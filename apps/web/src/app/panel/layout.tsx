@@ -1,0 +1,131 @@
+import { redirect } from "next/navigation";
+
+import {
+  PanelShell,
+  type PanelWorkspace,
+} from "@/components/panel/PanelShell";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import {
+  getPanelSummary,
+  getUnreadMessageCount,
+} from "@/lib/panel/get-panel-data";
+import { prisma } from "@/lib/prisma";
+import {
+  AuthenticationError,
+  requireUser,
+} from "@/server/auth/require-user";
+
+export default async function PanelLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  let user;
+
+  try {
+    user = await requireUser({ allowDbUnavailable: true });
+  } catch (error) {
+    if (error instanceof AuthenticationError) {
+      redirect("/giris?callbackUrl=/panel");
+    }
+    throw error;
+  }
+
+  const dbUnavailable = user.id.includes("@");
+
+  let unreadNotifications = 0;
+  let unreadMessages = 0;
+  let features: Record<string, boolean> | undefined;
+  let companies: { id: string; name: string }[] = [];
+  let workspace: PanelWorkspace = {
+    mode: "personal",
+    planTier: "STANDARD",
+    planLabel: "Standart",
+    quotaUnlimited: false,
+    quotaRemaining: 5,
+  };
+
+  if (!dbUnavailable) {
+    const contextOptions = await getCompanyContextOptions();
+
+    // Memberships drive the account switcher — load independently so a
+    // summary/entitlement glitch cannot wipe the company list.
+    try {
+      const memberships = await prisma.companyMember.findMany({
+        where: {
+          userId: user.id,
+          status: "ACTIVE",
+          company: {
+            deletedAt: null,
+            status: { in: ["ACTIVE", "PENDING_VERIFICATION", "DRAFT"] },
+          },
+        },
+        orderBy: { joinedAt: "desc" },
+        select: {
+          company: { select: { id: true, name: true } },
+        },
+      });
+      companies = memberships.map((item) => ({
+        id: item.company.id,
+        name: item.company.name,
+      }));
+    } catch (error) {
+      console.error("[panel] Firma listesi alınamadı:", error);
+    }
+
+    try {
+      const [summary, messageCount, entitlements] = await Promise.all([
+        getPanelSummary(user.id),
+        getUnreadMessageCount(user.id),
+        resolveEntitlements(user.id, contextOptions),
+      ]);
+
+      unreadNotifications = summary.unreadNotifications;
+      unreadMessages = messageCount;
+      features = entitlements.features;
+
+      // Any active company subject is a company workspace. Plan tier only
+      // gates features (envanter etc.), not whether the firm appears in UI.
+      const inCompanyWorkspace = entitlements.subject.type === "company";
+
+      let companyLogoUrl: string | null = null;
+      if (inCompanyWorkspace && entitlements.subject.id) {
+        const companyMedia = await prisma.company.findUnique({
+          where: { id: entitlements.subject.id },
+          select: { logoUrl: true },
+        });
+        companyLogoUrl = companyMedia?.logoUrl ?? null;
+      }
+
+      workspace = {
+        mode: inCompanyWorkspace ? "corporate" : "personal",
+        companyId: inCompanyWorkspace ? entitlements.subject.id : null,
+        companyName: inCompanyWorkspace
+          ? entitlements.subject.name
+          : null,
+        companyLogoUrl,
+        planTier: entitlements.effectivePlanTier,
+        planLabel: entitlements.planLabel,
+        quotaUnlimited: entitlements.quota.isUnlimited,
+        quotaRemaining: entitlements.quota.remaining,
+      };
+    } catch (error) {
+      console.error("[panel] Özet verileri alınamadı:", error);
+    }
+  }
+
+  return (
+    <PanelShell
+      user={user}
+      unreadNotifications={unreadNotifications}
+      unreadMessages={unreadMessages}
+      dbUnavailable={dbUnavailable}
+      features={features}
+      workspace={workspace}
+      companies={companies}
+    >
+      {children}
+    </PanelShell>
+  );
+}

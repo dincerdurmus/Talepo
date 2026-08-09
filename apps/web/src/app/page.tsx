@@ -1,323 +1,246 @@
-const featuredRequests = [
+import Link from "next/link";
+import { Header } from "@/components/layout/Header";
+import { HomeComposer } from "@/components/home/HomeComposer";
+import { PricingPlans } from "@/components/home/PricingPlans";
+import {
+  ArrowRight,
+  Check,
+  Handshake,
+  MessageSquareText,
+  PenLine,
+} from "lucide-react";
+
+const STEPS = [
   {
-    title: "İstanbul’da 50 adet ofis sandalyesi",
-    category: "Ofis Mobilyaları",
-    location: "İstanbul",
-    budget: "₺150.000",
-    offers: 8,
+    n: "1",
+    title: "İhtiyacını yaz",
+    body: "Ne lazım, nerede, kaç adet — günlük dille yazman yeter. Form doldurmana gerek yok.",
+    icon: PenLine,
   },
   {
-    title: "Kurumsal web sitesi tasarımı",
-    category: "Yazılım ve Tasarım",
-    location: "Türkiye Geneli",
-    budget: "₺80.000",
-    offers: 14,
+    n: "2",
+    title: "Firmalar teklif verir",
+    body: "Uygun firmalar fiyat ve süre yazar. Sen sadece teklifleri yan yana görürsün.",
+    icon: MessageSquareText,
   },
   {
-    title: "500 adet özel baskılı karton kutu",
-    category: "Matbaa ve Ambalaj",
-    location: "İstanbul",
-    budget: "₺45.000",
-    offers: 6,
+    n: "3",
+    title: "Beğendiğini seç",
+    body: "Teklifi kabul edince mesajlaşmaya geçersin. Ondan önce telefonun ve mailin gizli kalır.",
+    icon: Handshake,
   },
 ];
-
-const categories = [
-  "Otomotiv",
-  "Matbaa ve Ambalaj",
-  "Makine",
-  "Teknoloji",
-  "Ev ve Yaşam",
-  "Hizmetler",
-];
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="m21 21-4.35-4.35m1.1-5.4a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"
-      />
-    </svg>
-  );
-}
-
-function ArrowIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 12h14m-6-6 6 6-6 6"
-      />
-    </svg>
-  );
-}
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#f8f8f6] text-[#171717]">
-      <header className="border-b border-black/5 bg-[#f8f8f6]/90 backdrop-blur">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-          <a
-            href="#"
-            className="text-2xl font-semibold tracking-[-0.04em]"
-            aria-label="Talepo ana sayfa"
-          >
-            Talepo
-          </a>
+    <main className="min-h-screen overflow-hidden bg-[#f3f3ef] text-[#151515]">
+      <Header />
 
-          <nav className="hidden items-center gap-8 text-sm text-black/65 md:flex">
-            <a className="transition hover:text-black" href="#talepler">
-              Talepler
-            </a>
-            <a className="transition hover:text-black" href="#nasil-calisir">
-              Nasıl çalışır?
-            </a>
-            <a className="transition hover:text-black" href="#kurumsal">
-              Kurumsal
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <button className="hidden rounded-full px-5 py-2.5 text-sm font-medium transition hover:bg-black/5 sm:block">
-              Giriş yap
-            </button>
-
-            <button className="rounded-full bg-[#171717] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-black">
-              Ücretsiz başla
-            </button>
-          </div>
+      {/* HERO — tek iş: anla + yaz */}
+      <section className="relative px-5 pb-16 pt-10 sm:px-6 lg:px-8 lg:pb-24 lg:pt-14">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.85),_transparent_55%)]" />
+          <div className="talepo-blob-a absolute -left-28 top-10 h-[420px] w-[420px] rounded-full bg-[#b8f0ae]/55 blur-[100px]" />
+          <div className="talepo-blob-b absolute -right-20 -top-8 h-[460px] w-[460px] rounded-full bg-[#b7cff8]/55 blur-[110px]" />
+          <div className="talepo-blob-c absolute left-1/2 top-[42%] h-56 w-56 -translate-x-1/2 rounded-full bg-[#ffe8b8]/40 blur-[90px]" />
+          <div
+            className="absolute inset-0 opacity-[0.35]"
+            style={{
+              backgroundImage:
+                "radial-gradient(rgba(20,20,20,0.08) 1px, transparent 1px)",
+              backgroundSize: "22px 22px",
+              maskImage:
+                "radial-gradient(ellipse at center, black 20%, transparent 72%)",
+            }}
+          />
         </div>
-      </header>
 
-      <section className="px-6 pb-24 pt-20 lg:px-8 lg:pb-32 lg:pt-28">
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="mx-auto mb-7 w-fit rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-black/60 shadow-sm">
-            Aradığınız ürün veya hizmeti sizin için bulur
-          </div>
-
-          <h1 className="text-balance text-5xl font-semibold tracking-[-0.055em] sm:text-6xl lg:text-7xl">
-            Bugün ne arıyorsunuz?
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-balance text-lg leading-8 text-black/55 sm:text-xl">
-            Talebinizi anlatın. Talepo önce mevcut seçenekleri bulmaya çalışır,
-            bulamazsa talebinizi doğru satıcılara ulaştırır.
+        <div className="relative mx-auto max-w-3xl text-center">
+          <p className="talepo-rise text-[clamp(2.2rem,6vw,3.5rem)] font-semibold leading-none tracking-[-0.07em] text-[#151515]">
+            tale<span className="text-black/30">po</span>
           </p>
 
-          <form
-            className="mx-auto mt-10 flex max-w-3xl flex-col gap-3 rounded-[28px] border border-black/10 bg-white p-3 shadow-[0_24px_80px_rgba(0,0,0,0.08)] sm:flex-row"
-            action="#"
-          >
-            <label className="flex min-h-16 flex-1 items-center gap-3 px-4">
-              <SearchIcon />
-              <span className="sr-only">Aradığınız ürün veya hizmet</span>
-              <input
-                className="w-full bg-transparent text-base outline-none placeholder:text-black/35 sm:text-lg"
-                placeholder="Örneğin: 500 adet baskılı karton kutu arıyorum"
-                type="text"
-              />
-            </label>
+          <p className="talepo-rise talepo-rise-delay-1 mt-5 inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/80 px-4 py-1.5 text-sm font-medium text-black/50 shadow-sm backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-[#60ad64]" />
+            Ücretsiz talep · Firmalar teklif verir
+          </p>
 
-            <button
-              className="flex min-h-14 items-center justify-center gap-2 rounded-[20px] bg-[#171717] px-7 font-medium text-white transition hover:bg-black"
-              type="submit"
-            >
-              Talep oluştur
-              <ArrowIcon />
-            </button>
-          </form>
+          <h1 className="talepo-rise talepo-rise-delay-2 mt-6 text-[2.35rem] font-semibold leading-[1.05] tracking-[-0.06em] sm:text-5xl lg:text-[3.75rem]">
+            Ne lazımsa yazın.
+            <span className="mt-2 block bg-gradient-to-r from-black/45 via-black/30 to-[#3d7a42]/70 bg-clip-text text-transparent">
+              Firmalar teklif versin.
+            </span>
+          </h1>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm text-black/55 transition hover:border-black/20 hover:text-black"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          <p className="talepo-rise talepo-rise-delay-3 mx-auto mt-5 max-w-xl text-base leading-7 text-black/50 sm:text-lg">
+            Sen yazarsın, onlar teklif verir; beğendiğini seçersin. İletişimin
+            kabulden önce gizli kalır.
+          </p>
         </div>
-      </section>
 
-      <section className="border-y border-black/5 bg-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px bg-black/5 px-6 lg:grid-cols-4 lg:px-8">
+        <div className="talepo-rise talepo-rise-delay-3 relative mx-auto mt-9 max-w-2xl">
+          <HomeComposer />
+        </div>
+
+        <ul className="relative mx-auto mt-7 flex max-w-2xl flex-wrap items-center justify-center gap-3 text-sm">
           {[
-            ["12.840+", "Yayınlanan talep"],
-            ["4.250+", "Doğrulanmış satıcı"],
-            ["38.600+", "Gönderilen teklif"],
-            ["81", "Aktif kategori"],
-          ].map(([number, label]) => (
-            <div
-              key={label}
-              className="bg-white px-4 py-9 text-center sm:px-8"
+            "Talep ücretsiz",
+            "İletişim kabulden önce gizli",
+            "Karşılaştırıp seç",
+          ].map((item) => (
+            <li
+              key={item}
+              className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/75 px-3.5 py-2 text-black/55 shadow-sm backdrop-blur"
             >
-              <div className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                {number}
-              </div>
-              <div className="mt-2 text-sm text-black/45">{label}</div>
-            </div>
+              <Check className="h-4 w-4 text-[#60ad64]" />
+              {item}
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
+      {/* NASIL ÇALIŞIR — cahil kullanıcı için */}
       <section
-        id="talepler"
-        className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32"
-      >
-        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-medium text-black/45">Güncel fırsatlar</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-              Öne çıkan talepler
-            </h2>
-          </div>
-
-          <a
-            className="flex items-center gap-2 text-sm font-medium"
-            href="#talepler"
-          >
-            Tüm talepleri görüntüle
-            <ArrowIcon />
-          </a>
-        </div>
-
-        <div className="mt-10 grid gap-5 lg:grid-cols-3">
-          {featuredRequests.map((request) => (
-            <article
-              key={request.title}
-              className="group rounded-[28px] border border-black/8 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-[#f1f1ee] px-3 py-1.5 text-xs font-medium text-black/55">
-                  {request.category}
-                </span>
-
-                <span className="text-xs text-black/40">
-                  {request.offers} teklif
-                </span>
-              </div>
-
-              <h3 className="mt-8 min-h-16 text-xl font-semibold leading-7 tracking-[-0.025em]">
-                {request.title}
-              </h3>
-
-              <div className="mt-8 flex items-end justify-between border-t border-black/7 pt-5">
-                <div>
-                  <p className="text-xs text-black/40">Tahmini bütçe</p>
-                  <p className="mt-1 font-semibold">{request.budget}</p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-xs text-black/40">Konum</p>
-                  <p className="mt-1 text-sm">{request.location}</p>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section
-        id="nasil-calisir"
-        className="border-y border-black/5 bg-[#171717] px-6 py-24 text-white lg:px-8 lg:py-32"
+        id="nasil"
+        className="border-y border-black/[0.06] bg-white/60 px-5 py-16 sm:px-6 lg:px-8 lg:py-20"
       >
         <div className="mx-auto max-w-7xl">
-          <p className="text-sm font-medium text-white/45">Basit ve hızlı</p>
-
-          <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-            Siz ne aradığınızı söyleyin. Gerisini Talepo yönetsin.
-          </h2>
-
-          <div className="mt-14 grid gap-10 lg:grid-cols-3">
-            {[
-              [
-                "01",
-                "İhtiyacınızı anlatın",
-                "Ürün, hizmet, bütçe ve teslimat beklentinizi birkaç cümleyle belirtin.",
-              ],
-              [
-                "02",
-                "Talepo seçenekleri bulsun",
-                "Sistem önce özel envanterleri ve uygun satıcıları tarar.",
-              ],
-              [
-                "03",
-                "Teklifleri karşılaştırın",
-                "Fiyat, teslimat ve satıcı bilgilerini tek ekranda değerlendirin.",
-              ],
-            ].map(([number, title, description]) => (
-              <div key={number} className="border-t border-white/15 pt-6">
-                <span className="text-sm text-white/35">{number}</span>
-                <h3 className="mt-7 text-xl font-semibold">{title}</h3>
-                <p className="mt-4 max-w-sm leading-7 text-white/55">
-                  {description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="kurumsal"
-        className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32"
-      >
-        <div className="overflow-hidden rounded-[36px] bg-[#e8eadf] px-7 py-12 sm:px-12 lg:flex lg:items-center lg:justify-between lg:px-16 lg:py-16">
           <div className="max-w-2xl">
-            <p className="text-sm font-medium text-black/45">
-              Satıcılar ve işletmeler için
-            </p>
-
-            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-              Yeni müşterileri aramayın. Talepler size gelsin.
+            <p className="text-sm font-medium text-black/40">3 adımda bitti</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">
+              İşleyiş bu kadar basit.
             </h2>
-
-            <p className="mt-5 max-w-xl leading-7 text-black/55">
-              Firmanızı oluşturun, özel envanterinizi ekleyin ve size uygun
-              satın alma taleplerini tek merkezden yönetin.
+            <p className="mt-3 text-base leading-7 text-black/50">
+              Hesap açmadan önce bile ne olacağını buradan görürsün. Karışık
+              jargon yok.
             </p>
           </div>
 
-          <button className="mt-8 flex items-center gap-2 rounded-full bg-[#171717] px-6 py-3.5 font-medium text-white transition hover:bg-black lg:mt-0">
-            Kurumsal hesabı keşfet
-            <ArrowIcon />
-          </button>
+          <ol className="mt-10 grid gap-4 lg:grid-cols-3">
+            {STEPS.map((step) => {
+              const Icon = step.icon;
+              return (
+                <li
+                  key={step.n}
+                  className="relative rounded-[28px] border border-black/[0.06] bg-[#f3f3ef] p-6 sm:p-7"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-4xl font-semibold tracking-[-0.06em] text-black/15">
+                      {step.n}
+                    </span>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <h3 className="mt-6 text-xl font-semibold tracking-tight">
+                    {step.title}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-black/50">
+                    {step.body}
+                  </p>
+                </li>
+              );
+            })}
+          </ol>
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            <Link
+              href="/talep"
+              className="inline-flex items-center gap-2 rounded-full bg-[#151515] px-6 py-3 text-sm font-semibold text-white transition hover:bg-black"
+            >
+              Hemen talep yaz
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <p className="text-sm text-black/40">
+              Örnek: “Bağcılar’da 2+1 kiralık daire”
+            </p>
+          </div>
         </div>
       </section>
 
-      <footer className="border-t border-black/5 px-6 py-10 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-5 text-sm text-black/40 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Talepo. Tüm hakları saklıdır.</p>
-
-          <div className="flex gap-6">
-            <a className="transition hover:text-black" href="#">
-              Gizlilik
-            </a>
-            <a className="transition hover:text-black" href="#">
-              Koşullar
-            </a>
-            <a className="transition hover:text-black" href="#">
-              İletişim
-            </a>
+      {/* KİM İÇİN — iki yol, net */}
+      <section className="px-5 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-2">
+          <div className="rounded-[30px] border border-black/[0.06] bg-white p-7 shadow-[0_16px_50px_rgba(0,0,0,0.04)] sm:p-9">
+            <p className="text-sm font-medium text-black/40">Alıcıysan</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
+              Bir şeye ihtiyacın var.
+            </h2>
+            <p className="mt-3 max-w-md text-sm leading-6 text-black/50">
+              Yaz → teklifleri gör → birini seç. Para ödemezsin. Firmalar sana
+              ulaşır.
+            </p>
+            <Link
+              href="/talep"
+              className="mt-7 inline-flex items-center gap-2 rounded-full bg-[#151515] px-5 py-3 text-sm font-semibold text-white"
+            >
+              Talep oluştur
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
+
+          <div
+            id="firmalar"
+            className="rounded-[30px] border border-black/[0.06] bg-[#151515] p-7 text-white shadow-[0_16px_50px_rgba(0,0,0,0.08)] sm:p-9"
+          >
+            <p className="text-sm font-medium text-white/40">Firmaysan</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
+              İş fırsatı arıyorsun.
+            </h2>
+            <p className="mt-3 max-w-md text-sm leading-6 text-white/45">
+              Açık talepleri gör, teklif ver. Alıcı kabul ederse mesajlaşmaya
+              geçersin. Planlar hız ve kotayı büyütür.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/talepler"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black"
+              >
+                Talepleri gör
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="#planlar"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm font-medium text-white/80"
+              >
+                Planlar
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <PricingPlans />
+
+      <footer className="border-t border-black/[0.06] px-5 py-10 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-7 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <Link
+              href="/"
+              className="text-2xl font-semibold tracking-[-0.06em]"
+            >
+              tale<span className="text-black/35">po</span>
+            </Link>
+            <p className="mt-2 text-sm text-black/35">
+              Yaz → teklif al → seç.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-6 text-sm text-black/40">
+            <a href="#nasil" className="transition hover:text-black">
+              Nasıl çalışır
+            </a>
+            <a href="#planlar" className="transition hover:text-black">
+              Planlar
+            </a>
+            <Link href="/talep" className="transition hover:text-black">
+              Talep oluştur
+            </Link>
+          </div>
+
+          <p className="text-sm text-black/30">
+            © 2026 Talepo. Tüm hakları saklıdır.
+          </p>
         </div>
       </footer>
     </main>

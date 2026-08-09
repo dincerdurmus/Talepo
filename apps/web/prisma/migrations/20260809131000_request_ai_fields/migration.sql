@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Request" ADD COLUMN "aiScore" INTEGER,
+ADD COLUMN "aiSummary" TEXT,
+ADD COLUMN "professionalDescription" TEXT,
+ADD COLUMN "viewCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "offerCount" INTEGER NOT NULL DEFAULT 0;

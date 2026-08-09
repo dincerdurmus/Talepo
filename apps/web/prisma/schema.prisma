@@ -1,0 +1,726 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum CompanyStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  ACTIVE
+  REJECTED
+  SUSPENDED
+  DELETED
+}
+
+enum CompanyMemberRole {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  VIEWER
+}
+
+enum CompanyMemberStatus {
+  INVITED
+  ACTIVE
+  REJECTED
+  REMOVED
+}
+
+enum FieldType {
+  SHORT_TEXT
+  LONG_TEXT
+  NUMBER
+  DECIMAL
+  SINGLE_SELECT
+  MULTI_SELECT
+  CHECKBOX
+  DATE
+  FILE
+}
+
+enum CategorySuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MERGED
+}
+
+enum RequestStatus {
+  DRAFT
+  PUBLISHED
+  RECEIVING_OFFERS
+  OFFER_SELECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  EXPIRED
+}
+
+enum OfferStatus {
+  DRAFT
+  SUBMITTED
+  VIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
+enum Currency {
+  TRY
+  USD
+  EUR
+  GBP
+}
+
+enum ConversationStatus {
+  ACTIVE
+  ARCHIVED
+  CLOSED
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  IMAGE
+  SYSTEM
+}
+
+enum NotificationType {
+  GENERAL
+  REQUEST_PUBLISHED
+  NEW_REQUEST_MATCH
+  NEW_OFFER
+  OFFER_VIEWED
+  OFFER_ACCEPTED
+  OFFER_REJECTED
+  NEW_MESSAGE
+  COMPANY_INVITATION
+  COMPANY_MEMBER_JOINED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+enum PlanTier {
+  STANDARD
+  PREMIUM
+  PROFESSIONAL
+  CORPORATE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  /// scrypt hash: `salt:hash` (hex). Null = yalnızca OAuth.
+  passwordHash String?
+
+  phone       String?
+  country     String     @default("Türkiye")
+  city        String?
+  district    String?
+  biography   String?    @db.Text
+  status      UserStatus @default(ACTIVE)
+  lastLoginAt DateTime?
+
+  planTier      PlanTier  @default(STANDARD)
+  planExpiresAt DateTime?
+  bonusOfferCredits Int   @default(0)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  accounts Account[]
+  sessions Session[]
+
+  companyMemberships CompanyMember[]
+  ownedCompanies     Company[]       @relation("CompanyCreator")
+
+  categorySuggestions CategorySuggestion[]
+
+  createdRequests Request[] @relation("RequestCreator")
+  submittedOffers Offer[]   @relation("OfferSubmitter")
+
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]                 @relation("MessageSender")
+
+  notifications Notification[]
+
+  @@index([status])
+  @@index([city, district])
+  @@index([createdAt])
+}
+
+model Account {
+  id String @id @default(cuid())
+
+  userId String
+  type   String
+
+  provider          String
+  providerAccountId String
+
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id String @id @default(cuid())
+
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id String @id @default(cuid())
+
+  name String
+  slug String @unique
+
+  legalName   String?
+  description String? @db.Text
+
+  logoUrl    String? @db.Text
+  coverUrl   String? @db.Text
+  websiteUrl String?
+
+  phone String?
+  email String?
+
+  taxNumber String?
+  taxOffice String?
+
+  country      String  @default("Türkiye")
+  city         String?
+  district     String?
+  neighborhood String?
+  address      String? @db.Text
+  postalCode   String?
+
+  status     CompanyStatus @default(DRAFT)
+  isVerified Boolean       @default(false)
+
+  planTier          PlanTier  @default(STANDARD)
+  planExpiresAt     DateTime?
+  bonusOfferCredits Int       @default(0)
+
+  createdById String
+
+  createdBy User @relation("CompanyCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  members    CompanyMember[]
+  categories CompanyCategory[]
+  inventoryItems CompanyInventoryItem[]
+
+  requests Request[]
+  offers   Offer[]
+  requestMatches RequestMatch[]
+
+  conversationParticipants ConversationParticipant[]
+  sentMessages             Message[]                 @relation("MessageCompanySender")
+
+  @@index([createdById])
+  @@index([status])
+  @@index([isVerified])
+  @@index([city, district])
+  @@index([createdAt])
+}
+
+model CompanyInventoryItem {
+  id String @id @default(cuid())
+
+  companyId String
+
+  title         String
+  categoryLabel String?
+  quantity      Int     @default(1)
+  unit          String  @default("adet")
+  sku           String?
+  city          String?
+  notes         String? @db.Text
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model CompanyMember {
+  id String @id @default(cuid())
+
+  companyId String
+  userId    String
+
+  role   CompanyMemberRole   @default(MEMBER)
+  status CompanyMemberStatus @default(INVITED)
+
+  invitedAt DateTime  @default(now())
+  joinedAt  DateTime?
+  removedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, userId])
+  @@index([companyId])
+  @@index([userId])
+}
+
+model Category {
+  id String @id @default(cuid())
+
+  name String
+  slug String @unique
+
+  icon String?
+
+  description String? @db.Text
+
+  sortOrder Int @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyCategories CompanyCategory[]
+  forms             RequestForm[]
+  requests          Request[]
+  suggestions       CategorySuggestion[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model CompanyCategory {
+  id String @id @default(cuid())
+
+  companyId  String
+  categoryId String
+
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, categoryId])
+}
+
+model CategorySuggestion {
+  id String @id @default(cuid())
+
+  userId String
+
+  categoryId String?
+
+  name String
+
+  description String? @db.Text
+
+  status CategorySuggestionStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+model RequestForm {
+  id String @id @default(cuid())
+
+  categoryId String
+
+  name        String
+  description String? @db.Text
+
+  version Int @default(1)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  fields   FormField[]
+  requests Request[]
+
+  @@unique([categoryId, version])
+  @@index([categoryId])
+  @@index([isActive])
+}
+
+model FormField {
+  id String @id @default(cuid())
+
+  formId String
+
+  key   String
+  label String
+
+  description String? @db.Text
+  placeholder String?
+
+  type FieldType
+
+  isRequired Boolean @default(false)
+  isActive   Boolean @default(true)
+
+  sortOrder Int @default(0)
+
+  minLength Int?
+  maxLength Int?
+
+  minValue Decimal? @db.Decimal(18, 4)
+  maxValue Decimal? @db.Decimal(18, 4)
+
+  options    Json?
+  validation Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form RequestForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  values RequestFieldValue[]
+
+  @@unique([formId, key])
+  @@index([formId, sortOrder])
+  @@index([isActive])
+}
+
+model RequestFieldValue {
+  id String @id @default(cuid())
+
+  requestId String
+  fieldId   String
+
+  textValue    String?   @db.Text
+  numberValue  Decimal?  @db.Decimal(18, 4)
+  booleanValue Boolean?
+  dateValue    DateTime?
+  jsonValue    Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  field FormField @relation(fields: [fieldId], references: [id], onDelete: Restrict)
+
+  @@unique([requestId, fieldId])
+  @@index([requestId])
+  @@index([fieldId])
+}
+
+model Request {
+  id String @id @default(cuid())
+
+  createdById String
+  companyId   String?
+  categoryId  String
+  formId      String?
+
+  title       String
+  description String @db.Text
+
+  status RequestStatus @default(DRAFT)
+
+  country  String  @default("Türkiye")
+  city     String?
+  district String?
+
+  budgetMin Decimal? @db.Decimal(18, 2)
+  budgetMax Decimal? @db.Decimal(18, 2)
+  currency  Currency @default(TRY)
+
+  aiScore                 Int?
+  aiSummary               String? @db.Text
+  professionalDescription String? @db.Text
+
+  viewCount   Int       @default(0)
+  offerCount  Int       @default(0)
+
+  isUrgent    Boolean   @default(false)
+  isFeatured  Boolean   @default(false)
+  featuredUntil DateTime?
+
+  /// Standart firmalar bu tarihten sonra talebi görebilir (Premium anında görür)
+  visibleToSuppliersAt DateTime?
+
+  deadlineAt  DateTime?
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  createdBy User @relation("RequestCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  form RequestForm? @relation(fields: [formId], references: [id], onDelete: SetNull)
+
+  fieldValues RequestFieldValue[]
+  offers      Offer[]
+  matches     RequestMatch[]
+
+  @@index([createdById])
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([formId])
+  @@index([status])
+  @@index([city, district])
+  @@index([publishedAt])
+  @@index([createdAt])
+  @@index([isFeatured, featuredUntil])
+  @@index([isUrgent])
+  @@index([visibleToSuppliersAt])
+}
+
+/// Talep yayınlandığında kategori/şehir ile eşleşen firmalar
+model RequestMatch {
+  id String @id @default(cuid())
+
+  requestId String
+  companyId String
+
+  /// 100 kategori+şehir, 80 kategori, 50 yalnız şehir
+  score Int @default(0)
+
+  matchReason String?
+  notifiedAt  DateTime?
+
+  createdAt DateTime @default(now())
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, companyId])
+  @@index([requestId])
+  @@index([companyId])
+  @@index([score])
+  @@index([createdAt])
+}
+
+model Offer {
+  id String @id @default(cuid())
+
+  requestId     String
+  submittedById String
+  companyId     String?
+
+  title       String?
+  description String  @db.Text
+
+  amount   Decimal  @db.Decimal(18, 2)
+  currency Currency @default(TRY)
+
+  deliveryDays Int?
+  validUntil   DateTime?
+
+  status OfferStatus @default(DRAFT)
+
+  submittedAt DateTime?
+  viewedAt    DateTime?
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+  withdrawnAt DateTime?
+  expiredAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  submittedBy User @relation("OfferSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  conversation Conversation?
+
+  @@index([requestId])
+  @@index([submittedById])
+  @@index([companyId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([createdAt])
+}
+
+model Conversation {
+  id String @id @default(cuid())
+
+  offerId String @unique
+
+  title  String?
+  status ConversationStatus @default(ACTIVE)
+
+  lastMessageAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@index([status])
+  @@index([lastMessageAt])
+  @@index([createdAt])
+}
+
+model ConversationParticipant {
+  id String @id @default(cuid())
+
+  conversationId String
+  userId         String?
+  companyId      String?
+
+  joinedAt   DateTime  @default(now())
+  leftAt     DateTime?
+  lastReadAt DateTime?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@unique([conversationId, companyId])
+  @@index([conversationId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+model Message {
+  id String @id @default(cuid())
+
+  conversationId  String
+  senderUserId    String
+  senderCompanyId String?
+
+  type MessageType @default(TEXT)
+
+  content  String? @db.Text
+  fileUrl  String?
+  fileName String?
+  fileSize Int?
+  mimeType String?
+
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderUser User @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
+
+  senderCompany Company? @relation("MessageCompanySender", fields: [senderCompanyId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, createdAt])
+  @@index([senderUserId])
+  @@index([senderCompanyId])
+}
+
+model Notification {
+  id String @id @default(cuid())
+
+  userId String
+
+  type   NotificationType
+  status NotificationStatus @default(UNREAD)
+
+  title   String
+  message String @db.Text
+
+  actionUrl String?
+
+  requestId String?
+  offerId   String?
+  companyId String?
+
+  readAt     DateTime?
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([type])
+  @@index([requestId])
+  @@index([offerId])
+  @@index([companyId])
+  @@index([createdAt])
+}
