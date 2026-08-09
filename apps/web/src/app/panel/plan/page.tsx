@@ -40,8 +40,8 @@ export default async function PlanPage() {
           Plan ve teklif hakları
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-          Talep oluşturmak ücretsiz kalır. Premium ile gerçek alıcıları daha erken
-          görün, daha hızlı teklif verin.
+          Talep oluşturmak ücretsiz kalır. Kişisel Premium tek kullanıcı içindir;
+          ekip paylaşımı için firma planı (Kurumsal) gerekir.
         </p>
       </section>
 

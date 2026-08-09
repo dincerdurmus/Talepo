@@ -6,6 +6,7 @@ import {
   Crown,
   FileText,
   Home,
+  LayoutDashboard,
   MessageCircle,
   Search,
   UserRound,
@@ -29,18 +30,16 @@ export type PanelNavItem = {
 
 export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
-    href: "/panel",
+    href: "/",
     icon: Home,
     label: "Ana sayfa",
     exact: true,
-    workspace: "personal",
   },
   {
     href: "/panel",
-    icon: Home,
+    icon: LayoutDashboard,
     label: "Özet",
     exact: true,
-    workspace: "corporate",
   },
   {
     href: "/panel/taleplerim",

@@ -13,20 +13,20 @@ import {
 const STEPS = [
   {
     n: "1",
-    title: "İhtiyacını yaz",
-    body: "Ne lazım, nerede, kaç adet — günlük dille yazman yeter. Form doldurmana gerek yok.",
+    title: "İhtiyacınızı yazın",
+    body: "Ne lazım, nerede, kaç adet — günlük dille yazmanız yeter. Form doldurmanıza gerek yok.",
     icon: PenLine,
   },
   {
     n: "2",
     title: "Firmalar teklif verir",
-    body: "Uygun firmalar fiyat ve süre yazar. Sen sadece teklifleri yan yana görürsün.",
+    body: "Uygun firmalar fiyat ve süre yazar. Siz yalnızca teklifleri yan yana görürsünüz.",
     icon: MessageSquareText,
   },
   {
     n: "3",
-    title: "Beğendiğini seç",
-    body: "Teklifi kabul edince mesajlaşmaya geçersin. Ondan önce telefonun ve mailin gizli kalır.",
+    title: "Beğendiğinizi seçin",
+    body: "Teklifi kabul edince mesajlaşmaya geçersiniz. Ondan önce telefonunuz ve e-postanız gizli kalır.",
     icon: Handshake,
   },
 ];
@@ -73,8 +73,8 @@ export default function Home() {
           </h1>
 
           <p className="talepo-rise talepo-rise-delay-3 mx-auto mt-5 max-w-xl text-base leading-7 text-black/50 sm:text-lg">
-            Sen yazarsın, onlar teklif verir; beğendiğini seçersin. İletişimin
-            kabulden önce gizli kalır.
+            Siz yazarsınız, firmalar teklif verir; beğendiğinizi seçersiniz.
+            İletişiminiz kabulden önce gizli kalır.
           </p>
         </div>
 
@@ -111,8 +111,8 @@ export default function Home() {
               İşleyiş bu kadar basit.
             </h2>
             <p className="mt-3 text-base leading-7 text-black/50">
-              Hesap açmadan önce bile ne olacağını buradan görürsün. Karışık
-              jargon yok.
+              Hesap açmadan önce bile sürecin nasıl işlediğini buradan
+              görebilirsiniz. Karışık jargon yok.
             </p>
           </div>
 
@@ -162,13 +162,13 @@ export default function Home() {
       <section className="px-5 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-2">
           <div className="rounded-[30px] border border-black/[0.06] bg-white p-7 shadow-[0_16px_50px_rgba(0,0,0,0.04)] sm:p-9">
-            <p className="text-sm font-medium text-black/40">Alıcıysan</p>
+            <p className="text-sm font-medium text-black/40">Alıcıysanız</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
-              Bir şeye ihtiyacın var.
+              Bir şeye ihtiyacınız var.
             </h2>
             <p className="mt-3 max-w-md text-sm leading-6 text-black/50">
-              Yaz → teklifleri gör → birini seç. Para ödemezsin. Firmalar sana
-              ulaşır.
+              Yazın → teklifleri görün → birini seçin. Talep ücretsizdir.
+              Firmalar size ulaşır.
             </p>
             <Link
               href="/talep"
@@ -183,13 +183,13 @@ export default function Home() {
             id="firmalar"
             className="rounded-[30px] border border-black/[0.06] bg-[#151515] p-7 text-white shadow-[0_16px_50px_rgba(0,0,0,0.08)] sm:p-9"
           >
-            <p className="text-sm font-medium text-white/40">Firmaysan</p>
+            <p className="text-sm font-medium text-white/40">Firmaysanız</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] sm:text-3xl">
-              İş fırsatı arıyorsun.
+              İş fırsatı arıyorsunuz.
             </h2>
             <p className="mt-3 max-w-md text-sm leading-6 text-white/45">
-              Açık talepleri gör, teklif ver. Alıcı kabul ederse mesajlaşmaya
-              geçersin. Planlar hız ve kotayı büyütür.
+              Açık talepleri görün, teklif verin. Alıcı kabul ederse
+              mesajlaşmaya geçersiniz. Planlar hız ve kotayı büyütür.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
@@ -235,6 +235,18 @@ export default function Home() {
             </a>
             <Link href="/talep" className="transition hover:text-black">
               Talep oluştur
+            </Link>
+            <Link
+              href="/kullanim-kosullari"
+              className="transition hover:text-black"
+            >
+              Kullanım koşulları
+            </Link>
+            <Link
+              href="/gizlilik-politikasi"
+              className="transition hover:text-black"
+            >
+              Gizlilik
             </Link>
           </div>
 

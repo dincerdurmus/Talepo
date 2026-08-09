@@ -1,5 +1,10 @@
 import type { FeatureKey } from "./entitlements";
-import type { EntitlementContext, EntitlementSubject, QuotaInfo } from "./types";
+import type {
+  EntitlementContext,
+  EntitlementSubject,
+  PersonalPlanSnapshot,
+  QuotaInfo,
+} from "./types";
 import type { PlanTierId } from "./plans";
 
 /**
@@ -17,6 +22,11 @@ export type EntitlementDTO = {
   features: Record<FeatureKey, boolean>;
   quota: QuotaInfo;
   requestAccessDelayHours: number;
+  personalPlan?: PersonalPlanSnapshotDTO;
+};
+
+export type PersonalPlanSnapshotDTO = Omit<PersonalPlanSnapshot, "expiresAt"> & {
+  expiresAt: string | null;
 };
 
 export function toEntitlementDTO(ctx: EntitlementContext): EntitlementDTO {
@@ -31,6 +41,14 @@ export function toEntitlementDTO(ctx: EntitlementContext): EntitlementDTO {
     features: ctx.features,
     quota: ctx.quota,
     requestAccessDelayHours: ctx.requestAccessDelayHours,
+    personalPlan: ctx.personalPlan
+      ? {
+          ...ctx.personalPlan,
+          expiresAt: ctx.personalPlan.expiresAt
+            ? ctx.personalPlan.expiresAt.toISOString()
+            : null,
+        }
+      : undefined,
   };
 }
 

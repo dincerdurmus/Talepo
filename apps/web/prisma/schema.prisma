@@ -498,6 +498,9 @@ model Request {
   aiSummary               String? @db.Text
   professionalDescription String? @db.Text
 
+  /// Auto or manual cover image for the request card/detail.
+  coverImageUrl String?
+
   viewCount   Int       @default(0)
   offerCount  Int       @default(0)
 

@@ -20,6 +20,7 @@ import {
   WandSparkles,
 } from "lucide-react";
 
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 export default function GirisPage() {
@@ -238,17 +239,17 @@ function GirisPageContent() {
                 Şifre
               </label>
               <div className="rounded-[20px] border border-black/[0.08] bg-white p-2 shadow-[0_12px_35px_rgba(0,0,0,0.035)] transition focus-within:border-teal-600/35 focus-within:shadow-[0_16px_50px_rgba(13,148,136,0.1)]">
-                <input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   required
                   minLength={8}
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Şifreniz"
-                  className="h-12 w-full rounded-2xl bg-transparent px-3 text-base outline-none placeholder:text-black/25"
+                  wrapClassName="relative"
+                  inputClassName="h-12 w-full rounded-2xl bg-transparent px-3 pr-12 text-base outline-none placeholder:text-black/25"
                 />
               </div>
               {(emailError || authError) && (
@@ -295,14 +296,14 @@ function GirisPageContent() {
             <p className="mt-6 text-center text-xs leading-5 text-black/35">
               Devam ederek Talepo’nun{" "}
               <Link
-                href="#"
+                href="/kullanim-kosullari"
                 className="font-medium text-teal-800 transition hover:text-teal-950"
               >
                 kullanım koşullarını
               </Link>{" "}
               ve{" "}
               <Link
-                href="#"
+                href="/gizlilik-politikasi"
                 className="font-medium text-teal-800 transition hover:text-teal-950"
               >
                 gizlilik politikasını

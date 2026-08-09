@@ -1,5 +1,21 @@
 export type PlanTierId = "STANDARD" | "PREMIUM" | "PROFESSIONAL" | "CORPORATE";
 
+/**
+ * TEST bayrağı — Standart plan 24 saat talep görme gecikmesi.
+ * `true` = canlı davranış (Standart 24 saat bekler).
+ * `false` = test/geçici: herkes anında görür.
+ *
+ * Bağlı yerler:
+ * - entitlements.ts → STANDARD'a instant_request_access ver/alma (asıl keşif filtresi)
+ * - create-request.ts → Request.visibleToSuppliersAt
+ * - assert-entitlement.ts → canAccessRequest / buildSupplierVisibilityFilter
+ * - distribute-request.ts → gecikmeli bildirim metni
+ * - panel/talepler + OfferForm → uyarı kutuları (instant_request_access)
+ */
+export const ENABLE_STANDARD_REQUEST_ACCESS_DELAY = false;
+
+const STANDARD_REQUEST_ACCESS_DELAY_HOURS = 24;
+
 export type PlanDefinition = {
   id: PlanTierId;
   label: string;
@@ -28,8 +44,10 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     badge: "Ücretsiz",
     description: "Talep oluşturma ücretsiz. Firmalar ayda 5 teklif hakkı ile başlar.",
     monthlyOfferQuota: 5,
-    requestAccessDelayHours: 24,
-    instantRequestAccess: false,
+    requestAccessDelayHours: ENABLE_STANDARD_REQUEST_ACCESS_DELAY
+      ? STANDARD_REQUEST_ACCESS_DELAY_HOURS
+      : 0,
+    instantRequestAccess: !ENABLE_STANDARD_REQUEST_ACCESS_DELAY,
     aiOfferAssistant: false,
     advancedAiPricing: false,
     alertRules: false,
@@ -42,7 +60,8 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     id: "PREMIUM",
     label: "Premium",
     badge: "Popüler",
-    description: "Yeni taleplere anında eriş, sınırsız teklif ver, AI araçlarından yararlan.",
+    description:
+      "Kişisel hesap veya tek kişilik firma için: anında erişim, sınırsız teklif ve AI araçları. Ekip paylaşımı için Kurumsal plan gerekir.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -58,7 +77,8 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     id: "PROFESSIONAL",
     label: "Profesyonel",
     badge: "Pro",
-    description: "Acil taleplere öncelik, gelişmiş filtreler ve detaylı piyasa analizi.",
+    description:
+      "Firma planı — ekip paylaşımlı: acil talep önceliği, gelişmiş filtreler ve piyasa analizi.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -74,7 +94,8 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     id: "CORPORATE",
     label: "Kurumsal",
     badge: "Kurumsal",
-    description: "Kategori takibi, otomatik bildirimler ve gizli envanter eşleştirme.",
+    description:
+      "Ekip paylaşımlı firma planı: tüm üyeler aynı hakları kullanır. Gizli envanter, otomatik bildirimler ve kurumsal profil.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -106,6 +127,18 @@ export function getPlanDefinition(tier: string): PlanDefinition {
 
 export function isPaidPlan(tier: string) {
   return tier !== "STANDARD";
+}
+
+const PLAN_TIER_RANK: Record<PlanTierId, number> = {
+  STANDARD: 0,
+  PREMIUM: 1,
+  PROFESSIONAL: 2,
+  CORPORATE: 3,
+};
+
+/** Compare plan tiers for entitlement precedence (not billing). */
+export function planTierRank(tier: PlanTierId): number {
+  return PLAN_TIER_RANK[tier] ?? 0;
 }
 
 export function hasInstantAccess(tier: string) {

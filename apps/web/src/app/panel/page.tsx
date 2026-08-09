@@ -12,7 +12,13 @@ import {
 
 import { CorporateHome } from "@/components/panel/CorporateHome";
 import { InviteActions } from "@/components/panel/InviteActions";
+import { PlanBadge } from "@/components/panel/PlanBadge";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import {
+  formatPersonalPlanMismatchDetail,
+  hasPersonalPlanMismatch,
+} from "@/lib/membership/membership-rules";
+import type { PlanTierId } from "@/lib/membership/plans";
 import {
   getPanelSummary,
   getUnreadMessageCount,
@@ -42,6 +48,9 @@ export default async function PanelPage() {
   let companyName = "Firma";
   let hasActiveCompany = false;
   let hasHiddenInventory = false;
+  let planTier: PlanTierId = "STANDARD";
+  let planLabel = "Standart";
+  let personalPlanMismatchDetail: string | null = null;
   let pendingInvite: { companyId: string; companyName: string } | null = null;
 
   if (!dbUnavailable) {
@@ -73,11 +82,16 @@ export default async function PanelPage() {
         }),
       ]);
       isCorporate = entitlements.subject.type === "company";
+      planTier = entitlements.effectivePlanTier;
+      planLabel = entitlements.planLabel;
       if (entitlements.subject.type === "company" && entitlements.subject.name) {
         companyName = entitlements.subject.name;
       }
       hasHiddenInventory = entitlements.features.hidden_inventory === true;
       hasActiveCompany = Boolean(activeMembership);
+      if (hasPersonalPlanMismatch(entitlements)) {
+        personalPlanMismatchDetail = formatPersonalPlanMismatchDetail(entitlements);
+      }
       if (invite) {
         pendingInvite = {
           companyId: invite.companyId,
@@ -93,9 +107,12 @@ export default async function PanelPage() {
     return (
       <CorporateHome
         companyName={companyName}
+        planTier={planTier}
+        planLabel={planLabel}
         unreadMessages={unreadMessages}
         openOffersHint={summary.newOffers}
         hasHiddenInventory={hasHiddenInventory}
+        personalPlanMismatchDetail={personalPlanMismatchDetail}
       />
     );
   }
@@ -120,17 +137,19 @@ export default async function PanelPage() {
       )}
 
       {!hasActiveCompany && (
-        <section className="mb-5 rounded-2xl border border-black/[0.06] bg-white px-5 py-5 shadow-sm sm:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <section className="relative mb-5 overflow-hidden rounded-2xl border border-teal-800/12 bg-gradient-to-br from-[#e7f7f2] via-[#eef9f6] to-[#e8f4fb] px-5 py-5 sm:px-6">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-300/25 blur-[48px]" />
+          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-sky-200/30 blur-[44px]" />
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#0f1f1d] text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-800/10 text-teal-800 ring-1 ring-teal-800/10">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold tracking-tight">
+                <h2 className="text-lg font-semibold tracking-tight text-teal-950">
                   Firma hesabı oluşturun
                 </h2>
-                <p className="mt-1 max-w-xl text-sm leading-6 text-black/45">
+                <p className="mt-1 max-w-xl text-sm leading-6 text-teal-950/55">
                   Satıcı veya ekip olarak çalışacaksanız firmanızı oluşturun;
                   ardından ekip daveti ve kurumsal araçlar açılır.
                 </p>
@@ -138,7 +157,7 @@ export default async function PanelPage() {
             </div>
             <Link
               href="/panel/firma/yeni"
-              className="inline-flex items-center gap-2 rounded-full bg-[#0f1f1d] px-4 py-2.5 text-sm font-semibold text-white"
+              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(15,118,110,0.22)] transition hover:from-teal-800 hover:to-teal-900"
             >
               Firma oluştur
               <ArrowRight className="h-4 w-4" />
@@ -153,9 +172,19 @@ export default async function PanelPage() {
         <div className="pointer-events-none absolute right-1/3 top-1/2 h-40 w-40 rounded-full bg-amber-200/15 blur-[60px]" />
 
         <div className="relative px-6 py-7 sm:px-8 sm:py-8">
-          <p className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-50">
-            Çalışma alanı
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-50">
+              Çalışma alanı
+            </p>
+            <PlanBadge
+              planTier={planTier}
+              planLabel={planLabel}
+              variant="hero"
+              size="md"
+              showStandard
+              linked
+            />
+          </div>
           <h1 className="mt-4 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
             Merhaba, {firstName}
           </h1>

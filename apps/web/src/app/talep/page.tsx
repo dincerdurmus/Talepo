@@ -22,6 +22,7 @@ import {
   Send,
   Sparkles,
   WandSparkles,
+  Zap,
 } from "lucide-react";
 
 import { runTalepoAiCore } from "@/lib/ai";
@@ -76,6 +77,8 @@ function TalepOlusturForm() {
     delivery: "",
     budget: "",
   });
+  /** When true, user edited the title — stop overwriting from AI. */
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
   const [publishedVersion, setPublishedVersion] = useState<
     "manual" | "ai" | null
   >(null);
@@ -86,10 +89,30 @@ function TalepOlusturForm() {
     "" | "FEATURE_24H" | "FEATURE_3D" | "FEATURE_7D"
   >("");
 
-  const aiResult = useMemo(
-    () => runTalepoAiCore(requestText),
-    [requestText]
-  );
+  const aiResult = useMemo(() => {
+    try {
+      return runTalepoAiCore(requestText);
+    } catch (error) {
+      console.error("[talep] AI core failed", error);
+      return runTalepoAiCore("");
+    }
+  }, [requestText]);
+
+  // Keep homepage ?query= in sync on client navigations (component may not remount).
+  useEffect(() => {
+    if (!queryFromHome) return;
+    setRequestText(queryFromHome);
+    setManualValues({});
+    setCommonDraft({
+      title: "",
+      quantity: "",
+      city: "",
+      delivery: "",
+      budget: "",
+    });
+    setTitleManuallyEdited(false);
+    setPublishedVersion(null);
+  }, [queryFromHome]);
 
   const [liveMatching, setLiveMatching] = useState<{
     estimatedCompanyCount: number;
@@ -123,9 +146,8 @@ function TalepOlusturForm() {
     manualValues,
   ]);
 
-  const mergedCommonDraft: CommonDraft = {
-    title:
-      commonDraft.title ||
+  const autoTitle = useMemo(
+    () =>
       composeRequestTitle({
         categoryId: activeCategoryId,
         rawText: requestText,
@@ -134,9 +156,27 @@ function TalepOlusturForm() {
           ...dynamicValues,
         },
         city: commonDraft.city || aiResult.parsed.city || "",
+        quantity: aiResult.parsed.quantity,
+        unit: aiResult.parsed.unit,
         fields: selectedCategory.fields,
         fieldValues: dynamicValues,
+        commonDraft,
       }),
+    [
+      activeCategoryId,
+      requestText,
+      aiResult.parsed.attributes,
+      aiResult.parsed.city,
+      aiResult.parsed.quantity,
+      aiResult.parsed.unit,
+      dynamicValues,
+      selectedCategory.fields,
+      commonDraft,
+    ],
+  );
+
+  const mergedCommonDraft: CommonDraft = {
+    title: titleManuallyEdited ? commonDraft.title : autoTitle,
     quantity: visibleCommonFieldKeys.has("quantity")
       ? commonDraft.quantity ||
         (aiResult.parsed.quantity
@@ -248,6 +288,19 @@ function TalepOlusturForm() {
     field: keyof CommonDraft,
     value: string
   ) {
+    if (field === "title") {
+      if (!value.trim()) {
+        // Clearing title resumes autofill.
+        setTitleManuallyEdited(false);
+        setCommonDraft((current) => ({ ...current, title: "" }));
+      } else {
+        setTitleManuallyEdited(true);
+        setCommonDraft((current) => ({ ...current, title: value }));
+      }
+      setPublishedVersion(null);
+      return;
+    }
+
     setCommonDraft((current) => ({
       ...current,
       [field]: value,
@@ -358,8 +411,8 @@ function TalepOlusturForm() {
               Ne lazımsa yazın.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-black/50">
-              Günlük dille anlatın. Alttaki alanlar otomatik dolsun; eksik varsa
-              tamamlayıp yayınlayın. İletişiminiz teklif kabulüne kadar gizli.
+              Bir paragraf yazın — başlık, kategori ve alanlar otomatik dolsun.
+              Kontrol edip yayınlayın. İletişiminiz teklif kabulüne kadar gizli.
             </p>
           </div>
         </section>
@@ -391,13 +444,13 @@ function TalepOlusturForm() {
                   onChange={(event) => {
                     setRequestText(event.target.value);
                     setManualValues({});
-                    setCommonDraft({
-                      title: "",
+                    setCommonDraft((current) => ({
+                      title: titleManuallyEdited ? current.title : "",
                       quantity: "",
                       city: "",
                       delivery: "",
                       budget: "",
-                    });
+                    }));
                     setPublishedVersion(null);
                   }}
                   className="min-h-[360px] w-full resize-y bg-transparent px-2 py-2 text-xl leading-9 outline-none placeholder:text-black/25 sm:min-h-[420px] sm:text-2xl sm:leading-10"
@@ -479,6 +532,14 @@ function TalepOlusturForm() {
                     onChange={(value) => updateCommonField(field.key, value)}
                     placeholder={field.placeholder}
                     wide={field.key === "title"}
+                    hint={
+                      field.key === "title" &&
+                      !titleManuallyEdited &&
+                      Boolean(autoTitle.trim()) &&
+                      autoTitle !== "Yeni talep"
+                        ? "Başlık otomatik dolduruldu — düzenleyebilirsiniz"
+                        : undefined
+                    }
                   />
                 ))}
 
@@ -496,6 +557,28 @@ function TalepOlusturForm() {
                   />
                 ))}
               </div>
+
+              {publishError && publishedVersion === "manual" && (
+                <div className="mt-4 rounded-2xl bg-[#ffe4df] p-4 text-sm font-semibold text-[#8b352b]">
+                  {publishError}
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={isPublishing}
+                onClick={() => publishRequest("manual")}
+                className="mt-5 flex min-h-[52px] w-full items-center justify-between rounded-2xl border border-black/[0.12] bg-[#171717] px-4 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPublishing && publishedVersion === "manual"
+                  ? "Yayınlanıyor..."
+                  : "Talebimi yayınla"}
+                {isPublishing && publishedVersion === "manual" ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="h-4 w-4" />
+                )}
+              </button>
             </div>
           </section>
 
@@ -634,25 +717,61 @@ function TalepOlusturForm() {
                   </p>
                 </div>
 
-                <details className="mt-4 group rounded-2xl border border-white/[0.08] bg-white/[0.03] open:bg-white/[0.04]">
+                <button
+                  type="button"
+                  onClick={() => setIsUrgent((current) => !current)}
+                  aria-pressed={isUrgent}
+                  className={`mt-4 flex w-full items-start gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
+                    isUrgent
+                      ? "border-amber-300/50 bg-gradient-to-r from-amber-400/20 to-orange-500/15 shadow-[0_10px_28px_rgba(245,158,11,0.18)]"
+                      : "border-amber-300/25 bg-amber-400/[0.08] hover:border-amber-300/40 hover:bg-amber-400/[0.12]"
+                  }`}
+                >
+                  <span
+                    className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                      isUrgent
+                        ? "bg-amber-400 text-[#1a1200] shadow-[0_8px_18px_rgba(245,158,11,0.45)]"
+                        : "bg-amber-400/20 text-amber-200"
+                    }`}
+                  >
+                    <Zap className="h-5 w-5" fill={isUrgent ? "currentColor" : "none"} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-white">
+                        Acil alıcıyım
+                      </span>
+                      <span className="rounded-full bg-amber-300/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-100">
+                        Ücretsiz
+                      </span>
+                    </span>
+                    <span className="mt-1 block text-xs leading-5 text-white/55">
+                      Firmalar talebinizi öncelikli görür; daha hızlı teklif
+                      alırsınız.
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                      isUrgent
+                        ? "border-amber-300 bg-amber-400 text-[#1a1200]"
+                        : "border-white/25 bg-black/20"
+                    }`}
+                    aria-hidden
+                  >
+                    {isUrgent ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : null}
+                  </span>
+                </button>
+
+                <details className="mt-3 group rounded-2xl border border-white/[0.08] bg-white/[0.03] open:bg-white/[0.04]">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-sm font-semibold text-white/80 [&::-webkit-details-marker]:hidden">
-                    Görünürlük seçenekleri
+                    Öne çıkarma (isteğe bağlı)
                     <ChevronDown className="h-4 w-4 text-white/35 transition group-open:rotate-180" />
                   </summary>
                   <div className="border-t border-white/[0.06] px-4 pb-4 pt-3">
                     <p className="text-xs leading-5 text-white/40">
-                      Talep ücretsiz. Acil alıcı ve öne çıkarma ile daha hızlı
-                      teklif alabilirsiniz.
+                      Talebinizi keşifte daha görünür yapmak isterseniz süre
+                      seçin. Ödeme yakında.
                     </p>
-                    <label className="mt-3 flex items-center gap-3 text-sm text-white/75">
-                      <input
-                        type="checkbox"
-                        checked={isUrgent}
-                        onChange={(event) => setIsUrgent(event.target.checked)}
-                        className="h-4 w-4 rounded border-white/20"
-                      />
-                      Acil alıcıyım (ücretsiz)
-                    </label>
                     <label className="mt-3 block">
                       <span className="text-xs text-white/40">
                         Talep öne çıkarma
@@ -683,48 +802,30 @@ function TalepOlusturForm() {
                   bağlandığında güncellenecek.
                 </p>
 
-                {publishError && (
+                {publishError && publishedVersion === "ai" && (
                   <div className="mt-3 rounded-2xl bg-[#ffe4df] p-4 text-sm font-semibold text-[#8b352b]">
                     {publishError}
                   </div>
                 )}
 
-                <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    disabled={isPublishing}
-                    onClick={() => publishRequest("manual")}
-                    className="flex min-h-[52px] items-center justify-between rounded-2xl border border-white/15 bg-white/[0.05] px-4 text-sm font-semibold transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isPublishing && publishedVersion === "manual"
-                      ? "Yayınlanıyor..."
-                      : "Talebimi yayınla"}
-                    {isPublishing && publishedVersion === "manual" ? (
+                <button
+                  type="button"
+                  disabled={isPublishing}
+                  onClick={() => publishRequest("ai")}
+                  className="mt-4 flex min-h-[52px] w-full items-center justify-between rounded-2xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(15,118,110,0.35)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="flex items-center gap-2">
+                    {isPublishing && publishedVersion === "ai" ? (
                       <LoaderCircle className="h-4 w-4 animate-spin" />
                     ) : (
-                      <ArrowRight className="h-4 w-4" />
+                      <Send className="h-4 w-4" />
                     )}
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={isPublishing}
-                    onClick={() => publishRequest("ai")}
-                    className="flex min-h-[52px] items-center justify-between rounded-2xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(15,118,110,0.35)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <span className="flex items-center gap-2">
-                      {isPublishing && publishedVersion === "ai" ? (
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                      {isPublishing && publishedVersion === "ai"
-                        ? "Yayınlanıyor..."
-                        : "AI sürümünü yayınla"}
-                    </span>
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-                </div>
+                    {isPublishing && publishedVersion === "ai"
+                      ? "Yayınlanıyor..."
+                      : "AI sürümünü yayınla"}
+                  </span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
               </div>
             </div>
           </aside>
@@ -762,12 +863,14 @@ function CommonField({
   onChange,
   placeholder,
   wide = false,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   wide?: boolean;
+  hint?: string;
 }) {
   return (
     <label className={wide ? "sm:col-span-2" : ""}>
@@ -781,6 +884,12 @@ function CommonField({
         placeholder={placeholder}
         className="h-12 w-full rounded-2xl border border-black/[0.08] bg-[#fafaf8] px-4 text-sm font-medium outline-none transition focus:border-[#0f766e]/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.1)]"
       />
+
+      {hint ? (
+        <span className="mt-1.5 block text-[11px] leading-4 text-[#0f766e]/80">
+          {hint}
+        </span>
+      ) : null}
     </label>
   );
 }

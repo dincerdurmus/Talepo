@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Sparkles } from "lucide-react";
 
 const EXAMPLES = [
   {
@@ -31,9 +33,11 @@ const PLACEHOLDERS = [
 
 export function HomeComposer() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [text, setText] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [focused, setFocused] = useState(false);
+  const isLoggedIn = status === "authenticated" && Boolean(session?.user);
 
   useEffect(() => {
     if (text || focused) return;
@@ -126,6 +130,18 @@ export function HomeComposer() {
           </button>
         ))}
       </div>
+
+      {isLoggedIn && (
+        <div className="mt-5 flex justify-center">
+          <Link
+            href="/panel"
+            className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/80 px-4 py-2 text-sm font-medium text-[#171717] shadow-sm backdrop-blur transition hover:border-black/15 hover:bg-white"
+          >
+            <LayoutDashboard className="h-4 w-4 text-black/45" />
+            Panele git · Özet
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

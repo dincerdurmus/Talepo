@@ -1,15 +1,24 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LoaderCircle, Sparkles, WandSparkles } from "lucide-react";
 
+import { OFFER_DRAFT_STORAGE_KEY } from "@/components/panel/AiAssistantPanel";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 
 type OfferFormProps = {
   requestId: string;
   entitlements: EntitlementDTO;
+};
+
+type StoredDraft = {
+  requestId: string;
+  description: string;
+  amount: number;
+  deliveryDays: number;
 };
 
 export function OfferForm({ requestId, entitlements }: OfferFormProps) {
@@ -20,11 +29,34 @@ export function OfferForm({ requestId, entitlements }: OfferFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<StoredDraft | null>(null);
 
   const remainingLabel = formatQuotaRemaining(entitlements.quota);
   const canSubmit =
     entitlements.quota.isUnlimited ||
     (entitlements.quota.remaining !== null && entitlements.quota.remaining > 0);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(OFFER_DRAFT_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StoredDraft;
+      if (parsed.requestId === requestId) {
+        setPendingDraft(parsed);
+      }
+    } catch {
+      // ignore invalid storage
+    }
+  }, [requestId]);
+
+  function applyDraft() {
+    if (!pendingDraft) return;
+    setDescription(pendingDraft.description);
+    setAmount(String(pendingDraft.amount));
+    setDeliveryDays(String(pendingDraft.deliveryDays));
+    sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
+    setPendingDraft(null);
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -59,6 +91,7 @@ export function OfferForm({ requestId, entitlements }: OfferFormProps) {
         throw new Error(result.message || "Teklif gönderilemedi.");
       }
 
+      sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
       router.push(result.redirectTo || `/panel/talepler/${requestId}`);
       router.refresh();
     } catch (submitError) {
@@ -85,14 +118,38 @@ export function OfferForm({ requestId, entitlements }: OfferFormProps) {
           </p>
         )}
         {entitlements.features.ai_offer_assistant && (
-          <p className="mt-2 text-xs text-[#5b3fd4]">
-            AI teklif asistanı planınızda açık.{" "}
-            <a href="/panel/asistan" className="font-semibold underline">
-              Asistanı aç
-            </a>
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-teal-800">
+            <WandSparkles className="h-3.5 w-3.5" />
+            AI teklif asistanı açık.{" "}
+            <Link
+              href={`/panel/asistan?request=${requestId}`}
+              className="font-semibold underline"
+            >
+              Bu talep için taslak üret
+            </Link>
           </p>
         )}
       </div>
+
+      {pendingDraft && (
+        <div className="rounded-[16px] border border-amber-200/70 bg-gradient-to-r from-[#fffbeb] to-[#fef3c7] p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-amber-950">
+            <Sparkles className="h-4 w-4 text-amber-700" />
+            AI taslağı hazır
+          </p>
+          <p className="mt-1 text-xs text-amber-900/70">
+            Önerilen tutar ₺{pendingDraft.amount.toLocaleString("tr-TR")} ·{" "}
+            {pendingDraft.deliveryDays} gün teslim
+          </p>
+          <button
+            type="button"
+            onClick={applyDraft}
+            className="mt-3 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-xs font-semibold text-white"
+          >
+            Taslağı forma uygula
+          </button>
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-2 block text-xs font-medium text-black/40">
@@ -142,12 +199,12 @@ export function OfferForm({ requestId, entitlements }: OfferFormProps) {
       )}
 
       {quotaExceeded && (
-        <div className="rounded-[16px] border border-[#8c72c9]/25 bg-[#f3edff] p-4 text-sm text-[#4f3d72]">
+        <div className="rounded-[16px] border border-amber-200/60 bg-[#fffbeb] p-4 text-sm text-[#78350f]">
           <p className="font-semibold">Aylık ücretsiz teklif hakkınız doldu.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a
               href="/panel/plan"
-              className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white"
+              className="rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-4 py-2 text-xs font-semibold text-white"
             >
               Premium&apos;a geç
             </a>

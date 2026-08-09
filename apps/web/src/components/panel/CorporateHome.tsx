@@ -7,12 +7,20 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { PlanBadge } from "@/components/panel/PlanBadge";
+import { PersonalPlanMismatchBanner } from "@/components/panel/PersonalPlanMismatchBanner";
+import type { PlanTierId } from "@/lib/membership/plans";
+
 type CorporateHomeProps = {
   companyName: string;
+  planTier: PlanTierId;
+  planLabel: string;
   unreadMessages: number;
   openOffersHint?: number;
   /** Feature key: hidden_inventory (CORPORATE plan). */
   hasHiddenInventory?: boolean;
+  /** Kişisel plan firma planından yüksekse uyarı metni. */
+  personalPlanMismatchDetail?: string | null;
 };
 
 const DEMO_MATCHES = [
@@ -41,12 +49,21 @@ const DEMO_MATCHES = [
 
 export function CorporateHome({
   companyName,
+  planTier,
+  planLabel,
   unreadMessages,
   openOffersHint = 0,
   hasHiddenInventory = false,
+  personalPlanMismatchDetail = null,
 }: CorporateHomeProps) {
   return (
     <>
+      {personalPlanMismatchDetail && (
+        <section className="mb-5">
+          <PersonalPlanMismatchBanner detail={personalPlanMismatchDetail} />
+        </section>
+      )}
+
       <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-white px-4 py-4 shadow-sm sm:px-5">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/60">
@@ -56,9 +73,13 @@ export function CorporateHome({
             {companyName} özeti
           </h1>
         </div>
-        <span className="rounded-xl bg-teal-700 px-3 py-2 text-xs font-semibold text-white">
-          Kurumsal
-        </span>
+        <PlanBadge
+          planTier={planTier}
+          planLabel={planLabel}
+          size="md"
+          showStandard
+          linked
+        />
       </header>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -112,8 +133,8 @@ export function CorporateHome({
                 Size uyan talepler
               </h2>
               <p className="mt-2 text-sm text-black/45">
-                Eşleşme motoru bağlanınca gerçek skorlar gelecek. Şimdilik
-                örnek akış.
+                Aşağıdakiler örnek kartlardır. Gerçek eşleşmeler talep
+                yayınlandıkça bildirimlerinize düşer.
               </p>
             </div>
             {hasHiddenInventory ? (
@@ -175,8 +196,8 @@ export function CorporateHome({
             </div>
             <h3 className="mt-3 text-lg font-semibold">Teklif taslakları</h3>
             <p className="mt-2 text-sm leading-6 text-white/55">
-              Kurumsal planda AI asistan açık. Taslak motoru sonraki fazda
-              bağlanacak.
+              Kurumsal planda AI asistan özelliği açıktır. Teklif taslağı aracı
+              yakında kullanıma sunulacak.
             </p>
             <Link
               href="/panel/asistan"

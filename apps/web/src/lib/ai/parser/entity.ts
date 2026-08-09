@@ -1,3 +1,13 @@
+import {
+  APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  BABY_BRANDS,
+  findAutomotiveModel,
+  findBrand,
+  findTechnologyProduct,
+  TECHNOLOGY_BRANDS,
+} from "./brand-catalog";
+
 const CITIES = [
   "İstanbul",
   "Ankara",
@@ -39,6 +49,10 @@ const QUANTITY_CATEGORIES = new Set([
   "printing",
   "machinery",
   "furniture",
+  "appliances",
+  "health",
+  "baby",
+  "home-kitchen",
 ]);
 
 const DELIVERY_CATEGORIES = new Set([
@@ -46,6 +60,10 @@ const DELIVERY_CATEGORIES = new Set([
   "machinery",
   "furniture",
   "technology",
+  "appliances",
+  "health",
+  "baby",
+  "home-kitchen",
 ]);
 
 export function detectQuantity(text: string, categoryId: string) {
@@ -127,41 +145,14 @@ export function detectAttributes(text: string, categoryId: string) {
   }
 
   if (categoryId === "automotive") {
-    const brands = [
-      "Mercedes",
-      "BMW",
-      "Audi",
-      "Renault",
-      "Ford",
-      "Fiat",
-      "Toyota",
-      "Honda",
-      "Volkswagen",
-      "Opel",
-      "Hyundai",
-      "Peugeot",
-      "Skoda",
-      "Volvo",
-    ];
-    const brand = brands.find((item) =>
-      normalized.includes(item.toLocaleLowerCase("tr-TR")),
-    );
+    const brand = findBrand(text, AUTOMOTIVE_BRANDS);
     if (brand) attributes.brand = brand;
 
     const yearMatch = text.match(/\b(19|20)\d{2}\b/);
     if (yearMatch) attributes.modelYear = Number(yearMatch[0]);
 
-    const modelMatch = text.match(
-      /\b(C180|C200|C220|E200|E220|A180|A200|320i|520i|A3|A4|Clio|Megane|Focus|Egea|Corolla|Civic|Golf)\b/i,
-    );
-    const kasaMatch = text.match(
-      /\b([cesa])\s*[- ]?\s*(kasa|sınıfı|sinifi|class|serisi)\b/i,
-    );
-    if (modelMatch) {
-      attributes.model = modelMatch[0].toUpperCase();
-    } else if (kasaMatch) {
-      attributes.model = `${kasaMatch[1].toUpperCase()} kasa`;
-    }
+    const model = findAutomotiveModel(text, brand);
+    if (model) attributes.model = model;
 
     const partPhrases = [
       "yedek parça",
@@ -343,6 +334,21 @@ export function detectAttributes(text: string, categoryId: string) {
       "donanım",
       "donanim",
       "notebook",
+      "telefon",
+      "tablet",
+      "iphone",
+      "ipad",
+      "macbook",
+      "airpods",
+      "airpod",
+      "android",
+      "galaxy",
+      "galaksi",
+      "redmi",
+      "poco",
+      "playstation",
+      "ps5",
+      "ps4",
     ];
     const serviceSignals = ["bakım", "bakim", "destek", "hosting bakımı"];
     const softwareSignals = [
@@ -356,10 +362,35 @@ export function detectAttributes(text: string, categoryId: string) {
       "entegrasyon",
     ];
 
-    if (hardwareSignals.some((item) => normalized.includes(item))) {
+    const techProduct = findTechnologyProduct(text);
+    const techBrand =
+      techProduct?.brand || findBrand(text, TECHNOLOGY_BRANDS);
+
+    if (techProduct) {
+      attributes.needType = "hardware";
+      attributes.solutionType = techProduct.canonical;
+      attributes.brand = techProduct.brand;
+    } else if (
+      hardwareSignals.some((item) => normalized.includes(item)) ||
+      techBrand
+    ) {
       attributes.needType = "hardware";
       const hit = hardwareSignals.find((item) => normalized.includes(item));
-      if (hit) attributes.solutionType = hit;
+      if (
+        techBrand === "Apple" &&
+        (hit === "iphone" || normalized.includes("iphone"))
+      ) {
+        attributes.solutionType = "iPhone";
+        attributes.brand = "Apple";
+      } else if (techBrand && hit) {
+        attributes.solutionType = `${techBrand} ${hit}`;
+        attributes.brand = techBrand;
+      } else if (techBrand) {
+        attributes.solutionType = techBrand;
+        attributes.brand = techBrand;
+      } else if (hit) {
+        attributes.solutionType = hit === "iphone" ? "iPhone" : hit;
+      }
     } else if (
       serviceSignals.some((item) => normalized.includes(item)) &&
       !softwareSignals.some((item) => normalized.includes(item))
@@ -368,6 +399,28 @@ export function detectAttributes(text: string, categoryId: string) {
       attributes.solutionType = "Bakım ve destek";
     } else {
       attributes.needType = "software";
+    }
+
+    // Device condition / price preferences from casual speech (after normalize)
+    if (attributes.needType === "hardware") {
+      const prefs: string[] = [];
+      if (
+        normalized.includes("temiz durumda") ||
+        normalized.includes("temiz") ||
+        normalized.includes("iyi durumda")
+      ) {
+        prefs.push("Temiz / iyi durumda");
+      }
+      if (
+        normalized.includes("uygun fiyat") ||
+        normalized.includes("uygun fiyatlı") ||
+        normalized.includes("ucuz")
+      ) {
+        prefs.push("Uygun fiyatlı tedarik");
+      }
+      if (prefs.length && !attributes.specs) {
+        attributes.specs = prefs.join(", ");
+      }
     }
   }
 
@@ -473,6 +526,197 @@ export function detectAttributes(text: string, categoryId: string) {
       attributes.assembly = "Dahil olsun";
     } else if (normalized.includes("montaj hariç")) {
       attributes.assembly = "Hariç";
+    }
+  }
+
+  if (categoryId === "appliances") {
+    if (normalized.includes("buzdolab") || normalized.includes("buzdolabı")) {
+      attributes.applianceType = "Buzdolabı";
+    } else if (
+      normalized.includes("çamaşır makinesi") ||
+      normalized.includes("camasir makinesi")
+    ) {
+      attributes.applianceType = "Çamaşır makinesi";
+    } else if (
+      normalized.includes("bulaşık makinesi") ||
+      normalized.includes("bulasik makinesi")
+    ) {
+      attributes.applianceType = "Bulaşık makinesi";
+    } else if (normalized.includes("kurutma")) {
+      attributes.applianceType = "Kurutma makinesi";
+    } else if (normalized.includes("klima")) {
+      attributes.applianceType = "Klima";
+    } else if (normalized.includes("fırın") || normalized.includes("firin")) {
+      attributes.applianceType = "Fırın";
+    } else if (normalized.includes("ocak")) {
+      attributes.applianceType = "Ocak";
+    } else if (normalized.includes("davlumbaz")) {
+      attributes.applianceType = "Davlumbaz";
+    } else if (
+      normalized.includes("mikrodalga") ||
+      normalized.includes("mikro dalga")
+    ) {
+      attributes.applianceType = "Mikrodalga";
+    } else if (normalized.includes("derin dondurucu")) {
+      attributes.applianceType = "Derin dondurucu";
+    }
+
+    if (normalized.includes("otel") || normalized.includes("pansiyon")) {
+      attributes.usageArea = "Otel / pansiyon";
+    } else if (normalized.includes("restoran") || normalized.includes("kafe")) {
+      attributes.usageArea = "Restoran / kafe";
+    } else if (normalized.includes("ofis")) {
+      attributes.usageArea = "Ofis";
+    } else if (normalized.includes("ankastre") || normalized.includes("ev")) {
+      attributes.usageArea = attributes.usageArea || "Ev";
+    }
+
+    if (normalized.includes("ankastre")) {
+      attributes.features = attributes.features
+        ? `${attributes.features}, ankastre`
+        : "ankastre";
+    }
+    if (normalized.includes("no-frost") || normalized.includes("nofrost")) {
+      attributes.features = attributes.features
+        ? `${attributes.features}, no-frost`
+        : "no-frost";
+    }
+
+    if (normalized.includes("ikinci el") || normalized.includes("2. el")) {
+      attributes.condition = "İkinci el";
+    } else if (normalized.includes("sıfır") || normalized.includes("sifir")) {
+      attributes.condition = "Sıfır";
+    }
+
+    if (normalized.includes("kurulum") || normalized.includes("montaj")) {
+      attributes.installation = "Dahil olsun";
+    }
+
+    const applianceBrand = findBrand(text, APPLIANCE_BRANDS);
+    if (applianceBrand) {
+      attributes.brandPreference = applianceBrand;
+      attributes.brand = applianceBrand;
+    }
+  }
+
+  if (categoryId === "health") {
+    if (normalized.includes("tekerlekli sandalye")) {
+      attributes.healthProductType = "Hasta bakım ekipmanı";
+      attributes.productName = "Tekerlekli sandalye";
+    } else if (
+      normalized.includes("hasta yatağı") ||
+      normalized.includes("hasta yatagi")
+    ) {
+      attributes.healthProductType = "Hasta bakım ekipmanı";
+      attributes.productName = "Hasta yatağı";
+    } else if (
+      normalized.includes("tansiyon") ||
+      normalized.includes("stetoskop") ||
+      normalized.includes("oksijen")
+    ) {
+      attributes.healthProductType = "Medikal cihaz";
+    } else if (
+      normalized.includes("maske") ||
+      normalized.includes("eldiven") ||
+      normalized.includes("dezenfektan")
+    ) {
+      attributes.healthProductType = "Sarf malzeme";
+    } else if (normalized.includes("diş") || normalized.includes("dis ")) {
+      attributes.healthProductType = "Diş / laboratuvar";
+    } else if (normalized.includes("medikal") || normalized.includes("tıbbi")) {
+      attributes.healthProductType = "Medikal cihaz";
+    }
+
+    if (normalized.includes("hastane")) attributes.usageArea = "Hastane";
+    else if (normalized.includes("klinik")) attributes.usageArea = "Klinik";
+    else if (normalized.includes("eczane")) attributes.usageArea = "Eczane";
+    else if (normalized.includes("evde") || normalized.includes("ev "))
+      attributes.usageArea = "Evde bakım";
+  }
+
+  if (categoryId === "baby") {
+    if (
+      normalized.includes("bebek arabası") ||
+      normalized.includes("bebek arabasi") ||
+      normalized.includes("puset")
+    ) {
+      attributes.babyProductType = "Bebek arabası / puset";
+    } else if (normalized.includes("mama sandalyesi")) {
+      attributes.babyProductType = "Mama sandalyesi";
+    } else if (
+      normalized.includes("beşik") ||
+      normalized.includes("besik") ||
+      normalized.includes("park yatak")
+    ) {
+      attributes.babyProductType = "Beşik / park yatak";
+    } else if (normalized.includes("bebek bezi")) {
+      attributes.babyProductType = "Bebek bezi / bakım";
+    } else if (
+      normalized.includes("mama") ||
+      normalized.includes("biberon") ||
+      normalized.includes("emzik")
+    ) {
+      attributes.babyProductType = "Beslenme ürünleri";
+    }
+
+    if (normalized.includes("yenidoğan") || normalized.includes("yenidogan")) {
+      attributes.ageRange = "0–6 ay";
+    }
+
+    const babyBrand = findBrand(text, BABY_BRANDS);
+    if (babyBrand) attributes.brandPreference = babyBrand;
+  }
+
+  if (categoryId === "home-kitchen") {
+    if (normalized.includes("kahve seti")) {
+      attributes.kitchenProductType = "Kahve seti";
+    } else if (
+      normalized.includes("çay seti") ||
+      normalized.includes("cay seti")
+    ) {
+      attributes.kitchenProductType = "Çay seti";
+    } else if (
+      normalized.includes("yemek takımı") ||
+      normalized.includes("yemek takimi") ||
+      normalized.includes("tabak") ||
+      normalized.includes("çanak") ||
+      normalized.includes("canak")
+    ) {
+      attributes.kitchenProductType = "Yemek / tabak takımı";
+    } else if (
+      normalized.includes("çatal") ||
+      normalized.includes("catal") ||
+      normalized.includes("bıçak") ||
+      normalized.includes("bicak") ||
+      normalized.includes("kaşık") ||
+      normalized.includes("kasik")
+    ) {
+      attributes.kitchenProductType = "Çatal-bıçak takımı";
+    } else if (normalized.includes("bardak") || normalized.includes("kadeh")) {
+      attributes.kitchenProductType = "Bardak / kadeh";
+    } else if (normalized.includes("tepsi") || normalized.includes("servis")) {
+      attributes.kitchenProductType = "Servis / tepsi";
+    }
+
+    if (normalized.includes("porselen")) attributes.material = "Porselen";
+    else if (normalized.includes("cam")) attributes.material = "Cam";
+    else if (normalized.includes("seramik")) attributes.material = "Seramik";
+    else if (normalized.includes("çelik") || normalized.includes("celik"))
+      attributes.material = "Çelik";
+
+    if (normalized.includes("restoran") || normalized.includes("kafe")) {
+      attributes.usageArea = "Kafe / restoran";
+    } else if (normalized.includes("otel")) {
+      attributes.usageArea = "Otel";
+    } else if (normalized.includes("hediye") || normalized.includes("kurumsal")) {
+      attributes.usageArea = "Hediye / kurumsal";
+    } else {
+      attributes.usageArea = attributes.usageArea || "Ev";
+    }
+
+    const pieceMatch = normalized.match(/(\d+)\s*(kişilik|kisilik|parça|parca)/i);
+    if (pieceMatch) {
+      attributes.pieceCount = `${pieceMatch[1]} ${pieceMatch[2]}`;
     }
   }
 

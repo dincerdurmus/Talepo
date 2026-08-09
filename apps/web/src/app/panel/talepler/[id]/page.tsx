@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { OfferForm } from "@/components/panel/OfferForm";
+import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
@@ -93,7 +94,7 @@ export default async function ExploreRequestDetailPage({
   const request = await prisma.request.findFirst({
     where: { id: preview.id },
     include: {
-      category: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
       createdBy: { select: { name: true, city: true } },
       fieldValues: {
         orderBy: { field: { sortOrder: "asc" } },
@@ -106,6 +107,7 @@ export default async function ExploreRequestDetailPage({
   if (!request) notFound();
 
   const showOfferPrompt = teklif === "1";
+  const categorySlug = request.category.slug;
 
   return (
     <>
@@ -178,7 +180,10 @@ export default async function ExploreRequestDetailPage({
                       {value.field.label}
                     </p>
                     <p className="mt-2 font-semibold">
-                      {displayFieldValue(value)}
+                      {displayRequestFieldValue({
+                        ...value,
+                        categoryId: categorySlug,
+                      })}
                     </p>
                   </div>
                 ))}
@@ -348,21 +353,6 @@ function SummaryRow({
       <span className="text-sm font-semibold">{value}</span>
     </div>
   );
-}
-
-function displayFieldValue(value: {
-  textValue: string | null;
-  numberValue: unknown;
-  booleanValue: boolean | null;
-  dateValue: Date | null;
-  jsonValue: unknown;
-}) {
-  if (value.textValue) return value.textValue;
-  if (value.numberValue !== null) return String(value.numberValue);
-  if (value.booleanValue !== null) return value.booleanValue ? "Evet" : "Hayır";
-  if (value.dateValue) return formatDate(value.dateValue);
-  if (value.jsonValue) return JSON.stringify(value.jsonValue);
-  return "—";
 }
 
 function formatDateTime(date: Date) {

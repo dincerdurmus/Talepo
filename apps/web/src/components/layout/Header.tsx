@@ -78,106 +78,133 @@ export function Header() {
           {showAuthSkeleton ? (
             <div className="hidden h-10 w-32 animate-pulse rounded-full bg-black/5 sm:block" />
           ) : session?.user ? (
-            <div ref={profileMenuRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setProfileMenuOpen((current) => !current)}
-                aria-expanded={profileMenuOpen}
-                aria-haspopup="menu"
-                className="flex items-center gap-2 rounded-full p-1.5 pr-3 transition hover:bg-black/5"
+            <>
+              <Link
+                href="/panel"
+                className="rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-[#171717] transition hover:border-black/20 hover:bg-black/[0.02]"
               >
-                {session.user.image ? (
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name ?? "Kullanıcı"}
-                    className="h-9 w-9 rounded-full border border-black/10 object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171717] text-sm font-medium text-white">
-                    {userInitial}
+                Özet
+              </Link>
+
+              <div ref={profileMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProfileMenuOpen((current) => !current)}
+                  aria-expanded={profileMenuOpen}
+                  aria-haspopup="menu"
+                  className="flex items-center gap-2 rounded-full p-1.5 pr-3 transition hover:bg-black/5"
+                >
+                  {session.user.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name ?? "Kullanıcı"}
+                      className="h-9 w-9 rounded-full border border-black/10 object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#171717] text-sm font-medium text-white">
+                      {userInitial}
+                    </span>
+                  )}
+
+                  <span className="hidden max-w-36 truncate text-sm font-medium text-black/70 sm:block">
+                    {session.user.name ?? "Kullanıcı"}
                   </span>
+
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    className={`hidden h-4 w-4 text-black/40 transition sm:block ${
+                      profileMenuOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    <path
+                      d="m6 8 4 4 4-4"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                {profileMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-black/10 bg-white p-2 shadow-[0_20px_60px_rgba(0,0,0,0.14)]"
+                  >
+                    <div className="border-b border-black/5 px-3 py-3">
+                      <p className="truncate text-sm font-semibold text-[#171717]">
+                        {session.user.name ?? "Kullanıcı"}
+                      </p>
+
+                      <p className="mt-1 truncate text-xs text-black/45">
+                        {session.user.email ?? ""}
+                      </p>
+                    </div>
+
+                    <div className="py-2">
+                      <Link
+                        href="/panel"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#171717] transition hover:bg-black/[0.04]"
+                      >
+                        Özet
+                      </Link>
+
+                      <Link
+                        href="/panel/taleplerim"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
+                      >
+                        Taleplerim
+                      </Link>
+
+                      <Link
+                        href="/panel/talepler"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
+                      >
+                        Talepleri keşfet
+                      </Link>
+
+                      <Link
+                        href="/panel/teklifler"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
+                      >
+                        Tekliflerim
+                      </Link>
+
+                      <Link
+                        href="/panel/profil"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
+                      >
+                        Profilim
+                      </Link>
+                    </div>
+
+                    <div className="border-t border-black/5 pt-2">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => signOut({ callbackUrl: "/" })}
+                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+                      >
+                        Çıkış yap
+                      </button>
+                    </div>
+                  </div>
                 )}
-
-                <span className="hidden max-w-36 truncate text-sm font-medium text-black/70 sm:block">
-                  {session.user.name ?? "Kullanıcı"}
-                </span>
-
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className={`hidden h-4 w-4 text-black/40 transition sm:block ${
-                    profileMenuOpen ? "rotate-180" : ""
-                  }`}
-                >
-                  <path
-                    d="m6 8 4 4 4-4"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
-              {profileMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-black/10 bg-white p-2 shadow-[0_20px_60px_rgba(0,0,0,0.14)]"
-                >
-                  <div className="border-b border-black/5 px-3 py-3">
-                    <p className="truncate text-sm font-semibold text-[#171717]">
-                      {session.user.name ?? "Kullanıcı"}
-                    </p>
-
-                    <p className="mt-1 truncate text-xs text-black/45">
-                      {session.user.email ?? ""}
-                    </p>
-                  </div>
-
-                  <div className="py-2">
-                    <Link
-                      href="/panel/taleplerim"
-                      role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
-                    >
-                      Taleplerim
-                    </Link>
-
-                    <Link
-                      href="/panel/talepler"
-                      role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
-                    >
-                      Tekliflerim
-                    </Link>
-
-                    <Link
-                      href="/panel/profil"
-                      role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-black/65 transition hover:bg-black/[0.04] hover:text-black"
-                    >
-                      Profilim
-                    </Link>
-                  </div>
-
-                  <div className="border-t border-black/5 pt-2">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
-                    >
-                      Çıkış yap
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            </>
           ) : (
             <>
               <Link

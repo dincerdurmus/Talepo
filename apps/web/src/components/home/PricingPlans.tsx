@@ -32,8 +32,9 @@ export function PricingPlans() {
 
           <p className="mt-5 text-base leading-7 text-black/45 sm:text-lg">
             Alıcılar talep oluşturmak için ödeme yapmaz. Firmalar gerçek
-            alıcılara daha erken ulaşmak, daha hızlı teklif vermek ve AI
-            araçlarından yararlanmak için plan yükseltir.
+            alıcılara daha erken ulaşmak için plan yükseltir. Kişisel Premium
+            tek kullanıcı içindir; ekip paylaşımı Kurumsal firma planı ile
+            açılır.
           </p>
         </div>
 
@@ -41,16 +42,16 @@ export function PricingPlans() {
           {plans.map((plan) => {
             const visual = PLAN_VISUALS[plan.id];
             const Icon = visual.icon;
-            const isDark = visual.dark;
 
             return (
               <article
                 key={plan.id}
-                className={`relative overflow-hidden rounded-[30px] border ${visual.border} ${
+                className={`relative overflow-hidden rounded-[30px] border ${visual.border} ${visual.surface} ${
                   visual.highlight
-                    ? "shadow-[0_28px_90px_rgba(124,92,255,0.18)] ring-1 ring-[#7c5cff]/20"
+                    ? (visual.highlightClass ??
+                      "shadow-[0_18px_60px_rgba(0,0,0,0.05)]")
                     : "shadow-[0_18px_60px_rgba(0,0,0,0.05)]"
-                } ${isDark ? "bg-[#151515] text-white" : "bg-white text-[#151515]"}`}
+                }`}
               >
                 <div
                   className={`pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-[50px] ${visual.glow}`}
@@ -59,9 +60,7 @@ export function PricingPlans() {
                 <div className="relative p-6 sm:p-7">
                   <div className="flex items-start justify-between gap-3">
                     <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.accent} ${
-                        isDark ? "text-white shadow-lg" : "text-[#151515]"
-                      }`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.accent} ${visual.iconClass}`}
                     >
                       <Icon className="h-5 w-5" />
                     </div>
@@ -77,11 +76,7 @@ export function PricingPlans() {
                     {plan.label}
                   </h3>
 
-                  <p
-                    className={`mt-3 min-h-[72px] text-sm leading-6 ${
-                      isDark ? "text-white/55" : "text-black/45"
-                    }`}
-                  >
+                  <p className="mt-3 min-h-[72px] text-sm leading-6 text-black/45">
                     {plan.description}
                   </p>
 
@@ -91,13 +86,7 @@ export function PricingPlans() {
                         <span className="text-4xl font-semibold tracking-[-0.05em]">
                           ₺{plan.priceTry.toLocaleString("tr-TR")}
                         </span>
-                        <span
-                          className={`pb-1 text-sm ${
-                            isDark ? "text-white/40" : "text-black/35"
-                          }`}
-                        >
-                          / ay
-                        </span>
+                        <span className="pb-1 text-sm text-black/35">/ ay</span>
                       </div>
                     ) : plan.id === "CORPORATE" ? (
                       <p className="text-2xl font-semibold tracking-tight">
@@ -114,20 +103,10 @@ export function PricingPlans() {
                     {PLAN_FEATURES[plan.id].map((feature) => (
                       <li
                         key={feature}
-                        className={`flex items-start gap-3 text-sm leading-6 ${
-                          isDark ? "text-white/70" : "text-black/55"
-                        }`}
+                        className="flex items-start gap-3 text-sm leading-6 text-black/55"
                       >
-                        <span
-                          className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                            isDark ? "bg-white/10" : "bg-[#e4f4df]"
-                          }`}
-                        >
-                          <Check
-                            className={`h-3 w-3 ${
-                              isDark ? "text-[#c4f3bb]" : "text-[#356d3a]"
-                            }`}
-                          />
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f4df]">
+                          <Check className="h-3 w-3 text-[#356d3a]" />
                         </span>
                         {feature}
                       </li>
@@ -135,20 +114,35 @@ export function PricingPlans() {
                   </ul>
 
                   <Link
-                    href={plan.id === "CORPORATE" ? "/kayit" : "/panel/plan"}
+                    href={
+                      plan.id === "STANDARD" || plan.id === "CORPORATE"
+                        ? "/kayit"
+                        : "/panel/plan"
+                    }
                     className={`mt-8 flex items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold transition ${visual.button}`}
                   >
                     {plan.id === "CORPORATE"
-                      ? "İletişime geç"
+                      ? "Kurumsal için kayıt olun"
                       : plan.id === "STANDARD"
                         ? "Ücretsiz başla"
-                        : "Planı seç"}
+                        : "Planları inceleyin"}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               </article>
             );
           })}
+        </div>
+
+        <div className="mt-8 rounded-[28px] border border-teal-900/10 bg-[#f0fdfa] px-6 py-6 sm:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/70">
+            Ekip vs kişisel
+          </p>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-teal-900/75">
+            Kişisel hesabınıza aldığınız Premium, firma ekibine yansımaz.
+            Ekip üyelerinin aynı hakları kullanması için firma planı
+            (Profesyonel veya Kurumsal) firma hesabına tanımlanmalıdır.
+          </p>
         </div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
@@ -161,7 +155,8 @@ export function PricingPlans() {
             </h3>
             <p className="mt-3 text-sm leading-6 text-[#9a3412]/75">
               İsterseniz talebinizi öne çıkarın veya &quot;Acil alıcıyım&quot;
-              seçeneğiyle firmaların dikkatini çekin.
+              seçeneğiyle firmaların dikkatini çekin. Ödeme bağlandığında
+              aktifleşecek.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {Object.values(FEATURE_BOOST_OPTIONS).map((boost) => (
@@ -173,6 +168,9 @@ export function PricingPlans() {
                 </span>
               ))}
             </div>
+            <p className="mt-3 text-[11px] font-medium text-[#b45309]/80">
+              Fiyatlar bilgilendirme amaçlı · ödeme yakında
+            </p>
           </div>
 
           <div className="rounded-[28px] border border-[#6366f1]/15 bg-gradient-to-br from-[#eef2ff] to-[#e0e7ff] p-6 sm:p-7">
@@ -184,7 +182,7 @@ export function PricingPlans() {
             </h3>
             <p className="mt-3 text-sm leading-6 text-[#3730a3]/75">
               Premium almak istemeyen işletmeler aylık 5 ücretsiz teklif
-              hakkını doldurduğunda ek paket satın alabilir.
+              hakkını doldurduğunda ek paket satın alabilecek.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {Object.values(OFFER_CREDIT_PACKS).map((pack) => (
@@ -196,6 +194,9 @@ export function PricingPlans() {
                 </span>
               ))}
             </div>
+            <p className="mt-3 text-[11px] font-medium text-[#4338ca]/80">
+              Fiyatlar bilgilendirme amaçlı · ödeme yakında
+            </p>
           </div>
         </div>
 

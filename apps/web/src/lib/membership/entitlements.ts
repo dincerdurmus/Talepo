@@ -1,4 +1,7 @@
-import type { PlanTierId } from "./plans";
+import {
+  ENABLE_STANDARD_REQUEST_ACCESS_DELAY,
+  type PlanTierId,
+} from "./plans";
 
 /**
  * Canonical feature keys. Do not scatter string literals —
@@ -39,12 +42,18 @@ const ALL_FALSE: Record<FeatureKey, boolean> = {
  * Plan → feature registry.
  * Features listed here may not have product surfaces yet (FAZ 1);
  * the registry still defines who is entitled when they ship.
+ *
+ * Test: ENABLE_STANDARD_REQUEST_ACCESS_DELAY=false iken Standart da
+ * instant_request_access alır (keşif filtresi açık kalır).
  */
 const PLAN_FEATURE_KEYS: Record<PlanTierId, readonly FeatureKey[]> = {
   STANDARD: [
     "submit_offer",
     // Payment-backed later — keep true so create-request boost still works.
     "feature_request_boost",
+    ...(!ENABLE_STANDARD_REQUEST_ACCESS_DELAY
+      ? (["instant_request_access"] as const)
+      : []),
   ],
   PREMIUM: [
     "submit_offer",

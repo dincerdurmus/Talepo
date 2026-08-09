@@ -1,4 +1,6 @@
+import { resolveFieldOptionLabel } from "@/lib/field-display";
 import type { DynamicField } from "@/lib/request-category-engine";
+import { normalizeCasualTurkish } from "@/lib/ai/parser/normalize-casual-tr";
 
 type CommonDraft = {
   title?: string;
@@ -35,6 +37,14 @@ const OFFER_INSTRUCTIONS: Record<string, string> = {
     "Teklifte toplam fiyat, proje süresi, kapsam detayı ve destek koşulları ayrı ayrı belirtilmelidir.",
   furniture:
     "Teklifte birim fiyat, toplam tutar, teslim süresi, montaj ve garanti koşulları ayrı ayrı belirtilmelidir.",
+  appliances:
+    "Teklifte birim fiyat, toplam tutar, enerji sınıfı, kurulum/montaj ve garanti koşulları ayrı ayrı belirtilmelidir.",
+  health:
+    "Teklifte birim fiyat, belgelendirme (CE/ISO), teslim süresi ve garanti/servis koşulları ayrı ayrı belirtilmelidir.",
+  baby:
+    "Teklifte birim fiyat, yaş uygunluğu, güvenlik standartları, teslim süresi ve garanti koşulları ayrı ayrı belirtilmelidir.",
+  "home-kitchen":
+    "Teklifte birim fiyat, parça/kişilik bilgisi, malzeme, teslim süresi ve varsa ambalaj koşulları ayrı ayrı belirtilmelidir.",
   default:
     "Teklifte toplam fiyat, teslim süresi, ödeme koşulları ve varsa garanti bilgisi ayrı ayrı belirtilmelidir.",
 };
@@ -54,23 +64,22 @@ const KNOWN_CITIES = [
 
 export function composeRequestTitle(input: ComposeRequestTextInput): string {
   const values = mergeFieldValues(input);
+  const cleanRaw = normalizeCasualTurkish(input.rawText);
 
   if (input.categoryId === "real-estate") {
-    return composeRealEstateTitle(input.rawText, values, input.city);
+    return composeRealEstateShortTitle(cleanRaw, values, input.city);
   }
 
   if (input.categoryId === "automotive") {
     const needType = values.needType || "vehicle";
     if (needType === "part" || needType === "tire") {
-      const parts = [
-        values.modelYear,
-        values.brand,
-        values.model,
-        values.part ? `için ${values.part}` : "",
-      ].filter(Boolean);
-      if (parts.length >= 2) {
-        return `${parts.join(" ")} talebi`.replace(/\s+/g, " ").trim();
-      }
+      const subject = [values.modelYear, values.brand, values.model]
+        .filter(Boolean)
+        .join(" ");
+      const part = values.part?.trim();
+      if (subject && part) return `${subject} ${part}`.replace(/\s+/g, " ").trim();
+      if (subject) return subject;
+      if (part) return capitalizeTurkish(part);
     } else if (needType === "service") {
       const parts = [
         values.brand,
@@ -78,36 +87,97 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
         values.serviceType || "servis",
       ].filter(Boolean);
       if (parts.length >= 2) {
-        return `${parts.join(" ")} talebi`.replace(/\s+/g, " ").trim();
+        return parts.join(" ").replace(/\s+/g, " ").trim();
       }
     } else {
       const parts = [values.modelYear, values.brand, values.model].filter(
         Boolean,
       );
       if (parts.length >= 2) {
-        return `${parts.join(" ")} talebi`.replace(/\s+/g, " ").trim();
+        return parts.join(" ").replace(/\s+/g, " ").trim();
+      }
+      if (parts.length === 1) {
+        return String(parts[0]);
       }
     }
   }
 
   if (input.categoryId === "furniture") {
-    const qty = input.commonDraft?.quantity?.trim() || values.quantity?.trim();
-    const type = values.furnitureType?.trim();
-    const city = normalizeCityDisplay(
-      input.city?.trim() || input.commonDraft?.city?.trim(),
-    );
+    const qty = resolveTitleQuantity(input, values);
+    const type =
+      values.furnitureType?.trim() || inferFurnitureTypeLabel(cleanRaw);
     if (type) {
-      return [qty, type, city ? `(${city})` : ""].filter(Boolean).join(" ");
+      return [qty, type].filter(Boolean).join(" ");
+    }
+  }
+
+  if (input.categoryId === "technology") {
+    const subject =
+      values.solutionType?.trim() ||
+      values.brand?.trim() ||
+      (values.needType === "hardware"
+        ? "Donanım"
+        : values.needType === "service"
+          ? "IT destek"
+          : "Yazılım");
+    // Never fall back to slang raw text when we already have a structured product.
+    return subject;
+  }
+
+  if (input.categoryId === "machinery") {
+    const subject =
+      values.machineType?.trim() ||
+      values.part?.trim() ||
+      (values.needType === "service" ? "Makine servisi" : "Makine");
+    return capitalizeTurkish(subject);
+  }
+
+  if (input.categoryId === "printing") {
+    const product =
+      inferPrintingProductLabel(cleanRaw) ||
+      values.printType?.trim() ||
+      "Matbaa / baskı";
+    const subject = [product, values.material?.trim()]
+      .filter(Boolean)
+      .join(" — ");
+    const qty = resolveTitleQuantity(input, values);
+    return [qty, subject].filter(Boolean).join(" ");
+  }
+
+  if (
+    input.categoryId === "appliances" ||
+    input.categoryId === "baby" ||
+    input.categoryId === "home-kitchen" ||
+    input.categoryId === "health"
+  ) {
+    const qty = resolveTitleQuantity(input, values);
+    const type =
+      values.applianceType?.trim() ||
+      values.babyProductType?.trim() ||
+      values.kitchenProductType?.trim() ||
+      values.productName?.trim() ||
+      values.healthProductType?.trim();
+    const brand =
+      values.brand?.trim() ||
+      values.brandPreference?.trim();
+    if (type || brand) {
+      return [qty, brand, type].filter(Boolean).join(" ");
     }
   }
 
   const firstDetail = input.fields
-    ?.map((field) => values[field.key]?.trim())
+    ?.map((field) => {
+      if (field.key === "needType") return "";
+      return values[field.key]?.trim();
+    })
     .find(Boolean);
 
   if (firstDetail && input.categoryId !== "real-estate") {
-    return `${firstDetail} talebi`;
+    return capitalizeTurkish(firstDetail);
   }
+
+  const fromRaw = deriveShortTitleFromRawText(input.rawText);
+  if (fromRaw) return fromRaw;
 
   return "Yeni talep";
 }
@@ -116,14 +186,27 @@ export function composeProfessionalDescription(
   input: ComposeRequestTextInput,
 ): string {
   const values = mergeFieldValues(input);
-  const opening = composeOpeningSentence(input, values);
-  const detailLines = collectDetailLines(input, values);
-  const instruction =
-    OFFER_INSTRUCTIONS[input.categoryId] ?? OFFER_INSTRUCTIONS.default;
+  const normalizedInput: ComposeRequestTextInput = {
+    ...input,
+    rawText: normalizeCasualTurkish(input.rawText),
+  };
+  const opening = composeOpeningSentence(normalizedInput, values);
+  const detailLines = collectDetailLines(normalizedInput, values);
+  const instruction = resolveOfferInstruction(input.categoryId, values);
 
   return [opening, detailLines.length ? detailLines.join("\n") : "", instruction]
     .filter(Boolean)
     .join("\n\n");
+}
+
+function resolveOfferInstruction(
+  categoryId: string,
+  values: Record<string, string>,
+): string {
+  if (categoryId === "technology" && values.needType === "hardware") {
+    return "Teklifte birim/toplam fiyat, teslim süresi, garanti ve cihaz durumu ayrı ayrı belirtilmelidir.";
+  }
+  return OFFER_INSTRUCTIONS[categoryId] ?? OFFER_INSTRUCTIONS.default;
 }
 
 function composeOpeningSentence(
@@ -155,7 +238,55 @@ function composeOpeningSentence(
     return composePrintingOpening(input, values);
   }
 
+  if (
+    input.categoryId === "appliances" ||
+    input.categoryId === "health" ||
+    input.categoryId === "baby" ||
+    input.categoryId === "home-kitchen"
+  ) {
+    return composeProductCategoryOpening(input, values);
+  }
+
   return composeGenericOpening(input, values);
+}
+
+function composeProductCategoryOpening(
+  input: ComposeRequestTextInput,
+  values: Record<string, string>,
+): string {
+  const type =
+    values.applianceType?.trim() ||
+    values.babyProductType?.trim() ||
+    values.kitchenProductType?.trim() ||
+    values.productName?.trim() ||
+    values.healthProductType?.trim() ||
+    "ürün";
+  const brand =
+    values.brand?.trim() || values.brandPreference?.trim() || "";
+  const city = resolveCity(input, values);
+  const qtyLabel = formatQuantityPhrase(input, values);
+  const qtyPhrase = qtyLabel ? `${qtyLabel} ` : "";
+  const cityPhrase = city ? `${city} içinde ` : "";
+  const brandPhrase = brand ? `${brand} ` : "";
+  const featureBits: string[] = [];
+  const featureSource = [
+    values.features,
+    values.specs,
+    input.rawText,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+  if (featureSource.includes("no-frost") || featureSource.includes("nofrost")) {
+    featureBits.push("no-frost");
+  }
+  const featurePhrase = featureBits.length
+    ? ` (${featureBits.join(", ")})`
+    : "";
+
+  return capitalizeTurkish(
+    `${cityPhrase}${qtyPhrase}${brandPhrase}${lowerTurkish(type)}${featurePhrase} tedarik etmek istiyoruz.`,
+  );
 }
 
 function composeFurnitureOpening(
@@ -239,13 +370,42 @@ function composeTechnologyOpening(
         ? "bakım ve destek"
         : "yazılım çözümü");
 
+  const preferenceClause = composeHardwarePreferenceClause(values);
+  const subjectLabel = formatTechnologySubject(solution);
+
   if (needType === "hardware") {
-    return `${capitalizeTurkish(solution)} tedarik talebi oluşturuyoruz${citySuffix}.`;
+    return `${subjectLabel} tedarik talebi oluşturuyoruz${citySuffix}.${preferenceClause}`;
   }
   if (needType === "service") {
-    return `${capitalizeTurkish(solution)} hizmeti talep ediyoruz${citySuffix}.`;
+    return `${subjectLabel} hizmeti talep ediyoruz${citySuffix}.`;
   }
-  return `${capitalizeTurkish(solution)} geliştirme / tedarik talebi oluşturuyoruz${citySuffix}.`;
+  return `${subjectLabel} geliştirme / tedarik talebi oluşturuyoruz${citySuffix}.`;
+}
+
+/** Keep Apple-style casing (iPhone / iPad); otherwise Turkish-capitalize. */
+function formatTechnologySubject(solution: string): string {
+  if (/^i[A-ZÇĞİÖŞÜ]/.test(solution)) return solution;
+  return capitalizeTurkish(solution);
+}
+
+/** Corporate preference sentence from structured specs (never echoes slang). */
+function composeHardwarePreferenceClause(
+  values: Record<string, string>,
+): string {
+  const specs = values.specs?.trim();
+  if (!specs) return "";
+
+  const parts: string[] = [];
+  const lower = specs.toLocaleLowerCase("tr-TR");
+  if (lower.includes("temiz") || lower.includes("iyi durumda")) {
+    parts.push("temiz / iyi durumda");
+  }
+  if (lower.includes("uygun fiyat")) {
+    parts.push("bütçeye uygun fiyatlı");
+  }
+
+  if (parts.length === 0) return "";
+  return ` Tercihen ${parts.join(" ve ")} olmalıdır.`;
 }
 
 function composeMachineryOpening(
@@ -305,6 +465,21 @@ function composeRealEstateTitle(
   values: Record<string, string>,
   city?: string,
 ): string {
+  const short = composeRealEstateShortTitle(rawText, values, city);
+  if (short === "Emlak talebi") {
+    return "Gayrimenkul tedarik / kiralama talebi oluşturuyoruz.";
+  }
+  return short.endsWith(".")
+    ? short
+    : `${short} için teklif talep ediyoruz.`;
+}
+
+/** Compact listing title for the form field (no trailing "arıyorum"). */
+function composeRealEstateShortTitle(
+  rawText: string,
+  values: Record<string, string>,
+  city?: string,
+): string {
   const normalized = rawText.toLocaleLowerCase("tr-TR");
   const listing =
     values.listingType?.toLocaleLowerCase("tr-TR") ||
@@ -330,15 +505,59 @@ function composeRealEstateTitle(
     capitalizeTurkish(values.location || "") ||
     undefined;
 
+  const room = values.roomCount?.trim();
+  const roomPhrase = room ? `${room} ` : "";
+
   if (district && listing) {
-    return `${formatDistrict(district)}'da ${listing} ${property} arıyorum`;
+    return `${formatDistrict(district)}'da ${listing} ${roomPhrase}${property}`
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   if (listing) {
-    return `${capitalizeTurkish(listing)} ${property} arıyorum`;
+    return `${capitalizeTurkish(listing)} ${roomPhrase}${property}`
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  if (room) {
+    return `${room} ${property}`.replace(/\s+/g, " ").trim();
   }
 
   return "Emlak talebi";
+}
+
+function deriveShortTitleFromRawText(rawText: string): string | undefined {
+  // Always normalize first so slang openers never become the title.
+  const cleaned = normalizeCasualTurkish(rawText)
+    .replace(
+      /\b(ben|ne|arıyorum|ariyorum|arıyom|ariyom|arıyorm|lazım|lazim|lazm|istiyorum|istiyom|istiyorm|olsun|lütfen|lutfen|teşekkürler|tesekkurler|acil|uygun|fiyatlı|fiyatli|temiz|durumda|iyi|bütçeye|butceye)\b/gi,
+      " ",
+    )
+    .replace(
+      /\b(biliyo(?:r)?\s*musun|biliyosun|biliyor\s*musunuz|baba|abi|kanka|lan|moruk|kral|valla|vallahi|yani|işte|iste|şey|sey)\b/gi,
+      " ",
+    )
+    .replace(/(?:^|\s)ya(?:\s|$)/gi, " ")
+    .replace(/[.,;:!?'"]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (cleaned.length < 3) return undefined;
+
+  const words = cleaned.split(" ").filter(Boolean).slice(0, 6);
+  if (words.length === 0) return undefined;
+
+  // Reject leftover conversational debris ("Ben ne …")
+  if (
+    words.some((word) =>
+      /^(ben|biliyo|biliyosun|musun|baba|abi|kral|lan|şey)$/i.test(word),
+    )
+  ) {
+    return undefined;
+  }
+
+  return capitalizeTurkish(words.join(" "));
 }
 
 function collectDetailLines(
@@ -386,7 +605,9 @@ function collectDetailLines(
     const normalizedLabel = normalizeKey(field.label);
     if (seen.has(normalizedLabel)) continue;
 
-    lines.push(`• ${field.label}: ${softCorrectValue(field.key, value)}`);
+    lines.push(
+      `• ${field.label}: ${softCorrectValue(field.key, value, input.categoryId, field.options)}`,
+    );
     seen.add(normalizedLabel);
   }
 
@@ -418,11 +639,25 @@ function collectDetailLines(
     !lines.some((line) => line.toLowerCase().includes("teslim"))
   ) {
     const label =
-      input.categoryId === "technology" ? "Proje süresi" : "Teslim süresi";
+      input.categoryId === "technology" && values.needType !== "hardware"
+        ? "Proje süresi"
+        : "Teslim süresi";
     lines.push(`• ${label}: ${input.deliveryDays} gün`);
   }
 
   return lines;
+}
+
+function resolveTitleQuantity(
+  input: ComposeRequestTextInput,
+  values: Record<string, string>,
+): string | undefined {
+  const draftQty = input.commonDraft?.quantity?.trim();
+  if (draftQty) return draftQty;
+  if (input.quantity) {
+    return `${input.quantity} ${input.unit || "adet"}`;
+  }
+  return values.quantity?.trim() || undefined;
 }
 
 function mergeFieldValues(input: ComposeRequestTextInput): Record<string, string> {
@@ -543,11 +778,60 @@ function inferFurnitureTypeLabel(rawText: string): string | undefined {
   return undefined;
 }
 
-function softCorrectValue(key: string, value: string): string {
+function inferPrintingProductLabel(rawText: string): string | undefined {
+  const normalized = rawText.toLocaleLowerCase("tr-TR");
+
+  const products: Array<[string, string]> = [
+    ["kart vizit", "Kartvizit"],
+    ["kartvizit", "Kartvizit"],
+    ["kraft kutu", "Kraft kutu"],
+    ["oluklu kutu", "Oluklu kutu"],
+    ["cepli dosya", "Cepli dosya"],
+    ["roll up", "Roll-up"],
+    ["broşür", "Broşür"],
+    ["brosur", "Broşür"],
+    ["flyer", "Flyer"],
+    ["afiş", "Afiş"],
+    ["afis", "Afiş"],
+    ["katalog", "Katalog"],
+    ["davetiye", "Davetiye"],
+    ["sticker", "Sticker"],
+    ["etiket", "Etiket"],
+    ["ambalaj", "Ambalaj"],
+    ["branda", "Branda"],
+    ["tabela", "Tabela"],
+    ["magnet", "Magnet"],
+    ["mıknatıs", "Magnet"],
+    ["miknatis", "Magnet"],
+    ["antetli", "Antetli kağıt"],
+    ["zarf", "Zarf"],
+    ["poşet", "Poşet"],
+    ["poset", "Poşet"],
+    ["kutu", "Kutu"],
+  ];
+
+  for (const [needle, label] of products) {
+    if (normalized.includes(needle)) return label;
+  }
+
+  return undefined;
+}
+
+function softCorrectValue(
+  key: string,
+  value: string,
+  categoryId?: string,
+  options?: DynamicField["options"],
+): string {
   if (key === "city" || key === "location") {
     return normalizeCityDisplay(value) || value;
   }
-  return value;
+  return resolveFieldOptionLabel({
+    value,
+    fieldKey: key,
+    categoryId,
+    options,
+  });
 }
 
 function normalizeCityDisplay(city?: string): string | undefined {

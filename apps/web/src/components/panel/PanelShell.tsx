@@ -7,7 +7,7 @@ import {
   Bell,
   Building2,
   ChevronRight,
-  Home,
+  LayoutDashboard,
   MessageCircle,
   Plus,
   Search,
@@ -19,6 +19,7 @@ import {
   PanelAccountMenu,
   type PanelCompanyOption,
 } from "@/components/panel/PanelAccountMenu";
+import { PlanBadge } from "@/components/panel/PlanBadge";
 import {
   filterPanelNavItems,
   PANEL_NAV_ITEMS,
@@ -136,7 +137,8 @@ export function PanelShell({
             unreadMessages={unreadMessages}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
-            planLabel={workspace?.planLabel ?? "Kurumsal"}
+            planTier={workspace?.planTier ?? "STANDARD"}
+            planLabel={workspace?.planLabel ?? "Standart"}
             quotaUnlimited={workspace?.quotaUnlimited ?? true}
             quotaRemaining={workspace?.quotaRemaining ?? null}
           />
@@ -148,6 +150,8 @@ export function PanelShell({
             user={user}
             displayName={displayName}
             initials={initials}
+            planTier={workspace?.planTier ?? "STANDARD"}
+            planLabel={workspace?.planLabel ?? "Standart"}
           />
         )}
 
@@ -163,9 +167,12 @@ export function PanelShell({
                   tale<span className="text-black/35">po</span>
                 </div>
                 {isCorporate && (
-                  <span className="rounded-full bg-teal-700 px-2 py-0.5 text-[10px] font-semibold text-white">
-                    Kurumsal
-                  </span>
+                  <PlanBadge
+                    planTier={workspace?.planTier ?? "STANDARD"}
+                    planLabel={workspace?.planLabel}
+                    size="sm"
+                    linked
+                  />
                 )}
               </div>
 
@@ -178,9 +185,17 @@ export function PanelShell({
                   >
                     {isCorporate ? companyName : `Merhaba, ${displayName.split(" ")[0]}`}
                   </p>
-                  <p className="truncate text-sm font-semibold text-black/80">
-                    {pageTitle}
-                  </p>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-black/80">
+                      {pageTitle}
+                    </p>
+                    <PlanBadge
+                      planTier={workspace?.planTier ?? "STANDARD"}
+                      planLabel={workspace?.planLabel}
+                      size="sm"
+                      linked
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -229,8 +244,8 @@ export function PanelShell({
         <div className="mx-auto flex max-w-md items-center justify-between">
           <MobileLink
             href="/panel"
-            icon={Home}
-            label={isCorporate ? "Özet" : "Ana sayfa"}
+            icon={LayoutDashboard}
+            label="Özet"
             active={isNavActive(pathname, "/panel", true)}
           />
           <MobileLink
@@ -278,6 +293,8 @@ function PersonalSidebar({
   user,
   displayName,
   initials,
+  planTier,
+  planLabel,
 }: {
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
@@ -285,6 +302,8 @@ function PersonalSidebar({
   user: PanelUser;
   displayName: string;
   initials: string;
+  planTier: PlanTierId;
+  planLabel: string;
 }) {
   return (
     <aside className="relative sticky top-0 hidden h-screen w-[270px] shrink-0 overflow-hidden border-r border-black/[0.06] bg-[#eef1ea] px-4 py-6 lg:flex lg:flex-col">
@@ -295,10 +314,13 @@ function PersonalSidebar({
 
       <div className="relative">
         <Link
-          href="/panel"
+          href="/"
+          aria-label="Ana sayfa"
           className="inline-flex items-end gap-2 px-2 text-[30px] font-semibold tracking-[-0.06em]"
         >
-          tale<span className="text-black/35">po</span>
+          <span>
+            tale<span className="text-black/35">po</span>
+          </span>
           <span className="mb-1.5 rounded-full bg-[#dff4d9] px-2 py-0.5 text-[9px] font-semibold tracking-[0.14em] text-[#2f6b34]">
             PANEL
           </span>
@@ -313,7 +335,7 @@ function PersonalSidebar({
         </Link>
       </div>
 
-      <nav className="relative mt-8 space-y-1">
+      <nav className="relative mt-3 space-y-1">
         {navItems.map((item, index) => (
           <SidebarLink
             key={`${item.href}-${item.label}`}
@@ -361,9 +383,15 @@ function PersonalSidebar({
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{displayName}</p>
-              <p className="mt-0.5 truncate text-xs text-black/40">
-                Kişisel hesap
-              </p>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                <p className="truncate text-xs text-black/40">Kişisel hesap</p>
+                <PlanBadge
+                  planTier={planTier}
+                  planLabel={planLabel}
+                  size="sm"
+                  linked
+                />
+              </div>
             </div>
 
             <ChevronRight className="h-4 w-4 text-black/30" />
@@ -380,6 +408,7 @@ function CorporateSidebar({
   unreadMessages,
   companyName,
   companyLogoUrl,
+  planTier,
   planLabel,
   quotaUnlimited,
   quotaRemaining,
@@ -389,6 +418,7 @@ function CorporateSidebar({
   unreadMessages: number;
   companyName: string;
   companyLogoUrl?: string | null;
+  planTier: PlanTierId;
   planLabel: string;
   quotaUnlimited: boolean;
   quotaRemaining: number | null;
@@ -399,7 +429,11 @@ function CorporateSidebar({
       <div className="pointer-events-none absolute bottom-20 right-0 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
 
       <div className="relative px-2">
-        <Link href="/panel" className="text-2xl font-semibold tracking-[-0.06em]">
+        <Link
+          href="/"
+          aria-label="Ana sayfa"
+          className="text-2xl font-semibold tracking-[-0.06em]"
+        >
           tale<span className="text-white/35">po</span>
         </Link>
 

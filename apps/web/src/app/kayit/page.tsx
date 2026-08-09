@@ -2,77 +2,53 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 
-import { COMPANY_DRAFT_STORAGE_KEY } from "@/components/panel/CompanyCreateForm";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
-type AccountType = "buyer" | "seller" | "both";
-
-const SECTOR_TO_CATEGORY: Record<string, string> = {
-  printing: "printing",
-  technology: "technology",
-  automotive: "automotive",
-  machine: "machinery",
-  construction: "services",
-  food: "services",
-  textile: "services",
-  service: "services",
-  other: "services",
-};
+const inputClass =
+  "h-14 w-full rounded-2xl border border-black/10 bg-white/90 px-4 text-sm outline-none transition placeholder:text-black/30 focus:border-teal-600/40 focus:ring-4 focus:ring-teal-600/10";
 
 export default function KayitPage() {
   const router = useRouter();
-  const [accountType, setAccountType] = useState<AccountType>("buyer");
-  const [companyName, setCompanyName] = useState("");
-  const [sector, setSector] = useState("");
-  const [city, setCity] = useState("");
-  const [taxNumber, setTaxNumber] = useState("");
   const [hint, setHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [social, setSocial] = useState({ facebook: false, twitter: false });
 
-  const showCompanyFields =
-    accountType === "seller" || accountType === "both";
-
-  function persistCompanyDraft() {
-    if (!showCompanyFields) {
-      try {
-        sessionStorage.removeItem(COMPANY_DRAFT_STORAGE_KEY);
-      } catch {
-        // ignore
-      }
-      return;
-    }
-
-    const categorySlug = SECTOR_TO_CATEGORY[sector];
-
-    try {
-      sessionStorage.setItem(
-        COMPANY_DRAFT_STORAGE_KEY,
-        JSON.stringify({
-          name: companyName.trim(),
-          city: city.trim(),
-          taxNumber: taxNumber.trim(),
-          sector,
-          categorySlugs: categorySlug ? [categorySlug] : [],
-        }),
-      );
-    } catch {
-      // ignore
-    }
-  }
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/providers-status")
+      .then((response) => response.json())
+      .then((data: { facebook?: boolean; twitter?: boolean }) => {
+        if (cancelled) return;
+        setSocial({
+          facebook: Boolean(data.facebook),
+          twitter: Boolean(data.twitter),
+        });
+      })
+      .catch(() => {
+        /* ignore */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function startGoogleSignIn() {
-    persistCompanyDraft();
-    const callbackUrl = showCompanyFields ? "/panel/firma/yeni" : "/panel";
-    void signIn("google", { callbackUrl });
+    void signIn("google", { callbackUrl: "/panel" });
   }
 
   async function onEmailSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
     setHint(null);
-    persistCompanyDraft();
 
     const form = new FormData(event.currentTarget);
     const name = String(form.get("name") ?? "");
@@ -107,7 +83,7 @@ export default function KayitPage() {
         email: email.trim(),
         password,
         redirect: false,
-        callbackUrl: showCompanyFields ? "/panel/firma/yeni" : "/panel",
+        callbackUrl: "/panel",
       });
 
       if (!result || result.error) {
@@ -117,7 +93,7 @@ export default function KayitPage() {
         return;
       }
 
-      router.push(result.url || (showCompanyFields ? "/panel/firma/yeni" : "/panel"));
+      router.push(result.url || "/panel");
       router.refresh();
     } catch {
       setHint("Bağlantı hatası. Tekrar deneyin.");
@@ -127,435 +103,307 @@ export default function KayitPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#f8f8f6] text-[#171717] lg:flex">
-      <section className="flex w-full flex-col px-6 py-8 sm:px-10 lg:w-3/5 lg:px-16">
-        <Link href="/" className="flex w-fit items-center gap-2">
-          <span className="text-2xl font-bold tracking-[-0.06em]">
-            tale<span className="text-black/45">po</span>
-          </span>
+    <main className="min-h-screen overflow-hidden bg-[#f3f3ef] text-[#151515]">
+      <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -left-32 top-0 h-[380px] w-[380px] animate-[talepo-float_14s_ease-in-out_infinite] rounded-full bg-[#9ae89a]/35 blur-[100px]" />
+            <div className="absolute right-0 top-40 h-72 w-72 animate-[talepo-float-alt_18s_ease-in-out_infinite] rounded-full bg-[#7ec8ff]/30 blur-[90px]" />
+            <div className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#ffe08a]/25 blur-[90px]" />
+          </div>
 
-          <span className="rounded-full border border-black/10 bg-white px-2 py-1 text-[9px] font-semibold tracking-[0.16em] text-black/45">
-            BETA
-          </span>
-        </Link>
+          <div className="relative z-10 flex items-center justify-between">
+            <Link href="/" className="flex w-fit items-center gap-2">
+              <span className="text-2xl font-semibold tracking-[-0.06em]">
+                tale<span className="text-[#0d9488]">po</span>
+              </span>
+              <span className="rounded-full border border-[#0d9488]/20 bg-[#e6fffa] px-2.5 py-1 text-[9px] font-semibold tracking-[0.16em] text-teal-800 shadow-sm">
+                BETA
+              </span>
+            </Link>
 
-        <div className="mx-auto w-full max-w-xl py-14">
-          <p className="text-sm font-medium text-black/45">
-            Talepo&apos;ya katılın
-          </p>
+            <Link
+              href="/"
+              className="group flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/80 px-4 py-2 text-sm font-medium text-black/50 shadow-sm backdrop-blur-xl transition hover:bg-white hover:text-black"
+            >
+              <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" />
+              Ana sayfa
+            </Link>
+          </div>
 
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.045em]">
-            Ücretsiz hesabınızı oluşturun
-          </h1>
+          <div className="relative z-10 mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center py-10 lg:py-12">
+            <div className="flex w-fit items-center gap-2 rounded-full border border-teal-600/20 bg-gradient-to-r from-[#e6fffa] to-[#e0f2fe] px-4 py-2 text-sm font-medium text-teal-900/80 shadow-sm">
+              <Sparkles className="h-4 w-4 text-teal-700" />
+              Tek hesap · ücretsiz başlayın
+            </div>
 
-          <p className="mt-4 leading-7 text-black/50">
-            İhtiyaçlarınızı yayınlayın, doğru satıcıları bulun ve teklifleri tek
-            merkezden yönetin.
-          </p>
+            <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-[-0.055em] sm:text-[2.75rem]">
+              Ücretsiz hesabınızı{" "}
+              <span className="bg-gradient-to-r from-teal-700 to-sky-600 bg-clip-text text-transparent">
+                oluşturun
+              </span>
+            </h1>
 
-          <div className="mt-9 grid gap-3 sm:grid-cols-3">
+            <p className="mt-4 max-w-md text-base leading-7 text-black/50">
+              Talebinizi yayınlayın, teklifleri karşılaştırın veya firmanız için
+              fırsatları görün — hepsi aynı hesapta.
+            </p>
+
             <button
               type="button"
               onClick={startGoogleSignIn}
-              className="flex h-14 items-center justify-center gap-3 rounded-2xl border border-black/10 bg-white font-medium transition hover:border-black/20"
+              className="group mt-7 flex min-h-[56px] w-full items-center justify-between rounded-[20px] border border-black/[0.08] bg-white px-4 shadow-[0_14px_45px_rgba(0,0,0,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-teal-600/30"
             >
-              Google
-            </button>
-
-            <button
-              type="button"
-              disabled
-              title="Facebook girişi için .env anahtarları gerekli"
-              className="flex h-14 cursor-not-allowed items-center justify-center gap-3 rounded-2xl border border-black/10 bg-white/70 font-medium text-black/30"
-            >
-              Facebook
-            </button>
-
-            <button
-              type="button"
-              disabled
-              title="X girişi için .env anahtarları gerekli"
-              className="flex h-14 cursor-not-allowed items-center justify-center gap-3 rounded-2xl border border-black/10 bg-white/70 font-medium text-black/30"
-            >
-              X
-            </button>
-          </div>
-
-          {showCompanyFields && (
-            <p className="mt-4 text-xs leading-5 text-black/40">
-              Satıcı hesabında kayıt veya Google sonrası firma oluşturma
-              adımına yönlendirilirsiniz. Aşağıdaki firma alanları o adımda
-              önceden doldurulur.
-            </p>
-          )}
-
-          <div className="my-8 flex items-center gap-4">
-            <div className="h-px flex-1 bg-black/10"></div>
-
-            <span className="text-xs text-black/35">
-              veya e-posta ile kayıt olun
-            </span>
-
-            <div className="h-px flex-1 bg-black/10"></div>
-          </div>
-
-          <form className="space-y-6" onSubmit={onEmailSubmit}>
-            <fieldset>
-              <legend className="mb-3 text-sm font-medium">
-                Talepo&apos;da ne yapmak istiyorsunuz?
-              </legend>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                <button
-                  type="button"
-                  onClick={() => setAccountType("buyer")}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    accountType === "buyer"
-                      ? "border-black bg-[#171717] text-white"
-                      : "border-black/10 bg-white"
-                  }`}
-                >
-                  <div className="font-semibold">Alıcı</div>
-                  <div className="mt-1 text-xs opacity-70">
-                    Ürün veya hizmet arıyorum
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAccountType("seller")}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    accountType === "seller"
-                      ? "border-black bg-[#171717] text-white"
-                      : "border-black/10 bg-white"
-                  }`}
-                >
-                  <div className="font-semibold">Satıcı</div>
-                  <div className="mt-1 text-xs opacity-70">
-                    Ürün veya hizmet satıyorum
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setAccountType("both")}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    accountType === "both"
-                      ? "border-black bg-[#171717] text-white"
-                      : "border-black/10 bg-white"
-                  }`}
-                >
-                  <div className="font-semibold">Her İkisi</div>
-                  <div className="mt-1 text-xs opacity-70">
-                    Hem alıyor hem satıyorum
-                  </div>
-                </button>
-              </div>
-            </fieldset>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label htmlFor="name" className="mb-2 block text-sm font-medium">
-                  Ad soyad
-                </label>
-
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  autoComplete="name"
-                  placeholder="Adınız ve soyadınız"
-                  required
-                  className="h-14 w-full rounded-2xl border border-black/10 bg-white px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="phone"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Telefon numarası
-                </label>
-
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  placeholder="05XX XXX XX XX"
-                  required
-                  className="h-14 w-full rounded-2xl border border-black/10 bg-white px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium">
-                E-posta adresi
-              </label>
-
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="ornek@firma.com"
-                required
-                className="h-14 w-full rounded-2xl border border-black/10 bg-white px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-              />
-            </div>
-
-            {showCompanyFields && (
-              <div className="rounded-[24px] border border-black/10 bg-white p-5">
-                <p className="mb-5 text-sm font-semibold">Firma bilgileri</p>
-
-                <div className="space-y-5">
-                  <div>
-                    <label
-                      htmlFor="companyName"
-                      className="mb-2 block text-sm font-medium"
-                    >
-                      Firma adı
-                    </label>
-
-                    <input
-                      id="companyName"
-                      name="companyName"
-                      type="text"
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      placeholder="Firma adınız"
-                      required={showCompanyFields}
-                      className="h-14 w-full rounded-2xl border border-black/10 bg-[#f8f8f6] px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                    />
-                  </div>
-
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div>
-                      <label
-                        htmlFor="sector"
-                        className="mb-2 block text-sm font-medium"
-                      >
-                        Sektör
-                      </label>
-
-                      <select
-                        id="sector"
-                        name="sector"
-                        required={showCompanyFields}
-                        value={sector}
-                        onChange={(e) => setSector(e.target.value)}
-                        className="h-14 w-full rounded-2xl border border-black/10 bg-[#f8f8f6] px-4 outline-none transition focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                      >
-                        <option value="" disabled>
-                          Sektör seçin
-                        </option>
-                        <option value="printing">Matbaa ve Ambalaj</option>
-                        <option value="technology">Teknoloji</option>
-                        <option value="automotive">Otomotiv</option>
-                        <option value="machine">Makine ve Sanayi</option>
-                        <option value="construction">İnşaat ve Yapı</option>
-                        <option value="food">Gıda</option>
-                        <option value="textile">Tekstil</option>
-                        <option value="service">Hizmetler</option>
-                        <option value="other">Diğer</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="city"
-                        className="mb-2 block text-sm font-medium"
-                      >
-                        Şehir
-                      </label>
-
-                      <input
-                        id="city"
-                        name="city"
-                        type="text"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="Örneğin İstanbul"
-                        required={showCompanyFields}
-                        className="h-14 w-full rounded-2xl border border-black/10 bg-[#f8f8f6] px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="taxNumber"
-                      className="mb-2 block text-sm font-medium"
-                    >
-                      Vergi numarası{" "}
-                      <span className="font-normal text-black/35">
-                        (isteğe bağlı)
-                      </span>
-                    </label>
-
-                    <input
-                      id="taxNumber"
-                      name="taxNumber"
-                      type="text"
-                      inputMode="numeric"
-                      value={taxNumber}
-                      onChange={(e) => setTaxNumber(e.target.value)}
-                      placeholder="Vergi numaranız"
-                      className="h-14 w-full rounded-2xl border border-black/10 bg-[#f8f8f6] px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="grid gap-5 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Şifre
-                </label>
-
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="En az 8 karakter"
-                  minLength={8}
-                  required
-                  className="h-14 w-full rounded-2xl border border-black/10 bg-white px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Şifre tekrar
-                </label>
-
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Şifrenizi tekrar girin"
-                  minLength={8}
-                  required
-                  className="h-14 w-full rounded-2xl border border-black/10 bg-white px-4 outline-none transition placeholder:text-black/30 focus:border-black/35 focus:ring-4 focus:ring-black/5"
-                />
-              </div>
-            </div>
-
-            <p className="-mt-2 text-xs text-black/40">
-              Şifreniz en az 8 karakter olmalıdır.
-            </p>
-
-            <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-black/55">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="mt-1 h-4 w-4 rounded border-black/20 accent-black"
-              />
-
-              <span>
-                <Link
-                  href="/kullanim-kosullari"
-                  className="font-medium text-black hover:underline"
-                >
-                  Kullanım koşullarını
-                </Link>{" "}
-                ve{" "}
-                <Link
-                  href="/gizlilik-politikasi"
-                  className="font-medium text-black hover:underline"
-                >
-                  gizlilik politikasını
-                </Link>{" "}
-                kabul ediyorum.
+              <span className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] p-[2px]">
+                  <span className="flex h-full w-full items-center justify-center rounded-[14px] bg-white text-lg font-bold text-[#4285F4]">
+                    G
+                  </span>
+                </span>
+                <span className="text-left">
+                  <span className="block font-semibold">Google ile devam et</span>
+                  <span className="block text-xs text-black/40">
+                    Hızlı ve güvenli kayıt
+                  </span>
+                </span>
               </span>
-            </label>
-
-            {hint && (
-              <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950/80">
-                {hint}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={busy}
-              className="h-14 w-full rounded-2xl bg-[#171717] font-medium text-white transition hover:bg-black disabled:opacity-60"
-            >
-              {busy ? "Hesap oluşturuluyor…" : "Hesap oluştur"}
+              <ArrowRight className="h-4 w-4 text-teal-700 transition group-hover:translate-x-1" />
             </button>
 
-            {showCompanyFields && (
+            <div className="mt-3 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={startGoogleSignIn}
-                className="h-12 w-full rounded-2xl border border-black/10 bg-white text-sm font-medium transition hover:border-black/20"
+                disabled={!social.facebook}
+                title={
+                  social.facebook
+                    ? "Facebook ile kayıt"
+                    : "Facebook girişi yakında"
+                }
+                onClick={() =>
+                  social.facebook && signIn("facebook", { callbackUrl: "/panel" })
+                }
+                className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-medium ${
+                  social.facebook
+                    ? "border-black/10 bg-white hover:border-black/20"
+                    : "cursor-not-allowed border-black/8 bg-white/60 text-black/30"
+                }`}
               >
-                Google ile devam et ve firmayı oluştur
+                Facebook{!social.facebook ? " · Yakında" : ""}
               </button>
-            )}
-          </form>
+              <button
+                type="button"
+                disabled={!social.twitter}
+                title={social.twitter ? "X ile kayıt" : "X girişi yakında"}
+                onClick={() =>
+                  social.twitter && signIn("twitter", { callbackUrl: "/panel" })
+                }
+                className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-medium ${
+                  social.twitter
+                    ? "border-black/10 bg-white hover:border-black/20"
+                    : "cursor-not-allowed border-black/8 bg-white/60 text-black/30"
+                }`}
+              >
+                X{!social.twitter ? " · Yakında" : ""}
+              </button>
+            </div>
 
-          <p className="mt-8 text-center text-sm text-black/45">
-            Zaten hesabınız var mı?{" "}
-            <Link
-              href="/giris"
-              className="font-medium text-black transition hover:opacity-60"
-            >
-              Giriş yapın
-            </Link>
-          </p>
-        </div>
-      </section>
-      <section className="relative hidden min-h-screen w-2/5 overflow-hidden bg-[#171717] p-12 text-white lg:flex">
-        <div className="relative z-10 flex w-full flex-col justify-between">
-          <div>
-            <p className="text-sm text-white/45">Talepo İş Ağı</p>
+            <div className="my-7 flex items-center gap-4">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+              <span className="text-xs font-medium text-black/35">
+                veya e-posta ile
+              </span>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-black/10 to-transparent" />
+            </div>
 
-            <h2 className="mt-6 text-5xl font-semibold leading-tight tracking-[-0.04em]">
-              İhtiyacınızı paylaşın,
-              <br />
-              doğru satıcılar sizi bulsun.
-            </h2>
+            <form className="space-y-4" onSubmit={onEmailSubmit}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="name" className="mb-2 block text-sm font-medium">
+                    Ad soyad
+                  </label>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Adınız ve soyadınız"
+                    required
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="phone"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Telefon
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="05XX XXX XX XX"
+                    required
+                    className={inputClass}
+                  />
+                </div>
+              </div>
 
-            <p className="mt-6 max-w-md text-base leading-7 text-white/60">
-              Talepo; alıcılarla satıcıları güvenli, hızlı ve şeffaf şekilde
-              buluşturan yeni nesil B2B platformudur.
+              <div>
+                <label htmlFor="email" className="mb-2 block text-sm font-medium">
+                  E-posta
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="ornek@firma.com"
+                  required
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="password"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Şifre
+                  </label>
+                  <PasswordInput
+                    id="password"
+                    name="password"
+                    autoComplete="new-password"
+                    placeholder="En az 8 karakter"
+                    minLength={8}
+                    required
+                    inputClassName={inputClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Şifre tekrar
+                  </label>
+                  <PasswordInput
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    autoComplete="new-password"
+                    placeholder="Tekrar girin"
+                    minLength={8}
+                    required
+                    inputClassName={inputClass}
+                  />
+                </div>
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-black/55">
+                <input
+                  id="terms"
+                  name="terms"
+                  type="checkbox"
+                  required
+                  className="mt-1 h-4 w-4 rounded border-black/20 accent-teal-700"
+                />
+                <span>
+                  <Link
+                    href="/kullanim-kosullari"
+                    className="font-medium text-teal-800 hover:underline"
+                  >
+                    Kullanım koşullarını
+                  </Link>{" "}
+                  ve{" "}
+                  <Link
+                    href="/gizlilik-politikasi"
+                    className="font-medium text-teal-800 hover:underline"
+                  >
+                    gizlilik politikasını
+                  </Link>{" "}
+                  kabul ediyorum.
+                </span>
+              </label>
+
+              {hint && (
+                <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950/80">
+                  {hint}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex min-h-[56px] w-full items-center justify-center gap-2 rounded-[20px] bg-gradient-to-r from-teal-800 to-sky-800 font-semibold text-white shadow-[0_14px_40px_rgba(13,148,136,0.25)] transition hover:opacity-95 disabled:opacity-60"
+              >
+                {busy ? "Hesap oluşturuluyor…" : "Hesap oluştur"}
+                {!busy && <ArrowRight className="h-4 w-4" />}
+              </button>
+            </form>
+
+            <p className="mt-7 text-center text-sm text-black/45">
+              Zaten hesabınız var mı?{" "}
+              <Link
+                href="/giris"
+                className="font-semibold text-teal-800 transition hover:text-teal-950"
+              >
+                Giriş yapın
+              </Link>
             </p>
           </div>
+        </section>
 
-          <div className="space-y-5">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <p className="text-sm text-white/50">Ortalama teklif süresi</p>
-              <p className="mt-2 text-3xl font-bold">&lt; 24 Saat</p>
-            </div>
+        <section className="relative hidden min-h-screen overflow-hidden p-5 lg:block xl:p-7">
+          <div className="absolute inset-5 overflow-hidden rounded-[38px] bg-gradient-to-br from-[#0f766e] via-[#0c4a6e] to-[#172554] shadow-[0_35px_110px_rgba(15,118,110,0.28)] xl:inset-7">
+            <div className="pointer-events-none absolute -left-16 top-20 h-56 w-56 rounded-full bg-[#5eead4]/20 blur-3xl" />
+            <div className="pointer-events-none absolute bottom-10 right-0 h-64 w-64 rounded-full bg-[#38bdf8]/20 blur-3xl" />
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <p className="text-sm text-white/50">Binlerce tedarikçi</p>
-              <p className="mt-2 text-3xl font-bold">Türkiye Geneli</p>
-            </div>
+            <div className="relative z-10 flex h-full flex-col justify-between p-10 text-white xl:p-12">
+              <div>
+                <p className="text-sm font-medium text-teal-100/70">
+                  Talepo iş ağı
+                </p>
+                <h2 className="mt-5 max-w-md text-4xl font-semibold leading-[1.1] tracking-[-0.04em] xl:text-5xl">
+                  İhtiyacınızı paylaşın, doğru firmalar size ulaşsın.
+                </h2>
+                <p className="mt-5 max-w-sm text-base leading-7 text-white/65">
+                  Tek hesapla hem talep oluşturun hem firma olarak teklif verin.
+                  İletişiminiz kabulden önce gizli kalır.
+                </p>
+              </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur">
-              <p className="text-sm text-white/50">Güvenli teklif sistemi</p>
-              <p className="mt-2 text-3xl font-bold">%100 Şeffaf</p>
+              <div className="grid gap-3">
+                {[
+                  { label: "Talep oluşturma", value: "Ücretsiz" },
+                  { label: "İletişim bilgileri", value: "Kabulden önce gizli" },
+                  { label: "Teklifler", value: "Yan yana karşılaştırın" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-2xl border border-white/10 bg-white/10 px-5 py-4 backdrop-blur"
+                  >
+                    <p className="text-xs font-medium text-teal-100/70">
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-lg font-semibold">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-start gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3">
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-200" />
+                <p className="text-sm leading-6 text-emerald-50/85">
+                  Firma kurmak isterseniz kayıt sonrası panelden birkaç dakikada
+                  ekleyebilirsiniz.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full border border-white/10" />
-      </section>
+        </section>
+      </div>
     </main>
   );
 }

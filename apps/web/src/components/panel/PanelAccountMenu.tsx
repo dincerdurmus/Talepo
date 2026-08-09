@@ -8,6 +8,8 @@ import {
   Building2,
   ChevronDown,
   CreditCard,
+  Home,
+  LayoutDashboard,
   LogOut,
   UserRound,
   Users,
@@ -140,6 +142,26 @@ export function PanelAccountMenu({
           </div>
 
           <div className="py-1.5">
+            <Link
+              href="/panel"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-[#171717] transition hover:bg-black/[0.04]"
+            >
+              <LayoutDashboard className="h-4 w-4 text-black/35" />
+              Özet
+            </Link>
+
+            <Link
+              href="/"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-black/70 transition hover:bg-black/[0.04] hover:text-black"
+            >
+              <Home className="h-4 w-4 text-black/35" />
+              Ana sayfa
+            </Link>
+
             <Link
               href="/panel/profil"
               role="menuitem"

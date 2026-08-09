@@ -28,6 +28,12 @@ export type CreateRequestInput = {
   publishVersion: "manual" | "ai";
   isUrgent?: boolean;
   featureBoost?: "FEATURE_24H" | "FEATURE_3D" | "FEATURE_7D" | null;
+  /**
+   * When true, attach the client-confirmed cover URL (AI/stock suggestion).
+   * When false/omitted, no cover image is stored.
+   */
+  useCoverImage?: boolean;
+  coverImageUrl?: string | null;
   fields: RequestFieldInput[];
 };
 
@@ -116,6 +122,10 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   }
 
   const aiScoreNumber = Number(raw.aiScore);
+  const useCoverImage = raw.useCoverImage === true;
+  const rawCoverUrl = asCleanString(raw.coverImageUrl, 2_048);
+  const coverImageUrl =
+    useCoverImage && rawCoverUrl.startsWith("https://") ? rawCoverUrl : null;
 
   return {
     title,
@@ -143,6 +153,8 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
       raw.featureBoost === "FEATURE_7D"
         ? raw.featureBoost
         : null,
+    useCoverImage,
+    coverImageUrl,
     fields,
   };
 }

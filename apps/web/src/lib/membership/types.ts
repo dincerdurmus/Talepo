@@ -35,6 +35,15 @@ export type QuotaInfo = {
   isUnlimited: boolean;
 };
 
+/** User-owned plan snapshot — always computed, even in company context. */
+export type PersonalPlanSnapshot = {
+  storedPlanTier: PlanTierId;
+  effectivePlanTier: PlanTierId;
+  planLabel: string;
+  expiresAt: Date | null;
+  isExpired: boolean;
+};
+
 export type EntitlementContext = {
   userId: string;
   subject: EntitlementSubject;
@@ -48,6 +57,8 @@ export type EntitlementContext = {
   features: Record<FeatureKey, boolean>;
   quota: QuotaInfo;
   requestAccessDelayHours: number;
+  /** Present when user record exists — used for personal-vs-company UX. */
+  personalPlan?: PersonalPlanSnapshot;
 };
 
 export class EntitlementError extends Error {

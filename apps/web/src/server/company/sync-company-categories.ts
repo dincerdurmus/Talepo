@@ -14,6 +14,30 @@ export function normalizeCategorySlugs(input: unknown): string[] {
   return [...unique].slice(0, 12);
 }
 
+/** Ensure all engine categories exist in DB (explore filters, company pickers). */
+export async function ensureEngineCategories() {
+  await Promise.all(
+    REQUEST_CATEGORIES.map((meta, index) =>
+      prisma.category.upsert({
+        where: { slug: meta.id },
+        update: {
+          name: meta.label,
+          description: meta.description,
+          isActive: true,
+          sortOrder: index,
+        },
+        create: {
+          slug: meta.id,
+          name: meta.label,
+          description: meta.description,
+          isActive: true,
+          sortOrder: index,
+        },
+      }),
+    ),
+  );
+}
+
 /**
  * Upsert Category rows from engine slugs and replace CompanyCategory links.
  */

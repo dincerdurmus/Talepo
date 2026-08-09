@@ -1,237 +1,610 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  CalendarDays,
-  Crown,
-  MapPin,
-  MessageSquareText,
-  Search,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { Fraunces, Manrope } from "next/font/google";
+import { ArrowRight, PencilLine, Search } from "lucide-react";
 
+import { ExploreAutoRefresh } from "@/components/panel/ExploreAutoRefresh";
+import { ExploreCategoryFilterBar } from "@/components/panel/ExploreCategoryFilterBar";
+import { ExploreRequestCard } from "@/components/panel/ExploreRequestCard";
+import { InterestCategoryPicker } from "@/components/panel/InterestCategoryPicker";
+import {
+  appendExploreFilterParams,
+  buildExploreFilterWhere,
+  hasActiveExploreFilters,
+  parseExploreFilters,
+} from "@/lib/explore/category-filters";
+import { parseInterestSlugs } from "@/lib/explore/interest-categories";
 import { buildSupplierVisibilityFilter } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { ensureEngineCategories } from "@/server/company/sync-company-categories";
+import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 
-const statusLabels: Record<string, string> = {
-  PUBLISHED: "Yayında",
-  RECEIVING_OFFERS: "Teklif alıyor",
+const exploreDisplay = Fraunces({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-explore-display",
+});
+
+const exploreSans = Manrope({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-explore-sans",
+});
+
+type ExploreTab = "matched" | "all" | "newest";
+
+function parseExploreTab(raw: string | undefined): ExploreTab {
+  if (raw === "all") return "all";
+  if (raw === "newest") return "newest";
+  return "matched";
+}
+
+const requestListSelect = {
+  id: true,
+  title: true,
+  city: true,
+  isUrgent: true,
+  isFeatured: true,
+  publishedAt: true,
+  createdAt: true,
+  coverImageUrl: true,
+  category: { select: { name: true, slug: true } },
+  _count: { select: { offers: true } },
+} as const;
+
+type RequestRow = {
+  id: string;
+  title: string;
+  city: string | null;
+  isUrgent: boolean;
+  isFeatured: boolean;
+  publishedAt: Date | null;
+  createdAt: Date;
+  coverImageUrl: string | null;
+  category: { name: string; slug: string };
+  _count: { offers: number };
+  matchScore?: number | null;
+  matchReason?: string | null;
 };
 
-export default async function ExploreRequestsPage() {
+const OPEN_STATUSES = ["PUBLISHED", "RECEIVING_OFFERS"] as [
+  "PUBLISHED",
+  "RECEIVING_OFFERS",
+];
+
+export default async function ExploreRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
   const user = await requireUser();
+  const params = await searchParams;
+  const tab = parseExploreTab(params.tab);
+  const categoryFilter = params.category?.trim() || "";
+  const cityFilter = params.city?.trim() || "";
+  const editingInterests = params.edit === "1";
+
+  await ensureEngineCategories();
+
   const entitlements = await resolveEntitlements(
     user.id,
     await getCompanyContextOptions(),
   );
   const visibilityFilter = buildSupplierVisibilityFilter(entitlements);
   const hasUrgentPriority = entitlements.features.urgent_request_priority;
+  const companyId =
+    entitlements.subject.type === "company" ? entitlements.subject.id : null;
 
-  /**
-   * PROFESSIONAL+: acil talepler listenin en üstünde.
-   * Diğer planlar: öne çıkan → tarih (acil rozeti kalır, sıralama önceliği yok).
-   */
-  const orderBy = hasUrgentPriority
-    ? ([
-        { isUrgent: "desc" as const },
-        { isFeatured: "desc" as const },
-        { publishedAt: "desc" as const },
-      ] as const)
-    : ([
-        { isFeatured: "desc" as const },
-        { publishedAt: "desc" as const },
-      ] as const);
+  const companyMeta = companyId
+    ? await prisma.company.findFirst({
+        where: { id: companyId, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          city: true,
+        },
+      })
+    : null;
 
-  const [requests, myPublishedCount] = await Promise.all([
-    prisma.request.findMany({
+  if (companyMeta) {
+    await backfillMatchesForCompany(companyMeta.id);
+  }
+
+  const categories = await prisma.category.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, slug: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  });
+
+  // Interests are URL-only (`?interest=...`) — leaving the page clears them.
+  const interestSlugs = parseInterestSlugs(params.interest);
+  const interestCategories = categories.filter((c) =>
+    interestSlugs.includes(c.slug),
+  );
+  const interestCategoryIds = interestCategories.map((c) => c.id);
+  const showInterestPicker =
+    tab === "matched" && (editingInterests || interestSlugs.length === 0);
+
+  const exploreFilters = parseExploreFilters(params, interestSlugs);
+  const filterWhere = buildExploreFilterWhere(exploreFilters);
+  const filtersActive = hasActiveExploreFilters(exploreFilters);
+  const focusCategoryId = categories.find(
+    (c) => c.slug === exploreFilters.focus,
+  )?.id;
+  // Narrow to focused category when field filters or explicit focus are set.
+  const scopeMatchedToFocus =
+    Boolean(params.focus?.trim()) || exploreFilters.fields.length > 0;
+  const matchedCategoryIds =
+    scopeMatchedToFocus && focusCategoryId
+      ? [focusCategoryId]
+      : interestCategoryIds;
+
+  const baseWhere = {
+    deletedAt: null,
+    createdById: { not: user.id },
+    status: { in: OPEN_STATUSES },
+    ...visibilityFilter,
+  };
+
+  let requests: RequestRow[] = [];
+  let matchedCount = 0;
+
+  if (!showInterestPicker && interestCategoryIds.length > 0) {
+    matchedCount = await prisma.request.count({
       where: {
-        deletedAt: null,
-        // Keşfet: başkalarının talepleri (teklif vermek için)
-        createdById: { not: user.id },
-        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
-        ...visibilityFilter,
+        ...baseWhere,
+        categoryId: { in: interestCategoryIds },
       },
-      orderBy: [...orderBy],
+    });
+  }
+
+  if (tab === "matched" && !showInterestPicker && interestCategoryIds.length > 0) {
+    const matchedRequestWhere = {
+      ...baseWhere,
+      categoryId: { in: matchedCategoryIds },
+      ...filterWhere,
+    };
+
+    if (companyId) {
+      const matches = await prisma.requestMatch.findMany({
+        where: {
+          companyId,
+          request: matchedRequestWhere,
+        },
+        orderBy: [{ score: "desc" }, { createdAt: "desc" }],
+        take: 50,
+        include: {
+          request: {
+            select: requestListSelect,
+          },
+        },
+      });
+
+      if (matches.length > 0) {
+        requests = matches
+          .map((row) => ({
+            ...row.request,
+            matchScore: row.score,
+            matchReason: row.matchReason,
+          }))
+          .sort((a, b) => {
+            if (hasUrgentPriority && a.isUrgent !== b.isUrgent) {
+              return a.isUrgent ? -1 : 1;
+            }
+            if (a.isFeatured !== b.isFeatured) {
+              return a.isFeatured ? -1 : 1;
+            }
+            return (b.matchScore ?? 0) - (a.matchScore ?? 0);
+          });
+      }
+    }
+
+    if (requests.length === 0) {
+      const rows = await prisma.request.findMany({
+        where: matchedRequestWhere,
+        orderBy: hasUrgentPriority
+          ? [
+              { isUrgent: "desc" },
+              { isFeatured: "desc" },
+              { publishedAt: "desc" },
+            ]
+          : [{ isFeatured: "desc" }, { publishedAt: "desc" }],
+        take: 50,
+        select: requestListSelect,
+      });
+      requests = rows.map((row) => ({
+        ...row,
+        matchReason: "Seçtiğiniz kategori",
+      }));
+    }
+  } else if (tab === "all") {
+    const categoryId = categoryFilter
+      ? categories.find(
+          (c) => c.slug === categoryFilter || c.id === categoryFilter,
+        )?.id
+      : undefined;
+
+    const allFilterSlugs = categoryFilter
+      ? [categoryFilter]
+      : ([] as string[]);
+    const allExploreFilters = parseExploreFilters(params, allFilterSlugs);
+    const allFilterWhere = buildExploreFilterWhere(allExploreFilters);
+
+    const rows = await prisma.request.findMany({
+      where: {
+        ...baseWhere,
+        ...(categoryId ? { categoryId } : {}),
+        ...(cityFilter
+          ? { city: { contains: cityFilter, mode: "insensitive" as const } }
+          : {}),
+        ...allFilterWhere,
+      },
+      orderBy: hasUrgentPriority
+        ? [
+            { isUrgent: "desc" },
+            { isFeatured: "desc" },
+            { publishedAt: "desc" },
+          ]
+        : [{ isFeatured: "desc" }, { publishedAt: "desc" }],
       take: 50,
-      include: {
-        category: { select: { name: true } },
-        createdBy: { select: { name: true, city: true } },
-        _count: { select: { offers: true } },
-      },
-    }),
-    prisma.request.count({
-      where: {
-        deletedAt: null,
-        createdById: user.id,
-        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
-      },
-    }),
-  ]);
+      select: requestListSelect,
+    });
+
+    requests = rows;
+  } else if (tab === "newest") {
+    const rows = await prisma.request.findMany({
+      where: baseWhere,
+      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      take: 50,
+      select: requestListSelect,
+    });
+    requests = rows;
+  }
 
   const remainingLabel = formatQuotaRemaining(entitlements.quota);
+  const interestLabels = interestCategories.map((c) => c.name);
+  const interestOptions = interestCategories.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+  }));
+
+  const clearMatchedFiltersHref = (() => {
+    const q = new URLSearchParams();
+    if (interestSlugs.length > 0) {
+      q.set("interest", interestSlugs.join(","));
+    }
+    const s = q.toString();
+    return s ? `/panel/talepler?${s}` : "/panel/talepler";
+  })();
+
+  const tabHref = (next: ExploreTab) => {
+    const q = new URLSearchParams();
+    if (next === "all") q.set("tab", "all");
+    if (next === "newest") q.set("tab", "newest");
+    if (next === "matched" && interestSlugs.length > 0) {
+      appendExploreFilterParams(q, exploreFilters, interestSlugs);
+    }
+    if (next === "all") {
+      if (categoryFilter) q.set("category", categoryFilter);
+      if (cityFilter) q.set("city", cityFilter);
+      if (params.q?.trim()) q.set("q", params.q.trim());
+    }
+    const s = q.toString();
+    return s ? `/panel/talepler?${s}` : "/panel/talepler";
+  };
 
   return (
-    <>
-      <section className="py-4 sm:py-6">
-        <p className="text-sm font-semibold text-black/35">Keşfet</p>
-        <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div
+      className={`${exploreDisplay.variable} ${exploreSans.variable} font-[family-name:var(--font-explore-sans)]`}
+    >
+      <ExploreAutoRefresh enabled={tab === "newest"} />
+      <section className="relative overflow-hidden py-4 sm:py-6">
+        <div className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-[#9ae89a]/20 blur-3xl" />
+        <div className="pointer-events-none absolute right-0 top-8 h-32 w-32 rounded-full bg-[#ffe08a]/25 blur-3xl" />
+
+        <p className="relative text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/70">
+          Keşfet
+        </p>
+        <div className="relative mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-              Talepleri keşfet
+            <h1 className="font-[family-name:var(--font-explore-display)] text-3xl font-semibold tracking-[-0.03em] text-[#0f3d38] sm:text-4xl">
+              Size yakışan talepler
             </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-              Burada <strong>başka kullanıcıların</strong> açık talepleri listelenir.
-              Teklif vererek yeni müşterilere ulaşın. Kendi talepleriniz{" "}
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#3d5c57]">
+              Kategorilerinize göre fırsatlar burada. Kendi talepleriniz{" "}
               <Link
                 href="/panel/taleplerim"
                 className="font-semibold text-teal-800 underline-offset-2 hover:underline"
               >
                 Taleplerim
-              </Link>{" "}
-              sayfasındadır.
+              </Link>
+              ’de.
             </p>
           </div>
+          <p className="rounded-full bg-teal-700/10 px-3 py-1.5 text-xs font-medium text-teal-900">
+            {entitlements.planLabel} · {remainingLabel} teklif
+            {companyMeta ? ` · ${companyMeta.name}` : ""}
+          </p>
         </div>
 
-        {!entitlements.features.instant_request_access && (
-          <div className="mt-5 flex items-start gap-3 rounded-[22px] border border-[#8c72c9]/20 bg-[#f8f5ff] px-5 py-4">
-            <Crown className="mt-0.5 h-5 w-5 shrink-0 text-[#704daf]" />
-            <p className="text-sm leading-6 text-[#4f3d72]/80">
-              Standart planda yeni talepler 24 saat gecikmeyle açılır. Premium ile
-              anında erişin.
-            </p>
-          </div>
-        )}
-
-        {hasUrgentPriority && (
-          <div className="mt-3 flex items-start gap-3 rounded-[22px] border border-[#f59e0b]/25 bg-[#fff7e8] px-5 py-4">
-            <Zap className="mt-0.5 h-5 w-5 shrink-0 text-[#b45309]" />
-            <p className="text-sm leading-6 text-[#9a3412]/85">
-              Profesyonel öncelik aktif: acil talepler listenin en üstünde
-              sıralanıyor.
-            </p>
-          </div>
-        )}
-
-        <p className="mt-4 text-sm text-black/40">
-          Plan: <strong>{entitlements.planLabel}</strong> · Kalan teklif hakkı:{" "}
-          <strong>{remainingLabel}</strong>
-          {entitlements.isExpired && (
-            <span className="ml-2 text-[#8b352b]">
-              (kayıtlı plan süresi dolmuş — Standart erişim)
-            </span>
-          )}
-        </p>
+        <div className="relative mt-6 flex gap-1 border-b border-teal-900/10">
+          <TabLink href={tabHref("matched")} active={tab === "matched"}>
+            Size uygun
+            {!showInterestPicker && matchedCount > 0 ? (
+              <span className="ml-1.5 rounded-full bg-teal-700/15 px-1.5 py-0.5 text-[11px] text-teal-900">
+                {matchedCount}
+              </span>
+            ) : null}
+          </TabLink>
+          <TabLink href={tabHref("all")} active={tab === "all"}>
+            Tümü
+          </TabLink>
+          <TabLink href={tabHref("newest")} active={tab === "newest"}>
+            En yeniler
+            {tab === "newest" ? (
+              <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            ) : null}
+          </TabLink>
+        </div>
       </section>
 
       <section className="pb-10">
-        {requests.length === 0 ? (
-          <div className="rounded-[30px] border border-black/[0.06] bg-white p-10 text-center shadow-[0_18px_60px_rgba(0,0,0,0.04)]">
-            <Search className="mx-auto h-8 w-8 text-black/25" />
-            <p className="mt-4 text-lg font-semibold">
-              Şu an teklif verilecek başka talep yok
-            </p>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/45">
-              Keşfet, sizin oluşturduğunuz talepleri göstermez — onlar alıcı
-              tarafınızdır. Başka kullanıcılar talep yayınladıkça burada görünür.
-            </p>
-            {myPublishedCount > 0 && (
-              <div className="mx-auto mt-6 max-w-md rounded-[20px] border border-teal-200/70 bg-teal-50 px-5 py-4 text-sm text-teal-950">
-                Sizin <strong>{myPublishedCount}</strong> yayında talebiniz var.
-                Bunları yönetmek için{" "}
-                <Link
-                  href="/panel/taleplerim"
-                  className="font-semibold underline underline-offset-2"
-                >
-                  Taleplerim
-                </Link>{" "}
-                sayfasına gidin.
-              </div>
-            )}
-            <Link
-              href="/panel/taleplerim"
-              className="mt-6 inline-flex items-center gap-2 rounded-full bg-black px-5 py-3 text-sm font-semibold text-white"
+        {tab === "all" && (
+          <div className="mb-5 space-y-3">
+            <form
+              method="get"
+              className="flex flex-col gap-2 rounded-2xl border border-teal-900/10 bg-white/80 p-3 shadow-sm sm:flex-row sm:items-end"
             >
-              Taleplerime git
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {requests.map((request) => (
-              <Link
-                key={request.id}
-                href={`/panel/talepler/${request.id}`}
-                className="group rounded-[28px] border border-black/[0.06] bg-white p-5 shadow-[0_14px_50px_rgba(0,0,0,0.04)] transition hover:border-black/15 sm:p-6"
+              <input type="hidden" name="tab" value="all" />
+              {params.q?.trim() ? (
+                <input type="hidden" name="q" value={params.q.trim()} />
+              ) : null}
+              <label className="flex-1 text-xs font-semibold text-teal-900/55">
+                Kategori
+                <select
+                  name="category"
+                  defaultValue={categoryFilter}
+                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                >
+                  <option value="">Tüm kategoriler</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.slug}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex-1 text-xs font-semibold text-teal-900/55">
+                Şehir
+                <input
+                  name="city"
+                  defaultValue={cityFilter}
+                  placeholder="ör. İstanbul"
+                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                />
+              </label>
+              <button
+                type="submit"
+                className="h-11 rounded-xl bg-gradient-to-r from-teal-700 to-teal-600 px-5 text-sm font-semibold text-white shadow-sm"
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[#f6f6f2] px-3 py-1.5 text-xs font-semibold text-black/45">
-                    {request.category.name}
-                  </span>
-                  {request.isUrgent && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
-                      <Zap className="h-3 w-3" />
-                      Acil
-                    </span>
-                  )}
-                  {request.isFeatured && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#eee7ff] px-3 py-1.5 text-xs font-semibold text-[#704daf]">
-                      <Sparkles className="h-3 w-3" />
-                      Öne çıkan
-                    </span>
-                  )}
-                  <span className="rounded-full bg-[#e4f4df] px-3 py-1.5 text-xs font-semibold text-[#356d3a]">
-                    {statusLabels[request.status] ?? request.status}
-                  </span>
-                </div>
-
-                <h2 className="mt-4 text-xl font-semibold tracking-tight group-hover:underline">
-                  {request.title}
-                </h2>
-
-                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-black/40">
-                  {request.city && (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="h-4 w-4" />
-                      {request.city}
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1.5">
-                    <CalendarDays className="h-4 w-4" />
-                    {formatDate(request.publishedAt ?? request.createdAt)}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <MessageSquareText className="h-4 w-4" />
-                    {request._count.offers} teklif
-                  </span>
-                </div>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="text-xs text-black/30">
-                    {request.createdBy.name || "Alıcı"}
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-black/55">
-                    İncele
-                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                  </span>
-                </div>
-              </Link>
-            ))}
+                Filtrele
+              </button>
+            </form>
+            {categoryFilter ? (
+              <ExploreCategoryFilterBar
+                interestOptions={categories
+                  .filter((c) => c.slug === categoryFilter)
+                  .map((c) => ({ slug: c.slug, name: c.name }))}
+                filters={parseExploreFilters(params, [categoryFilter])}
+                hiddenFields={{
+                  tab: "all",
+                  category: categoryFilter,
+                  ...(cityFilter ? { city: cityFilter } : {}),
+                }}
+                clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}`}
+              />
+            ) : null}
           </div>
         )}
+
+        {showInterestPicker ? (
+          <InterestCategoryPicker
+            categories={categories.map((c) => ({
+              slug: c.slug,
+              name: c.name,
+            }))}
+            initialSelected={interestSlugs}
+          />
+        ) : tab === "matched" && interestLabels.length > 0 ? (
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold text-teal-900/50">
+                İlgi alanlarınız:
+              </span>
+              {interestLabels.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-full bg-teal-700/10 px-2.5 py-1 text-xs font-semibold text-teal-900"
+                >
+                  {label}
+                </span>
+              ))}
+              <Link
+                href="/panel/talepler"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-teal-800 hover:underline"
+              >
+                <PencilLine className="h-3.5 w-3.5" />
+                Değiştir
+              </Link>
+            </div>
+            <ExploreCategoryFilterBar
+              interestOptions={interestOptions}
+              filters={exploreFilters}
+              clearHref={clearMatchedFiltersHref}
+            />
+          </>
+        ) : null}
+
+        {tab === "newest" && requests.length > 0 ? (
+          <p className="mb-3 text-xs font-medium text-emerald-800/70">
+            En son yayınlanan açık talepler · yaklaşık 20 sn’de bir yenilenir
+          </p>
+        ) : null}
+
+        {!showInterestPicker && requests.length === 0 ? (
+          <EmptyState
+            icon={<Search className="mx-auto h-7 w-7 text-teal-800/35" />}
+            title={
+              tab === "matched" && filtersActive
+                ? "Filtreye uyan talep yok"
+                : tab === "matched"
+                  ? "Bu kategorilerde henüz açık talep yok"
+                  : tab === "newest"
+                    ? "Henüz yayınlanmış talep yok"
+                    : "Filtreye uyan talep yok"
+            }
+            body={
+              tab === "matched" && filtersActive
+                ? "Arama veya kategori filtrelerini gevşeterek tekrar deneyin."
+                : tab === "matched"
+                  ? "Yeni talepler düştükçe burada görünecek. İsterseniz kategorileri değiştirin veya En yeniler’e bakın."
+                  : tab === "newest"
+                    ? "Birisi talep yayınladığında anında burada listelenir."
+                    : "Kategori, şehir veya alan filtrelerini değiştirerek tekrar deneyin."
+            }
+            actionHref={
+              tab === "matched" && filtersActive
+                ? clearMatchedFiltersHref
+                : tab === "matched"
+                  ? "/panel/talepler?edit=1"
+                  : tab === "newest"
+                    ? "/panel/talepler"
+                    : "/panel/talepler?tab=newest"
+            }
+            actionLabel={
+              tab === "matched" && filtersActive
+                ? "Filtreleri temizle"
+                : tab === "matched"
+                  ? "Kategorileri değiştir"
+                  : tab === "newest"
+                    ? "Size uygun’a dön"
+                    : "En yenilere bak"
+            }
+          />
+        ) : !showInterestPicker ? (
+          <ul className="space-y-3">
+            {requests.map((request) => {
+              const when = request.publishedAt ?? request.createdAt;
+              return (
+                <li key={request.id}>
+                  <ExploreRequestCard
+                    href={`/panel/talepler/${request.id}`}
+                    title={request.title}
+                    categoryName={request.category.name}
+                    categorySlug={request.category.slug}
+                    city={request.city}
+                    coverImageUrl={request.coverImageUrl}
+                    offerCount={request._count.offers}
+                    timeLabel={
+                      tab === "newest"
+                        ? formatRelativeTime(when)
+                        : formatShortDate(when)
+                    }
+                    isUrgent={request.isUrgent}
+                    isFeatured={request.isFeatured}
+                    isFresh={tab === "newest" && isFresh(when)}
+                    matchReason={
+                      tab === "matched" ? request.matchReason : null
+                    }
+                    emphasizeTime={tab === "newest"}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
       </section>
-    </>
+    </div>
   );
 }
 
-function formatDate(date: Date) {
+function TabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
+        active
+          ? "border-teal-700 text-teal-900"
+          : "border-transparent text-[#6b8681] hover:text-teal-900"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  body,
+  actionHref,
+  actionLabel,
+}: {
+  icon: ReactNode;
+  title: string;
+  body: string;
+  actionHref: string;
+  actionLabel: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-teal-900/10 bg-gradient-to-br from-white to-[#f3fbf8] px-6 py-10 text-center">
+      {icon}
+      <p className="mt-4 font-[family-name:var(--font-explore-display)] text-xl font-semibold text-[#0f3d38]">
+        {title}
+      </p>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a7a74]">
+        {body}
+      </p>
+      <Link
+        href={actionHref}
+        className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
+      >
+        {actionLabel}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
+function formatShortDate(date: Date) {
   return new Intl.DateTimeFormat("tr-TR", {
     day: "numeric",
-    month: "long",
-    year: "numeric",
+    month: "short",
   }).format(date);
+}
+
+function formatRelativeTime(date: Date) {
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return "Az önce";
+  if (minutes < 60) return `${minutes} dk önce`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} saat önce`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days} gün önce`;
+  return formatShortDate(date);
+}
+
+function isFresh(date: Date) {
+  return Date.now() - date.getTime() < 60 * 60 * 1000;
 }

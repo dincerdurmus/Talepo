@@ -4,6 +4,14 @@ import { ArrowLeft, Building2 } from "lucide-react";
 
 import { CompanyCategoriesForm } from "@/components/panel/CompanyCategoriesForm";
 import { CompanySettingsForm } from "@/components/panel/CompanySettingsForm";
+import { PersonalPlanMismatchBanner } from "@/components/panel/PersonalPlanMismatchBanner";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import {
+  formatPersonalPlanMismatchDetail,
+  hasPersonalPlanMismatch,
+  TEAM_PLAN_SCOPE_NOTE,
+} from "@/lib/membership/membership-rules";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -11,6 +19,14 @@ import { requireUser } from "@/server/auth/require-user";
 export default async function FirmaAyarlariPage() {
   const user = await requireUser();
   const workspace = await getCompanyWorkspace(user.id);
+  const entitlements = await resolveEntitlements(
+    user.id,
+    await getCompanyContextOptions(),
+  );
+  const personalMismatch = hasPersonalPlanMismatch(entitlements);
+  const mismatchDetail = personalMismatch
+    ? formatPersonalPlanMismatchDetail(entitlements)
+    : null;
 
   if (!workspace) {
     redirect("/panel/firma/yeni");
@@ -75,6 +91,16 @@ export default async function FirmaAyarlariPage() {
           </Link>
         </div>
       </section>
+
+      {personalMismatch && mismatchDetail && (
+        <section className="mb-5">
+          <PersonalPlanMismatchBanner detail={mismatchDetail} />
+        </section>
+      )}
+
+      <p className="mb-5 rounded-[18px] border border-teal-900/10 bg-[#f0fdfa] px-4 py-3 text-sm leading-6 text-teal-900/70">
+        {TEAM_PLAN_SCOPE_NOTE}
+      </p>
 
       <div className="space-y-5">
         <CompanySettingsForm

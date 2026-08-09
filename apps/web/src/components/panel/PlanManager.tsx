@@ -9,6 +9,12 @@ import {
   FEATURE_META,
   PLAN_SUMMARY_FEATURE_KEYS,
 } from "@/lib/membership/feature-meta";
+import { getFeatureVisual } from "@/lib/membership/feature-visuals";
+import {
+  formatPersonalPlanMismatchDetail,
+  hasPersonalPlanMismatch,
+  TEAM_PLAN_SCOPE_NOTE,
+} from "@/lib/membership/membership-rules";
 import { PLAN_FEATURES, PLAN_VISUALS } from "@/lib/membership/plan-visuals";
 import {
   OFFER_CREDIT_PACKS,
@@ -17,6 +23,8 @@ import {
 } from "@/lib/membership/plans";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
+
+import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
 
 export type CompanyOption = {
   id: string;
@@ -43,6 +51,10 @@ export function PlanManager({
   const activeFeatureKeys = PLAN_SUMMARY_FEATURE_KEYS.filter(
     (key) => entitlements.features[key],
   );
+  const personalMismatch = hasPersonalPlanMismatch(entitlements);
+  const mismatchDetail = personalMismatch
+    ? formatPersonalPlanMismatchDetail(entitlements)
+    : undefined;
 
   async function runAction(key: string, body: Record<string, unknown>) {
     setLoadingKey(key);
@@ -80,34 +92,32 @@ export function PlanManager({
 
   return (
     <div className="space-y-6">
+      {personalMismatch && (
+        <PersonalPlanMismatchBanner detail={mismatchDetail} />
+      )}
+
+      {entitlements.subject.type === "company" && (
+        <p className="rounded-[18px] border border-teal-900/10 bg-[#f0fdfa] px-4 py-3 text-sm leading-6 text-teal-900/70">
+          {TEAM_PLAN_SCOPE_NOTE}
+        </p>
+      )}
+
       <section
-        className={`relative overflow-hidden rounded-[28px] border p-6 ${
-          currentVisual.dark
-            ? "border-white/10 bg-[#151515] text-white"
-            : "border-black/[0.06] bg-white"
-        }`}
+        className={`relative overflow-hidden rounded-[28px] border p-6 ${currentVisual.border} ${currentVisual.surface}`}
       >
         <div
           className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-[40px] ${currentVisual.glow}`}
         />
-        <p
-          className={`text-sm ${currentVisual.dark ? "text-white/40" : "text-black/40"}`}
-        >
-          Mevcut planınız
-        </p>
+        <p className="text-sm text-black/40">Mevcut planınız</p>
         <div className="relative mt-3 flex items-center gap-3">
           <div
-            className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${currentVisual.accent} ${
-              currentVisual.dark ? "text-white" : "text-[#151515]"
-            }`}
+            className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${currentVisual.accent} ${currentVisual.iconClass}`}
           >
             <Crown className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-2xl font-semibold">{entitlements.planLabel}</h2>
-            <p
-              className={`text-sm ${currentVisual.dark ? "text-white/50" : "text-black/45"}`}
-            >
+            <p className="text-sm text-black/45">
               Kalan teklif: {remainingLabel} · Bu ay kullanılan:{" "}
               {entitlements.quota.used}
               {entitlements.quota.bonusCredits > 0
@@ -117,34 +127,42 @@ export function PlanManager({
           </div>
         </div>
 
-        <div
-          className={`relative mt-5 grid gap-2 text-sm sm:grid-cols-2 ${
-            currentVisual.dark ? "text-white/55" : "text-black/45"
-          }`}
-        >
+        <div className="relative mt-5 grid gap-2 text-sm text-black/45 sm:grid-cols-2">
           <p>
             Kayıtlı plan:{" "}
-            <strong className={currentVisual.dark ? "text-white" : "text-black"}>
+            <strong className="text-black">
               {PLAN_DEFINITIONS[entitlements.storedPlanTier].label}
             </strong>
           </p>
           <p>
-            Effective plan:{" "}
-            <strong className={currentVisual.dark ? "text-white" : "text-black"}>
-              {entitlements.planLabel}
-            </strong>
+            Geçerli plan:{" "}
+            <strong className="text-black">{entitlements.planLabel}</strong>
           </p>
           <p>
-            Subject:{" "}
-            <strong className={currentVisual.dark ? "text-white" : "text-black"}>
+            Hesap türü:{" "}
+            <strong className="text-black">
               {entitlements.subject.type === "company"
-                ? `Firma · ${entitlements.subject.name ?? entitlements.subject.id}`
+                ? `Firma · ${entitlements.subject.name ?? "Firma"}`
                 : "Kişisel hesap"}
             </strong>
           </p>
           <p>
+            Kişisel plan:{" "}
+            <strong className="text-black">
+              {entitlements.personalPlan?.planLabel ?? "Standart"}
+            </strong>
+            {entitlements.subject.type === "company" &&
+            entitlements.personalPlan &&
+            entitlements.personalPlan.effectivePlanTier !==
+              entitlements.effectivePlanTier ? (
+              <span className="ml-1 text-xs text-amber-700">
+                (firma bağlamında geçerli değil)
+              </span>
+            ) : null}
+          </p>
+          <p>
             Bitiş:{" "}
-            <strong className={currentVisual.dark ? "text-white" : "text-black"}>
+            <strong className="text-black">
               {entitlements.expiresAt
                 ? formatDate(entitlements.expiresAt)
                 : "—"}
@@ -155,11 +173,7 @@ export function PlanManager({
 
         {companies.length >= 1 && (
           <label className="relative mt-5 block max-w-md">
-            <span
-              className={`mb-2 block text-xs ${
-                currentVisual.dark ? "text-white/40" : "text-black/40"
-              }`}
-            >
+            <span className="mb-2 block text-xs text-black/40">
               Firma bağlamı
             </span>
             <select
@@ -175,11 +189,7 @@ export function PlanManager({
                   companyId: value || null,
                 });
               }}
-              className={`h-12 w-full rounded-[14px] border px-3 text-sm outline-none ${
-                currentVisual.dark
-                  ? "border-white/15 bg-white/10 text-white"
-                  : "border-black/10 bg-[#fafaf8] text-black"
-              }`}
+              className="h-12 w-full rounded-[14px] border border-black/10 bg-white/70 px-3 text-sm text-black outline-none"
             >
               <option value="">Kişisel hesap</option>
               {companies.map((company) => (
@@ -192,12 +202,12 @@ export function PlanManager({
         )}
       </section>
 
-      <section className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_16px_55px_rgba(0,0,0,0.04)]">
-        <h3 className="text-xl font-semibold tracking-tight">
+      <section className="rounded-[28px] border border-teal-900/10 bg-gradient-to-br from-[#f0fdfa] via-white to-[#fffbeb] p-6 shadow-[0_16px_55px_rgba(15,118,110,0.06)]">
+        <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
           Aktif özellikleriniz
         </h3>
         <p className="mt-2 text-sm text-black/45">
-          Effective planınıza göre açılan entitlement&apos;lar.
+          Geçerli planınıza göre açılan özellikler.
         </p>
         <ul className="mt-5 grid gap-3 sm:grid-cols-2">
           {activeFeatureKeys.length === 0 ? (
@@ -208,21 +218,47 @@ export function PlanManager({
           ) : (
             activeFeatureKeys.map((key) => {
               const meta = FEATURE_META[key];
+              const visual = getFeatureVisual(key);
+              const Icon = visual.icon;
+              const href = visual.href ?? meta.surface;
+              const cta = visual.cta ?? "Aç →";
+
               return (
                 <li
                   key={key}
-                  className="rounded-[18px] border border-black/[0.05] bg-[#fafaf8] p-4"
+                  className={`relative overflow-hidden rounded-[18px] border p-4 ${visual.border} ${visual.surface}`}
                 >
-                  <p className="font-semibold">{meta.label}</p>
-                  <p className="mt-1 text-sm text-black/45">{meta.description}</p>
-                  {meta.surface && (
-                    <Link
-                      href={meta.surface}
-                      className="mt-3 inline-flex text-xs font-semibold text-[#5b3fd4]"
+                  <div
+                    className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-[32px] ${visual.glow}`}
+                  />
+                  <div className="relative flex items-start gap-3">
+                    <div
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${visual.iconWrap}`}
                     >
-                      Aç →
-                    </Link>
-                  )}
+                      <Icon className={`h-4 w-4 ${visual.iconClass}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-semibold text-[#0f172a]">{meta.label}</p>
+                        {visual.badge && (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${visual.badgeClass}`}
+                          >
+                            {visual.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-black/45">{meta.description}</p>
+                      {href && (
+                        <Link
+                          href={href}
+                          className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold ${visual.linkClass}`}
+                        >
+                          {cta}
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </li>
               );
             })
@@ -247,16 +283,16 @@ export function PlanManager({
           const visual = PLAN_VISUALS[plan.id];
           const Icon = visual.icon;
           const isCurrent = entitlements.effectivePlanTier === plan.id;
-          const isDark = visual.dark;
 
           return (
             <article
               key={plan.id}
-              className={`relative overflow-hidden rounded-[28px] border p-6 sm:p-7 ${visual.border} ${
+              className={`relative overflow-hidden rounded-[28px] border p-6 sm:p-7 ${visual.border} ${visual.surface} ${
                 visual.highlight
-                  ? "shadow-[0_24px_80px_rgba(124,92,255,0.16)] ring-1 ring-[#7c5cff]/15"
+                  ? (visual.highlightClass ??
+                    "shadow-[0_16px_55px_rgba(0,0,0,0.04)]")
                   : "shadow-[0_16px_55px_rgba(0,0,0,0.04)]"
-              } ${isDark ? "bg-[#151515] text-white" : "bg-white text-[#151515]"}`}
+              }`}
             >
               <div
                 className={`pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full blur-[45px] ${visual.glow}`}
@@ -265,9 +301,7 @@ export function PlanManager({
               <div className="relative">
                 <div className="flex items-start justify-between gap-3">
                   <div
-                    className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.accent} ${
-                      isDark ? "text-white" : "text-[#151515]"
-                    }`}
+                    className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${visual.accent} ${visual.iconClass}`}
                   >
                     <Icon className="h-5 w-5" />
                   </div>
@@ -292,11 +326,7 @@ export function PlanManager({
                   {plan.label}
                 </h3>
 
-                <p
-                  className={`mt-3 text-sm leading-6 ${
-                    isDark ? "text-white/55" : "text-black/50"
-                  }`}
-                >
+                <p className="mt-3 text-sm leading-6 text-black/50">
                   {plan.description}
                 </p>
 
@@ -306,24 +336,14 @@ export function PlanManager({
                       <span className="text-3xl font-semibold tracking-[-0.04em]">
                         ₺{plan.priceTry.toLocaleString("tr-TR")}
                       </span>
-                      <span
-                        className={`pb-1 text-sm ${
-                          isDark ? "text-white/40" : "text-black/35"
-                        }`}
-                      >
-                        / ay
-                      </span>
+                      <span className="pb-1 text-sm text-black/35">/ ay</span>
                     </div>
                   ) : plan.id === "CORPORATE" ? (
                     <p className="text-xl font-semibold">Özel fiyatlandırma</p>
                   ) : (
                     <p className="text-xl font-semibold">Ücretsiz</p>
                   )}
-                  <p
-                    className={`mt-1 text-xs ${
-                      isDark ? "text-white/35" : "text-black/35"
-                    }`}
-                  >
+                  <p className="mt-1 text-xs text-black/35">
                     Teklif kotası:{" "}
                     {plan.monthlyOfferQuota === null
                       ? "Sınırsız"
@@ -335,20 +355,10 @@ export function PlanManager({
                   {PLAN_FEATURES[plan.id].map((feature) => (
                     <li
                       key={feature}
-                      className={`flex items-start gap-2.5 text-sm leading-6 ${
-                        isDark ? "text-white/70" : "text-black/55"
-                      }`}
+                      className="flex items-start gap-2.5 text-sm leading-6 text-black/55"
                     >
-                      <span
-                        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${
-                          isDark ? "bg-white/10" : "bg-[#e4f4df]"
-                        }`}
-                      >
-                        <Check
-                          className={`h-3 w-3 ${
-                            isDark ? "text-[#c4f3bb]" : "text-[#356d3a]"
-                          }`}
-                        />
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f4df]">
+                        <Check className="h-3 w-3 text-[#356d3a]" />
                       </span>
                       {feature}
                     </li>
@@ -357,14 +367,20 @@ export function PlanManager({
 
                 <button
                   type="button"
-                  disabled={isCurrent || loadingKey === plan.id}
-                  onClick={() =>
-                    runAction(plan.id, {
-                      action: "upgrade",
-                      planTier: plan.id as PlanTierId,
-                    })
+                  disabled={
+                    isCurrent ||
+                    loadingKey === plan.id ||
+                    plan.id !== "STANDARD"
                   }
-                  className={`mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-30 ${visual.button}`}
+                  onClick={() => {
+                    if (plan.id === "STANDARD") {
+                      void runAction(plan.id, {
+                        action: "upgrade",
+                        planTier: plan.id as PlanTierId,
+                      });
+                    }
+                  }}
+                  className={`mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${visual.button}`}
                 >
                   {loadingKey === plan.id ? (
                     <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -373,14 +389,12 @@ export function PlanManager({
                       Aktif plan
                       <Check className="h-4 w-4" />
                     </>
+                  ) : plan.id === "CORPORATE" ? (
+                    "Kurumsal · ödeme yakında"
+                  ) : plan.priceTry ? (
+                    `₺${plan.priceTry}/ay · ödeme yakında`
                   ) : (
-                    <>
-                      {plan.priceTry
-                        ? `₺${plan.priceTry}/ay — Seç`
-                        : plan.id === "CORPORATE"
-                          ? "İletişime geç"
-                          : "Ücretsiz başla"}
-                    </>
+                    "Ücretsiz başla"
                   )}
                 </button>
               </div>
@@ -403,6 +417,7 @@ export function PlanManager({
             </h3>
             <p className="text-sm text-[#3730a3]/75">
               Premium almak istemeyen firmalar için tek seferlik paketler.
+              Ödeme bağlanınca buradan satın alınabilecek.
             </p>
           </div>
         </div>
@@ -412,23 +427,23 @@ export function PlanManager({
             <button
               key={packKey}
               type="button"
-              disabled={loadingKey === packKey}
-              onClick={() =>
-                runAction(packKey, { action: "buy-credits", pack: packKey })
-              }
-              className="rounded-[22px] border border-white/60 bg-white/80 p-5 text-left transition hover:bg-white"
+              disabled
+              title="Ödeme altyapısı yakında"
+              className="cursor-not-allowed rounded-[22px] border border-white/60 bg-white/80 p-5 text-left opacity-70"
             >
               <p className="font-semibold text-[#312e81]">{pack.label}</p>
               <p className="mt-2 text-sm text-[#4338ca]">₺{pack.priceTry}</p>
+              <p className="mt-2 text-[11px] font-medium text-[#6366f1]">
+                Ödeme yakında
+              </p>
             </button>
           ))}
         </div>
       </section>
 
       <p className="text-xs leading-5 text-black/35">
-        Ödeme entegrasyonu henüz bağlanmadı. Plan yükseltme yalnızca{" "}
-        <code className="rounded bg-black/[0.05] px-1">ALLOW_MOCK_UPGRADE=true</code>{" "}
-        iken çalışır. Ek teklif paketleri geliştirme amaçlı anında uygulanır.
+        Ödeme altyapısı henüz bağlı değil. Ücretli plan yükseltmeleri ve ek
+        paketler yakında açılacak; fiyatlar bilgilendirme amaçlıdır.
       </p>
     </div>
   );

@@ -11,6 +11,10 @@ export function estimateCompanyMatches(request: ParsedRequest): MatchEstimate {
     machinery: 6,
     furniture: 9,
     technology: 11,
+    appliances: 9,
+    health: 7,
+    baby: 6,
+    "home-kitchen": 8,
     services: 7,
     "real-estate": 8,
   };

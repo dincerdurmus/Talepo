@@ -11,6 +11,7 @@ export const FEATURE_META: Record<
   instant_request_access: {
     label: "Anında talep erişimi",
     description: "Yeni talepleri 24 saat beklemeden görün.",
+    surface: "/panel/talepler",
   },
   ai_offer_assistant: {
     label: "AI teklif asistanı",
@@ -20,7 +21,7 @@ export const FEATURE_META: Record<
   advanced_ai_pricing: {
     label: "Gelişmiş AI fiyat analizi",
     description: "Kategori ve bölge bazlı fiyat aralığı analizi.",
-    surface: "/panel/asistan",
+    surface: "/panel/asistan?tab=fiyat",
   },
   alert_rules: {
     label: "Talep bildirim kuralları",
@@ -44,7 +45,7 @@ export const FEATURE_META: Record<
   feature_request_boost: {
     label: "Talep öne çıkarma",
     description:
-      "Alıcı tarafı boost. FAZ 3’te ödemeye bağlanacak; şu an entitlement ile kontrol edilir.",
+      "Talebinizi keşifte öne çıkarın. Ödeme altyapısı bağlanınca ücretli olarak açılacak.",
   },
 };
 

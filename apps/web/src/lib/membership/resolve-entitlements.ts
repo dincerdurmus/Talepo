@@ -2,8 +2,11 @@ import { prisma } from "@/lib/prisma";
 
 import { featuresForPlan } from "./entitlements";
 import {
+  buildPersonalPlanSnapshot,
+  resolveEffectivePlanTier,
+} from "./plan-tier-utils";
+import {
   getPlanDefinition,
-  isPaidPlan,
   type PlanTierId,
 } from "./plans";
 import type {
@@ -28,26 +31,6 @@ function asPlanTier(value: string | null | undefined): PlanTierId {
   }
 
   return "STANDARD";
-}
-
-/**
- * Resolve effective plan after expiry.
- * Persisted planTier is left untouched — only effective tier changes.
- */
-export function resolveEffectivePlanTier(
-  storedPlanTier: PlanTierId,
-  expiresAt: Date | null | undefined,
-  now: Date,
-): { effectivePlanTier: PlanTierId; isExpired: boolean } {
-  if (!isPaidPlan(storedPlanTier)) {
-    return { effectivePlanTier: "STANDARD", isExpired: false };
-  }
-
-  if (expiresAt && expiresAt.getTime() <= now.getTime()) {
-    return { effectivePlanTier: "STANDARD", isExpired: true };
-  }
-
-  return { effectivePlanTier: storedPlanTier, isExpired: false };
 }
 
 function buildQuota(
@@ -83,6 +66,7 @@ function buildQuota(
  * Central entitlement resolver (company-first).
  *
  * Active company membership → company plan, company quota, company bonus.
+ * User.planTier is ignored for supplier/team features in company context.
  * No company → user plan / quota / bonus.
  * User + company bonuses are never summed.
  */
@@ -217,6 +201,12 @@ export async function resolveEntitlements(
   );
   const plan = getPlanDefinition(effectivePlanTier);
 
+  const personalPlan = buildPersonalPlanSnapshot(
+    asPlanTier(user.planTier),
+    user.planExpiresAt,
+    now,
+  );
+
   return {
     userId,
     subject,
@@ -228,5 +218,8 @@ export async function resolveEntitlements(
     features: featuresForPlan(effectivePlanTier),
     quota: buildQuota(plan.monthlyOfferQuota, usedOffersThisMonth, bonusCredits),
     requestAccessDelayHours: plan.requestAccessDelayHours,
+    personalPlan,
   };
 }
+
+export { resolveEffectivePlanTier } from "./plan-tier-utils";

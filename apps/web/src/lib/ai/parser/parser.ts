@@ -7,11 +7,13 @@ import {
   detectDeliveryDays,
   detectQuantity,
 } from "./entity";
+import { normalizeCasualTurkish } from "./normalize-casual-tr";
 
 export function parseRequest(text: string): ParsedRequest {
-  const categoryId = detectCategoryId(text);
-  const quantity = detectQuantity(text, categoryId);
-  const attributes = detectAttributes(text, categoryId);
+  const normalizedText = normalizeCasualTurkish(text);
+  const categoryId = detectCategoryId(normalizedText);
+  const quantity = detectQuantity(normalizedText, categoryId);
+  const attributes = detectAttributes(normalizedText, categoryId);
 
   if (categoryId === "automotive" && !attributes.needType) {
     attributes.needType = "vehicle";
@@ -29,9 +31,9 @@ export function parseRequest(text: string): ParsedRequest {
     subcategory: resolveSubcategory(categoryId, attributes),
     quantity: quantity.quantity,
     unit: quantity.unit,
-    city: detectCity(text),
-    deliveryDays: detectDeliveryDays(text, categoryId),
-    budget: detectBudget(text),
+    city: detectCity(normalizedText),
+    deliveryDays: detectDeliveryDays(normalizedText, categoryId),
+    budget: detectBudget(normalizedText),
     attributes,
   };
 }

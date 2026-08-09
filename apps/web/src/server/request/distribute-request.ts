@@ -202,6 +202,115 @@ export async function distributeRequestToCompanies(
   };
 }
 
+/**
+ * Silent backfill: score open requests against one company and create missing
+ * RequestMatch rows (no notifications — safe to run on explore page load).
+ */
+export async function backfillMatchesForCompany(companyId: string) {
+  const company = await prisma.company.findFirst({
+    where: {
+      id: companyId,
+      deletedAt: null,
+      status: { in: ["ACTIVE", "PENDING_VERIFICATION"] },
+    },
+    select: {
+      id: true,
+      city: true,
+      categories: { select: { categoryId: true } },
+    },
+  });
+
+  if (!company) return { created: 0 };
+
+  const categoryIds = company.categories.map((row) => row.categoryId);
+  if (categoryIds.length === 0 && !normalizeCity(company.city)) {
+    return { created: 0 };
+  }
+
+  const memberUserIds = (
+    await prisma.companyMember.findMany({
+      where: { companyId, status: "ACTIVE" },
+      select: { userId: true },
+    })
+  ).map((row) => row.userId);
+
+  const alreadyMatched = await prisma.requestMatch.findMany({
+    where: { companyId },
+    select: { requestId: true },
+  });
+  const matchedIds = alreadyMatched.map((row) => row.requestId);
+
+  const candidates = await prisma.request.findMany({
+    where: {
+      deletedAt: null,
+      status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      ...(matchedIds.length ? { id: { notIn: matchedIds } } : {}),
+      ...(memberUserIds.length
+        ? { createdById: { notIn: memberUserIds } }
+        : {}),
+      OR: [
+        ...(categoryIds.length
+          ? [{ categoryId: { in: categoryIds } }]
+          : []),
+        ...(normalizeCity(company.city)
+          ? [{ city: { not: null } }]
+          : []),
+      ],
+    },
+    select: {
+      id: true,
+      city: true,
+      categoryId: true,
+      category: { select: { name: true } },
+    },
+    take: 100,
+    orderBy: { publishedAt: "desc" },
+  });
+
+  const rows: {
+    requestId: string;
+    companyId: string;
+    score: number;
+    matchReason: string;
+  }[] = [];
+
+  for (const request of candidates) {
+    const categoryHit = categoryIds.includes(request.categoryId);
+    const cityHit = citiesMatch(request.city, company.city);
+
+    if (!categoryHit && !cityHit) continue;
+
+    let score = 50;
+    let matchReason = company.city
+      ? `Şehir (${company.city})`
+      : "Şehir eşleşmesi";
+
+    if (categoryHit && cityHit) {
+      score = 100;
+      matchReason = `Kategori (${request.category.name}) + şehir`;
+    } else if (categoryHit) {
+      score = 80;
+      matchReason = `Kategori (${request.category.name})`;
+    }
+
+    rows.push({
+      requestId: request.id,
+      companyId,
+      score,
+      matchReason,
+    });
+  }
+
+  if (rows.length === 0) return { created: 0 };
+
+  const result = await prisma.requestMatch.createMany({
+    data: rows,
+    skipDuplicates: true,
+  });
+
+  return { created: result.count };
+}
+
 /** Live count for AI panel — category companies + same-city fallback. */
 export async function countMatchingCompanies(input: {
   categorySlug: string;

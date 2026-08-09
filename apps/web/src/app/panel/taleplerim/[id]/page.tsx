@@ -11,7 +11,9 @@ import {
   WalletCards,
 } from "lucide-react";
 
+import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
+import { displayRequestFieldValue } from "@/lib/field-display";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { canEditRequestStatus } from "@/server/request/update-request";
@@ -42,7 +44,7 @@ export default async function RequestDetailPage({
       deletedAt: null,
     },
     include: {
-      category: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
       fieldValues: {
         orderBy: { field: { sortOrder: "asc" } },
         include: { field: true },
@@ -62,6 +64,7 @@ export default async function RequestDetailPage({
 
   const editable = canEditRequestStatus(request.status);
   const matchedCompanyCount = request._count.matches;
+  const categorySlug = request.category.slug;
 
   return (
     <>
@@ -83,6 +86,7 @@ export default async function RequestDetailPage({
               Talebimi düzelt
             </Link>
           )}
+          <DeleteRequestButton requestId={request.id} variant="header" />
           <span className="rounded-full bg-[#e4f4df] px-3 py-2 text-xs font-semibold text-[#356d3a]">
             {statusLabels[request.status] ?? request.status}
           </span>
@@ -148,7 +152,10 @@ export default async function RequestDetailPage({
                       {value.field.label}
                     </p>
                     <p className="mt-2 font-semibold">
-                      {displayFieldValue(value)}
+                      {displayRequestFieldValue({
+                        ...value,
+                        categoryId: categorySlug,
+                      })}
                     </p>
                   </div>
                 ))}
@@ -259,6 +266,9 @@ export default async function RequestDetailPage({
                 Talebimi düzelt
               </Link>
             )}
+            <div className={editable ? "" : "mt-5"}>
+              <DeleteRequestButton requestId={request.id} variant="aside" />
+            </div>
           </div>
         </aside>
       </div>
@@ -288,21 +298,6 @@ function SummaryRow({
       <span className="text-sm font-semibold">{value}</span>
     </div>
   );
-}
-
-function displayFieldValue(value: {
-  textValue: string | null;
-  numberValue: unknown;
-  booleanValue: boolean | null;
-  dateValue: Date | null;
-  jsonValue: unknown;
-}) {
-  if (value.textValue) return value.textValue;
-  if (value.numberValue !== null) return String(value.numberValue);
-  if (value.booleanValue !== null) return value.booleanValue ? "Evet" : "Hayır";
-  if (value.dateValue) return formatDate(value.dateValue);
-  if (value.jsonValue) return JSON.stringify(value.jsonValue);
-  return "—";
 }
 
 function formatDate(date: Date) {
