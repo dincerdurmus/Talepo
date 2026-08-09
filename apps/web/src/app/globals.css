@@ -1,79 +1,173 @@
 @import "tailwindcss";
 
+/* ─── Talepo design tokens ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --talepo-ink: #0f1f1d;
+  --talepo-ink-muted: rgba(15, 31, 29, 0.55);
+  --talepo-ink-soft: rgba(15, 31, 29, 0.4);
+  --talepo-teal: #0f766e;
+  --talepo-teal-bright: #0d9488;
+  --talepo-teal-deep: #115e59;
+  --talepo-surface: #f4f7f6;
+  --talepo-surface-elevated: #ffffff;
+  --talepo-surface-tint: #f7faf9;
+  --talepo-border: rgba(15, 118, 110, 0.12);
+  --talepo-border-soft: rgba(15, 31, 29, 0.08);
+  --talepo-shadow-sm: 0 8px 24px rgba(15, 31, 29, 0.04);
+  --talepo-shadow-md: 0 16px 48px rgba(15, 31, 29, 0.06);
+  --talepo-shadow-lg: 0 24px 70px rgba(15, 118, 110, 0.08);
+  --talepo-radius-card: 1.25rem;
+  --talepo-radius-pill: 9999px;
+
+  --background: var(--talepo-surface);
+  --foreground: var(--talepo-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-talepo-ink: var(--talepo-ink);
+  --color-talepo-teal: var(--talepo-teal);
+  --color-talepo-teal-bright: var(--talepo-teal-bright);
+  --color-talepo-surface: var(--talepo-surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-@keyframes talepo-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(18px, -14px, 0) scale(1.06);
-  }
+/* ─── Shared surface utilities ─── */
+.talepo-card {
+  border: 1px solid var(--talepo-border-soft);
+  background: var(--talepo-surface-elevated);
+  border-radius: var(--talepo-radius-card);
+  box-shadow: var(--talepo-shadow-sm);
 }
 
-@keyframes talepo-float-alt {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(-16px, 12px, 0) scale(1.05);
-  }
+.talepo-card-soft {
+  border: 1px solid var(--talepo-border);
+  background: var(--talepo-surface-elevated);
+  border-radius: 1.5rem;
+  box-shadow: var(--talepo-shadow-md);
+}
+
+.talepo-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--plan-primary, var(--talepo-teal));
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.talepo-btn-primary:hover {
+  background: var(--plan-primary-hover, var(--talepo-teal-deep));
+}
+
+/* ─── Active membership plan theme (panel chrome) ─── */
+.talepo-plan-theme {
+  --plan-primary: #3f5c57;
+  --plan-primary-hover: #2f4743;
+  --plan-primary-soft: #eef4f3;
+  --plan-accent: #5a7a74;
+  --plan-ring: rgba(63, 92, 87, 0.28);
+  --plan-glow: rgba(63, 92, 87, 0.14);
+  --plan-sidebar-glow: rgba(90, 122, 116, 0.22);
+  --plan-on-primary: #ffffff;
+}
+
+.talepo-plan-cta {
+  background: var(--plan-primary);
+  color: var(--plan-on-primary);
+  box-shadow: 0 8px 18px var(--plan-glow);
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.talepo-plan-cta:hover {
+  background: var(--plan-primary-hover);
+}
+
+.talepo-plan-dot {
+  background: var(--plan-primary);
+}
+
+.talepo-plan-accent-bar {
+  background: linear-gradient(
+    90deg,
+    var(--plan-accent),
+    var(--plan-primary)
+  );
+}
+
+.talepo-plan-soft {
+  background: var(--plan-primary-soft);
+}
+
+.talepo-plan-nav-active {
+  background: var(--plan-primary);
+  color: var(--plan-on-primary);
+}
+
+.talepo-plan-focus-ring:focus-visible {
+  outline: 2px solid var(--plan-primary);
+  outline-offset: 2px;
+}
+
+.talepo-btn-ink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  background: var(--talepo-ink);
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.talepo-btn-ink:hover {
+  background: #0a1614;
+}
+
+.talepo-cloud-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: var(--talepo-radius-pill);
+  border: 1px solid var(--talepo-border-soft);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(8px);
+}
+
+.talepo-page-eyebrow {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(15, 118, 110, 0.55);
+}
+
+.talepo-page-title {
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: var(--talepo-ink);
 }
 
 @keyframes talepo-rise {
   from {
     transform: translateY(12px);
+    opacity: 0;
   }
   to {
     transform: translateY(0);
+    opacity: 1;
   }
-}
-
-@keyframes talepo-pulse-soft {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
-.talepo-blob-a {
-  animation: talepo-float 14s ease-in-out infinite;
-}
-
-.talepo-blob-b {
-  animation: talepo-float-alt 18s ease-in-out infinite;
-}
-
-.talepo-blob-c {
-  animation: talepo-pulse-soft 8s ease-in-out infinite;
 }
 
 .talepo-rise {
@@ -91,6 +185,118 @@ body {
 
 .talepo-rise-delay-3 {
   animation-delay: 0.24s;
+}
+
+/* Homepage hero — atmospheric plane + composer entrance */
+@keyframes talepo-hero-atmosphere {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translate3d(2%, -1.5%, 0) scale(1.04);
+    opacity: 0.85;
+  }
+}
+
+@keyframes talepo-composer-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.talepo-hero-atmosphere {
+  animation: talepo-hero-atmosphere 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.talepo-hero-atmosphere-slow {
+  animation: talepo-hero-atmosphere 26s ease-in-out infinite reverse;
+  will-change: transform, opacity;
+}
+
+.talepo-composer-enter {
+  animation: talepo-composer-enter 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 0.22s;
+}
+
+/* Legacy hero illustration utilities (kept for unused assets) */
+@keyframes talepo-hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes talepo-hero-flow {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes talepo-hero-flow-dash {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+@keyframes talepo-hero-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes talepo-hero-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.talepo-hero-enter {
+  opacity: 0;
+  animation: talepo-hero-enter 0.7s ease-out both;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.talepo-hero-flow {
+  opacity: 0;
+  animation:
+    talepo-hero-flow 0.6s ease-out both,
+    talepo-hero-flow-dash 4.5s linear 0.8s infinite;
+}
+
+.talepo-hero-float {
+  animation: talepo-hero-float 4.2s ease-in-out 0.9s infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.talepo-hero-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: talepo-hero-pulse 2.8s ease-in-out 1s infinite;
 }
 
 /* /talep — AI Core side panel */
@@ -194,6 +400,20 @@ body {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
+/* /talep companion — light score ring on soft surfaces */
+.talepo-ai-score-ring--light {
+  width: 72px;
+  height: 72px;
+  background:
+    radial-gradient(circle at center, #ffffff 58%, transparent 59%),
+    conic-gradient(
+      from -90deg,
+      #0f766e calc(var(--progress) * 1%),
+      rgba(15, 31, 29, 0.08) 0
+    );
+  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.1);
+}
+
 .talepo-ai-metric {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
@@ -203,8 +423,7 @@ body {
 .talepo-ai-version {
   position: relative;
   border: 1px solid rgba(15, 118, 110, 0.22);
-  background:
-    linear-gradient(180deg, #ffffff 0%, #f4f7f6 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7f6 100%);
   box-shadow:
     0 18px 40px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.4) inset;
@@ -222,12 +441,23 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .talepo-blob-a,
-  .talepo-blob-b,
-  .talepo-blob-c,
   .talepo-rise,
   .talepo-ai-status-dot,
-  .talepo-ai-panel::after {
+  .talepo-ai-panel::after,
+  .talepo-hero-enter,
+  .talepo-hero-flow,
+  .talepo-hero-float,
+  .talepo-hero-pulse,
+  .talepo-hero-atmosphere,
+  .talepo-hero-atmosphere-slow,
+  .talepo-composer-enter {
     animation: none !important;
+  }
+
+  .talepo-hero-enter,
+  .talepo-hero-flow,
+  .talepo-composer-enter {
+    opacity: 1;
+    transform: none;
   }
 }

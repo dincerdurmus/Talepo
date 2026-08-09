@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function GizlilikPolitikasiPage() {
   return (
-    <main className="min-h-screen bg-[#f3f3ef] px-5 py-12 text-[#151515] sm:px-8">
+    <main className="min-h-screen bg-[#f4f7f6] px-5 py-12 text-[#0f1f1d] sm:px-8">
       <div className="mx-auto max-w-2xl">
         <Link
           href="/"

@@ -5,7 +5,7 @@ import {
   getCompanyContextOptions,
   PERSONAL_CONTEXT_VALUE,
 } from "@/lib/membership/company-context";
-import { OFFER_CREDIT_PACKS, PLAN_DEFINITIONS, type PlanTierId } from "@/lib/membership/plans";
+import { OFFER_CREDIT_PACKS, PLAN_DEFINITIONS, planTierRank, type PlanTierId } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
@@ -23,9 +23,34 @@ export async function GET() {
       await getCompanyContextOptions(),
     );
 
+    let companies: { id: string; name: string }[] = [];
+    try {
+      const memberships = await prisma.companyMember.findMany({
+        where: {
+          userId: user.id,
+          status: "ACTIVE",
+          company: {
+            deletedAt: null,
+            status: { in: ["ACTIVE", "PENDING_VERIFICATION", "DRAFT"] },
+          },
+        },
+        orderBy: { joinedAt: "desc" },
+        select: {
+          company: { select: { id: true, name: true } },
+        },
+      });
+      companies = memberships.map((item) => ({
+        id: item.company.id,
+        name: item.company.name,
+      }));
+    } catch (error) {
+      console.error("[membership] Firma listesi alınamadı:", error);
+    }
+
     return NextResponse.json({
       ok: true,
       entitlements: toEntitlementDTO(entitlements),
+      companies,
       membership: {
         userId: entitlements.userId,
         planTier: entitlements.effectivePlanTier,
@@ -138,13 +163,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, message: "Geçersiz plan." }, { status: 400 });
       }
 
-      const expiresAt = new Date();
-      expiresAt.setMonth(expiresAt.getMonth() + 1);
-
       const ctx = await resolveEntitlements(
         user.id,
         await getCompanyContextOptions(),
       );
+
+      if (
+        tier !== "STANDARD" &&
+        planTierRank(tier) <= planTierRank(ctx.effectivePlanTier)
+      ) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Yalnızca daha üst bir plana yükseltme yapılabilir.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 1);
 
       if (ctx.subject.type === "company") {
         await prisma.company.update({

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 
 import { CompanyCategoriesForm } from "@/components/panel/CompanyCategoriesForm";
 import { CompanySettingsForm } from "@/components/panel/CompanySettingsForm";
@@ -65,14 +65,7 @@ export default async function FirmaAyarlariPage() {
   return (
     <>
       <section className="py-4 sm:py-6">
-        <Link
-          href="/panel"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-black/45 transition hover:text-black"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Panele dön
-        </Link>
-        <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
               Firma ayarları

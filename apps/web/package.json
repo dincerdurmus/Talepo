@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "verify:core": "npx --yes tsx scripts/verify-core.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

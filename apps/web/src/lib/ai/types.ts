@@ -7,6 +7,8 @@ export type ParsedRequest = {
   city?: string;
   deliveryDays?: number;
   budget?: number;
+  /** Human-readable budget for form / AI panel (may be a range). */
+  budgetDisplay?: string;
   attributes: Record<string, string | number | boolean>;
 };
 

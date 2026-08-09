@@ -1,4 +1,8 @@
 import {
+  formatNeighborhoodsLabel,
+  parseNeighborhoods,
+} from "@/lib/geo/neighborhoods";
+import {
   REQUEST_CATEGORIES,
   getCategoryById,
   type DynamicFieldOption,
@@ -84,6 +88,12 @@ export function displayRequestFieldValue(value: {
   categoryId?: string | null;
 }): string {
   if (value.textValue) {
+    if (value.field?.key === "neighborhoods") {
+      const mahalleler = parseNeighborhoods(value.textValue);
+      return mahalleler.length
+        ? formatNeighborhoodsLabel(mahalleler)
+        : value.textValue;
+    }
     return resolveFieldOptionLabel({
       value: value.textValue,
       fieldKey: value.field?.key,

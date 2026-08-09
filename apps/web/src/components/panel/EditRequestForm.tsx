@@ -14,11 +14,21 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { RealEstateLocationFields } from "@/components/request/RealEstateLocationFields";
+import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { runTalepoAiCore } from "@/lib/ai";
 import {
   composeProfessionalDescription,
   composeRequestTitle,
 } from "@/lib/ai/request-text-composer";
+import {
+  neighborhoodsFieldValue,
+  realEstateLocationError,
+  realEstateLocationToCity,
+  type RealEstateLocation,
+} from "@/lib/geo/real-estate-location";
+import { parseNeighborhoods } from "@/lib/geo/neighborhoods";
+import { parseRealEstateCity } from "@/lib/geo/turkey-districts";
 import {
   getCategoryById,
   getVisibleCategoryFields,
@@ -66,10 +76,26 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
   const [isUrgent, setIsUrgent] = useState(initial.isUrgent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const initialParsed = parseRealEstateCity(initial.city);
+  const [realEstateLocation, setRealEstateLocation] =
+    useState<RealEstateLocation>({
+      il: initialParsed?.il ?? "",
+      ilce: initialParsed?.ilce ?? "",
+      mahalleler: parseNeighborhoods(initial.fieldValues.neighborhoods),
+    });
+
+  function updateRealEstateLocation(next: RealEstateLocation) {
+    setRealEstateLocation(next);
+    setManualValues((current) => ({
+      ...current,
+      neighborhoods: neighborhoodsFieldValue(next),
+    }));
+  }
 
   const aiResult = useMemo(() => runTalepoAiCore(requestText), [requestText]);
   // Düzenlemede kategori sabit kalır (oluşturma anındaki kategori).
   const activeCategoryId = initial.categorySlug || aiResult.parsed.categoryId;
+  const isRealEstate = activeCategoryId === "real-estate";
   const selectedCategory = getCategoryById(activeCategoryId);
   const visibleCommonFields = selectedCategory.commonFields.map(
     resolveCommonField,
@@ -79,20 +105,16 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
   );
 
   const dynamicValues = useMemo(() => {
+    const category = getCategoryById(activeCategoryId);
     const values: Record<string, string> = {};
-    for (const field of selectedCategory.fields) {
+    for (const field of category.fields) {
       const aiValue = aiResult.parsed.attributes[field.key];
       values[field.key] =
         manualValues[field.key] ??
         (aiValue === undefined || aiValue === null ? "" : String(aiValue));
     }
     return withCategoryFieldDefaults(activeCategoryId, values);
-  }, [
-    activeCategoryId,
-    selectedCategory.fields,
-    aiResult.parsed.attributes,
-    manualValues,
-  ]);
+  }, [activeCategoryId, aiResult.parsed.attributes, manualValues]);
 
   const mergedCommonDraft: CommonDraft = {
     title:
@@ -108,13 +130,28 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
     quantity: visibleCommonFieldKeys.has("quantity")
       ? commonDraft.quantity
       : "",
-    city: visibleCommonFieldKeys.has("city")
-      ? commonDraft.city || aiResult.parsed.city || ""
-      : "",
+    city: isRealEstate
+      ? realEstateLocationToCity(realEstateLocation) ||
+        commonDraft.city ||
+        aiResult.parsed.city ||
+        ""
+      : visibleCommonFieldKeys.has("city")
+        ? commonDraft.city || aiResult.parsed.city || ""
+        : "",
     delivery: visibleCommonFieldKeys.has("delivery")
       ? commonDraft.delivery
       : "",
-    budget: visibleCommonFieldKeys.has("budget") ? commonDraft.budget : "",
+    budget: visibleCommonFieldKeys.has("budget")
+      ? commonDraft.budget ||
+        aiResult.parsed.budgetDisplay ||
+        (aiResult.parsed.budget != null
+          ? new Intl.NumberFormat("tr-TR", {
+              style: "currency",
+              currency: "TRY",
+              maximumFractionDigits: 0,
+            }).format(aiResult.parsed.budget)
+          : "")
+      : "",
   };
 
   const visibleDynamicFields = getVisibleCategoryFields(
@@ -128,6 +165,10 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
       isFieldRequired(field, dynamicValues) &&
       !dynamicValues[field.key]?.trim(),
   );
+
+  const realEstateLocationMissing = isRealEstate
+    ? Boolean(realEstateLocationError(realEstateLocation))
+    : false;
 
   const professionalText = composeProfessionalDescription({
     categoryId: activeCategoryId,
@@ -145,7 +186,13 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
   });
 
   async function saveRequest() {
-    if (isSaving || missingFields.length > 0) return;
+    if (
+      isSaving ||
+      missingFields.length > 0 ||
+      realEstateLocationMissing
+    ) {
+      return;
+    }
     setIsSaving(true);
     setSaveError(null);
 
@@ -163,6 +210,7 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
             description: selectedCategory.description,
           },
           city: mergedCommonDraft.city,
+          district: isRealEstate ? realEstateLocation.ilce : undefined,
           quantity: mergedCommonDraft.quantity,
           delivery: mergedCommonDraft.delivery,
           budget: mergedCommonDraft.budget,
@@ -174,11 +222,24 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
           ].join("\n"),
           isUrgent,
           publishVersion: "ai",
-          fields: visibleDynamicFields.map((field) => ({
-            ...field,
-            required: isFieldRequired(field, dynamicValues),
-            value: dynamicValues[field.key] ?? "",
-          })),
+          fields: [
+            ...visibleDynamicFields.map((field) => ({
+              ...field,
+              required: isFieldRequired(field, dynamicValues),
+              value: dynamicValues[field.key] ?? "",
+            })),
+            ...(isRealEstate
+              ? [
+                  {
+                    key: "neighborhoods",
+                    label: "Mahalle",
+                    type: "text" as const,
+                    required: false,
+                    value: neighborhoodsFieldValue(realEstateLocation),
+                  },
+                ]
+              : []),
+          ],
         }),
       });
 
@@ -219,24 +280,21 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
           <ArrowLeft className="h-4 w-4" />
           Talebe dön
         </Link>
-        <span className="rounded-full bg-gradient-to-r from-emerald-400 to-sky-400 px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
+        <span className="rounded-full bg-[#0f766e] px-3 py-1.5 text-xs font-semibold text-white shadow-sm">
           Talebi düzenliyorsunuz
         </span>
       </header>
 
-      <section className="relative overflow-hidden rounded-[30px] border border-white/80 bg-gradient-to-br from-white via-[#f0fdf9] to-[#e0f2fe] p-6 shadow-[0_22px_70px_rgba(14,116,144,0.12)] sm:p-8">
-        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-sky-300/35 blur-[70px]" />
-        <div className="pointer-events-none absolute -bottom-20 left-0 h-56 w-56 rounded-full bg-emerald-300/30 blur-[70px]" />
-
+      <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_16px_48px_rgba(15,31,29,0.05)] sm:p-8">
         <div className="relative flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-gradient-to-br from-teal-500 to-sky-500 text-white shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-sm">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#0f1f1d] sm:text-3xl">
               Talebimi düzelt
             </h1>
-            <p className="mt-1 text-sm text-black/45">
+            <p className="mt-1 text-sm text-teal-950/45">
               Metni veya alanları güncelleyin, sonra kaydedin.
             </p>
           </div>
@@ -270,27 +328,78 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
         </div>
 
         <div className="relative mt-6 grid gap-4 sm:grid-cols-2">
-          {visibleCommonFields.map((field) => (
-            <label
-              key={field.key}
-              className={field.key === "title" ? "sm:col-span-2" : ""}
-            >
-              <span className="mb-2 block text-xs font-medium text-black/40">
-                {field.label}
-              </span>
-              <input
-                value={mergedCommonDraft[field.key]}
-                onChange={(event) =>
-                  setCommonDraft((current) => ({
-                    ...current,
-                    [field.key]: event.target.value,
-                  }))
-                }
-                placeholder={field.placeholder}
-                className="h-12 w-full rounded-[17px] border border-teal-900/10 bg-gradient-to-br from-white to-sky-50/60 px-4 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
-              />
-            </label>
-          ))}
+          {visibleCommonFields.map((field) => {
+            if (isRealEstate && field.key === "city") {
+              return (
+                <RealEstateLocationFields
+                  key="real-estate-location"
+                  il={realEstateLocation.il}
+                  ilce={realEstateLocation.ilce}
+                  mahalleler={realEstateLocation.mahalleler}
+                  onIlChange={(il) =>
+                    updateRealEstateLocation({
+                      il,
+                      ilce: "",
+                      mahalleler: [],
+                    })
+                  }
+                  onIlceChange={(ilce) =>
+                    updateRealEstateLocation({
+                      il: realEstateLocation.il,
+                      ilce,
+                      mahalleler: [],
+                    })
+                  }
+                  onMahallelerChange={(mahalleler) =>
+                    updateRealEstateLocation({
+                      il: realEstateLocation.il,
+                      ilce: realEstateLocation.ilce,
+                      mahalleler,
+                    })
+                  }
+                  selectClassName="h-12 w-full appearance-none rounded-[17px] border border-teal-900/10 bg-[#f7faf9] px-4 pr-10 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
+                  labelClassName="text-xs font-medium text-black/40"
+                  neighborhoodControlClassName="min-h-12 w-full rounded-[17px] border border-teal-900/10 bg-[#f7faf9] px-3 py-2 text-sm outline-none transition focus-within:border-teal-500/40 focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
+                />
+              );
+            }
+
+            const fieldClassName =
+              "h-12 w-full rounded-[17px] border border-teal-900/10 bg-[#f7faf9] px-4 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]";
+
+            const setFieldValue = (next: string) =>
+              setCommonDraft((current) => ({
+                ...current,
+                [field.key]: next,
+              }));
+
+            return (
+              <label
+                key={field.key}
+                className={field.key === "title" ? "sm:col-span-2" : ""}
+              >
+                <span className="mb-2 block text-xs font-medium text-black/40">
+                  {field.label}
+                </span>
+                {field.key === "budget" ? (
+                  <TrMoneyInput
+                    value={mergedCommonDraft[field.key]}
+                    onValueChange={setFieldValue}
+                    placeholder={field.placeholder}
+                    allowFreeText
+                    className={fieldClassName}
+                  />
+                ) : (
+                  <input
+                    value={mergedCommonDraft[field.key]}
+                    onChange={(event) => setFieldValue(event.target.value)}
+                    placeholder={field.placeholder}
+                    className={fieldClassName}
+                  />
+                )}
+              </label>
+            );
+          })}
 
           {visibleDynamicFields.map((field) => (
             <DynamicFieldInput
@@ -320,10 +429,15 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
           Acil alıcıyım
         </label>
 
-        {missingFields.length > 0 && (
+        {(missingFields.length > 0 || realEstateLocationMissing) && (
           <div className="relative mt-4 rounded-[18px] border border-[#efb8b0] bg-[#fff1ee] px-4 py-3 text-sm text-[#8b352b]">
             Eksik zorunlu alanlar:{" "}
-            {missingFields.map((field) => field.label).join(", ")}
+            {[
+              ...(realEstateLocationMissing
+                ? [realEstateLocationError(realEstateLocation) ?? "İl / İlçe / Mahalle"]
+                : []),
+              ...missingFields.map((field) => field.label),
+            ].join(", ")}
           </div>
         )}
 
@@ -337,9 +451,11 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
         <div className="relative mt-6 flex flex-wrap gap-3">
           <button
             type="button"
-            disabled={isSaving || missingFields.length > 0}
+            disabled={
+              isSaving || missingFields.length > 0 || realEstateLocationMissing
+            }
             onClick={() => void saveRequest()}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-sky-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {isSaving ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -357,7 +473,7 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
         </div>
       </section>
 
-      <section className="relative overflow-hidden rounded-[30px] bg-gradient-to-br from-[#0f766e] via-[#0c4a6e] to-[#172554] p-6 text-white shadow-[0_24px_70px_rgba(15,118,110,0.25)] sm:p-8">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f766e] via-[#0d9488] to-[#115e59] p-6 text-white shadow-[0_20px_56px_rgba(15,118,110,0.22)] sm:p-8">
         <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-teal-300/20 blur-[70px]" />
         <div className="relative flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-teal-100/70">
           <Sparkles className="h-4 w-4 text-amber-200" />
@@ -366,7 +482,7 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
         <p className="relative mt-4 whitespace-pre-line text-sm leading-7 text-white/75">
           {professionalText}
         </p>
-        {missingFields.length === 0 ? (
+        {missingFields.length === 0 && !realEstateLocationMissing ? (
           <div className="relative mt-4 flex items-center gap-2 text-sm text-emerald-200">
             <Check className="h-4 w-4" />
             Kaydetmeye hazır
@@ -403,7 +519,7 @@ function DynamicFieldInput({
             <select
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              className="h-12 w-full appearance-none rounded-[17px] border border-teal-900/10 bg-gradient-to-br from-white to-sky-50/60 px-4 pr-10 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
+              className="h-12 w-full appearance-none rounded-[17px] border border-teal-900/10 bg-[#f7faf9] px-4 pr-10 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
             >
               <option value="">Seçiniz</option>
               {field.options?.map((option) => (
@@ -420,7 +536,7 @@ function DynamicFieldInput({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={field.placeholder}
-            className="h-12 w-full rounded-[17px] border border-teal-900/10 bg-gradient-to-br from-white to-sky-50/60 px-4 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
+            className="h-12 w-full rounded-[17px] border border-teal-900/10 bg-[#f7faf9] px-4 text-sm font-medium outline-none transition focus:border-teal-500/40 focus:bg-white focus:shadow-[0_0_0_3px_rgba(20,184,166,0.12)]"
           />
         )}
       </div>

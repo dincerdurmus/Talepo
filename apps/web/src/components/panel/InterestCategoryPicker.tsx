@@ -4,18 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 
+import { getCategoryVisual } from "@/lib/visuals/category-visuals";
+
 type CategoryOption = {
   slug: string;
   name: string;
 };
-
-const CHIP_TONES = [
-  "border-[#0d9488]/25 bg-[#e6fffa] text-teal-900 hover:border-teal-600/40",
-  "border-[#d97706]/20 bg-[#fff7ed] text-[#9a5b00] hover:border-[#d97706]/40",
-  "border-[#0284c7]/20 bg-[#e0f2fe] text-[#075985] hover:border-[#0284c7]/40",
-  "border-[#059669]/20 bg-[#ecfdf5] text-[#065f46] hover:border-[#059669]/40",
-  "border-[#b45309]/20 bg-[#fef3c7] text-[#92400e] hover:border-[#b45309]/40",
-];
 
 export function InterestCategoryPicker({
   categories,
@@ -74,9 +68,10 @@ export function InterestCategoryPicker({
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {categories.map((category, index) => {
+          {categories.map((category) => {
             const active = selected.includes(category.slug);
-            const tone = CHIP_TONES[index % CHIP_TONES.length];
+            const look = getCategoryVisual(category.slug);
+            const Icon = look.icon;
             return (
               <button
                 key={category.slug}
@@ -85,10 +80,14 @@ export function InterestCategoryPicker({
                 className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
                   active
                     ? "border-teal-700 bg-teal-700 text-white shadow-sm"
-                    : tone
+                    : `border-teal-900/10 ${look.chip} hover:border-teal-700/30`
                 }`}
               >
-                {active ? <Check className="h-3.5 w-3.5" /> : null}
+                {active ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+                )}
                 {category.name}
               </button>
             );

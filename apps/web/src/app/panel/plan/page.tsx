@@ -48,6 +48,7 @@ export default async function PlanPage() {
       <PlanManager
         entitlements={toEntitlementDTO(entitlements)}
         companies={companies}
+        mockUpgradeEnabled={process.env.ALLOW_MOCK_UPGRADE === "true"}
       />
     </>
   );

@@ -1,14 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { containsBlockedContactInfo, sanitizeCommercialText } from "@/lib/membership/contact-filter";
+import {
+  containsBlockedContactInfo,
+  sanitizeCommercialText,
+} from "@/lib/membership/contact-filter";
 
 import { createNotification } from "../notifications/create-notification";
+import { getSendableConversation } from "./conversation-access";
+import { MessageValidationError } from "./errors";
 
-export class MessageValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "MessageValidationError";
-  }
-}
+export { MessageValidationError };
 
 export async function sendMessage(
   userId: string,
@@ -27,40 +27,7 @@ export async function sendMessage(
     );
   }
 
-  const participant = await prisma.conversationParticipant.findFirst({
-    where: {
-      conversationId,
-      userId,
-      leftAt: null,
-    },
-    include: {
-      conversation: {
-        include: {
-          offer: {
-            select: {
-              status: true,
-              request: { select: { createdById: true, title: true } },
-              submittedById: true,
-            },
-          },
-          participants: {
-            select: { userId: true },
-          },
-        },
-      },
-    },
-  });
-
-  if (!participant) {
-    throw new MessageValidationError("Bu sohbete erişiminiz yok.");
-  }
-
-  if (participant.conversation.offer.status !== "ACCEPTED") {
-    throw new MessageValidationError(
-      "Mesajlaşma yalnızca kabul edilen tekliflerden sonra açılır.",
-    );
-  }
-
+  const access = await getSendableConversation(userId, conversationId);
   const now = new Date();
   const sanitized = sanitizeCommercialText(trimmed);
 
@@ -69,6 +36,7 @@ export async function sendMessage(
       data: {
         conversationId,
         senderUserId: userId,
+        senderCompanyId: access.senderCompanyId,
         content: sanitized,
         type: "TEXT",
       },
@@ -80,14 +48,14 @@ export async function sendMessage(
     });
 
     await tx.conversationParticipant.update({
-      where: { id: participant.id },
+      where: { id: access.participant.id },
       data: { lastReadAt: now },
     });
 
     return created;
   });
 
-  const recipients = participant.conversation.participants
+  const recipients = access.participant.conversation.participants
     .map((item) => item.userId)
     .filter((id): id is string => Boolean(id && id !== userId));
 
@@ -97,7 +65,7 @@ export async function sendMessage(
         userId: recipientId,
         type: "NEW_MESSAGE",
         title: "Yeni mesajınız var",
-        message: `“${participant.conversation.offer.request.title}” sohbetinde yeni mesaj.`,
+        message: `“${access.request.title}” sohbetinde yeni mesaj.`,
         actionUrl: `/panel/mesajlar/${conversationId}`,
       }),
     ),

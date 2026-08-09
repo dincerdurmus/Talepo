@@ -26,14 +26,16 @@ export default async function YeniFirmaPage() {
   return (
     <>
       <section className="py-4 sm:py-6">
-        <Link
-          href={workspace ? "/panel/firma" : "/panel"}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-black/45 transition hover:text-black"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {workspace ? "Firma ayarlarına dön" : "Panele dön"}
-        </Link>
-        <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+        {workspace ? (
+          <Link
+            href="/panel/firma"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-black/45 transition hover:text-black"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Firma ayarlarına dön
+          </Link>
+        ) : null}
+        <h1 className={`text-4xl font-semibold tracking-[-0.05em] sm:text-5xl ${workspace ? "mt-4" : ""}`}>
           Yeni firma oluştur
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">

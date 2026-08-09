@@ -10,6 +10,7 @@ type CreateNotificationInput = {
     | "OFFER_VIEWED"
     | "OFFER_ACCEPTED"
     | "OFFER_REJECTED"
+    | "OFFER_NEGOTIATE"
     | "NEW_MESSAGE"
     | "COMPANY_INVITATION"
     | "COMPANY_MEMBER_JOINED";

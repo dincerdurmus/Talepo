@@ -1,48 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   ArrowRight,
   ClipboardCopy,
   LoaderCircle,
+  Send,
   Sparkles,
   WandSparkles,
 } from "lucide-react";
 
+import type { AssistantRequestOption } from "@/lib/ai/list-assistant-requests";
 import type { OfferAssistantResult } from "@/lib/ai/offer-assistant";
 import { formatTry } from "@/lib/ai/offer-assistant";
 
 export const OFFER_DRAFT_STORAGE_KEY = "talepo_offer_draft";
 
-type RequestOption = {
-  id: string;
-  title: string;
-  city: string | null;
-  isUrgent: boolean;
-  category: { name: string; slug: string };
-};
-
 type AiAssistantPanelProps = {
   hasOfferAssistant: boolean;
   hasAdvancedPricing: boolean;
+  initialRequests: AssistantRequestOption[];
+  initialRequestId?: string | null;
+  initialTab?: "draft" | "pricing";
 };
+
+function resolveInitialSelectedId(
+  requests: AssistantRequestOption[],
+  initialRequestId?: string | null,
+) {
+  if (initialRequestId) return initialRequestId;
+  return requests[0]?.id ?? "";
+}
 
 export function AiAssistantPanel({
   hasOfferAssistant,
   hasAdvancedPricing,
+  initialRequests,
+  initialRequestId,
+  initialTab = "draft",
 }: AiAssistantPanelProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") === "fiyat" ? "pricing" : "draft";
 
-  const [tab, setTab] = useState<"draft" | "pricing">(
-    hasOfferAssistant ? initialTab : "pricing",
+  const lockedToRequest = Boolean(initialRequestId);
+  const lockedRequest =
+    lockedToRequest
+      ? initialRequests.find((item) => item.id === initialRequestId) ??
+        initialRequests[0] ??
+        null
+      : null;
+
+  const [tab, setTab] = useState<"draft" | "pricing">(() => {
+    if (initialRequestId) return "draft";
+    if (!hasOfferAssistant) return "pricing";
+    return initialTab;
+  });
+  const [requests] = useState(() => {
+    if (initialRequestId) {
+      return initialRequests.filter((item) => item.id === initialRequestId);
+    }
+    return initialRequests;
+  });
+  const [selectedId, setSelectedId] = useState(() =>
+    resolveInitialSelectedId(
+      initialRequestId
+        ? initialRequests.filter((item) => item.id === initialRequestId)
+        : initialRequests,
+      initialRequestId,
+    ),
   );
-  const [requests, setRequests] = useState<RequestOption[]>([]);
-  const [loadingRequests, setLoadingRequests] = useState(true);
-  const [selectedId, setSelectedId] = useState("");
   const [pastedText, setPastedText] = useState("");
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,37 +85,8 @@ export function AiAssistantPanel({
     priceLabel: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
-
-  const loadRequests = useCallback(async () => {
-    setLoadingRequests(true);
-    try {
-      const response = await fetch("/api/ai/offer-assistant");
-      const data = (await response.json()) as {
-        ok?: boolean;
-        requests?: RequestOption[];
-      };
-      if (response.ok && data.requests) {
-        setRequests(data.requests);
-        if (data.requests[0] && !selectedId) {
-          setSelectedId(data.requests[0].id);
-        }
-      }
-    } finally {
-      setLoadingRequests(false);
-    }
-  }, [selectedId]);
-
-  useEffect(() => {
-    void loadRequests();
-  }, [loadRequests]);
-
-  useEffect(() => {
-    const preset = searchParams.get("request");
-    if (preset) {
-      setSelectedId(preset);
-      setTab("draft");
-    }
-  }, [searchParams]);
+  const [submittingOffer, setSubmittingOffer] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -160,7 +158,50 @@ export function AiAssistantPanel({
       }),
     );
 
-    router.push(`/panel/talepler/${selectedId}?teklif=1`);
+    router.push(`/panel/talepler/${selectedId}/teklif?taslak=1`);
+  }
+
+  async function submitOfferFromDraft() {
+    if (!draft || !selectedId || submittingOffer) return;
+
+    setSubmittingOffer(true);
+    setError(null);
+    setSubmitSuccess(false);
+
+    try {
+      const response = await fetch("/api/offers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: selectedId,
+          description: draft.description,
+          amount: draft.suggestedAmount,
+          deliveryDays: draft.deliveryDays,
+        }),
+      });
+
+      const result = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+        redirectTo?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(result.message || "Teklif gönderilemedi.");
+      }
+
+      sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
+      setSubmitSuccess(true);
+      router.push(result.redirectTo || `/panel/teklifler?gonderildi=1`);
+      router.refresh();
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Teklif gönderilirken bir hata oluştu.",
+      );
+      setSubmittingOffer(false);
+    }
   }
 
   async function copyDraft() {
@@ -177,10 +218,10 @@ export function AiAssistantPanel({
           <button
             type="button"
             onClick={() => setTab("draft")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               tab === "draft"
-                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-sm"
-                : "bg-amber-50 text-amber-900 hover:bg-amber-100"
+                ? "bg-[#0f766e] text-white shadow-sm"
+                : "bg-[#eef6f4] text-teal-900 hover:bg-[#e7f0ee]"
             }`}
           >
             Teklif taslağı
@@ -190,10 +231,10 @@ export function AiAssistantPanel({
           <button
             type="button"
             onClick={() => setTab("pricing")}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
               tab === "pricing"
-                ? "bg-gradient-to-r from-sky-500 to-cyan-600 text-white shadow-sm"
-                : "bg-sky-50 text-sky-900 hover:bg-sky-100"
+                ? "bg-[#0f1f1d] text-white shadow-sm"
+                : "bg-[#f0f4f3] text-[#0f1f1d]/70 hover:bg-[#e8eeec]"
             }`}
           >
             Fiyat analizi
@@ -201,12 +242,10 @@ export function AiAssistantPanel({
         )}
       </div>
 
-      <section className="relative overflow-hidden rounded-[28px] border border-amber-200/60 bg-gradient-to-br from-[#fffbeb] via-white to-[#fef3c7] p-6 shadow-[0_16px_55px_rgba(217,119,6,0.08)]">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-300/25 blur-[40px]" />
-
+      <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
         <div className="relative space-y-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0f766e] text-white">
               {tab === "pricing" ? (
                 <Sparkles className="h-5 w-5" />
               ) : (
@@ -214,60 +253,94 @@ export function AiAssistantPanel({
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-[#0f172a]">
-                {tab === "pricing" ? "Fiyat bandı analizi" : "Talep bağlamı seçin"}
-              </h2>
-              <p className="text-sm text-black/45">
+              <h2 className="text-lg font-semibold text-[#0f1f1d]">
                 {tab === "pricing"
-                  ? "Kategori ve miktar bazlı tahmini aralık — gerçek pazar verisi gelene kadar sezgisel hesap."
-                  : "Keşifteki bir talebi seçin veya metin yapıştırın."}
+                  ? "Fiyat bandı analizi"
+                  : lockedToRequest
+                    ? "Bu talep için taslak"
+                    : "Talep seçin"}
+              </h2>
+              <p className="text-sm text-teal-950/45">
+                {lockedToRequest
+                  ? "Yalnızca seçtiğiniz talep için çalışır; diğer talepler listelenmez."
+                  : tab === "pricing"
+                    ? "Kategori ve miktar bazlı tahmini aralık."
+                    : "Keşifteki bir talebi seçin veya metin yapıştırın."}
               </p>
             </div>
           </div>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-medium text-black/40">
-              Açık talepler
-            </span>
-            <select
-              value={selectedId}
-              onChange={(event) => setSelectedId(event.target.value)}
-              disabled={loadingRequests}
-              className="h-12 w-full rounded-[14px] border border-amber-200/70 bg-white/90 px-3 text-sm outline-none"
-            >
-              {loadingRequests ? (
-                <option>Yükleniyor...</option>
-              ) : requests.length === 0 ? (
-                <option value="">Henüz erişilebilir talep yok</option>
-              ) : (
-                requests.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title}
-                    {item.city ? ` · ${item.city}` : ""}
-                    {item.isUrgent ? " · Acil" : ""}
-                  </option>
-                ))
+          {lockedToRequest ? (
+            <div className="rounded-xl border border-teal-900/10 bg-[#eef6f4] px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-800/70">
+                Seçili talep
+              </p>
+              <p className="mt-1 text-sm font-semibold leading-snug text-[#0f1f1d]">
+                {lockedRequest?.title?.trim() || "Başlıksız talep"}
+              </p>
+              {(lockedRequest?.city || lockedRequest?.category?.name) && (
+                <p className="mt-0.5 text-xs text-teal-950/55">
+                  {[lockedRequest.city, lockedRequest.category?.name]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
               )}
-            </select>
-          </label>
+              <Link
+                href={`/panel/talepler/${initialRequestId}`}
+                className="mt-2 inline-block text-xs font-semibold text-teal-800 underline-offset-2 hover:underline"
+              >
+                Talep detayına dön →
+              </Link>
+            </div>
+          ) : (
+            <>
+              <label className="block">
+                <span className="mb-2 block text-xs font-medium text-teal-950/40">
+                  Açık talepler
+                </span>
+                <select
+                  value={selectedId}
+                  onChange={(event) => setSelectedId(event.target.value)}
+                  className="h-12 w-full rounded-xl border border-teal-900/10 bg-[#f7faf9] px-3 text-sm outline-none focus:border-teal-700/30 focus:bg-white"
+                >
+                  {requests.length === 0 ? (
+                    <option value="">Henüz erişilebilir talep yok</option>
+                  ) : (
+                    requests.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title}
+                        {item.city ? ` · ${item.city}` : ""}
+                        {item.isUrgent ? " · Acil" : ""}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
 
-          <label className="block">
-            <span className="mb-2 block text-xs font-medium text-black/40">
-              veya talep metni yapıştırın
-            </span>
-            <textarea
-              value={pastedText}
-              onChange={(event) => setPastedText(event.target.value)}
-              placeholder="Örn. İstanbul'da 50 adet ofis sandalyesi, 7 gün içinde teslim..."
-              className="min-h-[100px] w-full rounded-[14px] border border-amber-200/70 bg-white/90 px-4 py-3 text-sm leading-6 outline-none"
-            />
-          </label>
+              <label className="block">
+                <span className="mb-2 block text-xs font-medium text-teal-950/40">
+                  veya talep metni yapıştırın
+                </span>
+                <textarea
+                  value={pastedText}
+                  onChange={(event) => setPastedText(event.target.value)}
+                  placeholder="Örn. İstanbul'da 50 adet ofis sandalyesi..."
+                  className="min-h-[100px] w-full rounded-xl border border-teal-900/10 bg-[#f7faf9] px-4 py-3 text-sm leading-6 outline-none focus:border-teal-700/30 focus:bg-white"
+                />
+              </label>
+            </>
+          )}
 
           <button
             type="button"
-            disabled={generating || (!selectedId && !pastedText.trim())}
+            disabled={
+              generating ||
+              (lockedToRequest
+                ? !selectedId
+                : !selectedId && !pastedText.trim())
+            }
             onClick={() => void handleGenerate()}
-            className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-45"
           >
             {generating ? (
               <>
@@ -290,25 +363,25 @@ export function AiAssistantPanel({
       </section>
 
       {tab === "pricing" && pricingOnly && (
-        <section className="rounded-[28px] border border-sky-200/70 bg-gradient-to-br from-[#e0f2fe] via-white to-[#ecfeff] p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sky-800/70">
+        <section className="rounded-2xl border border-teal-900/10 bg-[#eef6f4] p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/70">
             Tahmini fiyat aralığı
           </p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-sky-950">
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-[#0f1f1d]">
             {pricingOnly.priceLabel}
           </p>
-          <p className="mt-2 text-sm text-sky-900/70">
+          <p className="mt-2 text-sm text-teal-950/60">
             Önerilen teklif:{" "}
             <strong>{formatTry(pricingOnly.suggestedAmount)}</strong>
           </p>
-          <p className="mt-4 rounded-[16px] bg-white/70 px-4 py-3 text-sm leading-6 text-sky-950/65">
+          <p className="mt-4 rounded-xl bg-white px-4 py-3 text-sm leading-6 text-teal-950/65">
             Güven: %{pricingOnly.confidence} · {pricingOnly.pricingExplanation}
           </p>
         </section>
       )}
 
       {tab === "draft" && draft && (
-        <section className="rounded-[28px] border border-teal-200/60 bg-gradient-to-br from-[#ecfdf5] via-white to-[#e0f2fe] p-6">
+        <section className="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/70">
@@ -324,20 +397,40 @@ export function AiAssistantPanel({
               <button
                 type="button"
                 onClick={() => void copyDraft()}
-                className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-white px-3 py-2 text-xs font-semibold text-teal-900"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-teal-900/10 bg-[#f7faf9] px-3 py-2 text-xs font-semibold text-teal-900"
               >
                 <ClipboardCopy className="h-3.5 w-3.5" />
                 {copied ? "Kopyalandı" : "Kopyala"}
               </button>
               {selectedId && (
-                <button
-                  type="button"
-                  onClick={applyToOfferForm}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-3 py-2 text-xs font-semibold text-white"
-                >
-                  Forma bas
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void submitOfferFromDraft()}
+                    disabled={submittingOffer}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#0f766e] px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {submittingOffer ? (
+                      <>
+                        <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                        Gönderiliyor...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-3.5 w-3.5" />
+                        Teklifi gönder
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyToOfferForm}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-teal-300 bg-white px-3 py-2 text-xs font-semibold text-teal-900"
+                  >
+                    Formda düzenle
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -356,15 +449,23 @@ export function AiAssistantPanel({
           </div>
 
           <p className="mt-4 text-xs leading-5 text-teal-900/55">
-            Tahmini fiyat — güven %{draft.confidence}. {draft.pricingExplanation}
+            Taslak alıcıya ulaşmaz — <strong>Teklifi gönder</strong> ile
+            kaydedilir. Tahmini fiyat güveni %{draft.confidence}.{" "}
+            {draft.pricingExplanation}
           </p>
+
+          {submitSuccess && (
+            <p className="mt-3 rounded-[14px] bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+              Teklif gönderildi. Alıcı talep detayında görebilir.
+            </p>
+          )}
 
           {selectedId && (
             <Link
-              href={`/panel/talepler/${selectedId}?teklif=1`}
+              href={`/panel/talepler/${selectedId}/teklif`}
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-teal-800"
             >
-              Talep detayında teklif ver
+              Talep detayında manuel teklif ver
               <ArrowRight className="h-4 w-4" />
             </Link>
           )}

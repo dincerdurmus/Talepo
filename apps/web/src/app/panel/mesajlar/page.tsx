@@ -25,7 +25,7 @@ export default async function MessagesPage() {
         include: {
           offer: {
             include: {
-              request: { select: { title: true } },
+              request: { select: { id: true, title: true, city: true } },
               company: { select: { id: true, name: true } },
               submittedBy: { select: { name: true } },
             },
@@ -42,13 +42,24 @@ export default async function MessagesPage() {
     },
   });
 
-  // Deduplicate by conversation id (user + company participant rows)
-  const seen = new Set<string>();
-  const unique = conversations.filter((row) => {
-    if (seen.has(row.conversationId)) return false;
-    seen.add(row.conversationId);
-    return true;
-  });
+  // Deduplicate by conversation id; keep the freshest lastReadAt.
+  const byConversation = new Map<string, (typeof conversations)[number]>();
+  for (const row of conversations) {
+    const existing = byConversation.get(row.conversationId);
+    if (!existing) {
+      byConversation.set(row.conversationId, row);
+      continue;
+    }
+    const existingTs = existing.lastReadAt?.getTime() ?? 0;
+    const nextTs = row.lastReadAt?.getTime() ?? 0;
+    if (nextTs > existingTs) {
+      byConversation.set(row.conversationId, {
+        ...existing,
+        lastReadAt: row.lastReadAt,
+      });
+    }
+  }
+  const unique = [...byConversation.values()];
 
   const companyScoped = workspace
     ? unique.filter(
@@ -57,22 +68,17 @@ export default async function MessagesPage() {
     : unique;
 
   const list = workspace ? companyScoped : unique;
-  const isCorporateTone = Boolean(workspace?.isCorporate);
 
   return (
     <>
-      <section className="py-4 sm:py-6">
-        <p
-          className={`text-sm font-semibold ${
-            isCorporateTone ? "text-teal-800/60" : "text-black/35"
-          }`}
-        >
+      <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-5 py-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:px-7 sm:py-7">
+        <p className="relative text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/55">
           {workspace ? workspace.companyName : "İletişim"}
         </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+        <h1 className="talepo-page-title relative mt-2 text-3xl sm:text-4xl">
           Mesajlar
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
+        <p className="relative mt-3 max-w-2xl text-sm leading-7 text-teal-950/50 sm:text-[15px]">
           {workspace
             ? "Firmanızın tekliflerine bağlı yazışmalar. İletişim teklif kabulünden sonra açılır."
             : "Teklif sürecindeki firmalar ve müşterilerle yazışmalarınızı buradan takip edin."}
@@ -80,100 +86,169 @@ export default async function MessagesPage() {
       </section>
 
       {list.length === 0 ? (
-        <section className="rounded-[34px] border border-black/[0.06] bg-white p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.04)] sm:p-14">
-          <div
-            className={`mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] ${
-              isCorporateTone ? "bg-[#e7f7f2] text-teal-800" : "bg-[#f4eaff] text-[#704daf]"
-            }`}
-          >
+        <section className="mt-5 rounded-2xl border border-teal-900/10 bg-white p-8 text-center shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:p-14">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-[#eef6f4] text-teal-800">
             <MessageCircle className="h-7 w-7" />
           </div>
-          <h2 className="mt-6 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-6 text-2xl font-semibold tracking-tight text-[#0f1f1d]">
             Henüz mesajınız yok
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-black/45">
-            {workspace
-              ? "Bir teklifiniz kabul edildiğinde mesajlaşma burada başlar."
-              : "Bir talebe teklif verildiğinde veya talebinize teklif geldiğinde mesajlaşma burada başlayacak."}
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-teal-950/50">
+            Mesajlar otomatik gelmez. Teklif sonrası alıcı kabul veya pazarlık
+            ile sohbeti açar.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link
-              href="/panel/talepler"
-              className={`inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold text-white ${
-                isCorporateTone ? "bg-teal-800" : "bg-black"
-              }`}
-            >
-              Talepleri keşfet
-            </Link>
+
+          <ol className="mx-auto mt-6 max-w-md space-y-3 text-left text-sm text-teal-950/60">
             {workspace ? (
-              <Link
-                href="/panel/teklifler"
-                className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-5 py-3 text-sm font-semibold"
-              >
-                Tekliflerimiz
-              </Link>
+              <>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-teal-900/80">1.</span>{" "}
+                  Keşiften bir talebe <strong>teklif gönderin</strong>
+                </li>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-teal-900/80">2.</span> Alıcı{" "}
+                  <strong>kabul eder</strong> veya <strong>pazarlık</strong>{" "}
+                  başlatır
+                </li>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-teal-900/80">3.</span> Yazışma{" "}
+                  <strong>burada</strong> açılır
+                </li>
+              </>
             ) : (
-              <Link
-                href="/panel/taleplerim"
-                className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white px-5 py-3 text-sm font-semibold"
-              >
-                Taleplerime git
-              </Link>
+              <>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-[#0f1f1d]">1.</span> Firma
+                  talebinize <strong>teklif gönderir</strong> →{" "}
+                  <Link
+                    href="/panel/gelen-teklifler"
+                    className="font-semibold text-teal-800 underline-offset-2 hover:underline"
+                  >
+                    Gelen teklifler
+                  </Link>
+                </li>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-[#0f1f1d]">2.</span> Siz{" "}
+                  <strong>Kabul et</strong> veya <strong>Pazarlık et</strong>{" "}
+                  dersiniz
+                </li>
+                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                  <span className="font-semibold text-[#0f1f1d]">3.</span> Yazışma{" "}
+                  <strong>burada</strong> açılır
+                </li>
+              </>
+            )}
+          </ol>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {workspace ? (
+              <>
+                <Link
+                  href="/panel/talepler"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  Talepleri keşfet
+                </Link>
+                <Link
+                  href="/panel/teklifler"
+                  className="inline-flex items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-5 py-3 text-sm font-semibold text-[#0f1f1d]"
+                >
+                  Tekliflerimiz
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/panel/gelen-teklifler"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
+                >
+                  Gelen teklifler
+                </Link>
+                <Link
+                  href="/panel/taleplerim"
+                  className="inline-flex items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-5 py-3 text-sm font-semibold text-[#0f1f1d]"
+                >
+                  Taleplerim
+                </Link>
+              </>
             )}
           </div>
         </section>
       ) : (
-        <section className="grid gap-3">
+        <section className="mt-5 grid gap-3">
           {list.map(({ conversation, lastReadAt }) => {
             const lastMessage = conversation.messages[0];
-            const isOwnCompanyOffer =
+            const isSupplierSide = Boolean(
               workspace &&
-              conversation.offer.companyId === workspace.companyId;
-            const counterpart = isOwnCompanyOffer
-              ? conversation.offer.request.title
+                conversation.offer.companyId === workspace.companyId,
+            );
+            const counterpart = isSupplierSide
+              ? "Alıcı"
               : conversation.offer.company?.name ||
                 conversation.offer.submittedBy.name ||
                 "Firma";
+            const requestTitle =
+              conversation.offer.request.title ||
+              conversation.title ||
+              "Talep";
+            const requestId = conversation.offer.request.id;
             const unread =
               conversation.lastMessageAt &&
               (!lastReadAt || lastReadAt < conversation.lastMessageAt);
+
+            const preview = lastMessage
+              ? lastMessage.type === "SYSTEM"
+                ? lastMessage.content
+                : lastMessage.type === "IMAGE"
+                  ? `${lastMessage.senderUser?.name ?? "Sistem"}: Fotoğraf${
+                      lastMessage.content ? ` · ${lastMessage.content}` : ""
+                    }`
+                  : `${lastMessage.senderUser?.name ?? "Sistem"}: ${
+                      lastMessage.content ??
+                      lastMessage.fileName ??
+                      "Dosya / sistem mesajı"
+                    }`
+              : "Henüz mesaj yok";
 
             return (
               <Link
                 key={conversation.id}
                 href={`/panel/mesajlar/${conversation.id}`}
-                className="rounded-[24px] border border-black/[0.06] bg-white p-5 shadow-[0_12px_40px_rgba(0,0,0,0.03)] transition hover:bg-[#fafaf8]"
+                className="group rounded-2xl border border-teal-900/8 bg-white/95 p-5 shadow-[0_10px_36px_rgba(15,118,110,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] hover:shadow-[0_14px_42px_rgba(15,118,110,0.07)]"
               >
                 <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold">{counterpart}</p>
-                    <p className="mt-1 truncate text-xs text-black/40">
-                      {isOwnCompanyOffer
-                        ? "Firma teklifi · kabul sonrası sohbet"
-                        : conversation.offer.request.title}
+                  <div className="min-w-0 flex-1">
+                    <div className="inline-flex max-w-full flex-col gap-0.5 rounded-xl border border-teal-800/10 bg-[#f0faf7] px-2.5 py-1.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-800/55">
+                        Talep başlığı
+                      </span>
+                      <span className="truncate text-[13px] font-semibold text-teal-950/90">
+                        {requestTitle}
+                      </span>
+                    </div>
+                    <p className="mt-2.5 truncate text-[15px] font-semibold text-slate-800">
+                      {counterpart}
                     </p>
-                    <p className="mt-3 truncate text-sm text-black/55">
-                      {lastMessage
-                        ? `${lastMessage.senderUser?.name ?? "Sistem"}: ${
-                            lastMessage.content ??
-                            lastMessage.fileName ??
-                            "Dosya / sistem mesajı"
-                          }`
-                        : "Henüz mesaj yok"}
+                    {conversation.offer.request.city && (
+                      <p className="mt-0.5 truncate text-xs text-slate-400">
+                        {conversation.offer.request.city}
+                      </p>
+                    )}
+                    <p className="mt-3 truncate text-sm text-slate-500">
+                      {preview}
+                    </p>
+                    <p className="mt-2 text-[11px] font-medium text-slate-400">
+                      Talep no · {requestId.slice(-8)}
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
                     {conversation.lastMessageAt && (
-                      <p className="text-xs text-black/35">
+                      <p className="text-xs text-slate-400">
                         {formatDate(conversation.lastMessageAt)}
                       </p>
                     )}
                     {unread && (
-                      <span
-                        className={`mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold text-white ${
-                          isCorporateTone ? "bg-teal-700" : "bg-black"
-                        }`}
-                      >
+                      <span className="mt-2 inline-flex rounded-lg bg-teal-700/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm shadow-teal-900/10">
                         Yeni
                       </span>
                     )}

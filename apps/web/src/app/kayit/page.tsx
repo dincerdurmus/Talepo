@@ -103,7 +103,7 @@ export default function KayitPage() {
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f3f3ef] text-[#151515]">
+    <main className="min-h-screen overflow-hidden bg-[#f4f7f6] text-[#0f1f1d]">
       <div className="grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">

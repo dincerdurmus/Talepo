@@ -7,34 +7,32 @@ import {
   MapPin,
   MessageSquareText,
   Sparkles,
-  WalletCards,
   Zap,
 } from "lucide-react";
 
-import { OfferForm } from "@/components/panel/OfferForm";
+import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
+import { OfferSendCta } from "@/components/panel/OfferSendCta";
+import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
-import { toEntitlementDTO } from "@/lib/membership/serialize";
+import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
 
 export default async function ExploreRequestDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ teklif?: string }>;
 }) {
   const user = await requireUser();
   const entitlements = await resolveEntitlements(
     user.id,
     await getCompanyContextOptions(),
   );
-  const entitlementDto = toEntitlementDTO(entitlements);
   const { id } = await params;
-  const { teklif } = await searchParams;
 
   // Minimal fetch first — authorization before loading sensitive fields.
   const preview = await prisma.request.findFirst({
@@ -53,7 +51,8 @@ export default async function ExploreRequestDetailPage({
       publishedAt: true,
       createdAt: true,
       visibleToSuppliersAt: true,
-      category: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+      coverImageUrl: true,
     },
   });
 
@@ -62,28 +61,41 @@ export default async function ExploreRequestDetailPage({
   const isLocked = !canAccessRequest(entitlements, preview);
 
   if (isLocked) {
+    const lockedLook = getCategoryVisual(preview.category.slug);
     return (
       <>
         <DetailHeader locked />
-        <section className="py-8 sm:py-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black/45">
-              {preview.category.name}
-            </span>
-            {preview.isUrgent && (
-              <span className="rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
-                Acil alıcı
-              </span>
-            )}
-          </div>
-          <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-            {preview.title}
-          </h1>
-          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-black/40">
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4" />
-              {formatDate(preview.publishedAt ?? preview.createdAt)}
-            </span>
+        <section className="py-3 sm:py-4">
+          <div className="flex items-start gap-3.5 sm:gap-4">
+            <CategoryVisualThumb
+              categorySlug={preview.category.slug}
+              categoryName={preview.category.name}
+              coverImageUrl={preview.coverImageUrl}
+              size="lg"
+            />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${lockedLook.chip}`}
+                >
+                  {preview.category.name}
+                </span>
+                {preview.isUrgent && (
+                  <span className="rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
+                    Acil alıcı
+                  </span>
+                )}
+              </div>
+              <h1 className="mt-3 max-w-4xl text-[28px] font-semibold tracking-[-0.05em] sm:text-[40px]">
+                {preview.title}
+              </h1>
+              <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-black/40">
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="h-4 w-4" />
+                  {formatDate(preview.publishedAt ?? preview.createdAt)}
+                </span>
+              </div>
+            </div>
           </div>
         </section>
         <LockedRequestPreview visibleAt={preview.visibleToSuppliersAt} />
@@ -106,167 +118,174 @@ export default async function ExploreRequestDetailPage({
 
   if (!request) notFound();
 
-  const showOfferPrompt = teklif === "1";
   const categorySlug = request.category.slug;
+  const categoryLook = getCategoryVisual(categorySlug);
+  const existingOffer = await findSupplierOfferOnRequest(user.id, request.id);
+  const teklifHref = `/panel/talepler/${request.id}/teklif`;
+  const canCreateFreshOffer =
+    !existingOffer ||
+    ["REJECTED", "WITHDRAWN", "EXPIRED"].includes(existingOffer.status);
 
   return (
     <>
       <DetailHeader locked={false} />
 
-      <section className="py-8 sm:py-10">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black/45">
-            {request.category.name}
-          </span>
-          {request.isUrgent && (
-            <span className="rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
-              Acil alıcı
-            </span>
-          )}
-          {request.isFeatured && (
-            <span className="rounded-full bg-[#eee7ff] px-3 py-1.5 text-xs font-semibold text-[#704daf]">
-              Öne çıkan
-            </span>
-          )}
-          {request.aiScore !== null && (
-            <span className="rounded-full bg-[#eee7ff] px-3 py-1.5 text-xs font-semibold text-[#704daf]">
-              AI kalite puanı {request.aiScore}/100
-            </span>
-          )}
-        </div>
+      <section className="py-3 sm:py-4">
+        <div className="flex items-start gap-3.5 sm:gap-4">
+          <CategoryVisualThumb
+            categorySlug={categorySlug}
+            categoryName={request.category.name}
+            coverImageUrl={request.coverImageUrl}
+            size="lg"
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${categoryLook.chip}`}
+              >
+                {request.category.name}
+              </span>
+              {request.isUrgent && (
+                <span className="rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
+                  Acil alıcı
+                </span>
+              )}
+              {request.isFeatured && (
+                <span className="rounded-full border border-amber-900/10 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                  Öne çıkan
+                </span>
+              )}
+              {request.aiScore !== null && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-900/10 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
+                  <Sparkles className="h-3.5 w-3.5 text-sky-600" />
+                  AI kalite puanı {request.aiScore}/100
+                </span>
+              )}
+            </div>
 
-        <h1 className="mt-5 max-w-4xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-          {request.title}
-        </h1>
+            <h1 className="mt-3 max-w-4xl text-[28px] font-semibold tracking-[-0.05em] sm:text-[40px]">
+              {request.title}
+            </h1>
 
-        <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-black/40">
-          {request.city && (
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4" />
-              {request.city}
-            </span>
-          )}
-          <span className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4" />
-            {formatDate(request.publishedAt ?? request.createdAt)}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <MessageSquareText className="h-4 w-4" />
-            {request._count.offers} teklif
-          </span>
+            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-black/40">
+              {request.city && (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  {request.city}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" />
+                {formatDate(request.publishedAt ?? request.createdAt)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <MessageSquareText className="h-4 w-4" />
+                {request._count.offers} teklif
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-        <section className="space-y-5">
-          <div className="rounded-[30px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] sm:p-8">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/30">
-              Talep açıklaması
-            </p>
-            <p className="mt-5 whitespace-pre-line text-base leading-8 text-black/65">
-              {request.professionalDescription || request.description}
-            </p>
-          </div>
-
-          {request.fieldValues.length > 0 && (
-            <div className="rounded-[30px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] sm:p-8">
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Teknik detaylar
-              </h2>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {request.fieldValues.map((value) => (
-                  <div key={value.id} className="rounded-[20px] bg-[#f6f6f2] p-4">
-                    <p className="text-xs font-medium text-black/35">
-                      {value.field.label}
-                    </p>
-                    <p className="mt-2 font-semibold">
-                      {displayRequestFieldValue({
-                        ...value,
-                        categoryId: categorySlug,
-                      })}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch lg:gap-5">
+        <section className="flex h-full flex-col rounded-xl border border-black/[0.06] bg-white p-4 sm:p-5">
+          <span className="text-xs font-semibold text-black/40">
+            Talep açıklaması
+          </span>
+          <p className="mt-2.5 line-clamp-8 whitespace-pre-line text-sm leading-6 text-black/70">
+            {request.professionalDescription || request.description}
+          </p>
         </section>
 
-        <aside className="space-y-4">
-          {showOfferPrompt ? (
-            <div className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)]">
-              <p className="text-lg font-semibold">Teklif ver</p>
-              <p className="mt-2 text-sm text-black/45">
-                Teklif metninde telefon ve IBAN paylaşmayın. Mesajlaşma teklif
-                kabul edildikten sonra açılır.
-              </p>
-              <div className="mt-5">
-                <OfferForm
-                  requestId={request.id}
-                  entitlements={entitlementDto}
-                />
-              </div>
-            </div>
-          ) : (
-            <Link
-              href={`/panel/talepler/${request.id}?teklif=1`}
-              className="flex w-full items-center justify-center rounded-full bg-black px-5 py-3.5 text-sm font-semibold text-white"
-            >
-              Teklif ver
-            </Link>
-          )}
-
-          <div className="rounded-[28px] bg-[#171717] p-6 text-white shadow-[0_24px_75px_rgba(0,0,0,0.14)]">
-            <div className="flex h-11 w-11 items-center justify-center rounded-[17px] bg-white/10">
-              <Sparkles className="h-5 w-5 text-[#d8c5ff]" />
-            </div>
-            <p className="mt-5 text-xs uppercase tracking-[0.16em] text-white/30">
-              AI özeti
-            </p>
-            <p className="mt-3 whitespace-pre-line text-sm leading-6 text-white/65">
-              {request.aiSummary ||
-                "Talep AI tarafından analiz edilerek yayınlandı."}
-            </p>
+        <aside className="flex h-full flex-col rounded-xl border border-teal-900/10 bg-gradient-to-br from-[#0f766e] via-[#0e7490] to-[#1e3a5f] p-4 text-white sm:p-5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-sky-200" />
+            <span className="text-xs font-semibold text-white/55">AI özeti</span>
           </div>
-
-          <div className="rounded-[28px] border border-black/[0.06] bg-white p-6">
-            <SummaryRow
-              icon={<WalletCards className="h-5 w-5" />}
-              label="Bütçe"
-              value={
-                request.budgetMin
-                  ? formatMoney(Number(request.budgetMin), request.currency)
-                  : "Belirtilmedi"
-              }
-            />
-            <SummaryRow
-              icon={<MessageSquareText className="h-5 w-5" />}
-              label="Mevcut teklif"
-              value={`${request._count.offers}`}
-              last
-            />
-          </div>
+          <p className="mt-2.5 line-clamp-8 whitespace-pre-line text-sm leading-6 text-white/85">
+            {request.aiSummary ||
+              "Talep AI tarafından analiz edilerek yayınlandı."}
+          </p>
         </aside>
       </div>
+
+      <section className="mt-6 sm:mt-8">
+        {existingOffer && !canCreateFreshOffer ? (
+          <OfferExistingStatus
+            status={existingOffer.status}
+            reviseHref={
+              ["SUBMITTED", "VIEWED"].includes(existingOffer.status)
+                ? teklifHref
+                : undefined
+            }
+            messagesHref={
+              existingOffer.conversation?.id &&
+              ["ACCEPTED", "SUBMITTED", "VIEWED"].includes(existingOffer.status)
+                ? `/panel/mesajlar/${existingOffer.conversation.id}`
+                : undefined
+            }
+          />
+        ) : existingOffer && canCreateFreshOffer ? (
+          <OfferExistingStatus
+            status={existingOffer.status}
+            newOfferHref={
+              request.status === "PUBLISHED" ||
+              request.status === "RECEIVING_OFFERS"
+                ? teklifHref
+                : undefined
+            }
+          />
+        ) : (
+          <OfferSendCta href={teklifHref} />
+        )}
+      </section>
+
+      {request.fieldValues.length > 0 && (
+        <section className="mt-5 sm:mt-6">
+          <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6">
+            <h2 className="text-base font-semibold tracking-tight sm:text-lg">
+              Teknik detaylar
+            </h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {request.fieldValues.map((value) => (
+                <div
+                  key={value.id}
+                  className="rounded-xl border border-black/[0.04] bg-[#f8f9f7] px-4 py-3"
+                >
+                  <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-black/35">
+                    {value.field.label}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-[#111827]">
+                    {displayRequestFieldValue({
+                      ...value,
+                      categoryId: categorySlug,
+                    })}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
     </>
   );
 }
 
 function DetailHeader({ locked }: { locked: boolean }) {
   return (
-    <header className="flex items-center justify-between rounded-[26px] border border-black/[0.06] bg-white/80 px-5 py-4 backdrop-blur-xl">
+    <header className="flex items-center justify-between gap-2">
       <Link
         href="/panel/talepler"
-        className="flex items-center gap-2 text-sm font-medium text-black/45 transition hover:text-black"
+        className="talepo-cloud-pill px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
       >
         <ArrowLeft className="h-4 w-4" />
         Talepleri keşfet
       </Link>
       <span
-        className={`rounded-full px-3 py-2 text-xs font-semibold ${
+        className={`rounded-full border px-3.5 py-2 text-xs font-semibold shadow-[0_6px_18px_rgba(15,31,29,0.04)] ${
           locked
-            ? "bg-[#eee7ff] text-[#704daf]"
-            : "bg-[#e4f4df] text-[#356d3a]"
+            ? "border-teal-900/10 bg-[#eef6f4] text-teal-800"
+            : "border-teal-900/8 bg-[#e4f4df] text-[#356d3a]"
         }`}
       >
         {locked ? "Kilitli önizleme" : "Açık talep"}
@@ -282,44 +301,44 @@ function LockedRequestPreview({
 }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
-      <section className="rounded-[30px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] sm:p-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-black/30">
+      <section className="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_16px_48px_rgba(15,31,29,0.04)] sm:p-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/45">
           Sınırlı önizleme
         </p>
-        <p className="mt-5 text-base leading-8 text-black/55">
+        <p className="mt-5 text-base leading-8 text-teal-950/55">
           Bu talep henüz standart erişime açılmadı. Tam açıklama, teknik
           detaylar, bütçe ve teklif formu Premium üyeler için anında
           görünür.
         </p>
-        <ul className="mt-6 space-y-2 text-sm text-black/40">
-          <li className="rounded-[16px] bg-[#f6f6f2] px-4 py-3">
+        <ul className="mt-6 space-y-2 text-sm text-teal-950/45">
+          <li className="rounded-xl bg-[#f7faf9] px-4 py-3">
             Talep başlığı ve kategori görüntüleniyor
           </li>
-          <li className="rounded-[16px] bg-[#f6f6f2] px-4 py-3">
+          <li className="rounded-xl bg-[#f7faf9] px-4 py-3">
             Detaylı içerik ve teklif hakkı kilitli
           </li>
           {visibleAt && (
-            <li className="rounded-[16px] bg-[#f6f6f2] px-4 py-3">
+            <li className="rounded-xl bg-[#f7faf9] px-4 py-3">
               Standart erişim: {formatDateTime(visibleAt)}
             </li>
           )}
         </ul>
       </section>
 
-      <aside className="rounded-[28px] border border-[#8c72c9]/25 bg-[#f8f5ff] p-6">
+      <aside className="rounded-2xl border border-teal-900/12 bg-[#eef6f4] p-6">
         <div className="flex items-start gap-3">
-          <Crown className="mt-0.5 h-5 w-5 text-[#704daf]" />
+          <Crown className="mt-0.5 h-5 w-5 text-teal-800" />
           <div>
-            <p className="font-semibold text-[#4f3d72]">
+            <p className="font-semibold text-[#0f1f1d]">
               Bu talebe hemen erişmek için Premium&apos;a geç.
             </p>
-            <p className="mt-2 text-sm leading-6 text-[#4f3d72]/70">
+            <p className="mt-2 text-sm leading-6 text-teal-950/55">
               Premium üyeler yeni talepleri anında görür, sınırsız teklif verir
               ve AI araçlarından yararlanır.
             </p>
             <Link
               href="/panel/plan"
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-black px-4 py-2.5 text-xs font-semibold text-white"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59]"
             >
               <Zap className="h-3.5 w-3.5" />
               Premium&apos;a geç
@@ -327,30 +346,6 @@ function LockedRequestPreview({
           </div>
         </div>
       </aside>
-    </div>
-  );
-}
-
-function SummaryRow({
-  icon,
-  label,
-  value,
-  last = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  last?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center justify-between py-4 ${last ? "" : "border-b border-black/[0.06]"}`}
-    >
-      <span className="flex items-center gap-3 text-sm text-black/40">
-        {icon}
-        {label}
-      </span>
-      <span className="text-sm font-semibold">{value}</span>
     </div>
   );
 }
@@ -371,12 +366,4 @@ function formatDate(date: Date) {
     month: "long",
     year: "numeric",
   }).format(date);
-}
-
-function formatMoney(amount: number, currency: string) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
 }

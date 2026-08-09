@@ -9,6 +9,8 @@ import {
 
 import { PlanBadge } from "@/components/panel/PlanBadge";
 import { PersonalPlanMismatchBanner } from "@/components/panel/PersonalPlanMismatchBanner";
+import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
+import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
 type CorporateHomeProps = {
@@ -27,6 +29,8 @@ const DEMO_MATCHES = [
   {
     title: "50 adet ofis sandalyesi",
     meta: "İstanbul · Mobilya ve Ofis · Acil",
+    categorySlug: "furniture",
+    categoryName: "Mobilya ve Ofis",
     score: "94%",
     note: "Envanter eşleşmesi bekleniyor",
     href: "/panel/talepler",
@@ -34,6 +38,8 @@ const DEMO_MATCHES = [
   {
     title: "Toplantı masası 220x100",
     meta: "Ankara · Mobilya ve Ofis",
+    categorySlug: "furniture",
+    categoryName: "Mobilya ve Ofis",
     score: "88%",
     note: "Uyarı kuralınıza uyuyor",
     href: "/panel/talepler",
@@ -41,6 +47,8 @@ const DEMO_MATCHES = [
   {
     title: "Kafe masa-sandalye seti ×20",
     meta: "İzmir · Mobilya ve Ofis",
+    categorySlug: "furniture",
+    categoryName: "Mobilya ve Ofis",
     score: "81%",
     note: "Bölge filtresi: Ege",
     href: "/panel/talepler",
@@ -56,20 +64,23 @@ export function CorporateHome({
   hasHiddenInventory = false,
   personalPlanMismatchDetail = null,
 }: CorporateHomeProps) {
+  const planThemeStyle = getPlanThemeStyle(planTier);
+
   return (
-    <>
+    <div className="talepo-plan-theme" style={planThemeStyle} data-plan={planTier}>
       {personalPlanMismatchDetail && (
         <section className="mb-5">
           <PersonalPlanMismatchBanner detail={personalPlanMismatchDetail} />
         </section>
       )}
 
-      <header className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-black/[0.06] bg-white px-4 py-4 shadow-sm sm:px-5">
+      <header className="relative flex flex-wrap items-center justify-between gap-3 overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-4 py-4 shadow-[0_8px_24px_rgba(15,31,29,0.04)] sm:px-5">
+        <div className="talepo-plan-accent-bar absolute inset-x-0 top-0 h-[3px]" aria-hidden />
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/60">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/55">
             Kurumsal çalışma alanı
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#0f1f1d]">
             {companyName} özeti
           </h1>
         </div>
@@ -87,19 +98,19 @@ export function CorporateHome({
           {
             label: "Keşfedilecek talep",
             value: "—",
-            tone: "bg-[#e7f7f2]",
+            tone: "bg-[#eef6f4]",
             href: "/panel/talepler",
           },
           {
             label: "Açık teklif sinyali",
             value: String(openOffersHint),
-            tone: "bg-[#eef3fb]",
+            tone: "bg-white",
             href: "/panel/talepler",
           },
           {
             label: "Gizli envanter",
             value: hasHiddenInventory ? "Açık" : "Kapalı",
-            tone: hasHiddenInventory ? "bg-[#e7f7f2]" : "bg-[#fbf4ea]",
+            tone: hasHiddenInventory ? "bg-[#e7f7f2]" : "bg-[#f0f4f3]",
             href: "/panel/envanter",
           },
           {
@@ -112,9 +123,9 @@ export function CorporateHome({
           <Link
             key={item.label}
             href={item.href}
-            className={`rounded-2xl border border-black/[0.05] ${item.tone} p-4 transition hover:-translate-y-0.5`}
+            className={`rounded-2xl border border-teal-900/8 ${item.tone} p-4 transition hover:-translate-y-0.5`}
           >
-            <p className="text-xs text-black/45">{item.label}</p>
+            <p className="text-xs text-teal-950/45">{item.label}</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">
               {item.value}
             </p>
@@ -155,31 +166,40 @@ export function CorporateHome({
             {DEMO_MATCHES.map((row) => (
               <div
                 key={row.title}
-                className="rounded-2xl border border-black/[0.06] bg-[#f6f8f6] p-4"
+                className="talepo-card p-3.5"
               >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold">{row.title}</p>
-                    <p className="mt-1 text-xs text-black/45">{row.meta}</p>
-                    <p className="mt-2 flex items-center gap-1.5 text-xs text-teal-800/80">
-                      <Boxes className="h-3.5 w-3.5" />
-                      {row.note}
-                    </p>
+                <div className="flex items-start gap-3">
+                  <CategoryVisualThumb
+                    categorySlug={row.categorySlug}
+                    categoryName={row.categoryName}
+                    size="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold">{row.title}</p>
+                        <p className="mt-1 text-xs text-black/45">{row.meta}</p>
+                        <p className="mt-2 flex items-center gap-1.5 text-xs text-teal-800/80">
+                          <Boxes className="h-3.5 w-3.5" />
+                          {row.note}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-semibold text-teal-800">
+                          {row.score}
+                        </p>
+                        <p className="text-[11px] text-black/40">örnek eşleşme</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={row.href}
+                        className="talepo-plan-cta rounded-xl px-3 py-2 text-xs font-semibold shadow-none"
+                      >
+                        Talepleri aç
+                      </Link>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-semibold text-teal-800">
-                      {row.score}
-                    </p>
-                    <p className="text-[11px] text-black/40">örnek eşleşme</p>
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Link
-                    href={row.href}
-                    className="rounded-xl bg-teal-800 px-3 py-2 text-xs font-semibold text-white"
-                  >
-                    Talepleri aç
-                  </Link>
                 </div>
               </div>
             ))}
@@ -201,7 +221,7 @@ export function CorporateHome({
             </p>
             <Link
               href="/panel/asistan"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-teal-500 px-3 py-2 text-xs font-semibold text-[#042f2e]"
+              className="talepo-plan-cta mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
             >
               Asistanı aç
               <ArrowRight className="h-3.5 w-3.5" />
@@ -263,6 +283,6 @@ export function CorporateHome({
           </section>
         </div>
       </div>
-    </>
+    </div>
   );
 }

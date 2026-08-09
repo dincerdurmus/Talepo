@@ -9,6 +9,7 @@ import {
   FURNITURE_BRANDS,
   TECHNOLOGY_BRANDS,
 } from "@/lib/ai/parser/brand-catalog";
+import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
 
 export type DynamicFieldType = "text" | "number" | "select";
 
@@ -47,6 +48,9 @@ const AUTOMOTIVE_PART_ONLY_KEYS = new Set([
   "partPreference",
   "vin",
 ]);
+
+/** Managed by RealEstateLocationFields (searchable multi-select), not free text. */
+const REAL_ESTATE_STRUCTURED_KEYS = new Set(["neighborhoods"]);
 
 export function withCategoryFieldDefaults(
   categoryId: string,
@@ -109,6 +113,12 @@ export function getVisibleCategoryFields(
           field.key !== "condition" && field.key !== "bodyCondition",
       );
     }
+  }
+
+  if (categoryId === "real-estate") {
+    visible = visible.filter(
+      (field) => !REAL_ESTATE_STRUCTURED_KEYS.has(field.key),
+    );
   }
 
   return visible;
@@ -889,11 +899,16 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         unit: "m²",
       },
       {
-        key: "location",
-        label: "Konum / Adres",
+        key: "neighborhoods",
+        label: "Mahalle",
         type: "text",
-        placeholder: "Örn. Bahar Cd, Bağcılar",
-        required: true,
+        placeholder: "Seçilen mahalleler",
+      },
+      {
+        key: "location",
+        label: "Adres detayı",
+        type: "text",
+        placeholder: "Örn. sokak, bina no (isteğe bağlı)",
       },
       {
         key: "floor",
@@ -1673,11 +1688,9 @@ export function parseDynamicValues(
     if (locationMatch) {
       values.location = locationMatch[1].trim();
     } else {
-      const districtMatch = text.match(
-        /\b(bağcılar|bagcilar|kadıköy|kadikoy|beşiktaş|besiktas|üsküdar|uskudar|bakırköy|bakirkoy|zeytinburnu|fatih|şişli|sisli|ataşehir|atasehir|maltepe|pendik|kartal|sarıyer|sariyer)\b/i
-      );
-      if (districtMatch) {
-        values.location = districtMatch[0];
+      const geoMatch = findProvinceAndDistrictInText(text);
+      if (geoMatch?.ilce) {
+        values.location = geoMatch.ilce;
       }
     }
   }

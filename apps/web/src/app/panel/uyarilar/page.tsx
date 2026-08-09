@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { ArrowRight, Crown } from "lucide-react";
 
 import { AlertRulesManager } from "@/components/panel/AlertRulesManager";
+import {
+  ALERT_RULES_COOKIE,
+  parseAlertRules,
+} from "@/lib/alerts/alert-rules-store";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { requireUser } from "@/server/auth/require-user";
@@ -44,6 +49,11 @@ export default async function AlertRulesPage() {
     );
   }
 
+  const jar = await cookies();
+  const initialRules = parseAlertRules(jar.get(ALERT_RULES_COOKIE)?.value);
+  const initialStorageNote =
+    "Kurallar geçici olarak hesabınıza bağlı çerezde saklanır. Kalıcı depolama için AlertRule tablosu eklenecek.";
+
   return (
     <>
       <section className="py-4 sm:py-6">
@@ -57,7 +67,10 @@ export default async function AlertRulesPage() {
         </p>
       </section>
 
-      <AlertRulesManager />
+      <AlertRulesManager
+        initialRules={initialRules}
+        initialStorageNote={initialStorageNote}
+      />
     </>
   );
 }

@@ -1,18 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { BellRing, LoaderCircle, Plus, Trash2 } from "lucide-react";
 
 import type { AlertRule } from "@/lib/alerts/alert-rules-store";
 
-export function AlertRulesManager() {
-  const [rules, setRules] = useState<AlertRule[]>([]);
-  const [loading, setLoading] = useState(true);
+type AlertRulesManagerProps = {
+  initialRules: AlertRule[];
+  initialStorageNote?: string | null;
+};
+
+export function AlertRulesManager({
+  initialRules,
+  initialStorageNote = null,
+}: AlertRulesManagerProps) {
+  const [rules, setRules] = useState(initialRules);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categoryKeyword, setCategoryKeyword] = useState("");
   const [cityKeyword, setCityKeyword] = useState("");
-  const [storageNote, setStorageNote] = useState<string | null>(null);
+  const [storageNote, setStorageNote] = useState(initialStorageNote);
 
   const loadRules = useCallback(async () => {
     setLoading(true);
@@ -37,10 +45,6 @@ export function AlertRulesManager() {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    void loadRules();
-  }, [loadRules]);
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();

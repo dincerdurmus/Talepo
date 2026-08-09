@@ -1,4 +1,8 @@
 import {
+  findProvinceAndDistrictInText,
+  formatRealEstateCity,
+} from "@/lib/geo/turkey-districts";
+import {
   APPLIANCE_BRANDS,
   AUTOMOTIVE_BRANDS,
   BABY_BRANDS,
@@ -21,29 +25,23 @@ const CITIES = [
   "Mersin",
 ];
 
-const DISTRICTS: Record<string, string> = {
-  bağcılar: "İstanbul / Bağcılar",
-  bagcilar: "İstanbul / Bağcılar",
-  kadıköy: "İstanbul / Kadıköy",
-  kadikoy: "İstanbul / Kadıköy",
-  beşiktaş: "İstanbul / Beşiktaş",
-  besiktas: "İstanbul / Beşiktaş",
-  üsküdar: "İstanbul / Üsküdar",
-  uskudar: "İstanbul / Üsküdar",
-  bakırköy: "İstanbul / Bakırköy",
-  bakirkoy: "İstanbul / Bakırköy",
-  zeytinburnu: "İstanbul / Zeytinburnu",
-  fatih: "İstanbul / Fatih",
-  şişli: "İstanbul / Şişli",
-  sisli: "İstanbul / Şişli",
-  ataşehir: "İstanbul / Ataşehir",
-  atasehir: "İstanbul / Ataşehir",
-  maltepe: "İstanbul / Maltepe",
-  pendik: "İstanbul / Pendik",
-  kartal: "İstanbul / Kartal",
-  sarıyer: "İstanbul / Sarıyer",
-  sariyer: "İstanbul / Sarıyer",
-};
+export function detectCity(text: string) {
+  const fromGeo = findProvinceAndDistrictInText(text);
+  if (fromGeo?.il && fromGeo.ilce) {
+    return formatRealEstateCity(fromGeo.il, fromGeo.ilce);
+  }
+
+  const normalized = text.toLocaleLowerCase("tr-TR");
+
+  const city = CITIES.find((item) =>
+    normalized.includes(item.toLocaleLowerCase("tr-TR"))
+  );
+  if (city) return city;
+
+  if (fromGeo?.il) return fromGeo.il;
+
+  return undefined;
+}
 
 const QUANTITY_CATEGORIES = new Set([
   "printing",
@@ -81,23 +79,6 @@ export function detectQuantity(text: string, categoryId: string) {
   };
 }
 
-export function detectCity(text: string) {
-  const normalized = text.toLocaleLowerCase("tr-TR");
-
-  const city = CITIES.find((item) =>
-    normalized.includes(item.toLocaleLowerCase("tr-TR"))
-  );
-  if (city) return city;
-
-  for (const [district, label] of Object.entries(DISTRICTS)) {
-    if (normalized.includes(district)) {
-      return label;
-    }
-  }
-
-  return undefined;
-}
-
 export function detectDeliveryDays(text: string, categoryId: string) {
   if (!DELIVERY_CATEGORIES.has(categoryId)) return undefined;
 
@@ -110,13 +91,11 @@ export function detectDeliveryDays(text: string, categoryId: string) {
     : amount;
 }
 
-export function detectBudget(text: string) {
-  const match = text.match(/(\d[\d.]*)\s*(bin)?\s*(tl|₺)/i);
-  if (!match) return undefined;
-
-  const base = Number(match[1].replace(/\./g, ""));
-  return match[2] ? base * 1000 : base;
-}
+export {
+  detectBudget,
+  extractBudgetFromText,
+  type DetectedBudget,
+} from "./budget";
 
 export function detectAttributes(text: string, categoryId: string) {
   const normalized = text.toLocaleLowerCase("tr-TR");
@@ -763,11 +742,9 @@ export function detectAttributes(text: string, categoryId: string) {
     if (locationMatch) {
       attributes.location = locationMatch[1].trim();
     } else {
-      for (const [district, label] of Object.entries(DISTRICTS)) {
-        if (normalized.includes(district)) {
-          attributes.location = label.split(" / ").pop() ?? district;
-          break;
-        }
+      const geoMatch = findProvinceAndDistrictInText(text);
+      if (geoMatch?.ilce) {
+        attributes.location = geoMatch.ilce;
       }
     }
 

@@ -1,3 +1,4 @@
+import { isValidRealEstateLocation, parseRealEstateCity } from "@/lib/geo/turkey-districts";
 import { getCategoryById } from "@/lib/request-category-engine";
 
 import type { ParsedRequest, Recommendation } from "../types";
@@ -9,20 +10,31 @@ export function createRecommendations(
   const category = getCategoryById(request.categoryId);
   const commonFieldKeys = new Set(category.commonFields.map((field) => field.key));
 
-  if (commonFieldKeys.has("city") && !request.city) {
-    recommendations.push({
-      id: "add-city",
-      title:
-        request.categoryId === "real-estate"
-          ? "Şehir veya ilçe bilgisini ekleyin"
-          : "Teslimat şehrini ekleyin",
-      description:
-        request.categoryId === "real-estate"
-          ? "Örneğin İstanbul / Bağcılar yazabilirsiniz."
-          : "Firmaların lojistik maliyetini doğru hesaplamasını sağlar.",
-      reason: "Konum bilgisi teklif fiyatını ve uygun firma sayısını etkiler.",
-      field: "city",
-    });
+  if (commonFieldKeys.has("city")) {
+    const needsRealEstateLocation =
+      request.categoryId === "real-estate" &&
+      (() => {
+        const parsed = parseRealEstateCity(request.city);
+        return !parsed || !isValidRealEstateLocation(parsed.il, parsed.ilce);
+      })();
+
+    if (needsRealEstateLocation) {
+      recommendations.push({
+        id: "add-city",
+        title: "İl ve ilçe seçin",
+        description: "Listeden il ve ilçe seçmeniz gerekir.",
+        reason: "Emlak taleplerinde konum eşleşmesi için il ve ilçe zorunludur.",
+        field: "city",
+      });
+    } else if (request.categoryId !== "real-estate" && !request.city) {
+      recommendations.push({
+        id: "add-city",
+        title: "Teslimat şehrini ekleyin",
+        description: "Firmaların lojistik maliyetini doğru hesaplamasını sağlar.",
+        reason: "Konum bilgisi teklif fiyatını ve uygun firma sayısını etkiler.",
+        field: "city",
+      });
+    }
   }
 
   if (commonFieldKeys.has("delivery") && !request.deliveryDays) {

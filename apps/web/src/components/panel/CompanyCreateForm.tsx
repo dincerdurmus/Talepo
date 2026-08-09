@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Building2, LoaderCircle } from "lucide-react";
 
 import { CompanyCategoryPicker } from "@/components/panel/CompanyCategoriesForm";
@@ -31,6 +31,13 @@ function readDraftFromStorage(): CompanyDraft | null {
   }
 }
 
+function getInitialCompanyDraft(initial?: CompanyDraft): CompanyDraft {
+  if (initial?.name || initial?.city || initial?.taxNumber) {
+    return initial;
+  }
+  return readDraftFromStorage() ?? {};
+}
+
 function clearDraft() {
   try {
     sessionStorage.removeItem(COMPANY_DRAFT_STORAGE_KEY);
@@ -43,24 +50,16 @@ export function CompanyCreateForm({
   initial,
   compact = false,
 }: CompanyCreateFormProps) {
-  const [name, setName] = useState(initial?.name ?? "");
-  const [city, setCity] = useState(initial?.city ?? "");
-  const [taxNumber, setTaxNumber] = useState(initial?.taxNumber ?? "");
+  const [name, setName] = useState(() => getInitialCompanyDraft(initial).name ?? "");
+  const [city, setCity] = useState(() => getInitialCompanyDraft(initial).city ?? "");
+  const [taxNumber, setTaxNumber] = useState(
+    () => getInitialCompanyDraft(initial).taxNumber ?? "",
+  );
   const [categorySlugs, setCategorySlugs] = useState<string[]>(
-    initial?.categorySlugs ?? [],
+    () => getInitialCompanyDraft(initial).categorySlugs ?? [],
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initial?.name || initial?.city || initial?.taxNumber) return;
-    const draft = readDraftFromStorage();
-    if (!draft) return;
-    if (draft.name) setName(draft.name);
-    if (draft.city) setCity(draft.city);
-    if (draft.taxNumber) setTaxNumber(draft.taxNumber);
-    if (draft.categorySlugs?.length) setCategorySlugs(draft.categorySlugs);
-  }, [initial?.city, initial?.name, initial?.taxNumber]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

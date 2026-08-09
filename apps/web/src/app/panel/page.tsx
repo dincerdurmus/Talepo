@@ -18,6 +18,7 @@ import {
   formatPersonalPlanMismatchDetail,
   hasPersonalPlanMismatch,
 } from "@/lib/membership/membership-rules";
+import { getPlanHeroBanner } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 import {
   getPanelSummary,
@@ -118,6 +119,7 @@ export default async function PanelPage() {
   }
 
   const firstName = user.name?.trim().split(/\s+/)[0] ?? "Merhaba";
+  const heroBanner = getPlanHeroBanner(planTier);
 
   return (
     <>
@@ -137,16 +139,14 @@ export default async function PanelPage() {
       )}
 
       {!hasActiveCompany && (
-        <section className="relative mb-5 overflow-hidden rounded-2xl border border-teal-800/12 bg-gradient-to-br from-[#e7f7f2] via-[#eef9f6] to-[#e8f4fb] px-5 py-5 sm:px-6">
-          <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-300/25 blur-[48px]" />
-          <div className="pointer-events-none absolute -bottom-20 left-1/3 h-36 w-36 rounded-full bg-sky-200/30 blur-[44px]" />
+        <section className="relative mb-5 overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-5 py-5 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:px-6">
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-800/10 text-teal-800 ring-1 ring-teal-800/10">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef6f4] text-teal-800">
                 <Building2 className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold tracking-tight text-teal-950">
+                <h2 className="text-lg font-semibold tracking-tight text-[#0f1f1d]">
                   Firma hesabı oluşturun
                 </h2>
                 <p className="mt-1 max-w-xl text-sm leading-6 text-teal-950/55">
@@ -157,7 +157,7 @@ export default async function PanelPage() {
             </div>
             <Link
               href="/panel/firma/yeni"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(15,118,110,0.22)] transition hover:from-teal-800 hover:to-teal-900"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#115e59]"
             >
               Firma oluştur
               <ArrowRight className="h-4 w-4" />
@@ -166,14 +166,14 @@ export default async function PanelPage() {
         </section>
       )}
 
-      <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-gradient-to-br from-[#0f766e] via-[#0e7490] to-[#1e3a5f] text-white shadow-[0_20px_60px_rgba(15,118,110,0.22)]">
-        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-emerald-300/25 blur-[80px]" />
-        <div className="pointer-events-none absolute -bottom-28 left-1/4 h-64 w-64 rounded-full bg-sky-300/20 blur-[80px]" />
-        <div className="pointer-events-none absolute right-1/3 top-1/2 h-40 w-40 rounded-full bg-amber-200/15 blur-[60px]" />
+      <section className={heroBanner.section}>
+        <div className={heroBanner.glowPrimary} />
+        <div className={heroBanner.glowSecondary} />
+        <div className={heroBanner.glowTertiary} />
 
         <div className="relative px-6 py-7 sm:px-8 sm:py-8">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-50">
+            <p className={heroBanner.eyebrow}>
               Çalışma alanı
             </p>
             <PlanBadge
@@ -188,7 +188,9 @@ export default async function PanelPage() {
           <h1 className="mt-4 text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
             Merhaba, {firstName}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-50/75">
+          <p
+            className={`mt-2 max-w-2xl text-sm leading-6 ${heroBanner.subtitle}`}
+          >
             Taleplerinizi yönetin, uygun iş fırsatlarını değerlendirin ve
             teklif süreçlerini tek yerden takip edin.
           </p>
@@ -198,17 +200,21 @@ export default async function PanelPage() {
           <MetricCell
             label="Aktif talepler"
             value={String(summary.activeRequests)}
-            accent="text-emerald-200"
+            accent="text-teal-100"
+            href="/panel/taleplerim"
           />
           <MetricCell
             label="Yeni teklifler"
             value={String(summary.newOffers)}
-            accent="text-sky-200"
+            accent="text-white"
+            href="/panel/gelen-teklifler"
+            hint="Teklifleri gör →"
           />
           <MetricCell
             label="Okunmamış mesajlar"
             value={String(unreadMessages)}
-            accent="text-amber-200"
+            accent="text-teal-50"
+            href="/panel/mesajlar"
           />
         </div>
       </section>
@@ -237,18 +243,19 @@ export default async function PanelPage() {
       <section className="mt-5 grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
         <RecentActivity notifications={summary.recentNotifications} />
 
-        <aside className="overflow-hidden rounded-2xl border border-amber-200/60 bg-gradient-to-b from-[#fffbeb] to-white shadow-[0_12px_40px_rgba(217,119,6,0.08)]">
-          <div className="border-b border-amber-200/50 px-5 py-4 sm:px-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-800/70">
+        <aside className="overflow-hidden rounded-2xl border border-teal-900/10 bg-white shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
+          <div className="border-b border-teal-900/8 px-5 py-4 sm:px-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800/55">
               Hızlı erişim
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-[#0f172a]">
+            <h2 className="mt-1 text-lg font-semibold text-[#0f1f1d]">
               Sık kullanılanlar
             </h2>
           </div>
 
-          <div className="divide-y divide-amber-100 p-2">
+          <div className="divide-y divide-teal-900/6 p-2">
             <QuickLink href="/panel/taleplerim" label="Taleplerim" />
+            <QuickLink href="/panel/gelen-teklifler" label="Gelen teklifler" />
             <QuickLink href="/panel/mesajlar" label="Mesajlar" />
             <QuickLink href="/panel/firma/yeni" label="Firma oluştur" />
             <QuickLink href="/panel/plan" label="Plan ve üyelik" />
@@ -264,18 +271,28 @@ function MetricCell({
   label,
   value,
   accent,
+  href,
+  hint,
 }: {
   label: string;
   value: string;
   accent: string;
+  href: string;
+  hint?: string;
 }) {
   return (
-    <div className="bg-white/[0.06] px-6 py-5 backdrop-blur-sm sm:px-8">
+    <Link
+      href={href}
+      className="group bg-white/[0.06] px-6 py-5 backdrop-blur-sm transition hover:bg-white/[0.12] sm:px-8"
+    >
       <p className="text-xs font-medium text-white/55">{label}</p>
       <p className={`mt-2 text-3xl font-semibold tracking-tight ${accent}`}>
         {value}
       </p>
-    </div>
+      <p className="mt-2 text-[11px] font-medium text-white/40 transition group-hover:text-white/70">
+        {hint ?? "Görüntüle →"}
+      </p>
+    </Link>
   );
 }
 
@@ -296,52 +313,57 @@ function PrimaryAction({
   action: string;
   tone: "green" | "blue";
 }) {
-  const isGreen = tone === "green";
+  const isBuyer = tone === "green";
 
   return (
     <Link
       href={href}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border p-6 shadow-[0_14px_45px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_55px_rgba(15,23,42,0.1)] sm:p-7 ${
-        isGreen
-          ? "border-emerald-200/70 bg-gradient-to-br from-[#ecfdf5] via-white to-[#f0fdf4]"
-          : "border-sky-200/70 bg-gradient-to-br from-[#e0f2fe] via-white to-[#f0f9ff]"
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)] transition hover:-translate-y-0.5 sm:p-7 ${
+        isBuyer
+          ? "border-amber-900/10 hover:shadow-[0_16px_48px_rgba(234,88,12,0.1)]"
+          : "border-cyan-900/10 hover:shadow-[0_16px_48px_rgba(14,116,144,0.1)]"
       }`}
     >
       <div
-        className={`pointer-events-none absolute -right-12 -top-14 h-40 w-40 rounded-full blur-[50px] ${
-          isGreen ? "bg-emerald-300/40" : "bg-sky-300/40"
-        }`}
+        className="absolute inset-x-0 top-0 h-1"
+        style={{
+          background: isBuyer
+            ? "linear-gradient(90deg, #f59e0b, #ea580c)"
+            : "linear-gradient(90deg, #14b8a6, #0284c7)",
+        }}
+        aria-hidden
       />
-
       <div className="relative flex items-start justify-between gap-4">
         <div
           className={`flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-sm ${
-            isGreen
-              ? "bg-gradient-to-br from-emerald-500 to-teal-600"
-              : "bg-gradient-to-br from-sky-500 to-blue-600"
+            isBuyer
+              ? "bg-gradient-to-br from-[#f59e0b] to-[#ea580c]"
+              : "bg-gradient-to-br from-[#0d9488] to-[#0284c7]"
           }`}
         >
           <Icon className="h-5 w-5" />
         </div>
         <span
-          className={`rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-white ${
-            isGreen ? "bg-emerald-700" : "bg-sky-700"
+          className={`rounded-md px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${
+            isBuyer
+              ? "bg-[#ffedd5] text-[#9a3412]"
+              : "bg-[#cffafe] text-[#155e75]"
           }`}
         >
           {eyebrow}
         </span>
       </div>
 
-      <h2 className="relative mt-6 text-xl font-semibold tracking-tight text-[#0f172a]">
+      <h2 className="relative mt-6 text-xl font-semibold tracking-tight text-[#0f1f1d]">
         {title}
       </h2>
-      <p className="relative mt-2 text-sm leading-6 text-[#5b6b7c]">
+      <p className="relative mt-2 text-sm leading-6 text-teal-950/50">
         {description}
       </p>
 
       <div
         className={`relative mt-8 flex items-center gap-2 text-sm font-semibold ${
-          isGreen ? "text-emerald-800" : "text-sky-800"
+          isBuyer ? "text-[#c2410c]" : "text-[#0e7490]"
         }`}
       >
         {action}
@@ -355,10 +377,10 @@ function QuickLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#0f172a] transition hover:bg-amber-50"
+      className="flex items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
     >
       {label}
-      <ChevronRight className="h-4 w-4 text-amber-700/50" />
+      <ChevronRight className="h-4 w-4 text-teal-800/35" />
     </Link>
   );
 }
@@ -379,20 +401,20 @@ function RecentActivity({
   notifications: NotificationItem[];
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-sky-200/60 bg-gradient-to-b from-[#f0f9ff] to-white shadow-[0_12px_40px_rgba(14,165,233,0.08)]">
-      <div className="flex items-center justify-between border-b border-sky-100 px-5 py-4 sm:px-6">
+    <section className="overflow-hidden rounded-2xl border border-teal-900/10 bg-white shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
+      <div className="flex items-center justify-between border-b border-teal-900/8 px-5 py-4 sm:px-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-800/70">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800/55">
             Aktivite
           </p>
-          <h2 className="mt-1 text-lg font-semibold text-[#0f172a]">
+          <h2 className="mt-1 text-lg font-semibold text-[#0f1f1d]">
             Son gelişmeler
           </h2>
         </div>
 
         <Link
           href="/panel/bildirimler"
-          className="flex items-center gap-1 text-sm font-medium text-sky-800/70 transition hover:text-sky-950"
+          className="flex items-center gap-1 text-sm font-medium text-teal-800/70 transition hover:text-teal-950"
         >
           Tümü
           <ChevronRight className="h-4 w-4" />
@@ -400,28 +422,32 @@ function RecentActivity({
       </div>
 
       {notifications.length === 0 ? (
-        <div className="px-5 py-8 text-sm leading-6 text-[#5b6b7c] sm:px-6">
+        <div className="px-5 py-8 text-sm leading-6 text-teal-950/50 sm:px-6">
           Henüz bildirim yok. İlk talebinizi oluşturduğunuzda gelişmeler burada
           listelenir.
         </div>
       ) : (
-        <div className="divide-y divide-sky-100/80">
+        <div className="divide-y divide-teal-900/6">
           {notifications.map((notification) => (
             <Link
               key={notification.id}
-              href={notification.actionUrl ?? "/panel/bildirimler"}
-              className="flex items-start gap-3 px-5 py-4 transition hover:bg-sky-50/70 sm:px-6"
+              href={
+                notification.actionUrl
+                  ? `/panel/bildirimler/r/${notification.id}`
+                  : "/panel/bildirimler"
+              }
+              className="flex items-start gap-3 px-5 py-4 transition hover:bg-[#f7faf9] sm:px-6"
             >
               <ActivityIcon type={notification.type} />
               <div className="min-w-0 flex-1">
-                <p className="font-medium text-[#0f172a]">
+                <p className="font-medium text-[#0f1f1d]">
                   {notification.title}
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[#5b6b7c]">
+                <p className="mt-1 text-sm leading-6 text-teal-950/50">
                   {notification.message}
                 </p>
               </div>
-              <span className="shrink-0 text-xs text-[#94a3b8]">
+              <span className="shrink-0 text-xs text-teal-950/35">
                 {formatRelativeTime(notification.createdAt)}
               </span>
             </Link>
@@ -434,7 +460,7 @@ function RecentActivity({
 
 function ActivityIcon({ type }: { type: string }) {
   let Icon: LucideIcon = FileText;
-  let tone = "bg-sky-100 text-sky-800";
+  let tone = "bg-[#eef6f4] text-teal-800";
 
   if (
     type === "NEW_OFFER" ||
@@ -442,12 +468,12 @@ function ActivityIcon({ type }: { type: string }) {
     type === "OFFER_VIEWED"
   ) {
     Icon = BriefcaseBusiness;
-    tone = "bg-emerald-100 text-emerald-800";
+    tone = "bg-[#e7f7f2] text-teal-900";
   }
 
   if (type === "NEW_MESSAGE") {
     Icon = MessageCircle;
-    tone = "bg-amber-100 text-amber-800";
+    tone = "bg-[#f0f4f3] text-[#0f1f1d]";
   }
 
   return (

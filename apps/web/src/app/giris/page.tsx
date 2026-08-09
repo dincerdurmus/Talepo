@@ -33,7 +33,7 @@ export default function GirisPage() {
 
 function GirisPageFallback() {
   return (
-    <main className="min-h-screen bg-[#f3f3ef]">
+    <main className="min-h-screen bg-[#f4f7f6]">
       <div className="mx-auto flex min-h-screen max-w-lg items-center justify-center px-5">
         <p className="text-sm text-black/45">Giriş ekranı yükleniyor...</p>
       </div>
@@ -106,7 +106,7 @@ function GirisPageContent() {
   }, []);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f3f3ef] text-[#151515]">
+    <main className="min-h-screen overflow-hidden bg-[#f4f7f6] text-[#0f1f1d]">
       <div className="grid min-h-screen lg:grid-cols-[0.95fr_1.05fr]">
         {/* SOL — giriş */}
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
@@ -426,7 +426,7 @@ function GirisPageContent() {
                       <DetectedItem
                         label="Konum"
                         value="İstanbul"
-                        color="bg-violet-100 text-violet-900"
+                        color="bg-[#eef6f4] text-teal-900"
                       />
                     </div>
 

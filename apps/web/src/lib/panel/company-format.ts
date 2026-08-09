@@ -1,4 +1,18 @@
-export function formatOfferStatus(status: string) {
+export function formatOfferStatus(
+  status: string,
+  options?: { hasConversation?: boolean },
+) {
+  const negotiating =
+    options?.hasConversation &&
+    (status === "SUBMITTED" || status === "VIEWED");
+
+  if (negotiating) {
+    return {
+      label: "Pazarlık",
+      tone: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",
+    };
+  }
+
   switch (status) {
     case "SUBMITTED":
       return { label: "Gönderildi", tone: "bg-[#eef3fb] text-[#2a4a74]" };
@@ -9,11 +23,11 @@ export function formatOfferStatus(status: string) {
     case "REJECTED":
       return { label: "Red", tone: "bg-[#fff1ee] text-[#8b352b]" };
     case "WITHDRAWN":
-      return { label: "Geri çekildi", tone: "bg-[#f3f3ef] text-black/50" };
+      return { label: "Geri çekildi", tone: "bg-[#f0f4f3] text-teal-950/50" };
     case "EXPIRED":
-      return { label: "Süresi doldu", tone: "bg-[#f3f3ef] text-black/50" };
+      return { label: "Süresi doldu", tone: "bg-[#f0f4f3] text-teal-950/50" };
     default:
-      return { label: status, tone: "bg-[#f3f3ef] text-black/50" };
+      return { label: status, tone: "bg-[#f0f4f3] text-teal-950/50" };
   }
 }
 
@@ -43,9 +57,9 @@ export function formatMemberStatus(status: string) {
     case "REJECTED":
       return { label: "Red", tone: "bg-[#fff1ee] text-[#8b352b]" };
     case "REMOVED":
-      return { label: "Çıkarıldı", tone: "bg-[#f3f3ef] text-black/45" };
+      return { label: "Çıkarıldı", tone: "bg-[#f0f4f3] text-teal-950/45" };
     default:
-      return { label: status, tone: "bg-[#f3f3ef] text-black/45" };
+      return { label: status, tone: "bg-[#f0f4f3] text-teal-950/45" };
   }
 }
 

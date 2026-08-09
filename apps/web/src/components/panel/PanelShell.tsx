@@ -1,19 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  ArrowLeft,
   Bell,
   Building2,
+  ChevronLeft,
   ChevronRight,
   LayoutDashboard,
   MessageCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Search,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+
+const SIDEBAR_COLLAPSED_KEY = "talepo.panel.sidebarCollapsed";
 
 import {
   PanelAccountMenu,
@@ -26,6 +33,7 @@ import {
   PANEL_NOTIFICATIONS_HREF,
 } from "@/components/panel/panel-nav";
 import type { FeatureKey } from "@/lib/membership/entitlements";
+import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
 export type PanelUser = {
@@ -77,8 +85,12 @@ function getPanelPageTitle(pathname: string) {
   if (pathname === "/panel") return "Özet";
   if (pathname.includes("/duzenle")) return "Talebi düzelt";
   if (pathname.startsWith("/panel/taleplerim")) return "Taleplerim";
+  if (pathname.startsWith("/panel/gelen-teklifler")) return "Gelen teklifler";
+  if (pathname.includes("/panel/talepler/") && pathname.endsWith("/teklif")) {
+    return "Teklif ver";
+  }
   if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet";
-  if (pathname.startsWith("/panel/teklifler")) return "Tekliflerimiz";
+  if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
   if (pathname.startsWith("/panel/asistan")) return "AI asistan";
   if (pathname.startsWith("/panel/uyarilar")) return "Uyarı kuralları";
   if (pathname.startsWith("/panel/envanter")) return "Gizli envanter";
@@ -91,17 +103,6 @@ function getPanelPageTitle(pathname: string) {
   if (pathname.startsWith("/panel/profil")) return "Profil";
   return "Çalışma alanı";
 }
-
-const NAV_TONES = [
-  "bg-[#dff4d9] text-[#2f6b34]",
-  "bg-[#dce8ff] text-[#2a4a74]",
-  "bg-[#fbf4ea] text-[#7a4e1a]",
-  "bg-[#eef6f4] text-[#2f5c54]",
-  "bg-[#e4f4f2] text-[#2f5c54]",
-  "bg-[#ffe8d6] text-[#8a4b1a]",
-  "bg-[#e8f3ea] text-[#356d3a]",
-  "bg-[#e7eef8] text-[#334e68]",
-] as const;
 
 export function PanelShell({
   user,
@@ -118,18 +119,44 @@ export function PanelShell({
   const initials = getInitials(user.name, user.email);
   const mode = workspace?.mode ?? "personal";
   const isCorporate = mode === "corporate";
+  const planTier = workspace?.planTier ?? "STANDARD";
+  const planThemeStyle = getPlanThemeStyle(planTier);
   const navItems = filterPanelNavItems(PANEL_NAV_ITEMS, features, mode);
   const companyName = workspace?.companyName?.trim() || "Firma";
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
+  const [collapsed, setCollapsed] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
+        setCollapsed(true);
+      }
+    } catch {
+      /* ignore */
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed, hydrated]);
+
+  const onToggleSidebar = () => setCollapsed((value) => !value);
 
   return (
     <main
-      className={`min-h-screen ${
-        isCorporate ? "bg-[#f3f6f4] text-[#0f1f1d]" : "bg-[#f3f3ef] text-[#151515]"
-      }`}
+      className="talepo-plan-theme min-h-screen bg-[#f4f7f6] text-[#0f1f1d]"
+      style={planThemeStyle}
+      data-plan={planTier}
     >
-      <div className="mx-auto flex min-h-screen max-w-[1680px]">
+      <div className="flex min-h-screen w-full">
         {isCorporate ? (
           <CorporateSidebar
             pathname={pathname}
@@ -137,38 +164,50 @@ export function PanelShell({
             unreadMessages={unreadMessages}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
-            planTier={workspace?.planTier ?? "STANDARD"}
+            planTier={planTier}
             planLabel={workspace?.planLabel ?? "Standart"}
             quotaUnlimited={workspace?.quotaUnlimited ?? true}
             quotaRemaining={workspace?.quotaRemaining ?? null}
+            collapsed={collapsed}
+            onToggle={onToggleSidebar}
           />
         ) : (
           <PersonalSidebar
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
-            user={user}
-            displayName={displayName}
-            initials={initials}
-            planTier={workspace?.planTier ?? "STANDARD"}
-            planLabel={workspace?.planLabel ?? "Standart"}
+            planTier={planTier}
+            collapsed={collapsed}
+            onToggle={onToggleSidebar}
           />
         )}
 
-        <section className="min-w-0 flex-1 px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-8">
-          <div className="mx-auto max-w-[1320px]">
-            <header
-              className={`relative z-40 flex items-center justify-between rounded-[24px] border border-black/[0.06] px-4 py-3 backdrop-blur-xl sm:px-5 ${
-                isCorporate ? "bg-white shadow-sm" : "bg-white/70"
-              }`}
-            >
-              <div className="flex items-center gap-3 lg:hidden">
-                <div className="text-2xl font-semibold tracking-[-0.06em]">
-                  tale<span className="text-black/35">po</span>
+        <section
+          className={`min-w-0 flex-1 pb-28 pt-4 transition-[padding] duration-200 ease-out sm:px-6 lg:pb-8 ${
+            collapsed
+              ? "px-4 lg:pl-4 lg:pr-6"
+              : "px-4 lg:px-8"
+          }`}
+        >
+          <div
+            className={`w-full transition-[max-width] duration-200 ease-out ${
+              collapsed
+                ? "max-w-none"
+                : "mx-auto max-w-[1320px]"
+            }`}
+          >
+            <header className="relative z-40 flex items-center justify-between overflow-visible rounded-2xl border border-teal-900/8 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,31,29,0.04)] sm:px-5">
+              <div
+                className="talepo-plan-accent-bar pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-2xl"
+                aria-hidden
+              />
+              <div className="flex min-w-0 items-center gap-3 lg:hidden">
+                <div className="text-2xl font-semibold tracking-[-0.06em] text-[#0f1f1d]">
+                  tale<span className="text-teal-800/40">po</span>
                 </div>
                 {isCorporate && (
                   <PlanBadge
-                    planTier={workspace?.planTier ?? "STANDARD"}
+                    planTier={planTier}
                     planLabel={workspace?.planLabel}
                     size="sm"
                     linked
@@ -178,19 +217,15 @@ export function PanelShell({
 
               <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex">
                 <div className="min-w-0">
-                  <p
-                    className={`truncate text-[11px] font-semibold uppercase tracking-[0.14em] ${
-                      isCorporate ? "text-teal-800/55" : "text-black/35"
-                    }`}
-                  >
+                  <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
                     {isCorporate ? companyName : `Merhaba, ${displayName.split(" ")[0]}`}
                   </p>
                   <div className="flex min-w-0 items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-black/80">
+                    <p className="truncate text-sm font-semibold text-[#0f1f1d]">
                       {pageTitle}
                     </p>
                     <PlanBadge
-                      planTier={workspace?.planTier ?? "STANDARD"}
+                      planTier={planTier}
                       planLabel={workspace?.planLabel}
                       size="sm"
                       linked
@@ -199,15 +234,15 @@ export function PanelShell({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="relative z-50 flex shrink-0 items-center gap-2">
                 <Link
                   href={PANEL_NOTIFICATIONS_HREF}
                   aria-label="Bildirimler"
-                  className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.06] bg-white transition hover:bg-[#f5f5f2]"
+                  className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-teal-900/8 bg-[#f7faf9] transition hover:bg-white"
                 >
-                  <Bell className="h-5 w-5" />
+                  <Bell className="h-5 w-5 text-[#0f1f1d]/70" />
                   {unreadNotifications > 0 && (
-                    <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-[#72c56f]" />
+                    <span className="talepo-plan-dot absolute right-2.5 top-2.5 h-2 w-2 rounded-full" />
                   )}
                 </Link>
 
@@ -235,12 +270,15 @@ export function PanelShell({
               </div>
             )}
 
-            <div className="mt-4">{children}</div>
+            <div className="mt-4">
+              <PanelBackLink pathname={pathname} />
+              {children}
+            </div>
           </div>
         </section>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-50 rounded-[25px] border border-black/[0.08] bg-white/90 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl lg:hidden">
+      <nav className="fixed bottom-3 left-3 right-3 z-50 rounded-[25px] border border-teal-900/10 bg-white/92 px-4 py-3 shadow-[0_18px_50px_rgba(15,31,29,0.12)] backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-md items-center justify-between">
           <MobileLink
             href="/panel"
@@ -258,11 +296,7 @@ export function PanelShell({
           <Link
             href={isCorporate ? "/panel/talepler" : "/talep"}
             aria-label={isCorporate ? "Talepleri keşfet" : "Talep oluştur"}
-            className={`-mt-8 flex h-16 w-16 items-center justify-center rounded-full border-[5px] text-white shadow-[0_12px_30px_rgba(0,0,0,0.22)] ${
-              isCorporate
-                ? "border-[#f3f6f4] bg-teal-800"
-                : "border-[#f3f3ef] bg-[#151515]"
-            }`}
+            className="talepo-plan-cta -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-[5px] border-[#f4f7f6] shadow-[0_12px_30px_var(--plan-glow)]"
           >
             {isCorporate ? <Search className="h-7 w-7" /> : <Plus className="h-7 w-7" />}
           </Link>
@@ -286,64 +320,127 @@ export function PanelShell({
   );
 }
 
+function SidebarToggle({
+  collapsed,
+  onToggle,
+  tone = "light",
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  tone?: "light" | "dark";
+}) {
+  const light = tone === "light";
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={!collapsed}
+      aria-label={collapsed ? "Menüyü aç" : "Menüyü daralt"}
+      title={collapsed ? "Menüyü aç" : "Menüyü daralt"}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition ${
+        light
+          ? "border border-[#e5e7eb] bg-white text-[#4b5563] hover:bg-[#f3f4f6] hover:text-[#111827]"
+          : "border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+      }`}
+    >
+      {collapsed ? (
+        light ? (
+          <PanelLeftOpen className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )
+      ) : light ? (
+        <PanelLeftClose className="h-4 w-4" />
+      ) : (
+        <ChevronLeft className="h-4 w-4" />
+      )}
+    </button>
+  );
+}
+
 function PersonalSidebar({
   pathname,
   navItems,
   unreadMessages,
-  user,
-  displayName,
-  initials,
   planTier,
-  planLabel,
+  collapsed,
+  onToggle,
 }: {
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
-  user: PanelUser;
-  displayName: string;
-  initials: string;
   planTier: PlanTierId;
-  planLabel: string;
+  collapsed: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <aside className="relative sticky top-0 hidden h-screen w-[270px] shrink-0 overflow-hidden border-r border-black/[0.06] bg-[#eef1ea] px-4 py-6 lg:flex lg:flex-col">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-16 top-8 h-48 w-48 rounded-full bg-[#c9f4c1]/50 blur-[70px]" />
-        <div className="absolute -right-20 bottom-28 h-52 w-52 rounded-full bg-[#c6d9ff]/45 blur-[80px]" />
-      </div>
-
-      <div className="relative">
-        <Link
-          href="/"
-          aria-label="Ana sayfa"
-          className="inline-flex items-end gap-2 px-2 text-[30px] font-semibold tracking-[-0.06em]"
+    <aside
+      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-teal-900/8 bg-[#eef2f1] py-5 transition-[width,padding] duration-200 ease-out lg:flex ${
+        collapsed ? "w-[72px] px-2" : "w-[268px] px-3.5"
+      }`}
+      data-plan={planTier}
+    >
+      <div className={collapsed ? "flex flex-col items-center gap-3" : ""}>
+        <div
+          className={`flex items-center ${
+            collapsed ? "w-full flex-col gap-2" : "justify-between gap-2 px-0.5"
+          }`}
         >
-          <span>
-            tale<span className="text-black/35">po</span>
-          </span>
-          <span className="mb-1.5 rounded-full bg-[#dff4d9] px-2 py-0.5 text-[9px] font-semibold tracking-[0.14em] text-[#2f6b34]">
-            PANEL
-          </span>
-        </Link>
+          <Link
+            href="/"
+            aria-label="Ana sayfa"
+            title="talepo"
+            className={`inline-flex items-center font-semibold tracking-[-0.05em] text-[#0f1f1d] ${
+              collapsed
+                ? "justify-center text-xl"
+                : "gap-2.5 px-2.5 text-[26px]"
+            }`}
+          >
+            {collapsed ? (
+              <span>
+                t<span className="text-teal-800/35">p</span>
+              </span>
+            ) : (
+              <>
+                <span>
+                  tale<span className="text-teal-800/40">po</span>
+                </span>
+                <span className="rounded-md border border-teal-900/10 bg-white px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-teal-900/55">
+                  PANEL
+                </span>
+              </>
+            )}
+          </Link>
+          <SidebarToggle collapsed={collapsed} onToggle={onToggle} />
+        </div>
 
         <Link
           href="/talep"
-          className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-[#151515] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(0,0,0,0.16)] transition hover:-translate-y-0.5 hover:bg-black"
+          title="Yeni talep"
+          aria-label="Yeni talep"
+          className={`talepo-plan-cta mt-5 flex items-center justify-center rounded-xl text-sm font-semibold ${
+            collapsed ? "h-10 w-10" : "gap-2 px-4 py-2.5"
+          }`}
         >
           <Plus className="h-4 w-4" />
-          Yeni talep
+          {!collapsed && <span>Yeni talep</span>}
         </Link>
       </div>
 
-      <nav className="relative mt-3 space-y-1">
-        {navItems.map((item, index) => (
+      <nav className={`mt-6 space-y-0.5 ${collapsed ? "px-0" : ""}`}>
+        {!collapsed && (
+          <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-900/35">
+            Menü
+          </p>
+        )}
+        {navItems.map((item) => (
           <SidebarLink
             key={`${item.href}-${item.label}`}
             href={item.href}
             icon={item.icon}
             label={item.label}
-            tone={NAV_TONES[index % NAV_TONES.length]}
             active={isNavActive(pathname, item.href, item.exact)}
+            collapsed={collapsed}
             badge={
               item.href === "/panel/mesajlar" && unreadMessages > 0
                 ? String(unreadMessages)
@@ -353,51 +450,19 @@ function PersonalSidebar({
         ))}
       </nav>
 
-      <div className="relative mt-auto space-y-3 px-0.5">
-        <div className="rounded-2xl border border-[#b7e3b0]/70 bg-[#eef9eb]/90 px-3.5 py-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2f6b34]">
-            Hızlı ipucu
-          </p>
-          <p className="mt-1.5 text-xs leading-5 text-black/55">
-            İhtiyacını günlük dille yaz; firmalar teklif getirsin.
-          </p>
-        </div>
-
-        <Link
-          href="/panel/profil"
-          className="block rounded-[22px] border border-black/[0.06] bg-white/90 p-3.5 shadow-[0_14px_40px_rgba(0,0,0,0.05)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
-        >
-          <div className="flex items-center gap-3">
-            {user.image ? (
-              <img
-                src={user.image}
-                alt={displayName}
-                className="h-11 w-11 rounded-full border border-black/10 object-cover"
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#151515] to-[#3d5c45] text-sm font-semibold text-white">
-                {initials}
-              </div>
-            )}
-
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{displayName}</p>
-              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                <p className="truncate text-xs text-black/40">Kişisel hesap</p>
-                <PlanBadge
-                  planTier={planTier}
-                  planLabel={planLabel}
-                  size="sm"
-                  linked
-                />
-              </div>
-            </div>
-
-            <ChevronRight className="h-4 w-4 text-black/30" />
+      {!collapsed && (
+        <div className="mt-auto px-0.5">
+          <div className="rounded-xl border border-teal-900/8 bg-white px-3.5 py-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
+              Çalışma notu
+            </p>
+            <p className="mt-1.5 text-xs leading-5 text-teal-950/50">
+              Talebinizi net yazın; uygun firmalar tekliflerini buradan takip
+              edin.
+            </p>
           </div>
-        </Link>
-      </div>
+        </div>
+      )}
     </aside>
   );
 }
@@ -412,6 +477,8 @@ function CorporateSidebar({
   planLabel,
   quotaUnlimited,
   quotaRemaining,
+  collapsed,
+  onToggle,
 }: {
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
@@ -422,103 +489,195 @@ function CorporateSidebar({
   planLabel: string;
   quotaUnlimited: boolean;
   quotaRemaining: number | null;
+  collapsed: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <aside className="relative sticky top-0 hidden h-screen w-[280px] shrink-0 overflow-hidden border-r border-white/10 bg-[#0f1f1d] px-4 py-5 text-white lg:flex lg:flex-col">
-      <div className="pointer-events-none absolute -left-10 top-10 h-40 w-40 rounded-full bg-teal-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-20 right-0 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+    <aside
+      className={`relative sticky top-0 hidden h-screen shrink-0 overflow-hidden border-r border-white/8 bg-[#0f1f1d] py-5 text-white transition-[width,padding] duration-200 ease-out lg:flex lg:flex-col ${
+        collapsed ? "w-[72px] px-2" : "w-[280px] px-4"
+      }`}
+      data-plan={planTier}
+    >
+      <div
+        className="pointer-events-none absolute -left-10 top-10 h-40 w-40 rounded-full blur-3xl"
+        style={{ background: "var(--plan-sidebar-glow)" }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-20 right-0 h-44 w-44 rounded-full blur-3xl opacity-80"
+        style={{ background: "var(--plan-glow)" }}
+      />
 
-      <div className="relative px-2">
-        <Link
-          href="/"
-          aria-label="Ana sayfa"
-          className="text-2xl font-semibold tracking-[-0.06em]"
+      <div className={`relative ${collapsed ? "px-0" : "px-2"}`}>
+        <div
+          className={`flex items-center ${
+            collapsed ? "flex-col gap-2" : "justify-between gap-2"
+          }`}
         >
-          tale<span className="text-white/35">po</span>
-        </Link>
-
-        <div className="mt-4 rounded-2xl border border-teal-400/25 bg-teal-500/10 p-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-teal-500/25 text-teal-100">
-              {companyLogoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={companyLogoUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <Building2 className="h-4 w-4" />
-              )}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white">
-                {companyName}
-              </p>
-              <p className="text-[11px] text-teal-100/70">
-                {planLabel} · Aktif
-              </p>
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] text-teal-100/80">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Kurumsal çalışma alanı
-          </div>
+          <Link
+            href="/"
+            aria-label="Ana sayfa"
+            title="talepo"
+            className={`font-semibold tracking-[-0.06em] ${
+              collapsed ? "text-xl" : "text-2xl"
+            }`}
+          >
+            {collapsed ? (
+              <span>
+                t<span className="text-white/35">p</span>
+              </span>
+            ) : (
+              <>
+                tale<span className="text-white/35">po</span>
+              </>
+            )}
+          </Link>
+          <SidebarToggle
+            collapsed={collapsed}
+            onToggle={onToggle}
+            tone="dark"
+          />
         </div>
+
+        {collapsed ? (
+          <div
+            className="mx-auto mt-4 flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl text-white"
+            style={{ background: "color-mix(in srgb, var(--plan-accent) 35%, transparent)" }}
+            title={companyName}
+          >
+            {companyLogoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={companyLogoUrl}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <Building2 className="h-4 w-4" />
+            )}
+          </div>
+        ) : (
+          <div
+            className="mt-4 rounded-2xl border p-3"
+            style={{
+              borderColor: "color-mix(in srgb, var(--plan-accent) 40%, transparent)",
+              background: "color-mix(in srgb, var(--plan-accent) 14%, transparent)",
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl text-white"
+                style={{
+                  background: "color-mix(in srgb, var(--plan-accent) 35%, transparent)",
+                }}
+              >
+                {companyLogoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={companyLogoUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <Building2 className="h-4 w-4" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">
+                  {companyName}
+                </p>
+                <p className="text-[11px] text-white/65">
+                  {planLabel} · Aktif
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-1.5 text-[11px] text-white/75">
+              <ShieldCheck className="h-3.5 w-3.5" style={{ color: "var(--plan-accent)" }} />
+              Kurumsal çalışma alanı
+            </div>
+          </div>
+        )}
       </div>
 
       <nav className="relative mt-6 space-y-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isNavActive(pathname, item.href, item.exact);
+          const hasBadge =
+            item.href === "/panel/mesajlar" && unreadMessages > 0;
           return (
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+              title={item.label}
+              aria-label={item.label}
+              className={`relative flex items-center rounded-xl text-sm transition ${
+                collapsed
+                  ? "mx-auto h-10 w-10 justify-center"
+                  : "gap-3 px-3 py-2.5"
+              } ${
                 active
-                  ? "bg-teal-500 font-semibold text-[#042f2e]"
+                  ? "font-semibold text-white"
                   : "text-white/55 hover:bg-white/5 hover:text-white/85"
               }`}
+              style={
+                active
+                  ? { background: "var(--plan-primary)" }
+                  : undefined
+              }
             >
-              <Icon className="h-4 w-4" />
-              <span className="flex-1 truncate">{item.label}</span>
-              {item.href === "/panel/mesajlar" && unreadMessages > 0 && (
+              <Icon className="h-4 w-4 shrink-0" />
+              {!collapsed && (
+                <span className="flex-1 truncate">{item.label}</span>
+              )}
+              {hasBadge && !collapsed && (
                 <span
                   className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
                     active
-                      ? "bg-[#042f2e]/15 text-[#042f2e]"
-                      : "bg-teal-400/20 text-teal-100"
+                      ? "bg-white/20 text-white"
+                      : "bg-white/10 text-white/80"
                   }`}
                 >
                   {unreadMessages}
                 </span>
+              )}
+              {hasBadge && collapsed && (
+                <span
+                  className={`absolute right-1.5 top-1.5 h-2 w-2 rounded-full ${
+                    active ? "bg-white" : ""
+                  }`}
+                  style={active ? undefined : { background: "var(--plan-accent)" }}
+                />
               )}
             </Link>
           );
         })}
       </nav>
 
-      <div className="relative mt-auto rounded-2xl border border-white/10 bg-white/5 p-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
-          Kota
-        </p>
-        <p className="mt-2 text-sm font-semibold text-white">
-          {quotaUnlimited
-            ? "Sınırsız teklif"
-            : `${quotaRemaining ?? 0} teklif hakkı`}
-        </p>
-        <p className="mt-1 text-xs text-white/45">
-          {planLabel}
-          {quotaUnlimited ? " · gizli envanter açık" : ""}
-        </p>
-        <Link
-          href="/panel/plan"
-          className="mt-3 inline-block text-xs font-semibold text-teal-200/90"
-        >
-          Planı yönet →
-        </Link>
-      </div>
+      {!collapsed && (
+        <div className="relative mt-auto rounded-2xl border border-white/10 bg-white/5 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">
+            Kota
+          </p>
+          <p className="mt-2 text-sm font-semibold text-white">
+            {quotaUnlimited
+              ? "Sınırsız teklif"
+              : `${quotaRemaining ?? 0} teklif hakkı`}
+          </p>
+          <p className="mt-1 text-xs text-white/45">
+            {planLabel}
+            {quotaUnlimited ? " · gizli envanter açık" : ""}
+          </p>
+          <Link
+            href="/panel/plan"
+            className="mt-3 inline-block text-xs font-semibold"
+            style={{ color: "var(--plan-accent)" }}
+          >
+            Planı yönet →
+          </Link>
+        </div>
+      )}
+      {collapsed && <div className="mt-auto" />}
     </aside>
   );
 }
@@ -527,47 +686,86 @@ function SidebarLink({
   href,
   icon: Icon,
   label,
-  tone,
   active = false,
   badge,
+  collapsed = false,
 }: {
   href: string;
   icon: LucideIcon;
   label: string;
-  tone: string;
   active?: boolean;
   badge?: string;
+  collapsed?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className={`group flex items-center gap-3 rounded-2xl px-2.5 py-2.5 text-sm font-medium transition ${
+      title={label}
+      aria-label={label}
+      className={`group relative flex items-center rounded-lg text-[13px] font-medium transition ${
+        collapsed
+          ? "mx-auto h-10 w-10 justify-center px-0"
+          : "gap-3 px-2.5 py-2"
+      } ${
         active
-          ? "bg-[#151515] text-white shadow-[0_12px_28px_rgba(0,0,0,0.14)]"
-          : "text-black/55 hover:bg-white/80 hover:text-black"
+          ? "talepo-plan-nav-active"
+          : "text-teal-950/55 hover:bg-white hover:text-[#0f1f1d]"
       }`}
     >
       <span
-        className={`flex h-9 w-9 items-center justify-center rounded-xl transition ${
+        className={`relative flex items-center justify-center rounded-md transition ${
+          collapsed ? "h-8 w-8" : "h-8 w-8"
+        } ${
           active
-            ? "bg-white/15 text-white"
-            : `${tone} group-hover:scale-[1.03]`
+            ? "bg-white/10 text-white"
+            : "bg-transparent text-teal-950/45 group-hover:text-[#0f1f1d]"
         }`}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" strokeWidth={1.75} />
+        {badge && collapsed && (
+          <span className="talepo-plan-dot absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ring-2 ring-[#eef2f1]" />
+        )}
       </span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-
-      {badge && (
-        <span
-          className={`flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold ${
-            active ? "bg-[#c9f4c1] text-[#1f4d36]" : "bg-[#151515] text-white"
-          }`}
-        >
-          {badge}
-        </span>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {badge && (
+            <span
+              className={`flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold ${
+                active ? "bg-white/15 text-white" : "talepo-plan-cta"
+              }`}
+            >
+              {badge}
+            </span>
+          )}
+        </>
       )}
     </Link>
+  );
+}
+
+function PanelBackLink({ pathname }: { pathname: string }) {
+  const router = useRouter();
+
+  if (pathname === "/panel") return null;
+
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/panel");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleBack}
+      className="talepo-cloud-pill mb-2 px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
+    >
+      <ArrowLeft className="h-4 w-4 shrink-0" />
+      Geri
+    </button>
   );
 }
 
@@ -588,13 +786,14 @@ function MobileLink({
     <Link
       href={href}
       className={`relative flex min-w-14 flex-col items-center gap-1.5 text-[11px] font-medium ${
-        active ? "text-black" : "text-black/35"
+        active ? "" : "text-teal-950/35"
       }`}
+      style={active ? { color: "var(--plan-primary)" } : undefined}
     >
       <Icon className="h-5 w-5" />
       <span>{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#151515] px-1 text-[10px] text-white">
+        <span className="talepo-plan-cta absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] shadow-none">
           {badge}
         </span>
       )}

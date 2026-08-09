@@ -5,7 +5,7 @@ import {
   mapFieldType,
   mapFieldValue,
   parseDeliveryDeadline,
-  parseMoney,
+  parseBudgetRange,
 } from "./mapper";
 import {
   RequestValidationError,
@@ -129,7 +129,7 @@ export async function updateRequest(
       where: { requestId: existing.id },
     });
 
-    const budget = parseMoney(input.budget);
+    const budget = parseBudgetRange(input.budget);
 
     const updated = await tx.request.update({
       where: { id: existing.id },
@@ -144,8 +144,8 @@ export async function updateRequest(
         aiSummary: buildAiSummary(input),
         city: input.city,
         district: input.district,
-        budgetMin: budget,
-        budgetMax: budget,
+        budgetMin: budget.min,
+        budgetMax: budget.max,
         deadlineAt: parseDeliveryDeadline(input.delivery),
         isUrgent: input.isUrgent ?? false,
         status:

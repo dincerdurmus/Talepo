@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { listAssistantRequests } from "@/lib/ai/list-assistant-requests";
 import {
   formatTry,
   generateOfferAssistantDraft,
@@ -9,7 +10,6 @@ import { estimatePrice } from "@/lib/ai/pricing/estimate";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import {
   assertCanAccessRequest,
-  buildSupplierVisibilityFilter,
 } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
@@ -35,25 +35,7 @@ export async function GET() {
       );
     }
 
-    const visibility = buildSupplierVisibilityFilter(entitlements);
-
-    const requests = await prisma.request.findMany({
-      where: {
-        deletedAt: null,
-        createdById: { not: user.id },
-        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
-        ...visibility,
-      },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-      take: 12,
-      select: {
-        id: true,
-        title: true,
-        city: true,
-        isUrgent: true,
-        category: { select: { name: true, slug: true } },
-      },
-    });
+    const requests = await listAssistantRequests(user.id);
 
     return NextResponse.json({ ok: true, requests });
   } catch (error) {

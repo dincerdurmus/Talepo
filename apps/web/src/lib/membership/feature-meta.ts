@@ -37,10 +37,12 @@ export const FEATURE_META: Record<
   urgent_request_priority: {
     label: "Acil talep önceliği",
     description: "Acil talepler keşif listesinde en üste alınır.",
+    surface: "/panel/talepler",
   },
   advanced_filters: {
     label: "Gelişmiş filtreler",
     description: "Keşif ve eşleştirmede gelişmiş filtre seti.",
+    surface: "/panel/talepler?tab=all",
   },
   feature_request_boost: {
     label: "Talep öne çıkarma",

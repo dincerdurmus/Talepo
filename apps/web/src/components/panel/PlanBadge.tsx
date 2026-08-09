@@ -45,8 +45,8 @@ export function PlanBadge({
   const styleClasses =
     variant === "hero"
       ? paid
-        ? `${visual.activeBadge} shadow-sm ring-1 ring-white/20`
-        : "border border-white/15 bg-white/10 text-teal-50/80"
+        ? `${visual.activeBadge} shadow-sm ring-1 ring-white/25`
+        : "border border-white/15 bg-white/12 text-white/85"
       : visual.badge;
 
   const badge = (

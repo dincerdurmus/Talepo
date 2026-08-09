@@ -1,8 +1,8 @@
 import type { ParsedRequest } from "../types";
 import { detectCategoryId } from "./category";
+import { extractBudgetFromText } from "./budget";
 import {
   detectAttributes,
-  detectBudget,
   detectCity,
   detectDeliveryDays,
   detectQuantity,
@@ -14,6 +14,7 @@ export function parseRequest(text: string): ParsedRequest {
   const categoryId = detectCategoryId(normalizedText);
   const quantity = detectQuantity(normalizedText, categoryId);
   const attributes = detectAttributes(normalizedText, categoryId);
+  const budget = extractBudgetFromText(normalizedText);
 
   if (categoryId === "automotive" && !attributes.needType) {
     attributes.needType = "vehicle";
@@ -33,7 +34,8 @@ export function parseRequest(text: string): ParsedRequest {
     unit: quantity.unit,
     city: detectCity(normalizedText),
     deliveryDays: detectDeliveryDays(normalizedText, categoryId),
-    budget: detectBudget(normalizedText),
+    budget: budget?.amount,
+    budgetDisplay: budget?.display,
     attributes,
   };
 }

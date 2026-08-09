@@ -5,9 +5,13 @@ import type { LucideIcon } from "lucide-react";
 import { InviteActions } from "@/components/panel/InviteActions";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { markAllNotificationsAsRead } from "@/server/notifications/mark-notifications-read";
 
 export default async function NotificationsPage() {
   const user = await requireUser();
+
+  // Opening the inbox counts as reading — clear the bell badge on next layout render.
+  await markAllNotificationsAsRead(user.id);
 
   const [notifications, pendingInvites] = await Promise.all([
     prisma.notification.findMany({
@@ -38,11 +42,11 @@ export default async function NotificationsPage() {
   return (
     <>
       <section className="py-4 sm:py-6">
-        <p className="text-sm font-semibold text-black/35">Bildirimler</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+        <p className="talepo-page-eyebrow">Bildirimler</p>
+        <h1 className="talepo-page-title mt-3 text-4xl sm:text-5xl">
           Hareketler
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
+        <p className="mt-4 max-w-2xl text-base leading-7 text-teal-950/50">
           Talepleriniz, teklifleriniz, mesajlarınız ve firma davetleriyle ilgili
           güncellemeler burada listelenir.
         </p>
@@ -82,14 +86,14 @@ export default async function NotificationsPage() {
       )}
 
       {notifications.length === 0 ? (
-        <section className="rounded-[34px] border border-black/[0.06] bg-white p-8 text-center shadow-[0_20px_70px_rgba(0,0,0,0.04)] sm:p-14">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#f4f4f0]">
-            <Bell className="h-7 w-7 text-black/35" />
+        <section className="rounded-2xl border border-teal-900/10 bg-white p-8 text-center shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:p-14">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-[#eef6f4]">
+            <Bell className="h-7 w-7 text-teal-800/55" />
           </div>
-          <h2 className="mt-6 text-2xl font-semibold tracking-tight">
+          <h2 className="mt-6 text-2xl font-semibold tracking-tight text-[#0f1f1d]">
             Henüz bildirim yok
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-black/45">
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-teal-950/50">
             İlk talebinizi oluşturduğunuzda veya teklif aldığınızda
             bildirimler burada görünecek.
           </p>
@@ -139,7 +143,7 @@ export default async function NotificationsPage() {
                     />
                   ) : notification.actionUrl && !isInvite ? (
                     <Link
-                      href={notification.actionUrl}
+                      href={`/panel/bildirimler/r/${notification.id}`}
                       className="mt-3 inline-flex text-sm font-semibold text-teal-800"
                     >
                       Görüntüle →
@@ -174,10 +178,12 @@ function NotificationIcon({ type }: { type: string }) {
     type === "NEW_OFFER" ||
     type === "OFFER_ACCEPTED" ||
     type === "OFFER_VIEWED" ||
-    type === "OFFER_REJECTED"
+    type === "OFFER_REJECTED" ||
+    type === "OFFER_NEGOTIATE"
   ) {
     Icon = BriefcaseBusiness;
-    background = "bg-[#e5efff]";
+    background =
+      type === "OFFER_NEGOTIATE" ? "bg-amber-50" : "bg-[#e5efff]";
   }
 
   if (type === "NEW_MESSAGE") {

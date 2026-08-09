@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
 export default function KullanimKosullariPage() {
   return (
-    <main className="min-h-screen bg-[#f3f3ef] px-5 py-12 text-[#151515] sm:px-8">
+    <main className="min-h-screen bg-[#f4f7f6] px-5 py-12 text-[#0f1f1d] sm:px-8">
       <div className="mx-auto max-w-2xl">
         <Link
           href="/"
@@ -22,7 +22,7 @@ export default function KullanimKosullariPage() {
         <div className="mt-8 space-y-5 text-base leading-7 text-black/60">
           <p>
             Talepo, alıcıların ihtiyaçlarını yayınladığı ve firmaların teklif
-            verdiği bir B2B eşleşme platformudur. Hesap oluşturarak bu
+            verdiği bir talep ve teklif platformudur. Hesap oluşturarak bu
             koşulları kabul etmiş sayılırsınız.
           </p>
           <p>

@@ -1,17 +1,22 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Fraunces, Manrope } from "next/font/google";
-import { ArrowRight, PencilLine, Search } from "lucide-react";
+import { ArrowRight, PencilLine } from "lucide-react";
 
 import { ExploreAutoRefresh } from "@/components/panel/ExploreAutoRefresh";
 import { ExploreCategoryFilterBar } from "@/components/panel/ExploreCategoryFilterBar";
+import { ExploreFilterUpsell } from "@/components/panel/ExploreFilterUpsell";
 import { ExploreRequestCard } from "@/components/panel/ExploreRequestCard";
 import { InterestCategoryPicker } from "@/components/panel/InterestCategoryPicker";
+import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
+import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   appendExploreFilterParams,
   buildExploreFilterWhere,
+  hasActiveAdvancedExploreFilters,
   hasActiveExploreFilters,
   parseExploreFilters,
+  stripAdvancedExploreFilters,
 } from "@/lib/explore/category-filters";
 import { parseInterestSlugs } from "@/lib/explore/interest-categories";
 import { buildSupplierVisibilityFilter } from "@/lib/membership/assert-entitlement";
@@ -50,6 +55,11 @@ const requestListSelect = {
   publishedAt: true,
   createdAt: true,
   coverImageUrl: true,
+  aiSummary: true,
+  description: true,
+  budgetMin: true,
+  budgetMax: true,
+  currency: true,
   category: { select: { name: true, slug: true } },
   _count: { select: { offers: true } },
 } as const;
@@ -63,6 +73,11 @@ type RequestRow = {
   publishedAt: Date | null;
   createdAt: Date;
   coverImageUrl: string | null;
+  aiSummary: string | null;
+  description: string;
+  budgetMin: { toString(): string } | null;
+  budgetMax: { toString(): string } | null;
+  currency: string;
   category: { name: string; slug: string };
   _count: { offers: number };
   matchScore?: number | null;
@@ -94,6 +109,7 @@ export default async function ExploreRequestsPage({
   );
   const visibilityFilter = buildSupplierVisibilityFilter(entitlements);
   const hasUrgentPriority = entitlements.features.urgent_request_priority;
+  const hasAdvancedFilters = entitlements.features.advanced_filters;
   const companyId =
     entitlements.subject.type === "company" ? entitlements.subject.id : null;
 
@@ -127,9 +143,22 @@ export default async function ExploreRequestsPage({
   const showInterestPicker =
     tab === "matched" && (editingInterests || interestSlugs.length === 0);
 
-  const exploreFilters = parseExploreFilters(params, interestSlugs);
+  const rawExploreFilters = parseExploreFilters(params, interestSlugs);
+  const exploreFilters = hasAdvancedFilters
+    ? rawExploreFilters
+    : stripAdvancedExploreFilters(rawExploreFilters);
+  const advancedFiltersAttempted =
+    !hasAdvancedFilters && hasActiveAdvancedExploreFilters(rawExploreFilters);
   const filterWhere = buildExploreFilterWhere(exploreFilters);
   const filtersActive = hasActiveExploreFilters(exploreFilters);
+
+  const allFilterSlugs = categoryFilter ? [categoryFilter] : ([] as string[]);
+  const rawAllFilters = parseExploreFilters(params, allFilterSlugs);
+  const allExploreFilters = hasAdvancedFilters
+    ? rawAllFilters
+    : stripAdvancedExploreFilters(rawAllFilters);
+  const allFilterWhere = buildExploreFilterWhere(allExploreFilters);
+
   const focusCategoryId = categories.find(
     (c) => c.slug === exploreFilters.focus,
   )?.id;
@@ -226,12 +255,6 @@ export default async function ExploreRequestsPage({
         )?.id
       : undefined;
 
-    const allFilterSlugs = categoryFilter
-      ? [categoryFilter]
-      : ([] as string[]);
-    const allExploreFilters = parseExploreFilters(params, allFilterSlugs);
-    const allFilterWhere = buildExploreFilterWhere(allExploreFilters);
-
     const rows = await prisma.request.findMany({
       where: {
         ...baseWhere,
@@ -256,7 +279,14 @@ export default async function ExploreRequestsPage({
   } else if (tab === "newest") {
     const rows = await prisma.request.findMany({
       where: baseWhere,
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
+      orderBy: hasUrgentPriority
+        ? [
+            { isUrgent: "desc" },
+            { isFeatured: "desc" },
+            { publishedAt: "desc" },
+            { createdAt: "desc" },
+          ]
+        : [{ publishedAt: "desc" }, { createdAt: "desc" }],
       take: 50,
       select: requestListSelect,
     });
@@ -387,23 +417,99 @@ export default async function ExploreRequestsPage({
               </label>
               <button
                 type="submit"
-                className="h-11 rounded-xl bg-gradient-to-r from-teal-700 to-teal-600 px-5 text-sm font-semibold text-white shadow-sm"
+                className="h-11 rounded-xl bg-[#0f766e] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
               >
                 Filtrele
               </button>
             </form>
+
+            {hasAdvancedFilters && !categoryFilter ? (
+              <form
+                method="get"
+                className="rounded-2xl border border-teal-900/10 bg-white/80 p-3 shadow-sm"
+              >
+                <input type="hidden" name="tab" value="all" />
+                {cityFilter ? (
+                  <input type="hidden" name="city" value={cityFilter} />
+                ) : null}
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-sky-800/60">
+                  Gelişmiş filtreler
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+                  {hasUrgentPriority ? (
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-teal-900/70">
+                      <input
+                        type="checkbox"
+                        name="urgent"
+                        value="1"
+                        defaultChecked={allExploreFilters.advanced.urgentOnly}
+                        className="h-4 w-4 rounded border-teal-900/20 text-teal-700"
+                      />
+                      Sadece acil talepler
+                    </label>
+                  ) : null}
+                  <label className="min-w-[7rem] flex-1 text-xs font-semibold text-teal-900/55 sm:max-w-[9rem]">
+                    Min bütçe (₺)
+                    <TrMoneyInput
+                      name="budgetMin"
+                      defaultValue={allExploreFilters.advanced.budgetMin}
+                      placeholder="ör. 10.000"
+                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                    />
+                  </label>
+                  <label className="min-w-[7rem] flex-1 text-xs font-semibold text-teal-900/55 sm:max-w-[9rem]">
+                    Max bütçe (₺)
+                    <TrMoneyInput
+                      name="budgetMax"
+                      defaultValue={allExploreFilters.advanced.budgetMax}
+                      placeholder="ör. 500.000"
+                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                    />
+                  </label>
+                  <label className="min-w-[8rem] flex-1 text-xs font-semibold text-teal-900/55 sm:max-w-[10rem]">
+                    Yayın tarihi
+                    <select
+                      name="since"
+                      defaultValue={
+                        allExploreFilters.advanced.sinceDays != null
+                          ? String(allExploreFilters.advanced.sinceDays)
+                          : ""
+                      }
+                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                    >
+                      <option value="">Tüm zamanlar</option>
+                      <option value="1">Son 24 saat</option>
+                      <option value="7">Son 7 gün</option>
+                      <option value="30">Son 30 gün</option>
+                      <option value="90">Son 90 gün</option>
+                    </select>
+                  </label>
+                  <button
+                    type="submit"
+                    className="h-10 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-black"
+                  >
+                    Uygula
+                  </button>
+                </div>
+              </form>
+            ) : !hasAdvancedFilters ? (
+              <ExploreFilterUpsell />
+            ) : null}
+
             {categoryFilter ? (
               <ExploreCategoryFilterBar
                 interestOptions={categories
                   .filter((c) => c.slug === categoryFilter)
                   .map((c) => ({ slug: c.slug, name: c.name }))}
-                filters={parseExploreFilters(params, [categoryFilter])}
+                filters={allExploreFilters}
                 hiddenFields={{
                   tab: "all",
                   category: categoryFilter,
                   ...(cityFilter ? { city: cityFilter } : {}),
                 }}
                 clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}`}
+                advancedFiltersEnabled={hasAdvancedFilters}
+                showUrgentFilter={hasUrgentPriority}
               />
             ) : null}
           </div>
@@ -443,7 +549,20 @@ export default async function ExploreRequestsPage({
               interestOptions={interestOptions}
               filters={exploreFilters}
               clearHref={clearMatchedFiltersHref}
+              advancedFiltersEnabled={hasAdvancedFilters}
+              showUrgentFilter={hasUrgentPriority}
             />
+            {advancedFiltersAttempted ? (
+              <p className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-3 py-2 text-xs text-amber-900/80">
+                Gelişmiş filtre parametreleri Profesyonel planda geçerlidir; şu an
+                uygulanmadı.
+              </p>
+            ) : null}
+            {hasUrgentPriority ? (
+              <p className="mb-4 text-xs font-medium text-sky-800/70">
+                Acil talepler listenizde öncelikli sıralanır.
+              </p>
+            ) : null}
           </>
         ) : null}
 
@@ -455,7 +574,13 @@ export default async function ExploreRequestsPage({
 
         {!showInterestPicker && requests.length === 0 ? (
           <EmptyState
-            icon={<Search className="mx-auto h-7 w-7 text-teal-800/35" />}
+            variant={
+              tab === "matched" && filtersActive
+                ? "search"
+                : tab === "newest"
+                  ? "requests"
+                  : "search"
+            }
             title={
               tab === "matched" && filtersActive
                 ? "Filtreye uyan talep yok"
@@ -506,6 +631,11 @@ export default async function ExploreRequestsPage({
                     categorySlug={request.category.slug}
                     city={request.city}
                     coverImageUrl={request.coverImageUrl}
+                    summary={request.aiSummary}
+                    description={request.description}
+                    budgetMin={request.budgetMin}
+                    budgetMax={request.budgetMax}
+                    currency={request.currency}
                     offerCount={request._count.offers}
                     timeLabel={
                       tab === "newest"
@@ -517,6 +647,9 @@ export default async function ExploreRequestsPage({
                     isFresh={tab === "newest" && isFresh(when)}
                     matchReason={
                       tab === "matched" ? request.matchReason : null
+                    }
+                    matchScore={
+                      tab === "matched" ? (request.matchScore ?? null) : null
                     }
                     emphasizeTime={tab === "newest"}
                   />
@@ -554,22 +687,22 @@ function TabLink({
 }
 
 function EmptyState({
-  icon,
+  variant = "search",
   title,
   body,
   actionHref,
   actionLabel,
 }: {
-  icon: ReactNode;
+  variant?: "requests" | "offers" | "search" | "inbox";
   title: string;
   body: string;
   actionHref: string;
   actionLabel: string;
 }) {
   return (
-    <div className="rounded-3xl border border-teal-900/10 bg-gradient-to-br from-white to-[#f3fbf8] px-6 py-10 text-center">
-      {icon}
-      <p className="mt-4 font-[family-name:var(--font-explore-display)] text-xl font-semibold text-[#0f3d38]">
+    <div className="talepo-card px-6 py-10 text-center">
+      <EmptyIllustration variant={variant} />
+      <p className="mt-5 font-[family-name:var(--font-explore-display)] text-xl font-semibold text-[#0f3d38]">
         {title}
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a7a74]">
@@ -577,7 +710,7 @@ function EmptyState({
       </p>
       <Link
         href={actionHref}
-        className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
       >
         {actionLabel}
         <ArrowRight className="h-4 w-4" />

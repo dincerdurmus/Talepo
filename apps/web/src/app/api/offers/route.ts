@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
@@ -20,11 +21,18 @@ export async function POST(request: Request) {
       title: body.title ? String(body.title) : undefined,
     });
 
+    revalidatePath("/panel/taleplerim");
+    revalidatePath(`/panel/taleplerim/${offer.requestId}`);
+    revalidatePath("/panel/talepler");
+    revalidatePath(`/panel/talepler/${offer.requestId}`);
+    revalidatePath("/panel/gelen-teklifler");
+    revalidatePath("/panel/teklifler");
+
     return NextResponse.json(
       {
         ok: true,
         offer,
-        redirectTo: `/panel/talepler/${offer.requestId}`,
+        redirectTo: `/panel/teklifler?gonderildi=1`,
       },
       { status: 201 },
     );
@@ -52,7 +60,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("Teklif oluşturulamadı:", error);
+    console.error("[POST /api/offers] Teklif oluşturulamadı:", error);
     return NextResponse.json(
       { ok: false, message: "Teklif kaydedilirken beklenmeyen bir hata oluştu." },
       { status: 500 },

@@ -10,7 +10,7 @@ import {
   mapFieldType,
   mapFieldValue,
   parseDeliveryDeadline,
-  parseMoney,
+  parseBudgetRange,
 } from "./mapper";
 import type { CreateRequestInput } from "./request-schema";
 
@@ -111,7 +111,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       formFields.set(field.key, savedField.id);
     }
 
-    const budget = parseMoney(input.budget);
+    const budget = parseBudgetRange(input.budget);
     const now = new Date();
     const standardDelayHours = getPlanDefinition("STANDARD").requestAccessDelayHours;
     const visibleToSuppliersAt = new Date(
@@ -141,8 +141,8 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         status: "PUBLISHED",
         city: input.city,
         district: input.district,
-        budgetMin: budget,
-        budgetMax: budget,
+        budgetMin: budget.min,
+        budgetMax: budget.max,
         deadlineAt: parseDeliveryDeadline(input.delivery),
         publishedAt: now,
         isUrgent: input.isUrgent ?? false,

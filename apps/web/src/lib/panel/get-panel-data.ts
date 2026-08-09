@@ -1,3 +1,4 @@
+import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 
 const ACTIVE_REQUEST_STATUSES = [
@@ -42,12 +43,18 @@ export async function getPanelSummary(userId: string) {
 }
 
 export async function getUnreadMessageCount(userId: string) {
+  const workspace = await getCompanyWorkspace(userId);
+
   const participants = await prisma.conversationParticipant.findMany({
     where: {
-      userId,
       leftAt: null,
+      OR: [
+        { userId },
+        ...(workspace ? [{ companyId: workspace.companyId }] : []),
+      ],
     },
     select: {
+      conversationId: true,
       lastReadAt: true,
       conversation: {
         select: { lastMessageAt: true },
@@ -55,10 +62,36 @@ export async function getUnreadMessageCount(userId: string) {
     },
   });
 
-  return participants.filter((participant) => {
-    const lastMessageAt = participant.conversation.lastMessageAt;
-    if (!lastMessageAt) return false;
-    if (!participant.lastReadAt) return true;
-    return participant.lastReadAt < lastMessageAt;
-  }).length;
+  // Prefer the freshest lastReadAt when user + company rows both exist.
+  const byConversation = new Map<
+    string,
+    { lastReadAt: Date | null; lastMessageAt: Date | null }
+  >();
+
+  for (const row of participants) {
+    const existing = byConversation.get(row.conversationId);
+    if (!existing) {
+      byConversation.set(row.conversationId, {
+        lastReadAt: row.lastReadAt,
+        lastMessageAt: row.conversation.lastMessageAt,
+      });
+      continue;
+    }
+
+    const existingTs = existing.lastReadAt?.getTime() ?? 0;
+    const nextTs = row.lastReadAt?.getTime() ?? 0;
+    if (nextTs > existingTs) {
+      existing.lastReadAt = row.lastReadAt;
+    }
+  }
+
+  let unread = 0;
+  for (const row of byConversation.values()) {
+    if (!row.lastMessageAt) continue;
+    if (!row.lastReadAt || row.lastReadAt < row.lastMessageAt) {
+      unread += 1;
+    }
+  }
+
+  return unread;
 }

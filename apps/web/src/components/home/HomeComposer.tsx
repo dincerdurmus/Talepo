@@ -3,49 +3,48 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { FormEvent, useEffect, useState } from "react";
-import { ArrowRight, LayoutDashboard, Sparkles } from "lucide-react";
+import { FormEvent, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
+import { detectCategory } from "@/lib/request-category-engine";
 
-const EXAMPLES = [
-  {
-    label: "İstanbul’da 50 ofis sandalyesi lazım",
-    tone: "border-[#b7e3b0] bg-[#eef9eb] text-[#2f6b34] hover:bg-[#e4f5df]",
-  },
-  {
-    label: "Bağcılar’da 2+1 kiralık daire arıyorum",
-    tone: "border-[#b8cce8] bg-[#eef3fb] text-[#2a4a74] hover:bg-[#e4ecf8]",
-  },
-  {
-    label: "5.000 adet baskılı karton kutu",
-    tone: "border-[#e4c9a0] bg-[#fbf4ea] text-[#7a4e1a] hover:bg-[#f7ecdc]",
-  },
-  {
-    label: "Ankara’ya 10 laptop teklifi",
-    tone: "border-[#c5d9d4] bg-[#eef6f4] text-[#2f5c54] hover:bg-[#e4f0ed]",
-  },
+const SUGGESTIONS = [
+  "50 ofis sandalyesi, İstanbul",
+  "2+1 kiralık daire, Bağcılar",
+  "5.000 adet karton kutu",
 ];
 
-const PLACEHOLDERS = [
-  "Örnek: İstanbul’da 50 ofis sandalyesi lazım…",
-  "Örnek: Bağcılar’da 2+1 kiralık daire…",
-  "Örnek: 5.000 adet baskılı karton kutu…",
-];
+type HomeComposerProps = {
+  /** When true, secondary links are tuned for a dark atmospheric hero. */
+  onInk?: boolean;
+};
 
-export function HomeComposer() {
+export function HomeComposer({ onInk = false }: HomeComposerProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fieldId = useId();
   const [text, setText] = useState("");
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [focused, setFocused] = useState(false);
   const isLoggedIn = status === "authenticated" && Boolean(session?.user);
 
+  const categoryHint = useMemo(() => {
+    const trimmed = text.trim();
+    if (trimmed.length < 8) return null;
+    const normalized = trimmed.toLocaleLowerCase("tr-TR");
+    const category = detectCategory(normalized);
+    const matched = category.keywords.some((keyword) =>
+      normalized.includes(keyword)
+    );
+    return matched ? category.label : null;
+  }, [text]);
+
   useEffect(() => {
-    if (text || focused) return;
-    const id = window.setInterval(() => {
-      setPlaceholderIndex((current) => (current + 1) % PLACEHOLDERS.length);
-    }, 3200);
-    return () => window.clearInterval(id);
-  }, [text, focused]);
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const next = Math.min(Math.max(el.scrollHeight, 56), 140);
+    el.style.height = `${next}px`;
+  }, [text]);
 
   function go(next: string) {
     const value = next.trim();
@@ -61,84 +60,118 @@ export function HomeComposer() {
     go(text);
   }
 
+  function applySuggestion(value: string) {
+    setText(value);
+    textareaRef.current?.focus();
+  }
+
+  const canSubmit = text.trim().length > 0;
+
   return (
     <div className="w-full">
-      <form
-        onSubmit={onSubmit}
-        className={`relative overflow-hidden rounded-[30px] border bg-white/95 p-3 shadow-[0_28px_90px_rgba(20,40,20,0.10)] backdrop-blur-sm transition duration-300 sm:p-4 ${
-          focused
-            ? "border-[#7cbc7a]/55 shadow-[0_28px_90px_rgba(80,150,90,0.16)]"
-            : "border-black/[0.08]"
-        }`}
-      >
-        <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-[#c9f4c1]/40 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-14 -left-8 h-32 w-32 rounded-full bg-[#c6d9ff]/45 blur-3xl" />
-
-        <div className="relative mb-2 flex items-center gap-2 px-3 pt-1">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#eef9eb] px-2.5 py-1 text-[11px] font-semibold text-[#2f6b34]">
-            <Sparkles className="h-3 w-3" />
-            Hızlı yaz
-          </span>
-          <span className="text-[11px] text-black/35">
-            Günlük dille anlatman yeter
-          </span>
+      <form onSubmit={onSubmit} className="talepo-composer w-full">
+        <div className="flex items-baseline justify-between gap-3 px-1">
+          <label
+            htmlFor={fieldId}
+            className={`text-[11px] font-medium uppercase tracking-[0.2em] ${
+              onInk ? "text-white/35" : "text-[#0a1210]/40"
+            }`}
+          >
+            Talep
+          </label>
+          {categoryHint ? (
+            <span
+              className={`text-[11px] tracking-[0.02em] ${
+                onInk ? "text-teal-200/40" : "text-teal-800/45"
+              }`}
+            >
+              {categoryHint}
+            </span>
+          ) : null}
         </div>
 
-        <label htmlFor="home-need" className="sr-only">
-          Ne arıyorsunuz?
-        </label>
-        <textarea
-          id="home-need"
-          name="query"
-          rows={3}
-          value={text}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          onChange={(event) => setText(event.target.value)}
-          placeholder={PLACEHOLDERS[placeholderIndex]}
-          className="relative min-h-[104px] w-full resize-none bg-transparent px-3 py-2 text-base leading-7 outline-none placeholder:text-black/30 sm:text-lg"
-        />
-        <div className="relative mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="px-1 text-xs text-black/40 sm:px-3">
-            Ücretsiz · Yaklaşık 20 saniye · Telefonunuz gizli kalır
-          </p>
+        <div
+          className={`mt-3 flex items-end gap-2 rounded-[1.75rem] border px-3 py-2.5 backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-300 sm:gap-3 sm:px-4 sm:py-3 ${
+            onInk
+              ? focused
+                ? "border-white/18 bg-white/[0.12] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
+                : "border-white/10 bg-white/[0.08] hover:border-white/14 hover:bg-white/[0.1]"
+              : focused
+                ? "border-[#0a1210]/14 bg-white/90 shadow-[0_12px_40px_rgba(10,18,16,0.08)]"
+                : "border-[#0a1210]/10 bg-white/70 hover:border-[#0a1210]/14"
+          }`}
+        >
+          <textarea
+            ref={textareaRef}
+            id={fieldId}
+            name="query"
+            rows={2}
+            value={text}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            onChange={(event) => setText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                go(text);
+              }
+            }}
+            placeholder="İhtiyacınızı yazın…"
+            className={`max-h-[140px] min-h-[56px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] leading-6 outline-none sm:text-[16px] sm:leading-7 ${
+              onInk
+                ? "text-white/92 placeholder:text-white/28"
+                : "text-[#0a1210] placeholder:text-[#0a1210]/28"
+            }`}
+          />
+
           <button
             type="submit"
-            className="group inline-flex min-h-[54px] items-center justify-center gap-2 rounded-[18px] bg-[#151515] px-6 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition hover:-translate-y-0.5 hover:bg-black sm:min-w-[210px]"
+            className={`mb-1 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-medium tracking-[0.01em] transition sm:h-11 sm:px-5 ${
+              onInk
+                ? canSubmit
+                  ? "bg-white text-[#070c0b] hover:bg-white/92"
+                  : "bg-white/12 text-white/55 hover:bg-white/16 hover:text-white/75"
+                : canSubmit
+                  ? "bg-[#0a1210] text-white hover:bg-[#121c1a]"
+                  : "bg-[#0a1210]/70 text-white/90 hover:bg-[#0a1210]/82"
+            }`}
           >
-            Talep oluştur
-            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            Devam
+            <ArrowRight className="h-3.5 w-3.5 opacity-70" />
           </button>
         </div>
+
+        <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-1 sm:mt-5">
+          {SUGGESTIONS.map((suggestion) => (
+            <li key={suggestion}>
+              <button
+                type="button"
+                onClick={() => applySuggestion(suggestion)}
+                className={`text-[12.5px] tracking-[0.01em] transition sm:text-[13px] ${
+                  onInk
+                    ? "text-white/32 hover:text-white/62"
+                    : "text-[#0a1210]/38 hover:text-[#0a1210]/70"
+                }`}
+              >
+                {suggestion}
+              </button>
+            </li>
+          ))}
+        </ul>
       </form>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="self-center text-xs font-medium text-black/40">
-          Hızlı örnek:
-        </span>
-        {EXAMPLES.map((example) => (
-          <button
-            key={example.label}
-            type="button"
-            onClick={() => {
-              setText(example.label);
-              go(example.label);
-            }}
-            className={`rounded-full border px-3.5 py-2 text-left text-xs font-medium transition hover:-translate-y-0.5 ${example.tone}`}
-          >
-            {example.label}
-          </button>
-        ))}
-      </div>
-
       {isLoggedIn && (
-        <div className="mt-5 flex justify-center">
+        <div className="mt-6 flex justify-center">
           <Link
             href="/panel"
-            className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/80 px-4 py-2 text-sm font-medium text-[#171717] shadow-sm backdrop-blur transition hover:border-black/15 hover:bg-white"
+            className={`inline-flex items-center gap-2 text-[13px] font-medium transition ${
+              onInk
+                ? "text-white/40 hover:text-white/70"
+                : "text-teal-800/65 hover:text-teal-900"
+            }`}
           >
-            <LayoutDashboard className="h-4 w-4 text-black/45" />
-            Panele git · Özet
+            <LayoutDashboard className="h-3.5 w-3.5 opacity-70" />
+            Panele git
           </Link>
         </div>
       )}

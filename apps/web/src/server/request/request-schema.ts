@@ -1,3 +1,10 @@
+import { parseNeighborhoods } from "@/lib/geo/neighborhoods";
+import {
+  isValidRealEstateLocation,
+  parseRealEstateCity,
+} from "@/lib/geo/turkey-districts";
+import { isValidNeighborhoodSelection } from "@/lib/geo/turkey-neighborhoods";
+
 export type RequestFieldInput = {
   key: string;
   label: string;
@@ -117,6 +124,29 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
     }
   }
 
+  const city = asCleanString(raw.city, 120);
+  const district = asCleanString(raw.district, 120);
+
+  if (categorySlug === "real-estate") {
+    const parsed = parseRealEstateCity(city);
+    const il = parsed?.il ?? "";
+    const ilce = district || parsed?.ilce || "";
+    if (!isValidRealEstateLocation(il, ilce)) {
+      issues.push("Emlak talepleri için il ve ilçe seçimi zorunludur.");
+    } else {
+      const neighborhoodsField = fields.find(
+        (field) => field.key === "neighborhoods",
+      );
+      const mahalleler = parseNeighborhoods(neighborhoodsField?.value);
+      if (
+        mahalleler.length > 0 &&
+        !isValidNeighborhoodSelection(il, ilce, mahalleler)
+      ) {
+        issues.push("Seçilen mahalleler ilçe ile uyumlu değil.");
+      }
+    }
+  }
+
   if (issues.length) {
     throw new RequestValidationError(issues);
   }
@@ -136,8 +166,8 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
       name: categoryName,
       description: asCleanString(rawCategory.description, 1_000) || undefined,
     },
-    city: asCleanString(raw.city, 120) || undefined,
-    district: asCleanString(raw.district, 120) || undefined,
+    city: city || undefined,
+    district: district || undefined,
     quantity: asCleanString(raw.quantity, 120) || undefined,
     delivery: asCleanString(raw.delivery, 120) || undefined,
     budget: asCleanString(raw.budget, 120) || undefined,

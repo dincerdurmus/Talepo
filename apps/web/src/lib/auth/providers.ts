@@ -1,4 +1,4 @@
-import type { Provider } from "next-auth/providers";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
@@ -11,8 +11,10 @@ function hasCredentials(id?: string, secret?: string) {
   return Boolean(id?.trim() && secret?.trim());
 }
 
-export function getAuthProviders(): Provider[] {
-  const providers: Provider[] = [
+type AuthProvider = NonNullable<NextAuthOptions["providers"]>[number];
+
+export function getAuthProviders(): AuthProvider[] {
+  const providers: AuthProvider[] = [
     CredentialsProvider({
       id: "credentials",
       name: "E-posta",

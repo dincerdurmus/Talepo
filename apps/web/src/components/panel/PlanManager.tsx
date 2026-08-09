@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, Crown, LoaderCircle, Sparkles } from "lucide-react";
+import { Check, LoaderCircle, Sparkles } from "lucide-react";
 
 import {
   FEATURE_META,
@@ -15,10 +15,16 @@ import {
   hasPersonalPlanMismatch,
   TEAM_PLAN_SCOPE_NOTE,
 } from "@/lib/membership/membership-rules";
-import { PLAN_FEATURES, PLAN_VISUALS } from "@/lib/membership/plan-visuals";
+import {
+  getPlanThemeStyle,
+  PLAN_FEATURES,
+  PLAN_THEME_TOKENS,
+  PLAN_VISUALS,
+} from "@/lib/membership/plan-visuals";
 import {
   OFFER_CREDIT_PACKS,
   PLAN_DEFINITIONS,
+  planTierRank,
   type PlanTierId,
 } from "@/lib/membership/plans";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
@@ -34,11 +40,13 @@ export type CompanyOption = {
 type PlanManagerProps = {
   entitlements: EntitlementDTO;
   companies?: CompanyOption[];
+  mockUpgradeEnabled?: boolean;
 };
 
 export function PlanManager({
   entitlements,
   companies = [],
+  mockUpgradeEnabled = false,
 }: PlanManagerProps) {
   const router = useRouter();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
@@ -55,6 +63,34 @@ export function PlanManager({
   const mismatchDetail = personalMismatch
     ? formatPersonalPlanMismatchDetail(entitlements)
     : undefined;
+  const currentRank = planTierRank(entitlements.effectivePlanTier);
+
+  function canSelectPlan(planId: PlanTierId): boolean {
+    if (planId === entitlements.effectivePlanTier) return false;
+    if (planId === "CORPORATE") return false;
+    if (planId === "STANDARD") return mockUpgradeEnabled;
+    return mockUpgradeEnabled && planTierRank(planId) > currentRank;
+  }
+
+  function planButtonLabel(planId: PlanTierId): string {
+    if (planId === entitlements.effectivePlanTier) {
+      return "Aktif plan";
+    }
+    if (planId === "CORPORATE") {
+      return "Kurumsal · ödeme yakında";
+    }
+    if (planId === "STANDARD") {
+      return mockUpgradeEnabled ? "Standart'a geç (test)" : "Ücretsiz başla";
+    }
+    const plan = PLAN_DEFINITIONS[planId];
+    if (mockUpgradeEnabled && planTierRank(planId) > currentRank) {
+      return `Test yükselt · ₺${plan.priceTry?.toLocaleString("tr-TR")}/ay`;
+    }
+    if (plan.priceTry) {
+      return `₺${plan.priceTry.toLocaleString("tr-TR")}/ay · ödeme yakında`;
+    }
+    return "Yükselt";
+  }
 
   async function runAction(key: string, body: Record<string, unknown>) {
     setLoadingKey(key);
@@ -90,8 +126,15 @@ export function PlanManager({
     }
   }
 
+  const CurrentIcon = currentVisual.icon;
+  const planThemeStyle = getPlanThemeStyle(visualKey);
+
   return (
-    <div className="space-y-6">
+    <div
+      className="talepo-plan-theme space-y-6"
+      style={planThemeStyle}
+      data-plan={visualKey}
+    >
       {personalMismatch && (
         <PersonalPlanMismatchBanner detail={mismatchDetail} />
       )}
@@ -106,6 +149,10 @@ export function PlanManager({
         className={`relative overflow-hidden rounded-[28px] border p-6 ${currentVisual.border} ${currentVisual.surface}`}
       >
         <div
+          className="talepo-plan-accent-bar absolute inset-x-0 top-0 h-[3px]"
+          aria-hidden
+        />
+        <div
           className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-[40px] ${currentVisual.glow}`}
         />
         <p className="text-sm text-black/40">Mevcut planınız</p>
@@ -113,7 +160,7 @@ export function PlanManager({
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${currentVisual.accent} ${currentVisual.iconClass}`}
           >
-            <Crown className="h-5 w-5" />
+            <CurrentIcon className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-2xl font-semibold">{entitlements.planLabel}</h2>
@@ -202,7 +249,7 @@ export function PlanManager({
         )}
       </section>
 
-      <section className="rounded-[28px] border border-teal-900/10 bg-gradient-to-br from-[#f0fdfa] via-white to-[#fffbeb] p-6 shadow-[0_16px_55px_rgba(15,118,110,0.06)]">
+      <section className="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
         <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
           Aktif özellikleriniz
         </h3>
@@ -281,6 +328,7 @@ export function PlanManager({
       <section className="grid gap-5 lg:grid-cols-2">
         {Object.values(PLAN_DEFINITIONS).map((plan) => {
           const visual = PLAN_VISUALS[plan.id];
+          const theme = PLAN_THEME_TOKENS[plan.id];
           const Icon = visual.icon;
           const isCurrent = entitlements.effectivePlanTier === plan.id;
 
@@ -294,6 +342,13 @@ export function PlanManager({
                   : "shadow-[0_16px_55px_rgba(0,0,0,0.04)]"
               }`}
             >
+              <div
+                className="absolute inset-x-0 top-0 h-1"
+                style={{
+                  background: `linear-gradient(90deg, ${theme.accent}, ${theme.primary})`,
+                }}
+                aria-hidden
+              />
               <div
                 className={`pointer-events-none absolute -right-14 -top-14 h-36 w-36 rounded-full blur-[45px] ${visual.glow}`}
               />
@@ -357,8 +412,14 @@ export function PlanManager({
                       key={feature}
                       className="flex items-start gap-2.5 text-sm leading-6 text-black/55"
                     >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f4df]">
-                        <Check className="h-3 w-3 text-[#356d3a]" />
+                      <span
+                        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
+                        style={{ background: theme.primarySoft }}
+                      >
+                        <Check
+                          className="h-3 w-3"
+                          style={{ color: theme.primary }}
+                        />
                       </span>
                       {feature}
                     </li>
@@ -368,12 +429,10 @@ export function PlanManager({
                 <button
                   type="button"
                   disabled={
-                    isCurrent ||
-                    loadingKey === plan.id ||
-                    plan.id !== "STANDARD"
+                    !canSelectPlan(plan.id) || loadingKey === plan.id
                   }
                   onClick={() => {
-                    if (plan.id === "STANDARD") {
+                    if (canSelectPlan(plan.id)) {
                       void runAction(plan.id, {
                         action: "upgrade",
                         planTier: plan.id as PlanTierId,
@@ -389,12 +448,8 @@ export function PlanManager({
                       Aktif plan
                       <Check className="h-4 w-4" />
                     </>
-                  ) : plan.id === "CORPORATE" ? (
-                    "Kurumsal · ödeme yakında"
-                  ) : plan.priceTry ? (
-                    `₺${plan.priceTry}/ay · ödeme yakında`
                   ) : (
-                    "Ücretsiz başla"
+                    planButtonLabel(plan.id)
                   )}
                 </button>
               </div>
@@ -405,17 +460,17 @@ export function PlanManager({
 
       <section
         id="credits"
-        className="rounded-[28px] border border-[#6366f1]/15 bg-gradient-to-br from-[#eef2ff] to-[#e0e7ff] p-6 sm:p-7"
+        className="rounded-2xl border border-teal-900/10 bg-[#eef6f4] p-6 sm:p-7"
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#6366f1] text-white">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0f766e] text-white">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-[#312e81]">
+            <h3 className="text-xl font-semibold text-[#0f1f1d]">
               Ek teklif paketleri
             </h3>
-            <p className="text-sm text-[#3730a3]/75">
+            <p className="text-sm text-teal-950/55">
               Premium almak istemeyen firmalar için tek seferlik paketler.
               Ödeme bağlanınca buradan satın alınabilecek.
             </p>
@@ -429,11 +484,11 @@ export function PlanManager({
               type="button"
               disabled
               title="Ödeme altyapısı yakında"
-              className="cursor-not-allowed rounded-[22px] border border-white/60 bg-white/80 p-5 text-left opacity-70"
+              className="cursor-not-allowed rounded-xl border border-teal-900/10 bg-white p-5 text-left opacity-70"
             >
-              <p className="font-semibold text-[#312e81]">{pack.label}</p>
-              <p className="mt-2 text-sm text-[#4338ca]">₺{pack.priceTry}</p>
-              <p className="mt-2 text-[11px] font-medium text-[#6366f1]">
+              <p className="font-semibold text-[#0f1f1d]">{pack.label}</p>
+              <p className="mt-2 text-sm text-teal-800">₺{pack.priceTry}</p>
+              <p className="mt-2 text-[11px] font-medium text-teal-800/60">
                 Ödeme yakında
               </p>
             </button>
@@ -442,8 +497,9 @@ export function PlanManager({
       </section>
 
       <p className="text-xs leading-5 text-black/35">
-        Ödeme altyapısı henüz bağlı değil. Ücretli plan yükseltmeleri ve ek
-        paketler yakında açılacak; fiyatlar bilgilendirme amaçlıdır.
+        {mockUpgradeEnabled
+          ? "Test modu açık (ALLOW_MOCK_UPGRADE): ücretli planlar mock ödeme ile 1 ay süreyle yükseltilebilir. Gerçek ödeme altyapısı yakında."
+          : "Ödeme altyapısı henüz bağlı değil. Ücretli plan yükseltmeleri ve ek paketler yakında açılacak; fiyatlar bilgilendirme amaçlıdır."}
       </p>
     </div>
   );

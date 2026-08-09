@@ -645,6 +645,18 @@ function collectDetailLines(
     lines.push(`• ${label}: ${input.deliveryDays} gün`);
   }
 
+  if (
+    input.budget &&
+    !lines.some((line) => line.toLocaleLowerCase("tr-TR").includes("bütçe"))
+  ) {
+    const formatted = new Intl.NumberFormat("tr-TR", {
+      style: "currency",
+      currency: "TRY",
+      maximumFractionDigits: 0,
+    }).format(input.budget);
+    lines.push(`• Bütçe: ${formatted}`);
+  }
+
   return lines;
 }
 

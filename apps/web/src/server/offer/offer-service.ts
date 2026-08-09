@@ -36,7 +36,93 @@ type CreateOfferInput = {
   title?: string;
 };
 
+type UpdateOfferInput = {
+  description: string;
+  amount: number;
+  deliveryDays?: number | null;
+  title?: string;
+};
+
 type Tx = Prisma.TransactionClient;
+
+const AWAITING_RESPONSE_STATUSES = ["SUBMITTED", "VIEWED"] as const;
+const BLOCKING_OFFER_STATUSES = [
+  "DRAFT",
+  "SUBMITTED",
+  "VIEWED",
+  "ACCEPTED",
+] as const;
+
+function validateOfferFields(input: {
+  description: string;
+  amount: number;
+}) {
+  const issues: string[] = [];
+
+  if (!input.description || input.description.trim().length < 10) {
+    issues.push("Teklif açıklaması en az 10 karakter olmalı.");
+  }
+  if (!Number.isFinite(input.amount) || input.amount <= 0) {
+    issues.push("Geçerli bir teklif tutarı girin.");
+  }
+  if (containsBlockedContactInfo(input.description)) {
+    issues.push(
+      "Teklif metninde telefon, IBAN veya platform dışı iletişim bilgisi paylaşılamaz.",
+    );
+  }
+
+  return issues;
+}
+
+/** Active offer for the current supplier subject on a request (company or personal). */
+export async function findSupplierOfferOnRequest(
+  userId: string,
+  requestId: string,
+) {
+  const entitlements = await resolveEntitlements(
+    userId,
+    await getCompanyContextOptions(),
+  );
+
+  if (entitlements.subject.type === "company") {
+    return prisma.offer.findFirst({
+      where: {
+        requestId,
+        companyId: entitlements.subject.id,
+        status: { not: "DRAFT" },
+      },
+      orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        status: true,
+        description: true,
+        amount: true,
+        deliveryDays: true,
+        title: true,
+        conversation: { select: { id: true } },
+      },
+    });
+  }
+
+  return prisma.offer.findFirst({
+    where: {
+      requestId,
+      submittedById: userId,
+      companyId: null,
+      status: { not: "DRAFT" },
+    },
+    orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
+    select: {
+      id: true,
+      status: true,
+      description: true,
+      amount: true,
+      deliveryDays: true,
+      title: true,
+      conversation: { select: { id: true } },
+    },
+  });
+}
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -95,17 +181,7 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
   const issues: string[] = [];
 
   if (!input.requestId) issues.push("Talep bilgisi eksik.");
-  if (!input.description || input.description.trim().length < 10) {
-    issues.push("Teklif açıklaması en az 10 karakter olmalı.");
-  }
-  if (!Number.isFinite(input.amount) || input.amount <= 0) {
-    issues.push("Geçerli bir teklif tutarı girin.");
-  }
-  if (containsBlockedContactInfo(input.description)) {
-    issues.push(
-      "Teklif metninde telefon, IBAN veya platform dışı iletişim bilgisi paylaşılamaz.",
-    );
-  }
+  issues.push(...validateOfferFields(input));
 
   if (issues.length) {
     throw new OfferValidationError(issues);
@@ -153,11 +229,16 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
     throw error;
   }
 
+  const companyId =
+    entitlements.subject.type === "company" ? entitlements.subject.id : null;
+
   const existingOffer = await prisma.offer.findFirst({
     where: {
       requestId: input.requestId,
-      submittedById: userId,
-      status: { notIn: ["WITHDRAWN", "REJECTED", "EXPIRED"] },
+      status: { in: [...BLOCKING_OFFER_STATUSES] },
+      ...(companyId
+        ? { companyId }
+        : { submittedById: userId, companyId: null }),
     },
     select: { id: true },
   });
@@ -168,8 +249,6 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
 
   const sanitizedDescription = sanitizeCommercialText(input.description.trim());
   const now = new Date();
-  const companyId =
-    entitlements.subject.type === "company" ? entitlements.subject.id : null;
 
   const offer = await prisma.$transaction(async (tx) => {
     // Serialize concurrent offer submissions for the same quota subject.
@@ -256,18 +335,153 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
     return created;
   });
 
-  await createNotification({
-    userId: request.createdById,
-    type: "NEW_OFFER",
-    title: "Talebinize yeni teklif geldi",
-    message: `“${request.title}” talebinize yeni bir teklif gönderildi.`,
-    actionUrl: `/panel/taleplerim/${request.id}`,
-    requestId: request.id,
-    offerId: offer.id,
-    companyId: companyId ?? undefined,
-  });
+  try {
+    await createNotification({
+      userId: request.createdById,
+      type: "NEW_OFFER",
+      title: "Talebinize yeni teklif geldi",
+      message: `“${request.title}” talebinize yeni bir teklif gönderildi.`,
+      actionUrl: `/panel/gelen-teklifler`,
+      requestId: request.id,
+      offerId: offer.id,
+      companyId: companyId ?? undefined,
+    });
+  } catch (notificationError) {
+    console.error("[createOffer] Bildirim oluşturulamadı:", notificationError);
+  }
 
   return offer;
+}
+
+export async function updateOffer(
+  userId: string,
+  offerId: string,
+  input: UpdateOfferInput,
+) {
+  const issues = validateOfferFields(input);
+  if (issues.length) {
+    throw new OfferValidationError(issues);
+  }
+
+  const entitlements = await resolveEntitlements(
+    userId,
+    await getCompanyContextOptions(),
+  );
+
+  const companyId =
+    entitlements.subject.type === "company" ? entitlements.subject.id : null;
+
+  const existing = await prisma.offer.findFirst({
+    where: {
+      id: offerId,
+      status: { in: [...AWAITING_RESPONSE_STATUSES] },
+      ...(companyId
+        ? { companyId }
+        : { submittedById: userId, companyId: null }),
+      request: {
+        deletedAt: null,
+        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      },
+    },
+    select: {
+      id: true,
+      requestId: true,
+      companyId: true,
+      request: {
+        select: {
+          title: true,
+          createdById: true,
+        },
+      },
+    },
+  });
+
+  if (!existing) {
+    throw new OfferValidationError([
+      "Teklif bulunamadı veya artık güncellenemez.",
+    ]);
+  }
+
+  const sanitizedDescription = sanitizeCommercialText(input.description.trim());
+
+  const updated = await prisma.offer.update({
+    where: { id: existing.id },
+    data: {
+      description: sanitizedDescription,
+      amount: input.amount,
+      deliveryDays:
+        input.deliveryDays === undefined
+          ? undefined
+          : input.deliveryDays && input.deliveryDays > 0
+            ? input.deliveryDays
+            : null,
+      title: input.title?.trim() || null,
+      // Keep awaiting-response semantics; treat revision as a fresh submit signal.
+      status: "SUBMITTED",
+      viewedAt: null,
+    },
+    select: {
+      id: true,
+      requestId: true,
+      amount: true,
+      currency: true,
+      status: true,
+    },
+  });
+
+  try {
+    await createNotification({
+      userId: existing.request.createdById,
+      type: "NEW_OFFER",
+      title: "Teklif güncellendi",
+      message: `“${existing.request.title}” talebinize gelen teklif revize edildi.`,
+      actionUrl: `/panel/gelen-teklifler`,
+      requestId: existing.requestId,
+      offerId: existing.id,
+      companyId: existing.companyId ?? undefined,
+    });
+  } catch (notificationError) {
+    console.error("[updateOffer] Bildirim oluşturulamadı:", notificationError);
+  }
+
+  return updated;
+}
+
+async function ensureOfferConversation(
+  tx: Tx,
+  input: {
+    offerId: string;
+    requestTitle: string;
+    buyerUserId: string;
+    supplierUserId: string;
+    companyId?: string | null;
+    now: Date;
+  },
+) {
+  const existing = await tx.conversation.findUnique({
+    where: { offerId: input.offerId },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  return tx.conversation.create({
+    data: {
+      offerId: input.offerId,
+      title: input.requestTitle,
+      lastMessageAt: input.now,
+      participants: {
+        create: [
+          { userId: input.buyerUserId },
+          { userId: input.supplierUserId },
+          ...(input.companyId ? [{ companyId: input.companyId }] : []),
+        ],
+      },
+    },
+    select: { id: true },
+  });
 }
 
 export async function acceptOffer(userId: string, offerId: string) {
@@ -284,6 +498,7 @@ export async function acceptOffer(userId: string, offerId: string) {
       request: { select: { id: true, title: true } },
       submittedBy: { select: { id: true, name: true } },
       company: { select: { id: true, name: true } },
+      conversation: { select: { id: true } },
     },
   });
 
@@ -302,17 +517,30 @@ export async function acceptOffer(userId: string, offerId: string) {
       },
     });
 
-    await tx.offer.updateMany({
+    const siblings = await tx.offer.findMany({
       where: {
         requestId: offer.requestId,
         id: { not: offerId },
         status: { in: ["SUBMITTED", "VIEWED"] },
       },
-      data: {
-        status: "REJECTED",
-        rejectedAt: now,
+      select: {
+        id: true,
+        submittedById: true,
+        companyId: true,
       },
     });
+
+    if (siblings.length > 0) {
+      await tx.offer.updateMany({
+        where: {
+          id: { in: siblings.map((s) => s.id) },
+        },
+        data: {
+          status: "REJECTED",
+          rejectedAt: now,
+        },
+      });
+    }
 
     await tx.request.update({
       where: { id: offer.requestId },
@@ -321,18 +549,26 @@ export async function acceptOffer(userId: string, offerId: string) {
       },
     });
 
-    const conversation = await tx.conversation.create({
+    const conversation = await ensureOfferConversation(tx, {
+      offerId: offer.id,
+      requestTitle: offer.request.title,
+      buyerUserId: userId,
+      supplierUserId: offer.submittedById,
+      companyId: offer.companyId,
+      now,
+    });
+
+    await tx.conversation.update({
+      where: { id: conversation.id },
+      data: { lastMessageAt: now },
+    });
+
+    await tx.message.create({
       data: {
-        offerId: offer.id,
-        title: offer.request.title,
-        lastMessageAt: now,
-        participants: {
-          create: [
-            { userId },
-            { userId: offer.submittedById },
-            ...(offer.companyId ? [{ companyId: offer.companyId }] : []),
-          ],
-        },
+        conversationId: conversation.id,
+        senderUserId: userId,
+        type: "SYSTEM",
+        content: `“${offer.request.title}” talebi için teklif kabul edildi. Bu sohbet bu talebe aittir.`,
       },
     });
 
@@ -347,7 +583,119 @@ export async function acceptOffer(userId: string, offerId: string) {
       companyId: offer.companyId ?? undefined,
     });
 
+    for (const sibling of siblings) {
+      await createNotification({
+        userId: sibling.submittedById,
+        type: "OFFER_REJECTED",
+        title: "Teklifiniz seçilmedi",
+        message: `“${offer.request.title}” talebi için başka bir teklif kabul edildi.`,
+        actionUrl: `/panel/teklifler`,
+        requestId: offer.requestId,
+        offerId: sibling.id,
+        companyId: sibling.companyId ?? undefined,
+      });
+    }
+
     return { offer: accepted, conversationId: conversation.id };
+  });
+}
+
+/** Buyer opens negotiation (pazarlık) — unlocks chat without accepting yet. */
+export async function negotiateOffer(
+  userId: string,
+  offerId: string,
+  note?: string,
+) {
+  const offer = await prisma.offer.findFirst({
+    where: {
+      id: offerId,
+      status: { in: ["SUBMITTED", "VIEWED"] },
+      request: {
+        createdById: userId,
+        deletedAt: null,
+      },
+    },
+    include: {
+      request: { select: { id: true, title: true } },
+      submittedBy: { select: { id: true } },
+      company: { select: { id: true } },
+    },
+  });
+
+  if (!offer) {
+    throw new OfferValidationError(["Teklif bulunamadı veya pazarlık açılamaz."]);
+  }
+
+  const cleanNote = note?.trim() ?? "";
+  if (cleanNote.length > 2000) {
+    throw new OfferValidationError(["Pazarlık notu çok uzun."]);
+  }
+  if (cleanNote && containsBlockedContactInfo(cleanNote)) {
+    throw new OfferValidationError([
+      "Pazarlık notunda telefon veya e-posta paylaşmayın.",
+    ]);
+  }
+
+  const now = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    // Mark as viewed so buyer engagement is visible.
+    if (offer.status === "SUBMITTED") {
+      await tx.offer.update({
+        where: { id: offerId },
+        data: { status: "VIEWED", viewedAt: now },
+      });
+    }
+
+    const conversation = await ensureOfferConversation(tx, {
+      offerId: offer.id,
+      requestTitle: offer.request.title,
+      buyerUserId: userId,
+      supplierUserId: offer.submittedById,
+      companyId: offer.companyId,
+      now,
+    });
+
+    await tx.message.create({
+      data: {
+        conversationId: conversation.id,
+        senderUserId: userId,
+        type: "SYSTEM",
+        content:
+          "Alıcı pazarlık başlattı. Teklif henüz kabul edilmedi — fiyat ve koşulları bu sohbette konuşabilirsiniz.",
+      },
+    });
+
+    if (cleanNote) {
+      await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderUserId: userId,
+          type: "TEXT",
+          content: sanitizeCommercialText(cleanNote),
+        },
+      });
+    }
+
+    await tx.conversation.update({
+      where: { id: conversation.id },
+      data: { lastMessageAt: now },
+    });
+
+    await createNotification({
+      userId: offer.submittedById,
+      type: "OFFER_NEGOTIATE",
+      title: "Pazarlık talebi",
+      message: cleanNote
+        ? `“${offer.request.title}” için alıcı pazarlık istedi: ${cleanNote.slice(0, 120)}`
+        : `“${offer.request.title}” için alıcı pazarlık istedi. Sohbet açıldı.`,
+      actionUrl: `/panel/mesajlar/${conversation.id}`,
+      requestId: offer.requestId,
+      offerId: offer.id,
+      companyId: offer.companyId ?? undefined,
+    });
+
+    return { conversationId: conversation.id };
   });
 }
 
@@ -380,7 +728,7 @@ export async function rejectOffer(userId: string, offerId: string) {
     type: "OFFER_REJECTED",
     title: "Teklifiniz reddedildi",
     message: `“${offer.request.title}” talebi için teklifiniz reddedildi.`,
-    actionUrl: `/panel/talepler/${offer.requestId}`,
+    actionUrl: `/panel/teklifler`,
     requestId: offer.requestId,
     offerId: offer.id,
   });

@@ -6,6 +6,7 @@ import {
   Crown,
   FileText,
   Home,
+  Inbox,
   LayoutDashboard,
   MessageCircle,
   Search,
@@ -48,6 +49,13 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     workspace: "personal",
   },
   {
+    href: "/panel/gelen-teklifler",
+    icon: Inbox,
+    label: "Gelen teklifler",
+    mobileLabel: "Gelen",
+    workspace: "personal",
+  },
+  {
     href: "/panel/talepler",
     icon: Search,
     label: "Talepleri keşfet",
@@ -56,8 +64,9 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/panel/teklifler",
     icon: FileText,
-    label: "Tekliflerimiz",
-    workspace: "corporate",
+    label: "Tekliflerim",
+    mobileLabel: "Teklifler",
+    requiresFeature: "submit_offer",
   },
   {
     href: "/panel/asistan",
