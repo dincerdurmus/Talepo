@@ -21,12 +21,28 @@ function citiesMatch(
   return a === b || a.includes(b) || b.includes(a);
 }
 
+export type DistributeOptions = {
+  /**
+   * Skip users who already have a NEW_REQUEST_MATCH for this request
+   * (used when re-running match for brand-new companies only).
+   */
+  skipAlreadyNotifiedUsers?: boolean;
+  /** Use “acil hatırlatma” copy for supplier notifications. */
+  reminderCopy?: boolean;
+  /**
+   * When reminding, skip users who already received an urgent redistrib
+   * notification for this request (idempotent “Gönder”).
+   */
+  skipAlreadyRemindedUsers?: boolean;
+};
+
 /**
  * Match published request to ACTIVE companies by category (preferred) and city,
  * persist RequestMatch rows, and notify OWNER/ADMIN/MANAGER members.
  */
 export async function distributeRequestToCompanies(
   requestId: string,
+  options: DistributeOptions = {},
 ): Promise<DistributeResult> {
   const request = await prisma.request.findFirst({
     where: {
@@ -168,12 +184,61 @@ export async function distributeRequestToCompanies(
     },
   });
 
-  const notifications = members.map((member) => {
+  let recipients = members;
+  if (members.length > 0 && options.skipAlreadyRemindedUsers) {
+    const alreadyReminded = await prisma.notification.findMany({
+      where: {
+        requestId: request.id,
+        type: "NEW_REQUEST_MATCH",
+        title: {
+          in: [
+            "Acil talep — yeniden iletildi",
+            "Acil talep hatırlatması (yakında açılır)",
+          ],
+        },
+        userId: { in: members.map((m) => m.userId) },
+      },
+      select: { userId: true },
+    });
+    const remindedIds = new Set(alreadyReminded.map((row) => row.userId));
+    recipients = members.filter((member) => !remindedIds.has(member.userId));
+  } else if (members.length > 0 && options.skipAlreadyNotifiedUsers) {
+    const alreadyNotified = await prisma.notification.findMany({
+      where: {
+        requestId: request.id,
+        type: "NEW_REQUEST_MATCH",
+        userId: { in: members.map((m) => m.userId) },
+      },
+      select: { userId: true },
+    });
+    const alreadyIds = new Set(alreadyNotified.map((row) => row.userId));
+    recipients = members.filter((member) => !alreadyIds.has(member.userId));
+  }
+
+  const notifications = recipients.map((member) => {
     const plan = getPlanDefinition(member.company.planTier);
     const delayed =
       !plan.instantRequestAccess &&
       request.visibleToSuppliersAt &&
       request.visibleToSuppliersAt > now;
+
+    if (options.reminderCopy) {
+      return {
+        userId: member.userId,
+        type: "NEW_REQUEST_MATCH" as const,
+        title: delayed
+          ? "Acil talep hatırlatması (yakında açılır)"
+          : "Acil talep — yeniden iletildi",
+        message: delayed
+          ? `Acil “${request.title}” talebi firmanızla eşleşti. Standart planda ${request.visibleToSuppliersAt!.toLocaleString("tr-TR")} itibarıyla görüntüleyebilirsiniz.`
+          : `Acil “${request.title}” talebi (${request.category.name}${
+              request.city ? ` · ${request.city}` : ""
+            }) firmanızla eşleşti. Henüz teklif bekleniyor — inceleyip teklif verebilirsiniz.`,
+        actionUrl: `/panel/talepler/${request.id}`,
+        requestId: request.id,
+        companyId: member.companyId,
+      };
+    }
 
     return {
       userId: member.userId,

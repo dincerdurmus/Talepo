@@ -15,6 +15,7 @@ import {
   AuthenticationError,
   requireUser,
 } from "@/server/auth/require-user";
+import { processUrgentNoOfferNudges } from "@/server/request/urgent-no-offer-nudge";
 
 export default async function PanelLayout({
   children,
@@ -75,6 +76,13 @@ export default async function PanelLayout({
     }
 
     try {
+      // Best-effort: create due “teklif gelmedi” nudges before badge counts.
+      try {
+        await processUrgentNoOfferNudges(user.id);
+      } catch (nudgeError) {
+        console.error("[panel] Acil talep nudge işlenemedi:", nudgeError);
+      }
+
       const [summary, messageCount, entitlements] = await Promise.all([
         getPanelSummary(user.id),
         getUnreadMessageCount(user.id),

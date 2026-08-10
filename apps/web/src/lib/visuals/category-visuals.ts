@@ -31,6 +31,8 @@ export type CategoryVisual = {
   iconTone: string;
   /** Soft ring / border hint */
   ring: string;
+  /** Public cover image under /categories/{slug}.png when present */
+  image?: string;
 };
 
 export const FALLBACK_CATEGORY_VISUAL: CategoryVisual = {
@@ -43,6 +45,10 @@ export const FALLBACK_CATEGORY_VISUAL: CategoryVisual = {
   ring: "ring-teal-900/10",
 };
 
+function categoryImage(slug: string): string {
+  return `/categories/${slug}.png`;
+}
+
 export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
   printing: {
     icon: Printer,
@@ -52,6 +58,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d1fae5] via-[#ecfdf5] to-[#f0fdfa]",
     iconTone: "text-emerald-800",
     ring: "ring-emerald-900/10",
+    image: categoryImage("printing"),
   },
   automotive: {
     icon: Car,
@@ -61,6 +68,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d1e7e3] via-[#e8f2f0] to-[#f4f7f6]",
     iconTone: "text-teal-900",
     ring: "ring-teal-900/12",
+    image: categoryImage("automotive"),
   },
   machinery: {
     icon: Wrench,
@@ -70,6 +78,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d8e4e1] via-[#eef2f1] to-[#f4f7f6]",
     iconTone: "text-[#3f5c57]",
     ring: "ring-teal-900/10",
+    image: categoryImage("machinery"),
   },
   furniture: {
     icon: Sofa,
@@ -79,6 +88,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d5ebe6] via-[#eef6f4] to-[#f7faf9]",
     iconTone: "text-teal-800",
     ring: "ring-teal-800/10",
+    image: categoryImage("furniture"),
   },
   technology: {
     icon: Cpu,
@@ -88,6 +98,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#cce5e1] via-[#e7f0ee] to-[#f0f7f5]",
     iconTone: "text-teal-700",
     ring: "ring-teal-700/12",
+    image: categoryImage("technology"),
   },
   "real-estate": {
     icon: Home,
@@ -97,6 +108,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#99f6e4] via-[#ccfbf1] to-[#f0fdfa]",
     iconTone: "text-teal-800",
     ring: "ring-teal-600/15",
+    image: categoryImage("real-estate"),
   },
   appliances: {
     icon: Package,
@@ -106,6 +118,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d5ebe6] via-[#eef6f4] to-[#f4f7f6]",
     iconTone: "text-teal-800",
     ring: "ring-teal-800/10",
+    image: categoryImage("appliances"),
   },
   health: {
     icon: HeartPulse,
@@ -115,6 +128,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d4e5e2] via-[#f0f4f3] to-[#f7faf9]",
     iconTone: "text-teal-900",
     ring: "ring-teal-900/10",
+    image: categoryImage("health"),
   },
   baby: {
     icon: Baby,
@@ -124,6 +138,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#d9f0ea] via-[#eef6f4] to-[#f7faf9]",
     iconTone: "text-teal-700",
     ring: "ring-teal-600/10",
+    image: categoryImage("baby"),
   },
   "home-kitchen": {
     icon: Boxes,
@@ -133,6 +148,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#dce8e5] via-[#f0f4f3] to-[#f4f7f6]",
     iconTone: "text-[#3f5c57]",
     ring: "ring-teal-800/10",
+    image: categoryImage("home-kitchen"),
   },
   services: {
     icon: Sparkles,
@@ -142,6 +158,7 @@ export const CATEGORY_VISUALS: Record<string, CategoryVisual> = {
     thumb: "from-[#99f6e4]/70 via-[#e6fffa] to-[#f0fdfa]",
     iconTone: "text-teal-700",
     ring: "ring-teal-500/15",
+    image: categoryImage("services"),
   },
 };
 

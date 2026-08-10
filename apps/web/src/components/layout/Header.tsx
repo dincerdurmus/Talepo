@@ -55,9 +55,6 @@ export function Header({ tone = "default" }: HeaderProps) {
 
   useEffect(() => {
     if (status !== "authenticated") {
-      setCompanies([]);
-      setActiveCompanyId(null);
-      setActiveCompanyName(null);
       return;
     }
 
@@ -127,7 +124,11 @@ export function Header({ tone = "default" }: HeaderProps) {
   const userInitial =
     session?.user?.name?.trim().charAt(0).toUpperCase() ?? "K";
   const showAuthSkeleton = status === "loading";
-  const inCompanyContext = Boolean(activeCompanyId);
+  const isAuthenticated = status === "authenticated";
+  const headerCompanies = isAuthenticated ? companies : [];
+  const headerActiveCompanyId = isAuthenticated ? activeCompanyId : null;
+  const headerActiveCompanyName = isAuthenticated ? activeCompanyName : null;
+  const inCompanyContext = Boolean(headerActiveCompanyId);
 
   return (
     <header
@@ -261,7 +262,7 @@ export function Header({ tone = "default" }: HeaderProps) {
 
                     <p className="mt-2 text-[11px] font-medium text-teal-950/40">
                       {inCompanyContext
-                        ? `Kurumsal · ${activeCompanyName ?? "Firma"}`
+                        ? `Kurumsal · ${headerActiveCompanyName ?? "Firma"}`
                         : "Kişisel hesap"}
                     </p>
                   </div>
@@ -324,12 +325,12 @@ export function Header({ tone = "default" }: HeaderProps) {
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
-                      {companies.length === 0
+                      {headerCompanies.length === 0
                         ? "Firma oluştur"
                         : "Yeni firma oluştur"}
                     </Link>
 
-                    {companies.length === 0 && (
+                    {headerCompanies.length === 0 && (
                       <Link
                         href="/panel/bildirimler"
                         role="menuitem"
@@ -352,8 +353,8 @@ export function Header({ tone = "default" }: HeaderProps) {
                       </button>
                     )}
 
-                    {companies.map((company) => {
-                      const active = activeCompanyId === company.id;
+                    {headerCompanies.map((company) => {
+                      const active = headerActiveCompanyId === company.id;
                       if (active) {
                         return (
                           <div
@@ -368,7 +369,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                       }
 
                       const label =
-                        companies.length === 1
+                        headerCompanies.length === 1
                           ? "Kurumsal hesaba geç"
                           : `${company.name} hesabına geç`;
 

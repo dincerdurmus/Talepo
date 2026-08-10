@@ -38,8 +38,9 @@ export function CategoryVisualThumb({
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
   const label = categoryName || "Kategori";
+  const resolvedCover = coverImageUrl || look.image || null;
 
-  if (coverImageUrl) {
+  if (resolvedCover) {
     return (
       <div
         className={`relative shrink-0 overflow-hidden bg-[#0b1220] shadow-sm ring-1 ring-black/[0.08] ${SIZE_CLASS[size]} ${className}`}
@@ -47,7 +48,7 @@ export function CategoryVisualThumb({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={coverImageUrl}
+          src={resolvedCover}
           alt=""
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />

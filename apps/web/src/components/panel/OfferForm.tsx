@@ -87,6 +87,42 @@ function formatTry(amount: number) {
   }).format(amount);
 }
 
+function resolveInitialOfferFields(
+  requestId: string,
+  existingOffer: ExistingOfferValues | null,
+  applyDraftFromQuery: boolean,
+) {
+  if (existingOffer) {
+    return {
+      description: existingOffer.description,
+      amount: formatTrNumber(existingOffer.amount),
+      deliveryDays: existingOffer.deliveryDays
+        ? String(existingOffer.deliveryDays)
+        : "",
+      draftApplied: false,
+    };
+  }
+
+  if (applyDraftFromQuery) {
+    const draft = readPendingDraft(requestId);
+    if (draft) {
+      return {
+        description: draft.description,
+        amount: formatTrNumber(draft.amount),
+        deliveryDays: draft.deliveryDays ? String(draft.deliveryDays) : "",
+        draftApplied: true,
+      };
+    }
+  }
+
+  return {
+    description: "",
+    amount: "",
+    deliveryDays: "",
+    draftApplied: false,
+  };
+}
+
 export function OfferForm({
   requestId,
   entitlements,
@@ -98,21 +134,20 @@ export function OfferForm({
   const searchParams = useSearchParams();
   const applyDraftFromQuery = searchParams.get("taslak") === "1";
   const isRevise = Boolean(existingOffer);
+  const initialFields = useMemo(
+    () =>
+      resolveInitialOfferFields(requestId, existingOffer, applyDraftFromQuery),
+    [applyDraftFromQuery, existingOffer, requestId],
+  );
 
   const [step, setStep] = useState<"edit" | "preview">("edit");
-  const [description, setDescription] = useState(
-    existingOffer?.description ?? "",
-  );
-  const [amount, setAmount] = useState(
-    existingOffer ? formatTrNumber(existingOffer.amount) : "",
-  );
-  const [deliveryDays, setDeliveryDays] = useState(
-    existingOffer?.deliveryDays ? String(existingOffer.deliveryDays) : "",
-  );
+  const [description, setDescription] = useState(initialFields.description);
+  const [amount, setAmount] = useState(initialFields.amount);
+  const [deliveryDays, setDeliveryDays] = useState(initialFields.deliveryDays);
   const [error, setError] = useState<string | null>(null);
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [draftApplied, setDraftApplied] = useState(false);
+  const [draftApplied] = useState(initialFields.draftApplied);
 
   const placeholders = useMemo(
     () => getPlaceholders(categorySlug, budgetMin),
@@ -136,11 +171,7 @@ export function OfferForm({
     const draft = readPendingDraft(requestId);
     if (!draft) return;
 
-    setDescription(draft.description);
-    setAmount(formatTrNumber(draft.amount));
-    setDeliveryDays(draft.deliveryDays ? String(draft.deliveryDays) : "");
     sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
-    setDraftApplied(true);
     router.replace(`/panel/talepler/${requestId}/teklif`, { scroll: false });
   }, [applyDraftFromQuery, isRevise, requestId, router]);
 

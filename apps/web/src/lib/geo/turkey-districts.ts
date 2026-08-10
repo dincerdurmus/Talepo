@@ -1416,21 +1416,59 @@ export function parseRealEstateCity(
   return null;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * True when `place` appears as its own token (not a substring of a longer
+ * word). Allows common Turkish locative/possessive endings: "İstanbul'da",
+ * "Of'ta". Prevents "Of" matching inside "ofis".
+ */
+export function textMentionsPlace(text: string, place: string): boolean {
+  const needle = place.trim().toLocaleLowerCase("tr-TR");
+  if (!needle) return false;
+  const haystack = text.toLocaleLowerCase("tr-TR");
+  const escaped = escapeRegExp(needle);
+  const suffix =
+    "(?:['’]?(?:da|de|ta|te|dan|den|tan|ten|ya|ye|nun|nin|un|ün|in|ın))?";
+  const re = new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}${suffix}(?![\\p{L}\\p{N}])`,
+    "iu",
+  );
+  return re.test(haystack);
+}
+
 export function findProvinceAndDistrictInText(
   text: string,
 ): { il: string; ilce: string } | null {
-  const normalized = text.toLocaleLowerCase("tr-TR");
-  let ilMatch = "";
+  type Hit = { il: string; ilce: string; score: number };
+  const hits: Hit[] = [];
+
   for (const prov of TURKEY_PROVINCES) {
-    const ilNorm = prov.il.toLocaleLowerCase("tr-TR");
+    const ilMentioned = textMentionsPlace(text, prov.il);
     for (const ilce of prov.ilceler) {
-      const ilceNorm = ilce.toLocaleLowerCase("tr-TR");
-      if (normalized.includes(ilceNorm)) return { il: prov.il, ilce };
+      if (!textMentionsPlace(text, ilce)) continue;
+      hits.push({
+        il: prov.il,
+        ilce,
+        // Longer district names win; bonus if province also appears.
+        score: ilce.length * 10 + (ilMentioned ? 5 : 0),
+      });
     }
-    if (normalized.includes(ilNorm)) ilMatch = prov.il;
+    if (ilMentioned) {
+      hits.push({ il: prov.il, ilce: "", score: prov.il.length });
+    }
   }
-  if (ilMatch) return { il: ilMatch, ilce: "" };
-  return null;
+
+  if (!hits.length) return null;
+  hits.sort(
+    (a, b) =>
+      b.score - a.score ||
+      b.ilce.length - a.ilce.length ||
+      b.il.length - a.il.length,
+  );
+  return { il: hits[0].il, ilce: hits[0].ilce };
 }
 
 export function isValidRealEstateLocation(il: string, ilce: string): boolean {

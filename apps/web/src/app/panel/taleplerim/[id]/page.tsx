@@ -14,6 +14,7 @@ import {
 
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
+import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { displayRequestFieldValue } from "@/lib/field-display";
@@ -49,11 +50,20 @@ const statusStyles: Record<string, string> = {
 
 export default async function RequestDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ "acil-yayin"?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
+  const query = await searchParams;
+  const urgentBroadcastMode =
+    query["acil-yayin"] === "1"
+      ? "ask"
+      : query["acil-yayin"] === "gonderildi"
+        ? "sent"
+        : null;
 
   const request = await prisma.request.findFirst({
     where: {
@@ -146,6 +156,11 @@ export default async function RequestDetailPage({
               >
                 {statusLabel}
               </span>
+              {request.isUrgent && (
+                <span className="inline-flex items-center rounded-full border border-amber-900/15 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                  Acil
+                </span>
+              )}
               {request.aiScore !== null && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-900/10 bg-sky-50/90 px-3 py-1.5 text-xs font-semibold text-sky-800">
                   <Sparkles className="h-3.5 w-3.5 text-sky-600" />
@@ -177,6 +192,13 @@ export default async function RequestDetailPage({
           </div>
         </div>
       </section>
+
+      {urgentBroadcastMode ? (
+        <UrgentBroadcastBanner
+          requestId={request.id}
+          mode={urgentBroadcastMode}
+        />
+      ) : null}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
         <section className="space-y-5">

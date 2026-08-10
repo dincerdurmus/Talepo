@@ -512,6 +512,9 @@ model Request {
   /// Standart firmalar bu tarihten sonra talebi görebilir (Premium anında görür)
   visibleToSuppliersAt DateTime?
 
+  /// Acil talepte teklif gelmezse alıcıya gönderilen “teklif gelmedi” nudge zamanı (idempotent)
+  urgentOfferNudgeAt DateTime?
+
   deadlineAt  DateTime?
   publishedAt DateTime?
   expiresAt   DateTime?

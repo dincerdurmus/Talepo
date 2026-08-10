@@ -51,6 +51,30 @@ export function createRecommendations(
     });
   }
 
+  if (commonFieldKeys.has("quantity") && !request.quantity) {
+    recommendations.push({
+      id: "add-quantity",
+      title: "Miktarı belirtin",
+      description: "Örneğin 50 adet veya 5.000 kg.",
+      reason: "Miktar, teklif fiyatını ve uygun firma sayısını doğrudan etkiler.",
+      field: "quantity",
+    });
+  }
+
+  if (
+    commonFieldKeys.has("budget") &&
+    request.budget == null &&
+    !request.budgetDisplay
+  ) {
+    recommendations.push({
+      id: "add-budget",
+      title: "Bütçe aralığı ekleyin",
+      description: "Örneğin 50.000 TL veya 10–50 bin.",
+      reason: "Bütçe bilgisi firmaların daha uygun teklif vermesini sağlar.",
+      field: "budget",
+    });
+  }
+
   if (request.categoryId === "printing" && !request.attributes.dimensions) {
     recommendations.push({
       id: "printing-dimensions",

@@ -11,7 +11,6 @@ import { createRecommendations } from "./recommendations/recommendationEngine";
 export function runTalepoAiCore(text: string): AiCoreResult {
   const parsed = parseRequest(text);
   const category = getCategoryById(parsed.categoryId);
-  const commonFieldKeys = new Set(category.commonFields.map((field) => field.key));
   const knowledge = runKnowledgeEngine(parsed);
   const pricing = estimatePrice(parsed);
   const matching = estimateCompanyMatches(parsed);
@@ -35,14 +34,8 @@ export function runTalepoAiCore(text: string): AiCoreResult {
     ),
   });
 
-  const score = Math.min(
-    100,
-    Math.round(
-      knowledge.confidence +
-        (parsed.budget ? 4 : 0) +
-        (commonFieldKeys.has("quantity") && parsed.quantity ? 3 : 0)
-    )
-  );
+  // Knowledge confidence is already 0–100 over category-available signals.
+  const score = knowledge.confidence;
 
   return {
     parsed,

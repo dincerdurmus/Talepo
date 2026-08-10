@@ -66,6 +66,7 @@ export default async function ProfilePage() {
         <aside className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)]">
           <div className="flex flex-col items-center text-center">
             {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={user.image}
                 alt={user.name ?? "Profil"}

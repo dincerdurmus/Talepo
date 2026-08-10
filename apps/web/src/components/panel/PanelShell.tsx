@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
@@ -125,28 +125,27 @@ export function PanelShell({
   const companyName = workspace?.companyName?.trim() || "Firma";
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
-  const [collapsed, setCollapsed] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
-      if (localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1") {
-        setCollapsed(true);
-      }
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
     } catch {
-      /* ignore */
+      return false;
     }
-    setHydrated(true);
-  }, []);
+  });
+  const skipPersistRef = useRef(true);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (skipPersistRef.current) {
+      skipPersistRef.current = false;
+      return;
+    }
     try {
       localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0");
     } catch {
       /* ignore */
     }
-  }, [collapsed, hydrated]);
+  }, [collapsed]);
 
   const onToggleSidebar = () => setCollapsed((value) => !value);
 

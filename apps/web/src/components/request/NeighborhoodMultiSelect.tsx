@@ -31,23 +31,30 @@ export function NeighborhoodMultiSelect({
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [options, setOptions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [fetchResult, setFetchResult] = useState<{
+    key: string;
+    options: string[];
+    error: string | null;
+  } | null>(null);
 
   const canLoad = Boolean(il.trim() && ilce.trim()) && !disabled;
+  const fetchKey = canLoad ? `${il}\0${ilce}` : "";
+  const options = useMemo(
+    () =>
+      canLoad && fetchResult?.key === fetchKey ? fetchResult.options : [],
+    [canLoad, fetchKey, fetchResult],
+  );
+  const loading = canLoad && fetchResult?.key !== fetchKey;
+  const loadError =
+    canLoad && fetchResult?.key === fetchKey ? fetchResult.error : null;
 
   useEffect(() => {
     if (!canLoad) {
-      setOptions([]);
-      setLoadError(null);
-      setLoading(false);
       return;
     }
 
+    const key = `${il}\0${ilce}`;
     const controller = new AbortController();
-    setLoading(true);
-    setLoadError(null);
 
     const params = new URLSearchParams({ il, ilce });
     void fetch(`/api/geo/neighborhoods?${params.toString()}`, {
@@ -61,17 +68,20 @@ export function NeighborhoodMultiSelect({
         if (!response.ok) {
           throw new Error(payload.message || "Mahalleler yüklenemedi.");
         }
-        setOptions(payload.mahalleler ?? []);
+        setFetchResult({
+          key,
+          options: payload.mahalleler ?? [],
+          error: null,
+        });
       })
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
-        setOptions([]);
-        setLoadError(
-          error instanceof Error ? error.message : "Mahalleler yüklenemedi.",
-        );
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        setFetchResult({
+          key,
+          options: [],
+          error:
+            error instanceof Error ? error.message : "Mahalleler yüklenemedi.",
+        });
       });
 
     return () => controller.abort();

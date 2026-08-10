@@ -244,6 +244,7 @@ export function TeamManager({
               >
                 <div className="flex flex-wrap items-center gap-3 p-4">
                   {member.user.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={member.user.image}
                       alt={member.user.name ?? "Üye"}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { HomeComposer } from "@/components/home/HomeComposer";
+import { PopularCategories } from "@/components/home/PopularCategories";
 import { PricingPlans } from "@/components/home/PricingPlans";
 import {
   ArrowRight,
@@ -86,6 +87,8 @@ export default function Home() {
           />
         </section>
       </div>
+
+      <PopularCategories />
 
       <section
         id="nasil"
@@ -205,6 +208,9 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap gap-6 text-sm text-teal-950/40">
+            <a href="#kategoriler" className="transition hover:text-[#0f1f1d]">
+              Kategoriler
+            </a>
             <a href="#nasil" className="transition hover:text-[#0f1f1d]">
               Nasıl çalışır
             </a>

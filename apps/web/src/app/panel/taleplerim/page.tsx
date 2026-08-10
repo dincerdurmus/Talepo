@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
+import { UrgentNoOfferNudgePoller } from "@/components/panel/UrgentNoOfferNudgePoller";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
@@ -70,8 +71,18 @@ export default async function MyRequestsPage() {
     },
   });
 
+  const hasOpenUrgentWithoutNudge = requests.some(
+    (request) =>
+      request.isUrgent &&
+      !request.urgentOfferNudgeAt &&
+      (request.status === "PUBLISHED" ||
+        request.status === "RECEIVING_OFFERS") &&
+      request._count.offers === 0,
+  );
+
   return (
     <>
+      <UrgentNoOfferNudgePoller enabled={hasOpenUrgentWithoutNudge} />
       <section className="flex flex-col gap-5 py-4 sm:flex-row sm:items-end sm:justify-between sm:py-6">
         <div>
           <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">

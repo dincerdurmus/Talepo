@@ -440,6 +440,82 @@ body {
   background: linear-gradient(180deg, #14b8a6, #0f766e);
 }
 
+.talepo-ai-panel-body {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.talepo-ai-suggestion {
+  min-width: 0;
+}
+
+.talepo-ai-suggestion-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(240, 253, 250, 0.95);
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.talepo-ai-suggestion-input::placeholder {
+  color: rgba(204, 251, 241, 0.35);
+}
+
+.talepo-ai-suggestion-input:focus {
+  border-color: rgba(45, 212, 191, 0.45);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+}
+
+.talepo-ai-suggestion-input option {
+  color: #0f1f1d;
+  background: #ffffff;
+}
+
+.talepo-ai-suggestion-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(94, 234, 212, 0.3);
+  background: rgba(45, 212, 191, 0.12);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: rgba(204, 251, 241, 0.95);
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.talepo-ai-suggestion-apply:hover {
+  background: rgba(45, 212, 191, 0.22);
+}
+
+@media (max-width: 419px) {
+  .talepo-ai-suggestion-apply {
+    width: 100%;
+  }
+}
+
+.talepo-ai-firm-text {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .talepo-rise,
   .talepo-ai-status-dot,

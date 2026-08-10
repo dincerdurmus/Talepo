@@ -1,4 +1,8 @@
-import { getCategoryById } from "@/lib/request-category-engine";
+import {
+  getCategoryById,
+  getVisibleCategoryFields,
+  withCategoryFieldDefaults,
+} from "@/lib/request-category-engine";
 
 import type { KnowledgeResult, ParsedRequest } from "../types";
 
@@ -97,16 +101,54 @@ export function runKnowledgeEngine(
     );
   }
 
-  const completeness =
-    55 +
-    (commonFieldKeys.has("quantity") && request.quantity ? 8 : 0) +
-    (commonFieldKeys.has("city") && request.city ? 8 : 0) +
-    (commonFieldKeys.has("delivery") && request.deliveryDays ? 8 : 0) +
-    (Object.keys(request.attributes).length >= 2 ? 12 : 0);
+  const attrValues = withCategoryFieldDefaults(
+    request.categoryId,
+    Object.fromEntries(
+      Object.entries(request.attributes).map(([key, value]) => [
+        key,
+        value == null ? "" : String(value),
+      ]),
+    ),
+  );
+  const visibleFields = getVisibleCategoryFields(
+    category.fields,
+    attrValues,
+    request.categoryId,
+  );
+
+  const signals: boolean[] = [];
+
+  if (commonFieldKeys.has("quantity")) {
+    signals.push(Boolean(request.quantity));
+  }
+  if (commonFieldKeys.has("city")) {
+    signals.push(Boolean(request.city?.trim()));
+  }
+  if (commonFieldKeys.has("delivery")) {
+    signals.push(Boolean(request.deliveryDays));
+  }
+  if (commonFieldKeys.has("budget")) {
+    signals.push(
+      request.budget != null || Boolean(request.budgetDisplay?.trim()),
+    );
+  }
+
+  for (const field of visibleFields) {
+    signals.push(Boolean(attrValues[field.key]?.trim()));
+  }
+
+  const confidence =
+    signals.length === 0
+      ? request.rawText.trim().length >= 8
+        ? 70
+        : 20
+      : Math.round(
+          (signals.filter(Boolean).length / signals.length) * 100,
+        );
 
   return {
     categoryId: request.categoryId,
-    confidence: Math.min(completeness, 98),
+    confidence: Math.min(100, Math.max(0, confidence)),
     notes,
     suggestions,
   };

@@ -1,6 +1,7 @@
 import {
   findProvinceAndDistrictInText,
   formatRealEstateCity,
+  textMentionsPlace,
 } from "@/lib/geo/turkey-districts";
 import {
   APPLIANCE_BRANDS,
@@ -12,32 +13,38 @@ import {
   TECHNOLOGY_BRANDS,
 } from "./brand-catalog";
 
-const CITIES = [
-  "İstanbul",
-  "Ankara",
-  "İzmir",
-  "Bursa",
-  "Antalya",
-  "Adana",
-  "Konya",
-  "Gaziantep",
-  "Kocaeli",
-  "Mersin",
+const CITIES: Array<{ name: string; aliases?: string[] }> = [
+  { name: "İstanbul", aliases: ["istanbul", "ıstanbul"] },
+  { name: "Ankara" },
+  { name: "İzmir", aliases: ["izmir"] },
+  { name: "Bursa" },
+  { name: "Antalya" },
+  { name: "Adana" },
+  { name: "Konya" },
+  { name: "Gaziantep" },
+  { name: "Kocaeli" },
+  { name: "Mersin" },
 ];
 
 export function detectCity(text: string) {
+  // Major metros first so short district tokens (e.g. "Of" in "ofis") never win.
+  const metro = CITIES.find(
+    (item) =>
+      textMentionsPlace(text, item.name) ||
+      item.aliases?.some((alias) => textMentionsPlace(text, alias)),
+  )?.name;
+  if (metro) {
+    const fromGeo = findProvinceAndDistrictInText(text);
+    if (fromGeo?.il === metro && fromGeo.ilce) {
+      return formatRealEstateCity(fromGeo.il, fromGeo.ilce);
+    }
+    return metro;
+  }
+
   const fromGeo = findProvinceAndDistrictInText(text);
   if (fromGeo?.il && fromGeo.ilce) {
     return formatRealEstateCity(fromGeo.il, fromGeo.ilce);
   }
-
-  const normalized = text.toLocaleLowerCase("tr-TR");
-
-  const city = CITIES.find((item) =>
-    normalized.includes(item.toLocaleLowerCase("tr-TR"))
-  );
-  if (city) return city;
-
   if (fromGeo?.il) return fromGeo.il;
 
   return undefined;
