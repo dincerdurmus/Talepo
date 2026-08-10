@@ -13,7 +13,7 @@ import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   appendExploreFilterParams,
   buildExploreFilterWhere,
-  hasActiveAdvancedExploreFilters,
+  hasActiveAdvancedOnlyFilters,
   hasActiveExploreFilters,
   parseExploreFilters,
   stripAdvancedExploreFilters,
@@ -23,8 +23,10 @@ import { buildSupplierVisibilityFilter } from "@/lib/membership/assert-entitleme
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
+import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
 import { ensureEngineCategories } from "@/server/company/sync-company-categories";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 
@@ -82,6 +84,7 @@ type RequestRow = {
   _count: { offers: number };
   matchScore?: number | null;
   matchReason?: string | null;
+  matchReasons?: string[] | null;
 };
 
 const OPEN_STATUSES = ["PUBLISHED", "RECEIVING_OFFERS"] as [
@@ -98,7 +101,6 @@ export default async function ExploreRequestsPage({
   const params = await searchParams;
   const tab = parseExploreTab(params.tab);
   const categoryFilter = params.category?.trim() || "";
-  const cityFilter = params.city?.trim() || "";
   const editingInterests = params.edit === "1";
 
   await ensureEngineCategories();
@@ -110,6 +112,8 @@ export default async function ExploreRequestsPage({
   const visibilityFilter = buildSupplierVisibilityFilter(entitlements);
   const hasUrgentPriority = entitlements.features.urgent_request_priority;
   const hasAdvancedFilters = entitlements.features.advanced_filters;
+  const hasSmartMatching = entitlements.features.smart_matching;
+  const hasSavedSearches = entitlements.features.saved_searches;
   const companyId =
     entitlements.subject.type === "company" ? entitlements.subject.id : null;
 
@@ -120,7 +124,17 @@ export default async function ExploreRequestsPage({
           id: true,
           name: true,
           city: true,
+          description: true,
+          _count: { select: { categories: true } },
         },
+      })
+    : null;
+
+  const profileReadiness = companyMeta
+    ? assessCompanyProfileReadiness({
+        city: companyMeta.city,
+        description: companyMeta.description,
+        categoryCount: companyMeta._count.categories,
       })
     : null;
 
@@ -148,9 +162,11 @@ export default async function ExploreRequestsPage({
     ? rawExploreFilters
     : stripAdvancedExploreFilters(rawExploreFilters);
   const advancedFiltersAttempted =
-    !hasAdvancedFilters && hasActiveAdvancedExploreFilters(rawExploreFilters);
+    !hasAdvancedFilters && hasActiveAdvancedOnlyFilters(rawExploreFilters);
   const filterWhere = buildExploreFilterWhere(exploreFilters);
   const filtersActive = hasActiveExploreFilters(exploreFilters);
+  const cityFilter = exploreFilters.city;
+  const districtFilter = exploreFilters.district;
 
   const allFilterSlugs = categoryFilter ? [categoryFilter] : ([] as string[]);
   const rawAllFilters = parseExploreFilters(params, allFilterSlugs);
@@ -259,9 +275,6 @@ export default async function ExploreRequestsPage({
       where: {
         ...baseWhere,
         ...(categoryId ? { categoryId } : {}),
-        ...(cityFilter
-          ? { city: { contains: cityFilter, mode: "insensitive" as const } }
-          : {}),
         ...allFilterWhere,
       },
       orderBy: hasUrgentPriority
@@ -291,6 +304,26 @@ export default async function ExploreRequestsPage({
       select: requestListSelect,
     });
     requests = rows;
+  }
+
+  if (hasSmartMatching && companyId && requests.length > 0) {
+    const matchMap = await batchMatchCompanyRequests(
+      companyId,
+      requests.map((r) => r.id),
+    );
+    requests = requests.map((row) => {
+      const preview = matchMap.get(row.id);
+      if (!preview) return row;
+      return {
+        ...row,
+        matchScore: preview.score,
+        matchReasons: preview.reasons,
+        matchReason: preview.reasons[0] ?? row.matchReason,
+      };
+    });
+    if (tab === "matched") {
+      requests.sort((a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0));
+    }
   }
 
   const remainingLabel = formatQuotaRemaining(entitlements.quota);
@@ -415,6 +448,15 @@ export default async function ExploreRequestsPage({
                   className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
                 />
               </label>
+              <label className="flex-1 text-xs font-semibold text-teal-900/55">
+                İlçe
+                <input
+                  name="district"
+                  defaultValue={districtFilter}
+                  placeholder="ör. Kadıköy"
+                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                />
+              </label>
               <button
                 type="submit"
                 className="h-11 rounded-xl bg-[#0f766e] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
@@ -510,6 +552,8 @@ export default async function ExploreRequestsPage({
                 clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}`}
                 advancedFiltersEnabled={hasAdvancedFilters}
                 showUrgentFilter={hasUrgentPriority}
+                savedSearchesEnabled={hasSavedSearches}
+                city={cityFilter}
               />
             ) : null}
           </div>
@@ -551,7 +595,20 @@ export default async function ExploreRequestsPage({
               clearHref={clearMatchedFiltersHref}
               advancedFiltersEnabled={hasAdvancedFilters}
               showUrgentFilter={hasUrgentPriority}
+              savedSearchesEnabled={hasSavedSearches}
             />
+            {hasSmartMatching && profileReadiness && !profileReadiness.ready ? (
+              <div className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-4 py-3 text-sm text-amber-950/80">
+                Akıllı eşleştirme için firma profilinizi tamamlayın:{" "}
+                {profileReadiness.missing.join(", ")}.{" "}
+                <Link
+                  href="/panel/firma"
+                  className="font-semibold text-teal-800 underline"
+                >
+                  Firma ayarları
+                </Link>
+              </div>
+            ) : null}
             {advancedFiltersAttempted ? (
               <p className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-3 py-2 text-xs text-amber-900/80">
                 Gelişmiş filtre parametreleri Profesyonel planda geçerlidir; şu an
@@ -645,11 +702,12 @@ export default async function ExploreRequestsPage({
                     isUrgent={request.isUrgent}
                     isFeatured={request.isFeatured}
                     isFresh={tab === "newest" && isFresh(when)}
-                    matchReason={
-                      tab === "matched" ? request.matchReason : null
+                    matchReason={hasSmartMatching ? request.matchReason : null}
+                    matchReasons={
+                      hasSmartMatching ? (request.matchReasons ?? null) : null
                     }
                     matchScore={
-                      tab === "matched" ? (request.matchScore ?? null) : null
+                      hasSmartMatching ? (request.matchScore ?? null) : null
                     }
                     emphasizeTime={tab === "newest"}
                   />

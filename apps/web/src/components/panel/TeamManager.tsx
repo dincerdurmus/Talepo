@@ -29,6 +29,7 @@ export type TeamMemberDTO = {
     name: string | null;
     email: string | null;
     image: string | null;
+    membershipNumber?: string | null;
   };
 };
 
@@ -65,7 +66,7 @@ export function TeamManager({
   const [members, setMembers] = useState(initialMembers);
   const [offersByUserId, setOffersByUserId] = useState(initialOffersByUserId);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
+  const [inviteInput, setInviteInput] = useState("");
   const [role, setRole] = useState<"MEMBER" | "MANAGER" | "ADMIN" | "VIEWER">(
     "MEMBER",
   );
@@ -97,7 +98,7 @@ export function TeamManager({
       const response = await fetch("/api/company/team", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ invite: inviteInput, role }),
       });
       const data = (await response.json()) as {
         ok: boolean;
@@ -114,7 +115,7 @@ export function TeamManager({
         const without = current.filter((m) => m.id !== data.member!.id);
         return [data.member!, ...without];
       });
-      setEmail("");
+      setInviteInput("");
       setMessage(data.message ?? "Davet gönderildi.");
       router.refresh();
     } catch {
@@ -177,16 +178,18 @@ export function TeamManager({
             <p className="text-sm font-semibold">Ekibe davet et</p>
           </div>
           <p className="mt-2 text-xs text-black/45">
-            Kullanıcı Talepo’da kayıtlı olmalı. Davet bildirim olarak gider.
+            Kullanıcı Talepo’da kayıtlı olmalı. E-posta veya üyelik numarası
+            (TLP-100001) ile davet gönderin; bildirim otomatik gider.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-[1.4fr_0.8fr_auto]">
             <input
               required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ornek@firma.com"
+              type="text"
+              value={inviteInput}
+              onChange={(e) => setInviteInput(e.target.value)}
+              placeholder="ornek@firma.com veya TLP-100001"
               className="rounded-xl border border-black/10 bg-[#f7f8f6] px-3 py-2.5 text-sm outline-none"
+              autoComplete="off"
             />
             <select
               value={role}

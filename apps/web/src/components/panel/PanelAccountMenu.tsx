@@ -15,6 +15,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+
 export type PanelCompanyOption = {
   id: string;
   name: string;
@@ -23,6 +25,7 @@ export type PanelCompanyOption = {
 type PanelAccountMenuProps = {
   displayName: string;
   email: string | null;
+  membershipNumber?: string | null;
   image: string | null;
   initials: string;
   isCorporate: boolean;
@@ -34,6 +37,7 @@ type PanelAccountMenuProps = {
 export function PanelAccountMenu({
   displayName,
   email,
+  membershipNumber,
   image,
   initials,
   isCorporate,
@@ -136,6 +140,9 @@ export function PanelAccountMenu({
               {displayName}
             </p>
             <p className="mt-1 truncate text-xs text-teal-950/45">{email ?? ""}</p>
+            {membershipNumber ? (
+              <MembershipNumberLabel membershipNumber={membershipNumber} />
+            ) : null}
             <p className="mt-2 text-[11px] font-medium text-teal-950/40">
               {inCompanyContext
                 ? `${isCorporate ? "Kurumsal" : "Firma"} · ${companyName ?? "Firma"}`
@@ -151,7 +158,7 @@ export function PanelAccountMenu({
               className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
             >
               <LayoutDashboard className="h-4 w-4 text-teal-950/35" />
-              Özet
+              Sayfam
             </Link>
 
             <Link

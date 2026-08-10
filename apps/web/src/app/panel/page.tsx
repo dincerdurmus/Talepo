@@ -30,7 +30,7 @@ import { requireUser } from "@/server/auth/require-user";
 
 export default async function PanelPage() {
   const user = await requireUser({ allowDbUnavailable: true });
-  const dbUnavailable = user.id.includes("@");
+  const dbUnavailable = user.dbUnavailable;
 
   const summary = dbUnavailable
     ? {
@@ -118,7 +118,10 @@ export default async function PanelPage() {
     );
   }
 
-  const firstName = user.name?.trim().split(/\s+/)[0] ?? "Merhaba";
+  const firstName =
+    user.name?.trim().split(/\s+/)[0] ||
+    user.email?.split("@")[0] ||
+    "Kullanıcı";
   const heroBanner = getPlanHeroBanner(planTier);
 
   return (

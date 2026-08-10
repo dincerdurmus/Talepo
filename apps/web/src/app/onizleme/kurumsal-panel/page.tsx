@@ -22,7 +22,7 @@ import {
 type Mode = "corporate" | "personal";
 
 const CORP_NAV = [
-  { icon: Home, label: "Özet", active: true },
+  { icon: Home, label: "Sayfam", active: true },
   { icon: Search, label: "Talepleri keşfet" },
   { icon: FileText, label: "Tekliflerimiz" },
   { icon: BellRing, label: "Uyarı kuralları" },

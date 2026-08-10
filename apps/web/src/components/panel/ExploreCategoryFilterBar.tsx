@@ -10,6 +10,7 @@ import {
 } from "@/lib/explore/category-filters";
 
 import { ExploreFilterUpsell } from "./ExploreFilterUpsell";
+import { SaveExploreSearchButton } from "./SaveExploreSearchButton";
 
 type InterestOption = {
   slug: string;
@@ -25,6 +26,8 @@ export function ExploreCategoryFilterBar({
   className = "mb-5",
   advancedFiltersEnabled = false,
   showUrgentFilter = false,
+  savedSearchesEnabled = false,
+  city,
 }: {
   interestOptions: InterestOption[];
   filters: ParsedExploreFilters;
@@ -34,12 +37,16 @@ export function ExploreCategoryFilterBar({
   advancedFiltersEnabled?: boolean;
   /** Show "Sadece acil" when user has urgent priority (Professional+) */
   showUrgentFilter?: boolean;
+  /** Enable save-search button (Premium saved_searches) */
+  savedSearchesEnabled?: boolean;
+  city?: string;
 }) {
   const focus = filters.focus || interestOptions[0]?.slug || "";
-  const defs = advancedFiltersEnabled ? getExploreFilterDefs(focus) : [];
+  const defs = focus ? getExploreFilterDefs(focus) : [];
   const hasExtra = Boolean(filters.q) || hasActiveAdvancedExploreFilters(filters);
   const showFocusSelect = interestOptions.length > 1;
   const showAdvancedRow = advancedFiltersEnabled;
+  const showAdvancedUpsell = !advancedFiltersEnabled && defs.length > 0;
 
   const activeByParam = new Map(
     filters.fields.map(({ def, value }) => [def.param, value]),
@@ -146,6 +153,14 @@ export function ExploreCategoryFilterBar({
             >
               Filtrele
             </button>
+            {savedSearchesEnabled ? (
+              <SaveExploreSearchButton
+                filters={filters}
+                categorySlug={focus || undefined}
+                city={city}
+                enabled
+              />
+            ) : null}
             {hasExtra ? (
               <Link
                 href={clearHref}
@@ -212,7 +227,10 @@ export function ExploreCategoryFilterBar({
         ) : null}
       </form>
 
-      {!advancedFiltersEnabled ? <ExploreFilterUpsell /> : null}
+      {!advancedFiltersEnabled && !showAdvancedUpsell ? <ExploreFilterUpsell /> : null}
+      {showAdvancedUpsell ? (
+        <ExploreFilterUpsell compact />
+      ) : null}
     </div>
   );
 }

@@ -33,6 +33,8 @@ type ExploreRequestCardProps = {
   isFeatured?: boolean;
   isFresh?: boolean;
   matchReason?: string | null;
+  /** Multiple match reasons from smart matching */
+  matchReasons?: string[] | null;
   /** 0–100 match score from RequestMatch when available */
   matchScore?: number | null;
   emphasizeTime?: boolean;
@@ -56,6 +58,7 @@ export function ExploreRequestCard({
   isFeatured,
   isFresh,
   matchReason,
+  matchReasons,
   matchScore,
   emphasizeTime,
 }: ExploreRequestCardProps) {
@@ -132,9 +135,18 @@ export function ExploreRequestCard({
                 Eşleşme %{Math.round(matchScore)}
               </span>
             ) : null}
-            {matchReason ? (
-              <span className="font-medium text-teal-700/75">{matchReason}</span>
-            ) : null}
+            {matchReasons && matchReasons.length > 0
+              ? matchReasons.slice(0, 3).map((reason) => (
+                  <span
+                    key={reason}
+                    className="font-medium text-teal-700/75"
+                  >
+                    {reason}
+                  </span>
+                ))
+              : matchReason ? (
+                  <span className="font-medium text-teal-700/75">{matchReason}</span>
+                ) : null}
           </div>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-2 sm:hidden">

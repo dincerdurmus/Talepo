@@ -49,6 +49,7 @@ export async function GET() {
 
     return NextResponse.json({
       ok: true,
+      membershipNumber: user.membershipNumber ?? null,
       entitlements: toEntitlementDTO(entitlements),
       companies,
       membership: {

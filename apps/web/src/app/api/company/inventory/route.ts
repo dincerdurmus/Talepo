@@ -99,6 +99,7 @@ export async function POST(request: Request) {
     const item = await prisma.companyInventoryItem.create({
       data: {
         companyId: workspace.companyId,
+        name: title,
         title,
         categoryLabel: body.categoryLabel?.trim() || null,
         quantity: Math.floor(quantity),

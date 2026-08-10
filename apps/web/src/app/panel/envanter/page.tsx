@@ -50,7 +50,7 @@ export default async function InventoryPage() {
         companyName={workspace.companyName}
         initialItems={items.map((item) => ({
           id: item.id,
-          title: item.title,
+          title: item.name || item.title || "",
           categoryLabel: item.categoryLabel,
           quantity: item.quantity,
           unit: item.unit,

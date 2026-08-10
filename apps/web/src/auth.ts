@@ -1,7 +1,7 @@
 import type { NextAuthOptions } from "next-auth";
 
 import { getAuthProviders } from "@/lib/auth/providers";
-import { syncOAuthUser } from "@/lib/auth/sync-google-user";
+import { resolveSessionUser, syncOAuthUser } from "@/lib/auth/sync-google-user";
 
 function oauthEmailFallback(
   provider: string | undefined,
@@ -52,18 +52,47 @@ export const authOptions: NextAuthOptions = {
         if (account?.provider === "credentials" && user.id) {
           token.sub = user.id;
           token.dbUnavailable = false;
-          return token;
+        } else {
+          const synced = await syncOAuthUser({
+            email,
+            name: user.name,
+            image: user.image,
+            account: account ?? undefined,
+          });
+
+          token.sub = synced.userId;
+          token.dbUnavailable = synced.dbUnavailable;
         }
+      }
 
-        const synced = await syncOAuthUser({
-          email,
-          name: user.name,
-          image: user.image,
-          account: account ?? undefined,
-        });
+      const refreshEmail =
+        (typeof token.email === "string" ? token.email : undefined) ??
+        undefined;
+      const refreshSub = token.sub ?? "";
 
-        token.sub = synced.userId;
-        token.dbUnavailable = synced.dbUnavailable;
+      if (refreshEmail || refreshSub) {
+        try {
+          const resolved = await resolveSessionUser(
+            refreshSub,
+            refreshEmail,
+            {
+              name: (token.name as string | null | undefined) ?? null,
+              image: (token.picture as string | null | undefined) ?? null,
+            },
+          );
+
+          if (resolved && !resolved.dbUnavailable) {
+            token.sub = resolved.user.id;
+            token.dbUnavailable = false;
+            if (resolved.user.name) token.name = resolved.user.name;
+            if (resolved.user.email) token.email = resolved.user.email;
+            if (resolved.user.image) token.picture = resolved.user.image;
+          } else if (resolved?.dbUnavailable) {
+            token.dbUnavailable = true;
+          }
+        } catch (refreshError) {
+          console.error("[auth] JWT oturum yenileme başarısız:", refreshError);
+        }
       }
 
       return token;
@@ -72,6 +101,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.sub ?? "";
+        if (token.name) session.user.name = token.name as string;
+        if (token.email) session.user.email = token.email as string;
+        if (token.picture) session.user.image = token.picture as string;
         session.dbUnavailable = Boolean(token.dbUnavailable);
       }
 

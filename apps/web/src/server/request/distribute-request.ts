@@ -1,5 +1,7 @@
 import { getPlanDefinition } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
+import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
+import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
 
 export type DistributeResult = {
   matchedCompanyCount: number;
@@ -260,6 +262,16 @@ export async function distributeRequestToCompanies(
   if (notifications.length > 0) {
     await prisma.notification.createMany({ data: notifications });
   }
+
+  // V2: background opportunity hunter (alert rules, inventory, profile).
+  // Non-blocking — queue-ready service boundary.
+  void runAutomaticOpportunityHunter(request.id).catch((error) => {
+    console.error("[distribute] opportunity hunter failed:", error);
+  });
+
+  void deliverAlertRuleNotifications(request.id).catch((error) => {
+    console.error("[distribute] alert notifications failed:", error);
+  });
 
   return {
     matchedCompanyCount: matches.length,

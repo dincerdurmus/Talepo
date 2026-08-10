@@ -1,15 +1,11 @@
-import Link from "next/link";
-import { cookies } from "next/headers";
-import { ArrowRight, Crown } from "lucide-react";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { hasFeature } from "@/lib/membership/entitlements";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/server/auth/require-user";
 
 import { AlertRulesManager } from "@/components/panel/AlertRulesManager";
-import {
-  ALERT_RULES_COOKIE,
-  parseAlertRules,
-} from "@/lib/alerts/alert-rules-store";
-import { getCompanyContextOptions } from "@/lib/membership/company-context";
-import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
-import { requireUser } from "@/server/auth/require-user";
+import { FeatureUpgradeGate } from "@/components/panel/FeatureUpgradeGate";
 
 export default async function AlertRulesPage() {
   const user = await requireUser();
@@ -17,60 +13,55 @@ export default async function AlertRulesPage() {
     user.id,
     await getCompanyContextOptions(),
   );
+  const entitled = hasFeature(entitlements.features, "smart_alerts");
 
-  if (!entitlements.features.alert_rules) {
-    return (
-      <>
-        <section className="py-4 sm:py-6">
-          <p className="text-sm font-semibold text-teal-800/55">Premium özellik</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-            Talep bildirim kuralları
-          </h1>
-        </section>
+  const companyId =
+    entitled && entitlements.subject.type === "company"
+      ? entitlements.subject.id
+      : null;
 
-        <div className="rounded-[28px] border border-amber-200/60 bg-gradient-to-br from-[#fffbeb] to-[#fef3c7] p-8">
-          <Crown className="h-8 w-8 text-amber-700" />
-          <h2 className="mt-4 text-2xl font-semibold text-[#78350f]">
-            Bu özellik Premium ve üzeri planlarda açılır
-          </h2>
-          <p className="mt-3 max-w-xl text-sm leading-6 text-[#92400e]/75">
-            Kategori, bölge ve bütçeye göre otomatik talep uyarıları için
-            planınızı yükseltmeniz gerekir.
-          </p>
-          <Link
-            href="/panel/plan"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-800 px-5 py-3 text-sm font-semibold text-white"
-          >
-            Planları gör
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </>
-    );
-  }
+  const [categories, rules] = companyId
+    ? await Promise.all([
+        prisma.category.findMany({
+          where: { isActive: true },
+          select: { id: true, name: true, slug: true },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        }),
+        prisma.alertRule.findMany({
+          where: { companyId },
+          orderBy: { updatedAt: "desc" },
+          include: { category: { select: { id: true, name: true, slug: true } } },
+        }),
+      ])
+    : [[], []];
 
-  const jar = await cookies();
-  const initialRules = parseAlertRules(jar.get(ALERT_RULES_COOKIE)?.value);
-  const initialStorageNote =
-    "Kurallar geçici olarak hesabınıza bağlı çerezde saklanır. Kalıcı depolama için AlertRule tablosu eklenecek.";
+  const serializedRules = rules.map((rule) => ({
+    ...rule,
+    minBudget: rule.minBudget?.toString() ?? null,
+    maxBudget: rule.maxBudget?.toString() ?? null,
+    createdAt: rule.createdAt.toISOString(),
+    updatedAt: rule.updatedAt.toISOString(),
+    attributes: (rule.attributes as Record<string, unknown> | null) ?? null,
+  }));
 
   return (
     <>
       <section className="py-4 sm:py-6">
-        <p className="text-sm font-semibold text-teal-800/55">Premium özellik</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
+        <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">Premium</p>
+        <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
           Talep bildirim kuralları
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-          Kategori ve şehir anahtar kelimelerine göre uyarı kuralları oluşturun.
-          Eşleşen talepler yayınlandığında bildirim alacaksınız.
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
+          Kategori, bölge ve bütçeye göre otomatik uyarı kuralları tanımlayın.
         </p>
       </section>
 
-      <AlertRulesManager
-        initialRules={initialRules}
-        initialStorageNote={initialStorageNote}
-      />
+      <FeatureUpgradeGate feature="smart_alerts" entitled={entitled}>
+        <AlertRulesManager
+          initialRules={serializedRules}
+          categories={categories}
+        />
+      </FeatureUpgradeGate>
     </>
   );
 }

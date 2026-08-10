@@ -4,6 +4,10 @@ import {
   assertCompanyMembership,
   getCompanyWorkspace,
 } from "@/lib/panel/company-workspace";
+import {
+  isMembershipNumberInput,
+  normalizeMembershipNumberInput,
+} from "@/lib/auth/membership-number";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 
@@ -35,7 +39,7 @@ export async function GET() {
       orderBy: [{ status: "asc" }, { createdAt: "asc" }],
       include: {
         user: {
-          select: { id: true, name: true, email: true, image: true },
+          select: { id: true, name: true, email: true, image: true, membershipNumber: true },
         },
       },
     });
@@ -132,32 +136,74 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as {
       email?: string;
+      invite?: string;
+      membershipNumber?: string;
       role?: "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";
     };
 
-    const email = body.email?.trim().toLowerCase();
-    if (!email) {
+    const rawInvite =
+      body.invite?.trim() ||
+      body.membershipNumber?.trim() ||
+      body.email?.trim();
+
+    if (!rawInvite) {
       return NextResponse.json(
-        { ok: false, message: "E-posta zorunlu." },
+        { ok: false, message: "E-posta veya üyelik numarası zorunlu." },
         { status: 400 },
       );
     }
 
     const role = body.role ?? "MEMBER";
-    const invitee = await prisma.user.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
-      select: { id: true, name: true, email: true },
-    });
 
-    if (!invitee) {
-      return NextResponse.json(
-        {
-          ok: false,
-          message:
-            "Bu e-posta ile kayıtlı kullanıcı yok. Önce Talepo’ya kayıt olmalı.",
-        },
-        { status: 404 },
-      );
+    let invitee: {
+      id: string;
+      name: string | null;
+      email: string | null;
+    } | null = null;
+
+    if (isMembershipNumberInput(rawInvite)) {
+      const membershipNumber = normalizeMembershipNumberInput(rawInvite)!;
+      invitee = await prisma.user.findUnique({
+        where: { membershipNumber },
+        select: { id: true, name: true, email: true },
+      });
+
+      if (!invitee) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Bu üyelik numarası ile kayıtlı kullanıcı bulunamadı.",
+          },
+          { status: 404 },
+        );
+      }
+    } else {
+      const email = rawInvite.toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Geçerli bir e-posta veya üyelik numarası girin.",
+          },
+          { status: 400 },
+        );
+      }
+
+      invitee = await prisma.user.findFirst({
+        where: { email: { equals: email, mode: "insensitive" } },
+        select: { id: true, name: true, email: true },
+      });
+
+      if (!invitee) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message:
+              "Bu e-posta ile kayıtlı kullanıcı yok. Önce Talepo’ya kayıt olmalı.",
+          },
+          { status: 404 },
+        );
+      }
     }
 
     if (invitee.id === user.id) {
@@ -183,6 +229,8 @@ export async function POST(request: Request) {
       );
     }
 
+    const wasPendingInvite = existing?.status === "INVITED";
+
     const member = existing
       ? await prisma.companyMember.update({
           where: { id: existing.id },
@@ -194,7 +242,13 @@ export async function POST(request: Request) {
           },
           include: {
             user: {
-              select: { id: true, name: true, email: true, image: true },
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                membershipNumber: true,
+              },
             },
           },
         })
@@ -207,7 +261,13 @@ export async function POST(request: Request) {
           },
           include: {
             user: {
-              select: { id: true, name: true, email: true, image: true },
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                membershipNumber: true,
+              },
             },
           },
         });
@@ -223,10 +283,15 @@ export async function POST(request: Request) {
       },
     });
 
+    const inviteeLabel =
+      invitee.name?.trim() || invitee.email?.trim() || "Kullanıcı";
+
     return NextResponse.json({
       ok: true,
       member,
-      message: `${invitee.email} davet edildi.`,
+      message: wasPendingInvite
+        ? `${inviteeLabel} için davet yenilendi.`
+        : `${inviteeLabel} davet edildi.`,
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {

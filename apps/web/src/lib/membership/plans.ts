@@ -61,7 +61,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Premium",
     badge: "Popüler",
     description:
-      "Kişisel hesap veya tek kişilik firma için: anında erişim, sınırsız teklif ve AI araçları. Ekip paylaşımı için Kurumsal plan gerekir.",
+      "Hız: anında erişim, sınırsız teklif, akıllı alarmlar, AI asistan ve gelişmiş filtreler.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -78,7 +78,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Profesyonel",
     badge: "Pro",
     description:
-      "Firma planı — ekip paylaşımlı: acil talep önceliği, gelişmiş filtreler ve piyasa analizi.",
+      "Zeka: sıcak fırsatlar, rekabet sinyalleri, watchlist, profesyonel analitik ve Talepo Insights.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -95,7 +95,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Kurumsal",
     badge: "Kurumsal",
     description:
-      "Ekip paylaşımlı firma planı: tüm üyeler aynı hakları kullanır. Gizli envanter, otomatik bildirimler ve kurumsal profil.",
+      "Otomasyon ve veri: ekip, gizli envanter, fırsat avcısı, lead dağıtımı ve kurumsal istihbarat.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,

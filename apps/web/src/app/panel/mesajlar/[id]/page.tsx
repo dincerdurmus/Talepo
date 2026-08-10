@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText } from "lucide-react";
 
 import { MessageComposer } from "@/components/panel/MessageComposer";
+import { DealOutcomePanel } from "@/components/panel/DealOutcomePanel";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { markConversationAsRead } from "@/server/message/mark-conversation-read";
+import { getDealOutcomeForConversation } from "@/server/price-intelligence/deal-outcome";
 
 export default async function ConversationDetailPage({
   params,
@@ -82,6 +84,14 @@ export default async function ConversationDetailPage({
     ? `/panel/taleplerim/${request.id}`
     : `/panel/talepler/${request.id}`;
 
+  const dealOutcome =
+    offerAccepted ? await getDealOutcomeForConversation(id) : null;
+  const dealRole: "buyer" | "supplier" | null = isBuyer
+    ? "buyer"
+    : isSupplier
+      ? "supplier"
+      : null;
+
   return (
     <>
       <header className="rounded-2xl border border-teal-900/8 bg-gradient-to-br from-white via-[#f8fcfb] to-[#eef6f8] px-5 py-4 shadow-[0_12px_40px_rgba(15,118,110,0.04)]">
@@ -118,6 +128,21 @@ export default async function ConversationDetailPage({
           </span>
         </Link>
       </header>
+
+      {dealOutcome && dealRole && (
+        <DealOutcomePanel
+          dealOutcome={{
+            id: dealOutcome.id,
+            status: dealOutcome.status,
+            confirmationLevel: dealOutcome.confirmationLevel,
+            agreedPrice: dealOutcome.agreedPrice?.toNumber() ?? null,
+            currency: dealOutcome.currency,
+            buyerConfirmedAt: dealOutcome.buyerConfirmedAt?.toISOString() ?? null,
+            supplierConfirmedAt: dealOutcome.supplierConfirmedAt?.toISOString() ?? null,
+          }}
+          role={dealRole}
+        />
+      )}
 
       <section className="mt-5 flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-teal-900/8 bg-white shadow-[0_18px_55px_rgba(15,118,110,0.05)]">
         <div className="flex-1 space-y-3.5 overflow-y-auto bg-gradient-to-b from-[#f7fbfa] to-white p-5 sm:p-6">

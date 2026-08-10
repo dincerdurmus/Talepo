@@ -1,5 +1,9 @@
 import type { Account } from "next-auth";
 
+import {
+  allocateMembershipNumber,
+  ensureUserMembershipNumber,
+} from "@/lib/auth/membership-number";
 import { prisma } from "@/lib/prisma";
 
 type SyncOAuthUserInput = {
@@ -11,21 +15,39 @@ type SyncOAuthUserInput = {
 
 export async function syncOAuthUser(input: SyncOAuthUserInput) {
   try {
-    const dbUser = await prisma.user.upsert({
+    const existing = await prisma.user.findUnique({
       where: { email: input.email },
-      update: {
-        name: input.name ?? undefined,
-        image: input.image ?? undefined,
-        lastLoginAt: new Date(),
-      },
-      create: {
-        email: input.email,
-        name: input.name,
-        image: input.image,
-        lastLoginAt: new Date(),
-      },
       select: { id: true },
     });
+
+    const dbUser = existing
+      ? await prisma.user.update({
+          where: { email: input.email },
+          data: {
+            name: input.name ?? undefined,
+            image: input.image ?? undefined,
+            lastLoginAt: new Date(),
+          },
+          select: { id: true },
+        })
+      : await prisma.user.create({
+          data: {
+            email: input.email,
+            name: input.name,
+            image: input.image,
+            membershipNumber: await allocateMembershipNumber(),
+            lastLoginAt: new Date(),
+          },
+          select: { id: true },
+        });
+
+    if (existing) {
+      try {
+        await ensureUserMembershipNumber(dbUser.id);
+      } catch (membershipError) {
+        console.error("[auth] OAuth üyelik numarası güncellenemedi:", membershipError);
+      }
+    }
 
     if (input.account) {
       try {
@@ -74,20 +96,122 @@ export async function syncOAuthUser(input: SyncOAuthUserInput) {
 /** @deprecated Use syncOAuthUser */
 export const syncGoogleUser = syncOAuthUser;
 
-export async function resolveSessionUser(userId: string, email?: string | null) {
+type SessionUserFields = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  membershipNumber: string | null;
+};
+
+type SessionFallback = {
+  name?: string | null;
+  image?: string | null;
+};
+
+const userSelectBasic = {
+  id: true,
+  name: true,
+  email: true,
+  image: true,
+} as const;
+
+const userSelect = {
+  ...userSelectBasic,
+  membershipNumber: true,
+} as const;
+
+function isStaleMembershipFieldError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.name === "PrismaClientValidationError" &&
+    error.message.includes("membershipNumber")
+  );
+}
+
+async function findDbUser(
+  where: { id: string } | { email: string },
+): Promise<{
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  membershipNumber: string | null;
+} | null> {
   try {
-    const dbUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-      },
+    return await prisma.user.findUnique({
+      where,
+      select: userSelect,
+    });
+  } catch (error) {
+    if (!isStaleMembershipFieldError(error)) {
+      throw error;
+    }
+
+    console.warn(
+      "[auth] Prisma istemcisi membershipNumber alanını tanımıyor; temel seçimle devam ediliyor. `npx prisma generate` ve dev sunucusunu yeniden başlatın.",
+    );
+
+    const basic = await prisma.user.findUnique({
+      where,
+      select: userSelectBasic,
     });
 
+    if (!basic) return null;
+
+    return { ...basic, membershipNumber: null };
+  }
+}
+
+async function safeEnsureMembershipNumber(userId: string): Promise<string | null> {
+  try {
+    return await ensureUserMembershipNumber(userId);
+  } catch (error) {
+    console.error("[auth] Üyelik numarası atanamadı:", error);
+    return null;
+  }
+}
+
+function applySessionFallback(
+  user: SessionUserFields,
+  fallback?: SessionFallback,
+): SessionUserFields {
+  return {
+    ...user,
+    name: user.name?.trim() || fallback?.name?.trim() || null,
+    image: user.image || fallback?.image || null,
+  };
+}
+
+async function resolveDbUser(
+  dbUser: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+    membershipNumber: string | null;
+  },
+  fallback?: SessionFallback,
+): Promise<{ user: SessionUserFields; dbUnavailable: false }> {
+  const membershipNumber =
+    dbUser.membershipNumber ?? (await safeEnsureMembershipNumber(dbUser.id));
+
+  return {
+    user: applySessionFallback({ ...dbUser, membershipNumber }, fallback),
+    dbUnavailable: false,
+  };
+}
+
+export async function resolveSessionUser(
+  userId: string,
+  email?: string | null,
+  fallback?: SessionFallback,
+) {
+  try {
+    const dbUser = await findDbUser({ id: userId });
+
     if (dbUser) {
-      return { user: dbUser, dbUnavailable: false };
+      return await resolveDbUser(dbUser, fallback);
     }
   } catch (error) {
     console.error("[auth] Kullanıcı id ile bulunamadı:", error);
@@ -95,18 +219,10 @@ export async function resolveSessionUser(userId: string, email?: string | null) 
 
   if (email) {
     try {
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-        },
-      });
+      const dbUser = await findDbUser({ email });
 
       if (dbUser) {
-        return { user: dbUser, dbUnavailable: false };
+        return await resolveDbUser(dbUser, fallback);
       }
     } catch (error) {
       console.error("[auth] Kullanıcı email ile bulunamadı:", error);
@@ -115,13 +231,17 @@ export async function resolveSessionUser(userId: string, email?: string | null) 
 
   if (email) {
     return {
-      user: {
-        id: userId,
-        name: null,
-        email,
-        image: null,
-      },
-      dbUnavailable: true,
+      user: applySessionFallback(
+        {
+          id: userId,
+          name: null,
+          email,
+          image: null,
+          membershipNumber: null,
+        },
+        fallback,
+      ),
+      dbUnavailable: true as const,
     };
   }
 

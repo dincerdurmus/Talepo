@@ -33,7 +33,7 @@ export default async function PanelLayout({
     throw error;
   }
 
-  const dbUnavailable = user.id.includes("@");
+  const dbUnavailable = user.dbUnavailable;
 
   let unreadNotifications = 0;
   let unreadMessages = 0;
@@ -125,7 +125,13 @@ export default async function PanelLayout({
 
   return (
     <PanelShell
-      user={user}
+      user={{
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        membershipNumber: user.membershipNumber,
+      }}
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}
       dbUnavailable={dbUnavailable}

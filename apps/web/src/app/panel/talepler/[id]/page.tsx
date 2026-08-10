@@ -11,16 +11,23 @@ import {
 } from "lucide-react";
 
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
+import { OfferDraftSuggestion } from "@/components/panel/OfferDraftSuggestion";
+import { RequestChangeBanner } from "@/components/panel/RequestChangeBanner";
+import { SmartMatchPanel } from "@/components/panel/SmartMatchPanel";
+import { WatchlistToggle } from "@/components/panel/WatchlistToggle";
 import { OfferSendCta } from "@/components/panel/OfferSendCta";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { hasFeature } from "@/lib/membership/entitlements";
+import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
+import { matchCompanyToRequest } from "@/server/monetization/smart-matching";
 
 export default async function ExploreRequestDetailPage({
   params,
@@ -126,6 +133,57 @@ export default async function ExploreRequestDetailPage({
     !existingOffer ||
     ["REJECTED", "WITHDRAWN", "EXPIRED"].includes(existingOffer.status);
 
+  const companyId =
+    entitlements.subject.type === "company" ? entitlements.subject.id : null;
+  const hasSmartMatching = hasFeature(entitlements.features, "smart_matching");
+  const hasWatchlist = hasFeature(entitlements.features, "watchlist");
+
+  const [companyProfile, watchlistItem, requestChanges, smartMatch] =
+    companyId
+      ? await Promise.all([
+          prisma.company.findFirst({
+            where: { id: companyId, deletedAt: null },
+            select: {
+              city: true,
+              description: true,
+              _count: { select: { categories: true } },
+            },
+          }),
+          hasWatchlist
+            ? prisma.opportunityWatchlistItem.findUnique({
+                where: {
+                  companyId_requestId: {
+                    companyId,
+                    requestId: request.id,
+                  },
+                },
+                select: { id: true },
+              })
+            : Promise.resolve(null),
+          hasWatchlist
+            ? prisma.requestChange.findMany({
+                where: {
+                  requestId: request.id,
+                  createdAt: { gte: new Date(Date.now() - 14 * 86400000) },
+                },
+                orderBy: { createdAt: "desc" },
+                take: 5,
+              })
+            : Promise.resolve([]),
+          hasSmartMatching
+            ? matchCompanyToRequest(companyId, request.id)
+            : Promise.resolve(null),
+        ])
+      : [null, null, [], null];
+
+  const profileReadiness = companyProfile
+    ? assessCompanyProfileReadiness({
+        city: companyProfile.city,
+        description: companyProfile.description,
+        categoryCount: companyProfile._count.categories,
+      })
+    : null;
+
   return (
     <>
       <DetailHeader locked={false} />
@@ -187,6 +245,33 @@ export default async function ExploreRequestDetailPage({
         </div>
       </section>
 
+      {hasSmartMatching ? (
+        <SmartMatchPanel
+          score={smartMatch?.score ?? 0}
+          reasons={smartMatch?.reasons ?? []}
+          profileIncomplete={Boolean(profileReadiness && !profileReadiness.ready)}
+          missingProfileFields={profileReadiness?.missing ?? []}
+        />
+      ) : null}
+
+      {hasWatchlist && watchlistItem && requestChanges.length > 0 ? (
+        <RequestChangeBanner
+          changes={requestChanges.map((c) => ({
+            field: c.field,
+            oldValue: c.oldValue,
+            newValue: c.newValue,
+          }))}
+        />
+      ) : null}
+
+      {companyId ? (
+        <WatchlistToggle
+          requestId={request.id}
+          initialWatchlisted={Boolean(watchlistItem)}
+          entitled={hasWatchlist}
+        />
+      ) : null}
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch lg:gap-5">
         <section className="flex h-full flex-col rounded-xl border border-black/[0.06] bg-white p-4 sm:p-5">
           <span className="text-xs font-semibold text-black/40">
@@ -239,6 +324,18 @@ export default async function ExploreRequestDetailPage({
           <OfferSendCta href={teklifHref} />
         )}
       </section>
+
+      {entitlements.features.ai_offer_assistant &&
+      (request.status === "PUBLISHED" || request.status === "RECEIVING_OFFERS") ? (
+        <OfferDraftSuggestion
+          requestTitle={request.title}
+          requestDescription={
+            request.professionalDescription || request.description
+          }
+          categoryName={request.category.name}
+          teklifHref={teklifHref}
+        />
+      ) : null}
 
       {request.fieldValues.length > 0 && (
         <section className="mt-5 sm:mt-6">

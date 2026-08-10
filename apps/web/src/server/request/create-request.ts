@@ -5,6 +5,7 @@ import { EntitlementError } from "@/lib/membership/types";
 import { prisma } from "@/lib/prisma";
 
 import { distributeRequestToCompanies } from "./distribute-request";
+import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
 import {
   buildAiSummary,
   mapFieldType,
@@ -184,6 +185,11 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
     // still succeeds if distribution has a soft failure.
     try {
       const distribution = await distributeRequestToCompanies(request.id);
+      try {
+        await recordRequestPriceObservation(request.id);
+      } catch (observationError) {
+        console.error("[create-request] price observation failed", observationError);
+      }
       return { ...request, distribution };
     } catch (error) {
       console.error("[create-request] distribution failed", error);

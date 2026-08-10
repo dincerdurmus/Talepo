@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
+import { recordRequestChanges } from "@/server/monetization/request-changes";
+
 import {
   buildAiSummary,
   mapFieldType,
@@ -38,6 +40,10 @@ export async function updateRequest(
         id: true,
         status: true,
         formId: true,
+        budgetMin: true,
+        budgetMax: true,
+        isUrgent: true,
+        deadlineAt: true,
       },
     });
 
@@ -130,6 +136,7 @@ export async function updateRequest(
     });
 
     const budget = parseBudgetRange(input.budget);
+    const deadlineAt = parseDeliveryDeadline(input.delivery);
 
     const updated = await tx.request.update({
       where: { id: existing.id },
@@ -146,7 +153,7 @@ export async function updateRequest(
         district: input.district,
         budgetMin: budget.min,
         budgetMax: budget.max,
-        deadlineAt: parseDeliveryDeadline(input.delivery),
+        deadlineAt,
         isUrgent: input.isUrgent ?? false,
         status:
           existing.status === "DRAFT" ? "PUBLISHED" : existing.status,
@@ -167,6 +174,24 @@ export async function updateRequest(
         status: true,
       },
     });
+
+    await recordRequestChanges(
+      existing.id,
+      {
+        budgetMin: existing.budgetMin,
+        budgetMax: existing.budgetMax,
+        isUrgent: existing.isUrgent,
+        deadlineAt: existing.deadlineAt,
+        status: existing.status,
+      },
+      {
+        budgetMin: budget.min,
+        budgetMax: budget.max,
+        isUrgent: input.isUrgent ?? false,
+        deadlineAt,
+        status: existing.status === "DRAFT" ? "PUBLISHED" : existing.status,
+      },
+    );
 
     await tx.notification.create({
       data: {

@@ -4,87 +4,146 @@ import {
 } from "./plans";
 
 /**
- * Canonical feature keys. Do not scatter string literals —
- * import FeatureKey / FEATURE_KEYS instead.
+ * Canonical V2 feature keys — do not scatter string literals.
+ * Legacy keys (alert_rules, etc.) remain for backward compatibility.
  */
 export const FEATURE_KEYS = [
+  // Core
   "submit_offer",
   "instant_request_access",
+  "unlimited_offers",
+
+  // Premium — speed + access
+  "smart_alerts",
   "ai_offer_assistant",
-  "advanced_ai_pricing",
-  "alert_rules",
-  "hidden_inventory",
-  "urgent_request_priority",
+  "smart_matching",
+  "saved_searches",
   "advanced_filters",
-  /**
-   * Buyer-side request boost.
-   * FAZ 1: always granted (no payment gate yet — preserves current behavior).
-   * FAZ 3+: must become payment-backed; remove from free plan grants.
-   */
+  "basic_market_insights",
+
+  // Professional — intelligence + opportunity selection
+  "hot_opportunities",
+  "high_budget_opportunities",
+  "advanced_opportunity_analysis",
+  "competition_signals",
+  "budget_change_alerts",
+  "watchlist",
+  "professional_analytics",
+  "talepo_insights",
+
+  // Corporate — automation + team + inventory + data
+  "team_management",
+  "hidden_inventory",
+  "automatic_opportunity_hunter",
+  "inventory_import",
+  "lead_distribution",
+  "corporate_intelligence",
+  "erp_integration",
+
+  // Legacy aliases (FAZ 1 surfaces — map to V2 equivalents in UI copy)
+  "alert_rules",
+  "advanced_ai_pricing",
+  "urgent_request_priority",
+  /** Buyer-side request boost — payment-backed later */
   "feature_request_boost",
 ] as const;
 
 export type FeatureKey = (typeof FEATURE_KEYS)[number];
 
-const ALL_FALSE: Record<FeatureKey, boolean> = {
-  submit_offer: false,
-  instant_request_access: false,
-  ai_offer_assistant: false,
-  advanced_ai_pricing: false,
-  alert_rules: false,
-  hidden_inventory: false,
-  urgent_request_priority: false,
-  advanced_filters: false,
-  feature_request_boost: false,
-};
+const ALL_FALSE = Object.fromEntries(
+  FEATURE_KEYS.map((key) => [key, false]),
+) as Record<FeatureKey, boolean>;
+
+const STANDARD_KEYS: readonly FeatureKey[] = [
+  "submit_offer",
+  "feature_request_boost",
+  ...(!ENABLE_STANDARD_REQUEST_ACCESS_DELAY
+    ? (["instant_request_access"] as const)
+    : []),
+];
+
+const PREMIUM_KEYS: readonly FeatureKey[] = [
+  ...STANDARD_KEYS,
+  "unlimited_offers",
+  "instant_request_access",
+  "smart_alerts",
+  "alert_rules",
+  "ai_offer_assistant",
+  "smart_matching",
+  "saved_searches",
+  "advanced_filters",
+  "basic_market_insights",
+  "advanced_ai_pricing",
+];
+
+const PROFESSIONAL_KEYS: readonly FeatureKey[] = [
+  ...PREMIUM_KEYS,
+  "hot_opportunities",
+  "urgent_request_priority",
+  "high_budget_opportunities",
+  "advanced_opportunity_analysis",
+  "competition_signals",
+  "budget_change_alerts",
+  "watchlist",
+  "professional_analytics",
+  "talepo_insights",
+];
+
+const CORPORATE_KEYS: readonly FeatureKey[] = [
+  ...PROFESSIONAL_KEYS,
+  "team_management",
+  "hidden_inventory",
+  "automatic_opportunity_hunter",
+  "inventory_import",
+  "lead_distribution",
+  "corporate_intelligence",
+  "erp_integration",
+];
 
 /**
- * Plan → feature registry.
- * Features listed here may not have product surfaces yet (FAZ 1);
- * the registry still defines who is entitled when they ship.
- *
- * Test: ENABLE_STANDARD_REQUEST_ACCESS_DELAY=false iken Standart da
- * instant_request_access alır (keşif filtresi açık kalır).
+ * Plan → feature registry (V2 matrix).
+ * Features may ship as INFRASTRUCTURE_READY before full UI.
  */
 const PLAN_FEATURE_KEYS: Record<PlanTierId, readonly FeatureKey[]> = {
-  STANDARD: [
-    "submit_offer",
-    // Payment-backed later — keep true so create-request boost still works.
-    "feature_request_boost",
-    ...(!ENABLE_STANDARD_REQUEST_ACCESS_DELAY
-      ? (["instant_request_access"] as const)
-      : []),
-  ],
-  PREMIUM: [
-    "submit_offer",
-    "instant_request_access",
-    "ai_offer_assistant",
-    "advanced_ai_pricing",
-    "alert_rules",
-    "feature_request_boost",
-  ],
-  PROFESSIONAL: [
-    "submit_offer",
-    "instant_request_access",
-    "ai_offer_assistant",
-    "advanced_ai_pricing",
-    "alert_rules",
-    "urgent_request_priority",
-    "advanced_filters",
-    "feature_request_boost",
-  ],
-  CORPORATE: [
-    "submit_offer",
-    "instant_request_access",
-    "ai_offer_assistant",
-    "advanced_ai_pricing",
-    "alert_rules",
-    "urgent_request_priority",
-    "advanced_filters",
-    "hidden_inventory",
-    "feature_request_boost",
-  ],
+  STANDARD: STANDARD_KEYS,
+  PREMIUM: PREMIUM_KEYS,
+  PROFESSIONAL: PROFESSIONAL_KEYS,
+  CORPORATE: CORPORATE_KEYS,
 };
+
+/** V2 feature groups for plan comparison UI. */
+export const PLAN_FEATURE_GROUPS = {
+  STANDARD: ["submit_offer"] as FeatureKey[],
+  PREMIUM: [
+    "unlimited_offers",
+    "instant_request_access",
+    "smart_alerts",
+    "ai_offer_assistant",
+    "smart_matching",
+    "saved_searches",
+    "advanced_filters",
+    "basic_market_insights",
+  ] as FeatureKey[],
+  PROFESSIONAL: [
+    "hot_opportunities",
+    "high_budget_opportunities",
+    "advanced_opportunity_analysis",
+    "competition_signals",
+    "budget_change_alerts",
+    "watchlist",
+    "professional_analytics",
+    "talepo_insights",
+  ] as FeatureKey[],
+  CORPORATE: [
+    "team_management",
+    "hidden_inventory",
+    "automatic_opportunity_hunter",
+    "inventory_import",
+    "lead_distribution",
+    "corporate_intelligence",
+    "erp_integration",
+  ] as FeatureKey[],
+} as const;
 
 export function featuresForPlan(tier: PlanTierId): Record<FeatureKey, boolean> {
   const features = { ...ALL_FALSE };
@@ -100,5 +159,33 @@ export function hasFeature(
   features: Record<FeatureKey, boolean>,
   key: FeatureKey,
 ): boolean {
-  return features[key] === true;
+  if (features[key] === true) return true;
+
+  // Legacy alias resolution
+  if (key === "smart_alerts" && features.alert_rules) return true;
+  if (key === "alert_rules" && features.smart_alerts) return true;
+  if (key === "basic_market_insights" && features.advanced_ai_pricing) {
+    return true;
+  }
+  if (key === "hot_opportunities" && features.urgent_request_priority) {
+    return true;
+  }
+
+  return false;
+}
+
+export function minimumPlanForFeature(key: FeatureKey): PlanTierId {
+  const order: PlanTierId[] = [
+    "STANDARD",
+    "PREMIUM",
+    "PROFESSIONAL",
+    "CORPORATE",
+  ];
+  for (const tier of order) {
+    if (PLAN_FEATURE_KEYS[tier].includes(key)) return tier;
+    if (key === "smart_alerts" && PLAN_FEATURE_KEYS[tier].includes("alert_rules")) {
+      return tier;
+    }
+  }
+  return "CORPORATE";
 }

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
+import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+
 type HeaderCompany = {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ export function Header({ tone = "default" }: HeaderProps) {
   const [activeCompanyName, setActiveCompanyName] = useState<string | null>(
     null,
   );
+  const [membershipNumber, setMembershipNumber] = useState<string | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const ink = tone === "ink";
 
@@ -66,6 +69,7 @@ export function Header({ tone = "default" }: HeaderProps) {
         const data = (await response.json()) as {
           ok?: boolean;
           companies?: HeaderCompany[];
+          membershipNumber?: string | null;
           membership?: {
             companyId?: string | null;
             companyName?: string | null;
@@ -75,6 +79,7 @@ export function Header({ tone = "default" }: HeaderProps) {
         if (cancelled || !response.ok || !data.ok) return;
 
         setCompanies(data.companies ?? []);
+        setMembershipNumber(data.membershipNumber ?? null);
         setActiveCompanyId(data.membership?.companyId ?? null);
         setActiveCompanyName(data.membership?.companyName ?? null);
       } catch {
@@ -260,6 +265,10 @@ export function Header({ tone = "default" }: HeaderProps) {
                       {session.user.email ?? ""}
                     </p>
 
+                    {membershipNumber ? (
+                      <MembershipNumberLabel membershipNumber={membershipNumber} />
+                    ) : null}
+
                     <p className="mt-2 text-[11px] font-medium text-teal-950/40">
                       {inCompanyContext
                         ? `Kurumsal · ${headerActiveCompanyName ?? "Firma"}`
@@ -274,7 +283,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                       onClick={() => setProfileMenuOpen(false)}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
                     >
-                      Özet
+                      Sayfam
                     </Link>
 
                     <Link

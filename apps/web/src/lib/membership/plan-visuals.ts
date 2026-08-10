@@ -210,34 +210,33 @@ export const PLAN_VISUALS: Record<
 
 export const PLAN_FEATURES: Record<PlanTierId, string[]> = {
   STANDARD: [
-    "Ücretsiz talep oluşturma",
+    "Ücretsiz talep oluşturma (alıcı tarafı)",
     "Ayda 5 teklif hakkı",
-    "Temel AI talep oluşturma",
+    "Temel firma profili",
     ENABLE_STANDARD_REQUEST_ACCESS_DELAY
       ? "Yeni taleplere 24 saat gecikmeli erişim"
-      : "Yeni taleplere anında erişim (test)",
+      : "Temel talep erişimi",
   ],
   PREMIUM: [
-    "Kişisel / tek kullanıcı planı",
-    "Sınırsız teklif hakkı",
-    "Yeni taleplere anında erişim",
-    "AI teklif asistanı",
-    "Gelişmiş AI fiyat analizi",
-    "Talep bildirim kuralları",
+    "Hız — anında erişim ve sınırsız teklif",
+    "Akıllı alarmlar ve kayıtlı aramalar",
+    "AI teklif asistanı (altyapı)",
+    "Akıllı eşleştirme ve gelişmiş filtreler",
+    "Temel piyasa içgörüleri",
   ],
   PROFESSIONAL: [
-    "Firma planı — ekip paylaşımlı",
-    "Premium'un tüm avantajları",
-    "Acil taleplere öncelikli erişim",
-    "Gelişmiş talep filtreleri",
-    "Kategori ve bölge takibi",
+    "Zeka — Premium + fırsat seçimi",
+    "Sıcak fırsatlar ve rekabet sinyalleri",
+    "Watchlist ve bütçe değişikliği takibi",
+    "Profesyonel analitik dashboard altyapısı",
+    "Talepo Insights (anonim veri)",
   ],
   CORPORATE: [
-    "Ekip paylaşımlı Kurumsal plan",
-    "Profesyonel'in tüm avantajları",
-    "Otomatik talep bildirimleri",
-    "Kurumsal firma profili",
-    "Gizli envanter eşleştirme",
+    "Otomasyon ve veri — Profesyonel +",
+    "Ekip yönetimi ve lead dağıtımı",
+    "Gizli envanter ve otomatik fırsat avcısı",
+    "CSV envanter import ve ERP adapter arayüzü",
+    "Kurumsal talep istihbaratı",
   ],
 };
 

@@ -41,6 +41,7 @@ export type PanelUser = {
   name: string | null;
   email: string | null;
   image: string | null;
+  membershipNumber?: string | null;
 };
 
 export type PanelWorkspace = {
@@ -82,7 +83,7 @@ function isNavActive(pathname: string, href: string, exact?: boolean) {
 }
 
 function getPanelPageTitle(pathname: string) {
-  if (pathname === "/panel") return "Özet";
+  if (pathname === "/panel") return "Sayfam";
   if (pathname.includes("/duzenle")) return "Talebi düzelt";
   if (pathname.startsWith("/panel/taleplerim")) return "Taleplerim";
   if (pathname.startsWith("/panel/gelen-teklifler")) return "Gelen teklifler";
@@ -115,7 +116,10 @@ export function PanelShell({
   children,
 }: PanelShellProps) {
   const pathname = usePathname();
-  const displayName = user.name?.trim() || "Kullanıcı";
+  const displayName =
+    user.name?.trim() ||
+    user.email?.split("@")[0] ||
+    "Kullanıcı";
   const initials = getInitials(user.name, user.email);
   const mode = workspace?.mode ?? "personal";
   const isCorporate = mode === "corporate";
@@ -248,6 +252,7 @@ export function PanelShell({
                 <PanelAccountMenu
                   displayName={displayName}
                   email={user.email}
+                  membershipNumber={user.membershipNumber}
                   image={user.image}
                   initials={initials}
                   isCorporate={isCorporate}
@@ -282,7 +287,7 @@ export function PanelShell({
           <MobileLink
             href="/panel"
             icon={LayoutDashboard}
-            label="Özet"
+            label="Sayfam"
             active={isNavActive(pathname, "/panel", true)}
           />
           <MobileLink

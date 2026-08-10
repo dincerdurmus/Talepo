@@ -10,6 +10,11 @@ import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError, type EntitlementContext } from "@/lib/membership/types";
 
 import { createNotification } from "../notifications/create-notification";
+import { createPendingDealOutcome } from "../price-intelligence/deal-outcome";
+import {
+  recordAcceptedOfferObservation,
+  recordOfferPriceObservation,
+} from "../price-intelligence/record-observation";
 
 export class OfferQuotaExceededError extends Error {
   constructor(message = "Aylık ücretsiz teklif hakkınız doldu.") {
@@ -195,7 +200,7 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
   try {
     assertCanSubmitOffer(entitlements);
   } catch (error) {
-    if (error instanceof EntitlementError && error.code === "OFFER_QUOTA_EXCEEDED") {
+    if (error instanceof EntitlementError && (error.code === "QUOTA_EXCEEDED" || error.code === "OFFER_QUOTA_EXCEEDED")) {
       throw new OfferQuotaExceededError(error.message);
     }
     throw error;
@@ -348,6 +353,12 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
     });
   } catch (notificationError) {
     console.error("[createOffer] Bildirim oluşturulamadı:", notificationError);
+  }
+
+  try {
+    await recordOfferPriceObservation(offer.id);
+  } catch (observationError) {
+    console.error("[createOffer] price observation failed", observationError);
   }
 
   return offer;
@@ -597,6 +608,28 @@ export async function acceptOffer(userId: string, offerId: string) {
     }
 
     return { offer: accepted, conversationId: conversation.id };
+  }).then(async (result) => {
+    try {
+      await createPendingDealOutcome({
+        requestId: offer.requestId,
+        offerId: offer.id,
+        conversationId: result.conversationId,
+        buyerUserId: userId,
+        companyId: offer.companyId,
+        offerAmount: offer.amount.toNumber(),
+        currency: offer.currency,
+      });
+    } catch (dealError) {
+      console.error("[acceptOffer] deal outcome failed", dealError);
+    }
+
+    try {
+      await recordAcceptedOfferObservation(offer.id);
+    } catch (observationError) {
+      console.error("[acceptOffer] accepted offer observation failed", observationError);
+    }
+
+    return result;
   });
 }
 

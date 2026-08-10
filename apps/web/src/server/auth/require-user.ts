@@ -19,7 +19,18 @@ export class DatabaseUnavailableError extends Error {
   }
 }
 
-export async function requireUser(options?: { allowDbUnavailable?: boolean }) {
+export type AuthenticatedUser = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  membershipNumber: string | null;
+  dbUnavailable: boolean;
+};
+
+export async function requireUser(options?: {
+  allowDbUnavailable?: boolean;
+}): Promise<AuthenticatedUser> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   const email = session?.user?.email;
@@ -28,7 +39,10 @@ export async function requireUser(options?: { allowDbUnavailable?: boolean }) {
     throw new AuthenticationError();
   }
 
-  const resolved = await resolveSessionUser(userId ?? email ?? "", email);
+  const resolved = await resolveSessionUser(userId ?? email ?? "", email, {
+    name: session?.user?.name,
+    image: session?.user?.image,
+  });
 
   if (!resolved) {
     throw new AuthenticationError("Oturuma bağlı kullanıcı bulunamadı.");
@@ -38,5 +52,9 @@ export async function requireUser(options?: { allowDbUnavailable?: boolean }) {
     throw new DatabaseUnavailableError();
   }
 
-  return resolved.user;
+  return {
+    ...resolved.user,
+    membershipNumber: resolved.user.membershipNumber ?? null,
+    dbUnavailable: resolved.dbUnavailable,
+  };
 }

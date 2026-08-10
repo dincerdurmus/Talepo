@@ -5,13 +5,9 @@ import type { LucideIcon } from "lucide-react";
 import { InviteActions } from "@/components/panel/InviteActions";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-import { markAllNotificationsAsRead } from "@/server/notifications/mark-notifications-read";
 
 export default async function NotificationsPage() {
   const user = await requireUser();
-
-  // Opening the inbox counts as reading — clear the bell badge on next layout render.
-  await markAllNotificationsAsRead(user.id);
 
   const [notifications, pendingInvites] = await Promise.all([
     prisma.notification.findMany({
@@ -107,32 +103,67 @@ export default async function NotificationsPage() {
       ) : (
         <section className="divide-y divide-black/[0.06] overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_18px_60px_rgba(0,0,0,0.04)]">
           {notifications.map((notification) => {
+            const isUnread = notification.status === "UNREAD";
             const isInvite = notification.type === "COMPANY_INVITATION";
             const inviteCompanyId = notification.companyId;
             const stillPending =
               isInvite &&
               inviteCompanyId &&
               pendingByCompany.has(inviteCompanyId);
+            const clickThroughHref =
+              !stillPending && !isInvite && (notification.actionUrl || isUnread)
+                ? `/panel/bildirimler/r/${notification.id}`
+                : null;
+            const rowClassName = [
+              "relative flex items-start gap-4 border-l-[3px] px-5 py-5 transition-colors sm:px-6",
+              isUnread
+                ? "border-l-teal-600 bg-gradient-to-r from-[#e7f7f2]/90 via-[#eef8f5]/50 to-white"
+                : "border-l-transparent bg-white hover:bg-[#f7faf9]/80",
+              clickThroughHref ? "group cursor-pointer hover:bg-[#eef8f5]/70" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
 
-            return (
-              <div
-                key={notification.id}
-                className={`flex items-start gap-4 px-5 py-5 sm:px-6 ${
-                  notification.status === "UNREAD" ? "bg-[#fafdf8]" : ""
-                }`}
-              >
-                <NotificationIcon type={notification.type} />
+            const rowContent = (
+              <>
+                <NotificationIcon type={notification.type} unread={isUnread} />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-4">
-                    <p className="font-semibold tracking-tight">
-                      {notification.title}
-                    </p>
-                    <span className="shrink-0 text-xs text-black/30">
+                    <div className="flex min-w-0 items-start gap-2">
+                      {isUnread && (
+                        <span
+                          className="talepo-plan-dot mt-2 h-2 w-2 shrink-0 rounded-full"
+                          aria-hidden
+                        />
+                      )}
+                      <p
+                        className={
+                          isUnread
+                            ? "font-bold tracking-tight text-[#0f1f1d]"
+                            : "font-medium tracking-tight text-[#0f1f1d]/70"
+                        }
+                      >
+                        {notification.title}
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        isUnread
+                          ? "shrink-0 text-xs font-medium text-teal-800/55"
+                          : "shrink-0 text-xs text-black/30"
+                      }
+                    >
                       {formatRelativeTime(notification.createdAt)}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm leading-6 text-black/45">
+                  <p
+                    className={
+                      isUnread
+                        ? "mt-1 text-sm leading-6 text-teal-950/65"
+                        : "mt-1 text-sm leading-6 text-black/45"
+                    }
+                  >
                     {notification.message}
                   </p>
 
@@ -141,21 +172,36 @@ export default async function NotificationsPage() {
                       companyId={inviteCompanyId}
                       companyName={pendingByCompany.get(inviteCompanyId)}
                     />
-                  ) : notification.actionUrl && !isInvite ? (
-                    <Link
-                      href={`/panel/bildirimler/r/${notification.id}`}
-                      className="mt-3 inline-flex text-sm font-semibold text-teal-800"
-                    >
+                  ) : clickThroughHref ? (
+                    <span className="mt-3 inline-flex text-sm font-semibold text-teal-800 transition group-hover:text-teal-950">
                       Görüntüle →
-                    </Link>
+                    </span>
                   ) : null}
 
-                  {notification.status === "UNREAD" && !stillPending && (
-                    <span className="mt-3 inline-flex rounded-full bg-[#e4f4df] px-2.5 py-1 text-[11px] font-semibold text-[#356d3a]">
+                  {isUnread && !stillPending && (
+                    <span className="mt-3 inline-flex rounded-full bg-teal-800/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-teal-800">
                       Yeni
                     </span>
                   )}
                 </div>
+              </>
+            );
+
+            if (clickThroughHref) {
+              return (
+                <Link
+                  key={notification.id}
+                  href={clickThroughHref}
+                  className={rowClassName}
+                >
+                  {rowContent}
+                </Link>
+              );
+            }
+
+            return (
+              <div key={notification.id} className={rowClassName}>
+                {rowContent}
               </div>
             );
           })}
@@ -165,7 +211,13 @@ export default async function NotificationsPage() {
   );
 }
 
-function NotificationIcon({ type }: { type: string }) {
+function NotificationIcon({
+  type,
+  unread = false,
+}: {
+  type: string;
+  unread?: boolean;
+}) {
   let Icon: LucideIcon = Bell;
   let background = "bg-[#f4f4f0]";
 
@@ -197,10 +249,14 @@ function NotificationIcon({ type }: { type: string }) {
   }
 
   return (
-    <div
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${background}`}
-    >
-      <Icon className="h-5 w-5" />
+    <div className="relative shrink-0">
+      <div
+        className={`flex h-11 w-11 items-center justify-center rounded-2xl ${background} ${
+          unread ? "ring-2 ring-teal-600/15" : ""
+        }`}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
     </div>
   );
 }

@@ -17,8 +17,28 @@ export function assertEntitlement(
 ): void {
   if (!hasFeature(ctx.features, key)) {
     throw new EntitlementError(
-      "ENTITLEMENT_REQUIRED",
-      message ?? `Bu işlem için gerekli yetki yok: ${key}`,
+      "FEATURE_NOT_AVAILABLE",
+      message ?? `Bu özellik mevcut planınızda kapalı: ${key}`,
+      403,
+    );
+  }
+}
+
+export function assertPlanAtLeast(
+  ctx: EntitlementContext,
+  required: EntitlementContext["effectivePlanTier"],
+  message?: string,
+): void {
+  const rank: Record<string, number> = {
+    STANDARD: 0,
+    PREMIUM: 1,
+    PROFESSIONAL: 2,
+    CORPORATE: 3,
+  };
+  if ((rank[ctx.effectivePlanTier] ?? 0) < (rank[required] ?? 99)) {
+    throw new EntitlementError(
+      "PLAN_REQUIRED",
+      message ?? `${required} planı gerekli.`,
       403,
     );
   }
@@ -35,7 +55,7 @@ export function assertCanSubmitOffer(ctx: EntitlementContext): void {
 
   if (ctx.quota.remaining === null || ctx.quota.remaining <= 0) {
     throw new EntitlementError(
-      "OFFER_QUOTA_EXCEEDED",
+      "QUOTA_EXCEEDED",
       "Aylık ücretsiz teklif hakkınız doldu.",
       402,
     );

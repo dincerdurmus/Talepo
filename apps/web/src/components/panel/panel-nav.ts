@@ -1,10 +1,13 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
   Bell,
   BellRing,
+  Bookmark,
   Boxes,
   Crown,
   FileText,
+  Flame,
   Home,
   Inbox,
   LayoutDashboard,
@@ -39,7 +42,7 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/panel",
     icon: LayoutDashboard,
-    label: "Özet",
+    label: "Sayfam",
     exact: true,
   },
   {
@@ -78,9 +81,28 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/panel/uyarilar",
     icon: BellRing,
-    label: "Uyarı kuralları",
-    mobileLabel: "Uyarı",
-    requiresFeature: "alert_rules",
+    label: "Alarmlar",
+    mobileLabel: "Alarm",
+    requiresFeature: "smart_alerts",
+  },
+  {
+    href: "/panel/kayitli-aramalar",
+    icon: Bookmark,
+    label: "Kayıtlı aramalar",
+    mobileLabel: "Arama",
+    requiresFeature: "saved_searches",
+  },
+  {
+    href: "/panel/firsatlar",
+    icon: Flame,
+    label: "Fırsatlar",
+    requiresFeature: "hot_opportunities",
+  },
+  {
+    href: "/panel/analiz",
+    icon: BarChart3,
+    label: "Analiz",
+    requiresFeature: "professional_analytics",
   },
   {
     href: "/panel/envanter",
@@ -95,6 +117,7 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     icon: Users,
     label: "Ekip",
     workspace: "corporate",
+    requiresFeature: "team_management",
   },
   { href: "/panel/plan", icon: Crown, label: "Plan" },
   { href: "/panel/mesajlar", icon: MessageCircle, label: "Mesajlar" },

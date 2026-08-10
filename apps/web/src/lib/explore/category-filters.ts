@@ -21,6 +21,12 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
   {
     automotive: [
       {
+        param: "needType",
+        label: "İhtiyaç türü",
+        fieldKey: "needType",
+        input: "select",
+      },
+      {
         param: "brand",
         label: "Marka",
         fieldKey: "brand",
@@ -38,11 +44,17 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
       },
       {
         param: "year",
-        label: "Yıl",
+        label: "Model yılı",
         fieldKey: "modelYear",
         input: "number",
         placeholder: "ör. 2013",
         alsoMatchTitle: true,
+      },
+      {
+        param: "condition",
+        label: "Araç durumu",
+        fieldKey: "condition",
+        input: "select",
       },
     ],
     "real-estate": [
@@ -60,9 +72,23 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
       },
       {
         param: "roomCount",
-        label: "Oda",
+        label: "Oda sayısı",
         fieldKey: "roomCount",
         input: "select",
+      },
+      {
+        param: "area",
+        label: "Metrekare",
+        fieldKey: "area",
+        input: "number",
+        placeholder: "ör. 120",
+      },
+      {
+        param: "buildingAge",
+        label: "Bina yaşı",
+        fieldKey: "buildingAge",
+        input: "number",
+        placeholder: "ör. 5",
       },
     ],
     furniture: [
@@ -74,8 +100,20 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
       },
       {
         param: "usageArea",
-        label: "Kullanım",
+        label: "Kullanım alanı",
         fieldKey: "usageArea",
+        input: "select",
+      },
+      {
+        param: "material",
+        label: "Malzeme",
+        fieldKey: "material",
+        input: "select",
+      },
+      {
+        param: "condition",
+        label: "Durum",
+        fieldKey: "condition",
         input: "select",
       },
     ],
@@ -92,8 +130,20 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         fieldKey: "printType",
         input: "select",
       },
+      {
+        param: "lamination",
+        label: "Yüzey işlemi",
+        fieldKey: "lamination",
+        input: "select",
+      },
     ],
     machinery: [
+      {
+        param: "needType",
+        label: "İhtiyaç türü",
+        fieldKey: "needType",
+        input: "select",
+      },
       {
         param: "machineType",
         label: "Makine türü",
@@ -103,22 +153,22 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         alsoMatchTitle: true,
       },
       {
-        param: "needType",
-        label: "İhtiyaç",
-        fieldKey: "needType",
+        param: "condition",
+        label: "Durum",
+        fieldKey: "condition",
         input: "select",
       },
     ],
     technology: [
       {
         param: "needType",
-        label: "İhtiyaç",
+        label: "İhtiyaç türü",
         fieldKey: "needType",
         input: "select",
       },
       {
         param: "solutionType",
-        label: "Çözüm",
+        label: "Çözüm / ürün",
         fieldKey: "solutionType",
         input: "text",
         placeholder: "ör. web uygulaması",
@@ -139,6 +189,12 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         input: "select",
       },
       {
+        param: "usageArea",
+        label: "Kullanım alanı",
+        fieldKey: "usageArea",
+        input: "select",
+      },
+      {
         param: "brand",
         label: "Marka",
         fieldKey: "brandPreference",
@@ -146,15 +202,89 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         placeholder: "ör. Bosch",
         alsoMatchTitle: true,
       },
+      {
+        param: "condition",
+        label: "Durum",
+        fieldKey: "condition",
+        input: "select",
+      },
+    ],
+    health: [
+      {
+        param: "healthProductType",
+        label: "Ürün türü",
+        fieldKey: "healthProductType",
+        input: "select",
+      },
+      {
+        param: "productName",
+        label: "Ürün adı",
+        fieldKey: "productName",
+        input: "text",
+        placeholder: "ör. tekerlekli sandalye",
+        alsoMatchTitle: true,
+      },
+      {
+        param: "usageArea",
+        label: "Kullanım yeri",
+        fieldKey: "usageArea",
+        input: "select",
+      },
+    ],
+    baby: [
+      {
+        param: "babyProductType",
+        label: "Ürün türü",
+        fieldKey: "babyProductType",
+        input: "select",
+      },
+      {
+        param: "ageRange",
+        label: "Yaş aralığı",
+        fieldKey: "ageRange",
+        input: "select",
+      },
+      {
+        param: "condition",
+        label: "Durum",
+        fieldKey: "condition",
+        input: "select",
+      },
+    ],
+    "home-kitchen": [
+      {
+        param: "kitchenProductType",
+        label: "Ürün türü",
+        fieldKey: "kitchenProductType",
+        input: "select",
+      },
+      {
+        param: "material",
+        label: "Malzeme",
+        fieldKey: "material",
+        input: "select",
+      },
+      {
+        param: "usageArea",
+        label: "Kullanım alanı",
+        fieldKey: "usageArea",
+        input: "select",
+      },
     ],
     services: [
       {
         param: "serviceType",
-        label: "Hizmet",
+        label: "Hizmet türü",
         fieldKey: "serviceType",
         input: "text",
         placeholder: "ör. nakliye",
         alsoMatchTitle: true,
+      },
+      {
+        param: "frequency",
+        label: "Sıklık",
+        fieldKey: "frequency",
+        input: "select",
       },
     ],
   };
@@ -171,6 +301,8 @@ export type ParsedExploreFilters = {
   q: string;
   /** Category slug whose field filters are active / shown */
   focus: string;
+  city: string;
+  district: string;
   /** Active field filters for the focused category */
   fields: Array<{ def: ExploreFilterFieldDef; value: string }>;
   advanced: AdvancedExploreFilters;
@@ -248,14 +380,27 @@ export function parseExploreFilters(
   for (const def of defs) {
     const raw = params[def.param]?.trim() ?? "";
     if (!raw) continue;
-    if (def.input === "number" && !/^\d{2,4}$/.test(raw)) continue;
+    if (def.input === "number" && !/^\d{1,6}$/.test(raw)) continue;
     fields.push({ def, value: raw });
   }
 
-  return { q, focus, fields, advanced: parseAdvancedExploreFilters(params) };
+  return {
+    q,
+    focus,
+    city: params.city?.trim() ?? "",
+    district: params.district?.trim() ?? "",
+    fields,
+    advanced: parseAdvancedExploreFilters(params),
+  };
 }
 
-export function hasActiveAdvancedExploreFilters(
+export function hasActiveCategoryFieldFilters(
+  filters: ParsedExploreFilters,
+): boolean {
+  return filters.fields.length > 0;
+}
+
+export function hasActiveAdvancedOnlyFilters(
   filters: ParsedExploreFilters,
 ): boolean {
   const { advanced } = filters;
@@ -263,22 +408,34 @@ export function hasActiveAdvancedExploreFilters(
     advanced.urgentOnly ||
     advanced.budgetMin != null ||
     advanced.budgetMax != null ||
-    advanced.sinceDays != null ||
-    filters.fields.length > 0
+    advanced.sinceDays != null
+  );
+}
+
+export function hasActiveAdvancedExploreFilters(
+  filters: ParsedExploreFilters,
+): boolean {
+  return (
+    hasActiveCategoryFieldFilters(filters) ||
+    hasActiveAdvancedOnlyFilters(filters)
   );
 }
 
 export function hasActiveExploreFilters(filters: ParsedExploreFilters): boolean {
-  return Boolean(filters.q) || hasActiveAdvancedExploreFilters(filters);
+  return (
+    Boolean(filters.q) ||
+    Boolean(filters.city) ||
+    Boolean(filters.district) ||
+    hasActiveAdvancedExploreFilters(filters)
+  );
 }
 
-/** Strip Professional+ filters when entitlement is missing. */
+/** Strip Professional+ filters (budget, urgent, date) when entitlement is missing. */
 export function stripAdvancedExploreFilters(
   filters: ParsedExploreFilters,
 ): ParsedExploreFilters {
   return {
     ...filters,
-    fields: [],
     advanced: { ...EMPTY_ADVANCED },
   };
 }
@@ -303,13 +460,18 @@ function fieldValueWhere(
             },
           ],
         }
-      : {
-          field: { key: def.fieldKey },
-          textValue: {
-            contains: value,
-            mode: "insensitive" as const,
-          },
-        };
+      : def.input === "select"
+        ? {
+            field: { key: def.fieldKey },
+            textValue: value,
+          }
+        : {
+            field: { key: def.fieldKey },
+            textValue: {
+              contains: value,
+              mode: "insensitive" as const,
+            },
+          };
 
   const valueClause: Prisma.RequestWhereInput = {
     fieldValues: { some: fieldMatch },
@@ -350,6 +512,18 @@ export function buildExploreFilterWhere(
 
   for (const { def, value } of filters.fields) {
     and.push(fieldValueWhere(def, value));
+  }
+
+  if (filters.city) {
+    and.push({
+      city: { contains: filters.city, mode: "insensitive" as const },
+    });
+  }
+
+  if (filters.district) {
+    and.push({
+      district: { contains: filters.district, mode: "insensitive" as const },
+    });
   }
 
   if (filters.advanced.urgentOnly) {
@@ -402,6 +576,8 @@ export function appendExploreFilterParams(
     q.set("focus", filters.focus);
   }
   if (filters.q) q.set("q", filters.q);
+  if (filters.city) q.set("city", filters.city);
+  if (filters.district) q.set("district", filters.district);
   for (const { def, value } of filters.fields) {
     q.set(def.param, value);
   }

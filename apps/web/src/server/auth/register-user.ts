@@ -1,4 +1,5 @@
 import { hashPassword, validatePasswordStrength } from "@/lib/auth/password";
+import { allocateMembershipNumber } from "@/lib/auth/membership-number";
 import { prisma } from "@/lib/prisma";
 
 export class RegisterValidationError extends Error {
@@ -59,6 +60,7 @@ export async function registerUserWithPassword(input: RegisterUserInput) {
 
   const passwordHash = hashPassword(password);
   const now = new Date();
+  const membershipNumber = await allocateMembershipNumber();
 
   const user = await prisma.user.create({
     data: {
@@ -66,6 +68,7 @@ export async function registerUserWithPassword(input: RegisterUserInput) {
       email,
       phone,
       passwordHash,
+      membershipNumber,
       lastLoginAt: now,
       status: "ACTIVE",
     },
@@ -73,6 +76,7 @@ export async function registerUserWithPassword(input: RegisterUserInput) {
       id: true,
       name: true,
       email: true,
+      membershipNumber: true,
     },
   });
 
