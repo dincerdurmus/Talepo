@@ -16,7 +16,6 @@ import {
 
 import { RealEstateLocationFields } from "@/components/request/RealEstateLocationFields";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
-import { runTalepoAiCore } from "@/lib/ai";
 import {
   composeProfessionalDescription,
   composeRequestTitle,
@@ -37,6 +36,12 @@ import {
   withCategoryFieldDefaults,
   type DynamicField,
 } from "@/lib/request-category-engine";
+import { understandRequest } from "@/lib/request-understanding/understand-request";
+import {
+  budgetDisplayFromUnderstanding,
+  safeDraftAttributes,
+  seedFieldValuesFromUnderstanding,
+} from "@/lib/request-understanding/activation-bridge";
 
 export type EditRequestInitial = {
   id: string;
@@ -92,9 +97,37 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
     }));
   }
 
-  const aiResult = useMemo(() => runTalepoAiCore(requestText), [requestText]);
-  // Düzenlemede kategori sabit kalır (oluşturma anındaki kategori).
-  const activeCategoryId = initial.categorySlug || aiResult.parsed.categoryId;
+  const understanding = useMemo(
+    () =>
+      understandRequest({
+        rawInput: requestText,
+        structured: {
+          // Persisted category is a locked structured override on edit
+          categoryId: initial.categorySlug,
+          city: commonDraft.city || null,
+          district: realEstateLocation.ilce || null,
+          fieldValues: {
+            ...manualValues,
+            ...(commonDraft.quantity ? { quantity: commonDraft.quantity } : {}),
+            ...(commonDraft.budget ? { budget: commonDraft.budget } : {}),
+            ...(commonDraft.delivery ? { delivery: commonDraft.delivery } : {}),
+          },
+        },
+      }),
+    [
+      commonDraft.budget,
+      commonDraft.city,
+      commonDraft.delivery,
+      commonDraft.quantity,
+      initial.categorySlug,
+      manualValues,
+      realEstateLocation.ilce,
+      requestText,
+    ],
+  );
+
+  // Düzenlemede kategori sabit kalır (persisted STRUCTURED_FIELD).
+  const activeCategoryId = initial.categorySlug;
   const isRealEstate = activeCategoryId === "real-estate";
   const selectedCategory = getCategoryById(activeCategoryId);
   const visibleCommonFields = selectedCategory.commonFields.map(
@@ -104,17 +137,34 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
     visibleCommonFields.map((field) => field.key),
   );
 
+  const seededFields = useMemo(
+    () => seedFieldValuesFromUnderstanding(understanding),
+    [understanding],
+  );
+  const understandingCity = understanding.location?.city?.value ?? "";
+  const understandingBudgetDisplay =
+    budgetDisplayFromUnderstanding(understanding);
+
   const dynamicValues = useMemo(() => {
     const category = getCategoryById(activeCategoryId);
     const values: Record<string, string> = {};
     for (const field of category.fields) {
-      const aiValue = aiResult.parsed.attributes[field.key];
+      const seeded = seededFields[field.key];
       values[field.key] =
         manualValues[field.key] ??
-        (aiValue === undefined || aiValue === null ? "" : String(aiValue));
+        (seeded === undefined || seeded === null ? "" : String(seeded));
     }
     return withCategoryFieldDefaults(activeCategoryId, values);
-  }, [activeCategoryId, aiResult.parsed.attributes, manualValues]);
+  }, [activeCategoryId, seededFields, manualValues]);
+
+  const draftSafeAttributes = useMemo(
+    () =>
+      safeDraftAttributes(understanding, {
+        ...seededFields,
+        ...dynamicValues,
+      }),
+    [understanding, seededFields, dynamicValues],
+  );
 
   const mergedCommonDraft: CommonDraft = {
     title:
@@ -122,35 +172,30 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
       composeRequestTitle({
         categoryId: activeCategoryId,
         rawText: requestText,
-        attributes: { ...aiResult.parsed.attributes, ...dynamicValues },
-        city: commonDraft.city || aiResult.parsed.city || "",
+        attributes: { ...seededFields, ...dynamicValues },
+        city: commonDraft.city || understandingCity || "",
         fields: selectedCategory.fields,
         fieldValues: dynamicValues,
       }),
     quantity: visibleCommonFieldKeys.has("quantity")
-      ? commonDraft.quantity
+      ? commonDraft.quantity ||
+        (understanding.quantity?.value?.value != null
+          ? `${understanding.quantity.value.value} ${understanding.quantity.value.unit ?? "adet"}`
+          : "")
       : "",
     city: isRealEstate
       ? realEstateLocationToCity(realEstateLocation) ||
         commonDraft.city ||
-        aiResult.parsed.city ||
+        understandingCity ||
         ""
       : visibleCommonFieldKeys.has("city")
-        ? commonDraft.city || aiResult.parsed.city || ""
+        ? commonDraft.city || understandingCity || ""
         : "",
     delivery: visibleCommonFieldKeys.has("delivery")
       ? commonDraft.delivery
       : "",
     budget: visibleCommonFieldKeys.has("budget")
-      ? commonDraft.budget ||
-        aiResult.parsed.budgetDisplay ||
-        (aiResult.parsed.budget != null
-          ? new Intl.NumberFormat("tr-TR", {
-              style: "currency",
-              currency: "TRY",
-              maximumFractionDigits: 0,
-            }).format(aiResult.parsed.budget)
-          : "")
+      ? commonDraft.budget || understandingBudgetDisplay
       : "",
   };
 
@@ -173,12 +218,12 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
   const professionalText = composeProfessionalDescription({
     categoryId: activeCategoryId,
     rawText: requestText,
-    attributes: { ...aiResult.parsed.attributes, ...dynamicValues },
-    city: mergedCommonDraft.city || aiResult.parsed.city,
-    budget: aiResult.parsed.budget,
-    deliveryDays: aiResult.parsed.deliveryDays,
-    quantity: aiResult.parsed.quantity,
-    unit: aiResult.parsed.unit,
+    attributes: draftSafeAttributes,
+    city: mergedCommonDraft.city || understandingCity,
+    budget:
+      understanding.budget?.value?.max ?? understanding.budget?.value?.min,
+    quantity: understanding.quantity?.value?.value,
+    unit: understanding.quantity?.value?.unit,
     fields: visibleDynamicFields,
     fieldValues: dynamicValues,
     commonDraft: mergedCommonDraft,
@@ -214,10 +259,11 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
           quantity: mergedCommonDraft.quantity,
           delivery: mergedCommonDraft.delivery,
           budget: mergedCommonDraft.budget,
-          aiScore: aiResult.score,
+          aiScore: Math.round(understanding.understandingConfidence * 100),
           aiSummary: [
             `Kategori: ${selectedCategory.label}`,
-            `AI güveni: %${aiResult.knowledge.confidence}`,
+            `AI güveni: %${Math.round(understanding.understandingConfidence * 100)}`,
+            `Strategy: ${understanding.strategy.value ?? "UNKNOWN"}`,
             "Talep kullanıcı tarafından güncellendi",
           ].join("\n"),
           isUrgent,

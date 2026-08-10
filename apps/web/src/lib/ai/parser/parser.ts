@@ -1,5 +1,5 @@
 import type { ParsedRequest } from "../types";
-import { detectCategoryId } from "./category";
+import { detectCategoryResult } from "./category";
 import { extractBudgetFromText } from "./budget";
 import {
   detectAttributes,
@@ -9,9 +9,14 @@ import {
 } from "./entity";
 import { normalizeCasualTurkish } from "./normalize-casual-tr";
 
+/**
+ * @deprecated Prefer `understandRequest()` for request workflows.
+ * Remaining use: offer-assistant paste parsing (non-canonical product path).
+ */
 export function parseRequest(text: string): ParsedRequest {
   const normalizedText = normalizeCasualTurkish(text);
-  const categoryId = detectCategoryId(normalizedText);
+  const detection = detectCategoryResult(normalizedText);
+  const categoryId = detection.categoryId;
   const quantity = detectQuantity(normalizedText, categoryId);
   const attributes = detectAttributes(normalizedText, categoryId);
   const budget = extractBudgetFromText(normalizedText);
@@ -23,12 +28,19 @@ export function parseRequest(text: string): ParsedRequest {
     attributes.needType = "machine";
   }
   if (categoryId === "technology" && !attributes.needType) {
-    attributes.needType = "software";
+    // Free-text purchase phrases are usually hardware, not software projects
+    const purchaseIntent =
+      /arıyorum|ariyorum|lazım|lazim|bakıyorum|bakiyorum|istiyorum/.test(
+        normalizedText,
+      );
+    attributes.needType = purchaseIntent ? "hardware" : "software";
   }
 
   return {
     rawText: text,
     categoryId,
+    categoryScore: detection.score,
+    categoryConfident: detection.confident,
     subcategory: resolveSubcategory(categoryId, attributes),
     quantity: quantity.quantity,
     unit: quantity.unit,

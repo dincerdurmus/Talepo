@@ -1433,6 +1433,11 @@ export function getCategoryById(id: string): RequestCategory {
   );
 }
 
+/**
+ * @deprecated Not authoritative for request understanding.
+ * Use only as a non-locking UX hint (e.g. Home composer label).
+ * Canonical category comes from understandRequest().
+ */
 export function detectCategory(text: string): RequestCategory {
   const normalized = text.toLocaleLowerCase("tr-TR");
 
@@ -1452,6 +1457,17 @@ export function detectCategory(text: string): RequestCategory {
   }
 
   return bestCategory;
+}
+
+/** Explicit non-authoritative home/UX hint label — never locks category. */
+export function detectCategoryHintLabel(text: string): string | null {
+  const normalized = text.toLocaleLowerCase("tr-TR");
+  if (normalized.trim().length < 8) return null;
+  const category = detectCategory(normalized);
+  const matched = category.keywords.some((keyword) =>
+    normalized.includes(keyword),
+  );
+  return matched ? category.label : null;
 }
 
 export function createInitialDynamicValues(

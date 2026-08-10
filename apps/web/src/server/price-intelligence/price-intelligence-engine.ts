@@ -13,6 +13,7 @@ import type {
 import {
   buildPriceStrategyContext,
   resolvePriceStrategy,
+  type PriceStrategyResolution,
 } from "@/lib/price-intelligence/strategy-resolver";
 
 import {
@@ -45,6 +46,11 @@ export type PriceIntelligenceQuery = {
   fieldValues?: { key: string; value: string | null }[];
   includeExternal?: boolean;
   userBudget?: number | null;
+  /**
+   * When supplied (canonical request flow), this strategy is authoritative.
+   * Price engine must NOT re-resolve a conflicting strategy for routing.
+   */
+  canonicalStrategy?: PriceStrategyResolution | null;
 };
 
 const WINDOW_OPTIONS = [7, 30, 90, 180, 365] as const;
@@ -81,15 +87,24 @@ export async function getPriceIntelligence(
   const since = new Date(Date.now() - windowDays * 86400000);
   const requestCondition = normalizeCondition(query.condition);
 
-  const strategy = resolvePriceStrategy(
-    buildPriceStrategyContext({
-      categorySlug: query.categorySlug,
-      title: query.title,
-      condition: query.condition,
-      fieldValues: query.fieldValues,
-      normalizedProduct: query.normalizedProduct,
-    }),
-  );
+  const strategy: PriceStrategyResolution = query.canonicalStrategy?.strategy
+    ? {
+        strategy: query.canonicalStrategy.strategy,
+        strategyConfidence: query.canonicalStrategy.strategyConfidence,
+        strategyReasons: [
+          ...(query.canonicalStrategy.strategyReasons ?? []),
+          "canonicalStrategy authoritative",
+        ],
+      }
+    : resolvePriceStrategy(
+        buildPriceStrategyContext({
+          categorySlug: query.categorySlug,
+          title: query.title,
+          condition: query.condition,
+          fieldValues: query.fieldValues,
+          normalizedProduct: query.normalizedProduct,
+        }),
+      );
 
   const attributes = {
     ...buildAttributes(query.fieldValues),

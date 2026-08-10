@@ -217,6 +217,29 @@ export const APPLIANCE_BRANDS: BrandEntry[] = [
   { canonical: "Hoover", aliases: ["hoover"] },
   { canonical: "Candy", aliases: ["candy"] },
   { canonical: "Miele", aliases: ["miele"] },
+  // Small / floorcare appliances — catalog entries (not production if/else)
+  { canonical: "Dyson", aliases: ["dyson"] },
+  { canonical: "Philips", aliases: ["philips", "phillips"] },
+  { canonical: "iRobot", aliases: ["irobot", "roomba"] },
+  { canonical: "Xiaomi", aliases: ["roborock"] },
+];
+
+/** Home & kitchen small appliances / brands used in category scoring */
+export const HOME_KITCHEN_BRANDS: BrandEntry[] = [
+  { canonical: "Philips", aliases: ["philips", "phillips", "lattego", "latte go"] },
+  { canonical: "Breville", aliases: ["breville"] },
+  { canonical: "Delonghi", aliases: ["delonghi", "de'longhi", "de longhi"] },
+  { canonical: "KitchenAid", aliases: ["kitchenaid", "kitchen aid"] },
+  { canonical: "Tefal", aliases: ["tefal"] },
+  { canonical: "Karaca", aliases: ["karaca"] },
+];
+
+/** Industrial / print equipment brands */
+export const MACHINERY_BRANDS: BrandEntry[] = [
+  { canonical: "Heidelberg", aliases: ["heidelberg", "heidelburg"] },
+  { canonical: "Komori", aliases: ["komori"] },
+  { canonical: "Manroland", aliases: ["manroland", "man roland"] },
+  { canonical: "Ryobi", aliases: ["ryobi"] },
 ];
 
 export const TECHNOLOGY_BRANDS: BrandEntry[] = [
@@ -701,6 +724,8 @@ export function findAnyCatalogBrand(text: string): string | undefined {
     findBrand(text, AUTOMOTIVE_BRANDS) ||
     findBrand(text, TECHNOLOGY_BRANDS) ||
     findBrand(text, APPLIANCE_BRANDS) ||
+    findBrand(text, HOME_KITCHEN_BRANDS) ||
+    findBrand(text, MACHINERY_BRANDS) ||
     findBrand(text, FURNITURE_BRANDS) ||
     findBrand(text, BABY_BRANDS)
   );

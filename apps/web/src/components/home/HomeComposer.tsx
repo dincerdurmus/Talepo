@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { FormEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
-import { detectCategory } from "@/lib/request-category-engine";
+import { detectCategoryHintLabel } from "@/lib/request-category-engine";
 
 const SUGGESTIONS = [
   "50 ofis sandalyesi, İstanbul",
@@ -27,15 +27,14 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
   const [focused, setFocused] = useState(false);
   const isLoggedIn = status === "authenticated" && Boolean(session?.user);
 
+  /**
+   * NON-AUTHORITATIVE UX hint only.
+   * Home never locks category — handoff is raw query → /talep → understandRequest().
+   */
   const categoryHint = useMemo(() => {
     const trimmed = text.trim();
     if (trimmed.length < 8) return null;
-    const normalized = trimmed.toLocaleLowerCase("tr-TR");
-    const category = detectCategory(normalized);
-    const matched = category.keywords.some((keyword) =>
-      normalized.includes(keyword)
-    );
-    return matched ? category.label : null;
+    return detectCategoryHintLabel(trimmed);
   }, [text]);
 
   useEffect(() => {
@@ -52,6 +51,7 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
       router.push("/talep");
       return;
     }
+    // Raw input only — no category authority in URL
     router.push(`/talep?query=${encodeURIComponent(value)}`);
   }
 

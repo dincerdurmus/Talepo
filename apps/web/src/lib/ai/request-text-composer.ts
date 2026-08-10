@@ -77,7 +77,9 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
         .filter(Boolean)
         .join(" ");
       const part = values.part?.trim();
-      if (subject && part) return `${subject} ${part}`.replace(/\s+/g, " ").trim();
+      if (subject && part) {
+        return `${subject} için ${part}`.replace(/\s+/g, " ").trim();
+      }
       if (subject) return subject;
       if (part) return capitalizeTurkish(part);
     } else if (needType === "service") {

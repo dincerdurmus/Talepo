@@ -146,9 +146,20 @@ export function runKnowledgeEngine(
           (signals.filter(Boolean).length / signals.length) * 100,
         );
 
+  const capped =
+    request.categoryConfident === false
+      ? Math.min(confidence, 35)
+      : confidence;
+
+  if (request.categoryConfident === false) {
+    notes.push(
+      "Kategori henüz net değil — birkaç seçenekle birlikte netleştirebiliriz.",
+    );
+  }
+
   return {
     categoryId: request.categoryId,
-    confidence: Math.min(100, Math.max(0, confidence)),
+    confidence: Math.min(100, Math.max(0, capped)),
     notes,
     suggestions,
   };

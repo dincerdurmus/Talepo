@@ -8,6 +8,12 @@ import { estimatePrice } from "./pricing/estimate";
 import { estimateCompanyMatches } from "./matching/companyMatcher";
 import { createRecommendations } from "./recommendations/recommendationEngine";
 
+/**
+ * @deprecated For canonical request create/edit/preview flows use
+ * `understandRequest()` from `@/lib/request-understanding`.
+ * Kept for offer-assistant and diagnostic compatibility only —
+ * NOT authoritative in /talep or EditRequestForm.
+ */
 export function runTalepoAiCore(text: string): AiCoreResult {
   const parsed = parseRequest(text);
   const category = getCategoryById(parsed.categoryId);

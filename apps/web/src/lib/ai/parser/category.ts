@@ -6,6 +6,8 @@ import {
   brandKeywordList,
   findTechnologyProduct,
   FURNITURE_BRANDS,
+  HOME_KITCHEN_BRANDS,
+  MACHINERY_BRANDS,
   TECHNOLOGY_BRANDS,
   technologyProductKeywordList,
 } from "./brand-catalog";
@@ -13,6 +15,9 @@ import {
 const AUTOMOTIVE_BRAND_KEYWORDS = brandKeywordList(AUTOMOTIVE_BRANDS);
 const AUTOMOTIVE_MODEL_KEYWORDS = automotiveModelKeywordList();
 const TECHNOLOGY_PRODUCT_KEYWORDS = technologyProductKeywordList();
+const APPLIANCE_BRAND_KEYWORDS = brandKeywordList(APPLIANCE_BRANDS);
+const HOME_KITCHEN_BRAND_KEYWORDS = brandKeywordList(HOME_KITCHEN_BRANDS);
+const MACHINERY_BRAND_KEYWORDS = brandKeywordList(MACHINERY_BRANDS);
 
 const CATEGORY_KEYWORDS: Record<string, string[]> = {
   printing: [
@@ -119,6 +124,9 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "baskı makinesi",
     "baski makinesi",
     "paketleme makinesi",
+    "ikinci el makine",
+    "ikinci el makina",
+    ...MACHINERY_BRAND_KEYWORDS,
   ],
   furniture: [
     "mobilya",
@@ -272,10 +280,22 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "sofben",
     "ütü",
     "utu",
+    "süpürge",
+    "supurge",
     "robot süpürge",
     "robot supurge",
+    "dikey süpürge",
+    "dikey supurge",
+    "elektrikli süpürge",
+    "elektrikli supurge",
+    "vacuum",
     "hava temizleyici",
-    ...brandKeywordList(APPLIANCE_BRANDS),
+    "hava temizleme",
+    "saç kurutma",
+    "sac kurutma",
+    "saç bakımı",
+    "sac bakimi",
+    ...APPLIANCE_BRAND_KEYWORDS,
   ],
   health: [
     "sağlık",
@@ -341,6 +361,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "kahve seti",
     "çay seti",
     "cay seti",
+    "kahve makinesi",
+    "kahve makina",
+    "espresso",
+    "latte go",
+    "lattego",
     "fincan",
     "bardak",
     "çatal",
@@ -370,6 +395,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "saklama kabı",
     "saklama kabi",
     "mutfak gereci",
+    ...HOME_KITCHEN_BRAND_KEYWORDS,
   ],
   services: [
     "hizmet",
@@ -383,6 +409,17 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "montaj hizmeti",
     "bakım hizmeti",
     "bakim hizmeti",
+    "boya",
+    "badana",
+    "boya badana",
+    "boyama",
+    "boyatacam",
+    "boyatacağım",
+    "boyatacagim",
+    "boyatmak",
+    "tadilat",
+    "renovasyon",
+    "tamirat",
   ],
 };
 
@@ -391,20 +428,65 @@ function keywordScore(normalized: string, keyword: string) {
   return Math.max(1, Math.ceil(keyword.length / 5));
 }
 
-export function detectCategoryId(text: string): string {
+const HOUSEHOLD_MACHINE_PATTERNS = [
+  "kahve makinesi",
+  "kahve makina",
+  "çamaşır makinesi",
+  "camasir makinesi",
+  "bulaşık makinesi",
+  "bulasik makinesi",
+  "kurutma makinesi",
+  "dikey süpürge",
+  "dikey supurge",
+  "elektrikli süpürge",
+  "elektrikli supurge",
+  "robot süpürge",
+  "robot supurge",
+];
+
+const PAINT_SERVICE_PATTERNS = [
+  "boya",
+  "badana",
+  "boyat",
+  "boyama",
+  "tadilat",
+];
+
+/** Minimum score before we claim a category confidently in UX. */
+export const CATEGORY_CONFIDENT_MIN_SCORE = 2;
+
+export type CategoryDetectionResult = {
+  categoryId: string;
+  score: number;
+  /** False when match is weak/default — UI must not present as certain. */
+  confident: boolean;
+  runnerUpId: string | null;
+  runnerUpScore: number;
+};
+
+function hasAny(normalized: string, terms: string[]) {
+  return terms.some((t) => normalized.includes(t));
+}
+
+/**
+ * Score all categories and pick a winner.
+ * IMPORTANT: score 0 must NOT confidently claim "services".
+ */
+export function detectCategoryResult(text: string): CategoryDetectionResult {
   const normalized = text.toLocaleLowerCase("tr-TR");
 
   let winner = "services";
   let winnerScore = 0;
+  let runnerUpId: string | null = null;
+  let runnerUpScore = 0;
 
   for (const [categoryId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = keywords.reduce(
       (total, keyword) => total + keywordScore(normalized, keyword),
-      0
+      0,
     );
 
     if (categoryId === "automotive") {
-      // Brand or model alone should beat generic "services"
       if (
         AUTOMOTIVE_BRAND_KEYWORDS.some((keyword) =>
           normalized.includes(keyword),
@@ -432,7 +514,6 @@ export function detectCategoryId(text: string): string {
       if (normalized.includes("ofis") && normalized.includes("sandalye")) {
         score += 3;
       }
-      // Tekerlekli sandalye sağlık; ofis sandalyesi mobilya
       if (normalized.includes("tekerlekli sandalye")) {
         score = Math.max(0, score - 4);
       }
@@ -445,7 +526,17 @@ export function detectCategoryId(text: string): string {
         normalized.includes("cay seti") ||
         normalized.includes("tabak") ||
         normalized.includes("yemek takımı") ||
-        normalized.includes("yemek takimi")
+        normalized.includes("yemek takimi") ||
+        normalized.includes("kahve makinesi") ||
+        normalized.includes("espresso") ||
+        normalized.includes("lattego")
+      ) {
+        score += 4;
+      }
+      if (
+        HOME_KITCHEN_BRAND_KEYWORDS.some((keyword) =>
+          normalized.includes(keyword),
+        )
       ) {
         score += 4;
       }
@@ -459,6 +550,20 @@ export function detectCategoryId(text: string): string {
           normalized.includes("bulaşık") ||
           normalized.includes("bulasik") ||
           normalized.includes("kurutma"))
+      ) {
+        score += 3;
+      }
+      if (
+        APPLIANCE_BRAND_KEYWORDS.some((keyword) =>
+          normalized.includes(keyword),
+        )
+      ) {
+        score += 4;
+      }
+      if (
+        normalized.includes("süpürge") ||
+        normalized.includes("supurge") ||
+        normalized.includes("vacuum")
       ) {
         score += 3;
       }
@@ -484,7 +589,6 @@ export function detectCategoryId(text: string): string {
       ) {
         score += 3;
       }
-      // Slang device models ("16 pro max", "s24 ultra") must beat default "services"
       if (findTechnologyProduct(normalized)) {
         score += 6;
       }
@@ -500,17 +604,20 @@ export function detectCategoryId(text: string): string {
       ) {
         score += 2;
       }
+      // Paint / renovation service verbs must not look like property search
+      if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+        score = Math.max(0, score - 6);
+      }
     }
 
     if (categoryId === "real-estate" && normalized.includes("ofis")) {
-      // "ofis sandalyesi / masası" emlak değil
       if (
         normalized.includes("sandalye") ||
         normalized.includes("masa") ||
         normalized.includes("mobilya")
       ) {
         score = Math.max(0, score - 2);
-      } else {
+      } else if (!hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
         score += 1;
       }
     }
@@ -530,15 +637,17 @@ export function detectCategoryId(text: string): string {
         "matbaa",
         "baskı",
         "baski",
+        "bastır",
+        "bastir",
         "davetiye",
         "sticker",
         "kraft kutu",
         "oluklu kutu",
+        "kutu",
       ];
       if (strongPrintingTerms.some((term) => normalized.includes(term))) {
         score += 4;
       }
-      // Matbaa ekipmanı makine kategorisine kaymasın
       if (
         normalized.includes("baskı makinesi") ||
         normalized.includes("baski makinesi") ||
@@ -557,13 +666,91 @@ export function detectCategoryId(text: string): string {
       ) {
         score += 4;
       }
+      if (
+        MACHINERY_BRAND_KEYWORDS.some((keyword) =>
+          normalized.includes(keyword),
+        )
+      ) {
+        score += 5;
+      }
+      // Household "… makinesi" must not win industrial machinery
+      if (hasAny(normalized, HOUSEHOLD_MACHINE_PATTERNS)) {
+        score = Math.max(0, score - 6);
+      }
+    }
+
+    if (categoryId === "services") {
+      if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+        score += 5;
+      }
+      // Bare "hizmet" alone is weak; require actual service signal
+      if (
+        score > 0 &&
+        score < 2 &&
+        !hasAny(normalized, [
+          "temizlik",
+          "nakliye",
+          "nakliyat",
+          "danışmanlık",
+          "danismanlik",
+          ...PAINT_SERVICE_PATTERNS,
+        ])
+      ) {
+        score = Math.max(0, score - 1);
+      }
     }
 
     if (score > winnerScore) {
+      runnerUpId = winnerScore > 0 ? winner : runnerUpId;
+      runnerUpScore = winnerScore;
       winner = categoryId;
       winnerScore = score;
+    } else if (score > runnerUpScore) {
+      runnerUpId = categoryId;
+      runnerUpScore = score;
     }
   }
 
-  return winner;
+  // No keyword signal → do not confidently claim services (historical default).
+  if (winnerScore <= 0) {
+    return {
+      categoryId: "services",
+      score: 0,
+      confident: false,
+      runnerUpId: null,
+      runnerUpScore: 0,
+    };
+  }
+
+  const margin = winnerScore - runnerUpScore;
+  const retailFamily = new Set([
+    "appliances",
+    "home-kitchen",
+    "technology",
+    "baby",
+    "furniture",
+  ]);
+  const ambiguousRetailTie =
+    margin < 2 &&
+    retailFamily.has(winner) &&
+    runnerUpId != null &&
+    retailFamily.has(runnerUpId);
+
+  const confident =
+    winnerScore >= CATEGORY_CONFIDENT_MIN_SCORE &&
+    !(winner === "services" && winnerScore < 3) &&
+    (ambiguousRetailTie ||
+      !(margin < 2 && runnerUpScore >= CATEGORY_CONFIDENT_MIN_SCORE));
+
+  return {
+    categoryId: winner,
+    score: winnerScore,
+    confident,
+    runnerUpId,
+    runnerUpScore,
+  };
+}
+
+export function detectCategoryId(text: string): string {
+  return detectCategoryResult(text).categoryId;
 }

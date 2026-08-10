@@ -1,6 +1,10 @@
 export type ParsedRequest = {
   rawText: string;
   categoryId: string;
+  /** Detection strength from keyword engine (0 = no signal). */
+  categoryScore?: number;
+  /** When false, UX must not present category as certain. */
+  categoryConfident?: boolean;
   subcategory?: string;
   quantity?: number;
   unit?: string;
