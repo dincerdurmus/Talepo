@@ -5,6 +5,11 @@ import type {
   PriceSignalType,
 } from "@/lib/price-intelligence/types";
 
+import {
+  buildPriceStrategyContext,
+  resolvePriceStrategy,
+} from "@/lib/price-intelligence/strategy-resolver";
+
 import { computeAggregateConfidence } from "./confidence";
 import { fetchExternalListings } from "./fetch-external-listings";
 import { normalizeProductFromRequest } from "./normalize-product";
@@ -44,6 +49,17 @@ export async function getPriceIntelligence(
 ): Promise<PriceIntelligenceResult> {
   const windowDays = resolveWindowDays(query.windowDays);
   const since = new Date(Date.now() - windowDays * 86400000);
+
+  // Phase 2 shadow mode — metadata only; does not gate or alter external fetch
+  const strategy = resolvePriceStrategy(
+    buildPriceStrategyContext({
+      categorySlug: query.categorySlug,
+      title: query.title,
+      condition: query.condition,
+      fieldValues: query.fieldValues,
+      normalizedProduct: query.normalizedProduct,
+    }),
+  );
 
   const locationParts = [query.city, query.district].filter(Boolean);
   const locationFilter =
@@ -186,6 +202,7 @@ export async function getPriceIntelligence(
       externalLabel: "Dış piyasa ilanları",
       totalSignals: totalSample,
     },
+    strategy,
   };
 }
 

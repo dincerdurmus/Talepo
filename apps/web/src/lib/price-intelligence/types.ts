@@ -1,5 +1,10 @@
 import type { ProductIdentifiers, SemanticFieldClass } from "@/lib/product-identity/types";
 
+import type { PriceStrategyResolution } from "./strategy-resolver";
+
+export type { PriceStrategyKey } from "./price-strategy-registry";
+export type { PriceStrategyResolution } from "./strategy-resolver";
+
 export type PriceSignalType =
   | "EXTERNAL_LISTING"
   | "TALEPO_REQUEST"
@@ -78,6 +83,8 @@ export type PriceIntelligenceResult = {
     externalLabel: string;
     totalSignals: number;
   };
+  /** Shadow mode — does not affect provider routing in Phase 2 */
+  strategy?: PriceStrategyResolution;
 };
 
 export type ExternalPriceObservation = {
