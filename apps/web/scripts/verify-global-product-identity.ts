@@ -32,6 +32,10 @@ import {
   filterByMatchQuality,
 } from "../src/server/price-intelligence/external-match-quality";
 import { normalizeProductFromRequest } from "../src/server/price-intelligence/normalize-product";
+import {
+  buildPriceStrategyContext,
+  resolvePriceStrategy,
+} from "../src/lib/price-intelligence/strategy-resolver";
 import { fetchExternalListings } from "../src/server/price-intelligence/fetch-external-listings";
 import { buildProviderRouting } from "../src/server/price-intelligence/provider-query";
 import { clearProviderCache } from "../src/server/price-intelligence/provider-cache";
@@ -117,11 +121,19 @@ async function runLiveQuery(
   title: string,
 ): Promise<{ raw: number; matched: number; sampleTitles: string[] }> {
   clearProviderCache();
+  const strategy = resolvePriceStrategy(
+    buildPriceStrategyContext({
+      categorySlug,
+      title,
+      normalizedProduct: normalized,
+    }),
+  );
   const result = await fetchExternalListings({
     categorySlug,
     categoryId: normalized.categoryId,
     title,
     normalized,
+    strategy: strategy.strategy,
   });
   const matched = filterByMatchQuality(
     normalized,

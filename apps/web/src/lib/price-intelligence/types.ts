@@ -1,9 +1,13 @@
 import type { ProductIdentifiers, SemanticFieldClass } from "@/lib/product-identity/types";
 
+import type { NormalizedCondition } from "./condition-utils";
+import type { CompletenessBreakdown } from "./strategy-completeness";
 import type { PriceStrategyResolution } from "./strategy-resolver";
 
 export type { PriceStrategyKey } from "./price-strategy-registry";
 export type { PriceStrategyResolution } from "./strategy-resolver";
+export type { CompletenessBreakdown } from "./strategy-completeness";
+export type { NormalizedCondition } from "./condition-utils";
 
 export type PriceSignalType =
   | "EXTERNAL_LISTING"
@@ -35,6 +39,53 @@ export type PriceConfidenceLevel =
   | "MEDIUM"
   | "HIGH"
   | "VERY_HIGH";
+
+export type ConfidenceLevelWithNone = PriceConfidenceLevel | "NONE";
+
+export type ConfidenceDetail = {
+  score: number;
+  level: ConfidenceLevelWithNone;
+  reasons: string[];
+  sampleCount: number;
+};
+
+export type SignalGroupStatistics = PriceStatistics & {
+  signalType: PriceSignalType;
+  effectiveWeight: number;
+  recencyDaysMedian: number | null;
+  reliabilityWeight: number;
+  strategyImportance: number;
+};
+
+export type WeightedMarketReference = {
+  median: number | null;
+  p25: number | null;
+  p75: number | null;
+  effectiveSampleWeight: number;
+  insufficientData: boolean;
+  contributingSignals: string[];
+};
+
+export type MarketRange = {
+  low: number;
+  median: number;
+  high: number;
+  currency: string;
+};
+
+export type BudgetEvaluationStatus =
+  | "BELOW_MARKET"
+  | "WITHIN_MARKET"
+  | "ABOVE_MARKET"
+  | "UNKNOWN";
+
+export type BudgetEvaluation = {
+  status: BudgetEvaluationStatus;
+  differencePercent: number | null;
+  marketMedian: number | null;
+  userBudget: number | null;
+  confidence: ConfidenceLevelWithNone;
+};
 
 export type NormalizedProduct = {
   categoryId: string;
@@ -83,8 +134,24 @@ export type PriceIntelligenceResult = {
     externalLabel: string;
     totalSignals: number;
   };
-  /** Shadow mode — does not affect provider routing in Phase 2 */
+  /** Resolved price strategy + confidence (Phase 2+) */
   strategy?: PriceStrategyResolution;
+  /** Phase 4 — Confidence V2 */
+  internalConfidence?: ConfidenceDetail;
+  externalConfidence?: ConfidenceDetail;
+  overallConfidence?: ConfidenceDetail;
+  confidenceReasons?: string[];
+  /** Phase 4 — request completeness for first-release UX */
+  completeness?: CompletenessBreakdown;
+  /** Phase 4 — weighted market reference */
+  weightedReference?: WeightedMarketReference;
+  /** Phase 4 — market range (only when sufficient confidence) */
+  marketRange?: MarketRange | null;
+  /** Phase 4 — budget vs market evaluation */
+  budgetEvaluation?: BudgetEvaluation;
+  /** Normalized request condition used for isolation */
+  condition?: NormalizedCondition;
+  conditionAmbiguity?: boolean;
 };
 
 export type ExternalPriceObservation = {
@@ -119,6 +186,11 @@ export type ExternalIntelligenceMeta = {
   fetchedCount: number;
   cached: boolean;
   errorMessage?: string;
+  /** Phase 3 — strategy-aware routing diagnostics */
+  externalProviderAttempted?: boolean;
+  externalProviderUsed?: string | null;
+  externalRoutingReason?: ExternalRoutingReason;
+  providerCandidates?: string[];
 };
 
 export type ProviderCapability =
@@ -131,3 +203,16 @@ export type ExternalDataPolicy = {
   retentionPolicy: string | null;
   termsReference: string | null;
 };
+
+/** Phase 3 — external provider routing diagnostic reasons */
+export type ExternalRoutingReason =
+  | "NOT_REQUESTED"
+  | "STRATEGY_INTERNAL_ONLY"
+  | "STRATEGY_UNKNOWN"
+  | "NO_EXTERNAL_PROVIDER_FOR_STRATEGY"
+  | "IDENTITY_REQUIREMENTS_NOT_MET"
+  | "PROVIDER_NOT_CONFIGURED"
+  | "SUITABILITY_BELOW_THRESHOLD"
+  | "EMPTY_PROVIDER_QUERY"
+  | "EXTERNAL_CALL_ALLOWED"
+  | "PROVIDER_ERROR";

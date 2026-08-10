@@ -1,4 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import {
+  conditionsCompatible,
+  normalizeCondition,
+} from "@/lib/price-intelligence/condition-utils";
+import { computeStrategyCompleteness } from "@/lib/price-intelligence/strategy-completeness";
 import type {
   NormalizedProduct,
   PriceIntelligenceResult,
@@ -10,10 +15,21 @@ import {
   resolvePriceStrategy,
 } from "@/lib/price-intelligence/strategy-resolver";
 
-import { computeAggregateConfidence } from "./confidence";
+import {
+  buildConfidenceV2,
+  computeAggregateConfidence,
+} from "./confidence-v2";
 import { fetchExternalListings } from "./fetch-external-listings";
 import { normalizeProductFromRequest } from "./normalize-product";
+import { buildSignalGroupBundle } from "./signal-group-stats";
 import { computePriceStatistics, MIN_AGGREGATE_SAMPLE } from "./statistics";
+import {
+  computeBudgetEvaluation,
+  computeMarketRange,
+  computeWeightedMarketReference,
+  parseBudgetValue,
+  shouldIncludeInMarketReference,
+} from "./weighted-market-reference";
 
 export type PriceIntelligenceQuery = {
   categoryId: string;
@@ -28,6 +44,7 @@ export type PriceIntelligenceQuery = {
   title?: string;
   fieldValues?: { key: string; value: string | null }[];
   includeExternal?: boolean;
+  userBudget?: number | null;
 };
 
 const WINDOW_OPTIONS = [7, 30, 90, 180, 365] as const;
@@ -40,8 +57,21 @@ function resolveWindowDays(days?: number): number {
   return nearest;
 }
 
-function statsFromPrices(values: number[]) {
-  return computePriceStatistics(values);
+function extractBudget(
+  fieldValues?: { key: string; value: string | null }[],
+  explicit?: number | null,
+): number | null {
+  if (explicit !== undefined && explicit !== null) return explicit;
+  const budgetField = fieldValues?.find((f) => f.key === "budget");
+  return parseBudgetValue(budgetField?.value);
+}
+
+function buildAttributes(fieldValues?: { key: string; value: string | null }[]): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  for (const fv of fieldValues ?? []) {
+    if (fv.value?.trim()) attrs[fv.key] = fv.value.trim();
+  }
+  return attrs;
 }
 
 export async function getPriceIntelligence(
@@ -49,8 +79,8 @@ export async function getPriceIntelligence(
 ): Promise<PriceIntelligenceResult> {
   const windowDays = resolveWindowDays(query.windowDays);
   const since = new Date(Date.now() - windowDays * 86400000);
+  const requestCondition = normalizeCondition(query.condition);
 
-  // Phase 2 shadow mode — metadata only; does not gate or alter external fetch
   const strategy = resolvePriceStrategy(
     buildPriceStrategyContext({
       categorySlug: query.categorySlug,
@@ -61,46 +91,64 @@ export async function getPriceIntelligence(
     }),
   );
 
+  const attributes = {
+    ...buildAttributes(query.fieldValues),
+    ...(query.normalizedProduct?.attributes ?? {}),
+  };
+
+  const completeness = computeStrategyCompleteness({
+    strategy: strategy.strategy,
+    attributes,
+    brand: query.normalizedProduct?.brand,
+    model: query.normalizedProduct?.model,
+    semanticFields: query.normalizedProduct?.semanticFields,
+  });
+
   const locationParts = [query.city, query.district].filter(Boolean);
   const locationFilter =
     locationParts.length > 0
       ? { contains: locationParts[0]!, mode: "insensitive" as const }
       : undefined;
 
-  const observations = await prisma.priceObservation.findMany({
+  const rawObservations = await prisma.priceObservation.findMany({
     where: {
       categoryId: query.categoryId,
       observedAt: { gte: since },
       ...(query.productFingerprint
         ? { productFingerprint: query.productFingerprint }
         : {}),
-      ...(query.condition ? { condition: query.condition } : {}),
       ...(locationFilter ? { location: locationFilter } : {}),
     },
     select: {
       sourceType: true,
       price: true,
       currency: true,
+      observedAt: true,
+      condition: true,
     },
   });
 
-  const byType = (type: PriceSignalType) =>
-    observations
-      .filter((o) => o.sourceType === type)
-      .map((o) => o.price.toNumber());
+  type ObsRow = {
+    price: number;
+    sourceType: PriceSignalType;
+    observedAt: Date;
+    condition: string | null;
+    currency: string;
+  };
 
-  const requestPriceStats = statsFromPrices(byType("TALEPO_REQUEST"));
-  const offerPriceStats = statsFromPrices(byType("TALEPO_OFFER"));
-  const acceptedOfferStats = statsFromPrices(byType("TALEPO_ACCEPTED_OFFER"));
-  const confirmedTransactionStats = statsFromPrices(byType("TALEPO_CONFIRMED_TRANSACTION"));
-  let externalListingStats = statsFromPrices(byType("EXTERNAL_LISTING"));
-  const externalSoldStats = statsFromPrices(byType("EXTERNAL_SOLD"));
+  let observations: ObsRow[] = rawObservations.map((o) => ({
+    price: o.price.toNumber(),
+    sourceType: o.sourceType as PriceSignalType,
+    observedAt: o.observedAt,
+    condition: o.condition,
+    currency: o.currency,
+  }));
 
-  const internalSample =
-    requestPriceStats.rawSampleSize +
-    offerPriceStats.rawSampleSize +
-    acceptedOfferStats.rawSampleSize +
-    confirmedTransactionStats.rawSampleSize;
+  if (requestCondition !== "UNKNOWN") {
+    observations = observations.filter((o) =>
+      conditionsCompatible(requestCondition, normalizeCondition(o.condition)),
+    );
+  }
 
   let externalMeta: PriceIntelligenceResult["external"] = {
     attempted: false,
@@ -111,6 +159,10 @@ export async function getPriceIntelligence(
     fetchedCount: 0,
     cached: false,
   };
+
+  let externalMatchedCount = observations.filter((o) => o.sourceType === "EXTERNAL_LISTING").length;
+  let averageMatchQuality: number | null = null;
+  let providerSuitability = 0;
 
   if (query.includeExternal && query.categorySlug && query.title) {
     const normalized =
@@ -131,9 +183,12 @@ export async function getPriceIntelligence(
       categoryId: query.categoryId,
       title: query.title,
       normalized,
+      strategy: strategy.strategy,
       city: query.city,
       district: query.district,
     });
+
+    providerSuitability = external.suitabilityScore;
 
     externalMeta = {
       attempted: true,
@@ -144,44 +199,108 @@ export async function getPriceIntelligence(
       fetchedCount: external.observations.length,
       cached: external.cached,
       errorMessage: external.errorMessage,
+      externalProviderAttempted: external.externalProviderAttempted,
+      externalProviderUsed: external.externalProviderUsed,
+      externalRoutingReason: external.routingReason,
+      providerCandidates: external.providerCandidates,
     };
 
     if (external.observations.length > 0) {
-      const tryPrices = external.observations
-        .filter((o) => o.currency === "TRY" || o.currency === query.normalizedProduct?.attributes?.currency)
-        .map((o) => o.price);
+      externalMatchedCount = external.matchedCount;
+      averageMatchQuality =
+        external.matchedCount > 0 && external.rawCount > 0
+          ? external.matchedCount / external.rawCount
+          : 0.7;
 
-      const livePrices = tryPrices.length > 0
-        ? tryPrices
-        : external.observations.map((o) => o.price);
+      const liveObs: ObsRow[] = external.observations
+        .filter((o) => o.currency === "TRY" || o.currency === "TRY")
+        .map((o) => ({
+          price: o.price,
+          sourceType: "EXTERNAL_LISTING" as const,
+          observedAt: o.observedAt,
+          condition: o.condition,
+          currency: o.currency,
+        }));
 
-      const dbExternal = byType("EXTERNAL_LISTING");
-      externalListingStats = statsFromPrices([...dbExternal, ...livePrices]);
+      observations = [
+        ...observations.filter((o) => o.sourceType !== "EXTERNAL_LISTING"),
+        ...liveObs,
+      ];
     }
   }
 
-  const totalSample =
-    internalSample +
-    externalListingStats.rawSampleSize +
-    externalSoldStats.rawSampleSize;
-
-  const confirmedSample = confirmedTransactionStats.rawSampleSize;
-
-  // Confidence driven by internal signals — external alone cannot produce HIGH
-  const confidence = computeAggregateConfidence({
-    internalSample,
-    confirmedSample,
+  const signalBundle = buildSignalGroupBundle({
+    observations,
+    strategy: strategy.strategy,
   });
 
-  const insufficientData = internalSample < MIN_AGGREGATE_SAMPLE;
+  const identityConfidence = query.normalizedProduct?.confidence ?? 0.5;
+
+  const confidenceV2 = buildConfidenceV2({
+    signalGroups: signalBundle,
+    strategy: strategy.strategy,
+    completeness,
+    externalMatchedCount,
+    averageMatchQuality,
+    providerSuitability,
+    identityConfidence,
+  });
+
+  const weightedReference = computeWeightedMarketReference({
+    groups: [
+      { signalType: "TALEPO_OFFER", stats: signalBundle.offerStats, includeInReference: shouldIncludeInMarketReference("TALEPO_OFFER") },
+      { signalType: "TALEPO_ACCEPTED_OFFER", stats: signalBundle.acceptedStats, includeInReference: shouldIncludeInMarketReference("TALEPO_ACCEPTED_OFFER") },
+      { signalType: "TALEPO_CONFIRMED_TRANSACTION", stats: signalBundle.confirmedStats, includeInReference: shouldIncludeInMarketReference("TALEPO_CONFIRMED_TRANSACTION") },
+      { signalType: "EXTERNAL_LISTING", stats: signalBundle.externalListingStats, includeInReference: shouldIncludeInMarketReference("EXTERNAL_LISTING") },
+      { signalType: "EXTERNAL_SOLD", stats: signalBundle.externalSoldStats, includeInReference: shouldIncludeInMarketReference("EXTERNAL_SOLD") },
+    ],
+    weightedObservations: signalBundle.weightedObservations.filter(
+      (o) => shouldIncludeInMarketReference(o.sourceType),
+    ),
+  });
+
+  const marketRange = computeMarketRange({
+    weightedReference,
+    overallConfidence: confidenceV2.overallConfidence,
+    currency: "TRY",
+  });
+
+  const userBudget = extractBudget(query.fieldValues, query.userBudget);
+  const budgetEvaluation = computeBudgetEvaluation({
+    userBudget,
+    marketRange,
+    overallConfidence: confidenceV2.overallConfidence,
+  });
+
+  const internalSample =
+    signalBundle.requestStats.rawSampleSize +
+    signalBundle.offerStats.rawSampleSize +
+    signalBundle.acceptedStats.rawSampleSize +
+    signalBundle.confirmedStats.rawSampleSize;
+
+  const totalSample =
+    internalSample +
+    signalBundle.externalListingStats.rawSampleSize +
+    signalBundle.externalSoldStats.rawSampleSize;
+
+  const insufficientData =
+    weightedReference.insufficientData &&
+    confidenceV2.overallConfidence.level === "NONE";
+
+  const confidence = computeAggregateConfidence({
+    internalSample,
+    confirmedSample: signalBundle.confirmedStats.rawSampleSize,
+    externalListingSample: signalBundle.externalListingStats.rawSampleSize,
+    overallScore: confidenceV2.overallConfidence.score,
+  });
 
   const sources = {
-    talepoRequests: requestPriceStats.rawSampleSize,
-    talepoOffers: offerPriceStats.rawSampleSize,
-    acceptedOffers: acceptedOfferStats.rawSampleSize,
-    confirmedTransactions: confirmedTransactionStats.rawSampleSize,
-    externalListings: externalListingStats.rawSampleSize,
-    externalSold: externalSoldStats.rawSampleSize,
+    talepoRequests: signalBundle.requestStats.rawSampleSize,
+    talepoOffers: signalBundle.offerStats.rawSampleSize,
+    acceptedOffers: signalBundle.acceptedStats.rawSampleSize,
+    confirmedTransactions: signalBundle.confirmedStats.rawSampleSize,
+    externalListings: signalBundle.externalListingStats.rawSampleSize,
+    externalSold: signalBundle.externalSoldStats.rawSampleSize,
   };
 
   return {
@@ -189,12 +308,12 @@ export async function getPriceIntelligence(
     insufficientData,
     confidence,
     windowDays,
-    requestPriceStats,
-    offerPriceStats,
-    acceptedOfferStats,
-    confirmedTransactionStats,
-    externalListingStats,
-    externalSoldStats,
+    requestPriceStats: signalBundle.requestStats,
+    offerPriceStats: signalBundle.offerStats,
+    acceptedOfferStats: signalBundle.acceptedStats,
+    confirmedTransactionStats: signalBundle.confirmedStats,
+    externalListingStats: signalBundle.externalListingStats,
+    externalSoldStats: signalBundle.externalSoldStats,
     sources,
     external: externalMeta,
     signalSummary: {
@@ -203,6 +322,16 @@ export async function getPriceIntelligence(
       totalSignals: totalSample,
     },
     strategy,
+    internalConfidence: confidenceV2.internalConfidence,
+    externalConfidence: confidenceV2.externalConfidence,
+    overallConfidence: confidenceV2.overallConfidence,
+    confidenceReasons: confidenceV2.confidenceReasons,
+    completeness,
+    weightedReference,
+    marketRange,
+    budgetEvaluation,
+    condition: requestCondition,
+    conditionAmbiguity: signalBundle.conditionAmbiguity || requestCondition === "UNKNOWN",
   };
 }
 

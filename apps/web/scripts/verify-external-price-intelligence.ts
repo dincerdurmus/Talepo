@@ -287,6 +287,7 @@ async function main() {
     categoryId: "cat-tech",
     title: "Apple iPhone 15 Pro Max",
     normalized: iphone,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: async () => {
       throw new Error("timeout");
     },

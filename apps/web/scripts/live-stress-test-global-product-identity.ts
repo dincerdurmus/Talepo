@@ -679,6 +679,7 @@ async function main() {
     categoryId: boschNorm.categoryId,
     title: "Bosch Series 6 9 kg çamaşır makinesi",
     normalized: boschNorm,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: boschSearch,
   });
   const b2 = await fetchExternalListings({
@@ -686,6 +687,7 @@ async function main() {
     categoryId: boschNorm.categoryId,
     title: "Bosch Series 6 9 kg çamaşır makinesi",
     normalized: boschNorm,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: boschSearch,
   });
 
@@ -700,6 +702,7 @@ async function main() {
     categoryId: samsungNorm.categoryId,
     title: "Samsung Galaxy S24 Ultra 256 GB",
     normalized: samsungNorm,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: samsungSearch,
   });
   const s2 = await fetchExternalListings({
@@ -707,6 +710,7 @@ async function main() {
     categoryId: samsungNorm.categoryId,
     title: "Samsung Galaxy S24 Ultra 256 GB",
     normalized: samsungNorm,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: samsungSearch,
   });
 

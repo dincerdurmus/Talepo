@@ -223,6 +223,7 @@ async function main() {
     categoryId: "live-test-iphone",
     title: "Apple iPhone 15 Pro Max 256GB",
     normalized: iphoneNormalized,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: iphoneSearch,
   });
 
@@ -255,6 +256,7 @@ async function main() {
     categoryId: "live-test-iphone",
     title: "Apple iPhone 15 Pro Max 256GB",
     normalized: iphoneNormalized,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: iphoneSearch,
   });
   const iphone2NewCalls = apiCallCount - callsBeforeIphone2;
@@ -289,6 +291,7 @@ async function main() {
     categoryId: "live-test-bosch",
     title: "Bosch Series 6 9 kg çamaşır makinesi",
     normalized: boschNormalized,
+    strategy: "RETAIL_PRODUCT",
     searchImpl: boschSearch,
   });
 
