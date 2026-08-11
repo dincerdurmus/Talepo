@@ -1,0 +1,65 @@
+[
+  {
+    "input": "2017 Golf 7 1.6 TDI sağ motor kulağı",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Golf",
+      "generation": "Golf VII",
+      "engineMarketingName": "1.6 TDI EA288",
+      "powerKw": 85
+    }
+  },
+  {
+    "input": "2015 Golf 7 1.6 TDI",
+    "expect": {
+      "engineMarketingName": "1.6 TDI",
+      "powerKw": 81
+    }
+  },
+  {
+    "input": "Clio 4 0.9 TCe turbo hortumu",
+    "expect": {
+      "brand": "Renault",
+      "model": "Clio",
+      "generation": "Clio IV",
+      "engineMarketingName": "0.9 TCe"
+    }
+  },
+  {
+    "input": "Egea 1.6 Multijet baskı balata",
+    "expect": {
+      "brand": "Fiat",
+      "model": "Egea",
+      "engineMarketingName": "1.6 MultiJet II",
+      "powerKw": 88
+    }
+  },
+  {
+    "input": "Hyundai i20 BC3 1.0 T-GDI 100",
+    "expect": {
+      "engineMarketingName": "1.0 T-GDI",
+      "powerKw": 74
+    }
+  },
+  {
+    "input": "Honda Civic FC 1.5 turbo",
+    "expect": {
+      "engineMarketingName": "1.5 VTEC Turbo",
+      "powerKw": 134
+    }
+  },
+  {
+    "input": "BMW E90 320d",
+    "expect": {
+      "engineMarketingName": "320d",
+      "powerKw": 130
+    }
+  },
+  {
+    "input": "Golf 7 9.9 TDI",
+    "expect": {
+      "engine": null,
+      "unresolved": "9.9 TDI"
+    }
+  }
+]

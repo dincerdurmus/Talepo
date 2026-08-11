@@ -1,0 +1,75 @@
+[
+  {
+    "input": "2017 Volkswagen Golf 7 sağ ön far",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Golf",
+      "generation": "Golf VII"
+    }
+  },
+  {
+    "input": "Passat B8 sol stop",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Passat",
+      "generation": "Passat B8"
+    }
+  },
+  {
+    "input": "BMW E90 ön tampon",
+    "expect": {
+      "brand": "BMW",
+      "model": "3 Serisi",
+      "generation": "E90/E91/E92/E93"
+    }
+  },
+  {
+    "input": "Mercedes W124 sağ ayna",
+    "expect": {
+      "brand": "Mercedes-Benz",
+      "model": "E Serisi",
+      "generation": "W124"
+    }
+  },
+  {
+    "input": "Clio 4 kaput",
+    "expect": {
+      "brand": "Renault",
+      "model": "Clio",
+      "generation": "Clio IV"
+    }
+  },
+  {
+    "input": "Corolla E210 far",
+    "expect": {
+      "brand": "Toyota",
+      "model": "Corolla",
+      "generation": "Corolla E210"
+    }
+  },
+  {
+    "input": "Civic FC stop",
+    "expect": {
+      "brand": "Honda",
+      "model": "Civic",
+      "generation": "Civic FC/FK"
+    }
+  },
+  {
+    "input": "Qashqai J11 tampon",
+    "expect": {
+      "brand": "Nissan",
+      "model": "Qashqai",
+      "generation": "Qashqai J11"
+    }
+  },
+  {
+    "input": "Golf B27 far",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Golf",
+      "generation": null,
+      "unresolved": "B27"
+    }
+  }
+]

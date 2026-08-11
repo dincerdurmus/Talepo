@@ -1,0 +1,186 @@
+{
+  "ön far": [
+    "far",
+    "far komple",
+    "far ünitesi",
+    "headlamp",
+    "ön lamba"
+  ],
+  "arka stop": [
+    "stop",
+    "stop lambası",
+    "arka lamba",
+    "arka far",
+    "stop komple"
+  ],
+  "çamurluk": [
+    "kanat",
+    "ön çamurluk",
+    "arka çamurluk"
+  ],
+  "kaput": [
+    "motor kaputu",
+    "ön kaput"
+  ],
+  "bagaj kapağı": [
+    "arka kapak",
+    "bagaj kapısı"
+  ],
+  "panjur": [
+    "ön ızgara",
+    "grille",
+    "ızgara"
+  ],
+  "motor beyni ECU": [
+    "ecu",
+    "motor beyni",
+    "enjeksiyon beyni",
+    "engine control unit"
+  ],
+  "şanzıman beyni TCU": [
+    "tcu",
+    "şanzıman beyni",
+    "transmission control unit"
+  ],
+  "gövde beyni BCM": [
+    "bcm",
+    "body control module",
+    "konfor modülü"
+  ],
+  "far beyni": [
+    "xenon beyni",
+    "led far beyni",
+    "far modülü"
+  ],
+  "xenon balast": [
+    "balast",
+    "xenon balastı",
+    "xenon beyni"
+  ],
+  "debriyaj seti": [
+    "baskı balata",
+    "baskı balata seti",
+    "debriyaj baskı balata"
+  ],
+  "çift kütleli volan": [
+    "volant",
+    "dmf",
+    "çift kütle volan"
+  ],
+  "aks komple": [
+    "aks",
+    "aks mili komple"
+  ],
+  "rot başı": [
+    "rotbaşı",
+    "direksiyon rot başı"
+  ],
+  "z rot": [
+    "askı rotu",
+    "denge kolu",
+    "viraj askı rotu"
+  ],
+  "salıncak": [
+    "tabla",
+    "alt tabla",
+    "kontrol kolu"
+  ],
+  "porya": [
+    "teker poryası",
+    "hub"
+  ],
+  "teker rulmanı": [
+    "bilya",
+    "porya rulmanı",
+    "teker bilyası"
+  ],
+  "klima kompresörü": [
+    "klima motoru",
+    "a/c kompresörü",
+    "ac compressor"
+  ],
+  "kalorifer motoru": [
+    "üfleme motoru",
+    "blower motor",
+    "fan motoru iç"
+  ],
+  "devirdaim pompası": [
+    "su pompası",
+    "water pump"
+  ],
+  "genleşme kabı": [
+    "yedek su deposu",
+    "antifriz deposu",
+    "radyatör su deposu"
+  ],
+  "yüksek basınç pompası": [
+    "hpfp",
+    "mazot pompası",
+    "benzin yüksek basınç pompası"
+  ],
+  "yakıt pompası": [
+    "benzin pompası",
+    "mazot pompası",
+    "depo pompası"
+  ],
+  "enjektör": [
+    "injector",
+    "meme"
+  ],
+  "partikül filtresi DPF": [
+    "dpf",
+    "partikül filtresi",
+    "dizel partikül filtresi"
+  ],
+  "katalitik konvertör": [
+    "katalizör",
+    "katalitik",
+    "cat"
+  ],
+  "lambda sensörü": [
+    "oksijen sensörü",
+    "o2 sensörü"
+  ],
+  "egr valfi": [
+    "egr",
+    "egzoz gazı devirdaim valfi"
+  ],
+  "marş motoru": [
+    "marş dinamosu",
+    "starter"
+  ],
+  "alternatör": [
+    "şarj dinamosu",
+    "dinamo"
+  ],
+  "cam krikosu": [
+    "cam mekanizması",
+    "cam lifti",
+    "cam regülatörü"
+  ],
+  "yan ayna komple": [
+    "dikiz aynası dış",
+    "kapı aynası",
+    "yan dikiz"
+  ],
+  "park sensörü": [
+    "park radarı sensörü",
+    "pdc sensörü"
+  ],
+  "ön radar": [
+    "acc radar",
+    "adaptif hız sabitleyici radar",
+    "mesafe radarı"
+  ],
+  "yüksek voltaj bataryası": [
+    "çekiş bataryası",
+    "traction battery",
+    "hv battery",
+    "ana batarya"
+  ],
+  "onboard charger OBC": [
+    "obc",
+    "araç üstü şarj cihazı",
+    "on-board charger"
+  ]
+}

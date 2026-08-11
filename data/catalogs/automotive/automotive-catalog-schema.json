@@ -1,0 +1,53 @@
+{
+  "catalog_version": "1.0.0",
+  "generated_at": "2026-08-11T06:50:07.808189+00:00",
+  "entity_flow": [
+    "vehicle_type",
+    "manufacturer_group",
+    "brand",
+    "model",
+    "generation",
+    "model_year",
+    "engine",
+    "fuel_type",
+    "transmission",
+    "part_system",
+    "part_subsystem",
+    "part",
+    "position",
+    "oem_number",
+    "cross_reference",
+    "compatibility"
+  ],
+  "identity_rules": {
+    "catalog_is_authoritative_when_confidence_high": true,
+    "unknown_entities_allowed": true,
+    "unknown_entity_state": "unverified",
+    "never_block_request_due_to_missing_catalog_record": true,
+    "oem_number_can_resolve_reverse": true,
+    "aliases_normalized": true,
+    "compatibility_many_to_many": true
+  },
+  "required_for_request_creation": [
+    "free_text"
+  ],
+  "optional_enrichment_fields": [
+    "brand",
+    "model",
+    "generation",
+    "model_year",
+    "engine",
+    "fuel_type",
+    "transmission",
+    "part",
+    "position",
+    "oem_number"
+  ],
+  "confidence_levels": [
+    "exact",
+    "high",
+    "medium",
+    "low",
+    "unverified"
+  ]
+}

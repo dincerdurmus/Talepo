@@ -1,0 +1,32 @@
+[
+  {
+    "id": "vw-golf7",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "Volkswagen Newsroom — Engine versions Golf VII profile"
+  },
+  {
+    "id": "renault-clio",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "Renault Group — Histoire du Renault Clio"
+  },
+  {
+    "id": "fiat-tipo",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "Stellantis Media — Fiat Tipo: Born to be a Sedan"
+  },
+  {
+    "id": "hyundai-i20",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "Hyundai News — i20 technical data, Nov 2020"
+  },
+  {
+    "id": "honda-civic",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "Honda News Europe — 2017 Civic"
+  },
+  {
+    "id": "bmw-320d",
+    "type": "OFFICIAL_MANUFACTURER",
+    "title": "BMW Group Press — Der neue BMW 3er, 2008"
+  }
+]

@@ -230,4 +230,10 @@ export type RequestUnderstandingResult = {
   recommendedQuestions: string[];
 
   diagnostics?: RequestUnderstandingDiagnostics;
+
+  /**
+   * Optional knowledge-layer enrichment (catalog registry).
+   * Never authoritative over understandRequest decisions.
+   */
+  catalogEnrichment?: import("@/lib/catalog/automotive/types").AutomotiveSubjectEnrichment;
 };

@@ -1,0 +1,511 @@
+{
+  "engine": {
+    "name_tr": "Motor",
+    "children": {
+      "complete_engine": [
+        "Komple motor",
+        "Sandık motor",
+        "Yarım motor",
+        "Long block",
+        "Short block"
+      ],
+      "cylinder_head": [
+        "Silindir kapağı",
+        "Silindir kapak contası",
+        "Külbütör kapağı",
+        "Külbütör kapak contası",
+        "Supap",
+        "Supap lastiği",
+        "Supap yayı",
+        "İtici",
+        "Piyano mili"
+      ],
+      "bottom_end": [
+        "Motor bloğu",
+        "Piston",
+        "Piston kolu",
+        "Segman",
+        "Krank mili",
+        "Ana yatak",
+        "Kol yatak",
+        "Krank kasnağı",
+        "Volan"
+      ],
+      "timing": [
+        "Triger kayışı",
+        "Triger seti",
+        "Zincir",
+        "Zincir seti",
+        "Gergi",
+        "Avare rulman",
+        "Eksantrik dişlisi",
+        "Krank dişlisi",
+        "Değişken zamanlama valfi"
+      ],
+      "lubrication": [
+        "Karter",
+        "Karter contası",
+        "Yağ pompası",
+        "Yağ filtresi gövdesi",
+        "Yağ soğutucu",
+        "Yağ seviye sensörü",
+        "Yağ basınç müşürü",
+        "Yağ çubuğu"
+      ],
+      "air_induction": [
+        "Emme manifoldu",
+        "Gaz kelebeği",
+        "Hava akışmetre",
+        "MAP sensörü",
+        "Turbo",
+        "Turbo hortumu",
+        "Intercooler",
+        "Intercooler hortumu",
+        "Supercharger"
+      ],
+      "mounts": [
+        "Motor kulağı",
+        "Motor takozu",
+        "Şanzıman takozu"
+      ]
+    }
+  },
+  "fuel_ignition": {
+    "name_tr": "Ateşleme & Yakıt",
+    "children": {
+      "fuel": [
+        "Yakıt pompası",
+        "Yüksek basınç pompası",
+        "Enjektör",
+        "Enjektör rampası",
+        "Yakıt deposu",
+        "Yakıt şamandırası",
+        "Yakıt hortumu",
+        "Yakıt basınç sensörü",
+        "Regülatör",
+        "Karbüratör"
+      ],
+      "ignition": [
+        "Buji",
+        "Kızdırma bujisi",
+        "Ateşleme bobini",
+        "Distribütör",
+        "Distribütör kapağı",
+        "Tevzi makarası",
+        "Buji kablosu",
+        "Kızdırma rölesi"
+      ]
+    }
+  },
+  "cooling": {
+    "name_tr": "Soğutma",
+    "children": {
+      "cooling": [
+        "Su radyatörü",
+        "Radyatör fanı",
+        "Fan motoru",
+        "Fan davlumbazı",
+        "Devirdaim pompası",
+        "Termostat",
+        "Termostat gövdesi",
+        "Genleşme kabı",
+        "Radyatör hortumu",
+        "Hararet müşürü",
+        "Fan müşürü"
+      ]
+    }
+  },
+  "exhaust_emission": {
+    "name_tr": "Egzoz & Emisyon",
+    "children": {
+      "exhaust": [
+        "Egzoz manifoldu",
+        "Katalitik konvertör",
+        "Partikül filtresi DPF",
+        "Orta susturucu",
+        "Arka susturucu",
+        "Egzoz borusu",
+        "Egzoz askısı",
+        "Lambda sensörü"
+      ],
+      "emission": [
+        "EGR valfi",
+        "EGR soğutucu",
+        "AdBlue pompası",
+        "AdBlue enjektörü",
+        "NOx sensörü",
+        "EVAP valfi"
+      ]
+    }
+  },
+  "transmission": {
+    "name_tr": "Şanzıman & Vites",
+    "children": {
+      "manual": [
+        "Manuel şanzıman",
+        "Şanzıman dişlisi",
+        "Senkromeç",
+        "Prizdirek mili",
+        "Vites halatı",
+        "Vites kolu"
+      ],
+      "automatic": [
+        "Otomatik şanzıman",
+        "Tork konvertörü",
+        "Mekatronik",
+        "Valf gövdesi",
+        "Şanzıman beyni TCU",
+        "Şanzıman yağ pompası",
+        "Şanzıman filtresi"
+      ],
+      "clutch": [
+        "Debriyaj seti",
+        "Debriyaj balatası",
+        "Debriyaj baskısı",
+        "Debriyaj rulmanı",
+        "Debriyaj üst merkezi",
+        "Debriyaj alt merkezi",
+        "Çift kütleli volan"
+      ]
+    }
+  },
+  "drivetrain": {
+    "name_tr": "Aktarma",
+    "children": {
+      "axle": [
+        "Aks komple",
+        "Aks kafası",
+        "Aks körüğü",
+        "Aks mili",
+        "Şaft",
+        "Şaft askısı",
+        "Şaft mafsalı"
+      ],
+      "differential": [
+        "Diferansiyel",
+        "Diferansiyel dişlisi",
+        "Diferansiyel takozu",
+        "Transfer kutusu",
+        "4x4 kavrama"
+      ]
+    }
+  },
+  "suspension_steering": {
+    "name_tr": "Yürüyen & Direksiyon",
+    "children": {
+      "suspension": [
+        "Amortisör",
+        "Amortisör takozu",
+        "Amortisör rulmanı",
+        "Helezon yay",
+        "Salıncak",
+        "Salıncak burcu",
+        "Rotil",
+        "Z rot",
+        "Viraj demiri",
+        "Viraj demir lastiği",
+        "Travers",
+        "Arka aks",
+        "Torsiyon"
+      ],
+      "hub": [
+        "Porya",
+        "Teker rulmanı",
+        "Bijon",
+        "Bijon saplaması"
+      ],
+      "steering": [
+        "Direksiyon kutusu",
+        "Direksiyon pompası",
+        "Elektrikli direksiyon motoru",
+        "Direksiyon beyni",
+        "Rot başı",
+        "Rot mili",
+        "Direksiyon mafsalı",
+        "Direksiyon kolonu"
+      ]
+    }
+  },
+  "brake": {
+    "name_tr": "Fren",
+    "children": {
+      "friction": [
+        "Fren diski",
+        "Fren balatası",
+        "Fren kampanası",
+        "Fren pabucu"
+      ],
+      "hydraulic": [
+        "Fren kaliperi",
+        "Kaliper tamir takımı",
+        "Fren ana merkezi",
+        "Fren servosu",
+        "Fren hortumu",
+        "Fren borusu",
+        "Vakum pompası"
+      ],
+      "electronic": [
+        "ABS beyni",
+        "ABS pompası",
+        "ABS sensörü",
+        "ESP sensörü",
+        "Elektronik park freni motoru"
+      ]
+    }
+  },
+  "body": {
+    "name_tr": "Kaporta & Karoser",
+    "children": {
+      "front": [
+        "Ön tampon",
+        "Ön tampon demiri",
+        "Ön tampon ızgarası",
+        "Kaput",
+        "Ön panel",
+        "Panjur",
+        "Ön çamurluk",
+        "Davlumbaz"
+      ],
+      "side": [
+        "Ön kapı",
+        "Arka kapı",
+        "Kapı sacı",
+        "Kapı menteşesi",
+        "Kapı gergisi",
+        "Marşpiyel",
+        "B sütunu",
+        "Çamurluk ağzı"
+      ],
+      "rear": [
+        "Arka tampon",
+        "Arka tampon demiri",
+        "Bagaj kapağı",
+        "Bagaj menteşesi",
+        "Arka panel",
+        "Arka çamurluk"
+      ],
+      "structural": [
+        "Şase kolu",
+        "Podye",
+        "Travers",
+        "Tavan sacı",
+        "Taban sacı"
+      ]
+    }
+  },
+  "lighting": {
+    "name_tr": "Aydınlatma",
+    "children": {
+      "external": [
+        "Ön far",
+        "Arka stop",
+        "Sis farı",
+        "Gündüz farı DRL",
+        "Sinyal",
+        "Plaka lambası",
+        "3. stop lambası",
+        "Reflektör"
+      ],
+      "modules": [
+        "Far beyni",
+        "Xenon balast",
+        "LED modülü",
+        "Far seviye motoru",
+        "Far yükseklik sensörü"
+      ]
+    }
+  },
+  "glass_mirror": {
+    "name_tr": "Cam & Ayna",
+    "children": {
+      "glass": [
+        "Ön cam",
+        "Arka cam",
+        "Kapı camı",
+        "Kelebek camı",
+        "Sunroof camı"
+      ],
+      "mechanism": [
+        "Cam krikosu",
+        "Cam motoru",
+        "Cam düğmesi",
+        "Sunroof motoru",
+        "Sunroof mekanizması"
+      ],
+      "mirror": [
+        "Dikiz aynası",
+        "Yan ayna komple",
+        "Ayna camı",
+        "Ayna motoru",
+        "Ayna sinyali",
+        "Ayna kapağı"
+      ]
+    }
+  },
+  "electrical_electronic": {
+    "name_tr": "Elektrik & Elektronik",
+    "children": {
+      "power": [
+        "Alternatör",
+        "Marş motoru",
+        "Akü",
+        "Akü kutup başı",
+        "Sigorta kutusu",
+        "Röle",
+        "Konjektör"
+      ],
+      "control": [
+        "Motor beyni ECU",
+        "Gövde beyni BCM",
+        "Konfor beyni",
+        "Gateway modülü",
+        "Immobilizer beyni",
+        "Anahtar",
+        "Kontak",
+        "Kontak anteni"
+      ],
+      "sensors": [
+        "Krank sensörü",
+        "Eksantrik sensörü",
+        "Vuruntu sensörü",
+        "Basınç sensörü",
+        "Sıcaklık sensörü",
+        "Park sensörü",
+        "Yağmur sensörü",
+        "Işık sensörü"
+      ],
+      "wiring": [
+        "Motor tesisatı",
+        "Kapı tesisatı",
+        "Ana kablo tesisatı",
+        "Soket",
+        "Konnektör"
+      ]
+    }
+  },
+  "climate": {
+    "name_tr": "Isıtma, Havalandırma & Klima",
+    "children": {
+      "ac": [
+        "Klima kompresörü",
+        "Klima kondenseri",
+        "Klima evaporatörü",
+        "Klima kurutucu",
+        "Klima genleşme valfi",
+        "Klima basınç sensörü",
+        "Klima hortumu"
+      ],
+      "hvac": [
+        "Kalorifer peteği",
+        "Kalorifer motoru",
+        "Fan rezistansı",
+        "Klape motoru",
+        "Klima kontrol paneli",
+        "Kalorifer hortumu"
+      ]
+    }
+  },
+  "interior_safety": {
+    "name_tr": "İç Trim & Güvenlik",
+    "children": {
+      "interior": [
+        "Torpido",
+        "Orta konsol",
+        "Gösterge paneli",
+        "Gösterge saati",
+        "Direksiyon simidi",
+        "Vites topuzu",
+        "Kapı döşemesi",
+        "Tavan döşemesi",
+        "Koltuk",
+        "Koltuk rayı",
+        "Koltuk motoru",
+        "Emniyet kemeri"
+      ],
+      "safety": [
+        "Sürücü airbag",
+        "Yolcu airbag",
+        "Perde airbag",
+        "Koltuk airbag",
+        "Airbag beyni",
+        "Darbe sensörü",
+        "Kemer gergisi"
+      ]
+    }
+  },
+  "adas_multimedia": {
+    "name_tr": "ADAS & Multimedya",
+    "children": {
+      "adas": [
+        "Ön radar",
+        "Kör nokta radarı",
+        "Ön kamera",
+        "360 kamera",
+        "Geri görüş kamerası",
+        "Şerit takip kamerası",
+        "ADAS kontrol ünitesi"
+      ],
+      "multimedia": [
+        "Multimedya ekranı",
+        "Radyo",
+        "Navigasyon ünitesi",
+        "Amplifikatör",
+        "Hoparlör",
+        "Anten",
+        "USB modülü"
+      ]
+    }
+  },
+  "ev_hybrid": {
+    "name_tr": "Elektrikli & Hibrit Sistem",
+    "children": {
+      "high_voltage": [
+        "Yüksek voltaj bataryası",
+        "Batarya modülü",
+        "BMS",
+        "İnverter",
+        "DC-DC dönüştürücü",
+        "Onboard charger OBC",
+        "Yüksek voltaj kablosu",
+        "HV kontaktör",
+        "Servis ayırıcı"
+      ],
+      "drive": [
+        "Elektrik motoru",
+        "Redüksiyon kutusu",
+        "E-aks"
+      ],
+      "charging": [
+        "Şarj soketi",
+        "Şarj portu kapağı",
+        "Şarj kontrol modülü"
+      ],
+      "thermal": [
+        "Batarya soğutma pompası",
+        "Batarya chiller",
+        "Batarya ısıtıcı"
+      ]
+    }
+  },
+  "filters_service": {
+    "name_tr": "Filtre & Bakım",
+    "children": {
+      "filters": [
+        "Yağ filtresi",
+        "Hava filtresi",
+        "Polen filtresi",
+        "Yakıt filtresi",
+        "Şanzıman filtresi"
+      ],
+      "service": [
+        "V kayışı",
+        "V kayış gergisi",
+        "Silecek süpürgesi",
+        "Silecek motoru",
+        "Silecek mekanizması",
+        "Cam suyu pompası",
+        "Cam suyu deposu"
+      ]
+    }
+  }
+}

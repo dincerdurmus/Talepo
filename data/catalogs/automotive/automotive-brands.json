@@ -1,0 +1,1607 @@
+[
+  {
+    "id": "brand_abarth",
+    "name": "Abarth",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_acura",
+    "name": "Acura",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_aiways",
+    "name": "Aiways",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_aion",
+    "name": "Aion",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_alfa-romeo",
+    "name": "Alfa Romeo",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_alpine",
+    "name": "Alpine",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_amc",
+    "name": "AMC",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_anadol",
+    "name": "Anadol",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_aston-martin",
+    "name": "Aston Martin",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_audi",
+    "name": "Audi",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_austin",
+    "name": "Austin",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_baic",
+    "name": "BAIC",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_bentley",
+    "name": "Bentley",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_bmw",
+    "name": "BMW",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_buick",
+    "name": "Buick",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_byd",
+    "name": "BYD",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_cadillac",
+    "name": "Cadillac",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_carver",
+    "name": "Carver",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_chery",
+    "name": "Chery",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_chevrolet",
+    "name": "Chevrolet",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_chrysler",
+    "name": "Chrysler",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_citroen",
+    "name": "Citroën",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_cupra",
+    "name": "Cupra",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_dacia",
+    "name": "Dacia",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_daewoo",
+    "name": "Daewoo",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_daihatsu",
+    "name": "Daihatsu",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_dodge",
+    "name": "Dodge",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_dongfeng",
+    "name": "Dongfeng",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_ds-automobiles",
+    "name": "DS Automobiles",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_eagle",
+    "name": "Eagle",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_exeed",
+    "name": "Exeed",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_ferrari",
+    "name": "Ferrari",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_fiat",
+    "name": "Fiat",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_fisker",
+    "name": "Fisker",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_ford",
+    "name": "Ford",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_forthing",
+    "name": "Forthing",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_foton",
+    "name": "Foton",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_geely",
+    "name": "Geely",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_genesis",
+    "name": "Genesis",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_gmc",
+    "name": "GMC",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_great-wall",
+    "name": "Great Wall",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_honda",
+    "name": "Honda",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_hongqi",
+    "name": "Hongqi",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_hummer",
+    "name": "Hummer",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_hyundai",
+    "name": "Hyundai",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_infiniti",
+    "name": "Infiniti",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_iran-khodro",
+    "name": "Iran Khodro",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_isuzu",
+    "name": "Isuzu",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_iveco",
+    "name": "Iveco",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_jaecoo",
+    "name": "Jaecoo",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_jaguar",
+    "name": "Jaguar",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_jeep",
+    "name": "Jeep",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_kia",
+    "name": "Kia",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lada",
+    "name": "Lada",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lamborghini",
+    "name": "Lamborghini",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lancia",
+    "name": "Lancia",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_land-rover",
+    "name": "Land Rover",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_leapmotor",
+    "name": "Leapmotor",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lexus",
+    "name": "Lexus",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lincoln",
+    "name": "Lincoln",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lotus",
+    "name": "Lotus",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_lucid",
+    "name": "Lucid",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mahindra",
+    "name": "Mahindra",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_maserati",
+    "name": "Maserati",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mazda",
+    "name": "Mazda",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mclaren",
+    "name": "McLaren",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mercedes-benz",
+    "name": "Mercedes-Benz",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mercury",
+    "name": "Mercury",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mg",
+    "name": "MG",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mini",
+    "name": "MINI",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_mitsubishi",
+    "name": "Mitsubishi",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_moskvitch",
+    "name": "Moskvitch",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_nio",
+    "name": "Nio",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_nissan",
+    "name": "Nissan",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_oldsmobile",
+    "name": "Oldsmobile",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_omoda",
+    "name": "Omoda",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_opel",
+    "name": "Opel",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_peugeot",
+    "name": "Peugeot",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_plymouth",
+    "name": "Plymouth",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_polestar",
+    "name": "Polestar",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_pontiac",
+    "name": "Pontiac",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_porsche",
+    "name": "Porsche",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_proton",
+    "name": "Proton",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_ram",
+    "name": "RAM",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_renault",
+    "name": "Renault",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_rivian",
+    "name": "Rivian",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_rolls-royce",
+    "name": "Rolls-Royce",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_rover",
+    "name": "Rover",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_saab",
+    "name": "Saab",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_seat",
+    "name": "Seat",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_seres",
+    "name": "Seres",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_skoda",
+    "name": "Skoda",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_skywell",
+    "name": "Skywell",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_smart",
+    "name": "Smart",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_ssangyong",
+    "name": "SsangYong",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_subaru",
+    "name": "Subaru",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_suzuki",
+    "name": "Suzuki",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_tata",
+    "name": "Tata",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_tesla",
+    "name": "Tesla",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_tofas",
+    "name": "Tofaş",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_togg",
+    "name": "Togg",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_toyota",
+    "name": "Toyota",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_volkswagen",
+    "name": "Volkswagen",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_volvo",
+    "name": "Volvo",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_voyah",
+    "name": "Voyah",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_xpeng",
+    "name": "XPeng",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  },
+  {
+    "id": "brand_zeekr",
+    "name": "Zeekr",
+    "aliases": [],
+    "market_scope": [
+      "TR"
+    ],
+    "status": "current_or_legacy",
+    "source_priority": [
+      "official_manufacturer",
+      "ODMD",
+      "marketplace",
+      "aftermarket_catalog"
+    ]
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "version": "2B.1",
+  "generatedAt": "2026-08-11T15:11:39.111756+00:00",
+  "engineRecordCount": 31,
+  "scope": "verified seed",
+  "files": [
+    "README.md",
+    "automotive-engines.json",
+    "engine-schema-v2b.json",
+    "verification-fixtures-v2b.json",
+    "source-manifest-v2b.json"
+  ]
+}

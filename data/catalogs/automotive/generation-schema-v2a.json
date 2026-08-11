@@ -1,0 +1,20 @@
+{
+  "version": "2A.1",
+  "purpose": "Automotive generation/body-code enrichment",
+  "joinKeys": [
+    "brandId",
+    "modelId"
+  ],
+  "matchOrder": [
+    "exact_name",
+    "platform_code",
+    "alias",
+    "year_consistency"
+  ],
+  "rules": [
+    "Do not infer generation from year alone when generations overlap.",
+    "Platform/body codes are brand+model scoped.",
+    "Unknown generation tokens remain unresolved.",
+    "Generation enrichment must never overwrite EXPLICIT subject fields."
+  ]
+}

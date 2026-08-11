@@ -1,0 +1,31 @@
+{
+  "version": "2B.1",
+  "purpose": "Engine/propulsion enrichment scoped by brand + model + generation",
+  "fields": {
+    "engineCode": "nullable; never infer from marketing name",
+    "powerKw": "nullable",
+    "powerHp": "nullable",
+    "displacementCc": "nullable for BEV",
+    "fuelType": "canonical enum/string",
+    "electrification": [
+      "ICE",
+      "MHEV",
+      "HEV",
+      "PHEV",
+      "BEV"
+    ]
+  },
+  "matchOrder": [
+    "generation_scope",
+    "exact_marketing_name",
+    "alias",
+    "displacement+fuel+power_consistency"
+  ],
+  "rules": [
+    "Never select an engine code unless explicitly present in verified data.",
+    "Do not infer engine variant from displacement alone when multiple power variants exist.",
+    "Year is a consistency signal, not sole authority.",
+    "Unknown engine text remains unresolved and must not block request creation.",
+    "Engine enrichment is non-destructive and must not overwrite EXPLICIT subject fields."
+  ]
+}

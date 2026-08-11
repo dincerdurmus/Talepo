@@ -1,0 +1,4626 @@
+[
+  {
+    "id": "generation_volkswagen_golf_golf-i",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf I",
+    "aliases": [
+      "Golf 1",
+      "Golf Mk1",
+      "MK1"
+    ],
+    "platformCodes": [
+      "17"
+    ],
+    "yearFrom": 1974,
+    "yearTo": 1983,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-ii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf II",
+    "aliases": [
+      "Golf 2",
+      "Golf Mk2",
+      "MK2"
+    ],
+    "platformCodes": [
+      "19E",
+      "1G"
+    ],
+    "yearFrom": 1983,
+    "yearTo": 1992,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-iii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf III",
+    "aliases": [
+      "Golf 3",
+      "Golf Mk3",
+      "MK3"
+    ],
+    "platformCodes": [
+      "1H"
+    ],
+    "yearFrom": 1991,
+    "yearTo": 1998,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-iv",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf IV",
+    "aliases": [
+      "Golf 4",
+      "Golf Mk4",
+      "MK4"
+    ],
+    "platformCodes": [
+      "1J"
+    ],
+    "yearFrom": 1997,
+    "yearTo": 2006,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-v",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf V",
+    "aliases": [
+      "Golf 5",
+      "Golf Mk5",
+      "MK5"
+    ],
+    "platformCodes": [
+      "1K"
+    ],
+    "yearFrom": 2003,
+    "yearTo": 2009,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-vi",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf VI",
+    "aliases": [
+      "Golf 6",
+      "Golf Mk6",
+      "MK6"
+    ],
+    "platformCodes": [
+      "5K"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-vii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf VII",
+    "aliases": [
+      "Golf 7",
+      "Golf Mk7",
+      "MK7"
+    ],
+    "platformCodes": [
+      "5G"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_golf_golf-viii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "name": "Golf VIII",
+    "aliases": [
+      "Golf 8",
+      "Golf Mk8",
+      "MK8"
+    ],
+    "platformCodes": [
+      "CD"
+    ],
+    "yearFrom": 2019,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b3",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B3",
+    "aliases": [
+      "B3",
+      "Passat 3"
+    ],
+    "platformCodes": [
+      "3A"
+    ],
+    "yearFrom": 1988,
+    "yearTo": 1993,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b4",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B4",
+    "aliases": [
+      "B4",
+      "Passat 4"
+    ],
+    "platformCodes": [
+      "3A"
+    ],
+    "yearFrom": 1993,
+    "yearTo": 1997,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b5",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B5",
+    "aliases": [
+      "B5",
+      "Passat 5"
+    ],
+    "platformCodes": [
+      "3B"
+    ],
+    "yearFrom": 1996,
+    "yearTo": 2005,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b6",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B6",
+    "aliases": [
+      "B6",
+      "Passat 6"
+    ],
+    "platformCodes": [
+      "3C"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b7",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B7",
+    "aliases": [
+      "B7",
+      "Passat 7"
+    ],
+    "platformCodes": [
+      "3C"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2015,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_passat_passat-b8",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_passat",
+    "name": "Passat B8",
+    "aliases": [
+      "B8",
+      "Passat 8"
+    ],
+    "platformCodes": [
+      "3G"
+    ],
+    "yearFrom": 2014,
+    "yearTo": 2023,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_polo_polo-iii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_polo",
+    "name": "Polo III",
+    "aliases": [
+      "Polo 3",
+      "6N",
+      "6N2"
+    ],
+    "platformCodes": [
+      "6N"
+    ],
+    "yearFrom": 1994,
+    "yearTo": 2001,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_polo_polo-iv",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_polo",
+    "name": "Polo IV",
+    "aliases": [
+      "Polo 4",
+      "9N",
+      "9N3"
+    ],
+    "platformCodes": [
+      "9N"
+    ],
+    "yearFrom": 2001,
+    "yearTo": 2009,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_polo_polo-v",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_polo",
+    "name": "Polo V",
+    "aliases": [
+      "Polo 5",
+      "6R",
+      "6C"
+    ],
+    "platformCodes": [
+      "6R",
+      "6C"
+    ],
+    "yearFrom": 2009,
+    "yearTo": 2017,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_polo_polo-vi",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_polo",
+    "name": "Polo VI",
+    "aliases": [
+      "Polo 6",
+      "AW"
+    ],
+    "platformCodes": [
+      "AW"
+    ],
+    "yearFrom": 2017,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_tiguan_tiguan-i",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_tiguan",
+    "name": "Tiguan I",
+    "aliases": [
+      "Tiguan 1",
+      "5N"
+    ],
+    "platformCodes": [
+      "5N"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_tiguan_tiguan-ii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_tiguan",
+    "name": "Tiguan II",
+    "aliases": [
+      "Tiguan 2",
+      "AD1"
+    ],
+    "platformCodes": [
+      "AD1"
+    ],
+    "yearFrom": 2016,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_caddy_caddy-iii",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_caddy",
+    "name": "Caddy III",
+    "aliases": [
+      "Caddy 3",
+      "2K"
+    ],
+    "platformCodes": [
+      "2K"
+    ],
+    "yearFrom": 2003,
+    "yearTo": 2015,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_caddy_caddy-iv",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_caddy",
+    "name": "Caddy IV",
+    "aliases": [
+      "Caddy 4",
+      "SA"
+    ],
+    "platformCodes": [
+      "SA"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_volkswagen_caddy_caddy-v",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_caddy",
+    "name": "Caddy V",
+    "aliases": [
+      "Caddy 5",
+      "SB"
+    ],
+    "platformCodes": [
+      "SB"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-i",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio I",
+    "aliases": [
+      "Clio 1"
+    ],
+    "platformCodes": [
+      "X57"
+    ],
+    "yearFrom": 1990,
+    "yearTo": 1998,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-ii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio II",
+    "aliases": [
+      "Clio 2"
+    ],
+    "platformCodes": [
+      "X65"
+    ],
+    "yearFrom": 1998,
+    "yearTo": 2012,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-iii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio III",
+    "aliases": [
+      "Clio 3"
+    ],
+    "platformCodes": [
+      "X85"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-iv",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio IV",
+    "aliases": [
+      "Clio 4"
+    ],
+    "platformCodes": [
+      "X98"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-v",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio V",
+    "aliases": [
+      "Clio 5"
+    ],
+    "platformCodes": [
+      "BJA"
+    ],
+    "yearFrom": 2019,
+    "yearTo": 2026,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_clio_clio-vi",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "name": "Clio VI",
+    "aliases": [
+      "Clio 6"
+    ],
+    "platformCodes": [],
+    "yearFrom": 2026,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_megane_megane-i",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_megane",
+    "name": "Megane I",
+    "aliases": [
+      "Megane 1",
+      "Mégane I"
+    ],
+    "platformCodes": [
+      "X64"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_megane_megane-ii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_megane",
+    "name": "Megane II",
+    "aliases": [
+      "Megane 2",
+      "Mégane II"
+    ],
+    "platformCodes": [
+      "X84"
+    ],
+    "yearFrom": 2002,
+    "yearTo": 2009,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_megane_megane-iii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_megane",
+    "name": "Megane III",
+    "aliases": [
+      "Megane 3",
+      "Mégane III"
+    ],
+    "platformCodes": [
+      "X95"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_megane_megane-iv",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_megane",
+    "name": "Megane IV",
+    "aliases": [
+      "Megane 4",
+      "Mégane IV"
+    ],
+    "platformCodes": [
+      "BFB"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_kangoo_kangoo-i",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_kangoo",
+    "name": "Kangoo I",
+    "aliases": [
+      "Kangoo 1"
+    ],
+    "platformCodes": [
+      "KC"
+    ],
+    "yearFrom": 1997,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_kangoo_kangoo-ii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_kangoo",
+    "name": "Kangoo II",
+    "aliases": [
+      "Kangoo 2"
+    ],
+    "platformCodes": [
+      "KW"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_kangoo_kangoo-iii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_kangoo",
+    "name": "Kangoo III",
+    "aliases": [
+      "Kangoo 3"
+    ],
+    "platformCodes": [
+      "RFK"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_symbol_symbol-i",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_symbol",
+    "name": "Symbol I",
+    "aliases": [
+      "Symbol 1",
+      "Clio Symbol"
+    ],
+    "platformCodes": [
+      "LB"
+    ],
+    "yearFrom": 1999,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_symbol_symbol-ii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_symbol",
+    "name": "Symbol II",
+    "aliases": [
+      "Symbol 2"
+    ],
+    "platformCodes": [
+      "LU"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_renault_symbol_symbol-iii",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_symbol",
+    "name": "Symbol III",
+    "aliases": [
+      "Symbol 3"
+    ],
+    "platformCodes": [
+      "L35"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_punto_punto-i",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_punto",
+    "name": "Punto I",
+    "aliases": [
+      "Punto 1",
+      "176"
+    ],
+    "platformCodes": [
+      "176"
+    ],
+    "yearFrom": 1993,
+    "yearTo": 1999,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_punto_punto-ii",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_punto",
+    "name": "Punto II",
+    "aliases": [
+      "Punto 2",
+      "188"
+    ],
+    "platformCodes": [
+      "188"
+    ],
+    "yearFrom": 1999,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_grande-punto_grande-punto",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_grande-punto",
+    "name": "Grande Punto",
+    "aliases": [
+      "Grande Punto 199",
+      "Punto 199"
+    ],
+    "platformCodes": [
+      "199"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2012,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_egea_egea-i",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_egea",
+    "name": "Egea I",
+    "aliases": [
+      "Egea",
+      "Tipo 356"
+    ],
+    "platformCodes": [
+      "356"
+    ],
+    "yearFrom": 2015,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_doblo_doblo-i",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_doblo",
+    "name": "Doblo I",
+    "aliases": [
+      "Doblo 1",
+      "223"
+    ],
+    "platformCodes": [
+      "223"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_doblo_doblo-ii",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_doblo",
+    "name": "Doblo II",
+    "aliases": [
+      "Doblo 2",
+      "263"
+    ],
+    "platformCodes": [
+      "263"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2022,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_doblo_doblo-iii",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_doblo",
+    "name": "Doblo III",
+    "aliases": [
+      "Doblo 3"
+    ],
+    "platformCodes": [
+      "K9"
+    ],
+    "yearFrom": 2022,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_fiorino_fiorino-iii",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_fiorino",
+    "name": "Fiorino III",
+    "aliases": [
+      "Fiorino 225",
+      "Qubo"
+    ],
+    "platformCodes": [
+      "225"
+    ],
+    "yearFrom": 2007,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_linea_linea",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_linea",
+    "name": "Linea",
+    "aliases": [
+      "Linea 323"
+    ],
+    "platformCodes": [
+      "323"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2018,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_palio_palio-i",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_palio",
+    "name": "Palio I",
+    "aliases": [
+      "Palio 1",
+      "178"
+    ],
+    "platformCodes": [
+      "178"
+    ],
+    "yearFrom": 1996,
+    "yearTo": 2011,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_tempra_tempra",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_tempra",
+    "name": "Tempra",
+    "aliases": [
+      "159"
+    ],
+    "platformCodes": [
+      "159"
+    ],
+    "yearFrom": 1990,
+    "yearTo": 1999,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_tipo_tipo-i",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_tipo",
+    "name": "Tipo I",
+    "aliases": [
+      "Tipo 1",
+      "160"
+    ],
+    "platformCodes": [
+      "160"
+    ],
+    "yearFrom": 1988,
+    "yearTo": 1995,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_fiat_tipo_tipo-ii",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_tipo",
+    "name": "Tipo II",
+    "aliases": [
+      "Tipo 2",
+      "Egea",
+      "356"
+    ],
+    "platformCodes": [
+      "356"
+    ],
+    "yearFrom": 2015,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_tofas_sahin_sahin",
+    "brandId": "brand_tofas",
+    "modelId": "model_tofas_sahin",
+    "name": "Şahin",
+    "aliases": [
+      "Tofaş Şahin",
+      "Sahin"
+    ],
+    "platformCodes": [
+      "131"
+    ],
+    "yearFrom": 1981,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_tofas_dogan_dogan",
+    "brandId": "brand_tofas",
+    "modelId": "model_tofas_dogan",
+    "name": "Doğan",
+    "aliases": [
+      "Tofaş Doğan",
+      "Dogan"
+    ],
+    "platformCodes": [
+      "131"
+    ],
+    "yearFrom": 1981,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_tofas_kartal_kartal",
+    "brandId": "brand_tofas",
+    "modelId": "model_tofas_kartal",
+    "name": "Kartal",
+    "aliases": [
+      "Tofaş Kartal"
+    ],
+    "platformCodes": [
+      "131"
+    ],
+    "yearFrom": 1981,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_focus_focus-i",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_focus",
+    "name": "Focus I",
+    "aliases": [
+      "Focus 1",
+      "Mk1"
+    ],
+    "platformCodes": [
+      "C170"
+    ],
+    "yearFrom": 1998,
+    "yearTo": 2005,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_focus_focus-ii",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_focus",
+    "name": "Focus II",
+    "aliases": [
+      "Focus 2",
+      "Mk2"
+    ],
+    "platformCodes": [
+      "C307"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2011,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_focus_focus-iii",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_focus",
+    "name": "Focus III",
+    "aliases": [
+      "Focus 3",
+      "Mk3"
+    ],
+    "platformCodes": [
+      "C346"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2018,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_focus_focus-iv",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_focus",
+    "name": "Focus IV",
+    "aliases": [
+      "Focus 4",
+      "Mk4"
+    ],
+    "platformCodes": [
+      "C519"
+    ],
+    "yearFrom": 2018,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_fiesta_fiesta-mk4",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_fiesta",
+    "name": "Fiesta Mk4",
+    "aliases": [
+      "Fiesta 4",
+      "Mk4"
+    ],
+    "platformCodes": [
+      "BE91"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_fiesta_fiesta-mk5",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_fiesta",
+    "name": "Fiesta Mk5",
+    "aliases": [
+      "Fiesta 5",
+      "Mk5"
+    ],
+    "platformCodes": [
+      "B256"
+    ],
+    "yearFrom": 2002,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_fiesta_fiesta-mk6",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_fiesta",
+    "name": "Fiesta Mk6",
+    "aliases": [
+      "Fiesta 6",
+      "Mk6"
+    ],
+    "platformCodes": [
+      "B299"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2017,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_fiesta_fiesta-mk7",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_fiesta",
+    "name": "Fiesta Mk7",
+    "aliases": [
+      "Fiesta 7",
+      "Mk7"
+    ],
+    "platformCodes": [
+      "B479"
+    ],
+    "yearFrom": 2017,
+    "yearTo": 2023,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_mondeo_mondeo-mk3",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_mondeo",
+    "name": "Mondeo Mk3",
+    "aliases": [
+      "Mondeo 3",
+      "Mk3"
+    ],
+    "platformCodes": [
+      "CD132"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2007,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_mondeo_mondeo-mk4",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_mondeo",
+    "name": "Mondeo Mk4",
+    "aliases": [
+      "Mondeo 4",
+      "Mk4"
+    ],
+    "platformCodes": [
+      "EUCD"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_ford_mondeo_mondeo-mk5",
+    "brandId": "brand_ford",
+    "modelId": "model_ford_mondeo",
+    "name": "Mondeo Mk5",
+    "aliases": [
+      "Mondeo 5",
+      "Mk5"
+    ],
+    "platformCodes": [
+      "CD391"
+    ],
+    "yearFrom": 2014,
+    "yearTo": 2022,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e90",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E90",
+    "aliases": [
+      "E90"
+    ],
+    "platformCodes": [
+      "E90"
+    ],
+    "yearFrom": 1987,
+    "yearTo": 1992,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e100",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E100",
+    "aliases": [
+      "E100"
+    ],
+    "platformCodes": [
+      "E100"
+    ],
+    "yearFrom": 1991,
+    "yearTo": 1998,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e110",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E110",
+    "aliases": [
+      "E110"
+    ],
+    "platformCodes": [
+      "E110"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e120-e130",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E120/E130",
+    "aliases": [
+      "E120",
+      "E130",
+      "Corolla E12"
+    ],
+    "platformCodes": [
+      "E120",
+      "E130"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2007,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e150",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E150",
+    "aliases": [
+      "E150"
+    ],
+    "platformCodes": [
+      "E150"
+    ],
+    "yearFrom": 2006,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e170-e180",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E170/E180",
+    "aliases": [
+      "E170",
+      "E180"
+    ],
+    "platformCodes": [
+      "E170",
+      "E180"
+    ],
+    "yearFrom": 2013,
+    "yearTo": 2019,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_corolla_corolla-e210",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_corolla",
+    "name": "Corolla E210",
+    "aliases": [
+      "E210"
+    ],
+    "platformCodes": [
+      "E210"
+    ],
+    "yearFrom": 2018,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_yaris_yaris-xp10",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_yaris",
+    "name": "Yaris XP10",
+    "aliases": [
+      "XP10",
+      "Yaris 1"
+    ],
+    "platformCodes": [
+      "XP10"
+    ],
+    "yearFrom": 1999,
+    "yearTo": 2005,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_yaris_yaris-xp90",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_yaris",
+    "name": "Yaris XP90",
+    "aliases": [
+      "XP90",
+      "Yaris 2"
+    ],
+    "platformCodes": [
+      "XP90"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2011,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_yaris_yaris-xp130",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_yaris",
+    "name": "Yaris XP130",
+    "aliases": [
+      "XP130",
+      "Yaris 3"
+    ],
+    "platformCodes": [
+      "XP130"
+    ],
+    "yearFrom": 2011,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_toyota_yaris_yaris-xp210",
+    "brandId": "brand_toyota",
+    "modelId": "model_toyota_yaris",
+    "name": "Yaris XP210",
+    "aliases": [
+      "XP210",
+      "Yaris 4"
+    ],
+    "platformCodes": [
+      "XP210"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-f",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra F",
+    "aliases": [
+      "Astra F"
+    ],
+    "platformCodes": [
+      "F"
+    ],
+    "yearFrom": 1991,
+    "yearTo": 1998,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-g",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra G",
+    "aliases": [
+      "Astra G"
+    ],
+    "platformCodes": [
+      "G"
+    ],
+    "yearFrom": 1998,
+    "yearTo": 2004,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-h",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra H",
+    "aliases": [
+      "Astra H"
+    ],
+    "platformCodes": [
+      "H"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-j",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra J",
+    "aliases": [
+      "Astra J"
+    ],
+    "platformCodes": [
+      "J"
+    ],
+    "yearFrom": 2009,
+    "yearTo": 2015,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-k",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra K",
+    "aliases": [
+      "Astra K"
+    ],
+    "platformCodes": [
+      "K"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_astra_astra-l",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_astra",
+    "name": "Astra L",
+    "aliases": [
+      "Astra L"
+    ],
+    "platformCodes": [
+      "L"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_corsa_corsa-b",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_corsa",
+    "name": "Corsa B",
+    "aliases": [
+      "Corsa B"
+    ],
+    "platformCodes": [
+      "B"
+    ],
+    "yearFrom": 1993,
+    "yearTo": 2000,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_corsa_corsa-c",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_corsa",
+    "name": "Corsa C",
+    "aliases": [
+      "Corsa C"
+    ],
+    "platformCodes": [
+      "C"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2006,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_corsa_corsa-d",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_corsa",
+    "name": "Corsa D",
+    "aliases": [
+      "Corsa D"
+    ],
+    "platformCodes": [
+      "D"
+    ],
+    "yearFrom": 2006,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_corsa_corsa-e",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_corsa",
+    "name": "Corsa E",
+    "aliases": [
+      "Corsa E"
+    ],
+    "platformCodes": [
+      "E"
+    ],
+    "yearFrom": 2014,
+    "yearTo": 2019,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_corsa_corsa-f",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_corsa",
+    "name": "Corsa F",
+    "aliases": [
+      "Corsa F"
+    ],
+    "platformCodes": [
+      "F"
+    ],
+    "yearFrom": 2019,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_vectra_vectra-a",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_vectra",
+    "name": "Vectra A",
+    "aliases": [
+      "Vectra A"
+    ],
+    "platformCodes": [
+      "A"
+    ],
+    "yearFrom": 1988,
+    "yearTo": 1995,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_vectra_vectra-b",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_vectra",
+    "name": "Vectra B",
+    "aliases": [
+      "Vectra B"
+    ],
+    "platformCodes": [
+      "B"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_opel_vectra_vectra-c",
+    "brandId": "brand_opel",
+    "modelId": "model_opel_vectra",
+    "name": "Vectra C",
+    "aliases": [
+      "Vectra C"
+    ],
+    "platformCodes": [
+      "C"
+    ],
+    "yearFrom": 2002,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_206_206",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_206",
+    "name": "206",
+    "aliases": [
+      "T1",
+      "206+"
+    ],
+    "platformCodes": [
+      "T1"
+    ],
+    "yearFrom": 1998,
+    "yearTo": 2012,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_207_207",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_207",
+    "name": "207",
+    "aliases": [
+      "A7"
+    ],
+    "platformCodes": [
+      "A7"
+    ],
+    "yearFrom": 2006,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_208_208-i",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_208",
+    "name": "208 I",
+    "aliases": [
+      "208 1",
+      "A9"
+    ],
+    "platformCodes": [
+      "A9"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2019,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_208_208-ii",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_208",
+    "name": "208 II",
+    "aliases": [
+      "208 2",
+      "P21"
+    ],
+    "platformCodes": [
+      "P21"
+    ],
+    "yearFrom": 2019,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_308_308-i",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_308",
+    "name": "308 I",
+    "aliases": [
+      "308 1",
+      "T7"
+    ],
+    "platformCodes": [
+      "T7"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_308_308-ii",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_308",
+    "name": "308 II",
+    "aliases": [
+      "308 2",
+      "T9"
+    ],
+    "platformCodes": [
+      "T9"
+    ],
+    "yearFrom": 2013,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_308_308-iii",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_308",
+    "name": "308 III",
+    "aliases": [
+      "308 3",
+      "P5"
+    ],
+    "platformCodes": [
+      "P5"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_3008_3008-i",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_3008",
+    "name": "3008 I",
+    "aliases": [
+      "3008 1",
+      "T84"
+    ],
+    "platformCodes": [
+      "T84"
+    ],
+    "yearFrom": 2009,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_3008_3008-ii",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_3008",
+    "name": "3008 II",
+    "aliases": [
+      "3008 2",
+      "P84"
+    ],
+    "platformCodes": [
+      "P84"
+    ],
+    "yearFrom": 2016,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_peugeot_3008_3008-iii",
+    "brandId": "brand_peugeot",
+    "modelId": "model_peugeot_3008",
+    "name": "3008 III",
+    "aliases": [
+      "3008 3"
+    ],
+    "platformCodes": [],
+    "yearFrom": 2024,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c3_c3-i",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c3",
+    "name": "C3 I",
+    "aliases": [
+      "C3 1"
+    ],
+    "platformCodes": [
+      "FC/FN"
+    ],
+    "yearFrom": 2002,
+    "yearTo": 2009,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c3_c3-ii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c3",
+    "name": "C3 II",
+    "aliases": [
+      "C3 2"
+    ],
+    "platformCodes": [
+      "SC"
+    ],
+    "yearFrom": 2009,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c3_c3-iii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c3",
+    "name": "C3 III",
+    "aliases": [
+      "C3 3"
+    ],
+    "platformCodes": [
+      "SX"
+    ],
+    "yearFrom": 2016,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c4_c4-i",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c4",
+    "name": "C4 I",
+    "aliases": [
+      "C4 1"
+    ],
+    "platformCodes": [
+      "LC"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c4_c4-ii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c4",
+    "name": "C4 II",
+    "aliases": [
+      "C4 2"
+    ],
+    "platformCodes": [
+      "B7"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2018,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_c4_c4-iii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_c4",
+    "name": "C4 III",
+    "aliases": [
+      "C4 3"
+    ],
+    "platformCodes": [
+      "C41"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_berlingo_berlingo-i",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_berlingo",
+    "name": "Berlingo I",
+    "aliases": [
+      "Berlingo 1"
+    ],
+    "platformCodes": [
+      "M49",
+      "M59"
+    ],
+    "yearFrom": 1996,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_berlingo_berlingo-ii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_berlingo",
+    "name": "Berlingo II",
+    "aliases": [
+      "Berlingo 2"
+    ],
+    "platformCodes": [
+      "B9"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2018,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_citroen_berlingo_berlingo-iii",
+    "brandId": "brand_citroen",
+    "modelId": "model_citroen_berlingo",
+    "name": "Berlingo III",
+    "aliases": [
+      "Berlingo 3"
+    ],
+    "platformCodes": [
+      "K9"
+    ],
+    "yearFrom": 2018,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w124",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W124",
+    "aliases": [
+      "124",
+      "E W124",
+      "Mercedes 124"
+    ],
+    "platformCodes": [
+      "W124"
+    ],
+    "yearFrom": 1984,
+    "yearTo": 1995,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w210",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W210",
+    "aliases": [
+      "210",
+      "E W210"
+    ],
+    "platformCodes": [
+      "W210"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2002,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w211",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W211",
+    "aliases": [
+      "211",
+      "E W211"
+    ],
+    "platformCodes": [
+      "W211"
+    ],
+    "yearFrom": 2002,
+    "yearTo": 2009,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w212",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W212",
+    "aliases": [
+      "212",
+      "E W212"
+    ],
+    "platformCodes": [
+      "W212"
+    ],
+    "yearFrom": 2009,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w213",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W213",
+    "aliases": [
+      "213",
+      "E W213"
+    ],
+    "platformCodes": [
+      "W213"
+    ],
+    "yearFrom": 2016,
+    "yearTo": 2023,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_e-serisi_w214",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_e-serisi",
+    "name": "W214",
+    "aliases": [
+      "214",
+      "E W214"
+    ],
+    "platformCodes": [
+      "W214"
+    ],
+    "yearFrom": 2023,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_c-serisi_w202",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_c-serisi",
+    "name": "W202",
+    "aliases": [
+      "202",
+      "C W202"
+    ],
+    "platformCodes": [
+      "W202"
+    ],
+    "yearFrom": 1993,
+    "yearTo": 2000,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_c-serisi_w203",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_c-serisi",
+    "name": "W203",
+    "aliases": [
+      "203",
+      "C W203"
+    ],
+    "platformCodes": [
+      "W203"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2007,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_c-serisi_w204",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_c-serisi",
+    "name": "W204",
+    "aliases": [
+      "204",
+      "C W204"
+    ],
+    "platformCodes": [
+      "W204"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_c-serisi_w205",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_c-serisi",
+    "name": "W205",
+    "aliases": [
+      "205",
+      "C W205"
+    ],
+    "platformCodes": [
+      "W205"
+    ],
+    "yearFrom": 2014,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_mercedes-benz_c-serisi_w206",
+    "brandId": "brand_mercedes-benz",
+    "modelId": "model_mercedes-benz_c-serisi",
+    "name": "W206",
+    "aliases": [
+      "206",
+      "C W206"
+    ],
+    "platformCodes": [
+      "W206"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_3-serisi_e36",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "name": "E36",
+    "aliases": [
+      "BMW E36",
+      "3 E36"
+    ],
+    "platformCodes": [
+      "E36"
+    ],
+    "yearFrom": 1990,
+    "yearTo": 2000,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_3-serisi_e46",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "name": "E46",
+    "aliases": [
+      "BMW E46",
+      "3 E46"
+    ],
+    "platformCodes": [
+      "E46"
+    ],
+    "yearFrom": 1997,
+    "yearTo": 2006,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_3-serisi_e90-e91-e92-e93",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "name": "E90/E91/E92/E93",
+    "aliases": [
+      "E90",
+      "E91",
+      "E92",
+      "E93",
+      "BMW E90"
+    ],
+    "platformCodes": [
+      "E90",
+      "E91",
+      "E92",
+      "E93"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_3-serisi_f30-f31-f34",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "name": "F30/F31/F34",
+    "aliases": [
+      "F30",
+      "F31",
+      "F34",
+      "BMW F30"
+    ],
+    "platformCodes": [
+      "F30",
+      "F31",
+      "F34"
+    ],
+    "yearFrom": 2011,
+    "yearTo": 2019,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_3-serisi_g20-g21",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "name": "G20/G21",
+    "aliases": [
+      "G20",
+      "G21",
+      "BMW G20"
+    ],
+    "platformCodes": [
+      "G20",
+      "G21"
+    ],
+    "yearFrom": 2018,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_5-serisi_e39",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_5-serisi",
+    "name": "E39",
+    "aliases": [
+      "BMW E39",
+      "5 E39"
+    ],
+    "platformCodes": [
+      "E39"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2004,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_5-serisi_e60-e61",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_5-serisi",
+    "name": "E60/E61",
+    "aliases": [
+      "E60",
+      "E61",
+      "BMW E60"
+    ],
+    "platformCodes": [
+      "E60",
+      "E61"
+    ],
+    "yearFrom": 2003,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_5-serisi_f10-f11",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_5-serisi",
+    "name": "F10/F11",
+    "aliases": [
+      "F10",
+      "F11",
+      "BMW F10"
+    ],
+    "platformCodes": [
+      "F10",
+      "F11"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2017,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_5-serisi_g30-g31",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_5-serisi",
+    "name": "G30/G31",
+    "aliases": [
+      "G30",
+      "G31",
+      "BMW G30"
+    ],
+    "platformCodes": [
+      "G30",
+      "G31"
+    ],
+    "yearFrom": 2016,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_bmw_5-serisi_g60-g61",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_5-serisi",
+    "name": "G60/G61",
+    "aliases": [
+      "G60",
+      "G61",
+      "BMW G60"
+    ],
+    "platformCodes": [
+      "G60",
+      "G61"
+    ],
+    "yearFrom": 2023,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a3_8l",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a3",
+    "name": "8L",
+    "aliases": [
+      "A3 8L"
+    ],
+    "platformCodes": [
+      "8L"
+    ],
+    "yearFrom": 1996,
+    "yearTo": 2003,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a3_8p",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a3",
+    "name": "8P",
+    "aliases": [
+      "A3 8P"
+    ],
+    "platformCodes": [
+      "8P"
+    ],
+    "yearFrom": 2003,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a3_8v",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a3",
+    "name": "8V",
+    "aliases": [
+      "A3 8V"
+    ],
+    "platformCodes": [
+      "8V"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a3_8y",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a3",
+    "name": "8Y",
+    "aliases": [
+      "A3 8Y"
+    ],
+    "platformCodes": [
+      "8Y"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a4_b5",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a4",
+    "name": "B5",
+    "aliases": [
+      "A4 B5",
+      "8D"
+    ],
+    "platformCodes": [
+      "B5",
+      "8D"
+    ],
+    "yearFrom": 1994,
+    "yearTo": 2001,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a4_b6",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a4",
+    "name": "B6",
+    "aliases": [
+      "A4 B6",
+      "8E"
+    ],
+    "platformCodes": [
+      "B6",
+      "8E"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2004,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a4_b7",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a4",
+    "name": "B7",
+    "aliases": [
+      "A4 B7",
+      "8E"
+    ],
+    "platformCodes": [
+      "B7",
+      "8E"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2008,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a4_b8",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a4",
+    "name": "B8",
+    "aliases": [
+      "A4 B8",
+      "8K"
+    ],
+    "platformCodes": [
+      "B8",
+      "8K"
+    ],
+    "yearFrom": 2007,
+    "yearTo": 2015,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_audi_a4_b9",
+    "brandId": "brand_audi",
+    "modelId": "model_audi_a4",
+    "name": "B9",
+    "aliases": [
+      "A4 B9",
+      "8W"
+    ],
+    "platformCodes": [
+      "B9",
+      "8W"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_accent_accent-lc",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_accent",
+    "name": "Accent LC",
+    "aliases": [
+      "LC",
+      "Accent Admire"
+    ],
+    "platformCodes": [
+      "LC"
+    ],
+    "yearFrom": 1999,
+    "yearTo": 2006,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_accent_accent-mc",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_accent",
+    "name": "Accent MC",
+    "aliases": [
+      "MC",
+      "Accent Era"
+    ],
+    "platformCodes": [
+      "MC"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2011,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_accent-blue_accent-rb",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_accent-blue",
+    "name": "Accent RB",
+    "aliases": [
+      "RB",
+      "Accent Blue"
+    ],
+    "platformCodes": [
+      "RB"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2019,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_i20_i20-pb",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "name": "i20 PB",
+    "aliases": [
+      "PB",
+      "i20 1"
+    ],
+    "platformCodes": [
+      "PB"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2014,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_i20_i20-gb",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "name": "i20 GB",
+    "aliases": [
+      "GB",
+      "i20 2"
+    ],
+    "platformCodes": [
+      "GB"
+    ],
+    "yearFrom": 2014,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_hyundai_i20_i20-bc3",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "name": "i20 BC3",
+    "aliases": [
+      "BC3",
+      "i20 3"
+    ],
+    "platformCodes": [
+      "BC3"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_kia_sportage_sportage-sl",
+    "brandId": "brand_kia",
+    "modelId": "model_kia_sportage",
+    "name": "Sportage SL",
+    "aliases": [
+      "SL",
+      "Sportage 3"
+    ],
+    "platformCodes": [
+      "SL"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2015,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_kia_sportage_sportage-ql",
+    "brandId": "brand_kia",
+    "modelId": "model_kia_sportage",
+    "name": "Sportage QL",
+    "aliases": [
+      "QL",
+      "Sportage 4"
+    ],
+    "platformCodes": [
+      "QL"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_kia_sportage_sportage-nq5",
+    "brandId": "brand_kia",
+    "modelId": "model_kia_sportage",
+    "name": "Sportage NQ5",
+    "aliases": [
+      "NQ5",
+      "Sportage 5"
+    ],
+    "platformCodes": [
+      "NQ5"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-ek",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic EK",
+    "aliases": [
+      "EK",
+      "Civic 6"
+    ],
+    "platformCodes": [
+      "EK"
+    ],
+    "yearFrom": 1995,
+    "yearTo": 2000,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-es",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic ES",
+    "aliases": [
+      "ES",
+      "Civic 7"
+    ],
+    "platformCodes": [
+      "ES"
+    ],
+    "yearFrom": 2000,
+    "yearTo": 2005,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-fd-fa",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic FD/FA",
+    "aliases": [
+      "FD",
+      "FA",
+      "Civic 8"
+    ],
+    "platformCodes": [
+      "FD",
+      "FA"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2011,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-fb",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic FB",
+    "aliases": [
+      "FB",
+      "Civic 9"
+    ],
+    "platformCodes": [
+      "FB"
+    ],
+    "yearFrom": 2011,
+    "yearTo": 2016,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-fc-fk",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic FC/FK",
+    "aliases": [
+      "FC",
+      "FK",
+      "Civic 10"
+    ],
+    "platformCodes": [
+      "FC",
+      "FK"
+    ],
+    "yearFrom": 2015,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_honda_civic_civic-fe-fl",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "name": "Civic FE/FL",
+    "aliases": [
+      "FE",
+      "FL",
+      "Civic 11"
+    ],
+    "platformCodes": [
+      "FE",
+      "FL"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_nissan_qashqai_qashqai-j10",
+    "brandId": "brand_nissan",
+    "modelId": "model_nissan_qashqai",
+    "name": "Qashqai J10",
+    "aliases": [
+      "J10",
+      "Qashqai 1"
+    ],
+    "platformCodes": [
+      "J10"
+    ],
+    "yearFrom": 2006,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_nissan_qashqai_qashqai-j11",
+    "brandId": "brand_nissan",
+    "modelId": "model_nissan_qashqai",
+    "name": "Qashqai J11",
+    "aliases": [
+      "J11",
+      "Qashqai 2"
+    ],
+    "platformCodes": [
+      "J11"
+    ],
+    "yearFrom": 2013,
+    "yearTo": 2021,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_nissan_qashqai_qashqai-j12",
+    "brandId": "brand_nissan",
+    "modelId": "model_nissan_qashqai",
+    "name": "Qashqai J12",
+    "aliases": [
+      "J12",
+      "Qashqai 3"
+    ],
+    "platformCodes": [
+      "J12"
+    ],
+    "yearFrom": 2021,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_skoda_octavia_octavia-i",
+    "brandId": "brand_skoda",
+    "modelId": "model_skoda_octavia",
+    "name": "Octavia I",
+    "aliases": [
+      "Octavia 1",
+      "1U"
+    ],
+    "platformCodes": [
+      "1U"
+    ],
+    "yearFrom": 1996,
+    "yearTo": 2010,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_skoda_octavia_octavia-ii",
+    "brandId": "brand_skoda",
+    "modelId": "model_skoda_octavia",
+    "name": "Octavia II",
+    "aliases": [
+      "Octavia 2",
+      "1Z"
+    ],
+    "platformCodes": [
+      "1Z"
+    ],
+    "yearFrom": 2004,
+    "yearTo": 2013,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_skoda_octavia_octavia-iii",
+    "brandId": "brand_skoda",
+    "modelId": "model_skoda_octavia",
+    "name": "Octavia III",
+    "aliases": [
+      "Octavia 3",
+      "5E"
+    ],
+    "platformCodes": [
+      "5E"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_skoda_octavia_octavia-iv",
+    "brandId": "brand_skoda",
+    "modelId": "model_skoda_octavia",
+    "name": "Octavia IV",
+    "aliases": [
+      "Octavia 4",
+      "NX"
+    ],
+    "platformCodes": [
+      "NX"
+    ],
+    "yearFrom": 2019,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_seat_leon_leon-i",
+    "brandId": "brand_seat",
+    "modelId": "model_seat_leon",
+    "name": "Leon I",
+    "aliases": [
+      "Leon 1",
+      "1M"
+    ],
+    "platformCodes": [
+      "1M"
+    ],
+    "yearFrom": 1999,
+    "yearTo": 2006,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_seat_leon_leon-ii",
+    "brandId": "brand_seat",
+    "modelId": "model_seat_leon",
+    "name": "Leon II",
+    "aliases": [
+      "Leon 2",
+      "1P"
+    ],
+    "platformCodes": [
+      "1P"
+    ],
+    "yearFrom": 2005,
+    "yearTo": 2012,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_seat_leon_leon-iii",
+    "brandId": "brand_seat",
+    "modelId": "model_seat_leon",
+    "name": "Leon III",
+    "aliases": [
+      "Leon 3",
+      "5F"
+    ],
+    "platformCodes": [
+      "5F"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_seat_leon_leon-iv",
+    "brandId": "brand_seat",
+    "modelId": "model_seat_leon",
+    "name": "Leon IV",
+    "aliases": [
+      "Leon 4",
+      "KL"
+    ],
+    "platformCodes": [
+      "KL"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_duster_duster-i",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_duster",
+    "name": "Duster I",
+    "aliases": [
+      "Duster 1",
+      "HS"
+    ],
+    "platformCodes": [
+      "HS"
+    ],
+    "yearFrom": 2010,
+    "yearTo": 2017,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_duster_duster-ii",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_duster",
+    "name": "Duster II",
+    "aliases": [
+      "Duster 2",
+      "HM"
+    ],
+    "platformCodes": [
+      "HM"
+    ],
+    "yearFrom": 2017,
+    "yearTo": 2024,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_duster_duster-iii",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_duster",
+    "name": "Duster III",
+    "aliases": [
+      "Duster 3",
+      "P1310"
+    ],
+    "platformCodes": [
+      "P1310"
+    ],
+    "yearFrom": 2024,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_sandero_sandero-i",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_sandero",
+    "name": "Sandero I",
+    "aliases": [
+      "Sandero 1",
+      "B90"
+    ],
+    "platformCodes": [
+      "B90"
+    ],
+    "yearFrom": 2008,
+    "yearTo": 2012,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_sandero_sandero-ii",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_sandero",
+    "name": "Sandero II",
+    "aliases": [
+      "Sandero 2",
+      "B52"
+    ],
+    "platformCodes": [
+      "B52"
+    ],
+    "yearFrom": 2012,
+    "yearTo": 2020,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_dacia_sandero_sandero-iii",
+    "brandId": "brand_dacia",
+    "modelId": "model_dacia_sandero",
+    "name": "Sandero III",
+    "aliases": [
+      "Sandero 3",
+      "BJI"
+    ],
+    "platformCodes": [
+      "BJI"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_chery_tiggo-7-pro_tiggo-7-pro",
+    "brandId": "brand_chery",
+    "modelId": "model_chery_tiggo-7-pro",
+    "name": "Tiggo 7 Pro",
+    "aliases": [
+      "Tiggo7 Pro",
+      "Tiggo 7"
+    ],
+    "platformCodes": [
+      "T1E"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_chery_tiggo-8-pro_tiggo-8-pro",
+    "brandId": "brand_chery",
+    "modelId": "model_chery_tiggo-8-pro",
+    "name": "Tiggo 8 Pro",
+    "aliases": [
+      "Tiggo8 Pro",
+      "Tiggo 8"
+    ],
+    "platformCodes": [
+      "T1D"
+    ],
+    "yearFrom": 2020,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_chery_tiggo-8-pro-max_tiggo-8-pro-max",
+    "brandId": "brand_chery",
+    "modelId": "model_chery_tiggo-8-pro-max",
+    "name": "Tiggo 8 Pro Max",
+    "aliases": [
+      "Tiggo8 Pro Max"
+    ],
+    "platformCodes": [
+      "T1D"
+    ],
+    "yearFrom": 2022,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_chery_omoda-5_omoda-5",
+    "brandId": "brand_chery",
+    "modelId": "model_chery_omoda-5",
+    "name": "Omoda 5",
+    "aliases": [
+      "OMODA5",
+      "Omoda5"
+    ],
+    "platformCodes": [
+      "T19C"
+    ],
+    "yearFrom": 2022,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_togg_t10x_t10x",
+    "brandId": "brand_togg",
+    "modelId": "model_togg_t10x",
+    "name": "T10X",
+    "aliases": [
+      "T10 X",
+      "Togg T10X"
+    ],
+    "platformCodes": [
+      "T10X"
+    ],
+    "yearFrom": 2023,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  },
+  {
+    "id": "generation_togg_t10f_t10f",
+    "brandId": "brand_togg",
+    "modelId": "model_togg_t10f",
+    "name": "T10F",
+    "aliases": [
+      "T10 F",
+      "Togg T10F"
+    ],
+    "platformCodes": [
+      "T10F"
+    ],
+    "yearFrom": 2025,
+    "yearTo": null,
+    "bodyTypes": [],
+    "marketScope": [
+      "TR",
+      "EU"
+    ],
+    "provenance": {
+      "type": "CURATED_MULTI_SOURCE",
+      "confidence": "HIGH",
+      "verificationStatus": "catalog_curated"
+    },
+    "notes": null
+  }
+]

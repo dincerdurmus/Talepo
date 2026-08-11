@@ -1,0 +1,128 @@
+[
+  {
+    "id": "group_volkswagen-group",
+    "name": "Volkswagen Group",
+    "brands": [
+      "brand_audi",
+      "brand_bentley",
+      "brand_cupra",
+      "brand_lamborghini",
+      "brand_porsche",
+      "brand_seat",
+      "brand_skoda",
+      "brand_volkswagen"
+    ]
+  },
+  {
+    "id": "group_stellantis",
+    "name": "Stellantis",
+    "brands": [
+      "brand_abarth",
+      "brand_alfa-romeo",
+      "brand_citroen",
+      "brand_ds-automobiles",
+      "brand_fiat",
+      "brand_jeep",
+      "brand_lancia",
+      "brand_maserati",
+      "brand_opel",
+      "brand_peugeot"
+    ]
+  },
+  {
+    "id": "group_renault-group",
+    "name": "Renault Group",
+    "brands": [
+      "brand_dacia",
+      "brand_renault",
+      "brand_alpine"
+    ]
+  },
+  {
+    "id": "group_hyundai-motor-group",
+    "name": "Hyundai Motor Group",
+    "brands": [
+      "brand_genesis",
+      "brand_hyundai",
+      "brand_kia"
+    ]
+  },
+  {
+    "id": "group_toyota-group",
+    "name": "Toyota Group",
+    "brands": [
+      "brand_lexus",
+      "brand_toyota",
+      "brand_daihatsu"
+    ]
+  },
+  {
+    "id": "group_bmw-group",
+    "name": "BMW Group",
+    "brands": [
+      "brand_bmw",
+      "brand_mini",
+      "brand_rolls-royce"
+    ]
+  },
+  {
+    "id": "group_mercedes-benz-group",
+    "name": "Mercedes-Benz Group",
+    "brands": [
+      "brand_mercedes-benz",
+      "brand_smart"
+    ]
+  },
+  {
+    "id": "group_geely-holding",
+    "name": "Geely Holding",
+    "brands": [
+      "brand_geely",
+      "brand_lotus",
+      "brand_polestar",
+      "brand_volvo",
+      "brand_zeekr"
+    ]
+  },
+  {
+    "id": "group_chery-group",
+    "name": "Chery Group",
+    "brands": [
+      "brand_chery",
+      "brand_exeed",
+      "brand_jaecoo",
+      "brand_omoda"
+    ]
+  },
+  {
+    "id": "group_general-motors",
+    "name": "General Motors",
+    "brands": [
+      "brand_buick",
+      "brand_cadillac",
+      "brand_chevrolet",
+      "brand_gmc",
+      "brand_hummer",
+      "brand_oldsmobile",
+      "brand_pontiac"
+    ]
+  },
+  {
+    "id": "group_ford-motor-company",
+    "name": "Ford Motor Company",
+    "brands": [
+      "brand_ford",
+      "brand_lincoln",
+      "brand_mercury"
+    ]
+  },
+  {
+    "id": "group_tata-group",
+    "name": "Tata Group",
+    "brands": [
+      "brand_jaguar",
+      "brand_land-rover",
+      "brand_tata"
+    ]
+  }
+]

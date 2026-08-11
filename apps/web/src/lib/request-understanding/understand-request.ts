@@ -43,6 +43,9 @@ import {
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
 import { findAutomotiveModel } from "@/lib/ai/parser/brand-catalog";
 
+import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
+import { ensureAutomotiveCatalogRegistered } from "@/lib/catalog/automotive/provider";
+
 import { reconcileUnderstanding } from "./reconcile-understanding";
 import {
   reconcileParentIdentityTokens,
@@ -1428,7 +1431,9 @@ export function understandRequest(
 
   const detectedCat = detectCategoryResult(rawInput);
 
-  return {
+  ensureAutomotiveCatalogRegistered();
+
+  return applyCatalogEnrichment({
     version: "v1",
     rawInput,
     normalizedInput,
@@ -1469,5 +1474,5 @@ export function understandRequest(
       intentSignals: intentResolved.evidence,
       notes: strategyResolution.strategyReasons,
     },
-  };
+  });
 }

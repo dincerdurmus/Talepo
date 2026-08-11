@@ -1,0 +1,26 @@
+{
+  "scope": "Talepo / Otomotiv / yedek parça bilgi katmanı",
+  "research_sources": [
+    {
+      "name": "Sahibinden otomotiv yedek parça taxonomy",
+      "purpose": "Türkiye kullanıcı dili ve ana parça sistemleri",
+      "url_hint": "sahibinden.com otomotiv ekipmanları yedek parça"
+    },
+    {
+      "name": "ODMD",
+      "purpose": "Türkiye'de distribütörü bulunan güncel marka/pazar doğrulaması",
+      "url_hint": "odmd.org.tr"
+    },
+    {
+      "name": "Kautek / TecDoc based catalog",
+      "purpose": "OE no, cross-reference, marka-model hiyerarşisi yaklaşımı",
+      "url_hint": "kautek.com.tr"
+    },
+    {
+      "name": "Phira online catalog",
+      "purpose": "Marka/model/OEM aftermarket katalog yaklaşımı",
+      "url_hint": "phira.com.tr"
+    }
+  ],
+  "important_note": "Bu paket lisanslı TecDoc/OEM veri tabanının kopyası değildir. OEM ve tam uyumluluk kayıtları yalnızca doğrulanmış/lisansı uygun kaynaklardan ingest edilmelidir."
+}

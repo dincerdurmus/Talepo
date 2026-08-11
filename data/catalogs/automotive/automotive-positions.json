@@ -1,0 +1,76 @@
+[
+  {
+    "id": "front_left",
+    "tr": "ön sol",
+    "aliases": [
+      "sol ön",
+      "şoför tarafı ön"
+    ]
+  },
+  {
+    "id": "front_right",
+    "tr": "ön sağ",
+    "aliases": [
+      "sağ ön",
+      "yolcu tarafı ön"
+    ]
+  },
+  {
+    "id": "rear_left",
+    "tr": "arka sol",
+    "aliases": [
+      "sol arka"
+    ]
+  },
+  {
+    "id": "rear_right",
+    "tr": "arka sağ",
+    "aliases": [
+      "sağ arka"
+    ]
+  },
+  {
+    "id": "front",
+    "tr": "ön",
+    "aliases": []
+  },
+  {
+    "id": "rear",
+    "tr": "arka",
+    "aliases": []
+  },
+  {
+    "id": "left",
+    "tr": "sol",
+    "aliases": [
+      "şoför tarafı"
+    ]
+  },
+  {
+    "id": "right",
+    "tr": "sağ",
+    "aliases": [
+      "yolcu tarafı"
+    ]
+  },
+  {
+    "id": "upper",
+    "tr": "üst",
+    "aliases": []
+  },
+  {
+    "id": "lower",
+    "tr": "alt",
+    "aliases": []
+  },
+  {
+    "id": "inner",
+    "tr": "iç",
+    "aliases": []
+  },
+  {
+    "id": "outer",
+    "tr": "dış",
+    "aliases": []
+  }
+]

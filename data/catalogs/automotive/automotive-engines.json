@@ -1,0 +1,796 @@
+[
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-0-tsi-bluemotion_63",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.0 TSI BlueMotion",
+    "aliases": [
+      "1.0 TSI"
+    ],
+    "engineCode": null,
+    "displacementCc": 999,
+    "fuelType": "PETROL",
+    "powerKw": 63,
+    "powerHp": 85,
+    "torqueNm": 160,
+    "yearFrom": 2015,
+    "yearTo": 2017,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-0-tsi_85",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.0 TSI",
+    "aliases": [
+      "1.0 TSI"
+    ],
+    "engineCode": null,
+    "displacementCc": 999,
+    "fuelType": "PETROL",
+    "powerKw": 85,
+    "powerHp": 115,
+    "torqueNm": 200,
+    "yearFrom": 2017,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-2-tsi_63",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.2 TSI",
+    "aliases": [
+      "1.2 TSI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1197,
+    "fuelType": "PETROL",
+    "powerKw": 63,
+    "powerHp": 85,
+    "torqueNm": 160,
+    "yearFrom": 2013,
+    "yearTo": 2015,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-2-tsi-bluemotion_77",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.2 TSI BlueMotion",
+    "aliases": [
+      "1.2 TSI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1197,
+    "fuelType": "PETROL",
+    "powerKw": 77,
+    "powerHp": 105,
+    "torqueNm": 175,
+    "yearFrom": 2013,
+    "yearTo": 2015,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-2-tsi-evo_81",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.2 TSI EVO",
+    "aliases": [
+      "1.2 TSI EVO"
+    ],
+    "engineCode": null,
+    "displacementCc": 1197,
+    "fuelType": "PETROL",
+    "powerKw": 81,
+    "powerHp": 110,
+    "torqueNm": 175,
+    "yearFrom": 2015,
+    "yearTo": 2016,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-4-tsi_90",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.4 TSI",
+    "aliases": [
+      "1.4 TSI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1395,
+    "fuelType": "PETROL",
+    "powerKw": 90,
+    "powerHp": 122,
+    "torqueNm": 200,
+    "yearFrom": 2013,
+    "yearTo": 2014,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-4-tsi-act_103",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.4 TSI ACT",
+    "aliases": [
+      "1.4 TSI ACT"
+    ],
+    "engineCode": null,
+    "displacementCc": 1395,
+    "fuelType": "PETROL",
+    "powerKw": 103,
+    "powerHp": 140,
+    "torqueNm": 250,
+    "yearFrom": 2013,
+    "yearTo": 2016,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-4-tgi-bluemotion_81",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.4 TGI BlueMotion",
+    "aliases": [
+      "1.4 TGI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1395,
+    "fuelType": "CNG",
+    "powerKw": 81,
+    "powerHp": 110,
+    "torqueNm": 200,
+    "yearFrom": 2014,
+    "yearTo": 2020,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-5-tsi-evo-act_96",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.5 TSI Evo ACT",
+    "aliases": [
+      "1.5 TSI Evo ACT"
+    ],
+    "engineCode": null,
+    "displacementCc": 1498,
+    "fuelType": "PETROL",
+    "powerKw": 96,
+    "powerHp": 130,
+    "torqueNm": 200,
+    "yearFrom": 2017,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-5-tsi-evo-act_110",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.5 TSI Evo ACT",
+    "aliases": [
+      "1.5 TSI Evo ACT"
+    ],
+    "engineCode": null,
+    "displacementCc": 1498,
+    "fuelType": "PETROL",
+    "powerKw": 110,
+    "powerHp": 150,
+    "torqueNm": 250,
+    "yearFrom": 2017,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-6-tdi-bluemotion_66",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.6 TDI BlueMotion",
+    "aliases": [
+      "1.6 TDI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "DIESEL",
+    "powerKw": 66,
+    "powerHp": 90,
+    "torqueNm": 230,
+    "yearFrom": 2013,
+    "yearTo": 2015,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-6-tdi_77",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.6 TDI",
+    "aliases": [
+      "1.6 TDI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "DIESEL",
+    "powerKw": 77,
+    "powerHp": 105,
+    "torqueNm": 250,
+    "yearFrom": 2013,
+    "yearTo": 2014,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-6-tdi_81",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.6 TDI",
+    "aliases": [
+      "1.6 TDI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "DIESEL",
+    "powerKw": 81,
+    "powerHp": 110,
+    "torqueNm": 250,
+    "yearFrom": 2015,
+    "yearTo": 2016,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_1-6-tdi-ea288_85",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "1.6 TDI EA288",
+    "aliases": [
+      "1.6 TDI EA288"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "DIESEL",
+    "powerKw": 85,
+    "powerHp": 115,
+    "torqueNm": 250,
+    "yearFrom": 2017,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_2-0-tdi_110",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "2.0 TDI",
+    "aliases": [
+      "2.0 TDI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1968,
+    "fuelType": "DIESEL",
+    "powerKw": 110,
+    "powerHp": 150,
+    "torqueNm": 340,
+    "yearFrom": 2013,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_gtd-2-0-tdi_135",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "GTD 2.0 TDI",
+    "aliases": [
+      "GTD 2.0 TDI"
+    ],
+    "engineCode": null,
+    "displacementCc": 1968,
+    "fuelType": "DIESEL",
+    "powerKw": 135,
+    "powerHp": 184,
+    "torqueNm": 380,
+    "yearFrom": 2014,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_gte_150",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "GTE",
+    "aliases": [
+      "Golf GTE",
+      "1.4 TSI GTE"
+    ],
+    "engineCode": null,
+    "displacementCc": 1395,
+    "fuelType": "PETROL_PHEV",
+    "powerKw": 150,
+    "powerHp": 204,
+    "torqueNm": 350,
+    "yearFrom": 2014,
+    "yearTo": 2018,
+    "electrification": "PHEV",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Engine versions Golf VII profile"
+    },
+    "notes": "System output; combustion + electric."
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_e-golf_85",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "e-Golf",
+    "aliases": [
+      "eGolf",
+      "e Golf"
+    ],
+    "engineCode": null,
+    "displacementCc": null,
+    "fuelType": "ELECTRIC",
+    "powerKw": 85,
+    "powerHp": 116,
+    "torqueNm": null,
+    "yearFrom": 2014,
+    "yearTo": 2016,
+    "electrification": "BEV",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Vehicle data Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_volkswagen_golf_generation-volkswagen-golf-golf-vii_e-golf_100",
+    "brandId": "brand_volkswagen",
+    "modelId": "model_volkswagen_golf",
+    "generationId": "generation_volkswagen_golf_golf-vii",
+    "marketingName": "e-Golf",
+    "aliases": [
+      "eGolf",
+      "e Golf"
+    ],
+    "engineCode": null,
+    "displacementCc": null,
+    "fuelType": "ELECTRIC",
+    "powerKw": 100,
+    "powerHp": 136,
+    "torqueNm": null,
+    "yearFrom": 2017,
+    "yearTo": 2020,
+    "electrification": "BEV",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Volkswagen Newsroom — Vehicle data Golf VII profile"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_renault_clio_generation-renault-clio-clio-iv_0-9-tce_66",
+    "brandId": "brand_renault",
+    "modelId": "model_renault_clio",
+    "generationId": "generation_renault_clio_clio-iv",
+    "marketingName": "0.9 TCe",
+    "aliases": [
+      "0.9 TCE",
+      "TCe 90",
+      "0.9 turbo"
+    ],
+    "engineCode": null,
+    "displacementCc": 898,
+    "fuelType": "PETROL",
+    "powerKw": 66,
+    "powerHp": 90,
+    "torqueNm": null,
+    "yearFrom": 2012,
+    "yearTo": 2019,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Renault Group — Histoire du Renault Clio"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_fiat_egea_generation-fiat-egea-egea-i_1-4-16v-fire_70",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_egea",
+    "generationId": "generation_fiat_egea_egea-i",
+    "marketingName": "1.4 16V Fire",
+    "aliases": [
+      "1.4 Fire",
+      "1.4 95"
+    ],
+    "engineCode": null,
+    "displacementCc": 1368,
+    "fuelType": "PETROL",
+    "powerKw": 70,
+    "powerHp": 95,
+    "torqueNm": null,
+    "yearFrom": 2015,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Stellantis Media — Fiat Tipo: Born to be a Sedan"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_fiat_egea_generation-fiat-egea-egea-i_1-6-e-torq_81",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_egea",
+    "generationId": "generation_fiat_egea_egea-i",
+    "marketingName": "1.6 E.torQ",
+    "aliases": [
+      "1.6 E-TorQ",
+      "1.6 110"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "PETROL",
+    "powerKw": 81,
+    "powerHp": 110,
+    "torqueNm": null,
+    "yearFrom": 2015,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Stellantis Media — Fiat Tipo: Born to be a Sedan"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_fiat_egea_generation-fiat-egea-egea-i_1-3-multijet-ii_70",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_egea",
+    "generationId": "generation_fiat_egea_egea-i",
+    "marketingName": "1.3 MultiJet II",
+    "aliases": [
+      "1.3 Multijet",
+      "1.3 MJet"
+    ],
+    "engineCode": null,
+    "displacementCc": 1248,
+    "fuelType": "DIESEL",
+    "powerKw": 70,
+    "powerHp": 95,
+    "torqueNm": null,
+    "yearFrom": 2015,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Stellantis Media — Fiat Tipo: Born to be a Sedan"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_fiat_egea_generation-fiat-egea-egea-i_1-6-multijet-ii_88",
+    "brandId": "brand_fiat",
+    "modelId": "model_fiat_egea",
+    "generationId": "generation_fiat_egea_egea-i",
+    "marketingName": "1.6 MultiJet II",
+    "aliases": [
+      "1.6 Multijet",
+      "1.6 MJet",
+      "1.6 120"
+    ],
+    "engineCode": null,
+    "displacementCc": 1598,
+    "fuelType": "DIESEL",
+    "powerKw": 88,
+    "powerHp": 120,
+    "torqueNm": null,
+    "yearFrom": 2015,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Stellantis Media — Fiat Tipo: Born to be a Sedan"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_hyundai_i20_generation-hyundai-i20-i20-bc3_1-2-mpi_62",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "generationId": "generation_hyundai_i20_i20-bc3",
+    "marketingName": "1.2 MPI",
+    "aliases": [
+      "1.2",
+      "1.2 84"
+    ],
+    "engineCode": null,
+    "displacementCc": 1197,
+    "fuelType": "PETROL",
+    "powerKw": 62,
+    "powerHp": 84,
+    "torqueNm": null,
+    "yearFrom": 2020,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Hyundai News — i20 technical data, Nov 2020"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_hyundai_i20_generation-hyundai-i20-i20-bc3_1-0-t-gdi_74",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "generationId": "generation_hyundai_i20_i20-bc3",
+    "marketingName": "1.0 T-GDI",
+    "aliases": [
+      "1.0 TGDI",
+      "1.0 turbo",
+      "1.0 100"
+    ],
+    "engineCode": null,
+    "displacementCc": 998,
+    "fuelType": "PETROL",
+    "powerKw": 74,
+    "powerHp": 100,
+    "torqueNm": null,
+    "yearFrom": 2020,
+    "yearTo": null,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Hyundai News — i20 technical data, Nov 2020"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_hyundai_i20_generation-hyundai-i20-i20-bc3_1-0-t-gdi-48v_74",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "generationId": "generation_hyundai_i20_i20-bc3",
+    "marketingName": "1.0 T-GDI 48V",
+    "aliases": [
+      "1.0 TGDI 48V",
+      "1.0 mild hybrid 100"
+    ],
+    "engineCode": null,
+    "displacementCc": 998,
+    "fuelType": "PETROL_MHEV",
+    "powerKw": 74,
+    "powerHp": 100,
+    "torqueNm": null,
+    "yearFrom": 2020,
+    "yearTo": null,
+    "electrification": "MHEV",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Hyundai News — i20 technical data, Nov 2020"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_hyundai_i20_generation-hyundai-i20-i20-bc3_1-0-t-gdi-48v_88",
+    "brandId": "brand_hyundai",
+    "modelId": "model_hyundai_i20",
+    "generationId": "generation_hyundai_i20_i20-bc3",
+    "marketingName": "1.0 T-GDI 48V",
+    "aliases": [
+      "1.0 TGDI 48V 120",
+      "1.0 mild hybrid 120"
+    ],
+    "engineCode": null,
+    "displacementCc": 998,
+    "fuelType": "PETROL_MHEV",
+    "powerKw": 88,
+    "powerHp": 120,
+    "torqueNm": null,
+    "yearFrom": 2020,
+    "yearTo": null,
+    "electrification": "MHEV",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Hyundai News — i20 technical data, Nov 2020"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_honda_civic_generation-honda-civic-civic-fc-fk_1-5-vtec-turbo_134",
+    "brandId": "brand_honda",
+    "modelId": "model_honda_civic",
+    "generationId": "generation_honda_civic_civic-fc-fk",
+    "marketingName": "1.5 VTEC Turbo",
+    "aliases": [
+      "1.5 VTEC TURBO",
+      "1.5 turbo",
+      "182 PS"
+    ],
+    "engineCode": null,
+    "displacementCc": 1498,
+    "fuelType": "PETROL",
+    "powerKw": 134,
+    "powerHp": 182,
+    "torqueNm": 240,
+    "yearFrom": 2017,
+    "yearTo": 2021,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "Honda News Europe — 2017 Civic"
+    },
+    "notes": null
+  },
+  {
+    "id": "engine_bmw_3-serisi_generation-bmw-3-serisi-e90-e91-e92-e93_320d_130",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "generationId": "generation_bmw_3-serisi_e90-e91-e92-e93",
+    "marketingName": "320d",
+    "aliases": [
+      "2.0d 177",
+      "320 d"
+    ],
+    "engineCode": null,
+    "displacementCc": 1995,
+    "fuelType": "DIESEL",
+    "powerKw": 130,
+    "powerHp": 177,
+    "torqueNm": 350,
+    "yearFrom": 2008,
+    "yearTo": 2012,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "BMW Group Press — Der neue BMW 3er, 2008"
+    },
+    "notes": "E90-family 320d official 2008 technical data; exact engine code not asserted."
+  },
+  {
+    "id": "engine_bmw_3-serisi_generation-bmw-3-serisi-e90-e91-e92-e93_320d-efficientdynamics_120",
+    "brandId": "brand_bmw",
+    "modelId": "model_bmw_3-serisi",
+    "generationId": "generation_bmw_3-serisi_e90-e91-e92-e93",
+    "marketingName": "320d EfficientDynamics",
+    "aliases": [
+      "320d ED",
+      "320d Efficient Dynamics"
+    ],
+    "engineCode": null,
+    "displacementCc": 1995,
+    "fuelType": "DIESEL",
+    "powerKw": 120,
+    "powerHp": 163,
+    "torqueNm": 360,
+    "yearFrom": 2010,
+    "yearTo": 2012,
+    "electrification": "ICE",
+    "provenance": {
+      "type": "OFFICIAL_MANUFACTURER",
+      "confidence": "HIGH",
+      "sourceRef": "BMW Group Press — 320d EfficientDynamics Edition, 2010"
+    },
+    "notes": null
+  }
+]
