@@ -2,9 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { buildLocalRequestIntelligence } from "@/lib/request-brain/local-intelligence";
 import { buildPreviewFingerprint } from "@/lib/request-brain/preview-fingerprint";
-import { rankNextBestQuestions } from "@/lib/request-brain/question-priority";
 import type {
   MarketIntelligenceSnapshot,
   PricePreviewResponse,
@@ -87,98 +85,37 @@ export function useRequestBrain(input: UseRequestBrainInput): UseRequestBrainRes
   const lastFingerprintRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  /**
+   * Strategy/completeness from authoritative understanding snapshot only.
+   * Do not re-classify category/strategy from draft text (no second authority).
+   * Question list is owned by resolveHybridQuestions — nextQuestions always [].
+   */
   const localIntel = useMemo(() => {
+    if (!input.understanding) {
+      return { strategy: null, completeness: null };
+    }
     if (!input.draft.title.trim() && !input.draft.rawText.trim()) {
       return { strategy: null, completeness: null };
     }
 
-    // Canonical brain is authoritative for strategy when provided
-    if (input.understanding) {
-      try {
-        const strategy = strategyResolutionFromUnderstanding(input.understanding);
-        const completeness = completenessFromUnderstanding(
-          input.understanding,
-          input.draft.fieldValues,
-        );
-        return { strategy, completeness };
-      } catch {
-        // fall through to legacy local
-      }
-    }
-
     try {
-      const { strategy, completeness } = buildLocalRequestIntelligence(input.draft);
+      const strategy = strategyResolutionFromUnderstanding(input.understanding);
+      const completeness = completenessFromUnderstanding(
+        input.understanding,
+        input.draft.fieldValues,
+      );
       return { strategy, completeness };
     } catch {
       return { strategy: null, completeness: null };
     }
   }, [input.draft, input.understanding]);
 
-  const nextQuestions = useMemo(() => {
-    if (!localIntel.strategy || !localIntel.completeness) return [];
-
-    const knownFromUnderstanding = new Set<string>();
-    if (input.understanding) {
-      for (const fact of input.understanding.explicitFacts) {
-        knownFromUnderstanding.add(fact.key);
-      }
-      if (input.understanding.attributes.modelYear) {
-        knownFromUnderstanding.add("modelYear");
-      }
-      if (input.understanding.identity.model) knownFromUnderstanding.add("model");
-      if (input.understanding.identity.brand) knownFromUnderstanding.add("brand");
-      if (input.understanding.quantity) knownFromUnderstanding.add("quantity");
-      if (input.understanding.condition) knownFromUnderstanding.add("condition");
-      if (input.understanding.attributes.roomCount) {
-        knownFromUnderstanding.add("roomCount");
-      }
-      if (input.understanding.attributes.area) knownFromUnderstanding.add("area");
-      if (input.understanding.attributes.needType) {
-        knownFromUnderstanding.add("needType");
-      }
-      if (input.understanding.attributes.listingType) {
-        knownFromUnderstanding.add("listingType");
-      }
-      if (input.understanding.attributes.part) knownFromUnderstanding.add("part");
-      if (input.understanding.attributes.serviceType) {
-        knownFromUnderstanding.add("serviceType");
-      }
-      // Soft preference satisfies "mileage" question enough to avoid fake maxMileage push
-      if (input.understanding.preferences.mileagePreference) {
-        knownFromUnderstanding.add("mileage");
-      }
-    }
-
-    const ranked = rankNextBestQuestions({
-      strategy: localIntel.strategy.strategy,
-      completeness: localIntel.completeness,
-      fieldValues: input.draft.fieldValues,
-      commonDraft: {
-        title: input.draft.title,
-        city: input.draft.city,
-        budget: input.draft.budget,
-        quantity: input.draft.fieldValues.quantity ?? "",
-        delivery: input.draft.fieldValues.delivery ?? "",
-      },
-      dynamicFields: input.dynamicFields,
-      requiredDynamicKeys: input.requiredDynamicKeys,
-      maxQuestions: 5,
-    });
-
-    return ranked
-      .filter((q) => !knownFromUnderstanding.has(q.fieldKey))
-      .slice(0, 3);
-  }, [
-    input.draft,
-    input.dynamicFields,
-    input.requiredDynamicKeys,
-    input.understanding,
-    localIntel.completeness,
-    localIntel.strategy,
-  ]);
+  /** @deprecated Questions come from resolveHybridQuestions (canonical-hybrid). */
+  const nextQuestions: QuestionCandidate[] = [];
 
   const fetchPreview = useCallback(async () => {
-    if (!input.enabled || input.wizardStep !== 2) return;
+    // Single-page flow: preview whenever composer is enabled (no wizard gate)
+    if (!input.enabled) return;
     if (!input.draft.title.trim() || input.draft.title.trim().length < 3) return;
 
     // Cost control: skip external preview when canonical says NOT_READY

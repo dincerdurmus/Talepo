@@ -8,7 +8,10 @@ import {
   resolveSchemaCategory,
 } from "@/lib/request-understanding/activation-bridge";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
-import { getTaxonomyNode } from "@/lib/taxonomy";
+import {
+  findTaxonomyTypeUnderSubcategory,
+  getTaxonomyNode,
+} from "@/lib/taxonomy";
 
 import {
   applyAnyBindingsToFields,
@@ -172,6 +175,40 @@ export function mapUnderstandingToFields(
     fields.productType = unknownField();
   }
 
+  // Furniture product leaves → furnitureType (browse ↔ text)
+  if (productHint?.taxonomyNodeId?.startsWith("tax:furniture:")) {
+    fields.furnitureType = valueField(
+      productHint.productType,
+      "EXPLICIT_TEXT",
+      0.9,
+      ["furniture-hint"],
+    );
+  } else {
+    fields.furnitureType = unknownField();
+  }
+
+  // Appliances product leaves → applianceType (browse ↔ text)
+  if (productHint?.taxonomyNodeId?.startsWith("tax:appliances:")) {
+    fields.applianceType = valueField(
+      productHint.productType,
+      "EXPLICIT_TEXT",
+      0.9,
+      ["appliance-hint"],
+    );
+  } else if (
+    productHint?.productType === "supurge" ||
+    /süpürge|supurge/i.test(productHint?.productType ?? "")
+  ) {
+    fields.applianceType = valueField(
+      "Elektrikli Süpürge",
+      "EXPLICIT_TEXT",
+      0.85,
+      ["appliance-vacuum-hint"],
+    );
+  } else {
+    fields.applianceType = unknownField();
+  }
+
   if (screenSize) {
     fields.screenSize = valueField(screenSize, "EXPLICIT_TEXT", 0.95, [
       `${screenSize} ekran`,
@@ -201,32 +238,58 @@ export function mapUnderstandingToFields(
     );
   }
 
-  if (result.requestSubject.displayPhrase?.value) {
-    fields.part = valueField(
-      String(result.requestSubject.displayPhrase.value),
-      mapRuProvenance(
-        result.requestSubject.displayPhrase.provenance,
-        result.requestSubject.displayPhrase.source,
-      ),
-    );
-  } else if (result.requestSubject.name?.value) {
-    fields.part = valueField(
-      String(result.requestSubject.name.value),
-      mapRuProvenance(
-        result.requestSubject.name.provenance,
-        result.requestSubject.name.source,
-      ),
-    );
+  // part / position only for spare-part subjects — never dump vehicle name into part
+  const subjectKind = result.requestSubject.kind.value;
+  const isPartSubject = subjectKind === "PART" || subjectKind === "ACCESSORY";
+
+  // Real-estate subject name → propertyType (concrete types only; not "gayrimenkul")
+  if (
+    subjectKind === "REAL_ESTATE" &&
+    result.requestSubject.name?.value &&
+    !fields.propertyType
+  ) {
+    const propName = String(result.requestSubject.name.value).trim();
+    const generic = /^(gayrimenkul|emlak|konut|ev)$/i.test(propName);
+    if (!generic) {
+      fields.propertyType = valueField(
+        propName,
+        mapRuProvenance(
+          result.requestSubject.name.provenance,
+          result.requestSubject.name.source,
+        ),
+        result.requestSubject.name.confidence,
+      );
+    }
   }
 
-  if (result.requestSubject.position?.value) {
-    fields.partPosition = valueField(
-      String(result.requestSubject.position.value),
-      mapRuProvenance(
-        result.requestSubject.position.provenance,
-        result.requestSubject.position.source,
-      ),
-    );
+  if (isPartSubject) {
+    if (result.requestSubject.displayPhrase?.value) {
+      fields.part = valueField(
+        String(result.requestSubject.displayPhrase.value),
+        mapRuProvenance(
+          result.requestSubject.displayPhrase.provenance,
+          result.requestSubject.displayPhrase.source,
+        ),
+      );
+    } else if (result.requestSubject.name?.value) {
+      fields.part = valueField(
+        String(result.requestSubject.name.value),
+        mapRuProvenance(
+          result.requestSubject.name.provenance,
+          result.requestSubject.name.source,
+        ),
+      );
+    }
+
+    if (result.requestSubject.position?.value) {
+      fields.partPosition = valueField(
+        String(result.requestSubject.position.value),
+        mapRuProvenance(
+          result.requestSubject.position.provenance,
+          result.requestSubject.position.source,
+        ),
+      );
+    }
   }
 
   if (result.quantity?.value?.value != null) {
@@ -259,6 +322,72 @@ export function mapUnderstandingToFields(
     // keep ANY
   }
 
+  // Technology hardware demand → needType/solutionType for Step-2 filters
+  const taxId = productHint?.taxonomyNodeId ?? "";
+  const pt =
+    withAny.productType?.kind === "VALUE"
+      ? String(withAny.productType.value)
+      : productHint?.productType ?? "";
+  const isTechHardware =
+    taxId.startsWith("tax:technology:donanim:") ||
+    /televizyon|\btv\b|laptop|dizüstü|dizustu|telefon|iphone|tablet|ipad|monitör|monitor/i.test(
+      `${pt} ${raw}`,
+    );
+  if (isTechHardware) {
+    if (
+      !withAny.needType ||
+      withAny.needType.kind === "UNKNOWN" ||
+      (withAny.needType.kind === "VALUE" &&
+        withAny.needType.value === "software" &&
+        withAny.needType.provenance === "INFERRED")
+    ) {
+      withAny.needType = valueField("hardware", "INFERRED", 0.9, [
+        "tech-hardware-seed",
+      ]);
+    }
+    if (
+      (!withAny.solutionType || withAny.solutionType.kind === "UNKNOWN") &&
+      pt
+    ) {
+      withAny.solutionType = valueField(pt, "INFERRED", 0.85, [
+        "tech-solution-seed",
+      ]);
+    }
+  }
+
+  // Furniture home leaf → usageArea Ev (publish/filter comfort)
+  if (
+    taxId.includes(":ev-mobilyasi:") ||
+    (withAny.furnitureType?.kind === "VALUE" &&
+      !/ofis|toplantı|makam|çalışma/i.test(
+        String(withAny.furnitureType.value ?? ""),
+      ))
+  ) {
+    if (!withAny.usageArea || withAny.usageArea.kind === "UNKNOWN") {
+      withAny.usageArea = valueField("Ev", "INFERRED", 0.8, [
+        "furniture-home-usage",
+      ]);
+    }
+  } else if (
+    taxId.includes(":ofis-mobilyalari:") &&
+    (!withAny.usageArea || withAny.usageArea.kind === "UNKNOWN")
+  ) {
+    withAny.usageArea = valueField("Ofis", "INFERRED", 0.8, [
+      "furniture-office-usage",
+    ]);
+  }
+
+  // RE Residans spelling → Rezidans
+  if (
+    withAny.propertyType?.kind === "VALUE" &&
+    /^residans$/i.test(String(withAny.propertyType.value ?? "").trim())
+  ) {
+    withAny.propertyType = {
+      ...withAny.propertyType,
+      value: "Rezidans",
+    };
+  }
+
   return withAny;
 }
 
@@ -288,14 +417,118 @@ function taxonomyFromUnderstanding(
     // leave as-is
   }
 
-  // Automotive spare defaults
-  if (categoryId === "automotive" && result.requestSubject.kind.value === "PART") {
-    subcategorySlug = subcategorySlug ?? "yedek-parca";
+  // Automotive subcategory from needType / subject (not always yedek-parça)
+  if (categoryId === "automotive" && !subcategorySlug) {
+    const need =
+      fields.needType?.kind === "VALUE" && fields.needType.value
+        ? fields.needType.value
+        : null;
+    const subject = result.requestSubject.kind.value;
+    if (need === "part" || subject === "PART" || subject === "ACCESSORY") {
+      subcategorySlug = "yedek-parca";
+    } else if (need === "service" || subject === "SERVICE") {
+      subcategorySlug = "arac-bakim";
+    } else if (need === "tire") {
+      subcategorySlug = "lastik-ve-jant";
+    } else if (
+      need === "vehicle" ||
+      subject === "VEHICLE" ||
+      result.intent.value === "BUY" ||
+      result.intent.value === "SELL" ||
+      result.intent.value === "RENT"
+    ) {
+      subcategorySlug = "arac-satin-alma";
+    }
   }
 
-  // Appliances vacuum → home path stays appliances
-  if (!taxonomyNodeId && productHint?.productType === "supurge") {
+  // Real-estate: listingType + property hint → subcategory / taxonomy leaf
+  if (categoryId === "real-estate") {
+    const listing = (
+      fields.listingType?.kind === "VALUE" && fields.listingType.value
+        ? fields.listingType.value
+        : ""
+    ).toLocaleLowerCase("tr-TR");
+    const raw = (result.rawInput ?? "").toLocaleLowerCase("tr-TR");
+    const propHint = (
+      fields.propertyType?.kind === "VALUE" && fields.propertyType.value
+        ? fields.propertyType.value
+        : result.requestSubject.name?.value
+          ? String(result.requestSubject.name.value)
+          : ""
+    ).toLocaleLowerCase("tr-TR");
+
+    if (!subcategorySlug) {
+      if (listing.includes("kiralık") || /\bkiralık\b/.test(raw)) {
+        subcategorySlug = "kiralik-konut";
+      } else if (listing.includes("satılık") || /\bsatılık\b/.test(raw)) {
+        subcategorySlug = "satilik-konut";
+      } else if (/\b(arsa|tarla)\b/.test(raw) || propHint.includes("arsa")) {
+        subcategorySlug = "arsa";
+      } else if (
+        /\b(dükkan|dukkan|ofis|işyeri|isyeri|depo)\b/.test(raw) ||
+        propHint.includes("ofis") ||
+        propHint.includes("dükkan")
+      ) {
+        subcategorySlug = "ticari-gayrimenkul";
+      } else if (
+        /\b(daire|villa|rezidans|konut|ev|stüdyo|studyo|dubleks)\b/.test(raw) ||
+        /\b(daire|villa|ev)\b/.test(propHint)
+      ) {
+        subcategorySlug =
+          result.intent.value === "RENT" ? "kiralik-konut" : "satilik-konut";
+      }
+    }
+
+    if (!taxonomyNodeId && subcategorySlug) {
+      const typeToken =
+        /\bdaire\b/.test(propHint) || /\bdaire\b/.test(raw)
+          ? "daire"
+          : /\brezidans\b/.test(propHint) || /\brezidans\b/.test(raw)
+            ? "rezidans"
+            : /\bvilla\b/.test(propHint) || /\bvilla\b/.test(raw)
+              ? "villa"
+              : /\bmüstakil\b/.test(raw)
+                ? "müstakil ev"
+                : /\byalı\b/.test(raw)
+                  ? "yalı"
+                  : propHint.trim() &&
+                      !/^(gayrimenkul|emlak|konut)$/i.test(propHint.trim())
+                    ? propHint.trim()
+                    : null;
+      if (typeToken) {
+        const hit = findTaxonomyTypeUnderSubcategory(
+          "real-estate",
+          subcategorySlug,
+          typeToken,
+        );
+        if (hit) taxonomyNodeId = hit.id;
+      }
+    }
+  }
+
+  // Appliances vacuum / appliance leaves → stay on appliances
+  if (
+    productHint?.taxonomyNodeId?.startsWith("tax:appliances:") ||
+    productHint?.productType === "supurge"
+  ) {
     categoryId = "appliances";
+    if (!taxonomyNodeId && productHint.taxonomyNodeId) {
+      taxonomyNodeId = productHint.taxonomyNodeId;
+    }
+    if (!subcategorySlug && productHint.taxonomyNodeId) {
+      if (productHint.taxonomyNodeId.includes(":kucuk-ev-aletleri:")) {
+        subcategorySlug = "kucuk-ev-aletleri";
+      } else if (
+        productHint.taxonomyNodeId.includes(":isitma-sogutma-ve-havalandirma:")
+      ) {
+        subcategorySlug = "isitma-sogutma-ve-havalandirma";
+      } else if (productHint.taxonomyNodeId.includes(":beyaz-esya:")) {
+        subcategorySlug = "beyaz-esya";
+      }
+    }
+    if (!subcategorySlug && productHint.productType === "supurge") {
+      subcategorySlug = "kucuk-ev-aletleri";
+    }
   }
 
   return {
@@ -417,30 +650,88 @@ export function canApplyField(
   return true;
 }
 
+/**
+ * Progressive text rebuild: keep EXPLICIT_BROWSE only.
+ * Previous EXPLICIT_TEXT / INFERRED / CATALOG come from the new understanding
+ * (stale text-inferred values must not survive when the user deletes them).
+ */
+export function mergePreservedBrowseFields(
+  fromUnderstanding: Record<string, CanonicalFieldState>,
+  previous: Record<string, CanonicalFieldState> | undefined,
+  lastUserAction: LastUserAction,
+): Record<string, CanonicalFieldState> {
+  if (!previous) return fromUnderstanding;
+
+  const next = { ...fromUnderstanding };
+  for (const [key, prevField] of Object.entries(previous)) {
+    if (prevField.provenance !== "EXPLICIT_BROWSE") continue;
+    if (prevField.kind === "UNKNOWN") continue;
+
+    const incoming = next[key];
+    if (!incoming || incoming.kind === "UNKNOWN") {
+      next[key] = prevField;
+      continue;
+    }
+
+    // Incoming may not overwrite browse explicit (e.g. weak inference)
+    if (!canApplyField(prevField, incoming, lastUserAction)) {
+      next[key] = prevField;
+    }
+  }
+  return next;
+}
+
 export function buildCanonicalRequestState(input: {
   understanding: RequestUnderstandingResult;
   browseFields?: Record<string, string>;
   lastUserAction?: LastUserAction;
   previous?: CanonicalRequestState | null;
-  /** When rebuilding from new text, drop stale inferred by not merging previous fields. */
+  /**
+   * When rebuilding from new text: drop stale inferred/EXPLICIT_TEXT from previous,
+   * but preserve EXPLICIT_BROWSE unless the new text explicitly conflicts.
+   */
   progressiveReset?: boolean;
 }): CanonicalRequestState {
+  const lastAction =
+    input.lastUserAction ?? input.previous?.lastUserAction ?? "text";
   const mapped = mapUnderstandingToFields(input.understanding);
-  const fields = mergeBrowseFieldBag(
-    mapped,
-    input.browseFields,
-    input.lastUserAction ?? input.previous?.lastUserAction,
-  );
+  let fields = mergeBrowseFieldBag(mapped, input.browseFields, lastAction);
+
+  // Progressive text path: preserve browse pins; never keep stale text inference
+  if (input.progressiveReset && input.previous?.fields) {
+    fields = mergePreservedBrowseFields(
+      fields,
+      input.previous.fields,
+      lastAction,
+    );
+  }
 
   const tax = taxonomyFromUnderstanding(input.understanding, fields);
+
+  // Browse-selected taxonomy leaf survives progressive text if still same category
+  let taxonomyNodeId = tax.taxonomyNodeId;
+  let subcategorySlug = tax.subcategorySlug;
+  let categoryId = tax.categoryId;
+  if (
+    input.progressiveReset &&
+    input.previous?.taxonomyNodeId &&
+    !taxonomyNodeId &&
+    (!tax.categoryId ||
+      !input.previous.categoryId ||
+      tax.categoryId === input.previous.categoryId)
+  ) {
+    taxonomyNodeId = input.previous.taxonomyNodeId;
+    subcategorySlug = subcategorySlug ?? input.previous.subcategorySlug;
+    categoryId = categoryId ?? input.previous.categoryId;
+  }
 
   return {
     version: "hybrid-v1",
     understanding: input.understanding,
     fields,
-    categoryId: tax.categoryId,
-    subcategorySlug: tax.subcategorySlug,
-    taxonomyNodeId: tax.taxonomyNodeId,
+    categoryId,
+    subcategorySlug,
+    taxonomyNodeId,
     lastUserAction: input.lastUserAction ?? input.previous?.lastUserAction,
     naturalTextDirty: true,
     lastComposedText: input.previous?.lastComposedText,

@@ -23,18 +23,14 @@ import {
 } from "lucide-react";
 
 import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
-import { ConversationalStartPanel } from "@/components/request/ConversationalStartPanel";
-import { EnrichmentChips } from "@/components/request/EnrichmentChips";
 import {
   HybridBrowsePath,
   HybridCategoryBrowsePanel,
-  HybridComposerDebugDrawer,
   HybridQuickSelectChips,
   HybridUnderstoodPanel,
 } from "@/components/request/HybridComposerPanels";
 import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
 import { RealEstateLocationFields } from "@/components/request/RealEstateLocationFields";
-import { RequestProcessStrip } from "@/components/request/RequestProcessStrip";
 import { RequestSummaryCard } from "@/components/request/RequestSummaryCard";
 import {
   TalepoAiPanel,
@@ -84,7 +80,7 @@ import {
   CATALOG_PREVIEW_CHIP_KEYS,
   toCatalogPreviewModel,
 } from "@/lib/catalog/consumer";
-import { understandRequest } from "@/lib/request-understanding/understand-request";
+import { resolveHybridQuestions } from "@/lib/request-composer";
 import {
   budgetDisplayFromUnderstanding,
   buildUnderstandingSummary,
@@ -92,6 +88,7 @@ import {
   safeDraftAttributes,
   seedFieldValuesFromUnderstanding,
 } from "@/lib/request-understanding/activation-bridge";
+import { emptyRequestUnderstanding } from "@/lib/request-understanding/understand-request";
 
 type CommonDraft = {
   title: string;
@@ -220,7 +217,6 @@ function TalepOlusturForm() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   /** 1 = ihtiyaç metni, 2 = AI özeti onay / yayın */
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
-  const [isAnalyzingStep, setIsAnalyzingStep] = useState(false);
   const [appliedProfessionalDescription, setAppliedProfessionalDescription] =
     useState(false);
   const previousActiveCategoryIdRef = useRef<string | null>(null);
@@ -263,67 +259,13 @@ function TalepOlusturForm() {
   }
 
   /**
-   * Hybrid composer CanonicalRequestState is the sole product/category SoT.
-   * Structured city/budget/lock overlays only re-enter understandRequest when
-   * the user explicitly locks category or edits location/budget fields.
+   * Phase 1 Single Brain closure:
+   * Hybrid composer owns the sole understandRequest() call for user text.
+   * /talep never re-runs Single Brain — city/budget/lock are draft overlays.
+   * emptyRequestUnderstanding() is a cached shell only when hybrid has no state.
    */
-  const understanding = useMemo(() => {
-    const base = hybrid.state?.understanding;
-    const needsStructuredOverlay =
-      (categoryLockedByUser && Boolean(categoryOverride)) ||
-      cityTouched ||
-      budgetTouched ||
-      realEstateTouched ||
-      Boolean(commonDraft.quantity.trim()) ||
-      Object.keys(manualValues).length > 0;
-
-    if (!needsStructuredOverlay && base) {
-      return base;
-    }
-
-    try {
-      const structuredFields: Record<string, string | null | undefined> = {
-        ...hybrid.softFillFields,
-        ...manualValues,
-      };
-      if (cityTouched && commonDraft.city.trim()) {
-        structuredFields.city = commonDraft.city.trim();
-      }
-      if (budgetTouched && commonDraft.budget.trim()) {
-        structuredFields.budget = commonDraft.budget.trim();
-      }
-      if (commonDraft.quantity.trim()) {
-        structuredFields.quantity = commonDraft.quantity.trim();
-      }
-
-      return understandRequest({
-        rawInput: requestText,
-        structured: {
-          categoryId: categoryLockedByUser ? categoryOverride : null,
-          city: cityTouched ? commonDraft.city : null,
-          district: realEstateTouched ? realEstateDraft.ilce : null,
-          fieldValues: structuredFields,
-        },
-      });
-    } catch (error) {
-      console.error("[talep] understandRequest failed", error);
-      return base ?? understandRequest("");
-    }
-  }, [
-    budgetTouched,
-    categoryLockedByUser,
-    categoryOverride,
-    cityTouched,
-    commonDraft.budget,
-    commonDraft.city,
-    commonDraft.quantity,
-    hybrid.softFillFields,
-    hybrid.state?.understanding,
-    manualValues,
-    realEstateDraft.ilce,
-    realEstateTouched,
-    requestText,
-  ]);
+  const understanding =
+    hybrid.state?.understanding ?? emptyRequestUnderstanding();
 
   const [liveMatching, setLiveMatching] = useState<{
     estimatedCompanyCount: number;
@@ -337,20 +279,25 @@ function TalepOlusturForm() {
 
   /**
    * CATEGORY_HINT (URL soft) ≠ USER_CATEGORY_OVERRIDE ≠ CANONICAL_CATEGORY
-   * Priority: locked override > canonical CONFIDENT/TENTATIVE > soft hint > provisional schema
+   * Priority: locked Step-2 select > detector CONFIDENT/TENTATIVE > hybrid SoT >
+   * soft URL hint only when detector has no value > provisional schema
    */
-  const activeCategoryId =
-    categoryLockedByUser && categoryOverride
-      ? categoryOverride
-      : understanding.category.status === "CONFIDENT" &&
-          understanding.category.value
-        ? understanding.category.value
-        : understanding.category.status === "TENTATIVE" &&
-            understanding.category.value
-          ? understanding.category.value
-          : categoryOverride ?? detectedCategoryId;
+  const activeCategoryId = (() => {
+    if (categoryLockedByUser && categoryOverride) return categoryOverride;
+    if (
+      (understanding.category.status === "CONFIDENT" ||
+        understanding.category.status === "TENTATIVE") &&
+      understanding.category.value
+    ) {
+      return understanding.category.value;
+    }
+    if (hybrid.state?.categoryId) return hybrid.state.categoryId;
+    if (categoryOverride && !understanding.category.value) {
+      return categoryOverride;
+    }
+    return detectedCategoryId;
+  })();
   const selectedCategory = getCategoryById(activeCategoryId);
-  const categoryFilterDefs = getExploreFilterDefs(activeCategoryId);
   const visibleCommonFields = useMemo(
     () => selectedCategory.commonFields.map(resolveCommonField),
     [selectedCategory],
@@ -361,28 +308,48 @@ function TalepOlusturForm() {
   );
   const isRealEstate = activeCategoryId === "real-estate";
 
-  /** Soft URL/home hint — not a user lock; AI may replace it after text changes. */
-  function releaseSoftCategoryHint() {
-    if (!categoryLockedByUser) {
-      setCategoryOverride(null);
-    }
+  /** Text edits release soft hint and Step-2 lock so detector drives filters. */
+  function clearCategoryOverridesOnTextEdit() {
+    setCategoryLockedByUser(false);
+    setCategoryOverride(null);
   }
 
-  // Drop il/ilçe/mahalle when category leaves real-estate (override clear or AI switch).
+  // Category change: drop stale category-specific answers; keep city/budget comfort.
   useEffect(() => {
     const previous = previousActiveCategoryIdRef.current;
     previousActiveCategoryIdRef.current = activeCategoryId;
-    if (previous !== "real-estate" || activeCategoryId === "real-estate") {
-      return;
+    if (!previous || previous === activeCategoryId) return;
+
+    if (previous === "real-estate" && activeCategoryId !== "real-estate") {
+      setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+      setRealEstateTouched(false);
     }
-    setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
-    setRealEstateTouched(false);
+
     setManualValues((current) => {
-      if (!current.neighborhoods) return current;
       const rest = { ...current };
       delete rest.neighborhoods;
+      delete rest.needType;
+      delete rest.solutionType;
+      delete rest.platform;
+      delete rest.users;
+      delete rest.integration;
+      delete rest.quantityDetail;
+      delete rest.specs;
+      delete rest.furnitureType;
+      delete rest.usageArea;
+      delete rest.applianceType;
+      delete rest.propertyType;
+      delete rest.listingType;
+      delete rest.roomCount;
+      delete rest.floor;
+      delete rest.buildingAge;
+      delete rest.part;
+      delete rest.partPreference;
+      delete rest.vin;
       return rest;
     });
+    setEnrichmentFieldKey(null);
+    setEnrichmentDraft("");
   }, [activeCategoryId]);
 
   const understandingCity = understanding.location?.city?.value ?? "";
@@ -443,6 +410,11 @@ function TalepOlusturForm() {
 
     return withCategoryFieldDefaults(activeCategoryId, values);
   }, [activeCategoryId, hybrid.softFillFields, seededFields, manualValues]);
+
+  const categoryFilterDefs = useMemo(
+    () => getExploreFilterDefs(activeCategoryId, dynamicValues),
+    [activeCategoryId, dynamicValues],
+  );
 
   const autoTitle = useMemo(() => {
     const category = getCategoryById(activeCategoryId);
@@ -756,8 +728,9 @@ function TalepOlusturForm() {
     dynamicFields: visibleDynamicFields,
     requiredDynamicKeys,
     professionalText,
-    enabled: wizardStep === 2,
-    wizardStep,
+    enabled: requestText.trim().length > 0,
+    // Single-page: always treat as "active" once there is text
+    wizardStep: requestText.trim().length > 0 ? 2 : 1,
     understanding,
     categoryLockedByUser,
   });
@@ -803,16 +776,54 @@ function TalepOlusturForm() {
     };
   }, [catalogPreview, understanding, mergedCommonDraft.title]);
 
+  /**
+   * Sole question authority: resolveHybridQuestions (canonical-hybrid).
+   * rankNextBestQuestions may rank inside that allowlist; brain.nextQuestions is unused.
+   */
+  const hybridQuestionResult = useMemo(() => {
+    if (!hybrid.state) return null;
+    try {
+      return resolveHybridQuestions(hybrid.state, {
+        strategy: brain.strategy?.strategy ?? null,
+        completeness: brain.completeness,
+        dynamicFields: visibleDynamicFields,
+        requiredDynamicKeys,
+      });
+    } catch {
+      return null;
+    }
+  }, [
+    brain.completeness,
+    brain.strategy?.strategy,
+    hybrid.state,
+    requiredDynamicKeys,
+    visibleDynamicFields,
+  ]);
+
   const enrichmentCandidates = useMemo(() => {
-    // Optional enrichment only — exclude budget/city and expert-only technical dumps
-    return brain.nextQuestions.filter(
-      (q) =>
-        q.fieldKey !== "budget" &&
-        q.fieldKey !== "city" &&
-        q.fieldKey !== "specs" &&
-        q.fieldKey !== "technicalSpecs",
-    );
-  }, [brain.nextQuestions]);
+    const visibleKeys = new Set(visibleDynamicFields.map((f) => f.key));
+    const list = hybridQuestionResult?.candidates ?? [];
+    return list.filter((q) => {
+      if (
+        q.fieldKey === "budget" ||
+        q.fieldKey === "city" ||
+        q.fieldKey === "specs" ||
+        q.fieldKey === "technicalSpecs"
+      ) {
+        return false;
+      }
+      if (
+        q.fieldKey === "brand" ||
+        q.fieldKey === "condition" ||
+        q.fieldKey === "screenSize" ||
+        q.fieldKey === "resolution" ||
+        q.fieldKey === "model"
+      ) {
+        return true;
+      }
+      return visibleKeys.size === 0 || visibleKeys.has(q.fieldKey);
+    });
+  }, [hybridQuestionResult?.candidates, visibleDynamicFields]);
 
   const readiness = useMemo(
     () =>
@@ -841,15 +852,13 @@ function TalepOlusturForm() {
     ],
   );
 
-  const topEnrichment = enrichmentCandidates[0] ?? null;
-
   const humanQuestions = useMemo(
     () =>
       toHumanQuestions(enrichmentCandidates, {
         strategy: brain.strategy?.strategy,
         requiredDynamicKeys,
         dynamicFields: visibleDynamicFields,
-        maxVisible: 3,
+        maxVisible: 4,
       }),
     [
       brain.strategy?.strategy,
@@ -858,6 +867,14 @@ function TalepOlusturForm() {
       visibleDynamicFields,
     ],
   );
+
+  const humanPrompts = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const q of humanQuestions) {
+      map[q.fieldKey] = q.humanPrompt;
+    }
+    return map;
+  }, [humanQuestions]);
 
   const categoryClarification = useMemo(
     () =>
@@ -941,38 +958,10 @@ function TalepOlusturForm() {
   const readinessLabel = readiness.message;
 
   const hasText = requestText.trim().length > 0;
-  const canContinue = requestText.trim().length >= 8;
-
-  function goToStep2() {
-    if (!canContinue || isPublishing || isAnalyzingStep) return;
-    releaseSoftCategoryHint();
-    setPublishError(null);
-    setPublishedVersion(null);
-    setOptionalOpen(false);
-    setFiltersOpen(false);
-    setEnrichmentFieldKey(null);
-    setEnrichmentDraft("");
-    setAiCompanionOpen(true);
-    setIsAnalyzingStep(true);
-    brain.setAnalysisStatus("PARSING");
-    window.setTimeout(() => {
-      setWizardStep(2);
-      setIsAnalyzingStep(false);
-      brain.setAnalysisStatus("READY_FOR_REVIEW");
-    }, 450);
-  }
-
-  function goToStep1() {
-    if (isPublishing) return;
-    setPublishError(null);
-    setUrgencyPromptVersion(null);
-    setPublishAsUrgent(false);
-    setWizardStep(1);
-  }
 
   function applyExampleChip(example: string) {
     hybrid.resetWithText(example);
-    releaseSoftCategoryHint();
+    clearCategoryOverridesOnTextEdit();
     setManualValues({});
     setCommonDraft({
       title: "",
@@ -988,6 +977,8 @@ function TalepOlusturForm() {
     setBudgetTouched(false);
     setPublishedVersion(null);
     setPublishError(null);
+    setWizardStep(2);
+    setAiCompanionOpen(true);
   }
 
   function updateDynamicField(key: string, value: string) {
@@ -1247,6 +1238,19 @@ function TalepOlusturForm() {
               required: isFieldRequired(field, dynamicValues),
               value: dynamicValues[field.key] ?? "",
             })),
+            // Legacy dual-write: older alerts/explore rows used brandPreference
+            ...(activeCategoryId === "appliances" &&
+            (dynamicValues.brand ?? "").trim()
+              ? [
+                  {
+                    key: "brandPreference",
+                    label: "Marka tercihi",
+                    type: "text" as const,
+                    required: false,
+                    value: dynamicValues.brand.trim(),
+                  },
+                ]
+              : []),
             ...(isRealEstate
               ? [
                   {
@@ -1380,12 +1384,27 @@ function TalepOlusturForm() {
           : mergedCommonDraft.title || selectedCategory.label
       }
       understoodChips={requestSummary.chips}
-      humanQuestions={humanQuestions}
-      clarification={
-        wizardStep === 2 || hasText ? categoryClarification : null
-      }
+      enrichmentCandidates={enrichmentCandidates.slice(0, 4)}
+      enrichmentFieldKey={enrichmentFieldKey}
+      enrichmentDraft={enrichmentDraft}
+      humanPrompts={humanPrompts}
+      onEnrichmentSelect={(q) => {
+        setEnrichmentFieldKey(q.fieldKey);
+        setEnrichmentDraft(dynamicValues[q.fieldKey] ?? "");
+        setAiCompanionOpen(true);
+      }}
+      onEnrichmentDraftChange={setEnrichmentDraft}
+      onEnrichmentApply={(q, value) => {
+        applyBrainQuestion(q, value);
+        setEnrichmentFieldKey(null);
+        setEnrichmentDraft("");
+      }}
+      onEnrichmentCancel={() => {
+        setEnrichmentFieldKey(null);
+        setEnrichmentDraft("");
+      }}
+      clarification={hasText ? categoryClarification : null}
       onClarificationSelect={applyClarification}
-      onApplyHumanQuestion={applyHumanQuestionValue}
       showBudgetActions={showBudgetActions}
       onKeepBudget={() => setBudgetTouched(true)}
       onUseMarketMedian={() => {
@@ -1407,14 +1426,74 @@ function TalepOlusturForm() {
     />
   );
 
+  const aiCompanionShell = (
+    <div className="talepo-ai-panel min-h-0 rounded-[2rem] lg:min-h-[32rem]">
+      <button
+        type="button"
+        className="relative z-[1] flex w-full cursor-pointer items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
+        onClick={() => setAiCompanionOpen((open) => !open)}
+        aria-expanded={aiCompanionOpen}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0f766e] text-white shadow-[0_0_28px_rgba(20,184,166,0.4)]">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
+              <span className="talepo-ai-status-dot" />
+              Talepo AI
+            </p>
+            <p className="mt-1 truncate text-sm font-semibold text-white">
+              {readiness.state === "READY"
+                ? "Yayına hazır"
+                : enrichmentCandidates.length > 0
+                  ? `${enrichmentCandidates.length} öneri · netleştir`
+                  : "Analiz asistanı"}
+            </p>
+          </div>
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 text-teal-100/45 transition ${
+            aiCompanionOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      <div className="relative z-[1] hidden items-center gap-3 px-5 pt-6 lg:flex">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0f766e] text-white shadow-[0_0_28px_rgba(20,184,166,0.4)]">
+          <Sparkles className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
+            <span className="talepo-ai-status-dot" />
+            Talepo AI
+          </p>
+          <p className="mt-1 text-base font-semibold text-white">
+            Analiz asistanı
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={`relative z-[1] min-w-0 px-4 pb-5 sm:px-6 sm:pb-7 lg:block lg:pt-4 ${
+          aiCompanionOpen
+            ? "block border-t border-white/10 pt-4 lg:border-t-0"
+            : "hidden lg:block"
+        }`}
+      >
+        {aiPanelContent}
+      </div>
+    </div>
+  );
+
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-[#eef3f2] text-[#0f1f1d]">
       {/* Atmospheric marketplace backdrop — soft, corporate, non-competing */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(165deg,#e8f1ef_0%,#f4f7f6_42%,#eef2f6_100%)]" />
-        <div className="absolute -left-[18%] top-[-8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.14)_0%,transparent_68%)] blur-2xl" />
-        <div className="absolute -right-[12%] top-[12%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle_at_center,rgba(13,148,136,0.1)_0%,transparent_70%)] blur-2xl" />
-        <div className="absolute bottom-[-10%] left-[30%] h-[420px] w-[620px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,31,29,0.05)_0%,transparent_72%)] blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(165deg,#d1fae5_0%,#ecfeff_38%,#f0fdfa_68%,#e0f2fe_100%)]" />
+        <div className="absolute -left-[18%] top-[-8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.22)_0%,transparent_68%)] blur-2xl" />
+        <div className="absolute -right-[12%] top-[12%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.16)_0%,transparent_70%)] blur-2xl" />
+        <div className="absolute bottom-[-10%] left-[30%] h-[420px] w-[620px] rounded-full bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.12)_0%,transparent_72%)] blur-3xl" />
         <div
           className="absolute inset-0 opacity-[0.35]"
           style={{
@@ -1453,24 +1532,13 @@ function TalepOlusturForm() {
       <header className="sticky top-0 z-40 border-b border-teal-900/[0.07] bg-white/80 backdrop-blur-xl">
         <div className="mx-auto grid h-14 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
           <div className="justify-self-start">
-            {wizardStep === 2 ? (
-              <button
-                type="button"
-                onClick={goToStep1}
-                className="talepo-cloud-pill px-3 py-2 text-sm font-medium text-[#0f1f1d]/72 transition hover:border-teal-800/15 hover:text-[#0f1f1d] sm:px-3.5"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                <span className="hidden sm:inline">Geri</span>
-              </button>
-            ) : (
-              <Link
-                href="/panel"
-                className="talepo-cloud-pill px-3 py-2 text-sm font-medium text-[#0f1f1d]/72 transition hover:border-teal-800/15 hover:text-[#0f1f1d] sm:px-3.5"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 shrink-0 opacity-70" />
-                <span className="hidden sm:inline">Panele dön</span>
-              </Link>
-            )}
+            <Link
+              href="/panel"
+              className="talepo-cloud-pill px-3 py-2 text-sm font-medium text-[#0f1f1d]/72 transition hover:border-teal-800/15 hover:text-[#0f1f1d] sm:px-3.5"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              <span className="hidden sm:inline">Panele dön</span>
+            </Link>
           </div>
 
           <Link href="/" aria-label="Talepo ana sayfa" className="shrink-0">
@@ -1481,15 +1549,15 @@ function TalepOlusturForm() {
           </Link>
 
           <div className="justify-self-end">
-            {wizardStep === 2 ? (
-              <span className="inline-flex items-center rounded-full border border-[#0f766e]/12 bg-[#f0fdfa] px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[#115e59]">
-                Hazırlanıyor
-              </span>
-            ) : (
-              <span className="inline-flex items-center rounded-full border border-teal-900/[0.08] bg-teal-50/70 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-teal-900/45">
-                Yeni talep
-              </span>
-            )}
+            <span
+              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${
+                hasText
+                  ? "border-[#0f766e]/12 bg-[#f0fdfa] text-[#115e59]"
+                  : "border-teal-900/[0.08] bg-teal-50/70 text-teal-900/45"
+              }`}
+            >
+              {hasText ? "Hazırlanıyor" : "Yeni talep"}
+            </span>
           </div>
         </div>
       </header>
@@ -1505,6 +1573,7 @@ function TalepOlusturForm() {
               setPublishedVersion(null);
               setPublishError(null);
               hybrid.resetWithText("");
+              hybrid.setOpenBrowsePanel(true);
               setWizardStep(1);
               brain.setAnalysisStatus("IDLE");
               setManualValues({});
@@ -1515,45 +1584,75 @@ function TalepOlusturForm() {
                 delivery: "",
                 budget: "",
               });
+              setTitleManuallyEdited(false);
+              setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+              setRealEstateTouched(false);
+              setCityTouched(false);
+              setBudgetTouched(false);
+              setOptionalOpen(false);
+              setAiCompanionOpen(false);
+              setEnrichmentFieldKey(null);
+              setEnrichmentDraft("");
+              setFeatureBoost("");
               setCategoryOverride(null);
               setCategoryLockedByUser(false);
             }}
           />
-        ) : wizardStep === 1 ? (
+        ) : (
           <>
-            <section className="talepo-rise mx-auto max-w-3xl py-5 text-center sm:py-7">
-              <h1 className="text-[2rem] font-semibold tracking-[-0.05em] text-[#0f1f1d] sm:text-[2.55rem]">
-                Ne arıyorsanız{" "}
-                <span className="text-[#0f766e]">anlatın.</span>
-              </h1>
-              <p className="mx-auto mt-2 max-w-xl text-base font-medium leading-7 text-[#0f766e] sm:text-lg">
-                Talepo talebinizi sizinle birlikte hazırlasın.
+            <section className="talepo-rise mx-auto max-w-3xl py-4 text-center sm:py-6">
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/18 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]">
+                <Sparkles className="h-3.5 w-3.5" />
+                ~20 saniyede hazır
               </p>
-              <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-teal-950/48">
-                Nasıl yazdığınız önemli değil. Bildiğiniz kadarıyla anlatın;
-                Talepo ihtiyacınızı anlasın, önemli detaylarda size yardımcı
-                olsun.
+              <h1 className="mt-3 text-[2rem] font-semibold tracking-[-0.05em] text-[#0f1f1d] sm:text-[2.6rem]">
+                Ne arıyorsan{" "}
+                <span className="bg-gradient-to-r from-[#0f766e] to-[#0d9488] bg-clip-text text-transparent">
+                  yaz veya seç.
+                </span>
+              </h1>
+              <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-teal-950/55 sm:text-base">
+                Kategoriden tıkla → talep metni otomatik dolsun. Yaz → kategori
+                oraya gitsin. Tek sayfada bitir.
               </p>
             </section>
 
-            <div className="talepo-rise talepo-rise-delay-1 mx-auto mb-5 hidden max-w-3xl lg:block">
-              <RequestProcessStrip />
+            <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/40">
+              <span className="rounded-full bg-[#0f766e] px-2.5 py-1 text-white">
+                1 · Anlat / seç
+              </span>
+              <span className="text-teal-900/25">→</span>
+              <span
+                className={`rounded-full px-2.5 py-1 ${
+                  hasText
+                    ? "bg-[#0f766e] text-white"
+                    : "bg-teal-900/6 text-teal-900/45"
+                }`}
+              >
+                2 · Netleştir & yayınla
+              </span>
             </div>
 
-            <div className="mx-auto grid max-w-[1180px] items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] lg:gap-7">
-              <div className="flex flex-col gap-4">
+            <div
+              className={`mx-auto grid items-start gap-5 ${
+                hasText
+                  ? "max-w-[1180px] lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.95fr)] lg:gap-7"
+                  : "max-w-[920px]"
+              }`}
+            >
+              <div className="flex min-w-0 flex-col gap-4">
                 <div
-                  className={`talepo-rise talepo-rise-delay-1 order-1 rounded-[1.75rem] border bg-white/90 p-4 shadow-[0_16px_48px_rgba(15,31,29,0.05)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 sm:p-5 ${
+                  className={`talepo-rise talepo-rise-delay-1 rounded-[1.75rem] border bg-gradient-to-b from-white to-[#f7fdfb] p-4 shadow-[0_16px_48px_rgba(15,118,110,0.08)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 sm:p-5 ${
                     composerFocused
-                      ? "border-[#0f766e]/28 shadow-[0_20px_56px_rgba(15,118,110,0.1)]"
-                      : "border-teal-900/8"
+                      ? "border-[#0f766e]/35 shadow-[0_20px_56px_rgba(15,118,110,0.14)]"
+                      : "border-teal-900/10"
                   }`}
                 >
                   <label
                     htmlFor="talep-composer"
                     className="block text-sm font-semibold text-[#0f1f1d]"
                   >
-                    Ne arıyorsunuz?
+                    Talebin
                   </label>
 
                   <textarea
@@ -1564,24 +1663,34 @@ function TalepOlusturForm() {
                     onChange={(event) => {
                       const nextText = event.target.value;
                       hybrid.setText(nextText);
-                      releaseSoftCategoryHint();
-                      setManualValues({});
-                      setCommonDraft((current) => ({
-                        title: titleManuallyEdited ? current.title : "",
-                        quantity: "",
-                        city: "",
-                        delivery: "",
-                        budget: "",
-                      }));
-                      setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
-                      setRealEstateTouched(false);
-                      setCityTouched(false);
-                      setBudgetTouched(false);
+                      // Keep city/budget/manual answers while the user refines wording.
+                      // Only unlock soft category override so detector can follow the new text.
+                      clearCategoryOverridesOnTextEdit();
                       setPublishedVersion(null);
                       setPublishError(null);
+                      if (nextText.trim().length > 0) {
+                        setWizardStep(2);
+                        setAiCompanionOpen(true);
+                      }
                     }}
                     className="mt-3 min-h-[140px] w-full resize-y bg-transparent text-[16px] leading-7 text-[#0f1f1d] outline-none placeholder:text-[#0f1f1d]/28 sm:min-h-[160px] sm:text-[17px] sm:leading-8"
-                    placeholder="Örn. 2022 üzeri Mercedes C200 AMG arıyorum, 50 bin km altında olsun..."
+                    placeholder="Örn. Buzdolabı arıyorum — veya aşağıdaki kategoriden seç..."
+                  />
+
+                  <HybridCategoryBrowsePanel
+                    open={hybrid.openBrowsePanel}
+                    onToggle={() =>
+                      hybrid.setOpenBrowsePanel(!hybrid.openBrowsePanel)
+                    }
+                    walk={hybrid.browseWalk}
+                    columns={hybrid.browseColumns}
+                    degraded={hybrid.browseDegraded}
+                    onSelectAtColumn={(columnIndex, node) => {
+                      hybrid.selectBrowseNodeAtColumn(columnIndex, node);
+                      setWizardStep(2);
+                      setAiCompanionOpen(true);
+                    }}
+                    onReset={hybrid.resetBrowseWalk}
                   />
 
                   <HybridUnderstoodPanel
@@ -1591,7 +1700,10 @@ function TalepOlusturForm() {
                       categoryConfident && schemaCategory.displayLabelSafe
                         ? selectedCategory.label
                         : hybrid.understoodFacts.find((f) => f.key === "productType")
-                            ?.displayValue ?? null
+                            ?.displayValue ??
+                          hybrid.understoodFacts.find((f) => f.key === "applianceType")
+                            ?.displayValue ??
+                          null
                     }
                     degraded={hybrid.browseDegraded}
                   />
@@ -1617,92 +1729,25 @@ function TalepOlusturForm() {
                     }}
                   />
 
-                  <HybridCategoryBrowsePanel
-                    open={hybrid.openBrowsePanel}
-                    onToggle={() =>
-                      hybrid.setOpenBrowsePanel(!hybrid.openBrowsePanel)
-                    }
-                    walk={hybrid.browseWalk}
-                    options={hybrid.browseOptions}
-                    degraded={hybrid.browseDegraded}
-                    onSelect={hybrid.selectBrowseNode}
-                    onBack={hybrid.backBrowseWalk}
-                    onReset={hybrid.resetBrowseWalk}
-                  />
-
-                  <HybridComposerDebugDrawer snapshot={hybrid.debugSnapshot} />
-
                   <ul className="mt-3 flex flex-col gap-1.5 border-t border-teal-900/6 pt-3 text-xs text-teal-950/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Yazım hatası sorun
-                      değil
+                      <span className="text-[#0f766e]">✓</span> Kategori seçince
+                      metin dolar
                     </li>
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Kendi
-                      cümlelerinizle yazın
+                      <span className="text-[#0f766e]">✓</span> Yazınca kategori
+                      oraya gider
                     </li>
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Bilmediğiniz
-                      detayları bilmek zorunda değilsiniz
+                      <span className="text-[#0f766e]">✓</span> Liste dışı ürün
+                      de kabul
                     </li>
                   </ul>
                 </div>
 
-                {/* Live understood preview — mobile / below input */}
-                {canContinue &&
-                (requestSummary.chips.length > 0 || catalogPreview) ? (
-                  <div className="talepo-rise order-2 rounded-[1.25rem] border border-[#0f766e]/15 bg-[#f0fdfa]/70 px-4 py-3 lg:hidden">
-                    <p className="text-xs font-medium text-[#0f766e]">Anladım ✓</p>
-                    <p className="mt-1 text-sm font-semibold text-[#0f1f1d]">
-                      {requestSummary.headline}
-                    </p>
-                    {catalogPreview ? (
-                      <div className="mt-2.5">
-                        <CatalogIdentityPreview model={catalogPreview} compact />
-                      </div>
-                    ) : null}
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {requestSummary.chips.slice(0, 5).map((chip) => (
-                        <span
-                          key={chip.fieldKey}
-                          className="rounded-full border border-teal-900/10 bg-white px-2.5 py-1 text-[11px] text-teal-950/75"
-                        >
-                          {chip.displayValue}
-                        </span>
-                      ))}
-                      <span className="rounded-full border border-teal-900/10 bg-white px-2.5 py-1 text-[11px] text-teal-950/55">
-                        {categoryConfident
-                          ? selectedCategory.label
-                          : "Birlikte netleştirelim"}
-                      </span>
-                    </div>
-                  </div>
-                ) : null}
-
-                <button
-                  type="button"
-                  disabled={!canContinue || isAnalyzingStep}
-                  onClick={goToStep2}
-                  className="talepo-rise talepo-rise-delay-3 order-3 flex min-h-[52px] w-full items-center justify-between rounded-2xl bg-[#0f766e] px-5 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(15,118,110,0.22)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed disabled:bg-teal-900/20 disabled:shadow-none lg:order-4"
-                >
-                  <span className="flex items-center gap-2">
-                    {isAnalyzingStep ? (
-                      <LoaderCircle className="h-4 w-4 animate-spin opacity-90" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 opacity-90" />
-                    )}
-                    {isAnalyzingStep
-                      ? "Talebinizi hazırlıyorum..."
-                      : canContinue
-                        ? "Talebimi hazırla"
-                        : "Yazmaya başlayın"}
-                  </span>
-                  <ArrowRight className="h-4 w-4 opacity-80" />
-                </button>
-
-                <div className="talepo-rise talepo-rise-delay-2 order-4 px-0.5 lg:order-3">
+                <div className="talepo-rise talepo-rise-delay-2 px-0.5">
                   <p className="text-xs font-medium text-teal-950/40">
-                    Nasıl yazabilirsiniz?
+                    Hızlı örnek
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {EXAMPLE_CHIPS.map((example) => (
@@ -1710,7 +1755,7 @@ function TalepOlusturForm() {
                         key={example}
                         type="button"
                         onClick={() => applyExampleChip(example)}
-                        className="rounded-full border border-teal-900/10 bg-white/70 px-3.5 py-2 text-left text-xs font-medium text-teal-950/70 backdrop-blur-sm transition hover:border-[#0f766e]/25 hover:bg-[#f0fdfa] hover:text-[#0f1f1d]"
+                        className="rounded-full border border-teal-900/10 bg-white/80 px-3.5 py-2 text-left text-xs font-medium text-teal-950/70 shadow-sm backdrop-blur-sm transition hover:border-[#0f766e]/30 hover:bg-[#ecfdf5] hover:text-[#0f1f1d]"
                       >
                         {example}
                       </button>
@@ -1718,82 +1763,12 @@ function TalepOlusturForm() {
                   </div>
                 </div>
 
-                <div className="talepo-rise order-5 lg:hidden">
-                  <RequestProcessStrip />
-                </div>
-
-                {!hasText ? (
-                  <details className="talepo-rise order-6 group rounded-[1.25rem] border border-teal-900/8 bg-white/80 lg:hidden">
-                    <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-teal-950/55 marker:content-none [&::-webkit-details-marker]:hidden">
-                      Nasıl çalışıyor?
-                      <span className="float-right text-teal-800/35 group-open:hidden">
-                        +
-                      </span>
-                      <span className="float-right hidden text-teal-800/35 group-open:inline">
-                        −
-                      </span>
-                    </summary>
-                    <div className="border-t border-teal-900/6 px-1 pb-2">
-                      <ConversationalStartPanel
-                        hasInput={false}
-                        understood={false}
-                        headline=""
-                        chips={[]}
-                        categoryLabel=""
-                        enrichmentHints={[]}
-                        embedded
-                      />
-                    </div>
-                  </details>
-                ) : null}
-              </div>
-
-              <aside className="talepo-rise talepo-rise-delay-2 hidden lg:block lg:sticky lg:top-20">
-                <ConversationalStartPanel
-                  hasInput={hasText}
-                  understood={
-                    canContinue &&
-                    (requestSummary.chips.length > 0 ||
-                      Boolean(mergedCommonDraft.title.trim()) ||
-                      understanding.understandingConfidence >= 0.35)
-                  }
-                  headline={
-                    requestSummary.headline !== "Talebiniz"
-                      ? requestSummary.headline
-                      : mergedCommonDraft.title ||
-                        (categoryConfident
-                          ? selectedCategory.label
-                          : "Talebinizi netleştirelim")
-                  }
-                  chips={requestSummary.chips}
-                  catalogPreview={catalogPreview}
-                  categoryLabel={
-                    categoryConfident && schemaCategory.displayLabelSafe
-                      ? selectedCategory.label
-                      : "Birlikte netleştirelim"
-                  }
-                  enrichmentHints={enrichmentCandidates
-                    .slice(0, 2)
-                    .map((q) => q.label)}
-                />
-              </aside>
-            </div>
-          </>
-        ) : (
-          <>
-            <section className="talepo-rise mx-auto max-w-3xl py-5 text-center sm:py-7">
-              <h1 className="mt-0.5 text-[1.65rem] font-semibold tracking-[-0.045em] text-[#0f1f1d] sm:text-[2rem]">
-                Talebinizi böyle anladım ✓
-              </h1>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-teal-950/48">
-                Verdiğiniz bilgilerle talebinizi hazırladık. İsterseniz önerilen
-                birkaç detayı daha ekleyebilirsiniz.
-              </p>
-            </section>
-
-            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] lg:gap-7">
-              <section className="space-y-4 sm:space-y-5">
-                <div className="talepo-rise talepo-rise-delay-1 space-y-4">
+                {hasText ? (
+              <section
+                id="talep-finish"
+                className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
+              >
+                <div className="space-y-4">
                   <RequestSummaryCard
                     headline={requestSummary.headline}
                     chips={requestSummary.chips}
@@ -1801,7 +1776,12 @@ function TalepOlusturForm() {
                     categoryLabel={selectedCategory.label}
                     onEditChip={(fieldKey) => {
                       if (fieldKey === "city") {
-                        setFiltersOpen(true);
+                        document
+                          .getElementById("talep-location")
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
                         return;
                       }
                       const q =
@@ -1934,7 +1914,10 @@ function TalepOlusturForm() {
 
                   {/* Location prompt */}
                   {isRealEstate ? (
-                    <div className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6">
+                    <div
+                      id="talep-location"
+                      className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6"
+                    >
                       <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
                         Teklifleri hangi bölgeden almak istersiniz?
                       </h3>
@@ -1969,7 +1952,10 @@ function TalepOlusturForm() {
                       </div>
                     </div>
                   ) : showLocationPrompt ? (
-                    <div className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6">
+                    <div
+                      id="talep-location"
+                      className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6"
+                    >
                       <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
                         Teklifleri hangi bölgeden almak istersiniz?
                       </h3>
@@ -2014,26 +2000,6 @@ function TalepOlusturForm() {
                       </div>
                     </div>
                   ) : null}
-
-                  <EnrichmentChips
-                    candidates={enrichmentCandidates}
-                    activeFieldKey={enrichmentFieldKey}
-                    draftValue={enrichmentDraft}
-                    onSelect={(q) => {
-                      setEnrichmentFieldKey(q.fieldKey);
-                      setEnrichmentDraft(dynamicValues[q.fieldKey] ?? "");
-                    }}
-                    onDraftChange={setEnrichmentDraft}
-                    onApply={(q, value) => {
-                      applyBrainQuestion(q, value);
-                      setEnrichmentFieldKey(null);
-                      setEnrichmentDraft("");
-                    }}
-                    onCancel={() => {
-                      setEnrichmentFieldKey(null);
-                      setEnrichmentDraft("");
-                    }}
-                  />
 
                   {/* Advanced: all details */}
                   <div>
@@ -2140,6 +2106,9 @@ function TalepOlusturForm() {
                     <p className="text-sm text-teal-950/60">{readiness.message}</p>
                   </div>
 
+                  {/* Mobile: AI sits above publish so questions are reachable */}
+                  <div className="lg:hidden">{aiCompanionShell}</div>
+
                   <button
                     type="button"
                     disabled={isPublishing || readiness.state === "BLOCKED"}
@@ -2155,67 +2124,22 @@ function TalepOlusturForm() {
                       )}
                       {isPublishing
                         ? "Talebiniz yayınlanıyor..."
-                        : "Talebimi yayınla"}
+                        : "Talebi yayınla"}
                     </span>
                     {!isPublishing ? (
                       <ArrowRight className="h-4 w-4 opacity-80" />
                     ) : null}
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={goToStep1}
-                  className="text-sm font-medium text-teal-800/55 transition hover:text-[#0f1f1d]"
-                >
-                  ← İhtiyaç metnini düzenle
-                </button>
               </section>
+                ) : null}
+              </div>
 
-              <aside className="talepo-rise talepo-rise-delay-2 min-w-0 lg:sticky lg:top-4 lg:self-start">
-                <div className="talepo-ai-panel rounded-[1.75rem]">
-                  <button
-                    type="button"
-                    className="relative z-[1] flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-4 text-left lg:hidden"
-                    onClick={() => setAiCompanionOpen((open) => !open)}
-                    aria-expanded={aiCompanionOpen}
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-[0_0_24px_rgba(20,184,166,0.35)]">
-                        <Sparkles className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
-                          <span className="talepo-ai-status-dot" />
-                          Talepo AI
-                        </p>
-                        <p className="mt-1 truncate text-sm font-semibold text-white">
-                          {readiness.state === "READY"
-                            ? "Yayına hazır"
-                            : readiness.state === "ENRICHABLE"
-                              ? "Güçlendirilebilir"
-                              : "Bir bilgi daha"}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`h-4 w-4 text-teal-100/45 transition ${
-                        aiCompanionOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-
-                  <div
-                    className={`relative z-[1] min-w-0 px-3.5 pb-5 sm:px-5 sm:pb-6 lg:block lg:pt-5 ${
-                      aiCompanionOpen
-                        ? "block border-t border-white/10 pt-4"
-                        : "hidden"
-                    }`}
-                  >
-                    {aiPanelContent}
-                  </div>
-                </div>
+              {hasText ? (
+              <aside className="talepo-rise talepo-rise-delay-2 hidden min-w-0 lg:sticky lg:top-20 lg:block lg:self-start">
+                {aiCompanionShell}
               </aside>
+              ) : null}
             </div>
           </>
         )}

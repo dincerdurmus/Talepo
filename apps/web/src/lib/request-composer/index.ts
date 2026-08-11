@@ -36,6 +36,7 @@ export {
 export {
   mapUnderstandingToFields,
   mergeBrowseFieldBag,
+  mergePreservedBrowseFields,
   canApplyField,
   buildCanonicalRequestState,
   toResolverFieldBag,
@@ -50,7 +51,10 @@ export {
   type BrowseSelectionInput,
 } from "./apply-browse";
 
-export { composeNaturalRequestText } from "./compose-text";
+export {
+  composeNaturalRequestText,
+  composeTextFromBrowseStack,
+} from "./compose-text";
 
 export {
   syncFromText,
@@ -64,6 +68,7 @@ export {
 export {
   resolveHybridQuestions,
   type HybridQuestionResult,
+  type ResolveHybridQuestionsOptions,
 } from "./questions";
 
 export {
@@ -79,7 +84,10 @@ export {
   buildQuickSelectGroups,
   createBrowseWalkState,
   listBrowseOptions,
+  listBrowseCascadeColumns,
   advanceBrowseWalk,
+  selectBrowseWalkAtColumn,
+  browseWalkFromPath,
   runHybridUiAcceptancePath,
   applyTextThenBrowse,
 } from "./ui-helpers";

@@ -1,5 +1,10 @@
 export type * from "./types";
-export { understandRequest } from "./understand-request";
+export {
+  understandRequest,
+  emptyRequestUnderstanding,
+  getUnderstandCallCount,
+  resetUnderstandCallCount,
+} from "./understand-request";
 export type { UnderstandRequestInput } from "./understand-request";
 export {
   toStrategyContext,

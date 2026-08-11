@@ -148,18 +148,22 @@ function gateCategory(
     };
   }
 
+  // Detector found evidence (score > 0): never nullify value.
+  // Weak scores stay TENTATIVE so filters follow the detected category.
   const status = decisionStatus(scoreConf, {
     detectorConfident: detected.confident,
   });
-
-  return {
-    value: status === "UNKNOWN" ? null : detected.categoryId,
-    confidence: scoreConf,
-    status: detected.confident && scoreConf >= CATEGORY_DECISION.tentativeBelow
+  const resolvedStatus =
+    detected.confident && scoreConf >= CATEGORY_DECISION.tentativeBelow
       ? "CONFIDENT"
       : status === "UNKNOWN"
-        ? "UNKNOWN"
-        : "TENTATIVE",
+        ? "TENTATIVE"
+        : status;
+
+  return {
+    value: detected.categoryId,
+    confidence: Math.max(scoreConf, CATEGORY_DECISION.unknownBelow),
+    status: resolvedStatus,
     evidence: [
       `detector=${detected.categoryId}`,
       `score=${detected.score}`,
@@ -394,6 +398,27 @@ function yearAmbiguities(
   return [];
 }
 
+/** Test/instrumentation — authoritative Single Brain call count. */
+let understandCallCount = 0;
+
+export function getUnderstandCallCount(): number {
+  return understandCallCount;
+}
+
+export function resetUnderstandCallCount(): void {
+  understandCallCount = 0;
+}
+
+/** Cached empty shell for consumers when hybrid state is not ready (not a second authority). */
+let emptyUnderstandingCache: RequestUnderstandingResult | null = null;
+
+export function emptyRequestUnderstanding(): RequestUnderstandingResult {
+  if (!emptyUnderstandingCache) {
+    emptyUnderstandingCache = understandRequest("");
+  }
+  return emptyUnderstandingCache;
+}
+
 /**
  * Canonical Request Understanding entry point.
  * Orchestrates existing engines — does not rewrite them.
@@ -401,6 +426,7 @@ function yearAmbiguities(
 export function understandRequest(
   input: UnderstandRequestInput | string,
 ): RequestUnderstandingResult {
+  understandCallCount += 1;
   const rawInput = typeof input === "string" ? input : input.rawInput;
   const structured = typeof input === "string" ? undefined : input.structured;
   const normalizedInput = normalizeUnderstandingInput(rawInput);
