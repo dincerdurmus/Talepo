@@ -11,6 +11,7 @@ import {
   findModelInText,
   findPartsInText,
   findPositionInText,
+  findTransmissionsInText,
   getAutomotiveIndexes,
 } from "./indexes";
 import { lookupAutomotiveOem } from "./oem";
@@ -55,7 +56,8 @@ export type AutomotiveEnrichInput = {
  * Precision-first automotive enrichment from catalog indexes.
  * Generation is catalog-resolved only (never year-selected, never global).
  * Engine is catalog-resolved only (generation/model scoped, never invented).
- * Does not invent OEM / compatibility.
+ * Transmission is catalog-resolved only (brand→model→generation→engine scoped).
+ * Soft family hints never invent transmissionCode. Does not invent OEM / compatibility.
  */
 export function enrichAutomotiveSubject(
   input: AutomotiveEnrichInput,
@@ -287,11 +289,76 @@ export function enrichAutomotiveSubject(
     };
   }
 
+  const txHit = findTransmissionsInText(
+    text,
+    {
+      brandId: inferredBrand?.record.id ?? null,
+      modelId: inferredModel?.record.id ?? null,
+      generationId:
+        generation?.status === "resolved" ? generation.id ?? null : null,
+      engineId: engine?.status === "resolved" ? engine.id ?? null : null,
+    },
+    year,
+  );
+
+  if (txHit.status === "unresolved" && txHit.raw) {
+    if (!unresolved.includes(txHit.raw)) unresolved.push(txHit.raw);
+  }
+
+  let transmission: AutomotiveSubjectEnrichment["transmission"];
+  if (txHit.status === "resolved" && txHit.record) {
+    const rec = txHit.record;
+    transmission = {
+      id: rec.id,
+      canonicalName: rec.canonicalName,
+      marketingName: rec.marketingName,
+      transmissionFamily: rec.transmissionFamily,
+      transmissionType: rec.transmissionType,
+      gearCount: rec.gearCount,
+      transmissionCode: rec.transmissionCode,
+      confidence: txHit.confidence,
+      matchMode: txHit.matchMode,
+      matchKind: txHit.matchKind,
+      status: "resolved",
+      yearConsistent: txHit.yearConsistent,
+    };
+  } else if (txHit.status === "ambiguous" && txHit.candidates?.length) {
+    transmission = {
+      marketingName: txHit.candidates[0]!.marketingName,
+      transmissionFamily: txHit.candidates[0]!.transmissionFamily,
+      gearCount: txHit.candidates[0]!.gearCount,
+      confidence: "medium",
+      matchMode: txHit.matchMode,
+      matchKind: txHit.matchKind,
+      status: "ambiguous",
+      raw: txHit.raw,
+      candidates: txHit.candidates.map((c) => ({
+        id: c.id,
+        marketingName: c.marketingName,
+        transmissionFamily: c.transmissionFamily,
+        gearCount: c.gearCount,
+      })),
+    };
+  } else if (txHit.familyHint || txHit.raw) {
+    // Soft hint only — no catalog id, code stays null unless verified hint.
+    transmission = {
+      marketingName: txHit.raw,
+      transmissionFamily: txHit.familyHint,
+      gearCount: txHit.gearCountHint ?? null,
+      transmissionCode: txHit.transmissionCodeHint ?? null,
+      confidence: "unverified",
+      matchKind: "family_hint",
+      status: "unverified",
+      raw: txHit.raw,
+    };
+  }
+
   const resolved: CatalogConfidence[] = [];
   if (inferredBrand) resolved.push(inferredBrand.confidence);
   if (inferredModel) resolved.push(inferredModel.confidence);
   if (generation?.status === "resolved") resolved.push(generation.confidence);
   if (engine?.status === "resolved") resolved.push(engine.confidence);
+  if (transmission?.status === "resolved") resolved.push(transmission.confidence);
   if (topPart) resolved.push(ambiguous ? "medium" : topPart.confidence);
   if (positionHit) resolved.push(positionHit.confidence);
   if (oem) resolved.push(oem.confidence);
@@ -332,6 +399,7 @@ export function enrichAutomotiveSubject(
   if (generation) result.generation = generation;
   if (year) result.modelYear = year;
   if (engine) result.engine = engine;
+  if (transmission) result.transmission = transmission;
 
   if (topPart) {
     result.part = {

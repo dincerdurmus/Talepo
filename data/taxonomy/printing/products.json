@@ -1,0 +1,1838 @@
+{
+  "domain": "printing",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing",
+      "parentId": null,
+      "canonicalName": "Matbaa ve Ambalaj",
+      "nodeType": "CATEGORY",
+      "categoryId": "printing",
+      "depth": 0,
+      "requestSchemaId": "printing",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu",
+      "parentId": "tax:printing",
+      "canonicalName": "Karton Kutu",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 1,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri",
+      "parentId": "tax:printing:karton-kutu",
+      "canonicalName": "Kutu tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 2,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mikro oluk",
+        "E-flute kutu"
+      ],
+      "searchTerms": [
+        "Mikro oluklu kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:mikro-oluklu-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Mikro oluklu kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tek oluk",
+        "B-flute"
+      ],
+      "searchTerms": [
+        "Tek oluklu kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:tek-oluklu-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Tek oluklu kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çift oluk",
+        "BC flute"
+      ],
+      "searchTerms": [
+        "Çift oluklu kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:cift-oluklu-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Çift oluklu kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "triple wall"
+      ],
+      "searchTerms": [
+        "Üç oluklu kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:uc-oluklu-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Üç oluklu kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "auto bottom",
+        "otomatik taban"
+      ],
+      "searchTerms": [
+        "Kilitli taban kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:kilitli-taban-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Kilitli taban kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kapaklı kutu",
+        "telescope box"
+      ],
+      "searchTerms": [
+        "Teleskopik kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:teleskopik-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Teleskopik kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "pizza box"
+      ],
+      "searchTerms": [
+        "Pizza kutusu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:pizza-kutusu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Pizza kutusu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bonbon kutusu"
+      ],
+      "searchTerms": [
+        "Şekerleme kutusu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:sekerleme-kutusu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Şekerleme kutusu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kozmetik kutusu"
+      ],
+      "searchTerms": [
+        "Parfüm kutusu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:parfum-kutusu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Parfüm kutusu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mailer box",
+        "kargo kolisi"
+      ],
+      "searchTerms": [
+        "E-ticaret kolisi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:e-ticaret-kolisi",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "E-ticaret kolisi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "teşhir kutusu"
+      ],
+      "searchTerms": [
+        "Display / stand kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:display-stand-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Display / stand kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bölmeli kutu"
+      ],
+      "searchTerms": [
+        "Separatörlü kutu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:kutu-tipleri:separatorlu-kutu",
+      "parentId": "tax:printing:karton-kutu:kutu-tipleri",
+      "canonicalName": "Separatörlü kutu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:malzeme",
+      "parentId": "tax:printing:karton-kutu",
+      "canonicalName": "Malzeme",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 2,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kraft"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:malzeme:kraft-karton",
+      "parentId": "tax:printing:karton-kutu:malzeme",
+      "canonicalName": "Kraft karton",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kuşe karton"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:malzeme:beyaz-kuse",
+      "parentId": "tax:printing:karton-kutu:malzeme",
+      "canonicalName": "Beyaz kuşe",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:malzeme:duplex-karton",
+      "parentId": "tax:printing:karton-kutu:malzeme",
+      "canonicalName": "Duplex karton",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "gri mukavva"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:malzeme:greyboard",
+      "parentId": "tax:printing:karton-kutu:malzeme",
+      "canonicalName": "Greyboard",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing",
+      "parentId": "tax:printing:karton-kutu",
+      "canonicalName": "Finishing",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 2,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:mat-selefon",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "Mat selefon",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:parlak-selefon",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "Parlak selefon",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:soft-touch",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "Soft touch",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:uv-lak",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "UV lak",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "emboss"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:gofre-kabartma",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "Gofre / kabartma",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "hotfoil"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:karton-kutu:finishing:yaldiz-folyo",
+      "parentId": "tax:printing:karton-kutu:finishing",
+      "canonicalName": "Yaldız / folyo",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "karton-kutu",
+      "depth": 3,
+      "requestSchemaId": "printing/karton-kutu",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski",
+      "parentId": "tax:printing",
+      "canonicalName": "Etiket Baskı",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 1,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri",
+      "parentId": "tax:printing:etiket-baski",
+      "canonicalName": "Etiket tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 2,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "roll label"
+      ],
+      "searchTerms": [
+        "Rulo etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:rulo-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Rulo etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sheet label"
+      ],
+      "searchTerms": [
+        "Yaprak etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:yaprak-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Yaprak etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "clear label"
+      ],
+      "searchTerms": [
+        "Şeffaf etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:seffaf-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Şeffaf etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "barcode label"
+      ],
+      "searchTerms": [
+        "Barkod etiketi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:barkod-etiketi",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Barkod etiketi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "food label"
+      ],
+      "searchTerms": [
+        "Gıda etiketi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:gida-etiketi",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Gıda etiketi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "pharma label"
+      ],
+      "searchTerms": [
+        "İlaç etiketi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:ilac-etiketi",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "İlaç etiketi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yıkama etiketi"
+      ],
+      "searchTerms": [
+        "Tekstil etiket / care label"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:tekstil-etiket-care-label",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Tekstil etiket / care label",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tamper evident"
+      ],
+      "searchTerms": [
+        "Güvenlik / hologram etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:guvenlik-hologram-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Güvenlik / hologram etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "direct thermal"
+      ],
+      "searchTerms": [
+        "Termal etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:termal-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Termal etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "thermal transfer"
+      ],
+      "searchTerms": [
+        "Transfer termal etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:etiket-tipleri:transfer-termal-etiket",
+      "parentId": "tax:printing:etiket-baski:etiket-tipleri",
+      "canonicalName": "Transfer termal etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:malzeme",
+      "parentId": "tax:printing:etiket-baski",
+      "canonicalName": "Malzeme",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 2,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:malzeme:pp-etiket",
+      "parentId": "tax:printing:etiket-baski:malzeme",
+      "canonicalName": "PP etiket",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:malzeme:pe-etiket",
+      "parentId": "tax:printing:etiket-baski:malzeme",
+      "canonicalName": "PE etiket",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:malzeme:kuse-etiket",
+      "parentId": "tax:printing:etiket-baski:malzeme",
+      "canonicalName": "Kuşe etiket",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:etiket-baski:malzeme:metalize-etiket",
+      "parentId": "tax:printing:etiket-baski:malzeme",
+      "canonicalName": "Metalize etiket",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "etiket-baski",
+      "depth": 3,
+      "requestSchemaId": "printing/etiket-baski",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog",
+      "parentId": "tax:printing",
+      "canonicalName": "Broşür ve Katalog",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 1,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler",
+      "parentId": "tax:printing:brosur-ve-katalog",
+      "canonicalName": "Ürünler",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 2,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "flyer",
+        "el ilanı"
+      ],
+      "searchTerms": [
+        "Broşür"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:brosur",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Broşür",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ürün kataloğu"
+      ],
+      "searchTerms": [
+        "Katalog"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:katalog",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Katalog",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "booklet"
+      ],
+      "searchTerms": [
+        "Kitapçık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:kitapcik",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Kitapçık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "magazine"
+      ],
+      "searchTerms": [
+        "Dergi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:dergi",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Dergi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "business card"
+      ],
+      "searchTerms": [
+        "Kartvizit"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:kartvizit",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Kartvizit",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "letterhead"
+      ],
+      "searchTerms": [
+        "Antetli kağıt"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:antetli-kagit",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Antetli kağıt",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "invitation"
+      ],
+      "searchTerms": [
+        "Davetiye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:davetiye",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Davetiye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "poster"
+      ],
+      "searchTerms": [
+        "Poster / afiş"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:poster-afis",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Poster / afiş",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "folder"
+      ],
+      "searchTerms": [
+        "Kapak / klasör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:urunler:kapak-klasor",
+      "parentId": "tax:printing:brosur-ve-katalog:urunler",
+      "canonicalName": "Kapak / klasör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:cilt-bitis",
+      "parentId": "tax:printing:brosur-ve-katalog",
+      "canonicalName": "Cilt / bitiş",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 2,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "staple"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:cilt-bitis:tel-dikis",
+      "parentId": "tax:printing:brosur-ve-katalog:cilt-bitis",
+      "canonicalName": "Tel dikiş",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "perfect bind"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:cilt-bitis:amerikan-cilt",
+      "parentId": "tax:printing:brosur-ve-katalog:cilt-bitis",
+      "canonicalName": "Amerikan cilt",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:cilt-bitis:spiral-cilt",
+      "parentId": "tax:printing:brosur-ve-katalog:cilt-bitis",
+      "canonicalName": "Spiral cilt",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:brosur-ve-katalog:cilt-bitis:selefonlu-kapak",
+      "parentId": "tax:printing:brosur-ve-katalog:cilt-bitis",
+      "canonicalName": "Selefonlu kapak",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "brosur-ve-katalog",
+      "depth": 3,
+      "requestSchemaId": "printing/brosur-ve-katalog",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon",
+      "parentId": "tax:printing",
+      "canonicalName": "Promosyon",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 1,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri",
+      "parentId": "tax:printing:promosyon",
+      "canonicalName": "Promosyon ürünleri",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 2,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "promosyon kalem"
+      ],
+      "searchTerms": [
+        "Kalem baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:kalem-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Kalem baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bardak baskı"
+      ],
+      "searchTerms": [
+        "Kupa / mug baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:kupa-mug-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Kupa / mug baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "textile print"
+      ],
+      "searchTerms": [
+        "Tişört baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:tisort-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Tişört baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bez çanta"
+      ],
+      "searchTerms": [
+        "Çanta baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:canta-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Çanta baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "USB / powerbank baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:usb-powerbank-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "USB / powerbank baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ajanda / defter baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:ajanda-defter-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Ajanda / defter baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şapka / tekstil aksesuar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:sapka-tekstil-aksesuar",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Şapka / tekstil aksesuar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Magnet / rozet"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:magnet-rozet",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Magnet / rozet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger",
+      "parentId": "tax:printing",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri",
+      "parentId": "tax:printing:diger",
+      "canonicalName": "Diğer matbaa işleri",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "alışveriş poşeti"
+      ],
+      "searchTerms": [
+        "Poşet / torba baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:poset-torba-baski",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Poşet / torba baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sleeve"
+      ],
+      "searchTerms": [
+        "Streç / shrink etiket"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:strec-shrink-etiket",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Streç / shrink etiket",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karton askı / hang tag"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:karton-aski-hang-tag",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Karton askı / hang tag",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Numune / prototip baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:numune-prototip-baski",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Numune / prototip baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "digital wide format"
+      ],
+      "searchTerms": [
+        "Büyük format baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:buyuk-format-baski",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Büyük format baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Ambalaj sarf malzemesi",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi:koli-bandi",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi",
+      "canonicalName": "Koli bandı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 4,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi:strec-film",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi",
+      "canonicalName": "Streç film",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 4,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bubble wrap"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi:balonlu-naylon",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi",
+      "canonicalName": "Balonlu naylon",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 4,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi:kosebent-dolgu",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri:ambalaj-sarf-malzemesi",
+      "canonicalName": "Köşebent / dolgu",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 4,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

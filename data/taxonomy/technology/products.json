@@ -1,0 +1,1256 @@
+{
+  "domain": "technology",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology",
+      "parentId": null,
+      "canonicalName": "Teknoloji",
+      "nodeType": "CATEGORY",
+      "categoryId": "technology",
+      "depth": 0,
+      "requestSchemaId": "technology",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme",
+      "parentId": "tax:technology",
+      "canonicalName": "Yazılım Geliştirme",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 1,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "parentId": "tax:technology:yazilim-gelistirme",
+      "canonicalName": "Yazılım hizmetleri",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 2,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "custom software"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:ozel-yazilim-gelistirme",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "Özel yazılım geliştirme",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "iOS",
+        "Android app"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:mobil-uygulama",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "Mobil uygulama",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:erp-crm-uyarlama",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "ERP / CRM uyarlama",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:api-entegrasyon",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "API / entegrasyon",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:bakim-destek-sozlesmesi",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "Bakım / destek sözleşmesi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri:yazilim-danismanligi",
+      "parentId": "tax:technology:yazilim-gelistirme:yazilim-hizmetleri",
+      "canonicalName": "Yazılım danışmanlığı",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi",
+      "parentId": "tax:technology",
+      "canonicalName": "Web Sitesi",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 1,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri",
+      "parentId": "tax:technology:web-sitesi",
+      "canonicalName": "Web hizmetleri",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 2,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:kurumsal-web-sitesi",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "Kurumsal web sitesi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "online mağaza"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:e-ticaret-sitesi",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "E-ticaret sitesi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:landing-page",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "Landing page",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:cms-wordpress",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "CMS / WordPress",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:seo-performans-iyilestirme",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "SEO / performans iyileştirme",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:web-sitesi:web-hizmetleri:hosting-domain-kurulumu",
+      "parentId": "tax:technology:web-sitesi:web-hizmetleri",
+      "canonicalName": "Hosting / domain kurulumu",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "web-sitesi",
+      "depth": 3,
+      "requestSchemaId": "technology/web-sitesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim",
+      "parentId": "tax:technology",
+      "canonicalName": "Donanım",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 1,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:telefon-ve-tablet",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Telefon ve tablet",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "telefon",
+        "cep telefonu",
+        "smartphone"
+      ],
+      "searchTerms": [
+        "Akıllı telefon"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:telefon-ve-tablet:akilli-telefon",
+      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "canonicalName": "Akıllı telefon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ipad"
+      ],
+      "searchTerms": [
+        "Tablet"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:telefon-ve-tablet:tablet",
+      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "canonicalName": "Tablet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "smartwatch"
+      ],
+      "searchTerms": [
+        "Akıllı saat"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:telefon-ve-tablet:akilli-saat",
+      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "canonicalName": "Akıllı saat",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kulaklık"
+      ],
+      "searchTerms": [
+        "Kulaklık / TWS"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:telefon-ve-tablet:kulaklik-tws",
+      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "canonicalName": "Kulaklık / TWS",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Bilgisayar",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "laptop",
+        "notebook"
+      ],
+      "searchTerms": [
+        "Dizüstü bilgisayar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:dizustu-bilgisayar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Dizüstü bilgisayar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "PC",
+        "desktop"
+      ],
+      "searchTerms": [
+        "Masaüstü bilgisayar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:masaustu-bilgisayar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Masaüstü bilgisayar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "workstation"
+      ],
+      "searchTerms": [
+        "İş istasyonu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:is-istasyonu",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "İş istasyonu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "NUC"
+      ],
+      "searchTerms": [
+        "Mini PC"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:mini-pc",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Mini PC",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ekran"
+      ],
+      "searchTerms": [
+        "Monitör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:monitor",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Monitör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "TV ve görüntü",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "TV",
+        "smart tv"
+      ],
+      "searchTerms": [
+        "Televizyon"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:televizyon",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Televizyon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "projeksiyon"
+      ],
+      "searchTerms": [
+        "Projeksiyon cihazı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:projeksiyon-cihazi",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Projeksiyon cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "streaming box"
+      ],
+      "searchTerms": [
+        "Medya oynatıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:medya-oynatici",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Medya oynatıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Çevre birimleri",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "printer"
+      ],
+      "searchTerms": [
+        "Yazıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:yazici",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Yazıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "scanner"
+      ],
+      "searchTerms": [
+        "Tarayıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:tarayici",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Tarayıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Klavye / mouse seti"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:klavye-mouse-seti",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Klavye / mouse seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kesintisiz güç"
+      ],
+      "searchTerms": [
+        "UPS"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:ups",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "UPS",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "network storage"
+      ],
+      "searchTerms": [
+        "NAS / depolama"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:nas-depolama",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "NAS / depolama",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi",
+      "parentId": "tax:technology",
+      "canonicalName": "Sistem ve Altyapı",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 1,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi",
+      "parentId": "tax:technology:sistem-ve-altyapi",
+      "canonicalName": "Altyapı",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 2,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "server"
+      ],
+      "searchTerms": [
+        "Sunucu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:sunucu",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Sunucu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ağ switch"
+      ],
+      "searchTerms": [
+        "Switch / network"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:switch-network",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Switch / network",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "güvenlik duvarı"
+      ],
+      "searchTerms": [
+        "Firewall / güvenlik"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:firewall-guvenlik",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Firewall / güvenlik",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "structured cabling"
+      ],
+      "searchTerms": [
+        "Kablolama / rack"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:kablolama-rack",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Kablolama / rack",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kablosuz erişim noktası"
+      ],
+      "searchTerms": [
+        "Wi-Fi access point"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:wi-fi-access-point",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Wi-Fi access point",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "güvenlik kamerası"
+      ],
+      "searchTerms": [
+        "Kamera / CCTV sistemi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:sistem-ve-altyapi:altyapi:kamera-cctv-sistemi",
+      "parentId": "tax:technology:sistem-ve-altyapi:altyapi",
+      "canonicalName": "Kamera / CCTV sistemi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "sistem-ve-altyapi",
+      "depth": 3,
+      "requestSchemaId": "technology/sistem-ve-altyapi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger",
+      "parentId": "tax:technology",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger:diger-teknoloji",
+      "parentId": "tax:technology:diger",
+      "canonicalName": "Diğer teknoloji",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "playstation",
+        "xbox"
+      ],
+      "searchTerms": [
+        "Oyun konsolu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger:diger-teknoloji:oyun-konsolu",
+      "parentId": "tax:technology:diger:diger-teknoloji",
+      "canonicalName": "Oyun konsolu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Drone"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger:diger-teknoloji:drone",
+      "parentId": "tax:technology:diger:diger-teknoloji",
+      "canonicalName": "Drone",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ödeme terminali"
+      ],
+      "searchTerms": [
+        "POS / yazar kasa"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger:diger-teknoloji:pos-yazar-kasa",
+      "parentId": "tax:technology:diger:diger-teknoloji",
+      "canonicalName": "POS / yazar kasa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Barkod okuyucu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:diger:diger-teknoloji:barkod-okuyucu",
+      "parentId": "tax:technology:diger:diger-teknoloji",
+      "canonicalName": "Barkod okuyucu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "technology/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

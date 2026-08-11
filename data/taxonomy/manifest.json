@@ -1,0 +1,78 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-08-11T19:25:22.620Z",
+  "domains": [
+    {
+      "id": "printing",
+      "files": [
+        "printing/products.json"
+      ]
+    },
+    {
+      "id": "furniture",
+      "files": [
+        "furniture/products.json"
+      ]
+    },
+    {
+      "id": "appliances",
+      "files": [
+        "appliances/products.json"
+      ]
+    },
+    {
+      "id": "technology",
+      "files": [
+        "technology/products.json"
+      ]
+    },
+    {
+      "id": "machinery",
+      "files": [
+        "machinery/machines.json"
+      ]
+    },
+    {
+      "id": "home-kitchen",
+      "files": [
+        "home-kitchen/products.json"
+      ]
+    },
+    {
+      "id": "real-estate",
+      "files": [
+        "real-estate/property.json"
+      ]
+    },
+    {
+      "id": "services",
+      "files": [
+        "services/services.json"
+      ]
+    },
+    {
+      "id": "health",
+      "files": [
+        "health/products.json"
+      ]
+    },
+    {
+      "id": "baby",
+      "files": [
+        "baby/products.json"
+      ]
+    },
+    {
+      "id": "automotive",
+      "files": [
+        "automotive/spare-parts.json"
+      ]
+    }
+  ],
+  "notes": [
+    "Root categories/subcategories mirror REQUEST_CATEGORIES (11/59).",
+    "Kitchen/bath fixtures live under home-kitchen/Diğer (no dedicated kitchen-bath root).",
+    "Automotive brand/model/generation authority remains CatalogRegistry.",
+    "Automotive spare part system ids align with data/catalogs/automotive/automotive-part-taxonomy.json."
+  ]
+}

@@ -36,7 +36,9 @@ export function classifyIngestRecord(input: {
     unique.includes("UNSUPPORTED_CATEGORY") ||
     unique.includes("POLICY_DISABLED") ||
     unique.includes("INVALID_RELATION") ||
-    unique.includes("INVALID_RANGE")
+    unique.includes("INVALID_RANGE") ||
+    unique.includes("OUT_OF_SCOPE") ||
+    unique.includes("VARIANT_EXPLOSION")
   ) {
     return { ...input.record, classification: "REJECT", reasons: unique };
   }
@@ -56,9 +58,13 @@ export function classifyIngestRecord(input: {
     unique.includes("DUPLICATE") ||
     unique.includes("ORPHAN") ||
     unique.includes("AMBIGUOUS") ||
+    unique.includes("AMBIGUOUS_MODEL") ||
     unique.includes("SOURCE_CONFLICT") ||
     unique.includes("LOW_CONFIDENCE") ||
     unique.includes("MISSING_PROVENANCE") ||
+    unique.includes("POSSIBLE_DUPLICATE") ||
+    unique.includes("CATEGORY_SCOPE_UNCLEAR") ||
+    unique.includes("MISSING_REQUIRED_SPEC") ||
     input.conflict.hasConflict
   ) {
     return { ...input.record, classification: "REVIEW", reasons: unique };

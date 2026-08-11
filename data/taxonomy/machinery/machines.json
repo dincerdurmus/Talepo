@@ -1,0 +1,1958 @@
+{
+  "domain": "machinery",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery",
+      "parentId": null,
+      "canonicalName": "Makine",
+      "nodeType": "CATEGORY",
+      "categoryId": "machinery",
+      "depth": 0,
+      "requestSchemaId": "machinery",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi",
+      "parentId": "tax:machinery",
+      "canonicalName": "Üretim Makinesi",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 1,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Talaşlı imalat",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cnc lathe"
+      ],
+      "searchTerms": [
+        "CNC torna"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:cnc-torna",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "CNC torna",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cnc milling",
+        "vmc"
+      ],
+      "searchTerms": [
+        "CNC freze"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:cnc-freze",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "CNC freze",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "machining center"
+      ],
+      "searchTerms": [
+        "İşleme merkezi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:isleme-merkezi",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "İşleme merkezi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Universal torna"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:universal-torna",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "Universal torna",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Freze tezgahı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:freze-tezgahi",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "Freze tezgahı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "grinder"
+      ],
+      "searchTerms": [
+        "Taşlama tezgahı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:taslama-tezgahi",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "Taşlama tezgahı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "elektroerozyon"
+      ],
+      "searchTerms": [
+        "EDM / dalma erozyon"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:talasli-imalat:edm-dalma-erozyon",
+      "parentId": "tax:machinery:uretim-makinesi:talasli-imalat",
+      "canonicalName": "EDM / dalma erozyon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Pres ve şekillendirme",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mekanik pres"
+      ],
+      "searchTerms": [
+        "Eksantrik pres"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:eksantrik-pres",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Eksantrik pres",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "hydraulic press"
+      ],
+      "searchTerms": [
+        "Hidrolik pres"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:hidrolik-pres",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Hidrolik pres",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "press brake"
+      ],
+      "searchTerms": [
+        "Abkant pres"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:abkant-pres",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Abkant pres",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "shear"
+      ],
+      "searchTerms": [
+        "Giyotin makas"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:giyotin-makas",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Giyotin makas",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Rulo açıcı / straightener"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:rulo-acici-straightener",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Rulo açıcı / straightener",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Punç / punch press"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:punc-punch-press",
+      "parentId": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme",
+      "canonicalName": "Punç / punch press",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Enjeksiyon / plastik",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "injection molding"
+      ],
+      "searchTerms": [
+        "Plastik enjeksiyon makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:plastik-enjeksiyon-makinesi",
+      "parentId": "tax:machinery:uretim-makinesi:enjeksiyon-plastik",
+      "canonicalName": "Plastik enjeksiyon makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "blow molding"
+      ],
+      "searchTerms": [
+        "Şişirme makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:sisirme-makinesi",
+      "parentId": "tax:machinery:uretim-makinesi:enjeksiyon-plastik",
+      "canonicalName": "Şişirme makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "extrusion"
+      ],
+      "searchTerms": [
+        "Ekstruder"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:ekstruder",
+      "parentId": "tax:machinery:uretim-makinesi:enjeksiyon-plastik",
+      "canonicalName": "Ekstruder",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Kaynak ve birleştirme",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "gazaltı"
+      ],
+      "searchTerms": [
+        "MIG/MAG kaynak makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:mig-mag-kaynak-makinesi",
+      "parentId": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme",
+      "canonicalName": "MIG/MAG kaynak makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "TIG kaynak makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:tig-kaynak-makinesi",
+      "parentId": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme",
+      "canonicalName": "TIG kaynak makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Robot kaynak hücresi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:robot-kaynak-hucresi",
+      "parentId": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme",
+      "canonicalName": "Robot kaynak hücresi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "nokta kaynak"
+      ],
+      "searchTerms": [
+        "Spot kaynak"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:spot-kaynak",
+      "parentId": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme",
+      "canonicalName": "Spot kaynak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Hava ve akışkan",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "compressor"
+      ],
+      "searchTerms": [
+        "Hava kompresörü"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:hava-kompresoru",
+      "parentId": "tax:machinery:uretim-makinesi:hava-ve-akiskan",
+      "canonicalName": "Hava kompresörü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "screw compressor"
+      ],
+      "searchTerms": [
+        "Vidalı kompresör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:vidali-kompresor",
+      "parentId": "tax:machinery:uretim-makinesi:hava-ve-akiskan",
+      "canonicalName": "Vidalı kompresör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vakum pompası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:vakum-pompasi",
+      "parentId": "tax:machinery:uretim-makinesi:hava-ve-akiskan",
+      "canonicalName": "Vakum pompası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "soğutma grubu"
+      ],
+      "searchTerms": [
+        "Endüstriyel chiller"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:endustriyel-chiller",
+      "parentId": "tax:machinery:uretim-makinesi:hava-ve-akiskan",
+      "canonicalName": "Endüstriyel chiller",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Taşıma",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "istif makinesi"
+      ],
+      "searchTerms": [
+        "Forklift"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima:forklift",
+      "parentId": "tax:machinery:uretim-makinesi:tasima",
+      "canonicalName": "Forklift",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Reach truck"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima:reach-truck",
+      "parentId": "tax:machinery:uretim-makinesi:tasima",
+      "canonicalName": "Reach truck",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "elektrikli transpalet"
+      ],
+      "searchTerms": [
+        "Transpalet"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima:transpalet",
+      "parentId": "tax:machinery:uretim-makinesi:tasima",
+      "canonicalName": "Transpalet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "crane"
+      ],
+      "searchTerms": [
+        "Vinç / monoray"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima:vinc-monoray",
+      "parentId": "tax:machinery:uretim-makinesi:tasima",
+      "canonicalName": "Vinç / monoray",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "conveyor"
+      ],
+      "searchTerms": [
+        "Konveyör hattı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:tasima:konveyor-hatti",
+      "parentId": "tax:machinery:uretim-makinesi:tasima",
+      "canonicalName": "Konveyör hattı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi",
+      "parentId": "tax:machinery",
+      "canonicalName": "Kesim Makinesi",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 1,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "parentId": "tax:machinery:kesim-makinesi",
+      "canonicalName": "Kesim teknolojileri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "fiber lazer",
+        "laser cutter"
+      ],
+      "searchTerms": [
+        "Lazer kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:lazer-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Lazer kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "plasma"
+      ],
+      "searchTerms": [
+        "Plazma kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:plazma-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Plazma kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "oxy-fuel"
+      ],
+      "searchTerms": [
+        "Oksijen kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:oksijen-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Oksijen kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "waterjet"
+      ],
+      "searchTerms": [
+        "Su jeti kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:su-jeti-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Su jeti kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Giyotin kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:giyotin-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Giyotin kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "band saw"
+      ],
+      "searchTerms": [
+        "Şerit testere"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:serit-testere",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Şerit testere",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "circular saw"
+      ],
+      "searchTerms": [
+        "Disk testere"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:disk-testere",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "Disk testere",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "CNC router / ahşap kesim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:cnc-router-ahsap-kesim",
+      "parentId": "tax:machinery:kesim-makinesi:kesim-teknolojileri",
+      "canonicalName": "CNC router / ahşap kesim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "kesim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/kesim-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi",
+      "parentId": "tax:machinery",
+      "canonicalName": "Paketleme Makinesi",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 1,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme",
+      "parentId": "tax:machinery:paketleme-makinesi",
+      "canonicalName": "Paketleme",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "shrink tunnel"
+      ],
+      "searchTerms": [
+        "Shrink paketleme"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:shrink-paketleme",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Shrink paketleme",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yatay paketleme"
+      ],
+      "searchTerms": [
+        "Flowpack"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:flowpack",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Flowpack",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "vffs"
+      ],
+      "searchTerms": [
+        "Dikey form-fill-seal"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:dikey-form-fill-seal",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Dikey form-fill-seal",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cartoner"
+      ],
+      "searchTerms": [
+        "Karton doldurma"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:karton-doldurma",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Karton doldurma",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "pallet wrapper"
+      ],
+      "searchTerms": [
+        "Palet streç makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:palet-strec-makinesi",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Palet streç makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "labeler"
+      ],
+      "searchTerms": [
+        "Etiketleme makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:etiketleme-makinesi",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Etiketleme makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "filler"
+      ],
+      "searchTerms": [
+        "Dozaj / dolum makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:dozaj-dolum-makinesi",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Dozaj / dolum makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "capper"
+      ],
+      "searchTerms": [
+        "Kapak kapama"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:paketleme-makinesi:paketleme:kapak-kapama",
+      "parentId": "tax:machinery:paketleme-makinesi:paketleme",
+      "canonicalName": "Kapak kapama",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "paketleme-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/paketleme-makinesi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca",
+      "parentId": "tax:machinery",
+      "canonicalName": "Yedek Parça",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 1,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "parentId": "tax:machinery:yedek-parca",
+      "canonicalName": "Makine yedek parçaları",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 2,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bearing"
+      ],
+      "searchTerms": [
+        "Rulman"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:rulman",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Rulman",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kayış / zincir"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:kayis-zincir",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Kayış / zincir",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "gearbox"
+      ],
+      "searchTerms": [
+        "Redüktör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:reduktor",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Redüktör",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Servo motor"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:servo-motor",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Servo motor",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "vfd"
+      ],
+      "searchTerms": [
+        "Sürücü / inverter"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:surucu-inverter",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Sürücü / inverter",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hidrolik pompa"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:hidrolik-pompa",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Hidrolik pompa",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pneumatik valf"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:pneumatik-valf",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Pneumatik valf",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "carbide insert"
+      ],
+      "searchTerms": [
+        "Kesici takım / insert"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:kesici-takim-insert",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Kesici takım / insert",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Conta / conta seti"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:conta-conta-seti",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "Conta / conta seti",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "PLC / IO modülü"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:makine-yedek-parcalari:plc-io-modulu",
+      "parentId": "tax:machinery:yedek-parca:makine-yedek-parcalari",
+      "canonicalName": "PLC / IO modülü",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine",
+      "parentId": "tax:machinery",
+      "canonicalName": "İkinci El Makine",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 1,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "parentId": "tax:machinery:ikinci-el-makine",
+      "canonicalName": "İkinci el gruplar",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 2,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "used cnc"
+      ],
+      "searchTerms": [
+        "2. el CNC"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-cnc",
+      "parentId": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "canonicalName": "2. el CNC",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 3,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "2. el pres"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-pres",
+      "parentId": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "canonicalName": "2. el pres",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 3,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "2. el forklift"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-forklift",
+      "parentId": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "canonicalName": "2. el forklift",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 3,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "2. el paketleme hattı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-paketleme-hatti",
+      "parentId": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "canonicalName": "2. el paketleme hattı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 3,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "2. el kompresör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-kompresor",
+      "parentId": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar",
+      "canonicalName": "2. el kompresör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "ikinci-el-makine",
+      "depth": 3,
+      "requestSchemaId": "machinery/ikinci-el-makine",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger",
+      "parentId": "tax:machinery",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Diğer makineler",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tekstil makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler:tekstil-makinesi",
+      "parentId": "tax:machinery:diger:diger-makineler",
+      "canonicalName": "Tekstil makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gıda işleme makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler:gida-isleme-makinesi",
+      "parentId": "tax:machinery:diger:diger-makineler",
+      "canonicalName": "Gıda işleme makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tarım makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler:tarim-makinesi",
+      "parentId": "tax:machinery:diger:diger-makineler",
+      "canonicalName": "Tarım makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ekskavatör",
+        "loader"
+      ],
+      "searchTerms": [
+        "İnşaat makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler:insaat-makinesi",
+      "parentId": "tax:machinery:diger:diger-makineler",
+      "canonicalName": "İnşaat makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "generator"
+      ],
+      "searchTerms": [
+        "Jeneratör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:diger-makineler:jenerator",
+      "parentId": "tax:machinery:diger:diger-makineler",
+      "canonicalName": "Jeneratör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

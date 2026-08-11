@@ -27,6 +27,7 @@ export type {
   KnowledgeSourceType,
   IngestClassification,
   IngestRejectReason,
+  IngestSourceMode,
 } from "./types";
 
 export { foldLabel, subcategorySlug, profileId } from "./slug";
@@ -56,6 +57,8 @@ export {
   getParts,
   applyBrowseSelection,
   isExplicitBrowseField,
+  getBrowseAnyOption,
+  withBrowseAnyOption,
 } from "./browse";
 
 export {
@@ -69,14 +72,10 @@ export {
 
 export { resolveNextQuestions } from "./question-resolver";
 
-export {
-  runCatalogIngestion,
-  categoriesEligibleForExternalIngest,
-  classifyIngestRecord,
-  canAutoSafeSource,
-  createStubSourceAdapter,
-  EMPTY_ADAPTERS,
-} from "./ingestion";
+/**
+ * Ingestion (node:fs / adapters) is NOT re-exported from this barrel.
+ * Client code must not pull it. Import from `@/lib/knowledge/ingestion` in scripts/server only.
+ */
 
 export {
   AUTOMOTIVE_EQUIVALENCE_FREE_TEXT,
@@ -88,3 +87,21 @@ export {
 } from "./automotive-equivalence";
 
 export { createCatalogGap, canPromoteGapToProduction } from "./gap";
+
+export {
+  ensureTaxonomyLoaded,
+  getRootTaxonomyNodes,
+  getTaxonomyChildren,
+  getTaxonomyNode,
+  resolveTaxonomyAlias,
+  getRequestSchemaForNode,
+  auditTaxonomyCoverage,
+  listAllTaxonomyNodes,
+  getSubcategoryTaxonomyNode,
+} from "@/lib/taxonomy";
+
+export type {
+  TaxonomyNode,
+  TaxonomyCoverageReport,
+  AliasHit,
+} from "@/lib/taxonomy";

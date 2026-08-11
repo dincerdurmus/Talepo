@@ -12,6 +12,8 @@ const FIELD_LABELS: Record<string, string> = {
   brand: "Marka",
   model: "Model",
   modelYear: "Model yılı",
+  generation: "Nesil",
+  engine: "Motor",
   mileage: "Kilometre",
   condition: "Durum",
   specs: "Özellikler",

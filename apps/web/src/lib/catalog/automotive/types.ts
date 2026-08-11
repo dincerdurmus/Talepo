@@ -1,4 +1,15 @@
 import type { CatalogConfidence, CatalogMatchMode } from "../types";
+import type {
+  TransmissionFamily,
+  TransmissionMatchKind,
+  TransmissionType,
+} from "./transmission-normalize";
+
+export type {
+  TransmissionFamily,
+  TransmissionType,
+  TransmissionMatchKind,
+} from "./transmission-normalize";
 
 export type AutomotiveBrandRecord = {
   id: string;
@@ -92,6 +103,41 @@ export type AutomotiveEngineRecord = {
 
 export type AutomotiveEngineMatchKind = "exact_marketing_name" | "alias";
 
+/**
+ * Production-ready automotive transmission entity (V2C).
+ * transmissionCode stays null unless explicitly verified in source.
+ */
+export type AutomotiveTransmissionRecord = {
+  id: string;
+  brandId: string;
+  modelId: string;
+  generationId: string;
+  engineId?: string | null;
+  canonicalName: string;
+  marketingName: string;
+  aliases: string[];
+  transmissionFamily: TransmissionFamily;
+  transmissionType: TransmissionType;
+  gearCount: number | null;
+  /** Never invent from marketing labels (DSG ≠ code). */
+  transmissionCode: string | null;
+  manufacturerCode?: string | null;
+  driveType?: string | null;
+  clutchType?: string | null;
+  yearFrom: number | null;
+  yearTo: number | null;
+  marketScope: string[];
+  provenance: {
+    type: string;
+    confidence: string;
+    verificationStatus: string;
+    sourceRef?: string;
+  };
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  verificationStatus: string;
+  notes?: string | null;
+};
+
 export type AutomotiveResolvedHit = {
   id: string;
   name: string;
@@ -135,6 +181,27 @@ export type AutomotiveSubjectEnrichment = {
       marketingName: string;
       powerKw: number | null;
       powerHp: number | null;
+    }>;
+  };
+  transmission?: {
+    id?: string;
+    canonicalName?: string;
+    marketingName?: string;
+    transmissionFamily?: TransmissionFamily;
+    transmissionType?: TransmissionType;
+    gearCount?: number | null;
+    transmissionCode?: string | null;
+    confidence: CatalogConfidence;
+    matchMode?: CatalogMatchMode;
+    matchKind?: TransmissionMatchKind;
+    status: "resolved" | "ambiguous" | "unverified";
+    yearConsistent?: boolean;
+    raw?: string;
+    candidates?: Array<{
+      id: string;
+      marketingName: string;
+      transmissionFamily: TransmissionFamily;
+      gearCount: number | null;
     }>;
   };
   part?: AutomotiveResolvedHit & {

@@ -8,10 +8,70 @@ import {
   ensureAutomotiveCatalogRegistered,
   getAutomotiveIndexes,
 } from "@/lib/catalog";
+import {
+  ensureTaxonomyLoaded,
+  getSubcategoryTaxonomyNode,
+  getTaxonomyChildren,
+  taxonomyNodeHasChildren,
+  type TaxonomyNode,
+} from "@/lib/taxonomy";
 
 import { resolveKnowledgeProfile } from "./profile-registry";
 import { subcategorySlug } from "./slug";
 import type { BrowseContext, BrowseNode, BrowseNodeKind } from "./types";
+
+function taxonomyKind(node: TaxonomyNode): BrowseNodeKind {
+  switch (node.nodeType) {
+    case "GROUP":
+      return "group";
+    case "PRODUCT_TYPE":
+      return "product_type";
+    case "SERVICE_TYPE":
+      return "service_type";
+    case "COMMODITY_TYPE":
+      return "commodity_type";
+    case "PART_TYPE":
+      return "part";
+    case "TECHNICAL_TYPE":
+      return "attribute_bucket";
+    case "SUBCATEGORY":
+      return "subcategory";
+    case "CATEGORY":
+      return "category";
+    default:
+      return "product_type";
+  }
+}
+
+function taxonomyToBrowse(n: TaxonomyNode, parentId: string): BrowseNode {
+  return node({
+    id: n.id,
+    kind: taxonomyKind(n),
+    label: n.canonicalName,
+    categoryId: n.categoryId,
+    parentId,
+    entityId: n.catalogSystemId ?? n.id,
+    hasChildren: taxonomyNodeHasChildren(n.id),
+    meta: {
+      taxonomyNodeType: n.nodeType,
+      subcategoryId: n.subcategoryId ?? "",
+      catalogSystemId: n.catalogSystemId ?? "",
+      catalogSubsystemId: n.catalogSubsystemId ?? "",
+      requestSchemaId: n.requestSchemaId ?? "",
+    },
+  });
+}
+
+function taxonomyChildrenForSubcategory(
+  categoryId: string,
+  slug: string,
+  parentId: string,
+): BrowseNode[] {
+  ensureTaxonomyLoaded();
+  const sub = getSubcategoryTaxonomyNode(categoryId, slug);
+  if (!sub) return [];
+  return getTaxonomyChildren(sub.id).map((n) => taxonomyToBrowse(n, parentId));
+}
 
 function node(partial: BrowseNode): BrowseNode {
   return partial;
@@ -234,6 +294,14 @@ export function getBrowseChildren(
     subcategorySlug: context.subcategorySlug,
   });
 
+  // Master taxonomy walk (tax:category:sub:...)
+  if (parentId.startsWith("tax:")) {
+    ensureTaxonomyLoaded();
+    return getTaxonomyChildren(parentId).map((n) =>
+      taxonomyToBrowse(n, parentId),
+    );
+  }
+
   // Subcategory node → next hierarchy step
   if (parentId.includes("/") && !parentId.startsWith("browse:")) {
     const [categoryId, slug] = parentId.split("/");
@@ -243,11 +311,52 @@ export function getBrowseChildren(
     });
     const hierarchy = resolved.browseHierarchy;
     const next = nextKindAfter(hierarchy, "subcategory");
-    return childrenForKind(next, {
-      ...context,
-      categoryId,
-      subcategorySlug: slug,
-    }, parentId, resolved);
+
+    // Prefer taxonomy groups/product types when ENTITY_CATALOG brand path is not next
+    const taxKids = taxonomyChildrenForSubcategory(
+      categoryId!,
+      slug!,
+      parentId,
+    );
+    if (
+      taxKids.length > 0 &&
+      next &&
+      (next === "group" ||
+        next === "product_type" ||
+        next === "service_type" ||
+        next === "commodity_type" ||
+        next === "attribute_bucket" ||
+        (next === "brand" && !resolved.capabilities.includes("ENTITY_CATALOG")))
+    ) {
+      return taxKids;
+    }
+
+    // Non-entity domains: always offer taxonomy when present
+    if (
+      taxKids.length > 0 &&
+      !resolved.capabilities.includes("ENTITY_CATALOG")
+    ) {
+      return taxKids;
+    }
+
+    // Services / commodity: taxonomy over placeholders
+    if (
+      taxKids.length > 0 &&
+      (next === "service_type" || next === "commodity_type")
+    ) {
+      return taxKids;
+    }
+
+    return childrenForKind(
+      next,
+      {
+        ...context,
+        categoryId: categoryId!,
+        subcategorySlug: slug,
+      },
+      parentId,
+      resolved,
+    );
   }
 
   if (parentId.startsWith("browse:")) {
@@ -278,8 +387,33 @@ function childrenForKind(
     if (context.categoryId === "automotive") {
       return automotiveBrands(context.categoryId, parentId);
     }
-    // Placeholder empty until domain adapters land — contract stable
+    // Brands not loaded yet — expose master taxonomy product/machine groups
+    if (context.subcategorySlug) {
+      const taxKids = taxonomyChildrenForSubcategory(
+        context.categoryId,
+        context.subcategorySlug,
+        parentId,
+      );
+      if (taxKids.length > 0) return taxKids;
+    }
     return [];
+  }
+
+  if (
+    kind === "group" ||
+    kind === "product_type" ||
+    kind === "service_type" ||
+    kind === "commodity_type" ||
+    kind === "attribute_bucket"
+  ) {
+    if (context.subcategorySlug) {
+      const taxKids = taxonomyChildrenForSubcategory(
+        context.categoryId,
+        context.subcategorySlug,
+        parentId,
+      );
+      if (taxKids.length > 0) return taxKids;
+    }
   }
 
   if (kind === "attribute_bucket") {
@@ -448,4 +582,50 @@ export function isExplicitBrowseField(
   key: string,
 ): boolean {
   return (fields[`__explicit__${key}`] ?? "").trim().length > 0;
+}
+
+/**
+ * Canonical browse "Farketmez" option for allowAny fields.
+ * Not a catalog entity — sentinel only.
+ */
+export function getBrowseAnyOption(
+  fieldKey: string,
+  categoryId: string,
+  parentId?: string | null,
+): BrowseNode {
+  return node({
+    id: `any:${fieldKey}`,
+    kind: "attribute_bucket",
+    label: "Farketmez",
+    categoryId,
+    parentId: parentId ?? null,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey,
+      sentinel: "__ANY__",
+    },
+  });
+}
+
+/**
+ * Prepend ANY option when the field allows it (no fake brand_* entities).
+ */
+export function withBrowseAnyOption(
+  children: BrowseNode[],
+  opts: {
+    fieldKey: string;
+    categoryId: string;
+    parentId?: string | null;
+    allowAny?: boolean;
+  },
+): BrowseNode[] {
+  if (!opts.allowAny) return children;
+  const anyNode = getBrowseAnyOption(
+    opts.fieldKey,
+    opts.categoryId,
+    opts.parentId,
+  );
+  if (children.some((c) => c.id === anyNode.id)) return children;
+  return [anyNode, ...children];
 }

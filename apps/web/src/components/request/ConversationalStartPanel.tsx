@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 import { ArrowDown, Check } from "lucide-react";
 
+import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
+import type { CatalogPreviewModel } from "@/lib/catalog/consumer";
 import type { SummaryChip } from "@/lib/request-brain/request-summary";
 
 type Props = {
@@ -12,6 +14,7 @@ type Props = {
   chips: SummaryChip[];
   categoryLabel: string;
   enrichmentHints: string[];
+  catalogPreview?: CatalogPreviewModel | null;
   /** When nested under a disclosure, skip outer chrome title */
   embedded?: boolean;
 };
@@ -23,6 +26,7 @@ export function ConversationalStartPanel({
   chips,
   categoryLabel,
   enrichmentHints,
+  catalogPreview = null,
   embedded = false,
 }: Props) {
   if (!hasInput) {
@@ -126,6 +130,11 @@ export function ConversationalStartPanel({
         {headline}
       </h3>
       <p className="mt-1 text-sm text-teal-950/45">{categoryLabel}</p>
+      {catalogPreview ? (
+        <div className="mt-3">
+          <CatalogIdentityPreview model={catalogPreview} compact />
+        </div>
+      ) : null}
       {chips.length > 0 ? (
         <div className="mt-3 flex flex-wrap gap-1.5">
           {chips.map((chip) => (

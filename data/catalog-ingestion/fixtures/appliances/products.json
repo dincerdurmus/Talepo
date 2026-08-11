@@ -1,0 +1,278 @@
+{
+  "version": "1.0.0",
+  "domain": "appliances",
+  "notes": "Curated real public appliance models with honest provenance. Not invented.",
+  "products": [
+    {
+      "id": "appl-arcelik-270480eb",
+      "subcategorySlug": "buzdolabi",
+      "brand": "Arçelik",
+      "region": "TR",
+      "productFamily": "Buzdolabı",
+      "series": "No-Frost",
+      "model": "270480 EB",
+      "specs": {
+        "volume": 455,
+        "energyClass": "E",
+        "doorType": "Freezer-top"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Arçelik public product pages / retailer listings (curated fixture)",
+        "sourceRef": "https://www.arcelik.com.tr/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-beko-wtv8734xsi",
+      "subcategorySlug": "camasir-makinesi",
+      "brand": "Beko",
+      "region": "TR",
+      "productFamily": "Çamaşır Makinesi",
+      "series": "AquaTech",
+      "model": "WTV 8734 XS0",
+      "specs": {
+        "capacityKg": 8,
+        "rpm": 1400,
+        "energyClass": "A"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Beko public product catalog (curated fixture)",
+        "sourceRef": "https://www.beko.com.tr/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-vestel-nf520",
+      "subcategorySlug": "buzdolabi",
+      "brand": "Vestel",
+      "region": "TR",
+      "productFamily": "Buzdolabı",
+      "series": "No-Frost",
+      "model": "NF520",
+      "specs": {
+        "volume": 468,
+        "energyClass": "E"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Vestel public product pages (curated fixture)",
+        "sourceRef": "https://www.vestel.com.tr/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-profilo-bm6220a",
+      "subcategorySlug": "bulasik-makinesi",
+      "brand": "Profilo",
+      "region": "TR",
+      "productFamily": "Bulaşık Makinesi",
+      "series": "BM",
+      "model": "BM6220A",
+      "specs": {
+        "capacityPlaceSettings": 13,
+        "energyClass": "E"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Profilo public product pages (curated fixture)",
+        "sourceRef": "https://www.profilo.com.tr/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-bosch-sms6zci42e",
+      "subcategorySlug": "bulasik-makinesi",
+      "brand": "Bosch",
+      "region": "EU",
+      "productFamily": "Bulaşık Makinesi",
+      "series": "Serie 6",
+      "model": "SMS6ZCI42E",
+      "specs": {
+        "capacityPlaceSettings": 14,
+        "energyClass": "B"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Bosch Home public model SMS6ZCI42E (curated fixture)",
+        "sourceRef": "https://www.bosch-home.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-siemens-wg44g209tr",
+      "subcategorySlug": "camasir-makinesi",
+      "brand": "Siemens",
+      "region": "EU",
+      "productFamily": "Çamaşır Makinesi",
+      "series": "iQ500",
+      "model": "WG44G209TR",
+      "specs": {
+        "capacityKg": 9,
+        "rpm": 1400,
+        "energyClass": "A"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Siemens Home public TR model listing (curated fixture)",
+        "sourceRef": "https://www.siemens-home.bsh-group.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-miele-g7650scvi",
+      "subcategorySlug": "bulasik-makinesi",
+      "brand": "Miele",
+      "region": "EU",
+      "productFamily": "Bulaşık Makinesi",
+      "series": "G 7000",
+      "model": "G 7650 SCVi",
+      "specs": {
+        "capacityPlaceSettings": 14,
+        "energyClass": "A"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Miele public product G 7650 SCVi (curated fixture)",
+        "sourceRef": "https://www.miele.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-samsung-rb38t675dsa",
+      "subcategorySlug": "buzdolabi",
+      "brand": "Samsung",
+      "region": "ASIA",
+      "productFamily": "Buzdolabı",
+      "series": "SpaceMax",
+      "model": "RB38T675DSA",
+      "specs": {
+        "volume": 390,
+        "energyClass": "E",
+        "doorType": "Bottom-freezer"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Samsung public refrigerator model RB38T675DSA (curated fixture)",
+        "sourceRef": "https://www.samsung.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-lg-f4v5vyp0w",
+      "subcategorySlug": "camasir-makinesi",
+      "brand": "LG",
+      "region": "ASIA",
+      "productFamily": "Çamaşır Makinesi",
+      "series": "AI DD",
+      "model": "F4V5VYP0W",
+      "specs": {
+        "capacityKg": 9,
+        "rpm": 1400,
+        "energyClass": "A"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "LG public washing machine F4V5VYP0W (curated fixture)",
+        "sourceRef": "https://www.lg.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-bosch-climate-7000i",
+      "subcategorySlug": "klima",
+      "brand": "Bosch",
+      "region": "EU",
+      "productFamily": "Klima",
+      "series": "Climate 7000i",
+      "model": "CL7000i-Set 35 E",
+      "specs": {
+        "capacityBtu": 12000,
+        "inverter": true,
+        "energyClass": "A++",
+        "installationType": "Split"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Bosch Climate 7000i public product family (curated fixture)",
+        "sourceRef": "https://www.bosch-homecomfort.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-siemens-hb578ABS0",
+      "subcategorySlug": "firin-ocak",
+      "brand": "Siemens",
+      "region": "EU",
+      "productFamily": "Fırın",
+      "series": "iQ500",
+      "model": "HB578ABS0",
+      "specs": {
+        "volumeLiters": 71,
+        "ovenType": "Built-in",
+        "energyClass": "A"
+      },
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Siemens built-in oven HB578ABS0 (curated fixture)",
+        "sourceRef": "https://www.siemens-home.bsh-group.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "appl-oos-bosch-gws750",
+      "subcategorySlug": "diger",
+      "brand": "Bosch",
+      "region": "EU",
+      "productFamily": "Power Tool",
+      "series": "Professional",
+      "model": "GWS 750",
+      "outOfScope": true,
+      "scopeReason": "Bosch power tools are outside Talepo appliances category",
+      "specs": {},
+      "compatibleProductIds": [],
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Negative fixture — out-of-scope power tool",
+        "sourceRef": "scope-guard",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "negative-fixture"
+      }
+    }
+  ]
+}

@@ -31,7 +31,11 @@ export type BrowseNodeKind =
   | "position"
   | "attribute_bucket"
   | "service_type"
-  | "commodity_type";
+  | "commodity_type"
+  /** Master taxonomy GROUP (non-entity domains). */
+  | "group"
+  /** Master taxonomy PRODUCT_TYPE / leaf product. */
+  | "product_type";
 
 export type KnowledgeFieldType =
   | "TEXT"
@@ -56,7 +60,8 @@ export type KnowledgeSourceType =
   | "MARKETPLACE"
   | "AI_INFERRED"
   | "USER_DISCOVERED"
-  | "TALEP_O_ENGINE";
+  | "TALEP_O_ENGINE"
+  | "INTERNAL_AUDIT";
 
 export type IngestClassification = "SAFE" | "REVIEW" | "REJECT";
 
@@ -64,6 +69,7 @@ export type IngestRejectReason =
   | "DUPLICATE"
   | "ORPHAN"
   | "AMBIGUOUS"
+  | "AMBIGUOUS_MODEL"
   | "LOW_CONFIDENCE"
   | "SOURCE_CONFLICT"
   | "INVALID_RELATION"
@@ -73,7 +79,13 @@ export type IngestRejectReason =
   | "POLICY_DISABLED"
   | "AI_INFERRED_NOT_SAFE"
   | "USER_DISCOVERED_NOT_SAFE"
-  | "MARKETPLACE_INSUFFICIENT_AUTHORITY";
+  | "MARKETPLACE_INSUFFICIENT_AUTHORITY"
+  | "OUT_OF_SCOPE"
+  | "VARIANT_EXPLOSION"
+  | "CATEGORY_SCOPE_UNCLEAR"
+  | "SOURCE_UNAVAILABLE"
+  | "POSSIBLE_DUPLICATE"
+  | "MISSING_REQUIRED_SPEC";
 
 export type BrowseNode = {
   id: string;
@@ -117,6 +129,11 @@ export type KnowledgeField = {
   source?: KnowledgeSourceType;
   /** Maps to existing request-category-engine DynamicField key when present. */
   engineFieldKey?: string;
+  /**
+   * When true, browse/UI may offer a non-entity "Farketmez" (ANY) option.
+   * quantity / productType typically false.
+   */
+  allowAny?: boolean;
 };
 
 export type KnowledgeProfile = {
@@ -150,12 +167,17 @@ export type CatalogGap = {
   confidence: "HIGH" | "MEDIUM" | "LOW";
 };
 
+/** How the ingest row was obtained — fixtures never count as LIVE coverage. */
+export type IngestSourceMode = "LIVE" | "OFFLINE_FIXTURE" | "CACHE";
+
 export type IngestRecord = {
   id: string;
   categoryId: string;
   kind: BrowseNodeKind | "entity" | "spec" | "relation";
   payload: Record<string, unknown>;
   provenance: ProvenanceRecord;
+  /** LIVE | OFFLINE_FIXTURE | CACHE — required for V2 accounting. */
+  sourceMode?: IngestSourceMode;
 };
 
 export type ClassifiedIngestRecord = IngestRecord & {
@@ -171,12 +193,33 @@ export type IngestionRunReport = {
   finishedAt: string;
   categoryIds: string[];
   adapterIds: string[];
+  status?: "SUCCESS" | "PARTIAL_SUCCESS" | "FAILED";
   counts: {
     discovered: number;
     safe: number;
     review: number;
     rejected: number;
     skippedPolicy: number;
+    existingMapped?: number;
+    newCandidates?: number;
+    outOfScope?: number;
+    fetchAttempts?: number;
+    /** LIVE network/source rows only — fixtures never included. */
+    LIVE_SOURCE_RECORDS?: number;
+    /** Offline curated fixtures (CI / --offline). */
+    FIXTURE_RECORDS?: number;
+    /** Cache-served rows. */
+    CACHE_RECORDS?: number;
+    /** SAFE among LIVE rows only (production-candidate metric). */
+    LIVE_SAFE?: number;
+    /** REVIEW among LIVE rows only. */
+    LIVE_REVIEW?: number;
+    LIVE_TRANSMISSION_RECORDS?: number;
+    LIVE_ENGINE_RECORDS?: number;
+    FIXTURE_TRANSMISSION_RECORDS?: number;
+    FIXTURE_ENGINE_RECORDS?: number;
+    newTransmissionCandidates?: number;
+    newEngineCandidates?: number;
   };
   notes: string[];
 };

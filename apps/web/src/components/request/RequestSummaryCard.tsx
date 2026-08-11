@@ -2,12 +2,15 @@
 
 import { Check, X } from "lucide-react";
 
+import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
+import type { CatalogPreviewModel } from "@/lib/catalog/consumer";
 import type { SummaryChip } from "@/lib/request-brain/request-summary";
 
 type Props = {
   headline: string;
   chips: SummaryChip[];
   categoryLabel: string;
+  catalogPreview?: CatalogPreviewModel | null;
   onEditChip?: (fieldKey: string) => void;
   onRemoveChip?: (fieldKey: string) => void;
 };
@@ -16,6 +19,7 @@ export function RequestSummaryCard({
   headline,
   chips,
   categoryLabel,
+  catalogPreview,
   onEditChip,
   onRemoveChip,
 }: Props) {
@@ -33,6 +37,12 @@ export function RequestSummaryCard({
           <p className="mt-1 text-sm text-teal-950/45">{categoryLabel}</p>
         </div>
       </div>
+
+      {catalogPreview ? (
+        <div className="mt-4 border-t border-teal-900/6 pt-4">
+          <CatalogIdentityPreview model={catalogPreview} />
+        </div>
+      ) : null}
 
       {chips.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">

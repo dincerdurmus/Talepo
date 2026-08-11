@@ -14,18 +14,42 @@ export {
   catalogSlug,
 } from "./normalize";
 export { applyCatalogEnrichment } from "./apply-enrichment";
+export {
+  toCanonicalCatalogFacts,
+  toCatalogPreviewModel,
+  seedCatalogFactsIntoFields,
+  composeSoughtPartLabel,
+  CATALOG_PREVIEW_CHIP_KEYS,
+} from "./consumer";
+export type {
+  CanonicalCatalogFacts,
+  CatalogPreviewModel,
+} from "./consumer";
 export { enrichAutomotiveSubject } from "./automotive/enrich";
 export {
   getAutomotiveIndexes,
   findGenerationInText,
   findEnginesInText,
+  findTransmissionsInText,
+  resolveTransmission,
+  resetAutomotiveIndexesCache,
+  automotiveTransmissionCoverageStats,
 } from "./automotive/indexes";
 export { normalizeCatalogFuelType } from "./normalize";
 export { lookupAutomotiveOem } from "./automotive/oem";
 export { lookupAutomotiveCompatibility } from "./automotive/compatibility";
 export { ensureAutomotiveCatalogRegistered } from "./automotive/provider";
+export {
+  sanitizeTransmissionCode,
+  inferTransmissionFamily,
+  normalizeTransmissionMention,
+  familyToType,
+} from "./automotive/transmission-normalize";
 export type {
   AutomotiveEngineRecord,
   AutomotiveGenerationRecord,
+  AutomotiveTransmissionRecord,
   AutomotiveSubjectEnrichment,
+  TransmissionFamily,
+  TransmissionType,
 } from "./automotive/types";

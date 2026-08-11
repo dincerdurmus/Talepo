@@ -1,6 +1,7 @@
 /**
  * Dynamic question resolver — WHAT TO ASK NEXT.
  * Does not invent intent; reads schema + current explicit/known values.
+ * ANY / NOT_APPLICABLE sentinels are treated as filled (not missing).
  */
 
 import { isExplicitBrowseField } from "./browse";
@@ -28,6 +29,19 @@ export type QuestionResolverResult = {
   next: KnowledgeField[];
 };
 
+function isAnyOrNa(value: string | undefined): boolean {
+  if (!value) return false;
+  const v = value.trim();
+  return (
+    v === "__ANY__" ||
+    v === "ANY" ||
+    v === "__NOT_APPLICABLE__" ||
+    v === "NOT_APPLICABLE" ||
+    v.toLocaleLowerCase("tr-TR") === "farketmez" ||
+    v.toLocaleLowerCase("tr-TR") === "fark etmez"
+  );
+}
+
 function isKnown(
   values: Record<string, string | undefined>,
   key: string,
@@ -36,6 +50,7 @@ function isKnown(
   if (explicitKeys.has(key)) return true;
   if (isExplicitBrowseField(values, key)) return true;
   const v = values[key];
+  if (isAnyOrNa(v)) return true;
   return v != null && String(v).trim().length > 0;
 }
 
@@ -50,7 +65,7 @@ export function resolveNextQuestions(
     .filter((f) => isKnown(values, f.key, explicitKeys))
     .map((f) => f.key);
 
-  // Treat explicit (text or browse) as filled so they are not re-asked
+  // Treat explicit (text or browse) + ANY/NA as filled so they are not re-asked
   const valuesWithExplicit: Record<string, string | undefined> = { ...values };
   for (const key of known) {
     if (!valuesWithExplicit[key]?.trim()) {
@@ -63,14 +78,21 @@ export function resolveNextQuestions(
     values: valuesWithExplicit,
   };
 
+  const missingRequired = getMissingRequiredFields(input);
+  const optionalUseful = getOptionalFields(input).filter(
+    (f) => !isKnown(values, f.key, explicitKeys),
+  );
+  const next = getNextMissingFields(input, 3).filter((f) => {
+    if (isAnyOrNa(values[f.key])) return false;
+    return true;
+  });
+
   return {
     known,
-    missingRequired: getMissingRequiredFields(input),
-    optionalUseful: getOptionalFields(input).filter(
-      (f) => !isKnown(values, f.key, explicitKeys),
-    ),
+    missingRequired,
+    optionalUseful,
     conditionalActive: getConditionalFields(input),
-    next: getNextMissingFields(input, 3),
+    next,
   };
 }
 

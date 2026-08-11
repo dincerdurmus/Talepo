@@ -95,8 +95,8 @@ const PRINTING = base(
   "Matbaa ve Ambalaj",
   ["ATTRIBUTE_SCHEMA", "SERVICE_SCHEMA"],
   "DISABLED",
-  ["category", "subcategory", "attribute_bucket"],
-  "No global brand/model product crawling. Spec + finishing + quantity dominate.",
+  ["category", "subcategory", "group", "product_type"],
+  "No global brand/model product crawling. Master taxonomy product tree + specs.",
 );
 
 const FURNITURE = base(
@@ -104,8 +104,8 @@ const FURNITURE = base(
   "Mobilya ve Ofis",
   ["ATTRIBUTE_SCHEMA"],
   "DISABLED",
-  ["category", "subcategory", "attribute_bucket"],
-  "Blind global furniture crawling disabled. Selective entity only if subcategory warrants.",
+  ["category", "subcategory", "group", "product_type"],
+  "Blind global furniture crawling disabled. Master taxonomy product tree.",
 );
 
 const TECHNOLOGY = base(
@@ -130,8 +130,8 @@ const REAL_ESTATE = base(
   "Emlak",
   ["ATTRIBUTE_SCHEMA", "SERVICE_SCHEMA"],
   "DISABLED",
-  ["category", "subcategory", "attribute_bucket"],
-  "Location/attributes dominate; no product brand crawling.",
+  ["category", "subcategory", "group", "product_type"],
+  "Location/attributes dominate; taxonomy property types + sale/rent attrs.",
 );
 
 const APPLIANCES = base(
@@ -186,8 +186,8 @@ const HOME_KITCHEN = base(
   "Ev ve Mutfak",
   ["ATTRIBUTE_SCHEMA"],
   "DISABLED",
-  ["category", "subcategory", "attribute_bucket"],
-  "Mostly attributes; brand/model only when subcategory proves value (SELECTIVE override).",
+  ["category", "subcategory", "group", "product_type"],
+  "Master taxonomy product tree. Kitchen/bath fixtures under Diğer (no dedicated root).",
 );
 
 const SERVICES = base(
@@ -195,8 +195,8 @@ const SERVICES = base(
   "Hizmetler",
   ["SERVICE_SCHEMA"],
   "DISABLED",
-  ["category", "subcategory", "service_type"],
-  "No entity crawling.",
+  ["category", "subcategory", "group", "service_type"],
+  "No entity crawling. Master taxonomy service types.",
 );
 
 /** Domain defaults — one per REQUEST_CATEGORIES id. */
@@ -356,7 +356,7 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
         {
           capabilities: ["ATTRIBUTE_SCHEMA", "SERVICE_SCHEMA"],
           externalPolicy: "DISABLED",
-          browseHierarchy: ["category", "subcategory", "attribute_bucket"],
+          browseHierarchy: ["category", "subcategory", "group", "product_type"],
         },
         PRINTING,
       ),
@@ -548,8 +548,14 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
     {
       capabilities: ["COMMODITY_SCHEMA", "ATTRIBUTE_SCHEMA"],
       externalPolicy: "DISCOVERY_ONLY",
-      browseHierarchy: ["category", "subcategory", "commodity_type", "attribute_bucket"],
-      notes: "Commodity/spec logic — not brand catalog crawling.",
+      browseHierarchy: [
+        "category",
+        "subcategory",
+        "group",
+        "commodity_type",
+        "attribute_bucket",
+      ],
+      notes: "Commodity/spec logic — master taxonomy; not brand catalog crawling.",
     },
     HEALTH,
   ),
@@ -665,7 +671,7 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
         {
           capabilities: ["SERVICE_SCHEMA"],
           externalPolicy: "DISABLED",
-          browseHierarchy: ["category", "subcategory", "service_type"],
+          browseHierarchy: ["category", "subcategory", "group", "service_type"],
         },
         SERVICES,
       ),

@@ -5,7 +5,9 @@
  * From this file: src/lib/catalog/automotive → repo root is 6 levels up.
  *
  * Generations: V2A base ∪ V2A.2 delta merged at runtime (prefer base on conflict).
+ * Transmissions: empty-safe static import (missing/empty → []). Client-safe — no node:fs.
  */
+
 import brands from "../../../../../../data/catalogs/automotive/automotive-brands.json";
 import models from "../../../../../../data/catalogs/automotive/automotive-models-core.json";
 import groups from "../../../../../../data/catalogs/automotive/automotive-manufacturer-groups.json";
@@ -18,6 +20,8 @@ import engines from "../../../../../../data/catalogs/automotive/automotive-engin
 import oemCrossrefs from "../../../../../../data/catalogs/automotive/automotive-oem-crossrefs.json";
 import compatibility from "../../../../../../data/catalogs/automotive/automotive-compatibility.json";
 import manifest from "../../../../../../data/catalogs/automotive/manifest.json";
+/** Production TX file may be absent until selective apply; empty array is valid. */
+import transmissionsJson from "../../../../../../data/catalogs/automotive/automotive-transmissions.json";
 
 import { foldCatalogKey } from "../normalize";
 import type {
@@ -27,6 +31,7 @@ import type {
   AutomotiveManufacturerGroup,
   AutomotiveModelRecord,
   AutomotivePositionRecord,
+  AutomotiveTransmissionRecord,
 } from "./types";
 
 export type AutomotiveTaxonomy = Record<
@@ -205,6 +210,63 @@ const mergedGenerations = mergeAutomotiveGenerations(
   generationsDelta as AutomotiveGenerationRecord[],
 );
 
+function normalizeTransmissionRecord(
+  raw: Partial<AutomotiveTransmissionRecord> & {
+    id: string;
+    brandId: string;
+    modelId: string;
+    generationId: string;
+    marketingName: string;
+  },
+): AutomotiveTransmissionRecord {
+  return {
+    id: raw.id,
+    brandId: raw.brandId,
+    modelId: raw.modelId,
+    generationId: raw.generationId,
+    engineId: raw.engineId ?? null,
+    canonicalName: raw.canonicalName ?? raw.marketingName,
+    marketingName: raw.marketingName,
+    aliases: [...(raw.aliases ?? [])],
+    transmissionFamily: raw.transmissionFamily ?? "UNKNOWN",
+    transmissionType: raw.transmissionType ?? "unknown",
+    gearCount: raw.gearCount ?? null,
+    transmissionCode: raw.transmissionCode ?? null,
+    manufacturerCode: raw.manufacturerCode ?? null,
+    driveType: raw.driveType ?? null,
+    clutchType: raw.clutchType ?? null,
+    yearFrom: raw.yearFrom ?? null,
+    yearTo: raw.yearTo ?? null,
+    marketScope: [...(raw.marketScope ?? [])],
+    provenance: raw.provenance ?? {
+      type: "UNKNOWN",
+      confidence: "LOW",
+      verificationStatus: "unverified",
+    },
+    confidence: raw.confidence ?? "LOW",
+    verificationStatus: raw.verificationStatus ?? "unverified",
+    notes: raw.notes ?? null,
+  };
+}
+
+/**
+ * Empty-safe transmission loader (static JSON — client-safe).
+ * Empty array / invalid rows → []. Never invents records.
+ */
+export function loadAutomotiveTransmissions(): AutomotiveTransmissionRecord[] {
+  const parsed = transmissionsJson as
+    | AutomotiveTransmissionRecord[]
+    | { records?: AutomotiveTransmissionRecord[] };
+  const rows = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed.records)
+      ? parsed.records
+      : [];
+  return rows
+    .filter((r) => r && typeof r.id === "string" && r.marketingName)
+    .map((r) => normalizeTransmissionRecord(r));
+}
+
 export function loadAutomotiveDataset() {
   return {
     manifest: manifest as AutomotiveManifest,
@@ -217,6 +279,7 @@ export function loadAutomotiveDataset() {
     generations: mergedGenerations.generations,
     generationMergeStats: mergedGenerations.stats,
     engines: engines as AutomotiveEngineRecord[],
+    transmissions: loadAutomotiveTransmissions(),
     oemCrossrefs: oemCrossrefs as unknown[],
     compatibility: compatibility as unknown[],
   };

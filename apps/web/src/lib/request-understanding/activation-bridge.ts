@@ -3,6 +3,11 @@ import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-r
 import type { PriceStrategyResolution } from "@/lib/price-intelligence/strategy-resolver";
 import { computeStrategyCompleteness } from "@/lib/price-intelligence/strategy-completeness";
 
+import {
+  seedCatalogFactsIntoFields,
+  toCanonicalCatalogFacts,
+} from "@/lib/catalog/consumer";
+
 import { toLegacyFormHints, toStrategyContext } from "./adapters";
 import type {
   RequestUnderstandingResult,
@@ -139,7 +144,7 @@ export function seedFieldValuesFromUnderstanding(
     seeded.tenantOccupied = "true";
   }
 
-  return seeded;
+  return seedCatalogFactsIntoFields(result, seeded);
 }
 
 function looksLikeYearToken(value: string): boolean {
@@ -251,6 +256,13 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
   }
   if (result.attributes.modelYear && isSafeToShow(result.attributes.modelYear)) {
     add("modelYear", "Model yılı", String(result.attributes.modelYear.value));
+  }
+  const catalogFacts = toCanonicalCatalogFacts(result);
+  if (catalogFacts?.generation) {
+    add("generation", "Nesil", catalogFacts.generation.label);
+  }
+  if (catalogFacts?.engine) {
+    add("engine", "Motor", catalogFacts.engine.marketingName);
   }
   if (result.preferences.mileagePreference?.value === "LOW") {
     add("mileagePreference", "Kilometre", "Düşük km tercihi");

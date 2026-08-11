@@ -22,8 +22,16 @@ import {
   Zap,
 } from "lucide-react";
 
+import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
 import { ConversationalStartPanel } from "@/components/request/ConversationalStartPanel";
 import { EnrichmentChips } from "@/components/request/EnrichmentChips";
+import {
+  HybridBrowsePath,
+  HybridCategoryBrowsePanel,
+  HybridComposerDebugDrawer,
+  HybridQuickSelectChips,
+  HybridUnderstoodPanel,
+} from "@/components/request/HybridComposerPanels";
 import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
 import { RealEstateLocationFields } from "@/components/request/RealEstateLocationFields";
 import { RequestProcessStrip } from "@/components/request/RequestProcessStrip";
@@ -33,6 +41,7 @@ import {
   type ClarificationOption,
 } from "@/components/request/TalepoAiPanel";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
+import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
 import {
   budgetPlaceholderForStrategy,
@@ -71,6 +80,10 @@ import {
   withCategoryFieldDefaults,
   type DynamicField,
 } from "@/lib/request-category-engine";
+import {
+  CATALOG_PREVIEW_CHIP_KEYS,
+  toCatalogPreviewModel,
+} from "@/lib/catalog/consumer";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 import {
   budgetDisplayFromUnderstanding,
@@ -141,7 +154,8 @@ function TalepOlusturForm() {
   )
     ? categoryFromHome
     : null;
-  const [requestText, setRequestText] = useState(queryFromHome);
+  const hybrid = useHybridRequestComposer({ initialText: queryFromHome });
+  const requestText = hybrid.text;
   const [manualValues, setManualValues] = useState<Record<string, string>>({});
   const [commonDraft, setCommonDraft] = useState<CommonDraft>({
     title: "",
@@ -214,7 +228,7 @@ function TalepOlusturForm() {
   if (queryFromHome !== syncedQueryFromHome) {
     setSyncedQueryFromHome(queryFromHome);
     if (queryFromHome) {
-      setRequestText(queryFromHome);
+      hybrid.resetWithText(queryFromHome);
       setManualValues({});
       setCommonDraft({
         title: "",
@@ -248,9 +262,28 @@ function TalepOlusturForm() {
     }
   }
 
+  /**
+   * Hybrid composer CanonicalRequestState is the sole product/category SoT.
+   * Structured city/budget/lock overlays only re-enter understandRequest when
+   * the user explicitly locks category or edits location/budget fields.
+   */
   const understanding = useMemo(() => {
+    const base = hybrid.state?.understanding;
+    const needsStructuredOverlay =
+      (categoryLockedByUser && Boolean(categoryOverride)) ||
+      cityTouched ||
+      budgetTouched ||
+      realEstateTouched ||
+      Boolean(commonDraft.quantity.trim()) ||
+      Object.keys(manualValues).length > 0;
+
+    if (!needsStructuredOverlay && base) {
+      return base;
+    }
+
     try {
       const structuredFields: Record<string, string | null | undefined> = {
+        ...hybrid.softFillFields,
         ...manualValues,
       };
       if (cityTouched && commonDraft.city.trim()) {
@@ -274,7 +307,7 @@ function TalepOlusturForm() {
       });
     } catch (error) {
       console.error("[talep] understandRequest failed", error);
-      return understandRequest("");
+      return base ?? understandRequest("");
     }
   }, [
     budgetTouched,
@@ -284,6 +317,8 @@ function TalepOlusturForm() {
     commonDraft.budget,
     commonDraft.city,
     commonDraft.quantity,
+    hybrid.softFillFields,
+    hybrid.state?.understanding,
     manualValues,
     realEstateDraft.ilce,
     realEstateTouched,
@@ -382,12 +417,15 @@ function TalepOlusturForm() {
   const dynamicValues = useMemo(() => {
     const category = getCategoryById(activeCategoryId);
     const values: Record<string, string> = {};
+    const composerFill = hybrid.softFillFields;
 
     for (const field of category.fields) {
       const seeded = seededFields[field.key];
+      const fromComposer = composerFill[field.key];
 
       values[field.key] =
         manualValues[field.key] ??
+        fromComposer ??
         (seeded === undefined || seeded === null ? "" : String(seeded));
     }
 
@@ -397,9 +435,14 @@ function TalepOlusturForm() {
         if (!manualValues[key] && value) values[key] = value;
       }
     }
+    for (const [key, value] of Object.entries(composerFill)) {
+      if (values[key] === undefined || values[key] === "") {
+        if (!manualValues[key] && value) values[key] = value;
+      }
+    }
 
     return withCategoryFieldDefaults(activeCategoryId, values);
-  }, [activeCategoryId, seededFields, manualValues]);
+  }, [activeCategoryId, hybrid.softFillFields, seededFields, manualValues]);
 
   const autoTitle = useMemo(() => {
     const category = getCategoryById(activeCategoryId);
@@ -735,6 +778,11 @@ function TalepOlusturForm() {
     missingFields.length === 0 &&
     !realEstateLocationMissing;
 
+  const catalogPreview = useMemo(
+    () => toCatalogPreviewModel(understanding),
+    [understanding],
+  );
+
   const requestSummary = useMemo(() => {
     const fromBrain = buildUnderstandingSummary(understanding);
     // Prefer canonical semantic headline over mechanical title concat
@@ -742,15 +790,18 @@ function TalepOlusturForm() {
       fromBrain.headline && fromBrain.headline !== "Talebiniz"
         ? fromBrain.headline
         : null;
+    const chips = catalogPreview
+      ? fromBrain.chips.filter((chip) => !CATALOG_PREVIEW_CHIP_KEYS.has(chip.fieldKey))
+      : fromBrain.chips;
     return {
       headline:
         semanticHeadline ||
         mergedCommonDraft.title.trim() ||
         "Talebiniz",
-      chips: fromBrain.chips,
+      chips,
       subtypeLabel: fromBrain.subtypeLabel ?? null,
     };
-  }, [understanding, mergedCommonDraft.title]);
+  }, [catalogPreview, understanding, mergedCommonDraft.title]);
 
   const enrichmentCandidates = useMemo(() => {
     // Optional enrichment only — exclude budget/city and expert-only technical dumps
@@ -920,7 +971,7 @@ function TalepOlusturForm() {
   }
 
   function applyExampleChip(example: string) {
-    setRequestText(example);
+    hybrid.resetWithText(example);
     releaseSoftCategoryHint();
     setManualValues({});
     setCommonDraft({
@@ -1453,7 +1504,7 @@ function TalepOlusturForm() {
               setPublishSuccess(null);
               setPublishedVersion(null);
               setPublishError(null);
-              setRequestText("");
+              hybrid.resetWithText("");
               setWizardStep(1);
               brain.setAnalysisStatus("IDLE");
               setManualValues({});
@@ -1512,7 +1563,7 @@ function TalepOlusturForm() {
                     onBlur={() => setComposerFocused(false)}
                     onChange={(event) => {
                       const nextText = event.target.value;
-                      setRequestText(nextText);
+                      hybrid.setText(nextText);
                       releaseSoftCategoryHint();
                       setManualValues({});
                       setCommonDraft((current) => ({
@@ -1533,6 +1584,54 @@ function TalepOlusturForm() {
                     placeholder="Örn. 2022 üzeri Mercedes C200 AMG arıyorum, 50 bin km altında olsun..."
                   />
 
+                  <HybridUnderstoodPanel
+                    hasText={requestText.trim().length > 0}
+                    facts={hybrid.understoodFacts}
+                    categoryLabel={
+                      categoryConfident && schemaCategory.displayLabelSafe
+                        ? selectedCategory.label
+                        : hybrid.understoodFacts.find((f) => f.key === "productType")
+                            ?.displayValue ?? null
+                    }
+                    degraded={hybrid.browseDegraded}
+                  />
+
+                  <HybridBrowsePath
+                    path={hybrid.browsePath}
+                    degraded={hybrid.browseDegraded}
+                    allowBrandEdit
+                    onEditBrandAny={() => {
+                      hybrid.setOpenBrowsePanel(true);
+                    }}
+                  />
+
+                  <HybridQuickSelectChips
+                    groups={hybrid.quickGroups}
+                    onSelect={(fieldKey, value, isAny) => {
+                      hybrid.applyQuickOption(fieldKey, value, isAny);
+                      setManualValues((current) => {
+                        const next = { ...current };
+                        delete next[fieldKey];
+                        return next;
+                      });
+                    }}
+                  />
+
+                  <HybridCategoryBrowsePanel
+                    open={hybrid.openBrowsePanel}
+                    onToggle={() =>
+                      hybrid.setOpenBrowsePanel(!hybrid.openBrowsePanel)
+                    }
+                    walk={hybrid.browseWalk}
+                    options={hybrid.browseOptions}
+                    degraded={hybrid.browseDegraded}
+                    onSelect={hybrid.selectBrowseNode}
+                    onBack={hybrid.backBrowseWalk}
+                    onReset={hybrid.resetBrowseWalk}
+                  />
+
+                  <HybridComposerDebugDrawer snapshot={hybrid.debugSnapshot} />
+
                   <ul className="mt-3 flex flex-col gap-1.5 border-t border-teal-900/6 pt-3 text-xs text-teal-950/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
                     <li className="inline-flex items-center gap-1.5">
                       <span className="text-[#0f766e]">✓</span> Yazım hatası sorun
@@ -1550,12 +1649,18 @@ function TalepOlusturForm() {
                 </div>
 
                 {/* Live understood preview — mobile / below input */}
-                {canContinue && requestSummary.chips.length > 0 ? (
+                {canContinue &&
+                (requestSummary.chips.length > 0 || catalogPreview) ? (
                   <div className="talepo-rise order-2 rounded-[1.25rem] border border-[#0f766e]/15 bg-[#f0fdfa]/70 px-4 py-3 lg:hidden">
                     <p className="text-xs font-medium text-[#0f766e]">Anladım ✓</p>
                     <p className="mt-1 text-sm font-semibold text-[#0f1f1d]">
                       {requestSummary.headline}
                     </p>
+                    {catalogPreview ? (
+                      <div className="mt-2.5">
+                        <CatalogIdentityPreview model={catalogPreview} compact />
+                      </div>
+                    ) : null}
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {requestSummary.chips.slice(0, 5).map((chip) => (
                         <span
@@ -1661,6 +1766,7 @@ function TalepOlusturForm() {
                           : "Talebinizi netleştirelim")
                   }
                   chips={requestSummary.chips}
+                  catalogPreview={catalogPreview}
                   categoryLabel={
                     categoryConfident && schemaCategory.displayLabelSafe
                       ? selectedCategory.label
@@ -1691,6 +1797,7 @@ function TalepOlusturForm() {
                   <RequestSummaryCard
                     headline={requestSummary.headline}
                     chips={requestSummary.chips}
+                    catalogPreview={catalogPreview}
                     categoryLabel={selectedCategory.label}
                     onEditChip={(fieldKey) => {
                       if (fieldKey === "city") {

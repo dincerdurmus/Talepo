@@ -194,6 +194,9 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "monitör",
     "monitor",
     "ekran",
+    "televizyon",
+    "smart tv",
+    "smarttv",
     "yazıcı",
     "yazici",
     "donanım",
@@ -588,6 +591,14 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         normalized.includes("notebook")
       ) {
         score += 3;
+      }
+      if (
+        normalized.includes("televizyon") ||
+        (/\btv\b/.test(normalized) &&
+          !normalized.includes("tv ünitesi") &&
+          !normalized.includes("tv unitesi"))
+      ) {
+        score += 5;
       }
       if (findTechnologyProduct(normalized)) {
         score += 6;

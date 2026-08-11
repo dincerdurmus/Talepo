@@ -1,0 +1,11 @@
+{
+  "version": "0.2.0-v2c",
+  "purpose": "CatalogRegistry-compatible transmission foundation. Empty until verified LIVE apply. Ingest dry-run must not mutate data/catalogs.",
+  "records": [],
+  "notes": [
+    "Do not invent transmissionCode from marketing names (DSG/S-Tronic/etc.).",
+    "Prefer generation/engine scoped records.",
+    "CVT ≠ E_CVT. SINGLE_SPEED_EV for BEV — do not fake automatic.",
+    "This seed path is NOT production catalog mutation."
+  ]
+}

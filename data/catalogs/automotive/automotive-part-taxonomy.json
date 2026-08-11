@@ -50,7 +50,9 @@
         "Yağ soğutucu",
         "Yağ seviye sensörü",
         "Yağ basınç müşürü",
-        "Yağ çubuğu"
+        "Yağ çubuğu",
+        "Yağ soğutucu hortumu",
+        "Yağ basınç valfi"
       ],
       "air_induction": [
         "Emme manifoldu",
@@ -61,12 +63,17 @@
         "Turbo hortumu",
         "Intercooler",
         "Intercooler hortumu",
-        "Supercharger"
+        "Supercharger",
+        "Hava filtre kutusu",
+        "Blow-off valfi",
+        "Wastegate"
       ],
       "mounts": [
         "Motor kulağı",
         "Motor takozu",
-        "Şanzıman takozu"
+        "Şanzıman takozu",
+        "Motor üst kulağı",
+        "Şanzıman alt takozu"
       ]
     }
   },
@@ -83,7 +90,9 @@
         "Yakıt hortumu",
         "Yakıt basınç sensörü",
         "Regülatör",
-        "Karbüratör"
+        "Karbüratör",
+        "AdBlue deposu",
+        "Yakıt dağıtım borusu"
       ],
       "ignition": [
         "Buji",
@@ -93,7 +102,9 @@
         "Distribütör kapağı",
         "Tevzi makarası",
         "Buji kablosu",
-        "Kızdırma rölesi"
+        "Kızdırma rölesi",
+        "Ateşleme modülü",
+        "Buji bosch tipi adaptör"
       ]
     }
   },
@@ -111,7 +122,10 @@
         "Genleşme kabı",
         "Radyatör hortumu",
         "Hararet müşürü",
-        "Fan müşürü"
+        "Fan müşürü",
+        "Kalorifer musluğu",
+        "Su sıcaklık sensörü",
+        "Radyatör kapağı"
       ]
     }
   },
@@ -233,7 +247,9 @@
         "Fren diski",
         "Fren balatası",
         "Fren kampanası",
-        "Fren pabucu"
+        "Fren pabucu",
+        "Fren balata sensörü",
+        "El freni teli"
       ],
       "hydraulic": [
         "Fren kaliperi",
@@ -242,7 +258,9 @@
         "Fren servosu",
         "Fren hortumu",
         "Fren borusu",
-        "Vakum pompası"
+        "Vakum pompası",
+        "Fren hidroliği deposu",
+        "ABS hortumu"
       ],
       "electronic": [
         "ABS beyni",
@@ -264,7 +282,10 @@
         "Ön panel",
         "Panjur",
         "Ön çamurluk",
-        "Davlumbaz"
+        "Davlumbaz",
+        "Kaput menteşesi",
+        "Kaput amartisörü",
+        "Ön çamurluk davlumbazı"
       ],
       "side": [
         "Ön kapı",
@@ -274,7 +295,10 @@
         "Kapı gergisi",
         "Marşpiyel",
         "B sütunu",
-        "Çamurluk ağzı"
+        "Çamurluk ağzı",
+        "Kapı kolu dış",
+        "Kapı kolu iç",
+        "Kapı kilidi karşılığı"
       ],
       "rear": [
         "Arka tampon",
@@ -282,7 +306,9 @@
         "Bagaj kapağı",
         "Bagaj menteşesi",
         "Arka panel",
-        "Arka çamurluk"
+        "Arka çamurluk",
+        "Bagaj amartisörü",
+        "Plaka yuvası"
       ],
       "structural": [
         "Şase kolu",
@@ -362,7 +388,9 @@
         "Immobilizer beyni",
         "Anahtar",
         "Kontak",
-        "Kontak anteni"
+        "Kontak anteni",
+        "Immobilizer anteni",
+        "Kumanda anahtar kabı"
       ],
       "sensors": [
         "Krank sensörü",
@@ -372,7 +400,12 @@
         "Sıcaklık sensörü",
         "Park sensörü",
         "Yağmur sensörü",
-        "Işık sensörü"
+        "Işık sensörü",
+        "ABS sensörü",
+        "Debriyaj müşürü",
+        "Fren müşürü",
+        "Geri vites müşürü",
+        "Yakıt seviye sensörü"
       ],
       "wiring": [
         "Motor tesisatı",
@@ -420,7 +453,12 @@
         "Koltuk",
         "Koltuk rayı",
         "Koltuk motoru",
-        "Emniyet kemeri"
+        "Emniyet kemeri",
+        "Torpido kapağı",
+        "El freni kolu",
+        "Pedal lastiği",
+        "Paspas seti",
+        "Güneşlik"
       ],
       "safety": [
         "Sürücü airbag",
@@ -495,7 +533,9 @@
         "Hava filtresi",
         "Polen filtresi",
         "Yakıt filtresi",
-        "Şanzıman filtresi"
+        "Şanzıman filtresi",
+        "AdBlue filtresi",
+        "Hidrolik yağ filtresi"
       ],
       "service": [
         "V kayışı",
@@ -504,7 +544,131 @@
         "Silecek motoru",
         "Silecek mekanizması",
         "Cam suyu pompası",
-        "Cam suyu deposu"
+        "Cam suyu deposu",
+        "Antifriz",
+        "Fren hidroliği",
+        "Direksiyon yağı",
+        "Şanzıman yağı"
+      ]
+    }
+  },
+  "wheel_tire": {
+    "name_tr": "Jant & Lastik Parçaları",
+    "children": {
+      "wheel": [
+        "Çelik jant",
+        "Alaşım jant",
+        "Jant kapağı",
+        "Bijon anahtarı",
+        "Bijon somunu",
+        "Jant centiri",
+        "TPMS sensörü",
+        "Sibop",
+        "Sibop kapağı"
+      ],
+      "tire_related": [
+        "Lastik tamir seti",
+        "Stepne",
+        "Stepne askısı",
+        "Kriko",
+        "Bijon anahtarı seti"
+      ]
+    }
+  },
+  "locks_security": {
+    "name_tr": "Kilit & Güvenlik",
+    "children": {
+      "locks": [
+        "Kapı kilidi",
+        "Kapı kilidi motoru",
+        "Merkezi kilit pompası",
+        "Kontak kilidi",
+        "Bagaj kilidi",
+        "Kaput kilidi",
+        "Kilit silindiri",
+        "Anahtar kılıfı"
+      ]
+    }
+  },
+  "hoses_lines": {
+    "name_tr": "Hortum & Hatlar",
+    "children": {
+      "hoses": [
+        "Yakıt hortumu",
+        "Fren hortumu",
+        "Radyatör hortumu",
+        "Klima hortumu",
+        "Vakum hortumu",
+        "Servo hortumu",
+        "Turbo basınç hortumu",
+        "Kalorifer hortumu"
+      ]
+    }
+  },
+  "consumables_fasteners": {
+    "name_tr": "Sarf, Conta & Bağlantı",
+    "children": {
+      "gaskets": [
+        "Silindir kapak contası",
+        "Karter contası",
+        "Manifold contası",
+        "Termostat contası",
+        "Yağ filitre contası",
+        "Supap kapak contası"
+      ],
+      "fasteners": [
+        "Bijon",
+        "Bijon saplaması",
+        "Motor cıvatası",
+        "Egzoz kelepçesi",
+        "Hortum kelepçesi",
+        "Plastik klips",
+        "Panel klipsi"
+      ],
+      "bearings": [
+        "Teker rulmanı",
+        "Debriyaj rulmanı",
+        "Alternatör rulmanı",
+        "Gerği rulmanı",
+        "Şaft rulmanı"
+      ],
+      "belts": [
+        "V kayışı",
+        "Triger kayışı",
+        "Triger seti",
+        "Alternatör kayışı",
+        "Klima kayışı"
+      ]
+    }
+  },
+  "exterior_trim": {
+    "name_tr": "Dış Trim & Aksesuar",
+    "children": {
+      "trim": [
+        "Kapı çıtası",
+        "Marşpiyel çıtası",
+        "Cam çıtası",
+        "Tavan çıtası",
+        "Bagaj spoiler",
+        "Ön lip",
+        "Çamurluk genişletme",
+        "Anten",
+        "Yağmur oluğu"
+      ]
+    }
+  },
+  "wiper_wash": {
+    "name_tr": "Silecek & Yıkama",
+    "children": {
+      "wiper": [
+        "Silecek süpürgesi",
+        "Silecek motoru",
+        "Silecek mekanizması",
+        "Silecek kolu",
+        "Cam suyu pompası",
+        "Cam suyu deposu",
+        "Cam suyu hortumu",
+        "Fıskiye memesi"
       ]
     }
   }

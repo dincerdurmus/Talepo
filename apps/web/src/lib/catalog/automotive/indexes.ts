@@ -18,7 +18,15 @@ import type {
   AutomotiveModelRecord,
   AutomotivePartRecord,
   AutomotivePositionRecord,
+  AutomotiveTransmissionRecord,
+  TransmissionFamily,
+  TransmissionMatchKind,
 } from "./types";
+import {
+  extractTransmissionLikePhrases,
+  normalizeTransmissionMention,
+  sanitizeTransmissionCode,
+} from "./transmission-normalize";
 
 type PhraseKind = "name" | "alias" | "platform_code";
 
@@ -57,6 +65,12 @@ export type AutomotiveIndexes = {
   enginesByGeneration: Map<string, AutomotiveEngineRecord[]>;
   enginesByModel: Map<string, AutomotiveEngineRecord[]>;
   enginePhrases: PhraseEntry<AutomotiveEngineRecord>[];
+  transmissions: AutomotiveTransmissionRecord[];
+  transmissionById: Map<string, AutomotiveTransmissionRecord>;
+  transmissionsByGeneration: Map<string, AutomotiveTransmissionRecord[]>;
+  transmissionsByModel: Map<string, AutomotiveTransmissionRecord[]>;
+  transmissionsByEngine: Map<string, AutomotiveTransmissionRecord[]>;
+  transmissionPhrases: PhraseEntry<AutomotiveTransmissionRecord>[];
 };
 
 export type GenerationHit = {
@@ -78,6 +92,22 @@ export type EngineLookup = {
   yearConsistent?: boolean;
   matchedPhrase?: string;
   raw?: string;
+};
+
+export type TransmissionLookup = {
+  status: "resolved" | "ambiguous" | "unresolved";
+  record?: AutomotiveTransmissionRecord;
+  candidates?: AutomotiveTransmissionRecord[];
+  confidence: CatalogConfidence;
+  matchKind?: TransmissionMatchKind;
+  matchMode?: CatalogMatchMode;
+  yearConsistent?: boolean;
+  matchedPhrase?: string;
+  raw?: string;
+  /** Soft family hint when catalog empty / unresolved (never invents code). */
+  familyHint?: TransmissionFamily;
+  gearCountHint?: number | null;
+  transmissionCodeHint?: string | null;
 };
 
 function phraseEntry<T>(
@@ -236,6 +266,47 @@ function buildIndexes(): AutomotiveIndexes {
     }
   }
 
+  const transmissions = data.transmissions ?? [];
+  const transmissionById = new Map(transmissions.map((t) => [t.id, t]));
+  const transmissionsByGeneration = new Map<
+    string,
+    AutomotiveTransmissionRecord[]
+  >();
+  const transmissionsByModel = new Map<string, AutomotiveTransmissionRecord[]>();
+  const transmissionsByEngine = new Map<string, AutomotiveTransmissionRecord[]>();
+  for (const tx of transmissions) {
+    const byGen = transmissionsByGeneration.get(tx.generationId) ?? [];
+    byGen.push(tx);
+    transmissionsByGeneration.set(tx.generationId, byGen);
+    const byModel = transmissionsByModel.get(tx.modelId) ?? [];
+    byModel.push(tx);
+    transmissionsByModel.set(tx.modelId, byModel);
+    if (tx.engineId) {
+      const byEng = transmissionsByEngine.get(tx.engineId) ?? [];
+      byEng.push(tx);
+      transmissionsByEngine.set(tx.engineId, byEng);
+    }
+  }
+
+  const transmissionPhrases: PhraseEntry<AutomotiveTransmissionRecord>[] = [];
+  for (const tx of transmissions) {
+    const canon = phraseEntry(tx.canonicalName, tx, "name");
+    if (canon) transmissionPhrases.push(canon);
+    if (foldCatalogKey(tx.marketingName) !== foldCatalogKey(tx.canonicalName)) {
+      const mkt = phraseEntry(tx.marketingName, tx, "alias");
+      if (mkt) transmissionPhrases.push(mkt);
+    }
+    for (const alias of tx.aliases ?? []) {
+      if (!shouldIndexTransmissionPhrase(alias)) continue;
+      const row = phraseEntry(alias, tx, "alias");
+      if (row) transmissionPhrases.push(row);
+    }
+    if (tx.transmissionCode && shouldIndexTransmissionPhrase(tx.transmissionCode)) {
+      const code = phraseEntry(tx.transmissionCode, tx, "alias");
+      if (code) transmissionPhrases.push(code);
+    }
+  }
+
   return {
     version: data.manifest.version,
     brands: data.brands,
@@ -262,6 +333,12 @@ function buildIndexes(): AutomotiveIndexes {
     enginesByGeneration,
     enginesByModel,
     enginePhrases: sortPhrases(enginePhrases),
+    transmissions,
+    transmissionById,
+    transmissionsByGeneration,
+    transmissionsByModel,
+    transmissionsByEngine,
+    transmissionPhrases: sortPhrases(transmissionPhrases),
   };
 }
 
@@ -281,6 +358,14 @@ function shouldIndexEnginePhrase(phrase: string): boolean {
   return true;
 }
 
+/** Bare "AT"/"MT" alone are too ambiguous to index globally — still allowed as aliases on records. */
+function shouldIndexTransmissionPhrase(phrase: string): boolean {
+  const norm = normalizeCatalogKey(phrase);
+  if (!norm || norm.length < 2) return false;
+  if (/^\d$/.test(norm)) return false;
+  return true;
+}
+
 type GlobalIdx = { __talepoAutomotiveIndexes?: AutomotiveIndexes };
 
 export function getAutomotiveIndexes(): AutomotiveIndexes {
@@ -289,6 +374,12 @@ export function getAutomotiveIndexes(): AutomotiveIndexes {
     g.__talepoAutomotiveIndexes = buildIndexes();
   }
   return g.__talepoAutomotiveIndexes;
+}
+
+/** Test helper — clears globalThis cache (does not mutate production JSON). */
+export function resetAutomotiveIndexesCache(): void {
+  const g = globalThis as GlobalIdx;
+  delete g.__talepoAutomotiveIndexes;
 }
 
 export function matchModeForHit(
@@ -931,4 +1022,243 @@ export function extractUnverifiedGenerationRaw(
   if (!m?.[1]) return undefined;
   if (/^(19|20)\d{2}$/.test(m[1])) return undefined;
   return m[1];
+}
+
+function yearFitsTransmission(
+  tx: AutomotiveTransmissionRecord,
+  year: number,
+): boolean {
+  if (tx.yearFrom != null && year < tx.yearFrom) return false;
+  if (tx.yearTo != null && year > tx.yearTo) return false;
+  return true;
+}
+
+function transmissionInScope(
+  tx: AutomotiveTransmissionRecord,
+  scope: {
+    brandId?: string | null;
+    modelId?: string | null;
+    generationId?: string | null;
+    engineId?: string | null;
+  },
+): boolean {
+  if (scope.engineId) {
+    if (tx.engineId && tx.engineId !== scope.engineId) return false;
+  }
+  if (scope.generationId) {
+    if (tx.generationId !== scope.generationId) return false;
+    if (scope.brandId && tx.brandId !== scope.brandId) return false;
+    if (scope.modelId && tx.modelId !== scope.modelId) return false;
+    return true;
+  }
+  if (scope.modelId) {
+    if (tx.modelId !== scope.modelId) return false;
+    if (scope.brandId && tx.brandId !== scope.brandId) return false;
+    return true;
+  }
+  return false;
+}
+
+function transmissionMatchKind(
+  tx: AutomotiveTransmissionRecord,
+  phrase: string,
+  kind: PhraseKind,
+): TransmissionMatchKind {
+  if (tx.transmissionCode && normalizeCatalogKey(tx.transmissionCode) === phrase) {
+    return "code";
+  }
+  if (
+    kind === "name" &&
+    normalizeCatalogKey(tx.canonicalName) === phrase
+  ) {
+    return "exact_canonical_name";
+  }
+  if (normalizeCatalogKey(tx.marketingName) === phrase) {
+    return "exact_marketing_name";
+  }
+  return "alias";
+}
+
+/**
+ * Transmission lookup is brand→model→generation→engine scoped.
+ * NEVER resolves a global "7-speed DSG" alone.
+ * Ambiguity → ambiguous (never random pick). Never fabricates transmissionCode.
+ * Empty production catalog → unresolved (+ optional familyHint when scoped).
+ */
+export function findTransmissionsInText(
+  text: string,
+  scope: {
+    brandId?: string | null;
+    modelId?: string | null;
+    generationId?: string | null;
+    engineId?: string | null;
+  },
+  year?: number,
+): TransmissionLookup {
+  const leftover = extractTransmissionLikePhrases(text);
+  const soft = leftover[0]
+    ? normalizeTransmissionMention(leftover[0])
+    : leftover.length === 0 && /(?:dsg|dct|cvt|e-?cvt|edc|manuel|manual|otomatik)/i.test(text)
+      ? normalizeTransmissionMention(text)
+      : null;
+
+  const unresolved = (raw?: string): TransmissionLookup => ({
+    status: "unresolved",
+    confidence: "unverified",
+    raw: raw ?? leftover[0],
+    familyHint: soft && soft.family !== "UNKNOWN" ? soft.family : undefined,
+    gearCountHint: soft?.gearCount ?? null,
+    transmissionCodeHint: soft?.transmissionCode ?? null,
+    matchKind: soft ? "family_hint" : undefined,
+  });
+
+  // Never global — require at least model (brand→model chain).
+  if (!scope.modelId && !scope.generationId) return unresolved();
+
+  const idx = getAutomotiveIndexes();
+  const textNorm = normalizeCatalogKey(text);
+  const padded = ` ${textNorm} `;
+  const foldedHay = ` ${foldCatalogKey(textNorm)} `;
+
+  const direct: PhraseEntry<AutomotiveTransmissionRecord>[] = [];
+  for (const row of idx.transmissionPhrases) {
+    if (!transmissionInScope(row.record, scope)) continue;
+    const inNorm = padded.includes(` ${row.phrase} `);
+    const inFold = !inNorm && foldedHay.includes(` ${row.folded} `);
+    if (!inNorm && !inFold) continue;
+    direct.push(row);
+  }
+
+  // Precision: DQ200 ≠ DQ250 — prefer longer / more specific phrases
+  if (direct.length === 0) {
+    // Soft family hint only when vehicle is scoped; still unresolved (no catalog id).
+    return unresolved(leftover[0] ?? soft?.raw);
+  }
+
+  let bestTokens = 0;
+  let bestLen = 0;
+  for (const hit of direct) {
+    if (
+      hit.tokenCount > bestTokens ||
+      (hit.tokenCount === bestTokens && hit.length > bestLen)
+    ) {
+      bestTokens = hit.tokenCount;
+      bestLen = hit.length;
+    }
+  }
+  const topPhrases = direct.filter(
+    (hit) => hit.tokenCount === bestTokens && hit.length === bestLen,
+  );
+  const topPhrase = topPhrases[0]!.phrase;
+
+  const byId = new Map<string, PhraseEntry<AutomotiveTransmissionRecord>>();
+  for (const hit of topPhrases) {
+    if (!byId.has(hit.record.id)) byId.set(hit.record.id, hit);
+  }
+
+  let filtered = [...byId.values()].map((r) => r.record);
+  if (scope.engineId) {
+    const engScoped = filtered.filter(
+      (t) => !t.engineId || t.engineId === scope.engineId,
+    );
+    if (engScoped.length) filtered = engScoped;
+  }
+  if (year != null) {
+    const yearFit = filtered.filter((t) => yearFitsTransmission(t, year));
+    if (yearFit.length) filtered = yearFit;
+  }
+
+  // Gear-count precision: 6MT ≠ 5MT, 7DCT ≠ 6DCT
+  if (soft?.gearCount != null) {
+    const gearFit = filtered.filter(
+      (t) => t.gearCount == null || t.gearCount === soft.gearCount,
+    );
+    if (gearFit.length) filtered = gearFit;
+  }
+
+  // Explicit OEM code in text must not cross-match different codes
+  const codeInText = sanitizeTransmissionCode(
+    text.match(/\b((?:DQ|DL)\d{2,3}|8HP\d{0,2}|7G-?DCT)\b/i)?.[1] ?? null,
+  );
+  if (codeInText) {
+    const codeFit = filtered.filter(
+      (t) =>
+        t.transmissionCode == null ||
+        t.transmissionCode.toUpperCase() === codeInText,
+    );
+    if (codeFit.length) filtered = codeFit;
+  }
+
+  if (filtered.length === 0) return unresolved(leftover[0] ?? topPhrase);
+
+  if (filtered.length > 1) {
+    return {
+      status: "ambiguous",
+      candidates: filtered,
+      confidence: "medium",
+      matchKind: "alias",
+      matchMode: "alias",
+      matchedPhrase: topPhrase,
+      raw: leftover[0] ?? topPhrase,
+      familyHint: soft?.family,
+      gearCountHint: soft?.gearCount ?? null,
+      transmissionCodeHint: codeInText,
+    };
+  }
+
+  const record = filtered[0]!;
+  const source = byId.get(record.id)!;
+  const matchKind = transmissionMatchKind(record, topPhrase, source.kind);
+  return {
+    status: "resolved",
+    record,
+    confidence:
+      matchKind === "exact_canonical_name" || matchKind === "code"
+        ? "exact"
+        : matchKind === "exact_marketing_name"
+          ? "high"
+          : "high",
+    matchKind,
+    matchMode:
+      matchKind === "exact_canonical_name" || matchKind === "exact_marketing_name"
+        ? "exact"
+        : "alias",
+    matchedPhrase: topPhrase,
+    yearConsistent:
+      year == null ? undefined : yearFitsTransmission(record, year),
+  };
+}
+
+/** Alias for findTransmissionsInText (engine-style naming). */
+export function resolveTransmission(
+  text: string,
+  scope: {
+    brandId?: string | null;
+    modelId?: string | null;
+    generationId?: string | null;
+    engineId?: string | null;
+  },
+  year?: number,
+): TransmissionLookup {
+  return findTransmissionsInText(text, scope, year);
+}
+
+/** Coverage helpers for ingestion matrix (counts only). */
+export function automotiveTransmissionCoverageStats(idx?: AutomotiveIndexes) {
+  const i = idx ?? getAutomotiveIndexes();
+  const gensWithEngine = new Set(i.engines.map((e) => e.generationId));
+  const gensWithTx = new Set(i.transmissions.map((t) => t.generationId));
+  const enginesWithTx = new Set(
+    i.transmissions.map((t) => t.engineId).filter(Boolean) as string[],
+  );
+  return {
+    brands: i.brands.length,
+    models: i.models.length,
+    generations: i.generations.length,
+    engines: i.engines.length,
+    transmissions: i.transmissions.length,
+    generationWithEngineCount: gensWithEngine.size,
+    generationWithTransmissionCount: gensWithTx.size,
+    engineWithTransmissionRelationCount: enginesWithTx.size,
+  };
 }

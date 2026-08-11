@@ -1,0 +1,169 @@
+{
+  "version": "1.0.0",
+  "domain": "technology",
+  "notes": "Curated real public tech models. Variants as attributes — no SKU explosion.",
+  "products": [
+    {
+      "id": "tech-apple-iphone-15-pro-max",
+      "subcategorySlug": "donanim",
+      "brand": "Apple",
+      "productFamily": "iPhone",
+      "model": "iPhone 15 Pro Max",
+      "kind": "smartphone",
+      "variantAttributes": {
+        "storageOptions": ["256GB", "512GB", "1TB"],
+        "colorOptions": ["Black Titanium", "White Titanium", "Blue Titanium", "Natural Titanium"]
+      },
+      "specs": {
+        "displayInches": 6.7,
+        "chip": "A17 Pro"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Apple iPhone 15 Pro Max public tech specs (curated fixture)",
+        "sourceRef": "https://www.apple.com/iphone-15-pro/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-samsung-galaxy-s24-ultra",
+      "subcategorySlug": "donanim",
+      "brand": "Samsung",
+      "productFamily": "Galaxy S",
+      "model": "Galaxy S24 Ultra",
+      "kind": "smartphone",
+      "variantAttributes": {
+        "storageOptions": ["256GB", "512GB", "1TB"],
+        "ramOptions": ["12GB"]
+      },
+      "specs": {
+        "displayInches": 6.8
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Samsung Galaxy S24 Ultra public specs (curated fixture)",
+        "sourceRef": "https://www.samsung.com/global/galaxy/galaxy-s24-ultra/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-lenovo-thinkpad-x1-carbon-g11",
+      "subcategorySlug": "donanim",
+      "brand": "Lenovo",
+      "productFamily": "ThinkPad",
+      "series": "X1 Carbon",
+      "model": "ThinkPad X1 Carbon Gen 11",
+      "kind": "laptop",
+      "variantAttributes": {
+        "ramOptions": ["16GB", "32GB"],
+        "storageOptions": ["512GB", "1TB"]
+      },
+      "specs": {
+        "displayInches": 14
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Lenovo ThinkPad X1 Carbon Gen 11 public PSREF (curated fixture)",
+        "sourceRef": "https://psref.lenovo.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-asus-rog-zephyrus-g14-2024",
+      "subcategorySlug": "donanim",
+      "brand": "ASUS",
+      "productFamily": "ROG Zephyrus",
+      "model": "ROG Zephyrus G14 (2024)",
+      "kind": "laptop",
+      "variantAttributes": {
+        "ramOptions": ["16GB", "32GB"],
+        "storageOptions": ["1TB"]
+      },
+      "specs": {
+        "displayInches": 14
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "ASUS ROG Zephyrus G14 2024 public product page (curated fixture)",
+        "sourceRef": "https://rog.asus.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-lg-oled55c3",
+      "subcategorySlug": "donanim",
+      "brand": "LG",
+      "productFamily": "OLED TV",
+      "series": "C3",
+      "model": "OLED55C3",
+      "kind": "tv",
+      "variantAttributes": {
+        "sizeOptionsInches": [55, 65, 77, 83]
+      },
+      "specs": {
+        "panel": "OLED",
+        "resolution": "4K"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "LG OLED C3 public product family (curated fixture)",
+        "sourceRef": "https://www.lg.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-sony-xr65a80l",
+      "subcategorySlug": "donanim",
+      "brand": "Sony",
+      "productFamily": "BRAVIA",
+      "series": "A80L",
+      "model": "XR-65A80L",
+      "kind": "tv",
+      "variantAttributes": {
+        "sizeOptionsInches": [55, 65, 77]
+      },
+      "specs": {
+        "panel": "OLED",
+        "resolution": "4K"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Sony BRAVIA A80L public model (curated fixture)",
+        "sourceRef": "https://www.sony.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "tech-oos-apple-icloud",
+      "subcategorySlug": "yazilim-gelistirme",
+      "brand": "Apple",
+      "productFamily": "iCloud",
+      "model": "iCloud+",
+      "kind": "service",
+      "outOfScope": true,
+      "scopeReason": "Software/services subcategory DISABLED for entity crawl",
+      "variantAttributes": {},
+      "specs": {},
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Negative fixture — software service out of Donanım scope",
+        "sourceRef": "scope-guard",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "negative-fixture"
+      }
+    }
+  ]
+}

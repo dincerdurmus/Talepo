@@ -1,0 +1,1132 @@
+{
+  "domain": "health",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health",
+      "parentId": null,
+      "canonicalName": "Sağlık",
+      "nodeType": "CATEGORY",
+      "categoryId": "health",
+      "depth": 0,
+      "requestSchemaId": "health",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz",
+      "parentId": "tax:health",
+      "canonicalName": "Medikal Cihaz",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 1,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "parentId": "tax:health:medikal-cihaz",
+      "canonicalName": "Cihaz grupları",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 2,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "vital monitor"
+      ],
+      "searchTerms": [
+        "Hasta monitörü"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:hasta-monitoru",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Hasta monitörü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "solunum cihazı"
+      ],
+      "searchTerms": [
+        "Ventilatör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:ventilator",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Ventilatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "AED"
+      ],
+      "searchTerms": [
+        "Defibrilatör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:defibrilator",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Defibrilatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "USG"
+      ],
+      "searchTerms": [
+        "Ultrason cihazı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:ultrason-cihazi",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Ultrason cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "EKG cihazı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:ekg-cihazi",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "EKG cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnfüzyon pompası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:infuzyon-pompasi",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "İnfüzyon pompası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oksijen konsantratörü"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:oksijen-konsantratoru",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Oksijen konsantratörü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Nebulizatör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:nebulizator",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Nebulizatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sphygmomanometer"
+      ],
+      "searchTerms": [
+        "Tansiyon aleti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:tansiyon-aleti",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Tansiyon aleti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pulse oksimetre"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:cihaz-gruplari:pulse-oksimetre",
+      "parentId": "tax:health:medikal-cihaz:cihaz-gruplari",
+      "canonicalName": "Pulse oksimetre",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme",
+      "parentId": "tax:health",
+      "canonicalName": "Sarf Malzeme",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 1,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari",
+      "parentId": "tax:health:sarf-malzeme",
+      "canonicalName": "Sarf grupları",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 2,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "muayene eldiveni",
+        "nitrile glove"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:eldiven",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Eldiven",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cerrahi maske",
+        "N95"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:maske",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Maske",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "syringe"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:enjektor-igne",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Enjektör / iğne",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:serum-seti",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Serum seti",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:gazli-bez-pamuk",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Gazlı bez / pamuk",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:plaster-flaster",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Plaster / flaster",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:idrar-kabi-numune-kabi",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "İdrar kabı / numune kabı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:dezenfektan",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Dezenfektan",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:muayene-ortusu",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Muayene örtüsü",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:sarf-gruplari:kateter",
+      "parentId": "tax:health:sarf-malzeme:sarf-gruplari",
+      "canonicalName": "Kateter",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim",
+      "parentId": "tax:health",
+      "canonicalName": "Klinik Donanım",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 1,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik",
+      "parentId": "tax:health:klinik-donanim",
+      "canonicalName": "Klinik",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 2,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Muayene masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:muayene-masasi",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Muayene masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "hospital bed"
+      ],
+      "searchTerms": [
+        "Hasta yatağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:hasta-yatagi",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Hasta yatağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sedye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:sedye",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Sedye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tıbbi dolap / ecza dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:tibbi-dolap-ecza-dolabi",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Tıbbi dolap / ecza dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Aydınlatma / muayene lambası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:aydinlatma-muayene-lambasi",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Aydınlatma / muayene lambası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "autoclave"
+      ],
+      "searchTerms": [
+        "Sterilizatör / otoklav"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik:sterilizator-otoklav",
+      "parentId": "tax:health:klinik-donanim:klinik",
+      "canonicalName": "Sterilizatör / otoklav",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar",
+      "parentId": "tax:health",
+      "canonicalName": "Diş / Laboratuvar",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 1,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis",
+      "parentId": "tax:health:dis-laboratuvar",
+      "canonicalName": "Diş",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 2,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "dental unit"
+      ],
+      "searchTerms": [
+        "Diş üniti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis:dis-uniti",
+      "parentId": "tax:health:dis-laboratuvar:dis",
+      "canonicalName": "Diş üniti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Apex locator"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis:apex-locator",
+      "parentId": "tax:health:dis-laboratuvar:dis",
+      "canonicalName": "Apex locator",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kavitron / scaler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis:kavitron-scaler",
+      "parentId": "tax:health:dis-laboratuvar:dis",
+      "canonicalName": "Kavitron / scaler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Diş hekimi sandalyesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis:dis-hekimi-sandalyesi",
+      "parentId": "tax:health:dis-laboratuvar:dis",
+      "canonicalName": "Diş hekimi sandalyesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:laboratuvar",
+      "parentId": "tax:health:dis-laboratuvar",
+      "canonicalName": "Laboratuvar",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 2,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Santrifüj"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:laboratuvar:santrifuj",
+      "parentId": "tax:health:dis-laboratuvar:laboratuvar",
+      "canonicalName": "Santrifüj",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mikroskop"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:laboratuvar:mikroskop",
+      "parentId": "tax:health:dis-laboratuvar:laboratuvar",
+      "canonicalName": "Mikroskop",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "lab analyzer"
+      ],
+      "searchTerms": [
+        "Analizör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:laboratuvar:analizor",
+      "parentId": "tax:health:dis-laboratuvar:laboratuvar",
+      "canonicalName": "Analizör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:laboratuvar:pipet-lab-sarf",
+      "parentId": "tax:health:dis-laboratuvar:laboratuvar",
+      "canonicalName": "Pipet / lab sarf",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger",
+      "parentId": "tax:health",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:diger-saglik",
+      "parentId": "tax:health:diger",
+      "canonicalName": "Diğer sağlık",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "walker",
+        "koltuk değneği"
+      ],
+      "searchTerms": [
+        "Ortopedi ürünleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:diger-saglik:ortopedi-urunleri",
+      "parentId": "tax:health:diger:diger-saglik",
+      "canonicalName": "Ortopedi ürünleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İşitme cihazı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:diger-saglik:isitme-cihazi",
+      "parentId": "tax:health:diger:diger-saglik",
+      "canonicalName": "İşitme cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Evde bakım cihazı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:diger-saglik:evde-bakim-cihazi",
+      "parentId": "tax:health:diger:diger-saglik",
+      "canonicalName": "Evde bakım cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal mobilya"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:diger-saglik:medikal-mobilya",
+      "parentId": "tax:health:diger:diger-saglik",
+      "canonicalName": "Medikal mobilya",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

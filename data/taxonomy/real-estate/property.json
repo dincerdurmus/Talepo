@@ -1,0 +1,981 @@
+{
+  "domain": "real-estate",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate",
+      "parentId": null,
+      "canonicalName": "Emlak",
+      "nodeType": "CATEGORY",
+      "categoryId": "real-estate",
+      "depth": 0,
+      "requestSchemaId": "real-estate",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut",
+      "parentId": "tax:real-estate",
+      "canonicalName": "Kiralık Konut",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 1,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "parentId": "tax:real-estate:kiralik-konut",
+      "canonicalName": "Konut tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 2,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "apartment"
+      ],
+      "searchTerms": [
+        "Daire"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:daire",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Daire",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Rezidans"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:rezidans",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Rezidans",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "müstakil"
+      ],
+      "searchTerms": [
+        "Villa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:villa",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Villa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dublex / triplex"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:dublex-triplex",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Dublex / triplex",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "1+0"
+      ],
+      "searchTerms": [
+        "Stüdyo"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:studyo",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Stüdyo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe katı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:bahce-kati",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Bahçe katı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çatı katı / loft"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:cati-kati-loft",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Çatı katı / loft",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
+      "parentId": "tax:real-estate:kiralik-konut",
+      "canonicalName": "Kiralama özellikleri",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 2,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "furnished"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:esyali",
+      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
+      "canonicalName": "Eşyalı",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:esyasiz",
+      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
+      "canonicalName": "Eşyasız",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:aidat-dahil",
+      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
+      "canonicalName": "Aidat dahil",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "daily rent"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:kisa-donem-kiralik",
+      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
+      "canonicalName": "Kısa dönem kiralık",
+      "nodeType": "TECHNICAL_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut",
+      "parentId": "tax:real-estate",
+      "canonicalName": "Satılık Konut",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 1,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "parentId": "tax:real-estate:satilik-konut",
+      "canonicalName": "Satılık konut tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 2,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Satılık daire"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-daire",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "Satılık daire",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Satılık villa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-villa",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "Satılık villa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Satılık yazlık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-yazlik",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "Satılık yazlık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Satılık müstakil ev"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-mustakil-ev",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "Satılık müstakil ev",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "zero apartment"
+      ],
+      "searchTerms": [
+        "Yeni proje / sıfır daire"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:yeni-proje-sifir-daire",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "Yeni proje / sıfır daire",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İkinci el daire"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:ikinci-el-daire",
+      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "canonicalName": "İkinci el daire",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul",
+      "parentId": "tax:real-estate",
+      "canonicalName": "Ticari Gayrimenkul",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 1,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "parentId": "tax:real-estate:ticari-gayrimenkul",
+      "canonicalName": "Ticari tipler",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 2,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "retail"
+      ],
+      "searchTerms": [
+        "Dükkan / mağaza"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:dukkan-magaza",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Dükkan / mağaza",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "işyeri"
+      ],
+      "searchTerms": [
+        "Ofis"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:ofis",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Ofis",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Plaza ofisi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:plaza-ofisi",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Plaza ofisi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "warehouse"
+      ],
+      "searchTerms": [
+        "Depo / antrepo"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:depo-antrepo",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Depo / antrepo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fabrika / imalathane"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:fabrika-imalathane",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Fabrika / imalathane",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "AVM ünitesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:avm-unitesi",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "AVM ünitesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Otel / apart"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:ticari-gayrimenkul:ticari-tipler:otel-apart",
+      "parentId": "tax:real-estate:ticari-gayrimenkul:ticari-tipler",
+      "canonicalName": "Otel / apart",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "ticari-gayrimenkul",
+      "depth": 3,
+      "requestSchemaId": "real-estate/ticari-gayrimenkul",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa",
+      "parentId": "tax:real-estate",
+      "canonicalName": "Arsa",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 1,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri",
+      "parentId": "tax:real-estate:arsa",
+      "canonicalName": "Arsa tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 2,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "zoned plot"
+      ],
+      "searchTerms": [
+        "İmarlı arsa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri:imarli-arsa",
+      "parentId": "tax:real-estate:arsa:arsa-tipleri",
+      "canonicalName": "İmarlı arsa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 3,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "agricultural"
+      ],
+      "searchTerms": [
+        "Tarla"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri:tarla",
+      "parentId": "tax:real-estate:arsa:arsa-tipleri",
+      "canonicalName": "Tarla",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 3,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ticari arsa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri:ticari-arsa",
+      "parentId": "tax:real-estate:arsa:arsa-tipleri",
+      "canonicalName": "Ticari arsa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 3,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Konut imarlı arsa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri:konut-imarli-arsa",
+      "parentId": "tax:real-estate:arsa:arsa-tipleri",
+      "canonicalName": "Konut imarlı arsa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 3,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sanayi arsası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:arsa:arsa-tipleri:sanayi-arsasi",
+      "parentId": "tax:real-estate:arsa:arsa-tipleri",
+      "canonicalName": "Sanayi arsası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "arsa",
+      "depth": 3,
+      "requestSchemaId": "real-estate/arsa",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger",
+      "parentId": "tax:real-estate",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak",
+      "parentId": "tax:real-estate:diger",
+      "canonicalName": "Diğer emlak",
+      "nodeType": "GROUP",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "transfer business"
+      ],
+      "searchTerms": [
+        "Devren işyeri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak:devren-isyeri",
+      "parentId": "tax:real-estate:diger:diger-emlak",
+      "canonicalName": "Devren işyeri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Müştemilat"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak:mustemilat",
+      "parentId": "tax:real-estate:diger:diger-emlak",
+      "canonicalName": "Müştemilat",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kooperatif hissesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak:kooperatif-hissesi",
+      "parentId": "tax:real-estate:diger:diger-emlak",
+      "canonicalName": "Kooperatif hissesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Turistik tesis"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak:turistik-tesis",
+      "parentId": "tax:real-estate:diger:diger-emlak",
+      "canonicalName": "Turistik tesis",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

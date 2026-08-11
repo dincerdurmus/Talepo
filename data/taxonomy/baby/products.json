@@ -1,0 +1,937 @@
+{
+  "domain": "baby",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby",
+      "parentId": null,
+      "canonicalName": "Bebek ve Çocuk",
+      "nodeType": "CATEGORY",
+      "categoryId": "baby",
+      "depth": 0,
+      "requestSchemaId": "baby",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi",
+      "parentId": "tax:baby",
+      "canonicalName": "Bebek Arabası",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 1,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri",
+      "parentId": "tax:baby:bebek-arabasi",
+      "canonicalName": "Araba tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 2,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "travel system"
+      ],
+      "searchTerms": [
+        "Travel sistem bebek arabası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:travel-sistem-bebek-arabasi",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Travel sistem bebek arabası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "umbrella stroller"
+      ],
+      "searchTerms": [
+        "Cep tipi / cabin boy"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:cep-tipi-cabin-boy",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Cep tipi / cabin boy",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "double stroller"
+      ],
+      "searchTerms": [
+        "İkiz bebek arabası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:ikiz-bebek-arabasi",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "İkiz bebek arabası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Jogger bebek arabası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:jogger-bebek-arabasi",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Jogger bebek arabası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "infant carrier",
+        "oto koltuğu ana kucağı"
+      ],
+      "searchTerms": [
+        "Ana kucağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:ana-kucagi",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Ana kucağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "car seat"
+      ],
+      "searchTerms": [
+        "Oto koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:oto-koltugu",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Oto koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme",
+      "parentId": "tax:baby",
+      "canonicalName": "Beslenme",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 1,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri",
+      "parentId": "tax:baby:beslenme",
+      "canonicalName": "Beslenme ürünleri",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 2,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bottle"
+      ],
+      "searchTerms": [
+        "Biberon"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:biberon",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Biberon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "pacifier"
+      ],
+      "searchTerms": [
+        "Emzik"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:emzik",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Emzik",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "high chair"
+      ],
+      "searchTerms": [
+        "Mama sandalyesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:mama-sandalyesi",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Mama sandalyesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sterilizatör"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:sterilizator",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Sterilizatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mama hazırlama makinesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:mama-hazirlama-makinesi",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Mama hazırlama makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sippy cup"
+      ],
+      "searchTerms": [
+        "Alıştırma bardağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:alistirma-bardagi",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Alıştırma bardağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "breast pump"
+      ],
+      "searchTerms": [
+        "Göğüs pompası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:gogus-pompasi",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Göğüs pompası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik",
+      "parentId": "tax:baby",
+      "canonicalName": "Uyku / Beşik",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 1,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku",
+      "parentId": "tax:baby:uyku-besik",
+      "canonicalName": "Uyku",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 2,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "crib"
+      ],
+      "searchTerms": [
+        "Beşik"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:besik",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Beşik",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "playard"
+      ],
+      "searchTerms": [
+        "Park yatak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:park-yatak",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Park yatak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "co-sleeper"
+      ],
+      "searchTerms": [
+        "Anne yanı yatak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:anne-yani-yatak",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Anne yanı yatak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sleeping bag"
+      ],
+      "searchTerms": [
+        "Uyku tulumu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:uyku-tulumu",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Uyku tulumu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yatak koruyucu / nest"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:yatak-koruyucu-nest",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Yatak koruyucu / nest",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek odası mobilya seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:bebek-odasi-mobilya-seti",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Bebek odası mobilya seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim",
+      "parentId": "tax:baby",
+      "canonicalName": "Bakım",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 1,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim",
+      "parentId": "tax:baby:bakim",
+      "canonicalName": "Bakım",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 2,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "diaper"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezi",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek bezi",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:islak-mendil",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Islak mendil",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-sampuani-losyon",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek şampuanı / losyon",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "changing pad"
+      ],
+      "searchTerms": [
+        "Alt açma minderi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:alt-acma-minderi",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Alt açma minderi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek banyo küveti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-banyo-kuveti",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek banyo küveti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "thermometer"
+      ],
+      "searchTerms": [
+        "Ateş ölçer"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:ates-olcer",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Ateş ölçer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tırnak makası / bakım seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:tirnak-makasi-bakim-seti",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Tırnak makası / bakım seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger",
+      "parentId": "tax:baby",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek",
+      "parentId": "tax:baby:diger",
+      "canonicalName": "Diğer bebek",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "carrier"
+      ],
+      "searchTerms": [
+        "Kanguru / baby carrier"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek:kanguru-baby-carrier",
+      "parentId": "tax:baby:diger:diger-bebek",
+      "canonicalName": "Kanguru / baby carrier",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyun parkı / activity gym"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek:oyun-parki-activity-gym",
+      "parentId": "tax:baby:diger:diger-bebek",
+      "canonicalName": "Oyun parkı / activity gym",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "baby monitor"
+      ],
+      "searchTerms": [
+        "Bebek monitörü"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek:bebek-monitoru",
+      "parentId": "tax:baby:diger:diger-bebek",
+      "canonicalName": "Bebek monitörü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzirme yastığı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek:emzirme-yastigi",
+      "parentId": "tax:baby:diger:diger-bebek",
+      "canonicalName": "Emzirme yastığı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek tekstili"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:diger-bebek:bebek-tekstili",
+      "parentId": "tax:baby:diger:diger-bebek",
+      "canonicalName": "Bebek tekstili",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

@@ -5,3 +5,11 @@ apps/web.zip
 data/catalog-ingestion/runs/**
 !data/catalog-ingestion/runs/.gitkeep
 
+# Incremental adapter state (fingerprints; may grow)
+data/catalog-ingestion/state/**
+!data/catalog-ingestion/state/.gitkeep
+
+# Source response cache (TTL bodies; may grow)
+data/catalog-ingestion/cache/**
+!data/catalog-ingestion/cache/.gitkeep
+

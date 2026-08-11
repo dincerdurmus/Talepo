@@ -43,7 +43,8 @@ function mayOverwrite(
 /**
  * Non-destructive catalog layer.
  * Never throws. Never blocks request creation. Never invents OEM.
- * Generation/engine stay on catalogEnrichment only — never copied onto requestSubject.
+ * Generation/engine never copy onto requestSubject (sought part stays the subject).
+ * Displayable generation/engine may soft-fill attributes when not EXPLICIT.
  * Catalog fuel is not written over request-understanding fuel.
  */
 export function applyCatalogEnrichment(
@@ -107,6 +108,59 @@ export function applyCatalogEnrichment(
         source: "USER_EXPLICIT",
         confidence: 0.9,
         evidence: [String(enrichment.modelYear)],
+      });
+    }
+
+    if (
+      enrichment.generation?.status === "resolved" &&
+      enrichment.generation.name &&
+      FILLABLE.includes(enrichment.generation.confidence) &&
+      mayOverwrite(attributes.generation, enrichment.generation.name)
+    ) {
+      attributes.generation = uv(enrichment.generation.name, {
+        provenance: "INFERRED",
+        source: "FUTURE_KNOWLEDGE",
+        confidence: catalogNumericConfidence(enrichment.generation.confidence),
+        evidence: enrichment.generation.id
+          ? [`catalog:${enrichment.generation.id}`]
+          : ["catalog:generation"],
+      });
+    }
+
+    if (
+      enrichment.engine?.status === "resolved" &&
+      enrichment.engine.marketingName &&
+      FILLABLE.includes(enrichment.engine.confidence) &&
+      mayOverwrite(attributes.engine, enrichment.engine.marketingName)
+    ) {
+      attributes.engine = uv(enrichment.engine.marketingName, {
+        provenance: "INFERRED",
+        source: "FUTURE_KNOWLEDGE",
+        confidence: catalogNumericConfidence(enrichment.engine.confidence),
+        evidence: enrichment.engine.id
+          ? [`catalog:${enrichment.engine.id}`]
+          : ["catalog:engine"],
+      });
+    }
+
+    // Transmission soft-fill: never overwrite EXPLICIT user tokens (mayOverwrite).
+    // Unresolved/family-hint transmissions do not write attributes.
+    if (
+      enrichment.transmission?.status === "resolved" &&
+      enrichment.transmission.marketingName &&
+      FILLABLE.includes(enrichment.transmission.confidence) &&
+      mayOverwrite(
+        attributes.transmission,
+        enrichment.transmission.marketingName,
+      )
+    ) {
+      attributes.transmission = uv(enrichment.transmission.marketingName, {
+        provenance: "INFERRED",
+        source: "FUTURE_KNOWLEDGE",
+        confidence: catalogNumericConfidence(enrichment.transmission.confidence),
+        evidence: enrichment.transmission.id
+          ? [`catalog:${enrichment.transmission.id}`]
+          : ["catalog:transmission"],
       });
     }
 

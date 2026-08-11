@@ -9,13 +9,9 @@ import {
   applyBrowseSelection,
   auditCategoryTreeCoverage,
   browsePathToExplicitFields,
-  canAutoSafeSource,
   canPromoteGapToProduction,
-  categoriesEligibleForExternalIngest,
-  classifyIngestRecord,
   compareFreeTextAndBrowseEquivalence,
   createCatalogGap,
-  createStubSourceAdapter,
   getBrands,
   getBrowseChildren,
   getCategoryChildren,
@@ -32,9 +28,15 @@ import {
   resolveKnowledgeProfile,
   resolveNextQuestions,
   resolveRequestSchema,
-  runCatalogIngestion,
   subcategorySlug,
 } from "../src/lib/knowledge";
+import {
+  canAutoSafeSource,
+  categoriesEligibleForExternalIngest,
+  classifyIngestRecord,
+  createStubSourceAdapter,
+  runCatalogIngestion,
+} from "../src/lib/knowledge/ingestion";
 import type { IngestRecord } from "../src/lib/knowledge/types";
 
 let pass = 0;

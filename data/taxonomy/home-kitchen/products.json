@@ -1,0 +1,983 @@
+{
+  "domain": "home-kitchen",
+  "version": "1.0.0",
+  "nodes": [
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen",
+      "parentId": null,
+      "canonicalName": "Ev ve Mutfak",
+      "nodeType": "CATEGORY",
+      "categoryId": "home-kitchen",
+      "depth": 0,
+      "requestSchemaId": "home-kitchen",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi",
+      "parentId": "tax:home-kitchen",
+      "canonicalName": "Yemek Takımı",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 1,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "parentId": "tax:home-kitchen:yemek-takimi",
+      "canonicalName": "Yemek takımları",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yemek seti"
+      ],
+      "searchTerms": [
+        "Porselen yemek takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari:porselen-yemek-takimi",
+      "parentId": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "canonicalName": "Porselen yemek takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bone china yemek takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari:bone-china-yemek-takimi",
+      "parentId": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "canonicalName": "Bone china yemek takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Günlük servis takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari:gunluk-servis-takimi",
+      "parentId": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "canonicalName": "Günlük servis takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kayık tabak / sunum seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari:kayik-tabak-sunum-seti",
+      "parentId": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "canonicalName": "Kayık tabak / sunum seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kase / çorba seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:yemek-takimi:yemek-takimlari:kase-corba-seti",
+      "parentId": "tax:home-kitchen:yemek-takimi:yemek-takimlari",
+      "canonicalName": "Kase / çorba seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "yemek-takimi",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/yemek-takimi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti",
+      "parentId": "tax:home-kitchen",
+      "canonicalName": "Kahve / Çay Seti",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 1,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "parentId": "tax:home-kitchen:kahve-cay-seti",
+      "canonicalName": "Kahve ve çay",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "turkish coffee set"
+      ],
+      "searchTerms": [
+        "Kahve fincan takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:kahve-fincan-takimi",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "Kahve fincan takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çay bardak takımı"
+      ],
+      "searchTerms": [
+        "Çay seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:cay-seti",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "Çay seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "French press"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:french-press",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "French press",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Chemex / pour over set"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:chemex-pour-over-set",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "Chemex / pour over set",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Espresso fincan seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:espresso-fincan-seti",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "Espresso fincan seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Termos / sürahi seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay:termos-surahi-seti",
+      "parentId": "tax:home-kitchen:kahve-cay-seti:kahve-ve-cay",
+      "canonicalName": "Termos / sürahi seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "kahve-cay-seti",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/kahve-cay-seti",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak",
+      "parentId": "tax:home-kitchen",
+      "canonicalName": "Çatal Bıçak",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 1,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "parentId": "tax:home-kitchen:catal-bicak",
+      "canonicalName": "Çatal bıçak",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cutlery set"
+      ],
+      "searchTerms": [
+        "Çatal bıçak takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak:catal-bicak-takimi",
+      "parentId": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "canonicalName": "Çatal bıçak takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Servis takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak:servis-takimi",
+      "parentId": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "canonicalName": "Servis takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mutfak bıçağı"
+      ],
+      "searchTerms": [
+        "Bıçak seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak:bicak-seti",
+      "parentId": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "canonicalName": "Bıçak seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Steak knife seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak:steak-knife-seti",
+      "parentId": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "canonicalName": "Steak knife seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaşık seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:catal-bicak:catal-bicak:kasik-seti",
+      "parentId": "tax:home-kitchen:catal-bicak:catal-bicak",
+      "canonicalName": "Kaşık seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "catal-bicak",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/catal-bicak",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen",
+      "parentId": "tax:home-kitchen",
+      "canonicalName": "Cam / Porselen",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 1,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "parentId": "tax:home-kitchen:cam-porselen",
+      "canonicalName": "Cam ve porselen",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "su bardağı"
+      ],
+      "searchTerms": [
+        "Bardak seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen:bardak-seti",
+      "parentId": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "canonicalName": "Bardak seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "şarap kadehi"
+      ],
+      "searchTerms": [
+        "Kadeh seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen:kadeh-seti",
+      "parentId": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "canonicalName": "Kadeh seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cam kap"
+      ],
+      "searchTerms": [
+        "Saklama kabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen:saklama-kabi",
+      "parentId": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "canonicalName": "Saklama kabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "oven dish"
+      ],
+      "searchTerms": [
+        "Fırın kabı / borcam"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen:firin-kabi-borcam",
+      "parentId": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "canonicalName": "Fırın kabı / borcam",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif vazo"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:cam-porselen:cam-ve-porselen:dekoratif-vazo",
+      "parentId": "tax:home-kitchen:cam-porselen:cam-ve-porselen",
+      "canonicalName": "Dekoratif vazo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "cam-porselen",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/cam-porselen",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger",
+      "parentId": "tax:home-kitchen",
+      "canonicalName": "Diğer",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 1,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Mutfak gereçleri",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cookware"
+      ],
+      "searchTerms": [
+        "Tencere seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:tencere-seti",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Tencere seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kızartma tavası"
+      ],
+      "searchTerms": [
+        "Tava"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:tava",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Tava",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak robotu aksesuarı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:mutfak-robotu-aksesuari",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Mutfak robotu aksesuarı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saklama / düzenleyici"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:saklama-duzenleyici",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Saklama / düzenleyici",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Mutfak ve banyo armatür / lavabo",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "eviye",
+        "sink",
+        "mutfak eviyesi",
+        "lavabo"
+      ],
+      "searchTerms": [
+        "Eviye / lavabo"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:eviye-lavabo",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Eviye / lavabo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "batarya",
+        "musluk",
+        "faucet",
+        "armatür"
+      ],
+      "searchTerms": [
+        "Batarya / musluk"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:batarya-musluk",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Batarya / musluk",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "shower mixer"
+      ],
+      "searchTerms": [
+        "Duş bataryası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:dus-bataryasi",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Duş bataryası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "toilet"
+      ],
+      "searchTerms": [
+        "Klozet"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:klozet",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Klozet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "banyo dolabı"
+      ],
+      "searchTerms": [
+        "Lavabo dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:lavabo-dolabi",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Lavabo dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "shower cabin"
+      ],
+      "searchTerms": [
+        "Duşakabin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:dusakabin",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Duşakabin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ankastre eviye seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo:ankastre-eviye-seti",
+      "parentId": "tax:home-kitchen:diger:mutfak-ve-banyo-armatur-lavabo",
+      "canonicalName": "Ankastre eviye seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    }
+  ]
+}

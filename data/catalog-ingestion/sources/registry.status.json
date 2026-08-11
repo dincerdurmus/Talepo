@@ -1,0 +1,95 @@
+{
+  "updatedAt": "2026-08-11T19:26:06.008Z",
+  "statuses": [
+    {
+      "sourceId": "wikidata-sparql",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "generic-structured-http",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "appliances-bosch-home",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "appliances-samsung",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "appliances-arcelik",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "appliances-beko",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "tech-apple",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "tech-samsung-mobile",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "tech-lg",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-volkswagen-newsroom",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-bmw-press",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-epa-fueleconomy",
+      "status": "ACTIVE",
+      "lastCheckedAt": "2026-08-11T19:26:06.008Z"
+    },
+    {
+      "sourceId": "auto-toyota-newsroom",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-renault-media",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-hyundai-news",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "auto-zf-tech",
+      "status": "UNKNOWN",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "fixtures-offline",
+      "status": "ACTIVE",
+      "lastCheckedAt": null
+    },
+    {
+      "sourceId": "automotive-internal-audit",
+      "status": "ACTIVE",
+      "lastCheckedAt": null
+    }
+  ]
+}

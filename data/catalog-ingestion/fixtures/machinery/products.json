@@ -1,0 +1,137 @@
+{
+  "version": "1.0.0",
+  "domain": "machinery",
+  "notes": "Selective pilot fixtures for Üretim / Kesim / Paketleme only. Real manufacturers.",
+  "products": [
+    {
+      "id": "mach-haas-vf2",
+      "subcategorySlug": "uretim-makinesi",
+      "brand": "Haas",
+      "productFamily": "Vertical Machining Center",
+      "model": "VF-2",
+      "machineType": "CNC VMC",
+      "specs": {
+        "powerKw": 22.4,
+        "capacity": "762 x 406 x 508 mm travels",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Haas Automation VF-2 public specifications (curated fixture)",
+        "sourceRef": "https://www.haascnc.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "mach-dmg-nlx2500",
+      "subcategorySlug": "uretim-makinesi",
+      "brand": "DMG MORI",
+      "productFamily": "NLX",
+      "model": "NLX 2500",
+      "machineType": "CNC Turning Center",
+      "specs": {
+        "powerKw": 18.5,
+        "capacity": "Ø366 mm max turning diameter (config-dependent)",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "DMG MORI NLX 2500 public machine family (curated fixture)",
+        "sourceRef": "https://www.dmgmori.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "mach-trumpf-trulaser-3030",
+      "subcategorySlug": "kesim-makinesi",
+      "brand": "TRUMPF",
+      "productFamily": "TruLaser",
+      "model": "TruLaser 3030",
+      "machineType": "2D Laser Cutting",
+      "specs": {
+        "powerKw": 6,
+        "capacity": "3000 x 1500 mm sheet",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "TRUMPF TruLaser 3030 public product page (curated fixture)",
+        "sourceRef": "https://www.trumpf.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "HIGH",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "mach-bystronic-bystar-fiber",
+      "subcategorySlug": "kesim-makinesi",
+      "brand": "Bystronic",
+      "productFamily": "ByStar Fiber",
+      "model": "ByStar Fiber 3015",
+      "machineType": "Fiber Laser Cutting",
+      "specs": {
+        "powerKw": 10,
+        "capacity": "3000 x 1500 mm",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Bystronic ByStar Fiber public product family (curated fixture)",
+        "sourceRef": "https://www.bystronic.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "mach-syntegon-sigpack-hbx",
+      "subcategorySlug": "paketleme-makinesi",
+      "brand": "Syntegon",
+      "productFamily": "Sigpack",
+      "model": "Sigpack HBX",
+      "machineType": "Horizontal Flow Wrapper",
+      "specs": {
+        "capacity": "up to 1500 packs/min (config-dependent)",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "Syntegon Sigpack HBX public packaging machine (curated fixture)",
+        "sourceRef": "https://www.syntegon.com/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    },
+    {
+      "id": "mach-ima-c80",
+      "subcategorySlug": "paketleme-makinesi",
+      "brand": "IMA",
+      "productFamily": "C Series",
+      "model": "C80",
+      "machineType": "Cartoning Machine",
+      "specs": {
+        "capacity": "up to 400 cartons/min (config-dependent)",
+        "voltage": "380V",
+        "phase": "3"
+      },
+      "provenance": {
+        "sourceType": "TRUSTED_DATASET",
+        "sourceName": "IMA C80 cartoning machine public references (curated fixture)",
+        "sourceRef": "https://ima.it/",
+        "retrievedAt": "2026-08-11",
+        "confidence": "MEDIUM",
+        "verificationStatus": "curated-public-model"
+      }
+    }
+  ]
+}

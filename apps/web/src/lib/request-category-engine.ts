@@ -369,6 +369,13 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         required: true,
       },
       {
+        key: "generation",
+        label: "Nesil",
+        type: "text",
+        placeholder: "Örn. Golf VII",
+        when: { field: "needType", in: ["vehicle", "part"] },
+      },
+      {
         key: "modelYear",
         label: "Model yılı",
         type: "number",
