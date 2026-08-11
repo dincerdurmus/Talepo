@@ -55,7 +55,8 @@ export type AutomotiveGenerationRecord = {
     confidence: string;
     verificationStatus: string;
   };
-  notes: string | null;
+  /** Optional on delta rows; loader normalizes missing to null. */
+  notes?: string | null;
 };
 
 export type AutomotiveGenerationMatchKind =

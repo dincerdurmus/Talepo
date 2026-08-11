@@ -1,0 +1,91 @@
+[
+  {
+    "input": "Volkswagen Touareg 7P ön far",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Touareg",
+      "generation": "Touareg II"
+    }
+  },
+  {
+    "input": "BMW X5 F15 tampon",
+    "expect": {
+      "brand": "BMW",
+      "model": "X5",
+      "generation": "F15"
+    }
+  },
+  {
+    "input": "Mercedes Sprinter W906 sağ ayna",
+    "expect": {
+      "brand": "Mercedes-Benz",
+      "model": "Sprinter",
+      "generation": "W906"
+    }
+  },
+  {
+    "input": "Toyota Hilux AN120 amortisör",
+    "expect": {
+      "brand": "Toyota",
+      "model": "Hilux",
+      "generation": "Hilux AN120/AN130"
+    }
+  },
+  {
+    "input": "Nissan X-Trail T32 stop",
+    "expect": {
+      "brand": "Nissan",
+      "model": "X-Trail",
+      "generation": "X-Trail T32"
+    }
+  },
+  {
+    "input": "Hyundai Kona SX2 far",
+    "expect": {
+      "brand": "Hyundai",
+      "model": "Kona",
+      "generation": "Kona SX2"
+    }
+  },
+  {
+    "input": "Porsche 911 992 far",
+    "expect": {
+      "brand": "Porsche",
+      "model": "911",
+      "generation": "992"
+    }
+  },
+  {
+    "input": "Subaru Forester SJ salıncak",
+    "expect": {
+      "brand": "Subaru",
+      "model": "Forester",
+      "generation": "SJ"
+    }
+  },
+  {
+    "input": "MG HS II tampon",
+    "expect": {
+      "brand": "MG",
+      "model": "HS",
+      "generation": "HS II"
+    }
+  },
+  {
+    "input": "MG HS 2025 tampon",
+    "expect": {
+      "brand": "MG",
+      "model": "HS",
+      "generation": null
+    }
+  },
+  {
+    "input": "Volkswagen Touareg ZZ9 far",
+    "expect": {
+      "brand": "Volkswagen",
+      "model": "Touareg",
+      "generation": null,
+      "unresolved": "ZZ9"
+    }
+  }
+]

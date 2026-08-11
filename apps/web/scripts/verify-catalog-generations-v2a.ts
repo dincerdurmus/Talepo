@@ -41,7 +41,8 @@ ensureAutomotiveCatalogRegistered();
 const idx = getAutomotiveIndexes();
 
 check("generations loaded (>=100)", idx.generations.length >= 100);
-check("generations count 178", idx.generations.length === 178);
+// V2A base was 178; V2A.2 runtime merge may append delta records (prefer base on conflict).
+check("generations count >= 178 (V2A base preserved)", idx.generations.length >= 178);
 check("generationById ready", idx.generationById.size === idx.generations.length);
 check("generationsByModel ready", idx.generationsByModel.size > 0);
 check("generationsByBrand ready", idx.generationsByBrand.size > 0);

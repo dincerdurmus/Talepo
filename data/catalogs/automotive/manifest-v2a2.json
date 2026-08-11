@@ -1,0 +1,21 @@
+{
+  "version": "2A.2-delta",
+  "generatedAt": "2026-08-11T17:17:34.743507+00:00",
+  "brandMasterCount": 107,
+  "modelMasterCount": 803,
+  "deltaGenerationCount": 423,
+  "skippedMissingCanonicalModelCount": 0,
+  "removedNearDuplicates": [
+    "generation_togg_t10x_t10x-i",
+    "generation_togg_t10f_t10f-i"
+  ],
+  "skipped": [],
+  "mode": "MERGE_DELTA_NOT_REPLACE",
+  "notes": [
+    "Existing V2A generation records must be preserved.",
+    "Delta references only canonical brand/model IDs present in uploaded masters.",
+    "Runtime matching remains precision-first; unknown generations stay unresolved.",
+    "CURATED_MULTI_SOURCE rows should be subjected to automated duplicate/year-overlap checks before release.",
+    "Togg T10X I / T10F I delta rows removed; aliases folded into base generation_togg_t10x_t10x and generation_togg_t10f_t10f."
+  ]
+}

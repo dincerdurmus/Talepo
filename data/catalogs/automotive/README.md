@@ -1,20 +1,20 @@
-# Talepo Automotive Master Catalog V2B — Engines
+# Talepo Automotive Generations Expansion V2A.2
 
-Bu paket V2A generation katmanının üstüne engine/propulsion enrichment eklemek için hazırlanmıştır.
+Bu paket mevcut V2A'nın yerine geçmez. DELTA/MERGE paketidir.
 
-Engine record count: 31
+- Canonical marka master: 107
+- Canonical model master: 803
+- Yeni generation delta kaydı: 423 (Togg T10X I / T10F I near-dupes removed; folded into base)
+- Canonical model bulunamadığı için atlanan kayıt: 0
 
-Bu paket geniş kapsamın ilk doğrulanmış seed setidir; tam global motor kataloğu değildir.
-Amaç motor matcher contract'ını production-safe biçimde devreye almak ve ardından kaynak doğrulamalı batch'lerle büyütmektir.
+## Entegrasyon
+Mevcut `automotive-generations.json` korunur.
+`automotive-generations-v2a2-delta.json` stable ID ile merge/upsert edilir.
+Aynı ID varsa yeni duplicate oluşturulmaz.
 
-## Kritik kurallar
-- Engine code bilinmiyorsa null.
-- Motor yalnız marka+model+generation scope içinde çözülür.
-- Aynı marketing name'in farklı güç varyantları olabilir.
-- Yıl consistency signal'dır; tek başına seçim yapmaz.
-- Yanlış motor eşleşmesi yerine unresolved tercih edilir.
-- BEV motorlarında displacementCc null olabilir.
-
-## Sonraki faz
-V2B.2+ ile aynı schema kullanılarak daha fazla marka/model motor ailesi eklenir.
-V2C transmission ayrı domain olarak tutulur.
+## Güvenlik
+- brandId/modelId yalnız mevcut master ID'lere referans verir.
+- Global fuzzy generation yok.
+- Yıl tek başına generation authority değildir.
+- Bilinmeyen kasa kodu unresolved kalır.
+- Bu paket motor/OEM/compatibility verisi içermez.

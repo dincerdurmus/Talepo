@@ -4578,7 +4578,8 @@
     "name": "T10X",
     "aliases": [
       "T10 X",
-      "Togg T10X"
+      "Togg T10X",
+      "T10X I"
     ],
     "platformCodes": [
       "T10X"
@@ -4604,7 +4605,8 @@
     "name": "T10F",
     "aliases": [
       "T10 F",
-      "Togg T10F"
+      "Togg T10F",
+      "T10F I"
     ],
     "platformCodes": [
       "T10F"
