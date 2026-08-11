@@ -1,3 +1,4 @@
+import { parseDiscoveryProjection } from "@/lib/discovery";
 import { parseNeighborhoods } from "@/lib/geo/neighborhoods";
 import {
   isValidRealEstateLocation,
@@ -42,6 +43,11 @@ export type CreateRequestInput = {
   useCoverImage?: boolean;
   coverImageUrl?: string | null;
   fields: RequestFieldInput[];
+  /**
+   * Phase 3A — validated discovery projection from Single Brain / hybrid state.
+   * Optional; server may rebuild from text when missing.
+   */
+  discoveryProjection?: unknown;
 };
 
 export class RequestValidationError extends Error {
@@ -186,5 +192,6 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
     useCoverImage,
     coverImageUrl,
     fields,
+    discoveryProjection: parseDiscoveryProjection(raw.discoveryProjection) ?? undefined,
   };
 }

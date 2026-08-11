@@ -1,10 +1,34 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+
+function normalizeSavedSearchFilters(
+  filters: SavedSearchFilters,
+): { ok: true; filters: SavedSearchFilters } | { ok: false; message: string } {
+  if (!filters.canonical) {
+    return { ok: true, filters: { ...filters, version: filters.version ?? 1 } };
+  }
+  const validated = validateCanonicalDiscoveryFilter(filters.canonical);
+  if (!validated.ok) {
+    return {
+      ok: false,
+      message: validated.errors[0] ?? "Geçersiz canonical filter.",
+    };
+  }
+  return {
+    ok: true,
+    filters: {
+      ...filters,
+      version: 1,
+      canonical: validated.filter,
+    },
+  };
+}
 
 export async function GET() {
   try {
@@ -47,11 +71,18 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      const normalized = normalizeSavedSearchFilters(body.filters);
+      if (!normalized.ok) {
+        return NextResponse.json(
+          { ok: false, message: normalized.message },
+          { status: 400 },
+        );
+      }
       const search = await prisma.savedSearch.create({
         data: {
           companyId: ctx.companyId,
           name,
-          filters: body.filters,
+          filters: normalized.filters,
         },
       });
       return NextResponse.json({ ok: true, search });
@@ -65,11 +96,22 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "update" && body.id) {
+      let filtersUpdate: SavedSearchFilters | undefined;
+      if (body.filters) {
+        const normalized = normalizeSavedSearchFilters(body.filters);
+        if (!normalized.ok) {
+          return NextResponse.json(
+            { ok: false, message: normalized.message },
+            { status: 400 },
+          );
+        }
+        filtersUpdate = normalized.filters;
+      }
       await prisma.savedSearch.updateMany({
         where: { id: body.id, companyId: ctx.companyId },
         data: {
           ...(body.name ? { name: body.name.trim() } : {}),
-          ...(body.filters ? { filters: body.filters } : {}),
+          ...(filtersUpdate ? { filters: filtersUpdate } : {}),
           ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
         },
       });

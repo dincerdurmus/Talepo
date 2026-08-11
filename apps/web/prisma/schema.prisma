@@ -380,6 +380,9 @@ model AlertRule {
   keywords   String?  @db.Text
   attributes Json?
 
+  /// Phase 3A — optional typed canonical discovery filter (nullable legacy-safe).
+  discoveryFilter Json?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -673,6 +676,10 @@ model Request {
   aiScore                 Int?
   aiSummary               String? @db.Text
   professionalDescription String? @db.Text
+
+  /// Phase 3A — publish-time discovery read model (taxonomy + constraints).
+  /// Not a second request authority; null on legacy rows.
+  discoveryProjection Json?
 
   /// Auto or manual cover image for the request card/detail.
   coverImageUrl String?

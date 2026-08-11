@@ -1,5 +1,9 @@
+import type { CanonicalDiscoveryFilter } from "@/lib/discovery";
+
 /** Typed saved-search / explore filter payload (Premium+). */
 export type SavedSearchFilters = {
+  /** Phase 3A — optional versioned envelope (1 = legacy flat + optional canonical). */
+  version?: 1;
   categorySlug?: string;
   categoryId?: string;
   city?: string;
@@ -10,6 +14,8 @@ export type SavedSearchFilters = {
   keyword?: string;
   createdAfter?: string;
   attributes?: Record<string, string | number | boolean>;
+  /** Phase 3A — typed taxonomy/constraint filter (URL is derived, not SoT). */
+  canonical?: CanonicalDiscoveryFilter;
 };
 
 export type MatchResult = {

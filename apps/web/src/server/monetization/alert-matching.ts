@@ -1,3 +1,9 @@
+import {
+  evaluateDiscoveryFilter,
+  hasCanonicalFilterSignal,
+  parseDiscoveryProjection,
+  validateCanonicalDiscoveryFilter,
+} from "@/lib/discovery";
 import { getExploreFilterDefs } from "@/lib/explore/category-filters";
 import { prisma } from "@/lib/prisma";
 import type { AlertRuleAttributes } from "@/lib/monetization/alert-rule-attributes";
@@ -36,10 +42,17 @@ function attributesMatch(
     if (!val) continue;
 
     const def = defs.find((d) => d.param === param);
-    const fieldKeys = def ? [def.fieldKey, param] : [param];
+    const fieldKeys = new Set<string>(
+      def ? [def.fieldKey, param] : [param],
+    );
+    // brand ↔ brandPreference dual-read (legacy appliance publishes)
+    if (fieldKeys.has("brand") || fieldKeys.has("brandPreference")) {
+      fieldKeys.add("brand");
+      fieldKeys.add("brandPreference");
+    }
 
     const fieldHit = fieldValues.some((fv) => {
-      if (!fieldKeys.includes(fv.field.key)) return false;
+      if (!fieldKeys.has(fv.field.key)) return false;
       const text = fv.textValue?.toLowerCase() ?? "";
       return text === val || text.includes(val);
     });
@@ -68,6 +81,7 @@ export async function matchRequestToAlertRules(
       description: true,
       budgetMin: true,
       budgetMax: true,
+      discoveryProjection: true,
       fieldValues: {
         select: {
           textValue: true,
@@ -78,6 +92,8 @@ export async function matchRequestToAlertRules(
   });
 
   if (!request) return [];
+
+  const projection = parseDiscoveryProjection(request.discoveryProjection);
 
   const rules = await prisma.alertRule.findMany({
     where: { isActive: true },
@@ -92,6 +108,7 @@ export async function matchRequestToAlertRules(
       maxBudget: true,
       keywords: true,
       attributes: true,
+      discoveryFilter: true,
       category: { select: { slug: true } },
     },
     take: 500,
@@ -135,13 +152,33 @@ export async function matchRequestToAlertRules(
       continue;
     }
 
+    // Phase 3A — typed canonical filter (taxonomy leaf / constraints)
+    const canonical = validateCanonicalDiscoveryFilter(rule.discoveryFilter);
+    if (canonical.ok && hasCanonicalFilterSignal(canonical.filter)) {
+      const evalResult = evaluateDiscoveryFilter(projection, canonical.filter);
+      if (!evalResult.match) continue;
+      results.push({
+        alertRuleId: rule.id,
+        alertRuleName: rule.name,
+        companyId: rule.companyId,
+        requestId: request.id,
+        score: 90,
+        reasons: [
+          `Alarm kuralı: ${rule.name}`,
+          evalResult.path,
+          ...evalResult.reasons.slice(0, 3),
+        ],
+      });
+      continue;
+    }
+
     results.push({
       alertRuleId: rule.id,
       alertRuleName: rule.name,
       companyId: rule.companyId,
       requestId: request.id,
       score: 85,
-      reasons: [`Alarm kuralı: ${rule.name}`],
+      reasons: [`Alarm kuralı: ${rule.name}`, "LEGACY_FALLBACK"],
     });
   }
 

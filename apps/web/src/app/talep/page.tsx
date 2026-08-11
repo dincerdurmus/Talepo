@@ -80,6 +80,7 @@ import {
   CATALOG_PREVIEW_CHIP_KEYS,
   toCatalogPreviewModel,
 } from "@/lib/catalog/consumer";
+import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
 import { resolveHybridQuestions } from "@/lib/request-composer";
 import {
   budgetDisplayFromUnderstanding,
@@ -1232,6 +1233,10 @@ function TalepOlusturForm() {
           isUrgent,
           featureBoost: featureBoost || null,
           publishVersion: version,
+          // Phase 3A — publish-time discovery projection (Single Brain snapshot)
+          discoveryProjection: hybrid.state
+            ? buildDiscoveryProjectionFromState(hybrid.state)
+            : undefined,
           fields: [
             ...visibleDynamicFields.map((field) => ({
               ...field,

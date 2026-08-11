@@ -33,6 +33,13 @@ export function savedSearchToExploreUrl(filters: SavedSearchFilters): string {
     }
   }
 
+  // Phase 3A — surface canonical taxonomy filter in URL (derived)
+  const leaf = filters.canonical?.primaryLeafId;
+  const nodes = filters.canonical?.taxonomyNodeIds;
+  if (leaf) q.set("taxonomyLeaf", leaf);
+  if (nodes?.length) q.set("taxonomyNode", nodes[0]!);
+  if (filters.canonical?.leafExact) q.set("leafExact", "1");
+
   const s = q.toString();
   return s ? `/panel/talepler?${s}` : "/panel/talepler";
 }
@@ -48,8 +55,11 @@ export function exploreFiltersToSavedSearch(input: {
   urgentOnly?: boolean;
   sinceDays?: number | null;
   fieldParams?: Record<string, string>;
+  taxonomyLeaf?: string;
+  taxonomyNode?: string;
+  leafExact?: boolean;
 }): SavedSearchFilters {
-  const filters: SavedSearchFilters = {};
+  const filters: SavedSearchFilters = { version: 1 };
 
   if (input.categorySlug) filters.categorySlug = input.categorySlug;
   if (input.city?.trim()) filters.city = input.city.trim();
@@ -66,6 +76,16 @@ export function exploreFiltersToSavedSearch(input: {
 
   if (input.fieldParams && Object.keys(input.fieldParams).length > 0) {
     filters.attributes = input.fieldParams;
+  }
+
+  if (input.taxonomyLeaf || input.taxonomyNode) {
+    filters.canonical = {
+      version: 1,
+      kind: "canonical_discovery_filter",
+      primaryLeafId: input.taxonomyLeaf ?? null,
+      taxonomyNodeIds: input.taxonomyNode ? [input.taxonomyNode] : undefined,
+      leafExact: input.leafExact || undefined,
+    };
   }
 
   return filters;

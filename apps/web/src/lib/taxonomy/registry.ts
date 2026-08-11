@@ -85,6 +85,39 @@ export function getTaxonomyNode(id: string): TaxonomyNode | undefined {
   return state.byId.get(id);
 }
 
+/** Walk parentId chain from node → root (node first). */
+export function getTaxonomyAncestorIds(nodeId: string): string[] {
+  ensureTaxonomyLoaded();
+  const ids: string[] = [];
+  let cur = state.byId.get(nodeId);
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur.id)) {
+    seen.add(cur.id);
+    ids.push(cur.id);
+    cur = cur.parentId ? state.byId.get(cur.parentId) : undefined;
+  }
+  return ids;
+}
+
+/** BFS descendants including the node itself. */
+export function getTaxonomyDescendantIds(nodeId: string): string[] {
+  ensureTaxonomyLoaded();
+  if (!state.byId.has(nodeId)) return [];
+  const out: string[] = [];
+  const queue = [nodeId];
+  const seen = new Set<string>();
+  while (queue.length) {
+    const id = queue.shift()!;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    for (const child of state.byParent.get(id) ?? []) {
+      queue.push(child.id);
+    }
+  }
+  return out;
+}
+
 export function getRootTaxonomyNodes(): TaxonomyNode[] {
   ensureTaxonomyLoaded();
   return (state.byParent.get(null) ?? []).filter((n) => n.nodeType === "CATEGORY");
@@ -107,6 +140,36 @@ export function getSubcategoryTaxonomyNode(
   ensureTaxonomyLoaded();
   const id = `tax:${categoryId}:${subcategorySlug}`;
   return state.byId.get(id);
+}
+
+/** Find PRODUCT_TYPE (or similar leaf) under a subcategory by name/alias. */
+export function findTaxonomyTypeUnderSubcategory(
+  categoryId: string,
+  subcategorySlug: string,
+  typeToken: string,
+): TaxonomyNode | null {
+  ensureTaxonomyLoaded();
+  const key = foldLabel(typeToken);
+  if (!key) return null;
+  const nodes = (state.byCategory.get(categoryId) ?? []).filter(
+    (n) =>
+      n.subcategoryId === subcategorySlug &&
+      (n.nodeType === "PRODUCT_TYPE" ||
+        n.nodeType === "SERVICE_TYPE" ||
+        n.nodeType === "COMMODITY_TYPE"),
+  );
+  const hit = nodes.find((n) => {
+    const terms = [
+      n.canonicalName,
+      ...n.aliases,
+      ...(n.searchTerms ?? []),
+    ];
+    return terms.some((t) => {
+      const f = foldLabel(t);
+      return f === key || f.includes(key) || key.includes(f);
+    });
+  });
+  return hit ?? null;
 }
 
 export function isTaxonomyLeaf(node: TaxonomyNode): boolean {

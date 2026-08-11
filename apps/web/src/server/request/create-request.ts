@@ -1,8 +1,14 @@
+import {
+  buildDiscoveryProjectionFromState,
+  parseDiscoveryProjection,
+  type RequestDiscoveryProjection,
+} from "@/lib/discovery";
 import { assertEntitlement } from "@/lib/membership/assert-entitlement";
 import { FEATURE_BOOST_OPTIONS, getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError } from "@/lib/membership/types";
 import { prisma } from "@/lib/prisma";
+import { createTextOnlyState } from "@/lib/request-composer";
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -14,6 +20,27 @@ import {
   parseBudgetRange,
 } from "./mapper";
 import type { CreateRequestInput } from "./request-schema";
+
+function resolveDiscoveryProjection(
+  input: CreateRequestInput,
+): RequestDiscoveryProjection | null {
+  const fromClient = parseDiscoveryProjection(input.discoveryProjection);
+  if (fromClient) return fromClient;
+
+  // Publish-time rebuild from description — not a matching brain, one-shot projection
+  const text =
+    input.description?.trim() ||
+    input.professionalDescription?.trim() ||
+    input.title;
+  if (!text || text.length < 3) return null;
+  try {
+    const state = createTextOnlyState(text);
+    return buildDiscoveryProjectionFromState(state);
+  } catch (error) {
+    console.error("[create-request] discovery projection rebuild failed", error);
+    return null;
+  }
+}
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
   /**
@@ -128,6 +155,8 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       featuredUntil = new Date(now.getTime() + boost.hours * 60 * 60 * 1000);
     }
 
+    const discoveryProjection = resolveDiscoveryProjection(input);
+
     const request = await tx.request.create({
       data: {
         createdById: userId,
@@ -139,6 +168,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
           input.professionalDescription || input.description,
         aiScore: input.aiScore,
         aiSummary: buildAiSummary(input),
+        discoveryProjection: discoveryProjection ?? undefined,
         status: "PUBLISHED",
         city: input.city,
         district: input.district,

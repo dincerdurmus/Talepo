@@ -26,11 +26,14 @@ export {
   getTaxonomyChildren,
   getTaxonomyNodesByCategory,
   getSubcategoryTaxonomyNode,
+  findTaxonomyTypeUnderSubcategory,
   resolveTaxonomyAlias,
   resolveSchemaIdForNode,
   listAllTaxonomyNodes,
   isTaxonomyLeaf,
   taxonomyNodeHasChildren,
+  getTaxonomyAncestorIds,
+  getTaxonomyDescendantIds,
 } from "./registry";
 
 export { getRequestSchemaForNode } from "./schema-bridge";

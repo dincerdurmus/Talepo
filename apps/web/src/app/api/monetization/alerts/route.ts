@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
 import { validateAlertRuleAttributes } from "@/lib/monetization/alert-rule-attributes";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
 import { prisma } from "@/lib/prisma";
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
       maxBudget?: number | null;
       keywords?: string | null;
       attributes?: Record<string, string> | null;
+      discoveryFilter?: unknown;
       isActive?: boolean;
     };
 
@@ -70,6 +72,18 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, message: attrCheck.message }, { status: 400 });
       }
 
+      let discoveryFilter: Prisma.InputJsonValue | undefined;
+      if (body.discoveryFilter !== undefined && body.discoveryFilter !== null) {
+        const canonical = validateCanonicalDiscoveryFilter(body.discoveryFilter);
+        if (!canonical.ok) {
+          return NextResponse.json(
+            { ok: false, message: canonical.errors[0] ?? "Geçersiz discovery filter." },
+            { status: 400 },
+          );
+        }
+        discoveryFilter = canonical.filter as unknown as Prisma.InputJsonValue;
+      }
+
       const rule = await prisma.alertRule.create({
         data: {
           companyId: ctx.companyId,
@@ -81,6 +95,7 @@ export async function POST(request: Request) {
           maxBudget: body.maxBudget ?? null,
           keywords: body.keywords?.trim() || null,
           ...(attrCheck.value ? { attributes: attrCheck.value } : {}),
+          ...(discoveryFilter ? { discoveryFilter } : {}),
         },
       });
       return NextResponse.json({ ok: true, rule });
@@ -106,6 +121,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, message: attrCheck.message }, { status: 400 });
       }
 
+      let discoveryFilterUpdate:
+        | Prisma.InputJsonValue
+        | typeof PrismaRuntime.JsonNull
+        | undefined;
+      if (body.discoveryFilter !== undefined) {
+        if (body.discoveryFilter === null) {
+          discoveryFilterUpdate = PrismaRuntime.JsonNull;
+        } else {
+          const canonical = validateCanonicalDiscoveryFilter(body.discoveryFilter);
+          if (!canonical.ok) {
+            return NextResponse.json(
+              { ok: false, message: canonical.errors[0] ?? "Geçersiz discovery filter." },
+              { status: 400 },
+            );
+          }
+          discoveryFilterUpdate = canonical.filter as unknown as Prisma.InputJsonValue;
+        }
+      }
+
       const updateData: Prisma.AlertRuleUncheckedUpdateManyInput = {
         ...(body.name !== undefined ? { name: body.name.trim() } : {}),
         ...(body.categoryId !== undefined
@@ -123,6 +157,9 @@ export async function POST(request: Request) {
                   ? attrCheck.value
                   : PrismaRuntime.JsonNull,
             }
+          : {}),
+        ...(discoveryFilterUpdate !== undefined
+          ? { discoveryFilter: discoveryFilterUpdate }
           : {}),
         ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
       };

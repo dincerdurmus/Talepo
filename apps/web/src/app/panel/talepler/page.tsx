@@ -11,6 +11,13 @@ import { InterestCategoryPicker } from "@/components/panel/InterestCategoryPicke
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
+  evaluateDiscoveryFilter,
+  hasCanonicalFilterSignal,
+  parseDiscoveryProjection,
+  validateCanonicalDiscoveryFilter,
+  type CanonicalDiscoveryFilter,
+} from "@/lib/discovery";
+import {
   appendExploreFilterParams,
   buildExploreFilterWhere,
   hasActiveAdvancedOnlyFilters,
@@ -62,6 +69,7 @@ const requestListSelect = {
   budgetMin: true,
   budgetMax: true,
   currency: true,
+  discoveryProjection: true,
   category: { select: { name: true, slug: true } },
   _count: { select: { offers: true } },
 } as const;
@@ -80,12 +88,67 @@ type RequestRow = {
   budgetMin: { toString(): string } | null;
   budgetMax: { toString(): string } | null;
   currency: string;
+  discoveryProjection?: unknown;
   category: { name: string; slug: string };
   _count: { offers: number };
   matchScore?: number | null;
   matchReason?: string | null;
   matchReasons?: string[] | null;
+  discoveryMatchPath?: string | null;
 };
+
+/** Phase 3A — URL-derived canonical filter (URL is not SoT). */
+function parseCanonicalFilterFromParams(
+  params: Record<string, string | undefined>,
+): CanonicalDiscoveryFilter | null {
+  const leaf = params.taxonomyLeaf?.trim();
+  const node = params.taxonomyNode?.trim();
+  const leafExact = params.leafExact === "1" || params.leafExact === "true";
+  if (!leaf && !node) return null;
+
+  const raw: Record<string, unknown> = {
+    version: 1,
+    kind: "canonical_discovery_filter",
+  };
+  if (leaf) {
+    raw.primaryLeafId = leaf;
+    if (leafExact) raw.leafExact = true;
+  }
+  if (node) raw.taxonomyNodeIds = [node];
+
+  const brand = params.brand?.trim();
+  const excludedBrand = params.excludedBrand?.trim();
+  if (brand || excludedBrand) {
+    raw.attributes = brand ? { brand } : undefined;
+    if (excludedBrand) raw.excluded = { brand: [excludedBrand] };
+  }
+
+  const validated = validateCanonicalDiscoveryFilter(raw);
+  return validated.ok ? validated.filter : null;
+}
+
+function applyCanonicalDiscoveryPostFilter(
+  rows: RequestRow[],
+  filter: CanonicalDiscoveryFilter | null,
+): RequestRow[] {
+  if (!filter || !hasCanonicalFilterSignal(filter)) return rows;
+  const out: RequestRow[] = [];
+  for (const row of rows) {
+    const projection = parseDiscoveryProjection(row.discoveryProjection);
+    const result = evaluateDiscoveryFilter(projection, filter);
+    if (!result.match) continue;
+    out.push({
+      ...row,
+      discoveryMatchPath: result.path,
+      matchReasons: [
+        ...(row.matchReasons ?? []),
+        result.path,
+        ...result.reasons.slice(0, 2),
+      ],
+    });
+  }
+  return out;
+}
 
 const OPEN_STATUSES = ["PUBLISHED", "RECEIVING_OFFERS"] as [
   "PUBLISHED",
@@ -102,6 +165,7 @@ export default async function ExploreRequestsPage({
   const tab = parseExploreTab(params.tab);
   const categoryFilter = params.category?.trim() || "";
   const editingInterests = params.edit === "1";
+  const canonicalExploreFilter = parseCanonicalFilterFromParams(params);
 
   await ensureEngineCategories();
 
@@ -305,6 +369,12 @@ export default async function ExploreRequestsPage({
     });
     requests = rows;
   }
+
+  // Phase 3A — taxonomy/constraint post-filter (legacy rows without projection stay via LEGACY_FALLBACK)
+  requests = applyCanonicalDiscoveryPostFilter(
+    requests,
+    canonicalExploreFilter,
+  );
 
   if (hasSmartMatching && companyId && requests.length > 0) {
     const matchMap = await batchMatchCompanyRequests(
