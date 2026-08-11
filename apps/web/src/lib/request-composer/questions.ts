@@ -177,15 +177,33 @@ export function resolveHybridQuestions(
 
   // Never re-ask ANY / NA / known VALUE fields; never force model when brand is ANY
   const brandAny = state.fields.brand?.kind === "ANY";
+  const brandPreferred = (state.fields.brand?.preferredValues?.length ?? 0) >= 1;
   const filterAnyAware = (fields: KnowledgeField[]) =>
     fields.filter((f) => {
-      const kind = state.fields[f.key]?.kind;
+      const field = state.fields[f.key];
+      const kind = field?.kind;
       if (kind === "ANY" || kind === "NOT_APPLICABLE") {
         suppressed.push(f.key);
         return false;
       }
       if (kind === "VALUE") return false;
+      // Preferred / allowed multi-value satisfies the field for ask purposes
+      if (
+        (field?.preferredValues?.length ?? 0) >= 1 ||
+        (field?.allowedValues?.length ?? 0) >= 1
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
+      // Exclusion-only without need to pick a positive value (ANY+exclude already handled)
       if (brandAny && (f.key === "brand" || f.key === "brandPreference")) {
+        suppressed.push(f.key);
+        return false;
+      }
+      if (
+        brandPreferred &&
+        (f.key === "brand" || f.key === "brandPreference")
+      ) {
         suppressed.push(f.key);
         return false;
       }
@@ -193,6 +211,7 @@ export function resolveHybridQuestions(
       if (
         f.key === "model" &&
         state.fields.model?.kind === "UNKNOWN" &&
+        !(state.fields.model?.preferredValues?.length) &&
         (state.fields.productType?.value?.includes("televizyon") ||
           state.taxonomyNodeId?.includes("televizyon"))
       ) {

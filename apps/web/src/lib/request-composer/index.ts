@@ -37,6 +37,7 @@ export {
   mapUnderstandingToFields,
   mergeBrowseFieldBag,
   mergePreservedBrowseFields,
+  applyConstraintBundleToFields,
   canApplyField,
   buildCanonicalRequestState,
   toResolverFieldBag,

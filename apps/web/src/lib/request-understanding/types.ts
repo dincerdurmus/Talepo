@@ -207,6 +207,12 @@ export type RequestUnderstandingResult = {
 
   preferences: Record<string, UnderstandingValue<unknown>>;
 
+  /**
+   * Phase 2 — field-scoped MUST / PREFERRED / EXCLUDED / multi-value / range.
+   * Additive; scalar identity/attributes remain backward compatible.
+   */
+  constraints?: import("./constraint-semantics").ConstraintBundle;
+
   explicitFacts: UnderstandingFact[];
   inferredFacts: UnderstandingFact[];
 

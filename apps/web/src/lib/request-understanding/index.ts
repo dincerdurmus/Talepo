@@ -7,6 +7,16 @@ export {
 } from "./understand-request";
 export type { UnderstandRequestInput } from "./understand-request";
 export {
+  extractConstraintSemantics,
+  toConstraintMatchContract,
+  toConstraintFilterContract,
+  type ConstraintStrength,
+  type FieldConstraintSemantics,
+  type ConstraintBundle,
+  type ConstraintMatchContract,
+  type ConstraintFilterContract,
+} from "./constraint-semantics";
+export {
   toStrategyContext,
   toProductIdentityInput,
   toLegacyFormHints,

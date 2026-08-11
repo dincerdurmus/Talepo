@@ -46,6 +46,11 @@ import { findAutomotiveModel } from "@/lib/ai/parser/brand-catalog";
 import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
 import { ensureAutomotiveCatalogRegistered } from "@/lib/catalog/automotive/provider";
 
+import {
+  brandsOnlyInExclusion,
+  extractConstraintSemantics,
+  isConditionUsedNegated,
+} from "./constraint-semantics";
 import { reconcileUnderstanding } from "./reconcile-understanding";
 import {
   reconcileParentIdentityTokens,
@@ -190,6 +195,8 @@ function extractCondition(
       normalized,
     )
   ) {
+    // "ikinci el olmasın" is exclusion, not positive USED
+    if (isConditionUsedNegated(normalized)) return undefined;
     return uv("USED", {
       provenance: "EXPLICIT",
       source: "USER_EXPLICIT",
@@ -853,6 +860,64 @@ export function understandRequest(
     );
   }
 
+  // Phase 2 constraints — Single Brain authority (before subject reconcile)
+  const constraintBundle = extractConstraintSemantics(normalizedInput);
+
+  // Brands only in "olmasın" windows must not become positive identity
+  const exclusionOnlyBrands = brandsOnlyInExclusion(normalizedInput);
+  if (
+    identityBlock.brand?.value &&
+    exclusionOnlyBrands.has(String(identityBlock.brand.value))
+  ) {
+    delete identityBlock.brand;
+  }
+
+  // Multi-value brand preference: do not collapse to a single identity.brand
+  const preferredBrands = constraintBundle.byField.brand?.preferredValues ?? [];
+  if (preferredBrands.length >= 2) {
+    delete identityBlock.brand;
+  }
+
+  // Constraint extractor recovers / cleans single brand (identity often garbles)
+  const constraintBrand = constraintBundle.byField.brand?.value;
+  if (
+    constraintBrand &&
+    preferredBrands.length < 2 &&
+    !exclusionOnlyBrands.has(constraintBrand) &&
+    !constraintBundle.conflicts.some((c) => c.fields?.includes("brand"))
+  ) {
+    const current = identityBlock.brand?.value
+      ? String(identityBlock.brand.value)
+      : "";
+    if (
+      !current ||
+      current.toLocaleLowerCase("tr-TR") !==
+        constraintBrand.toLocaleLowerCase("tr-TR")
+    ) {
+      identityBlock.brand = uv(constraintBrand, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.95,
+        evidence: ["constraint-brand"],
+      });
+    }
+  }
+
+  // Multi model preference — avoid collapsing to first token only
+  const preferredModels = constraintBundle.byField.model?.preferredValues ?? [];
+  if (preferredModels.length >= 2) {
+    delete identityBlock.model;
+  }
+
+  // Brand include+exclude contradiction — do not invent a final brand
+  if (
+    constraintBundle.conflicts.some(
+      (c) => c.kind === "BRAND_INCLUDE_EXCLUDE" && c.fields?.includes("brand"),
+    )
+  ) {
+    delete identityBlock.brand;
+  }
+
   // B3.7 — semantic subject / relationship (after identity, before strategy)
   let requestSubject: SemanticRequestSubject = resolveSemanticSubject({
     normalizedInput,
@@ -1288,7 +1353,121 @@ export function understandRequest(
   const ambiguities: UnderstandingAmbiguity[] = [
     ...yearAmbiguities(numbers, normalizedInput),
   ];
-  const contradictions: UnderstandingContradiction[] = [];
+  const contradictions: UnderstandingContradiction[] = [
+    ...constraintBundle.conflicts,
+  ];
+
+  // Seed structured attributes from constraints when brain attributes empty
+  if (
+    constraintBundle.byField.resolution?.value &&
+    !attributes.resolution
+  ) {
+    attributes.resolution = uv(constraintBundle.byField.resolution.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.resolution.confidence,
+      evidence: constraintBundle.byField.resolution.evidence,
+    });
+  }
+  if (
+    constraintBundle.byField.screenSize?.value &&
+    !attributes.screenSize
+  ) {
+    attributes.screenSize = uv(constraintBundle.byField.screenSize.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.screenSize.confidence,
+      evidence: constraintBundle.byField.screenSize.evidence,
+    });
+  }
+  if (constraintBundle.byField.grade?.value && !attributes.grade) {
+    attributes.grade = uv(constraintBundle.byField.grade.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.grade.confidence,
+      evidence: constraintBundle.byField.grade.evidence,
+    });
+  }
+  if (constraintBundle.byField.lamination?.value && !attributes.lamination) {
+    attributes.lamination = uv(constraintBundle.byField.lamination.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.lamination.confidence,
+      evidence: constraintBundle.byField.lamination.evidence,
+    });
+  }
+  if (
+    constraintBundle.byField.lightingType?.value &&
+    !attributes.lightingType
+  ) {
+    attributes.lightingType = uv(constraintBundle.byField.lightingType.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.lightingType.confidence,
+      evidence: constraintBundle.byField.lightingType.evidence,
+    });
+  }
+  if (
+    constraintBundle.byField.partPosition?.value &&
+    !attributes.partPosition
+  ) {
+    attributes.partPosition = uv(constraintBundle.byField.partPosition.value, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.partPosition.confidence,
+      evidence: constraintBundle.byField.partPosition.evidence,
+    });
+  }
+
+  // Budget range from constraints when budget empty
+  const budgetRange = constraintBundle.byField.budget?.range;
+  let resolvedBudget: RequestUnderstandingResult["budget"] = budget;
+  if (budgetRange && !resolvedBudget) {
+    resolvedBudget = uv(
+      {
+        min: budgetRange.min,
+        max: budgetRange.max,
+        currency: "TRY" as const,
+      },
+      {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: constraintBundle.byField.budget?.confidence ?? 0.9,
+        evidence: constraintBundle.byField.budget?.evidence,
+      },
+    );
+  }
+
+  // Quantity min from constraints
+  const qtyRange = constraintBundle.byField.quantity?.range;
+  let resolvedQuantity = quantity;
+  if (qtyRange?.min != null && !resolvedQuantity) {
+    resolvedQuantity = uv(
+      { value: qtyRange.min, unit: qtyRange.unit },
+      {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.93,
+        evidence: constraintBundle.byField.quantity?.evidence,
+      },
+    );
+  } else if (
+    constraintBundle.byField.quantity?.value &&
+    !resolvedQuantity
+  ) {
+    const n = Number(constraintBundle.byField.quantity.value);
+    if (Number.isFinite(n)) {
+      resolvedQuantity = uv(
+        { value: n, unit: qtyRange?.unit ?? "adet" },
+        {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          confidence: 0.92,
+          evidence: constraintBundle.byField.quantity.evidence,
+        },
+      );
+    }
+  }
 
   const productType =
     identity.productType
@@ -1474,11 +1653,12 @@ export function understandRequest(
     strategy: reconciled.strategy,
     identity: identityBlock,
     attributes,
-    budget,
+    budget: resolvedBudget,
     location,
-    quantity,
+    quantity: resolvedQuantity,
     condition,
     preferences,
+    constraints: constraintBundle,
     explicitFacts,
     inferredFacts,
     unknownFields,

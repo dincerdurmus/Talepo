@@ -3,6 +3,7 @@
  * Wraps understandRequest() output; does not re-parse intent/category.
  */
 
+import type { ConstraintStrength } from "@/lib/request-understanding/constraint-semantics";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 
 /** Field value semantics — UNKNOWN ≠ ANY. */
@@ -23,6 +24,12 @@ export type CanonicalFieldState = {
   provenance: FieldProvenance;
   confidence?: number;
   evidence?: string[];
+  /** Phase 2 — MUST vs PREFERRED (optional additive). */
+  strength?: ConstraintStrength;
+  preferredValues?: string[];
+  allowedValues?: string[];
+  excludedValues?: string[];
+  range?: { min?: number; max?: number; unit?: string };
 };
 
 export type BrowsePathStep = {

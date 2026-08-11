@@ -13,6 +13,8 @@ import {
   getTaxonomyNode,
 } from "@/lib/taxonomy";
 
+import type { ConstraintBundle } from "@/lib/request-understanding/constraint-semantics";
+
 import {
   applyAnyBindingsToFields,
   extractFieldScopedAny,
@@ -31,6 +33,131 @@ import type {
   LastUserAction,
 } from "./types";
 import { FIELD_SENTINEL, isAnySentinel, isNotApplicableSentinel } from "./types";
+
+/**
+ * Map Phase 2 constraint bundle onto hybrid fields.
+ * Does not re-parse text — consumes Single Brain constraints only.
+ */
+export function applyConstraintBundleToFields(
+  fields: Record<string, CanonicalFieldState>,
+  bundle: ConstraintBundle | undefined | null,
+): Record<string, CanonicalFieldState> {
+  if (!bundle) return fields;
+  const next = { ...fields };
+
+  for (const c of Object.values(bundle.byField)) {
+    const existing = next[c.fieldKey];
+    // Never overwrite EXPLICIT_BROWSE with text constraints
+    if (existing?.provenance === "EXPLICIT_BROWSE") {
+      next[c.fieldKey] = {
+        ...existing,
+        excludedValues: uniqueStrings([
+          ...(existing.excludedValues ?? []),
+          ...(c.excludedValues ?? []),
+        ]),
+        preferredValues: existing.preferredValues ?? c.preferredValues,
+        allowedValues: existing.allowedValues ?? c.allowedValues,
+        strength: existing.strength ?? c.strength,
+        range: existing.range ?? c.range,
+      };
+      continue;
+    }
+
+    if (c.any) {
+      next[c.fieldKey] = {
+        kind: "ANY",
+        value: null,
+        provenance: "EXPLICIT_TEXT",
+        confidence: c.confidence,
+        evidence: c.evidence,
+        strength: c.strength,
+        preferredValues: c.preferredValues,
+        allowedValues: c.allowedValues,
+        excludedValues: c.excludedValues,
+        range: c.range,
+      };
+      continue;
+    }
+
+    if (c.preferredValues && c.preferredValues.length >= 2 && !c.value) {
+      next[c.fieldKey] = {
+        kind: "UNKNOWN",
+        value: null,
+        provenance: "EXPLICIT_TEXT",
+        confidence: c.confidence,
+        evidence: c.evidence,
+        strength: c.strength ?? "PREFERRED",
+        preferredValues: c.preferredValues,
+        allowedValues: c.allowedValues,
+        excludedValues: c.excludedValues,
+        range: c.range,
+      };
+      continue;
+    }
+
+    if (c.value) {
+      const label =
+        c.fieldKey === "condition" && c.value === "NEW"
+          ? "Sıfır"
+          : c.fieldKey === "condition" && c.value === "USED"
+            ? "İkinci el"
+            : c.fieldKey === "partPosition" && c.value === "RIGHT"
+              ? "Sağ"
+              : c.value;
+      next[c.fieldKey] = {
+        kind: "VALUE",
+        value: label,
+        provenance: "EXPLICIT_TEXT",
+        confidence: c.confidence,
+        evidence: c.evidence,
+        strength: c.strength,
+        preferredValues: c.preferredValues,
+        allowedValues: c.allowedValues,
+        excludedValues: c.excludedValues,
+        range: c.range,
+      };
+      continue;
+    }
+
+    // Exclusion-only / range-only / preferred-empty
+    if (
+      c.excludedValues?.length ||
+      c.range ||
+      c.preferredValues?.length ||
+      c.allowedValues?.length
+    ) {
+      next[c.fieldKey] = {
+        kind: existing?.kind === "VALUE" ? existing.kind : "UNKNOWN",
+        value: existing?.kind === "VALUE" ? existing.value : null,
+        provenance: "EXPLICIT_TEXT",
+        confidence: c.confidence,
+        evidence: c.evidence,
+        strength: c.strength ?? existing?.strength,
+        preferredValues: c.preferredValues ?? existing?.preferredValues,
+        allowedValues: c.allowedValues ?? existing?.allowedValues,
+        excludedValues: uniqueStrings([
+          ...(existing?.excludedValues ?? []),
+          ...(c.excludedValues ?? []),
+        ]),
+        range: c.range ?? existing?.range,
+      };
+    }
+  }
+
+  return next;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) {
+    const key = v.toLocaleLowerCase("tr-TR");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(v);
+  }
+  return out;
+}
 
 function mapRuProvenance(
   provenance: "EXPLICIT" | "INFERRED" | undefined,
@@ -315,7 +442,10 @@ export function mapUnderstandingToFields(
 
   // Field-scoped ANY post-process
   const bindings = extractFieldScopedAny(raw);
-  const withAny = applyAnyBindingsToFields(fields, bindings);
+  let withAny = applyAnyBindingsToFields(fields, bindings);
+
+  // Phase 2 — apply Single Brain constraint bundle (additive)
+  withAny = applyConstraintBundleToFields(withAny, result.constraints);
 
   // If brand is ANY, drop conflicting concrete brand from weak identity
   if (withAny.brand?.kind === "ANY") {
