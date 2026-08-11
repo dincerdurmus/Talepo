@@ -1,0 +1,182 @@
+/**
+ * Universal Catalog & Request Knowledge Engine — shared types.
+ * Does not replace understandRequest() / Single Brain authority.
+ */
+
+export type KnowledgeCapability =
+  | "ENTITY_CATALOG"
+  | "ENTITY_SPEC"
+  | "ENTITY_COMPATIBILITY"
+  | "ATTRIBUTE_SCHEMA"
+  | "SERVICE_SCHEMA"
+  | "COMMODITY_SCHEMA";
+
+export type ExternalIngestionPolicy =
+  | "REQUIRED"
+  | "SELECTIVE"
+  | "DISCOVERY_ONLY"
+  | "DISABLED";
+
+export type BrowseNodeKind =
+  | "category"
+  | "subcategory"
+  | "brand"
+  | "product_family"
+  | "model"
+  | "series"
+  | "generation"
+  | "variant"
+  | "part_system"
+  | "part"
+  | "position"
+  | "attribute_bucket"
+  | "service_type"
+  | "commodity_type";
+
+export type KnowledgeFieldType =
+  | "TEXT"
+  | "NUMBER"
+  | "BOOLEAN"
+  | "ENUM"
+  | "MULTI_SELECT"
+  | "RANGE"
+  | "DATE"
+  | "MEASUREMENT"
+  | "ENTITY_REFERENCE";
+
+export type KnowledgeFieldPriority = "required" | "optional" | "conditional";
+
+export type KnowledgeSourceType =
+  | "OFFICIAL_MANUFACTURER"
+  | "OFFICIAL_EPC"
+  | "LICENSED_CATALOG"
+  | "OFFICIAL_DISTRIBUTOR"
+  | "TRUSTED_DATASET"
+  | "STANDARDS_BODY"
+  | "MARKETPLACE"
+  | "AI_INFERRED"
+  | "USER_DISCOVERED"
+  | "TALEP_O_ENGINE";
+
+export type IngestClassification = "SAFE" | "REVIEW" | "REJECT";
+
+export type IngestRejectReason =
+  | "DUPLICATE"
+  | "ORPHAN"
+  | "AMBIGUOUS"
+  | "LOW_CONFIDENCE"
+  | "SOURCE_CONFLICT"
+  | "INVALID_RELATION"
+  | "INVALID_RANGE"
+  | "MISSING_PROVENANCE"
+  | "UNSUPPORTED_CATEGORY"
+  | "POLICY_DISABLED"
+  | "AI_INFERRED_NOT_SAFE"
+  | "USER_DISCOVERED_NOT_SAFE"
+  | "MARKETPLACE_INSUFFICIENT_AUTHORITY";
+
+export type BrowseNode = {
+  id: string;
+  kind: BrowseNodeKind;
+  label: string;
+  categoryId: string;
+  parentId?: string | null;
+  /** Stable catalog entity id when available (brand_*, model_*, …). */
+  entityId?: string;
+  hasChildren: boolean;
+  meta?: Record<string, string | number | boolean | null>;
+};
+
+export type BrowseContext = {
+  categoryId: string;
+  subcategorySlug?: string | null;
+  brandId?: string | null;
+  modelId?: string | null;
+  generationId?: string | null;
+  partSystemId?: string | null;
+  /** Explicit user browse selections (never overwritten by enrichment). */
+  selections?: Record<string, string>;
+};
+
+export type KnowledgeField = {
+  key: string;
+  canonicalLabel: string;
+  aliases?: string[];
+  type: KnowledgeFieldType;
+  unit?: string;
+  priority: KnowledgeFieldPriority;
+  options?: Array<{ label: string; value: string }>;
+  validation?: {
+    min?: number;
+    max?: number;
+    pattern?: string;
+  };
+  dependsOn?: string[];
+  visibleWhen?: { field: string; in: string[] };
+  applicableCategories?: string[];
+  source?: KnowledgeSourceType;
+  /** Maps to existing request-category-engine DynamicField key when present. */
+  engineFieldKey?: string;
+};
+
+export type KnowledgeProfile = {
+  /** categoryId or categoryId/subcategorySlug */
+  id: string;
+  categoryId: string;
+  subcategorySlug?: string | null;
+  subcategoryLabel?: string | null;
+  label: string;
+  capabilities: KnowledgeCapability[];
+  externalPolicy: ExternalIngestionPolicy;
+  browseHierarchy: BrowseNodeKind[];
+  notes?: string;
+};
+
+export type ProvenanceRecord = {
+  sourceType: KnowledgeSourceType;
+  sourceName: string;
+  sourceRef?: string;
+  retrievedAt?: string;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  verificationStatus: string;
+};
+
+export type CatalogGap = {
+  categoryId: string;
+  rawValue: string;
+  normalizedValue: string;
+  seenCount: number;
+  status: "OPEN" | "REVIEWED" | "PROMOTED" | "REJECTED";
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+};
+
+export type IngestRecord = {
+  id: string;
+  categoryId: string;
+  kind: BrowseNodeKind | "entity" | "spec" | "relation";
+  payload: Record<string, unknown>;
+  provenance: ProvenanceRecord;
+};
+
+export type ClassifiedIngestRecord = IngestRecord & {
+  classification: IngestClassification;
+  reasons: IngestRejectReason[];
+};
+
+export type IngestionRunReport = {
+  runId: string;
+  dryRun: boolean;
+  applied: boolean;
+  startedAt: string;
+  finishedAt: string;
+  categoryIds: string[];
+  adapterIds: string[];
+  counts: {
+    discovered: number;
+    safe: number;
+    review: number;
+    rejected: number;
+    skippedPolicy: number;
+  };
+  notes: string[];
+};

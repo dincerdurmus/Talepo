@@ -1,3 +1,7 @@
 ﻿
 apps/web.zip
 
+# Catalog ingestion run artifacts (SAFE/REVIEW/REJECT deltas)
+data/catalog-ingestion/runs/**
+!data/catalog-ingestion/runs/.gitkeep
+
