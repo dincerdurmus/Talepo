@@ -15,6 +15,7 @@ type UnderstoodProps = {
   categoryLabel?: string | null;
   degraded?: boolean;
   hasText: boolean;
+  updating?: boolean;
 };
 
 /** Subtle “Talepo ne anladı?” under/beside the composer. */
@@ -23,7 +24,21 @@ export function HybridUnderstoodPanel({
   categoryLabel,
   degraded,
   hasText,
+  updating,
 }: UnderstoodProps) {
+  if (!hasText) return null;
+  if (updating) {
+    return (
+      <div className="mt-3 rounded-xl border border-teal-900/8 bg-[#f7faf9]/80 px-3.5 py-2.5">
+        <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-800/40">
+          Talepo ne anladı?
+        </p>
+        <p className="mt-1 text-sm text-teal-950/55">
+          Talepo talebini güncelliyor…
+        </p>
+      </div>
+    );
+  }
   if (!hasText) return null;
   if (degraded) {
     return (
@@ -122,11 +137,19 @@ type QuickProps = {
 };
 
 export function HybridQuickSelectChips({ groups, onSelect }: QuickProps) {
-  if (groups.length === 0) return null;
+  // Guard against accidental duplicate fieldKeys from upstream merges
+  const unique: QuickSelectGroup[] = [];
+  const seen = new Set<string>();
+  for (const group of groups) {
+    if (seen.has(group.fieldKey)) continue;
+    seen.add(group.fieldKey);
+    unique.push(group);
+  }
+  if (unique.length === 0) return null;
 
   return (
     <div className="mt-3 space-y-2.5 border-t border-teal-900/6 pt-3">
-      {groups.map((group) => (
+      {unique.map((group) => (
         <div key={group.fieldKey}>
           <p className="text-[11px] font-medium text-teal-950/40">{group.label}</p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -151,83 +174,140 @@ type BrowsePanelProps = {
   open: boolean;
   onToggle: () => void;
   walk: BrowseWalkState;
-  options: BrowseNode[];
+  columns: BrowseNode[][];
   degraded?: boolean;
-  onSelect: (node: BrowseNode) => void;
-  onBack: () => void;
+  onSelectAtColumn: (columnIndex: number, node: BrowseNode) => void;
   onReset: () => void;
 };
 
-/** Secondary “Kategoriden seç” panel — same CanonicalRequestState. */
+/** Primary “Kategoriden seç” — multi-column cascade (Talepo styling). */
 export function HybridCategoryBrowsePanel({
   open,
   onToggle,
   walk,
-  options,
+  columns,
   degraded,
-  onSelect,
-  onBack,
+  onSelectAtColumn,
   onReset,
 }: BrowsePanelProps) {
   return (
-    <div className="mt-3">
+    <div className="mt-4">
       <button
         type="button"
         onClick={onToggle}
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-950/50 transition hover:text-[#0f766e]"
+        aria-expanded={open}
+        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition sm:px-5 ${
+          open
+            ? "border-[#0f766e]/40 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] shadow-[0_8px_24px_rgba(15,118,110,0.12)]"
+            : "border-[#0f766e]/25 bg-gradient-to-r from-[#f0fdfa] to-white shadow-[0_6px_20px_rgba(15,118,110,0.08)] hover:border-[#0f766e]/40 hover:shadow-[0_10px_28px_rgba(15,118,110,0.14)]"
+        }`}
       >
-        <FolderTree className="h-3.5 w-3.5" aria-hidden />
-        {open ? "Kategori seçimini gizle" : "Kategoriden seç"}
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-[0_0_20px_rgba(20,184,166,0.28)]">
+            <FolderTree className="h-4.5 w-4.5" aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold tracking-tight text-[#0f1f1d]">
+              {open ? "Kategori seçimini gizle" : "Kategoriden seç"}
+            </span>
+            <span className="mt-0.5 block text-xs text-teal-950/50">
+              {open
+                ? "Seçince talep metni otomatik dolar"
+                : "Beyaz eşya, mobilya, teknoloji… tıkla, yazıya dökülsün"}
+            </span>
+          </span>
+        </span>
+        <ChevronRight
+          className={`h-4 w-4 shrink-0 text-[#0f766e] transition ${
+            open ? "rotate-90" : ""
+          }`}
+          aria-hidden
+        />
       </button>
 
       {open ? (
-        <div className="mt-2 rounded-xl border border-teal-900/8 bg-[#fafcfb] p-3">
+        <div className="mt-3 overflow-hidden rounded-xl border border-teal-900/10 bg-[#fafcfb] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
           {degraded ? (
-            <p className="text-sm text-teal-950/50">
+            <p className="p-3 text-sm text-teal-950/50">
               Kategori paneli geçici olarak sınırlı. Yazmaya devam edebilirsiniz.
             </p>
           ) : (
             <>
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                {walk.stack.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={onBack}
-                    className="text-[11px] font-medium text-[#0f766e]"
-                  >
-                    ← Geri
-                  </button>
-                ) : null}
+              <div className="flex items-center justify-between gap-2 border-b border-teal-900/6 px-3 py-2">
+                <p className="min-w-0 truncate text-[11px] text-teal-950/45">
+                  {walk.stack.length === 0
+                    ? "Kategori seçin"
+                    : walk.stack.map((n) => n.label).join(" › ")}
+                </p>
                 {walk.stack.length > 0 ? (
                   <button
                     type="button"
                     onClick={onReset}
-                    className="text-[11px] text-teal-950/40"
+                    className="shrink-0 text-[11px] font-medium text-[#0f766e]"
                   >
                     Başa dön
                   </button>
                 ) : null}
-                <p className="min-w-0 flex-1 truncate text-[11px] text-teal-950/40">
-                  {walk.stack.length === 0
-                    ? "Ana kategoriler"
-                    : walk.stack.map((n) => n.label).join(" › ")}
-                </p>
               </div>
-              <div className="flex max-h-48 flex-wrap gap-1.5 overflow-y-auto sm:max-h-56">
-                {options.length === 0 ? (
-                  <p className="text-sm text-teal-950/45">Bu seviyede seçenek yok.</p>
+
+              <div className="flex max-h-64 overflow-x-auto overflow-y-hidden sm:max-h-72">
+                {columns.length === 0 ? (
+                  <p className="p-3 text-sm text-teal-950/45">Kategori yok.</p>
                 ) : (
-                  options.map((node) => (
-                    <button
-                      key={node.id}
-                      type="button"
-                      onClick={() => onSelect(node)}
-                      className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 text-left text-xs font-medium text-teal-950/75 transition hover:border-[#0f766e]/25 hover:bg-[#f0fdfa]"
-                    >
-                      {node.label}
-                      {node.meta?.any ? "" : node.hasChildren ? " ›" : ""}
-                    </button>
-                  ))
+                  columns.map((columnNodes, columnIndex) => {
+                    const selectedId = walk.stack[columnIndex]?.id ?? null;
+                    return (
+                      <div
+                        key={`col-${columnIndex}-${walk.stack[columnIndex - 1]?.id ?? "root"}`}
+                        className="flex w-[min(42vw,11.5rem)] shrink-0 flex-col border-r border-teal-900/8 last:border-r-0 sm:w-44"
+                      >
+                        <ul className="max-h-64 overflow-y-auto py-1 sm:max-h-72">
+                          {columnNodes.length === 0 ? (
+                            <li className="px-3 py-2 text-xs text-teal-950/40">
+                              Seçenek yok
+                            </li>
+                          ) : (
+                            columnNodes.map((node) => {
+                              const selected = selectedId === node.id;
+                              const isLeafFocus =
+                                selected && columnIndex === walk.stack.length - 1;
+                              return (
+                                <li key={node.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onSelectAtColumn(columnIndex, node)
+                                    }
+                                    className={`flex w-full items-center justify-between gap-1 px-2.5 py-2 text-left text-xs transition sm:px-3 ${
+                                      isLeafFocus
+                                        ? "bg-[#0f766e] font-medium text-white"
+                                        : selected
+                                          ? "bg-[#0f766e]/12 font-medium text-[#0f1f1d]"
+                                          : "text-teal-950/75 hover:bg-[#0f766e]/06"
+                                    }`}
+                                  >
+                                    <span className="min-w-0 truncate">
+                                      {node.label}
+                                    </span>
+                                    {!node.meta?.any && node.hasChildren ? (
+                                      <ChevronRight
+                                        className={`h-3 w-3 shrink-0 ${
+                                          isLeafFocus
+                                            ? "text-white/70"
+                                            : "text-teal-900/30"
+                                        }`}
+                                        aria-hidden
+                                      />
+                                    ) : null}
+                                  </button>
+                                </li>
+                              );
+                            })
+                          )}
+                        </ul>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </>
@@ -235,31 +315,5 @@ export function HybridCategoryBrowsePanel({
         </div>
       ) : null}
     </div>
-  );
-}
-
-type DebugProps = {
-  snapshot: {
-    syncGeneration: number;
-    lastUserAction?: string;
-    pathIds: string[];
-    nextKeys: string[];
-    lastComposedText?: string;
-  } | null;
-};
-
-/** Dev-only tiny drawer — never rendered in production builds. */
-export function HybridComposerDebugDrawer({ snapshot }: DebugProps) {
-  if (process.env.NODE_ENV !== "development" || !snapshot) return null;
-
-  return (
-    <details className="mt-3 rounded-lg border border-dashed border-amber-700/25 bg-amber-50/40 px-3 py-2 text-[11px] text-amber-950/70">
-      <summary className="cursor-pointer font-medium text-amber-900/60">
-        Hybrid debug
-      </summary>
-      <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-all">
-        {JSON.stringify(snapshot, null, 2)}
-      </pre>
-    </details>
   );
 }

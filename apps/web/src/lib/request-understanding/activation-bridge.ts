@@ -8,6 +8,7 @@ import {
   toCanonicalCatalogFacts,
 } from "@/lib/catalog/consumer";
 
+import { stripRequestedItemClause } from "@/lib/request-composer/attribute-hints";
 import { toLegacyFormHints, toStrategyContext } from "./adapters";
 import type {
   RequestUnderstandingResult,
@@ -68,10 +69,17 @@ export function resolveSchemaCategory(result: RequestUnderstandingResult): {
     };
   }
 
-  // UNKNOWN — provisional schema from intent only (not authoritative label)
+  // UNKNOWN — prefer detector evidence, then intent heuristics
   const intent = result.intent.value;
+  const detectorHint = result.category.evidence
+    ?.map((e) => /^detector=(.+)$/.exec(e)?.[1])
+    .find((id): id is string => Boolean(id));
+  const altHint = result.category.alternatives?.[0]?.value;
+
   let provisionalId = "appliances";
-  if (intent === "SERVICE") provisionalId = "services";
+  if (detectorHint) provisionalId = detectorHint;
+  else if (altHint) provisionalId = altHint;
+  else if (intent === "SERVICE") provisionalId = "services";
   else if (intent === "MANUFACTURE") provisionalId = "printing";
   else if (intent === "RENT" || intent === "SELL") provisionalId = "real-estate";
   else if (intent === "PART") provisionalId = "automotive";
@@ -166,12 +174,21 @@ function parentLabelFromSubject(result: RequestUnderstandingResult): string {
           !looksLikeYearToken(String(result.identity.brand.value))
         ? String(result.identity.brand.value)
         : null;
-  const model =
+  const modelRaw =
     parent?.model && isSafeToShow(parent.model)
       ? String(parent.model.value)
       : result.identity.model && isSafeToShow(result.identity.model)
         ? String(result.identity.model.value)
         : null;
+  const partName =
+    result.requestSubject?.name?.value != null
+      ? String(result.requestSubject.name.value)
+      : result.requestSubject?.displayPhrase?.value != null
+        ? String(result.requestSubject.displayPhrase.value)
+        : null;
+  const model = modelRaw
+    ? stripRequestedItemClause(modelRaw, partName)
+    : null;
   const series =
     parent?.series && isSafeToShow(parent.series)
       ? String(parent.series.value)
@@ -230,14 +247,24 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
     kind &&
     kind !== "UNKNOWN";
 
-  // Chips from semantic structure
+  // Chips from semantic structure — PART/ACCESSORY parent is compatibility target
   if (parentLabel && (kind === "PART" || kind === "ACCESSORY" || kind === "SERVICE")) {
     const brand = rs?.parentEntity?.brand?.value;
     const model = rs?.parentEntity?.model?.value;
     if (brand && !looksLikeYearToken(String(brand))) {
-      add("brand", "Marka", String(brand));
+      add(
+        "brand",
+        kind === "SERVICE" ? "Marka" : "Uyumlu marka",
+        String(brand),
+      );
     }
-    if (model) add("model", "Model", String(model));
+    if (model) {
+      add(
+        "model",
+        kind === "SERVICE" ? "Model" : "Uyumlu model",
+        String(model),
+      );
+    }
   } else {
     if (result.identity.brand && isSafeToShow(result.identity.brand)) {
       const brand = String(result.identity.brand.value);
@@ -268,14 +295,19 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
     add("mileagePreference", "Kilometre", "Düşük km tercihi");
   }
   if (result.condition && isSafeToShow(result.condition)) {
+    const cikmaPart = result.condition.evidence?.some((e) =>
+      /cikma|çıkma/i.test(e),
+    );
     add(
       "condition",
-      "Durum",
+      kind === "PART" || kind === "ACCESSORY" ? "Parça durumu" : "Durum",
       result.condition.value === "NEW"
         ? "Sıfır"
-        : result.condition.value === "USED"
-          ? "İkinci el"
-          : String(result.condition.value),
+        : cikmaPart
+          ? "Çıkma"
+          : result.condition.value === "USED"
+            ? "İkinci el"
+            : String(result.condition.value),
     );
   }
   if (result.quantity && isSafeToShow(result.quantity as UnderstandingValue<unknown>)) {
@@ -371,8 +403,23 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
     );
     subtypeLabel = listingTr === "kiralık" ? "Kiralık" : listingTr === "satılık" ? "Satılık" : "Emlak";
   } else if (kindOk && kind === "VEHICLE") {
-    headline = parentLabel || String(rs.name?.value ?? "Araç");
-    subtypeLabel = "Araç";
+    // Only automotive VEHICLE may surface "Araç" — never cross-domain pollution
+    const cat = result.category.value;
+    if (cat && cat !== "automotive") {
+      headline =
+        (result.subject.productType && isSafeToShow(result.subject.productType)
+          ? String(result.subject.productType.value)
+          : null) ||
+        parentLabel ||
+        String(rs.name?.value ?? "Ürün");
+      subtypeLabel =
+        result.subject.productType && isSafeToShow(result.subject.productType)
+          ? capitalizeTr(String(result.subject.productType.value))
+          : "Ürün";
+    } else {
+      headline = parentLabel || String(rs.name?.value ?? "Araç");
+      subtypeLabel = "Araç";
+    }
   } else if (kindOk && kind === "INDUSTRIAL_EQUIPMENT") {
     headline = parentLabel || String(rs.name?.value ?? "Makine");
     subtypeLabel = "Makine";
@@ -396,7 +443,9 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
       deduped.push(b);
     }
     headline = deduped.join(" ") || String(rs.name?.value ?? "Ürün");
-    subtypeLabel = "Ürün";
+    subtypeLabel = productType
+      ? capitalizeTr(String(productType))
+      : "Ürün";
   } else {
     const brandForHeadline =
       result.identity.brand &&

@@ -219,6 +219,14 @@ export function pinBrowseSemanticContext(
       confidence: 1,
       evidence: [`browse-role:${subcategorySlug}`],
     };
+  } else if (!subcategorySlug) {
+    fields.needType = {
+      kind: "UNKNOWN",
+      value: null,
+      provenance: "INFERRED",
+      confidence: 0,
+      evidence: ["category-root-no-intent"],
+    };
   }
 
   // Subject switch: drop fields that are only valid for the previous subject.

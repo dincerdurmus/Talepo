@@ -20,8 +20,19 @@ import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
 import { DomainErrorCode } from "@/lib/observability/errors";
 import { safeErrorResponse } from "@/lib/observability/errors";
+import type { EntitlementContext } from "@/lib/membership/types";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { assertCanMutateBilling } from "@/server/billing/assert-billing-permission";
+import type { BillingSubjectRef } from "@/lib/billing/types";
+
+function billingSubjectFromEntitlements(
+  ctx: EntitlementContext,
+): BillingSubjectRef {
+  return ctx.subject.type === "company"
+    ? { type: "COMPANY", id: ctx.subject.id }
+    : { type: "USER", id: ctx.userId };
+}
 
 export async function GET() {
   try {
@@ -155,6 +166,15 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "upgrade" && body.planTier) {
+      const ctx = await resolveEntitlements(
+        user.id,
+        await getCompanyContextOptions(),
+      );
+      await assertCanMutateBilling({
+        actorUserId: user.id,
+        subject: billingSubjectFromEntitlements(ctx),
+      });
+
       if (!isMockUpgradeAllowed()) {
         return NextResponse.json(
           {
@@ -170,11 +190,6 @@ export async function POST(request: Request) {
       if (!PLAN_DEFINITIONS[tier]) {
         return NextResponse.json({ ok: false, message: "Geçersiz plan." }, { status: 400 });
       }
-
-      const ctx = await resolveEntitlements(
-        user.id,
-        await getCompanyContextOptions(),
-      );
 
       if (
         tier !== "STANDARD" &&
@@ -217,6 +232,15 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "buy-credits" && body.pack) {
+      const ctx = await resolveEntitlements(
+        user.id,
+        await getCompanyContextOptions(),
+      );
+      await assertCanMutateBilling({
+        actorUserId: user.id,
+        subject: billingSubjectFromEntitlements(ctx),
+      });
+
       if (!isMockCreditPurchaseAllowed()) {
         return NextResponse.json(
           {
@@ -232,11 +256,6 @@ export async function POST(request: Request) {
       if (!pack) {
         return NextResponse.json({ ok: false, message: "Geçersiz paket." }, { status: 400 });
       }
-
-      const ctx = await resolveEntitlements(
-        user.id,
-        await getCompanyContextOptions(),
-      );
 
       if (ctx.subject.type === "company") {
         await prisma.company.update({

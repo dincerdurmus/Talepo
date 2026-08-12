@@ -37,7 +37,9 @@ export type DynamicField = {
 };
 
 export function getCategoryNeedTypeDefault(categoryId: string): string | null {
-  if (categoryId === "automotive") return "vehicle";
+  // Automotive root is ambiguous (vehicle vs part vs service). Never assume
+  // vehicle purchase — that made modelYear required and flashed Araç Satın Alma.
+  if (categoryId === "automotive") return null;
   if (categoryId === "machinery") return "machine";
   // Technology: never blindly force software — hardware signals win in withCategoryFieldDefaults
   if (categoryId === "technology") return "software";
@@ -532,6 +534,7 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         type: "number",
         placeholder: "2016",
         required: true,
+        when: { field: "needType", in: ["vehicle"] },
       },
       {
         key: "engine",

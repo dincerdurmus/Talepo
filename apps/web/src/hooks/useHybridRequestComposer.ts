@@ -139,6 +139,10 @@ export function useHybridRequestComposer(
     (next: string) => {
       setTextState(next);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      const currentRaw = (stateRef.current?.understanding.rawInput ?? "").trim();
+      if (next.trim() !== currentRaw) {
+        setIsSyncing(true);
+      }
       debounceTimerRef.current = setTimeout(() => {
         runSyncFromText(next);
       }, debounceMs);
@@ -308,6 +312,23 @@ export function useHybridRequestComposer(
         node.kind === "subcategory" ||
         node.kind === "group"
       ) {
+        // Category root alone is not a vehicle-purchase request.
+        if (node.kind === "category" && !walkSubSlug) {
+          const previous = stateRef.current ?? emptyShell();
+          const pinned = pinBrowseSemanticContext(previous, {
+            categoryId: walkCategoryId,
+            subcategorySlug: null,
+          });
+          applyState({
+            ...pinned,
+            categoryId: node.categoryId || node.id,
+            subcategorySlug: null,
+            lastUserAction: "browse",
+          });
+          setComposerError(false);
+          setBrowseDegraded(false);
+          return;
+        }
         const seed =
           node.meta?.listingType
             ? `${node.meta.listingType} konut arıyorum.`
@@ -382,7 +403,7 @@ export function useHybridRequestComposer(
 
   // Text → columns: keep walk aligned with understood path
   useEffect(() => {
-    if (browseDegraded) return;
+    if (browseDegraded || isSyncing) return;
     const sig = pathSignature(browsePath);
     if (skipPathWalkSyncRef.current) {
       skipPathWalkSyncRef.current = false;
@@ -400,25 +421,25 @@ export function useHybridRequestComposer(
     } catch {
       // keep current walk
     }
-  }, [browseDegraded, browsePath]);
+  }, [browseDegraded, browsePath, isSyncing]);
 
   const questions = useMemo(() => {
-    if (!state) return null;
+    if (!state || isSyncing) return null;
     try {
       return resolveHybridQuestions(state);
     } catch {
       return null;
     }
-  }, [state]);
+  }, [isSyncing, state]);
 
   const understoodFacts = useMemo(
-    () => (browseDegraded ? [] : buildUnderstoodFacts(state)),
-    [browseDegraded, state],
+    () => (browseDegraded || isSyncing ? [] : buildUnderstoodFacts(state)),
+    [browseDegraded, isSyncing, state],
   );
 
   const quickGroups = useMemo(
-    () => (browseDegraded ? [] : buildQuickSelectGroups(state, 2)),
-    [browseDegraded, state],
+    () => (browseDegraded || isSyncing ? [] : buildQuickSelectGroups(state, 2)),
+    [browseDegraded, isSyncing, state],
   );
 
   const softFillFields = useMemo(

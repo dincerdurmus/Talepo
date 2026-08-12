@@ -276,7 +276,7 @@ function TalepOlusturForm() {
   const schemaCategory = resolveSchemaCategory(understanding);
   const detectedCategoryId = schemaCategory.categoryId;
   const categoryConfident =
-    categoryLockedByUser || schemaCategory.confident;
+    !hybrid.isSyncing && (categoryLockedByUser || schemaCategory.confident);
 
   /**
    * CATEGORY_HINT (URL soft) ≠ USER_CATEGORY_OVERRIDE ≠ CANONICAL_CATEGORY
@@ -553,7 +553,9 @@ function TalepOlusturForm() {
 
   const visibleDynamicFields = useMemo(
     () =>
-      getVisibleCategoryFields(
+      hybrid.isSyncing
+        ? []
+        : getVisibleCategoryFields(
         selectedCategory.fields,
         dynamicValues,
         activeCategoryId,
@@ -565,6 +567,7 @@ function TalepOlusturForm() {
     [
       activeCategoryId,
       dynamicValues,
+      hybrid.isSyncing,
       selectedCategory.fields,
       hybrid.state?.subcategorySlug,
       hybrid.state?.taxonomyNodeId,
@@ -792,7 +795,7 @@ function TalepOlusturForm() {
    * rankNextBestQuestions may rank inside that allowlist; brain.nextQuestions is unused.
    */
   const hybridQuestionResult = useMemo(() => {
-    if (!hybrid.state) return null;
+    if (hybrid.isSyncing || !hybrid.state) return null;
     try {
       return resolveHybridQuestions(hybrid.state, {
         strategy: brain.strategy?.strategy ?? null,
@@ -806,6 +809,7 @@ function TalepOlusturForm() {
   }, [
     brain.completeness,
     brain.strategy?.strategy,
+    hybrid.isSyncing,
     hybrid.state,
     requiredDynamicKeys,
     visibleDynamicFields,
@@ -1710,9 +1714,12 @@ function TalepOlusturForm() {
 
                   <HybridUnderstoodPanel
                     hasText={requestText.trim().length > 0}
-                    facts={hybrid.understoodFacts}
+                    updating={hybrid.isSyncing}
+                    facts={hybrid.isSyncing ? [] : hybrid.understoodFacts}
                     categoryLabel={
-                      categoryConfident && schemaCategory.displayLabelSafe
+                      hybrid.isSyncing
+                        ? null
+                        : categoryConfident && schemaCategory.displayLabelSafe
                         ? selectedCategory.label
                         : hybrid.understoodFacts.find((f) => f.key === "productType")
                             ?.displayValue ??
@@ -1724,7 +1731,7 @@ function TalepOlusturForm() {
                   />
 
                   <HybridBrowsePath
-                    path={hybrid.browsePath}
+                    path={hybrid.isSyncing ? [] : hybrid.browsePath}
                     degraded={hybrid.browseDegraded}
                     allowBrandEdit
                     onEditBrandAny={() => {
@@ -1733,7 +1740,7 @@ function TalepOlusturForm() {
                   />
 
                   <HybridQuickSelectChips
-                    groups={hybrid.quickGroups}
+                    groups={hybrid.isSyncing ? [] : hybrid.quickGroups}
                     onSelect={(fieldKey, value, isAny) => {
                       hybrid.applyQuickOption(fieldKey, value, isAny);
                       setManualValues((current) => {

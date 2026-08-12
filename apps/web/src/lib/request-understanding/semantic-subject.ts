@@ -3,6 +3,7 @@
  * Deterministic: what the user is actually seeking + how other entities relate.
  * No brand/model-specific production branches.
  */
+import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { clamp01, uv } from "./provenance";
 import type {
   ParentEntityKind,
@@ -53,6 +54,11 @@ const PART_LEMMAS = [
   "debriyaj",
   "debriyaj",
   "fren",
+  "rulman",
+  "şarj adaptörü",
+  "sarj adaptoru",
+  "şarj adaptoru",
+  "sarj adaptörü",
 ] as const;
 
 const ACCESSORY_LEMMAS = [
@@ -66,7 +72,26 @@ const ACCESSORY_LEMMAS = [
   "uzatma",
   "başlık",
   "baslik",
+  "şarj",
+  "sarj",
 ] as const;
+
+/** Categories that must never collapse to VEHICLE via numeric false positives */
+const NON_VEHICLE_CATEGORIES = new Set([
+  "technology",
+  "appliances",
+  "home-kitchen",
+  "furniture",
+  "health",
+  "baby",
+  "printing",
+  "real-estate",
+  "services",
+  "machinery",
+]);
+
+const MOTOR_PART_CONTEXT_RE =
+  /(?:çıkma|cikma|yedek|muadil|uyumlu|kapa|pompa|yağ|yag|\biçin\b|\bicin\b)/i;
 
 const SERVICE_LEMMAS = [
   "bakım",
@@ -290,6 +315,17 @@ export function reconcileParentIdentityTokens(
     if (!model || model.toLocaleLowerCase("tr-TR") !== am.toLocaleLowerCase("tr-TR")) {
       model = am;
     }
+  }
+
+  // Known vehicle model occupying brand: demote so catalog can fill parent brand
+  if (brand && isKnownAutomotiveModelName(brand)) {
+    if (
+      !model ||
+      model.toLocaleLowerCase("tr-TR") === brand.toLocaleLowerCase("tr-TR")
+    ) {
+      model = brand;
+    }
+    brand = null;
   }
 
   if (brand && model) {
@@ -556,30 +592,55 @@ export function resolveSemanticSubject(
 
   // --- PART ---
   if (partHit && !wholeVehicle) {
+    // Bare "motor" often means vehicle powertrain preference; keep PART when
+    // salvage/spare/compatibility language is present ("çıkma motor", "X için motor").
     const effectiveLemma =
-      partHit.lemma === "motor" && !/kapa|pompa|yağ|yag/i.test(text)
+      partHit.lemma === "motor" && !MOTOR_PART_CONTEXT_RE.test(text)
         ? null
         : partHit.lemma === "fren" && /balata/i.test(text)
           ? "balata"
           : partHit.lemma === "fren"
             ? null
-            : partHit.lemma;
+            : partHit.lemma === "şarj" || partHit.lemma === "sarj"
+              ? "şarj adaptörü"
+              : partHit.lemma;
 
     if (effectiveLemma) {
       const pos = extractPositions(text, partHit.index);
       const name =
         effectiveLemma === "parça" || effectiveLemma === "parca"
           ? "parça"
-          : effectiveLemma;
-      const display = [pos, name].filter(Boolean).join(" ");
+          : effectiveLemma === "şarj adaptörü" ||
+              effectiveLemma === "sarj adaptoru" ||
+              effectiveLemma === "şarj adaptoru" ||
+              effectiveLemma === "sarj adaptörü"
+            ? "şarj adaptörü"
+            : effectiveLemma;
+      // Position tokens already in the noun must not be re-prefixed
+      const nameLower = name.toLocaleLowerCase("tr-TR");
+      const posSafe =
+        pos &&
+        !pos
+          .split(/\s+/)
+          .every((tok) => nameLower.includes(tok.toLocaleLowerCase("tr-TR")))
+          ? pos
+          : pos && !nameLower.includes(pos.toLocaleLowerCase("tr-TR"))
+            ? pos
+              .split(/\s+/)
+              .filter((tok) => !nameLower.includes(tok.toLocaleLowerCase("tr-TR")))
+              .join(" ") || null
+            : null;
+      const display = [posSafe, name].filter(Boolean).join(" ");
 
       evidence.push(partHit.raw);
-      if (pos) evidence.push(pos);
+      if (posSafe) evidence.push(posSafe);
 
       const safeParentKind: ParentEntityKind =
         input.categoryId === "machinery"
           ? "MACHINE"
-          : input.categoryId === "automotive" || input.automotiveModel
+          : input.categoryId === "automotive" ||
+              (Boolean(input.automotiveModel) &&
+                !NON_VEHICLE_CATEGORIES.has(input.categoryId ?? ""))
             ? "VEHICLE"
             : input.categoryId === "technology" ||
                 input.categoryId === "appliances" ||
@@ -587,7 +648,8 @@ export function resolveSemanticSubject(
                 input.categoryId === "health" ||
                 input.categoryId === "baby"
               ? "PRODUCT"
-              : identitySuggestsVehicle(input.identity)
+              : identitySuggestsVehicle(input.identity) &&
+                  !NON_VEHICLE_CATEGORIES.has(input.categoryId ?? "")
                 ? "VEHICLE"
                 : "PRODUCT";
 
@@ -613,22 +675,90 @@ export function resolveSemanticSubject(
           confidence: 0.9,
           evidence,
         }),
-        position: pos
-          ? uv(pos, {
+        position: posSafe
+          ? uv(posSafe, {
               provenance: "EXPLICIT",
               source: "USER_EXPLICIT",
               confidence: 0.9,
-              evidence: [pos],
+              evidence: [posSafe],
             })
           : undefined,
         parentEntity: buildParentEntity(
           input.identity,
           safeParentKind,
-          input.automotiveModel,
+          NON_VEHICLE_CATEGORIES.has(input.categoryId ?? "")
+            ? null
+            : input.automotiveModel,
         ),
         relation: decision("PART_OF", 0.85, ["part-of-parent"]),
         relationship: decision("PART_FOR_PRODUCT", 0.85, ["part-for-product"]),
         alternatives,
+      };
+    }
+  }
+
+  // Structural "X için Y" when Y looks like a spare and lemma path did not resolve
+  const forPart = text.match(
+    /(.+?)\s+için\s+(.+?)(?:\s+(?:arıyorum|ariyorum|lazım|lazim)|$)/iu,
+  );
+  if (
+    !wholeVehicle &&
+    forPart?.[2] &&
+    /(?:arıyorum|ariyorum|lazım|lazim|olmasın)/i.test(text)
+  ) {
+    const requested = forPart[2].trim();
+    const requestedLower = requested.toLocaleLowerCase("tr-TR");
+    const looksLikePart =
+      findLemmaHit(requested, PART_LEMMAS) ||
+      /(?:parça|parca|yedek|motor|pompa|rulman|tampon|far|adaptör|adaptor)/i.test(
+        requestedLower,
+      );
+    if (looksLikePart && !findLemmaHit(requested, SERVICE_LEMMAS)) {
+      const lemmaHit = findLemmaHit(requested, PART_LEMMAS);
+      const name = lemmaHit?.lemma === "parça" || lemmaHit?.lemma === "parca"
+        ? "parça"
+        : lemmaHit?.lemma ?? requested.split(/\s+/).slice(-2).join(" ");
+      const pos = lemmaHit
+        ? extractPositions(requested, lemmaHit.index)
+        : extractPositions(requested, requested.length);
+      const display = [pos, name].filter(Boolean).join(" ");
+      const parentKind: ParentEntityKind =
+        input.categoryId === "machinery"
+          ? "MACHINE"
+          : input.categoryId === "automotive" || input.automotiveModel
+            ? "VEHICLE"
+            : NON_VEHICLE_CATEGORIES.has(input.categoryId ?? "")
+              ? "PRODUCT"
+              : "VEHICLE";
+      return {
+        kind: decision("PART", 0.84, ["icin-structure", name]),
+        name: uv(name, {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          confidence: 0.85,
+          evidence: [requested],
+        }),
+        displayPhrase: uv(display || name, {
+          provenance: "EXPLICIT",
+          source: "NORMALIZED_EXPLICIT",
+          confidence: 0.85,
+          evidence: [requested],
+        }),
+        position: pos
+          ? uv(pos, {
+              provenance: "EXPLICIT",
+              source: "USER_EXPLICIT",
+              confidence: 0.85,
+              evidence: [pos],
+            })
+          : undefined,
+        parentEntity: buildParentEntity(
+          input.identity,
+          parentKind,
+          input.automotiveModel,
+        ),
+        relation: decision("PART_OF", 0.82, ["icin-part-of"]),
+        relationship: decision("PART_FOR_PRODUCT", 0.82, ["icin-part-for"]),
       };
     }
   }
@@ -679,12 +809,27 @@ export function resolveSemanticSubject(
     };
   }
 
+  // Manufacture signals before SERVICE — "50.000 adet kutu yaptırmak" is not a service job.
+  const mfgProductEarly = detectManufactureProduct(text);
+  const manufactureQuantity =
+    input.quantity != null ||
+    /(?:^|[^\p{L}\p{N}])(?:\d+[.\d]*\s*)?(?:adet|bin|tane)(?=[^\p{L}\p{N}]|$)/iu.test(
+      text,
+    );
+  const manufactureAsk =
+    input.intent === "MANUFACTURE" ||
+    (mfgProductEarly && manufactureQuantity) ||
+    /(?:^|[^\p{L}\p{N}])(?:bastır\w*|bastir\w*|ürettir\w*|urettir\w*|imalat)(?=[^\p{L}\p{N}]|$)/iu.test(
+      text,
+    );
+
   // --- SERVICE ---
   const serviceNegated =
     /(?:servis|bakım|bakim|tamir|onarım|onarim)\s*istemiyorum/i.test(text) ||
     /kendisini\s*(?:arıyorum|ariyorum)/i.test(text);
   if (
     !serviceNegated &&
+    !manufactureAsk &&
     (input.intent === "SERVICE" ||
       serviceHit ||
       /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*|boyat\w*|montaj|bakım|bakim)(?=[^\p{L}\p{N}]|$)/iu.test(
@@ -750,16 +895,12 @@ export function resolveSemanticSubject(
   }
 
   // --- MANUFACTURE ---
-  const mfgProduct = detectManufactureProduct(text);
-  const manufactureVerb =
-    /(?:^|[^\p{L}\p{N}])(?:bastır\w*|bastir\w*|baskı|baski|imalat|ürettir\w*|urettir\w*)(?=[^\p{L}\p{N}]|$)/iu.test(
-      text,
-    );
-  if (
-    input.intent === "MANUFACTURE" ||
-    manufactureVerb ||
-    (mfgProduct && (input.quantity != null || /(?:bin|adet|tane)/i.test(text)))
-  ) {
+  // Note: bare "baskı" must not steal whole "baskı makinesi" equipment purchases.
+  const mfgProduct = mfgProductEarly;
+  const wholePrintMachine =
+    /(?:baskı|baski|ofset)\s*makine/i.test(text) ||
+    /makine(?:si)?\s*(?:arıyorum|ariyorum|lazım|lazim)/i.test(text);
+  if (manufactureAsk && !(wholePrintMachine && !mfgProduct)) {
     const name = mfgProduct?.product ?? "üretim";
     evidence.push(name);
     return {
@@ -848,13 +989,24 @@ export function resolveSemanticSubject(
   }
 
   // --- VEHICLE (whole) ---
+  // Never default non-auto categories to VEHICLE (numeric false positives → "Araç").
+  const categoryBlocksVehicle = NON_VEHICLE_CATEGORIES.has(
+    input.categoryId ?? "",
+  );
+  const autoModelCredible =
+    Boolean(input.automotiveModel) &&
+    !categoryBlocksVehicle &&
+    (input.categoryId === "automotive" ||
+      input.categoryId == null ||
+      identitySuggestsVehicle(input.identity));
   if (
-    wholeVehicle ||
-    input.automotiveModel ||
-    (input.categoryId === "automotive" &&
-      (input.intent === "BUY" || input.intent === "UNKNOWN") &&
-      !partHit &&
-      !accessoryHit)
+    !categoryBlocksVehicle &&
+    (wholeVehicle ||
+      autoModelCredible ||
+      (input.categoryId === "automotive" &&
+        (input.intent === "BUY" || input.intent === "UNKNOWN") &&
+        !partHit &&
+        !accessoryHit))
   ) {
     const parent = buildParentEntity(
       input.identity,
@@ -913,9 +1065,12 @@ export function resolveSemanticSubject(
 }
 
 function identitySuggestsVehicle(identity: IdentityLite): boolean {
-  // Heuristic without brand lists: model codes like C180, F30, Golf 7
+  // Heuristic without brand lists: model codes like C180, F30, Golf 7.
+  // Bare digits (140, 256) are NOT vehicle signals — screen size / storage.
   const model = identity.model ?? "";
-  if (/^[A-Za-z]?\d{2,3}[A-Za-z]?$/i.test(model.replace(/\s/g, ""))) return true;
+  const compact = model.replace(/\s/g, "");
+  if (/^[A-Za-z]\d{2,3}[A-Za-z]?$/i.test(compact)) return true;
+  if (/^\d{3}[A-Za-z]$/i.test(compact)) return true;
   if (/^[CESAGL]\d{2,3}/i.test(model)) return true;
   if (/^F\d{2}$/i.test(model)) return true;
   if (/\b\d\b/.test(model) && /^[A-Za-z]/.test(model)) return true;

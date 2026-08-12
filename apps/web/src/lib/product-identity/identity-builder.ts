@@ -8,6 +8,7 @@ import {
 import { normalizeToken } from "@/server/price-intelligence/normalize-product";
 
 import { extractBrandFromText } from "./brand-extraction";
+import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { normalizeCondition } from "./condition";
 import {
   extractModelCandidatesFromAttributes,
@@ -176,11 +177,24 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   // Title inference only when structured brand absent
   if (!brand && input.title?.trim()) {
     const fromTitle = extractBrandFromText(input.title);
-    if (fromTitle.brand) {
+    if (fromTitle.brand && !isKnownAutomotiveModelName(fromTitle.brand)) {
       brand = fromTitle.brand;
       brandConfidence = Math.max(brandConfidence, fromTitle.confidence);
       if (!model && fromTitle.remainder) model = fromTitle.remainder;
+    } else if (
+      fromTitle.brand &&
+      isKnownAutomotiveModelName(fromTitle.brand) &&
+      !model
+    ) {
+      model = fromTitle.brand;
     }
+  }
+
+  // Known vehicle model must never occupy the brand slot (Golf ≠ Volkswagen)
+  if (brand && isKnownAutomotiveModelName(brand)) {
+    if (!model) model = brand;
+    brand = null;
+    brandConfidence = 0;
   }
 
   if (model) model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));

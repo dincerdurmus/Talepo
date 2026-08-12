@@ -1,3 +1,4 @@
+import { canMutateCompanyBilling } from "@/lib/billing/billing-authority";
 import { prisma } from "@/lib/prisma";
 import { BillingError, BillingErrorCode } from "@/lib/billing/errors";
 import type { BillingSubjectRef } from "@/lib/billing/types";
@@ -26,12 +27,11 @@ export async function assertCanMutateBilling(input: {
       companyId: input.subject.id,
       userId: input.actorUserId,
       status: "ACTIVE",
-      role: { in: ["OWNER", "ADMIN"] },
     },
-    select: { id: true },
+    select: { id: true, role: true },
   });
 
-  if (!membership) {
+  if (!membership || !canMutateCompanyBilling(membership.role)) {
     throw new BillingError({
       code: BillingErrorCode.BILLING_FORBIDDEN,
       userMessage: "Plan/ödeme işlemleri için OWNER veya ADMIN rolü gerekir.",

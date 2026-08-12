@@ -249,19 +249,29 @@ export const TECHNOLOGY_BRANDS: BrandEntry[] = [
   },
   { canonical: "Samsung", aliases: ["samsung", "galaxy", "galaksi"] },
   { canonical: "Xiaomi", aliases: ["xiaomi", "şiaomi", "siaomi", "redmi", "poco"] },
-  { canonical: "Huawei", aliases: ["huawei", "huavei", "honor"] },
+  { canonical: "Huawei", aliases: ["huawei", "huavei"] },
+  { canonical: "Honor", aliases: ["honor"] },
   { canonical: "Oppo", aliases: ["oppo"] },
   { canonical: "Realme", aliases: ["realme"] },
+  { canonical: "OnePlus", aliases: ["oneplus", "one plus"] },
   { canonical: "Google", aliases: ["google pixel", "pixel"] },
   { canonical: "Lenovo", aliases: ["lenovo"] },
   { canonical: "HP", aliases: ["hp", "hewlett"] },
   { canonical: "Dell", aliases: ["dell"] },
   { canonical: "Asus", aliases: ["asus"] },
   { canonical: "Acer", aliases: ["acer"] },
+  { canonical: "MSI", aliases: ["msi"] },
   { canonical: "Microsoft", aliases: ["microsoft", "surface"] },
   { canonical: "Casper", aliases: ["casper"] },
   { canonical: "Monster", aliases: ["monster"] },
   { canonical: "Sony", aliases: ["sony", "playstation", "ps5", "ps4"] },
+  { canonical: "LG", aliases: ["lg"] },
+  { canonical: "Vestel", aliases: ["vestel"] },
+  { canonical: "Philips", aliases: ["philips", "phillips"] },
+  { canonical: "TCL", aliases: ["tcl"] },
+  { canonical: "Hisense", aliases: ["hisense"] },
+  { canonical: "Nokia", aliases: ["nokia"] },
+  { canonical: "Motorola", aliases: ["motorola"] },
 ];
 
 export type TechnologyProductEntry = {
@@ -813,16 +823,35 @@ export function findAutomotiveModel(
     return normalizeModelLabel(known[1]);
   }
 
-  // BMW / Mercedes dotted series: 3.20, 5.20, 1.16
+  // BMW / Mercedes dotted series: 3.20, 5.20, 1.16 — only with auto brand context
   const dotted = text.match(/\b([1-8])\.([0-9]{2})\b/);
   if (dotted) {
-    return `${dotted[1]}.${dotted[2]}`;
+    const autoBrand = brand || findAutomotiveBrandInText(text);
+    if (autoBrand) {
+      return `${dotted[1]}.${dotted[2]}`;
+    }
   }
 
-  // Compact series codes: 320i, 520d, 118i (avoid years)
+  // Compact series codes: 320i / 520d (letter suffix) always OK;
+  // bare 3-digit (156, 320) only with automotive brand — never "140 ekran" / "256 GB".
   const series = text.match(/\b([1-8][0-9]{2}[ijd]?)\b/i);
   if (series && !/^(19|20)\d{2}$/.test(series[1])) {
-    return series[1].toUpperCase();
+    const token = series[1];
+    const after = text.slice(
+      (series.index ?? 0) + series[0].length,
+      (series.index ?? 0) + series[0].length + 24,
+    );
+    if (
+      /^\s*(ekran|inç|inch|["”]|gb|tb|m2|m²|m\s*2|ton|adet|bin|kg|lt|litre)/i.test(
+        after,
+      )
+    ) {
+      // size / storage / quantity — not a vehicle model
+    } else if (/[ijd]$/i.test(token)) {
+      return token.toUpperCase();
+    } else if (brand || findAutomotiveBrandInText(text)) {
+      return token.toUpperCase();
+    }
   }
 
   const kasaMatch = text.match(
@@ -832,9 +861,14 @@ export function findAutomotiveModel(
     return `${kasaMatch[1].toUpperCase()} kasa`;
   }
 
-  if (brand) {
-    const brandEntry = AUTOMOTIVE_BRANDS.find((item) => item.canonical === brand);
-    const aliasAlternation = (brandEntry?.aliases ?? [brand.toLocaleLowerCase("tr-TR")])
+  const resolvedBrand = brand || findAutomotiveBrandInText(text);
+  if (resolvedBrand) {
+    const brandEntry = AUTOMOTIVE_BRANDS.find(
+      (item) => item.canonical === resolvedBrand,
+    );
+    const aliasAlternation = (brandEntry?.aliases ?? [
+      resolvedBrand.toLocaleLowerCase("tr-TR"),
+    ])
       .map(escapeRegex)
       .sort((a, b) => b.length - a.length)
       .join("|");
@@ -846,7 +880,10 @@ export function findAutomotiveModel(
     );
     if (afterBrand?.[1]) {
       const token = afterBrand[1];
-      if (!/^(19|20)\d{2}$/.test(token) && !/^(model|arıyorum|ariyorum|kasa)$/i.test(token)) {
+      if (
+        !/^(19|20)\d{2}$/.test(token) &&
+        !/^(model|arıyorum|ariyorum|kasa|için|icin)$/i.test(token)
+      ) {
         return normalizeModelLabel(token);
       }
     }
@@ -872,3 +909,28 @@ function normalizeModelLabel(raw: string): string {
   }
   return trimmed;
 }
+
+const AUTOMOTIVE_BRAND_FOLDS = new Set(
+  AUTOMOTIVE_BRANDS.flatMap((b) => [
+    b.canonical.toLocaleLowerCase("tr-TR"),
+    ...b.aliases.map((a) => a.toLocaleLowerCase("tr-TR")),
+  ]),
+);
+
+const AUTOMOTIVE_MODEL_FOLDS = new Set(
+  AUTOMOTIVE_MODEL_TOKENS.map((t) => t.toLocaleLowerCase("tr-TR")),
+);
+
+/**
+ * True when the token is a known vehicle *model* and not also a brand
+ * (Golf, Corolla — never Mini, which is a brand).
+ */
+export function isKnownAutomotiveModelName(
+  value: string | null | undefined,
+): boolean {
+  const fold = value?.trim().toLocaleLowerCase("tr-TR") ?? "";
+  if (!fold) return false;
+  if (AUTOMOTIVE_BRAND_FOLDS.has(fold)) return false;
+  return AUTOMOTIVE_MODEL_FOLDS.has(fold);
+}
+

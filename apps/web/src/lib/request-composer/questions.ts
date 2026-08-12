@@ -39,6 +39,7 @@ const AUTOMOTIVE_SPARE_SUPPRESS = new Set([
   "bodyCondition",
   "condition",
   "variant",
+  "modelYear",
 ]);
 
 function knowledgeFieldToCandidate(field: KnowledgeField): QuestionCandidate {
@@ -164,6 +165,15 @@ export function resolveHybridQuestions(
       values.needType === "tire" ||
       state.understanding.requestSubject.kind.value === "PART");
 
+  const automotiveNeedUnknown =
+    categoryId === "automotive" &&
+    !isAutoSpare &&
+    !(
+      state.fields.needType?.kind === "VALUE" &&
+      state.fields.needType.value
+    ) &&
+    state.understanding.requestSubject.kind.value !== "VEHICLE";
+
   const browsePinnedNeed =
     state.fields.needType?.provenance === "EXPLICIT_BROWSE" &&
     state.fields.needType.kind === "VALUE";
@@ -185,6 +195,24 @@ export function resolveHybridQuestions(
   const brandPreferred = (state.fields.brand?.preferredValues?.length ?? 0) >= 1;
   const filterAnyAware = (fields: KnowledgeField[]) =>
     fields.filter((f) => {
+      // Automotive root without intent: only ask needType — never flash vehicle-purchase fields
+      if (
+        automotiveNeedUnknown &&
+        f.key !== "needType"
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
+      // Generic spare-part: year is optional unless the part schema marks it visible
+      if (
+        f.key === "modelYear" &&
+        (isAutoSpare ||
+          state.understanding.requestSubject.kind.value === "PART" ||
+          state.understanding.requestSubject.kind.value === "ACCESSORY")
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
       if (browsePinnedNeed && f.key === "needType") {
         suppressed.push(f.key);
         return false;
@@ -224,6 +252,30 @@ export function resolveHybridQuestions(
         (state.fields.productType?.value?.includes("televizyon") ||
           state.taxonomyNodeId?.includes("televizyon"))
       ) {
+        return false;
+      }
+      // deviceFamily is for generic hardware leaf — irrelevant on TV / appliance paths
+      if (
+        f.key === "deviceFamily" &&
+        (state.fields.productType?.value
+          ?.toLocaleLowerCase("tr-TR")
+          .includes("televizyon") ||
+          state.taxonomyNodeId?.includes("televizyon") ||
+          state.understanding.requestSubject.kind.value === "PART" ||
+          categoryId === "appliances" ||
+          categoryId === "automotive")
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
+      // Explicit part condition (çıkma / ikinci el) — don't re-ask vehicle condition
+      if (
+        f.key === "condition" &&
+        (state.understanding.requestSubject.kind.value === "PART" ||
+          state.understanding.requestSubject.kind.value === "ACCESSORY" ||
+          values.needType === "part")
+      ) {
+        suppressed.push(f.key);
         return false;
       }
       return true;

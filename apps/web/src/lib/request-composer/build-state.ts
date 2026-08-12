@@ -26,6 +26,7 @@ import {
   extractResolution,
   extractScreenSize,
 } from "./attribute-hints";
+import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import type {
   CanonicalFieldState,
   CanonicalRequestState,
@@ -217,14 +218,14 @@ export function mapUnderstandingToFields(
   const resolution = extractResolution(raw);
   const productHint = extractProductTypeHint(raw);
 
-  const brandRaw = cleanBrandToken(
+  let brandRaw = cleanBrandToken(
     result.identity.brand?.value
       ? String(result.identity.brand.value)
       : result.requestSubject.parentEntity?.brand?.value
         ? String(result.requestSubject.parentEntity.brand.value)
         : null,
   );
-  const modelRaw = cleanModelToken(
+  let modelRaw = cleanModelToken(
     result.identity.model?.value
       ? String(result.identity.model.value)
       : result.requestSubject.parentEntity?.model?.value
@@ -232,6 +233,16 @@ export function mapUnderstandingToFields(
         : null,
     { screenSize },
   );
+  if (brandRaw && isKnownAutomotiveModelName(brandRaw)) {
+    if (
+      !modelRaw ||
+      modelRaw.toLocaleLowerCase("tr-TR") ===
+        brandRaw.toLocaleLowerCase("tr-TR")
+    ) {
+      modelRaw = brandRaw;
+    }
+    brandRaw = null;
+  }
 
   if (brandRaw && result.identity.brand) {
     fields.brand = valueField(

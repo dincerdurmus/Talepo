@@ -22,7 +22,8 @@ export type AuthzResource =
   | "alert_rule"
   | "inventory"
   | "team"
-  | "entitlement";
+  | "entitlement"
+  | "billing";
 
 export type AuthzAction =
   | "create"
@@ -121,5 +122,26 @@ export const AUTHORIZATION_MATRIX: AuthzRule[] = [
     action: "read",
     condition: "public surfaces only; mutations denied",
     enforcedBy: "requireUser on mutating APIs",
+  },
+  {
+    actor: "company_admin_owner",
+    resource: "billing",
+    action: "manage",
+    condition: "COMPANY subject + ACTIVE membership role OWNER|ADMIN; plan entitlement is not sufficient",
+    enforcedBy: "assertCanMutateBilling + canMutateCompanyBilling + checkout APIs + PlanManager",
+  },
+  {
+    actor: "company_member",
+    resource: "billing",
+    action: "manage",
+    condition: "DENY company checkout/credits; MEMBER/MANAGER/VIEWER cannot mutate company billing",
+    enforcedBy: "assertCanMutateBilling + PlanManager canMutateBilling",
+  },
+  {
+    actor: "company_member",
+    resource: "offer",
+    action: "submit",
+    condition: "ALLOW company offer when company plan entitles submit_offer; MEMBER may submit; owner=company actor=member",
+    enforcedBy: "createOffer + assertCanSubmitOffer (no MEMBER role block)",
   },
 ];

@@ -12,9 +12,75 @@ const PRODUCT_HINTS: Array<{ keys: RegExp; productType: string; taxonomyQuery: s
     taxonomyQuery: "televizyon",
   },
   {
+    keys: /\b(dizüstü|dizustu|laptop|notebook)\b/i,
+    productType: "dizüstü bilgisayar",
+    taxonomyQuery: "dizüstü bilgisayar",
+  },
+  {
+    keys: /\b(masaüstü|masaustu)\s*(bilgisayar|pc)?\b|\bdesktop\b/i,
+    productType: "masaüstü bilgisayar",
+    taxonomyQuery: "masaüstü bilgisayar",
+  },
+  {
+    keys: /\b(cep\s*telefonu|akıllı\s*telefon|akilli\s*telefon|smartphone|iphone)\b/i,
+    productType: "cep telefonu",
+    taxonomyQuery: "cep telefonu",
+  },
+  {
+    keys: /\b(tablet|ipad)\b/i,
+    productType: "tablet",
+    taxonomyQuery: "tablet",
+  },
+  {
+    // Avoid \\b — TR letters like ş break ASCII word boundaries
+    keys: /şaraplık/i,
+    productType: "şaraplık",
+    taxonomyQuery: "şaraplık",
+  },
+  {
+    keys: /koltuk\s*takımı|köşe\s*koltuk/i,
+    productType: "koltuk takımı",
+    taxonomyQuery: "koltuk takımı",
+  },
+  {
     keys: /\b(süpürge|supurge|vacuum)\b/i,
     productType: "supurge",
-    taxonomyQuery: "süpürge",
+    taxonomyQuery: "Elektrikli Süpürge",
+  },
+  {
+    keys: /buzdolabı|buzdolabi/i,
+    productType: "Buzdolabı",
+    taxonomyQuery: "Buzdolabı",
+  },
+  {
+    keys: /çamaşır\s*makinesi|camasir\s*makinesi/i,
+    productType: "Çamaşır Makinesi",
+    taxonomyQuery: "Çamaşır Makinesi",
+  },
+  {
+    keys: /bulaşık\s*makinesi|bulasik\s*makinesi/i,
+    productType: "Bulaşık Makinesi",
+    taxonomyQuery: "Bulaşık Makinesi",
+  },
+  {
+    keys: /mikrodalga/i,
+    productType: "Mikrodalga Fırın",
+    taxonomyQuery: "Mikrodalga Fırın",
+  },
+  {
+    keys: /şarap\s*dolabı|sarap\s*dolabi/i,
+    productType: "Şarap Dolabı",
+    taxonomyQuery: "Şarap Dolabı",
+  },
+  {
+    keys: /\bklima\b/i,
+    productType: "Klima",
+    taxonomyQuery: "Klima",
+  },
+  {
+    keys: /airfryer|fritöz|fritoz/i,
+    productType: "Fritöz & Airfryer",
+    taxonomyQuery: "Fritöz & Airfryer",
   },
 ];
 
@@ -49,6 +115,30 @@ export function extractProductTypeHint(raw: string): {
       hit && !hit.ambiguous ? hit.node.id : null;
     return { productType: hint.productType, taxonomyNodeId };
   }
+
+  // Free-text product leaves: resolve taxonomy alias for tokens
+  // (browse hierarchies are not a closed allowlist)
+  const stop = /^(arıyorum|ariyorum|istiyorum|almak|satın|bir|ve|için|lütfen)$/i;
+  const tokens = raw
+    .split(/[\s,.;:!?]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 4 && !stop.test(t));
+  for (const token of tokens) {
+    const hit = resolveTaxonomyAlias(token);
+    if (
+      hit &&
+      !hit.ambiguous &&
+      (hit.node.nodeType === "PRODUCT_TYPE" ||
+        hit.node.nodeType === "SERVICE_TYPE" ||
+        hit.node.nodeType === "COMMODITY_TYPE" ||
+        hit.node.nodeType === "PART_TYPE")
+    ) {
+      return {
+        productType: hit.node.canonicalName,
+        taxonomyNodeId: hit.node.id,
+      };
+    }
+  }
   return null;
 }
 
@@ -57,17 +147,86 @@ export function cleanBrandToken(brand: string | null | undefined): string | null
   if (!brand?.trim()) return null;
   let b = brand.trim();
   b = b.replace(/\s+marka\b/gi, "").trim();
-  // Reject tokens that are clearly product types, not brands
+  // Reject tokens that are clearly product types / categories, not brands
   const fold = b.toLocaleLowerCase("tr-TR");
   if (
     fold === "televizyon" ||
     fold === "tv" ||
     fold === "süpürge" ||
-    fold === "supurge"
+    fold === "supurge" ||
+    fold === "emlak" ||
+    fold === "gayrimenkul" ||
+    fold === "konut" ||
+    fold === "ev" ||
+    fold === "mobilya" ||
+    fold === "ev mobilyası" ||
+    fold === "ev mobilyasi" ||
+    fold === "ofis mobilyaları" ||
+    fold === "ofis mobilyalari" ||
+    fold === "web sitesi" ||
+    fold === "websitesi" ||
+    fold === "yazılım" ||
+    fold === "yazilim" ||
+    fold === "donanım" ||
+    fold === "donanim" ||
+    fold === "teknoloji" ||
+    fold === "e-ticaret sitesi" ||
+    fold === "eticaret sitesi" ||
+    fold === "hosting" ||
+    fold === "landing page" ||
+    fold.includes("hizmet") ||
+    fold === "yedek" ||
+    fold === "yedek parça" ||
+    fold === "yedek parca" ||
+    fold === "parça" ||
+    fold === "parca" ||
+    fold === "otomotiv" ||
+    fold === "araç" ||
+    fold === "arac" ||
+    fold === "ürün" ||
+    fold === "urun"
   ) {
     return null;
   }
   return b || null;
+}
+
+export function isGenericCompatibilityNoun(
+  value: string | null | undefined,
+): boolean {
+  const fold = value?.trim().toLocaleLowerCase("tr-TR") ?? "";
+  return (
+    fold === "yedek" ||
+    fold === "yedek parça" ||
+    fold === "yedek parca" ||
+    fold === "parça" ||
+    fold === "parca" ||
+    fold === "otomotiv" ||
+    fold === "araç" ||
+    fold === "arac"
+  );
+}
+
+/**
+ * Remove already-expressed request clauses from a parent identity token.
+ * "çamaşır makinesi için pompa arıyorum" + part=pompa → "çamaşır makinesi"
+ */
+export function stripRequestedItemClause(
+  identity: string | null | undefined,
+  requestedItem?: string | null,
+): string | null {
+  if (!identity?.trim()) return null;
+  let s = identity.trim();
+  s = s.replace(/\s*(arıyorum|ariyorum|istiyorum)\s*[.!?]*$/i, "").trim();
+  if (requestedItem?.trim()) {
+    const item = requestedItem
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    s = s
+      .replace(new RegExp(`\\s*için\\s+${item}$`, "i"), "")
+      .trim();
+  }
+  return s || null;
 }
 
 /** Reject year-like or bare screen-size numbers as model. */
@@ -87,7 +246,13 @@ export function cleanModelToken(
     fold.includes("ariyorum") ||
     fold.includes("almak")
   ) {
-    return null;
+    const stripped = stripRequestedItemClause(m);
+    if (!stripped || stripped.toLocaleLowerCase("tr-TR") === fold) return null;
+    return stripped;
+  }
+  if (/\biçin\b/i.test(m)) {
+    const stripped = stripRequestedItemClause(m);
+    if (stripped && stripped.length < m.length) return stripped;
   }
   return m;
 }

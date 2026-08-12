@@ -203,6 +203,17 @@ function extractCondition(
       evidence: ["condition:used"],
     });
   }
+  // Salvage / used-part language ("çıkma motor") — part condition, not vehicle ask.
+  // JS \\b is ASCII-only; use Unicode letter boundaries for Turkish ç/ı.
+  if (
+    /(?:^|[^\p{L}\p{N}])(?:çıkma|cikma)(?=[^\p{L}\p{N}]|$)/iu.test(normalized)
+  ) {
+    return uv("USED", {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      evidence: ["condition:cikma-part"],
+    });
+  }
   return undefined;
 }
 
@@ -923,6 +934,21 @@ export function understandRequest(
     typeof structured?.fieldValues?.needType === "string"
       ? structured.fieldValues.needType.trim()
       : null;
+  const nonAutoCategory = [
+    "technology",
+    "appliances",
+    "home-kitchen",
+    "furniture",
+    "health",
+    "baby",
+    "printing",
+    "real-estate",
+    "services",
+  ].includes(category.value ?? "");
+  // Do not inject numeric false-positive auto models into non-auto domains
+  const automotiveModelForSubject =
+    nonAutoCategory || !autoModel ? null : autoModel;
+
   let requestSubject: SemanticRequestSubject = resolveSemanticSubject({
     normalizedInput,
     identity: {
@@ -947,7 +973,7 @@ export function understandRequest(
     listingType: attributes.listingType
       ? String(attributes.listingType.value)
       : null,
-    automotiveModel: autoModel ?? null,
+    automotiveModel: automotiveModelForSubject,
     forcedNeedType: structuredNeedType,
   });
 
@@ -958,7 +984,7 @@ export function understandRequest(
       model: identityBlock.model?.value ?? null,
       series: identityBlock.series?.value ?? null,
     },
-    { automotiveModel: autoModel },
+    { automotiveModel: automotiveModelForSubject },
   );
   if (parentTokens.brand && identityBlock.brand) {
     identityBlock.brand = {

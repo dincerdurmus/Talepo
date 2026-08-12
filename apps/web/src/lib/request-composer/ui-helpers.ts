@@ -364,7 +364,7 @@ export function createBrowseWalkState(): BrowseWalkState {
   return {
     parentId: null,
     stack: [],
-    categoryId: "appliances",
+    categoryId: "",
     subcategorySlug: null,
   };
 }

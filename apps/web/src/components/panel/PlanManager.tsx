@@ -58,6 +58,8 @@ type PlanManagerProps = {
   companies?: CompanyOption[];
   mockUpgradeEnabled?: boolean;
   billing?: BillingStatusProps;
+  /** Company billing mutations: OWNER/ADMIN only. Personal always true. */
+  canMutateBilling?: boolean;
 };
 
 export function PlanManager({
@@ -65,6 +67,7 @@ export function PlanManager({
   companies = [],
   mockUpgradeEnabled = false,
   billing,
+  canMutateBilling = true,
 }: PlanManagerProps) {
   const router = useRouter();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
@@ -73,10 +76,11 @@ export function PlanManager({
   const billingPending =
     Boolean(billing?.redirectPending) || Boolean(billing?.pendingCheckout);
   const checkoutAvailable =
-    Boolean(billing?.mockBillingEnabled) ||
-    billing?.providerStatus === "MOCK_DEV" ||
-    billing?.providerStatus === "IYZICO_READY" ||
-    billing?.providerStatus === "IYZICO_CONFIGURED";
+    canMutateBilling &&
+    (Boolean(billing?.mockBillingEnabled) ||
+      billing?.providerStatus === "MOCK_DEV" ||
+      billing?.providerStatus === "IYZICO_READY" ||
+      billing?.providerStatus === "IYZICO_CONFIGURED");
 
   const visualKey = entitlements.effectivePlanTier;
   const currentVisual = PLAN_VISUALS[visualKey];
@@ -91,6 +95,7 @@ export function PlanManager({
   const currentRank = planTierRank(entitlements.effectivePlanTier);
 
   function canSelectPlan(planId: PlanTierId): boolean {
+    if (!canMutateBilling) return false;
     if (planId === entitlements.effectivePlanTier) return false;
     if (planId === "STANDARD") return mockUpgradeEnabled;
     if (checkoutAvailable && planTierRank(planId) > currentRank) return true;
@@ -135,6 +140,10 @@ export function PlanManager({
   }
 
   async function startCheckout(planId: PlanTierId) {
+    if (!canMutateBilling) {
+      setError("Plan/ödeme işlemleri için sahip veya yönetici yetkisi gerekir.");
+      return;
+    }
     setLoadingKey(planId);
     setMessage(null);
     setError(null);
@@ -176,6 +185,10 @@ export function PlanManager({
   }
 
   async function startCreditCheckout(packId: string) {
+    if (!canMutateBilling) {
+      setError("Plan/ödeme işlemleri için sahip veya yönetici yetkisi gerekir.");
+      return;
+    }
     setLoadingKey(packId);
     setMessage(null);
     setError(null);
@@ -265,6 +278,13 @@ export function PlanManager({
       {entitlements.subject.type === "company" && (
         <p className="rounded-[18px] border border-teal-900/10 bg-[#f0fdfa] px-4 py-3 text-sm leading-6 text-teal-900/70">
           {TEAM_PLAN_SCOPE_NOTE}
+        </p>
+      )}
+
+      {entitlements.subject.type === "company" && !canMutateBilling && (
+        <p className="rounded-[18px] border border-teal-900/10 bg-white px-4 py-3 text-sm leading-6 text-teal-950/70">
+          Firma planı ve ödeme işlemlerini yalnızca sahip veya yönetici
+          başlatabilir. Mevcut plan haklarınızı görebilirsiniz.
         </p>
       )}
 
@@ -640,11 +660,13 @@ export function PlanManager({
             <button
               key={packKey}
               type="button"
-              disabled={!checkoutAvailable || loadingKey === packKey}
+              disabled={!canMutateBilling || !checkoutAvailable || loadingKey === packKey}
               title={
-                checkoutAvailable
-                  ? "Ödeme oturumu başlat"
-                  : "Ödeme sağlayıcısı gerekli"
+                !canMutateBilling
+                  ? "Plan/ödeme için sahip veya yönetici yetkisi gerekir"
+                  : checkoutAvailable
+                    ? "Ödeme oturumu başlat"
+                    : "Ödeme sağlayıcısı gerekli"
               }
               onClick={() => {
                 if (checkoutAvailable) void startCreditCheckout(packKey);

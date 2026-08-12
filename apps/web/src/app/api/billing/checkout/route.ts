@@ -48,6 +48,7 @@ export async function POST(request: Request) {
 
     const origin = new URL(request.url).origin;
     const subject = await resolveBillingSubjectForUser(user.id);
+    // Company billing: OWNER/ADMIN only (enforced again inside createPlanCheckout).
     const session = await createPlanCheckout({
       actorUserId: user.id,
       subject,

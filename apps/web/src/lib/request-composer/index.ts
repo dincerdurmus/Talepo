@@ -31,6 +31,8 @@ export {
   extractProductTypeHint,
   cleanBrandToken,
   cleanModelToken,
+  isGenericCompatibilityNoun,
+  stripRequestedItemClause,
 } from "./attribute-hints";
 
 export {

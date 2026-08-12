@@ -1,4 +1,5 @@
 import { PlanManager } from "@/components/panel/PlanManager";
+import { canMutateCompanyBilling } from "@/lib/billing/billing-authority";
 import { isBillingMockAllowed } from "@/lib/billing/provider";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
@@ -8,6 +9,7 @@ import { requireUser } from "@/server/auth/require-user";
 import { getBillingSnapshot } from "@/server/billing/get-billing-snapshot";
 import { getBillingProviderStatus } from "@/server/billing/get-provider";
 import { resolveBillingSubjectForUser } from "@/server/billing/resolve-billing-subject";
+import { assertCompanyMembership } from "@/lib/panel/company-workspace";
 
 export default async function PlanPage({
   searchParams,
@@ -41,6 +43,14 @@ export default async function PlanPage({
   }));
 
   const subject = await resolveBillingSubjectForUser(user.id);
+  const companyRole =
+    entitlements.subject.type === "company"
+      ? (await assertCompanyMembership(user.id, entitlements.subject.id))?.role ??
+        null
+      : null;
+  const canMutateBilling =
+    entitlements.subject.type === "user" ||
+    canMutateCompanyBilling(companyRole);
   let billingSnapshot = null;
   try {
     billingSnapshot = await getBillingSnapshot(subject);
@@ -68,6 +78,7 @@ export default async function PlanPage({
         entitlements={toEntitlementDTO(entitlements)}
         companies={companies}
         mockUpgradeEnabled={process.env.ALLOW_MOCK_UPGRADE === "true"}
+        canMutateBilling={canMutateBilling}
         billing={{
           subscriptionStatus: billingSnapshot?.subscriptionStatus,
           pendingCheckout: billingSnapshot?.pendingCheckout,

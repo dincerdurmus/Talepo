@@ -288,9 +288,7 @@ function CompletenessBar({ completeness }: { completeness: OfferCompleteness }) 
   return (
     <div className="min-w-[120px]">
       <div className="flex items-center justify-between gap-2 text-[11px]">
-        <span className="font-semibold text-teal-950/55">
-          Doluluk · {completeness.label}
-        </span>
+        <span className="font-semibold text-teal-950/55">Teklif detayı</span>
         <span className="tabular-nums text-black/40">{completeness.score}%</span>
       </div>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-teal-900/8">
@@ -299,14 +297,6 @@ function CompletenessBar({ completeness }: { completeness: OfferCompleteness }) 
           style={{ width: `${completeness.score}%` }}
         />
       </div>
-      {completeness.missing.length > 0 ? (
-        <p className="mt-1 text-[10px] text-black/35">
-          Eksik: {completeness.missing.slice(0, 3).join(", ")}
-          {completeness.missing.length > 3 ? "…" : ""}
-        </p>
-      ) : (
-        <p className="mt-1 text-[10px] text-emerald-700/70">Tüm temel alanlar dolu</p>
-      )}
     </div>
   );
 }

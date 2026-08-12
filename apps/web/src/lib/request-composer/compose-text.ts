@@ -5,6 +5,10 @@
 
 import { resolveBrowseSemanticRole } from "./browse-semantic-role";
 import type { CanonicalRequestState } from "./types";
+import {
+  isGenericCompatibilityNoun,
+  stripRequestedItemClause,
+} from "./attribute-hints";
 
 function fieldValue(state: CanonicalRequestState, key: string): string | null {
   const f = state.fields[key];
@@ -146,47 +150,162 @@ function composeVacuum(state: CanonicalRequestState): string {
   return bits.join(" ").replace(/\s+/g, " ").trim() + ".";
 }
 
+/** Role-aware identity phrase: brand + model + generation without token echo. */
+function planIdentityPhrase(
+  brand: string | null,
+  model: string | null,
+  generation: string | null,
+): string[] {
+  const bits: string[] = [];
+  const push = (raw: string) => {
+    const t = raw.trim();
+    if (!t) return;
+    const lower = t.toLocaleLowerCase("tr-TR");
+    const existing = bits.map((b) => b.toLocaleLowerCase("tr-TR"));
+    if (existing.some((e) => e === lower)) return;
+    // Drop token fully covered by a longer existing bit (Golf ⊂ Golf VII)
+    if (existing.some((e) => e.includes(lower) && e !== lower)) return;
+    // Replace shorter bit when new token subsumes it
+    for (let i = bits.length - 1; i >= 0; i--) {
+      const e = existing[i]!;
+      if (lower.includes(e) && lower !== e) {
+        bits.splice(i, 1);
+      }
+    }
+    bits.push(t);
+  };
+
+  if (brand) push(brand);
+  if (model && !isGenericCompatibilityNoun(model)) push(model);
+  if (generation) push(generation);
+  return bits;
+}
+
+function targetAlreadyExpressesItem(target: string, item: string): boolean {
+  const t = target.toLocaleLowerCase("tr-TR");
+  const i = item.toLocaleLowerCase("tr-TR").trim();
+  if (!i) return false;
+  if (t === i) return true;
+  if (t.includes(`için ${i}`)) return true;
+  const itemTokens = i.split(/\s+/).filter((tok) => tok.length > 2);
+  if (itemTokens.length === 0) return t.includes(i);
+  return itemTokens.every((tok) => t.includes(tok));
+}
+
+/**
+ * Plan compatibility-part sentence from semantic roles, not string surgery
+ * on a finished sentence.
+ */
+function composeCompatibilityPartSentence(input: {
+  brand: string | null;
+  model: string | null;
+  generation: string | null;
+  parentProduct?: string | null;
+  part: string | null;
+  position?: string | null;
+  fallbackNoun: string;
+}): string {
+  const requestedItem = planPartPhrase(
+    input.part?.toLocaleLowerCase("tr-TR") ?? null,
+    input.position ?? null,
+    input.fallbackNoun,
+  );
+  const model = stripRequestedItemClause(input.model, requestedItem);
+  const parentProduct = stripRequestedItemClause(
+    input.parentProduct,
+    requestedItem,
+  );
+  const brand = isGenericCompatibilityNoun(input.brand)
+    ? null
+    : input.brand;
+
+  let modelForPlan = model;
+  if (parentProduct) {
+    if (!modelForPlan) {
+      modelForPlan = parentProduct;
+    } else {
+      const mf = modelForPlan.toLocaleLowerCase("tr-TR");
+      const pf = parentProduct.toLocaleLowerCase("tr-TR");
+      if (mf !== pf && !mf.includes(pf) && !pf.includes(mf)) {
+        modelForPlan = `${parentProduct} ${modelForPlan}`;
+      }
+    }
+  }
+
+  const targetBits = planIdentityPhrase(
+    brand,
+    modelForPlan,
+    input.generation,
+  ).filter((bit) => !isGenericCompatibilityNoun(bit));
+
+  const itemIsGeneric = isGenericCompatibilityNoun(requestedItem);
+  if (targetBits.length === 0) {
+    return `${requestedItem} arıyorum.`.replace(/\s+/g, " ").trim();
+  }
+  const target = targetBits.join(" ");
+  if (itemIsGeneric && isGenericCompatibilityNoun(target)) {
+    return `${requestedItem} arıyorum.`.replace(/\s+/g, " ").trim();
+  }
+  if (targetAlreadyExpressesItem(target, requestedItem)) {
+    if (/(arıyorum|ariyorum)\s*[.!?]*$/i.test(target)) {
+      return `${target.replace(/\s+/g, " ").trim().replace(/[.!?]+$/, "")}.`;
+    }
+    return `${target} arıyorum.`.replace(/\s+/g, " ").trim();
+  }
+  return `${target} için ${requestedItem} arıyorum.`
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const POSITION_ORDER = ["sol", "sağ", "ön", "arka", "üst", "alt", "iç", "dış"];
+
+/** Merge position field + part noun so "ön" is not repeated. */
+function planPartPhrase(
+  part: string | null,
+  pos: string | null,
+  fallbackNoun: string,
+): string {
+  const noun = (part ?? fallbackNoun).trim();
+  const nounLower = noun.toLocaleLowerCase("tr-TR");
+  const posTokens = (pos ?? "")
+    .toLocaleLowerCase("tr-TR")
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => !nounLower.split(/\s+/).includes(t));
+
+  // Also strip position tokens already embedded in the noun from a leading re-prefix
+  const leadingPos = new Set(POSITION_ORDER);
+  const nounTokens = nounLower.split(/\s+/).filter(Boolean);
+  const strippedNounTokens = [...nounTokens];
+  while (strippedNounTokens.length && leadingPos.has(strippedNounTokens[0]!)) {
+    // keep first occurrence inside noun; don't also prefix
+    break;
+  }
+
+  const orderedPos = [...new Set(posTokens)].sort(
+    (a, b) => POSITION_ORDER.indexOf(a) - POSITION_ORDER.indexOf(b),
+  );
+  return [...orderedPos, noun].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
+}
+
 function composeAutoPart(state: CanonicalRequestState): string {
-  const brand = fieldValue(state, "brand");
-  const model = fieldValue(state, "model");
-  const generation = fieldValue(state, "generation");
-  const part = fieldValue(state, "part");
-  const pos = fieldValue(state, "partPosition");
   const role = resolveBrowseSemanticRole({
     categoryId: state.categoryId,
     subcategorySlug: state.subcategorySlug,
   });
-  const subjectNoun =
-    part?.toLocaleLowerCase("tr-TR") ??
-    (automotiveNeedType(state) === "tire"
+  const fallbackNoun =
+    automotiveNeedType(state) === "tire"
       ? "lastik"
-      : role.subjectNounTr ?? "yedek parça");
-
-  const targetBits: string[] = [];
-  if (brand && brand.toLocaleLowerCase("tr-TR") !== "golf") {
-    targetBits.push(brand);
-  }
-  if (model) targetBits.push(model);
-  else if (brand && brand.toLocaleLowerCase("tr-TR") === "golf") {
-    targetBits.push("Golf");
-  }
-  if (generation) targetBits.push(generation);
-
-  const partBits: string[] = [];
-  if (pos) partBits.push(pos.toLocaleLowerCase("tr-TR"));
-  partBits.push(subjectNoun);
-
-  const exclLight = excludedPhrase(state, "lightingType");
-  if (exclLight) {
-    partBits.push(`${exclLight.toLocaleLowerCase("tr-TR")} olmasın`);
-  }
-
-  if (targetBits.length > 0) {
-    return `${targetBits.join(" ")} için ${partBits.join(" ")} arıyorum.`
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-  return `${partBits.join(" ")} arıyorum.`.replace(/\s+/g, " ").trim();
+      : role.subjectNounTr ?? "yedek parça";
+  return composeCompatibilityPartSentence({
+    brand: fieldValue(state, "brand"),
+    model: fieldValue(state, "model"),
+    generation: fieldValue(state, "generation"),
+    part: fieldValue(state, "part"),
+    position: fieldValue(state, "partPosition"),
+    fallbackNoun,
+  });
 }
 
 function composeAutoVehicle(state: CanonicalRequestState): string {
@@ -198,9 +317,7 @@ function composeAutoVehicle(state: CanonicalRequestState): string {
   const condition = fieldValue(state, "condition");
 
   if (year) bits.push(`${year} model`);
-  if (brand) bits.push(brand);
-  if (model) bits.push(model);
-  if (generation) bits.push(generation);
+  bits.push(...planIdentityPhrase(brand, model, generation));
   if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
   if (bits.length === 0) bits.push("araç");
   bits.push("arıyorum");
@@ -270,13 +387,15 @@ function composeAppliances(state: CanonicalRequestState): string {
       fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
   });
   if (role.compositionMode === "compatibility_part") {
-    const brand = fieldValue(state, "brand");
-    const model = fieldValue(state, "model");
-    const part = fieldValue(state, "part");
-    const target = [brand, model].filter(Boolean).join(" ");
-    const subject = part ?? role.subjectNounTr ?? "yedek parça";
-    if (target) return `${target} için ${subject} arıyorum.`;
-    return `${subject} arıyorum.`;
+    return composeCompatibilityPartSentence({
+      brand: fieldValue(state, "brand"),
+      model: fieldValue(state, "model"),
+      generation: fieldValue(state, "generation"),
+      parentProduct:
+        fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
+      part: fieldValue(state, "part"),
+      fallbackNoun: role.subjectNounTr ?? "yedek parça",
+    });
   }
 
   const bits: string[] = [];
@@ -351,17 +470,15 @@ export function composeNaturalRequestText(
     if (state.categoryId === "automotive" || isAutoPart(state)) {
       return composeAutoPart(state);
     }
-    const brand = fieldValue(state, "brand");
-    const model = fieldValue(state, "model");
-    const part = fieldValue(state, "part");
-    const target = [brand, model].filter(Boolean).join(" ");
-    const subject = part ?? role.subjectNounTr ?? "yedek parça";
-    if (target) {
-      return `${target} için ${subject} arıyorum.`
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-    return `${subject} arıyorum.`.replace(/\s+/g, " ").trim();
+    return composeCompatibilityPartSentence({
+      brand: fieldValue(state, "brand"),
+      model: fieldValue(state, "model"),
+      generation: fieldValue(state, "generation"),
+      parentProduct:
+        fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
+      part: fieldValue(state, "part"),
+      fallbackNoun: role.subjectNounTr ?? "yedek parça",
+    });
   }
 
   if (role.compositionMode === "service") {
@@ -465,17 +582,13 @@ export function composeTextFromBrowseStack(
   const cat = stack.find((n) => n.kind === "category");
 
   if (role.compositionMode === "compatibility_part") {
-    const target = [brand?.label, model?.label, generation?.label]
-      .filter(Boolean)
-      .join(" ");
-    const subject =
-      part?.label?.toLocaleLowerCase("tr-TR") ??
-      role.subjectNounTr ??
-      "yedek parça";
-    if (target) {
-      return `${target} için ${subject} arıyorum.`;
-    }
-    return `${subject} arıyorum.`;
+    return composeCompatibilityPartSentence({
+      brand: brand?.label ?? null,
+      model: model?.label ?? null,
+      generation: generation?.label ?? null,
+      part: part?.label?.toLocaleLowerCase("tr-TR") ?? null,
+      fallbackNoun: role.subjectNounTr ?? "yedek parça",
+    });
   }
 
   if (role.compositionMode === "service") {

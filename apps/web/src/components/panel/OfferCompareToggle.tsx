@@ -85,14 +85,9 @@ export function OfferCompareToggle({ offers }: { offers: CompareOffer[] }) {
                         />
                       </div>
                       <span className="tabular-nums text-xs font-semibold text-teal-950/70">
-                        {offer.completeness.score}% · {offer.completeness.label}
+                        {offer.completeness.score}%
                       </span>
                     </div>
-                    {offer.completeness.missing.length > 0 ? (
-                      <p className="mt-1 text-[10px] text-black/35">
-                        Eksik: {offer.completeness.missing.join(", ")}
-                      </p>
-                    ) : null}
                   </td>
                 </tr>
               ))}

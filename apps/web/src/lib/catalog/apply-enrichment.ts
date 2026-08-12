@@ -1,4 +1,5 @@
 import { uv } from "@/lib/request-understanding/provenance";
+import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 import {
   enrichAutomotiveSubject,
@@ -35,6 +36,8 @@ function mayOverwrite(
   if (!existing?.value) return true;
   const current = String(existing.value);
   if (fold(current) === fold(nextLabel)) return true;
+  // Catalog parent brand may replace a model token that was mis-slotted as brand
+  if (isKnownAutomotiveModelName(current)) return true;
   // Never replace a different EXPLICIT user token
   if (existing.provenance === "EXPLICIT") return false;
   return true;
