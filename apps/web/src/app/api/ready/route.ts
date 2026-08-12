@@ -41,6 +41,16 @@ export async function GET() {
     detail: dbOk ? "ok" : "unreachable",
   };
 
+  const isProd = process.env.NODE_ENV === "production";
+  checks.dev_only_flags = {
+    critical: isProd,
+    ok: !isProd || env.developmentOnlyEnabledInProduction.length === 0,
+    detail:
+      env.developmentOnlyEnabledInProduction.length > 0
+        ? `enabled:${env.developmentOnlyEnabledInProduction.length}`
+        : "ok",
+  };
+
   // Optional — informational only (in-memory telemetry window)
   let providerSamples: { provider: string; durationMs: number; success: boolean; errorCode?: string }[] =
     [];

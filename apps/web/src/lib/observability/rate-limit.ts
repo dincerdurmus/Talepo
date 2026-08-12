@@ -1,13 +1,15 @@
 import { DomainError, DomainErrorCode } from "./errors";
+import {
+  getRateLimitStore,
+  resetRateLimitStoreForTests,
+} from "./rate-limit-store";
 
 /**
- * Minimal in-process rate limiter for high-cost / abuse-prone endpoints.
- * Not a distributed limiter — replace with Redis/edge later if needed.
+ * Minimal rate limiter for high-cost / abuse-prone endpoints.
+ *
+ * IMPORTANT: default store is in-process memory.
+ * Multi-instance / serverless production needs a distributed RateLimitStore.
  */
-
-type Bucket = { tokens: number; updatedAt: number };
-
-const buckets = new Map<string, Bucket>();
 
 export type RateLimitOptions = {
   key: string;
@@ -24,21 +26,19 @@ export type RateLimitResult = {
 };
 
 export function checkRateLimit(options: RateLimitOptions): RateLimitResult {
-  const now = Date.now();
-  const existing = buckets.get(options.key);
-  if (!existing || now - existing.updatedAt >= options.windowMs) {
-    buckets.set(options.key, { tokens: options.limit - 1, updatedAt: now });
-    return { allowed: true, remaining: options.limit - 1, retryAfterMs: 0 };
+  const result = getRateLimitStore().consume(options);
+  if (result instanceof Promise) {
+    throw new Error(
+      "Async rate limit store requires checkRateLimitAsync — use assertRateLimitAsync",
+    );
   }
+  return result;
+}
 
-  if (existing.tokens <= 0) {
-    const retryAfterMs = options.windowMs - (now - existing.updatedAt);
-    return { allowed: false, remaining: 0, retryAfterMs };
-  }
-
-  existing.tokens -= 1;
-  buckets.set(options.key, existing);
-  return { allowed: true, remaining: existing.tokens, retryAfterMs: 0 };
+export async function checkRateLimitAsync(
+  options: RateLimitOptions,
+): Promise<RateLimitResult> {
+  return getRateLimitStore().consume(options);
 }
 
 export function assertRateLimit(options: RateLimitOptions): void {
@@ -46,7 +46,23 @@ export function assertRateLimit(options: RateLimitOptions): void {
   if (!result.allowed) {
     throw new DomainError({
       code: DomainErrorCode.RATE_LIMITED,
-      userMessage: "Çok fazla istek gönderildi. Lütfen kısa süre sonra tekrar deneyin.",
+      userMessage:
+        "Çok fazla istek gönderildi. Lütfen kısa süre sonra tekrar deneyin.",
+      status: 429,
+      diagnostic: `rate_limit key=${options.key}`,
+    });
+  }
+}
+
+export async function assertRateLimitAsync(
+  options: RateLimitOptions,
+): Promise<void> {
+  const result = await checkRateLimitAsync(options);
+  if (!result.allowed) {
+    throw new DomainError({
+      code: DomainErrorCode.RATE_LIMITED,
+      userMessage:
+        "Çok fazla istek gönderildi. Lütfen kısa süre sonra tekrar deneyin.",
       status: 429,
       diagnostic: `rate_limit key=${options.key}`,
     });
@@ -55,11 +71,15 @@ export function assertRateLimit(options: RateLimitOptions): void {
 
 /** Test helper */
 export function clearRateLimitBuckets(): void {
-  buckets.clear();
+  resetRateLimitStoreForTests();
 }
 
 export function clientKeyFromRequest(request: Request, prefix: string): string {
   const forwarded = request.headers.get("x-forwarded-for");
   const ip = forwarded?.split(",")[0]?.trim() || "unknown";
   return `${prefix}:${ip}`;
+}
+
+export function userKey(prefix: string, userId: string): string {
+  return `${prefix}:user:${userId}`;
 }

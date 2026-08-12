@@ -29,6 +29,19 @@ export function getAuthProviders(): AuthProvider[] {
         if (!email || !password) return null;
 
         try {
+          // Soft abuse guard (in-process). Multi-instance needs distributed store.
+          const { checkRateLimit } = await import(
+            "@/lib/observability/rate-limit"
+          );
+          const limited = checkRateLimit({
+            key: `auth.login:${email}`,
+            limit: 20,
+            windowMs: 60_000,
+          });
+          if (!limited.allowed) {
+            return null;
+          }
+
           const user = await prisma.user.findUnique({
             where: { email },
             select: {

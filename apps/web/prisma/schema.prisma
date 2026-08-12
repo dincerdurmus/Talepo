@@ -218,6 +218,9 @@ model User {
 
   notifications Notification[]
 
+  /// Phase 4B — critical write idempotency keys
+  idempotencyRecords IdempotencyRecord[]
+
   @@index([status])
   @@index([city, district])
   @@index([createdAt])
@@ -800,6 +803,9 @@ model Offer {
   dealOutcome       DealOutcome?
   priceObservations PriceObservation[]
 
+  /// Phase 4B — partial unique indexes (see migration):
+  /// - (requestId, companyId) where companyId IS NOT NULL AND status active
+  /// - (requestId, submittedById) where companyId IS NULL AND status active
   @@index([requestId])
   @@index([submittedById])
   @@index([companyId])
@@ -1011,4 +1017,20 @@ model PriceObservation {
   @@index([currency])
   @@index([categoryId, productFingerprint, observedAt])
   @@index([sourceType, categoryId, observedAt])
+}
+
+/// Phase 4B — idempotency for critical marketplace writes (header Idempotency-Key).
+model IdempotencyRecord {
+  id         String   @id @default(cuid())
+  userId     String
+  scope      String
+  key        String
+  resourceId String
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scope, key])
+  @@index([createdAt])
+  @@index([userId, scope])
 }

@@ -75,6 +75,12 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     description: "Enables mock plan upgrades — must be off in production.",
   },
   {
+    name: "ALLOW_MOCK_CREDITS",
+    classification: "DEVELOPMENT_ONLY",
+    serverOnly: true,
+    description: "Enables mock credit grants — must be off in production.",
+  },
+  {
     name: "TALEPO_PRODUCT_EVENTS_STDOUT",
     classification: "DEVELOPMENT_ONLY",
     serverOnly: true,
@@ -112,11 +118,16 @@ export function validateEnvironment(
     missingRequired.push("DATABASE_URL|DIRECT_URL");
   }
   if (isProd && !isPresent("DIRECT_URL")) {
-    // Soft: interactive tx / migrate need DIRECT_URL
     missingRequired.push("DIRECT_URL");
   }
-  if (!isPresent("NEXTAUTH_SECRET")) {
+  if (!isPresent("NEXTAUTH_SECRET") && isProd) {
     missingRequired.push("NEXTAUTH_SECRET");
+  }
+  // In non-prod, still recommend but don't hard-fail local tooling without secret
+  // Hard gate below uses production-only for NEXTAUTH when assertProduction.
+
+  if (!isPresent("NEXTAUTH_SECRET") && !isProd) {
+    // soft — listed only when hardGateNonProdSecrets requested
   }
 
   for (const spec of ENV_CATALOG) {
@@ -136,7 +147,6 @@ export function validateEnvironment(
     }
   }
 
-  // Known secret names must never be public-prefixed if someone adds aliases.
   for (const key of Object.keys(process.env)) {
     if (
       key.startsWith("NEXT_PUBLIC_") &&
@@ -146,13 +156,74 @@ export function validateEnvironment(
     }
   }
 
+  const ok =
+    missingRequired.length === 0 &&
+    clientLeakRisks.length === 0 &&
+    (!isProd || developmentOnlyEnabledInProduction.length === 0);
+
   return {
-    ok: missingRequired.length === 0 && clientLeakRisks.length === 0,
+    ok,
     missingRequired: [...new Set(missingRequired)],
-    developmentOnlyEnabledInProduction,
+    developmentOnlyEnabledInProduction: [
+      ...new Set(developmentOnlyEnabledInProduction),
+    ],
     clientLeakRisks: [...new Set(clientLeakRisks)],
     presentOptional,
   };
+}
+
+/**
+ * Production hard gate — call from instrumentation / deploy:check.
+ * Never logs secret values.
+ */
+export function assertProductionEnvironmentHardGate(options?: {
+  nodeEnv?: string;
+  /** When true, exit process on failure (server boot). */
+  exitProcess?: boolean;
+}): EnvValidationResult {
+  const nodeEnv = options?.nodeEnv ?? process.env.NODE_ENV ?? "development";
+  const result = validateEnvironment({ nodeEnv });
+
+  if (nodeEnv !== "production") {
+    return result;
+  }
+
+  // Always require NEXTAUTH_SECRET in production hard gate
+  if (!isPresent("NEXTAUTH_SECRET")) {
+    if (!result.missingRequired.includes("NEXTAUTH_SECRET")) {
+      result.missingRequired.push("NEXTAUTH_SECRET");
+    }
+    result.ok = false;
+  }
+
+  if (
+    result.missingRequired.length > 0 ||
+    result.developmentOnlyEnabledInProduction.length > 0 ||
+    result.clientLeakRisks.length > 0
+  ) {
+    result.ok = false;
+    const lines = [
+      "[talepo:env] PRODUCTION ENVIRONMENT HARD GATE FAILED",
+      result.missingRequired.length
+        ? `missing_required=${result.missingRequired.join(",")}`
+        : null,
+      result.developmentOnlyEnabledInProduction.length
+        ? `dev_only_enabled=${result.developmentOnlyEnabledInProduction.join(",")}`
+        : null,
+      result.clientLeakRisks.length
+        ? `client_leak_risks=${result.clientLeakRisks.join(",")}`
+        : null,
+    ].filter(Boolean);
+
+    console.error(lines.join(" | "));
+
+    if (options?.exitProcess) {
+      process.exit(1);
+    }
+    throw new Error("Production environment hard gate failed");
+  }
+
+  return result;
 }
 
 /** Safe summary for readiness — never includes values. */

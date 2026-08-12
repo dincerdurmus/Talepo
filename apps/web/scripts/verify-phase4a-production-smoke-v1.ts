@@ -196,6 +196,25 @@ async function main() {
       ),
   );
 
+  // Phase 4B soft-launch gates (smoke expansion)
+  check(
+    "4B mock credits gated in membership",
+    read("src/app/api/membership/route.ts").includes("isMockCreditPurchaseAllowed") &&
+      read("src/lib/membership/billing-gates.ts").includes("isProductionRuntime"),
+  );
+  check(
+    "4B offer accept claim transition",
+    read("src/server/offer/offer-service.ts").includes("claimedRequest"),
+  );
+  check(
+    "4B idempotency record model",
+    read("prisma/schema.prisma").includes("model IdempotencyRecord"),
+  );
+  check(
+    "4B deploy pipeline documented",
+    existsSync(join(root, "docs/production/deploy-pipeline.md")),
+  );
+
   console.log(`\nPhase 4A production smoke: ${pass} passed, ${fail} failed`);
   if (fail > 0) {
     console.error(errors.join("\n"));

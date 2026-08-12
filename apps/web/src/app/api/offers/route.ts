@@ -6,7 +6,22 @@ import {
   correlationResponseHeaders,
   runWithCorrelationAsync,
 } from "@/lib/observability/correlation";
-import { mapUnknownToSafeError, safeErrorResponse } from "@/lib/observability/errors";
+import {
+  mapUnknownToSafeError,
+  safeErrorResponse,
+} from "@/lib/observability/errors";
+import {
+  findIdempotentResource,
+  IdempotencyScope,
+  readIdempotencyKeyFromRequest,
+  saveIdempotentResource,
+} from "@/lib/observability/idempotency";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+  userKey,
+} from "@/lib/observability/rate-limit";
+import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   createOffer,
@@ -19,8 +34,55 @@ export async function POST(request: Request) {
 
   return runWithCorrelationAsync(store, async () => {
     try {
+      assertRateLimit({
+        key: clientKeyFromRequest(request, "offer.create"),
+        limit: 30,
+        windowMs: 60_000,
+      });
+
       const user = await requireUser();
       store.userId = user.id;
+
+      assertRateLimit({
+        key: userKey("offer.create", user.id),
+        limit: 15,
+        windowMs: 60_000,
+      });
+
+      const idempotencyKey = readIdempotencyKeyFromRequest(request);
+      if (idempotencyKey) {
+        const existing = await findIdempotentResource({
+          userId: user.id,
+          scope: IdempotencyScope.OFFER_SUBMIT,
+          key: idempotencyKey,
+        });
+        if (existing) {
+          const offer = await prisma.offer.findFirst({
+            where: { id: existing.resourceId, submittedById: user.id },
+            select: {
+              id: true,
+              requestId: true,
+              amount: true,
+              currency: true,
+            },
+          });
+          if (offer) {
+            return NextResponse.json(
+              {
+                ok: true,
+                offer,
+                replayed: true,
+                redirectTo: `/panel/teklifler?gonderildi=1`,
+              },
+              {
+                status: 200,
+                headers: correlationResponseHeaders(store),
+              },
+            );
+          }
+        }
+      }
+
       const body = (await request.json()) as Record<string, unknown>;
 
       const offer = await createOffer(user.id, {
@@ -30,6 +92,15 @@ export async function POST(request: Request) {
         deliveryDays: body.deliveryDays ? Number(body.deliveryDays) : undefined,
         title: body.title ? String(body.title) : undefined,
       });
+
+      if (idempotencyKey) {
+        await saveIdempotentResource({
+          userId: user.id,
+          scope: IdempotencyScope.OFFER_SUBMIT,
+          key: idempotencyKey,
+          resourceId: offer.id,
+        });
+      }
 
       revalidatePath("/panel/taleplerim");
       revalidatePath(`/panel/taleplerim/${offer.requestId}`);

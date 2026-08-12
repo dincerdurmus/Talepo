@@ -7,12 +7,16 @@ import { assertEntitlement } from "@/lib/membership/assert-entitlement";
 import { FEATURE_BOOST_OPTIONS, getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError } from "@/lib/membership/types";
+import {
+  findIdempotentResource,
+  IdempotencyScope,
+  normalizeIdempotencyKey,
+  saveIdempotentResource,
+} from "@/lib/observability/idempotency";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { prisma } from "@/lib/prisma";
 import { createTextOnlyState } from "@/lib/request-composer";
-
-const log = createSubsystemLogger("request");
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -24,6 +28,8 @@ import {
   parseBudgetRange,
 } from "./mapper";
 import type { CreateRequestInput } from "./request-schema";
+
+const log = createSubsystemLogger("request");
 
 function resolveDiscoveryProjection(
   input: CreateRequestInput,
@@ -53,6 +59,42 @@ function resolveDiscoveryProjection(
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
   const started = Date.now();
+  const idempotencyKey = normalizeIdempotencyKey(input.idempotencyKey);
+
+  if (idempotencyKey) {
+    const existing = await findIdempotentResource({
+      userId,
+      scope: IdempotencyScope.REQUEST_PUBLISH,
+      key: idempotencyKey,
+    });
+    if (existing) {
+      const prior = await prisma.request.findFirst({
+        where: {
+          id: existing.resourceId,
+          createdById: userId,
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          publishedAt: true,
+        },
+      });
+      if (prior) {
+        log.info("request.publish.idempotent_replay", {
+          outcome: "success",
+          requestId: prior.id,
+          userId,
+        });
+        return {
+          ...prior,
+          distribution: { matchedCompanyCount: 0, notifiedUserCount: 0 },
+        };
+      }
+    }
+  }
+
   log.info("request.publish.started", {
     outcome: "success",
     context: { categorySlug: input.category.slug },
@@ -225,6 +267,15 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
 
     return request;
   }).then(async (request) => {
+    if (idempotencyKey) {
+      await saveIdempotentResource({
+        userId,
+        scope: IdempotencyScope.REQUEST_PUBLISH,
+        key: idempotencyKey,
+        resourceId: request.id,
+      });
+    }
+
     trackProductEvent({
       eventName: ProductEventName.REQUEST_PUBLISHED,
       actorType: "buyer",

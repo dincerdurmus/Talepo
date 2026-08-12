@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 
+import { safeErrorResponse } from "@/lib/observability/errors";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+  userKey,
+} from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   MessageValidationError,
@@ -12,7 +18,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    assertRateLimit({
+      key: clientKeyFromRequest(request, "message.send"),
+      limit: 60,
+      windowMs: 60_000,
+    });
+
     const user = await requireUser();
+    assertRateLimit({
+      key: userKey("message.send", user.id),
+      limit: 40,
+      windowMs: 60_000,
+    });
+
     const { id } = await params;
     const contentType = request.headers.get("content-type") || "";
 
@@ -57,18 +75,19 @@ export async function POST(
     const message = await sendMessage(user.id, id, String(body.content ?? ""));
     return NextResponse.json({ ok: true, message }, { status: 201 });
   } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+    if (
+      error instanceof AuthenticationError ||
+      error instanceof MessageValidationError
+    ) {
+      return safeErrorResponse(error, {
+        service: "messaging",
+        event: "message.send.failed",
+      });
     }
 
-    if (error instanceof MessageValidationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
-    }
-
-    console.error("Mesaj gönderilemedi:", error);
-    return NextResponse.json(
-      { ok: false, message: "Mesaj gönderilirken bir hata oluştu." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "messaging",
+      event: "message.send.failed",
+    });
   }
 }

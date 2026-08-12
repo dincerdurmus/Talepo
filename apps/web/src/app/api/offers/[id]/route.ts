@@ -1,6 +1,18 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import { safeErrorResponse } from "@/lib/observability/errors";
+import {
+  findIdempotentResource,
+  IdempotencyScope,
+  readIdempotencyKeyFromRequest,
+  saveIdempotentResource,
+} from "@/lib/observability/idempotency";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+  userKey,
+} from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   acceptOffer,
@@ -15,7 +27,19 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    assertRateLimit({
+      key: clientKeyFromRequest(request, "offer.action"),
+      limit: 40,
+      windowMs: 60_000,
+    });
+
     const user = await requireUser();
+    assertRateLimit({
+      key: userKey("offer.action", user.id),
+      limit: 20,
+      windowMs: 60_000,
+    });
+
     const { id } = await params;
     const body = (await request.json()) as {
       action?: string;
@@ -23,7 +47,34 @@ export async function POST(
     };
 
     if (body.action === "accept") {
+      const idempotencyKey = readIdempotencyKeyFromRequest(request);
+      if (idempotencyKey) {
+        const existing = await findIdempotentResource({
+          userId: user.id,
+          scope: IdempotencyScope.OFFER_ACCEPT,
+          key: idempotencyKey,
+        });
+        if (existing) {
+          return NextResponse.json({
+            ok: true,
+            conversationId: existing.resourceId,
+            replayed: true,
+            redirectTo: `/panel/mesajlar/${existing.resourceId}`,
+          });
+        }
+      }
+
       const result = await acceptOffer(user.id, id);
+
+      if (idempotencyKey) {
+        await saveIdempotentResource({
+          userId: user.id,
+          scope: IdempotencyScope.OFFER_ACCEPT,
+          key: idempotencyKey,
+          resourceId: result.conversationId,
+        });
+      }
+
       revalidatePath("/panel/gelen-teklifler");
       revalidatePath("/panel/mesajlar");
       revalidatePath("/panel/teklifler");
@@ -61,22 +112,20 @@ export async function POST(
       { status: 400 },
     );
   } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+    if (
+      error instanceof AuthenticationError ||
+      error instanceof OfferValidationError
+    ) {
+      return safeErrorResponse(error, {
+        service: "offer",
+        event: "offer.action.failed",
+      });
     }
 
-    if (error instanceof OfferValidationError) {
-      return NextResponse.json(
-        { ok: false, message: error.message, issues: error.issues },
-        { status: 400 },
-      );
-    }
-
-    console.error("Teklif işlemi başarısız:", error);
-    return NextResponse.json(
-      { ok: false, message: "Teklif işlenirken bir hata oluştu." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "offer",
+      event: "offer.action.failed",
+    });
   }
 }
 
@@ -113,21 +162,19 @@ export async function PATCH(
       redirectTo: `/panel/teklifler?guncellendi=1`,
     });
   } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+    if (
+      error instanceof AuthenticationError ||
+      error instanceof OfferValidationError
+    ) {
+      return safeErrorResponse(error, {
+        service: "offer",
+        event: "offer.update.failed",
+      });
     }
 
-    if (error instanceof OfferValidationError) {
-      return NextResponse.json(
-        { ok: false, message: error.message, issues: error.issues },
-        { status: 400 },
-      );
-    }
-
-    console.error("[PATCH /api/offers/:id] Teklif güncellenemedi:", error);
-    return NextResponse.json(
-      { ok: false, message: "Teklif güncellenirken bir hata oluştu." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "offer",
+      event: "offer.update.failed",
+    });
   }
 }

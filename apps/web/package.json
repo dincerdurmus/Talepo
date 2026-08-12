@@ -6,8 +6,16 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
+    "start:prod": "npx --yes tsx scripts/check-production-env.ts --production && next start",
     "lint": "eslint",
+    "db:generate": "prisma generate",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:status": "prisma migrate status",
+    "env:check": "npx --yes tsx scripts/check-production-env.ts",
+    "env:check:prod": "npx --yes tsx scripts/check-production-env.ts --production",
     "verify:core": "npx --yes tsx scripts/verify-core.ts",
+    "verify:phase4b": "npx --yes tsx scripts/verify-phase4b-soft-launch-v1.ts",
+    "deploy:check": "npx --yes tsx scripts/check-production-env.ts --production && prisma generate && prisma migrate status",
     "postinstall": "prisma generate"
   },
   "dependencies": {

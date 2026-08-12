@@ -48,6 +48,8 @@ export type CreateRequestInput = {
    * Optional; server may rebuild from text when missing.
    */
   discoveryProjection?: unknown;
+  /** Phase 4B — optional client Idempotency-Key (also accepted via header). */
+  idempotencyKey?: string | null;
 };
 
 export class RequestValidationError extends Error {
@@ -193,5 +195,6 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
     coverImageUrl,
     fields,
     discoveryProjection: parseDiscoveryProjection(raw.discoveryProjection) ?? undefined,
+    idempotencyKey: asCleanString(raw.idempotencyKey, 128) || undefined,
   };
 }

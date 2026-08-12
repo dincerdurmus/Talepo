@@ -7,6 +7,7 @@ import { containsBlockedContactInfo, sanitizeCommercialText } from "@/lib/member
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError, type EntitlementContext } from "@/lib/membership/types";
+import { isPrismaUniqueViolation } from "@/lib/observability/idempotency";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { prisma } from "@/lib/prisma";
@@ -260,9 +261,26 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
   const sanitizedDescription = sanitizeCommercialText(input.description.trim());
   const now = new Date();
 
-  const offer = await prisma.$transaction(async (tx) => {
+  let offer;
+  try {
+    offer = await prisma.$transaction(async (tx) => {
     // Serialize concurrent offer submissions for the same quota subject.
     await lockEntitlementSubject(tx, entitlements);
+
+    // Re-check duplicate under lock (app-level); DB partial unique is the hard gate.
+    const raced = await tx.offer.findFirst({
+      where: {
+        requestId: input.requestId,
+        status: { in: [...BLOCKING_OFFER_STATUSES] },
+        ...(companyId
+          ? { companyId }
+          : { submittedById: userId, companyId: null }),
+      },
+      select: { id: true },
+    });
+    if (raced) {
+      throw new OfferValidationError(["Bu talebe zaten teklif verdiniz."]);
+    }
 
     // Re-check quota under lock (race-safe).
     if (!entitlements.quota.isUnlimited && entitlements.quota.limit !== null) {
@@ -344,6 +362,12 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
 
     return created;
   });
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) {
+      throw new OfferValidationError(["Bu talebe zaten teklif verdiniz."]);
+    }
+    throw error;
+  }
 
   try {
     await createNotification({
@@ -509,25 +533,57 @@ async function ensureOfferConversation(
     return existing;
   }
 
-  return tx.conversation.create({
-    data: {
-      offerId: input.offerId,
-      title: input.requestTitle,
-      lastMessageAt: input.now,
-      participants: {
-        create: [
-          { userId: input.buyerUserId },
-          { userId: input.supplierUserId },
-          ...(input.companyId ? [{ companyId: input.companyId }] : []),
-        ],
+  try {
+    return await tx.conversation.create({
+      data: {
+        offerId: input.offerId,
+        title: input.requestTitle,
+        lastMessageAt: input.now,
+        participants: {
+          create: [
+            { userId: input.buyerUserId },
+            { userId: input.supplierUserId },
+            ...(input.companyId ? [{ companyId: input.companyId }] : []),
+          ],
+        },
       },
-    },
-    select: { id: true },
-  });
+      select: { id: true },
+    });
+  } catch (error) {
+    if (isPrismaUniqueViolation(error)) {
+      const again = await tx.conversation.findUnique({
+        where: { offerId: input.offerId },
+        select: { id: true },
+      });
+      if (again) return again;
+    }
+    throw error;
+  }
 }
 
 export async function acceptOffer(userId: string, offerId: string) {
   const started = Date.now();
+
+  // Idempotent replay: already accepted by this buyer → return conversation
+  const already = await prisma.offer.findFirst({
+    where: {
+      id: offerId,
+      status: "ACCEPTED",
+      request: { createdById: userId, deletedAt: null },
+    },
+    select: {
+      id: true,
+      requestId: true,
+      companyId: true,
+      amount: true,
+      currency: true,
+      conversation: { select: { id: true } },
+    },
+  });
+  if (already?.conversation?.id) {
+    return { offer: already, conversationId: already.conversation.id };
+  }
+
   const offer = await prisma.offer.findFirst({
     where: {
       id: offerId,
@@ -552,12 +608,43 @@ export async function acceptOffer(userId: string, offerId: string) {
   const now = new Date();
 
   return prisma.$transaction(async (tx) => {
-    const accepted = await tx.offer.update({
-      where: { id: offerId },
+    // Atomic claim: only one accept can transition the request into OFFER_SELECTED.
+    const claimedRequest = await tx.request.updateMany({
+      where: {
+        id: offer.requestId,
+        createdById: userId,
+        deletedAt: null,
+        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      },
+      data: { status: "OFFER_SELECTED" },
+    });
+
+    if (claimedRequest.count !== 1) {
+      throw new OfferValidationError([
+        "Bu talep için başka bir teklif zaten kabul edilmiş olabilir.",
+      ]);
+    }
+
+    const acceptedRows = await tx.offer.updateMany({
+      where: {
+        id: offerId,
+        requestId: offer.requestId,
+        status: { in: ["SUBMITTED", "VIEWED"] },
+      },
       data: {
         status: "ACCEPTED",
         acceptedAt: now,
       },
+    });
+
+    if (acceptedRows.count !== 1) {
+      throw new OfferValidationError([
+        "Teklif kabul edilemedi — eşzamanlı işlem veya geçersiz durum.",
+      ]);
+    }
+
+    const accepted = await tx.offer.findUniqueOrThrow({
+      where: { id: offerId },
     });
 
     const siblings = await tx.offer.findMany({
@@ -585,13 +672,6 @@ export async function acceptOffer(userId: string, offerId: string) {
       });
     }
 
-    await tx.request.update({
-      where: { id: offer.requestId },
-      data: {
-        status: "OFFER_SELECTED",
-      },
-    });
-
     const conversation = await ensureOfferConversation(tx, {
       offerId: offer.id,
       requestTitle: offer.request.title,
@@ -615,32 +695,44 @@ export async function acceptOffer(userId: string, offerId: string) {
       },
     });
 
-    await createNotification({
-      userId: offer.submittedById,
-      type: "OFFER_ACCEPTED",
-      title: "Teklifiniz kabul edildi",
-      message: `“${offer.request.title}” talebi için teklifiniz kabul edildi. Mesajlaşma açıldı.`,
-      actionUrl: `/panel/mesajlar/${conversation.id}`,
-      requestId: offer.requestId,
-      offerId: offer.id,
-      companyId: offer.companyId ?? undefined,
-    });
-
-    for (const sibling of siblings) {
+    return {
+      offer: accepted,
+      conversationId: conversation.id,
+      siblingNotify: siblings,
+      requestTitle: offer.request.title,
+    };
+  }).then(async (result) => {
+    try {
       await createNotification({
-        userId: sibling.submittedById,
-        type: "OFFER_REJECTED",
-        title: "Teklifiniz seçilmedi",
-        message: `“${offer.request.title}” talebi için başka bir teklif kabul edildi.`,
-        actionUrl: `/panel/teklifler`,
+        userId: offer.submittedById,
+        type: "OFFER_ACCEPTED",
+        title: "Teklifiniz kabul edildi",
+        message: `“${result.requestTitle}” talebi için teklifiniz kabul edildi. Mesajlaşma açıldı.`,
+        actionUrl: `/panel/mesajlar/${result.conversationId}`,
         requestId: offer.requestId,
-        offerId: sibling.id,
-        companyId: sibling.companyId ?? undefined,
+        offerId: offer.id,
+        companyId: offer.companyId ?? undefined,
       });
+    } catch {
+      /* non-blocking */
     }
 
-    return { offer: accepted, conversationId: conversation.id };
-  }).then(async (result) => {
+    for (const sibling of result.siblingNotify) {
+      try {
+        await createNotification({
+          userId: sibling.submittedById,
+          type: "OFFER_REJECTED",
+          title: "Teklifiniz seçilmedi",
+          message: `“${result.requestTitle}” talebi için başka bir teklif kabul edildi.`,
+          actionUrl: `/panel/teklifler`,
+          requestId: offer.requestId,
+          offerId: sibling.id,
+          companyId: sibling.companyId ?? undefined,
+        });
+      } catch {
+        /* non-blocking */
+      }
+    }
     try {
       await createPendingDealOutcome({
         requestId: offer.requestId,

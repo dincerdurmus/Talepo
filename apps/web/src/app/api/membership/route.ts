@@ -5,15 +5,23 @@ import {
   getCompanyContextOptions,
   PERSONAL_CONTEXT_VALUE,
 } from "@/lib/membership/company-context";
-import { OFFER_CREDIT_PACKS, PLAN_DEFINITIONS, planTierRank, type PlanTierId } from "@/lib/membership/plans";
+import {
+  isMockCreditPurchaseAllowed,
+  isMockUpgradeAllowed,
+  PAYMENT_REQUIRED_MESSAGE,
+} from "@/lib/membership/billing-gates";
+import {
+  OFFER_CREDIT_PACKS,
+  PLAN_DEFINITIONS,
+  planTierRank,
+  type PlanTierId,
+} from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
+import { DomainErrorCode } from "@/lib/observability/errors";
+import { safeErrorResponse } from "@/lib/observability/errors";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
-
-function isMockUpgradeAllowed() {
-  return process.env.ALLOW_MOCK_UPGRADE === "true";
-}
 
 export async function GET() {
   try {
@@ -75,16 +83,13 @@ export async function GET() {
       plans: Object.values(PLAN_DEFINITIONS),
       creditPacks: OFFER_CREDIT_PACKS,
       mockUpgradeEnabled: isMockUpgradeAllowed(),
+      mockCreditsEnabled: isMockCreditPurchaseAllowed(),
     });
   } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
-    }
-
-    return NextResponse.json(
-      { ok: false, message: "Üyelik bilgisi alınamadı." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "membership",
+      event: "membership.read.failed",
+    });
   }
 }
 
@@ -122,7 +127,11 @@ export async function POST(request: Request) {
 
         if (!membership) {
           return NextResponse.json(
-            { ok: false, message: "Bu firmaya erişiminiz yok." },
+            {
+              ok: false,
+              code: DomainErrorCode.COMPANY_SCOPE_VIOLATION,
+              message: "Bu firmaya erişiminiz yok.",
+            },
             { status: 403 },
           );
         }
@@ -134,7 +143,6 @@ export async function POST(request: Request) {
           maxAge: 60 * 60 * 24 * 180,
         });
       } else {
-        // Explicit personal mode — do not fall back to company-first.
         response.cookies.set(COMPANY_CONTEXT_COOKIE, PERSONAL_CONTEXT_VALUE, {
           path: "/",
           httpOnly: true,
@@ -151,9 +159,8 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             ok: false,
-            code: "MOCK_UPGRADE_DISABLED",
-            message:
-              "Plan yükseltme için ödeme entegrasyonu gerekli. Mock upgrade kapalı (ALLOW_MOCK_UPGRADE).",
+            code: "PAYMENT_REQUIRED",
+            message: PAYMENT_REQUIRED_MESSAGE,
           },
           { status: 402 },
         );
@@ -205,11 +212,22 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         ok: true,
-        message: `${PLAN_DEFINITIONS[tier].label} planına geçildi (mock).`,
+        message: `${PLAN_DEFINITIONS[tier].label} planına geçildi (mock/dev).`,
       });
     }
 
     if (body.action === "buy-credits" && body.pack) {
+      if (!isMockCreditPurchaseAllowed()) {
+        return NextResponse.json(
+          {
+            ok: false,
+            code: "PAYMENT_REQUIRED",
+            message: PAYMENT_REQUIRED_MESSAGE,
+          },
+          { status: 402 },
+        );
+      }
+
       const pack = OFFER_CREDIT_PACKS[body.pack];
       if (!pack) {
         return NextResponse.json({ ok: false, message: "Geçersiz paket." }, { status: 400 });
@@ -234,20 +252,22 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         ok: true,
-        message: `${pack.label} hesabınıza eklendi.`,
+        message: `${pack.label} hesabınıza eklendi (mock/dev).`,
       });
     }
 
     return NextResponse.json({ ok: false, message: "Geçersiz işlem." }, { status: 400 });
   } catch (error) {
     if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+      return safeErrorResponse(error, {
+        service: "membership",
+        event: "membership.write.failed",
+      });
     }
 
-    console.error("Üyelik işlemi başarısız:", error);
-    return NextResponse.json(
-      { ok: false, message: "Üyelik işlemi tamamlanamadı." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "membership",
+      event: "membership.write.failed",
+    });
   }
 }
