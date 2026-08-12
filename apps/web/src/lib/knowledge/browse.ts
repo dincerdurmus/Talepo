@@ -12,12 +12,17 @@ import {
   ensureTaxonomyLoaded,
   getSubcategoryTaxonomyNode,
   getTaxonomyChildren,
+  getTaxonomyNode,
   taxonomyNodeHasChildren,
   type TaxonomyNode,
 } from "@/lib/taxonomy";
 
 import { resolveKnowledgeProfile } from "./profile-registry";
 import { subcategorySlug } from "./slug";
+import {
+  brandsForTechFamily,
+  inferTechBrandFamily,
+} from "./technology-brands";
 import type { BrowseContext, BrowseNode, BrowseNodeKind } from "./types";
 
 function taxonomyKind(node: TaxonomyNode): BrowseNodeKind {
@@ -43,15 +48,95 @@ function taxonomyKind(node: TaxonomyNode): BrowseNodeKind {
   }
 }
 
+function technologyDisplayLabel(n: TaxonomyNode): string {
+  // Stable ids; display matches sahibinden-style TR marketplace labels
+  if (n.id.endsWith(":telefon-ve-tablet")) return "Cep Telefonu & Aksesuar";
+  if (n.id.endsWith(":akilli-telefon")) return "Cep Telefonu";
+  return n.canonicalName;
+}
+
+function technologyProductTypeHasBrands(n: TaxonomyNode): boolean {
+  if (n.categoryId !== "technology" || n.subcategoryId !== "donanim") {
+    return false;
+  }
+  if (n.nodeType !== "PRODUCT_TYPE") return false;
+  return (
+    inferTechBrandFamily({
+      id: n.id,
+      name: n.canonicalName,
+      nodeType: n.nodeType,
+      subcategoryId: n.subcategoryId,
+    }) != null
+  );
+}
+
+function technologyBrandNodes(
+  productTypeId: string,
+  parentId: string,
+): BrowseNode[] {
+  ensureTaxonomyLoaded();
+  const tax = getTaxonomyNode(productTypeId);
+  if (!tax) return [];
+  // Web Sitesi / Yazılım SERVICE_TYPE leaves must never grow a brand column
+  if (tax.categoryId !== "technology" || tax.subcategoryId !== "donanim") {
+    return [];
+  }
+  if (tax.nodeType !== "PRODUCT_TYPE") return [];
+
+  const family = inferTechBrandFamily({
+    id: tax.id,
+    name: tax.canonicalName,
+    nodeType: tax.nodeType,
+    subcategoryId: tax.subcategoryId,
+  });
+  if (!family) return [];
+
+  const tumu = node({
+    id: "any:brand",
+    kind: "attribute_bucket",
+    label: "Tümü",
+    categoryId: "technology",
+    parentId,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey: "brand",
+      sentinel: "__ANY__",
+      brandFamily: family,
+      productTypeId,
+    },
+  });
+
+  const brands = brandsForTechFamily(family).map((label) =>
+    node({
+      id: `browse:technology:brand:${subcategorySlug(label)}`,
+      kind: "brand",
+      label,
+      categoryId: "technology",
+      parentId,
+      entityId: subcategorySlug(label),
+      hasChildren: false,
+      meta: {
+        brandFamily: family,
+        productTypeId,
+        subcategorySlug: "donanim",
+      },
+    }),
+  );
+
+  return [tumu, ...brands];
+}
+
 function taxonomyToBrowse(n: TaxonomyNode, parentId: string): BrowseNode {
+  const hasBrandKids = technologyProductTypeHasBrands(n);
   return node({
     id: n.id,
     kind: taxonomyKind(n),
-    label: n.canonicalName,
+    label: technologyDisplayLabel(n),
     categoryId: n.categoryId,
     parentId,
     entityId: n.catalogSystemId ?? n.id,
-    hasChildren: taxonomyNodeHasChildren(n.id),
+    hasChildren: hasBrandKids || taxonomyNodeHasChildren(n.id),
     meta: {
       taxonomyNodeType: n.nodeType,
       subcategoryId: n.subcategoryId ?? "",
@@ -70,7 +155,86 @@ function taxonomyChildrenForSubcategory(
   ensureTaxonomyLoaded();
   const sub = getSubcategoryTaxonomyNode(categoryId, slug);
   if (!sub) return [];
-  return getTaxonomyChildren(sub.id).map((n) => taxonomyToBrowse(n, parentId));
+  let kids = getTaxonomyChildren(sub.id).map((n) => taxonomyToBrowse(n, parentId));
+  if (
+    categoryId === "furniture" &&
+    (slug === "ev-mobilyasi" || slug === "ofis-mobilyalari")
+  ) {
+    kids = withFurnitureTumuOption(kids, parentId, slug);
+  }
+  if (
+    categoryId === "appliances" &&
+    (slug === "kucuk-ev-aletleri" ||
+      slug === "beyaz-esya" ||
+      slug === "isitma-sogutma-ve-havalandirma")
+  ) {
+    kids = withAppliancesTumuOption(kids, parentId, slug);
+  }
+  return kids;
+}
+
+/** Sahibinden-style Tümü at Ev / Ofis Mobilyası group & product columns. */
+function withFurnitureTumuOption(
+  kids: BrowseNode[],
+  parentId: string,
+  subcategorySlug?: string,
+): BrowseNode[] {
+  if (kids.length === 0) return kids;
+  if (kids.some((k) => k.meta?.any && k.meta?.fieldKey === "furnitureType")) {
+    return kids;
+  }
+  const slug =
+    subcategorySlug ??
+    (parentId.includes("ofis-mobilyalari")
+      ? "ofis-mobilyalari"
+      : "ev-mobilyasi");
+  const tumu = node({
+    id: `furn:any:furnitureType:${parentId}`,
+    kind: "attribute_bucket",
+    label: "Tümü",
+    categoryId: "furniture",
+    parentId,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey: "furnitureType",
+      subcategorySlug: slug,
+    },
+  });
+  return [tumu, ...kids];
+}
+
+/** Sahibinden-style Tümü under appliance pillars. */
+function withAppliancesTumuOption(
+  kids: BrowseNode[],
+  parentId: string,
+  subcategorySlug?: string,
+): BrowseNode[] {
+  if (kids.length === 0) return kids;
+  if (kids.some((k) => k.meta?.any && k.meta?.fieldKey === "applianceType")) {
+    return kids;
+  }
+  let slug = subcategorySlug;
+  if (!slug) {
+    if (parentId.includes("kucuk-ev-aletleri")) slug = "kucuk-ev-aletleri";
+    else if (parentId.includes("isitma-sogutma")) {
+      slug = "isitma-sogutma-ve-havalandirma";
+    } else slug = "beyaz-esya";
+  }
+  const tumu = node({
+    id: `appl:any:applianceType:${parentId}`,
+    kind: "attribute_bucket",
+    label: "Tümü",
+    categoryId: "appliances",
+    parentId,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey: "applianceType",
+      subcategorySlug: slug,
+    },
+  });
+  return [tumu, ...kids];
 }
 
 function node(partial: BrowseNode): BrowseNode {
@@ -91,6 +255,171 @@ export function getRootCategories(): BrowseNode[] {
   );
 }
 
+function cleanRealEstateTypeLabel(label: string): string {
+  return label
+    .replace(/^(satılık|kiralık)\s+/iu, "")
+    .replace(/^Satılık\s+/u, "")
+    .replace(/^Kiralık\s+/u, "")
+    .trim() || label;
+}
+
+/** Sahibinden-style RE segments under Emlak (not Satılık Konut / Kiralık Konut flat). */
+function realEstateRootSegments(): BrowseNode[] {
+  return [
+    node({
+      id: "re:group:konut",
+      kind: "group",
+      label: "Konut",
+      categoryId: "real-estate",
+      parentId: "real-estate",
+      hasChildren: true,
+      meta: { reSegment: "konut" },
+    }),
+    node({
+      id: "re:group:isyeri",
+      kind: "group",
+      label: "İş Yeri",
+      categoryId: "real-estate",
+      parentId: "real-estate",
+      hasChildren: true,
+      meta: { reSegment: "isyeri", subcategorySlug: "ticari-gayrimenkul" },
+    }),
+    node({
+      id: "real-estate/arsa",
+      kind: "subcategory",
+      label: "Arsa",
+      categoryId: "real-estate",
+      parentId: "real-estate",
+      hasChildren: true,
+      meta: { subcategorySlug: "arsa" },
+    }),
+    node({
+      id: "real-estate/diger",
+      kind: "subcategory",
+      label: "Diğer",
+      categoryId: "real-estate",
+      parentId: "real-estate",
+      hasChildren: true,
+      meta: { subcategorySlug: "diger" },
+    }),
+  ];
+}
+
+function realEstateListingChildren(parentId: string): BrowseNode[] {
+  return [
+    node({
+      id: "real-estate/satilik-konut",
+      kind: "subcategory",
+      label: "Satılık",
+      categoryId: "real-estate",
+      parentId,
+      hasChildren: true,
+      meta: { subcategorySlug: "satilik-konut", listingType: "Satılık" },
+    }),
+    node({
+      id: "real-estate/kiralik-konut",
+      kind: "subcategory",
+      label: "Kiralık",
+      categoryId: "real-estate",
+      parentId,
+      hasChildren: true,
+      meta: { subcategorySlug: "kiralik-konut", listingType: "Kiralık" },
+    }),
+  ];
+}
+
+/** Canonical Konut types — same for Satılık and Kiralık (not condition/floor junk). */
+const RE_KONUT_PROPERTY_TYPES = [
+  "Daire",
+  "Rezidans",
+  "Müstakil Ev",
+  "Villa",
+  "Çiftlik Evi",
+  "Köşk & Konak",
+  "Yalı",
+  "Yalı Dairesi",
+] as const;
+
+function realEstateKonutTypeLeaves(
+  slug: "satilik-konut" | "kiralik-konut",
+  parentId: string,
+): BrowseNode[] {
+  const tumu = node({
+    id: `re:any:propertyType:${slug}`,
+    kind: "attribute_bucket",
+    label: "Tümü",
+    categoryId: "real-estate",
+    parentId,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey: "propertyType",
+      subcategorySlug: slug,
+      listingType: slug === "satilik-konut" ? "Satılık" : "Kiralık",
+    },
+  });
+
+  const types = RE_KONUT_PROPERTY_TYPES.map((label) =>
+    node({
+      id: `re:property:${slug}:${subcategorySlug(label)}`,
+      kind: "product_type",
+      label,
+      categoryId: "real-estate",
+      parentId,
+      entityId: `re:property:${slug}:${subcategorySlug(label)}`,
+      hasChildren: false,
+      meta: {
+        subcategorySlug: slug,
+        propertyType: label,
+        listingType: slug === "satilik-konut" ? "Satılık" : "Kiralık",
+      },
+    }),
+  );
+
+  return [tumu, ...types];
+}
+
+/** Flatten PRODUCT_TYPE leaves under a non-konut RE subcategory. */
+function realEstatePropertyTypeLeaves(
+  slug: string,
+  parentId: string,
+): BrowseNode[] {
+  if (slug === "satilik-konut" || slug === "kiralik-konut") {
+    return realEstateKonutTypeLeaves(slug, parentId);
+  }
+
+  ensureTaxonomyLoaded();
+  const sub = getSubcategoryTaxonomyNode("real-estate", slug);
+  if (!sub) return [];
+  const out: BrowseNode[] = [];
+  const walk = (id: string) => {
+    for (const n of getTaxonomyChildren(id)) {
+      if (n.nodeType === "PRODUCT_TYPE" || n.nodeType === "SERVICE_TYPE") {
+        out.push(
+          node({
+            id: n.id,
+            kind: taxonomyKind(n),
+            label: cleanRealEstateTypeLabel(n.canonicalName),
+            categoryId: "real-estate",
+            parentId,
+            entityId: n.id,
+            hasChildren: false,
+            meta: {
+              subcategorySlug: slug,
+              taxonomyNodeType: n.nodeType,
+              propertyType: cleanRealEstateTypeLabel(n.canonicalName),
+            },
+          }),
+        );
+      } else if (n.nodeType === "GROUP") {
+        walk(n.id);
+      }
+    }
+  };
+  walk(sub.id);
+  return out;
+}
+
 export function getCategoryChildren(categoryId: string): BrowseNode[] {
   const cat = getCategoryById(categoryId);
   if (cat.id !== categoryId && !REQUEST_CATEGORIES.some((c) => c.id === categoryId)) {
@@ -98,6 +427,10 @@ export function getCategoryChildren(categoryId: string): BrowseNode[] {
   }
   const real = REQUEST_CATEGORIES.find((c) => c.id === categoryId);
   if (!real) return [];
+
+  if (categoryId === "real-estate") {
+    return realEstateRootSegments();
+  }
 
   return real.subcategories.map((label) => {
     const slug = subcategorySlug(label);
@@ -289,6 +622,15 @@ export function getBrowseChildren(
     return getCategoryChildren(parentId);
   }
 
+  // Real-estate: Konut → Satılık | Kiralık
+  if (parentId === "re:group:konut") {
+    return realEstateListingChildren(parentId);
+  }
+  // Real-estate: İş Yeri → ticari types (flattened)
+  if (parentId === "re:group:isyeri") {
+    return realEstatePropertyTypeLeaves("ticari-gayrimenkul", parentId);
+  }
+
   const profile = resolveKnowledgeProfile({
     categoryId: context.categoryId,
     subcategorySlug: context.subcategorySlug,
@@ -297,14 +639,49 @@ export function getBrowseChildren(
   // Master taxonomy walk (tax:category:sub:...)
   if (parentId.startsWith("tax:")) {
     ensureTaxonomyLoaded();
-    return getTaxonomyChildren(parentId).map((n) =>
+    let kids = getTaxonomyChildren(parentId).map((n) =>
       taxonomyToBrowse(n, parentId),
     );
+    // Ev / Ofis Mobilyası: groups & product leaves get sahibinden-style Tümü
+    if (
+      kids.length > 0 &&
+      (parentId.startsWith("tax:furniture:ev-mobilyasi") ||
+        parentId.startsWith("tax:furniture:ofis-mobilyalari"))
+    ) {
+      kids = withFurnitureTumuOption(kids, parentId);
+    }
+    // Appliances pillars: product leaves get Tümü
+    if (
+      kids.length > 0 &&
+      (parentId.startsWith("tax:appliances:kucuk-ev-aletleri") ||
+        parentId.startsWith("tax:appliances:beyaz-esya") ||
+        parentId.startsWith("tax:appliances:isitma-sogutma-ve-havalandirma"))
+    ) {
+      kids = withAppliancesTumuOption(kids, parentId);
+    }
+    if (kids.length > 0) return kids;
+    // Donanım product-type leaf → brand column (TV / laptop / phone…)
+    const brandKids = technologyBrandNodes(parentId, parentId);
+    if (brandKids.length > 0) return brandKids;
+    return [];
   }
 
   // Subcategory node → next hierarchy step
   if (parentId.includes("/") && !parentId.startsWith("browse:")) {
     const [categoryId, slug] = parentId.split("/");
+
+    // RE listing leaf column: property types without "Satılık …" prefix
+    if (
+      categoryId === "real-estate" &&
+      (slug === "satilik-konut" ||
+        slug === "kiralik-konut" ||
+        slug === "arsa" ||
+        slug === "diger" ||
+        slug === "ticari-gayrimenkul")
+    ) {
+      return realEstatePropertyTypeLeaves(slug!, parentId);
+    }
+
     const resolved = resolveKnowledgeProfile({
       categoryId,
       subcategorySlug: slug,
@@ -387,7 +764,13 @@ function childrenForKind(
     if (context.categoryId === "automotive") {
       return automotiveBrands(context.categoryId, parentId);
     }
-    // Brands not loaded yet — expose master taxonomy product/machine groups
+    if (
+      context.categoryId === "technology" &&
+      parentId.startsWith("tax:technology:donanim:")
+    ) {
+      return technologyBrandNodes(parentId, parentId);
+    }
+    // No brand catalog yet — expose master taxonomy product/machine groups
     if (context.subcategorySlug) {
       const taxKids = taxonomyChildrenForSubcategory(
         context.categoryId,
@@ -516,6 +899,13 @@ export function getBrands(categoryId: string, subcategorySlug?: string | null): 
       ? `${categoryId}/${subcategorySlug}`
       : categoryId;
     return automotiveBrands(categoryId, parent);
+  }
+  if (categoryId === "technology") {
+    // Generic tech brand column (family = general) when no product leaf selected
+    return technologyBrandNodes(
+      "tax:technology:donanim:bilgisayar:dizustu-bilgisayar",
+      subcategorySlug ? `${categoryId}/${subcategorySlug}` : categoryId,
+    ).filter((n) => n.kind === "brand");
   }
   return [];
 }

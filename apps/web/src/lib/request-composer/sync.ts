@@ -12,12 +12,21 @@ import {
 } from "./apply-browse";
 import { buildCanonicalRequestState } from "./build-state";
 import { composeNaturalRequestText } from "./compose-text";
+import {
+  resolveTextSyncAuthority,
+  shouldCarryBrowseNeedPin,
+  stripIncompatibleDomainFields,
+  type RequestSyncAuthority,
+} from "./request-transition";
 import type { CanonicalRequestState } from "./types";
 
 export type SyncFromTextResult = {
   state: CanonicalRequestState;
   skipped: boolean;
   reason?: string;
+  authority?: RequestSyncAuthority;
+  /** True when a previous browse/category pin was dropped for a new request. */
+  clearedStaleBrowse?: boolean;
 };
 
 export type SyncFromBrowseResult = {
@@ -46,7 +55,7 @@ export function syncFromText(
   opts?: { structured?: UnderstandRequestInput["structured"]; force?: boolean },
 ): SyncFromTextResult {
   const text = rawText ?? "";
-  const browseNeed =
+  const previousBrowseNeed =
     previous?.fields.needType?.provenance === "EXPLICIT_BROWSE" &&
     previous.fields.needType.kind === "VALUE" &&
     previous.fields.needType.value
@@ -55,13 +64,13 @@ export function syncFromText(
   const subjectKind =
     previous?.understanding.requestSubject.kind.value ?? null;
   const subjectMatchesBrowseNeed = (() => {
-    if (!browseNeed) return true;
-    if (browseNeed === "part" || browseNeed === "tire") {
+    if (!previousBrowseNeed) return true;
+    if (previousBrowseNeed === "part" || previousBrowseNeed === "tire") {
       return subjectKind === "PART" || subjectKind === "ACCESSORY";
     }
-    if (browseNeed === "vehicle") return subjectKind === "VEHICLE";
-    if (browseNeed === "service") return subjectKind === "SERVICE";
-    if (browseNeed === "machine") {
+    if (previousBrowseNeed === "vehicle") return subjectKind === "VEHICLE";
+    if (previousBrowseNeed === "service") return subjectKind === "SERVICE";
+    if (previousBrowseNeed === "machine") {
       return (
         subjectKind === "INDUSTRIAL_EQUIPMENT" || subjectKind === "PRODUCT"
       );
@@ -83,50 +92,88 @@ export function syncFromText(
       },
       skipped: true,
       reason: "composed-text-echo",
+      authority: "EXPLICIT_CURRENT_BROWSE",
     };
   }
 
-  // Carry EXPLICIT_BROWSE needType / category into the sole brain so
-  // brand+model sentences cannot collapse PART → VEHICLE.
-  const structured: UnderstandRequestInput["structured"] = {
-    ...opts?.structured,
-    categoryId:
-      opts?.structured?.categoryId ?? previous?.categoryId ?? undefined,
-    fieldValues: {
-      ...opts?.structured?.fieldValues,
-      ...(browseNeed
-        ? { needType: browseNeed }
-        : {}),
-    },
-  };
-
-  const understanding = understandRequest({
+  // Parse text-native first. Never inject previous.categoryId as a structured
+  // override — that lock is what kept Makine pinned over a new request.
+  const native = understandRequest({
     rawInput: text,
-    structured,
+    structured: opts?.structured,
   });
+
+  const authority = resolveTextSyncAuthority({
+    previous,
+    native,
+    rawText: text,
+    callerStructuredCategoryId: opts?.structured?.categoryId,
+  });
+  const clearedStaleBrowse = authority === "STALE_BROWSE_CLEARED";
+  const carryBrowsePin = shouldCarryBrowseNeedPin(previous, authority);
+
+  let understanding = native;
+  if (
+    carryBrowsePin &&
+    previousBrowseNeed &&
+    !opts?.structured?.fieldValues?.needType
+  ) {
+    // Same-domain enrichment: keep PART/VEHICLE/machine browse role so
+    // brand+model sentences cannot collapse the current request.
+    const structured: UnderstandRequestInput["structured"] = {
+      ...opts?.structured,
+      categoryId:
+        opts?.structured?.categoryId ?? previous?.categoryId ?? undefined,
+      fieldValues: {
+        ...opts?.structured?.fieldValues,
+        needType: previousBrowseNeed,
+      },
+    };
+    understanding = understandRequest({
+      rawInput: text,
+      structured,
+    });
+  }
 
   let state = buildCanonicalRequestState({
     understanding,
     lastUserAction: "text",
-    previous: previous ?? null,
-    progressiveReset: true,
+    previous: clearedStaleBrowse ? null : previous ?? null,
+    progressiveReset: !clearedStaleBrowse,
   });
 
-  // Keep browse-pinned subcategory + needType authoritative after re-parse.
-  if (previous?.fields.needType?.provenance === "EXPLICIT_BROWSE") {
+  // Current browse pin stays authoritative only for the same request.
+  if (carryBrowsePin && previous && !clearedStaleBrowse) {
+    const categoryId = previous.categoryId ?? state.categoryId;
     state = {
       ...state,
       subcategorySlug: previous.subcategorySlug ?? state.subcategorySlug,
-      categoryId: previous.categoryId ?? state.categoryId,
+      categoryId,
       taxonomyNodeId: previous.taxonomyNodeId ?? state.taxonomyNodeId,
-      fields: {
-        ...state.fields,
-        needType: previous.fields.needType,
-      },
+      fields: stripIncompatibleDomainFields(
+        {
+          ...state.fields,
+          ...(previous.fields.needType?.provenance === "EXPLICIT_BROWSE"
+            ? { needType: previous.fields.needType }
+            : {}),
+        },
+        categoryId,
+      ),
     };
   }
 
-  return { state, skipped: false };
+  const composed = composeNaturalRequestText(state);
+  return {
+    state: {
+      ...state,
+      lastComposedText: composed,
+      naturalTextDirty: false,
+      syncGeneration: (previous?.syncGeneration ?? 0) + 1,
+    },
+    skipped: false,
+    authority,
+    clearedStaleBrowse,
+  };
 }
 
 /**

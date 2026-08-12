@@ -13,6 +13,7 @@ import {
   pinBrowseSemanticContext,
   resolveBrowsePath,
   resolveHybridQuestions,
+  shouldSkipTextWalkRealign,
   syncFromBrowse,
   syncFromText,
 } from "@/lib/request-composer";
@@ -106,6 +107,8 @@ export function useHybridRequestComposer(
   /** When user clicks columns, skip one text→walk realign cycle. */
   const skipPathWalkSyncRef = useRef(false);
   const lastPathSigRef = useRef("");
+  const browseWalkRef = useRef(browseWalk);
+  browseWalkRef.current = browseWalk;
 
   const applyState = useCallback((next: CanonicalRequestState) => {
     stateRef.current = next;
@@ -120,6 +123,10 @@ export function useHybridRequestComposer(
       try {
         const result = syncFromText(stateRef.current, raw);
         if (token !== seqRef.current) return;
+        if (result.clearedStaleBrowse) {
+          skipPathWalkSyncRef.current = false;
+          lastPathSigRef.current = "";
+        }
         applyState(result.state);
         setComposerError(false);
         setBrowseDegraded(false);
@@ -405,11 +412,18 @@ export function useHybridRequestComposer(
   useEffect(() => {
     if (browseDegraded || isSyncing) return;
     const sig = pathSignature(browsePath);
-    if (skipPathWalkSyncRef.current) {
+    if (
+      shouldSkipTextWalkRealign({
+        skipOnce: skipPathWalkSyncRef.current,
+        walkCategoryId: browseWalkRef.current.categoryId,
+        path: browsePath,
+      })
+    ) {
       skipPathWalkSyncRef.current = false;
       lastPathSigRef.current = sig;
       return;
     }
+    skipPathWalkSyncRef.current = false;
     if (sig === lastPathSigRef.current) return;
     lastPathSigRef.current = sig;
     if (browsePath.length === 0) {

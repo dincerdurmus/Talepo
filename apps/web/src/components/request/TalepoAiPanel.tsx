@@ -16,9 +16,11 @@ import {
   buildMarketPresentation,
   type MarketPresentation,
 } from "@/lib/request-brain/market-presentation";
+import { EnrichmentChips } from "@/components/request/EnrichmentChips";
 import type { HumanizedQuestion } from "@/lib/request-brain/human-question-layer";
 import type {
   MarketIntelligenceSnapshot,
+  QuestionCandidate,
   RequestAnalysisStatus,
 } from "@/lib/request-brain/types";
 import type { RequestReadiness } from "@/lib/request-brain/request-readiness";
@@ -41,7 +43,17 @@ export type TalepoAiPanelProps = {
   previewError: string | null;
   understoodHeadline: string;
   understoodChips: SummaryChip[];
-  humanQuestions: HumanizedQuestion[];
+  /** Ranked next questions — single ask surface (chips + draft) */
+  enrichmentCandidates: QuestionCandidate[];
+  enrichmentFieldKey: string | null;
+  enrichmentDraft: string;
+  humanPrompts?: Record<string, string>;
+  onEnrichmentSelect: (question: QuestionCandidate) => void;
+  onEnrichmentDraftChange: (value: string) => void;
+  onEnrichmentApply: (question: QuestionCandidate, value: string) => void;
+  onEnrichmentCancel: () => void;
+  /** @deprecated kept for type compat — prefer enrichmentCandidates */
+  humanQuestions?: HumanizedQuestion[];
   clarification?: {
     prompt: string;
     options: ClarificationOption[];
@@ -146,63 +158,20 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         )}
       </WorkspaceSection>
 
-      {/* 2. NETLEŞTİRELİM */}
-      {props.humanQuestions.length > 0 ? (
+      {/* 2. NETLEŞTİRELİM — single ask surface (no duplicate left chips) */}
+      {props.enrichmentCandidates.length > 0 ? (
         <WorkspaceSection title="Netleştirelim" tone="accent">
-          <div className="space-y-3">
-            {props.humanQuestions.map((q) => (
-              <div key={q.fieldKey}>
-                <p className="text-xs leading-5 text-teal-50/90">
-                  {q.humanPrompt}
-                </p>
-                {q.fieldClass === "REQUIRED_TO_PUBLISH" ? (
-                  <p className="mt-1 text-[10px] uppercase tracking-[0.12em] text-amber-200/60">
-                    Yayın için gerekli
-                  </p>
-                ) : null}
-                {q.quickChoices?.length ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {q.quickChoices.map((choice) => (
-                      <button
-                        key={`${q.fieldKey}-${choice.value}`}
-                        type="button"
-                        onClick={() =>
-                          props.onApplyHumanQuestion?.(q, choice.value)
-                        }
-                        className="rounded-full border border-teal-200/25 bg-white/5 px-2.5 py-1 text-[11px] text-teal-50/90 transition hover:border-teal-200/50 hover:bg-white/10"
-                      >
-                        {choice.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : props.onApplyHumanQuestion ? (
-                  <button
-                    type="button"
-                    onClick={() => props.onApplyHumanQuestion?.(q)}
-                    className="mt-2 text-[11px] font-semibold text-teal-200/85 hover:text-white"
-                  >
-                    + {q.label} ekle
-                  </button>
-                ) : null}
-                {q.escapeChoices?.length ? (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {q.escapeChoices.map((escape) => (
-                      <button
-                        key={escape.value}
-                        type="button"
-                        onClick={() =>
-                          props.onApplyHumanQuestion?.(q, escape.value)
-                        }
-                        className="text-[11px] text-teal-100/40 hover:text-teal-100/70"
-                      >
-                        {escape.label}
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
+          <EnrichmentChips
+            variant="dark"
+            candidates={props.enrichmentCandidates}
+            activeFieldKey={props.enrichmentFieldKey}
+            draftValue={props.enrichmentDraft}
+            humanPrompts={props.humanPrompts}
+            onSelect={props.onEnrichmentSelect}
+            onDraftChange={props.onEnrichmentDraftChange}
+            onApply={props.onEnrichmentApply}
+            onCancel={props.onEnrichmentCancel}
+          />
         </WorkspaceSection>
       ) : null}
 

@@ -7,6 +7,7 @@ import { applyBrowseSelection } from "@/lib/knowledge/browse";
 import { resolveBrowseSemanticRole } from "./browse-semantic-role";
 import { canApplyField } from "./build-state";
 import { composeNaturalRequestText } from "./compose-text";
+import { stripIncompatibleDomainFields } from "./request-transition";
 import type {
   CanonicalFieldState,
   CanonicalRequestState,
@@ -167,7 +168,7 @@ export function applyBrowseSelectionToState(
     categoryId,
     subcategorySlug,
     taxonomyNodeId,
-    fields,
+    fields: stripIncompatibleDomainFields(fields, categoryId),
     lastUserAction: "browse",
     naturalTextDirty: true,
     syncGeneration: state.syncGeneration + 1,
@@ -264,7 +265,7 @@ export function pinBrowseSemanticContext(
     categoryId,
     subcategorySlug,
     taxonomyNodeId,
-    fields,
+    fields: stripIncompatibleDomainFields(fields, categoryId),
     lastUserAction: "browse",
     naturalTextDirty: true,
     syncGeneration: state.syncGeneration + 1,

@@ -61,7 +61,8 @@
     },
     {
       "aliases": [
-        "apartment"
+        "apartment",
+        "ev"
       ],
       "searchTerms": [
         "Daire"
@@ -110,6 +111,28 @@
         "müstakil"
       ],
       "searchTerms": [
+        "Müstakil Ev"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:mustakil-ev",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Müstakil Ev",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "kiralik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/kiralik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
         "Villa"
       ],
       "applicableCapabilities": [
@@ -132,15 +155,15 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Dublex / triplex"
+        "Çiftlik Evi"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:kiralik-konut:konut-tipleri:dublex-triplex",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:ciftlik-evi",
       "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
-      "canonicalName": "Dublex / triplex",
+      "canonicalName": "Çiftlik Evi",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "kiralik-konut",
@@ -153,40 +176,19 @@
     },
     {
       "aliases": [
-        "1+0"
+        "köşk",
+        "konak"
       ],
       "searchTerms": [
-        "Stüdyo"
+        "Köşk & Konak"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:kiralik-konut:konut-tipleri:studyo",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:kosk-konak",
       "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
-      "canonicalName": "Stüdyo",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "kiralik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/kiralik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Bahçe katı"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:kiralik-konut:konut-tipleri:bahce-kati",
-      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
-      "canonicalName": "Bahçe katı",
+      "canonicalName": "Köşk & Konak",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "kiralik-konut",
@@ -200,15 +202,15 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Çatı katı / loft"
+        "Yalı"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:kiralik-konut:konut-tipleri:cati-kati-loft",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:yali",
       "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
-      "canonicalName": "Çatı katı / loft",
+      "canonicalName": "Yalı",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "kiralik-konut",
@@ -221,99 +223,17 @@
     },
     {
       "aliases": [],
-      "searchTerms": [],
+      "searchTerms": [
+        "Yalı Dairesi"
+      ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
-      "parentId": "tax:real-estate:kiralik-konut",
-      "canonicalName": "Kiralama özellikleri",
-      "nodeType": "GROUP",
-      "categoryId": "real-estate",
-      "subcategoryId": "kiralik-konut",
-      "depth": 2,
-      "requestSchemaId": "real-estate/kiralik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "furnished"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:esyali",
-      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
-      "canonicalName": "Eşyalı",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "kiralik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/kiralik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:esyasiz",
-      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
-      "canonicalName": "Eşyasız",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "kiralik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/kiralik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:aidat-dahil",
-      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
-      "canonicalName": "Aidat dahil",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "kiralik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/kiralik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "daily rent"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:kiralik-konut:kiralama-ozellikleri:kisa-donem-kiralik",
-      "parentId": "tax:real-estate:kiralik-konut:kiralama-ozellikleri",
-      "canonicalName": "Kısa dönem kiralık",
-      "nodeType": "TECHNICAL_TYPE",
+      "id": "tax:real-estate:kiralik-konut:konut-tipleri:yali-dairesi",
+      "parentId": "tax:real-estate:kiralik-konut:konut-tipleri",
+      "canonicalName": "Yalı Dairesi",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "kiralik-konut",
       "depth": 3,
@@ -349,9 +269,9 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri",
       "parentId": "tax:real-estate:satilik-konut",
-      "canonicalName": "Satılık konut tipleri",
+      "canonicalName": "Konut tipleri",
       "nodeType": "GROUP",
       "categoryId": "real-estate",
       "subcategoryId": "satilik-konut",
@@ -363,17 +283,21 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "apartment",
+        "ev",
+        "satılık daire"
+      ],
       "searchTerms": [
-        "Satılık daire"
+        "Daire"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-daire",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "Satılık daire",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:daire",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Daire",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "satilik-konut",
@@ -387,59 +311,15 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Satılık villa"
+        "Rezidans"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-villa",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "Satılık villa",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "satilik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/satilik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Satılık yazlık"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-yazlik",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "Satılık yazlık",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "real-estate",
-      "subcategoryId": "satilik-konut",
-      "depth": 3,
-      "requestSchemaId": "real-estate/satilik-konut",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Satılık müstakil ev"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:satilik-mustakil-ev",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "Satılık müstakil ev",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:rezidans",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Rezidans",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "satilik-konut",
@@ -452,18 +332,43 @@
     },
     {
       "aliases": [
-        "zero apartment"
+        "müstakil",
+        "satılık müstakil ev"
       ],
       "searchTerms": [
-        "Yeni proje / sıfır daire"
+        "Müstakil Ev"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:yeni-proje-sifir-daire",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "Yeni proje / sıfır daire",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:mustakil-ev",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Müstakil Ev",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "satılık villa"
+      ],
+      "searchTerms": [
+        "Villa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:villa",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Villa",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "satilik-konut",
@@ -477,15 +382,84 @@
     {
       "aliases": [],
       "searchTerms": [
-        "İkinci el daire"
+        "Çiftlik Evi"
       ],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:real-estate:satilik-konut:satilik-konut-tipleri:ikinci-el-daire",
-      "parentId": "tax:real-estate:satilik-konut:satilik-konut-tipleri",
-      "canonicalName": "İkinci el daire",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:ciftlik-evi",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Çiftlik Evi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "köşk",
+        "konak"
+      ],
+      "searchTerms": [
+        "Köşk & Konak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:kosk-konak",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Köşk & Konak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yalı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:yali",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Yalı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "satilik-konut",
+      "depth": 3,
+      "requestSchemaId": "real-estate/satilik-konut",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yalı Dairesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:satilik-konut:konut-tipleri:yali-dairesi",
+      "parentId": "tax:real-estate:satilik-konut:konut-tipleri",
+      "canonicalName": "Yalı Dairesi",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "satilik-konut",

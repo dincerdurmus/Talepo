@@ -181,6 +181,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "yazılım",
     "yazilim",
     "web sitesi",
+    "internet sitesi",
+    "e-ticaret",
+    "eticaret",
+    "e ticaret",
+    "web hizmet",
     "uygulama",
     "bilgisayar",
     "masaüstü bilgisayar",
@@ -255,7 +260,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "işyeri",
     "isyeri",
     "bina",
-    "site",
+    "konut sitesi",
+    "sitede",
+    "site içi",
+    "site ici",
+    "site aidat",
     "mahalle",
     "2+1",
     "1+1",
@@ -665,6 +674,14 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       if (looksLikeTelevisionScreenContext(normalized)) {
         score += 6;
       }
+      if (
+        /\be-?ticaret\b/.test(normalized) ||
+        normalized.includes("web sitesi") ||
+        normalized.includes("internet sitesi") ||
+        normalized.includes("web hizmet")
+      ) {
+        score += 6;
+      }
     }
 
     if (categoryId === "real-estate") {
@@ -687,6 +704,14 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       }
       // Paint / renovation service verbs must not look like property search
       if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+        score = Math.max(0, score - 6);
+      }
+      if (
+        /\be-?ticaret\b/.test(normalized) ||
+        normalized.includes("web sitesi") ||
+        normalized.includes("internet sitesi") ||
+        normalized.includes("web hizmet")
+      ) {
         score = Math.max(0, score - 6);
       }
     }

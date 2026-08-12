@@ -7,6 +7,7 @@ import {
   getAutomotiveIndexes,
 } from "@/lib/catalog";
 import { subcategorySlug as toSlug } from "@/lib/knowledge/slug";
+import { getCategoryChildren } from "@/lib/knowledge/browse";
 import {
   ensureTaxonomyLoaded,
   getTaxonomyNode,
@@ -580,23 +581,81 @@ function genericPath(state: CanonicalRequestState): BrowsePathStep[] {
         state.subcategorySlug,
       ),
     );
+  } else if (state.categoryId) {
+    const hint = fold(
+      (state.fields.productType?.kind === "VALUE"
+        ? String(state.fields.productType.value)
+        : "") ||
+        (state.understanding.requestSubject.name?.value
+          ? String(state.understanding.requestSubject.name.value)
+          : ""),
+    );
+    if (hint) {
+      const kids = getCategoryChildren(state.categoryId);
+      const match = kids.find((k) => {
+        const lab = fold(k.label);
+        return lab === hint || hint.includes(lab) || lab.includes(hint);
+      });
+      if (match) {
+        path.push(step(match.id, match.kind, match.label));
+      }
+    }
   }
   if (state.taxonomyNodeId) {
     const node = getTaxonomyNode(state.taxonomyNodeId);
     if (node) {
-      path.push(step(node.id, String(node.nodeType), node.canonicalName));
+      const chain = [];
+      let cur = node;
+      while (
+        cur &&
+        cur.nodeType !== "CATEGORY" &&
+        cur.nodeType !== "SUBCATEGORY"
+      ) {
+        chain.unshift(cur);
+        const parent = cur.parentId ? getTaxonomyNode(cur.parentId) : null;
+        if (
+          !parent ||
+          parent.nodeType === "CATEGORY" ||
+          parent.nodeType === "SUBCATEGORY"
+        ) {
+          break;
+        }
+        cur = parent;
+      }
+      for (const n of chain) {
+        path.push(
+          step(
+            n.id,
+            String(n.nodeType).toLowerCase(),
+            n.canonicalName,
+            n.id,
+          ),
+        );
+      }
     }
   }
   if (state.fields.brand?.kind === "ANY") {
     path.push(step("any:brand", "brand", "Farketmez"));
   } else if (state.fields.brand?.kind === "VALUE" && state.fields.brand.value) {
-    path.push(
-      step(
-        `browse:brand:${toSlug(state.fields.brand.value)}`,
-        "brand",
-        state.fields.brand.value,
-      ),
+    const brand = String(state.fields.brand.value);
+    const productHint = fold(
+      (state.fields.productType?.kind === "VALUE"
+        ? String(state.fields.productType.value)
+        : "") ||
+        (state.understanding.requestSubject.name?.value
+          ? String(state.understanding.requestSubject.name.value)
+          : ""),
     );
+    const brandFold = fold(brand);
+    const brandIsProductToken =
+      Boolean(productHint) &&
+      (productHint === brandFold ||
+        productHint.split(/\s+/).includes(brandFold));
+    if (!brandIsProductToken) {
+      path.push(
+        step(`browse:brand:${toSlug(brand)}`, "brand", brand),
+      );
+    }
   }
   return path;
 }
@@ -678,18 +737,30 @@ export function resolveBrowsePath(
       : "";
   const raw = fold(state.understanding.rawInput ?? "");
 
+  const domain =
+    state.categoryId ?? state.understanding.category.value ?? null;
+  const nonAutomotiveDomain = new Set([
+    "appliances",
+    "furniture",
+    "technology",
+    "real-estate",
+    "machinery",
+    "printing",
+    "health",
+    "baby",
+    "home-kitchen",
+    "services",
+  ]);
+  const subject = state.understanding.requestSubject.kind.value;
   if (
-    state.categoryId === "automotive" ||
-    state.understanding.requestSubject.kind.value === "PART" ||
-    state.understanding.category.value === "automotive"
+    domain === "automotive" ||
+    ((subject === "PART" || subject === "ACCESSORY") &&
+      !nonAutomotiveDomain.has(domain ?? ""))
   ) {
     return automotiveBrowsePath(state);
   }
 
-  if (
-    state.categoryId === "real-estate" ||
-    state.understanding.category.value === "real-estate"
-  ) {
+  if (domain === "real-estate") {
     return realEstateBrowsePath(state);
   }
 

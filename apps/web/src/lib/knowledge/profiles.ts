@@ -402,6 +402,12 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
   ),
   override(
     "furniture",
+    "Ofis Mobilyaları",
+    { capabilities: ["ATTRIBUTE_SCHEMA"], externalPolicy: "DISABLED" },
+    FURNITURE,
+  ),
+  override(
+    "furniture",
     "Kafe ve Restoran",
     { capabilities: ["ATTRIBUTE_SCHEMA"], externalPolicy: "DISABLED" },
     FURNITURE,
@@ -413,15 +419,15 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
     "technology",
     "Donanım",
     {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
+      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC", "ATTRIBUTE_SCHEMA"],
       externalPolicy: "SELECTIVE",
+      // Group → product type → brand (sahibinden-style), not brand-first
       browseHierarchy: [
         "category",
         "subcategory",
+        "group",
+        "product_type",
         "brand",
-        "product_family",
-        "model",
-        "variant",
       ],
     },
     TECHNOLOGY,
@@ -476,51 +482,34 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
       ),
   ),
 
-  // Appliances — family scoped
+  // Appliances — sahibinden-style pillars (sub → product)
   override(
     "appliances",
-    "Buzdolabı",
+    "Küçük Ev Aletleri",
     {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
+      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC", "ATTRIBUTE_SCHEMA"],
       externalPolicy: "SELECTIVE",
-      notes: "Ingest only refrigerator family under brand.",
+      browseHierarchy: ["category", "subcategory", "product_type"],
     },
     APPLIANCES,
   ),
   override(
     "appliances",
-    "Çamaşır Makinesi",
+    "Beyaz Eşya",
     {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
+      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC", "ATTRIBUTE_SCHEMA"],
       externalPolicy: "SELECTIVE",
+      browseHierarchy: ["category", "subcategory", "product_type"],
     },
     APPLIANCES,
   ),
   override(
     "appliances",
-    "Bulaşık Makinesi",
+    "Isıtma, Soğutma ve Havalandırma",
     {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
+      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC", "ATTRIBUTE_SCHEMA"],
       externalPolicy: "SELECTIVE",
-    },
-    APPLIANCES,
-  ),
-  override(
-    "appliances",
-    "Fırın / Ocak",
-    {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
-      externalPolicy: "SELECTIVE",
-      notes: "Built-in kitchen appliances — ENTITY_CATALOG + ENTITY_SPEC.",
-    },
-    APPLIANCES,
-  ),
-  override(
-    "appliances",
-    "Klima",
-    {
-      capabilities: ["ENTITY_CATALOG", "ENTITY_SPEC"],
-      externalPolicy: "SELECTIVE",
+      browseHierarchy: ["category", "subcategory", "product_type"],
     },
     APPLIANCES,
   ),

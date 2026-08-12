@@ -350,7 +350,21 @@ function composeRealEstate(state: CanonicalRequestState): string {
   return bits.join(" ").replace(/\s+/g, " ").trim() + ".";
 }
 
+function composeDomainId(state: CanonicalRequestState): string | null {
+  return state.categoryId ?? state.understanding.category.value ?? null;
+}
+
+function isIntentVerbToken(value: string | null): boolean {
+  if (!value) return false;
+  const fold = value.toLocaleLowerCase("tr-TR");
+  return /^(yapt[iı]rmak|yapt[iı]rma|istiyorum|arıyorum|ariyorum|laz[iı]m|bak[iı]yorum|almak|satmak)$/i.test(
+    fold.trim(),
+  );
+}
+
 function isFurniture(state: CanonicalRequestState): boolean {
+  const domain = composeDomainId(state);
+  if (domain && domain !== "furniture") return false;
   return (
     state.categoryId === "furniture" ||
     state.understanding.category.value === "furniture" ||
@@ -383,6 +397,8 @@ function composeFurniture(state: CanonicalRequestState): string {
 }
 
 function isAppliances(state: CanonicalRequestState): boolean {
+  const domain = composeDomainId(state);
+  if (domain && domain !== "appliances") return false;
   return (
     state.categoryId === "appliances" ||
     state.understanding.category.value === "appliances" ||
@@ -440,15 +456,29 @@ function composeAppliances(state: CanonicalRequestState): string {
 
 function composeGeneric(state: CanonicalRequestState): string {
   const bits: string[] = [];
-  const brand = fieldValue(state, "brand");
-  if (fieldAny(state, "brand")) bits.push("marka fark etmez");
-  else if (brand) bits.push(brand);
-  const model = fieldValue(state, "model");
-  if (model) bits.push(model);
-  appendExclusionBits(bits, state, ["brand", "model"]);
-  const furnitureType = fieldValue(state, "furnitureType");
-  if (furnitureType) bits.push(furnitureType);
   const product = fieldValue(state, "productType");
+  const furnitureType = fieldValue(state, "furnitureType");
+  const brand = fieldValue(state, "brand");
+  const model = fieldValue(state, "model");
+  const productFold = (product ?? "").toLocaleLowerCase("tr-TR");
+  const brandFold = (brand ?? "").toLocaleLowerCase("tr-TR");
+
+  if (fieldAny(state, "brand")) bits.push("marka fark etmez");
+  else if (
+    brand &&
+    (!productFold ||
+      (brandFold !== productFold && !productFold.includes(brandFold)))
+  ) {
+    bits.push(brand);
+  }
+  if (model && !isIntentVerbToken(model) && model !== product) {
+    const modelFold = model.toLocaleLowerCase("tr-TR");
+    if (!productFold.includes(modelFold) && brandFold !== modelFold) {
+      bits.push(model);
+    }
+  }
+  appendExclusionBits(bits, state, ["brand", "model"]);
+  if (furnitureType) bits.push(furnitureType);
   if (product && product !== furnitureType) bits.push(product);
   const condition = fieldValue(state, "condition");
   if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
@@ -526,10 +556,7 @@ function composeNaturalRequestTextCore(
 
   if (isAutoPart(state)) return composeAutoPart(state);
   if (isAutoVehicle(state)) return composeAutoVehicle(state);
-  if (
-    state.categoryId === "real-estate" ||
-    state.understanding.category.value === "real-estate"
-  ) {
+  if (composeDomainId(state) === "real-estate") {
     return composeRealEstate(state);
   }
   if (isFurniture(state)) return composeFurniture(state);

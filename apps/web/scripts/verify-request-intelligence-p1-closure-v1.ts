@@ -493,6 +493,26 @@ runCase({
   input: "2022 üstü c200",
   brandNot: "2022",
 });
+runCase({
+  id: 28,
+  input: "e-ticaret sitesi arıyorum",
+  category: "technology",
+});
+{
+  const s = snapshot("e-ticaret sitesi arıyorum");
+  check(
+    "#28 canonical categoryId technology",
+    s.state.categoryId === "technology",
+    s.state.categoryId ?? "",
+  );
+  check(
+    "#28 compose not real-estate",
+    !fold(s.text).includes("konut") &&
+      !fold(s.text).includes("daire") &&
+      !fold(s.text).includes("satılık"),
+    s.text,
+  );
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 if (errors.length) {

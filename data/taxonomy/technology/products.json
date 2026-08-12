@@ -385,9 +385,9 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:technology:donanim:telefon-ve-tablet",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar",
       "parentId": "tax:technology:donanim",
-      "canonicalName": "Telefon ve tablet",
+      "canonicalName": "Cep Telefonu & Aksesuar",
       "nodeType": "GROUP",
       "categoryId": "technology",
       "subcategoryId": "donanim",
@@ -402,10 +402,12 @@
       "aliases": [
         "telefon",
         "cep telefonu",
+        "akıllı telefon",
+        "akilli telefon",
         "smartphone"
       ],
       "searchTerms": [
-        "Akıllı telefon"
+        "Cep Telefonu"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -413,9 +415,9 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:technology:donanim:telefon-ve-tablet:akilli-telefon",
-      "parentId": "tax:technology:donanim:telefon-ve-tablet",
-      "canonicalName": "Akıllı telefon",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:cep-telefonu",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Cep Telefonu",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "technology",
       "subcategoryId": "donanim",
@@ -439,8 +441,8 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:technology:donanim:telefon-ve-tablet:tablet",
-      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:tablet",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
       "canonicalName": "Tablet",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "technology",
@@ -454,7 +456,8 @@
     },
     {
       "aliases": [
-        "smartwatch"
+        "smartwatch",
+        "giyilebilir"
       ],
       "searchTerms": [
         "Akıllı saat"
@@ -465,8 +468,8 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:technology:donanim:telefon-ve-tablet:akilli-saat",
-      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:akilli-saat",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
       "canonicalName": "Akıllı saat",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "technology",
@@ -491,8 +494,8 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:technology:donanim:telefon-ve-tablet:kulaklik-tws",
-      "parentId": "tax:technology:donanim:telefon-ve-tablet",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:kulaklik-tws",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
       "canonicalName": "Kulaklık / TWS",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "technology",
@@ -529,7 +532,9 @@
     {
       "aliases": [
         "laptop",
-        "notebook"
+        "notebook",
+        "dizüstü",
+        "dizustu"
       ],
       "searchTerms": [
         "Dizüstü bilgisayar"
@@ -683,7 +688,8 @@
     {
       "aliases": [
         "TV",
-        "smart tv"
+        "smart tv",
+        "televizyon"
       ],
       "searchTerms": [
         "Televizyon"

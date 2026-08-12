@@ -27,6 +27,2356 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
+      "id": "tax:furniture:ev-mobilyasi",
+      "parentId": "tax:furniture",
+      "canonicalName": "Ev Mobilyası",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 1,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [
+        "oturma odası",
+        "salon",
+        "oturma grubu"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Oturma Odası & Salon",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "berjer",
+        "tekli koltuk"
+      ],
+      "searchTerms": [
+        "Berjer, Tekli Koltuk"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:berjer-tekli-koltuk",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Berjer, Tekli Koltuk",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çekyat",
+        "kanepe",
+        "kanepe takımı"
+      ],
+      "searchTerms": [
+        "Çekyat, Kanepe"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:cekyat-kanepe",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Çekyat, Kanepe",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "josefin",
+        "chaise"
+      ],
+      "searchTerms": [
+        "Josefin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:josefin",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Josefin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "koltuk takımı",
+        "kanepe takımı"
+      ],
+      "searchTerms": [
+        "Koltuk Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:koltuk-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Koltuk Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "köşe koltuk",
+        "L koltuk"
+      ],
+      "searchTerms": [
+        "Köşe Koltuk Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:kose-koltuk-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Köşe Koltuk Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "salon takımı"
+      ],
+      "searchTerms": [
+        "Salon Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:salon-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "Salon Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tv koltuğu"
+      ],
+      "searchTerms": [
+        "TV Koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:tv-koltugu",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "TV Koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tv ünitesi",
+        "tv unitesi"
+      ],
+      "searchTerms": [
+        "TV Ünitesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:oturma-odasi-salon:tv-unitesi",
+      "parentId": "tax:furniture:ev-mobilyasi:oturma-odasi-salon",
+      "canonicalName": "TV Ünitesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mutfak mobilyası"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Mutfak",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mutfak masa takımı"
+      ],
+      "searchTerms": [
+        "Masa Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:masa-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Masa Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:mutfak-masasi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Mutfak Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mutfak sandalyesi"
+      ],
+      "searchTerms": [
+        "Sandalye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:sandalye",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Sandalye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tabure"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:tabure",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Tabure",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:mutfak-dolabi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Mutfak Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "hazır mutfak",
+        "mutfak dolabı takımı"
+      ],
+      "searchTerms": [
+        "Hazır Mutfak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:hazir-mutfak",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Hazır Mutfak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Erzak Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:erzak-dolabi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Erzak Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kiler Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:kiler-dolabi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Kiler Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ekmek Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:ekmek-dolabi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Ekmek Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fırın Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:firin-dolabi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Fırın Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kahve Köşesi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:kahve-kosesi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Kahve Köşesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "raf",
+        "terek"
+      ],
+      "searchTerms": [
+        "Raf & Terek"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:raf-terek",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Raf & Terek",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "mutfak köşe takımı"
+      ],
+      "searchTerms": [
+        "Köşe Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:kose-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Köşe Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Servis Arabası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:servis-arabasi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Servis Arabası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yer Sofrası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:mutfak:yer-sofrasi",
+      "parentId": "tax:furniture:ev-mobilyasi:mutfak",
+      "canonicalName": "Yer Sofrası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yemek odası"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Yemek Odası",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "büfe",
+        "vitrin"
+      ],
+      "searchTerms": [
+        "Büfe & Vitrin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:bufe-vitrin",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Büfe & Vitrin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gümüşlük"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:gumusluk",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Gümüşlük",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Konsol"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:konsol",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Konsol",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yemek masası"
+      ],
+      "searchTerms": [
+        "Masa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:masa",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Masa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yemek sandalyesi"
+      ],
+      "searchTerms": [
+        "Sandalye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:sandalye",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Sandalye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şaraplık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:saraplik",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Şaraplık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yemek odası takımı"
+      ],
+      "searchTerms": [
+        "Yemek Odası Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:yemek-odasi-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
+      "canonicalName": "Yemek Odası Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yatak odası"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Yatak Odası",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yatak odası takımı"
+      ],
+      "searchTerms": [
+        "Yatak Odası Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yatak-odasi-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Yatak Odası Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Baza"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:baza",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Baza",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yatak / baza"
+      ],
+      "searchTerms": [
+        "Yatak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yatak",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Yatak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karyola"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:karyola",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Karyola",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "gardrop",
+        "dolap",
+        "gardırop"
+      ],
+      "searchTerms": [
+        "Gardırop"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:gardirop",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Gardırop",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şifonyer"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:sifonyer",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Şifonyer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Komodin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:komodin",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Komodin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "makyaj masası",
+        "toiret"
+      ],
+      "searchTerms": [
+        "Makyaj Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:makyaj-masasi",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Makyaj Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Etajer"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:etajer",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Etajer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çocuk odası",
+        "genç odası",
+        "cocuk odasi"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Çocuk & Genç Odası",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Arabalı Yatak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:arabali-yatak",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Arabalı Yatak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:bilgisayar-masasi",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Bilgisayar Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "calisma masasi"
+      ],
+      "searchTerms": [
+        "Çalışma Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:calisma-masasi",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Çalışma Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dolap"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:dolap",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Dolap",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "karyola",
+        "yatak"
+      ],
+      "searchTerms": [
+        "Karyola & Yatak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:karyola-yatak",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Karyola & Yatak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kitaplik"
+      ],
+      "searchTerms": [
+        "Kitaplık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:kitaplik",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Kitaplık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koltuk"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:koltuk",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Koltuk",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Komodin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:komodin",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Komodin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ranza"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:ranza",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Ranza",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sandalye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:sandalye",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Sandalye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şifonyer"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:sifonyer",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Şifonyer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çocuk odası takımı"
+      ],
+      "searchTerms": [
+        "Çocuk Odası Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:cocuk-odasi-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Çocuk Odası Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "genç odası takımı"
+      ],
+      "searchTerms": [
+        "Genç Odası Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:genc-odasi-takimi",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Genç Odası Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tamamlayıcı",
+        "antre"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Tamamlayıcı Ürünler",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "antre mobilyası",
+        "vestiyer"
+      ],
+      "searchTerms": [
+        "Antre"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:antre",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Antre",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tamamlayıcı oturma"
+      ],
+      "searchTerms": [
+        "Oturma Odası & Salon"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:oturma-odasi-salon",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Oturma Odası & Salon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tamamlayıcı yatak odası"
+      ],
+      "searchTerms": [
+        "Yatak Odası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:yatak-odasi",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Yatak Odası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari",
+      "parentId": "tax:furniture",
+      "canonicalName": "Ofis Mobilyaları",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 1,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [
+        "ofis aksesuar"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Aksesuar",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Askılık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:askilik",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Askılık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "küllük"
+      ],
+      "searchTerms": [
+        "Ayaklı Küllük"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:ayakli-kulluk",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Ayaklı Küllük",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "cop kutusu"
+      ],
+      "searchTerms": [
+        "Çöp Kutusu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:cop-kutusu",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Çöp Kutusu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "dilsiz usak"
+      ],
+      "searchTerms": [
+        "Dilsiz Uşak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:dilsiz-usak",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Dilsiz Uşak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Paspas"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:paspas",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Paspas",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "diğer",
+        "diger"
+      ],
+      "searchTerms": [
+        "Diğer Ürünler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:diger-urunler",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Diğer Ürünler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ofis dolabı",
+        "ofis dolabi"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Dolaplar",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anahtar Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:anahtar-dolabi",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Anahtar Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "dosya dolabi"
+      ],
+      "searchTerms": [
+        "Dosya Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:dosya-dolabi",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Dosya Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ecza Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:ecza-dolabi",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Ecza Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "emanet dolabi",
+        "locker"
+      ],
+      "searchTerms": [
+        "Emanet Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:emanet-dolabi",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Emanet Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kartoteks"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:kartoteks",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Kartoteks",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "keson dolap"
+      ],
+      "searchTerms": [
+        "Keson"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:keson",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Keson",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kitaplik",
+        "kitaplık"
+      ],
+      "searchTerms": [
+        "Kütüphane"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:kutuphane",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Kütüphane",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "raf sistemi"
+      ],
+      "searchTerms": [
+        "Raf"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:raf",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Raf",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "soyunma dolabi"
+      ],
+      "searchTerms": [
+        "Soyunma Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:soyunma-dolabi",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Soyunma Dolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vitrin"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dolaplar:vitrin",
+      "parentId": "tax:furniture:ofis-mobilyalari:dolaplar",
+      "canonicalName": "Vitrin",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ofis masası",
+        "ofis masasi"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Masalar",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "calisma masasi",
+        "desk"
+      ],
+      "searchTerms": [
+        "Çalışma Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:calisma-masasi",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Çalışma Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çoklu masa",
+        "bench"
+      ],
+      "searchTerms": [
+        "Çoklu Çalışma Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:coklu-calisma-masasi",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Çoklu Çalışma Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "toplantı masasi"
+      ],
+      "searchTerms": [
+        "Toplantı Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:toplanti-masasi",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Toplantı Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:bilgisayar-masasi",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Bilgisayar Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sehpa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:sehpa",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Sehpa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "resepsiyon bankosu"
+      ],
+      "searchTerms": [
+        "Banko"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:banko",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Banko",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "çizim masasi"
+      ],
+      "searchTerms": [
+        "Çizim Masası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:masalar:cizim-masasi",
+      "parentId": "tax:furniture:ofis-mobilyalari:masalar",
+      "canonicalName": "Çizim Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ofis oturma",
+        "ofis koltuk"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Oturma Grubu",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bekleme koltugu",
+        "waiting chair"
+      ],
+      "searchTerms": [
+        "Bekleme Koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:bekleme-koltugu",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Bekleme Koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kolcakli sandalye"
+      ],
+      "searchTerms": [
+        "Kolçaklı Sandalye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:kolcakli-sandalye",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Kolçaklı Sandalye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ofis koltuk takimi"
+      ],
+      "searchTerms": [
+        "Ofis Koltuk Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:ofis-koltuk-takimi",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Ofis Koltuk Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "personel koltuğu",
+        "ofis koltuğu",
+        "task chair"
+      ],
+      "searchTerms": [
+        "Personel & Ofis Koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:personel-ofis-koltugu",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Personel & Ofis Koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Puf"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:puf",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Puf",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sandalye"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:sandalye",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Sandalye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sedir"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:sedir",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Sedir",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tabure"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:tabure",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Tabure",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yonetici koltugu",
+        "makam koltuğu",
+        "executive chair"
+      ],
+      "searchTerms": [
+        "Yönetici Koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:oturma-grubu:yonetici-koltugu",
+      "parentId": "tax:furniture:ofis-mobilyalari:oturma-grubu",
+      "canonicalName": "Yönetici Koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "makam takımı",
+        "yönetici oda takımı"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:makam-oda-takimi",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Makam Oda Takımı",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "makam takımı"
+      ],
+      "searchTerms": [
+        "Makam Oda Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:makam-oda-takimi:makam-oda-takimi",
+      "parentId": "tax:furniture:ofis-mobilyalari:makam-oda-takimi",
+      "canonicalName": "Makam Oda Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
       "id": "tax:furniture:ofis-sandalyesi",
       "parentId": "tax:furniture",
       "canonicalName": "Ofis Sandalyesi",
@@ -681,379 +3031,6 @@
       "subcategoryId": "toplanti-masasi",
       "depth": 3,
       "requestSchemaId": "furniture/toplanti-masasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi",
-      "parentId": "tax:furniture",
-      "canonicalName": "Ev Mobilyası",
-      "nodeType": "SUBCATEGORY",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 1,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "parentId": "tax:furniture:ev-mobilyasi",
-      "canonicalName": "Oturma grubu",
-      "nodeType": "GROUP",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 2,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "kanepe takımı"
-      ],
-      "searchTerms": [
-        "Koltuk takımı"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu:koltuk-takimi",
-      "parentId": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "canonicalName": "Koltuk takımı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "L koltuk"
-      ],
-      "searchTerms": [
-        "Köşe koltuk"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu:kose-koltuk",
-      "parentId": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "canonicalName": "Köşe koltuk",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Berjer"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu:berjer",
-      "parentId": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "canonicalName": "Berjer",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "TV ünitesi"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu:tv-unitesi",
-      "parentId": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "canonicalName": "TV ünitesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Sehpa / orta sehpa"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:oturma-grubu:sehpa-orta-sehpa",
-      "parentId": "tax:furniture:ev-mobilyasi:oturma-grubu",
-      "canonicalName": "Sehpa / orta sehpa",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yatak-odasi",
-      "parentId": "tax:furniture:ev-mobilyasi",
-      "canonicalName": "Yatak odası",
-      "nodeType": "GROUP",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 2,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "karyola"
-      ],
-      "searchTerms": [
-        "Yatak / baza"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yatak-baza",
-      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
-      "canonicalName": "Yatak / baza",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "dolap"
-      ],
-      "searchTerms": [
-        "Gardrop"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:gardrop",
-      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
-      "canonicalName": "Gardrop",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Şifonyer"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:sifonyer",
-      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
-      "canonicalName": "Şifonyer",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Komodin"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:komodin",
-      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
-      "canonicalName": "Komodin",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yemek-odasi",
-      "parentId": "tax:furniture:ev-mobilyasi",
-      "canonicalName": "Yemek odası",
-      "nodeType": "GROUP",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 2,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Yemek masası"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:yemek-masasi",
-      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
-      "canonicalName": "Yemek masası",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Yemek sandalyesi"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:yemek-sandalyesi",
-      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
-      "canonicalName": "Yemek sandalyesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Konsol"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:konsol",
-      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
-      "canonicalName": "Konsol",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Büfe"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ev-mobilyasi:yemek-odasi:bufe",
-      "parentId": "tax:furniture:ev-mobilyasi:yemek-odasi",
-      "canonicalName": "Büfe",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ev-mobilyasi",
-      "depth": 3,
-      "requestSchemaId": "furniture/ev-mobilyasi",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"

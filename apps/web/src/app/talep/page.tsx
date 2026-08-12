@@ -284,19 +284,26 @@ function TalepOlusturForm() {
 
   /**
    * CATEGORY_HINT (URL soft) ≠ USER_CATEGORY_OVERRIDE ≠ CANONICAL_CATEGORY
-   * Priority: locked Step-2 select > detector CONFIDENT/TENTATIVE > hybrid SoT >
-   * soft URL hint only when detector has no value > provisional schema
+   * Priority: locked Step-2 select > detector CONFIDENT > hybrid canonical >
+   * detector TENTATIVE > soft URL hint > provisional schema.
+   * TENTATIVE must not override a resolved canonical categoryId (e.g. web
+   * service leaf vs a weak real-estate "site" substring).
    */
   const activeCategoryId = (() => {
     if (categoryLockedByUser && categoryOverride) return categoryOverride;
     if (
-      (understanding.category.status === "CONFIDENT" ||
-        understanding.category.status === "TENTATIVE") &&
+      understanding.category.status === "CONFIDENT" &&
       understanding.category.value
     ) {
       return understanding.category.value;
     }
     if (hybrid.state?.categoryId) return hybrid.state.categoryId;
+    if (
+      understanding.category.status === "TENTATIVE" &&
+      understanding.category.value
+    ) {
+      return understanding.category.value;
+    }
     if (categoryOverride && !understanding.category.value) {
       return categoryOverride;
     }

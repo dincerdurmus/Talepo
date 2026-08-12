@@ -31,35 +31,872 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:buzdolabi",
+      "id": "tax:appliances:kucuk-ev-aletleri",
       "parentId": "tax:appliances",
+      "canonicalName": "Küçük Ev Aletleri",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 1,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [
+        "baskül",
+        "tartı"
+      ],
+      "searchTerms": [
+        "Baskül & Tartı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:baskul-tarti",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Baskül & Tartı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Blender"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:blender",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Blender",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buharlı Pişirici"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:buharli-pisirici",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Buharlı Pişirici",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buharlı Temizlik Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:buharli-temizlik-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Buharlı Temizlik Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buz Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:buz-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Buz Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Cam Silme Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:cam-silme-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Cam Silme Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çay Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:cay-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Çay Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "dikey süpürge",
+        "şarjlı süpürge"
+      ],
+      "searchTerms": [
+        "Dikey & Şarjlı Süpürge"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:dikey-sarjli-supurge",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Dikey & Şarjlı Süpürge",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dikiş Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:dikis-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Dikiş Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tost makinesi ekmek",
+        "toaster"
+      ],
+      "searchTerms": [
+        "Ekmek Kızartma Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ekmek-kizartma-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Ekmek Kızartma Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ekmek Yapma Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ekmek-yapma-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Ekmek Yapma Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Izgara"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:elektrikli-izgara",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Elektrikli Izgara",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "süpürge",
+        "supurge",
+        "vacuum"
+      ],
+      "searchTerms": [
+        "Elektrikli Süpürge"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:elektrikli-supurge",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Elektrikli Süpürge",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "airfryer",
+        "fritöz"
+      ],
+      "searchTerms": [
+        "Fritöz & Airfryer"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:fritoz-airfryer",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Fritöz & Airfryer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Halı Yıkama Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:hali-yikama-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Halı Yıkama Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kahve"
+      ],
+      "searchTerms": [
+        "Kahve Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:kahve-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Kahve Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "blender juicer",
+        "juicer"
+      ],
+      "searchTerms": [
+        "Katı Meyve Sıkacağı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:kati-meyve-sikacagi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Katı Meyve Sıkacağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kıyma Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:kiyma-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Kıyma Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mikser"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:mikser",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Mikser",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Robotu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:mutfak-robotu",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Mutfak Robotu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "robot süpürge",
+        "roborock"
+      ],
+      "searchTerms": [
+        "Robot Süpürge"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:robot-supurge",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Robot Süpürge",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "doğrayıcı"
+      ],
+      "searchTerms": [
+        "Rondo"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:rondo",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Rondo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "kettle",
+        "kettle su"
+      ],
+      "searchTerms": [
+        "Su Isıtıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:su-isitici",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Su Isıtıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tost"
+      ],
+      "searchTerms": [
+        "Tost Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:tost-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Tost Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "utu"
+      ],
+      "searchTerms": [
+        "Ütü"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:utu",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Ütü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ütü Masası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:utu-masasi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Ütü Masası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Waffle Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:waffle-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Waffle Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yoğurt Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:yogurt-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Yoğurt Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "yedek parça"
+      ],
+      "searchTerms": [
+        "Yedek Parça & Ekipman"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:yedek-parca-ekipman",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Yedek Parça & Ekipman",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya",
+      "parentId": "tax:appliances",
+      "canonicalName": "Beyaz Eşya",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 1,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [
+        "ankastre"
+      ],
+      "searchTerms": [
+        "Ankastre Set"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:ankastre-set",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Ankastre Set",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "davlumbaz",
+        "aspiratör"
+      ],
+      "searchTerms": [
+        "Aspiratör & Davlumbaz"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:aspirator-davlumbaz",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Aspiratör & Davlumbaz",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "bulaşık",
+        "bulasik makinesi"
+      ],
+      "searchTerms": [
+        "Bulaşık Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:bulasik-makinesi",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Bulaşık Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "buzdolabi",
+        "fridge"
+      ],
+      "searchTerms": [
+        "Buzdolabı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:buzdolabi",
+      "parentId": "tax:appliances:beyaz-esya",
       "canonicalName": "Buzdolabı",
-      "nodeType": "SUBCATEGORY",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 1,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "parentId": "tax:appliances:buzdolabi",
-      "canonicalName": "Buzdolabı tipleri",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/buzdolabi",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -67,10 +904,11 @@
     },
     {
       "aliases": [
-        "nofrost"
+        "çamaşır",
+        "camasir makinesi"
       ],
       "searchTerms": [
-        "No-Frost buzdolabı"
+        "Çamaşır Makinesi"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -78,349 +916,14 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:no-frost-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "No-Frost buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Low-Frost buzdolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:low-frost-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "Low-Frost buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Statik buzdolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:statik-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "Statik buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "çift kapı üstten"
-      ],
-      "searchTerms": [
-        "French door buzdolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:french-door-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "French door buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "amerikan tipi"
-      ],
-      "searchTerms": [
-        "Side-by-side buzdolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:side-by-side-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "Side-by-side buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "mini fridge"
-      ],
-      "searchTerms": [
-        "Mini bar / mini buzdolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:mini-bar-mini-buzdolabi",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "Mini bar / mini buzdolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "freezer",
-        "sandık tipi dondurucu"
-      ],
-      "searchTerms": [
-        "Derin dondurucu"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:buzdolabi-tipleri:derin-dondurucu",
-      "parentId": "tax:appliances:buzdolabi:buzdolabi-tipleri",
-      "canonicalName": "Derin dondurucu",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "parentId": "tax:appliances:buzdolabi",
-      "canonicalName": "Yedek parça grupları",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 2,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Kompresör"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari:kompresor",
-      "parentId": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "canonicalName": "Kompresör",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Termostat"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari:termostat",
-      "parentId": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "canonicalName": "Termostat",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Fan motoru"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari:fan-motoru",
-      "parentId": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "canonicalName": "Fan motoru",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "conta"
-      ],
-      "searchTerms": [
-        "Kapı contası"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari:kapi-contasi",
-      "parentId": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "canonicalName": "Kapı contası",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Raf / çekmece"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:buzdolabi:yedek-parca-gruplari:raf-cekmece",
-      "parentId": "tax:appliances:buzdolabi:yedek-parca-gruplari",
-      "canonicalName": "Raf / çekmece",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "buzdolabi",
-      "depth": 3,
-      "requestSchemaId": "appliances/buzdolabi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi",
-      "parentId": "tax:appliances",
+      "id": "tax:appliances:beyaz-esya:camasir-makinesi",
+      "parentId": "tax:appliances:beyaz-esya",
       "canonicalName": "Çamaşır Makinesi",
-      "nodeType": "SUBCATEGORY",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 1,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:tipler",
-      "parentId": "tax:appliances:camasir-makinesi",
-      "canonicalName": "Tipler",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/camasir-makinesi",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -428,88 +931,11 @@
     },
     {
       "aliases": [
-        "front load"
-      ],
-      "searchTerms": [
-        "Önden yüklemeli çamaşır makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:tipler:onden-yuklemeli-camasir-makinesi",
-      "parentId": "tax:appliances:camasir-makinesi:tipler",
-      "canonicalName": "Önden yüklemeli çamaşır makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "top load"
-      ],
-      "searchTerms": [
-        "Üstten yüklemeli çamaşır makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:tipler:ustten-yuklemeli-camasir-makinesi",
-      "parentId": "tax:appliances:camasir-makinesi:tipler",
-      "canonicalName": "Üstten yüklemeli çamaşır makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "washer dryer"
-      ],
-      "searchTerms": [
-        "Kurutmalı çamaşır makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:tipler:kurutmali-camasir-makinesi",
-      "parentId": "tax:appliances:camasir-makinesi:tipler",
-      "canonicalName": "Kurutmalı çamaşır makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
+        "kurutma makinesi",
         "dryer"
       ],
       "searchTerms": [
-        "Çamaşır kurutma makinesi"
+        "Çamaşır Kurutma Makinesi"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -517,194 +943,14 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:camasir-makinesi:tipler:camasir-kurutma-makinesi",
-      "parentId": "tax:appliances:camasir-makinesi:tipler",
-      "canonicalName": "Çamaşır kurutma makinesi",
+      "id": "tax:appliances:beyaz-esya:camasir-kurutma-makinesi",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Çamaşır Kurutma Makinesi",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca",
-      "parentId": "tax:appliances:camasir-makinesi",
-      "canonicalName": "Yedek parça",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Pompa"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca:pompa",
-      "parentId": "tax:appliances:camasir-makinesi:yedek-parca",
-      "canonicalName": "Pompa",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Amortisör"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca:amortisor",
-      "parentId": "tax:appliances:camasir-makinesi:yedek-parca",
-      "canonicalName": "Amortisör",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Kayış"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca:kayis",
-      "parentId": "tax:appliances:camasir-makinesi:yedek-parca",
-      "canonicalName": "Kayış",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Kapı kilidi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca:kapi-kilidi",
-      "parentId": "tax:appliances:camasir-makinesi:yedek-parca",
-      "canonicalName": "Kapı kilidi",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Isıtıcı rezistans"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:camasir-makinesi:yedek-parca:isitici-rezistans",
-      "parentId": "tax:appliances:camasir-makinesi:yedek-parca",
-      "canonicalName": "Isıtıcı rezistans",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "camasir-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/camasir-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi",
-      "parentId": "tax:appliances",
-      "canonicalName": "Bulaşık Makinesi",
-      "nodeType": "SUBCATEGORY",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 1,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:tipler",
-      "parentId": "tax:appliances:bulasik-makinesi",
-      "canonicalName": "Tipler",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 2,
-      "requestSchemaId": "appliances/bulasik-makinesi",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -712,10 +958,11 @@
     },
     {
       "aliases": [
-        "built-in"
+        "dondurucu",
+        "freezer"
       ],
       "searchTerms": [
-        "Ankastre bulaşık makinesi"
+        "Derin Dondurucu"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -723,247 +970,41 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:tipler:ankastre-bulasik-makinesi",
-      "parentId": "tax:appliances:bulasik-makinesi:tipler",
-      "canonicalName": "Ankastre bulaşık makinesi",
+      "id": "tax:appliances:beyaz-esya:derin-dondurucu",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Derin Dondurucu",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "freestanding"
-      ],
-      "searchTerms": [
-        "Solo bulaşık makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:tipler:solo-bulasik-makinesi",
-      "parentId": "tax:appliances:bulasik-makinesi:tipler",
-      "canonicalName": "Solo bulaşık makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Yarı ankastre bulaşık makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:tipler:yari-ankastre-bulasik-makinesi",
-      "parentId": "tax:appliances:bulasik-makinesi:tipler",
-      "canonicalName": "Yarı ankastre bulaşık makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "compact"
-      ],
-      "searchTerms": [
-        "Tezgah üstü bulaşık makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:tipler:tezgah-ustu-bulasik-makinesi",
-      "parentId": "tax:appliances:bulasik-makinesi:tipler",
-      "canonicalName": "Tezgah üstü bulaşık makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:yedek-parca",
-      "parentId": "tax:appliances:bulasik-makinesi",
-      "canonicalName": "Yedek parça",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/bulasik-makinesi",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "firin",
+        "ankastre fırın"
+      ],
       "searchTerms": [
-        "Yıkama kolu"
+        "Fırın"
       ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:yedek-parca:yikama-kolu",
-      "parentId": "tax:appliances:bulasik-makinesi:yedek-parca",
-      "canonicalName": "Yıkama kolu",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Pompa"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:yedek-parca:pompa",
-      "parentId": "tax:appliances:bulasik-makinesi:yedek-parca",
-      "canonicalName": "Pompa",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Kapı menteşesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:yedek-parca:kapi-mentesesi",
-      "parentId": "tax:appliances:bulasik-makinesi:yedek-parca",
-      "canonicalName": "Kapı menteşesi",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Tuz haznesi kapağı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:bulasik-makinesi:yedek-parca:tuz-haznesi-kapagi",
-      "parentId": "tax:appliances:bulasik-makinesi:yedek-parca",
-      "canonicalName": "Tuz haznesi kapağı",
-      "nodeType": "PART_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "bulasik-makinesi",
-      "depth": 3,
-      "requestSchemaId": "appliances/bulasik-makinesi",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:firin-ocak",
-      "parentId": "tax:appliances",
-      "canonicalName": "Fırın / Ocak",
-      "nodeType": "SUBCATEGORY",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 1,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:firin",
-      "parentId": "tax:appliances:firin-ocak",
+      "id": "tax:appliances:beyaz-esya:firin",
+      "parentId": "tax:appliances:beyaz-esya",
       "canonicalName": "Fırın",
-      "nodeType": "GROUP",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/firin-ocak",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -971,60 +1012,11 @@
     },
     {
       "aliases": [
-        "built-in oven"
-      ],
-      "searchTerms": [
-        "Ankastre fırın"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:firin:ankastre-firin",
-      "parentId": "tax:appliances:firin-ocak:firin",
-      "canonicalName": "Ankastre fırın",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Solo fırın"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:firin:solo-firin",
-      "parentId": "tax:appliances:firin-ocak:firin",
-      "canonicalName": "Solo fırın",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
+        "mikrodalga",
         "microwave"
       ],
       "searchTerms": [
-        "Mikrodalga fırın"
+        "Mikrodalga Fırın"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -1032,62 +1024,14 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:firin-ocak:firin:mikrodalga-firin",
-      "parentId": "tax:appliances:firin-ocak:firin",
-      "canonicalName": "Mikrodalga fırın",
+      "id": "tax:appliances:beyaz-esya:mikrodalga-firin",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Mikrodalga Fırın",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "steam oven"
-      ],
-      "searchTerms": [
-        "Buharlı fırın"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:firin:buharli-firin",
-      "parentId": "tax:appliances:firin-ocak:firin",
-      "canonicalName": "Buharlı fırın",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:ocak",
-      "parentId": "tax:appliances:firin-ocak",
-      "canonicalName": "Ocak",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/firin-ocak",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1095,10 +1039,11 @@
     },
     {
       "aliases": [
-        "gaz ocak"
+        "ocak",
+        "set üstü"
       ],
       "searchTerms": [
-        "Ankastre gazlı ocak"
+        "Set Üstü Ocak"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -1106,162 +1051,14 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:firin-ocak:ocak:ankastre-gazli-ocak",
-      "parentId": "tax:appliances:firin-ocak:ocak",
-      "canonicalName": "Ankastre gazlı ocak",
+      "id": "tax:appliances:beyaz-esya:set-ustu-ocak",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Set Üstü Ocak",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "vitroseramik"
-      ],
-      "searchTerms": [
-        "Ankastre elektrikli ocak"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:ocak:ankastre-elektrikli-ocak",
-      "parentId": "tax:appliances:firin-ocak:ocak",
-      "canonicalName": "Ankastre elektrikli ocak",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "induction"
-      ],
-      "searchTerms": [
-        "İndüksiyon ocak"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:ocak:induksiyon-ocak",
-      "parentId": "tax:appliances:firin-ocak:ocak",
-      "canonicalName": "İndüksiyon ocak",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "portable hob"
-      ],
-      "searchTerms": [
-        "Set üstü ocak"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:ocak:set-ustu-ocak",
-      "parentId": "tax:appliances:firin-ocak:ocak",
-      "canonicalName": "Set üstü ocak",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:davlumbaz",
-      "parentId": "tax:appliances:firin-ocak",
-      "canonicalName": "Davlumbaz",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
+      "subcategoryId": "beyaz-esya",
       "depth": 2,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Ada davlumbaz"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:davlumbaz:ada-davlumbaz",
-      "parentId": "tax:appliances:firin-ocak:davlumbaz",
-      "canonicalName": "Ada davlumbaz",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Duvar tipi davlumbaz"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:firin-ocak:davlumbaz:duvar-tipi-davlumbaz",
-      "parentId": "tax:appliances:firin-ocak:davlumbaz",
-      "canonicalName": "Duvar tipi davlumbaz",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1269,10 +1066,10 @@
     },
     {
       "aliases": [
-        "gömme davlumbaz"
+        "su arıtma"
       ],
       "searchTerms": [
-        "Ankastre davlumbaz"
+        "Su Arıtma Cihazı"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -1280,14 +1077,119 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:firin-ocak:davlumbaz:ankastre-davlumbaz",
-      "parentId": "tax:appliances:firin-ocak:davlumbaz",
-      "canonicalName": "Ankastre davlumbaz",
+      "id": "tax:appliances:beyaz-esya:su-aritma-cihazi",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Su Arıtma Cihazı",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "firin-ocak",
-      "depth": 3,
-      "requestSchemaId": "appliances/firin-ocak",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "sebili"
+      ],
+      "searchTerms": [
+        "Su Sebili"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:su-sebili",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Su Sebili",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "şarap dolabı",
+        "sarap dolabi",
+        "wine cooler"
+      ],
+      "searchTerms": [
+        "Şarap Dolabı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:sarap-dolabi",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Şarap Dolabı",
+      "ambiguousAliases": [
+        "şaraplık"
+      ],
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yedek Parça & Ekipman"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:yedek-parca-ekipman",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Yedek Parça & Ekipman",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Toplu Satış"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:toplu-satis",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Toplu Satış",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1302,61 +1204,40 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma",
       "parentId": "tax:appliances",
-      "canonicalName": "Klima",
+      "canonicalName": "Isıtma, Soğutma ve Havalandırma",
       "nodeType": "SUBCATEGORY",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
       "depth": 1,
-      "requestSchemaId": "appliances/klima",
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "REQUEST_CATEGORIES"
       }
     },
     {
-      "aliases": [],
-      "searchTerms": [],
+      "aliases": [
+        "split klima",
+        "air conditioner"
+      ],
+      "searchTerms": [
+        "Klima"
+      ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri",
-      "parentId": "tax:appliances:klima",
-      "canonicalName": "Klima tipleri",
-      "nodeType": "GROUP",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:klima",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Klima",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
       "depth": 2,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "duvar tipi klima"
-      ],
-      "searchTerms": [
-        "Split klima"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:split-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Split klima",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1365,7 +1246,7 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Multi split klima"
+        "Kombi"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -1373,163 +1254,14 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:multi-split-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Multi split klima",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:kombi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Kombi",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "vrf",
-        "vrv"
-      ],
-      "searchTerms": [
-        "VRF / VRV sistem"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:vrf-vrv-sistem",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "VRF / VRV sistem",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "floor standing"
-      ],
-      "searchTerms": [
-        "Salon tipi klima"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:salon-tipi-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Salon tipi klima",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Kaset tipi klima"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:kaset-tipi-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Kaset tipi klima",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "portable ac"
-      ],
-      "searchTerms": [
-        "Mobil klima"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:mobil-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Mobil klima",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Pencere tipi klima"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:klima-tipleri:pencere-tipi-klima",
-      "parentId": "tax:appliances:klima:klima-tipleri",
-      "canonicalName": "Pencere tipi klima",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:klima:yedek-parca",
-      "parentId": "tax:appliances:klima",
-      "canonicalName": "Yedek parça",
-      "nodeType": "GROUP",
-      "categoryId": "appliances",
-      "subcategoryId": "klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
       "depth": 2,
-      "requestSchemaId": "appliances/klima",
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1538,21 +1270,75 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Kompresör"
+        "Kat Kaloriferi"
       ],
       "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:yedek-parca:kompresor",
-      "parentId": "tax:appliances:klima:yedek-parca",
-      "canonicalName": "Kompresör",
-      "nodeType": "PART_TYPE",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:kat-kaloriferi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Kat Kaloriferi",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "şofben",
+        "termosifon"
+      ],
+      "searchTerms": [
+        "Şofben & Termosifon"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:sofben-termosifon",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Şofben & Termosifon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "fan"
+      ],
+      "searchTerms": [
+        "Vantilatör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:vantilator",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Vantilatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1561,21 +1347,22 @@
     {
       "aliases": [],
       "searchTerms": [
-        "PCB / elektronik kart"
+        "Tavan Pervanesi"
       ],
       "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:yedek-parca:pcb-elektronik-kart",
-      "parentId": "tax:appliances:klima:yedek-parca",
-      "canonicalName": "PCB / elektronik kart",
-      "nodeType": "PART_TYPE",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:tavan-pervanesi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Tavan Pervanesi",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1584,21 +1371,22 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Fan motoru"
+        "Hava Soğutucu"
       ],
       "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:yedek-parca:fan-motoru",
-      "parentId": "tax:appliances:klima:yedek-parca",
-      "canonicalName": "Fan motoru",
-      "nodeType": "PART_TYPE",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:hava-sogutucu",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Hava Soğutucu",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1607,21 +1395,266 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Kumanda"
+        "Havalandırma Fanı"
       ],
       "applicableCapabilities": [
-        "ENTITY_COMPATIBILITY",
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:klima:yedek-parca:kumanda",
-      "parentId": "tax:appliances:klima:yedek-parca",
-      "canonicalName": "Kumanda",
-      "nodeType": "PART_TYPE",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:havalandirma-fani",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Havalandırma Fanı",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
-      "subcategoryId": "klima",
-      "depth": 3,
-      "requestSchemaId": "appliances/klima",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "hava temizleyici"
+      ],
+      "searchTerms": [
+        "Hava Temizleme Cihazı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:hava-temizleme-cihazi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Hava Temizleme Cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Isıtıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:elektrikli-isitici",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Elektrikli Isıtıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Şömine"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:elektrikli-somine",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Elektrikli Şömine",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fanlı Isıtıcı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:fanli-isitici",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Fanlı Isıtıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağlı Radyatör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:yagli-radyator",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Yağlı Radyatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Doğalgaz Sobası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:dogalgaz-sobasi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Doğalgaz Sobası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Isı Pompası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:isi-pompasi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Isı Pompası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "nem alma"
+      ],
+      "searchTerms": [
+        "Nem Alma Cihazı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:nem-alma-cihazi",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Nem Alma Cihazı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yedek Parça & Ekipman"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:yedek-parca-ekipman",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Yedek Parça & Ekipman",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Toplu Satış"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:toplu-satis",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Toplu Satış",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -1650,142 +1683,22 @@
     },
     {
       "aliases": [],
-      "searchTerms": [],
+      "searchTerms": [
+        "Diğer elektrikli ev aleti"
+      ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya",
+      "id": "tax:appliances:diger:diger-elektrikli-ev-aleti",
       "parentId": "tax:appliances:diger",
-      "canonicalName": "Diğer beyaz eşya",
-      "nodeType": "GROUP",
+      "canonicalName": "Diğer elektrikli ev aleti",
+      "nodeType": "PRODUCT_TYPE",
       "categoryId": "appliances",
       "subcategoryId": "diger",
       "depth": 2,
-      "requestSchemaId": "appliances/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Derin dondurucu sandık"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya:derin-dondurucu-sandik",
-      "parentId": "tax:appliances:diger:diger-beyaz-esya",
-      "canonicalName": "Derin dondurucu sandık",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "appliances/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "water heater"
-      ],
-      "searchTerms": [
-        "Şofben / termositfon"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya:sofben-termositfon",
-      "parentId": "tax:appliances:diger:diger-beyaz-esya",
-      "canonicalName": "Şofben / termositfon",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "appliances/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Çamaşır kurutma dolabı"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya:camasir-kurutma-dolabi",
-      "parentId": "tax:appliances:diger:diger-beyaz-esya",
-      "canonicalName": "Çamaşır kurutma dolabı",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "appliances/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Su sebili"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya:su-sebili",
-      "parentId": "tax:appliances:diger:diger-beyaz-esya",
-      "canonicalName": "Su sebili",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "appliances/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Ankastre kahve makinesi"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:appliances:diger:diger-beyaz-esya:ankastre-kahve-makinesi",
-      "parentId": "tax:appliances:diger:diger-beyaz-esya",
-      "canonicalName": "Ankastre kahve makinesi",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "appliances",
-      "subcategoryId": "diger",
-      "depth": 3,
       "requestSchemaId": "appliances/diger",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",

@@ -27,6 +27,7 @@ import {
   extractScreenSize,
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { stripIncompatibleDomainFields } from "./request-transition";
 import type {
   CanonicalFieldState,
   CanonicalRequestState,
@@ -882,6 +883,8 @@ export function buildCanonicalRequestState(input: {
     subcategorySlug = subcategorySlug ?? input.previous.subcategorySlug;
     categoryId = categoryId ?? input.previous.categoryId;
   }
+
+  fields = stripIncompatibleDomainFields(fields, categoryId);
 
   return {
     version: "hybrid-v1",

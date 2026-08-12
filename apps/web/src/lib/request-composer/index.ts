@@ -76,6 +76,16 @@ export {
 } from "./sync";
 
 export {
+  isMaterialRequestTransition,
+  resolveTextSyncAuthority,
+  shouldCarryBrowseNeedPin,
+  isFieldCompatibleWithCategory,
+  stripIncompatibleDomainFields,
+  shouldSkipTextWalkRealign,
+  type RequestSyncAuthority,
+} from "./request-transition";
+
+export {
   resolveHybridQuestions,
   type HybridQuestionResult,
   type ResolveHybridQuestionsOptions,

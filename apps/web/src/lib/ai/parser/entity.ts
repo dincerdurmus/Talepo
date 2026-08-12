@@ -516,35 +516,60 @@ export function detectAttributes(text: string, categoryId: string) {
   }
 
   if (categoryId === "appliances") {
+    // Canonical names must match taxonomy / explore filters
     if (normalized.includes("buzdolab") || normalized.includes("buzdolabı")) {
       attributes.applianceType = "Buzdolabı";
+    } else if (
+      normalized.includes("çamaşır kurutma") ||
+      normalized.includes("camasir kurutma") ||
+      normalized.includes("kurutma makinesi")
+    ) {
+      attributes.applianceType = "Çamaşır Kurutma Makinesi";
     } else if (
       normalized.includes("çamaşır makinesi") ||
       normalized.includes("camasir makinesi")
     ) {
-      attributes.applianceType = "Çamaşır makinesi";
+      attributes.applianceType = "Çamaşır Makinesi";
     } else if (
       normalized.includes("bulaşık makinesi") ||
       normalized.includes("bulasik makinesi")
     ) {
-      attributes.applianceType = "Bulaşık makinesi";
-    } else if (normalized.includes("kurutma")) {
-      attributes.applianceType = "Kurutma makinesi";
+      attributes.applianceType = "Bulaşık Makinesi";
     } else if (normalized.includes("klima")) {
       attributes.applianceType = "Klima";
-    } else if (normalized.includes("fırın") || normalized.includes("firin")) {
-      attributes.applianceType = "Fırın";
-    } else if (normalized.includes("ocak")) {
-      attributes.applianceType = "Ocak";
-    } else if (normalized.includes("davlumbaz")) {
-      attributes.applianceType = "Davlumbaz";
     } else if (
       normalized.includes("mikrodalga") ||
       normalized.includes("mikro dalga")
     ) {
-      attributes.applianceType = "Mikrodalga";
+      attributes.applianceType = "Mikrodalga Fırın";
+    } else if (normalized.includes("fırın") || normalized.includes("firin")) {
+      attributes.applianceType = "Fırın";
+    } else if (normalized.includes("set üstü") || normalized.includes("ocak")) {
+      attributes.applianceType = "Set Üstü Ocak";
+    } else if (
+      normalized.includes("davlumbaz") ||
+      normalized.includes("aspiratör") ||
+      normalized.includes("aspirator")
+    ) {
+      attributes.applianceType = "Aspiratör & Davlumbaz";
     } else if (normalized.includes("derin dondurucu")) {
-      attributes.applianceType = "Derin dondurucu";
+      attributes.applianceType = "Derin Dondurucu";
+    } else if (
+      normalized.includes("şarap dolabı") ||
+      normalized.includes("sarap dolabi")
+    ) {
+      attributes.applianceType = "Şarap Dolabı";
+    } else if (
+      normalized.includes("süpürge") ||
+      normalized.includes("supurge")
+    ) {
+      attributes.applianceType = "Elektrikli Süpürge";
+    } else if (normalized.includes("airfryer") || normalized.includes("fritöz")) {
+      attributes.applianceType = "Fritöz & Airfryer";
+    } else if (normalized.includes("ütü") || normalized.includes("utu")) {
+      attributes.applianceType = "Ütü";
+    } else if (normalized.includes("kombi")) {
+      attributes.applianceType = "Kombi";
     }
 
     if (normalized.includes("otel") || normalized.includes("pansiyon")) {
@@ -580,8 +605,9 @@ export function detectAttributes(text: string, categoryId: string) {
 
     const applianceBrand = findBrand(text, APPLIANCE_BRANDS);
     if (applianceBrand) {
-      attributes.brandPreference = applianceBrand;
       attributes.brand = applianceBrand;
+      // Legacy dual-write for older price/alert consumers
+      attributes.brandPreference = applianceBrand;
     }
   }
 
@@ -718,7 +744,7 @@ export function detectAttributes(text: string, categoryId: string) {
       attributes.propertyType = "Stüdyo";
     else if (normalized.includes("dubleks")) attributes.propertyType = "Dubleks";
     else if (normalized.includes("rezidans") || normalized.includes("residans"))
-      attributes.propertyType = "Residans";
+      attributes.propertyType = "Rezidans";
     else if (normalized.includes("arsa")) attributes.propertyType = "Arsa";
     else if (
       normalized.includes("dükkan") ||

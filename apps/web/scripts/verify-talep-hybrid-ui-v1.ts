@@ -743,6 +743,25 @@ ensureTaxonomyLoaded();
     ),
     String(web.fields.brand?.value ?? ""),
   );
+  check(
+    "32 e-ticaret canonical technology",
+    web.categoryId === "technology",
+    web.categoryId ?? "",
+  );
+  const webText = composeNaturalRequestText(web).toLocaleLowerCase("tr-TR");
+  check(
+    "32 e-ticaret compose not real-estate",
+    !webText.includes("konut") &&
+      !webText.includes("daire") &&
+      !webText.includes("satılık") &&
+      !webText.includes("kiralık"),
+    webText,
+  );
+  check(
+    "32 e-ticaret compose names the service",
+    webText.includes("e-ticaret") || webText.includes("web"),
+    webText,
+  );
 }
 
 // 33 Ev Mobilyası sahibinden-style rooms + product leaves

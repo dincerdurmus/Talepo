@@ -23,6 +23,7 @@ import {
 } from "./sync";
 import type { BrowsePathStep, CanonicalRequestState } from "./types";
 import { FIELD_SENTINEL, isAnySentinel } from "./types";
+import { isFieldCompatibleWithCategory } from "./request-transition";
 
 export type UnderstoodFact = {
   key: string;
@@ -227,6 +228,14 @@ export function buildUnderstoodFacts(
     if (
       field.kind === "UNKNOWN" &&
       !field.excludedValues?.length
+    ) {
+      continue;
+    }
+    if (
+      !isFieldCompatibleWithCategory(
+        key,
+        state.categoryId ?? state.understanding.category.value,
+      )
     ) {
       continue;
     }

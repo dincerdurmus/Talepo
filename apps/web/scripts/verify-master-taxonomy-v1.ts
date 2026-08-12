@@ -80,7 +80,10 @@ check(
   REQUEST_CATEGORIES.every((c) => roots.some((r) => r.categoryId === c.id)),
 );
 
-// 59 subcats
+const expectedSubcats = REQUEST_CATEGORIES.reduce(
+  (n, cat) => n + cat.subcategories.length,
+  0,
+);
 let subOk = 0;
 for (const cat of REQUEST_CATEGORIES) {
   for (const label of cat.subcategories) {
@@ -89,7 +92,11 @@ for (const cat of REQUEST_CATEGORIES) {
     if (node && getTaxonomyChildren(node.id).length > 0) subOk += 1;
   }
 }
-check("59 subcategories present with children", subOk === 59, String(subOk));
+check(
+  "every engine subcategory has taxonomy children",
+  subOk === expectedSubcats,
+  `${subOk}/${expectedSubcats}`,
+);
 
 check("no orphans", report.orphans.length === 0, report.orphans.slice(0, 5).join(","));
 check("no cycles", report.cycles.length === 0, report.cycles.slice(0, 5).join(","));
@@ -254,12 +261,22 @@ check(
   boxSchema.fields.map((f) => f.key).slice(0, 8).join(","),
 );
 
-// Diğer not empty
+// Diğer is a residual bucket after pillar expansion — a single catch-all leaf is valid.
 for (const dep of report.otherDependency) {
   check(
-    `Diğer leaves for ${dep.categoryId}`,
-    dep.leafCount >= 2,
+    `${dep.categoryId} Diğer residual bucket reachable`,
+    dep.leafCount >= 1,
     String(dep.leafCount),
+  );
+}
+
+// Pillar expansion must not drop former appliances-Diğer dump products.
+for (const term of ["derin dondurucu", "su sebili", "şofben"]) {
+  const hit = resolveTaxonomyAlias(term, "appliances");
+  check(
+    `appliances still resolves ${term}`,
+    Boolean(hit?.node && hit.node.categoryId === "appliances"),
+    hit?.node?.id ?? "missing",
   );
 }
 

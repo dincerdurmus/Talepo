@@ -340,7 +340,10 @@ function parseAdvancedExploreFilters(
   };
 }
 
-export function getExploreFilterDefs(categorySlug: string): ExploreFilterFieldDef[] {
+export function getExploreFilterDefs(
+  categorySlug: string,
+  context: Record<string, string | undefined> = {},
+): ExploreFilterFieldDef[] {
   return CATEGORY_EXPLORE_FILTERS[categorySlug] ?? [];
 }
 

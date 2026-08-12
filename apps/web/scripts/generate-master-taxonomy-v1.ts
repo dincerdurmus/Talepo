@@ -349,6 +349,78 @@ function furnitureTree(): TaxonomyNode[] {
   const cat = REQUEST_CATEGORIES.find((c) => c.id === "furniture")!;
   const nodes: TaxonomyNode[] = [catRoot(cat.id, cat.label)];
   const trees: Record<string, ChildSpec[]> = {
+    // Sahibinden-style Ofis Mobilyaları: grup → ürün tipi
+    "Ofis Mobilyaları": [
+      {
+        name: "Aksesuar",
+        aliases: ["ofis aksesuar"],
+        children: [
+          { name: "Askılık" },
+          { name: "Ayaklı Küllük", aliases: ["küllük"] },
+          { name: "Çöp Kutusu", aliases: ["cop kutusu"] },
+          { name: "Dilsiz Uşak", aliases: ["dilsiz usak"] },
+          { name: "Paspas" },
+          { name: "Diğer Ürünler", aliases: ["diğer", "diger"] },
+        ],
+      },
+      {
+        name: "Dolaplar",
+        aliases: ["ofis dolabı", "ofis dolabi"],
+        children: [
+          { name: "Anahtar Dolabı" },
+          { name: "Dosya Dolabı", aliases: ["dosya dolabi"] },
+          { name: "Ecza Dolabı" },
+          { name: "Emanet Dolabı", aliases: ["emanet dolabi", "locker"] },
+          { name: "Kartoteks" },
+          { name: "Keson", aliases: ["keson dolap"] },
+          { name: "Kütüphane", aliases: ["kitaplik", "kitaplık"] },
+          { name: "Raf", aliases: ["raf sistemi"] },
+          { name: "Soyunma Dolabı", aliases: ["soyunma dolabi"] },
+          { name: "Vitrin" },
+        ],
+      },
+      {
+        name: "Masalar",
+        aliases: ["ofis masası", "ofis masasi"],
+        children: [
+          { name: "Çalışma Masası", aliases: ["calisma masasi", "desk"] },
+          { name: "Çoklu Çalışma Masası", aliases: ["çoklu masa", "bench"] },
+          { name: "Toplantı Masası", aliases: ["toplantı masasi"] },
+          { name: "Bilgisayar Masası" },
+          { name: "Sehpa" },
+          { name: "Banko", aliases: ["resepsiyon bankosu"] },
+          { name: "Çizim Masası", aliases: ["çizim masasi"] },
+        ],
+      },
+      {
+        name: "Oturma Grubu",
+        aliases: ["ofis oturma", "ofis koltuk"],
+        children: [
+          { name: "Bekleme Koltuğu", aliases: ["bekleme koltugu", "waiting chair"] },
+          { name: "Kolçaklı Sandalye", aliases: ["kolcakli sandalye"] },
+          { name: "Ofis Koltuk Takımı", aliases: ["ofis koltuk takimi"] },
+          {
+            name: "Personel & Ofis Koltuğu",
+            aliases: ["personel koltuğu", "ofis koltuğu", "task chair"],
+          },
+          { name: "Puf" },
+          { name: "Sandalye" },
+          { name: "Sedir" },
+          { name: "Tabure" },
+          {
+            name: "Yönetici Koltuğu",
+            aliases: ["yonetici koltugu", "makam koltuğu", "executive chair"],
+          },
+        ],
+      },
+      {
+        name: "Makam Oda Takımı",
+        aliases: ["makam takımı", "yönetici oda takımı"],
+        children: [
+          { name: "Makam Oda Takımı", aliases: ["makam takımı"] },
+        ],
+      },
+    ],
     "Ofis Sandalyesi": [
       {
         name: "Sandalye tipleri",
@@ -398,33 +470,97 @@ function furnitureTree(): TaxonomyNode[] {
         ],
       },
     ],
+    // Sahibinden-style Ev Mobilyası: oda → ürün tipi (Ofis Mobilyası ayrı gelecek)
     "Ev Mobilyası": [
       {
-        name: "Oturma grubu",
+        name: "Oturma Odası & Salon",
+        aliases: ["oturma odası", "salon", "oturma grubu"],
         children: [
-          { name: "Koltuk takımı", aliases: ["kanepe takımı"] },
-          { name: "Köşe koltuk", aliases: ["L koltuk"] },
-          { name: "Berjer" },
-          { name: "TV ünitesi" },
-          { name: "Sehpa / orta sehpa" },
+          { name: "Berjer, Tekli Koltuk", aliases: ["berjer", "tekli koltuk"] },
+          { name: "Çekyat, Kanepe", aliases: ["çekyat", "kanepe", "kanepe takımı"] },
+          { name: "Josefin", aliases: ["josefin", "chaise"] },
+          { name: "Koltuk Takımı", aliases: ["koltuk takımı", "kanepe takımı"] },
+          { name: "Köşe Koltuk Takımı", aliases: ["köşe koltuk", "L koltuk"] },
+          { name: "Salon Takımı", aliases: ["salon takımı"] },
+          { name: "TV Koltuğu", aliases: ["tv koltuğu"] },
+          { name: "TV Ünitesi", aliases: ["tv ünitesi", "tv unitesi"] },
         ],
       },
       {
-        name: "Yatak odası",
+        name: "Mutfak",
+        aliases: ["mutfak mobilyası"],
         children: [
-          { name: "Yatak / baza", aliases: ["karyola"] },
-          { name: "Gardrop", aliases: ["dolap"] },
+          { name: "Masa Takımı", aliases: ["mutfak masa takımı"] },
+          { name: "Mutfak Masası" },
+          { name: "Sandalye", aliases: ["mutfak sandalyesi"] },
+          { name: "Tabure" },
+          { name: "Mutfak Dolabı" },
+          { name: "Hazır Mutfak", aliases: ["hazır mutfak", "mutfak dolabı takımı"] },
+          { name: "Erzak Dolabı" },
+          { name: "Kiler Dolabı" },
+          { name: "Ekmek Dolabı" },
+          { name: "Fırın Dolabı" },
+          { name: "Kahve Köşesi" },
+          { name: "Raf & Terek", aliases: ["raf", "terek"] },
+          { name: "Köşe Takımı", aliases: ["mutfak köşe takımı"] },
+          { name: "Servis Arabası" },
+          { name: "Yer Sofrası" },
+        ],
+      },
+      {
+        name: "Yemek Odası",
+        aliases: ["yemek odası"],
+        children: [
+          { name: "Büfe & Vitrin", aliases: ["büfe", "vitrin"] },
+          { name: "Gümüşlük" },
+          { name: "Konsol" },
+          { name: "Masa", aliases: ["yemek masası"] },
+          { name: "Sandalye", aliases: ["yemek sandalyesi"] },
+          { name: "Şaraplık" },
+          { name: "Yemek Odası Takımı", aliases: ["yemek odası takımı"] },
+        ],
+      },
+      {
+        name: "Yatak Odası",
+        aliases: ["yatak odası"],
+        children: [
+          { name: "Yatak Odası Takımı", aliases: ["yatak odası takımı"] },
+          { name: "Baza" },
+          { name: "Yatak", aliases: ["yatak / baza"] },
+          { name: "Karyola" },
+          { name: "Gardırop", aliases: ["gardrop", "dolap", "gardırop"] },
           { name: "Şifonyer" },
           { name: "Komodin" },
+          { name: "Makyaj Masası", aliases: ["makyaj masası", "toiret"] },
+          { name: "Etajer" },
         ],
       },
       {
-        name: "Yemek odası",
+        name: "Çocuk & Genç Odası",
+        aliases: ["çocuk odası", "genç odası", "cocuk odasi"],
         children: [
-          { name: "Yemek masası" },
-          { name: "Yemek sandalyesi" },
-          { name: "Konsol" },
-          { name: "Büfe" },
+          { name: "Arabalı Yatak" },
+          { name: "Bilgisayar Masası" },
+          { name: "Çalışma Masası", aliases: ["calisma masasi"] },
+          { name: "Dolap" },
+          { name: "Karyola & Yatak", aliases: ["karyola", "yatak"] },
+          { name: "Kitaplık", aliases: ["kitaplik"] },
+          { name: "Koltuk" },
+          { name: "Komodin" },
+          { name: "Ranza" },
+          { name: "Sandalye" },
+          { name: "Şifonyer" },
+          { name: "Çocuk Odası Takımı", aliases: ["çocuk odası takımı"] },
+          { name: "Genç Odası Takımı", aliases: ["genç odası takımı"] },
+        ],
+      },
+      {
+        name: "Tamamlayıcı Ürünler",
+        aliases: ["tamamlayıcı", "antre"],
+        children: [
+          { name: "Antre", aliases: ["antre mobilyası", "vestiyer"] },
+          { name: "Oturma Odası & Salon", aliases: ["tamamlayıcı oturma"] },
+          { name: "Yatak Odası", aliases: ["tamamlayıcı yatak odası"] },
         ],
       },
     ],
@@ -477,135 +613,85 @@ function furnitureTree(): TaxonomyNode[] {
 function appliancesTree(): TaxonomyNode[] {
   const cat = REQUEST_CATEGORIES.find((c) => c.id === "appliances")!;
   const nodes: TaxonomyNode[] = [catRoot(cat.id, cat.label)];
+  // Sahibinden-style: Küçük Ev Aletleri | Beyaz Eşya | Isıtma/Soğutma → ürün (flat)
   const trees: Record<string, ChildSpec[]> = {
-    Buzdolabı: [
-      {
-        name: "Buzdolabı tipleri",
-        children: [
-          { name: "No-Frost buzdolabı", aliases: ["nofrost"] },
-          { name: "Low-Frost buzdolabı" },
-          { name: "Statik buzdolabı" },
-          { name: "French door buzdolabı", aliases: ["çift kapı üstten"] },
-          { name: "Side-by-side buzdolabı", aliases: ["amerikan tipi"] },
-          { name: "Mini bar / mini buzdolabı", aliases: ["mini fridge"] },
-          { name: "Derin dondurucu", aliases: ["freezer", "sandık tipi dondurucu"] },
-        ],
-      },
-      {
-        name: "Yedek parça grupları",
-        children: [
-          { name: "Kompresör", type: "PART_TYPE" },
-          { name: "Termostat", type: "PART_TYPE" },
-          { name: "Fan motoru", type: "PART_TYPE" },
-          { name: "Kapı contası", type: "PART_TYPE", aliases: ["conta"] },
-          { name: "Raf / çekmece", type: "PART_TYPE" },
-        ],
-      },
+    "Küçük Ev Aletleri": [
+      { name: "Baskül & Tartı", aliases: ["baskül", "tartı"] },
+      { name: "Blender" },
+      { name: "Buharlı Pişirici" },
+      { name: "Buharlı Temizlik Makinesi" },
+      { name: "Buz Makinesi" },
+      { name: "Cam Silme Makinesi" },
+      { name: "Çay Makinesi" },
+      { name: "Dikey & Şarjlı Süpürge", aliases: ["dikey süpürge", "şarjlı süpürge"] },
+      { name: "Dikiş Makinesi" },
+      { name: "Ekmek Kızartma Makinesi", aliases: ["tost makinesi ekmek", "toaster"] },
+      { name: "Ekmek Yapma Makinesi" },
+      { name: "Elektrikli Izgara" },
+      { name: "Elektrikli Süpürge", aliases: ["süpürge", "supurge", "vacuum"] },
+      { name: "Fritöz & Airfryer", aliases: ["airfryer", "fritöz"] },
+      { name: "Halı Yıkama Makinesi" },
+      { name: "Kahve Makinesi", aliases: ["kahve"] },
+      { name: "Katı Meyve Sıkacağı", aliases: ["blender juicer", "juicer"] },
+      { name: "Kıyma Makinesi" },
+      { name: "Mikser" },
+      { name: "Mutfak Robotu" },
+      { name: "Robot Süpürge", aliases: ["robot süpürge", "roborock"] },
+      { name: "Rondo", aliases: ["doğrayıcı"] },
+      { name: "Su Isıtıcı", aliases: ["kettle", "kettle su"] },
+      { name: "Tost Makinesi", aliases: ["tost"] },
+      { name: "Ütü", aliases: ["utu"] },
+      { name: "Ütü Masası" },
+      { name: "Waffle Makinesi" },
+      { name: "Yoğurt Makinesi" },
+      { name: "Yedek Parça & Ekipman", aliases: ["yedek parça"] },
     ],
-    "Çamaşır Makinesi": [
+    "Beyaz Eşya": [
+      { name: "Ankastre Set", aliases: ["ankastre"] },
+      { name: "Aspiratör & Davlumbaz", aliases: ["davlumbaz", "aspiratör"] },
+      { name: "Bulaşık Makinesi", aliases: ["bulaşık", "bulasik makinesi"] },
+      { name: "Buzdolabı", aliases: ["buzdolabi", "fridge"] },
+      { name: "Çamaşır Makinesi", aliases: ["çamaşır", "camasir makinesi"] },
       {
-        name: "Tipler",
-        children: [
-          { name: "Önden yüklemeli çamaşır makinesi", aliases: ["front load"] },
-          { name: "Üstten yüklemeli çamaşır makinesi", aliases: ["top load"] },
-          { name: "Kurutmalı çamaşır makinesi", aliases: ["washer dryer"] },
-          { name: "Çamaşır kurutma makinesi", aliases: ["dryer"] },
-        ],
+        name: "Çamaşır Kurutma Makinesi",
+        aliases: ["kurutma makinesi", "dryer"],
       },
+      { name: "Derin Dondurucu", aliases: ["dondurucu", "freezer"] },
+      { name: "Fırın", aliases: ["firin", "ankastre fırın"] },
+      { name: "Mikrodalga Fırın", aliases: ["mikrodalga", "microwave"] },
+      { name: "Set Üstü Ocak", aliases: ["ocak", "set üstü"] },
+      { name: "Su Arıtma Cihazı", aliases: ["su arıtma"] },
+      { name: "Su Sebili", aliases: ["sebili"] },
       {
-        name: "Yedek parça",
-        children: [
-          { name: "Pompa", type: "PART_TYPE" },
-          { name: "Amortisör", type: "PART_TYPE" },
-          { name: "Kayış", type: "PART_TYPE" },
-          { name: "Kapı kilidi", type: "PART_TYPE" },
-          { name: "Isıtıcı rezistans", type: "PART_TYPE" },
-        ],
+        name: "Şarap Dolabı",
+        aliases: ["şarap dolabı", "sarap dolabi", "wine cooler"],
+        // "şaraplık" stays furniture Ev Mobilyası leaf
+        ambiguousAliases: ["şaraplık"],
       },
+      { name: "Yedek Parça & Ekipman" },
+      { name: "Toplu Satış" },
     ],
-    "Bulaşık Makinesi": [
-      {
-        name: "Tipler",
-        children: [
-          { name: "Ankastre bulaşık makinesi", aliases: ["built-in"] },
-          { name: "Solo bulaşık makinesi", aliases: ["freestanding"] },
-          { name: "Yarı ankastre bulaşık makinesi" },
-          { name: "Tezgah üstü bulaşık makinesi", aliases: ["compact"] },
-        ],
-      },
-      {
-        name: "Yedek parça",
-        children: [
-          { name: "Yıkama kolu", type: "PART_TYPE" },
-          { name: "Pompa", type: "PART_TYPE" },
-          { name: "Kapı menteşesi", type: "PART_TYPE" },
-          { name: "Tuz haznesi kapağı", type: "PART_TYPE" },
-        ],
-      },
+    "Isıtma, Soğutma ve Havalandırma": [
+      { name: "Klima", aliases: ["split klima", "air conditioner"] },
+      { name: "Kombi" },
+      { name: "Kat Kaloriferi" },
+      { name: "Şofben & Termosifon", aliases: ["şofben", "termosifon"] },
+      { name: "Vantilatör", aliases: ["fan"] },
+      { name: "Tavan Pervanesi" },
+      { name: "Hava Soğutucu" },
+      { name: "Havalandırma Fanı" },
+      { name: "Hava Temizleme Cihazı", aliases: ["hava temizleyici"] },
+      { name: "Elektrikli Isıtıcı" },
+      { name: "Elektrikli Şömine" },
+      { name: "Fanlı Isıtıcı" },
+      { name: "Yağlı Radyatör" },
+      { name: "Doğalgaz Sobası" },
+      { name: "Isı Pompası" },
+      { name: "Nem Alma Cihazı", aliases: ["nem alma"] },
+      { name: "Yedek Parça & Ekipman" },
+      { name: "Toplu Satış" },
     ],
-    "Fırın / Ocak": [
-      {
-        name: "Fırın",
-        children: [
-          { name: "Ankastre fırın", aliases: ["built-in oven"] },
-          { name: "Solo fırın" },
-          { name: "Mikrodalga fırın", aliases: ["microwave"] },
-          { name: "Buharlı fırın", aliases: ["steam oven"] },
-        ],
-      },
-      {
-        name: "Ocak",
-        children: [
-          { name: "Ankastre gazlı ocak", aliases: ["gaz ocak"] },
-          { name: "Ankastre elektrikli ocak", aliases: ["vitroseramik"] },
-          { name: "İndüksiyon ocak", aliases: ["induction"] },
-          { name: "Set üstü ocak", aliases: ["portable hob"] },
-        ],
-      },
-      {
-        name: "Davlumbaz",
-        children: [
-          { name: "Ada davlumbaz" },
-          { name: "Duvar tipi davlumbaz" },
-          { name: "Ankastre davlumbaz", aliases: ["gömme davlumbaz"] },
-        ],
-      },
-    ],
-    Klima: [
-      {
-        name: "Klima tipleri",
-        children: [
-          { name: "Split klima", aliases: ["duvar tipi klima"] },
-          { name: "Multi split klima" },
-          { name: "VRF / VRV sistem", aliases: ["vrf", "vrv"] },
-          { name: "Salon tipi klima", aliases: ["floor standing"] },
-          { name: "Kaset tipi klima" },
-          { name: "Mobil klima", aliases: ["portable ac"] },
-          { name: "Pencere tipi klima" },
-        ],
-      },
-      {
-        name: "Yedek parça",
-        children: [
-          { name: "Kompresör", type: "PART_TYPE" },
-          { name: "PCB / elektronik kart", type: "PART_TYPE" },
-          { name: "Fan motoru", type: "PART_TYPE" },
-          { name: "Kumanda", type: "PART_TYPE" },
-        ],
-      },
-    ],
-    Diğer: [
-      {
-        name: "Diğer beyaz eşya",
-        children: [
-          { name: "Derin dondurucu sandık" },
-          { name: "Şofben / termositfon", aliases: ["water heater"] },
-          { name: "Çamaşır kurutma dolabı" },
-          { name: "Su sebili" },
-          { name: "Ankastre kahve makinesi" },
-        ],
-      },
-    ],
+    Diğer: [{ name: "Diğer elektrikli ev aleti" }],
   };
 
   for (const label of cat.subcategories) {
@@ -648,18 +734,30 @@ function technologyTree(): TaxonomyNode[] {
     ],
     Donanım: [
       {
-        name: "Telefon ve tablet",
+        name: "Cep Telefonu & Aksesuar",
         children: [
-          { name: "Akıllı telefon", aliases: ["telefon", "cep telefonu", "smartphone"] },
+          {
+            name: "Cep Telefonu",
+            aliases: [
+              "telefon",
+              "cep telefonu",
+              "akıllı telefon",
+              "akilli telefon",
+              "smartphone",
+            ],
+          },
           { name: "Tablet", aliases: ["ipad"] },
-          { name: "Akıllı saat", aliases: ["smartwatch"] },
+          { name: "Akıllı saat", aliases: ["smartwatch", "giyilebilir"] },
           { name: "Kulaklık / TWS", aliases: ["kulaklık"] },
         ],
       },
       {
         name: "Bilgisayar",
         children: [
-          { name: "Dizüstü bilgisayar", aliases: ["laptop", "notebook"] },
+          {
+            name: "Dizüstü bilgisayar",
+            aliases: ["laptop", "notebook", "dizüstü", "dizustu"],
+          },
           { name: "Masaüstü bilgisayar", aliases: ["PC", "desktop"] },
           { name: "İş istasyonu", aliases: ["workstation"] },
           { name: "Mini PC", aliases: ["NUC"] },
@@ -669,7 +767,7 @@ function technologyTree(): TaxonomyNode[] {
       {
         name: "TV ve görüntü",
         children: [
-          { name: "Televizyon", aliases: ["TV", "smart tv"] },
+          { name: "Televizyon", aliases: ["TV", "smart tv", "televizyon"] },
           { name: "Projeksiyon cihazı", aliases: ["projeksiyon"] },
           { name: "Medya oynatıcı", aliases: ["streaming box"] },
         ],
@@ -966,35 +1064,29 @@ function realEstateTree(): TaxonomyNode[] {
       {
         name: "Konut tipleri",
         children: [
-          { name: "Daire", aliases: ["apartment"] },
+          { name: "Daire", aliases: ["apartment", "ev"] },
           { name: "Rezidans" },
-          { name: "Villa", aliases: ["müstakil"] },
-          { name: "Dublex / triplex" },
-          { name: "Stüdyo", aliases: ["1+0"] },
-          { name: "Bahçe katı" },
-          { name: "Çatı katı / loft" },
-        ],
-      },
-      {
-        name: "Kiralama özellikleri",
-        children: [
-          { name: "Eşyalı", type: "TECHNICAL_TYPE", aliases: ["furnished"] },
-          { name: "Eşyasız", type: "TECHNICAL_TYPE" },
-          { name: "Aidat dahil", type: "TECHNICAL_TYPE" },
-          { name: "Kısa dönem kiralık", type: "TECHNICAL_TYPE", aliases: ["daily rent"] },
+          { name: "Müstakil Ev", aliases: ["müstakil"] },
+          { name: "Villa" },
+          { name: "Çiftlik Evi" },
+          { name: "Köşk & Konak", aliases: ["köşk", "konak"] },
+          { name: "Yalı" },
+          { name: "Yalı Dairesi" },
         ],
       },
     ],
     "Satılık Konut": [
       {
-        name: "Satılık konut tipleri",
+        name: "Konut tipleri",
         children: [
-          { name: "Satılık daire" },
-          { name: "Satılık villa" },
-          { name: "Satılık yazlık" },
-          { name: "Satılık müstakil ev" },
-          { name: "Yeni proje / sıfır daire", aliases: ["zero apartment"] },
-          { name: "İkinci el daire" },
+          { name: "Daire", aliases: ["apartment", "ev", "satılık daire"] },
+          { name: "Rezidans" },
+          { name: "Müstakil Ev", aliases: ["müstakil", "satılık müstakil ev"] },
+          { name: "Villa", aliases: ["satılık villa"] },
+          { name: "Çiftlik Evi" },
+          { name: "Köşk & Konak", aliases: ["köşk", "konak"] },
+          { name: "Yalı" },
+          { name: "Yalı Dairesi" },
         ],
       },
     ],

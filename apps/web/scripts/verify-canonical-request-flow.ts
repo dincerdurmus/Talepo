@@ -75,6 +75,13 @@ const fixtures: Fixture[] = [
     expectStrategy: "REAL_ESTATE_RENT",
     expectIntent: "RENT",
   },
+  {
+    id: 9,
+    text: "e-ticaret sitesi arıyorum",
+    mustNotCategoryCertain: ["real-estate"],
+    mustNotAsk: ["listingType", "propertyType", "roomCount"],
+    draftMustNotContain: ["konut", "daire", "satılık", "kiralık"],
+  },
 ];
 
 let mismatchUi = 0;

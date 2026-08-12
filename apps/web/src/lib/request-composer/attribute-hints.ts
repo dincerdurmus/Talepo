@@ -3,6 +3,7 @@
  * Fills screenSize / resolution / productType cues from raw text when present.
  */
 
+import { findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
 import { isConversationStopword } from "@/lib/ai/parser/negation";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import {
@@ -11,7 +12,12 @@ import {
 } from "@/lib/request-understanding/number-role";
 import { resolveTaxonomyAlias, ensureTaxonomyLoaded } from "@/lib/taxonomy";
 
-const PRODUCT_HINTS: Array<{ keys: RegExp; productType: string; taxonomyQuery: string }> = [
+const PRODUCT_HINTS: Array<{
+  keys: RegExp;
+  productType: string;
+  taxonomyQuery: string;
+  categoryId?: string;
+}> = [
   {
     keys: /\b(televizyon|televizyona|televizyonu|\btv\b)\b/i,
     productType: "televizyon",
@@ -42,6 +48,7 @@ const PRODUCT_HINTS: Array<{ keys: RegExp; productType: string; taxonomyQuery: s
     keys: /şaraplık/i,
     productType: "şaraplık",
     taxonomyQuery: "şaraplık",
+    categoryId: "furniture",
   },
   {
     keys: /koltuk\s*takımı|köşe\s*koltuk/i,
@@ -113,6 +120,45 @@ export function extractResolution(raw: string): string | null {
   return null;
 }
 
+function taxonomyHintFromKnownTechProduct(raw: string): {
+  productType: string;
+  taxonomyNodeId: string | null;
+} | null {
+  const tech = findTechnologyProduct(raw);
+  if (!tech) return null;
+  const f = tech.canonical.toLocaleLowerCase("tr-TR");
+  let taxonomyQuery: string | null = null;
+  let productType: string | null = null;
+  if (f.includes("macbook")) {
+    taxonomyQuery = "dizüstü bilgisayar";
+    productType = "dizüstü bilgisayar";
+  } else if (f.includes("ipad")) {
+    taxonomyQuery = "tablet";
+    productType = "tablet";
+  } else if (f.includes("airpods")) {
+    taxonomyQuery = "Kulaklık / TWS";
+    productType = "kulaklık";
+  } else if (
+    f.includes("iphone") ||
+    f.includes("galaxy") ||
+    f.includes("pixel") ||
+    f.includes("redmi") ||
+    f.includes("poco") ||
+    f.startsWith("xiaomi") ||
+    f.includes("huawei") ||
+    f.includes("honor")
+  ) {
+    taxonomyQuery = "cep telefonu";
+    productType = "cep telefonu";
+  }
+  if (!taxonomyQuery || !productType) return null;
+  const hit = resolveTaxonomyAlias(taxonomyQuery, "technology");
+  return {
+    productType,
+    taxonomyNodeId: hit && !hit.ambiguous ? hit.node.id : null,
+  };
+}
+
 export function extractProductTypeHint(raw: string): {
   productType: string;
   taxonomyNodeId: string | null;
@@ -120,7 +166,7 @@ export function extractProductTypeHint(raw: string): {
   ensureTaxonomyLoaded();
   for (const hint of PRODUCT_HINTS) {
     if (!hint.keys.test(raw)) continue;
-    const hit = resolveTaxonomyAlias(hint.taxonomyQuery);
+    const hit = resolveTaxonomyAlias(hint.taxonomyQuery, hint.categoryId);
     const taxonomyNodeId =
       hit && !hit.ambiguous ? hit.node.id : null;
     return { productType: hint.productType, taxonomyNodeId };
@@ -133,6 +179,12 @@ export function extractProductTypeHint(raw: string): {
       taxonomyNodeId: hit && !hit.ambiguous ? hit.node.id : null,
     };
   }
+
+  // Known device identity (catalog) → hardware leaf. Not example-specific:
+  // "samsung s24" has no "telefon" token, but findTechnologyProduct already
+  // resolved Galaxy S24. TV-size context above wins for "samsung 55".
+  const fromKnownDevice = taxonomyHintFromKnownTechProduct(raw);
+  if (fromKnownDevice) return fromKnownDevice;
 
   // Free-text product leaves: longer phrases beat single tokens
   // (so "ofis koltuğu" is furniture, not a bare "ofis" real-estate leaf).
