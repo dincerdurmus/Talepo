@@ -4,6 +4,7 @@
  * No brand/model-specific production branches.
  */
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { isKnownPartNoun, stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import { clamp01, uv } from "./provenance";
 import type {
@@ -316,6 +317,14 @@ export function reconcileParentIdentityTokens(
     if (!model || model.toLocaleLowerCase("tr-TR") !== am.toLocaleLowerCase("tr-TR")) {
       model = am;
     }
+  }
+
+  if (model) {
+    const cleaned = stripTrailingPartNouns(model);
+    model = cleaned || null;
+  }
+  if (model && isKnownPartNoun(model)) {
+    model = null;
   }
 
   // Known vehicle model occupying brand: demote so catalog can fill parent brand

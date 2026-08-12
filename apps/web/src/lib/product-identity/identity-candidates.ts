@@ -1,5 +1,6 @@
 import { extractModelIdentityTokens } from "./model-identity-tokens";
 import { normalizeModelText } from "./model-normalization";
+import { isKnownPartNoun } from "@/lib/ai/parser/part-nouns";
 
 const PRODUCT_TYPE_VOCAB = new Set([
   "bebek", "arabasi", "arabası", "puset", "makinesi", "makine", "machine",
@@ -110,7 +111,7 @@ export function stripTrailingProductTypeFromModel(model: string): string {
   const words = model.trim().split(/\s+/);
   while (words.length > 1) {
     const last = words[words.length - 1]!.toLocaleLowerCase("tr-TR");
-    if (PRODUCT_TYPE_VOCAB.has(last) || /makinesi$|makine$/.test(last)) {
+    if (PRODUCT_TYPE_VOCAB.has(last) || isKnownPartNoun(last) || /makinesi$|makine$/.test(last)) {
       words.pop();
     } else {
       break;

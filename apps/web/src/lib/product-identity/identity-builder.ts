@@ -9,12 +9,15 @@ import { normalizeToken } from "@/server/price-intelligence/normalize-product";
 
 import { extractBrandFromText } from "./brand-extraction";
 import {
+  AUTOMOTIVE_BRANDS,
   findBrand,
   findTechnologyProduct,
   isKnownAutomotiveModelName,
+  stripLeadingBrandAliases,
   TECHNOLOGY_BRANDS,
 } from "@/lib/ai/parser/brand-catalog";
 import { stripConversationRemainder } from "@/lib/ai/parser/negation";
+import { stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { looksLikeTelevisionScreenContext, looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import { normalizeCondition } from "./condition";
 import {
@@ -203,6 +206,18 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     model = techProduct.canonical;
   }
 
+  // Catalog manufacturer aliases (alfa → Alfa Romeo) — same path as tech, not a parallel map
+  const catalogAutoBrand = findBrand(input.title, AUTOMOTIVE_BRANDS);
+  if (catalogAutoBrand) {
+    const currentResolves = brand
+      ? findBrand(brand, AUTOMOTIVE_BRANDS)
+      : null;
+    if (!brand || currentResolves === catalogAutoBrand) {
+      brand = catalogAutoBrand;
+      brandConfidence = Math.max(brandConfidence, 0.92);
+    }
+  }
+
   // Title inference only when structured brand absent
   if (!brand && input.title?.trim()) {
     const fromTitle = extractBrandFromText(input.title);
@@ -246,6 +261,13 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   if (model) {
     model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));
     model = stripConversationRemainder(model) || null;
+  }
+  if (brand && model) {
+    model = stripLeadingBrandAliases(model, brand, AUTOMOTIVE_BRANDS) || model;
+    model = stripLeadingBrandAliases(model, brand, TECHNOLOGY_BRANDS) || model;
+  }
+  if (model) {
+    model = stripTrailingPartNouns(model) || null;
   }
 
   // Strip redundant brand prefix from model when brand is known separately

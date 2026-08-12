@@ -4,6 +4,7 @@
  */
 
 import { isConversationStopword, isNegatedMention } from "./negation";
+import { isKnownPartNoun } from "./part-nouns";
 
 export type BrandEntry = {
   canonical: string;
@@ -55,7 +56,7 @@ export const AUTOMOTIVE_BRANDS: BrandEntry[] = [
   { canonical: "Land Rover", aliases: ["land rover", "landrover", "range rover"] },
   { canonical: "Mini", aliases: ["mini cooper", "minicooper"] },
   { canonical: "Cupra", aliases: ["cupra"] },
-  { canonical: "Alfa Romeo", aliases: ["alfa romeo", "alfaromeo"] },
+  { canonical: "Alfa Romeo", aliases: ["alfa romeo", "alfaromeo", "alfa"] },
   { canonical: "Subaru", aliases: ["subaru"] },
   { canonical: "Isuzu", aliases: ["isuzu"] },
   { canonical: "SsangYong", aliases: ["ssangyong", "ssang yong"] },
@@ -697,8 +698,8 @@ function aliasMatches(normalized: string, alias: string): boolean {
   const needle = alias.toLocaleLowerCase("tr-TR");
   if (!needle) return false;
 
-  // Short tokens (vw, kia, mg, lg, hp…) need word boundaries to avoid noise.
-  if (needle.length <= 3) {
+  // Short tokens (vw, kia, alfa, ford…) need word boundaries to avoid noise.
+  if (needle.length <= 4) {
     const re = new RegExp(
       `(?:^|[^a-zçğıöşü0-9])${escapeRegex(needle)}(?=$|[^a-zçğıöşü0-9])`,
       "i",
@@ -728,6 +729,31 @@ export function findBrand(
   }
 
   return best?.canonical;
+}
+
+/** Strip a canonical manufacturer or any of its aliases from the start of text. */
+export function stripLeadingBrandAliases(
+  text: string,
+  canonical: string,
+  brands: BrandEntry[] = AUTOMOTIVE_BRANDS,
+): string {
+  const entry = brands.find((item) => item.canonical === canonical);
+  const needles = [canonical, ...(entry?.aliases ?? [])]
+    .map((alias) => alias.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  let s = text.trim();
+  for (const needle of needles) {
+    const re = new RegExp(
+      `^${escapeRegex(needle)}(?:\\s+|$)`,
+      "i",
+    );
+    if (re.test(s)) {
+      s = s.replace(re, "").trim();
+      break;
+    }
+  }
+  return s;
 }
 
 /** First match across product catalogs (automotive preferred). */
@@ -888,6 +914,7 @@ export function findAutomotiveModel(
       if (
         !/^(19|20)\d{2}$/.test(token) &&
         !isConversationStopword(token) &&
+        !isKnownPartNoun(token) &&
         !/^(model|arıyorum|ariyorum|kasa|için|icin)$/i.test(token)
       ) {
         const tokenIndex = afterBrand.index ?? 0;

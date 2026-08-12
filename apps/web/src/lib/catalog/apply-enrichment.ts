@@ -1,5 +1,10 @@
 import { uv } from "@/lib/request-understanding/provenance";
-import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import {
+  AUTOMOTIVE_BRANDS,
+  findBrand,
+  isKnownAutomotiveModelName,
+} from "@/lib/ai/parser/brand-catalog";
+import { stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 import {
@@ -49,6 +54,17 @@ function mayOverwrite(
   if (fold(current) === fold(nextLabel)) return true;
   // Catalog parent brand may replace a model token that was mis-slotted as brand
   if (slot === "brand" && isKnownAutomotiveModelName(current)) return true;
+  // Alias → canonical manufacturer (alfa → Alfa Romeo) is the same identity
+  if (slot === "brand") {
+    const currentCanon = findBrand(current, AUTOMOTIVE_BRANDS);
+    const nextCanon = findBrand(nextLabel, AUTOMOTIVE_BRANDS) ?? nextLabel;
+    if (currentCanon && fold(currentCanon) === fold(nextCanon)) return true;
+  }
+  // Trailing requested-item nouns are not model identity ("156 tampon" → "156")
+  if (slot === "model") {
+    const stripped = stripTrailingPartNouns(current);
+    if (stripped && fold(stripped) === fold(nextLabel)) return true;
+  }
   // Year tokens are never identity — catalog may replace them
   if (looksLikeYearToken(current)) return true;
   // Keep user-typed compact codes (C200, 320i) over family names (C Serisi)

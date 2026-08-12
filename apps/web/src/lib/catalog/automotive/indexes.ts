@@ -421,10 +421,22 @@ function looksLikeChassisCode(token: string): boolean {
   return /^(?:[a-z]{1,4}\d{1,4}[a-z0-9]{0,4}|\d{1,2}[a-z]{1,3})$/.test(t);
 }
 
+function looksLikeFollowOnModelToken(token: string): boolean {
+  if (looksLikeChassisCode(token)) return true;
+  const t = foldCatalogKey(token).replace(/\s/g, "");
+  if (!t || t.length > 16) return false;
+  if (/^(?:19|20)\d{2}$/.test(t)) return false;
+  // Numeric series used as model names (156, 147, 911)
+  if (/^\d{2,4}[a-z]{0,2}$/.test(t)) return true;
+  // Named models after a unique manufacturer prefix (giulia, stelvio, corolla)
+  if (/^[a-zçğıöşü][a-zçğıöşü0-9-]{2,}$/.test(t) && t.length >= 4) return true;
+  return false;
+}
+
 /**
- * Unique prefix fallback: "Mercedes" → Mercedes-Benz.
- * Token must be >= 6 chars; "Merc" must not match.
- * Tokens shorter than 8 also need a following chassis-like token.
+ * Unique prefix fallback: "Mercedes" → Mercedes-Benz, "Alfa" → Alfa Romeo.
+ * Exact short fragments ("Merc") must not match.
+ * Tokens shorter than 8 need a following model-like token.
  */
 function findUniqueBrandPrefix(
   textNorm: string,
@@ -432,7 +444,7 @@ function findUniqueBrandPrefix(
 ): AutomotiveBrandRecord | null {
   const tokens = textNorm.split(" ").filter(Boolean);
   const first = tokens[0];
-  if (!first || first.length < 6) return null;
+  if (!first || first.length < 4) return null;
   const foldedFirst = foldCatalogKey(first);
   const matches = idx.brands.filter((brand) => {
     const foldedName = foldCatalogKey(brand.name);
@@ -443,7 +455,7 @@ function findUniqueBrandPrefix(
   if (matches.length !== 1) return null;
   if (first.length < 8) {
     const next = tokens[1];
-    if (!next || !looksLikeChassisCode(next)) return null;
+    if (!next || !looksLikeFollowOnModelToken(next)) return null;
   }
   return matches[0];
 }

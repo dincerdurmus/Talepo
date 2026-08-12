@@ -62,7 +62,11 @@
   {
     "id": "brand_alfa-romeo",
     "name": "Alfa Romeo",
-    "aliases": [],
+    "aliases": [
+      "alfa",
+      "alfa romeo",
+      "alfaromeo"
+    ],
     "market_scope": [
       "TR"
     ],
