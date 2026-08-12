@@ -1,6 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
+import {
+  bindCorrelationFromRequest,
+  correlationResponseHeaders,
+  runWithCorrelationAsync,
+} from "@/lib/observability/correlation";
+import { mapUnknownToSafeError, safeErrorResponse } from "@/lib/observability/errors";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   createOffer,
@@ -9,61 +15,77 @@ import {
 } from "@/server/offer/offer-service";
 
 export async function POST(request: Request) {
-  try {
-    const user = await requireUser();
-    const body = (await request.json()) as Record<string, unknown>;
+  const store = bindCorrelationFromRequest(request, { surface: "api.offers" });
 
-    const offer = await createOffer(user.id, {
-      requestId: String(body.requestId ?? ""),
-      description: String(body.description ?? ""),
-      amount: Number(body.amount),
-      deliveryDays: body.deliveryDays ? Number(body.deliveryDays) : undefined,
-      title: body.title ? String(body.title) : undefined,
-    });
+  return runWithCorrelationAsync(store, async () => {
+    try {
+      const user = await requireUser();
+      store.userId = user.id;
+      const body = (await request.json()) as Record<string, unknown>;
 
-    revalidatePath("/panel/taleplerim");
-    revalidatePath(`/panel/taleplerim/${offer.requestId}`);
-    revalidatePath("/panel/talepler");
-    revalidatePath(`/panel/talepler/${offer.requestId}`);
-    revalidatePath("/panel/gelen-teklifler");
-    revalidatePath("/panel/teklifler");
+      const offer = await createOffer(user.id, {
+        requestId: String(body.requestId ?? ""),
+        description: String(body.description ?? ""),
+        amount: Number(body.amount),
+        deliveryDays: body.deliveryDays ? Number(body.deliveryDays) : undefined,
+        title: body.title ? String(body.title) : undefined,
+      });
 
-    return NextResponse.json(
-      {
-        ok: true,
-        offer,
-        redirectTo: `/panel/teklifler?gonderildi=1`,
-      },
-      { status: 201 },
-    );
-  } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
-    }
+      revalidatePath("/panel/taleplerim");
+      revalidatePath(`/panel/taleplerim/${offer.requestId}`);
+      revalidatePath("/panel/talepler");
+      revalidatePath(`/panel/talepler/${offer.requestId}`);
+      revalidatePath("/panel/gelen-teklifler");
+      revalidatePath("/panel/teklifler");
 
-    if (error instanceof OfferQuotaExceededError) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         {
-          ok: false,
-          code: "OFFER_QUOTA_EXCEEDED",
-          message: error.message,
-          upgradeUrl: "/panel/plan",
+          ok: true,
+          offer,
+          redirectTo: `/panel/teklifler?gonderildi=1`,
         },
-        { status: 402 },
+        { status: 201 },
       );
-    }
+      for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+        res.headers.set(k, v);
+      }
+      return res;
+    } catch (error) {
+      if (error instanceof OfferQuotaExceededError) {
+        const mapped = mapUnknownToSafeError(error, store.correlationId);
+        return NextResponse.json(
+          { ...mapped.body, upgradeUrl: "/panel/plan" },
+          {
+            status: mapped.status,
+            headers: correlationResponseHeaders(store),
+          },
+        );
+      }
 
-    if (error instanceof OfferValidationError) {
-      return NextResponse.json(
-        { ok: false, message: error.message, issues: error.issues },
-        { status: 400 },
-      );
-    }
+      if (
+        error instanceof AuthenticationError ||
+        error instanceof OfferValidationError
+      ) {
+        const res = safeErrorResponse(error, {
+          service: "offer",
+          event: "offer.create.failed",
+          correlationId: store.correlationId,
+        });
+        for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+          res.headers.set(k, v);
+        }
+        return res;
+      }
 
-    console.error("[POST /api/offers] Teklif oluşturulamadı:", error);
-    return NextResponse.json(
-      { ok: false, message: "Teklif kaydedilirken beklenmeyen bir hata oluştu." },
-      { status: 500 },
-    );
-  }
+      const res = safeErrorResponse(error, {
+        service: "offer",
+        event: "offer.create.failed",
+        correlationId: store.correlationId,
+      });
+      for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+        res.headers.set(k, v);
+      }
+      return res;
+    }
+  });
 }

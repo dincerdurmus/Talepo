@@ -1,7 +1,11 @@
+import { createSubsystemLogger } from "@/lib/observability/logger";
+
 import type { FeatureKey } from "./entitlements";
 import { hasFeature } from "./entitlements";
 import type { EntitlementContext } from "./types";
 import { EntitlementError } from "./types";
+
+const log = createSubsystemLogger("entitlements");
 
 export type RequestVisibilityFields = {
   visibleToSuppliersAt: Date | null | undefined;
@@ -16,6 +20,16 @@ export function assertEntitlement(
   message?: string,
 ): void {
   if (!hasFeature(ctx.features, key)) {
+    log.warn("entitlement.denied", {
+      outcome: "denied",
+      errorCode: "FEATURE_NOT_AVAILABLE",
+      context: {
+        feature: key,
+        plan: ctx.effectivePlanTier,
+        subjectType: ctx.subject.type,
+        subjectId: ctx.subject.id,
+      },
+    });
     throw new EntitlementError(
       "FEATURE_NOT_AVAILABLE",
       message ?? `Bu özellik mevcut planınızda kapalı: ${key}`,

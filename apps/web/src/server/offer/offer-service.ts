@@ -1,5 +1,4 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/lib/prisma";
 import {
   assertCanAccessRequest,
   assertCanSubmitOffer,
@@ -8,6 +7,11 @@ import { containsBlockedContactInfo, sanitizeCommercialText } from "@/lib/member
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError, type EntitlementContext } from "@/lib/membership/types";
+import { createSubsystemLogger } from "@/lib/observability/logger";
+import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
+import { prisma } from "@/lib/prisma";
+
+const log = createSubsystemLogger("offer");
 
 import { createNotification } from "../notifications/create-notification";
 import { createPendingDealOutcome } from "../price-intelligence/deal-outcome";
@@ -183,6 +187,7 @@ async function readBonusCreditsInTx(tx: Tx, ctx: EntitlementContext) {
 }
 
 export async function createOffer(userId: string, input: CreateOfferInput) {
+  const started = Date.now();
   const issues: string[] = [];
 
   if (!input.requestId) issues.push("Talep bilgisi eksik.");
@@ -358,8 +363,34 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
   try {
     await recordOfferPriceObservation(offer.id);
   } catch (observationError) {
-    console.error("[createOffer] price observation failed", observationError);
+    log.warn("provider.price.failed", {
+      outcome: "failure",
+      requestId: request.id,
+      context: {
+        operation: "recordOfferPriceObservation",
+        errorName:
+          observationError instanceof Error ? observationError.name : "unknown",
+      },
+    });
   }
+
+  trackProductEvent({
+    eventName: ProductEventName.OFFER_SUBMITTED,
+    actorType: companyId ? "corporate" : "seller",
+    surface: "api.offers",
+    plan: entitlements.effectivePlanTier,
+    requestId: request.id,
+    companyId: companyId ?? undefined,
+    metadata: { offerId: offer.id },
+  });
+  log.info("offer.created", {
+    outcome: "success",
+    durationMs: Date.now() - started,
+    requestId: request.id,
+    userId,
+    companyId: companyId ?? undefined,
+    context: { offerId: offer.id },
+  });
 
   return offer;
 }
@@ -496,6 +527,7 @@ async function ensureOfferConversation(
 }
 
 export async function acceptOffer(userId: string, offerId: string) {
+  const started = Date.now();
   const offer = await prisma.offer.findFirst({
     where: {
       id: offerId,
@@ -626,8 +658,51 @@ export async function acceptOffer(userId: string, offerId: string) {
     try {
       await recordAcceptedOfferObservation(offer.id);
     } catch (observationError) {
-      console.error("[acceptOffer] accepted offer observation failed", observationError);
+      log.warn("provider.price.failed", {
+        outcome: "failure",
+        requestId: offer.requestId,
+        context: {
+          operation: "recordAcceptedOfferObservation",
+          errorName:
+            observationError instanceof Error
+              ? observationError.name
+              : "unknown",
+        },
+      });
     }
+
+    trackProductEvent({
+      eventName: ProductEventName.OFFER_ACCEPTED,
+      actorType: "buyer",
+      surface: "api.offers.accept",
+      requestId: offer.requestId,
+      companyId: offer.companyId ?? undefined,
+      metadata: { offerId: offer.id, conversationId: result.conversationId },
+    });
+    trackProductEvent({
+      eventName: ProductEventName.CONVERSATION_STARTED,
+      actorType: "buyer",
+      surface: "api.offers.accept",
+      requestId: offer.requestId,
+      companyId: offer.companyId ?? undefined,
+      metadata: { conversationId: result.conversationId },
+    });
+    log.info("offer.accepted", {
+      outcome: "success",
+      durationMs: Date.now() - started,
+      requestId: offer.requestId,
+      userId,
+      companyId: offer.companyId ?? undefined,
+      context: {
+        offerId: offer.id,
+        conversationId: result.conversationId,
+      },
+    });
+    log.info("conversation.created", {
+      outcome: "success",
+      requestId: offer.requestId,
+      context: { conversationId: result.conversationId, offerId: offer.id },
+    });
 
     return result;
   });

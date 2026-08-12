@@ -1,58 +1,68 @@
 import { NextResponse } from "next/server";
 
-import { EntitlementError } from "@/lib/membership/types";
+import {
+  bindCorrelationFromRequest,
+  correlationResponseHeaders,
+  runWithCorrelationAsync,
+} from "@/lib/observability/correlation";
+import { safeErrorResponse } from "@/lib/observability/errors";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { createRequest } from "@/server/request/create-request";
 import {
   parseCreateRequestInput,
   RequestValidationError,
 } from "@/server/request/request-schema";
+import { EntitlementError } from "@/lib/membership/types";
 
 export async function POST(request: Request) {
-  try {
-    const user = await requireUser();
-    const body = await request.json();
-    const input = parseCreateRequestInput(body);
-    const createdRequest = await createRequest(user.id, input);
+  const store = bindCorrelationFromRequest(request, { surface: "api.requests" });
 
-    return NextResponse.json(
-      {
-        ok: true,
-        request: createdRequest,
-        redirectTo: `/panel/taleplerim/${createdRequest.id}`,
-      },
-      { status: 201 },
-    );
-  } catch (error) {
-    if (error instanceof AuthenticationError) {
-      return NextResponse.json(
-        { ok: false, message: error.message },
-        { status: 401 },
+  return runWithCorrelationAsync(store, async () => {
+    try {
+      const user = await requireUser();
+      store.userId = user.id;
+      const body = await request.json();
+      const input = parseCreateRequestInput(body);
+      const createdRequest = await createRequest(user.id, input);
+
+      const res = NextResponse.json(
+        {
+          ok: true,
+          request: createdRequest,
+          redirectTo: `/panel/taleplerim/${createdRequest.id}`,
+        },
+        { status: 201 },
       );
+      for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+        res.headers.set(k, v);
+      }
+      return res;
+    } catch (error) {
+      if (
+        error instanceof AuthenticationError ||
+        error instanceof EntitlementError ||
+        error instanceof RequestValidationError
+      ) {
+        const res = safeErrorResponse(error, {
+          service: "request",
+          event: "request.publish.failed",
+          correlationId: store.correlationId,
+        });
+        for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+          res.headers.set(k, v);
+        }
+        return res;
+      }
+
+      const res = safeErrorResponse(error, {
+        service: "request",
+        event: "request.publish.failed",
+        correlationId: store.correlationId,
+      });
+      for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
+        res.headers.set(k, v);
+      }
+      return res;
     }
-
-    if (error instanceof EntitlementError) {
-      return NextResponse.json(
-        { ok: false, code: error.code, message: error.message },
-        { status: error.status },
-      );
-    }
-
-    if (error instanceof RequestValidationError) {
-      return NextResponse.json(
-        { ok: false, message: error.message, issues: error.issues },
-        { status: 400 },
-      );
-    }
-
-    console.error("Talep oluşturulamadı:", error);
-
-    return NextResponse.json(
-      {
-        ok: false,
-        message: "Talep kaydedilirken beklenmeyen bir hata oluştu.",
-      },
-      { status: 500 },
-    );
-  }
+  });
 }

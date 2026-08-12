@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { safeErrorResponse } from "@/lib/observability/errors";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+} from "@/lib/observability/rate-limit";
 import {
   RegisterValidationError,
   registerUserWithPassword,
@@ -12,6 +17,12 @@ function clean(value: unknown, max = 200) {
 
 export async function POST(request: Request) {
   try {
+    assertRateLimit({
+      key: clientKeyFromRequest(request, "auth.register"),
+      limit: 10,
+      windowMs: 60_000,
+    });
+
     const body = (await request.json()) as {
       name?: string;
       email?: string;
@@ -45,10 +56,9 @@ export async function POST(request: Request) {
       );
     }
 
-    console.error("[auth/register] failed", error);
-    return NextResponse.json(
-      { ok: false, message: "Kayıt tamamlanamadı. Lütfen tekrar deneyin." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "auth",
+      event: "auth.register.failed",
+    });
   }
 }

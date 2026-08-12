@@ -177,9 +177,21 @@ export async function assignOpportunity(
     }
   }
 
-  return prisma.opportunityMatch.updateMany({
+  const result = await prisma.opportunityMatch.updateMany({
     where: { id: opportunityId, companyId },
     data: { assignedToMemberId: memberId },
   });
+
+  if (result.count === 0) {
+    const { createSubsystemLogger } = await import("@/lib/observability/logger");
+    createSubsystemLogger("tenancy").warn("tenancy.company_scope_violation", {
+      outcome: "denied",
+      errorCode: "COMPANY_SCOPE_VIOLATION",
+      companyId,
+      context: { opportunityId, action: "assignOpportunity" },
+    });
+  }
+
+  return result;
 }
 

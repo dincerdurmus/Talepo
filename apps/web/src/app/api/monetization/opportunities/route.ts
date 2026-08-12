@@ -130,6 +130,32 @@ export async function POST(request: Request) {
           memberId,
           ctx.companyId,
         );
+        if (body.action === "assign" && memberId) {
+          const { ProductEventName, trackProductEvent } = await import(
+            "@/lib/observability/product-events"
+          );
+          const { createSubsystemLogger } = await import(
+            "@/lib/observability/logger"
+          );
+          trackProductEvent({
+            eventName: ProductEventName.OPPORTUNITY_ASSIGNED,
+            actorType: "corporate",
+            surface: "api.monetization.opportunities",
+            companyId: ctx.companyId,
+            metadata: {
+              opportunityId: body.opportunityId,
+              assigned: true,
+            },
+          });
+          createSubsystemLogger("opportunity").info(
+            "opportunity.match.assigned",
+            {
+              outcome: "success",
+              companyId: ctx.companyId,
+              context: { opportunityId: body.opportunityId },
+            },
+          );
+        }
         return NextResponse.json({ ok: true, updated: result.count });
       } catch (e) {
         return NextResponse.json(

@@ -1,0 +1,107 @@
+/**
+ * Vendor-neutral product telemetry foundation.
+ * Separate from operational logging — funnel/product analytics only.
+ * No PII / free-text content in metadata.
+ */
+
+import { getCorrelationStore } from "./correlation";
+import { sanitizeTelemetryMetadata } from "./redaction";
+
+export const ProductEventName = {
+  REQUEST_STARTED: "REQUEST_STARTED",
+  REQUEST_PUBLISHED: "REQUEST_PUBLISHED",
+  DISCOVERY_VIEWED: "DISCOVERY_VIEWED",
+  DISCOVERY_FILTER_APPLIED: "DISCOVERY_FILTER_APPLIED",
+  SAVED_SEARCH_CREATED: "SAVED_SEARCH_CREATED",
+  ALERT_CREATED: "ALERT_CREATED",
+  CATEGORY_FOLLOWED: "CATEGORY_FOLLOWED",
+  OPPORTUNITY_VIEWED: "OPPORTUNITY_VIEWED",
+  OPPORTUNITY_ASSIGNED: "OPPORTUNITY_ASSIGNED",
+  OFFER_STARTED: "OFFER_STARTED",
+  OFFER_SUBMITTED: "OFFER_SUBMITTED",
+  OFFER_ACCEPTED: "OFFER_ACCEPTED",
+  CONVERSATION_STARTED: "CONVERSATION_STARTED",
+  INVENTORY_ITEM_CREATED: "INVENTORY_ITEM_CREATED",
+  INVENTORY_IMPORT_COMPLETED: "INVENTORY_IMPORT_COMPLETED",
+  UPSELL_VIEWED: "UPSELL_VIEWED",
+} as const;
+
+export type ProductEventName =
+  (typeof ProductEventName)[keyof typeof ProductEventName];
+
+export type ActorType = "buyer" | "seller" | "professional" | "corporate" | "system" | "anonymous";
+
+export type ProductEvent = {
+  eventName: ProductEventName;
+  occurredAt: string;
+  actorType: ActorType;
+  plan?: string;
+  surface: string;
+  requestId?: string;
+  companyId?: string;
+  correlationId?: string;
+  metadata?: Record<string, unknown>;
+};
+
+export type ProductEventSink = (event: ProductEvent) => void;
+
+const sinks: ProductEventSink[] = [];
+const recent: ProductEvent[] = [];
+const MAX_RECENT = 200;
+
+export function addProductEventSink(sink: ProductEventSink): () => void {
+  sinks.push(sink);
+  return () => {
+    const idx = sinks.indexOf(sink);
+    if (idx >= 0) sinks.splice(idx, 1);
+  };
+}
+
+export function clearRecentProductEvents(): void {
+  recent.length = 0;
+}
+
+export function getRecentProductEvents(limit = 50): ProductEvent[] {
+  return recent.slice(-limit);
+}
+
+export function trackProductEvent(input: {
+  eventName: ProductEventName;
+  actorType: ActorType;
+  surface: string;
+  plan?: string;
+  requestId?: string;
+  companyId?: string;
+  metadata?: Record<string, unknown>;
+}): ProductEvent {
+  const store = getCorrelationStore();
+  const event: ProductEvent = {
+    eventName: input.eventName,
+    occurredAt: new Date().toISOString(),
+    actorType: input.actorType,
+    plan: input.plan,
+    surface: input.surface,
+    requestId: input.requestId ?? store?.requestId,
+    companyId: input.companyId ?? store?.companyId,
+    correlationId: store?.correlationId,
+    metadata: sanitizeTelemetryMetadata(input.metadata),
+  };
+
+  recent.push(event);
+  if (recent.length > MAX_RECENT) {
+    recent.splice(0, recent.length - MAX_RECENT);
+  }
+
+  for (const sink of sinks) sink(event);
+
+  // Optional debug visibility in non-production without flooding ops JSON.
+  if (process.env.NODE_ENV !== "production" && process.env.TALEPO_PRODUCT_EVENTS_STDOUT === "1") {
+    console.log(JSON.stringify({ kind: "product_event", ...event }));
+  }
+
+  return event;
+}
+
+export function isKnownProductEvent(name: string): name is ProductEventName {
+  return Object.prototype.hasOwnProperty.call(ProductEventName, name);
+}

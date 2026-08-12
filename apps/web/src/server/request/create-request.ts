@@ -7,8 +7,12 @@ import { assertEntitlement } from "@/lib/membership/assert-entitlement";
 import { FEATURE_BOOST_OPTIONS, getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError } from "@/lib/membership/types";
+import { createSubsystemLogger } from "@/lib/observability/logger";
+import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { prisma } from "@/lib/prisma";
 import { createTextOnlyState } from "@/lib/request-composer";
+
+const log = createSubsystemLogger("request");
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -37,12 +41,22 @@ function resolveDiscoveryProjection(
     const state = createTextOnlyState(text);
     return buildDiscoveryProjectionFromState(state);
   } catch (error) {
-    console.error("[create-request] discovery projection rebuild failed", error);
+    log.warn("request.projection.rebuild_failed", {
+      outcome: "fallback",
+      context: {
+        errorName: error instanceof Error ? error.name : "unknown",
+      },
+    });
     return null;
   }
 }
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
+  const started = Date.now();
+  log.info("request.publish.started", {
+    outcome: "success",
+    context: { categorySlug: input.category.slug },
+  });
   /**
    * feature_request_boost is entitlement-gated.
    * Payment collection is FAZ 3 — for now entitled users (all plans) may boost
@@ -211,6 +225,22 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
 
     return request;
   }).then(async (request) => {
+    trackProductEvent({
+      eventName: ProductEventName.REQUEST_PUBLISHED,
+      actorType: "buyer",
+      surface: "api.requests",
+      requestId: request.id,
+      metadata: {
+        status: request.status,
+      },
+    });
+    log.info("request.publish.completed", {
+      outcome: "success",
+      durationMs: Date.now() - started,
+      requestId: request.id,
+      userId,
+    });
+
     // Match + notify suppliers outside the create transaction so publish
     // still succeeds if distribution has a soft failure.
     try {
@@ -218,11 +248,27 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       try {
         await recordRequestPriceObservation(request.id);
       } catch (observationError) {
-        console.error("[create-request] price observation failed", observationError);
+        log.warn("provider.price.failed", {
+          outcome: "failure",
+          requestId: request.id,
+          context: {
+            operation: "recordRequestPriceObservation",
+            errorName:
+              observationError instanceof Error
+                ? observationError.name
+                : "unknown",
+          },
+        });
       }
       return { ...request, distribution };
     } catch (error) {
-      console.error("[create-request] distribution failed", error);
+      log.warn("request.distribute.failed", {
+        outcome: "fallback",
+        requestId: request.id,
+        context: {
+          errorName: error instanceof Error ? error.name : "unknown",
+        },
+      });
       return {
         ...request,
         distribution: { matchedCompanyCount: 0, notifiedUserCount: 0 },

@@ -1,3 +1,5 @@
+import { recordProviderOperationalMetric } from "@/lib/observability/provider-health";
+
 export type ProviderTelemetryEntry = {
   provider: string;
   queryFingerprint: string;
@@ -17,6 +19,16 @@ export function recordProviderTelemetry(entry: ProviderTelemetryEntry): void {
   if (telemetryLog.length > MAX_TELEMETRY) {
     telemetryLog.splice(0, telemetryLog.length - MAX_TELEMETRY);
   }
+
+  recordProviderOperationalMetric({
+    provider: entry.provider,
+    operation: "price_lookup",
+    durationMs: entry.durationMs,
+    success: entry.success,
+    failureCategory: entry.errorCode,
+    resultCount: entry.resultCount,
+    fallback: entry.cached,
+  });
 }
 
 export function getProviderTelemetry(limit = 50): ProviderTelemetryEntry[] {

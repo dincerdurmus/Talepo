@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { safeErrorResponse } from "@/lib/observability/errors";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+} from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { runPriceIntelligencePreview } from "@/server/price-intelligence/run-price-intelligence-preview";
 
@@ -32,6 +37,12 @@ function normalizeBodyFieldValues(
 
 export async function POST(request: Request) {
   try {
+    assertRateLimit({
+      key: clientKeyFromRequest(request, "price.preview"),
+      limit: 30,
+      windowMs: 60_000,
+    });
+
     // Optional auth — buyers may preview before publish login redirect
     try {
       await requireUser();
@@ -76,10 +87,9 @@ export async function POST(request: Request) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
-    console.error("[price-intelligence/preview]", error);
-    return NextResponse.json(
-      { ok: false, message: "Piyasa analizi şu anda kullanılamıyor." },
-      { status: 500 },
-    );
+    return safeErrorResponse(error, {
+      service: "price_intelligence",
+      event: "provider.price.failed",
+    });
   }
 }
