@@ -6,6 +6,7 @@ import {
 } from "@/lib/observability/provider-health";
 
 import { buildIyzicoAuthorization } from "./auth";
+import { resolveIyzicoAuthorizationPath } from "./authorization-path";
 import type { IyzicoConfig } from "./config";
 
 const log = createSubsystemLogger("billing.iyzico");
@@ -40,16 +41,26 @@ export async function iyzicoRequest<T>(input: {
   config: IyzicoConfig;
   method: "GET" | "POST";
   path: string;
+  /**
+   * Optional override for IYZWSv2 HMAC uri path.
+   * Default: request `path` with any `?query` stripped (list pagination safe).
+   * Checkout/webhook callers pass path without query → identical to pre-extension.
+   */
+  authorizationPath?: string;
   body?: Record<string, unknown>;
   operation: string;
 }): Promise<IyzicoApiResult<T>> {
   const path = input.path.startsWith("/") ? input.path : `/${input.path}`;
+  const authPath = resolveIyzicoAuthorizationPath(
+    path,
+    input.authorizationPath,
+  );
   const bodyText =
     input.method === "GET" || !input.body ? "" : JSON.stringify(input.body);
   const { authorization, randomKey } = buildIyzicoAuthorization({
     apiKey: input.config.apiKey,
     secretKey: input.config.secretKey,
-    uriPath: path,
+    uriPath: authPath,
     body: bodyText,
   });
 

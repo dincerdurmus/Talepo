@@ -30,6 +30,7 @@ import {
   verifyIyzicoWebhookSignatureV3,
 } from "../src/lib/billing/iyzico/webhook-signature";
 import { buildIyzicoAuthorization } from "../src/lib/billing/iyzico/auth";
+import { resolveIyzicoAuthorizationPath } from "../src/lib/billing/iyzico/authorization-path";
 import { BillingErrorCode } from "../src/lib/billing/errors";
 import {
   isBillingMockAllowed,
@@ -528,6 +529,19 @@ check(
       createHmac("sha256", "sec")
         .update('123456789/payment/bin/check{"binNumber":"535805"}')
         .digest("hex").length === 64,
+  );
+}
+
+{
+  check(
+    "auth path query strip default",
+    resolveIyzicoAuthorizationPath("/v2/subscription/products?page=1&count=10") ===
+      "/v2/subscription/products",
+  );
+  check(
+    "auth path checkout unchanged",
+    resolveIyzicoAuthorizationPath("/v2/subscription/checkoutform/initialize") ===
+      "/v2/subscription/checkoutform/initialize",
   );
 }
 
