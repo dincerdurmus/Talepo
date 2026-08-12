@@ -11,7 +11,7 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   smart_alerts: {
     title: "Akıllı talep alarmları",
     description:
-      "Yeni alıcıları aramak yerine Talepo sizi haberdar etsin. Kategori, bölge ve bütçeye göre kurallar tanımlayın.",
+      "Yeni talepler yayınlandığında haberdar olun. Kategori, bölge ve bütçeye göre kurallar tanımlayın.",
     bullets: [
       "Yeni talep yayınlandığında otomatik eşleşme",
       "Birden fazla alarm kuralı",
@@ -21,14 +21,15 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   },
   saved_searches: {
     title: "Kayıtlı aramalar",
-    description: "Sürekli aynı filtreleri kurmayın. Keşif filtrelerinizi kaydedin, tek tıkla tekrar çalıştırın.",
+    description:
+      "Keşif filtrelerinizi kaydedin, tek tıkla tekrar çalıştırın. Kişisel veya firma çalışma alanında ayrı tutulur.",
     bullets: ["Filtre setlerini isimlendirme", "Tek tıkla keşfe dön", "Aktif arama yönetimi"],
     cta: "Premium'a geç",
   },
   smart_matching: {
     title: "Akıllı eşleştirme",
     description:
-      "Firmanıza en uygun talepleri öne çıkarın. Kategori, bölge ve uzmanlık sinyallerine göre skor.",
+      "Size en uygun talepleri öne çıkarın. Kategori, bölge ve uzmanlık sinyallerine göre skor.",
     cta: "Premium'a geç",
   },
   advanced_filters: {
@@ -39,28 +40,30 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   hot_opportunities: {
     title: "Fırsatlar merkezi",
     description:
-      "Her fırsata değil, doğru fırsata teklif verin. Sıcak talepler, rekabet sinyalleri ve takip listesi tek ekranda.",
+      "Doğru fırsatlara odaklanın. Sıcak talepler ve takip listesi Profesyonel keşif yüzeyinde.",
     bullets: [
-      "Sıcak fırsat skoru",
-      "Rekabet analizi (anonim)",
-      "Takip listesi ve değişiklik uyarıları",
+      "Sıcak fırsat görünürlüğü",
+      "Takip listesi",
+      "Keşif workspace",
     ],
     cta: "Profesyonel'e geç",
   },
   professional_analytics: {
     title: "Profesyonel analiz",
     description:
-      "Teklif performansınızı ölçün: kabul oranı, yanıt süresi ve eşleşme metrikleri.",
+      "Firma çalışma alanında teklif ve eşleşme metriklerini görün. (Kişisel panelde ince yüzey.)",
     cta: "Profesyonel'e geç",
   },
   watchlist: {
     title: "Takip listesi",
-    description: "İlgilendiğiniz talepleri izleyin; bütçe ve acil durum değişikliklerinden haberdar olun.",
+    description:
+      "İlgilendiğiniz talepleri izleyin. Takip kayıtları firma çalışma alanında tutulur.",
     cta: "Profesyonel'e geç",
   },
   talepo_insights: {
     title: "Talepo Insights",
-    description: "Anonim piyasa verisiyle kategori ve bölge trendlerini görün.",
+    description:
+      "Anonim piyasa sinyalleri. Tam analitik yüzey firma/Pro bağlamında açılır.",
     cta: "Profesyonel'e geç",
   },
 };

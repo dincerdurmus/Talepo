@@ -1,8 +1,13 @@
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { hasFeature } from "@/lib/membership/entitlements";
+import {
+  ownerScopeWhere,
+  requireResourceOwnerFeature,
+} from "@/lib/membership/resource-owner";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { prisma } from "@/lib/prisma";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
+import { EntitlementError } from "@/lib/membership/types";
 import { requireUser } from "@/server/auth/require-user";
 
 import { FeatureUpgradeGate } from "@/components/panel/FeatureUpgradeGate";
@@ -16,17 +21,18 @@ export default async function SavedSearchesPage() {
   );
   const entitled = hasFeature(entitlements.features, "saved_searches");
 
-  const companyId =
-    entitled && entitlements.subject.type === "company"
-      ? entitlements.subject.id
-      : null;
-
-  const searches = companyId
-    ? await prisma.savedSearch.findMany({
-        where: { companyId },
+  let searches: Awaited<ReturnType<typeof prisma.savedSearch.findMany>> = [];
+  if (entitled) {
+    try {
+      const ctx = await requireResourceOwnerFeature(user.id, "saved_searches");
+      searches = await prisma.savedSearch.findMany({
+        where: ownerScopeWhere(ctx),
         orderBy: { updatedAt: "desc" },
-      })
-    : [];
+      });
+    } catch (e) {
+      if (!(e instanceof EntitlementError)) throw e;
+    }
+  }
 
   const serialized = searches.map((s) => ({
     id: s.id,
@@ -37,10 +43,15 @@ export default async function SavedSearchesPage() {
     updatedAt: s.updatedAt.toISOString(),
   }));
 
+  const workspaceLabel =
+    entitlements.subject.type === "company" ? "Firma" : "Kişisel";
+
   return (
     <>
       <section className="py-4 sm:py-6">
-        <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">Premium</p>
+        <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
+          Premium · {workspaceLabel}
+        </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">Kayıtlı aramalar</h1>
       </section>
 

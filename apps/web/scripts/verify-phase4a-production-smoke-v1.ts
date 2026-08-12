@@ -138,7 +138,8 @@ check(
 check(
   "13 inventory",
   read("prisma/schema.prisma").includes("CompanyInventoryItem") &&
-    getInventoryAlignmentPlan().phase === "4B",
+    (getInventoryAlignmentPlan().phase === "4B" ||
+      getInventoryAlignmentPlan().phase === "inventory-intelligence-v1"),
 );
 
 // 14 entitlement gate

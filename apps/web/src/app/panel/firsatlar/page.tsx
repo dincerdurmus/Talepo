@@ -144,10 +144,14 @@ export default async function OpportunitiesPage({
   const [trackedSearchCount, alertCount] = companyId
     ? await Promise.all([
         canSaveSearch
-          ? prisma.savedSearch.count({ where: { companyId, isActive: true } })
+          ? prisma.savedSearch.count({
+              where: { ownerType: "COMPANY", companyId, isActive: true },
+            })
           : Promise.resolve(0),
         canCreateAlert
-          ? prisma.alertRule.count({ where: { companyId, isActive: true } })
+          ? prisma.alertRule.count({
+              where: { ownerType: "COMPANY", companyId, isActive: true },
+            })
           : Promise.resolve(0),
       ])
     : [0, 0];

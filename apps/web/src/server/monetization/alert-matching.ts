@@ -7,11 +7,19 @@ import {
 import { getExploreFilterDefs } from "@/lib/explore/category-filters";
 import { prisma } from "@/lib/prisma";
 import type { AlertRuleAttributes } from "@/lib/monetization/alert-rule-attributes";
-import type { MatchResult } from "@/lib/monetization/types";
+import type { ResourceOwnerType } from "@/generated/prisma/client";
 
-export type AlertRuleMatch = MatchResult & {
+export type AlertRuleMatch = {
   alertRuleId: string;
   alertRuleName: string;
+  ownerType: ResourceOwnerType;
+  /** Present when ownerType = COMPANY */
+  companyId: string | null;
+  /** Present when ownerType = USER */
+  userId: string | null;
+  requestId: string;
+  score: number;
+  reasons: string[];
 };
 
 function includesKeyword(haystack: string, keyword: string): boolean {
@@ -45,7 +53,6 @@ function attributesMatch(
     const fieldKeys = new Set<string>(
       def ? [def.fieldKey, param] : [param],
     );
-    // brand ↔ brandPreference dual-read (legacy appliance publishes)
     if (fieldKeys.has("brand") || fieldKeys.has("brandPreference")) {
       fieldKeys.add("brand");
       fieldKeys.add("brandPreference");
@@ -65,7 +72,8 @@ function attributesMatch(
 }
 
 /**
- * Match a published request against active alert rules.
+ * Match a published request against active alert rules (USER + COMPANY).
+ * Downstream must branch on ownerType — hunter only consumes COMPANY.
  */
 export async function matchRequestToAlertRules(
   requestId: string,
@@ -100,7 +108,9 @@ export async function matchRequestToAlertRules(
     select: {
       id: true,
       name: true,
+      ownerType: true,
       companyId: true,
+      userId: true,
       categoryId: true,
       city: true,
       district: true,
@@ -152,7 +162,12 @@ export async function matchRequestToAlertRules(
       continue;
     }
 
-    // Phase 3A — typed canonical filter (taxonomy leaf / constraints)
+    const ownerType = rule.ownerType;
+    const companyId = ownerType === "COMPANY" ? rule.companyId : null;
+    const userId = ownerType === "USER" ? rule.userId : null;
+    if (ownerType === "COMPANY" && !companyId) continue;
+    if (ownerType === "USER" && !userId) continue;
+
     const canonical = validateCanonicalDiscoveryFilter(rule.discoveryFilter);
     if (canonical.ok && hasCanonicalFilterSignal(canonical.filter)) {
       const evalResult = evaluateDiscoveryFilter(projection, canonical.filter);
@@ -160,7 +175,9 @@ export async function matchRequestToAlertRules(
       results.push({
         alertRuleId: rule.id,
         alertRuleName: rule.name,
-        companyId: rule.companyId,
+        ownerType,
+        companyId,
+        userId,
         requestId: request.id,
         score: 90,
         reasons: [
@@ -175,7 +192,9 @@ export async function matchRequestToAlertRules(
     results.push({
       alertRuleId: rule.id,
       alertRuleName: rule.name,
-      companyId: rule.companyId,
+      ownerType,
+      companyId,
+      userId,
       requestId: request.id,
       score: 85,
       reasons: [`Alarm kuralı: ${rule.name}`, "LEGACY_FALLBACK"],

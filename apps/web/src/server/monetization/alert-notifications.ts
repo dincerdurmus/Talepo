@@ -6,7 +6,9 @@ const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
 
 /**
  * Deliver in-app notifications for alert rule matches on publish.
- * Non-blocking boundary — failures must not break request publish.
+ * USER alerts → target user only.
+ * COMPANY alerts → company members (OWNER/ADMIN/MANAGER).
+ * Non-blocking — failures must not break request publish.
  */
 export async function deliverAlertRuleNotifications(
   requestId: string,
@@ -31,6 +33,41 @@ export async function deliverAlertRuleNotifications(
   let skipped = 0;
 
   for (const match of matches) {
+    if (match.ownerType === "USER" && match.userId) {
+      const duplicate = await prisma.notification.findFirst({
+        where: {
+          userId: match.userId,
+          requestId: request.id,
+          companyId: null,
+          title: "Yeni talep alarmınızla eşleşti",
+          message: { contains: match.alertRuleName },
+        },
+        select: { id: true },
+      });
+      if (duplicate) {
+        skipped += 1;
+        continue;
+      }
+      await prisma.notification.create({
+        data: {
+          userId: match.userId,
+          type: "GENERAL",
+          title: "Yeni talep alarmınızla eşleşti",
+          message: `${request.title}${location ? ` · ${location}` : ""} (${match.alertRuleName})`,
+          actionUrl: `/panel/talepler/${request.id}`,
+          requestId: request.id,
+          companyId: null,
+        },
+      });
+      created += 1;
+      continue;
+    }
+
+    if (match.ownerType !== "COMPANY" || !match.companyId) {
+      skipped += 1;
+      continue;
+    }
+
     const members = await prisma.companyMember.findMany({
       where: {
         companyId: match.companyId,

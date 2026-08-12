@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
-import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import { requireEntitledFeature } from "@/lib/membership/require-entitled-feature";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   getPriceIntelligence,
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       );
     }
 
-    await requireCompanyFeature(user.id, "basic_market_insights");
+    await requireEntitledFeature(user.id, "basic_market_insights");
 
     const productFingerprint = searchParams.get("productFingerprint");
     const city = searchParams.get("city");

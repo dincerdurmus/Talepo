@@ -36,7 +36,9 @@ export async function runAutomaticOpportunityHunter(
     matchRequestToInventory(requestId),
   ]);
 
+  // COMPANY alerts only → OpportunityMatch. Personal USER alerts never create company rows.
   for (const m of alertMatches) {
+    if (m.ownerType !== "COMPANY" || !m.companyId) continue;
     results.push({
       companyId: m.companyId,
       requestId: m.requestId,
@@ -66,11 +68,12 @@ export async function runAutomaticOpportunityHunter(
   );
   if (projection) {
     const searches = await prisma.savedSearch.findMany({
-      where: { isActive: true },
+      where: { isActive: true, ownerType: "COMPANY", companyId: { not: null } },
       select: { id: true, companyId: true, name: true, filters: true },
       take: 300,
     });
     for (const search of searches) {
+      if (!search.companyId) continue;
       const filters = search.filters as SavedSearchFilters;
       if (!filters?.canonical || !hasCanonicalFilterSignal(filters.canonical)) {
         continue;

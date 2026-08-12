@@ -172,10 +172,13 @@ check(
     "where: { id: opportunityId, companyId }",
   ) &&
     read("src/app/api/monetization/alerts/route.ts").includes(
-      "companyId: ctx.companyId",
+      "ownerScopeWhere(ctx)",
     ) &&
     read("src/app/api/monetization/saved-searches/route.ts").includes(
-      "companyId: ctx.companyId",
+      "ownerScopeWhere(ctx)",
+    ) &&
+    read("src/lib/membership/resource-owner.ts").includes(
+      "requireResourceOwnerFeature",
     ) &&
     read("src/app/api/membership/route.ts").includes(
       "COMPANY_SCOPE_VIOLATION",
@@ -295,7 +298,9 @@ async function tenancyDbCheck() {
 
       const alert = await tx.alertRule.create({
         data: {
+          ownerType: "COMPANY",
           companyId: companyA.id,
+          userId: null,
           name: `alert-${suffix}`,
         },
         select: { id: true },
@@ -310,7 +315,9 @@ async function tenancyDbCheck() {
 
       const saved = await tx.savedSearch.create({
         data: {
+          ownerType: "COMPANY",
           companyId: companyA.id,
+          userId: null,
           name: `saved-${suffix}`,
           filters: {},
         },

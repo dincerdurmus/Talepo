@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
-import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import {
+  ownerCreateData,
+  ownerScopeWhere,
+  requireResourceOwnerFeature,
+} from "@/lib/membership/resource-owner";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 
@@ -33,10 +37,10 @@ function normalizeSavedSearchFilters(
 export async function GET() {
   try {
     const user = await requireUser();
-    const ctx = await requireCompanyFeature(user.id, "saved_searches");
+    const ctx = await requireResourceOwnerFeature(user.id, "saved_searches");
 
     const searches = await prisma.savedSearch.findMany({
-      where: { companyId: ctx.companyId },
+      where: ownerScopeWhere(ctx),
       orderBy: { updatedAt: "desc" },
     });
 
@@ -54,13 +58,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    const ctx = await requireCompanyFeature(user.id, "saved_searches");
+    const ctx = await requireResourceOwnerFeature(user.id, "saved_searches");
     const body = (await request.json()) as {
       action?: string;
       id?: string;
       name?: string;
       filters?: SavedSearchFilters;
       isActive?: boolean;
+      // Client ownership fields are ignored (server-authoritative)
+      ownerType?: unknown;
+      userId?: unknown;
+      companyId?: unknown;
     };
 
     if (body.action === "create") {
@@ -80,7 +88,7 @@ export async function POST(request: Request) {
       }
       const search = await prisma.savedSearch.create({
         data: {
-          companyId: ctx.companyId,
+          ...ownerCreateData(ctx),
           name,
           filters: normalized.filters,
         },
@@ -90,7 +98,7 @@ export async function POST(request: Request) {
 
     if (body.action === "delete" && body.id) {
       await prisma.savedSearch.deleteMany({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
       });
       return NextResponse.json({ ok: true });
     }
@@ -108,7 +116,7 @@ export async function POST(request: Request) {
         filtersUpdate = normalized.filters;
       }
       await prisma.savedSearch.updateMany({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
         data: {
           ...(body.name ? { name: body.name.trim() } : {}),
           ...(filtersUpdate ? { filters: filtersUpdate } : {}),

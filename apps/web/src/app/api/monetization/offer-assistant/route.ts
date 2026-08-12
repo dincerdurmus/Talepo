@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
-import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import { requireEntitledFeature } from "@/lib/membership/require-entitled-feature";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { runOfferAssistant } from "@/server/monetization/ai-offer-assistant";
 
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    await requireCompanyFeature(user.id, "ai_offer_assistant");
+    // Personal Premium may use AI without entering a company workspace.
+    // Canonical personal UI remains /api/ai/offer-assistant.
+    await requireEntitledFeature(user.id, "ai_offer_assistant");
 
     const body = (await request.json()) as {
       requestTitle?: string;

@@ -159,6 +159,12 @@ enum PlanTier {
   CORPORATE
 }
 
+/// Commercial context for SavedSearch / AlertRule — exactly one of USER|COMPANY.
+enum ResourceOwnerType {
+  USER
+  COMPANY
+}
+
 enum OpportunityMatchSource {
   ALERT_RULE
   COMPANY_PROFILE
@@ -217,6 +223,10 @@ model User {
   sentMessages             Message[]                 @relation("MessageSender")
 
   notifications Notification[]
+
+  /// Personal-owned Premium resources (workspace = USER)
+  alertRules    AlertRule[]
+  savedSearches SavedSearch[]
 
   /// Phase 4B — critical write idempotency keys
   idempotencyRecords IdempotencyRecord[]
@@ -371,9 +381,14 @@ model CompanyInventoryItem {
 model AlertRule {
   id String @id @default(cuid())
 
-  companyId String
-  name      String
-  isActive  Boolean @default(true)
+  ownerType ResourceOwnerType @default(COMPANY)
+  /// Set when ownerType = USER; null for COMPANY
+  userId    String?
+  /// Set when ownerType = COMPANY; null for USER
+  companyId String?
+
+  name     String
+  isActive Boolean @default(true)
 
   categoryId String?
   city       String?
@@ -389,9 +404,12 @@ model AlertRule {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company  Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
+  @@index([ownerType, userId])
+  @@index([ownerType, companyId])
   @@index([companyId, isActive])
   @@index([categoryId])
   @@index([city])
@@ -400,16 +418,24 @@ model AlertRule {
 model SavedSearch {
   id String @id @default(cuid())
 
-  companyId String
-  name      String
-  filters   Json
-  isActive  Boolean @default(true)
+  ownerType ResourceOwnerType @default(COMPANY)
+  /// Set when ownerType = USER; null for COMPANY
+  userId    String?
+  /// Set when ownerType = COMPANY; null for USER
+  companyId String?
+
+  name     String
+  filters  Json
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  @@index([ownerType, userId])
+  @@index([ownerType, companyId])
   @@index([companyId, isActive])
 }
 

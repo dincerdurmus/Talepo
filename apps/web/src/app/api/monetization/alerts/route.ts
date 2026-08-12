@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
 import { validateAlertRuleAttributes } from "@/lib/monetization/alert-rule-attributes";
-import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import {
+  ownerCreateData,
+  ownerScopeWhere,
+  requireResourceOwnerFeature,
+} from "@/lib/membership/resource-owner";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import type { Prisma } from "@/generated/prisma/client";
@@ -21,10 +25,10 @@ async function resolveCategorySlug(categoryId: string | null | undefined) {
 export async function GET() {
   try {
     const user = await requireUser();
-    const ctx = await requireCompanyFeature(user.id, "smart_alerts");
+    const ctx = await requireResourceOwnerFeature(user.id, "smart_alerts");
 
     const rules = await prisma.alertRule.findMany({
-      where: { companyId: ctx.companyId },
+      where: ownerScopeWhere(ctx),
       orderBy: { updatedAt: "desc" },
       include: { category: { select: { id: true, name: true, slug: true } } },
     });
@@ -44,7 +48,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    const ctx = await requireCompanyFeature(user.id, "smart_alerts");
+    const ctx = await requireResourceOwnerFeature(user.id, "smart_alerts");
     const body = (await request.json()) as {
       action?: string;
       id?: string;
@@ -58,6 +62,10 @@ export async function POST(request: Request) {
       attributes?: Record<string, string> | null;
       discoveryFilter?: unknown;
       isActive?: boolean;
+      // Client ownership fields are ignored (server-authoritative)
+      ownerType?: unknown;
+      userId?: unknown;
+      companyId?: unknown;
     };
 
     if (body.action === "create") {
@@ -86,7 +94,7 @@ export async function POST(request: Request) {
 
       const rule = await prisma.alertRule.create({
         data: {
-          companyId: ctx.companyId,
+          ...ownerCreateData(ctx),
           name,
           categoryId: body.categoryId || null,
           city: body.city?.trim() || null,
@@ -103,7 +111,7 @@ export async function POST(request: Request) {
 
     if (body.action === "update" && body.id) {
       const existing = await prisma.alertRule.findFirst({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
       });
       if (!existing) {
         return NextResponse.json({ ok: false, message: "Kural bulunamadı." }, { status: 404 });
@@ -165,7 +173,7 @@ export async function POST(request: Request) {
       };
 
       const updated = await prisma.alertRule.updateMany({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
         data: updateData,
       });
 
@@ -174,14 +182,14 @@ export async function POST(request: Request) {
       }
 
       const rule = await prisma.alertRule.findFirst({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
       });
       return NextResponse.json({ ok: true, rule });
     }
 
     if (body.action === "delete" && body.id) {
       await prisma.alertRule.deleteMany({
-        where: { id: body.id, companyId: ctx.companyId },
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
       });
       return NextResponse.json({ ok: true });
     }

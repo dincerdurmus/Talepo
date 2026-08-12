@@ -252,10 +252,18 @@ export async function buildCorporateOpportunityCenter(input: {
       orderBy: { createdAt: "asc" },
     }),
     prisma.savedSearch.count({
-      where: { companyId: input.companyId, isActive: true },
+      where: {
+        ownerType: "COMPANY",
+        companyId: input.companyId,
+        isActive: true,
+      },
     }),
     prisma.alertRule.count({
-      where: { companyId: input.companyId, isActive: true },
+      where: {
+        ownerType: "COMPANY",
+        companyId: input.companyId,
+        isActive: true,
+      },
     }),
   ]);
 
