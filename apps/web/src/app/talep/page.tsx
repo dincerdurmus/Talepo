@@ -557,8 +557,18 @@ function TalepOlusturForm() {
         selectedCategory.fields,
         dynamicValues,
         activeCategoryId,
+        {
+          subcategorySlug: hybrid.state?.subcategorySlug ?? null,
+          taxonomyNodeId: hybrid.state?.taxonomyNodeId ?? null,
+        },
       ),
-    [activeCategoryId, dynamicValues, selectedCategory.fields],
+    [
+      activeCategoryId,
+      dynamicValues,
+      selectedCategory.fields,
+      hybrid.state?.subcategorySlug,
+      hybrid.state?.taxonomyNodeId,
+    ],
   );
 
   const missingFields = useMemo(

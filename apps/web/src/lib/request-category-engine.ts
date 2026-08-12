@@ -10,6 +10,7 @@ import {
   TECHNOLOGY_BRANDS,
 } from "@/lib/ai/parser/brand-catalog";
 import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
+import { resolveBrowseSemanticRole } from "@/lib/request-composer/browse-semantic-role";
 
 export type DynamicFieldType = "text" | "number" | "select";
 
@@ -38,6 +39,7 @@ export type DynamicField = {
 export function getCategoryNeedTypeDefault(categoryId: string): string | null {
   if (categoryId === "automotive") return "vehicle";
   if (categoryId === "machinery") return "machine";
+  // Technology: never blindly force software — hardware signals win in withCategoryFieldDefaults
   if (categoryId === "technology") return "software";
   return null;
 }
@@ -52,6 +54,53 @@ const AUTOMOTIVE_PART_ONLY_KEYS = new Set([
 /** Managed by RealEstateLocationFields (searchable multi-select), not free text. */
 const REAL_ESTATE_STRUCTURED_KEYS = new Set(["neighborhoods"]);
 
+const TECH_HARDWARE_SIGNAL =
+  /televizyon|\btv\b|laptop|dizüstü|dizustu|notebook|telefon|iphone|ipad|tablet|monitör|monitor|bilgisayar|donanım|donanim|hardware|kulaklık|smartwatch|yazıcı|printer/i;
+
+const TECH_SOFTWARE_SIGNAL =
+  /yazılım|yazilim|web\s*sitesi|e-?ticaret|erp|crm|uygulama|saas|platform|entegrasyon|software/i;
+
+function looksLikeTechHardware(
+  values: Record<string, string | undefined>,
+): boolean {
+  if ((values.needType ?? "").trim() === "hardware") return true;
+  const bag = [
+    values.productType,
+    values.solutionType,
+    values.applianceType,
+    values.brand,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (TECH_HARDWARE_SIGNAL.test(bag)) return true;
+  if (TECH_SOFTWARE_SIGNAL.test(bag)) return false;
+  return false;
+}
+
+/** Normalize browse/engine spelling drift for visibility gates. */
+function normalizeWhenValue(fieldKey: string, value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (fieldKey === "propertyType") {
+    const fold = trimmed.toLocaleLowerCase("tr-TR");
+    if (fold === "residans" || fold === "rezidans") return "Rezidans";
+    if (fold === "daire") return "Daire";
+    if (fold === "villa") return "Villa";
+    if (fold === "stüdyo" || fold === "studyo") return "Stüdyo";
+    if (fold === "dubleks") return "Dubleks";
+    if (fold === "müstakil ev" || fold === "mustakil ev") return "Müstakil Ev";
+    if (fold === "yalı" || fold === "yali") return "Yalı";
+    if (fold === "yalı dairesi" || fold === "yali dairesi") return "Yalı Dairesi";
+    if (fold === "çiftlik evi" || fold === "ciftlik evi") return "Çiftlik Evi";
+    if (fold === "köşk & konak" || fold === "kosk & konak") return "Köşk & Konak";
+    if (fold === "iş yeri" || fold === "is yeri" || fold === "işyeri") {
+      return "İş yeri";
+    }
+    if (fold === "arsa") return "Arsa";
+  }
+  return trimmed;
+}
+
 export function withCategoryFieldDefaults(
   categoryId: string,
   values: Record<string, string | undefined>,
@@ -61,9 +110,48 @@ export function withCategoryFieldDefaults(
     next[key] = value ?? "";
   }
 
-  const needDefault = getCategoryNeedTypeDefault(categoryId);
-  if (needDefault && !next.needType?.trim()) {
-    next.needType = needDefault;
+  // Normalize RE property spelling so when-gates (roomCount/floor) fire
+  if (next.propertyType?.trim()) {
+    next.propertyType = normalizeWhenValue("propertyType", next.propertyType);
+  }
+
+  if (categoryId === "technology") {
+    if (!next.needType?.trim()) {
+      next.needType = looksLikeTechHardware(next) ? "hardware" : "software";
+    } else if (
+      next.needType.trim() === "software" &&
+      looksLikeTechHardware(next) &&
+      !TECH_SOFTWARE_SIGNAL.test(
+        [next.productType, next.solutionType].filter(Boolean).join(" "),
+      )
+    ) {
+      // Soft default was software but demand is clearly hardware
+      next.needType = "hardware";
+    }
+    if (
+      next.needType === "hardware" &&
+      !next.solutionType?.trim() &&
+      next.productType?.trim()
+    ) {
+      next.solutionType = next.productType.trim();
+    }
+  } else {
+    const needDefault = getCategoryNeedTypeDefault(categoryId);
+    if (needDefault && !next.needType?.trim()) {
+      next.needType = needDefault;
+    }
+  }
+
+  // Furniture: soft-default usage area from leaf (home vs office)
+  if (categoryId === "furniture" && !next.usageArea?.trim()) {
+    const ft = (next.furnitureType ?? "").toLocaleLowerCase("tr-TR");
+    if (ft) {
+      if (/ofis|toplantı|makam|çalışma|calisma|personel/.test(ft)) {
+        next.usageArea = "Ofis";
+      } else {
+        next.usageArea = "Ev";
+      }
+    }
   }
 
   return next;
@@ -74,8 +162,17 @@ export function isFieldVisible(
   values: Record<string, string | undefined>,
 ): boolean {
   if (!field.when) return true;
-  const current = (values[field.when.field] ?? "").trim();
-  return field.when.in.includes(current);
+  const raw = (values[field.when.field] ?? "").trim();
+  if (!raw) return false;
+  const current = normalizeWhenValue(field.when.field, raw);
+  const currentFold = current.toLocaleLowerCase("tr-TR");
+  return field.when.in.some((candidate) => {
+    const normalized = normalizeWhenValue(field.when!.field, candidate);
+    return (
+      normalized === current ||
+      normalized.toLocaleLowerCase("tr-TR") === currentFold
+    );
+  });
 }
 
 export function isFieldRequired(
@@ -89,12 +186,36 @@ export function getVisibleCategoryFields(
   fields: DynamicField[],
   values: Record<string, string | undefined>,
   categoryId?: string,
+  opts?: { subcategorySlug?: string | null; taxonomyNodeId?: string | null },
 ): DynamicField[] {
-  const resolved = categoryId
+  const resolved: Record<string, string> = categoryId
     ? withCategoryFieldDefaults(categoryId, values)
-    : values;
+    : Object.fromEntries(
+        Object.entries(values).map(([k, v]) => [k, v ?? ""]),
+      );
+
+  // Taxonomy subcategory / part leaf pins commercial subject — do not fall back
+  // to category default (e.g. automotive → vehicle) when browse already chose PART.
+  let browsePinnedNeed: string | null = null;
+  if (categoryId) {
+    const role = resolveBrowseSemanticRole({
+      categoryId,
+      subcategorySlug: opts?.subcategorySlug ?? null,
+      taxonomyNodeId: opts?.taxonomyNodeId ?? null,
+      productType: resolved.applianceType || resolved.productType || null,
+    });
+    if (role.needType) {
+      browsePinnedNeed = role.needType;
+      resolved.needType = role.needType;
+    }
+  }
 
   let visible = fields.filter((field) => isFieldVisible(field, resolved));
+
+  // Explicit browse subject: never re-ask "Araç mı, parça mı?"
+  if (browsePinnedNeed) {
+    visible = visible.filter((field) => field.key !== "needType");
+  }
 
   // Hard safety: never ask for parts when the user wants the whole vehicle.
   if (categoryId === "automotive") {
@@ -115,10 +236,40 @@ export function getVisibleCategoryFields(
     }
   }
 
+  if (categoryId === "machinery") {
+    const needType = (resolved.needType ?? "machine").trim() || "machine";
+    if (needType !== "machine") {
+      visible = visible.filter(
+        (field) =>
+          field.key !== "capacity" &&
+          field.key !== "power" &&
+          field.key !== "voltage",
+      );
+    }
+  }
+
   if (categoryId === "real-estate") {
     visible = visible.filter(
       (field) => !REAL_ESTATE_STRUCTURED_KEYS.has(field.key),
     );
+  }
+
+  // Technology: hide software-only filters when demand is hardware (and vice versa)
+  if (categoryId === "technology") {
+    const needType = (resolved.needType ?? "software").trim() || "software";
+    if (needType === "hardware") {
+      visible = visible.filter(
+        (field) =>
+          field.key !== "platform" &&
+          field.key !== "users" &&
+          field.key !== "integration",
+      );
+    } else if (needType === "software" || needType === "service") {
+      visible = visible.filter(
+        (field) =>
+          field.key !== "quantityDetail" && field.key !== "specs",
+      );
+    }
   }
 
   return visible;
@@ -571,10 +722,11 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
       ...brandKeywordList(FURNITURE_BRANDS),
     ],
     subcategories: [
+      "Ev Mobilyası",
+      "Ofis Mobilyaları",
       "Ofis Sandalyesi",
       "Çalışma / Ofis Masası",
       "Toplantı Masası",
-      "Ev Mobilyası",
       "Kafe ve Restoran",
       "Özel Üretim",
       "Diğer",
@@ -593,28 +745,15 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
       {
         key: "furnitureType",
         label: "Ürün türü",
-        type: "select",
+        type: "text",
         required: true,
-        options: [
-          { label: "Ofis sandalyesi", value: "Ofis sandalyesi" },
-          { label: "Çalışma / ofis masası", value: "Çalışma / ofis masası" },
-          {
-            label: "Makam / yönetici masa takımı",
-            value: "Makam / yönetici masa takımı",
-          },
-          { label: "Toplantı masası", value: "Toplantı masası" },
-          { label: "Misafir koltuğu", value: "Misafir koltuğu" },
-          { label: "Koltuk grubu", value: "Koltuk grubu" },
-          { label: "Dolap / raf", value: "Dolap / raf" },
-          { label: "Kafe masa-sandalye seti", value: "Kafe masa-sandalye seti" },
-          { label: "Diğer", value: "Diğer" },
-        ],
+        placeholder: "Örn. Şaraplık, koltuk takımı, çalışma masası",
       },
       {
         key: "usageArea",
         label: "Kullanım alanı",
         type: "select",
-        required: true,
+        required: false,
         options: [
           { label: "Ofis", value: "Ofis" },
           { label: "Ev", value: "Ev" },
@@ -765,6 +904,25 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         when: { field: "needType", in: ["software"] },
       },
       {
+        key: "brand",
+        label: "Marka",
+        type: "text",
+        placeholder: "Örn. Apple, Samsung, HP",
+        when: { field: "needType", in: ["hardware"] },
+      },
+      {
+        key: "condition",
+        label: "Durum",
+        type: "select",
+        when: { field: "needType", in: ["hardware"] },
+        options: [
+          { label: "Sıfır", value: "Sıfır" },
+          { label: "İkinci el", value: "İkinci el" },
+          { label: "Yenilenmiş", value: "Yenilenmiş" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
         key: "quantityDetail",
         label: "Adet / paket",
         type: "text",
@@ -866,8 +1024,13 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         required: true,
         options: [
           { label: "Daire", value: "Daire" },
+          { label: "Rezidans", value: "Rezidans" },
+          { label: "Müstakil Ev", value: "Müstakil Ev" },
           { label: "Villa", value: "Villa" },
-          { label: "Residans", value: "Residans" },
+          { label: "Çiftlik Evi", value: "Çiftlik Evi" },
+          { label: "Köşk & Konak", value: "Köşk & Konak" },
+          { label: "Yalı", value: "Yalı" },
+          { label: "Yalı Dairesi", value: "Yalı Dairesi" },
           { label: "Stüdyo", value: "Stüdyo" },
           { label: "Dubleks", value: "Dubleks" },
           { label: "İş yeri", value: "İş yeri" },
@@ -883,7 +1046,12 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
           in: [
             "Daire",
             "Villa",
-            "Residans",
+            "Rezidans",
+            "Müstakil Ev",
+            "Çiftlik Evi",
+            "Köşk & Konak",
+            "Yalı",
+            "Yalı Dairesi",
             "Stüdyo",
             "Dubleks",
             "İş yeri",
@@ -924,7 +1092,14 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         placeholder: "Örn. 3 / 8",
         when: {
           field: "propertyType",
-          in: ["Daire", "Residans", "Stüdyo", "Dubleks", "İş yeri"],
+          in: [
+            "Daire",
+            "Rezidans",
+            "Yalı Dairesi",
+            "Stüdyo",
+            "Dubleks",
+            "İş yeri",
+          ],
         },
       },
       {
@@ -938,7 +1113,12 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
           in: [
             "Daire",
             "Villa",
-            "Residans",
+            "Rezidans",
+            "Müstakil Ev",
+            "Çiftlik Evi",
+            "Köşk & Konak",
+            "Yalı",
+            "Yalı Dairesi",
             "Stüdyo",
             "Dubleks",
             "İş yeri",
@@ -950,10 +1130,13 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
   {
     id: "appliances",
     label: "Beyaz Eşya",
-    description: "Buzdolabı, çamaşır/bulaşık makinesi, fırın, klima ve benzeri",
+    description:
+      "Küçük ev aletleri, beyaz eşya, ısıtma/soğutma ve havalandırma",
     keywords: [
       "beyaz eşya",
       "beyaz esya",
+      "küçük ev aletleri",
+      "kucuk ev aletleri",
       "buzdolabı",
       "buzdolabi",
       "çamaşır makinesi",
@@ -967,17 +1150,26 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
       "ocak",
       "davlumbaz",
       "klima",
+      "kombi",
       "derin dondurucu",
       "mikro dalga",
       "mikrodalga",
+      "şarap dolabı",
+      "sarap dolabi",
+      "airfryer",
+      "ütü",
+      "utu",
+      "süpürge",
+      "supurge",
+      "ısıtma",
+      "isitma",
+      "havalandırma",
       ...brandKeywordList(APPLIANCE_BRANDS),
     ],
     subcategories: [
-      "Buzdolabı",
-      "Çamaşır Makinesi",
-      "Bulaşık Makinesi",
-      "Fırın / Ocak",
-      "Klima",
+      "Küçük Ev Aletleri",
+      "Beyaz Eşya",
+      "Isıtma, Soğutma ve Havalandırma",
       "Diğer",
     ],
     commonFields: [
@@ -989,23 +1181,12 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
     ],
     fields: [
       {
+        // Free text so taxonomy leaves (Blender, Robot Süpürge, …) persist & match explore
         key: "applianceType",
         label: "Ürün türü",
-        type: "select",
+        type: "text",
         required: true,
-        options: [
-          { label: "Buzdolabı", value: "Buzdolabı" },
-          { label: "Çamaşır makinesi", value: "Çamaşır makinesi" },
-          { label: "Bulaşık makinesi", value: "Bulaşık makinesi" },
-          { label: "Kurutma makinesi", value: "Kurutma makinesi" },
-          { label: "Fırın", value: "Fırın" },
-          { label: "Ocak", value: "Ocak" },
-          { label: "Davlumbaz", value: "Davlumbaz" },
-          { label: "Klima", value: "Klima" },
-          { label: "Derin dondurucu", value: "Derin dondurucu" },
-          { label: "Mikrodalga", value: "Mikrodalga" },
-          { label: "Diğer", value: "Diğer" },
-        ],
+        placeholder: "Örn. Buzdolabı, Klima, Elektrikli Süpürge",
       },
       {
         key: "usageArea",
@@ -1031,8 +1212,9 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         ],
       },
       {
-        key: "brandPreference",
-        label: "Marka tercihi",
+        // Canonical key = brand (explore/alerts). Legacy rows may still use brandPreference.
+        key: "brand",
+        label: "Marka",
         type: "text",
         placeholder: "Örn. Bosch, Arçelik, fark etmez",
       },
@@ -1511,7 +1693,15 @@ export function parseDynamicValues(
   }
 
   if ("brand" in values) {
-    values.brand = findBrand(text, AUTOMOTIVE_BRANDS) ?? "";
+    const auto = findBrand(text, AUTOMOTIVE_BRANDS);
+    const other =
+      findBrand(text, APPLIANCE_BRANDS) ||
+      findBrand(text, TECHNOLOGY_BRANDS) ||
+      findBrand(text, FURNITURE_BRANDS) ||
+      findBrand(text, BABY_BRANDS);
+    // Prefer category-appropriate brand; don't wipe an explicit value with ""
+    const hit = auto || other;
+    if (hit) values.brand = hit;
   }
 
   if ("model" in values) {
@@ -1524,7 +1714,7 @@ export function parseDynamicValues(
       findBrand(text, BABY_BRANDS) ||
       findBrand(text, TECHNOLOGY_BRANDS) ||
       findBrand(text, FURNITURE_BRANDS);
-    values.brandPreference = preference ?? "";
+    values.brandPreference = preference ?? values.brand ?? "";
   }
 
   if ("part" in values) {
@@ -1674,7 +1864,7 @@ export function parseDynamicValues(
       values.propertyType = "Stüdyo";
     else if (normalized.includes("dubleks")) values.propertyType = "Dubleks";
     else if (normalized.includes("rezidans") || normalized.includes("residans"))
-      values.propertyType = "Residans";
+      values.propertyType = "Rezidans";
     else if (normalized.includes("arsa")) values.propertyType = "Arsa";
     else if (
       normalized.includes("dükkan") ||

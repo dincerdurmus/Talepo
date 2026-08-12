@@ -161,7 +161,12 @@ export function resolveHybridQuestions(
   const isAutoSpare =
     categoryId === "automotive" &&
     (values.needType === "part" ||
+      values.needType === "tire" ||
       state.understanding.requestSubject.kind.value === "PART");
+
+  const browsePinnedNeed =
+    state.fields.needType?.provenance === "EXPLICIT_BROWSE" &&
+    state.fields.needType.kind === "VALUE";
 
   const suppressed: string[] = [];
   const filterSpare = (fields: KnowledgeField[]) => {
@@ -180,6 +185,10 @@ export function resolveHybridQuestions(
   const brandPreferred = (state.fields.brand?.preferredValues?.length ?? 0) >= 1;
   const filterAnyAware = (fields: KnowledgeField[]) =>
     fields.filter((f) => {
+      if (browsePinnedNeed && f.key === "needType") {
+        suppressed.push(f.key);
+        return false;
+      }
       const field = state.fields[f.key];
       const kind = field?.kind;
       if (kind === "ANY" || kind === "NOT_APPLICABLE") {

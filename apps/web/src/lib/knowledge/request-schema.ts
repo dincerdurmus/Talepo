@@ -175,6 +175,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       unit: "L",
       priority: "optional",
       aliases: ["litre", "liter"],
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Buzdolabı", "Derin Dondurucu", "Şarap Dolabı", "Su Sebili"],
+      },
     },
     {
       key: "freezerVolume",
@@ -182,6 +186,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "NUMBER",
       unit: "L",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Buzdolabı", "Derin Dondurucu"],
+      },
     },
     {
       key: "capacityKg",
@@ -190,6 +198,14 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       unit: "kg",
       priority: "optional",
       aliases: ["kg", "yıkama kapasitesi"],
+      visibleWhen: {
+        field: "applianceType",
+        in: [
+          "Çamaşır Makinesi",
+          "Çamaşır Kurutma Makinesi",
+          "Bulaşık Makinesi",
+        ],
+      },
     },
     {
       key: "rpm",
@@ -197,6 +213,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "NUMBER",
       unit: "rpm",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Çamaşır Makinesi"],
+      },
     },
     {
       key: "capacityBtu",
@@ -205,18 +225,37 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       unit: "BTU",
       priority: "optional",
       aliases: ["btu"],
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Klima"],
+      },
     },
     {
       key: "inverter",
       canonicalLabel: "Inverter",
       type: "BOOLEAN",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Klima", "Kombi"],
+      },
     },
     {
       key: "installationType",
       canonicalLabel: "Montaj tipi",
       type: "TEXT",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: [
+          "Klima",
+          "Ankastre Set",
+          "Aspiratör & Davlumbaz",
+          "Fırın",
+          "Set Üstü Ocak",
+          "Bulaşık Makinesi",
+        ],
+      },
     },
     {
       key: "volumeLiters",
@@ -224,18 +263,30 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "NUMBER",
       unit: "L",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Fırın", "Mikrodalga Fırın"],
+      },
     },
     {
       key: "ovenType",
       canonicalLabel: "Fırın tipi",
       type: "TEXT",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Fırın", "Mikrodalga Fırın"],
+      },
     },
     {
       key: "doorType",
       canonicalLabel: "Kapı tipi",
       type: "TEXT",
       priority: "optional",
+      visibleWhen: {
+        field: "applianceType",
+        in: ["Buzdolabı"],
+      },
     },
     {
       key: "dimensions",
@@ -273,12 +324,38 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "TEXT",
       priority: "optional",
       aliases: ["ssd", "storage", "gb"],
+      visibleWhen: {
+        field: "productType",
+        in: [
+          "dizüstü bilgisayar",
+          "dizustu bilgisayar",
+          "laptop",
+          "notebook",
+          "masaüstü bilgisayar",
+          "masaustu bilgisayar",
+          "cep telefonu",
+          "akıllı telefon",
+          "akilli telefon",
+          "tablet",
+        ],
+      },
     },
     {
       key: "ram",
       canonicalLabel: "RAM",
       type: "TEXT",
       priority: "optional",
+      visibleWhen: {
+        field: "productType",
+        in: [
+          "dizüstü bilgisayar",
+          "dizustu bilgisayar",
+          "laptop",
+          "notebook",
+          "masaüstü bilgisayar",
+          "masaustu bilgisayar",
+        ],
+      },
     },
     {
       key: "displayInches",
@@ -286,6 +363,17 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "NUMBER",
       unit: "in",
       priority: "optional",
+      visibleWhen: {
+        field: "productType",
+        in: [
+          "dizüstü bilgisayar",
+          "dizustu bilgisayar",
+          "laptop",
+          "notebook",
+          "masaüstü bilgisayar",
+          "masaustu bilgisayar",
+        ],
+      },
     },
     {
       key: "screenSize",
@@ -295,6 +383,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       priority: "optional",
       aliases: ["ekran", "inç", "inch"],
       allowAny: false,
+      visibleWhen: {
+        field: "productType",
+        in: ["televizyon", "Televizyon", "television", "tv"],
+      },
     },
     {
       key: "resolution",
@@ -309,6 +401,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
         { label: "8K", value: "8K" },
         { label: "Farketmez", value: "__ANY__" },
       ],
+      visibleWhen: {
+        field: "productType",
+        in: ["televizyon", "Televizyon", "television", "tv"],
+      },
     },
     {
       key: "panelType",
@@ -316,32 +412,10 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "TEXT",
       priority: "optional",
       allowAny: true,
-    },
-    {
-      key: "brand",
-      canonicalLabel: "Marka",
-      type: "TEXT",
-      priority: "optional",
-      allowAny: true,
-    },
-    {
-      key: "model",
-      canonicalLabel: "Model",
-      type: "TEXT",
-      priority: "optional",
-      allowAny: true,
-    },
-    {
-      key: "condition",
-      canonicalLabel: "Durum",
-      type: "ENUM",
-      priority: "optional",
-      allowAny: true,
-      options: [
-        { label: "Sıfır", value: "Sıfır" },
-        { label: "İkinci el", value: "İkinci el" },
-        { label: "Farketmez", value: "__ANY__" },
-      ],
+      visibleWhen: {
+        field: "productType",
+        in: ["televizyon", "Televizyon", "television", "tv"],
+      },
     },
     {
       key: "productType",
@@ -732,6 +806,32 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "TEXT",
       priority: "optional",
     },
+    {
+      key: "brand",
+      canonicalLabel: "Marka",
+      type: "TEXT",
+      priority: "optional",
+      allowAny: true,
+    },
+    {
+      key: "model",
+      canonicalLabel: "Model",
+      type: "TEXT",
+      priority: "optional",
+      allowAny: true,
+    },
+    {
+      key: "condition",
+      canonicalLabel: "Durum",
+      type: "ENUM",
+      priority: "optional",
+      allowAny: true,
+      options: [
+        { label: "Sıfır", value: "Sıfır" },
+        { label: "İkinci el", value: "İkinci el" },
+        { label: "Farketmez", value: "__ANY__" },
+      ],
+    },
   ],
   "automotive/lastik-ve-jant": [
     {
@@ -774,8 +874,13 @@ function isFieldVisible(
   values: Record<string, string | undefined>,
 ): boolean {
   if (!field.visibleWhen) return true;
-  const current = (values[field.visibleWhen.field] ?? "").trim();
-  return field.visibleWhen.in.includes(current);
+  const current = (values[field.visibleWhen.field] ?? "")
+    .trim()
+    .toLocaleLowerCase("tr-TR");
+  if (!current) return false;
+  return field.visibleWhen.in.some(
+    (v) => v.trim().toLocaleLowerCase("tr-TR") === current,
+  );
 }
 
 function isFilled(values: Record<string, string | undefined>, key: string): boolean {
@@ -820,18 +925,27 @@ export function resolveRequestSchema(
     category.fields,
     values,
     input.categoryId,
+    {
+      subcategorySlug: input.subcategorySlug ?? null,
+    },
   );
 
   const fromEngine = engineFields.map(fromDynamic);
-  const extras = [
-    ...(EXTRA_FIELDS[profile.id] ?? []),
-    ...(EXTRA_FIELDS[input.categoryId] ?? []),
-  ];
+  // profile.id may equal categoryId — never append the same EXTRA_FIELDS list twice
+  const extraKeys =
+    profile.id === input.categoryId
+      ? [profile.id]
+      : [profile.id, input.categoryId];
   const seen = new Set(fromEngine.map((f) => f.key));
-  const merged = [
-    ...fromEngine,
-    ...extras.filter((f) => !seen.has(f.key) && isFieldVisible(f, values)),
-  ];
+  const merged = [...fromEngine];
+  for (const key of extraKeys) {
+    for (const field of EXTRA_FIELDS[key] ?? []) {
+      if (seen.has(field.key)) continue;
+      if (!isFieldVisible(field, values)) continue;
+      seen.add(field.key);
+      merged.push(field);
+    }
+  }
 
   return {
     profileId: profile.id,

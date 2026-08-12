@@ -8,7 +8,9 @@ import {
   type BrowsePathStep,
   type CanonicalRequestState,
   type HybridQuestionResult,
+  composeTextFromBrowseStack,
   createBrowseOnlyState,
+  pinBrowseSemanticContext,
   resolveBrowsePath,
   resolveHybridQuestions,
   syncFromBrowse,
@@ -18,12 +20,13 @@ import {
   type BrowseWalkState,
   type QuickSelectGroup,
   type UnderstoodFact,
-  advanceBrowseWalk,
+  browseWalkFromPath,
   browseNodeToSelection,
   buildQuickSelectGroups,
   buildUnderstoodFacts,
   createBrowseWalkState,
-  listBrowseOptions,
+  listBrowseCascadeColumns,
+  selectBrowseWalkAtColumn,
   softFillFromComposerState,
 } from "@/lib/request-composer/ui-helpers";
 
@@ -55,23 +58,19 @@ export type UseHybridRequestComposerResult = {
     isAny?: boolean,
   ) => void;
   browseWalk: BrowseWalkState;
-  browseOptions: BrowseNode[];
+  browseColumns: BrowseNode[][];
   openBrowsePanel: boolean;
   setOpenBrowsePanel: (open: boolean) => void;
-  selectBrowseNode: (node: BrowseNode) => void;
+  selectBrowseNodeAtColumn: (columnIndex: number, node: BrowseNode) => void;
   resetBrowseWalk: () => void;
-  backBrowseWalk: () => void;
-  debugSnapshot: {
-    syncGeneration: number;
-    lastUserAction?: string;
-    pathIds: string[];
-    nextKeys: string[];
-    lastComposedText?: string;
-  } | null;
 };
 
 function emptyShell(): CanonicalRequestState {
   return createBrowseOnlyState([]);
+}
+
+function pathSignature(path: BrowsePathStep[]): string {
+  return path.map((p) => p.id).join(">");
 }
 
 export function useHybridRequestComposer(
@@ -91,7 +90,10 @@ export function useHybridRequestComposer(
   const [composerError, setComposerError] = useState(false);
   const [browseDegraded, setBrowseDegraded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [openBrowsePanel, setOpenBrowsePanel] = useState(false);
+  // Empty state: open cascade so “Kategoriden seç” is immediately usable
+  const [openBrowsePanel, setOpenBrowsePanel] = useState(
+    () => !(options.initialText ?? "").trim(),
+  );
   const [browseWalk, setBrowseWalk] = useState<BrowseWalkState>(() =>
     createBrowseWalkState(),
   );
@@ -101,6 +103,9 @@ export function useHybridRequestComposer(
   const seqRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastComposedRef = useRef<string | undefined>(state?.lastComposedText);
+  /** When user clicks columns, skip one text→walk realign cycle. */
+  const skipPathWalkSyncRef = useRef(false);
+  const lastPathSigRef = useRef("");
 
   const applyState = useCallback((next: CanonicalRequestState) => {
     stateRef.current = next;
@@ -123,7 +128,6 @@ export function useHybridRequestComposer(
         if (token !== seqRef.current) return;
         setComposerError(true);
         setBrowseDegraded(true);
-        // Keep user text + previous state; do not block create
       } finally {
         if (token === seqRef.current) setIsSyncing(false);
       }
@@ -147,6 +151,7 @@ export function useHybridRequestComposer(
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
       setTextState(next);
       setBrowseWalk(createBrowseWalkState());
+      lastPathSigRef.current = "";
       seqRef.current += 1;
       const token = seqRef.current;
       try {
@@ -192,57 +197,172 @@ export function useHybridRequestComposer(
     [applyBrowseSelection],
   );
 
-  const selectBrowseNode = useCallback(
-    (node: BrowseNode) => {
-      setBrowseWalk((walk) => advanceBrowseWalk(walk, node));
+  const selectBrowseNodeAtColumn = useCallback(
+    (columnIndex: number, node: BrowseNode) => {
+      skipPathWalkSyncRef.current = true;
+
+      const nextWalk = selectBrowseWalkAtColumn(
+        browseWalk,
+        columnIndex,
+        node,
+      );
+      setBrowseWalk(nextWalk);
+
+      const walkCategoryId =
+        nextWalk.categoryId ||
+        (node.kind === "category" ? node.categoryId || node.id : null);
+      const walkSubSlug =
+        nextWalk.subcategorySlug ??
+        (node.kind === "subcategory" && node.meta?.subcategorySlug
+          ? String(node.meta.subcategorySlug)
+          : null);
+
+      const stackLabels = () =>
+        composeTextFromBrowseStack(
+          nextWalk.stack.map((n) => ({ kind: n.kind, label: n.label })),
+          {
+            categoryId: nextWalk.categoryId,
+            subcategorySlug: nextWalk.subcategorySlug,
+          },
+        );
+
+      // Pin semantic role as soon as subcategory (or deeper) is known.
+      if (walkCategoryId && walkSubSlug && stateRef.current) {
+        const pinned = pinBrowseSemanticContext(stateRef.current, {
+          categoryId: walkCategoryId,
+          subcategorySlug: walkSubSlug,
+        });
+        applyState(pinned);
+      }
+
       const selection = browseNodeToSelection(node);
       if (selection) {
         applyBrowseSelection(selection);
+        const fromPath = stackLabels();
+        const composed =
+          fromPath ||
+          stateRef.current?.lastComposedText ||
+          `${selection.value} arıyorum.`;
+        try {
+          const result = syncFromText(stateRef.current, composed, {
+            force: true,
+            structured: {
+              categoryId: walkCategoryId ?? stateRef.current?.categoryId ?? undefined,
+              fieldValues: {
+                ...(walkSubSlug && stateRef.current?.fields.needType?.kind === "VALUE"
+                  ? {
+                      needType: String(
+                        stateRef.current.fields.needType.value ?? "",
+                      ),
+                    }
+                  : walkSubSlug === "yedek-parca"
+                    ? { needType: "part" }
+                    : walkSubSlug === "arac-satin-alma"
+                      ? { needType: "vehicle" }
+                      : walkSubSlug === "arac-bakim"
+                        ? { needType: "service" }
+                        : walkSubSlug === "lastik-ve-jant"
+                          ? { needType: "tire" }
+                          : {}),
+              },
+            },
+          });
+          applyState({
+            ...result.state,
+            fields: {
+              ...result.state.fields,
+              [selection.key]:
+                stateRef.current?.fields[selection.key] ??
+                result.state.fields[selection.key]!,
+              ...(stateRef.current?.fields.needType?.provenance ===
+              "EXPLICIT_BROWSE"
+                ? { needType: stateRef.current.fields.needType }
+                : {}),
+            },
+            categoryId:
+              walkCategoryId ??
+              result.state.categoryId ??
+              stateRef.current?.categoryId ??
+              null,
+            subcategorySlug:
+              walkSubSlug ??
+              result.state.subcategorySlug ??
+              stateRef.current?.subcategorySlug ??
+              null,
+            taxonomyNodeId: selection.entityId?.startsWith("tax:")
+              ? selection.entityId
+              : result.state.taxonomyNodeId,
+            lastComposedText: composed,
+            lastUserAction: "browse",
+          });
+          setTextState(composed);
+        } catch {
+          setTextState(composed);
+        }
         return;
       }
-      // Category / subcategory / group: bootstrap text if empty so understanding tracks
-      if (node.kind === "category" || node.kind === "subcategory") {
+
+      // Category / subcategory / group: pour selection into the textarea
+      if (
+        node.kind === "category" ||
+        node.kind === "subcategory" ||
+        node.kind === "group"
+      ) {
         const seed =
-          text.trim().length > 0
-            ? text
-            : `${node.label} arıyorum`;
-        if (!text.trim()) {
-          try {
-            const result = syncFromText(stateRef.current, seed);
-            applyState(result.state);
-            setTextState(seed);
-          } catch {
-            setBrowseDegraded(true);
-          }
+          node.meta?.listingType
+            ? `${node.meta.listingType} konut arıyorum.`
+            : stackLabels() || `${node.label} arıyorum.`;
+        try {
+          const result = syncFromText(null, seed, {
+            force: true,
+            structured: {
+              categoryId: walkCategoryId ?? undefined,
+              fieldValues:
+                walkSubSlug === "yedek-parca"
+                  ? { needType: "part" }
+                  : walkSubSlug === "arac-satin-alma"
+                    ? { needType: "vehicle" }
+                    : walkSubSlug === "arac-bakim"
+                      ? { needType: "service" }
+                      : walkSubSlug === "lastik-ve-jant"
+                        ? { needType: "tire" }
+                        : undefined,
+            },
+          });
+          const seeded: CanonicalRequestState = {
+            ...result.state,
+            categoryId:
+              node.kind === "category"
+                ? node.categoryId || node.id
+                : walkCategoryId ?? result.state.categoryId,
+            subcategorySlug:
+              node.kind === "subcategory" && node.meta?.subcategorySlug
+                ? String(node.meta.subcategorySlug)
+                : walkSubSlug ?? result.state.subcategorySlug,
+            lastComposedText: seed,
+            lastUserAction: "browse",
+          };
+          const nextState = pinBrowseSemanticContext(seeded, {
+            categoryId: seeded.categoryId,
+            subcategorySlug: seeded.subcategorySlug,
+          });
+          applyState(nextState);
+          setTextState(nextState.lastComposedText ?? seed);
+          setComposerError(false);
+          setBrowseDegraded(false);
+        } catch {
+          setTextState(seed);
+          setBrowseDegraded(true);
         }
       }
     },
-    [applyBrowseSelection, applyState, text],
+    [applyBrowseSelection, applyState, browseWalk],
   );
 
   const resetBrowseWalk = useCallback(() => {
+    skipPathWalkSyncRef.current = true;
     setBrowseWalk(createBrowseWalkState());
-  }, []);
-
-  const backBrowseWalk = useCallback(() => {
-    setBrowseWalk((walk) => {
-      if (walk.stack.length === 0) return createBrowseWalkState();
-      const stack = walk.stack.slice(0, -1);
-      const parent = stack[stack.length - 1] ?? null;
-      return {
-        parentId: parent?.id ?? null,
-        stack,
-        categoryId: parent?.categoryId || walk.categoryId,
-        subcategorySlug:
-          parent?.kind === "subcategory"
-            ? ((parent.meta?.subcategorySlug as string | undefined) ??
-              parent.id.split("/")[1] ??
-              null)
-            : parent?.kind === "category"
-              ? null
-              : walk.subcategorySlug,
-      };
-    });
+    lastPathSigRef.current = "";
   }, []);
 
   useEffect(() => {
@@ -259,6 +379,28 @@ export function useHybridRequestComposer(
       return [];
     }
   }, [browseDegraded, state]);
+
+  // Text → columns: keep walk aligned with understood path
+  useEffect(() => {
+    if (browseDegraded) return;
+    const sig = pathSignature(browsePath);
+    if (skipPathWalkSyncRef.current) {
+      skipPathWalkSyncRef.current = false;
+      lastPathSigRef.current = sig;
+      return;
+    }
+    if (sig === lastPathSigRef.current) return;
+    lastPathSigRef.current = sig;
+    if (browsePath.length === 0) {
+      setBrowseWalk(createBrowseWalkState());
+      return;
+    }
+    try {
+      setBrowseWalk(browseWalkFromPath(browsePath));
+    } catch {
+      // keep current walk
+    }
+  }, [browseDegraded, browsePath]);
 
   const questions = useMemo(() => {
     if (!state) return null;
@@ -284,21 +426,10 @@ export function useHybridRequestComposer(
     [state],
   );
 
-  const browseOptions = useMemo(
-    () => listBrowseOptions(browseWalk),
+  const browseColumns = useMemo(
+    () => listBrowseCascadeColumns(browseWalk),
     [browseWalk],
   );
-
-  const debugSnapshot = useMemo(() => {
-    if (!state) return null;
-    return {
-      syncGeneration: state.syncGeneration,
-      lastUserAction: state.lastUserAction,
-      pathIds: browsePath.map((p) => p.id),
-      nextKeys: questions?.next.map((f) => f.key) ?? [],
-      lastComposedText: state.lastComposedText,
-    };
-  }, [browsePath, questions, state]);
 
   return {
     text,
@@ -316,12 +447,10 @@ export function useHybridRequestComposer(
     applyBrowseSelection,
     applyQuickOption,
     browseWalk,
-    browseOptions,
+    browseColumns,
     openBrowsePanel,
     setOpenBrowsePanel,
-    selectBrowseNode,
+    selectBrowseNodeAtColumn,
     resetBrowseWalk,
-    backBrowseWalk,
-    debugSnapshot,
   };
 }

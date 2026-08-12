@@ -3,6 +3,7 @@
  * Short Turkish; no IDs / confidence.
  */
 
+import { resolveBrowseSemanticRole } from "./browse-semantic-role";
 import type { CanonicalRequestState } from "./types";
 
 function fieldValue(state: CanonicalRequestState, key: string): string | null {
@@ -13,6 +14,22 @@ function fieldValue(state: CanonicalRequestState, key: string): string | null {
 
 function fieldAny(state: CanonicalRequestState, key: string): boolean {
   return state.fields[key]?.kind === "ANY";
+}
+
+function automotiveNeedType(state: CanonicalRequestState): string | null {
+  if (state.fields.needType?.kind === "VALUE" && state.fields.needType.value) {
+    return String(state.fields.needType.value).toLowerCase();
+  }
+  const role = resolveBrowseSemanticRole({
+    categoryId: state.categoryId,
+    subcategorySlug: state.subcategorySlug,
+  });
+  if (role.needType) return role.needType;
+  const subject = state.understanding.requestSubject.kind.value;
+  if (subject === "PART" || subject === "ACCESSORY") return "part";
+  if (subject === "SERVICE") return "service";
+  if (subject === "VEHICLE") return "vehicle";
+  return null;
 }
 
 function isTv(state: CanonicalRequestState): boolean {
@@ -41,11 +58,22 @@ function isVacuum(state: CanonicalRequestState): boolean {
 }
 
 function isAutoPart(state: CanonicalRequestState): boolean {
-  return (
-    state.categoryId === "automotive" ||
-    state.understanding.category.value === "automotive" ||
-    state.understanding.requestSubject.kind.value === "PART"
-  );
+  const need = automotiveNeedType(state);
+  if (need === "vehicle") return false;
+  if (need === "part" || need === "tire") return true;
+  if (state.subcategorySlug === "yedek-parca") return true;
+  if (state.understanding.requestSubject.kind.value === "PART") return true;
+  return false;
+}
+
+function isAutoVehicle(state: CanonicalRequestState): boolean {
+  if (state.categoryId !== "automotive" &&
+    state.understanding.category.value !== "automotive") {
+    return false;
+  }
+  if (isAutoPart(state)) return false;
+  const need = automotiveNeedType(state);
+  return need === "vehicle" || need == null;
 }
 
 function preferredPhrase(state: CanonicalRequestState, key: string): string | null {
@@ -119,21 +147,62 @@ function composeVacuum(state: CanonicalRequestState): string {
 }
 
 function composeAutoPart(state: CanonicalRequestState): string {
-  const bits: string[] = [];
   const brand = fieldValue(state, "brand");
   const model = fieldValue(state, "model");
   const generation = fieldValue(state, "generation");
   const part = fieldValue(state, "part");
   const pos = fieldValue(state, "partPosition");
+  const role = resolveBrowseSemanticRole({
+    categoryId: state.categoryId,
+    subcategorySlug: state.subcategorySlug,
+  });
+  const subjectNoun =
+    part?.toLocaleLowerCase("tr-TR") ??
+    (automotiveNeedType(state) === "tire"
+      ? "lastik"
+      : role.subjectNounTr ?? "yedek parça");
 
-  if (brand && brand.toLocaleLowerCase("tr-TR") !== "golf") bits.push(brand);
-  if (model) bits.push(model);
-  else if (brand && brand.toLocaleLowerCase("tr-TR") === "golf") bits.push("Golf");
-  if (generation) bits.push(generation);
-  if (pos) bits.push(pos.toLocaleLowerCase("tr-TR"));
-  if (part) bits.push(part.toLocaleLowerCase("tr-TR"));
+  const targetBits: string[] = [];
+  if (brand && brand.toLocaleLowerCase("tr-TR") !== "golf") {
+    targetBits.push(brand);
+  }
+  if (model) targetBits.push(model);
+  else if (brand && brand.toLocaleLowerCase("tr-TR") === "golf") {
+    targetBits.push("Golf");
+  }
+  if (generation) targetBits.push(generation);
+
+  const partBits: string[] = [];
+  if (pos) partBits.push(pos.toLocaleLowerCase("tr-TR"));
+  partBits.push(subjectNoun);
+
   const exclLight = excludedPhrase(state, "lightingType");
-  if (exclLight) bits.push(`${exclLight.toLocaleLowerCase("tr-TR")} olmasın`);
+  if (exclLight) {
+    partBits.push(`${exclLight.toLocaleLowerCase("tr-TR")} olmasın`);
+  }
+
+  if (targetBits.length > 0) {
+    return `${targetBits.join(" ")} için ${partBits.join(" ")} arıyorum.`
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  return `${partBits.join(" ")} arıyorum.`.replace(/\s+/g, " ").trim();
+}
+
+function composeAutoVehicle(state: CanonicalRequestState): string {
+  const bits: string[] = [];
+  const brand = fieldValue(state, "brand");
+  const model = fieldValue(state, "model");
+  const generation = fieldValue(state, "generation");
+  const year = fieldValue(state, "year");
+  const condition = fieldValue(state, "condition");
+
+  if (year) bits.push(`${year} model`);
+  if (brand) bits.push(brand);
+  if (model) bits.push(model);
+  if (generation) bits.push(generation);
+  if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
+  if (bits.length === 0) bits.push("araç");
   bits.push("arıyorum");
   return bits.join(" ").replace(/\s+/g, " ").trim() + ".";
 }
@@ -193,6 +262,23 @@ function isAppliances(state: CanonicalRequestState): boolean {
 }
 
 function composeAppliances(state: CanonicalRequestState): string {
+  const role = resolveBrowseSemanticRole({
+    categoryId: state.categoryId,
+    subcategorySlug: state.subcategorySlug,
+    taxonomyNodeId: state.taxonomyNodeId,
+    productType:
+      fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
+  });
+  if (role.compositionMode === "compatibility_part") {
+    const brand = fieldValue(state, "brand");
+    const model = fieldValue(state, "model");
+    const part = fieldValue(state, "part");
+    const target = [brand, model].filter(Boolean).join(" ");
+    const subject = part ?? role.subjectNounTr ?? "yedek parça";
+    if (target) return `${target} için ${subject} arıyorum.`;
+    return `${subject} arıyorum.`;
+  }
+
   const bits: string[] = [];
   const applianceType = fieldValue(state, "applianceType");
   const product = fieldValue(state, "productType");
@@ -201,9 +287,11 @@ function composeAppliances(state: CanonicalRequestState): string {
   if (fieldAny(state, "brand")) bits.push("marka fark etmez");
   else if (brand) bits.push(brand);
 
-  if (applianceType) bits.push(applianceType);
-  else if (product) bits.push(product);
-  else if (state.subcategorySlug === "kucuk-ev-aletleri") {
+  if (applianceType && !/yedek\s*par/i.test(applianceType)) {
+    bits.push(applianceType);
+  } else if (product && !/yedek\s*par/i.test(product)) {
+    bits.push(product);
+  } else if (state.subcategorySlug === "kucuk-ev-aletleri") {
     bits.push("küçük ev aleti");
   } else if (state.subcategorySlug === "beyaz-esya") {
     bits.push("beyaz eşya");
@@ -248,7 +336,46 @@ export function composeNaturalRequestText(
 ): string {
   if (isTv(state)) return composeTv(state);
   if (isVacuum(state)) return composeVacuum(state);
+
+  const role = resolveBrowseSemanticRole({
+    categoryId: state.categoryId,
+    subcategorySlug: state.subcategorySlug,
+    taxonomyNodeId: state.taxonomyNodeId,
+    productType:
+      fieldValue(state, "applianceType") ??
+      fieldValue(state, "productType") ??
+      fieldValue(state, "machineType"),
+  });
+
+  if (role.compositionMode === "compatibility_part") {
+    if (state.categoryId === "automotive" || isAutoPart(state)) {
+      return composeAutoPart(state);
+    }
+    const brand = fieldValue(state, "brand");
+    const model = fieldValue(state, "model");
+    const part = fieldValue(state, "part");
+    const target = [brand, model].filter(Boolean).join(" ");
+    const subject = part ?? role.subjectNounTr ?? "yedek parça";
+    if (target) {
+      return `${target} için ${subject} arıyorum.`
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+    return `${subject} arıyorum.`.replace(/\s+/g, " ").trim();
+  }
+
+  if (role.compositionMode === "service") {
+    const brand = fieldValue(state, "brand");
+    const model = fieldValue(state, "model");
+    const target = [brand, model].filter(Boolean).join(" ");
+    const subject =
+      fieldValue(state, "serviceType") ?? role.subjectNounTr ?? "bakım";
+    if (target) return `${target} için ${subject} arıyorum.`;
+    return `${subject} arıyorum.`;
+  }
+
   if (isAutoPart(state)) return composeAutoPart(state);
+  if (isAutoVehicle(state)) return composeAutoVehicle(state);
   if (
     state.categoryId === "real-estate" ||
     state.understanding.category.value === "real-estate"
@@ -257,30 +384,120 @@ export function composeNaturalRequestText(
   }
   if (isFurniture(state)) return composeFurniture(state);
   if (isAppliances(state)) return composeAppliances(state);
+  if (
+    role.compositionMode === "whole_product" &&
+    (state.categoryId === "machinery" || state.categoryId === "industrial")
+  ) {
+    const bits = [
+      fieldValue(state, "brand"),
+      fieldValue(state, "machineType") ?? fieldValue(state, "productType"),
+      fieldValue(state, "model"),
+    ].filter(Boolean);
+    if (bits.length) return `${bits.join(" ")} arıyorum.`;
+    return `${role.subjectNounTr ?? "makine"} arıyorum.`;
+  }
   return composeGeneric(state);
 }
 
 /** Compose natural request from live browse cascade stack (category → leaf). */
 export function composeTextFromBrowseStack(
   stack: Array<{ kind: string; label: string }>,
+  opts?: {
+    categoryId?: string | null;
+    subcategorySlug?: string | null;
+  },
 ): string {
   if (!stack.length) return "";
+
+  const sub =
+    [...stack].reverse().find((n) => n.kind === "subcategory") ?? null;
+  const subcategorySlug =
+    opts?.subcategorySlug ??
+    (sub
+      ? sub.label
+          .toLocaleLowerCase("tr-TR")
+          .replace(/ğ/g, "g")
+          .replace(/ü/g, "u")
+          .replace(/ş/g, "s")
+          .replace(/ı/g, "i")
+          .replace(/ö/g, "o")
+          .replace(/ç/g, "c")
+          .replace(/\s+/g, "-")
+      : null);
+
+  const categoryId =
+    opts?.categoryId ??
+    stack.find((n) => n.kind === "category")?.label ??
+    null;
+
+  const resolvedCategoryId = (() => {
+    if (opts?.categoryId) return opts.categoryId;
+    if (typeof categoryId !== "string") return null;
+    const fold = categoryId.toLocaleLowerCase("tr-TR");
+    if (fold === "otomotiv" || categoryId === "automotive") return "automotive";
+    if (fold === "makine" || categoryId === "machinery") return "machinery";
+    if (fold.includes("beyaz") || fold === "appliances") return "appliances";
+    if (!categoryId.includes(" ") && !categoryId.includes("·")) return categoryId;
+    return null;
+  })();
+
+  const resolvedSubSlug = opts?.subcategorySlug ?? subcategorySlug;
+
+  // Prefer structured slug when caller passes it (composer walk).
+  const role = resolveBrowseSemanticRole({
+    categoryId: resolvedCategoryId,
+    subcategorySlug: resolvedSubSlug,
+  });
+
+  const brand = [...stack].reverse().find((n) => n.kind === "brand");
+  const model = [...stack].reverse().find((n) => n.kind === "model");
+  const generation = [...stack].reverse().find((n) => n.kind === "generation");
+  const part = [...stack].reverse().find((n) => n.kind === "part");
   const product = [...stack]
     .reverse()
     .find(
       (n) =>
         n.kind === "product_type" ||
         n.kind === "service_type" ||
-        n.kind === "commodity_type" ||
-        n.kind === "part" ||
-        n.kind === "brand",
+        n.kind === "commodity_type",
     );
   const group = [...stack].reverse().find((n) => n.kind === "group");
-  const sub = [...stack].reverse().find((n) => n.kind === "subcategory");
   const cat = stack.find((n) => n.kind === "category");
 
+  if (role.compositionMode === "compatibility_part") {
+    const target = [brand?.label, model?.label, generation?.label]
+      .filter(Boolean)
+      .join(" ");
+    const subject =
+      part?.label?.toLocaleLowerCase("tr-TR") ??
+      role.subjectNounTr ??
+      "yedek parça";
+    if (target) {
+      return `${target} için ${subject} arıyorum.`;
+    }
+    return `${subject} arıyorum.`;
+  }
+
+  if (role.compositionMode === "service") {
+    const target = [brand?.label, model?.label].filter(Boolean).join(" ");
+    const subject = product?.label ?? role.subjectNounTr ?? "bakım";
+    if (target) return `${target} için ${subject} arıyorum.`;
+    return `${subject} arıyorum.`;
+  }
+
+  if (role.compositionMode === "whole_product") {
+    const bits = [brand?.label, model?.label, generation?.label].filter(Boolean);
+    if (bits.length) return `${bits.join(" ")} arıyorum.`;
+  }
+
   const subject =
-    product?.label ?? group?.label ?? sub?.label ?? cat?.label ?? "";
+    part?.label ??
+    product?.label ??
+    brand?.label ??
+    group?.label ??
+    sub?.label ??
+    cat?.label ??
+    "";
   if (!subject.trim()) return "";
   return `${subject.trim()} arıyorum.`;
 }

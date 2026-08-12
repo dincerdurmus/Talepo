@@ -141,6 +141,11 @@ export type SemanticSubjectInput = {
   listingType?: string | null;
   /** Automotive model token from catalog when present */
   automotiveModel?: string | null;
+  /**
+   * Structured / browse-pinned commercial need (EXPLICIT).
+   * When set, overrides ambiguous brand+model → vehicle collapse.
+   */
+  forcedNeedType?: string | null;
 };
 
 function decision<T>(
@@ -439,6 +444,108 @@ export function resolveSemanticSubject(
   const text = input.normalizedInput;
   const evidence: string[] = [];
   const alternatives: SemanticRequestSubject["alternatives"] = [];
+
+  const forcedNeed = input.forcedNeedType?.trim().toLowerCase() ?? null;
+
+  // Browse / structured EXPLICIT needType beats ambiguous brand+model collapse.
+  if (forcedNeed === "part" || forcedNeed === "tire") {
+    const parentKind: ParentEntityKind =
+      input.categoryId === "machinery" || input.categoryId === "industrial"
+        ? "MACHINE"
+        : input.categoryId === "automotive" || input.automotiveModel
+          ? "VEHICLE"
+          : "PRODUCT";
+    const parent = buildParentEntity(
+      input.identity,
+      parentKind,
+      input.automotiveModel,
+    );
+    const partHit = findLemmaHit(text, PART_LEMMAS);
+    const name =
+      forcedNeed === "tire"
+        ? "lastik"
+        : partHit &&
+            partHit.lemma !== "parça" &&
+            partHit.lemma !== "parca" &&
+            partHit.lemma !== "motor" &&
+            partHit.lemma !== "fren"
+          ? partHit.lemma
+          : "yedek parça";
+    return {
+      kind: decision("PART", 0.95, [
+        "forcedNeedType=part",
+        ...(partHit ? [partHit.raw] : []),
+      ]),
+      name: uv(name, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.95,
+        evidence: ["forcedNeedType"],
+      }),
+      displayPhrase: uv(name, {
+        provenance: "EXPLICIT",
+        source: "NORMALIZED_EXPLICIT",
+        confidence: 0.95,
+        evidence: ["forcedNeedType"],
+      }),
+      parentEntity: parent,
+      relation: decision("PART_OF", 0.9, ["forced-part"]),
+      relationship: decision("PART_FOR_PRODUCT", 0.9, ["forced-part"]),
+    };
+  }
+
+  if (forcedNeed === "service") {
+    const parent = buildParentEntity(
+      input.identity,
+      input.categoryId === "automotive" ? "VEHICLE" : "PRODUCT",
+      input.automotiveModel,
+    );
+    return {
+      kind: decision("SERVICE", 0.95, ["forcedNeedType=service"]),
+      name: uv("bakım", {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.9,
+        evidence: ["forcedNeedType"],
+      }),
+      displayPhrase: uv("bakım", {
+        provenance: "EXPLICIT",
+        source: "NORMALIZED_EXPLICIT",
+        confidence: 0.9,
+        evidence: ["forcedNeedType"],
+      }),
+      parentEntity: parent,
+      relationship: decision("SERVICE_FOR_OBJECT", 0.9, ["forced-service"]),
+      relation: decision("UNKNOWN", 0.5, []),
+    };
+  }
+
+  if (forcedNeed === "vehicle") {
+    const parent = buildParentEntity(
+      input.identity,
+      "VEHICLE",
+      input.automotiveModel,
+    );
+    const label = parentDisplay(parent) || "araç";
+    return {
+      kind: decision("VEHICLE", 0.95, ["forcedNeedType=vehicle"]),
+      name: uv(label, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.9,
+        evidence: ["forcedNeedType"],
+      }),
+      displayPhrase: uv(label, {
+        provenance: "EXPLICIT",
+        source: "NORMALIZED_EXPLICIT",
+        confidence: 0.9,
+        evidence: ["forcedNeedType"],
+      }),
+      parentEntity: parent,
+      relationship: decision("VEHICLE_REQUEST", 0.9, ["forced-vehicle"]),
+      relation: decision("UNKNOWN", 0.4, []),
+    };
+  }
 
   const partNegated = PART_NEGATION.test(text);
   const wholeVehicle = WHOLE_VEHICLE_SEEK.test(text) || partNegated;

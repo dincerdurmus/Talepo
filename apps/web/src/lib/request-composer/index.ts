@@ -49,8 +49,15 @@ export { resolveBrowsePath } from "./resolve-browse-path";
 export {
   applyBrowseSelectionToState,
   applyBrowseSelectionsToState,
+  pinBrowseSemanticContext,
   type BrowseSelectionInput,
 } from "./apply-browse";
+
+export {
+  resolveBrowseSemanticRole,
+  isCompatibilityBrowseRole,
+  type BrowseSemanticRole,
+} from "./browse-semantic-role";
 
 export {
   composeNaturalRequestText,

@@ -919,6 +919,10 @@ export function understandRequest(
   }
 
   // B3.7 — semantic subject / relationship (after identity, before strategy)
+  const structuredNeedType =
+    typeof structured?.fieldValues?.needType === "string"
+      ? structured.fieldValues.needType.trim()
+      : null;
   let requestSubject: SemanticRequestSubject = resolveSemanticSubject({
     normalizedInput,
     identity: {
@@ -944,6 +948,7 @@ export function understandRequest(
       ? String(attributes.listingType.value)
       : null,
     automotiveModel: autoModel ?? null,
+    forcedNeedType: structuredNeedType,
   });
 
   // Reconcile identity with parent tokens (generic dedupe brand⊃model)

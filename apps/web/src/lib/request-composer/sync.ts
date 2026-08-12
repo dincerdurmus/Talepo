@@ -36,17 +36,45 @@ function normalizeComparable(text: string): string {
 
 /**
  * TEXT → Single Brain → CanonicalRequestState.
- * Skips re-parse when input equals last composed output (loop prevention).
+ * Skips re-parse when input equals last composed output (loop prevention),
+ * but NEVER when browse-pinned needType disagrees with requestSubject
+ * (browse compose can update text without refreshing understanding).
  */
 export function syncFromText(
   previous: CanonicalRequestState | null | undefined,
   rawText: string,
-  opts?: { structured?: UnderstandRequestInput["structured"] },
+  opts?: { structured?: UnderstandRequestInput["structured"]; force?: boolean },
 ): SyncFromTextResult {
   const text = rawText ?? "";
+  const browseNeed =
+    previous?.fields.needType?.provenance === "EXPLICIT_BROWSE" &&
+    previous.fields.needType.kind === "VALUE" &&
+    previous.fields.needType.value
+      ? String(previous.fields.needType.value).toLowerCase()
+      : null;
+  const subjectKind =
+    previous?.understanding.requestSubject.kind.value ?? null;
+  const subjectMatchesBrowseNeed = (() => {
+    if (!browseNeed) return true;
+    if (browseNeed === "part" || browseNeed === "tire") {
+      return subjectKind === "PART" || subjectKind === "ACCESSORY";
+    }
+    if (browseNeed === "vehicle") return subjectKind === "VEHICLE";
+    if (browseNeed === "service") return subjectKind === "SERVICE";
+    if (browseNeed === "machine") {
+      return (
+        subjectKind === "INDUSTRIAL_EQUIPMENT" || subjectKind === "PRODUCT"
+      );
+    }
+    return true;
+  })();
+
   if (
+    !opts?.force &&
     previous?.lastComposedText &&
-    normalizeComparable(text) === normalizeComparable(previous.lastComposedText)
+    normalizeComparable(text) ===
+      normalizeComparable(previous.lastComposedText) &&
+    subjectMatchesBrowseNeed
   ) {
     return {
       state: {
@@ -58,19 +86,46 @@ export function syncFromText(
     };
   }
 
+  // Carry EXPLICIT_BROWSE needType / category into the sole brain so
+  // brand+model sentences cannot collapse PART → VEHICLE.
+  const structured: UnderstandRequestInput["structured"] = {
+    ...opts?.structured,
+    categoryId:
+      opts?.structured?.categoryId ?? previous?.categoryId ?? undefined,
+    fieldValues: {
+      ...opts?.structured?.fieldValues,
+      ...(browseNeed
+        ? { needType: browseNeed }
+        : {}),
+    },
+  };
+
   const understanding = understandRequest({
     rawInput: text,
-    structured: opts?.structured,
+    structured,
   });
 
-  const state = buildCanonicalRequestState({
+  let state = buildCanonicalRequestState({
     understanding,
     lastUserAction: "text",
     previous: previous ?? null,
     progressiveReset: true,
   });
 
-  // Progressive: obsolete inferred cleared by full rebuild from new understanding
+  // Keep browse-pinned subcategory + needType authoritative after re-parse.
+  if (previous?.fields.needType?.provenance === "EXPLICIT_BROWSE") {
+    state = {
+      ...state,
+      subcategorySlug: previous.subcategorySlug ?? state.subcategorySlug,
+      categoryId: previous.categoryId ?? state.categoryId,
+      taxonomyNodeId: previous.taxonomyNodeId ?? state.taxonomyNodeId,
+      fields: {
+        ...state.fields,
+        needType: previous.fields.needType,
+      },
+    };
+  }
+
   return { state, skipped: false };
 }
 
