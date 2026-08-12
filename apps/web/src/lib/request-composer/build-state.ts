@@ -127,9 +127,26 @@ export function applyConstraintBundleToFields(
       c.preferredValues?.length ||
       c.allowedValues?.length
     ) {
-      next[c.fieldKey] = {
-        kind: existing?.kind === "VALUE" ? existing.kind : "UNKNOWN",
-        value: existing?.kind === "VALUE" ? existing.value : null,
+    const excludedFold = (c.excludedValues ?? []).map((v) =>
+      v.toLocaleLowerCase("tr-TR"),
+    );
+    const existingValue = existing?.kind === "VALUE" ? existing.value : null;
+    const valueIsExcluded =
+      Boolean(existingValue) &&
+      excludedFold.some(
+        (e) => e === String(existingValue).toLocaleLowerCase("tr-TR"),
+      );
+    next[c.fieldKey] = {
+      kind: valueIsExcluded
+        ? "UNKNOWN"
+        : existing?.kind === "VALUE"
+          ? existing.kind
+          : "UNKNOWN",
+      value: valueIsExcluded
+        ? null
+        : existing?.kind === "VALUE"
+          ? existing.value
+          : null,
         provenance: "EXPLICIT_TEXT",
         confidence: c.confidence,
         evidence: c.evidence,

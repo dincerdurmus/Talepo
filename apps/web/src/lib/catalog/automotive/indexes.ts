@@ -514,6 +514,7 @@ export function findModelInText(
         : "exact";
   return {
     record: hit.row.record,
+    matchedPhrase: hit.row.phrase,
     confidence: confidenceFromMatchMode(mode, {
       uniqueInference: !brandId,
     }),

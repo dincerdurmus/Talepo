@@ -90,6 +90,7 @@ export {
   browseKindToFieldKey,
   browseNodeToSelection,
   buildUnderstoodFacts,
+  understoodFactsToSummaryChips,
   softFillFromComposerState,
   buildQuickSelectGroups,
   createBrowseWalkState,

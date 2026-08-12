@@ -81,10 +81,14 @@ import {
   toCatalogPreviewModel,
 } from "@/lib/catalog/consumer";
 import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
-import { resolveHybridQuestions } from "@/lib/request-composer";
+import {
+  composeNaturalRequestText,
+  resolveHybridQuestions,
+  buildUnderstoodFacts,
+  understoodFactsToSummaryChips,
+} from "@/lib/request-composer";
 import {
   budgetDisplayFromUnderstanding,
-  buildUnderstandingSummary,
   resolveSchemaCategory,
   safeDraftAttributes,
   seedFieldValuesFromUnderstanding,
@@ -771,24 +775,27 @@ function TalepOlusturForm() {
   );
 
   const requestSummary = useMemo(() => {
-    const fromBrain = buildUnderstandingSummary(understanding);
-    // Prefer canonical semantic headline over mechanical title concat
-    const semanticHeadline =
-      fromBrain.headline && fromBrain.headline !== "Talebiniz"
-        ? fromBrain.headline
-        : null;
-    const chips = catalogPreview
-      ? fromBrain.chips.filter((chip) => !CATALOG_PREVIEW_CHIP_KEYS.has(chip.fieldKey))
-      : fromBrain.chips;
+    const facts = buildUnderstoodFacts(hybrid.state);
+    const chips = understoodFactsToSummaryChips(facts).filter((chip) =>
+      catalogPreview ? !CATALOG_PREVIEW_CHIP_KEYS.has(chip.fieldKey) : true,
+    );
+    const composed = (
+      hybrid.state?.lastComposedText?.trim() ||
+      (hybrid.state ? composeNaturalRequestText(hybrid.state) : "")
+    ).replace(/[.!\s]+$/u, "");
+    const kind = understanding.requestSubject.kind.value;
+    const subtypeLabel =
+      kind === "PART"
+        ? "Yedek parça"
+        : kind === "ACCESSORY"
+          ? "Aksesuar"
+          : null;
     return {
-      headline:
-        semanticHeadline ||
-        mergedCommonDraft.title.trim() ||
-        "Talebiniz",
+      headline: composed || mergedCommonDraft.title.trim() || "Talebiniz",
       chips,
-      subtypeLabel: fromBrain.subtypeLabel ?? null,
+      subtypeLabel,
     };
-  }, [catalogPreview, understanding, mergedCommonDraft.title]);
+  }, [catalogPreview, hybrid.state, understanding.requestSubject.kind.value, mergedCommonDraft.title]);
 
   /**
    * Sole question authority: resolveHybridQuestions (canonical-hybrid).

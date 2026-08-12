@@ -200,7 +200,9 @@ function parentLabelFromSubject(result: RequestUnderstandingResult): string {
 }
 
 /**
- * Canonical semantic summary — composed from requestSubject, not brand+model concat.
+ * Parse-time snapshot chips — demoted.
+ * Live UI must use buildUnderstoodFacts(CanonicalRequestState) so enrichment
+ * answers update immediately without a second parse.
  */
 export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
   headline: string;

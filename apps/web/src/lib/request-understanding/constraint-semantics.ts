@@ -6,10 +6,16 @@
 
 import {
   APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  AUTOMOTIVE_MODEL_TOKENS,
   HOME_KITCHEN_BRANDS,
   TECHNOLOGY_BRANDS,
   type BrandEntry,
 } from "@/lib/ai/parser/brand-catalog";
+import {
+  isNegatedMention,
+  isNegatedWindow,
+} from "@/lib/ai/parser/negation";
 import type {
   UnderstandingContradiction,
   UnderstandingProvenance,
@@ -62,13 +68,11 @@ const MUST_MARKERS =
 const PREFERRED_MARKERS =
   /\b(tercihen|tercihim|önceliğim|onceligim|olursa\s+iyi\s+olur|olsa\s+iyi\s+olur|mümkünse|mumkunse|daha\s+iyi\s+olur|olabilir)\b/i;
 
-const NEGATION_TAIL =
-  /\b(olmasın|olmasin|istemiyorum|istemem|olmaz|hariç|haric|değil|degil)\b/i;
-
 const BRAND_CATALOG: BrandEntry[] = [
   ...TECHNOLOGY_BRANDS,
   ...APPLIANCE_BRANDS,
   ...HOME_KITCHEN_BRANDS,
+  ...AUTOMOTIVE_BRANDS,
 ];
 
 const RESOLUTION_ALIASES: Array<{ re: RegExp; value: string }> = [
@@ -146,23 +150,6 @@ function strengthInWindow(win: string): ConstraintStrength | undefined {
   if (MUST_MARKERS.test(win)) return "MUST";
   if (PREFERRED_MARKERS.test(win)) return "PREFERRED";
   return undefined;
-}
-
-function isNegatedWindow(win: string): boolean {
-  return NEGATION_TAIL.test(win);
-}
-
-/**
- * Negation must attach to THIS mention — look mostly forward.
- * Wide bidirectional windows falsely mark early "Samsung … ama Samsung olmasın".
- */
-function isNegatedMention(text: string, index: number, len: number): boolean {
-  const after = text.slice(index, Math.min(text.length, index + len + 32));
-  if (NEGATION_TAIL.test(after)) return true;
-  // short lookbehind: "istemiyorum Samsung" rare; "Samsung'sız" not handled
-  const before = text.slice(Math.max(0, index - 12), index);
-  if (/\b(hariç|haric|değil|degil)\s*$/i.test(before)) return true;
-  return false;
 }
 
 function upsert(
@@ -409,6 +396,41 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
     }
   }
 
+  // --- Models / series: exclude via Phase 2 EXCLUDED (not a parallel negation system) ---
+  {
+    const seriesRe = /\b(\d)\s*seri(?:si)?\b/gi;
+    let sm: RegExpExecArray | null;
+    while ((sm = seriesRe.exec(text)) !== null) {
+      if (!isNegatedMention(text, sm.index, sm[0].length)) continue;
+      upsert(byField, {
+        fieldKey: "model",
+        excludedValues: [`${sm[1]} Serisi`],
+        confidence: 0.93,
+        provenance: "EXPLICIT",
+        evidence: [sm[0] + " negated"],
+      });
+    }
+    for (const token of AUTOMOTIVE_MODEL_TOKENS) {
+      const needle = token.toLocaleLowerCase("tr-TR");
+      if (needle.length < 3) continue;
+      const re = new RegExp(
+        `(?:^|[^a-zçğıöşü0-9])${escapeRegex(needle)}(?=$|[^a-zçğıöşü0-9])`,
+        "gi",
+      );
+      let mm: RegExpExecArray | null;
+      while ((mm = re.exec(text)) !== null) {
+        if (!isNegatedMention(text, mm.index, mm[0].length)) continue;
+        upsert(byField, {
+          fieldKey: "model",
+          excludedValues: [token],
+          confidence: 0.93,
+          provenance: "EXPLICIT",
+          evidence: [mm[0].trim() + " negated"],
+        });
+      }
+    }
+  }
+
   // Contradiction: same brand both required and excluded
   if (byField.brand?.value && byField.brand.excludedValues?.length) {
     const v = byField.brand.value.toLocaleLowerCase("tr-TR");
@@ -450,7 +472,7 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
     const m = text.match(alias.re);
     if (!m || m.index == null) continue;
     const win = windowAround(text, m.index, m[0].length, 40);
-    if (isNegatedWindow(win)) {
+    if (isNegatedMention(text, m.index, m[0].length)) {
       upsert(byField, {
         fieldKey: "resolution",
         excludedValues: [alias.value],

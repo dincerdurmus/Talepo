@@ -8,8 +8,14 @@ import {
 import { normalizeToken } from "@/server/price-intelligence/normalize-product";
 
 import { extractBrandFromText } from "./brand-extraction";
-import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
-import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
+import {
+  findBrand,
+  findTechnologyProduct,
+  isKnownAutomotiveModelName,
+  TECHNOLOGY_BRANDS,
+} from "@/lib/ai/parser/brand-catalog";
+import { stripConversationRemainder } from "@/lib/ai/parser/negation";
+import { looksLikeTelevisionScreenContext, looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import { normalizeCondition } from "./condition";
 import {
   extractModelCandidatesFromAttributes,
@@ -76,7 +82,7 @@ function splitEmbeddedProductName(
   const split = extractBrandFromText(text);
 
   let brand = existingBrand ?? split.brand;
-  let remainder = split.remainder || text;
+  let remainder = stripConversationRemainder(split.remainder);
 
   if (brand && remainder.toLocaleLowerCase("tr-TR").startsWith(brand.toLocaleLowerCase("tr-TR"))) {
     remainder = remainder.slice(brand.length).trim();
@@ -175,13 +181,36 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     if (embedded.series && !series) series = embedded.series;
   }
 
+  // Catalog device family (iPhone 15 → Apple / iPhone 15) beats inferred product-line brand
+  const techProduct = findTechnologyProduct(input.title);
+  const catalogTechBrand =
+    techProduct?.brand || findBrand(input.title, TECHNOLOGY_BRANDS);
+  if (catalogTechBrand) {
+    const currentResolves = brand
+      ? findBrand(brand, TECHNOLOGY_BRANDS)
+      : null;
+    if (!brand || currentResolves === catalogTechBrand) {
+      brand = catalogTechBrand;
+      brandConfidence = Math.max(brandConfidence, 0.92);
+    }
+  }
+  if (
+    techProduct &&
+    (!structuredModel ||
+      isProductTypePhrase(model ?? "") ||
+      /^\d+$/.test(model ?? ""))
+  ) {
+    model = techProduct.canonical;
+  }
+
   // Title inference only when structured brand absent
   if (!brand && input.title?.trim()) {
     const fromTitle = extractBrandFromText(input.title);
     if (fromTitle.brand && !isKnownAutomotiveModelName(fromTitle.brand)) {
       brand = fromTitle.brand;
       brandConfidence = Math.max(brandConfidence, fromTitle.confidence);
-      if (!model && fromTitle.remainder) model = fromTitle.remainder;
+      const remainder = stripConversationRemainder(fromTitle.remainder);
+      if (!model && remainder) model = remainder;
     } else if (
       fromTitle.brand &&
       isKnownAutomotiveModelName(fromTitle.brand) &&
@@ -206,14 +235,24 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   if (model && looksLikeYearToken(model) && !/^[A-Za-z]/.test(model)) {
     model = null;
   }
+  if (
+    model &&
+    /^\d{2,3}$/.test(model) &&
+    looksLikeTelevisionScreenContext(input.title)
+  ) {
+    model = null;
+  }
 
-  if (model) model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));
+  if (model) {
+    model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));
+    model = stripConversationRemainder(model) || null;
+  }
 
   // Strip redundant brand prefix from model when brand is known separately
   if (brand && model) {
     const brandPrefix = new RegExp(`^${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i");
     const stripped = model.replace(brandPrefix, "").trim();
-    if (stripped) model = stripped;
+    model = stripped || null;
   }
 
   // Never use productType as model when productType is explicitly set

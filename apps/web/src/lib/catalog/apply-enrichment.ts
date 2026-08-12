@@ -30,17 +30,36 @@ function fold(value: string): string {
   return value.toLocaleLowerCase("tr-TR");
 }
 
+function looksLikeCompactUserModel(value: string): boolean {
+  const t = value.trim();
+  if (/^[A-Za-z][0-9]{2,3}[A-Za-z]?$/i.test(t)) return true;
+  if (/^[0-9]{3}[ijd]$/i.test(t)) return true;
+  if (/^[CESAGL]\s*[0-9]{3}$/i.test(t)) return true;
+  return false;
+}
+
 function mayOverwrite(
   existing: { value?: unknown; provenance?: string } | undefined,
   nextLabel: string,
+  slot: "brand" | "model" | "other" = "other",
+  rawInput?: string,
 ): boolean {
   if (!existing?.value) return true;
   const current = String(existing.value);
   if (fold(current) === fold(nextLabel)) return true;
   // Catalog parent brand may replace a model token that was mis-slotted as brand
-  if (isKnownAutomotiveModelName(current)) return true;
+  if (slot === "brand" && isKnownAutomotiveModelName(current)) return true;
   // Year tokens are never identity — catalog may replace them
   if (looksLikeYearToken(current)) return true;
+  // Keep user-typed compact codes (C200, 320i) over family names (C Serisi)
+  if (
+    slot === "model" &&
+    looksLikeCompactUserModel(current) &&
+    rawInput &&
+    fold(rawInput).replace(/\s+/g, "").includes(fold(current).replace(/\s+/g, ""))
+  ) {
+    return false;
+  }
   // Never replace a different EXPLICIT user token
   if (existing.provenance === "EXPLICIT") return false;
   return true;
@@ -82,10 +101,22 @@ export function applyCatalogEnrichment(
     const attributes = { ...next.attributes };
     let requestSubject = { ...next.requestSubject };
 
+    const excludedModels = (next.constraints?.byField?.model?.excludedValues ?? []).map(
+      (v) => fold(v),
+    );
+    const modelExcluded =
+      enrichment.model &&
+      excludedModels.some(
+        (e) =>
+          fold(enrichment.model!.name) === e ||
+          fold(enrichment.model!.name).includes(e) ||
+          e.includes(fold(enrichment.model!.name)),
+      );
+
     if (
       enrichment.brand &&
       FILLABLE.includes(enrichment.brand.confidence) &&
-      mayOverwrite(identity.brand, enrichment.brand.name)
+      mayOverwrite(identity.brand, enrichment.brand.name, "brand", next.rawInput)
     ) {
       identity.brand = uv(enrichment.brand.name, {
         provenance: "INFERRED",
@@ -97,8 +128,9 @@ export function applyCatalogEnrichment(
 
     if (
       enrichment.model &&
+      !modelExcluded &&
       FILLABLE.includes(enrichment.model.confidence) &&
-      mayOverwrite(identity.model, enrichment.model.name)
+      mayOverwrite(identity.model, enrichment.model.name, "model", next.rawInput)
     ) {
       identity.model = uv(enrichment.model.name, {
         provenance: "INFERRED",

@@ -217,10 +217,12 @@ for (const f of fixtures) {
     }
   }
 
-  // Inferred-only brand must not be in draftAttrs as invented certainty
+  // Inferred-only brand must not be in draftAttrs as invented certainty.
+  // Catalog-unique model→brand (C180 → Mercedes-Benz) is allowed.
   if (
     canonical.identity.brand &&
     canonical.identity.brand.provenance === "INFERRED" &&
+    canonical.identity.brand.source !== "FUTURE_KNOWLEDGE" &&
     ui.draftAttrs.brand &&
     !f.text
       .toLocaleLowerCase("tr-TR")

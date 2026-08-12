@@ -3,6 +3,8 @@
  * Keep aliases lowercase; matching uses tr-TR normalization.
  */
 
+import { isConversationStopword, isNegatedMention } from "./negation";
+
 export type BrandEntry = {
   canonical: string;
   /** Lowercase aliases / common TR spellings */
@@ -816,11 +818,12 @@ export function findAutomotiveModel(
 ): string | undefined {
   const modelTokenPattern = new RegExp(
     `\\b(${AUTOMOTIVE_MODEL_TOKENS.map(escapeRegex).join("|")})\\b`,
-    "i",
+    "gi",
   );
-  const known = text.match(modelTokenPattern);
-  if (known?.[1]) {
-    return normalizeModelLabel(known[1]);
+  let known: RegExpExecArray | null;
+  while ((known = modelTokenPattern.exec(text)) !== null) {
+    if (isNegatedMention(text, known.index, known[0].length)) continue;
+    if (known[1]) return normalizeModelLabel(known[1]);
   }
 
   // BMW / Mercedes dotted series: 3.20, 5.20, 1.16 — only with auto brand context
@@ -857,8 +860,10 @@ export function findAutomotiveModel(
   const kasaMatch = text.match(
     /\b([cesagl])\s*[- ]?\s*(kasa|sınıfı|sinifi|class|serisi)\b/i,
   );
-  if (kasaMatch) {
-    return `${kasaMatch[1].toUpperCase()} kasa`;
+  if (kasaMatch && kasaMatch.index != null) {
+    if (!isNegatedMention(text, kasaMatch.index, kasaMatch[0].length)) {
+      return `${kasaMatch[1]!.toUpperCase()} kasa`;
+    }
   }
 
   const resolvedBrand = brand || findAutomotiveBrandInText(text);
@@ -882,9 +887,17 @@ export function findAutomotiveModel(
       const token = afterBrand[1];
       if (
         !/^(19|20)\d{2}$/.test(token) &&
+        !isConversationStopword(token) &&
         !/^(model|arıyorum|ariyorum|kasa|için|icin)$/i.test(token)
       ) {
-        return normalizeModelLabel(token);
+        const tokenIndex = afterBrand.index ?? 0;
+        const abs = text.toLocaleLowerCase("tr-TR").indexOf(
+          token.toLocaleLowerCase("tr-TR"),
+          tokenIndex,
+        );
+        if (abs < 0 || !isNegatedMention(text, abs, token.length)) {
+          return normalizeModelLabel(token);
+        }
       }
     }
   }
@@ -900,7 +913,10 @@ function normalizeModelLabel(raw: string): string {
   const trimmed = raw.trim();
   // Keep dotted BMW codes as typed; uppercase letter+digit codes.
   if (/^\d\.\d{2}$/.test(trimmed)) return trimmed;
-  if (/^[A-Za-z]+\d/.test(trimmed) || /^\d{3}[A-Za-z]?$/.test(trimmed)) {
+  if (/^\d{3}[A-Za-z]$/.test(trimmed)) {
+    return `${trimmed.slice(0, 3)}${trimmed.slice(3).toLowerCase()}`;
+  }
+  if (/^[A-Za-z]+\d/.test(trimmed) || /^\d{3}$/.test(trimmed)) {
     return trimmed.toUpperCase();
   }
   // Title-case common names (Corolla, Golf)

@@ -1,3 +1,4 @@
+import { looksLikeTelevisionScreenContext } from "@/lib/request-understanding/number-role";
 import {
   APPLIANCE_BRANDS,
   AUTOMOTIVE_BRANDS,
@@ -616,7 +617,8 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       if (
         APPLIANCE_BRAND_KEYWORDS.some((keyword) =>
           normalized.includes(keyword),
-        )
+        ) &&
+        !looksLikeTelevisionScreenContext(normalized)
       ) {
         score += 4;
       }
@@ -658,6 +660,9 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         score += 5;
       }
       if (findTechnologyProduct(normalized)) {
+        score += 6;
+      }
+      if (looksLikeTelevisionScreenContext(normalized)) {
         score += 6;
       }
     }

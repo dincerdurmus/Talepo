@@ -1,3 +1,4 @@
+import { isNegatedMention } from "@/lib/ai/parser/negation";
 import type { CatalogConfidence } from "../types";
 import { foldCatalogKey } from "../normalize";
 import {
@@ -34,6 +35,54 @@ function normalizeConsumed(phrase: string): string[] {
     .toLocaleLowerCase("tr-TR")
     .split(/[^a-z0-9çğıöşü]+/i)
     .filter(Boolean);
+}
+
+function catalogModelOnlyNegated(
+  text: string,
+  record: { name: string; aliases?: string[] },
+): boolean {
+  const surfaces = [record.name, ...(record.aliases ?? [])].filter(Boolean);
+  let positive = false;
+  let negative = false;
+  for (const surface of surfaces) {
+    const needle = surface.trim();
+    if (!needle) continue;
+    const re = new RegExp(
+      `(?:^|[^a-zçğıöşü0-9])${needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=$|[^a-zçğıöşü0-9])`,
+      "gi",
+    );
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      if (isNegatedMention(text, m.index, m[0].length)) negative = true;
+      else positive = true;
+    }
+  }
+  return negative && !positive;
+}
+
+function compactOrFamilyName(
+  text: string,
+  inferred: { record: { name: string }; matchedPhrase?: string },
+): string {
+  const phrase = (inferred.matchedPhrase ?? "").replace(/\s+/g, "");
+  if (
+    /^[a-z]?\d{2,3}[a-z]?$/i.test(phrase) ||
+    /^\d{3}[ijd]$/i.test(phrase)
+  ) {
+    if (/^\d{3}[ijd]$/i.test(phrase)) {
+      return `${phrase.slice(0, 3)}${phrase.slice(3).toLowerCase()}`;
+    }
+    return phrase.toUpperCase();
+  }
+  const compactInText = text.match(/\b(\d{3}[ijd]|[cesagl]\d{3})\b/i);
+  if (compactInText?.[1]) {
+    const tok = compactInText[1];
+    if (/^\d{3}[ijd]$/i.test(tok)) {
+      return `${tok.slice(0, 3)}${tok.slice(3).toLowerCase()}`;
+    }
+    return tok.toUpperCase();
+  }
+  return inferred.record.name;
 }
 
 function rankConfidence(values: CatalogConfidence[]): CatalogConfidence {
@@ -73,7 +122,10 @@ export function enrichAutomotiveSubject(
       : undefined;
 
   const brandHit = findBrandInText(text);
-  const modelHit = findModelInText(text, brandHit?.record.id ?? null);
+  let modelHit = findModelInText(text, brandHit?.record.id ?? null);
+  if (modelHit && catalogModelOnlyNegated(text, modelHit.record)) {
+    modelHit = null;
+  }
 
   let inferredBrand = brandHit;
   if (!inferredBrand && modelHit) {
@@ -105,6 +157,7 @@ export function enrichAutomotiveSubject(
         record: model,
         confidence: "high",
         matchMode: "normalized",
+        matchedPhrase: "",
       };
     }
   }
@@ -390,7 +443,7 @@ export function enrichAutomotiveSubject(
   if (inferredModel) {
     result.model = {
       id: inferredModel.record.id,
-      name: inferredModel.record.name,
+      name: compactOrFamilyName(text, inferredModel),
       confidence: inferredModel.confidence,
       matchMode: inferredModel.matchMode,
     };

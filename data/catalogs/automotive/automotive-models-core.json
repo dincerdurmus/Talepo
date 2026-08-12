@@ -2764,7 +2764,16 @@
     "id": "model_mercedes-benz_c-serisi",
     "brand_id": "brand_mercedes-benz",
     "name": "C Serisi",
-    "aliases": [],
+    "aliases": [
+      "c200",
+      "c180",
+      "c220",
+      "c250",
+      "c 200",
+      "c 180",
+      "c 220",
+      "c 250"
+    ],
     "vehicle_types": [
       "passenger_or_light_commercial"
     ],
@@ -2819,7 +2828,16 @@
     "id": "model_mercedes-benz_e-serisi",
     "brand_id": "brand_mercedes-benz",
     "name": "E Serisi",
-    "aliases": [],
+    "aliases": [
+      "e200",
+      "e180",
+      "e220",
+      "e250",
+      "e 200",
+      "e 180",
+      "e 220",
+      "e 250"
+    ],
     "vehicle_types": [
       "passenger_or_light_commercial"
     ],
@@ -3083,7 +3101,13 @@
     "id": "model_bmw_3-serisi",
     "brand_id": "brand_bmw",
     "name": "3 Serisi",
-    "aliases": [],
+    "aliases": [
+      "320i",
+      "320d",
+      "318i",
+      "330i",
+      "320 i"
+    ],
     "vehicle_types": [
       "passenger_or_light_commercial"
     ],

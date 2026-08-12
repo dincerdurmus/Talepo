@@ -223,7 +223,13 @@ export function buildUnderstoodFacts(
   for (const key of DISPLAY_PRIORITY) {
     const field = state.fields[key];
     if (!field || seen.has(key)) continue;
-    if (field.kind === "UNKNOWN" || field.kind === "NOT_APPLICABLE") continue;
+    if (field.kind === "NOT_APPLICABLE") continue;
+    if (
+      field.kind === "UNKNOWN" &&
+      !field.excludedValues?.length
+    ) {
+      continue;
+    }
 
     let displayValue: string | null = null;
     if (field.kind === "ANY") {
@@ -243,23 +249,50 @@ export function buildUnderstoodFacts(
         displayValue = field.value.trim();
       }
     }
-    if (!displayValue) continue;
+    if (!displayValue && !(field.excludedValues?.length)) continue;
 
-    seen.add(key);
-    let label = fieldLabel(key);
-    if (isPartNeed && key === "brand") label = "Uyumlu marka";
-    if (isPartNeed && key === "model") label = "Uyumlu model";
-    if (isPartNeed && key === "generation") label = "Uyumlu nesil";
-    if (isPartNeed && key === "condition") label = "Parça durumu";
+    if (displayValue) {
+      seen.add(key);
+      let label = fieldLabel(key);
+      if (isPartNeed && key === "brand") label = "Uyumlu marka";
+      if (isPartNeed && key === "model") label = "Uyumlu model";
+      if (isPartNeed && key === "generation") label = "Uyumlu nesil";
+      if (isPartNeed && key === "condition") label = "Parça durumu";
 
-    facts.push({
-      key,
-      label,
-      displayValue,
-    });
+      facts.push({
+        key,
+        label,
+        displayValue,
+      });
+    }
+
+    if (field.excludedValues?.length) {
+      const exclKey = `${key}:excluded`;
+      if (!seen.has(exclKey)) {
+        seen.add(exclKey);
+        let label = fieldLabel(key);
+        if (isPartNeed && key === "brand") label = "Uyumlu marka";
+        if (isPartNeed && key === "model") label = "Uyumlu model";
+        facts.push({
+          key: exclKey,
+          label: `${label} hariç`,
+          displayValue: field.excludedValues.join(", "),
+        });
+      }
+    }
   }
 
   return facts;
+}
+
+export function understoodFactsToSummaryChips(
+  facts: UnderstoodFact[],
+): Array<{ fieldKey: string; label: string; displayValue: string }> {
+  return facts.map((f) => ({
+    fieldKey: f.key.includes(":") ? f.key.split(":")[0]! : f.key,
+    label: f.label,
+    displayValue: f.displayValue,
+  }));
 }
 
 /** Soft-fill publish/form bags from composer — ANY → “Farketmez”. */

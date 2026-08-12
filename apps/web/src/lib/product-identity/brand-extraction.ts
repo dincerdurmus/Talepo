@@ -1,3 +1,8 @@
+import {
+  isConversationStopword,
+  stripConversationRemainder,
+} from "@/lib/ai/parser/negation";
+
 import { defaultBrandMemory } from "./brand-memory";
 import { extractModelIdentityTokens } from "./model-identity-tokens";
 import { normalizeModelText } from "./model-normalization";
@@ -76,6 +81,7 @@ function isProductFamilyLineToken(token: string, nextToken?: string): boolean {
 
 function isBrandCandidateToken(token: string): boolean {
   if (/^(19|20)\d{2}$/.test(token.trim())) return false;
+  if (isConversationStopword(token)) return false;
   return isTitleCaseToken(token) && !GENERIC_LEADING_NOUNS.has(token.toLocaleLowerCase("tr-TR"));
 }
 
@@ -89,8 +95,8 @@ export function extractBrandFromText(text: string): BrandExtractionResult {
   const memoryHit = defaultBrandMemory.resolve(trimmed.split(/\s+/)[0] ?? "");
   if (memoryHit.canonical && memoryHit.confidence >= 0.8) {
     const brand = memoryHit.canonical;
-    const remainder = trimmed.slice(brand.length).trim();
-    return { brand, remainder: remainder || trimmed, confidence: memoryHit.confidence, source: "memory" };
+    const remainder = stripConversationRemainder(trimmed.slice(brand.length).trim());
+    return { brand, remainder: remainder || "", confidence: memoryHit.confidence, source: "memory" };
   }
 
   const words = trimmed.split(/\s+/);
@@ -123,7 +129,7 @@ export function extractBrandFromText(text: string): BrandExtractionResult {
   }
 
   const brand = candidates.join(" ");
-  const remainder = trimmed.slice(brand.length).trim();
+  const remainder = stripConversationRemainder(trimmed.slice(brand.length).trim());
   let confidence = 0.55;
   if (
     isMixedCaseBrandToken(brand) ||

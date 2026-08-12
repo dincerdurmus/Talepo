@@ -93,6 +93,17 @@ function excludedPhrase(state: CanonicalRequestState, key: string): string | nul
   return excl.join(", ");
 }
 
+function appendExclusionBits(
+  bits: string[],
+  state: CanonicalRequestState,
+  keys: string[],
+) {
+  for (const key of keys) {
+    const excl = excludedPhrase(state, key);
+    if (excl) bits.push(`ama ${excl} olmasın`);
+  }
+}
+
 function strengthPrefix(state: CanonicalRequestState, key: string): string {
   const s = state.fields[key]?.strength;
   if (s === "MUST") return "mutlaka ";
@@ -121,6 +132,7 @@ function composeTv(state: CanonicalRequestState): string {
 
   const model = fieldValue(state, "model") ?? preferredPhrase(state, "model");
   if (model) bits.push(model);
+  appendExclusionBits(bits, state, ["model"]);
 
   const resolution = fieldValue(state, "resolution");
   if (resolution) bits.push(`${strengthPrefix(state, "resolution")}${resolution}`.trim());
@@ -318,6 +330,7 @@ function composeAutoVehicle(state: CanonicalRequestState): string {
 
   if (year) bits.push(`${year} model`);
   bits.push(...planIdentityPhrase(brand, model, generation));
+  appendExclusionBits(bits, state, ["brand", "model"]);
   if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
   if (bits.length === 0) bits.push("araç");
   bits.push("arıyorum");
@@ -405,6 +418,7 @@ function composeAppliances(state: CanonicalRequestState): string {
 
   if (fieldAny(state, "brand")) bits.push("marka fark etmez");
   else if (brand) bits.push(brand);
+  appendExclusionBits(bits, state, ["brand", "model"]);
 
   if (applianceType && !/yedek\s*par/i.test(applianceType)) {
     bits.push(applianceType);
@@ -431,6 +445,7 @@ function composeGeneric(state: CanonicalRequestState): string {
   else if (brand) bits.push(brand);
   const model = fieldValue(state, "model");
   if (model) bits.push(model);
+  appendExclusionBits(bits, state, ["brand", "model"]);
   const furnitureType = fieldValue(state, "furnitureType");
   if (furnitureType) bits.push(furnitureType);
   const product = fieldValue(state, "productType");

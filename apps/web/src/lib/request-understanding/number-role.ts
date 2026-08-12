@@ -1,4 +1,9 @@
 import { extractModelIdentityTokens } from "@/lib/product-identity/model-identity-tokens";
+import {
+  findBrand,
+  findTechnologyProduct,
+  TECHNOLOGY_BRANDS,
+} from "@/lib/ai/parser/brand-catalog";
 
 export type NumberRole =
   | "MODEL_IDENTIFIER"
@@ -11,6 +16,7 @@ export type NumberRole =
   | "AREA"
   | "PRICE"
   | "STORAGE"
+  | "SCREEN_SIZE"
   | "OTHER";
 
 export type ClassifiedNumber = {
@@ -26,6 +32,56 @@ function parseTrInt(raw: string): number {
   const cleaned = raw.replace(/\./g, "").replace(/,/g, "");
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : NaN;
+}
+
+const TYPICAL_TV_INCHES = new Set([
+  32, 40, 42, 43, 48, 49, 50, 55, 58, 60, 65, 70, 75, 77, 85, 86, 98, 100, 105,
+  110, 120, 140,
+]);
+
+const TV_BRAND_ENTRIES = TECHNOLOGY_BRANDS.filter((b) =>
+  /^(samsung|lg|sony|vestel|philips|tcl|hisense)$/i.test(b.canonical),
+);
+
+const APPLIANCE_NOUN_RE =
+  /buzdolab[ıi]|çamaş[ıi]r|bulaş[ıi]k|klima|f[ıi]r[ıi]n|ocak|davlumbaz|kombi|kurutma/i;
+
+const PHONE_FAMILY_RE =
+  /\b(?:s\d{1,2}(?:\s*(?:ultra|plus|\+))?|galaxy|note\s*\d|z?\s*fold|z?\s*flip|iphone|ipad|macbook)\b/i;
+
+/**
+ * Samsung + 55 / 55 inç → TV screen context.
+ * Does not map every brand+number (S24, buzdolabı stay out).
+ */
+export function looksLikeTelevisionScreenContext(text: string): boolean {
+  const n = text.toLocaleLowerCase("tr-TR");
+  if (APPLIANCE_NOUN_RE.test(n)) return false;
+  const tech = findTechnologyProduct(n);
+  if (tech && /galaxy|iphone|ipad|macbook|pixel|redmi|poco/i.test(tech.canonical)) {
+    return false;
+  }
+  const hasTvNoun = /\b(?:inç|inc|inch|ekran|\btv\b|televizyon|smart\s*tv)\b/i.test(
+    n,
+  );
+  if (PHONE_FAMILY_RE.test(n) && !hasTvNoun) return false;
+  const hasTvBrand = Boolean(findBrand(n, TV_BRAND_ENTRIES));
+  const hasTypicalSize = [...TYPICAL_TV_INCHES].some((size) =>
+    new RegExp(`(?:^|[^0-9])${size}(?:$|[^0-9])`).test(n),
+  );
+  if (hasTvNoun && (hasTvBrand || hasTypicalSize || /\btv\b|televizyon/.test(n))) {
+    return true;
+  }
+  return hasTvBrand && hasTypicalSize;
+}
+
+export function typicalTelevisionSizeInText(text: string): string | null {
+  const n = text.toLocaleLowerCase("tr-TR");
+  for (const size of TYPICAL_TV_INCHES) {
+    if (new RegExp(`(?:^|[^0-9])${size}(?:$|[^0-9])`).test(n)) {
+      return String(size);
+    }
+  }
+  return null;
 }
 
 /**
@@ -128,6 +184,46 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
       index: pm.index,
     });
     claim(pm.index, pm[0].length);
+  }
+
+  const inchRe =
+    /(\d{2,3})\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)\b/gi;
+  let im: RegExpExecArray | null;
+  while ((im = inchRe.exec(text)) !== null) {
+    if (isClaimed(im.index, im[1]!.length)) continue;
+    const n = Number(im[1]);
+    if (!Number.isFinite(n) || n < 24 || n > 140) continue;
+    results.push({
+      raw: im[0],
+      role: "SCREEN_SIZE",
+      value: n,
+      unit: "inch",
+      evidence: [im[0], "unit-backed-screen"],
+      index: im.index,
+    });
+    claim(im.index, im[0].length);
+  }
+
+  if (looksLikeTelevisionScreenContext(text)) {
+    const size = typicalTelevisionSizeInText(text);
+    if (size) {
+      const sizeRe = new RegExp(`(?:^|[^0-9])(${size})(?:$|[^0-9])`);
+      const smatch = text.match(sizeRe);
+      const idx = smatch?.index != null
+        ? text.indexOf(size, smatch.index)
+        : text.indexOf(size);
+      if (idx >= 0 && !isClaimed(idx, size.length)) {
+        results.push({
+          raw: size,
+          role: "SCREEN_SIZE",
+          value: Number(size),
+          unit: "inch",
+          evidence: [size, "tv-brand-typical-size"],
+          index: idx,
+        });
+        claim(idx, size.length);
+      }
+    }
   }
 
   const dimRe = /(\d+)\s*[x×]\s*(\d+)(?:\s*[x×]\s*(\d+))?/gi;

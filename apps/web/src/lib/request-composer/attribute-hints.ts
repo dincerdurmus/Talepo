@@ -3,7 +3,12 @@
  * Fills screenSize / resolution / productType cues from raw text when present.
  */
 
+import { isConversationStopword } from "@/lib/ai/parser/negation";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
+import {
+  looksLikeTelevisionScreenContext,
+  typicalTelevisionSizeInText,
+} from "@/lib/request-understanding/number-role";
 import { resolveTaxonomyAlias, ensureTaxonomyLoaded } from "@/lib/taxonomy";
 
 const PRODUCT_HINTS: Array<{ keys: RegExp; productType: string; taxonomyQuery: string }> = [
@@ -92,7 +97,11 @@ export function extractScreenSize(raw: string): string | null {
   if (m?.[1]) return m[1];
   // "105 ekran" / "140'lık ekran"
   const m2 = raw.match(/\b(\d{2,3})\s*['’]?l[ıi]k\s*ekran\b/i);
-  return m2?.[1] ?? null;
+  if (m2?.[1]) return m2[1];
+  if (looksLikeTelevisionScreenContext(raw)) {
+    return typicalTelevisionSizeInText(raw);
+  }
+  return null;
 }
 
 export function extractResolution(raw: string): string | null {
@@ -115,6 +124,14 @@ export function extractProductTypeHint(raw: string): {
     const taxonomyNodeId =
       hit && !hit.ambiguous ? hit.node.id : null;
     return { productType: hint.productType, taxonomyNodeId };
+  }
+
+  if (looksLikeTelevisionScreenContext(raw)) {
+    const hit = resolveTaxonomyAlias("televizyon");
+    return {
+      productType: "televizyon",
+      taxonomyNodeId: hit && !hit.ambiguous ? hit.node.id : null,
+    };
   }
 
   // Free-text product leaves: longer phrases beat single tokens
@@ -266,6 +283,7 @@ export function cleanModelToken(
   if (/^(19|20)\d{2}$/.test(m)) return null;
   if (opts?.screenSize && m === opts.screenSize) return null;
   if (/^\d{2,3}$/.test(m) && Number(m) >= 32 && Number(m) <= 120) return null;
+  if (isConversationStopword(m)) return null;
   const fold = m.toLocaleLowerCase("tr-TR");
   if (
     fold.includes("istiyorum") ||

@@ -42,7 +42,7 @@ import {
   type PriceStrategyContext,
 } from "@/lib/price-intelligence/strategy-resolver";
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
-import { findAutomotiveModel } from "@/lib/ai/parser/brand-catalog";
+import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
 
 import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
 import { ensureAutomotiveCatalogRegistered } from "@/lib/catalog/automotive/provider";
@@ -456,6 +456,7 @@ export function understandRequest(
 
   const modelTokens = modelIdentifierTokens(numbers);
   const autoModel = findAutomotiveModel(normalizedInput);
+  const techProduct = findTechnologyProduct(normalizedInput);
   const hasVehicleModel = Boolean(autoModel) || modelTokens.some((t) =>
     /^[a-z]?\d{2,3}[a-z]?$/i.test(t.raw.replace(/\s/g, "")) ||
     /^[cesagl]\d{2,3}/i.test(t.raw),
@@ -648,6 +649,13 @@ export function understandRequest(
         },
       );
     }
+    if (n.role === "SCREEN_SIZE" && n.value != null) {
+      attributes.screenSize = uv(String(n.value), {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: n.evidence,
+      });
+    }
     if (n.role === "MILEAGE" && n.value != null) {
       attributes.mileage = uv(
         { value: n.value, unit: "km" },
@@ -837,10 +845,21 @@ export function understandRequest(
     confidence: identity.confidence,
   };
 
-  const explicitModelFromText =
-    autoModel && textIncludes(normalizedInput, autoModel)
+  const explicitModelFromText = techProduct
+    ? (() => {
+        const canonical = techProduct.canonical;
+        const b = techProduct.brand;
+        if (
+          b &&
+          canonical.toLocaleLowerCase("tr-TR").startsWith(b.toLocaleLowerCase("tr-TR"))
+        ) {
+          return canonical.slice(b.length).trim() || canonical;
+        }
+        return canonical;
+      })()
+    : autoModel && textIncludes(normalizedInput, autoModel)
       ? autoModel
-      : modelTokens[0]?.raw;
+      : undefined;
 
   if (identity.brand && !looksLikeYearToken(identity.brand)) {
     const explicitBrand = textIncludes(normalizedInput, identity.brand);
@@ -859,7 +878,7 @@ export function understandRequest(
   const modelValue =
     explicitModelFromText ??
     identity.model ??
-    (modelTokens[0] ? modelTokens[0].raw : null);
+    (techProduct ? null : modelTokens[0] ? modelTokens[0].raw : null);
   if (modelValue && !looksLikeYearToken(String(modelValue))) {
     const explicitModel = textIncludes(normalizedInput, String(modelValue));
     identityBlock.model = uv(String(modelValue), {
@@ -907,6 +926,18 @@ export function understandRequest(
     exclusionOnlyBrands.has(String(identityBlock.brand.value))
   ) {
     delete identityBlock.brand;
+  }
+
+  const excludedModels = (constraintBundle.byField.model?.excludedValues ?? []).map(
+    (v) => v.toLocaleLowerCase("tr-TR"),
+  );
+  if (identityBlock.model?.value && excludedModels.length) {
+    const mv = String(identityBlock.model.value).toLocaleLowerCase("tr-TR");
+    if (
+      excludedModels.some((e) => mv === e || mv.includes(e) || e.includes(mv))
+    ) {
+      delete identityBlock.model;
+    }
   }
 
   // Multi-value brand preference: do not collapse to a single identity.brand
