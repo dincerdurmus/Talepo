@@ -92,7 +92,6 @@ export function PlanManager({
 
   function canSelectPlan(planId: PlanTierId): boolean {
     if (planId === entitlements.effectivePlanTier) return false;
-    if (planId === "CORPORATE") return false;
     if (planId === "STANDARD") return mockUpgradeEnabled;
     if (checkoutAvailable && planTierRank(planId) > currentRank) return true;
     return mockUpgradeEnabled && planTierRank(planId) > currentRank;
@@ -101,9 +100,6 @@ export function PlanManager({
   function planButtonLabel(planId: PlanTierId): string {
     if (planId === entitlements.effectivePlanTier) {
       return "Aktif plan";
-    }
-    if (planId === "CORPORATE") {
-      return "Kurumsal · özel satış";
     }
     if (planId === "STANDARD") {
       return mockUpgradeEnabled ? "Standart'a geç (test)" : "Ücretsiz başla";
@@ -549,10 +545,13 @@ export function PlanManager({
                       </span>
                       <span className="pb-1 text-sm text-black/35">/ ay</span>
                     </div>
-                  ) : plan.id === "CORPORATE" ? (
-                    <p className="text-xl font-semibold">Özel fiyatlandırma</p>
                   ) : (
                     <p className="text-xl font-semibold">Ücretsiz</p>
+                  )}
+                  {plan.id === "CORPORATE" && (
+                    <p className="mt-1 text-xs font-medium text-teal-900/70">
+                      5 ekip koltuğu dahil
+                    </p>
                   )}
                   <p className="mt-1 text-xs text-black/35">
                     Teklif kotası:{" "}

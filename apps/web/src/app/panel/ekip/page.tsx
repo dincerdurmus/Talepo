@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
 
 import { TeamManager } from "@/components/panel/TeamManager";
+import { getIncludedSeats } from "@/lib/membership/seat-policy";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -163,6 +164,9 @@ export default async function TeamPage() {
     }
   }
 
+  const includedSeats = getIncludedSeats(workspace.planTier);
+  const activeSeats = members.filter((m) => m.status === "ACTIVE").length;
+
   return (
     <>
       <PageHeader companyName={workspace.companyName} />
@@ -174,6 +178,11 @@ export default async function TeamPage() {
         currentUserId={user.id}
         currentUserRole={membership?.role ?? null}
         initialOffersByUserId={offersByUserId}
+        seatUsage={
+          includedSeats != null
+            ? { activeSeats, includedSeats }
+            : null
+        }
         initialMembers={members.map((member) => ({
           id: member.id,
           role: member.role,

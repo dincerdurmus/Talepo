@@ -34,6 +34,7 @@ export type PlanDefinition = {
   urgentRequestPriority: boolean;
   advancedFilters: boolean;
   hiddenInventory: boolean;
+  /** Display mirror of PLAN_PRICING — pricing-config.ts is canonical SoT. */
   priceTry: number | null;
 };
 
@@ -95,7 +96,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Kurumsal",
     badge: "Kurumsal",
     description:
-      "Otomasyon ve veri: ekip, gizli envanter, fırsat avcısı, lead dağıtımı ve kurumsal istihbarat.",
+      "Otomasyon ve veri: Profesyonel haklar + 5 ekip koltuğu, gizli envanter, fırsat merkezi, lead dağıtımı.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -105,7 +106,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     urgentRequestPriority: true,
     advancedFilters: true,
     hiddenInventory: true,
-    priceTry: null,
+    priceTry: 5990,
   },
 };
 

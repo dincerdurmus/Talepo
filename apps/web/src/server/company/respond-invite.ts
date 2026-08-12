@@ -1,4 +1,6 @@
+import type { PlanTierId } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
+import { assertCanActivateCompanySeat } from "@/server/company/assert-company-seat";
 import { createNotification } from "@/server/notifications/create-notification";
 
 export class InviteError extends Error {
@@ -12,54 +14,88 @@ export class InviteError extends Error {
 }
 
 export async function acceptCompanyInvite(userId: string, companyId: string) {
-  const membership = await prisma.companyMember.findUnique({
-    where: {
-      companyId_userId: { companyId, userId },
-    },
-    include: {
-      company: {
-        select: {
-          id: true,
-          name: true,
-          deletedAt: true,
-          status: true,
-        },
+  const outcome = await prisma.$transaction(async (tx) => {
+    // Serialize seat activations per company (soft race hardening; no schema change).
+    await tx.$queryRaw`SELECT id FROM "Company" WHERE id = ${companyId} FOR UPDATE`;
+
+    const membership = await tx.companyMember.findUnique({
+      where: {
+        companyId_userId: { companyId, userId },
       },
-      user: { select: { id: true, name: true, email: true } },
-    },
+      include: {
+        company: {
+          select: {
+            id: true,
+            name: true,
+            deletedAt: true,
+            status: true,
+            planTier: true,
+          },
+        },
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (!membership || membership.company.deletedAt) {
+      throw new InviteError("Davet bulunamadı.", 404);
+    }
+
+    if (membership.status === "ACTIVE") {
+      return {
+        kind: "already_active" as const,
+        membership,
+        companyName: membership.company.name,
+        inviteeLabel:
+          membership.user.name?.trim() ||
+          membership.user.email?.trim() ||
+          "Yeni üye",
+      };
+    }
+
+    if (membership.status !== "INVITED") {
+      throw new InviteError("Bu davet kabul edilemez.", 409);
+    }
+
+    if (
+      !["ACTIVE", "PENDING_VERIFICATION", "DRAFT"].includes(
+        membership.company.status,
+      )
+    ) {
+      throw new InviteError("Firma şu an davet kabul etmiyor.", 409);
+    }
+
+    await assertCanActivateCompanySeat({
+      companyId,
+      planTier: membership.company.planTier as PlanTierId,
+      db: tx,
+    });
+
+    const updated = await tx.companyMember.update({
+      where: { id: membership.id },
+      data: {
+        status: "ACTIVE",
+        joinedAt: new Date(),
+        removedAt: null,
+      },
+      include: {
+        company: { select: { id: true, name: true } },
+      },
+    });
+
+    return {
+      kind: "activated" as const,
+      membership: updated,
+      companyName: membership.company.name,
+      inviteeLabel:
+        membership.user.name?.trim() ||
+        membership.user.email?.trim() ||
+        "Yeni üye",
+    };
   });
 
-  if (!membership || membership.company.deletedAt) {
-    throw new InviteError("Davet bulunamadı.", 404);
+  if (outcome.kind === "already_active") {
+    return { membership: outcome.membership, alreadyActive: true as const };
   }
-
-  if (membership.status === "ACTIVE") {
-    return { membership, alreadyActive: true as const };
-  }
-
-  if (membership.status !== "INVITED") {
-    throw new InviteError("Bu davet kabul edilemez.", 409);
-  }
-
-  if (
-    !["ACTIVE", "PENDING_VERIFICATION", "DRAFT"].includes(
-      membership.company.status,
-    )
-  ) {
-    throw new InviteError("Firma şu an davet kabul etmiyor.", 409);
-  }
-
-  const updated = await prisma.companyMember.update({
-    where: { id: membership.id },
-    data: {
-      status: "ACTIVE",
-      joinedAt: new Date(),
-      removedAt: null,
-    },
-    include: {
-      company: { select: { id: true, name: true } },
-    },
-  });
 
   const managers = await prisma.companyMember.findMany({
     where: {
@@ -71,18 +107,13 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
     select: { userId: true },
   });
 
-  const inviteeLabel =
-    membership.user.name?.trim() ||
-    membership.user.email?.trim() ||
-    "Yeni üye";
-
   await Promise.all(
     managers.map((manager) =>
       createNotification({
         userId: manager.userId,
         type: "COMPANY_MEMBER_JOINED",
         title: "Ekibe katılım",
-        message: `${inviteeLabel} ${membership.company.name} ekibine katıldı.`,
+        message: `${outcome.inviteeLabel} ${outcome.companyName} ekibine katıldı.`,
         actionUrl: "/panel/ekip",
         companyId,
       }),
@@ -102,7 +133,7 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
     },
   });
 
-  return { membership: updated, alreadyActive: false as const };
+  return { membership: outcome.membership, alreadyActive: false as const };
 }
 
 export async function rejectCompanyInvite(userId: string, companyId: string) {

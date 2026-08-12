@@ -1,4 +1,5 @@
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import type { PlanTierId } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { prisma } from "@/lib/prisma";
 
@@ -6,6 +7,8 @@ export type CompanyWorkspace = {
   companyId: string;
   companyName: string;
   isCorporate: boolean;
+  /** Company subject effective plan (workspace isolation). */
+  planTier: PlanTierId;
   features: Awaited<ReturnType<typeof resolveEntitlements>>["features"];
 };
 
@@ -26,6 +29,7 @@ export async function getCompanyWorkspace(
     companyId: entitlements.subject.id,
     companyName: entitlements.subject.name?.trim() || "Firma",
     isCorporate: entitlements.effectivePlanTier === "CORPORATE",
+    planTier: entitlements.effectivePlanTier,
     features: entitlements.features,
   };
 }

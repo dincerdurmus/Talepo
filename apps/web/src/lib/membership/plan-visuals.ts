@@ -232,11 +232,11 @@ export const PLAN_FEATURES: Record<PlanTierId, string[]> = {
     "Talepo Insights (anonim veri)",
   ],
   CORPORATE: [
-    "Otomasyon ve veri — Profesyonel +",
+    "Profesyonel'deki tüm özellikler dahil",
+    "5 ekip koltuğu dahil",
+    "Gizli envanter ve Opportunity Center",
     "Ekip yönetimi ve lead dağıtımı",
-    "Gizli envanter ve otomatik fırsat avcısı",
-    "CSV envanter import ve ERP adapter arayüzü",
-    "Kurumsal talep istihbaratı",
+    "CSV envanter aktarımı ve otomatik fırsat avcısı",
   ],
 };
 

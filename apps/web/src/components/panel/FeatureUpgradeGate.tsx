@@ -74,9 +74,7 @@ export function FeatureUpgradeGate({
           {pricing.tagline}
           {pricing.priceTry
             ? ` · ${pricing.priceTry.toLocaleString("tr-TR")} TL/ay`
-            : pricing.tier === "CORPORATE"
-              ? " · Özel fiyat"
-              : ""}
+            : ""}
         </p>
         <Link
           href="/panel/plan"

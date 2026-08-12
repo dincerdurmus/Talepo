@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { COMPANY_CONTEXT_COOKIE } from "@/lib/membership/company-context";
 import { prisma } from "@/lib/prisma";
 import {
@@ -104,6 +105,8 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   } catch (error) {
+    const ent = entitlementErrorResponse(error);
+    if (ent) return ent;
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }

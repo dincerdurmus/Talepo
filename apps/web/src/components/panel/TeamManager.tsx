@@ -52,6 +52,7 @@ export function TeamManager({
   currentUserId,
   currentUserRole,
   initialOffersByUserId = {},
+  seatUsage = null,
 }: {
   companyName: string;
   initialMembers: TeamMemberDTO[];
@@ -61,6 +62,8 @@ export function TeamManager({
   currentUserId: string;
   currentUserRole: string | null;
   initialOffersByUserId?: Record<string, MemberOfferDTO[]>;
+  /** Corporate included-seat usage; null when no seat cap. */
+  seatUsage?: { activeSeats: number; includedSeats: number } | null;
 }) {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
@@ -74,6 +77,11 @@ export function TeamManager({
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const activeSeatCount = members.filter((m) => m.status === "ACTIVE").length;
+  const includedSeats = seatUsage?.includedSeats ?? null;
+  const seatAtLimit =
+    includedSeats != null && activeSeatCount >= includedSeats;
 
   const ownerCount = members.filter(
     (m) => m.role === "OWNER" && m.status === "ACTIVE",
@@ -168,6 +176,30 @@ export function TeamManager({
 
   return (
     <div className="space-y-5">
+      {includedSeats != null && (
+        <div
+          className={`rounded-[24px] border px-5 py-4 ${
+            seatAtLimit
+              ? "border-amber-800/20 bg-[#fff8ef]"
+              : "border-black/[0.06] bg-white"
+          }`}
+        >
+          <div className="flex items-center gap-2 text-teal-900">
+            <Users className="h-4 w-4" />
+            <p className="text-sm font-semibold">
+              {activeSeatCount} / {includedSeats} koltuk kullanılıyor
+            </p>
+          </div>
+          <p className="mt-1.5 text-xs leading-5 text-black/45">
+            Yalnız aktif üyeler koltuk tüketir (sahip dahil). Bekleyen davet
+            koltuk sayılmaz.
+            {seatAtLimit
+              ? " Limit doldu; yeni üye aktifleştirilemez."
+              : ""}
+          </p>
+        </div>
+      )}
+
       {canInvite && (
         <form
           onSubmit={onInvite}

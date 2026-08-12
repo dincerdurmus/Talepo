@@ -1,8 +1,9 @@
 import type { PlanTierId } from "./plans";
 
 /**
- * Central pricing config — do not hardcode prices in business logic.
- * Payment provider integration will read from here later.
+ * Canonical pricing SoT — do not hardcode prices in business logic.
+ * PLAN_DEFINITIONS.priceTry must stay mirrored (verified by seat/pricing script).
+ * Payment / checkout display mapping reads from here.
  */
 export type PlanPricing = {
   tier: PlanTierId;
@@ -36,8 +37,8 @@ export const PLAN_PRICING: Record<PlanTierId, PlanPricing> = {
   },
   CORPORATE: {
     tier: "CORPORATE",
-    priceTry: null,
-    billingPeriod: "custom",
+    priceTry: 5990,
+    billingPeriod: "month",
     label: "Kurumsal",
     tagline: "Otomasyon ve veri",
   },

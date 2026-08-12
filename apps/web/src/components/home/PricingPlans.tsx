@@ -102,13 +102,14 @@ export function PricingPlans() {
                         </span>
                         <span className="pb-1 text-sm text-teal-950/35">/ ay</span>
                       </div>
-                    ) : plan.id === "CORPORATE" ? (
-                      <p className="text-xl font-semibold tracking-tight">
-                        Özel fiyatlandırma
-                      </p>
                     ) : (
                       <p className="text-xl font-semibold tracking-tight">
                         Ücretsiz
+                      </p>
+                    )}
+                    {plan.id === "CORPORATE" && (
+                      <p className="mt-1 text-xs font-medium text-teal-900/70">
+                        5 ekip koltuğu dahil
                       </p>
                     )}
                   </div>
@@ -134,15 +135,11 @@ export function PricingPlans() {
                   </ul>
 
                   <Link
-                    href={
-                      plan.id === "STANDARD" || plan.id === "CORPORATE"
-                        ? "/kayit"
-                        : "/panel/plan"
-                    }
+                    href={plan.id === "STANDARD" ? "/kayit" : "/panel/plan"}
                     className={`mt-7 flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition ${visual.button}`}
                   >
                     {plan.id === "CORPORATE"
-                      ? "Kurumsal için kayıt olun"
+                      ? "Kurumsal planı inceleyin"
                       : plan.id === "STANDARD"
                         ? "Ücretsiz başla"
                         : "Planları inceleyin"}

@@ -33,11 +33,9 @@ export function getPlanPriceMapping(planTier: PlanTierId): PlanPriceMapping {
     planTier,
     providerPriceId,
     displayPriceTry: display ?? null,
-    checkoutAllowed: isPaidPlan(planTier) && planTier !== "CORPORATE"
-      ? true
-      : planTier === "CORPORATE"
-        ? Boolean(providerPriceId)
-        : false,
+    // Self-service paid plans (incl. Corporate 5990) are checkout-eligible.
+    // Actual charge still requires configured provider price/plan reference.
+    checkoutAllowed: isPaidPlan(planTier) && display != null,
   };
 }
 
@@ -50,17 +48,24 @@ export function assertCheckoutPlan(planTier: PlanTierId): PlanPriceMapping {
   }
 
   const mapping = getPlanPriceMapping(planTier);
-  if (planTier === "CORPORATE" && !mapping.providerPriceId) {
-    throw new BillingError({
-      code: BillingErrorCode.PLAN_MAPPING_INVALID,
-      userMessage: "Kurumsal plan için özel satış / fiyat yapılandırması gerekir.",
-    });
-  }
-
-  if (!mapping.checkoutAllowed && planTier === "CORPORATE") {
+  if (!mapping.checkoutAllowed || mapping.displayPriceTry == null) {
     throw new BillingError({
       code: BillingErrorCode.PLAN_MAPPING_INVALID,
       userMessage: "Bu plan için checkout yapılandırılmamış.",
+    });
+  }
+
+  // iyzico / external: provider plan reference required before charge session.
+  const provider = process.env.TALEPO_PAYMENT_PROVIDER?.trim().toLowerCase();
+  if (
+    (provider === "iyzico" || provider === "external") &&
+    !mapping.providerPriceId
+  ) {
+    throw new BillingError({
+      code: BillingErrorCode.PLAN_MAPPING_INVALID,
+      userMessage:
+        "Ödeme planı henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.",
+      diagnostic: `missing_provider_price_${planTier}`,
     });
   }
 
