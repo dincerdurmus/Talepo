@@ -101,13 +101,17 @@ function OpportunityCard({
               className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
             />
           )}
-          {item.isWatchlisted ? "Takipte" : "Takip et"}
+          {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
         </button>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
         <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          Skor {item.opportunityScore}
+          {item.opportunityClassification === "HOT"
+            ? "Yüksek eşleşme"
+            : item.opportunityClassification === "GOOD"
+              ? "Orta eşleşme"
+              : "Genel fırsat"}
         </span>
         <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
           {COMPETITION_LABELS[item.competition]}
@@ -260,10 +264,10 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
       )}
 
       <Section
-        title="Takip listesi"
+        title="Kaydettiklerim"
         icon={<Eye className="h-5 w-5 text-teal-700" />}
         items={watchlist}
-        empty="Henüz takip ettiğiniz talep yok."
+        empty="Henüz kaydettiğiniz talep yok. Kategori takibi için Keşfet sekmesini kullanın."
         renderItem={(item) => (
           <OpportunityCard
             key={item.requestId}

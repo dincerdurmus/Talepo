@@ -3,6 +3,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { BellRing, LoaderCircle, Pencil, Plus, Trash2 } from "lucide-react";
 
+import {
+  summarizeCanonicalFilter,
+  type CanonicalDiscoveryFilter,
+} from "@/lib/discovery";
 import { getFilterSelectOptions } from "@/lib/explore/category-filters";
 import { getAlertAttributeDefs } from "@/lib/monetization/alert-rule-attributes";
 
@@ -19,6 +23,7 @@ type AlertRuleRow = {
   maxBudget: string | number | null;
   keywords: string | null;
   attributes: Record<string, unknown> | null;
+  discoveryFilter?: CanonicalDiscoveryFilter | null;
   createdAt: string;
   updatedAt: string;
   category?: CategoryOption | null;
@@ -205,6 +210,13 @@ export function AlertRulesManager({
   }
 
   function ruleSummary(rule: AlertRuleRow) {
+    if (rule.discoveryFilter) {
+      const canonical = summarizeCanonicalFilter(rule.discoveryFilter);
+      const extras: string[] = [];
+      if (rule.city && !rule.discoveryFilter.location?.city) extras.push(rule.city);
+      if (rule.district) extras.push(rule.district);
+      return extras.length ? `${canonical} · ${extras.join(" · ")}` : canonical;
+    }
     const parts: string[] = [];
     if (rule.category?.name) parts.push(rule.category.name);
     if (rule.city) parts.push(rule.city);

@@ -31,6 +31,26 @@ export {
   isCandidateCompatibleWithProjection,
 } from "./evaluate-filter";
 
+export { searchTaxonomyNodes, type TaxonomySearchHit } from "./search-taxonomy";
+
+export {
+  taxonomyPathLabels,
+  taxonomyPathForNode,
+  summarizeCanonicalFilter,
+  summarizeSavedSearchFilters,
+  followCategoryToSavedSearch,
+  discoveryFilterToSavedSearch,
+  buildCanonicalFilterFromWorkspaceParams,
+  matchBandFromSignals,
+  matchBandLabel,
+  reasonCodesFromEval,
+  discoveryFilterToWorkspaceUrl,
+  defaultFollowName,
+  labelForReasonCode,
+  type DiscoveryReasonCode,
+  type DiscoveryMatchBand,
+} from "./workspace";
+
 /** Adapter boundary for matching engines — consume projection, do not re-parse text. */
 export function matchContractFromProjection(
   projection: import("./types").RequestDiscoveryProjection | null | undefined,

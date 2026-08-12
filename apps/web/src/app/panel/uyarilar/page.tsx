@@ -1,3 +1,4 @@
+import type { CanonicalDiscoveryFilter } from "@/lib/discovery";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { hasFeature } from "@/lib/membership/entitlements";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
@@ -42,6 +43,8 @@ export default async function AlertRulesPage() {
     createdAt: rule.createdAt.toISOString(),
     updatedAt: rule.updatedAt.toISOString(),
     attributes: (rule.attributes as Record<string, unknown> | null) ?? null,
+    discoveryFilter:
+      (rule.discoveryFilter as CanonicalDiscoveryFilter | null) ?? null,
   }));
 
   return (
@@ -52,7 +55,8 @@ export default async function AlertRulesPage() {
           Talep bildirim kuralları
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
-          Kategori, bölge ve bütçeye göre otomatik uyarı kuralları tanımlayın.
+          Kategori, taxonomy leaf, bölge ve bütçeye göre otomatik uyarı kuralları.
+          Professional Fırsatlar workspace’ten tek tıkla da oluşturulabilir.
         </p>
       </section>
 

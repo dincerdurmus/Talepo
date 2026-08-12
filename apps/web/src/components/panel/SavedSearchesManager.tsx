@@ -10,6 +10,11 @@ import {
   Trash2,
 } from "lucide-react";
 
+import {
+  discoveryFilterToWorkspaceUrl,
+  hasCanonicalFilterSignal,
+  summarizeSavedSearchFilters,
+} from "@/lib/discovery";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { savedSearchToExploreUrl } from "@/lib/monetization/saved-search-url";
 
@@ -92,15 +97,18 @@ export function SavedSearchesManager({
   }
 
   function filterSummary(filters: SavedSearchFilters) {
-    const parts: string[] = [];
-    if (filters.categorySlug) parts.push(filters.categorySlug);
-    if (filters.city) parts.push(filters.city);
-    if (filters.keyword) parts.push(`"${filters.keyword}"`);
-    if (filters.urgent) parts.push("Acil");
-    if (filters.budgetMin != null || filters.budgetMax != null) {
-      parts.push(`₺${filters.budgetMin ?? "—"}–${filters.budgetMax ?? "—"}`);
+    return summarizeSavedSearchFilters(filters);
+  }
+
+  function runUrl(filters: SavedSearchFilters): string {
+    if (filters.canonical && hasCanonicalFilterSignal(filters.canonical)) {
+      return discoveryFilterToWorkspaceUrl(filters.canonical, {
+        city: filters.city,
+        urgent: filters.urgent,
+        view: "browse",
+      });
     }
-    return parts.length > 0 ? parts.join(" · ") : "Genel filtre";
+    return savedSearchToExploreUrl(filters);
   }
 
   return (
@@ -110,9 +118,12 @@ export function SavedSearchesManager({
           <Bookmark className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-teal-950">Kayıtlı aramalar</h2>
+          <h2 className="text-xl font-semibold text-teal-950">
+            Kayıtlı aramalar / kategori takipleri
+          </h2>
           <p className="mt-1 text-sm text-teal-950/50">
-            Keşif sayfasından filtre kaydedin; buradan tek tıkla çalıştırın.
+            Canonical taxonomy filtrelerini kaydedin; Fırsatlar veya Keşfet’te tek tıkla
+            çalıştırın. Tek tek talepler için Kaydettiklerim (watchlist) ayrıdır.
           </p>
         </div>
       </div>
@@ -187,7 +198,7 @@ export function SavedSearchesManager({
                   Aktif
                 </label>
                 <Link
-                  href={savedSearchToExploreUrl(search.filters)}
+                  href={runUrl(search.filters)}
                   className="inline-flex items-center gap-1 rounded-full bg-teal-900 px-3 py-1.5 text-xs font-semibold text-white"
                 >
                   <Play className="h-3 w-3" />
