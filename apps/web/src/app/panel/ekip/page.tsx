@@ -66,6 +66,32 @@ export default async function TeamPage() {
     );
   }
 
+  // PLAN entitlement: team_management (Corporate+) — role gates invitations separately
+  if (!workspace.features.team_management) {
+    return (
+      <>
+        <PageHeader />
+        <div className="rounded-[28px] border border-amber-800/15 bg-[#fff8ef] p-8">
+          <Users className="h-8 w-8 text-amber-900" />
+          <h2 className="mt-4 text-2xl font-semibold text-amber-950">
+            Ekip yönetimi Kurumsal planda
+          </h2>
+          <p className="mt-3 max-w-xl text-sm leading-6 text-amber-950/70">
+            Bu firma çalışma alanında ekip yönetimi açık değil. Firma planını
+            yükseltin; kişisel plan ekip özelliklerini açmaz.
+          </p>
+          <Link
+            href="/panel/plan"
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-amber-900 px-5 py-3 text-sm font-semibold text-white"
+          >
+            Planı gör
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </>
+    );
+  }
+
   const membership = await assertCompanyMembership(user.id, workspace.companyId);
   const canInvite =
     !!membership && ["OWNER", "ADMIN", "MANAGER"].includes(membership.role);

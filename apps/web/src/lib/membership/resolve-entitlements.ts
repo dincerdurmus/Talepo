@@ -63,11 +63,13 @@ function buildQuota(
 }
 
 /**
- * Central entitlement resolver (company-first).
+ * Central entitlement resolver (explicit company context).
  *
- * Active company membership → company plan, company quota, company bonus.
- * User.planTier is ignored for supplier/team features in company context.
- * No company → user plan / quota / bonus.
+ * PERSONAL (default): User.planTier / user quota / user bonus.
+ * COMPANY: only when options.companyId is set AND membership is ACTIVE.
+ *
+ * Company plan NEVER mutates or replaces personal User.planTier.
+ * No MAX(userPlan, companyPlan). No implicit company-first upgrade.
  * User + company bonuses are never summed.
  */
 export async function resolveEntitlements(
@@ -104,15 +106,15 @@ export async function resolveEntitlements(
   }
 
   /**
-   * Company context selection:
-   * - preferUserSubject → skip company (explicit personal mode)
-   * - Explicit companyId if provided and membership is valid
-   * - Else most recently joined ACTIVE membership (company-first default)
+   * Company context selection (explicit only):
+   * - preferUserSubject → personal
+   * - companyId + ACTIVE membership → that company plan
+   * - otherwise → personal (never auto-pick a company)
    */
-  const companyMembership = options.preferUserSubject
-    ? null
-    : options.companyId
-      ? await prisma.companyMember.findFirst({
+  const companyMembership =
+    options.preferUserSubject || !options.companyId
+      ? null
+      : await prisma.companyMember.findFirst({
           where: {
             userId,
             companyId: options.companyId,
@@ -122,28 +124,6 @@ export async function resolveEntitlements(
               status: { in: ["ACTIVE", "PENDING_VERIFICATION", "DRAFT"] },
             },
           },
-          select: {
-            company: {
-              select: {
-                id: true,
-                name: true,
-                planTier: true,
-                planExpiresAt: true,
-                bonusOfferCredits: true,
-              },
-            },
-          },
-        })
-      : await prisma.companyMember.findFirst({
-          where: {
-            userId,
-            status: "ACTIVE",
-            company: {
-              deletedAt: null,
-              status: { in: ["ACTIVE", "PENDING_VERIFICATION", "DRAFT"] },
-            },
-          },
-          orderBy: { joinedAt: "desc" },
           select: {
             company: {
               select: {

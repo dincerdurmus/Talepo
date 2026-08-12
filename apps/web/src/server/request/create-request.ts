@@ -4,6 +4,7 @@ import {
   type RequestDiscoveryProjection,
 } from "@/lib/discovery";
 import { assertEntitlement } from "@/lib/membership/assert-entitlement";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { FEATURE_BOOST_OPTIONS, getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError } from "@/lib/membership/types";
@@ -105,7 +106,10 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
    * without charge when the feature key is true.
    */
   if (input.featureBoost) {
-    const entitlements = await resolveEntitlements(userId);
+    const entitlements = await resolveEntitlements(
+      userId,
+      await getCompanyContextOptions(),
+    );
     try {
       assertEntitlement(
         entitlements,

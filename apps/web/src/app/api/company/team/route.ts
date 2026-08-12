@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
 import {
   assertCompanyMembership,
-  getCompanyWorkspace,
 } from "@/lib/panel/company-workspace";
 import {
   isMembershipNumberInput,
@@ -18,14 +19,8 @@ const OFFER_VIEW_ROLES = new Set(["OWNER", "ADMIN"]);
 export async function GET() {
   try {
     const user = await requireUser();
-    const workspace = await getCompanyWorkspace(user.id);
-
-    if (!workspace) {
-      return NextResponse.json(
-        { ok: false, message: "Firma bağlamı seçili değil." },
-        { status: 400 },
-      );
-    }
+    // PLAN (team_management) + company context + ACTIVE membership
+    const workspace = await requireCompanyFeature(user.id, "team_management");
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
     const canViewOffers =
@@ -104,6 +99,8 @@ export async function GET() {
       offersByUserId: canViewOffers ? offersByUserId : undefined,
     });
   } catch (error) {
+    const ent = entitlementErrorResponse(error);
+    if (ent) return ent;
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
@@ -117,14 +114,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    const workspace = await getCompanyWorkspace(user.id);
-
-    if (!workspace) {
-      return NextResponse.json(
-        { ok: false, message: "Firma bağlamı seçili değil." },
-        { status: 400 },
-      );
-    }
+    const workspace = await requireCompanyFeature(user.id, "team_management");
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
     if (!membership || !MANAGER_ROLES.has(membership.role)) {
@@ -294,6 +284,8 @@ export async function POST(request: Request) {
         : `${inviteeLabel} davet edildi.`,
     });
   } catch (error) {
+    const ent = entitlementErrorResponse(error);
+    if (ent) return ent;
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
@@ -308,14 +300,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const user = await requireUser();
-    const workspace = await getCompanyWorkspace(user.id);
-
-    if (!workspace) {
-      return NextResponse.json(
-        { ok: false, message: "Firma bağlamı seçili değil." },
-        { status: 400 },
-      );
-    }
+    const workspace = await requireCompanyFeature(user.id, "team_management");
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
     if (!membership || !REMOVE_ROLES.has(membership.role)) {
@@ -405,6 +390,8 @@ export async function DELETE(request: Request) {
       memberId: target.id,
     });
   } catch (error) {
+    const ent = entitlementErrorResponse(error);
+    if (ent) return ent;
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }

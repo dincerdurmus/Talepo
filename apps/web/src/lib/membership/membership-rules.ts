@@ -11,10 +11,12 @@ type PlanMismatchInput = Pick<
  * Üyelik kuralları (ürün özeti)
  *
  * 1. Firma bağlamı aktifken tedarikçi/ekip özellikleri yalnızca Company.planTier'dan gelir.
- * 2. User.planTier kişisel modda geçerlidir; firma ekibine yansımaz.
+ * 2. User.planTier kişisel modda geçerlidir; firma aboneliği personal planı yükseltmez.
  * 3. Kişisel Premium + Standart firma → firma bağlamında Standart haklar (uyarı göster).
- * 4. Firma planı (Premium/Profesyonel/Kurumsal) tüm ACTIVE üyelere firma bağlamında uygulanır.
+ * 4. Firma planı (Premium/Profesyonel/Kurumsal) yalnız seçili firma workspace'inde geçerlidir.
  * 5. Kişisel ve firma bonus/kota havuzları birleştirilmez.
+ * 6. Corporate company membership ≠ USER planTier mutation.
+ * 7. PLAN entitlement ≠ ROLE permission — ikisi de gerekli.
  */
 
 export const PERSONAL_PREMIUM_MISMATCH_TITLE =

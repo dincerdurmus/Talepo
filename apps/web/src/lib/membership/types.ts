@@ -10,16 +10,16 @@ export type EntitlementSubject = {
 };
 
 /**
- * Future company switcher can pass companyId explicitly.
- * Until then resolver picks the same membership as before
- * (most recently joined ACTIVE membership).
+ * Explicit workspace context for entitlement resolution.
+ * Without companyId (or with preferUserSubject), resolution is PERSONAL.
+ * Company plan is never applied implicitly from membership alone.
  */
 export type ResolveEntitlementsOptions = {
-  /** Optional explicit company context (company switcher). */
+  /** Explicit company workspace (company switcher cookie / API). */
   companyId?: string;
   /**
    * When true, ignore company memberships and resolve as personal user.
-   * Used when the switcher explicitly selects "Kişisel hesap".
+   * Default when company cookie is missing or set to personal sentinel.
    */
   preferUserSubject?: boolean;
   now?: Date;
