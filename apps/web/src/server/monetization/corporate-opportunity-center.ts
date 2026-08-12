@@ -124,10 +124,24 @@ function reasonLabelsFromMatch(
     labels.push("Ürün grubunuzla eşleşiyor");
   }
   if (Array.isArray(reasons)) {
-    for (const r of reasons.slice(0, 4)) {
+    for (const r of reasons.slice(0, 8)) {
       if (typeof r !== "string") continue;
-      if (/canonical|taxonomy|CANONICAL/i.test(r)) {
+      if (
+        /TAXONOMY_EXACT|TAXONOMY_ANCESTOR|canonical|taxonomy|CANONICAL/i.test(r)
+      ) {
         codes.push("TAXONOMY_MATCH");
+      }
+      if (/ENTITY_BRAND_MATCH|ENTITY_MODEL_MATCH|COMPATIBILITY_TARGET/i.test(r)) {
+        codes.push("ENTITY_MATCH");
+      }
+      if (/SUBJECT_MATCH/i.test(r)) {
+        codes.push("SUBJECT_MATCH");
+      }
+      if (/PREFERENCE_MATCH/i.test(r)) {
+        codes.push("PREFERENCE_MATCH");
+      }
+      if (/LEGACY_FALLBACK/i.test(r)) {
+        codes.push("LEGACY_FALLBACK");
       }
       if (/istanbul|şehir|city|konum|LOCATION/i.test(r)) {
         codes.push("LOCATION_MATCH");
@@ -137,12 +151,14 @@ function reasonLabelsFromMatch(
         codes.push("URGENT_REQUEST");
         labels.push("Acil talep");
       }
-      if (/envanter|inventory/i.test(r)) {
+      if (/INVENTORY_RELEVANT|envanter|inventory/i.test(r)) {
         codes.push("INVENTORY_RELEVANT");
       }
+      // Human labels from evaluator (Turkish) — skip raw reason codes
       if (
         !labels.includes(r) &&
-        !/LEGACY|score|%/i.test(r) &&
+        !/^[A-Z][A-Z0-9_]+$/.test(r) &&
+        !/LEGACY_FALLBACK|score|%/i.test(r) &&
         labels.length < 4
       ) {
         labels.push(r);

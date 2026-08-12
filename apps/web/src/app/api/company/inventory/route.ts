@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
+import type { Prisma } from "@/generated/prisma/client";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
 } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { buildInventoryAttributesForWrite } from "@/server/monetization/inventory-projection";
 
 export async function GET() {
   try {
@@ -78,6 +80,8 @@ export async function POST(request: Request) {
       sku?: string;
       city?: string;
       notes?: string;
+      brand?: string;
+      model?: string;
     };
 
     const title = body.title?.trim();
@@ -96,17 +100,36 @@ export async function POST(request: Request) {
       );
     }
 
+    const brand = body.brand?.trim() || null;
+    const model = body.model?.trim() || null;
+    const categoryLabel = body.categoryLabel?.trim() || null;
+    const city = body.city?.trim() || null;
+    const notes = body.notes?.trim() || null;
+    const { attributes } = buildInventoryAttributesForWrite({
+      name: title,
+      brand,
+      model,
+      categoryLabel,
+      city,
+      notes,
+      quantity: Math.floor(quantity),
+      sku: body.sku?.trim() || null,
+    });
+
     const item = await prisma.companyInventoryItem.create({
       data: {
         companyId: workspace.companyId,
         name: title,
         title,
-        categoryLabel: body.categoryLabel?.trim() || null,
+        brand,
+        model,
+        categoryLabel,
         quantity: Math.floor(quantity),
         unit: body.unit?.trim() || "adet",
         sku: body.sku?.trim() || null,
-        city: body.city?.trim() || null,
-        notes: body.notes?.trim() || null,
+        city,
+        notes,
+        attributes: attributes as Prisma.InputJsonValue,
       },
     });
 

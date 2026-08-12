@@ -1,23 +1,18 @@
 /**
- * Phase 4B design pointer — inventory ↔ canonical discovery projection.
- * Phase 4A does not implement a second matcher.
+ * Inventory Intelligence V1 — alignment with Request.discoveryProjection.
  *
- * Exact integration point today:
- *   server/monetization/inventory-matching.ts → matchRequestToInventory()
- *   called from opportunity-hunter.ts (token overlap on title/description).
+ * Integration:
+ *   lib/inventory/build-projection.ts → buildInventoryDiscoveryProjection
+ *   lib/inventory/evaluate-compatibility.ts → evaluateInventoryRequestCompatibility
+ *   server/monetization/inventory-matching.ts → matchRequestToInventory
  *
- * Target path (4B):
- *   CompanyInventoryItem
- *     → taxonomy/entity/attribute projection (same vocabulary as discovery)
- *     → compare against Request.discoveryProjection via evaluateDiscoveryFilter /
- *       isCandidateCompatibleWithProjection
- *     → deterministic compatibility (no re-parse of request text)
+ * Projection stored in CompanyInventoryItem.attributes.__discoveryProjection (no migration).
  */
 
 export const INVENTORY_ALIGNMENT_INTEGRATION_POINT =
   "apps/web/src/server/monetization/inventory-matching.ts#matchRequestToInventory";
 
-export const INVENTORY_ALIGNMENT_PHASE = "4B" as const;
+export const INVENTORY_ALIGNMENT_PHASE = "inventory-intelligence-v1" as const;
 
 export type InventoryAlignmentPlan = {
   phase: typeof INVENTORY_ALIGNMENT_PHASE;
@@ -30,11 +25,27 @@ export function getInventoryAlignmentPlan(): InventoryAlignmentPlan {
     phase: INVENTORY_ALIGNMENT_PHASE,
     integrationPoint: INVENTORY_ALIGNMENT_INTEGRATION_POINT,
     steps: [
-      "Persist or derive inventory item taxonomyNodeIds + attribute constraints at import/create time",
-      "Load Request.discoveryProjection (authoritative) — do not re-run understandRequest for match",
-      "Evaluate compatibility with discovery evaluate-filter / projection helpers",
-      "Replace tokenOverlap scoring as primary signal; keep text only as weak fallback if needed",
-      "Emit opportunity.match.created with matchReason=inventory_projection",
+      "Build inventory discovery projection at create/import (attributes.__discoveryProjection)",
+      "Load Request.discoveryProjection — do not re-run understandRequest",
+      "evaluateInventoryRequestCompatibility (subject → taxonomy → entity → MUST/EXCLUDED → preferred)",
+      "Token overlap only as LEGACY_FALLBACK after hard gates",
+      "Hunter scopes to CORPORATE companies; company-scoped match API unchanged",
     ],
   };
+}
+
+/** PII-safe metric names (no free text payloads). */
+export const INVENTORY_METRICS = {
+  projectionBuilt: "inventory.projection.built",
+  matchEvaluated: "inventory.match.evaluated",
+  matchCompatible: "inventory.match.compatible",
+  matchRejected: "inventory.match.rejected",
+  matchLegacyFallback: "inventory.match.legacy_fallback",
+} as const;
+
+export function inventoryMetricEvent(
+  name: (typeof INVENTORY_METRICS)[keyof typeof INVENTORY_METRICS],
+  tags?: Record<string, string | number | boolean>,
+): { kind: "metric"; name: string; tags?: Record<string, string | number | boolean> } {
+  return { kind: "metric", name, tags };
 }

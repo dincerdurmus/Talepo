@@ -1,5 +1,8 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { InventoryImportResult } from "@/lib/monetization/types";
+
+import { buildInventoryAttributesForWrite } from "./inventory-projection";
 
 export type InventoryImportRow = {
   name: string;
@@ -71,23 +74,51 @@ export async function importInventoryRows(
       continue;
     }
 
+    const name = row.name.trim();
+    const brand = row.brand?.trim() || null;
+    const model = row.model?.trim() || null;
+    const categoryLabel = row.categoryLabel?.trim() || null;
+    const city = row.city?.trim() || null;
+    const { attributes } = buildInventoryAttributesForWrite({
+      name,
+      brand,
+      model,
+      categoryLabel,
+      city,
+      quantity: row.quantity ?? 1,
+      sku: row.sku?.trim() || null,
+    });
+
     if (row.sku) {
       const existing = await prisma.companyInventoryItem.findFirst({
         where: { companyId, sku: row.sku },
-        select: { id: true },
+        select: { id: true, attributes: true },
       });
       if (existing) {
+        const { attributes: nextAttrs } = buildInventoryAttributesForWrite(
+          {
+            name,
+            brand,
+            model,
+            categoryLabel,
+            city,
+            quantity: row.quantity ?? 1,
+            sku: row.sku.trim(),
+          },
+          existing.attributes,
+        );
         await prisma.companyInventoryItem.update({
           where: { id: existing.id },
           data: {
-            name: row.name.trim(),
-            title: row.name.trim(),
-            brand: row.brand?.trim() || null,
-            model: row.model?.trim() || null,
+            name,
+            title: name,
+            brand,
+            model,
             quantity: row.quantity ?? 1,
             price: row.price ?? null,
-            city: row.city?.trim() || null,
-            categoryLabel: row.categoryLabel?.trim() || null,
+            city,
+            categoryLabel,
+            attributes: nextAttrs as Prisma.InputJsonValue,
           },
         });
         result.updated += 1;
@@ -98,15 +129,16 @@ export async function importInventoryRows(
     await prisma.companyInventoryItem.create({
       data: {
         companyId,
-        name: row.name.trim(),
-        title: row.name.trim(),
+        name,
+        title: name,
         sku: row.sku?.trim() || null,
-        brand: row.brand?.trim() || null,
-        model: row.model?.trim() || null,
+        brand,
+        model,
         quantity: row.quantity ?? 1,
         price: row.price ?? null,
-        city: row.city?.trim() || null,
-        categoryLabel: row.categoryLabel?.trim() || null,
+        city,
+        categoryLabel,
+        attributes: attributes as Prisma.InputJsonValue,
       },
     });
     result.created += 1;
