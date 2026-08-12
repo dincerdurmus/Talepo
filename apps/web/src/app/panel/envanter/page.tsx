@@ -48,6 +48,7 @@ export default async function InventoryPage() {
       <PageHeader companyName={workspace.companyName} />
       <InventoryManager
         companyName={workspace.companyName}
+        canImport={Boolean(workspace.features.inventory_import)}
         initialItems={items.map((item) => ({
           id: item.id,
           title: item.name || item.title || "",

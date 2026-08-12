@@ -4,6 +4,7 @@ import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { canAssignOpportunities } from "@/server/monetization/opportunity-assignment";
 import { assignOpportunity } from "@/server/monetization/opportunity-hunter";
 import { scoreOpportunity } from "@/server/monetization/opportunity-score";
 import { getCompetitionSignals } from "@/server/monetization/competition-signals";
@@ -98,17 +99,47 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       action?: string;
       opportunityId?: string;
-      memberId?: string;
+      memberId?: string | null;
       status?: "VIEWED" | "DISMISSED" | "CONTACTED";
     };
 
-    if (body.action === "assign" && body.opportunityId && body.memberId) {
-      const result = await assignOpportunity(
-        body.opportunityId,
-        body.memberId,
-        ctx.companyId,
-      );
-      return NextResponse.json({ ok: true, updated: result.count });
+    if (
+      (body.action === "assign" || body.action === "unassign") &&
+      body.opportunityId
+    ) {
+      if (!canAssignOpportunities(ctx.role)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: "Atama için OWNER, ADMIN veya MANAGER rolü gerekir.",
+          },
+          { status: 403 },
+        );
+      }
+      const memberId =
+        body.action === "unassign" ? null : (body.memberId ?? null);
+      if (body.action === "assign" && !memberId) {
+        return NextResponse.json(
+          { ok: false, message: "Üye seçilmedi." },
+          { status: 400 },
+        );
+      }
+      try {
+        const result = await assignOpportunity(
+          body.opportunityId,
+          memberId,
+          ctx.companyId,
+        );
+        return NextResponse.json({ ok: true, updated: result.count });
+      } catch (e) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message: e instanceof Error ? e.message : "Atama başarısız.",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     if (body.action === "status" && body.opportunityId && body.status) {

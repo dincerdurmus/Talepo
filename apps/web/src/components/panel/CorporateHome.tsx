@@ -9,7 +9,6 @@ import {
 
 import { PlanBadge } from "@/components/panel/PlanBadge";
 import { PersonalPlanMismatchBanner } from "@/components/panel/PersonalPlanMismatchBanner";
-import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
@@ -25,33 +24,24 @@ type CorporateHomeProps = {
   personalPlanMismatchDetail?: string | null;
 };
 
-const DEMO_MATCHES = [
+const SETUP_STEPS = [
   {
-    title: "50 adet ofis sandalyesi",
-    meta: "İstanbul · Mobilya ve Ofis · Acil",
-    categorySlug: "furniture",
-    categoryName: "Mobilya ve Ofis",
-    score: "94%",
-    note: "Envanter eşleşmesi bekleniyor",
-    href: "/panel/talepler",
+    title: "Kategorilerini takip et",
+    meta: "Taxonomy leaf / ancestor",
+    note: "Canonical discovery ile market izleme",
+    href: "/panel/firsatlar?view=browse",
   },
   {
-    title: "Toplantı masası 220x100",
-    meta: "Ankara · Mobilya ve Ofis",
-    categorySlug: "furniture",
-    categoryName: "Mobilya ve Ofis",
-    score: "88%",
-    note: "Uyarı kuralınıza uyuyor",
-    href: "/panel/talepler",
+    title: "Opportunity Center",
+    meta: "Ata · Takip et · Teklif ver",
+    note: "Şirket fırsat operasyonu",
+    href: "/panel/firsatlar?view=ops",
   },
   {
-    title: "Kafe masa-sandalye seti ×20",
-    meta: "İzmir · Mobilya ve Ofis",
-    categorySlug: "furniture",
-    categoryName: "Mobilya ve Ofis",
-    score: "81%",
-    note: "Bölge filtresi: Ege",
-    href: "/panel/talepler",
+    title: "Ekip ve envanter",
+    meta: "Lead dağıtımı hazır",
+    note: "Üyeleri ekle, envanteri güncelle",
+    href: "/panel/ekip",
   },
 ];
 
@@ -138,14 +128,14 @@ export function CorporateHome({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-                Gizli envanter + uyarı
+                Opportunity Center
               </p>
               <h2 className="mt-1 text-xl font-semibold tracking-tight">
-                Size uyan talepler
+                Şirket fırsat operasyonu
               </h2>
               <p className="mt-2 text-sm text-black/45">
-                Aşağıdakiler örnek kartlardır. Gerçek eşleşmeler talep
-                yayınlandıkça bildirimlerinize düşer.
+                Sahte eşleşme skoru yok. Gerçek fırsatlar Opportunity Center’da
+                canonical discovery ile yönetilir.
               </p>
             </div>
             {hasHiddenInventory ? (
@@ -163,40 +153,22 @@ export function CorporateHome({
           </div>
 
           <div className="mt-5 space-y-3">
-            {DEMO_MATCHES.map((row) => (
-              <div
-                key={row.title}
-                className="talepo-card p-3.5"
-              >
+            {SETUP_STEPS.map((row) => (
+              <div key={row.title} className="talepo-card p-3.5">
                 <div className="flex items-start gap-3">
-                  <CategoryVisualThumb
-                    categorySlug={row.categorySlug}
-                    categoryName={row.categoryName}
-                    size="sm"
-                  />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-900/8 text-teal-800">
+                    <Boxes className="h-4 w-4" />
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold">{row.title}</p>
-                        <p className="mt-1 text-xs text-black/45">{row.meta}</p>
-                        <p className="mt-2 flex items-center gap-1.5 text-xs text-teal-800/80">
-                          <Boxes className="h-3.5 w-3.5" />
-                          {row.note}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-semibold text-teal-800">
-                          {row.score}
-                        </p>
-                        <p className="text-[11px] text-black/40">örnek eşleşme</p>
-                      </div>
-                    </div>
+                    <p className="font-semibold">{row.title}</p>
+                    <p className="mt-1 text-xs text-black/45">{row.meta}</p>
+                    <p className="mt-2 text-xs text-teal-800/80">{row.note}</p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Link
                         href={row.href}
                         className="talepo-plan-cta rounded-xl px-3 py-2 text-xs font-semibold shadow-none"
                       >
-                        Talepleri aç
+                        Aç
                       </Link>
                     </div>
                   </div>

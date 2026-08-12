@@ -18,15 +18,23 @@ export type InventoryItemDTO = {
 export function InventoryManager({
   companyName,
   initialItems,
+  canImport = false,
 }: {
   companyName: string;
   initialItems: InventoryItemDTO[];
+  /** Corporate inventory_import entitlement */
+  canImport?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [open, setOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [csvText, setCsvText] = useState(
+    "name,sku,brand,model,quantity,price,city,category\n",
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: "",
     categoryLabel: "Mobilya ve Ofis",
@@ -86,6 +94,44 @@ export function InventoryManager({
     }
   }
 
+  async function onImportCsv(event: FormEvent) {
+    event.preventDefault();
+    if (!canImport) return;
+    setBusy(true);
+    setError(null);
+    setImportMessage(null);
+    try {
+      const response = await fetch("/api/monetization/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "import", csv: csvText }),
+      });
+      const data = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+        created?: number;
+        updated?: number;
+        skipped?: number;
+        errors?: Array<{ row: number; message: string }>;
+      };
+      if (!response.ok || !data.ok) {
+        setError(data.message ?? "İçe aktarma başarısız.");
+        return;
+      }
+      setImportMessage(
+        `Oluşturulan: ${data.created ?? 0} · Güncellenen: ${data.updated ?? 0} · Atlanan: ${data.skipped ?? 0}${
+          data.errors?.length ? ` · Hata: ${data.errors.length}` : ""
+        }`,
+      );
+      setImportOpen(false);
+      router.refresh();
+    } catch {
+      setError("Bağlantı hatası.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onRemove(id: string) {
     setBusy(true);
     setError(null);
@@ -113,15 +159,55 @@ export function InventoryManager({
         <p className="text-sm text-black/45">
           {companyName} stokları · talep eşleştirmesinde kullanılır
         </p>
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white"
-        >
-          <Plus className="h-4 w-4" />
-          Stok ekle
-        </button>
+        <div className="flex flex-wrap gap-2">
+          {canImport ? (
+            <button
+              type="button"
+              onClick={() => setImportOpen((v) => !v)}
+              className="inline-flex items-center gap-2 rounded-full border border-teal-800/20 bg-white px-4 py-2.5 text-sm font-semibold text-teal-900"
+            >
+              CSV’den içe aktar
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white"
+          >
+            <Plus className="h-4 w-4" />
+            Stok ekle
+          </button>
+        </div>
       </div>
+
+      {importMessage ? (
+        <p className="text-xs font-medium text-teal-800">{importMessage}</p>
+      ) : null}
+
+      {importOpen && canImport ? (
+        <form
+          onSubmit={onImportCsv}
+          className="rounded-[24px] border border-black/[0.06] bg-white p-5 shadow-sm"
+        >
+          <p className="text-sm font-semibold text-teal-950">CSV içe aktarma</p>
+          <p className="mt-1 text-xs text-teal-950/50">
+            Kolonlar: name|title, sku, brand, model, quantity, price, city, category
+          </p>
+          <textarea
+            value={csvText}
+            onChange={(e) => setCsvText(e.target.value)}
+            rows={6}
+            className="mt-3 w-full rounded-xl border border-black/10 bg-[#f7f8f6] px-3 py-2.5 font-mono text-xs outline-none"
+          />
+          <button
+            type="submit"
+            disabled={busy}
+            className="mt-3 inline-flex rounded-full bg-teal-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            İçe aktar
+          </button>
+        </form>
+      ) : null}
 
       {open && (
         <form

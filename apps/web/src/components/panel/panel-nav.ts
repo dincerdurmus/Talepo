@@ -28,6 +28,8 @@ export type PanelNavItem = {
   exact?: boolean;
   /** If set, item is shown only when the feature entitlement is true. */
   requiresFeature?: FeatureKey;
+  /** Hide when this feature is entitled (plan differentiation). */
+  hideIfFeature?: FeatureKey;
   /** Restrict item to a workspace mode. Default: both. */
   workspace?: "personal" | "corporate" | "both";
 };
@@ -93,10 +95,20 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     requiresFeature: "saved_searches",
   },
   {
+    href: "/panel/firsatlar?view=ops",
+    icon: Flame,
+    label: "Opportunity Center",
+    mobileLabel: "Ops",
+    workspace: "corporate",
+    requiresFeature: "lead_distribution",
+  },
+  {
     href: "/panel/firsatlar",
     icon: Flame,
     label: "Fırsatlar",
     requiresFeature: "hot_opportunities",
+    // Corporate sees Opportunity Center instead of duplicate Fırsatlar entry.
+    hideIfFeature: "lead_distribution",
   },
   {
     href: "/panel/analiz",
@@ -143,6 +155,9 @@ export function filterPanelNavItems(
     const scope = item.workspace ?? "both";
     if (scope !== "both" && scope !== workspace) return false;
     if (item.requiresFeature && features?.[item.requiresFeature] !== true) {
+      return false;
+    }
+    if (item.hideIfFeature && features?.[item.hideIfFeature] === true) {
       return false;
     }
 
