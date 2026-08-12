@@ -42,7 +42,12 @@ type BillingStatusProps = {
   pendingCheckout?: boolean;
   currentPeriodEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
-  providerStatus?: "NONE" | "MOCK_DEV" | "EXTERNAL_BLOCKED";
+  providerStatus?:
+    | "NONE"
+    | "MOCK_DEV"
+    | "IYZICO_READY"
+    | "IYZICO_CONFIGURED"
+    | "EXTERNAL_BLOCKED";
   mockBillingEnabled?: boolean;
   /** From URL ?billing=pending after checkout redirect */
   redirectPending?: boolean;
@@ -69,7 +74,9 @@ export function PlanManager({
     Boolean(billing?.redirectPending) || Boolean(billing?.pendingCheckout);
   const checkoutAvailable =
     Boolean(billing?.mockBillingEnabled) ||
-    billing?.providerStatus === "MOCK_DEV";
+    billing?.providerStatus === "MOCK_DEV" ||
+    billing?.providerStatus === "IYZICO_READY" ||
+    billing?.providerStatus === "IYZICO_CONFIGURED";
 
   const visualKey = entitlements.effectivePlanTier;
   const currentVisual = PLAN_VISUALS[visualKey];
@@ -114,6 +121,23 @@ export function PlanManager({
     return "Yükselt";
   }
 
+  function mountIyzicoCheckoutForm(checkoutFormContent: string) {
+    // iyzico returns a script/HTML snippet that mounts into #iyzipay-checkout-form
+    const host = document.getElementById("iyzipay-checkout-form");
+    if (host) {
+      host.innerHTML = "";
+    }
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = checkoutFormContent;
+    document.body.appendChild(wrapper);
+    wrapper.querySelectorAll("script").forEach((oldScript) => {
+      const script = document.createElement("script");
+      if (oldScript.src) script.src = oldScript.src;
+      script.textContent = oldScript.textContent;
+      document.body.appendChild(script);
+    });
+  }
+
   async function startCheckout(planId: PlanTierId) {
     setLoadingKey(planId);
     setMessage(null);
@@ -127,9 +151,16 @@ export function PlanManager({
       const result = (await response.json()) as {
         message?: string;
         checkoutUrl?: string;
+        checkoutFormContent?: string;
+        token?: string;
       };
       if (!response.ok) {
         throw new Error(result.message || "Checkout başlatılamadı.");
+      }
+      if (result.checkoutFormContent) {
+        mountIyzicoCheckoutForm(result.checkoutFormContent);
+        setMessage("Ödeme formu açıldı. Plan yalnız doğrulanmış webhook sonrası açılır.");
+        return;
       }
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
@@ -161,9 +192,15 @@ export function PlanManager({
       const result = (await response.json()) as {
         message?: string;
         checkoutUrl?: string;
+        checkoutFormContent?: string;
       };
       if (!response.ok) {
         throw new Error(result.message || "Kredi ödemesi başlatılamadı.");
+      }
+      if (result.checkoutFormContent) {
+        mountIyzicoCheckoutForm(result.checkoutFormContent);
+        setMessage("Ödeme formu açıldı. Krediler yalnız doğrulanmış ödeme sonrası eklenir.");
+        return;
       }
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
@@ -631,11 +668,16 @@ export function PlanManager({
 
       <p className="text-xs leading-5 text-black/35">
         {checkoutAvailable
-          ? "Dev billing mock açık (ALLOW_MOCK_BILLING): checkout sonrası plan/credit yalnız imzalı webhook ile açılır. Browser success tek başına authority değildir."
+          ? billing?.mockBillingEnabled
+            ? "Dev billing mock açık (ALLOW_MOCK_BILLING): checkout sonrası plan/credit yalnız imzalı webhook ile açılır. Browser success tek başına authority değildir."
+            : billing?.providerStatus?.startsWith("IYZICO")
+              ? "iyzico checkout hazır. Kart verisi Talepo’da tutulmaz; plan/kredi yalnız doğrulanmış webhook sonrası açılır."
+              : "Checkout hazır. Plan/kredi yalnız doğrulanmış webhook sonrası açılır."
           : mockUpgradeEnabled
             ? "Eski test yükseltmesi (ALLOW_MOCK_UPGRADE) hâlâ açık olabilir; production'da kapalıdır. Gerçek provider bağlanana kadar checkout 402 döner."
             : "Ödeme sağlayıcısı henüz seçilmedi/bağlanmadı (PAYMENT_PROVIDER_REQUIRED). Fiyatlar bilgilendirme amaçlıdır; client plan/fiyat manipülasyonu etkisizdir."}
       </p>
+      <div id="iyzipay-checkout-form" className="responsive mt-4" />
     </div>
   );
 }

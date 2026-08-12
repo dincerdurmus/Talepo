@@ -4,6 +4,10 @@ import {
   isBillingMockAllowed,
   resolveConfiguredProviderId,
 } from "@/lib/billing/provider";
+import {
+  evaluateIyzicoBillingReadiness,
+  isIyzicoConfigured,
+} from "@/lib/billing/iyzico/config";
 
 import { createMockBillingProvider } from "./mock-provider";
 
@@ -33,21 +37,34 @@ const noneProvider: BillingProvider = {
 
 /**
  * Resolve active billing provider.
- * Never invents Stripe/iyzico without credentials + adapter.
+ * iyzico only when TALEPO_PAYMENT_PROVIDER=iyzico + credentials.
+ * Lazy-load iyzico adapter to avoid prisma import in status-only paths.
  */
 export function getBillingProvider(): BillingProvider {
   const id = resolveConfiguredProviderId();
   if (id === "mock" && isBillingMockAllowed()) {
     return createMockBillingProvider();
   }
-  // "external" reserved — adapters not implemented until vendor chosen
+  if (id === "iyzico") {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { createIyzicoBillingProvider } =
+      require("./iyzico-provider") as typeof import("./iyzico-provider");
+    return createIyzicoBillingProvider();
+  }
   return noneProvider;
 }
 
 export function getBillingProviderStatus(): {
   providerId: string;
-  status: "NONE" | "MOCK_DEV" | "EXTERNAL_BLOCKED";
+  status:
+    | "NONE"
+    | "MOCK_DEV"
+    | "IYZICO_READY"
+    | "IYZICO_CONFIGURED"
+    | "EXTERNAL_BLOCKED";
   paymentProviderRequired: boolean;
+  billingReady: boolean;
+  readinessReasons: string[];
 } {
   const id = resolveConfiguredProviderId();
   if (id === "mock") {
@@ -55,6 +72,30 @@ export function getBillingProviderStatus(): {
       providerId: "mock",
       status: "MOCK_DEV",
       paymentProviderRequired: false,
+      billingReady: true,
+      readinessReasons: [],
+    };
+  }
+  if (id === "iyzico") {
+    const readiness = evaluateIyzicoBillingReadiness();
+    return {
+      providerId: "iyzico",
+      status: readiness.ready ? "IYZICO_READY" : "IYZICO_CONFIGURED",
+      paymentProviderRequired: false,
+      billingReady: readiness.ready,
+      readinessReasons: readiness.reasons,
+    };
+  }
+  if (
+    process.env.TALEPO_PAYMENT_PROVIDER?.trim().toLowerCase() === "iyzico" &&
+    !isIyzicoConfigured()
+  ) {
+    return {
+      providerId: "iyzico",
+      status: "NONE",
+      paymentProviderRequired: true,
+      billingReady: false,
+      readinessReasons: ["missing_api_or_secret"],
     };
   }
   if (id === "external") {
@@ -62,11 +103,15 @@ export function getBillingProviderStatus(): {
       providerId: process.env.TALEPO_PAYMENT_PROVIDER ?? "external",
       status: "EXTERNAL_BLOCKED",
       paymentProviderRequired: true,
+      billingReady: false,
+      readinessReasons: ["adapter_not_implemented"],
     };
   }
   return {
     providerId: "none",
     status: "NONE",
     paymentProviderRequired: true,
+    billingReady: false,
+    readinessReasons: ["provider_none"],
   };
 }

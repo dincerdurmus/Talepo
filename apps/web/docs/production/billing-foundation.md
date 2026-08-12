@@ -2,7 +2,11 @@
 
 ## Status
 
-**FOUNDATION_READY_PROVIDER_BLOCKED** until a real payment provider is chosen and credentials + adapter are added.
+Phase 4C foundation + Phase 4D **iyzico adapter** available.
+
+Set `TALEPO_PAYMENT_PROVIDER=iyzico` with credentials — see `docs/production/iyzico-adapter.md`.
+
+Without credentials: **PAYMENT_PROVIDER_REQUIRED** / foundation still usable with mock in non-prod.
 
 ## Authority
 

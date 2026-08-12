@@ -12,7 +12,7 @@ export type SubscriptionStatus =
 
 export type BillingSubjectType = "USER" | "COMPANY";
 
-export type BillingProviderId = "none" | "mock" | "external";
+export type BillingProviderId = "none" | "mock" | "iyzico" | "external";
 
 export type CanonicalBillingEventType =
   | "CHECKOUT_STARTED"
@@ -48,6 +48,9 @@ export type CheckoutSessionResult = {
   checkoutUrl: string;
   providerSessionId: string;
   status: "PENDING";
+  /** Hosted CF HTML snippet when paymentPageUrl is unavailable (iyzico). */
+  checkoutFormContent?: string;
+  token?: string;
 };
 
 export type CreditPurchaseRequest = {
@@ -64,6 +67,8 @@ export type CreditPurchaseResult = {
   checkoutUrl: string;
   providerSessionId: string;
   status: "PENDING";
+  checkoutFormContent?: string;
+  token?: string;
 };
 
 export type CanonicalBillingEvent = {

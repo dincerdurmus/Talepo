@@ -66,6 +66,8 @@ export async function POST(request: Request) {
       ok: true,
       checkoutUrl: session.checkoutUrl,
       providerSessionId: session.providerSessionId,
+      checkoutFormContent: session.checkoutFormContent,
+      token: session.token,
       status: "PENDING",
       message: "Ödeme oturumu oluşturuldu. Plan webhook doğrulanana kadar açılmaz.",
     });

@@ -50,6 +50,8 @@ export async function POST(request: Request) {
       ok: true,
       checkoutUrl: session.checkoutUrl,
       providerSessionId: session.providerSessionId,
+      checkoutFormContent: session.checkoutFormContent,
+      token: session.token,
       status: "PENDING",
       credits: session.credits,
       message:

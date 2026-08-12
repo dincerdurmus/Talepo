@@ -13,6 +13,7 @@ export const BillingErrorCode = {
   CREDIT_GRANT_FAILED: "CREDIT_GRANT_FAILED",
   BILLING_FORBIDDEN: "BILLING_FORBIDDEN",
   INVALID_TRANSITION: "INVALID_TRANSITION",
+  CHECKOUT_PROFILE_INCOMPLETE: "CHECKOUT_PROFILE_INCOMPLETE",
 } as const;
 
 export type BillingErrorCode =
@@ -48,6 +49,7 @@ function statusForBillingCode(code: BillingErrorCode): number {
       return 404;
     case BillingErrorCode.PLAN_MAPPING_INVALID:
     case BillingErrorCode.INVALID_TRANSITION:
+    case BillingErrorCode.CHECKOUT_PROFILE_INCOMPLETE:
       return 400;
     case BillingErrorCode.PAYMENT_PROVIDER_UNAVAILABLE:
       return 503;

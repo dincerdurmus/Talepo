@@ -69,6 +69,37 @@ export async function GET() {
     detail: provider.state,
   };
 
+  // Billing / iyzico — optional for core app readiness; degraded when misconfigured.
+  let billingDetail = "provider_none";
+  let billingOk = true;
+  try {
+    const { getBillingProviderStatus } = await import(
+      "@/server/billing/get-provider"
+    );
+    const { getIyzicoProviderHealth } = await import(
+      "@/lib/billing/iyzico/client"
+    );
+    const billing = getBillingProviderStatus();
+    const iyzicoHealth = getIyzicoProviderHealth();
+    if (billing.providerId === "iyzico") {
+      billingOk = billing.billingReady && iyzicoHealth.state !== "UNAVAILABLE";
+      billingDetail = billing.billingReady
+        ? `iyzico:${iyzicoHealth.state}`
+        : `iyzico_not_ready:${billing.readinessReasons.join(",")}`;
+    } else {
+      billingDetail = billing.status;
+      billingOk = true; // core app remains ready without paid billing
+    }
+  } catch {
+    billingDetail = "billing_status_unavailable";
+    billingOk = true;
+  }
+  checks.billing_provider = {
+    critical: false,
+    ok: billingOk,
+    detail: billingDetail,
+  };
+
   const criticalFailed = Object.values(checks).some((c) => c.critical && !c.ok);
   const status = criticalFailed ? "not_ready" : "ready";
 

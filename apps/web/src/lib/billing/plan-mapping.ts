@@ -23,7 +23,9 @@ export type PlanPriceMapping = {
 
 export function getPlanPriceMapping(planTier: PlanTierId): PlanPriceMapping {
   const envKey = `TALEPO_PRICE_${planTier}`;
-  const providerPriceId = process.env[envKey]?.trim() || null;
+  const iyzicoKey = `TALEPO_IYZICO_PLAN_${planTier}_MONTHLY`;
+  const providerPriceId =
+    process.env[iyzicoKey]?.trim() || process.env[envKey]?.trim() || null;
   const display =
     PLAN_PRICING[planTier]?.priceTry ?? PLAN_DEFINITIONS[planTier]?.priceTry;
 

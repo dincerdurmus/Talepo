@@ -7,6 +7,7 @@ import type {
   CreditPurchaseResult,
   WebhookVerifyResult,
 } from "./types";
+import { isIyzicoConfigured } from "./iyzico/config";
 
 /**
  * Provider-neutral billing adapter.
@@ -45,25 +46,29 @@ export function isBillingMockAllowed(
   return process.env.ALLOW_MOCK_BILLING === "true";
 }
 
-export function resolveConfiguredProviderId(): BillingProviderId {
-  const configured = process.env.TALEPO_PAYMENT_PROVIDER?.trim().toLowerCase();
+export function resolveConfiguredProviderId(
+  env: NodeJS.ProcessEnv = process.env,
+  nodeEnv = env.NODE_ENV ?? process.env.NODE_ENV ?? "development",
+): BillingProviderId {
+  const configured = env.TALEPO_PAYMENT_PROVIDER?.trim().toLowerCase();
   if (!configured || configured === "none") {
-    if (isBillingMockAllowed()) return "mock";
+    if (isBillingMockAllowed(nodeEnv)) return "mock";
     return "none";
   }
-  // Real vendors require explicit credentials — do not invent integrations.
   if (configured === "mock") {
-    return isBillingMockAllowed() ? "mock" : "none";
+    return isBillingMockAllowed(nodeEnv) ? "mock" : "none";
   }
-  // Future: stripe | iyzico | paytr | paddle when adapters + secrets exist
-  const hasExternalSecrets =
-    Boolean(process.env.STRIPE_SECRET_KEY?.trim()) ||
-    Boolean(process.env.IYZICO_API_KEY?.trim()) ||
-    Boolean(process.env.PAYTR_MERCHANT_KEY?.trim()) ||
-    Boolean(process.env.PADDLE_API_KEY?.trim());
-  if (hasExternalSecrets && configured !== "mock") {
+  if (configured === "iyzico") {
+    return isIyzicoConfigured(env) ? "iyzico" : "none";
+  }
+  // Other vendors not implemented — do not invent adapters.
+  if (
+    configured === "stripe" ||
+    configured === "paytr" ||
+    configured === "paddle"
+  ) {
     return "external";
   }
-  if (isBillingMockAllowed()) return "mock";
+  if (isBillingMockAllowed(nodeEnv)) return "mock";
   return "none";
 }
