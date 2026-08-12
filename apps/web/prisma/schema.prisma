@@ -1034,3 +1034,106 @@ model IdempotencyRecord {
   @@index([createdAt])
   @@index([userId, scope])
 }
+
+/// Phase 4C — billing subscription (provider-neutral). Entitlement plan synced from verified events.
+enum BillingSubjectType {
+  USER
+  COMPANY
+}
+
+enum BillingSubscriptionStatus {
+  INACTIVE
+  PENDING
+  ACTIVE
+  PAST_DUE
+  CANCEL_AT_PERIOD_END
+  CANCELED
+  EXPIRED
+}
+
+enum BillingEventProcessStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+enum CreditLedgerEntryType {
+  PURCHASE
+  BONUS
+  ADMIN
+  REFUND
+  REVERSAL
+}
+
+model BillingSubscription {
+  id String @id @default(cuid())
+
+  subjectType BillingSubjectType
+  subjectId   String
+
+  planTier PlanTier
+  status   BillingSubscriptionStatus @default(INACTIVE)
+
+  provider                 String?
+  providerCustomerId       String?
+  providerSubscriptionId   String? @unique
+  currentPeriodStart       DateTime?
+  currentPeriodEnd         DateTime?
+  cancelAtPeriodEnd        Boolean  @default(false)
+  canceledAt               DateTime?
+  pastDueAt                DateTime?
+  providerVersion          Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events BillingEvent[]
+
+  @@unique([subjectType, subjectId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@index([provider])
+}
+
+model BillingEvent {
+  id String @id @default(cuid())
+
+  provider         String
+  providerEventId  String
+  eventType        String
+  subjectType      BillingSubjectType?
+  subjectId        String?
+  subscriptionId   String?
+  status           BillingEventProcessStatus @default(RECEIVED)
+  processedAt      DateTime?
+  eventTimestamp   DateTime?
+  providerVersion  Int?
+  /// Redacted / safe metadata only — never raw webhook body or secrets
+  safeMetadata     Json?
+
+  createdAt DateTime @default(now())
+
+  subscription BillingSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId])
+  @@index([subjectType, subjectId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+model CreditLedgerEntry {
+  id String @id @default(cuid())
+
+  subjectType BillingSubjectType
+  subjectId   String
+  entryType   CreditLedgerEntryType
+  credits     Int
+  packId      String?
+  providerEventId String? @unique
+  note        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([subjectType, subjectId, createdAt])
+}

@@ -81,6 +81,18 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     description: "Enables mock credit grants — must be off in production.",
   },
   {
+    name: "ALLOW_MOCK_BILLING",
+    classification: "DEVELOPMENT_ONLY",
+    serverOnly: true,
+    description: "Enables mock billing provider/webhooks — must be off in production.",
+  },
+  {
+    name: "TALEPO_PAYMENT_PROVIDER",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description: "Payment provider id (none|mock|stripe|iyzico|…). No silent vendor pick.",
+  },
+  {
     name: "TALEPO_PRODUCT_EVENTS_STDOUT",
     classification: "DEVELOPMENT_ONLY",
     serverOnly: true,

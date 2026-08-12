@@ -66,6 +66,22 @@ export const BUSINESS_METRICS: MetricDefinition[] = [
     definition: "count(accepted_offer) / nullif(count(valid_offer), 0)",
     notes: "Never invent fake rates in UI; compute only from persisted statuses.",
   },
+  {
+    id: "active_subscription",
+    name: "Active Subscription",
+    description: "BillingSubscription in ACTIVE or CANCEL_AT_PERIOD_END.",
+    grain: "subscription",
+    definition:
+      "BillingSubscription.status IN ('ACTIVE','CANCEL_AT_PERIOD_END')",
+  },
+  {
+    id: "verified_credit_grant",
+    name: "Verified Credit Grant",
+    description: "CreditLedgerEntry PURCHASE rows tied to unique providerEventId.",
+    grain: "ledger",
+    definition:
+      "CreditLedgerEntry.entryType = 'PURCHASE' AND providerEventId IS NOT NULL",
+  },
 ];
 
 export function getMetricDefinition(id: string): MetricDefinition | undefined {

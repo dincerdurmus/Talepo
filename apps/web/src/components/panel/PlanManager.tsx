@@ -37,21 +37,39 @@ export type CompanyOption = {
   name: string;
 };
 
+type BillingStatusProps = {
+  subscriptionStatus?: string;
+  pendingCheckout?: boolean;
+  currentPeriodEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
+  providerStatus?: "NONE" | "MOCK_DEV" | "EXTERNAL_BLOCKED";
+  mockBillingEnabled?: boolean;
+  /** From URL ?billing=pending after checkout redirect */
+  redirectPending?: boolean;
+};
+
 type PlanManagerProps = {
   entitlements: EntitlementDTO;
   companies?: CompanyOption[];
   mockUpgradeEnabled?: boolean;
+  billing?: BillingStatusProps;
 };
 
 export function PlanManager({
   entitlements,
   companies = [],
   mockUpgradeEnabled = false,
+  billing,
 }: PlanManagerProps) {
   const router = useRouter();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const billingPending =
+    Boolean(billing?.redirectPending) || Boolean(billing?.pendingCheckout);
+  const checkoutAvailable =
+    Boolean(billing?.mockBillingEnabled) ||
+    billing?.providerStatus === "MOCK_DEV";
 
   const visualKey = entitlements.effectivePlanTier;
   const currentVisual = PLAN_VISUALS[visualKey];
@@ -69,6 +87,7 @@ export function PlanManager({
     if (planId === entitlements.effectivePlanTier) return false;
     if (planId === "CORPORATE") return false;
     if (planId === "STANDARD") return mockUpgradeEnabled;
+    if (checkoutAvailable && planTierRank(planId) > currentRank) return true;
     return mockUpgradeEnabled && planTierRank(planId) > currentRank;
   }
 
@@ -77,19 +96,90 @@ export function PlanManager({
       return "Aktif plan";
     }
     if (planId === "CORPORATE") {
-      return "Kurumsal · ödeme yakında";
+      return "Kurumsal · özel satış";
     }
     if (planId === "STANDARD") {
       return mockUpgradeEnabled ? "Standart'a geç (test)" : "Ücretsiz başla";
     }
     const plan = PLAN_DEFINITIONS[planId];
+    if (checkoutAvailable && planTierRank(planId) > currentRank) {
+      return `Ödemeye geç · ₺${plan.priceTry?.toLocaleString("tr-TR")}/ay`;
+    }
     if (mockUpgradeEnabled && planTierRank(planId) > currentRank) {
       return `Test yükselt · ₺${plan.priceTry?.toLocaleString("tr-TR")}/ay`;
     }
     if (plan.priceTry) {
-      return `₺${plan.priceTry.toLocaleString("tr-TR")}/ay · ödeme yakında`;
+      return `₺${plan.priceTry.toLocaleString("tr-TR")}/ay · provider gerekli`;
     }
     return "Yükselt";
+  }
+
+  async function startCheckout(planId: PlanTierId) {
+    setLoadingKey(planId);
+    setMessage(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planTier: planId }),
+      });
+      const result = (await response.json()) as {
+        message?: string;
+        checkoutUrl?: string;
+      };
+      if (!response.ok) {
+        throw new Error(result.message || "Checkout başlatılamadı.");
+      }
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+      setMessage(result.message || "Ödeme doğrulanıyor…");
+      router.refresh();
+    } catch (actionError) {
+      setError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Ödeme başlatılırken hata oluştu.",
+      );
+    } finally {
+      setLoadingKey(null);
+    }
+  }
+
+  async function startCreditCheckout(packId: string) {
+    setLoadingKey(packId);
+    setMessage(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/billing/credits/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ packId }),
+      });
+      const result = (await response.json()) as {
+        message?: string;
+        checkoutUrl?: string;
+      };
+      if (!response.ok) {
+        throw new Error(result.message || "Kredi ödemesi başlatılamadı.");
+      }
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+      setMessage(result.message || "Ödeme doğrulanıyor…");
+      router.refresh();
+    } catch (actionError) {
+      setError(
+        actionError instanceof Error
+          ? actionError.message
+          : "Kredi ödemesi başlatılırken hata oluştu.",
+      );
+    } finally {
+      setLoadingKey(null);
+    }
   }
 
   async function runAction(key: string, body: Record<string, unknown>) {
@@ -142,6 +232,35 @@ export function PlanManager({
       {entitlements.subject.type === "company" && (
         <p className="rounded-[18px] border border-teal-900/10 bg-[#f0fdfa] px-4 py-3 text-sm leading-6 text-teal-900/70">
           {TEAM_PLAN_SCOPE_NOTE}
+        </p>
+      )}
+
+      {billingPending && (
+        <p className="rounded-[18px] border border-amber-900/15 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950/80">
+          Ödemeniz doğrulanıyor. Plan hakları, ödeme sağlayıcısı webhook ile
+          onaylanana kadar açılmaz.
+        </p>
+      )}
+
+      {billing?.subscriptionStatus && billing.subscriptionStatus !== "INACTIVE" && (
+        <p className="text-sm text-black/45">
+          Abonelik durumu: <strong>{billing.subscriptionStatus}</strong>
+          {billing.currentPeriodEnd
+            ? ` · dönem sonu: ${formatDate(billing.currentPeriodEnd)}`
+            : ""}
+          {billing.cancelAtPeriodEnd ? " · dönem sonunda iptal" : ""}
+        </p>
+      )}
+
+      {(message || error) && (
+        <p
+          className={`rounded-[18px] px-4 py-3 text-sm ${
+            error
+              ? "border border-red-200 bg-red-50 text-red-800"
+              : "border border-teal-900/10 bg-[#f0fdfa] text-teal-900/80"
+          }`}
+        >
+          {error || message}
         </p>
       )}
 
@@ -432,12 +551,15 @@ export function PlanManager({
                     !canSelectPlan(plan.id) || loadingKey === plan.id
                   }
                   onClick={() => {
-                    if (canSelectPlan(plan.id)) {
-                      void runAction(plan.id, {
-                        action: "upgrade",
-                        planTier: plan.id as PlanTierId,
-                      });
+                    if (!canSelectPlan(plan.id)) return;
+                    if (checkoutAvailable && plan.id !== "STANDARD") {
+                      void startCheckout(plan.id as PlanTierId);
+                      return;
                     }
+                    void runAction(plan.id, {
+                      action: "upgrade",
+                      planTier: plan.id as PlanTierId,
+                    });
                   }}
                   className={`mt-6 flex w-full items-center justify-center gap-2 rounded-full px-4 py-3.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${visual.button}`}
                 >
@@ -471,8 +593,8 @@ export function PlanManager({
               Ek teklif paketleri
             </h3>
             <p className="text-sm text-teal-950/55">
-              Premium almak istemeyen firmalar için tek seferlik paketler.
-              Ödeme bağlanınca buradan satın alınabilecek.
+              Premium almak istemeyen firmalar için tek seferlik paketler. Kredi
+              yalnız doğrulanmış ödeme (webhook) sonrası eklenir.
             </p>
           </div>
         </div>
@@ -482,14 +604,25 @@ export function PlanManager({
             <button
               key={packKey}
               type="button"
-              disabled
-              title="Ödeme altyapısı yakında"
-              className="cursor-not-allowed rounded-xl border border-teal-900/10 bg-white p-5 text-left opacity-70"
+              disabled={!checkoutAvailable || loadingKey === packKey}
+              title={
+                checkoutAvailable
+                  ? "Ödeme oturumu başlat"
+                  : "Ödeme sağlayıcısı gerekli"
+              }
+              onClick={() => {
+                if (checkoutAvailable) void startCreditCheckout(packKey);
+              }}
+              className={`rounded-xl border border-teal-900/10 bg-white p-5 text-left ${
+                checkoutAvailable
+                  ? "hover:border-teal-800/30"
+                  : "cursor-not-allowed opacity-70"
+              }`}
             >
               <p className="font-semibold text-[#0f1f1d]">{pack.label}</p>
               <p className="mt-2 text-sm text-teal-800">₺{pack.priceTry}</p>
               <p className="mt-2 text-[11px] font-medium text-teal-800/60">
-                Ödeme yakında
+                {checkoutAvailable ? "Ödemeye geç" : "Provider gerekli"}
               </p>
             </button>
           ))}
@@ -497,9 +630,11 @@ export function PlanManager({
       </section>
 
       <p className="text-xs leading-5 text-black/35">
-        {mockUpgradeEnabled
-          ? "Test modu açık (ALLOW_MOCK_UPGRADE): ücretli planlar mock ödeme ile 1 ay süreyle yükseltilebilir. Gerçek ödeme altyapısı yakında."
-          : "Ödeme altyapısı henüz bağlı değil. Ücretli plan yükseltmeleri ve ek paketler yakında açılacak; fiyatlar bilgilendirme amaçlıdır."}
+        {checkoutAvailable
+          ? "Dev billing mock açık (ALLOW_MOCK_BILLING): checkout sonrası plan/credit yalnız imzalı webhook ile açılır. Browser success tek başına authority değildir."
+          : mockUpgradeEnabled
+            ? "Eski test yükseltmesi (ALLOW_MOCK_UPGRADE) hâlâ açık olabilir; production'da kapalıdır. Gerçek provider bağlanana kadar checkout 402 döner."
+            : "Ödeme sağlayıcısı henüz seçilmedi/bağlanmadı (PAYMENT_PROVIDER_REQUIRED). Fiyatlar bilgilendirme amaçlıdır; client plan/fiyat manipülasyonu etkisizdir."}
       </p>
     </div>
   );
