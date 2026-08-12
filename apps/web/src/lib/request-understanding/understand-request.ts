@@ -12,6 +12,7 @@ import {
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
   classifyNumbers,
+  looksLikeYearToken,
   modelIdentifierTokens,
   primaryQuantity,
   primaryYear,
@@ -28,7 +29,7 @@ import type {
   UnderstandingDecision,
   UnderstandingValue,
 } from "@/lib/request-understanding/types";
-import { detectCategoryResult } from "@/lib/ai/parser/category";
+import { detectCategoryResult, hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import { extractBudgetFromText } from "@/lib/ai/parser/budget";
 import { detectCity } from "@/lib/ai/parser/entity";
 import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
@@ -461,9 +462,15 @@ export function understandRequest(
   );
 
   const hasPropertySignals =
-    /\b(ev|daire|dükkan|dukkan|ofis|villa|konut|2\s*\+\s*1|3\s*\+\s*1)\b/i.test(
+    (/\b(ev|daire|dükkan|dukkan|villa|konut|2\s*\+\s*1|3\s*\+\s*1)\b/i.test(
       normalizedInput,
-    ) || Boolean(extractRoomLayout(normalizedInput));
+    ) ||
+      Boolean(extractRoomLayout(normalizedInput)) ||
+      (/\bofis\b/i.test(normalizedInput) &&
+        /kiralık|kiralik|satılık|satilik|kiralamak|metrekare|\bm2\b|m²/.test(
+          normalizedInput,
+        ))) &&
+    !hasFurnitureObjectNoun(normalizedInput);
 
   const hasMachineSignals =
     /\b(makine|pres|cnc|heidelberg|kompresör|kompresor)\b/i.test(normalizedInput);
@@ -576,12 +583,31 @@ export function understandRequest(
 
   const year = primaryYear(numbers);
   const years = numbers.filter((n) => n.role === "MODEL_YEAR");
-  if (year && years.length === 1 && !/sonrası|sonrasi|üstü|ustu|ama/.test(normalizedInput)) {
-    attributes.modelYear = uv(year.value!, {
-      provenance: "EXPLICIT",
-      source: "USER_EXPLICIT",
-      evidence: year.evidence,
-    });
+  const yearRelation = /sonrası|sonrasi|üstü|ustu/.test(normalizedInput)
+    ? "min"
+    : /öncesi|oncesi|altı|alti/.test(normalizedInput)
+      ? "max"
+      : "exact";
+  if (year && years.length === 1) {
+    if (yearRelation === "exact" && !/ama/.test(normalizedInput)) {
+      attributes.modelYear = uv(year.value!, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: year.evidence,
+      });
+    } else if (yearRelation === "min") {
+      attributes.yearMin = uv(year.value!, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [...year.evidence, "year-relation:min"],
+      });
+    } else if (yearRelation === "max") {
+      attributes.yearMax = uv(year.value!, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [...year.evidence, "year-relation:max"],
+      });
+    }
   }
 
   for (const n of numbers) {
@@ -816,7 +842,7 @@ export function understandRequest(
       ? autoModel
       : modelTokens[0]?.raw;
 
-  if (identity.brand) {
+  if (identity.brand && !looksLikeYearToken(identity.brand)) {
     const explicitBrand = textIncludes(normalizedInput, identity.brand);
     identityBlock.brand = uv(identity.brand, {
       provenance: explicitBrand ? "EXPLICIT" : "INFERRED",
@@ -834,7 +860,7 @@ export function understandRequest(
     explicitModelFromText ??
     identity.model ??
     (modelTokens[0] ? modelTokens[0].raw : null);
-  if (modelValue) {
+  if (modelValue && !looksLikeYearToken(String(modelValue))) {
     const explicitModel = textIncludes(normalizedInput, String(modelValue));
     identityBlock.model = uv(String(modelValue), {
       provenance: explicitModel ? "EXPLICIT" : "INFERRED",

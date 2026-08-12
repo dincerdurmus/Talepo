@@ -4,6 +4,7 @@
  * No brand/model-specific production branches.
  */
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import { clamp01, uv } from "./provenance";
 import type {
   ParentEntityKind,
@@ -91,7 +92,7 @@ const NON_VEHICLE_CATEGORIES = new Set([
 ]);
 
 const MOTOR_PART_CONTEXT_RE =
-  /(?:çıkma|cikma|yedek|muadil|uyumlu|kapa|pompa|yağ|yag|\biçin\b|\bicin\b)/i;
+  /(?:çıkma|cikma|yedek|muadil|uyumlu|kapa|pompa|yağ|yag|\biçin\b|\bicin\b|2\.?\s*el|ikinci\s*el)/i;
 
 const SERVICE_LEMMAS = [
   "bakım",
@@ -146,7 +147,7 @@ const PART_NEGATION =
   /(?:parça|parca|tampon|far|ayna|filtre|balata|yedek)\s*(?:istemiyorum|istemiyoz|değil|degil)|(?:araç|arac|kendisini|komple\s+(?:cihaz|makine|araç|arac))\s*(?:arıyorum|ariyorum|lazım|lazim)/i;
 
 const WHOLE_VEHICLE_SEEK =
-  /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim|arıyorum)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)/i;
+  /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)|(?:satın\s*almak|satin\s*almak|satın\s*alıyorum|satin\s*aliyorum|almak\s*istiyorum)/i;
 
 type IdentityLite = {
   brand?: string | null;
@@ -584,18 +585,30 @@ export function resolveSemanticSubject(
   }
 
   const partNegated = PART_NEGATION.test(text);
-  const wholeVehicle = WHOLE_VEHICLE_SEEK.test(text) || partNegated;
+  const explicitVehiclePurchase = WHOLE_VEHICLE_SEEK.test(text);
+  const wholeVehicle = explicitVehiclePurchase || partNegated;
 
   const partHit = findLemmaHit(text, PART_LEMMAS);
   const accessoryHit = findLemmaHit(text, ACCESSORY_LEMMAS);
   const serviceHit = findLemmaHit(text, SERVICE_LEMMAS);
 
+  const hasCompatibilityTarget =
+    Boolean(input.automotiveModel) ||
+    identitySuggestsVehicle(input.identity) ||
+    isKnownAutomotiveModelName(input.identity.model) ||
+    isKnownAutomotiveModelName(input.identity.brand) ||
+    Boolean(input.identity.brand && input.identity.model);
+
   // --- PART ---
   if (partHit && !wholeVehicle) {
-    // Bare "motor" often means vehicle powertrain preference; keep PART when
-    // salvage/spare/compatibility language is present ("çıkma motor", "X için motor").
+    // Bare "motor" without a compatibility target often means powertrain
+    // preference on a vehicle purchase. Model/entity + part noun → PART.
+    const motorBareWithoutTarget =
+      partHit.lemma === "motor" &&
+      !MOTOR_PART_CONTEXT_RE.test(text) &&
+      !hasCompatibilityTarget;
     const effectiveLemma =
-      partHit.lemma === "motor" && !MOTOR_PART_CONTEXT_RE.test(text)
+      motorBareWithoutTarget
         ? null
         : partHit.lemma === "fren" && /balata/i.test(text)
           ? "balata"
@@ -927,11 +940,12 @@ export function resolveSemanticSubject(
 
   // --- REAL ESTATE ---
   if (
-    input.intent === "RENT" ||
-    input.intent === "SELL" ||
-    input.categoryId === "real-estate" ||
-    input.roomCount ||
-    input.listingType
+    (input.intent === "RENT" ||
+      input.intent === "SELL" ||
+      input.categoryId === "real-estate" ||
+      input.roomCount ||
+      input.listingType) &&
+    !hasFurnitureObjectNoun(text)
   ) {
     const prop =
       /(?:^|[^\p{L}\p{N}])(?:dükkan|dukkan)(?=[^\p{L}\p{N}]|$)/iu.test(text)
@@ -1035,7 +1049,11 @@ export function resolveSemanticSubject(
     input.identity.model ||
     input.categoryId === "appliances" ||
     input.categoryId === "technology" ||
-    input.categoryId === "home-kitchen"
+    input.categoryId === "home-kitchen" ||
+    input.categoryId === "furniture" ||
+    input.categoryId === "baby" ||
+    input.categoryId === "health" ||
+    hasFurnitureObjectNoun(text)
   ) {
     const parent = buildParentEntity(input.identity, "PRODUCT");
     const label =

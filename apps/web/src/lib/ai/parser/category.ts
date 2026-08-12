@@ -137,6 +137,10 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "toplantı masasi",
     "ofis masası",
     "ofis masasi",
+    "ofis koltuğu",
+    "ofis koltugu",
+    "dosya dolabı",
+    "dosya dolabi",
     "masa takımı",
     "masa takimi",
     "makam",
@@ -163,6 +167,13 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "yatak odasi",
     "tv ünitesi",
     "tv unitesi",
+    "şaraplık",
+    "saraplik",
+    "gardırop",
+    "ev mobilyası",
+    "ev mobilyasi",
+    "ofis mobilyaları",
+    "ofis mobilyalari",
     ...brandKeywordList(FURNITURE_BRANDS),
   ],
   technology: [
@@ -176,11 +187,17 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "sunucu",
     "laptop",
     "notebook",
+    "dizüstü",
+    "dizustu",
+    "dizüstü bilgisayar",
+    "dizustu bilgisayar",
     "teknoloji",
     "telefon",
+    "cep telefonu",
     "akıllı telefon",
     "akilli telefon",
     "tablet",
+    "televizyon",
     "iphone",
     "android",
     "galaxy",
@@ -257,6 +274,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   appliances: [
     "beyaz eşya",
     "beyaz esya",
+    "küçük ev aletleri",
+    "kucuk ev aletleri",
     "buzdolabı",
     "buzdolabi",
     "çamaşır makinesi",
@@ -270,9 +289,12 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "ocak",
     "davlumbaz",
     "klima",
+    "kombi",
     "derin dondurucu",
     "mikrodalga",
     "mikro dalga",
+    "şarap dolabı",
+    "sarap dolabi",
     "no-frost",
     "nofrost",
     "aspiratör",
@@ -283,6 +305,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "sofben",
     "ütü",
     "utu",
+    "airfryer",
     "süpürge",
     "supurge",
     "robot süpürge",
@@ -472,6 +495,38 @@ function hasAny(normalized: string, terms: string[]) {
 }
 
 /**
+ * Furniture *object* nouns beat location/use-context words like "ofis".
+ * "masaüstü" / "masaj" are not furniture objects.
+ */
+export function hasFurnitureObjectNoun(text: string): boolean {
+  const n = text.toLocaleLowerCase("tr-TR");
+  if (
+    /(?:koltuk|sandalye|kitaplık|kitaplik|sehpa|berjer|kanepe|gardırop|gardrop|vestiyer|dolap)/i.test(
+      n,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /(?:çalışma|calisma|toplantı|toplantı|yemek|ofis)\s*masa/i.test(n)
+  ) {
+    return true;
+  }
+  if (/masaüstü|masaustu|masaj/.test(n)) return false;
+  return /(?:^|[^\p{L}\p{N}])masa(?:sı|si)?(?=[^\p{L}\p{N}]|$)/iu.test(n);
+}
+
+function hasRealEstateOfficeSignal(normalized: string): boolean {
+  if (!normalized.includes("ofis")) return false;
+  if (hasFurnitureObjectNoun(normalized)) return false;
+  return (
+    /kiralık|kiralik|satılık|satilik|kiralamak|metrekare|\bm2\b|m²|gayrimenkul|işyeri|isyeri/.test(
+      normalized,
+    ) || /\d+\s*m2/.test(normalized)
+  );
+}
+
+/**
  * Score all categories and pick a winner.
  * IMPORTANT: score 0 must NOT confidently claim "services".
  */
@@ -514,7 +569,9 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       ) {
         score += 2;
       }
-      if (normalized.includes("ofis") && normalized.includes("sandalye")) {
+      if (normalized.includes("ofis") && hasFurnitureObjectNoun(normalized)) {
+        score += 4;
+      } else if (normalized.includes("ofis") && normalized.includes("sandalye")) {
         score += 3;
       }
       if (normalized.includes("tekerlekli sandalye")) {
@@ -615,6 +672,14 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       ) {
         score += 2;
       }
+      // Short lexicon anchors — enough for TENTATIVE/CONFIDENT gate
+      if (
+        /\b(emlak|daire|villa|konut|gayrimenkul|arsa|rezidans|residans)\b/i.test(
+          normalized,
+        )
+      ) {
+        score += 2;
+      }
       // Paint / renovation service verbs must not look like property search
       if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
         score = Math.max(0, score - 6);
@@ -622,14 +687,13 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
     }
 
     if (categoryId === "real-estate" && normalized.includes("ofis")) {
-      if (
-        normalized.includes("sandalye") ||
-        normalized.includes("masa") ||
-        normalized.includes("mobilya")
-      ) {
-        score = Math.max(0, score - 2);
+      if (hasFurnitureObjectNoun(normalized)) {
+        score = Math.max(0, score - 6);
+      } else if (hasRealEstateOfficeSignal(normalized)) {
+        score += 4;
       } else if (!hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
-        score += 1;
+        // Bare "ofis" is too weak to claim real estate
+        score = Math.max(0, score - 1);
       }
     }
 

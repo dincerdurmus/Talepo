@@ -8,6 +8,7 @@ const GENERIC_LEADING_NOUNS = new Set([
   "telefon", "phone", "smartphone", "mobile", "laptop", "notebook", "tablet",
   "computer", "bilgisayar", "makine", "machine", "device", "cihaz", "product",
   "urun", "ürün", "model", "type", "new", "yeni",
+  "ofis", "ev", "daire", "konut", "salon", "mutfak",
 ]);
 
 const QUALIFIER_TOKENS = new Set([
@@ -74,6 +75,7 @@ function isProductFamilyLineToken(token: string, nextToken?: string): boolean {
 }
 
 function isBrandCandidateToken(token: string): boolean {
+  if (/^(19|20)\d{2}$/.test(token.trim())) return false;
   return isTitleCaseToken(token) && !GENERIC_LEADING_NOUNS.has(token.toLocaleLowerCase("tr-TR"));
 }
 

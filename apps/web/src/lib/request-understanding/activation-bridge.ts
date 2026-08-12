@@ -9,6 +9,7 @@ import {
 } from "@/lib/catalog/consumer";
 
 import { stripRequestedItemClause } from "@/lib/request-composer/attribute-hints";
+import { looksLikeYearToken } from "./number-role";
 import { toLegacyFormHints, toStrategyContext } from "./adapters";
 import type {
   RequestUnderstandingResult,
@@ -69,25 +70,10 @@ export function resolveSchemaCategory(result: RequestUnderstandingResult): {
     };
   }
 
-  // UNKNOWN — prefer detector evidence, then intent heuristics
-  const intent = result.intent.value;
-  const detectorHint = result.category.evidence
-    ?.map((e) => /^detector=(.+)$/.exec(e)?.[1])
-    .find((id): id is string => Boolean(id));
-  const altHint = result.category.alternatives?.[0]?.value;
-
-  let provisionalId = "appliances";
-  if (detectorHint) provisionalId = detectorHint;
-  else if (altHint) provisionalId = altHint;
-  else if (intent === "SERVICE") provisionalId = "services";
-  else if (intent === "MANUFACTURE") provisionalId = "printing";
-  else if (intent === "RENT" || intent === "SELL") provisionalId = "real-estate";
-  else if (intent === "PART") provisionalId = "automotive";
-  else if (result.subject.kind.value === "VEHICLE") provisionalId = "automotive";
-  else if (result.subject.kind.value === "MACHINE") provisionalId = "machinery";
-
+  // UNKNOWN must stay unknown — never invent appliances (or any) schema
+  // just to keep a form populated.
   return {
-    categoryId: provisionalId,
+    categoryId: "",
     confident: false,
     provisional: true,
     displayLabelSafe: false,
@@ -153,10 +139,6 @@ export function seedFieldValuesFromUnderstanding(
   }
 
   return seedCatalogFactsIntoFields(result, seeded);
-}
-
-function looksLikeYearToken(value: string): boolean {
-  return /^(19|20)\d{2}$/.test(value.trim());
 }
 
 function capitalizeTr(value: string): string {
@@ -283,6 +265,12 @@ export function buildUnderstandingSummary(result: RequestUnderstandingResult): {
   }
   if (result.attributes.modelYear && isSafeToShow(result.attributes.modelYear)) {
     add("modelYear", "Model yılı", String(result.attributes.modelYear.value));
+  }
+  if (result.attributes.yearMin && isSafeToShow(result.attributes.yearMin)) {
+    add("yearMin", "En düşük yıl", `${result.attributes.yearMin.value} ve üstü`);
+  }
+  if (result.attributes.yearMax && isSafeToShow(result.attributes.yearMax)) {
+    add("yearMax", "En yüksek yıl", `${result.attributes.yearMax.value} ve altı`);
   }
   const catalogFacts = toCanonicalCatalogFacts(result);
   if (catalogFacts?.generation) {

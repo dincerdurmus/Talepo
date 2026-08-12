@@ -17,6 +17,14 @@ export function buildCategoryClarification(input: {
       text,
     );
 
+  // No safe category — one neutral prompt, do not invent appliance options.
+  if (!input.categoryId || input.categoryId === "unknown") {
+    return {
+      prompt: "Ne aradığını biraz daha tarif eder misin?",
+      options: [],
+    };
+  }
+
   if (!purchaseIntent && input.categoryId === "services") {
     return {
       prompt: "Ne aradığınızı bir seçenekle netleştirebilir misiniz?",

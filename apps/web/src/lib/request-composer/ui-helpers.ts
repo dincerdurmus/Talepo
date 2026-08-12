@@ -61,6 +61,10 @@ const FIELD_LABELS: Record<string, string> = {
   engine: "Motor",
   transmission: "Şanzıman",
   needType: "Talep türü",
+  modelYear: "Model yılı",
+  yearMin: "En düşük yıl",
+  yearMax: "En yüksek yıl",
+  city: "Şehir",
 };
 
 const NEED_TYPE_DISPLAY: Record<string, string> = {
@@ -101,6 +105,10 @@ const DISPLAY_PRIORITY = [
   "part",
   "partPosition",
   "color",
+  "modelYear",
+  "yearMin",
+  "yearMax",
+  "city",
 ] as const;
 
 export function fieldLabel(key: string): string {
@@ -227,6 +235,10 @@ export function buildUnderstoodFacts(
           field.value.trim();
       } else if (key === "screenSize") {
         displayValue = `${field.value.trim()} ekran`;
+      } else if (key === "yearMin") {
+        displayValue = `${field.value.trim()} ve üstü`;
+      } else if (key === "yearMax") {
+        displayValue = `${field.value.trim()} ve altı`;
       } else {
         displayValue = field.value.trim();
       }

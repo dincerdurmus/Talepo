@@ -3,6 +3,7 @@
  * Fills screenSize / resolution / productType cues from raw text when present.
  */
 
+import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import { resolveTaxonomyAlias, ensureTaxonomyLoaded } from "@/lib/taxonomy";
 
 const PRODUCT_HINTS: Array<{ keys: RegExp; productType: string; taxonomyQuery: string }> = [
@@ -116,15 +117,25 @@ export function extractProductTypeHint(raw: string): {
     return { productType: hint.productType, taxonomyNodeId };
   }
 
-  // Free-text product leaves: resolve taxonomy alias for tokens
-  // (browse hierarchies are not a closed allowlist)
+  // Free-text product leaves: longer phrases beat single tokens
+  // (so "ofis koltuğu" is furniture, not a bare "ofis" real-estate leaf).
   const stop = /^(arıyorum|ariyorum|istiyorum|almak|satın|bir|ve|için|lütfen)$/i;
   const tokens = raw
     .split(/[\s,.;:!?]+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 4 && !stop.test(t));
-  for (const token of tokens) {
-    const hit = resolveTaxonomyAlias(token);
+    .filter((t) => t.length >= 2 && !stop.test(t));
+
+  const LOCATION_USE_CONTEXT = new Set([
+    "ofis",
+    "ev",
+    "daire",
+    "salon",
+    "mutfak",
+    "konut",
+  ]);
+
+  const tryAlias = (phrase: string) => {
+    const hit = resolveTaxonomyAlias(phrase);
     if (
       hit &&
       !hit.ambiguous &&
@@ -133,10 +144,26 @@ export function extractProductTypeHint(raw: string): {
         hit.node.nodeType === "COMMODITY_TYPE" ||
         hit.node.nodeType === "PART_TYPE")
     ) {
+      if (
+        LOCATION_USE_CONTEXT.has(phrase.toLocaleLowerCase("tr-TR")) &&
+        hasFurnitureObjectNoun(raw)
+      ) {
+        return null;
+      }
       return {
         productType: hit.node.canonicalName,
         taxonomyNodeId: hit.node.id,
       };
+    }
+    return null;
+  };
+
+  for (let n = Math.min(3, tokens.length); n >= 1; n--) {
+    for (let i = 0; i + n <= tokens.length; i++) {
+      const phrase = tokens.slice(i, i + n).join(" ");
+      if (n === 1 && phrase.length < 4) continue;
+      const hit = tryAlias(phrase);
+      if (hit) return hit;
     }
   }
   return null;

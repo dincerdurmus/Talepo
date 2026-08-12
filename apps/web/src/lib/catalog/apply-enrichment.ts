@@ -1,5 +1,6 @@
 import { uv } from "@/lib/request-understanding/provenance";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 import {
   enrichAutomotiveSubject,
@@ -38,6 +39,8 @@ function mayOverwrite(
   if (fold(current) === fold(nextLabel)) return true;
   // Catalog parent brand may replace a model token that was mis-slotted as brand
   if (isKnownAutomotiveModelName(current)) return true;
+  // Year tokens are never identity — catalog may replace them
+  if (looksLikeYearToken(current)) return true;
   // Never replace a different EXPLICIT user token
   if (existing.provenance === "EXPLICIT") return false;
   return true;

@@ -447,10 +447,28 @@ function composeGeneric(state: CanonicalRequestState): string {
   return bits.join(" ").replace(/\s+/g, " ").trim() + ".";
 }
 
+function appendCanonicalLocation(
+  state: CanonicalRequestState,
+  text: string,
+): string {
+  const city = fieldValue(state, "city");
+  if (!city) return text;
+  const hay = text.toLocaleLowerCase("tr-TR");
+  if (hay.includes(city.toLocaleLowerCase("tr-TR"))) return text;
+  const trimmed = text.replace(/[.!\s]+$/u, "").trim();
+  return `${trimmed}, ${city}.`;
+}
+
 /**
  * Render short Turkish natural-language request from canonical state.
  */
 export function composeNaturalRequestText(
+  state: CanonicalRequestState,
+): string {
+  return appendCanonicalLocation(state, composeNaturalRequestTextCore(state));
+}
+
+function composeNaturalRequestTextCore(
   state: CanonicalRequestState,
 ): string {
   if (isTv(state)) return composeTv(state);

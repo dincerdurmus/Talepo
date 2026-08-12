@@ -921,6 +921,12 @@ function TalepOlusturForm() {
     value?: string,
   ) {
     if (value === "bilmiyorum" || value === "fark-etmez") {
+      const isAny = value === "fark-etmez";
+      hybrid.applyQuickOption(
+        question.fieldKey,
+        isAny ? "Farketmez" : "Belirtilmedi",
+        isAny,
+      );
       setManualValues((current) => ({
         ...current,
         [question.fieldKey]:
@@ -929,18 +935,7 @@ function TalepOlusturForm() {
       return;
     }
     if (value != null && value !== "") {
-      if (question.fieldKey === "budget") {
-        updateCommonField("budget", value);
-        return;
-      }
-      if (question.fieldKey === "city") {
-        updateCommonField("city", value);
-        return;
-      }
-      setManualValues((current) => ({
-        ...current,
-        [question.fieldKey]: value,
-      }));
+      applyBrainQuestion(question, value);
       return;
     }
     setEnrichmentFieldKey(question.fieldKey);
@@ -1090,11 +1085,35 @@ function TalepOlusturForm() {
   }
 
   function applyBrainQuestion(question: QuestionCandidate, rawValue: string) {
-    const field = question.fieldKey;
+    const field =
+      question.fieldKey === "deliveryDays" ? "delivery" : question.fieldKey;
     const typed = rawValue.trim();
+    if (!typed) return;
 
-    if (field === "deliveryDays" || field === "delivery") {
-      updateCommonField("delivery", /^\d+$/.test(typed) ? `${typed} gün` : typed);
+    const isAny =
+      typed.toLocaleLowerCase("tr-TR") === "farketmez" ||
+      typed.toLocaleLowerCase("tr-TR") === "fark etmez" ||
+      typed === "fark-etmez";
+
+    if (field === "needDescription") {
+      const current = hybrid.text.trim();
+      const next = current ? `${current} ${typed}` : typed;
+      hybrid.setText(next);
+      return;
+    }
+
+    // Canonical hybrid reducer (same path as browse / quick-select).
+    hybrid.applyQuickOption(
+      field,
+      field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed,
+      isAny,
+    );
+
+    if (field === "delivery") {
+      updateCommonField(
+        "delivery",
+        /^\d+$/.test(typed) ? `${typed} gün` : typed,
+      );
       return;
     }
     if (field === "city") {
@@ -1105,7 +1124,7 @@ function TalepOlusturForm() {
       updateCommonField(field, typed);
       return;
     }
-    updateDynamicField(field, typed);
+    updateDynamicField(field, isAny ? "Farketmez" : typed);
   }
 
   const filterCityValue = isRealEstate

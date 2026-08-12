@@ -540,9 +540,9 @@ function taxonomyFromUnderstanding(
   let categoryId =
     result.category.status !== "UNKNOWN" && result.category.value
       ? result.category.value
-      : schema.provisional
+      : schema.confident && schema.categoryId
         ? schema.categoryId
-        : result.category.value;
+        : null;
 
   const productHint = extractProductTypeHint(result.rawInput);
   let taxonomyNodeId = productHint?.taxonomyNodeId ?? null;

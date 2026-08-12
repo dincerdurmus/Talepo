@@ -42,6 +42,19 @@ const AUTOMOTIVE_SPARE_SUPPRESS = new Set([
   "modelYear",
 ]);
 
+/** Whole-product fields that must not be asked for a spare/part subject. */
+const PART_SUPPRESS_WHOLE_PRODUCT = new Set([
+  "energyClass",
+  "usageArea",
+  "listingType",
+  "propertyType",
+  "roomCount",
+  "mileage",
+  "engine",
+  "transmission",
+  "fuel",
+]);
+
 function knowledgeFieldToCandidate(field: KnowledgeField): QuestionCandidate {
   const inputType =
     field.type === "ENUM" || field.type === "MULTI_SELECT"
@@ -127,16 +140,30 @@ export function resolveHybridQuestions(
   const values = toResolverFieldBag(state);
   const categoryId =
     state.categoryId ?? state.understanding.category.value ?? null;
+  const categoryUnknown = !categoryId || categoryId === "unknown";
 
-  // Unknown category: don't dump appliance questions on free-text
-  if (!categoryId) {
+  // Unknown category: don't dump appliance/vehicle/estate questions on free-text
+  if (categoryUnknown) {
     return {
       known: [],
       missingRequired: [],
       optionalUseful: [],
       next: [],
       suppressed: ["no-category"],
-      candidates: [],
+      candidates: [
+        {
+          fieldKey: "needDescription",
+          label: "Ne aradığını biraz daha tarif eder misin?",
+          reason: "Kategori henüz net değil",
+          publishImpact: 0.9,
+          matchingImpact: 0.8,
+          priceImpact: 0.2,
+          confidenceImpact: 0.9,
+          priorityScore: 0.95,
+          inputType: "text",
+          placeholder: "Ürün, parça, hizmet veya emlak olarak yazabilirsiniz",
+        },
+      ],
       questionSource: "canonical-hybrid",
     };
   }
@@ -159,11 +186,13 @@ export function resolveHybridQuestions(
     explicitKeys,
   });
 
-  const isAutoSpare =
-    categoryId === "automotive" &&
-    (values.needType === "part" ||
-      values.needType === "tire" ||
-      state.understanding.requestSubject.kind.value === "PART");
+  const isPartSubject =
+    values.needType === "part" ||
+    values.needType === "tire" ||
+    state.understanding.requestSubject.kind.value === "PART" ||
+    state.understanding.requestSubject.kind.value === "ACCESSORY";
+
+  const isAutoSpare = categoryId === "automotive" && isPartSubject;
 
   const automotiveNeedUnknown =
     categoryId === "automotive" &&
@@ -180,9 +209,13 @@ export function resolveHybridQuestions(
 
   const suppressed: string[] = [];
   const filterSpare = (fields: KnowledgeField[]) => {
-    if (!isAutoSpare) return fields;
+    if (!isAutoSpare && !isPartSubject) return fields;
     return fields.filter((f) => {
-      if (AUTOMOTIVE_SPARE_SUPPRESS.has(f.key)) {
+      if (isAutoSpare && AUTOMOTIVE_SPARE_SUPPRESS.has(f.key)) {
+        suppressed.push(f.key);
+        return false;
+      }
+      if (isPartSubject && PART_SUPPRESS_WHOLE_PRODUCT.has(f.key)) {
         suppressed.push(f.key);
         return false;
       }

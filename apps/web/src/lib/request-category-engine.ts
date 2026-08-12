@@ -1618,7 +1618,22 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
   },
 ];
 
+export const UNKNOWN_REQUEST_CATEGORY: RequestCategory = {
+  id: "",
+  label: "Talep",
+  description: "Kategori henüz net değil",
+  keywords: [],
+  subcategories: [],
+  commonFields: [
+    { key: "title" },
+    { key: "city" },
+    { key: "budget" },
+  ],
+  fields: [],
+};
+
 export function getCategoryById(id: string): RequestCategory {
+  if (!id || id === "unknown") return UNKNOWN_REQUEST_CATEGORY;
   return (
     REQUEST_CATEGORIES.find((category) => category.id === id) ??
     REQUEST_CATEGORIES[REQUEST_CATEGORIES.length - 1]

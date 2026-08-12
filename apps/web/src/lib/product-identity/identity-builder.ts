@@ -9,6 +9,7 @@ import { normalizeToken } from "@/server/price-intelligence/normalize-product";
 
 import { extractBrandFromText } from "./brand-extraction";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import { normalizeCondition } from "./condition";
 import {
   extractModelCandidatesFromAttributes,
@@ -195,6 +196,15 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     if (!model) model = brand;
     brand = null;
     brandConfidence = 0;
+  }
+
+  // Year tokens are never brand identity
+  if (brand && looksLikeYearToken(brand)) {
+    brand = null;
+    brandConfidence = 0;
+  }
+  if (model && looksLikeYearToken(model) && !/^[A-Za-z]/.test(model)) {
+    model = null;
   }
 
   if (model) model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));

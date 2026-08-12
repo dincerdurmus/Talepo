@@ -320,6 +320,11 @@ export function primaryYear(
   return numbers.find((n) => n.role === "MODEL_YEAR" && n.value != null);
 }
 
+/** Calendar year token — never a brand/model identity by itself. */
+export function looksLikeYearToken(value: string | null | undefined): boolean {
+  return /^(19|20)\d{2}$/.test(String(value ?? "").trim());
+}
+
 export function modelIdentifierTokens(
   numbers: ClassifiedNumber[],
 ): ClassifiedNumber[] {
