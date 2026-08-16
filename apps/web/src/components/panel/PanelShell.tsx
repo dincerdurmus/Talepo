@@ -390,7 +390,7 @@ function PersonalSidebar({
   return (
     <aside
       className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#e3e8ed] bg-white py-5 shadow-[8px_0_30px_rgba(15,31,45,0.035)] transition-[width,padding] duration-200 ease-out lg:flex ${
-        collapsed ? "w-[72px] px-2" : "w-[280px] px-6"
+        collapsed ? "w-[72px] px-2" : "w-[280px] px-[22px]"
       }`}
       data-plan={planTier}
     >
@@ -407,7 +407,7 @@ function PersonalSidebar({
               className={`inline-flex items-center font-semibold tracking-[-0.05em] text-[#0b2522] ${
               collapsed
                 ? "justify-center text-xl"
-                : "gap-2.5 px-0.5 text-[28px]"
+                : "min-w-[112px] gap-2.5 px-0.5 text-[32px]"
             }`}
           >
             {collapsed ? (
@@ -432,7 +432,7 @@ function PersonalSidebar({
           href="/talep"
           title="Yeni talep"
           aria-label="Yeni talep"
-          className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[13px] text-[13px] font-bold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
+          className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[12px] text-[15px] font-semibold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
             collapsed ? "h-10 w-10" : "h-[46px] gap-2 px-4"
           }`}
         >
@@ -441,7 +441,7 @@ function PersonalSidebar({
         </Link>
       </div>
 
-      <nav className={`mt-7 min-h-0 flex-1 space-y-5 overflow-y-auto ${collapsed ? "px-0" : ""}`}>
+      <nav className={`mt-7 min-h-0 flex-1 space-y-6 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(15,63,58,.18)_transparent] ${collapsed ? "px-0" : ""}`}>
         {navGroups.map((group) => (
           <div key={group.label}>
             {!collapsed && <p className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.19em] text-teal-950/60">{group.label}</p>}
@@ -456,7 +456,7 @@ function PersonalSidebar({
 
       {!collapsed && (
         <div className="mt-auto px-0.5">
-          <div className={`relative overflow-hidden rounded-[18px] border px-4 py-4 ${isPaidPlan(planTier) ? "border-teal-800/25 bg-[#103b38] text-white shadow-[0_14px_28px_rgba(13,67,62,0.18)]" : "border-[#d8e5e1] bg-[#fbfdfc] shadow-[0_8px_20px_rgba(15,47,43,0.05)]"}`}>
+          <div className={`relative min-h-[132px] overflow-hidden rounded-[16px] border px-4 py-4 ${isPaidPlan(planTier) ? "border-teal-800/25 bg-[#103b38] text-white shadow-[0_14px_28px_rgba(13,67,62,0.18)]" : "border-[#d8e5e1] bg-[#fbfdfc] shadow-[0_8px_20px_rgba(15,47,43,0.05)]"}`}>
             {isPaidPlan(planTier) && <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-violet-300/15 blur-2xl" />}
             <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${isPaidPlan(planTier) ? "text-teal-100/65" : "text-teal-800/55"}`}>
               {isPaidPlan(planTier) ? getPublicProductLabel(planTier, "PERSONAL") : "STANDARD"}
@@ -711,7 +711,7 @@ function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-          className={`group relative flex h-[42px] items-center rounded-[10px] text-[14px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
+          className={`group relative flex h-[44px] items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
           : "gap-3 px-3"
