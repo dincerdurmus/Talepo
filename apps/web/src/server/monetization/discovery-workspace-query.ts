@@ -73,6 +73,8 @@ export async function queryDiscoveryWorkspace(input: {
   watchlistOnly?: boolean;
   city?: string | null;
   limit?: number;
+  /** Viewer user id — own buy-side requests are not company opportunities. */
+  excludeCreatedById?: string | null;
 }): Promise<DiscoveryWorkspaceItem[]> {
   const limit = input.limit ?? 40;
   const openWhere = {
@@ -84,6 +86,10 @@ export async function queryDiscoveryWorkspace(input: {
       )[],
     },
     ...(input.urgentOnly ? { isUrgent: true } : {}),
+    ...(input.excludeCreatedById
+      ? { createdById: { not: input.excludeCreatedById } }
+      : {}),
+    OR: [{ companyId: null }, { companyId: { not: input.companyId } }],
     ...(input.city?.trim()
       ? {
           city: {

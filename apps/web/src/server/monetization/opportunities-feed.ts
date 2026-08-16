@@ -78,6 +78,15 @@ export async function buildOpportunitiesFeed(
   const openWhere = {
     deletedAt: null,
     status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] as ("PUBLISHED" | "RECEIVING_OFFERS")[] },
+    // Opportunity Center is for evaluating other parties' demand — never the
+    // viewer's own buy-side request (mirrors /panel/talepler). Company workspace
+    // also skips requests published under the same company.
+    ...(userId ? { createdById: { not: userId } } : {}),
+    ...(companyId
+      ? {
+          OR: [{ companyId: null }, { companyId: { not: companyId } }],
+        }
+      : {}),
   };
 
   let requestIds: string[] = [];

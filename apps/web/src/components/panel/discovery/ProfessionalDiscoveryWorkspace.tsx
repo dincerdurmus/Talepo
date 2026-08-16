@@ -212,35 +212,59 @@ export function ProfessionalDiscoveryWorkspace({
   const hubView =
     view === "urgent" ? "urgent" : view === "browse" ? "browse" : "suggested";
 
+  const viewTabs = VIEW_TABS.filter(
+    (tab) => tab.id !== "saved" || canWatchlist,
+  ).map((tab) =>
+    tab.id === "browse" && isPersonalSurface
+      ? { ...tab, label: "Diğer Fırsatlar" }
+      : tab,
+  );
+
+  const personalViewHint =
+    isPersonalSurface && view === "suggested"
+      ? "Talepo’nun kayıtlı arama ve alarm sinyallerinize göre öne çıkardığı fırsatlar."
+      : isPersonalSurface && view === "browse"
+        ? "Değerlendirebileceğiniz diğer açık fırsatlar."
+        : isPersonalSurface && view === "urgent"
+          ? "Acil işaretli açık fırsatlar."
+          : null;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {VIEW_TABS.filter((tab) => tab.id !== "saved" || canWatchlist).map((tab) => {
-            const active = view === tab.id;
-            return (
-              <Link
-                key={tab.id}
-                href={buildHref({
-                  view: tab.id,
-                  taxonomyNode: tab.id === "browse" ? taxonomyNode : null,
-                  taxonomyLeaf: tab.id === "browse" ? taxonomyLeaf : null,
-                  leafExact: tab.id === "browse" ? leafExact : false,
-                  city,
-                  urgent: tab.id === "urgent" ? true : undefined,
-                })}
-                aria-current={active ? "page" : undefined}
-                className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
-                  active
-                    ? "bg-teal-900 text-white"
-                    : "border border-teal-900/12 bg-white text-teal-900/70 hover:bg-teal-50"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </Link>
-            );
-          })}
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {viewTabs.map((tab) => {
+              const active = view === tab.id;
+              return (
+                <Link
+                  key={tab.id}
+                  href={buildHref({
+                    view: tab.id,
+                    taxonomyNode: tab.id === "browse" ? taxonomyNode : null,
+                    taxonomyLeaf: tab.id === "browse" ? taxonomyLeaf : null,
+                    leafExact: tab.id === "browse" ? leafExact : false,
+                    city,
+                    urgent: tab.id === "urgent" ? true : undefined,
+                  })}
+                  aria-current={active ? "page" : undefined}
+                  className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
+                    active
+                      ? "bg-teal-900 text-white"
+                      : "border border-teal-900/12 bg-white text-teal-900/70 hover:bg-teal-50"
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
+          {personalViewHint ? (
+            <p className="max-w-2xl text-xs leading-5 text-teal-950/50">
+              {personalViewHint}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs">

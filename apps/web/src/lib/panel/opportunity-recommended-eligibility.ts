@@ -11,9 +11,14 @@
  * reasons are empty. Urgency, competition, budget, and freshness alone
  * must not admit a request into Personal Önerilen.
  *
+ * Personal Diğer Fırsatlar (view=browse) is the complementary pool:
+ * feed items that are NOT recommended. Own requests are excluded upstream
+ * in buildOpportunitiesFeed — not here.
+ *
  * Workspace Önerilen stays operational (HOT/GOOD classification), which
  * already incorporates company match when present. Personal saved-search
- * is never mixed into workspace.
+ * is never mixed into workspace. Workspace taxonomy browse uses
+ * queryDiscoveryWorkspace, not this browse filter.
  */
 
 export type OpportunityHubView = "suggested" | "browse" | "urgent";
@@ -56,11 +61,20 @@ export function isRecommendedEligible(
     : isWorkspaceRecommendedEligible(item);
 }
 
+/** Complementary pool for Personal "Diğer Fırsatlar" (hub view=browse). */
+export function isOtherOpportunityEligible(
+  item: OpportunityRecommendedSignal,
+): boolean {
+  return !isRecommendedEligible(item);
+}
+
 export function selectOpportunityHubItems<T extends OpportunityRecommendedSignal>(
   items: readonly T[],
   view: OpportunityHubView,
 ): T[] {
-  if (view === "browse") return [...items];
+  if (view === "browse") {
+    return items.filter(isOtherOpportunityEligible);
+  }
   if (view === "urgent") return items.filter((item) => item.isUrgent);
   return items.filter(isRecommendedEligible);
 }

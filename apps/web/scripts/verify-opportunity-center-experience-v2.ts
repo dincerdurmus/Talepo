@@ -17,6 +17,7 @@ import {
 } from "../src/lib/panel/opportunity-hub-summary";
 import {
   hasGroundedPersonalMatch,
+  isOtherOpportunityEligible,
   isPersonalRecommendedEligible,
   isRecommendedEligible,
   isWorkspaceRecommendedEligible,
@@ -194,14 +195,21 @@ check(
     ),
 );
 check(
-  "C non-matching request still in Keşfet",
+  "C non-matching open request in Diğer Fırsatlar, not duplicate of Önerilen",
   selectOpportunityHubItems(feed, "browse").some(
     (item) => item.requestId === "mercedes",
   ) &&
     selectOpportunityHubItems(feed, "browse").some(
       (item) => item.requestId === "iphone",
     ) &&
-    selectOpportunityHubItems(feed, "browse").length === feed.length,
+    !selectOpportunityHubItems(feed, "browse").some(
+      (item) => item.requestId === "yonetici",
+    ) &&
+    !selectOpportunityHubItems(feed, "browse").some(
+      (item) => item.requestId === "urgent-match",
+    ) &&
+    selectOpportunityHubItems(feed, "browse").length ===
+      feed.filter((item) => !isRecommendedEligible(item)).length,
 );
 check(
   "D urgent non-match in Acil, not Önerilen solely due urgency",
@@ -451,6 +459,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
     "personal tabs do not share one filter",
     workspace.includes('label: "Önerilen"') &&
       workspace.includes('label: "Keşfet"') &&
+      workspace.includes('label: "Diğer Fırsatlar"') &&
       workspace.includes('label: "Acil"') &&
       workspace.includes("selectOpportunityHubItems") === false &&
       hub.includes("selectOpportunityHubItems") &&
@@ -467,6 +476,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
   check(
     "personal empty state",
     hub.includes("Henüz sana güçlü şekilde uyan bir fırsat yok.") &&
+      hub.includes("Diğer Fırsatlar →") &&
       hub.includes("/panel/kayitli-aramalar") &&
       hub.includes("/panel/uyarilar") &&
       hub.includes("/panel/firsatlar?view=browse"),
@@ -510,11 +520,18 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !hub.includes("Aktif 28 gün kaldı"),
   );
   check(
-    "personal tabs stay Önerilen / Keşfet / Acil",
+    "personal tabs stay Önerilen / Diğer Fırsatlar / Acil",
     workspace.includes('label: "Önerilen"') &&
+      workspace.includes('label: "Diğer Fırsatlar"') &&
       workspace.includes("Lightbulb") &&
       workspace.includes("Compass") &&
-      !workspace.includes("Takip Ettiklerim"),
+      !workspace.includes("Takip Ettiklerim") &&
+      read("src/components/panel/panel-nav.ts").includes(
+        'mobileLabel: "Talepler"',
+      ) &&
+      !read("src/components/panel/panel-nav.ts").includes(
+        'mobileLabel: "Keşfet"',
+      ),
   );
   check(
     "taxonomy furniture node still exists",
@@ -696,6 +713,26 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
     pageSummary.strongestSignalScore === 62 &&
       pageSummary.strongestSignalConfidence === 0.8 &&
       buildOpportunityHubSummary([], now).strongestSignalScore === null,
+  );
+  check(
+    "recommended item excluded from Diğer Fırsatlar",
+    isOtherOpportunityEligible(urgentOnly) &&
+      !isOtherOpportunityEligible(recommended) &&
+      selectOpportunityHubItems(universe, "browse").every(
+        (item) => item.requestId !== "rec",
+      ) &&
+      selectOpportunityHubItems(universe, "browse").some(
+        (item) => item.requestId === "urgent",
+      ),
+  );
+  check(
+    "own request excluded at feed authority",
+    feedSrc.includes("createdById: { not: userId }") &&
+      feedSrc.includes("companyId: { not: companyId }") &&
+      eligibility.includes("isOtherOpportunityEligible") &&
+      eligibility.includes(
+        "Own requests are excluded upstream",
+      ),
   );
 }
 

@@ -64,7 +64,7 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     href: "/panel/talepler",
     icon: Search,
     label: "Talepleri keşfet",
-    mobileLabel: "Keşfet",
+    mobileLabel: "Talepler",
   },
   {
     href: "/panel/teklifler",

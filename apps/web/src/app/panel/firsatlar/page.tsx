@@ -137,6 +137,7 @@ export default async function OpportunitiesPage({
           watchlistOnly: view === "saved",
           city,
           limit: 40,
+          excludeCreatedById: user.id,
         })
       : [];
 

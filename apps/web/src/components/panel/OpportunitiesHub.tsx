@@ -414,14 +414,14 @@ function OpportunityEmptyState() {
       </h3>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
         Kayıtlı arama veya alarm ile eşleşen açık talepler burada görünür. Daha
-        geniş liste için keşfet veya acil sekmelerine bakabilirsiniz.
+        geniş liste için Diğer Fırsatlar veya Acil sekmelerine bakabilirsiniz.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
         <Link
           href="/panel/firsatlar?view=browse"
           className="inline-flex h-10 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
         >
-          Talepleri keşfet →
+          Diğer Fırsatlar →
         </Link>
         <Link
           href="/panel/kayitli-aramalar"
@@ -520,12 +520,12 @@ export function OpportunitiesHub({
 
   const sectionTitle =
     view === "browse"
-      ? "Keşif"
+      ? surface === "PERSONAL"
+        ? "Diğer fırsatlar"
+        : "Keşif"
       : view === "urgent"
         ? "Acil talepler"
-        : surface === "PERSONAL"
-          ? "Sana önerilen fırsatlar"
-          : "Sana önerilen fırsatlar";
+        : "Sana önerilen fırsatlar";
 
   function cardCanSave(item: OpportunityFeedItem) {
     return isOpportunitySaveSupported({
@@ -609,7 +609,7 @@ export function OpportunitiesHub({
           ) : view === "urgent" ? (
             "Şu an acil işaretli açık talep yok."
           ) : (
-            "Şu an gösterilecek açık talep yok."
+            "Şu an gösterilecek başka açık fırsat yok."
           )
         }
         showEmpty
