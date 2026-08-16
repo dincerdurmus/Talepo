@@ -63,6 +63,7 @@ export async function GET(request: Request) {
       });
 
       const intelligence = buildOpportunityIntelligence({
+        context: "WORKSPACE",
         matchScore: score.score,
         matchReasons: score.reasons,
         isUrgent: req.isUrgent,

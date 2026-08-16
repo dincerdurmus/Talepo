@@ -9,6 +9,7 @@ export type OpportunitySignal = {
 };
 
 export type OpportunityIntelligence = {
+  context: "PERSONAL" | "WORKSPACE";
   opportunityScore: number;
   confidence: number;
   fitLevel: "STRONG" | "PROMISING" | "LIMITED" | "UNKNOWN";
@@ -25,6 +26,7 @@ export type OpportunityIntelligence = {
 };
 
 export type OpportunityIntelligenceInput = {
+  context: "PERSONAL" | "WORKSPACE";
   matchScore: number | null;
   matchReasons?: string[];
   isUrgent: boolean;
@@ -77,5 +79,5 @@ export function buildOpportunityIntelligence(input: OpportunityIntelligenceInput
   const fitLevel = score >= 75 ? "STRONG" : score >= 50 ? "PROMISING" : score > 0 ? "LIMITED" : "UNKNOWN";
   const recommendedAction = fitLevel === "STRONG" && input.inventoryFit !== "NO_MATCH" ? "PREPARE_OFFER" : fitLevel === "UNKNOWN" || input.matchScore == null ? "WAIT_FOR_MORE_INFO" : fitLevel === "LIMITED" ? "REVIEW_REQUEST" : input.inventoryFit === "UNKNOWN" ? "CHECK_INVENTORY" : "REVIEW_REQUEST";
   const recommendedActionReason = recommendedAction === "PREPARE_OFFER" ? "Eşleşme güçlü; mevcut sinyaller teklif hazırlamayı destekliyor." : recommendedAction === "CHECK_INVENTORY" ? "Teklif öncesi envanter uygunluğu doğrulanmalı." : recommendedAction === "WAIT_FOR_MORE_INFO" ? "Karar vermek için güvenilir sinyal eksik." : "Eksik veya zayıf sinyaller nedeniyle talep incelenmeli.";
-  return { opportunityScore: score, confidence, fitLevel, reasons: [...new Set(reasons)].slice(0, 4), risks: [...new Set(risks)].slice(0, 4), signals, recommendedAction, recommendedActionReason, urgency, urgencyReason, pricePosition: input.pricePosition ?? "UNKNOWN", inventoryFit: input.inventoryFit ?? "UNKNOWN", nextBestAction: recommendedAction === "PREPARE_OFFER" ? "Uygun ürünü seçerek teklif taslağı hazırla." : recommendedAction === "CHECK_INVENTORY" ? "Şirket envanterini kontrol et." : "Talep detaylarını ve eksik bilgileri incele." };
+  return { context: input.context, opportunityScore: score, confidence, fitLevel, reasons: [...new Set(reasons)].slice(0, 4), risks: [...new Set(risks)].slice(0, 4), signals, recommendedAction, recommendedActionReason, urgency, urgencyReason, pricePosition: input.pricePosition ?? "UNKNOWN", inventoryFit: input.inventoryFit ?? "UNKNOWN", nextBestAction: recommendedAction === "PREPARE_OFFER" ? "Uygun ürünü seçerek teklif taslağı hazırla." : recommendedAction === "CHECK_INVENTORY" ? "Şirket envanterini kontrol et." : "Talep detaylarını ve eksik bilgileri incele." };
 }

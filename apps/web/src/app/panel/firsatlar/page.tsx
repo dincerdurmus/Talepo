@@ -63,7 +63,7 @@ export default async function OpportunitiesPage({
     user.id,
     await getCompanyContextOptions(),
   );
-  const entitled = hasFeature(entitlements.features, "hot_opportunities");
+  const entitled = hasFeature(entitlements.features, "advanced_opportunity_analysis");
 
   const companyId =
     entitled && entitlements.subject.type === "company"
@@ -122,7 +122,7 @@ export default async function OpportunitiesPage({
     view === "browse" || view === "urgent" || view === "saved";
 
   const feed =
-    companyId && view !== "ops" ? await buildOpportunitiesFeed(companyId) : [];
+    entitled && view !== "ops" ? await buildOpportunitiesFeed(companyId ?? undefined) : [];
 
   const discoveryRaw =
     companyId && needsDiscoveryQuery
@@ -181,12 +181,14 @@ export default async function OpportunitiesPage({
           {showCorporateOps ? "Corporate" : "Profesyonel"}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
-          {showCorporateOps ? "Opportunity Center" : "Fırsatlar"}
+          {showCorporateOps ? "Opportunity Center" : companyId ? "Fırsatlar" : "Kişisel fırsatlar"}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
           {showCorporateOps
             ? "Şirket fırsatlarını keşfedin, ekibe dağıtın, takip edin ve teklife bağlayın."
-            : "Taxonomy ile keşfedin, kategoriyi takip edin, alarm kurun — Talepo sizin için fırsat avlasın."}
+            : companyId
+              ? "Taxonomy ile keşfedin, kategoriyi takip edin, alarm kurun — Talepo sizin için fırsat avlasın."
+              : "Kişisel Pro fırsatlarını, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
           {isCorporatePlan ? (

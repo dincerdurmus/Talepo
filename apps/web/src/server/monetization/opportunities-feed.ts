@@ -28,6 +28,7 @@ export type OpportunityFeedItem = {
   isWatchlisted: boolean;
   recentChanges: { field: string; label: string; oldValue: string | null; newValue: string | null }[];
   intelligence: OpportunityIntelligence;
+  context: "PERSONAL" | "WORKSPACE";
 };
 
 function formatBudget(
@@ -55,7 +56,7 @@ const CHANGE_LABELS: Record<string, string> = {
 };
 
 export async function buildOpportunitiesFeed(
-  companyId: string,
+  companyId?: string,
   options?: { limit?: number; watchlistOnly?: boolean },
 ): Promise<OpportunityFeedItem[]> {
   const limit = options?.limit ?? 40;
@@ -63,7 +64,7 @@ export async function buildOpportunitiesFeed(
   const watchlistIds = new Set(
     (
       await prisma.opportunityWatchlistItem.findMany({
-        where: { companyId },
+        where: companyId ? { companyId } : { id: "__personal_watchlist_deferred__" },
         select: { requestId: true },
       })
     ).map((w) => w.requestId),
@@ -80,12 +81,12 @@ export async function buildOpportunitiesFeed(
     requestIds = [...watchlistIds];
   } else {
     const [matches, openRequests] = await Promise.all([
-      prisma.opportunityMatch.findMany({
+      companyId ? prisma.opportunityMatch.findMany({
         where: { companyId },
         orderBy: [{ score: "desc" }, { createdAt: "desc" }],
         take: limit,
         select: { requestId: true },
-      }),
+      }) : Promise.resolve([] as { requestId: string }[]),
       prisma.request.findMany({
         where: openWhere,
         orderBy: [{ isUrgent: "desc" }, { publishedAt: "desc" }],
@@ -141,7 +142,7 @@ export async function buildOpportunitiesFeed(
   const items: OpportunityFeedItem[] = [];
 
   for (const req of requests) {
-    const match = await matchCompanyToRequest(companyId, req.id);
+    const match = companyId ? await matchCompanyToRequest(companyId, req.id) : null;
     const matchScore = match?.score ?? 0;
     const matchReasons = match?.reasons ?? [];
 
@@ -174,6 +175,7 @@ export async function buildOpportunitiesFeed(
     });
 
     const intelligence = buildOpportunityIntelligence({
+      context: companyId ? "WORKSPACE" : "PERSONAL",
       matchScore,
       matchReasons,
       isUrgent: req.isUrgent,
@@ -212,6 +214,7 @@ export async function buildOpportunitiesFeed(
         newValue: c.newValue,
       })),
       intelligence,
+      context: companyId ? "WORKSPACE" : "PERSONAL",
     });
   }
 
