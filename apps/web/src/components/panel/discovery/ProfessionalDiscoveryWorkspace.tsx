@@ -43,6 +43,7 @@ export type ProfessionalDiscoveryWorkspaceProps = {
   canWatchlist: boolean;
   trackedSearchCount: number;
   alertCount: number;
+  opportunityContext?: "PERSONAL" | "WORKSPACE";
 };
 
 function buildHref(params: {
@@ -89,6 +90,7 @@ export function ProfessionalDiscoveryWorkspace({
   canWatchlist,
   trackedSearchCount,
   alertCount,
+  opportunityContext,
 }: ProfessionalDiscoveryWorkspaceProps) {
   const router = useRouter();
   const [cityDraft, setCityDraft] = useState(city ?? "");
@@ -197,9 +199,18 @@ export function ProfessionalDiscoveryWorkspace({
     }
   }
 
-  const showBrowseChrome = view === "browse" || Boolean(selectedNodeId);
+  const surface =
+    opportunityContext ??
+    feed[0]?.context ??
+    (canWatchlist ? "WORKSPACE" : "PERSONAL");
+  const isPersonalSurface = surface === "PERSONAL";
+  const showBrowseChrome =
+    !isPersonalSurface && (view === "browse" || Boolean(selectedNodeId));
   const showDiscoveryResults =
-    view === "browse" || view === "urgent" || view === "saved";
+    !isPersonalSurface &&
+    (view === "browse" || view === "urgent" || view === "saved");
+  const hubView =
+    view === "urgent" ? "urgent" : view === "browse" ? "browse" : "suggested";
 
   return (
     <div className="space-y-5">
@@ -218,7 +229,8 @@ export function ProfessionalDiscoveryWorkspace({
                   city,
                   urgent: tab.id === "urgent" ? true : undefined,
                 })}
-                className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
+                aria-current={active ? "page" : undefined}
+                className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
                   active
                     ? "bg-teal-900 text-white"
                     : "text-teal-900/65 hover:bg-teal-50"
@@ -411,7 +423,12 @@ export function ProfessionalDiscoveryWorkspace({
           )}
         </section>
       ) : (
-        <OpportunitiesHub initialFeed={feed} canWatchlist={canWatchlist} />
+        <OpportunitiesHub
+          initialFeed={feed}
+          canWatchlist={canWatchlist}
+          view={hubView}
+          opportunityContext={surface}
+        />
       )}
     </div>
   );

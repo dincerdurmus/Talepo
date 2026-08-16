@@ -44,7 +44,7 @@ export const OPPORTUNITY_ACTION_LABELS: Record<OpportunityIntelligence["recommen
   PREPARE_OFFER: "Teklif hazırlamaya değer",
   REVIEW_REQUEST: "Talebi ayrıntılı incele",
   CHECK_INVENTORY: "Envanteri kontrol et",
-  WAIT_FOR_MORE_INFO: "Daha fazla bilgi bekle",
+  WAIT_FOR_MORE_INFO: "Eksik bilgiler netleşince tekrar bak",
   SKIP: "Şimdilik bekle",
 };
 

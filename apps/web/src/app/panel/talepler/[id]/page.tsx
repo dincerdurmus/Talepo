@@ -129,6 +129,7 @@ export default async function ExploreRequestDetailPage({
   const categorySlug = request.category.slug;
   const categoryLook = getCategoryVisual(categorySlug);
   const existingOffer = await findSupplierOfferOnRequest(user.id, request.id);
+  const isRequestOwner = request.createdById === user.id;
   const teklifHref = `/panel/talepler/${request.id}/teklif`;
   const canCreateFreshOffer =
     !existingOffer ||
@@ -296,7 +297,11 @@ export default async function ExploreRequestDetailPage({
       </div>
 
       <section className="mt-6 sm:mt-8">
-        {existingOffer && !canCreateFreshOffer ? (
+        {isRequestOwner ? (
+          <p className="rounded-xl border border-teal-900/8 bg-white px-4 py-3 text-sm text-teal-950/65">
+            Bu sizin talebiniz. Teklif gönderme alıcıya kapalıdır.
+          </p>
+        ) : existingOffer && !canCreateFreshOffer ? (
           <OfferExistingStatus
             status={existingOffer.status}
             reviseHref={
@@ -326,7 +331,8 @@ export default async function ExploreRequestDetailPage({
         )}
       </section>
 
-      {entitlements.features.ai_offer_assistant &&
+      {!isRequestOwner &&
+      entitlements.features.ai_offer_assistant &&
       (request.status === "PUBLISHED" || request.status === "RECEIVING_OFFERS") ? (
         <OfferDraftSuggestion
           requestTitle={request.title}

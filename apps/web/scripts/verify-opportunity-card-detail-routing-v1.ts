@@ -61,10 +61,10 @@ check(
 );
 
 check(
-  "B Title and Fırsatı incele use the same destination",
+  "B Title and Talebi incele use the same destination",
   (hub.match(/opportunityRequestDetailHref\(item\.requestId\)/g) ?? []).length === 1 &&
     hub.includes("detailHref") &&
-    hub.includes("Fırsatı incele") &&
+    hub.includes("Talebi incele") &&
     !hub.includes("`/panel/talepler/${item.requestId}`") &&
     !hub.includes("`/panel/taleplerim/${item.requestId}`"),
 );

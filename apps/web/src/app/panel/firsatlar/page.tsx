@@ -184,14 +184,18 @@ export default async function OpportunitiesPage({
           {showCorporateOps ? "Workspace" : "Fırsatlar"}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
-          {showCorporateOps ? "Fırsatlar" : companyId ? "Fırsatlar" : "Kişisel fırsatlar"}
+          {showCorporateOps
+            ? "Fırsatlar"
+            : companyId
+              ? "Fırsatlar"
+              : "Sana uygun fırsatlar"}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
           {showCorporateOps
             ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
             : companyId
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
-              : "Kişisel fırsatları, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
+              : "Talepo talepleri senin için değerlendirir; güçlü eşleşmeleri ve nedenlerini burada gösterir."}
         </p>
         {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -229,6 +233,7 @@ export default async function OpportunitiesPage({
             canWatchlist={canWatchlist}
             trackedSearchCount={trackedSearchCount}
             alertCount={alertCount}
+            opportunityContext={companyId ? "WORKSPACE" : "PERSONAL"}
           />
         )}
       </FeatureUpgradeGate>
