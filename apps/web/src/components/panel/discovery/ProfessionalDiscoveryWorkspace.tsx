@@ -93,6 +93,10 @@ export function ProfessionalDiscoveryWorkspace({
   const router = useRouter();
   const [cityDraft, setCityDraft] = useState(city ?? "");
   const [bookmarkBusy, setBookmarkBusy] = useState<string | null>(null);
+  const [bookmarkError, setBookmarkError] = useState<{
+    requestId: string;
+    message: string;
+  } | null>(null);
   const [localItems, setLocalItems] = useState(discoveryItems);
 
   useEffect(() => {
@@ -160,6 +164,7 @@ export function ProfessionalDiscoveryWorkspace({
   async function toggleBookmark(requestId: string, add: boolean) {
     if (!canWatchlist) return;
     setBookmarkBusy(requestId);
+    setBookmarkError(null);
     try {
       const response = await fetch("/api/monetization/watchlist", {
         method: "POST",
@@ -169,13 +174,24 @@ export function ProfessionalDiscoveryWorkspace({
           requestId,
         }),
       });
-      if (response.ok) {
-        setLocalItems((rows) =>
-          rows.map((r) =>
-            r.requestId === requestId ? { ...r, isWatchlisted: add } : r,
-          ),
-        );
+      const data = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+      };
+      if (!response.ok) {
+        setBookmarkError({
+          requestId,
+          message: data.message ?? "Kaydedilemedi.",
+        });
+        return;
       }
+      setLocalItems((rows) =>
+        rows.map((r) =>
+          r.requestId === requestId ? { ...r, isWatchlisted: add } : r,
+        ),
+      );
+    } catch {
+      setBookmarkError({ requestId, message: "Bağlantı hatası." });
     } finally {
       setBookmarkBusy(null);
     }
@@ -189,7 +205,7 @@ export function ProfessionalDiscoveryWorkspace({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5 rounded-2xl border border-teal-900/8 bg-white p-1">
-          {VIEW_TABS.map((tab) => {
+          {VIEW_TABS.filter((tab) => tab.id !== "saved" || canWatchlist).map((tab) => {
             const active = view === tab.id;
             return (
               <Link
@@ -344,6 +360,11 @@ export function ProfessionalDiscoveryWorkspace({
                   item={item}
                   onBookmarkToggle={canWatchlist ? toggleBookmark : undefined}
                   busy={bookmarkBusy}
+                  saveError={
+                    bookmarkError?.requestId === item.requestId
+                      ? bookmarkError.message
+                      : null
+                  }
                 />
               ))}
             </div>
@@ -390,7 +411,7 @@ export function ProfessionalDiscoveryWorkspace({
           )}
         </section>
       ) : (
-        <OpportunitiesHub initialFeed={feed} />
+        <OpportunitiesHub initialFeed={feed} canWatchlist={canWatchlist} />
       )}
     </div>
   );

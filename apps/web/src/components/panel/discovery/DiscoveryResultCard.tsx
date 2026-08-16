@@ -21,10 +21,12 @@ export function DiscoveryResultCard({
   item,
   onBookmarkToggle,
   busy,
+  saveError,
 }: {
   item: DiscoveryWorkspaceItem;
   onBookmarkToggle?: (requestId: string, add: boolean) => void;
   busy?: string | null;
+  saveError?: string | null;
 }) {
   const band = matchBandLabel(item.matchBand);
   const attrEntries = Object.entries(item.attributes).slice(0, 4);
@@ -68,28 +70,35 @@ export function DiscoveryResultCard({
           </p>
         </div>
         {onBookmarkToggle ? (
-          <button
-            type="button"
-            disabled={busy === item.requestId}
-            onClick={() =>
-              onBookmarkToggle(item.requestId, !item.isWatchlisted)
-            }
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-              item.isWatchlisted
-                ? "bg-teal-900 text-white"
-                : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
-            }`}
-            title="Talebi kaydet (watchlist) — kategori takibinden ayrıdır"
-          >
-            {busy === item.requestId ? (
-              <LoaderCircle className="h-3 w-3 animate-spin" />
-            ) : (
-              <Star
-                className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
-              />
-            )}
-            {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
-          </button>
+          <div className="shrink-0">
+            <button
+              type="button"
+              disabled={busy === item.requestId}
+              onClick={() =>
+                onBookmarkToggle(item.requestId, !item.isWatchlisted)
+              }
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                item.isWatchlisted
+                  ? "bg-teal-900 text-white"
+                  : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
+              }`}
+              title="Talebi kaydet (watchlist) — kategori takibinden ayrıdır"
+            >
+              {busy === item.requestId ? (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              ) : (
+                <Star
+                  className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
+                />
+              )}
+              {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
+            </button>
+            {saveError ? (
+              <p className="mt-1 max-w-[11rem] text-[11px] font-medium text-rose-700">
+                {saveError}
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </div>
 

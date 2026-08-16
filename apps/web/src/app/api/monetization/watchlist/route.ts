@@ -48,27 +48,31 @@ export async function POST(request: Request) {
       action?: string;
       requestId?: string;
     };
+    const requestId =
+      typeof body.requestId === "string" ? body.requestId.trim() : "";
+    // Owner is always the authenticated company workspace. Client owner ids are ignored.
+    const companyId = ctx.companyId;
 
-    if (body.action === "add" && body.requestId) {
+    if (body.action === "add" && requestId) {
       const item = await prisma.opportunityWatchlistItem.upsert({
         where: {
           companyId_requestId: {
-            companyId: ctx.companyId,
-            requestId: body.requestId,
+            companyId,
+            requestId,
           },
         },
         create: {
-          companyId: ctx.companyId,
-          requestId: body.requestId,
+          companyId,
+          requestId,
         },
         update: {},
       });
       return NextResponse.json({ ok: true, item });
     }
 
-    if (body.action === "remove" && body.requestId) {
+    if (body.action === "remove" && requestId) {
       await prisma.opportunityWatchlistItem.deleteMany({
-        where: { companyId: ctx.companyId, requestId: body.requestId },
+        where: { companyId, requestId },
       });
       return NextResponse.json({ ok: true });
     }

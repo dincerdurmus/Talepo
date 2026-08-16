@@ -104,7 +104,8 @@ export default async function OpportunitiesPage({
 
   const canSaveSearch = hasFeature(entitlements.features, "saved_searches");
   const canCreateAlert = hasFeature(entitlements.features, "smart_alerts");
-  const canWatchlist = hasFeature(entitlements.features, "watchlist");
+  const canWatchlist =
+    Boolean(companyId) && hasFeature(entitlements.features, "watchlist");
   const canLeadDistribution = hasFeature(
     entitlements.features,
     "lead_distribution",

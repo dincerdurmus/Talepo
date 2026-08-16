@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 
 import { opportunityRequestDetailHref } from "@/lib/panel/opportunity-request-detail-href";
+import { isOpportunitySaveSupported } from "@/lib/panel/opportunity-save-support";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 
 type OpportunitiesHubProps = {
   initialFeed: OpportunityFeedItem[];
+  canWatchlist: boolean;
 };
 
 const COMPETITION_LABELS = {
@@ -69,10 +71,14 @@ function OpportunityCard({
   item,
   onWatchlistToggle,
   busy,
+  canSave,
+  saveError,
 }: {
   item: OpportunityFeedItem;
   onWatchlistToggle: (requestId: string, add: boolean) => void;
   busy: string | null;
+  canSave: boolean;
+  saveError: string | null;
 }) {
   const classColors = {
     HOT: "border-orange-200 bg-orange-50/50",
@@ -117,27 +123,37 @@ function OpportunityCard({
             {item.budgetLabel ? ` · ${item.budgetLabel}` : ""}
           </p>
         </div>
-        <button
-          type="button"
-          disabled={busy === item.requestId}
-          onClick={() =>
-            onWatchlistToggle(item.requestId, !item.isWatchlisted)
-          }
-          className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-            item.isWatchlisted
-              ? "bg-teal-900 text-white"
-              : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
-          }`}
-        >
-          {busy === item.requestId ? (
-            <LoaderCircle className="h-3 w-3 animate-spin" />
-          ) : (
-            <Star
-              className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
-            />
-          )}
-          {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
-        </button>
+        {canSave ? (
+          <div className="shrink-0">
+            <button
+              type="button"
+              disabled={busy === item.requestId}
+              onClick={() =>
+                onWatchlistToggle(item.requestId, !item.isWatchlisted)
+              }
+              title="Talebi kaydet (watchlist) — kayıtlı aramalardan ayrıdır"
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                item.isWatchlisted
+                  ? "bg-teal-900 text-white"
+                  : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
+              }`}
+            >
+              {busy === item.requestId ? (
+                <LoaderCircle className="h-3 w-3 animate-spin" />
+              ) : (
+                <Star
+                  className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
+                />
+              )}
+              {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
+            </button>
+            {saveError ? (
+              <p className="mt-1 max-w-[11rem] text-[11px] font-medium text-rose-700">
+                {saveError}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -290,9 +306,16 @@ function OpportunityEmptyState() {
   );
 }
 
-export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
+export function OpportunitiesHub({
+  initialFeed,
+  canWatchlist,
+}: OpportunitiesHubProps) {
   const [feed, setFeed] = useState(initialFeed);
   const [busy, setBusy] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<{
+    requestId: string;
+    message: string;
+  } | null>(null);
 
   const hot = feed.filter(
     (i) => i.opportunityClassification === "HOT" || i.opportunityClassification === "GOOD",
@@ -301,9 +324,28 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
   const showHighBudget = highBudget.length > 0;
   const watchlist = feed.filter((i) => i.isWatchlisted);
   const competitionHigh = feed.filter((i) => i.competition === "LOW");
+  const showSavedSection = canWatchlist;
+
+  function cardCanSave(item: OpportunityFeedItem) {
+    return isOpportunitySaveSupported({
+      context: item.context,
+      canWatchlist,
+    });
+  }
 
   async function toggleWatchlist(requestId: string, add: boolean) {
+    const item = feed.find((row) => row.requestId === requestId);
+    if (
+      !item ||
+      !isOpportunitySaveSupported({
+        context: item.context,
+        canWatchlist,
+      })
+    ) {
+      return;
+    }
     setBusy(requestId);
+    setSaveError(null);
     try {
       const response = await fetch("/api/monetization/watchlist", {
         method: "POST",
@@ -313,15 +355,26 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
           requestId,
         }),
       });
-      if (response.ok) {
-        setFeed((current) =>
-          current.map((item) =>
-            item.requestId === requestId
-              ? { ...item, isWatchlisted: add }
-              : item,
-          ),
-        );
+      const data = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+      };
+      if (!response.ok) {
+        setSaveError({
+          requestId,
+          message: data.message ?? "Kaydedilemedi.",
+        });
+        return;
       }
+      setFeed((current) =>
+        current.map((row) =>
+          row.requestId === requestId
+            ? { ...row, isWatchlisted: add }
+            : row,
+        ),
+      );
+    } catch {
+      setSaveError({ requestId, message: "Bağlantı hatası." });
     } finally {
       setBusy(null);
     }
@@ -341,6 +394,10 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
             item={item}
             onWatchlistToggle={toggleWatchlist}
             busy={busy}
+            canSave={cardCanSave(item)}
+            saveError={
+              saveError?.requestId === item.requestId ? saveError.message : null
+            }
           />
         )}
       />
@@ -357,25 +414,35 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
               item={item}
               onWatchlistToggle={toggleWatchlist}
               busy={busy}
+              canSave={cardCanSave(item)}
+              saveError={
+                saveError?.requestId === item.requestId ? saveError.message : null
+              }
             />
           )}
         />
       ) : null}
 
-      <Section
-        title="Kaydettiklerim"
-        icon={<Eye className="h-5 w-5 text-teal-700" />}
-        items={watchlist}
-        empty="Henüz kaydettiğiniz talep yok. Kategori takibi için Keşfet sekmesini kullanın."
-        renderItem={(item) => (
-          <OpportunityCard
-            key={item.requestId}
-            item={item}
-            onWatchlistToggle={toggleWatchlist}
-            busy={busy}
-          />
-        )}
-      />
+      {showSavedSection ? (
+        <Section
+          title="Kaydettiklerim"
+          icon={<Eye className="h-5 w-5 text-teal-700" />}
+          items={watchlist}
+          empty="Henüz kaydettiğiniz talep yok. Kategori takibi için Keşfet sekmesini kullanın."
+          renderItem={(item) => (
+            <OpportunityCard
+              key={item.requestId}
+              item={item}
+              onWatchlistToggle={toggleWatchlist}
+              busy={busy}
+              canSave={cardCanSave(item)}
+              saveError={
+                saveError?.requestId === item.requestId ? saveError.message : null
+              }
+            />
+          )}
+        />
+      ) : null}
 
       <Section
         title="Düşük rekabet sinyalleri"
@@ -388,6 +455,10 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
             item={item}
             onWatchlistToggle={toggleWatchlist}
             busy={busy}
+            canSave={cardCanSave(item)}
+            saveError={
+              saveError?.requestId === item.requestId ? saveError.message : null
+            }
           />
         )}
       />
