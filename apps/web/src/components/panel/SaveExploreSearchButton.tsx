@@ -13,6 +13,11 @@ type SaveExploreSearchButtonProps = {
   enabled?: boolean;
 };
 
+function stopParentForm(event: { preventDefault: () => void; stopPropagation: () => void }) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
 export function SaveExploreSearchButton({
   filters,
   categorySlug,
@@ -26,8 +31,7 @@ export function SaveExploreSearchButton({
 
   if (!enabled) return null;
 
-  async function handleSave(event: React.FormEvent) {
-    event.preventDefault();
+  async function handleSave() {
     const trimmed = name.trim();
     if (!trimmed) return;
 
@@ -76,6 +80,25 @@ export function SaveExploreSearchButton({
     }
   }
 
+  function handleNameKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      stopParentForm(event);
+      void handleSave();
+      return;
+    }
+    if (event.key === "Escape") {
+      stopParentForm(event);
+      setOpen(false);
+    }
+  }
+
+  function handlePanelKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape") {
+      stopParentForm(event);
+      setOpen(false);
+    }
+  }
+
   return (
     <div className="relative">
       <button
@@ -88,23 +111,31 @@ export function SaveExploreSearchButton({
       </button>
 
       {open ? (
-        <form
-          onSubmit={handleSave}
+        <div
+          role="dialog"
+          aria-label="Aramayı kaydet"
           className="absolute right-0 top-full z-20 mt-2 w-72 rounded-xl border border-teal-900/10 bg-white p-3 shadow-lg"
+          onKeyDown={handlePanelKeyDown}
         >
-          <label className="block text-xs font-semibold text-teal-950/55">
+          <label
+            htmlFor="save-explore-search-name"
+            className="block text-xs font-semibold text-teal-950/55"
+          >
             Arama adı
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Örn. Acil mobilya İstanbul"
-              className="mt-1 h-10 w-full rounded-lg border border-teal-900/10 px-3 text-sm"
-              autoFocus
-            />
           </label>
+          <input
+            id="save-explore-search-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={handleNameKeyDown}
+            placeholder="Örn. Acil mobilya İstanbul"
+            className="mt-1 h-10 w-full rounded-lg border border-teal-900/10 px-3 text-sm"
+            autoFocus
+          />
           <div className="mt-2 flex gap-2">
             <button
-              type="submit"
+              type="button"
+              onClick={() => void handleSave()}
               disabled={busy || !name.trim()}
               className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-teal-900 py-2 text-xs font-semibold text-white disabled:opacity-45"
             >
@@ -119,7 +150,7 @@ export function SaveExploreSearchButton({
               İptal
             </button>
           </div>
-        </form>
+        </div>
       ) : null}
 
       {message ? (
