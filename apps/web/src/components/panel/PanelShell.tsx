@@ -389,8 +389,8 @@ function PersonalSidebar({
 
   return (
     <aside
-      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#d9e5e1] bg-[#f3f8f6] py-5 shadow-[8px_0_30px_rgba(15,47,43,0.035)] transition-[width,padding] duration-200 ease-out lg:flex ${
-        collapsed ? "w-[72px] px-2" : "w-[248px] px-3.5"
+      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#e3e8ed] bg-white py-5 shadow-[8px_0_30px_rgba(15,31,45,0.035)] transition-[width,padding] duration-200 ease-out lg:flex ${
+        collapsed ? "w-[72px] px-2" : "w-[280px] px-6"
       }`}
       data-plan={planTier}
     >
@@ -407,7 +407,7 @@ function PersonalSidebar({
               className={`inline-flex items-center font-semibold tracking-[-0.05em] text-[#0b2522] ${
               collapsed
                 ? "justify-center text-xl"
-                : "gap-2.5 px-2.5 text-[26px]"
+                : "gap-2.5 px-0.5 text-[28px]"
             }`}
           >
             {collapsed ? (
@@ -433,7 +433,7 @@ function PersonalSidebar({
           title="Yeni talep"
           aria-label="Yeni talep"
           className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[13px] text-[13px] font-bold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
-            collapsed ? "h-10 w-10" : "h-11 gap-2 px-4"
+            collapsed ? "h-10 w-10" : "h-[46px] gap-2 px-4"
           }`}
         >
           <Plus className="h-[17px] w-[17px]" strokeWidth={2.25} />
@@ -441,7 +441,7 @@ function PersonalSidebar({
         </Link>
       </div>
 
-        <nav className={`mt-7 space-y-5 ${collapsed ? "px-0" : ""}`}>
+      <nav className={`mt-7 min-h-0 flex-1 space-y-5 overflow-y-auto ${collapsed ? "px-0" : ""}`}>
         {navGroups.map((group) => (
           <div key={group.label}>
             {!collapsed && <p className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.19em] text-teal-950/60">{group.label}</p>}
@@ -711,10 +711,10 @@ function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-          className={`group relative flex items-center rounded-[11px] text-[13.5px] font-semibold leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
+          className={`group relative flex h-[42px] items-center rounded-[10px] text-[14px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
-          : "gap-3 px-2.5 py-2.5"
+          : "gap-3 px-3"
       } ${
         active
           ? "bg-[#d8ebe6] font-bold text-[#0b3b36] shadow-[inset_3px_0_0_#2d7770,0_5px_14px_rgba(31,94,87,0.08)]"
@@ -730,7 +730,7 @@ function SidebarLink({
             : "bg-[#e3efeb] text-teal-950/72 group-hover:bg-white group-hover:text-[#0f1f1d]"
         }`}
       >
-        <Icon className="h-4 w-4" strokeWidth={1.75} />
+        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
         {badge && collapsed && (
           <span className="talepo-plan-dot absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ring-2 ring-[#eef2f1]" />
         )}
