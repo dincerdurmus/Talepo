@@ -7,6 +7,7 @@ import { Check, LoaderCircle } from "lucide-react";
 
 import {
   FEATURE_META,
+  PRO_VALUE_PILLARS,
   PLAN_SUMMARY_FEATURE_KEYS,
 } from "@/lib/membership/feature-meta";
 import { getFeatureVisual } from "@/lib/membership/feature-visuals";
@@ -380,9 +381,25 @@ export function PlanManager({
         )}
       </section>
 
+      <section className="rounded-2xl border border-teal-900/10 bg-[#f7faf9] p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/60">PRO değer akışı</p>
+        <h3 className="mt-2 text-xl font-semibold tracking-tight text-[#0f172a]">Talepo yalnızca talepleri göstermez.</h3>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">Hangi fırsata odaklanmanız gerektiğini, nasıl teklif vermenizi ve ne zaman takip etmenizi anlamanıza yardımcı olur.</p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {PRO_VALUE_PILLARS.map((pillar, index) => (
+            <article key={pillar.id} className="rounded-[18px] border border-teal-900/10 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/50">0{index + 1}</p>
+              <h4 className="mt-2 font-semibold text-[#0f172a]">{pillar.title}</h4>
+              <p className="mt-1 text-sm leading-6 text-black/45">{pillar.description}</p>
+              <p className="mt-3 text-xs font-medium text-teal-800/65">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).join(" · ") || "Takip önerileri ve kullanıcı onayı"}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
         <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
-          Aktif özellikleriniz
+          Ayrıntılı özellikleriniz
         </h3>
         <p className="mt-2 text-sm text-black/45">
           Geçerli planınıza göre açılan özellikler.

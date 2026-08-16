@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import { PRO_VALUE_PILLARS, FEATURE_META } from "../src/lib/membership/feature-meta";
+import { featuresForPlan } from "../src/lib/membership/entitlements";
+assert.equal(PRO_VALUE_PILLARS.length, 4);
+assert.equal(PRO_VALUE_PILLARS[0].title, "Fırsatları Yakala");
+assert.equal(PRO_VALUE_PILLARS[1].title, "Fırsatı Analiz Et");
+assert.equal(PRO_VALUE_PILLARS[2].title, "Daha Güçlü Teklif Ver");
+assert.equal(PRO_VALUE_PILLARS[3].title, "Satışı Takip Et");
+assert.equal(FEATURE_META.ai_offer_assistant.label, "AI Teklif Copilot");
+const standard = featuresForPlan("STANDARD");
+assert.equal(standard.ai_offer_assistant, false);
+assert.equal(featuresForPlan("PROFESSIONAL").ai_offer_assistant, true);
+assert.equal(featuresForPlan("CORPORATE").hidden_inventory, true);
+assert.equal(PRO_VALUE_PILLARS.some((pillar) => pillar.title.includes("7/24")), false);
+console.log("verify-pro-experience-architecture-v1: PASS");
