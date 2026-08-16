@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { PRO_FEATURE_PRESENTATION } from "../src/lib/membership/feature-presentation";
+import { PRO_VALUE_PILLARS } from "../src/lib/membership/feature-meta";
+import { featuresForPlan } from "../src/lib/membership/entitlements";
+assert.equal(PRO_VALUE_PILLARS.length, 4);
+for (const key of ["smart_matching", "opportunity_intelligence", "basic_market_insights", "ai_offer_assistant", "follow_up_intelligence"] as const) assert.ok(PRO_FEATURE_PRESENTATION[key]);
+assert.match(PRO_FEATURE_PRESENTATION.ai_offer_assistant?.trustNote ?? "", /onayınız/);
+assert.match(PRO_FEATURE_PRESENTATION.follow_up_intelligence?.trustNote ?? "", /otomatik gönderilmez/);
+assert.equal(PRO_FEATURE_PRESENTATION.hidden_inventory?.contexts.includes("PERSONAL"), false);
+assert.equal(PRO_FEATURE_PRESENTATION.automatic_opportunity_hunter, undefined);
+assert.equal(featuresForPlan("STANDARD").ai_offer_assistant, false);
+assert.equal(featuresForPlan("PROFESSIONAL").ai_offer_assistant, true);
+console.log("verify-pro-feature-tooltips-v1: PASS");

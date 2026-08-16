@@ -30,6 +30,7 @@ import {
 } from "@/lib/membership/plans";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
+import { FeatureInfoTooltip } from "./FeatureInfoTooltip";
 
 import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
 import { PremiumUpgradeCta } from "./PremiumUpgradeCta";
@@ -389,7 +390,7 @@ export function PlanManager({
           {PRO_VALUE_PILLARS.map((pillar, index) => (
             <article key={pillar.id} className="rounded-[18px] border border-teal-900/10 bg-white p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/50">0{index + 1}</p>
-              <h4 className="mt-2 font-semibold text-[#0f172a]">{pillar.title}</h4>
+              <div className="mt-2 flex items-center gap-1"><h4 className="font-semibold text-[#0f172a]">{pillar.title}</h4><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} /></div>
               <p className="mt-1 text-sm leading-6 text-black/45">{pillar.description}</p>
               <p className="mt-3 text-xs font-medium text-teal-800/65">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).join(" · ") || "Takip önerileri ve kullanıcı onayı"}</p>
             </article>
