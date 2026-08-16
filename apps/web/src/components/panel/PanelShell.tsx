@@ -383,14 +383,14 @@ function PersonalSidebar({
   const navGroups = [
     { label: "Genel", items: navItems.filter((item) => ["/", "/panel"].includes(item.href)) },
     { label: "Talep & teklif", items: navItems.filter((item) => ["/panel/taleplerim", "/panel/gelen-teklifler", "/panel/talepler", "/panel/teklifler"].includes(item.href)) },
-    { label: "Pro araçları", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz"].includes(item.href)) },
-    { label: "Hesap", items: navItems.filter((item) => ["/panel/plan", "/panel/mesajlar", "/panel/profil"].includes(item.href)) },
+    { label: "Pro araçları", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
+    { label: "Hesap", items: navItems.filter((item) => ["/panel/mesajlar", "/panel/profil"].includes(item.href)) },
   ].filter((group) => group.items.length > 0);
 
   return (
     <aside
       className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#d9e5e1] bg-[#f3f8f6] py-5 shadow-[8px_0_30px_rgba(15,47,43,0.035)] transition-[width,padding] duration-200 ease-out lg:flex ${
-        collapsed ? "w-[72px] px-2" : "w-[268px] px-3.5"
+        collapsed ? "w-[72px] px-2" : "w-[248px] px-3.5"
       }`}
       data-plan={planTier}
     >
@@ -459,7 +459,7 @@ function PersonalSidebar({
           <div className={`relative overflow-hidden rounded-[18px] border px-4 py-4 ${isPaidPlan(planTier) ? "border-teal-800/25 bg-[#103b38] text-white shadow-[0_14px_28px_rgba(13,67,62,0.18)]" : "border-[#d8e5e1] bg-[#fbfdfc] shadow-[0_8px_20px_rgba(15,47,43,0.05)]"}`}>
             {isPaidPlan(planTier) && <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-violet-300/15 blur-2xl" />}
             <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${isPaidPlan(planTier) ? "text-teal-100/65" : "text-teal-800/55"}`}>
-              {getPublicProductLabel(planTier, "PERSONAL")}
+              {isPaidPlan(planTier) ? getPublicProductLabel(planTier, "PERSONAL") : "STANDARD"}
             </p>
             <p className={`relative mt-2 text-xs leading-5 ${isPaidPlan(planTier) ? "text-white/75" : "text-teal-950/58"}`}>
               {isPaidPlan(planTier) ? "Fırsatı bul, analiz et, güçlü teklif ver ve doğru zamanda takip et." : "Temel talep ve teklif akışınız hazır."}
@@ -618,6 +618,7 @@ function CorporateSidebar({
               href={item.href}
               title={item.label}
               aria-label={item.label}
+              aria-current={active ? "page" : undefined}
               className={`relative flex items-center rounded-xl text-sm transition ${
                 collapsed
                   ? "mx-auto h-10 w-10 justify-center"
@@ -709,6 +710,7 @@ function SidebarLink({
       href={href}
       title={label}
       aria-label={label}
+      aria-current={active ? "page" : undefined}
       className={`group relative flex items-center rounded-[11px] text-[13px] font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
