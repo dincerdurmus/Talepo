@@ -232,7 +232,7 @@ export async function distributeRequestToCompanies(
           ? "Acil talep hatırlatması (yakında açılır)"
           : "Acil talep — yeniden iletildi",
         message: delayed
-          ? `Acil “${request.title}” talebi firmanızla eşleşti. Standart planda ${request.visibleToSuppliersAt!.toLocaleString("tr-TR")} itibarıyla görüntüleyebilirsiniz.`
+          ? `Acil “${request.title}” talebi firmanızla eşleşti. Bireysel üyelikte ${request.visibleToSuppliersAt!.toLocaleString("tr-TR")} itibarıyla görüntüleyebilirsiniz.`
           : `Acil “${request.title}” talebi (${request.category.name}${
               request.city ? ` · ${request.city}` : ""
             }) firmanızla eşleşti. Henüz teklif bekleniyor — inceleyip teklif verebilirsiniz.`,
@@ -249,7 +249,7 @@ export async function distributeRequestToCompanies(
         ? "Yeni talep eşleşmesi (yakında açılır)"
         : "Size uygun yeni talep",
       message: delayed
-        ? `“${request.title}” talebi firmanızla eşleşti. Standart planda ${request.visibleToSuppliersAt!.toLocaleString("tr-TR")} itibarıyla görüntüleyebilirsiniz.`
+        ? `“${request.title}” talebi firmanızla eşleşti. Bireysel üyelikte ${request.visibleToSuppliersAt!.toLocaleString("tr-TR")} itibarıyla görüntüleyebilirsiniz.`
         : `“${request.title}” talebi (${request.category.name}${
             request.city ? ` · ${request.city}` : ""
           }) firmanızla eşleşti. Teklif vermek için inceleyin.`,

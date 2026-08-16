@@ -82,7 +82,10 @@ export function resolveNextQuestions(
   const optionalUseful = getOptionalFields(input).filter(
     (f) => !isKnown(values, f.key, explicitKeys),
   );
-  const next = getNextMissingFields(input, 3).filter((f) => {
+  // Return a small ranking pool; the UI authority performs the final top-3
+  // selection. Limiting here hid useful category fields such as automotive
+  // fuel and transmission before they could be prioritized.
+  const next = getNextMissingFields(input, 8).filter((f) => {
     if (isAnyOrNa(values[f.key])) return false;
     return true;
   });
