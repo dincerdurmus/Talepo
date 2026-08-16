@@ -16,6 +16,8 @@ type UnderstoodProps = {
   degraded?: boolean;
   hasText: boolean;
   updating?: boolean;
+  conditionConfirmationPending?: boolean;
+  modelYearConfirmationPending?: boolean;
 };
 
 /** Subtle “Talepo ne anladı?” under/beside the composer. */
@@ -25,6 +27,8 @@ export function HybridUnderstoodPanel({
   degraded,
   hasText,
   updating,
+  conditionConfirmationPending,
+  modelYearConfirmationPending,
 }: UnderstoodProps) {
   if (!hasText) return null;
   if (updating) {
@@ -64,15 +68,25 @@ export function HybridUnderstoodPanel({
       ) : null}
       {facts.length > 0 ? (
         <ul className="mt-1.5 flex flex-wrap gap-1.5">
-          {facts.map((fact) => (
+          {facts.map((fact) => {
+            const awaitingConfirmation =
+              (conditionConfirmationPending && fact.key === "condition") ||
+              (modelYearConfirmationPending &&
+                ["modelYear", "yearMin", "yearMax"].includes(fact.key));
+            return (
             <li
               key={fact.key}
-              className="rounded-full border border-teal-900/10 bg-white/90 px-2.5 py-1 text-[11px] text-teal-950/75"
+              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${awaitingConfirmation ? "border-orange-300 bg-orange-100 text-orange-800 shadow-[0_0_0_2px_rgba(251,146,60,0.08)]" : "border-[#0f766e]/25 bg-[#dff6ef] text-[#0f5f59] shadow-[0_0_0_1px_rgba(15,118,110,0.04)]"}`}
             >
-              <span className="text-teal-950/45">{fact.label}: </span>
-              {fact.displayValue}
+              {awaitingConfirmation ? (
+                fact.key === "condition"
+                  ? "Durum: Onay Bekleniyor"
+                  : "Model yılı: Onay Bekleniyor"
+              ) : (
+                <><span className="text-[#0f766e]/65">{fact.label}: </span>{fact.displayValue}</>
+              )}
             </li>
-          ))}
+          )})}
         </ul>
       ) : null}
     </div>
@@ -250,7 +264,12 @@ export function HybridCategoryBrowsePanel({
                 ) : null}
               </div>
 
-              <div className="flex max-h-64 overflow-x-auto overflow-y-hidden sm:max-h-72">
+              <div
+                className="grid max-h-64 min-w-0 overflow-hidden sm:max-h-72"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.max(columns.length, 1)}, minmax(0, 1fr))`,
+                }}
+              >
                 {columns.length === 0 ? (
                   <p className="p-3 text-sm text-teal-950/45">Kategori yok.</p>
                 ) : (
@@ -259,7 +278,7 @@ export function HybridCategoryBrowsePanel({
                     return (
                       <div
                         key={`col-${columnIndex}-${walk.stack[columnIndex - 1]?.id ?? "root"}`}
-                        className="flex w-[min(42vw,11.5rem)] shrink-0 flex-col border-r border-teal-900/8 last:border-r-0 sm:w-44"
+                        className="flex min-w-0 flex-col border-r border-teal-900/8 last:border-r-0"
                       >
                         <ul className="max-h-64 overflow-y-auto py-1 sm:max-h-72">
                           {columnNodes.length === 0 ? (
@@ -278,7 +297,7 @@ export function HybridCategoryBrowsePanel({
                                     onClick={() =>
                                       onSelectAtColumn(columnIndex, node)
                                     }
-                                    className={`flex w-full items-center justify-between gap-1 px-2.5 py-2 text-left text-xs transition sm:px-3 ${
+                                    className={`flex w-full min-w-0 items-center justify-between gap-1 px-2 py-2 text-left text-xs transition sm:px-2.5 ${
                                       isLeafFocus
                                         ? "bg-[#0f766e] font-medium text-white"
                                         : selected

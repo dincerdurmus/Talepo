@@ -251,6 +251,13 @@ export function mapUnderstandingToFields(
         : null,
     { screenSize },
   );
+  // Common city shorthand must remain location context, never product model.
+  if (
+    modelRaw?.toLocaleLowerCase("tr-TR") === "ist" &&
+    /\bist(?:anbul)?(?:['’]?(?:da|de|dan|den))?\b/iu.test(raw)
+  ) {
+    modelRaw = null;
+  }
   if (brandRaw && isKnownAutomotiveModelName(brandRaw)) {
     if (
       !modelRaw ||

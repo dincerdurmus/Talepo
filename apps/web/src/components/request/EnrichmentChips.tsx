@@ -16,6 +16,7 @@ type Props = {
   variant?: "light" | "dark";
   /** Optional human prompts keyed by fieldKey (AI panel) */
   humanPrompts?: Record<string, string>;
+  highlightFieldKeys?: string[];
 };
 
 export function EnrichmentChips({
@@ -28,11 +29,15 @@ export function EnrichmentChips({
   onCancel,
   variant = "light",
   humanPrompts,
+  highlightFieldKeys = [],
 }: Props) {
   if (candidates.length === 0) return null;
 
   const active = candidates.find((c) => c.fieldKey === activeFieldKey) ?? null;
   const dark = variant === "dark";
+  const activeSelectedValues = active?.multiSelect
+    ? draftValue.split(",").map((value) => value.trim()).filter(Boolean)
+    : [];
 
   return (
     <section
@@ -61,6 +66,7 @@ export function EnrichmentChips({
       <div className={dark ? "flex flex-wrap gap-1.5" : "mt-4 flex flex-wrap gap-2"}>
         {candidates.map((q) => {
           const isActive = q.fieldKey === activeFieldKey;
+          const isRequiredMissing = highlightFieldKeys.includes(q.fieldKey);
           return (
             <button
               key={q.fieldKey}
@@ -68,12 +74,12 @@ export function EnrichmentChips({
               onClick={() => onSelect(q)}
               className={
                 dark
-                  ? `inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                  ? `inline-flex cursor-pointer select-none items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-all duration-150 active:scale-90 active:brightness-125 ${isRequiredMissing ? "talepo-required-field-alert" : ""} ${
                       isActive
-                        ? "border-teal-200/50 bg-white/15 text-white"
-                        : "border-teal-200/25 bg-white/5 text-teal-50/90 hover:border-teal-200/45 hover:bg-white/10"
+                        ? "border-teal-200/70 bg-teal-300/20 text-white"
+                        : "border-teal-200/25 bg-white/5 text-teal-50/90 hover:-translate-y-0.5 hover:border-teal-200/55 hover:bg-white/12 hover:shadow-[0_5px_14px_rgba(0,0,0,0.22)]"
                     }`
-                  : `inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+                  : `inline-flex cursor-pointer select-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-150 active:scale-90 ${
                       isActive
                         ? "border-[#0f766e]/35 bg-[#f0fdfa] text-[#115e59]"
                         : "border-teal-900/10 bg-[#fafcfb] text-teal-950/70 hover:border-[#0f766e]/25 hover:bg-[#f0fdfa]"
@@ -91,7 +97,7 @@ export function EnrichmentChips({
         <div
           className={
             dark
-              ? "rounded-xl border border-teal-200/20 bg-white/[0.06] p-3"
+              ? "talepo-enrichment-form-enter rounded-xl border border-teal-200/35 bg-white/[0.08] p-3 shadow-[0_10px_28px_rgba(0,0,0,0.18)]"
               : "mt-4 rounded-2xl border border-teal-900/8 bg-[#f7faf9] p-4"
           }
         >
@@ -127,22 +133,68 @@ export function EnrichmentChips({
             </div>
           ) : active.inputType === "select" ? (
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <select
-                value={draftValue}
-                onChange={(e) => onDraftChange(e.target.value)}
-                className={
-                  dark
-                    ? "h-10 flex-1 rounded-lg border border-teal-200/20 bg-[#0b1f1c] px-3 text-xs text-white outline-none"
-                    : "h-11 flex-1 rounded-xl border border-teal-900/10 bg-white px-3.5 text-sm outline-none focus:border-[#0f766e]/35"
-                }
-              >
-                <option value="">Seçiniz</option>
-                {active.options?.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              {active.multiSelect ? (
+                <div className="max-h-64 flex-1 overflow-y-auto rounded-lg border border-teal-200/25 bg-[#071b18] py-1 shadow-inner [scrollbar-color:#7f8f8c_#e5e7eb] [scrollbar-width:thin]">
+                  {active.options?.map((opt) => {
+                    const selected = activeSelectedValues.includes(opt.value);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          if (opt.value === "Fark Etmez") {
+                            onDraftChange(selected ? "" : "Fark Etmez");
+                            return;
+                          }
+                          const withoutAny = activeSelectedValues.filter(
+                            (value) => value !== "Fark Etmez",
+                          );
+                          const next = selected
+                            ? withoutAny.filter((value) => value !== opt.value)
+                            : [...withoutAny, opt.value];
+                          onDraftChange(next.join(", "));
+                        }}
+                        role="checkbox"
+                        aria-checked={selected}
+                        className={`flex w-full items-center gap-2.5 px-3 py-2 text-left text-xs font-semibold transition ${
+                          selected
+                            ? "bg-[#2675d8] text-white"
+                            : "text-white/90 hover:bg-white/10"
+                        }`}
+                      >
+                        <span
+                          aria-hidden
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border text-[10px] font-black transition ${
+                            selected
+                              ? "border-white bg-white text-[#2675d8]"
+                              : "border-white/55 bg-white/5 text-transparent"
+                          }`}
+                        >
+                          ✓
+                        </span>
+                        <span>{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <select
+                  value={draftValue}
+                  onChange={(e) => onDraftChange(e.target.value)}
+                  className={
+                    dark
+                      ? "h-10 flex-1 rounded-lg border border-teal-200/20 bg-[#0b1f1c] px-3 text-xs text-white outline-none"
+                      : "h-11 flex-1 rounded-xl border border-teal-900/10 bg-white px-3.5 text-sm outline-none focus:border-[#0f766e]/35"
+                  }
+                >
+                  <option value="">Seçiniz</option>
+                  {active.options?.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              )}
               <button
                 type="button"
                 disabled={!draftValue.trim()}

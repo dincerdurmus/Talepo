@@ -55,6 +55,30 @@ const PART_SUPPRESS_WHOLE_PRODUCT = new Set([
   "fuel",
 ]);
 
+/**
+ * Product-family fields are named differently by category schemas. If the
+ * canonical state already knows one of them, asking the generic equivalent
+ * again creates a duplicate question (for example: "süpürge" + "Ürün türü").
+ */
+const PRODUCT_FAMILY_KEYS = [
+  "productType",
+  "applianceType",
+  "furnitureType",
+  "machineType",
+  "deviceFamily",
+] as const;
+
+function hasKnownProductFamily(state: CanonicalRequestState): boolean {
+  return PRODUCT_FAMILY_KEYS.some((key) => {
+    const field = state.fields[key];
+    return (
+      field?.kind === "VALUE" &&
+      typeof field.value === "string" &&
+      field.value.trim().length > 0
+    );
+  });
+}
+
 function knowledgeFieldToCandidate(field: KnowledgeField): QuestionCandidate {
   const inputType =
     field.type === "ENUM" || field.type === "MULTI_SELECT"
@@ -76,6 +100,10 @@ function knowledgeFieldToCandidate(field: KnowledgeField): QuestionCandidate {
     priorityScore: field.priority === "required" ? 0.9 : 0.55,
     inputType,
     options: field.options?.map((o) => ({ label: o.label, value: o.value })),
+    quickChoices: field.options?.map((o) => ({
+      label: o.label,
+      value: o.value,
+    })),
   };
 }
 
@@ -207,6 +235,8 @@ export function resolveHybridQuestions(
     state.fields.needType?.provenance === "EXPLICIT_BROWSE" &&
     state.fields.needType.kind === "VALUE";
 
+  const productFamilyKnown = hasKnownProductFamily(state);
+
   const suppressed: string[] = [];
   const filterSpare = (fields: KnowledgeField[]) => {
     if (!isAutoSpare && !isPartSubject) return fields;
@@ -228,6 +258,15 @@ export function resolveHybridQuestions(
   const brandPreferred = (state.fields.brand?.preferredValues?.length ?? 0) >= 1;
   const filterAnyAware = (fields: KnowledgeField[]) =>
     fields.filter((f) => {
+      if (
+        productFamilyKnown &&
+        PRODUCT_FAMILY_KEYS.includes(
+          (f.engineFieldKey ?? f.key) as (typeof PRODUCT_FAMILY_KEYS)[number],
+        )
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
       // Automotive root without intent: only ask needType — never flash vehicle-purchase fields
       if (
         automotiveNeedUnknown &&
@@ -316,15 +355,36 @@ export function resolveHybridQuestions(
 
   const missingRequired = filterAnyAware(filterSpare(base.missingRequired));
   const optionalUseful = filterAnyAware(filterSpare(base.optionalUseful));
-  const next = filterAnyAware(filterSpare(base.next));
+  const next = filterAnyAware(filterSpare(base.next)).slice(0, 3);
 
-  const candidates = rankWithinAllowlist(next, {
+  let candidates = rankWithinAllowlist(next, {
     strategy: opts?.strategy,
     completeness: opts?.completeness,
     fieldValues: values,
     dynamicFields: opts?.dynamicFields,
     requiredDynamicKeys: opts?.requiredDynamicKeys,
   });
+
+  if (categoryId === "automotive" && !isPartSubject) {
+    const vehiclePreferenceKeys = new Set(["fuel", "transmission"]);
+    const preferred = next
+      .filter((field) => vehiclePreferenceKeys.has(field.engineFieldKey ?? field.key))
+      .map(knowledgeFieldToCandidate);
+    candidates = [
+      ...preferred,
+      ...candidates.filter((candidate) => !vehiclePreferenceKeys.has(candidate.fieldKey)),
+    ].slice(0, 3);
+  }
+
+  const cityField = [...missingRequired, ...next, ...optionalUseful].find(
+    (field) => (field.engineFieldKey ?? field.key) === "city",
+  );
+  if (!values.city?.trim() && cityField) {
+    candidates = [
+      knowledgeFieldToCandidate(cityField),
+      ...candidates.filter((candidate) => candidate.fieldKey !== "city"),
+    ].slice(0, 3);
+  }
 
   return {
     known: base.known,
