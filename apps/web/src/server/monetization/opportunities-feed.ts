@@ -5,6 +5,7 @@ import { getCompetitionSignals } from "./competition-signals";
 import { matchCompanyToRequest } from "./smart-matching";
 import { scoreOpportunity } from "./opportunity-score";
 import { buildOpportunityIntelligence, type OpportunityIntelligence } from "./opportunity-intelligence";
+import { matchPersonalToRequest } from "./personal-matching";
 
 export type OpportunityFeedItem = {
   requestId: string;
@@ -18,7 +19,7 @@ export type OpportunityFeedItem = {
   offerCount: number;
   publishedAt: Date | null;
   createdAt: Date;
-  matchScore: number;
+  matchScore: number | null;
   matchReasons: string[];
   opportunityScore: number;
   opportunityClassification: "NORMAL" | "GOOD" | "HOT";
@@ -57,6 +58,7 @@ const CHANGE_LABELS: Record<string, string> = {
 
 export async function buildOpportunitiesFeed(
   companyId?: string,
+  userId?: string,
   options?: { limit?: number; watchlistOnly?: boolean },
 ): Promise<OpportunityFeedItem[]> {
   const limit = options?.limit ?? 40;
@@ -143,8 +145,9 @@ export async function buildOpportunitiesFeed(
 
   for (const req of requests) {
     const match = companyId ? await matchCompanyToRequest(companyId, req.id) : null;
-    const matchScore = match?.score ?? 0;
-    const matchReasons = match?.reasons ?? [];
+    const personalMatch = !companyId && userId ? await matchPersonalToRequest(userId, req.id) : null;
+    const matchScore = companyId ? match?.score ?? null : personalMatch?.score ?? null;
+    const matchReasons = companyId ? match?.reasons ?? [] : personalMatch?.reasons ?? [];
 
     const budgetMin = req.budgetMin?.toNumber() ?? null;
     const budgetMax = req.budgetMax?.toNumber() ?? null;

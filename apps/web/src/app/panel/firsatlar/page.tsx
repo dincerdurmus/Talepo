@@ -122,7 +122,9 @@ export default async function OpportunitiesPage({
     view === "browse" || view === "urgent" || view === "saved";
 
   const feed =
-    entitled && view !== "ops" ? await buildOpportunitiesFeed(companyId ?? undefined) : [];
+    entitled && view !== "ops"
+      ? await buildOpportunitiesFeed(companyId ?? undefined, user.id)
+      : [];
 
   const discoveryRaw =
     companyId && needsDiscoveryQuery

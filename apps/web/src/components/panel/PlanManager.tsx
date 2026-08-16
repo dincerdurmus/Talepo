@@ -407,7 +407,7 @@ export function PlanManager({
         <div className="relative mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {PRO_VALUE_PILLARS.map((pillar, index) => (
             <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 xl:not-last:after:absolute xl:not-last:after:-right-3 xl:not-last:after:top-1/2 xl:not-last:after:h-px xl:not-last:after:w-3 xl:not-last:after:bg-white/20 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
-              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} /></div>
+              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} description={pillar.id === "capture" ? (entitlements.subject.type === "company" ? "Talepo şirket profiliniz ve desteklenen çalışma alanı sinyalleriyle fırsat uygunluğunu değerlendirir." : "Talepo kayıtlı tercihleriniz ve desteklenen kişisel eşleşme sinyalleriyle fırsatların size ne kadar ilgili olduğunu değerlendirir.") : undefined} /></div>
               <h4 className="mt-5 font-semibold text-white">{pillar.title}</h4><p className="mt-2 text-sm leading-6 text-white/60">{pillar.description}</p>
               <p className="mt-4 text-[11px] font-medium leading-5 text-white/45">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).slice(0, 3).join(" · ") || "Takip önerisi · kullanıcı onayı"}</p>
             </article>
@@ -461,7 +461,7 @@ export function PlanManager({
                             <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{presentation?.description ?? meta.description}</span>
                             {presentation?.resultLocation && <span className="mt-1 block text-[11px] font-medium text-teal-950/48">Sonuç: {presentation.resultLocation}</span>}
                           </span>
-                          <span className="relative z-20 shrink-0"><FeatureInfoTooltip feature={key} /></span>
+                          <span className="relative z-20 shrink-0"><FeatureInfoTooltip feature={key} description={key === "smart_matching" ? (entitlements.subject.type === "company" ? "Talepo şirket profiliniz ve desteklenen çalışma alanı sinyalleriyle fırsat uygunluğunu değerlendirir." : "Talepo kayıtlı tercihleriniz ve desteklenen kişisel eşleşme sinyalleriyle fırsatların size ne kadar ilgili olduğunu değerlendirir.") : undefined} /></span>
                           {href && <span className={`pointer-events-none relative z-10 shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100 ${visual.linkClass}`}>{presentation?.actionLabel ?? visual.cta ?? "Aç →"}</span>}
                         </li>
                       );
