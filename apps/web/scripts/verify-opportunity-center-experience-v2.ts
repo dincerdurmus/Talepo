@@ -26,7 +26,12 @@ import {
 import { opportunityRequestDetailHref } from "../src/lib/panel/opportunity-request-detail-href";
 import { isOpportunitySaveSupported } from "../src/lib/panel/opportunity-save-support";
 import { primaryRequestCoverImageUrl } from "../src/lib/panel/request-cover-image";
+import {
+  requestCardMediaAlt,
+  resolveRequestCardMedia,
+} from "../src/lib/panel/request-card-media";
 import { ensureTaxonomyLoaded, getTaxonomyNode } from "../src/lib/taxonomy";
+import { getCategoryVisual } from "../src/lib/visuals/category-visuals";
 import {
   buildOpportunityIntelligence,
   OPPORTUNITY_ACTION_LABELS,
@@ -486,7 +491,8 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
     "compact card uses existing OpportunityCard family",
     hub.includes("function OpportunityCard") &&
       hub.includes("CategoryVisualThumb") &&
-      hub.includes("allowCategoryStockImage={false}") &&
+      hub.includes("allowCategoryStockImage") &&
+      !hub.includes("allowCategoryStockImage={false}") &&
       hub.includes("md:flex-row") &&
       hub.includes("Yüksek eşleşme") &&
       !hub.includes("Neden sana uygun") &&
@@ -609,15 +615,18 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
       primaryRequestCoverImageUrl("javascript:alert(1)") === null,
   );
   check(
-    "F OpportunityCard uses real media when available",
-    hub.includes("primaryRequestCoverImageUrl(item.coverImageUrl)") &&
-      hub.includes("allowCategoryStockImage={false}") &&
-      hub.includes("CategoryVisualThumb"),
+    "F OpportunityCard uses real media when available then category artwork",
+    hub.includes("coverImageUrl={item.coverImageUrl}") &&
+      hub.includes("allowCategoryStockImage") &&
+      !hub.includes("allowCategoryStockImage={false}") &&
+      hub.includes("CategoryVisualThumb") &&
+      thumb.includes("resolveRequestCardMedia"),
   );
   check(
-    "G Keşfet card same media where supported",
-    exploreCard.includes("primaryRequestCoverImageUrl(coverImageUrl)") &&
-      exploreCard.includes("CategoryVisualThumb") &&
+    "G Keşfet card same media priority where supported",
+    exploreCard.includes("CategoryVisualThumb") &&
+      exploreCard.includes("allowCategoryStockImage") &&
+      exploreCard.includes("coverImageUrl={coverImageUrl}") &&
       read("src/app/panel/talepler/page.tsx").includes(
         "coverImageUrl={request.coverImageUrl}",
       ),
@@ -629,7 +638,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
       !hub.includes("placeholder.com") &&
       !feedSrc.includes("resolveRequestCoverImage") &&
       !thumb.includes("resolveRequestCoverImage") &&
-      hub.includes("allowCategoryStockImage={false}"),
+      !hub.includes("allowCategoryStockImage={false}"),
   );
   check(
     "I no N+1 external/provider for media",
@@ -687,6 +696,92 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
     pageSummary.strongestSignalScore === 62 &&
       pageSummary.strongestSignalConfidence === 0.8 &&
       buildOpportunityHubSummary([], now).strongestSignalScore === null,
+  );
+}
+
+console.log("\n=== CATEGORY ARTWORK FALLBACK ===\n");
+{
+  const hub = read("src/components/panel/OpportunitiesHub.tsx");
+  const exploreCard = read("src/components/panel/ExploreRequestCard.tsx");
+  const visuals = read("src/lib/visuals/category-visuals.ts");
+  const mediaHelper = read("src/lib/panel/request-card-media.ts");
+
+  const withCover = resolveRequestCardMedia({
+    coverImageUrl: "https://cdn.example.com/chair.jpg",
+    categorySlug: "furniture",
+  });
+  const furnitureOnly = resolveRequestCardMedia({
+    coverImageUrl: null,
+    categorySlug: "furniture",
+  });
+  const automotiveOnly = resolveRequestCardMedia({
+    coverImageUrl: null,
+    categorySlug: "automotive",
+  });
+  const technologyOnly = resolveRequestCardMedia({
+    coverImageUrl: null,
+    categorySlug: "technology",
+  });
+  const unknown = resolveRequestCardMedia({
+    coverImageUrl: null,
+    categorySlug: "not-a-real-category",
+  });
+  const empty = resolveRequestCardMedia({
+    coverImageUrl: null,
+    categorySlug: null,
+  });
+
+  check(
+    "A coverImageUrl wins over category artwork",
+    withCover.kind === "cover" &&
+      withCover.src === "https://cdn.example.com/chair.jpg",
+  );
+  check(
+    "B no cover + furniture → furniture artwork",
+    furnitureOnly.kind === "category" &&
+      furnitureOnly.src === "/categories/furniture.png" &&
+      getCategoryVisual("furniture").image === "/categories/furniture.png",
+  );
+  check(
+    "C no cover + automotive → automotive artwork",
+    automotiveOnly.kind === "category" &&
+      automotiveOnly.src === "/categories/automotive.png",
+  );
+  check(
+    "D no cover + technology → technology artwork",
+    technologyOnly.kind === "category" &&
+      technologyOnly.src === "/categories/technology.png",
+  );
+  check(
+    "E deep leaf uses root category slug mapping (no second taxonomy engine)",
+    mediaHelper.includes("Request.category.slug") &&
+      !mediaHelper.includes("getTaxonomyAncestorIds") &&
+      resolveRequestCardMedia({
+        coverImageUrl: null,
+        categorySlug: "furniture",
+      }).kind === "category",
+  );
+  check(
+    "F unknown category → generic icon fallback",
+    unknown.kind === "icon" && empty.kind === "icon",
+  );
+  check(
+    "G no fake/external image generation",
+    !mediaHelper.includes("unsplash") &&
+      !mediaHelper.includes("resolveRequestCoverImage") &&
+      visuals.includes('categoryImage("furniture")') &&
+      visuals.includes("/categories/"),
+  );
+  check(
+    "H Opportunity/Keşfet media consistency",
+    hub.includes("allowCategoryStockImage") &&
+      exploreCard.includes("allowCategoryStockImage") &&
+      !hub.includes("allowCategoryStockImage={false}") &&
+      requestCardMediaAlt(furnitureOnly, "Mobilya ve Ofis").includes(
+        "kategori görseli",
+      ) &&
+      requestCardMediaAlt(withCover, "Mobilya", "Yönetici koltuğu") ===
+        "Yönetici koltuğu",
   );
 }
 

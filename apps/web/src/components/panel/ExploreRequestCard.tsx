@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
-import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import {
   formatListingBudget,
   getCategoryVisual,
@@ -78,8 +77,10 @@ export function ExploreRequestCard({
         <CategoryVisualThumb
           categorySlug={categorySlug}
           categoryName={categoryName}
-          coverImageUrl={primaryRequestCoverImageUrl(coverImageUrl)}
+          coverImageUrl={coverImageUrl}
+          requestTitle={title}
           size="md"
+          allowCategoryStockImage
           className="self-start"
         />
 

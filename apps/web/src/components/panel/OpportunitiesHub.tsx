@@ -25,7 +25,6 @@ import {
   type OpportunityHubView,
 } from "@/lib/panel/opportunity-recommended-eligibility";
 import { isOpportunitySaveSupported } from "@/lib/panel/opportunity-save-support";
-import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 
@@ -210,9 +209,10 @@ function OpportunityCard({
         <CategoryVisualThumb
           categorySlug={item.categorySlug}
           categoryName={item.categoryName}
-          coverImageUrl={primaryRequestCoverImageUrl(item.coverImageUrl)}
+          coverImageUrl={item.coverImageUrl}
+          requestTitle={item.title}
           size="sm"
-          allowCategoryStockImage={false}
+          allowCategoryStockImage
           className="self-start"
         />
 

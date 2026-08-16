@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 
-import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
+import {
+  requestCardMediaAlt,
+  resolveRequestCardMedia,
+} from "@/lib/panel/request-card-media";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 
 type ThumbSize = "sm" | "md" | "lg" | "badge";
@@ -25,20 +28,26 @@ type CategoryVisualThumbProps = {
   categorySlug?: string | null;
   categoryName?: string | null;
   coverImageUrl?: string | null;
+  /** Used only for real-cover alt text; never invents media. */
+  requestTitle?: string | null;
   size?: ThumbSize;
   className?: string;
-  /** Category stock art is fine on browse listings; opportunity cards pass false. */
+  /**
+   * When true (default), missing cover falls back to Talepo category artwork
+   * before the generic icon tile. Opportunity and discovery cards keep this on.
+   */
   allowCategoryStockImage?: boolean;
 };
 
 /**
- * Listing-style category thumbnail: cover photo when present,
- * otherwise CSS gradient + Lucide icon composition.
+ * Listing thumb priority:
+ * real Request.coverImageUrl → category artwork → CSS icon placeholder.
  */
 export function CategoryVisualThumb({
   categorySlug,
   categoryName,
   coverImageUrl,
+  requestTitle,
   size = "md",
   className = "",
   allowCategoryStockImage = true,
@@ -46,23 +55,51 @@ export function CategoryVisualThumb({
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
   const label = categoryName || "Kategori";
-  const realCover = primaryRequestCoverImageUrl(coverImageUrl);
-  const stockCover = allowCategoryStockImage ? look.image || null : null;
+  const media = resolveRequestCardMedia({ coverImageUrl, categorySlug });
+  const resolved =
+    media.kind === "cover"
+      ? media
+      : media.kind === "category" && allowCategoryStockImage
+        ? media
+        : ({ kind: "icon" } as const);
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
-  const resolvedCover =
-    [realCover, stockCover].find((src) => src && src !== failedSrc) ?? null;
+  const imageSrc =
+    resolved.kind === "icon"
+      ? null
+      : resolved.src && resolved.src !== failedSrc
+        ? resolved.src
+        : null;
+  const showingKind =
+    imageSrc == null
+      ? "icon"
+      : resolved.kind === "cover"
+        ? "cover"
+        : "category";
+  const alt = requestCardMediaAlt(
+    showingKind === "icon"
+      ? { kind: "icon" }
+      : showingKind === "cover"
+        ? { kind: "cover", src: imageSrc! }
+        : {
+            kind: "category",
+            src: imageSrc!,
+            categorySlug: categorySlug?.trim() || "",
+          },
+    categoryName,
+    requestTitle,
+  );
 
-  if (resolvedCover) {
+  if (imageSrc) {
     return (
       <div
         className={`relative shrink-0 overflow-hidden bg-[#0b1220] shadow-sm ring-1 ring-black/[0.08] ${SIZE_CLASS[size]} ${className}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={resolvedCover}
-          alt={label}
+          src={imageSrc}
+          alt={alt}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          onError={() => setFailedSrc(resolvedCover)}
+          onError={() => setFailedSrc(imageSrc)}
         />
         <span
           className={`absolute bottom-1.5 left-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 shadow-sm ring-1 ${look.ring}`}
@@ -77,7 +114,7 @@ export function CategoryVisualThumb({
     <div
       className={`relative flex shrink-0 items-center justify-center overflow-hidden bg-gradient-to-br shadow-sm ring-1 ${look.thumb} ${look.ring} ${SIZE_CLASS[size]} ${className}`}
       role="img"
-      aria-label={label}
+      aria-label={alt}
     >
       <span
         aria-hidden
