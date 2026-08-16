@@ -13,7 +13,7 @@ export type PlanSeatPolicy = {
 export const PLAN_SEAT_POLICY: Record<PlanTierId, PlanSeatPolicy> = {
   STANDARD: { includedSeats: null },
   PREMIUM: { includedSeats: null },
-  PROFESSIONAL: { includedSeats: null },
+  PROFESSIONAL: { includedSeats: 5 },
   CORPORATE: { includedSeats: 5 },
 };
 

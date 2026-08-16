@@ -27,21 +27,19 @@ assert.equal(
   "Cookie alert-rules-store should be removed",
 );
 
-// Monetization APIs must scope by companyId from requireCompanyFeature
-for (const route of [
-  "app/api/monetization/alerts/route.ts",
-  "app/api/monetization/saved-searches/route.ts",
-  "app/api/monetization/watchlist/route.ts",
-]) {
+// Workspace watchlist is company-owned; personal-capable alerts and saved
+// searches must use the resource-owner resolver instead.
+for (const route of ["app/api/monetization/alerts/route.ts", "app/api/monetization/saved-searches/route.ts"]) {
   const code = read(route);
-  assert.match(code, /requireCompanyFeature/, `${route} must use requireCompanyFeature`);
-  assert.match(code, /companyId: ctx\.companyId/, `${route} must scope queries`);
+  assert.match(code, /requireResourceOwnerFeature/, `${route} must use resource ownership`);
 }
+const watchlistRoute = read("app/api/monetization/watchlist/route.ts");
+assert.match(watchlistRoute, /requireCompanyFeature/, "watchlist must use company feature guard");
+assert.match(watchlistRoute, /companyId: ctx\.companyId/, "watchlist must scope queries");
 
 // Watchlist mutations must not accept foreign companyId in body
-const watchlist = read("app/api/monetization/watchlist/route.ts");
 assert.doesNotMatch(
-  watchlist,
+  watchlistRoute,
   /body\.companyId/,
   "Watchlist must not trust client companyId",
 );

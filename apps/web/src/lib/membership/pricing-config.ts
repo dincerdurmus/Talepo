@@ -18,8 +18,8 @@ export const PLAN_PRICING: Record<PlanTierId, PlanPricing> = {
     tier: "STANDARD",
     priceTry: null,
     billingPeriod: "month",
-    label: "Standart",
-    tagline: "Temel kullanım",
+    label: "Bireysel",
+    tagline: "Ücretsiz kullanım",
   },
   PREMIUM: {
     tier: "PREMIUM",

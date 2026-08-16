@@ -1,6 +1,8 @@
 import {
   ENABLE_STANDARD_REQUEST_ACCESS_DELAY,
   type PlanTierId,
+  canonicalizePlanTier,
+  planTierRank,
 } from "./plans";
 
 /**
@@ -174,18 +176,59 @@ export function hasFeature(
   return false;
 }
 
-export function minimumPlanForFeature(key: FeatureKey): PlanTierId {
-  const order: PlanTierId[] = [
-    "STANDARD",
-    "PREMIUM",
-    "PROFESSIONAL",
-    "CORPORATE",
-  ];
-  for (const tier of order) {
-    if (PLAN_FEATURE_KEYS[tier].includes(key)) return tier;
-    if (key === "smart_alerts" && PLAN_FEATURE_KEYS[tier].includes("alert_rules")) {
-      return tier;
-    }
+function hasFeatureInPlanTier(tier: PlanTierId, key: FeatureKey): boolean {
+  if (PLAN_FEATURE_KEYS[tier].includes(key)) return true;
+  if (key === "smart_alerts" && PLAN_FEATURE_KEYS[tier].includes("alert_rules")) {
+    return true;
   }
-  return "CORPORATE";
+  if (key === "alert_rules" && PLAN_FEATURE_KEYS[tier].includes("smart_alerts")) {
+    return true;
+  }
+  if (
+    key === "basic_market_insights" &&
+    PLAN_FEATURE_KEYS[tier].includes("advanced_ai_pricing")
+  ) {
+    return true;
+  }
+  if (
+    key === "hot_opportunities" &&
+    PLAN_FEATURE_KEYS[tier].includes("urgent_request_priority")
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function buildMinimumPlanMap(): Record<FeatureKey, PlanTierId> {
+  const map = {} as Record<FeatureKey, PlanTierId>;
+
+  for (const feature of FEATURE_KEYS) {
+    let minimum: PlanTierId | null = null;
+
+    for (const storedTier of [
+      "STANDARD",
+      "PREMIUM",
+      "PROFESSIONAL",
+      "CORPORATE",
+    ] as const) {
+      if (!hasFeatureInPlanTier(storedTier, feature)) {
+        continue;
+      }
+
+      const effective = canonicalizePlanTier(storedTier);
+      if (minimum === null || planTierRank(effective) < planTierRank(minimum)) {
+        minimum = effective;
+      }
+    }
+
+    map[feature] = minimum ?? "PROFESSIONAL";
+  }
+
+  return map;
+}
+
+const MINIMUM_PLAN_FOR_FEATURE = buildMinimumPlanMap();
+
+export function minimumPlanForFeature(key: FeatureKey): PlanTierId {
+  return MINIMUM_PLAN_FOR_FEATURE[key] ?? "PROFESSIONAL";
 }

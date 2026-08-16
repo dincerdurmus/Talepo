@@ -17,25 +17,25 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
       "Birden fazla alarm kuralı",
       "Aktif/pasif yönetimi",
     ],
-    cta: "Premium'a geç",
+    cta: "Profesyonel'e geç",
   },
   saved_searches: {
     title: "Kayıtlı aramalar",
     description:
       "Keşif filtrelerinizi kaydedin, tek tıkla tekrar çalıştırın. Kişisel veya firma çalışma alanında ayrı tutulur.",
     bullets: ["Filtre setlerini isimlendirme", "Tek tıkla keşfe dön", "Aktif arama yönetimi"],
-    cta: "Premium'a geç",
+    cta: "Profesyonel'e geç",
   },
   smart_matching: {
     title: "Akıllı eşleştirme",
     description:
       "Size en uygun talepleri öne çıkarın. Kategori, bölge ve uzmanlık sinyallerine göre skor.",
-    cta: "Premium'a geç",
+    cta: "Profesyonel'e geç",
   },
   advanced_filters: {
     title: "Gelişmiş filtreler",
     description: "Bütçe, aciliyet, yayın tarihi ve kategoriye özel alanlarla doğru taleplere odaklanın.",
-    cta: "Premium'a geç",
+    cta: "Profesyonel'e geç",
   },
   hot_opportunities: {
     title: "Fırsatlar merkezi",

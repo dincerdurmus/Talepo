@@ -8,12 +8,12 @@ import {
 } from "@/lib/membership/plan-visuals";
 import {
   FEATURE_BOOST_OPTIONS,
+  getAvailablePlans,
   OFFER_CREDIT_PACKS,
-  PLAN_DEFINITIONS,
 } from "@/lib/membership/plans";
 
 export function PricingPlans() {
-  const plans = Object.values(PLAN_DEFINITIONS);
+  const plans = getAvailablePlans();
 
   return (
     <section
@@ -37,14 +37,13 @@ export function PricingPlans() {
           </h2>
 
           <p className="mt-5 text-base leading-7 text-teal-950/50 sm:text-[17px]">
-            Alıcılar talep oluşturmak için ödeme yapmaz. Firmalar gerçek
-            alıcılara daha erken ulaşmak için plan yükseltir. Kişisel Premium
-            tek kullanıcı içindir; ekip paylaşımı Profesyonel veya Kurumsal
-            firma planı ile açılır.
+            Bireysel üyelik ücretsizdir. Profesyonel üyelik; bireysel
+            profesyoneller ve ekip koltuğu kullanan şirketler için tüm gelişmiş
+            özellikleri tek planda sunar.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-2">
           {plans.map((plan) => {
             const visual = PLAN_VISUALS[plan.id];
             const theme = PLAN_THEME_TOKENS[plan.id];
@@ -107,7 +106,7 @@ export function PricingPlans() {
                         Ücretsiz
                       </p>
                     )}
-                    {plan.id === "CORPORATE" && (
+                    {plan.id === "PROFESSIONAL" && (
                       <p className="mt-1 text-xs font-medium text-teal-900/70">
                         5 ekip koltuğu dahil
                       </p>
@@ -138,9 +137,7 @@ export function PricingPlans() {
                     href={plan.id === "STANDARD" ? "/kayit" : "/panel/plan"}
                     className={`mt-7 flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition ${visual.button}`}
                   >
-                    {plan.id === "CORPORATE"
-                      ? "Kurumsal planı inceleyin"
-                      : plan.id === "STANDARD"
+                    {plan.id === "STANDARD"
                         ? "Ücretsiz başla"
                         : "Planları inceleyin"}
                     <ArrowRight className="h-4 w-4" />
@@ -156,9 +153,9 @@ export function PricingPlans() {
             Ekip vs kişisel
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-teal-900/75">
-            Kişisel hesabınıza aldığınız Premium, firma ekibine yansımaz.
-            Ekip üyelerinin aynı hakları kullanması için firma planı
-            (Profesyonel veya Kurumsal) firma hesabına tanımlanmalıdır.
+            Bireysel üyelik tek kullanıcı içindir. Şirketler Profesyonel
+            üyeliği firma hesabına tanımlar, dahil olan koltukları ekip
+            üyelerine rol ve yetkileriyle dağıtır.
           </p>
         </div>
 
@@ -198,7 +195,7 @@ export function PricingPlans() {
               Ek teklif paketleri
             </h3>
             <p className="mt-3 text-sm leading-6 text-teal-950/50">
-              Premium almak istemeyen işletmeler aylık 5 ücretsiz teklif
+              Profesyonel üyelik almak istemeyen işletmeler aylık 5 ücretsiz teklif
               hakkını doldurduğunda ek paket satın alabilecek.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">

@@ -225,11 +225,12 @@ export const PLAN_FEATURES: Record<PlanTierId, string[]> = {
     "Temel piyasa içgörüleri",
   ],
   PROFESSIONAL: [
-    "Zeka — Premium + fırsat seçimi",
+    "Tüm gelişmiş özellikler tek pakette",
+    "Anında erişim, sınırsız teklif ve AI teklif asistanı",
     "Sıcak fırsatlar ve rekabet sinyalleri",
-    "Watchlist ve bütçe değişikliği takibi",
-    "Profesyonel analitik dashboard altyapısı",
-    "Talepo Insights (anonim veri)",
+    "5 ekip koltuğu, ekip yönetimi ve lead dağıtımı",
+    "Gizli envanter, CSV aktarımı ve otomatik fırsat avcısı",
+    "Profesyonel analizler ve Talepo Insights",
   ],
   CORPORATE: [
     "Profesyonel'deki tüm özellikler dahil",

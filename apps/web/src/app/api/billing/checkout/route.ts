@@ -35,11 +35,7 @@ export async function POST(request: Request) {
 
     // Never trust client price — only planTier enum
     const planTier = body.planTier;
-    if (
-      planTier !== "PREMIUM" &&
-      planTier !== "PROFESSIONAL" &&
-      planTier !== "CORPORATE"
-    ) {
+    if (planTier !== "PROFESSIONAL") {
       return NextResponse.json(
         { ok: false, code: "PLAN_MAPPING_INVALID", message: "Geçersiz plan." },
         { status: 400 },

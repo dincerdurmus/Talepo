@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, LoaderCircle, Sparkles } from "lucide-react";
+import { Check, LoaderCircle } from "lucide-react";
 
 import {
   FEATURE_META,
@@ -22,7 +22,7 @@ import {
   PLAN_VISUALS,
 } from "@/lib/membership/plan-visuals";
 import {
-  OFFER_CREDIT_PACKS,
+  getAvailablePlans,
   PLAN_DEFINITIONS,
   planTierRank,
   type PlanTierId,
@@ -31,6 +31,7 @@ import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 
 import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
+import { PremiumUpgradeCta } from "./PremiumUpgradeCta";
 
 export type CompanyOption = {
   id: string;
@@ -60,6 +61,7 @@ type PlanManagerProps = {
   billing?: BillingStatusProps;
   /** Company billing mutations: OWNER/ADMIN only. Personal always true. */
   canMutateBilling?: boolean;
+  showPlanChoices?: boolean;
 };
 
 export function PlanManager({
@@ -68,6 +70,7 @@ export function PlanManager({
   mockUpgradeEnabled = false,
   billing,
   canMutateBilling = true,
+  showPlanChoices = true,
 }: PlanManagerProps) {
   const router = useRouter();
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export function PlanManager({
       return "Aktif plan";
     }
     if (planId === "STANDARD") {
-      return mockUpgradeEnabled ? "Standart'a geç (test)" : "Ücretsiz başla";
+      return mockUpgradeEnabled ? "Bireysel'e geç (test)" : "Ücretsiz başla";
     }
     const plan = PLAN_DEFINITIONS[planId];
     if (checkoutAvailable && planTierRank(planId) > currentRank) {
@@ -178,50 +181,6 @@ export function PlanManager({
         actionError instanceof Error
           ? actionError.message
           : "Ödeme başlatılırken hata oluştu.",
-      );
-    } finally {
-      setLoadingKey(null);
-    }
-  }
-
-  async function startCreditCheckout(packId: string) {
-    if (!canMutateBilling) {
-      setError("Plan/ödeme işlemleri için sahip veya yönetici yetkisi gerekir.");
-      return;
-    }
-    setLoadingKey(packId);
-    setMessage(null);
-    setError(null);
-    try {
-      const response = await fetch("/api/billing/credits/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packId }),
-      });
-      const result = (await response.json()) as {
-        message?: string;
-        checkoutUrl?: string;
-        checkoutFormContent?: string;
-      };
-      if (!response.ok) {
-        throw new Error(result.message || "Kredi ödemesi başlatılamadı.");
-      }
-      if (result.checkoutFormContent) {
-        mountIyzicoCheckoutForm(result.checkoutFormContent);
-        setMessage("Ödeme formu açıldı. Krediler yalnız doğrulanmış ödeme sonrası eklenir.");
-        return;
-      }
-      if (result.checkoutUrl) {
-        window.location.href = result.checkoutUrl;
-        return;
-      }
-      setMessage(result.message || "Ödeme doğrulanıyor…");
-      router.refresh();
-    } catch (actionError) {
-      setError(
-        actionError instanceof Error
-          ? actionError.message
-          : "Kredi ödemesi başlatılırken hata oluştu.",
       );
     } finally {
       setLoadingKey(null);
@@ -368,7 +327,7 @@ export function PlanManager({
           <p>
             Kişisel plan:{" "}
             <strong className="text-black">
-              {entitlements.personalPlan?.planLabel ?? "Standart"}
+              {entitlements.personalPlan?.planLabel ?? "Bireysel"}
             </strong>
             {entitlements.subject.type === "company" &&
             entitlements.personalPlan &&
@@ -431,7 +390,7 @@ export function PlanManager({
         <ul className="mt-5 grid gap-3 sm:grid-cols-2">
           {activeFeatureKeys.length === 0 ? (
             <li className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50 sm:col-span-2">
-              Standart planda temel teklif hakkı dışında premium özellik yok.
+              Bireysel planda temel teklif hakkı dışında profesyonel özellik yok.
               Yükseltme ile AI asistan, anında erişim ve uyarı kuralları açılır.
             </li>
           ) : (
@@ -497,8 +456,8 @@ export function PlanManager({
         </div>
       )}
 
-      <section className="grid gap-5 lg:grid-cols-2">
-        {Object.values(PLAN_DEFINITIONS).map((plan) => {
+      {showPlanChoices ? <section className="grid gap-5 lg:grid-cols-2">
+        {getAvailablePlans().map((plan) => {
           const visual = PLAN_VISUALS[plan.id];
           const theme = PLAN_THEME_TOKENS[plan.id];
           const Icon = visual.icon;
@@ -568,7 +527,7 @@ export function PlanManager({
                   ) : (
                     <p className="text-xl font-semibold">Ücretsiz</p>
                   )}
-                  {plan.id === "CORPORATE" && (
+                  {plan.id === "PROFESSIONAL" && (
                     <p className="mt-1 text-xs font-medium text-teal-900/70">
                       5 ekip koltuğu dahil
                     </p>
@@ -634,58 +593,7 @@ export function PlanManager({
             </article>
           );
         })}
-      </section>
-
-      <section
-        id="credits"
-        className="rounded-2xl border border-teal-900/10 bg-[#eef6f4] p-6 sm:p-7"
-      >
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#0f766e] text-white">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-xl font-semibold text-[#0f1f1d]">
-              Ek teklif paketleri
-            </h3>
-            <p className="text-sm text-teal-950/55">
-              Premium almak istemeyen firmalar için tek seferlik paketler. Kredi
-              yalnız doğrulanmış ödeme (webhook) sonrası eklenir.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {Object.entries(OFFER_CREDIT_PACKS).map(([packKey, pack]) => (
-            <button
-              key={packKey}
-              type="button"
-              disabled={!canMutateBilling || !checkoutAvailable || loadingKey === packKey}
-              title={
-                !canMutateBilling
-                  ? "Plan/ödeme için sahip veya yönetici yetkisi gerekir"
-                  : checkoutAvailable
-                    ? "Ödeme oturumu başlat"
-                    : "Ödeme sağlayıcısı gerekli"
-              }
-              onClick={() => {
-                if (checkoutAvailable) void startCreditCheckout(packKey);
-              }}
-              className={`rounded-xl border border-teal-900/10 bg-white p-5 text-left ${
-                checkoutAvailable
-                  ? "hover:border-teal-800/30"
-                  : "cursor-not-allowed opacity-70"
-              }`}
-            >
-              <p className="font-semibold text-[#0f1f1d]">{pack.label}</p>
-              <p className="mt-2 text-sm text-teal-800">₺{pack.priceTry}</p>
-              <p className="mt-2 text-[11px] font-medium text-teal-800/60">
-                {checkoutAvailable ? "Ödemeye geç" : "Provider gerekli"}
-              </p>
-            </button>
-          ))}
-        </div>
-      </section>
+      </section> : <PremiumUpgradeCta compact />}
 
       <p className="text-xs leading-5 text-black/35">
         {checkoutAvailable

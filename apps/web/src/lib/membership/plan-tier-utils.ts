@@ -1,4 +1,8 @@
-import type { PlanTierId } from "./plans";
+import {
+  canonicalizePlanTier,
+  normalizeStoredPlanTier,
+  type PlanTierId,
+} from "./plans";
 import { getPlanDefinition, isPaidPlan } from "./plans";
 import type { PersonalPlanSnapshot } from "./types";
 
@@ -19,7 +23,11 @@ export function resolveEffectivePlanTier(
     return { effectivePlanTier: "STANDARD", isExpired: true };
   }
 
-  return { effectivePlanTier: storedPlanTier, isExpired: false };
+  return { effectivePlanTier: canonicalizePlanTier(storedPlanTier), isExpired: false };
+}
+
+export function resolveStoredPlanTier(value: string | null | undefined): PlanTierId {
+  return normalizeStoredPlanTier(value);
 }
 
 export function buildPersonalPlanSnapshot(

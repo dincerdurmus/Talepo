@@ -33,7 +33,6 @@ export const PERSONAL_CAPABLE_FEATURES: readonly FeatureKey[] = [
   "advanced_opportunity_analysis",
   "competition_signals",
   "budget_change_alerts",
-  "watchlist",
   "professional_analytics",
   "talepo_insights",
 ] as const;

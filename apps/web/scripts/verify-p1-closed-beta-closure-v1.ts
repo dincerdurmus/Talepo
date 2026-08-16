@@ -194,7 +194,9 @@ console.log("\n=== P1-4 BILLING RBAC ===\n");
   const checkout = read("src/server/billing/create-checkout.ts");
   const credits = read("src/server/billing/create-credit-checkout.ts");
   const membership = read("src/app/api/membership/route.ts");
-  const planPage = read("src/app/panel/plan/page.tsx");
+  const planPage =
+    read("src/app/panel/plan/page.tsx") +
+    read("src/components/panel/PlanDetails.tsx");
   const planUi = read("src/components/panel/PlanManager.tsx");
   const offerSrc = read("src/lib/membership/assert-entitlement.ts");
 
