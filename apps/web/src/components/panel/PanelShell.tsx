@@ -34,8 +34,6 @@ import {
 } from "@/components/panel/panel-nav";
 import type { FeatureKey } from "@/lib/membership/entitlements";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
-import { getPublicProductLabel } from "@/lib/membership/product-packaging";
-import { isPaidPlan } from "@/lib/membership/plans";
 import type { PlanTierId } from "@/lib/membership/plans";
 
 export type PanelUser = {
@@ -444,7 +442,7 @@ function PersonalSidebar({
       <nav className={`mt-7 min-h-0 flex-1 space-y-6 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(15,63,58,.18)_transparent] ${collapsed ? "px-0" : ""}`}>
         {navGroups.map((group) => (
           <div key={group.label}>
-            {!collapsed && <p className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.19em] text-teal-950/60">{group.label}</p>}
+            {!collapsed && <p className="mb-2 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">{group.label}</p>}
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <SidebarLink key={`${item.href}-${item.label}`} href={item.href} icon={item.icon} label={item.label} active={isNavActive(pathname, item.href, item.exact)} collapsed={collapsed} badge={item.href === "/panel/mesajlar" && unreadMessages > 0 ? String(unreadMessages) : undefined} />
@@ -454,22 +452,6 @@ function PersonalSidebar({
         ))}
       </nav>
 
-      {!collapsed && (
-        <div className="mt-auto px-0.5">
-          <div className={`relative min-h-[132px] overflow-hidden rounded-[16px] border px-4 py-4 ${isPaidPlan(planTier) ? "border-teal-800/25 bg-[#103b38] text-white shadow-[0_14px_28px_rgba(13,67,62,0.18)]" : "border-[#d8e5e1] bg-[#fbfdfc] shadow-[0_8px_20px_rgba(15,47,43,0.05)]"}`}>
-            {isPaidPlan(planTier) && <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-violet-300/15 blur-2xl" />}
-            <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${isPaidPlan(planTier) ? "text-teal-100/65" : "text-teal-800/55"}`}>
-              {isPaidPlan(planTier) ? getPublicProductLabel(planTier, "PERSONAL") : "STANDARD"}
-            </p>
-            <p className={`relative mt-2 text-xs leading-5 ${isPaidPlan(planTier) ? "text-white/75" : "text-teal-950/58"}`}>
-              {isPaidPlan(planTier) ? "Fırsatı bul, analiz et, güçlü teklif ver ve doğru zamanda takip et." : "Temel talep ve teklif akışınız hazır."}
-            </p>
-            <Link href="/panel/plan" className={`relative mt-3 inline-flex text-xs font-bold ${isPaidPlan(planTier) ? "text-teal-100 hover:text-white" : "text-teal-800 hover:text-teal-950"}`}>
-              {isPaidPlan(planTier) ? "Planı yönet →" : "PRO’yu keşfet →"}
-            </Link>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
@@ -717,8 +699,8 @@ function SidebarLink({
           : "gap-3 px-3"
       } ${
         active
-          ? "bg-[#d8ebe6] font-bold text-[#0b3b36] shadow-[inset_3px_0_0_#2d7770,0_5px_14px_rgba(31,94,87,0.08)]"
-          : "text-teal-950/68 hover:bg-[#e7f1ee] hover:text-[#0f1f1d]"
+          ? "border border-[#d6eceb] bg-[#e8f5f5] font-semibold text-[#172c48]"
+          : "text-[#263a5a] hover:bg-[#f3f8fa] hover:text-[#172c48]"
       }`}
     >
       <span
@@ -726,8 +708,8 @@ function SidebarLink({
           collapsed ? "h-8 w-8" : "h-8 w-8"
         } ${
           active
-            ? "bg-[#b9ddd5] text-[#0b5149]"
-            : "bg-[#e3efeb] text-teal-950/72 group-hover:bg-white group-hover:text-[#0f1f1d]"
+            ? "bg-[#d2ece9] text-[#18717a]"
+            : "bg-[#eaf6f4] text-[#2c7580] group-hover:bg-[#e0f1ef] group-hover:text-[#216572]"
         }`}
       >
         <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
