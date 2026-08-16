@@ -370,9 +370,13 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     const numStart = bam.index + bam[1]!.length + 1;
     if (isClaimed(numStart, bam[2]!.length)) continue;
     const head = bam[1]!.toLocaleLowerCase("tr-TR");
+    const foldedHead = head
+      .replace(/\u0131/g, "i")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
     if (
-      /adet|tane|kutu|fiyat|tl|kira|bütçe|butce|km|m2|bin|gram|ofis|metre/.test(
-        head,
+      /adet|tane|kutu|fiyat|tl|kira|butce[mn]?|butcesi|butcemiz|km|m2|bin|gram|ofis|metre/.test(
+        foldedHead,
       )
     ) {
       continue;

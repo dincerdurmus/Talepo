@@ -585,6 +585,15 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
       provenance: "EXPLICIT",
       evidence: [multiColor.evidence],
     });
+  } else if (colorHits.length === 1) {
+    upsert(byField, {
+      fieldKey: "color",
+      value: colorHits[0],
+      strength: "PREFERRED",
+      confidence: 0.9,
+      provenance: "EXPLICIT",
+      evidence: [colorHits[0]!],
+    });
   }
 
   // --- Lighting (auto) ---

@@ -57,6 +57,7 @@ import {
   reconcileParentIdentityTokens,
   resolveSemanticSubject,
 } from "./semantic-subject";
+import { inferConditionFromContext } from "./condition-inference";
 import type { SemanticRequestSubject } from "./types";
 
 export type UnderstandRequestInput = {
@@ -611,6 +612,40 @@ export function understandRequest(
     }
   }
 
+  if (category.value === "automotive") {
+    const fuel = /\b(dizel|benzin|hibrit|elektrikli?|lpg)\b/i.exec(normalizedInput);
+    if (fuel?.[1]) {
+      const folded = fuel[1].toLocaleLowerCase("tr-TR");
+      const value = folded.startsWith("elektrik")
+        ? "Elektrik"
+        : folded === "lpg"
+          ? "LPG"
+          : folded[0]!.toLocaleUpperCase("tr-TR") + folded.slice(1);
+      attributes.fuel = uv(value, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [fuel[0]],
+      });
+    }
+
+    const transmission = /\b(yarı\s+otomatik|yari\s+otomatik|otomatik|manuel|düz\s+vites|duz\s+vites)\b/i.exec(
+      normalizedInput,
+    );
+    if (transmission?.[1]) {
+      const folded = transmission[1].toLocaleLowerCase("tr-TR");
+      const value = /yarı|yari/.test(folded)
+        ? "Yarı otomatik"
+        : /manuel|düz|duz/.test(folded)
+          ? "Manuel"
+          : "Otomatik";
+      attributes.transmission = uv(value, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [transmission[0]],
+      });
+    }
+  }
+
   for (const n of numbers) {
     if (n.role === "WEIGHT" && n.value != null) {
       attributes.weight = uv(
@@ -755,6 +790,18 @@ export function understandRequest(
   }
 
   let condition = extractCondition(normalizedInput);
+  if (!condition) {
+    condition = inferConditionFromContext({
+      normalizedInput,
+      categoryId: category.value,
+      subjectKind: subjectValue,
+      intent: intentResolved.intent,
+      modelYear:
+        typeof attributes.modelYear?.value === "number"
+          ? attributes.modelYear.value
+          : null,
+    });
+  }
   const structuredCondition = structured?.fieldValues?.condition?.trim();
   if (structuredCondition) {
     const lower = structuredCondition.toLocaleLowerCase("tr-TR");
@@ -1176,6 +1223,23 @@ export function understandRequest(
     if (requestSubject.target) {
       attributes.serviceTarget = requestSubject.target;
     }
+
+    // A clear service request must not fall back to a generic product
+    // clarification just because its target (e.g. klima) belongs to a
+    // product category. Automotive and machinery retain their dedicated
+    // service flows; every other service routes to the service marketplace.
+    if (category.value !== "automotive" && category.value !== "machinery") {
+      category = {
+        value: "services",
+        confidence: Math.max(category.confidence, requestSubject.kind.confidence),
+        status: "CONFIDENT",
+        evidence: [
+          ...(category.evidence ?? []),
+          "semantic-service-category",
+        ],
+        alternatives: category.alternatives,
+      };
+    }
   }
 
   if (semConfident && semKind === "VEHICLE") {
@@ -1446,6 +1510,37 @@ export function understandRequest(
   ];
 
   // Seed structured attributes from constraints when brain attributes empty
+  const explicitColor =
+    constraintBundle.byField.color?.value ??
+    ([
+      [/\b(kırmızı|kirmizi)\b/iu, "Kırmızı"],
+      [/\b(siyah)\b/iu, "Siyah"],
+      [/\b(beyaz)\b/iu, "Beyaz"],
+      [/\b(gri)\b/iu, "Gri"],
+      [/\b(mavi)\b/iu, "Mavi"],
+    ] as const).find(([pattern]) => pattern.test(normalizedInput))?.[1];
+  if (explicitColor && !attributes.color) {
+    attributes.color = uv(explicitColor, {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: constraintBundle.byField.color?.confidence ?? 0.95,
+      evidence: constraintBundle.byField.color?.evidence ?? [explicitColor],
+    });
+  }
+  const bodyConditionMatch = normalizedInput.match(
+    /\b(hasarsız|hasarsiz|hatasız|hatasiz|boyasız|boyasiz|değişensiz|degisensiz|kazası[sz]|kazasi[sz])\b/giu,
+  );
+  if (bodyConditionMatch?.length && !attributes.bodyCondition) {
+    attributes.bodyCondition = uv(
+      [...new Set(bodyConditionMatch.map((value) => value.toLocaleLowerCase("tr-TR")))].join(", "),
+      {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        confidence: 0.95,
+        evidence: bodyConditionMatch,
+      },
+    );
+  }
   if (
     constraintBundle.byField.resolution?.value &&
     !attributes.resolution
