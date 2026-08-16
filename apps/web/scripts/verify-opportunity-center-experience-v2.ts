@@ -2,7 +2,7 @@
  * Opportunity Center Experience V2 — recommendation eligibility + decision UX.
  * Run: npx tsx scripts/verify-opportunity-center-experience-v2.ts
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -11,6 +11,10 @@ import {
   type RequestDiscoveryProjection,
 } from "../src/lib/discovery";
 import { canonicalFilterFromSavedSearchFilters } from "../src/lib/monetization/saved-search-canonical";
+import {
+  buildOpportunityHubSummary,
+  isFreshOpportunity,
+} from "../src/lib/panel/opportunity-hub-summary";
 import {
   hasGroundedPersonalMatch,
   isPersonalRecommendedEligible,
@@ -21,6 +25,7 @@ import {
 } from "../src/lib/panel/opportunity-recommended-eligibility";
 import { opportunityRequestDetailHref } from "../src/lib/panel/opportunity-request-detail-href";
 import { isOpportunitySaveSupported } from "../src/lib/panel/opportunity-save-support";
+import { primaryRequestCoverImageUrl } from "../src/lib/panel/request-cover-image";
 import { ensureTaxonomyLoaded, getTaxonomyNode } from "../src/lib/taxonomy";
 import {
   buildOpportunityIntelligence,
@@ -489,10 +494,12 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !hub.includes("Dikkat edilmesi gerekenler"),
   );
   check(
-    "summary metrics are feed-derived",
+    "summary metrics are page-level from full feed",
     hub.includes("function FeedSummaryStrip") &&
-      hub.includes("isPublishedToday") &&
-      hub.includes("Veri güveni") &&
+      hub.includes("buildOpportunityHubSummary") &&
+      hub.includes("metrics={<FeedSummaryStrip items={feed} />}") &&
+      !hub.includes("FeedSummaryStrip items={visible}") &&
+      hub.includes("En güçlü sinyal") &&
       !hub.includes("Fırsat Bugün") &&
       !hub.includes("Aktif 28 gün kaldı"),
   );
@@ -506,6 +513,180 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
   check(
     "taxonomy furniture node still exists",
     getTaxonomyNode("tax:furniture")?.id === "tax:furniture",
+  );
+}
+
+console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
+{
+  const hub = read("src/components/panel/OpportunitiesHub.tsx");
+  const feedSrc = read("src/server/monetization/opportunities-feed.ts");
+  const thumb = read("src/components/visuals/CategoryVisualThumb.tsx");
+  const exploreCard = read("src/components/panel/ExploreRequestCard.tsx");
+  const detail = read("src/app/panel/talepler/[id]/page.tsx");
+  const eligibility = read(
+    "src/lib/panel/opportunity-recommended-eligibility.ts",
+  );
+  const now = Date.parse("2026-08-17T12:00:00.000Z");
+
+  function summaryItem(
+    overrides: Partial<Parameters<typeof buildOpportunityHubSummary>[0][number]> & {
+      requestId: string;
+    },
+  ) {
+    return {
+      context: "PERSONAL" as const,
+      matchScore: null,
+      matchReasons: [] as string[],
+      opportunityClassification: "NORMAL" as const,
+      isUrgent: false,
+      publishedAt: new Date("2026-08-16T10:00:00.000Z"),
+      createdAt: new Date("2026-08-16T10:00:00.000Z"),
+      intelligence: { opportunityScore: 50, confidence: 0.5 },
+      ...overrides,
+    };
+  }
+
+  const recommended = summaryItem({
+    requestId: "rec",
+    matchScore: 100,
+    matchReasons: ["Kayıtlı aramanızla eşleşiyor: Mobilya"],
+    opportunityClassification: "GOOD",
+    intelligence: { opportunityScore: 62, confidence: 0.8 },
+  });
+  const urgentOnly = summaryItem({
+    requestId: "urgent",
+    isUrgent: true,
+    opportunityClassification: "HOT",
+    intelligence: { opportunityScore: 88, confidence: 0.3 },
+  });
+  const fresh = summaryItem({
+    requestId: "fresh",
+    publishedAt: new Date("2026-08-17T08:00:00.000Z"),
+    createdAt: new Date("2026-08-17T08:00:00.000Z"),
+  });
+  const universe = [recommended, urgentOnly, fresh];
+  const suggested = selectOpportunityHubItems(universe, "suggested");
+  const urgentView = selectOpportunityHubItems(universe, "urgent");
+  const pageSummary = buildOpportunityHubSummary(universe, now);
+  const suggestedSummary = buildOpportunityHubSummary(suggested, now);
+
+  check(
+    "A summary counts independent of selected tab",
+    pageSummary.recommendedCount === 1 &&
+      pageSummary.urgentCount === 1 &&
+      suggestedSummary.urgentCount === 0 &&
+      hub.includes("metrics={<FeedSummaryStrip items={feed} />}") &&
+      !hub.includes("FeedSummaryStrip items={visible}"),
+  );
+  check(
+    "B urgent total correct across views",
+    pageSummary.urgentCount === 1 &&
+      urgentView.length === 1 &&
+      urgentView[0]?.requestId === "urgent" &&
+      suggested.every((item) => item.requestId !== "urgent"),
+  );
+  check(
+    "C Personal recommended count follows match eligibility",
+    pageSummary.recommendedCount === 1 &&
+      isPersonalRecommendedEligible(recommended) &&
+      !isPersonalRecommendedEligible(urgentOnly) &&
+      !isPersonalRecommendedEligible(fresh),
+  );
+  check(
+    "D media mapper returns real primary image",
+    primaryRequestCoverImageUrl("https://cdn.example.com/car.jpg") ===
+      "https://cdn.example.com/car.jpg" &&
+      primaryRequestCoverImageUrl("  https://cdn.example.com/car.jpg  ") ===
+        "https://cdn.example.com/car.jpg" &&
+      feedSrc.includes("primaryRequestCoverImageUrl(req.coverImageUrl)") &&
+      detail.includes("coverImageUrl={request.coverImageUrl}"),
+  );
+  check(
+    "E fallback when no media",
+    primaryRequestCoverImageUrl(null) === null &&
+      primaryRequestCoverImageUrl("") === null &&
+      primaryRequestCoverImageUrl("   ") === null &&
+      primaryRequestCoverImageUrl("javascript:alert(1)") === null,
+  );
+  check(
+    "F OpportunityCard uses real media when available",
+    hub.includes("primaryRequestCoverImageUrl(item.coverImageUrl)") &&
+      hub.includes("allowCategoryStockImage={false}") &&
+      hub.includes("CategoryVisualThumb"),
+  );
+  check(
+    "G Keşfet card same media where supported",
+    exploreCard.includes("primaryRequestCoverImageUrl(coverImageUrl)") &&
+      exploreCard.includes("CategoryVisualThumb") &&
+      read("src/app/panel/talepler/page.tsx").includes(
+        "coverImageUrl={request.coverImageUrl}",
+      ),
+  );
+  check(
+    "H no fake image",
+    !hub.includes("unsplash") &&
+      !hub.includes("loremflickr") &&
+      !hub.includes("placeholder.com") &&
+      !feedSrc.includes("resolveRequestCoverImage") &&
+      !thumb.includes("resolveRequestCoverImage") &&
+      hub.includes("allowCategoryStockImage={false}"),
+  );
+  check(
+    "I no N+1 external/provider for media",
+    feedSrc.includes("coverImageUrl: true") &&
+      !/for \(const req of requests\)[\s\S]*resolveRequestCoverImage/.test(
+        feedSrc,
+      ) &&
+      !thumb.includes("fetch(") &&
+      !hub.includes("resolveRequestCoverImage"),
+  );
+  check(
+    "J recommendation rules preserved",
+    isPersonalRecommendedEligible(yonetici) &&
+      !isPersonalRecommendedEligible(iphone) &&
+      eligibility.includes("hasGroundedPersonalMatch") &&
+      eligibility.includes("isWorkspaceRecommendedEligible"),
+  );
+  check(
+    "K Personal/Workspace isolation",
+    !isWorkspaceRecommendedEligible(yonetici) &&
+      isWorkspaceRecommendedEligible({
+        context: "WORKSPACE",
+        matchScore: null,
+        matchReasons: [],
+        opportunityClassification: "HOT",
+        isUrgent: true,
+      }) &&
+      pageSummary.recommendedCount ===
+        universe.filter(isRecommendedEligible).length,
+  );
+  check(
+    "L routing",
+    opportunityRequestDetailHref("abc") === "/panel/talepler/abc" &&
+      hub.includes("Talebi incele"),
+  );
+  check(
+    "M Saved Search regression",
+    isPersonalRecommendedEligible(yonetici) &&
+      read("src/server/monetization/personal-matching.ts").includes(
+        "evaluateDiscoveryFilter",
+      ),
+  );
+  check(
+    "N nested form regression source present",
+    existsSync(join(root, "scripts/verify-saved-search-nested-form-v1.ts")),
+  );
+  check(
+    "new count uses 24h freshness not selected tab",
+    pageSummary.newCount === 1 &&
+      isFreshOpportunity(fresh, now) &&
+      !isFreshOpportunity(recommended, now),
+  );
+  check(
+    "strongest signal from recommended set not tab average",
+    pageSummary.strongestSignalScore === 62 &&
+      pageSummary.strongestSignalConfidence === 0.8 &&
+      buildOpportunityHubSummary([], now).strongestSignalScore === null,
   );
 }
 

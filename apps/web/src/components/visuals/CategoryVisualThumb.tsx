@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+
+import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 
 type ThumbSize = "sm" | "md" | "lg" | "badge";
@@ -41,21 +46,23 @@ export function CategoryVisualThumb({
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
   const label = categoryName || "Kategori";
-  const realCover = coverImageUrl?.trim() || null;
+  const realCover = primaryRequestCoverImageUrl(coverImageUrl);
+  const stockCover = allowCategoryStockImage ? look.image || null : null;
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const resolvedCover =
-    realCover || (allowCategoryStockImage ? look.image || null : null);
+    [realCover, stockCover].find((src) => src && src !== failedSrc) ?? null;
 
   if (resolvedCover) {
     return (
       <div
         className={`relative shrink-0 overflow-hidden bg-[#0b1220] shadow-sm ring-1 ring-black/[0.08] ${SIZE_CLASS[size]} ${className}`}
-        aria-hidden
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={resolvedCover}
-          alt=""
+          alt={label}
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+          onError={() => setFailedSrc(resolvedCover)}
         />
         <span
           className={`absolute bottom-1.5 left-1.5 flex h-7 w-7 items-center justify-center rounded-lg bg-white/90 shadow-sm ring-1 ${look.ring}`}

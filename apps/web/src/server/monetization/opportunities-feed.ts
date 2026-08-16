@@ -1,3 +1,4 @@
+import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import { prisma } from "@/lib/prisma";
 
 import { evaluateBudgetOpportunity } from "./budget-opportunity";
@@ -198,7 +199,7 @@ export async function buildOpportunitiesFeed(
       title: req.title,
       categoryName: req.category.name,
       categorySlug: req.category.slug,
-      coverImageUrl: req.coverImageUrl,
+      coverImageUrl: primaryRequestCoverImageUrl(req.coverImageUrl),
       city: req.city,
       isUrgent: req.isUrgent,
       budgetLabel: formatBudget(budgetMin, budgetMax, req.currency),

@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { buildOpportunityHubSummary } from "@/lib/panel/opportunity-hub-summary";
 import { opportunityRequestDetailHref } from "@/lib/panel/opportunity-request-detail-href";
 import {
   selectOpportunityHubItems,
@@ -24,6 +25,7 @@ import {
   type OpportunityHubView,
 } from "@/lib/panel/opportunity-recommended-eligibility";
 import { isOpportunitySaveSupported } from "@/lib/panel/opportunity-save-support";
+import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 
@@ -75,19 +77,6 @@ function fitBadgeLabel(
 
 function dataConfidenceLabel(confidence: number): string {
   return confidence >= 0.7 ? "Yeterli" : confidence >= 0.4 ? "Orta" : "Sınırlı";
-}
-
-function isPublishedToday(item: OpportunityFeedItem): boolean {
-  const raw = item.publishedAt ?? item.createdAt;
-  if (!raw) return false;
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return false;
-  const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
 }
 
 function freshnessLabel(item: OpportunityFeedItem): string {
@@ -221,7 +210,7 @@ function OpportunityCard({
         <CategoryVisualThumb
           categorySlug={item.categorySlug}
           categoryName={item.categoryName}
-          coverImageUrl={item.coverImageUrl}
+          coverImageUrl={primaryRequestCoverImageUrl(item.coverImageUrl)}
           size="sm"
           allowCategoryStockImage={false}
           className="self-start"
@@ -451,52 +440,44 @@ function OpportunityEmptyState() {
   );
 }
 
-function FeedSummaryStrip({
-  items,
-  view,
-}: {
-  items: OpportunityFeedItem[];
-  view: OpportunityHubView;
-}) {
+function FeedSummaryStrip({ items }: { items: OpportunityFeedItem[] }) {
   if (items.length === 0) return null;
-
-  const recommendedCount = items.filter(
-    (item) => item.matchScore != null && item.matchReasons.length > 0,
-  ).length;
-  const listedCount =
-    view === "suggested" ? recommendedCount || items.length : items.length;
-  const newTodayCount = items.filter(isPublishedToday).length;
-  const urgentCount = items.filter((item) => item.isUrgent).length;
-  const scores = items.map((item) => item.intelligence.opportunityScore);
-  const avgScore = Math.round(
-    scores.reduce((sum, score) => sum + score, 0) / scores.length,
-  );
-  const avgConfidence =
-    items.reduce((sum, item) => sum + item.intelligence.confidence, 0) /
-    items.length;
+  const summary = buildOpportunityHubSummary(items);
+  const confidenceLabel =
+    summary.strongestSignalConfidence != null
+      ? dataConfidenceLabel(summary.strongestSignalConfidence)
+      : null;
 
   return (
     <div className="flex flex-wrap gap-2">
       <OpportunitySummaryMetric
-        value={listedCount}
-        label={view === "suggested" ? "Önerilen fırsat" : "Fırsat"}
+        value={summary.recommendedCount}
+        label="Önerilen fırsat"
         toneClass="text-teal-800"
       />
       <OpportunitySummaryMetric
-        value={newTodayCount}
+        value={summary.newCount == null ? "—" : summary.newCount}
         label="Yeni"
         icon={<TrendingUp className="h-3.5 w-3.5 text-sky-600" aria-hidden />}
         toneClass="text-sky-700"
       />
       <OpportunitySummaryMetric
-        value={urgentCount}
+        value={summary.urgentCount}
         label="Acil"
         icon={<Zap className="h-3.5 w-3.5 text-amber-600" aria-hidden />}
         toneClass="text-amber-700"
       />
       <OpportunitySummaryMetric
-        value={`${avgScore}/100`}
-        label={`Veri güveni ${dataConfidenceLabel(avgConfidence)}`}
+        value={
+          summary.strongestSignalScore != null
+            ? `${summary.strongestSignalScore}/100`
+            : "—"
+        }
+        label={
+          confidenceLabel
+            ? `En güçlü sinyal · Veri güveni ${confidenceLabel}`
+            : "En güçlü sinyal"
+        }
         icon={<Shield className="h-3.5 w-3.5 text-teal-700" aria-hidden />}
         toneClass="text-teal-800"
       />
@@ -633,7 +614,7 @@ export function OpportunitiesHub({
         }
         showEmpty
         chrome="plain"
-        metrics={<FeedSummaryStrip items={visible} view={view} />}
+        metrics={<FeedSummaryStrip items={feed} />}
         renderItem={renderCard}
       />
 

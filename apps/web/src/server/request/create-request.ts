@@ -240,6 +240,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         isFeatured,
         featuredUntil,
         visibleToSuppliersAt,
+        coverImageUrl: input.coverImageUrl ?? null,
         fieldValues: {
           create: input.fields.flatMap((field) => {
             const fieldId = formFields.get(field.key);
