@@ -1,3 +1,4 @@
+import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-search-canonical";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 
 /** Build /panel/talepler URL from a saved search filter payload. */
@@ -87,6 +88,9 @@ export function exploreFiltersToSavedSearch(input: {
       leafExact: input.leafExact || undefined,
     };
   }
+
+  const resolved = canonicalFilterFromSavedSearchFilters(filters);
+  if (resolved) filters.canonical = resolved;
 
   return filters;
 }

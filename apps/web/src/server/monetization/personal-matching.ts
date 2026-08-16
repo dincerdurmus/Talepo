@@ -4,8 +4,20 @@ import {
   parseDiscoveryProjection,
   validateCanonicalDiscoveryFilter,
 } from "@/lib/discovery";
+import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-search-canonical";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
+
+export const PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX =
+  "Kayıtlı aramanızla eşleşiyor:";
+
+export function formatPersonalSavedSearchMatchReason(name: string): string {
+  return `${PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX} ${name}`;
+}
+
+export function formatPersonalAlertRuleMatchReason(name: string): string {
+  return `Alarm tercihinizle eşleşiyor: ${name}`;
+}
 
 export type PersonalMatchResult = {
   source: "PERSONAL";
@@ -54,7 +66,11 @@ export async function matchPersonalToRequest(
     }),
     prisma.alertRule.findMany({
       where: { ownerType: "USER", userId, isActive: true },
-      select: { name: true, discoveryFilter: true },
+      select: {
+        name: true,
+        discoveryFilter: true,
+        category: { select: { slug: true } },
+      },
       take: 100,
     }),
   ]);
@@ -62,17 +78,26 @@ export async function matchPersonalToRequest(
   const reasons: string[] = [];
   for (const search of savedSearches) {
     const filters = search.filters as SavedSearchFilters;
-    const canonical = validateCanonicalDiscoveryFilter(filters?.canonical);
+    const resolved = canonicalFilterFromSavedSearchFilters(filters);
+    const canonical = validateCanonicalDiscoveryFilter(resolved);
     if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
     const result = evaluateDiscoveryFilter(projection, canonical.filter);
-    if (result.match) reasons.push(`Kayıtlı aramanızla eşleşiyor: ${search.name}`);
+    if (result.match) {
+      reasons.push(formatPersonalSavedSearchMatchReason(search.name));
+    }
   }
 
   for (const rule of alertRules) {
-    const canonical = validateCanonicalDiscoveryFilter(rule.discoveryFilter);
+    const resolved = canonicalFilterFromSavedSearchFilters({
+      categorySlug: rule.category?.slug,
+      canonical: rule.discoveryFilter,
+    });
+    const canonical = validateCanonicalDiscoveryFilter(resolved);
     if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
     const result = evaluateDiscoveryFilter(projection, canonical.filter);
-    if (result.match) reasons.push(`Alarm tercihinizle eşleşiyor: ${rule.name}`);
+    if (result.match) {
+      reasons.push(formatPersonalAlertRuleMatchReason(rule.name));
+    }
   }
 
   if (reasons.length === 0) {

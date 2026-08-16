@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
+import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-search-canonical";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import {
   ownerCreateData,
@@ -14,22 +15,35 @@ import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 function normalizeSavedSearchFilters(
   filters: SavedSearchFilters,
 ): { ok: true; filters: SavedSearchFilters } | { ok: false; message: string } {
-  if (!filters.canonical) {
-    return { ok: true, filters: { ...filters, version: filters.version ?? 1 } };
-  }
-  const validated = validateCanonicalDiscoveryFilter(filters.canonical);
-  if (!validated.ok) {
+  if (filters.canonical) {
+    const validated = validateCanonicalDiscoveryFilter(filters.canonical);
+    if (!validated.ok) {
+      return {
+        ok: false,
+        message: validated.errors[0] ?? "Geçersiz canonical filter.",
+      };
+    }
+    const withCanonical: SavedSearchFilters = {
+      ...filters,
+      version: 1,
+      canonical: validated.filter,
+    };
+    const resolved = canonicalFilterFromSavedSearchFilters(withCanonical);
     return {
-      ok: false,
-      message: validated.errors[0] ?? "Geçersiz canonical filter.",
+      ok: true,
+      filters: resolved
+        ? { ...withCanonical, canonical: resolved }
+        : withCanonical,
     };
   }
+
+  const resolved = canonicalFilterFromSavedSearchFilters(filters);
   return {
     ok: true,
     filters: {
       ...filters,
-      version: 1,
-      canonical: validated.filter,
+      version: filters.version ?? 1,
+      ...(resolved ? { canonical: resolved } : {}),
     },
   };
 }

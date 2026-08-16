@@ -47,6 +47,23 @@ function fitLabel(level: OpportunityFeedItem["intelligence"]["fitLevel"]) {
   return level === "STRONG" ? "Çok uygun" : level === "PROMISING" ? "Uygun" : level === "LIMITED" ? "Kısmen uygun" : "Uygunluk için yeterli veri yok";
 }
 
+function uniqueNonEmpty(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+/** Match reasons first; opportunity signals without duplicating the same line. */
+function opportunityCardReasons(item: OpportunityFeedItem): {
+  fitReasons: string[];
+  extraReasons: string[];
+} {
+  const fitReasons = uniqueNonEmpty(item.matchReasons);
+  const seen = new Set(fitReasons);
+  const extraReasons = uniqueNonEmpty(item.opportunityReasons).filter(
+    (reason) => !seen.has(reason),
+  );
+  return { fitReasons, extraReasons };
+}
+
 function OpportunityCard({
   item,
   onWatchlistToggle,
@@ -61,6 +78,7 @@ function OpportunityCard({
     GOOD: "border-teal-200 bg-teal-50/40",
     NORMAL: "border-teal-900/8 bg-white",
   };
+  const { fitReasons, extraReasons } = opportunityCardReasons(item);
 
   return (
     <article
@@ -131,12 +149,33 @@ function OpportunityCard({
         </div>
       </div>
 
-      {item.opportunityReasons.length > 0 ? (
-        <ul className="mt-2 space-y-0.5 text-xs text-teal-950/55">
-          {item.opportunityReasons.slice(0, 3).map((reason) => (
-            <li key={reason}>• {reason}</li>
-          ))}
-        </ul>
+      {fitReasons.length > 0 || extraReasons.length > 0 ? (
+        <div className="mt-3 space-y-2">
+          {fitReasons.length > 0 ? (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
+                Neden sana uygun
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-teal-950/55">
+                {fitReasons.slice(0, 3).map((reason) => (
+                  <li key={reason}>• {reason}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {extraReasons.length > 0 ? (
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
+                Fırsat neden ilginç
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-teal-950/55">
+                {extraReasons.slice(0, 3).map((reason) => (
+                  <li key={reason}>• {reason}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="mt-3 rounded-xl border border-amber-900/10 bg-amber-50/60 px-3 py-2">
