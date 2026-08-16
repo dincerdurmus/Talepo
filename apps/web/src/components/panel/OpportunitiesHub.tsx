@@ -31,6 +31,18 @@ const BUDGET_LABELS = {
   ABOVE_MARKET: "Piyasa üstü",
 } as const;
 
+const ACTION_LABELS = {
+  PREPARE_OFFER: "Teklif hazırlamaya değer",
+  REVIEW_REQUEST: "Talebi ayrıntılı incele",
+  CHECK_INVENTORY: "Envanteri kontrol et",
+  WAIT_FOR_MORE_INFO: "Daha fazla bilgi bekle",
+  SKIP: "Şimdilik bekle",
+} as const;
+
+function fitLabel(level: OpportunityFeedItem["intelligence"]["fitLevel"]) {
+  return level === "STRONG" ? "Çok uygun" : level === "PROMISING" ? "Uygun" : level === "LIMITED" ? "Kısmen uygun" : "Uygunluk için yeterli veri yok";
+}
+
 function OpportunityCard({
   item,
   onWatchlistToggle,
@@ -53,17 +65,10 @@ function OpportunityCard({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            {item.opportunityClassification === "HOT" ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                <Flame className="h-3 w-3" />
-                Sıcak
-              </span>
-            ) : item.opportunityClassification === "GOOD" ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-teal-700 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
-                <TrendingUp className="h-3 w-3" />
-                İyi fırsat
-              </span>
-            ) : null}
+            <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800">
+              <TrendingUp className="h-3 w-3" />
+              {fitLabel(item.intelligence.fitLevel)}
+            </span>
             {item.isUrgent ? (
               <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
                 Acil
@@ -105,32 +110,21 @@ function OpportunityCard({
         </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-        <span className="rounded-full bg-teal-950 px-2 py-0.5 font-semibold text-white">
-          Fırsat {item.intelligence.opportunityScore}%
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {item.intelligence.fitLevel === "STRONG" ? "Güçlü uyum" : item.intelligence.fitLevel === "PROMISING" ? "Umut verici" : "İnceleme gerekli"}
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {item.intelligence.recommendedAction === "PREPARE_OFFER" ? "Teklif hazırla" : item.intelligence.recommendedAction === "CHECK_INVENTORY" ? "Envanteri kontrol et" : "Talebi incele"}
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {item.opportunityClassification === "HOT"
-            ? "Yüksek eşleşme"
-            : item.opportunityClassification === "GOOD"
-              ? "Orta eşleşme"
-              : "Genel fırsat"}
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {COMPETITION_LABELS[item.competition]}
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {BUDGET_LABELS[item.budgetStatus]}
-        </span>
-        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
-          {item.offerCount} teklif
-        </span>
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-xl bg-teal-50/70 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">Sana uygunluk</p>
+          <p className="mt-1 text-sm font-semibold text-teal-950">{fitLabel(item.intelligence.fitLevel)}</p>
+        </div>
+        <div className="rounded-xl bg-blue-50/70 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-800/65">Rekabet</p>
+          <p className="mt-1 text-sm font-semibold text-blue-950">{COMPETITION_LABELS[item.competition]}</p>
+          <p className="mt-0.5 text-[11px] text-blue-950/55">{item.offerCount} teklif · anonim sinyal</p>
+        </div>
+        <div className="rounded-xl bg-violet-50/70 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-violet-800/65">Fırsat değerlendirmesi</p>
+          <p className="mt-1 text-sm font-semibold text-violet-950">{item.intelligence.opportunityScore}% · {item.intelligence.confidence >= 0.7 ? "güvenilir sinyal" : "sınırlı veri"}</p>
+          <p className="mt-0.5 text-[11px] text-violet-950/55">{BUDGET_LABELS[item.budgetStatus]}</p>
+        </div>
       </div>
 
       {item.opportunityReasons.length > 0 ? (
@@ -141,11 +135,18 @@ function OpportunityCard({
         </ul>
       ) : null}
 
-      {item.intelligence.risks.length > 0 ? (
-        <p className="mt-2 text-xs text-amber-900/70">
-          Belirsizlik: {item.intelligence.risks[0]}
-        </p>
-      ) : null}
+      <div className="mt-3 rounded-xl border border-amber-900/10 bg-amber-50/60 px-3 py-2">
+        <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-amber-900/70">Risk / eksik bilgi</p>
+        <p className="mt-1 text-xs text-amber-950/75">{item.intelligence.risks[0] ?? "Belirgin bir risk sinyali yok."}</p>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-teal-950/[0.04] px-3 py-2.5">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-teal-900/55">Önerilen aksiyon</p>
+          <p className="mt-0.5 text-sm font-semibold text-teal-950">{ACTION_LABELS[item.intelligence.recommendedAction]}</p>
+        </div>
+        <Link href={`/panel/talepler/${item.requestId}`} className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2">Fırsatı incele →</Link>
+      </div>
 
       {item.recentChanges.length > 0 ? (
         <div className="mt-3 rounded-xl bg-amber-50/80 px-3 py-2">
@@ -171,14 +172,17 @@ function Section({
   icon,
   items,
   empty,
+  showEmpty = false,
   renderItem,
 }: {
   title: string;
   icon: React.ReactNode;
   items: OpportunityFeedItem[];
   empty: string;
+  showEmpty?: boolean;
   renderItem: (item: OpportunityFeedItem) => React.ReactNode;
 }) {
+  if (items.length === 0 && !showEmpty) return null;
   return (
     <section className="rounded-[28px] border border-teal-900/8 bg-white p-6">
       <div className="flex items-center gap-2">
@@ -236,10 +240,11 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
   return (
     <div className="space-y-6">
       <Section
-        title="Sıcak fırsatlar"
+        title="Sana önerilen fırsatlar"
         icon={<Flame className="h-5 w-5 text-orange-600" />}
         items={hot}
-        empty="Şu an GOOD/HOT sınıflı açık talep yok."
+        empty="Şu anda öne çıkan güçlü bir fırsat bulunmuyor."
+        showEmpty
         renderItem={(item) => (
           <OpportunityCard
             key={item.requestId}
@@ -265,18 +270,7 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
             />
           )}
         />
-      ) : (
-        <section className="rounded-[28px] border border-dashed border-teal-900/12 bg-teal-50/30 p-6">
-          <div className="flex items-center gap-2 text-teal-800/70">
-            <Wallet className="h-5 w-5" />
-            <h2 className="text-base font-semibold text-teal-950">Yüksek bütçe fırsatları</h2>
-          </div>
-          <p className="mt-2 text-sm text-teal-950/55">
-            Yeterli anonim piyasa verisi oluştuğunda piyasa üstü bütçeli talepler burada
-            gösterilecek.
-          </p>
-        </section>
-      )}
+      ) : null}
 
       <Section
         title="Kaydettiklerim"

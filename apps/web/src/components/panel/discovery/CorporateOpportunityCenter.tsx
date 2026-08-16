@@ -287,14 +287,14 @@ export function CorporateOpportunityCenter({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-              Corporate Opportunity Center
+              Fırsat operasyonu
             </p>
             <h2 className="mt-1 text-xl font-semibold text-teal-950">
               {companyName} fırsat operasyonu
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-teal-950/55">
-              Keşfet → Nitelendir → Ata → Takip et → Teklif ver. Master Taxonomy ve
-              canonical discovery üzerine kuruludur.
+              Keşfet → değerlendir → ata → takip et → teklif ver. Gerçek talep ve
+              eşleşme verileriyle çalışır.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
@@ -303,7 +303,7 @@ export function CorporateOpportunityCenter({
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
             >
               <Search className="h-3.5 w-3.5" />
-              Taxonomy keşif
+              Kategorilere göre keşfet
             </Link>
             <Link
               href="/panel/kayitli-aramalar"

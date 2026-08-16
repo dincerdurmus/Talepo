@@ -181,14 +181,14 @@ export default async function OpportunitiesPage({
           {showCorporateOps ? "Corporate" : "Profesyonel"}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
-          {showCorporateOps ? "Opportunity Center" : companyId ? "Fırsatlar" : "Kişisel fırsatlar"}
+          {showCorporateOps ? "Fırsatlar" : companyId ? "Fırsatlar" : "Kişisel fırsatlar"}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
           {showCorporateOps
-            ? "Şirket fırsatlarını keşfedin, ekibe dağıtın, takip edin ve teklife bağlayın."
+            ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
             : companyId
-              ? "Taxonomy ile keşfedin, kategoriyi takip edin, alarm kurun — Talepo sizin için fırsat avlasın."
-              : "Kişisel Pro fırsatlarını, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
+              ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
+              : "Kişisel fırsatları, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
           {isCorporatePlan ? (
@@ -196,14 +196,14 @@ export default async function OpportunitiesPage({
               href="/panel/firsatlar?view=ops"
               className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
             >
-              Opportunity Center
+              Operasyon görünümü
             </Link>
           ) : null}
           <Link
             href="/panel/firsatlar?view=browse"
             className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
           >
-            Taxonomy keşif
+            Kategorilere göre keşfet
           </Link>
           <Link
             href="/panel/talepler"

@@ -328,7 +328,7 @@ export function ProfessionalDiscoveryWorkspace({
                     : "Keşif sonuçları"}
               </h2>
               <p className="mt-1 text-sm text-teal-950/50">
-                Phase 3A canonical projection — talep metni yeniden parse edilmez.
+                Mevcut talep ve eşleşme verileriyle oluşturulan keşif sonuçları.
               </p>
             </div>
             <p className="text-xs font-medium text-teal-900/45">
