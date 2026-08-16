@@ -436,7 +436,7 @@ export function PlanManager({
                 <div key={group.id}>
                   <div className="mb-2 flex items-center gap-2">
                     <span className={`h-2 w-2 rounded-full ${group.accent === "cyan" ? "bg-cyan-500" : group.accent === "blue" ? "bg-blue-500" : group.accent === "violet" ? "bg-violet-500" : "bg-emerald-500"}`} />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/62">{group.title}</h4>
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/72">{group.title}</h4>
                     <span className="h-px flex-1 bg-teal-900/10" />
                     <FeatureInfoTooltip feature={pillarKey} />
                   </div>
@@ -451,13 +451,13 @@ export function PlanManager({
                           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-2">
-                              <span className="text-sm font-semibold text-[#102522]">{meta.label}</span>
+                              <span className="text-[13px] font-bold text-[#102522]">{meta.label}</span>
                               {visual.badge && <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] ${visual.badgeClass}`}>{visual.badge}</span>}
                             </span>
-                            <span className="mt-0.5 block text-xs leading-5 text-black/52">{meta.description}</span>
+                            <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{meta.description}</span>
                           </span>
                           <FeatureInfoTooltip feature={key} />
-                          {href && <Link href={href} className={`shrink-0 text-xs font-bold opacity-70 transition group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</Link>}
+                          {href && <Link href={href} className={`shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</Link>}
                         </li>
                       );
                     })}

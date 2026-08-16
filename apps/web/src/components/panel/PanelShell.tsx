@@ -383,7 +383,7 @@ function PersonalSidebar({
   const navGroups = [
     { label: "Genel", items: navItems.filter((item) => ["/", "/panel"].includes(item.href)) },
     { label: "Talep & teklif", items: navItems.filter((item) => ["/panel/taleplerim", "/panel/gelen-teklifler", "/panel/talepler", "/panel/teklifler"].includes(item.href)) },
-    { label: "Pro araçları", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
+    { label: "Araçlar", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
     { label: "Hesap", items: navItems.filter((item) => ["/panel/mesajlar", "/panel/profil"].includes(item.href)) },
   ].filter((group) => group.items.length > 0);
 
@@ -433,18 +433,18 @@ function PersonalSidebar({
           title="Yeni talep"
           aria-label="Yeni talep"
           className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[13px] text-[13px] font-bold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
-            collapsed ? "h-10 w-10" : "gap-2 px-4 py-2.5"
+            collapsed ? "h-10 w-10" : "h-11 gap-2 px-4"
           }`}
         >
-          <Plus className="h-4 w-4" />
+          <Plus className="h-[17px] w-[17px]" strokeWidth={2.25} />
           {!collapsed && <span>Yeni talep</span>}
         </Link>
       </div>
 
-      <nav className={`mt-7 space-y-5 ${collapsed ? "px-0" : ""}`}>
+        <nav className={`mt-7 space-y-5 ${collapsed ? "px-0" : ""}`}>
         {navGroups.map((group) => (
           <div key={group.label}>
-            {!collapsed && <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-950/48">{group.label}</p>}
+            {!collapsed && <p className="mb-2 px-2.5 text-[10px] font-bold uppercase tracking-[0.19em] text-teal-950/60">{group.label}</p>}
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <SidebarLink key={`${item.href}-${item.label}`} href={item.href} icon={item.icon} label={item.label} active={isNavActive(pathname, item.href, item.exact)} collapsed={collapsed} badge={item.href === "/panel/mesajlar" && unreadMessages > 0 ? String(unreadMessages) : undefined} />
@@ -711,10 +711,10 @@ function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`group relative flex items-center rounded-[11px] text-[13px] font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
+          className={`group relative flex items-center rounded-[11px] text-[13.5px] font-semibold leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
-          : "gap-3 px-2.5 py-2"
+          : "gap-3 px-2.5 py-2.5"
       } ${
         active
           ? "bg-[#d8ebe6] font-bold text-[#0b3b36] shadow-[inset_3px_0_0_#2d7770,0_5px_14px_rgba(31,94,87,0.08)]"
@@ -727,7 +727,7 @@ function SidebarLink({
         } ${
           active
             ? "bg-[#b9ddd5] text-[#0b5149]"
-            : "bg-[#e8f1ee] text-teal-950/62 group-hover:bg-white group-hover:text-[#0f1f1d]"
+            : "bg-[#e3efeb] text-teal-950/72 group-hover:bg-white group-hover:text-[#0f1f1d]"
         }`}
       >
         <Icon className="h-4 w-4" strokeWidth={1.75} />
