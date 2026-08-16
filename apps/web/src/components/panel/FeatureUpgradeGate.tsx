@@ -7,6 +7,7 @@ import { minimumPlanForFeature, type FeatureKey } from "@/lib/membership/entitle
 import { getPlanPricing } from "@/lib/membership/pricing-config";
 import { getPlanDefinition } from "@/lib/membership/plans";
 import { UPGRADE_COPY } from "@/lib/membership/upgrade-copy";
+import { getPublicProductLabel, PRO_VALUE_MESSAGES } from "@/lib/membership/product-packaging";
 
 type FeatureUpgradeGateProps = {
   feature: FeatureKey;
@@ -32,11 +33,11 @@ export function FeatureUpgradeGate({
   }
 
   const copy = UPGRADE_COPY[feature];
-  const title = titleProp ?? copy?.title ?? "Premium özellik";
+  const title = titleProp ?? copy?.title ?? "PRO özelliği";
   const description =
     descriptionProp ??
     copy?.description ??
-    "Bu özellik planınızda aktif değil.";
+    PRO_VALUE_MESSAGES[feature] ?? "Bu özellik PRO planında aktif.";
   const bullets = copy?.bullets;
   const ctaLabel = ctaLabelProp ?? copy?.cta ?? "Planları incele";
 
@@ -51,7 +52,7 @@ export function FeatureUpgradeGate({
           <Lock className="h-7 w-7" />
         </div>
         <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/45">
-          {plan.label} planı gerekli
+          {getPublicProductLabel(requiredTier)} gerekli
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-teal-950">
           {title}

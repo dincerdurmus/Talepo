@@ -11,9 +11,10 @@ import {
   getAvailablePlans,
   OFFER_CREDIT_PACKS,
 } from "@/lib/membership/plans";
+import { getPublicProductLabel } from "@/lib/membership/product-packaging";
 
 export function PricingPlans() {
-  const plans = getAvailablePlans();
+  const plans = getAvailablePlans().filter((plan) => plan.id === "STANDARD" || plan.id === "PROFESSIONAL");
 
   return (
     <section
@@ -86,7 +87,7 @@ export function PricingPlans() {
                   </div>
 
                   <h3 className="mt-5 text-xl font-semibold tracking-tight">
-                    {plan.label}
+                    {getPublicProductLabel(plan.id)}
                   </h3>
 
                   <p className="mt-2 min-h-[64px] text-sm leading-6 text-teal-950/45">
@@ -153,9 +154,9 @@ export function PricingPlans() {
             Ekip vs kişisel
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-teal-900/75">
-            Bireysel üyelik tek kullanıcı içindir. Şirketler Profesyonel
-            üyeliği firma hesabına tanımlar, dahil olan koltukları ekip
-            üyelerine rol ve yetkileriyle dağıtır.
+            PRO kişisel kullanımda gelişmiş intelligence motorlarını sunar;
+            Workspace context’inde aynı PRO değerini şirket envanteri ve ekip
+            yetkileriyle genişletir.
           </p>
         </div>
 
