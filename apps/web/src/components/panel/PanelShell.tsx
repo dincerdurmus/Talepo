@@ -380,9 +380,16 @@ function PersonalSidebar({
   collapsed: boolean;
   onToggle: () => void;
 }) {
+  const navGroups = [
+    { label: "Genel", items: navItems.filter((item) => ["/", "/panel"].includes(item.href)) },
+    { label: "Talep & teklif", items: navItems.filter((item) => ["/panel/taleplerim", "/panel/gelen-teklifler", "/panel/talepler", "/panel/teklifler"].includes(item.href)) },
+    { label: "Pro araçları", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz"].includes(item.href)) },
+    { label: "Hesap", items: navItems.filter((item) => ["/panel/plan", "/panel/mesajlar", "/panel/profil"].includes(item.href)) },
+  ].filter((group) => group.items.length > 0);
+
   return (
     <aside
-      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-teal-900/10 bg-[#f8fbfa] py-6 transition-[width,padding] duration-200 ease-out lg:flex ${
+      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[#d9e5e1] bg-[#f3f8f6] py-5 shadow-[8px_0_30px_rgba(15,47,43,0.035)] transition-[width,padding] duration-200 ease-out lg:flex ${
         collapsed ? "w-[72px] px-2" : "w-[268px] px-3.5"
       }`}
       data-plan={planTier}
@@ -397,7 +404,7 @@ function PersonalSidebar({
             href="/"
             aria-label="Ana sayfa"
             title="talepo"
-            className={`inline-flex items-center font-semibold tracking-[-0.05em] text-[#0f1f1d] ${
+              className={`inline-flex items-center font-semibold tracking-[-0.05em] text-[#0b2522] ${
               collapsed
                 ? "justify-center text-xl"
                 : "gap-2.5 px-2.5 text-[26px]"
@@ -412,7 +419,7 @@ function PersonalSidebar({
                 <span>
                   tale<span className="text-teal-800/40">po</span>
                 </span>
-                <span className="rounded-md border border-teal-900/10 bg-white px-1.5 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-teal-900/55">
+                <span className="rounded-md border border-teal-900/10 bg-[#e8f2ef] px-1.5 py-0.5 text-[9px] font-bold tracking-[0.16em] text-teal-900/65">
                   PANEL
                 </span>
               </>
@@ -425,7 +432,7 @@ function PersonalSidebar({
           href="/talep"
           title="Yeni talep"
           aria-label="Yeni talep"
-          className={`talepo-plan-cta mt-6 flex items-center justify-center rounded-[14px] text-sm font-semibold shadow-[0_10px_22px_rgba(13,116,110,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(13,116,110,0.24)] ${
+          className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[13px] text-[13px] font-bold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
             collapsed ? "h-10 w-10" : "gap-2 px-4 py-2.5"
           }`}
         >
@@ -434,39 +441,30 @@ function PersonalSidebar({
         </Link>
       </div>
 
-      <nav className={`mt-6 space-y-0.5 ${collapsed ? "px-0" : ""}`}>
-        {!collapsed && (
-          <p className="mb-2 px-2.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-teal-900/35">
-            Menü
-          </p>
-        )}
-        {navItems.map((item) => (
-          <SidebarLink
-            key={`${item.href}-${item.label}`}
-            href={item.href}
-            icon={item.icon}
-            label={item.label}
-            active={isNavActive(pathname, item.href, item.exact)}
-            collapsed={collapsed}
-            badge={
-              item.href === "/panel/mesajlar" && unreadMessages > 0
-                ? String(unreadMessages)
-                : undefined
-            }
-          />
+      <nav className={`mt-7 space-y-5 ${collapsed ? "px-0" : ""}`}>
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            {!collapsed && <p className="mb-1.5 px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-950/48">{group.label}</p>}
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <SidebarLink key={`${item.href}-${item.label}`} href={item.href} icon={item.icon} label={item.label} active={isNavActive(pathname, item.href, item.exact)} collapsed={collapsed} badge={item.href === "/panel/mesajlar" && unreadMessages > 0 ? String(unreadMessages) : undefined} />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
       {!collapsed && (
         <div className="mt-auto px-0.5">
-          <div className={`rounded-2xl border px-3.5 py-3 ${isPaidPlan(planTier) ? "border-teal-800/20 bg-[#0f3d3a] text-white" : "border-teal-900/8 bg-white"}`}>
+          <div className={`relative overflow-hidden rounded-[18px] border px-4 py-4 ${isPaidPlan(planTier) ? "border-teal-800/25 bg-[#103b38] text-white shadow-[0_14px_28px_rgba(13,67,62,0.18)]" : "border-[#d8e5e1] bg-[#fbfdfc] shadow-[0_8px_20px_rgba(15,47,43,0.05)]"}`}>
+            {isPaidPlan(planTier) && <div className="pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full bg-violet-300/15 blur-2xl" />}
             <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${isPaidPlan(planTier) ? "text-teal-100/65" : "text-teal-800/55"}`}>
               {getPublicProductLabel(planTier, "PERSONAL")}
             </p>
-            <p className={`mt-1.5 text-xs leading-5 ${isPaidPlan(planTier) ? "text-white/75" : "text-teal-950/50"}`}>
+            <p className={`relative mt-2 text-xs leading-5 ${isPaidPlan(planTier) ? "text-white/75" : "text-teal-950/58"}`}>
               {isPaidPlan(planTier) ? "Fırsatı bul, analiz et, güçlü teklif ver ve doğru zamanda takip et." : "Temel talep ve teklif akışınız hazır."}
             </p>
-            <Link href="/panel/plan" className={`mt-2.5 inline-flex text-xs font-semibold ${isPaidPlan(planTier) ? "text-teal-100 hover:text-white" : "text-teal-800 hover:text-teal-950"}`}>
+            <Link href="/panel/plan" className={`relative mt-3 inline-flex text-xs font-bold ${isPaidPlan(planTier) ? "text-teal-100 hover:text-white" : "text-teal-800 hover:text-teal-950"}`}>
               {isPaidPlan(planTier) ? "Planı yönet →" : "PRO’yu keşfet →"}
             </Link>
           </div>
@@ -711,14 +709,14 @@ function SidebarLink({
       href={href}
       title={label}
       aria-label={label}
-      className={`group relative flex items-center rounded-lg text-[13px] font-medium transition ${
+      className={`group relative flex items-center rounded-[11px] text-[13px] font-semibold transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
           : "gap-3 px-2.5 py-2"
       } ${
         active
-          ? "talepo-plan-nav-active"
-          : "text-teal-950/55 hover:bg-white hover:text-[#0f1f1d]"
+          ? "bg-[#d8ebe6] font-bold text-[#0b3b36] shadow-[inset_3px_0_0_#2d7770,0_5px_14px_rgba(31,94,87,0.08)]"
+          : "text-teal-950/68 hover:bg-[#e7f1ee] hover:text-[#0f1f1d]"
       }`}
     >
       <span
@@ -726,8 +724,8 @@ function SidebarLink({
           collapsed ? "h-8 w-8" : "h-8 w-8"
         } ${
           active
-            ? "bg-white/10 text-white"
-            : "bg-transparent text-teal-950/45 group-hover:text-[#0f1f1d]"
+            ? "bg-[#b9ddd5] text-[#0b5149]"
+            : "bg-[#e8f1ee] text-teal-950/62 group-hover:bg-white group-hover:text-[#0f1f1d]"
         }`}
       >
         <Icon className="h-4 w-4" strokeWidth={1.75} />

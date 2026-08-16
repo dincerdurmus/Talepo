@@ -40,6 +40,20 @@ export type CompanyOption = {
   name: string;
 };
 
+const DETAIL_GROUPS = [
+  { id: "capture", title: "Fırsatları yakala", accent: "cyan", keys: PRO_VALUE_PILLARS[0].features },
+  { id: "analyze", title: "Fırsatı analiz et", accent: "blue", keys: PRO_VALUE_PILLARS[1].features },
+  { id: "offer", title: "Daha güçlü teklif ver", accent: "violet", keys: PRO_VALUE_PILLARS[2].features },
+  { id: "follow-up", title: "Satışı takip et", accent: "mint", keys: ["budget_change_alerts", "watchlist"] as const },
+] as const;
+
+const PILLAR_FEATURE_KEY: Record<string, keyof typeof FEATURE_META> = {
+  capture: "smart_matching",
+  analyze: "advanced_opportunity_analysis",
+  offer: "ai_offer_assistant",
+  "follow-up": "watchlist",
+};
+
 type BillingStatusProps = {
   subscriptionStatus?: string;
   pendingCheckout?: boolean;
@@ -384,12 +398,14 @@ export function PlanManager({
 
       <section className="relative overflow-hidden rounded-[28px] border border-teal-900/15 bg-[#0d302d] p-6 text-white shadow-[0_24px_70px_rgba(9,55,50,0.18)] sm:p-8">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-300/10 blur-[70px]" />
+        <div className="pointer-events-none absolute bottom-[-8rem] left-1/3 h-64 w-64 rounded-full bg-violet-400/10 blur-[90px]" />
+        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] [background-size:32px_32px]" />
         <div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-teal-200/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100">PRO intelligence</span><span className="text-xs text-white/45">Fırsat → teklif → takip</span></div>
         <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Talepo yalnızca talepleri göstermez.</h3>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-50/70 sm:text-base">Hangi fırsata odaklanmanız gerektiğini, nasıl teklif vermenizi ve ne zaman takip etmenizi anlamanıza yardımcı olur.</p></div>
         <div className="relative mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {PRO_VALUE_PILLARS.map((pillar, index) => (
-            <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
+            <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 xl:not-last:after:absolute xl:not-last:after:-right-3 xl:not-last:after:top-1/2 xl:not-last:after:h-px xl:not-last:after:w-3 xl:not-last:after:bg-white/20 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
               <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} /></div>
               <h4 className="mt-5 font-semibold text-white">{pillar.title}</h4><p className="mt-2 text-sm leading-6 text-white/60">{pillar.description}</p>
               <p className="mt-4 text-[11px] font-medium leading-5 text-white/45">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).slice(0, 3).join(" · ") || "Takip önerisi · kullanıcı onayı"}</p>
@@ -402,64 +418,55 @@ export function PlanManager({
         <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
           Ayrıntılı özellikleriniz
         </h3>
-        <p className="mt-2 text-sm text-black/45">
-          Geçerli planınıza göre açılan özellikler.
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-black/52">
+          Geçerli planınıza göre açılan özellikler; fırsatı bulmadan takibe kadar tek bir akışta.
         </p>
-        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+        <div className="mt-6 space-y-6">
           {activeFeatureKeys.length === 0 ? (
-            <li className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50 sm:col-span-2">
+            <p className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50">
               Bireysel planda temel teklif hakkı dışında profesyonel özellik yok.
               Yükseltme ile AI asistan, anında erişim ve uyarı kuralları açılır.
-            </li>
+            </p>
           ) : (
-            activeFeatureKeys.map((key) => {
-              const meta = FEATURE_META[key];
-              const visual = getFeatureVisual(key);
-              const Icon = visual.icon;
-              const href = visual.href ?? meta.surface;
-              const cta = visual.cta ?? "Aç →";
-
+            DETAIL_GROUPS.map((group) => {
+              const groupKeys = group.keys.filter((key) => activeFeatureKeys.includes(key));
+              if (groupKeys.length === 0) return null;
+              const pillarKey = PILLAR_FEATURE_KEY[group.id];
               return (
-                <li
-                  key={key}
-                  className={`relative overflow-hidden rounded-[14px] border p-3.5 ${visual.border} bg-white/70 transition hover:border-teal-900/20 hover:bg-white ${visual.surface}`}
-                >
-                  <div
-                    className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-[32px] ${visual.glow}`}
-                  />
-                  <div className="relative flex items-start gap-3">
-                    <div
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${visual.iconWrap}`}
-                    >
-                      <Icon className={`h-4 w-4 ${visual.iconClass}`} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-[#0f172a]">{meta.label}</p>
-                        {visual.badge && (
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] ${visual.badgeClass}`}
-                          >
-                            {visual.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-black/45">{meta.description}</p>
-                      {href && (
-                        <Link
-                          href={href}
-                          className={`mt-3 inline-flex items-center gap-1 text-xs font-semibold ${visual.linkClass}`}
-                        >
-                          {cta}
-                        </Link>
-                      )}
-                    </div>
+                <div key={group.id}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${group.accent === "cyan" ? "bg-cyan-500" : group.accent === "blue" ? "bg-blue-500" : group.accent === "violet" ? "bg-violet-500" : "bg-emerald-500"}`} />
+                    <h4 className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/62">{group.title}</h4>
+                    <span className="h-px flex-1 bg-teal-900/10" />
+                    <FeatureInfoTooltip feature={pillarKey} />
                   </div>
-                </li>
+                  <ul className="divide-y divide-teal-900/10 rounded-[16px] border border-teal-900/10 bg-[#f8fbfa] px-3">
+                    {groupKeys.map((key) => {
+                      const meta = FEATURE_META[key];
+                      const visual = getFeatureVisual(key);
+                      const Icon = visual.icon;
+                      const href = visual.href ?? meta.surface;
+                      return (
+                        <li key={key} className="group/feature flex items-center gap-3 py-3 transition hover:px-1">
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold text-[#102522]">{meta.label}</span>
+                              {visual.badge && <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] ${visual.badgeClass}`}>{visual.badge}</span>}
+                            </span>
+                            <span className="mt-0.5 block text-xs leading-5 text-black/52">{meta.description}</span>
+                          </span>
+                          <FeatureInfoTooltip feature={key} />
+                          {href && <Link href={href} className={`shrink-0 text-xs font-bold opacity-70 transition group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</Link>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               );
             })
           )}
-        </ul>
+        </div>
       </section>
 
       {message && (
