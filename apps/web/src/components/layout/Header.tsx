@@ -231,6 +231,11 @@ export function Header({ tone = "default" }: HeaderProps) {
                   }`}
                 >
                   {session.user.name ?? "Kullanıcı"}
+                  {session.user.platformRole !== "USER" ? (
+                    <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white">
+                      A
+                    </span>
+                  ) : null}
                 </span>
 
                 <svg
@@ -264,6 +269,12 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <p className="mt-1 truncate text-xs text-teal-950/45">
                       {session.user.email ?? ""}
                     </p>
+
+                    {session.user.platformRole !== "USER" ? (
+                      <p className="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
+                        Talepo yöneticisi
+                      </p>
+                    ) : null}
 
                     {membershipNumber ? (
                       <MembershipNumberLabel membershipNumber={membershipNumber} />
@@ -321,6 +332,20 @@ export function Header({ tone = "default" }: HeaderProps) {
                     >
                       Profilim
                     </Link>
+
+                    {session.user.platformRole !== "USER" ? (
+                      <Link
+                        href="/admin"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="mt-1 flex items-center justify-between rounded-xl bg-[#071310] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#102421]"
+                      >
+                        AdminPanel
+                        <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#241a02]">
+                          Admin
+                        </span>
+                      </Link>
+                    ) : null}
                   </div>
 
                   <div className="border-t border-teal-900/6 py-1.5">

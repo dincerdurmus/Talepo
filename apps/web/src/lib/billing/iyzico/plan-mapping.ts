@@ -44,7 +44,7 @@ export function resolvePlanTierFromIyzicoPricingPlan(
   pricingPlanReferenceCode: string,
   env: NodeJS.ProcessEnv = process.env,
 ): PlanTierId | null {
-  for (const tier of ["PREMIUM", "PROFESSIONAL", "CORPORATE"] as PlanTierId[]) {
+  for (const tier of ["PREMIUM", "PROFESSIONAL", "CORPORATE"] as const) {
     const mapped = getIyzicoPricingPlanReferenceCode(tier, env);
     if (mapped && mapped === pricingPlanReferenceCode) return tier;
   }

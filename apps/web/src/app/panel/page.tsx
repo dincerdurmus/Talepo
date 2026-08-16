@@ -50,7 +50,7 @@ export default async function PanelPage() {
   let hasActiveCompany = false;
   let hasHiddenInventory = false;
   let planTier: PlanTierId = "STANDARD";
-  let planLabel = "Standart";
+  let planLabel = "Bireysel";
   let personalPlanMismatchDetail: string | null = null;
   let pendingInvite: { companyId: string; companyName: string } | null = null;
 
@@ -141,7 +141,7 @@ export default async function PanelPage() {
         </section>
       )}
 
-      {!hasActiveCompany && (
+      {!hasActiveCompany && planTier !== "STANDARD" && (
         <section className="relative mb-5 overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-5 py-5 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:px-6">
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-start gap-3">
@@ -260,7 +260,9 @@ export default async function PanelPage() {
             <QuickLink href="/panel/taleplerim" label="Taleplerim" />
             <QuickLink href="/panel/gelen-teklifler" label="Gelen teklifler" />
             <QuickLink href="/panel/mesajlar" label="Mesajlar" />
-            <QuickLink href="/panel/firma/yeni" label="Firma oluştur" />
+            {planTier !== "STANDARD" ? (
+              <QuickLink href="/panel/firma/yeni" label="Firma oluştur" />
+            ) : null}
             <QuickLink href="/panel/plan" label="Plan ve üyelik" />
             <QuickLink href="/panel/profil" label="Profil ayarları" />
           </div>

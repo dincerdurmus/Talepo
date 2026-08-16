@@ -9,10 +9,12 @@ import {
   MapPin,
   Phone,
   Search,
+  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
 import { ProfileEditor } from "@/components/panel/ProfileEditor";
+import { isPlatformAdminRole } from "@/lib/auth/platform-admin";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
@@ -38,6 +40,7 @@ export default async function ProfilePage() {
       district: true,
       country: true,
       biography: true,
+      platformRole: true,
       createdAt: true,
       _count: {
         select: {
@@ -52,6 +55,7 @@ export default async function ProfilePage() {
   if (!user) redirect("/giris?callbackUrl=/panel/profil");
 
   const initials = getInitials(user.name, user.email);
+  const isAdmin = isPlatformAdminRole(user.platformRole);
 
   return (
     <>
@@ -83,6 +87,11 @@ export default async function ProfilePage() {
               {user.name ?? "Kullanıcı"}
             </h2>
             <p className="mt-1 text-sm text-black/40">{user.email}</p>
+            {isAdmin ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.1em] text-amber-800">
+                <ShieldCheck className="h-4 w-4" /> Talepo yöneticisi
+              </p>
+            ) : null}
             <p className="mt-4 rounded-full bg-[#f3f3ef] px-3 py-1.5 text-xs font-semibold text-black/45">
               {entitlements.planLabel} plan
               {entitlements.isExpired ? " · süresi dolmuş" : ""}
@@ -133,6 +142,16 @@ export default async function ProfilePage() {
             <Crown className="h-4 w-4" />
             Planı yönet
           </Link>
+
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className="mt-3 flex items-center justify-center gap-2 rounded-full bg-[#071310] px-4 py-3 text-sm font-semibold text-white"
+            >
+              <ShieldCheck className="h-4 w-4 text-amber-300" />
+              AdminPanel
+            </Link>
+          ) : null}
         </aside>
 
         <section className="space-y-5">
@@ -178,6 +197,13 @@ export default async function ProfilePage() {
                 icon={ArrowRight}
                 label="Yeni talep oluştur"
               />
+              {isAdmin ? (
+                <QuickLink
+                  href="/admin"
+                  icon={ShieldCheck}
+                  label="AdminPanel"
+                />
+              ) : null}
             </div>
           </div>
         </section>

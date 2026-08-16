@@ -134,6 +134,24 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
     return capitalizeTurkish(subject);
   }
 
+  if (input.categoryId === "services") {
+    const rawSubject = cleanRaw
+      .replace(
+        /\b(?:arıyorum|ariyorum|istiyorum|yaptıracağım|yaptiracagim|yaptırmak|yaptirmak|yaptırıyorum|yaptiriyorum)\b/giu,
+        " ",
+      )
+      .replace(/[.!?]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const serviceType = values.serviceType?.trim();
+    const target = values.serviceLocation?.trim();
+    const subject = rawSubject || [target, serviceType].filter(Boolean).join(" ");
+    if (subject) {
+      const alreadyService = /\b(?:hizmet|servis|bakım|bakim)\b/iu.test(subject);
+      return `${capitalizeTurkish(subject)}${alreadyService ? "" : " hizmeti"} arıyorum`;
+    }
+  }
+
   if (input.categoryId === "printing") {
     const product =
       inferPrintingProductLabel(cleanRaw) ||
@@ -325,9 +343,10 @@ function composeAutomotiveOpening(
   const city = resolveCity(input, values);
   const needType = values.needType || "vehicle";
   const citySuffix = city ? ` (${city})` : "";
+  const year = formatModelYearPreference(values);
 
   if (needType === "part" || needType === "tire") {
-    const subject = [values.modelYear, values.brand, values.model]
+    const subject = [year, values.brand, values.model]
       .filter(Boolean)
       .join(" ");
     const part = values.part || (needType === "tire" ? "lastik" : "yedek parça");
@@ -346,7 +365,7 @@ function composeAutomotiveOpening(
     return `${capitalizeTurkish(service)} hizmeti talep ediyoruz${citySuffix}.`;
   }
 
-  const subject = [values.modelYear, values.brand, values.model]
+  const subject = [year, values.brand, values.model]
     .filter(Boolean)
     .join(" ");
   const condition = values.condition ? `, ${lowerTurkish(values.condition)}` : "";
@@ -593,7 +612,10 @@ function collectDetailLines(
   }
 
   for (const field of input.fields ?? []) {
-    const value = values[field.key]?.trim();
+    const value =
+      field.key === "modelYear"
+        ? formatModelYearPreference(values)
+        : values[field.key]?.trim();
     if (!value) continue;
 
     if (
@@ -660,6 +682,14 @@ function collectDetailLines(
   }
 
   return lines;
+}
+
+function formatModelYearPreference(
+  values: Record<string, string>,
+): string | undefined {
+  if (values.yearMin?.trim()) return `${values.yearMin.trim()} ve üzeri`;
+  if (values.yearMax?.trim()) return `${values.yearMax.trim()} ve altı`;
+  return values.modelYear?.trim() || undefined;
 }
 
 function resolveTitleQuantity(

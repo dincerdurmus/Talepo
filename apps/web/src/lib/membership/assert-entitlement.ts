@@ -104,7 +104,7 @@ export function assertCanAccessRequest(
   if (!canAccessRequest(ctx, request, now)) {
     throw new EntitlementError(
       "REQUEST_ACCESS_DELAYED",
-      "Bu talep henüz standart erişime açılmadı. Premium ile anında erişebilirsiniz.",
+      "Bu talep henüz bireysel erişime açılmadı. Profesyonel üyelikle anında erişebilirsiniz.",
       403,
     );
   }

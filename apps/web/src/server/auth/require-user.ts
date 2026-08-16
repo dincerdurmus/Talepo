@@ -25,6 +25,7 @@ export type AuthenticatedUser = {
   email: string | null;
   image: string | null;
   membershipNumber: string | null;
+  platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
   dbUnavailable: boolean;
 };
 

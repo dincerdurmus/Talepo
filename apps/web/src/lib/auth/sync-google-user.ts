@@ -102,6 +102,7 @@ type SessionUserFields = {
   email: string | null;
   image: string | null;
   membershipNumber: string | null;
+  platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
 };
 
 type SessionFallback = {
@@ -119,6 +120,7 @@ const userSelectBasic = {
 const userSelect = {
   ...userSelectBasic,
   membershipNumber: true,
+  platformRole: true,
 } as const;
 
 function isStaleMembershipFieldError(error: unknown): boolean {
@@ -137,6 +139,7 @@ async function findDbUser(
   email: string | null;
   image: string | null;
   membershipNumber: string | null;
+  platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
 } | null> {
   try {
     return await prisma.user.findUnique({
@@ -159,7 +162,7 @@ async function findDbUser(
 
     if (!basic) return null;
 
-    return { ...basic, membershipNumber: null };
+    return { ...basic, membershipNumber: null, platformRole: "USER" };
   }
 }
 
@@ -190,6 +193,7 @@ async function resolveDbUser(
     email: string | null;
     image: string | null;
     membershipNumber: string | null;
+    platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
   },
   fallback?: SessionFallback,
 ): Promise<{ user: SessionUserFields; dbUnavailable: false }> {
@@ -238,6 +242,7 @@ export async function resolveSessionUser(
           email,
           image: null,
           membershipNumber: null,
+          platformRole: "USER",
         },
         fallback,
       ),

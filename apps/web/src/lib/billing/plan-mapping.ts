@@ -75,14 +75,15 @@ export function assertCheckoutPlan(planTier: PlanTierId): PlanPriceMapping {
 export function resolvePlanTierFromProviderPriceId(
   providerPriceId: string,
 ): PlanTierId | null {
-  for (const tier of ["PREMIUM", "PROFESSIONAL", "CORPORATE"] as PlanTierId[]) {
-    const mapped = getPlanPriceMapping(tier).providerPriceId;
-    if (mapped && mapped === providerPriceId) return tier;
+  for (const tier of ["PREMIUM", "PROFESSIONAL", "CORPORATE"] as const) {
+    const generic = process.env[`TALEPO_PRICE_${tier}`]?.trim();
+    const iyzico = process.env[`TALEPO_IYZICO_PLAN_${tier}_MONTHLY`]?.trim();
+    if (generic === providerPriceId || iyzico === providerPriceId) return tier;
   }
   // Mock / test price IDs
   if (providerPriceId.startsWith("mock_price_")) {
     const tier = providerPriceId.replace("mock_price_", "").toUpperCase();
-    if (tier === "PREMIUM" || tier === "PROFESSIONAL" || tier === "CORPORATE") {
+    if (tier === "PROFESSIONAL") {
       return tier;
     }
   }

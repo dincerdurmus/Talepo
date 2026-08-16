@@ -42,7 +42,7 @@ export default async function PanelLayout({
   let workspace: PanelWorkspace = {
     mode: "personal",
     planTier: "STANDARD",
-    planLabel: "Standart",
+    planLabel: "Bireysel",
     quotaUnlimited: false,
     quotaRemaining: 5,
   };
@@ -131,6 +131,7 @@ export default async function PanelLayout({
         email: user.email,
         image: user.image,
         membershipNumber: user.membershipNumber,
+        platformRole: user.platformRole,
       }}
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}

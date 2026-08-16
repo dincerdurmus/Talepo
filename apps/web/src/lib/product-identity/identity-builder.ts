@@ -204,6 +204,48 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
       /^\d+$/.test(model ?? ""))
   ) {
     model = techProduct.canonical;
+    const titleRemainder = extractBrandFromText(input.title).remainder;
+    const normalizedRemainder = stripTrailingCapacitySuffix(titleRemainder).trim();
+    if (
+      normalizedRemainder &&
+      normalizedRemainder.toLocaleLowerCase("tr-TR").includes(
+        techProduct.canonical.toLocaleLowerCase("tr-TR"),
+      )
+    ) {
+      model = normalizedRemainder;
+    }
+  }
+  const inferredTechnologyRemainder = stripTrailingCapacitySuffix(
+    extractBrandFromText(input.title).remainder,
+  ).trim();
+  if (
+    catalogTechBrand &&
+    model &&
+    inferredTechnologyRemainder &&
+    inferredTechnologyRemainder.toLocaleLowerCase("tr-TR").includes(
+      model.toLocaleLowerCase("tr-TR"),
+    ) &&
+    !model.toLocaleLowerCase("tr-TR").includes(
+      inferredTechnologyRemainder.toLocaleLowerCase("tr-TR"),
+    )
+  ) {
+    model = inferredTechnologyRemainder;
+  }
+  if (techProduct) {
+    const titleRemainder = stripTrailingCapacitySuffix(
+      extractBrandFromText(input.title).remainder,
+    ).trim();
+    if (
+      titleRemainder &&
+      titleRemainder.toLocaleLowerCase("tr-TR").includes(
+        techProduct.canonical.toLocaleLowerCase("tr-TR"),
+      ) &&
+      !model?.toLocaleLowerCase("tr-TR").includes(
+        titleRemainder.toLocaleLowerCase("tr-TR"),
+      )
+    ) {
+      model = titleRemainder;
+    }
   }
 
   // Catalog manufacturer aliases (alfa → Alfa Romeo) — same path as tech, not a parallel map
@@ -275,6 +317,20 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     const brandPrefix = new RegExp(`^${brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*`, "i");
     const stripped = model.replace(brandPrefix, "").trim();
     model = stripped || null;
+  }
+
+  // Preserve a generic product-family token when the resolver returned only
+  // the compact model suffix (for example Galaxy / S24 Ultra).
+  if (catalogTechBrand && model) {
+    const titleModel = stripTrailingCapacitySuffix(
+      extractBrandFromText(input.title).remainder,
+    ).trim();
+    if (
+      titleModel &&
+      titleModel.toLocaleLowerCase("tr-TR").includes(model.toLocaleLowerCase("tr-TR"))
+    ) {
+      model = titleModel;
+    }
   }
 
   // Never use productType as model when productType is explicitly set

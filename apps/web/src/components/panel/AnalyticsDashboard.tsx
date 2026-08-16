@@ -203,7 +203,7 @@ export function BasicMarketInsights({
     <section className="rounded-[24px] border border-teal-900/8 bg-white p-6">
       <h2 className="text-lg font-semibold text-teal-950">Temel piyasa özeti</h2>
       <p className="mt-1 text-sm text-teal-950/50">
-        Son 30 günde anonim toplu veri (Premium)
+        Son 30 günde anonim toplu veri (Profesyonel)
       </p>
       <dl className="mt-4 grid gap-4 sm:grid-cols-3">
         <div>

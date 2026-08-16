@@ -42,6 +42,7 @@ export type PanelUser = {
   email: string | null;
   image: string | null;
   membershipNumber?: string | null;
+  platformRole?: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
 };
 
 export type PanelWorkspace = {
@@ -169,7 +170,7 @@ export function PanelShell({
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
             planTier={planTier}
-            planLabel={workspace?.planLabel ?? "Standart"}
+            planLabel={workspace?.planLabel ?? "Bireysel"}
             quotaUnlimited={workspace?.quotaUnlimited ?? true}
             quotaRemaining={workspace?.quotaRemaining ?? null}
             collapsed={collapsed}
@@ -260,6 +261,8 @@ export function PanelShell({
                   companyName={workspace?.companyName}
                   activeCompanyId={workspace?.companyId}
                   companies={companies}
+                  planTier={planTier}
+                  isAdmin={Boolean(user.platformRole && user.platformRole !== "USER")}
                 />
               </div>
             </header>

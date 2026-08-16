@@ -843,8 +843,8 @@ export function findAutomotiveModel(
   brand?: string,
 ): string | undefined {
   const modelTokenPattern = new RegExp(
-    `\\b(${AUTOMOTIVE_MODEL_TOKENS.map(escapeRegex).join("|")})\\b`,
-    "gi",
+    `(?<![\\p{L}\\p{N}])(${AUTOMOTIVE_MODEL_TOKENS.map(escapeRegex).join("|")})(?![\\p{L}\\p{N}])`,
+    "giu",
   );
   let known: RegExpExecArray | null;
   while ((known = modelTokenPattern.exec(text)) !== null) {
@@ -852,18 +852,19 @@ export function findAutomotiveModel(
     if (known[1]) return normalizeModelLabel(known[1]);
   }
 
-  // BMW / Mercedes dotted series: 3.20, 5.20, 1.16 — only with auto brand context
-  const dotted = text.match(/\b([1-8])\.([0-9]{2})\b/);
+  // BMW / Mercedes dotted series: 3.20, 3.20d, 5.20i, 1.16 — only
+  // with automotive brand context.
+  const dotted = text.match(/\b([1-8])\.([0-9]{2})([ijd])?\b/i);
   if (dotted) {
     const autoBrand = brand || findAutomotiveBrandInText(text);
     if (autoBrand) {
-      return `${dotted[1]}.${dotted[2]}`;
+      return `${dotted[1]}.${dotted[2]}${dotted[3]?.toLowerCase() ?? ""}`;
     }
   }
 
   // Compact series codes: 320i / 520d (letter suffix) always OK;
   // bare 3-digit (156, 320) only with automotive brand — never "140 ekran" / "256 GB".
-  const series = text.match(/\b([1-8][0-9]{2}[ijd]?)\b/i);
+  const series = text.match(/\b([1-8][0-9]{2}[ijd]?)\b(?![.,]\d)/i);
   if (series && !/^(19|20)\d{2}$/.test(series[1])) {
     const token = series[1];
     const after = text.slice(
@@ -938,8 +939,10 @@ export function findAutomotiveModel(
 
 function normalizeModelLabel(raw: string): string {
   const trimmed = raw.trim();
-  // Keep dotted BMW codes as typed; uppercase letter+digit codes.
-  if (/^\d\.\d{2}$/.test(trimmed)) return trimmed;
+  // Normalize dotted BMW codes while keeping their meaningful suffix.
+  if (/^\d\.\d{2}[A-Za-z]?$/.test(trimmed)) {
+    return `${trimmed.slice(0, 4)}${trimmed.slice(4).toLowerCase()}`;
+  }
   if (/^\d{3}[A-Za-z]$/.test(trimmed)) {
     return `${trimmed.slice(0, 3)}${trimmed.slice(3).toLowerCase()}`;
   }
@@ -976,4 +979,3 @@ export function isKnownAutomotiveModelName(
   if (AUTOMOTIVE_BRAND_FOLDS.has(fold)) return false;
   return AUTOMOTIVE_MODEL_FOLDS.has(fold);
 }
-

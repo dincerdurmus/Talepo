@@ -1,4 +1,5 @@
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { isWorkspaceEligible } from "@/lib/membership/plans";
 import type { PlanTierId } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,7 @@ export async function getCompanyWorkspace(
   return {
     companyId: entitlements.subject.id,
     companyName: entitlements.subject.name?.trim() || "Firma",
-    isCorporate: entitlements.effectivePlanTier === "CORPORATE",
+    isCorporate: isWorkspaceEligible(entitlements.effectivePlanTier),
     planTier: entitlements.effectivePlanTier,
     features: entitlements.features,
   };

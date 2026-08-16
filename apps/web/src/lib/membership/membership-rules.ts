@@ -20,10 +20,10 @@ type PlanMismatchInput = Pick<
  */
 
 export const PERSONAL_PREMIUM_MISMATCH_TITLE =
-  "Kişisel Premium ekibe yansımaz";
+  "Kişisel Profesyonel üyelik ekibe yansımaz";
 
 export const PERSONAL_PREMIUM_MISMATCH_BODY =
-  "Kişisel hesabınızdaki Premium, firma çalışma alanında geçerli değildir. Ekip için firma planı (Kurumsal veya ücretli firma planı) gerekir.";
+  "Kişisel hesabınızdaki Profesyonel üyelik firma çalışma alanında geçerli değildir. Ekip için Profesyonel üyeliğin firma hesabına tanımlanması gerekir.";
 
 export const TEAM_PLAN_SCOPE_NOTE =
   "Firma planı tüm ekip üyelerine firma bağlamında uygulanır. Kişisel plan yalnızca kişisel modda geçerlidir.";

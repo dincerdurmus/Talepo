@@ -8,14 +8,17 @@ import {
   Building2,
   ChevronDown,
   CreditCard,
+  Crown,
   Home,
   LayoutDashboard,
   LogOut,
+  ShieldCheck,
   UserRound,
   Users,
 } from "lucide-react";
 
 import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+import type { PlanTierId } from "@/lib/membership/plans";
 
 export type PanelCompanyOption = {
   id: string;
@@ -32,6 +35,8 @@ type PanelAccountMenuProps = {
   companyName?: string | null;
   activeCompanyId?: string | null;
   companies: PanelCompanyOption[];
+  planTier: PlanTierId;
+  isAdmin?: boolean;
 };
 
 export function PanelAccountMenu({
@@ -44,12 +49,26 @@ export function PanelAccountMenu({
   companyName,
   activeCompanyId,
   companies,
+  planTier,
+  isAdmin = false,
 }: PanelAccountMenuProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [upgradeAnimating, setUpgradeAnimating] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const inCompanyContext = Boolean(activeCompanyId);
+  const isIndividualPlan = planTier === "STANDARD";
+
+  function previewUpgrade() {
+    if (upgradeAnimating) return;
+    setUpgradeAnimating(true);
+    window.setTimeout(() => {
+      setOpen(false);
+      setUpgradeAnimating(false);
+      router.push("/panel/plan/premium");
+    }, 650);
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -123,6 +142,11 @@ export function PanelAccountMenu({
         <span className="hidden max-w-28 truncate text-sm font-medium text-[#0f1f1d] sm:block">
           {displayName.split(" ")[0]}
         </span>
+        {isAdmin ? (
+          <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-[11px] font-black text-white">
+            A
+          </span>
+        ) : null}
         <ChevronDown
           className={`hidden h-4 w-4 text-teal-950/35 transition sm:block ${
             open ? "rotate-180" : ""
@@ -140,6 +164,11 @@ export function PanelAccountMenu({
               {displayName}
             </p>
             <p className="mt-1 truncate text-xs text-teal-950/45">{email ?? ""}</p>
+            {isAdmin ? (
+              <p className="mt-2 inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
+                Talepo yöneticisi
+              </p>
+            ) : null}
             {membershipNumber ? (
               <MembershipNumberLabel membershipNumber={membershipNumber} />
             ) : null}
@@ -191,6 +220,23 @@ export function PanelAccountMenu({
               Plan ve üyelik
             </Link>
 
+            {isAdmin ? (
+              <Link
+                href="/admin"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="mt-1 flex items-center justify-between rounded-xl bg-[#071310] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#102421]"
+              >
+                <span className="flex items-center gap-2.5">
+                  <ShieldCheck className="h-4 w-4 text-amber-300" />
+                  AdminPanel
+                </span>
+                <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#241a02]">
+                  Admin
+                </span>
+              </Link>
+            ) : null}
+
             {isCorporate && (
               <Link
                 href="/panel/ekip"
@@ -218,18 +264,37 @@ export function PanelAccountMenu({
 
           <div className="border-t border-teal-900/6 py-1.5">
             <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/35">
-              Firma
+              {isIndividualPlan ? "Üyelik" : "Firma"}
             </p>
 
-            <Link
-              href="/panel/firma/yeni"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-            >
-              <Building2 className="h-4 w-4 text-teal-800/70" />
-              {companies.length === 0 ? "Firma oluştur" : "Yeni firma oluştur"}
-            </Link>
+            {isIndividualPlan ? (
+              <button
+                type="button"
+                role="menuitem"
+                onClick={previewUpgrade}
+                className={`group relative flex w-full items-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 via-fuchsia-500 to-orange-400 px-3 py-3 text-left text-sm font-bold text-white shadow-[0_10px_28px_rgba(168,85,247,0.28)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(217,70,239,0.38)] ${upgradeAnimating ? "scale-[1.03]" : ""}`}
+              >
+                <span className={`absolute inset-0 bg-[linear-gradient(110deg,transparent_25%,rgba(255,255,255,.45)_50%,transparent_75%)] bg-[length:250%_100%] ${upgradeAnimating ? "animate-[shimmer_700ms_ease-in-out]" : "-translate-x-full"}`} />
+                <span className={`relative flex h-8 w-8 items-center justify-center rounded-full bg-white/20 transition ${upgradeAnimating ? "rotate-[360deg] scale-110" : "group-hover:rotate-12"}`}>
+                  <Crown className="h-4 w-4" />
+                </span>
+                <span className="relative flex-1">
+                  {upgradeAnimating ? "Hazırlanıyor…" : "Premiumlu Ol!"}
+                </span>
+                <span className={`relative text-lg transition ${upgradeAnimating ? "translate-x-1" : "group-hover:translate-x-1"}`}>→</span>
+                {upgradeAnimating ? <span className="absolute right-8 top-1 h-2 w-2 animate-ping rounded-full bg-yellow-200" /> : null}
+              </button>
+            ) : (
+              <Link
+                href="/panel/firma/yeni"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              >
+                <Building2 className="h-4 w-4 text-teal-800/70" />
+                {companies.length === 0 ? "Firma oluştur" : "Yeni firma oluştur"}
+              </Link>
+            )}
 
             {inCompanyContext && (
               <button

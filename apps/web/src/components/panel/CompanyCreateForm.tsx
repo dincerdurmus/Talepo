@@ -114,7 +114,7 @@ export function CompanyCreateForm({
           </h2>
           <p className="mt-1 text-sm leading-6 text-black/45">
             Firmanızı oluşturduğunuzda ekip daveti, envanter ve kurumsal panel
-            araçları açılır. Plan varsayılanı Standart’tır.
+            araçları açılır. Üyelik varsayılanı Bireysel’dir.
           </p>
         </div>
       </div>

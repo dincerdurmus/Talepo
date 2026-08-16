@@ -1,5 +1,47 @@
 export type PlanTierId = "STANDARD" | "PREMIUM" | "PROFESSIONAL" | "CORPORATE";
 
+/** Public product catalog. PREMIUM/CORPORATE remain legacy storage values only. */
+export const AVAILABLE_PLAN_IDS = ["STANDARD", "PROFESSIONAL"] as const;
+export type AvailablePlanTierId = (typeof AVAILABLE_PLAN_IDS)[number];
+
+/** Storage accepts 4 legacy plan values; normalize unknowns to STANDARD. */
+export function normalizeStoredPlanTier(
+  value: string | null | undefined,
+): PlanTierId {
+  if (
+    value === "STANDARD" ||
+    value === "PREMIUM" ||
+    value === "PROFESSIONAL" ||
+    value === "CORPORATE"
+  ) {
+    return value;
+  }
+
+  return "STANDARD";
+}
+
+/** Canonical entitlement interpretation used across runtime checks:
+ * PREMIUM and CORPORATE are treated as PROFESSIONAL entitlement for feature access.
+ */
+export function canonicalizePlanTier(storedPlanTier: PlanTierId): PlanTierId {
+  return storedPlanTier === "PREMIUM" || storedPlanTier === "CORPORATE"
+    ? "PROFESSIONAL"
+    : storedPlanTier;
+}
+
+/** Compatibility predicates kept for P0 contract; legacy names must stay stored but not reintroduced elsewhere. */
+export function isLegacyCorporateAccount(storedPlanTier: PlanTierId): boolean {
+  return storedPlanTier === "CORPORATE";
+}
+
+export function isWorkspaceEligible(storedOrEffectivePlanTier: PlanTierId): boolean {
+  return canonicalizePlanTier(storedOrEffectivePlanTier) === "PROFESSIONAL";
+}
+
+export function hasWorkspaceCapability(storedPlanTier: PlanTierId): boolean {
+  return isWorkspaceEligible(storedPlanTier);
+}
+
 /**
  * TEST bayrağı — Standart plan 24 saat talep görme gecikmesi.
  * `true` = canlı davranış (Standart 24 saat bekler).
@@ -41,7 +83,7 @@ export type PlanDefinition = {
 export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
   STANDARD: {
     id: "STANDARD",
-    label: "Standart",
+    label: "Bireysel",
     badge: "Ücretsiz",
     description: "Talep oluşturma ücretsiz. Firmalar ayda 5 teklif hakkı ile başlar.",
     monthlyOfferQuota: 5,
@@ -79,7 +121,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Profesyonel",
     badge: "Pro",
     description:
-      "Zeka: sıcak fırsatlar, rekabet sinyalleri, watchlist, profesyonel analitik ve Talepo Insights.",
+      "Tüm profesyonel özellikler: sınırsız teklif, AI, fırsatlar, ekip, envanter, analiz ve otomasyon.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -88,7 +130,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     alertRules: true,
     urgentRequestPriority: true,
     advancedFilters: true,
-    hiddenInventory: false,
+    hiddenInventory: true,
     priceTry: 2490,
   },
   CORPORATE: {
@@ -123,7 +165,14 @@ export const FEATURE_BOOST_OPTIONS = {
 } as const;
 
 export function getPlanDefinition(tier: string): PlanDefinition {
+  if (tier === "PREMIUM" || tier === "CORPORATE") {
+    return PLAN_DEFINITIONS.PROFESSIONAL;
+  }
   return PLAN_DEFINITIONS[tier as PlanTierId] ?? PLAN_DEFINITIONS.STANDARD;
+}
+
+export function getAvailablePlans(): PlanDefinition[] {
+  return AVAILABLE_PLAN_IDS.map((tier) => PLAN_DEFINITIONS[tier]);
 }
 
 export function isPaidPlan(tier: string) {

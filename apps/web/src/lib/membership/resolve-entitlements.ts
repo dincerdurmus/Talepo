@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { featuresForPlan } from "./entitlements";
 import {
   buildPersonalPlanSnapshot,
+  resolveStoredPlanTier,
   resolveEffectivePlanTier,
 } from "./plan-tier-utils";
 import {
@@ -18,19 +19,6 @@ import type {
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function asPlanTier(value: string | null | undefined): PlanTierId {
-  if (
-    value === "STANDARD" ||
-    value === "PREMIUM" ||
-    value === "PROFESSIONAL" ||
-    value === "CORPORATE"
-  ) {
-    return value;
-  }
-
-  return "STANDARD";
 }
 
 function buildQuota(
@@ -147,7 +135,7 @@ export async function resolveEntitlements(
 
   if (company) {
     subject = { type: "company", id: company.id, name: company.name };
-    storedPlanTier = asPlanTier(company.planTier);
+    storedPlanTier = resolveStoredPlanTier(company.planTier);
     expiresAt = company.planExpiresAt;
     bonusCredits = company.bonusOfferCredits;
 
@@ -160,7 +148,7 @@ export async function resolveEntitlements(
     });
   } else {
     subject = { type: "user", id: userId };
-    storedPlanTier = asPlanTier(user.planTier);
+    storedPlanTier = resolveStoredPlanTier(user.planTier);
     expiresAt = user.planExpiresAt;
     bonusCredits = user.bonusOfferCredits;
 
@@ -182,7 +170,7 @@ export async function resolveEntitlements(
   const plan = getPlanDefinition(effectivePlanTier);
 
   const personalPlan = buildPersonalPlanSnapshot(
-    asPlanTier(user.planTier),
+    resolveStoredPlanTier(user.planTier),
     user.planExpiresAt,
     now,
   );

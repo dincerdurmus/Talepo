@@ -12,6 +12,7 @@ import { hasFeature } from "@/lib/membership/entitlements";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { isWorkspaceEligible } from "@/lib/membership/plans";
 import {
   buildCorporateOpportunityCenter,
   type CorporateOpportunityFilter,
@@ -70,7 +71,7 @@ export default async function OpportunitiesPage({
       : null;
 
   const isCorporatePlan =
-    entitlements.effectivePlanTier === "CORPORATE" ||
+    isWorkspaceEligible(entitlements.effectivePlanTier) ||
     hasFeature(entitlements.features, "lead_distribution") ||
     hasFeature(entitlements.features, "automatic_opportunity_hunter");
 

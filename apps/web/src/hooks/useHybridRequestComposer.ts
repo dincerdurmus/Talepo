@@ -91,10 +91,8 @@ export function useHybridRequestComposer(
   const [composerError, setComposerError] = useState(false);
   const [browseDegraded, setBrowseDegraded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  // Empty state: open cascade so “Kategoriden seç” is immediately usable
-  const [openBrowsePanel, setOpenBrowsePanel] = useState(
-    () => !(options.initialText ?? "").trim(),
-  );
+  // Keep the category cascade closed on page load; users open it on demand.
+  const [openBrowsePanel, setOpenBrowsePanel] = useState(false);
   const [browseWalk, setBrowseWalk] = useState<BrowseWalkState>(() =>
     createBrowseWalkState(),
   );

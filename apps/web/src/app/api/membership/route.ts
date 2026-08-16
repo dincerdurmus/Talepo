@@ -12,6 +12,7 @@ import {
 } from "@/lib/membership/billing-gates";
 import {
   OFFER_CREDIT_PACKS,
+  getAvailablePlans,
   PLAN_DEFINITIONS,
   planTierRank,
   type PlanTierId,
@@ -91,7 +92,7 @@ export async function GET() {
         isExpired: entitlements.isExpired,
         expiresAt: entitlements.expiresAt,
       },
-      plans: Object.values(PLAN_DEFINITIONS),
+      plans: getAvailablePlans(),
       creditPacks: OFFER_CREDIT_PACKS,
       mockUpgradeEnabled: isMockUpgradeAllowed(),
       mockCreditsEnabled: isMockCreditPurchaseAllowed(),
@@ -187,7 +188,7 @@ export async function POST(request: Request) {
       }
 
       const tier = body.planTier;
-      if (!PLAN_DEFINITIONS[tier]) {
+      if (tier !== "STANDARD" && tier !== "PROFESSIONAL") {
         return NextResponse.json({ ok: false, message: "Geçersiz plan." }, { status: 400 });
       }
 

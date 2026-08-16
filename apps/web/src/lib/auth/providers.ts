@@ -26,7 +26,10 @@ export function getAuthProviders(): AuthProvider[] {
         const email = credentials?.email?.trim().toLowerCase();
         const password = credentials?.password ?? "";
 
-        if (!email || !password) return null;
+        if (!email || !password) {
+          console.warn("[auth] credentials rejected: missing input");
+          return null;
+        }
 
         try {
           // Soft abuse guard (in-process). Multi-instance needs distributed store.
@@ -39,6 +42,7 @@ export function getAuthProviders(): AuthProvider[] {
             windowMs: 60_000,
           });
           if (!limited.allowed) {
+            console.warn("[auth] credentials rejected: rate limited");
             return null;
           }
 
@@ -56,14 +60,21 @@ export function getAuthProviders(): AuthProvider[] {
           });
 
           if (!user || user.deletedAt || user.status !== "ACTIVE") {
+            console.warn("[auth] credentials rejected: unavailable account", {
+              found: Boolean(user),
+              deleted: Boolean(user?.deletedAt),
+              status: user?.status ?? null,
+            });
             return null;
           }
 
           if (!user.passwordHash) {
+            console.warn("[auth] credentials rejected: password not configured");
             return null;
           }
 
           if (!verifyPassword(password, user.passwordHash)) {
+            console.warn("[auth] credentials rejected: password mismatch");
             return null;
           }
 

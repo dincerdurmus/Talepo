@@ -7,8 +7,10 @@ declare module "next-auth" {
       name?: string | null;
       email?: string | null;
       image?: string | null;
+      platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
     };
     dbUnavailable?: boolean;
+    platformRole?: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
   }
 }
 

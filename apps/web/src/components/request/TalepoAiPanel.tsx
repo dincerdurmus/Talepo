@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import {
+  AlertTriangle,
   Check,
   ChevronDown,
   FileText,
@@ -25,6 +26,9 @@ import type {
 } from "@/lib/request-brain/types";
 import type { RequestReadiness } from "@/lib/request-brain/request-readiness";
 import type { SummaryChip } from "@/lib/request-brain/request-summary";
+import { YearConditionConfirmation } from "@/components/request/YearConditionConfirmation";
+import { FutureModelYearConfirmation } from "@/components/request/FutureModelYearConfirmation";
+import { BudgetConflictConfirmation } from "@/components/request/BudgetConflictConfirmation";
 
 export type ClarificationOption = {
   id: string;
@@ -43,6 +47,22 @@ export type TalepoAiPanelProps = {
   previewError: string | null;
   understoodHeadline: string;
   understoodChips: SummaryChip[];
+  yearConditionConfirmation?: {
+    year: string;
+    condition: "Sıfır" | "İkinci el";
+  } | null;
+  onChangeConfirmedCondition?: (value: "Sıfır" | "İkinci el") => void;
+  onConfirmYearCondition?: () => void;
+  futureModelYearConfirmation?: { year: number } | null;
+  onUseCurrentModelYear?: () => void;
+  onConfirmFutureModelYear?: () => void;
+  publishGuidance?: {
+    attempted: boolean;
+    missingLabels: string[];
+    missingFieldKeys: string[];
+  };
+  budgetConflict?: { textBudget: string; enteredBudget: string } | null;
+  onChooseBudget?: (value: string) => void;
   /** Ranked next questions — single ask surface (chips + draft) */
   enrichmentCandidates: QuestionCandidate[];
   enrichmentFieldKey: string | null;
@@ -158,6 +178,31 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         )}
       </WorkspaceSection>
 
+      {props.yearConditionConfirmation && props.onChangeConfirmedCondition && props.onConfirmYearCondition ? (
+        <YearConditionConfirmation
+          year={props.yearConditionConfirmation.year}
+          condition={props.yearConditionConfirmation.condition}
+          onChangeCondition={props.onChangeConfirmedCondition}
+          onConfirm={props.onConfirmYearCondition}
+        />
+      ) : null}
+
+      {props.futureModelYearConfirmation && props.onUseCurrentModelYear && props.onConfirmFutureModelYear ? (
+        <FutureModelYearConfirmation
+          year={props.futureModelYearConfirmation.year}
+          onUseCurrentYear={props.onUseCurrentModelYear}
+          onConfirm={props.onConfirmFutureModelYear}
+        />
+      ) : null}
+
+      {props.budgetConflict && props.onChooseBudget ? (
+        <BudgetConflictConfirmation
+          textBudget={props.budgetConflict.textBudget}
+          enteredBudget={props.budgetConflict.enteredBudget}
+          onChoose={props.onChooseBudget}
+        />
+      ) : null}
+
       {/* 2. NETLEŞTİRELİM — single ask surface (no duplicate left chips) */}
       {props.enrichmentCandidates.length > 0 ? (
         <WorkspaceSection title="Netleştirelim" tone="accent">
@@ -167,6 +212,11 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
             activeFieldKey={props.enrichmentFieldKey}
             draftValue={props.enrichmentDraft}
             humanPrompts={props.humanPrompts}
+            highlightFieldKeys={
+              props.publishGuidance?.attempted
+                ? props.publishGuidance.missingFieldKeys
+                : []
+            }
             onSelect={props.onEnrichmentSelect}
             onDraftChange={props.onEnrichmentDraftChange}
             onApply={props.onEnrichmentApply}
@@ -184,6 +234,26 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
           onUseMarketMedian={props.onUseMarketMedian}
           userBudget={props.marketIntelligence?.budgetEvaluation?.userBudget}
         />
+      ) : null}
+
+      {props.publishGuidance?.attempted &&
+      props.publishGuidance.missingLabels.length > 0 ? (
+        <section className="rounded-2xl border-2 border-[#facc15] bg-[#17221d] p-4 text-white shadow-[0_14px_36px_rgba(0,0,0,0.28),0_0_24px_rgba(250,204,21,0.08)]">
+          <p className="flex items-center gap-3 text-sm font-bold text-white">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#facc15] text-[#29220a] shadow-[0_7px_18px_rgba(250,204,21,0.3)]"><AlertTriangle className="h-5 w-5" /></span>
+            Talebini yayınlamadan önce {props.publishGuidance.missingLabels.length} bilgiyi tamamlayalım.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {props.publishGuidance.missingLabels.map((label) => (
+              <span
+                key={label}
+                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/90"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       {/* 4. PROFESYONEL TALEP */}

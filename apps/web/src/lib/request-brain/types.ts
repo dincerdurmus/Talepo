@@ -44,6 +44,7 @@ export type QuestionCandidate = {
   placeholder?: string;
   quickChoices?: { label: string; value: string }[];
   pickerOnly?: boolean;
+  multiSelect?: boolean;
 };
 
 export type MarketIntelligenceSnapshot = {

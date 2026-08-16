@@ -1,11 +1,44 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const processWithEnvLoader = process as typeof process & {
+  loadEnvFile?: (path?: string) => void;
+};
+
+if (!process.env.DATABASE_URL && !process.env.DIRECT_URL) {
+  processWithEnvLoader.loadEnvFile?.(".env.local");
+}
 
 /**
  * Prisma interactive transactions (e.g. FOR UPDATE in offer quota) require a
  * session-mode Postgres connection. Supabase transaction pooler (:6543) breaks them.
  */
 function resolvePrismaConnectionString(): string {
+  if (process.env.NODE_ENV !== "production") {
+    try {
+      const localEnv = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");
+      const values = new Map<string, string>();
+      for (const line of localEnv.split(/\r?\n/)) {
+        const match = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+        if (!match) continue;
+        let value = match[2].trim();
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
+          value = value.slice(1, -1);
+        }
+        values.set(match[1], value);
+      }
+      const localConnection = values.get("DIRECT_URL") || values.get("DATABASE_URL");
+      if (localConnection?.trim()) return localConnection.trim();
+    } catch {
+      // CI/production-like environments may not have a local env file.
+    }
+  }
+
   if (process.env.DIRECT_URL?.trim()) {
     return process.env.DIRECT_URL.trim();
   }

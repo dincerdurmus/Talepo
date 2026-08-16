@@ -32,7 +32,7 @@ export function FeatureUpgradeGate({
   }
 
   const copy = UPGRADE_COPY[feature];
-  const title = titleProp ?? copy?.title ?? "Premium özellik";
+  const title = titleProp ?? copy?.title ?? "Profesyonel özellik";
   const description =
     descriptionProp ??
     copy?.description ??

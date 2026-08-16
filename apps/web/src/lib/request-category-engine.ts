@@ -79,6 +79,13 @@ function looksLikeTechHardware(
   return false;
 }
 
+function selectedFieldValues(value?: string): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 /** Normalize browse/engine spelling drift for visibility gates. */
 function normalizeWhenValue(fieldKey: string, value: string): string {
   const trimmed = value.trim();
@@ -114,14 +121,20 @@ export function withCategoryFieldDefaults(
 
   // Normalize RE property spelling so when-gates (roomCount/floor) fire
   if (next.propertyType?.trim()) {
-    next.propertyType = normalizeWhenValue("propertyType", next.propertyType);
+    next.propertyType = next.propertyType
+      .split(",")
+      .map((value) => normalizeWhenValue("propertyType", value.trim()))
+      .filter(Boolean)
+      .join(", ");
   }
 
   if (categoryId === "technology") {
-    if (!next.needType?.trim()) {
+    const selectedNeedTypes = selectedFieldValues(next.needType);
+    if (selectedNeedTypes.length === 0) {
       next.needType = looksLikeTechHardware(next) ? "hardware" : "software";
     } else if (
-      next.needType.trim() === "software" &&
+      selectedNeedTypes.includes("software") &&
+      !selectedNeedTypes.includes("hardware") &&
       looksLikeTechHardware(next) &&
       !TECH_SOFTWARE_SIGNAL.test(
         [next.productType, next.solutionType].filter(Boolean).join(" "),
@@ -166,14 +179,19 @@ export function isFieldVisible(
   if (!field.when) return true;
   const raw = (values[field.when.field] ?? "").trim();
   if (!raw) return false;
-  const current = normalizeWhenValue(field.when.field, raw);
-  const currentFold = current.toLocaleLowerCase("tr-TR");
-  return field.when.in.some((candidate) => {
-    const normalized = normalizeWhenValue(field.when!.field, candidate);
-    return (
-      normalized === current ||
-      normalized.toLocaleLowerCase("tr-TR") === currentFold
-    );
+  const selectedValues = raw
+    .split(",")
+    .map((value) => normalizeWhenValue(field.when!.field, value.trim()))
+    .filter(Boolean);
+  return selectedValues.some((current) => {
+    const currentFold = current.toLocaleLowerCase("tr-TR");
+    return field.when!.in.some((candidate) => {
+      const normalized = normalizeWhenValue(field.when!.field, candidate);
+      return (
+        normalized === current ||
+        normalized.toLocaleLowerCase("tr-TR") === currentFold
+      );
+    });
   });
 }
 
@@ -221,16 +239,16 @@ export function getVisibleCategoryFields(
 
   // Hard safety: never ask for parts when the user wants the whole vehicle.
   if (categoryId === "automotive") {
-    const needType = (resolved.needType ?? "vehicle").trim() || "vehicle";
-    if (needType !== "part" && needType !== "tire") {
+    const needTypes = selectedFieldValues(resolved.needType || "vehicle");
+    if (!needTypes.includes("part") && !needTypes.includes("tire")) {
       visible = visible.filter(
         (field) => !AUTOMOTIVE_PART_ONLY_KEYS.has(field.key),
       );
     }
-    if (needType !== "service") {
+    if (!needTypes.includes("service")) {
       visible = visible.filter((field) => field.key !== "serviceType");
     }
-    if (needType !== "vehicle") {
+    if (!needTypes.includes("vehicle")) {
       visible = visible.filter(
         (field) =>
           field.key !== "condition" && field.key !== "bodyCondition",
@@ -239,8 +257,8 @@ export function getVisibleCategoryFields(
   }
 
   if (categoryId === "machinery") {
-    const needType = (resolved.needType ?? "machine").trim() || "machine";
-    if (needType !== "machine") {
+    const needTypes = selectedFieldValues(resolved.needType || "machine");
+    if (!needTypes.includes("machine")) {
       visible = visible.filter(
         (field) =>
           field.key !== "capacity" &&
@@ -258,15 +276,18 @@ export function getVisibleCategoryFields(
 
   // Technology: hide software-only filters when demand is hardware (and vice versa)
   if (categoryId === "technology") {
-    const needType = (resolved.needType ?? "software").trim() || "software";
-    if (needType === "hardware") {
+    const needTypes = selectedFieldValues(resolved.needType || "software");
+    if (needTypes.includes("hardware") && !needTypes.includes("software")) {
       visible = visible.filter(
         (field) =>
           field.key !== "platform" &&
           field.key !== "users" &&
           field.key !== "integration",
       );
-    } else if (needType === "software" || needType === "service") {
+    } else if (
+      !needTypes.includes("hardware") &&
+      (needTypes.includes("software") || needTypes.includes("service"))
+    ) {
       visible = visible.filter(
         (field) =>
           field.key !== "quantityDetail" && field.key !== "specs",
@@ -542,6 +563,39 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         type: "text",
         placeholder: "Örn. 1.6 benzin",
         when: { field: "needType", in: ["vehicle", "part"] },
+      },
+      {
+        key: "fuel",
+        label: "Yakıt türü",
+        type: "select",
+        when: { field: "needType", in: ["vehicle"] },
+        options: [
+          { label: "Benzin", value: "Benzin" },
+          { label: "Dizel", value: "Dizel" },
+          { label: "Hibrit", value: "Hibrit" },
+          { label: "Elektrik", value: "Elektrik" },
+          { label: "LPG", value: "LPG" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        key: "transmission",
+        label: "Şanzıman",
+        type: "select",
+        when: { field: "needType", in: ["vehicle"] },
+        options: [
+          { label: "Otomatik", value: "Otomatik" },
+          { label: "Manuel", value: "Manuel" },
+          { label: "Yarı otomatik", value: "Yarı otomatik" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        key: "color",
+        label: "Renk tercihi",
+        type: "text",
+        placeholder: "Örn. Siyah, beyaz, fark etmez",
+        when: { field: "needType", in: ["vehicle"] },
       },
       {
         key: "condition",
@@ -1086,7 +1140,7 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
         key: "location",
         label: "Adres detayı",
         type: "text",
-        placeholder: "Örn. sokak, bina no (isteğe bağlı)",
+        placeholder: "Mahalle, cadde veya sokak bilgisi girin",
       },
       {
         key: "floor",
@@ -1617,6 +1671,203 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
     ],
   },
 ];
+
+/**
+ * Sahibinden-style marketplace filter parity, adapted for Talepo's reverse
+ * marketplace. Keep this isolated so the experiment can be rolled back by
+ * changing one flag; none of these fields becomes a publishing requirement.
+ */
+export const MARKETPLACE_FILTER_PARITY_V1_ENABLED = true;
+
+const MARKETPLACE_FILTER_PARITY_V1: Partial<
+  Record<RequestCategory["id"], DynamicField[]>
+> = {
+  automotive: [
+    {
+      key: "mileage",
+      label: "Kilometre",
+      type: "number",
+      placeholder: "Örn. 80.000",
+      unit: "km",
+      when: { field: "needType", in: ["vehicle"] },
+    },
+    {
+      key: "bodyType",
+      label: "Kasa tipi",
+      type: "select",
+      when: { field: "needType", in: ["vehicle"] },
+      options: [
+        { label: "Sedan", value: "Sedan" },
+        { label: "Hatchback", value: "Hatchback" },
+        { label: "SUV", value: "SUV" },
+        { label: "Station wagon", value: "Station wagon" },
+        { label: "Coupe", value: "Coupe" },
+        { label: "Cabrio", value: "Cabrio" },
+        { label: "Pickup", value: "Pickup" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    {
+      key: "driveType",
+      label: "Çekiş",
+      type: "select",
+      when: { field: "needType", in: ["vehicle"] },
+      options: [
+        { label: "Önden çekiş", value: "Önden çekiş" },
+        { label: "Arkadan itiş", value: "Arkadan itiş" },
+        { label: "4x4", value: "4x4" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    {
+      key: "warranty",
+      label: "Garanti",
+      type: "select",
+      when: { field: "needType", in: ["vehicle", "part"] },
+      options: [
+        { label: "Garantili", value: "Garantili" },
+        { label: "Garanti gerekmiyor", value: "Garanti gerekmiyor" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+  ],
+  machinery: [
+    {
+      key: "brand",
+      label: "Marka",
+      type: "text",
+      placeholder: "Örn. Caterpillar, Atlas Copco",
+      when: { field: "needType", in: ["machine", "part"] },
+    },
+    {
+      key: "model",
+      label: "Model",
+      type: "text",
+      placeholder: "Örn. XAS 88",
+      when: { field: "needType", in: ["machine", "part"] },
+    },
+    {
+      key: "modelYear",
+      label: "Model yılı",
+      type: "number",
+      placeholder: "Örn. 2022",
+      when: { field: "needType", in: ["machine"] },
+    },
+    {
+      key: "operatingHours",
+      label: "Çalışma saati",
+      type: "number",
+      placeholder: "Örn. 4.500",
+      unit: "saat",
+      when: { field: "needType", in: ["machine"] },
+    },
+    {
+      key: "warranty",
+      label: "Garanti",
+      type: "select",
+      when: { field: "needType", in: ["machine", "part"] },
+      options: [
+        { label: "Garantili", value: "Garantili" },
+        { label: "Garanti gerekmiyor", value: "Garanti gerekmiyor" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+  ],
+  technology: [
+    { key: "model", label: "Model", type: "text", when: { field: "needType", in: ["hardware"] } },
+    { key: "processor", label: "İşlemci", type: "text", placeholder: "Örn. Core i7 veya Apple M4", when: { field: "needType", in: ["hardware"] } },
+    { key: "ram", label: "RAM", type: "text", placeholder: "Örn. 16 GB ve üzeri", when: { field: "needType", in: ["hardware"] } },
+    { key: "storage", label: "Depolama", type: "text", placeholder: "Örn. 512 GB SSD", when: { field: "needType", in: ["hardware"] } },
+    { key: "graphics", label: "Ekran kartı", type: "text", placeholder: "Örn. RTX 4060 veya fark etmez", when: { field: "needType", in: ["hardware"] } },
+    { key: "screenSize", label: "Ekran boyutu", type: "text", placeholder: "Örn. 14–16 inç", when: { field: "needType", in: ["hardware"] } },
+    {
+      key: "warranty",
+      label: "Garanti",
+      type: "select",
+      when: { field: "needType", in: ["hardware"] },
+      options: [
+        { label: "Garantili", value: "Garantili" },
+        { label: "Garanti gerekmiyor", value: "Garanti gerekmiyor" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+  ],
+  "real-estate": [
+    { key: "grossArea", label: "Brüt alan", type: "number", placeholder: "Örn. 140", unit: "m²" },
+    { key: "netArea", label: "Net alan", type: "number", placeholder: "Örn. 120", unit: "m²" },
+    { key: "totalFloors", label: "Bina kat sayısı", type: "number", placeholder: "Örn. 8" },
+    {
+      key: "heating",
+      label: "Isıtma",
+      type: "select",
+      options: [
+        { label: "Doğalgaz / kombi", value: "Doğalgaz / kombi" },
+        { label: "Merkezi sistem", value: "Merkezi sistem" },
+        { label: "Yerden ısıtma", value: "Yerden ısıtma" },
+        { label: "Klima", value: "Klima" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    { key: "bathroomCount", label: "Banyo sayısı", type: "number", placeholder: "Örn. 2" },
+    {
+      key: "furnished",
+      label: "Eşyalı",
+      type: "select",
+      options: [
+        { label: "Eşyalı", value: "Eşyalı" },
+        { label: "Eşyasız", value: "Eşyasız" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    {
+      key: "parking",
+      label: "Otopark",
+      type: "select",
+      options: [
+        { label: "Açık otopark", value: "Açık otopark" },
+        { label: "Kapalı otopark", value: "Kapalı otopark" },
+        { label: "Gerekli değil", value: "Gerekli değil" },
+      ],
+    },
+    {
+      key: "elevator",
+      label: "Asansör",
+      type: "select",
+      options: [
+        { label: "Olmalı", value: "Olmalı" },
+        { label: "Gerekli değil", value: "Gerekli değil" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    {
+      key: "loanEligibility",
+      label: "Krediye uygunluk",
+      type: "select",
+      when: { field: "listingType", in: ["Satılık"] },
+      options: [
+        { label: "Krediye uygun", value: "Krediye uygun" },
+        { label: "Fark etmez", value: "Fark etmez" },
+      ],
+    },
+    {
+      key: "deedStatus",
+      label: "Tapu durumu",
+      type: "text",
+      placeholder: "Örn. Kat mülkiyetli",
+      when: { field: "listingType", in: ["Satılık"] },
+    },
+  ],
+};
+
+if (MARKETPLACE_FILTER_PARITY_V1_ENABLED) {
+  for (const category of REQUEST_CATEGORIES) {
+    const additions = MARKETPLACE_FILTER_PARITY_V1[category.id] ?? [];
+    const existingKeys = new Set(category.fields.map((field) => field.key));
+    category.fields.push(
+      ...additions.filter((field) => !existingKeys.has(field.key)),
+    );
+  }
+}
 
 export const UNKNOWN_REQUEST_CATEGORY: RequestCategory = {
   id: "",

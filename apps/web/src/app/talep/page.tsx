@@ -26,16 +26,15 @@ import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPrev
 import {
   HybridBrowsePath,
   HybridCategoryBrowsePanel,
-  HybridQuickSelectChips,
   HybridUnderstoodPanel,
 } from "@/components/request/HybridComposerPanels";
 import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
-import { RealEstateLocationFields } from "@/components/request/RealEstateLocationFields";
-import { RequestSummaryCard } from "@/components/request/RequestSummaryCard";
 import {
   TalepoAiPanel,
   type ClarificationOption,
 } from "@/components/request/TalepoAiPanel";
+import { shouldConfirmYearCondition } from "@/components/request/YearConditionConfirmation";
+import { isImplausibleFutureModelYear } from "@/components/request/FutureModelYearConfirmation";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
@@ -67,6 +66,13 @@ import {
   resolveRealEstateLocationFromSources,
   type RealEstateLocation,
 } from "@/lib/geo/real-estate-location";
+import {
+  findProvinceAndDistrictInText,
+  parseRealEstateCity,
+  textMentionsPlace,
+  TURKEY_IL_NAMES,
+  TURKEY_PROVINCES,
+} from "@/lib/geo/turkey-districts";
 import {
   getCategoryById,
   getVisibleCategoryFields,
@@ -103,16 +109,145 @@ type CommonDraft = {
   budget: string;
 };
 
+function formatBudgetDigits(raw: string): string {
+  const [wholeRaw, decimal] = raw.replace(/\s/g, "").split(",");
+  const whole = wholeRaw.replace(/\./g, "").replace(/\D/g, "");
+  if (!whole) return raw;
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return decimal != null ? `${grouped},${decimal.replace(/\D/g, "")}` : grouped;
+}
+
+function formatBudgetNumbersInText(text: string): string {
+  return text
+    .replace(
+      /(?:₺\s*)?(\d[\d.\s]*(?:,\d{1,2})?)\s*(?:tl|₺)(?=$|\s|[.,;!?])/giu,
+      (_match, amount: string) => `${formatBudgetDigits(amount)} TL`,
+    )
+    .replace(
+      /\b(\d[\d.\s]*)\s*adet\b/giu,
+      (_match, amount: string) => `${formatBudgetDigits(amount)} adet`,
+    );
+}
+
+function formatBudgetAnswer(value: string): string {
+  if (!/^\s*(?:₺\s*)?\d[\d.\s]*(?:,\d{1,2})?\s*(?:tl|₺)?\s*$/iu.test(value)) {
+    return value.trim();
+  }
+  const amount = value.replace(/₺|tl/giu, "").trim();
+  return `${formatBudgetDigits(amount)} TL`;
+}
+
+function formatQuantityAnswer(value: string): string {
+  if (!/^\s*\d[\d.\s]*(?:\s*adet)?\s*$/iu.test(value)) return value.trim();
+  const amount = value.replace(/adet/giu, "").trim();
+  return `${formatBudgetDigits(amount)} adet`;
+}
+
+const TITLE_OVERLAP_STOP_WORDS = new Set([
+  "arıyorum",
+  "ariyorum",
+  "istiyorum",
+  "lazım",
+  "lazim",
+  "bir",
+  "için",
+  "icin",
+  "ve",
+  "ile",
+  "adet",
+  "tane",
+  "m²",
+  "metrekare",
+  "urun",
+  "ürün",
+  "mobilya",
+  "makine",
+  "hizmet",
+  "servis",
+]);
+
+function titlePreservesRequestSubject(candidate: string, rawText: string): boolean {
+  const tokens = (value: string) =>
+    value
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .match(/[a-z0-9çğıöşü²+.-]+/giu)
+      ?.filter(
+        (token) =>
+          token.length >= 2 &&
+          !/^\d[\d.,+²-]*$/u.test(token) &&
+          !TITLE_OVERLAP_STOP_WORDS.has(token),
+      ) ?? [];
+  const rawTokens = new Set(tokens(rawText));
+  const candidateTokens = tokens(candidate);
+  if (rawTokens.size === 0 || candidateTokens.length === 0) return false;
+  return candidateTokens.some((token) => rawTokens.has(token));
+}
+
+function titleRepeatsContent(candidate: string): boolean {
+  const seen = new Set<string>();
+  for (const token of candidate
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .match(/[a-zçğıöşü]{4,}/giu) ?? []) {
+    if (TITLE_OVERLAP_STOP_WORDS.has(token)) continue;
+    if (seen.has(token)) return true;
+    seen.add(token);
+  }
+  return false;
+}
+
+function titleHasMeaningfulSubject(candidate: string): boolean {
+  return (
+    candidate
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .match(/[a-zçğıöşü]{3,}/giu)
+      ?.some((token) => !TITLE_OVERLAP_STOP_WORDS.has(token)) ?? false
+  );
+}
+
+function rawTitleFallback(rawText: string): string {
+  return rawText
+    .replace(/\s+/g, " ")
+    .replace(/[.!?]+$/u, "")
+    .trim()
+    .slice(0, 110);
+}
+
 const ESSENTIAL_COMMON_KEYS = new Set(["title", "city"]);
 
-const QUICK_CITIES = [
-  "İstanbul",
-  "Ankara",
-  "İzmir",
-  "Bursa",
-  "Antalya",
-  "Kocaeli",
-] as const;
+const TURKEY_CITY_OPTIONS = [
+  { label: "Tüm Türkiye", value: "Tüm Türkiye" },
+  ...TURKEY_IL_NAMES.map((city) => ({ label: city, value: city })),
+];
+
+const TURKEY_REAL_ESTATE_LOCATION_OPTIONS = TURKEY_PROVINCES.flatMap(
+  (province) =>
+    province.ilceler.map((district) => ({
+      label: `${province.il} / ${district}`,
+      value: `${province.il} / ${district}`,
+    })),
+);
+
+const COLOR_PREFERENCE_OPTIONS = [
+  { label: "Fark Etmez", value: "Fark Etmez" },
+  { label: "Siyah", value: "Siyah" },
+  { label: "Beyaz", value: "Beyaz" },
+  { label: "Gri", value: "Gri" },
+  { label: "Kırmızı", value: "Kırmızı" },
+  { label: "Mavi", value: "Mavi" },
+  { label: "Lacivert", value: "Lacivert" },
+  { label: "Yeşil", value: "Yeşil" },
+  { label: "Sarı", value: "Sarı" },
+  { label: "Turuncu", value: "Turuncu" },
+  { label: "Kahverengi", value: "Kahverengi" },
+  { label: "Bej", value: "Bej" },
+  { label: "Bordo", value: "Bordo" },
+];
 
 const BUDGET_PRESETS = [
   { id: "under-10", label: "10 bin altı", value: "10.000 TL'ye kadar" },
@@ -128,6 +263,47 @@ const EXAMPLE_CHIPS = [
   "5.000 adet baskılı kutu yaptıracağım",
   "200 m² ofis boya badana yaptıracağım",
 ] as const;
+
+/** Rollback switch: false restores the legacy left-side requirement fields. */
+const ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS = true;
+/** Rollback switch for the fixed-height desktop workspace experiment. */
+const ENABLE_FIXED_DESKTOP_WORKSPACE = false;
+
+function featureExamplePlaceholder(
+  strategy: string | null | undefined,
+  requestText: string,
+  fallback?: string,
+): string {
+  const text = requestText.toLocaleLowerCase("tr-TR");
+
+  if (/dyson|süpürge|supurge/.test(text)) {
+    return "Örn. aparatları tam, garantili, kutulu, yedek bataryalı";
+  }
+  if (strategy === "VEHICLE" || /araç|araba|otomobil/.test(text)) {
+    return "Örn. hasarsız, belirli renk, servis bakımlı, donanım paketi";
+  }
+  if (strategy === "REAL_ESTATE_RENT" || strategy === "REAL_ESTATE_SALE") {
+    return "Örn. balkonlu, otoparklı, eşyalı, site içinde";
+  }
+  if (strategy === "SERVICE_SCOPE") {
+    return "Örn. kullanılacak malzeme, teslim tarihi, garanti, özel istekler";
+  }
+  if (strategy === "CUSTOM_MANUFACTURING") {
+    return "Örn. renk, yüzey, baskı, paketleme, kalite standardı";
+  }
+  if (/makine|cnc|pres|ekipman/.test(text)) {
+    return "Örn. kapasite, güç, çalışma saati, garanti, ekipmanlar";
+  }
+  if (/mobilya|koltuk|masa|sandalye|dolap/.test(text)) {
+    return "Örn. renk, malzeme, ölçü, kurulum, özel tasarım";
+  }
+
+  return fallback ?? "Örn. renk, ölçü, garanti, aksesuar veya diğer tercihler";
+}
+
+function comparableMoney(value: string): string {
+  return value.replace(/\D/g, "").replace(/^0+/, "");
+}
 
 export default function TalepOlusturPage() {
   return (
@@ -149,7 +325,9 @@ export default function TalepOlusturPage() {
 function TalepOlusturForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryFromHome = searchParams.get("query")?.trim() ?? "";
+  const queryFromHome = formatBudgetNumbersInText(
+    searchParams.get("query")?.trim() ?? "",
+  );
   const categoryFromHome = searchParams.get("category")?.trim() ?? "";
   const validCategoryFromHome = REQUEST_CATEGORIES.some(
     (category) => category.id === categoryFromHome,
@@ -196,6 +374,9 @@ function TalepOlusturForm() {
   /** When true, user edited/cleared budget — stop falling back to AI extraction. */
   const [budgetTouched, setBudgetTouched] = useState(false);
   const [aiCompanionOpen, setAiCompanionOpen] = useState(false);
+  const [publishGuidanceAttempted, setPublishGuidanceAttempted] = useState(false);
+  const [publishButtonAttention, setPublishButtonAttention] = useState(false);
+  const [publishReadyAnimation, setPublishReadyAnimation] = useState(false);
   /** Draft values typed in the AI companion suggestion rows (keyed by gap id). */
   const [suggestionInputs, setSuggestionInputs] = useState<
     Record<string, string>
@@ -220,8 +401,18 @@ function TalepOlusturForm() {
   );
   const [categoryLockedByUser, setCategoryLockedByUser] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [aiPanelScrollOffset, setAiPanelScrollOffset] = useState(0);
+  const aiPanelFollowRef = useRef<HTMLDivElement>(null);
+  const aiPanelNaturalTopRef = useRef<number | null>(null);
+  const aiPanelOffsetRef = useRef(0);
   /** 1 = ihtiyaç metni, 2 = AI özeti onay / yayın */
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  const [confirmedYearConditionKey, setConfirmedYearConditionKey] =
+    useState<string | null>(null);
+  const [confirmedFutureModelYearKey, setConfirmedFutureModelYearKey] =
+    useState<string | null>(null);
+  const [confirmedBudgetConflictKey, setConfirmedBudgetConflictKey] =
+    useState<string | null>(null);
   const [appliedProfessionalDescription, setAppliedProfessionalDescription] =
     useState(false);
   const previousActiveCategoryIdRef = useRef<string | null>(null);
@@ -455,9 +646,88 @@ function TalepOlusturForm() {
     commonDraft,
   ]);
 
+  const aiSuggestedTitle = useMemo(() => {
+    const composed = (
+      hybrid.state?.lastComposedText?.trim() ||
+      (hybrid.state ? composeNaturalRequestText(hybrid.state) : "")
+    ).replace(/[.!\s]+$/u, "");
+    // A generated sentence may only replace the title when it still contains
+    // the subject the user actually wrote. This blocks stale/cross-category
+    // titles such as "konut arıyorum" for an office painting request.
+    let base =
+      activeCategoryId !== "services" &&
+      composed &&
+      titlePreservesRequestSubject(composed, requestText) &&
+      !titleRepeatsContent(composed)
+        ? composed
+        : autoTitle;
+    if (!titleHasMeaningfulSubject(base)) {
+      base = rawTitleFallback(requestText) || base;
+    }
+
+    if (activeCategoryId === "automotive") {
+      const yearMin =
+        dynamicValues.yearMin || String(understanding.attributes.yearMin?.value ?? "");
+      const yearMax =
+        dynamicValues.yearMax || String(understanding.attributes.yearMax?.value ?? "");
+      const modelYear =
+        dynamicValues.modelYear ||
+        String(understanding.attributes.modelYear?.value ?? "");
+      const yearLabel = yearMin
+        ? `${yearMin} ve üzeri`
+        : yearMax
+          ? `${yearMax} ve altı`
+          : modelYear
+            ? `${modelYear} model`
+            : "";
+      const numericYear = (yearMin || yearMax || modelYear).trim();
+      if (yearLabel && numericYear && !base.includes(numericYear)) {
+        base = `${yearLabel} ${base}`.trim();
+      }
+    }
+
+    base = base
+      .replace(/\b(?:sıfır|ikinci\s+el|2\.\s*el)\b/giu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const location =
+      findProvinceAndDistrictInText(requestText) ??
+      (/\bist\b/iu.test(requestText) ? { il: "İstanbul", ilce: "" } : null);
+    if (!location || !base) return base;
+
+    const alreadyMentionsLocation =
+      textMentionsPlace(base, location.il) ||
+      (location.ilce ? textMentionsPlace(base, location.ilce) : false);
+    if (location.il === "İstanbul") {
+      base = base
+        .replace(/(?:\s*[-,]?\s*)\bist\b/giu, " ")
+        .replace(/\s+/g, " ")
+        .replace(/\s*[-,]\s*$/u, "")
+        .trim();
+    }
+    if (alreadyMentionsLocation && !/\bist\b/iu.test(base)) return base;
+
+    const locationLabel = location.ilce
+      ? `${location.ilce}, ${location.il}`
+      : location.il;
+    return `${base} - ${locationLabel}`;
+  }, [
+    activeCategoryId,
+    autoTitle,
+    dynamicValues.modelYear,
+    dynamicValues.yearMax,
+    dynamicValues.yearMin,
+    hybrid.state,
+    requestText,
+    understanding.attributes.modelYear?.value,
+    understanding.attributes.yearMax?.value,
+    understanding.attributes.yearMin?.value,
+  ]);
+
   const mergedCommonDraft = useMemo<CommonDraft>(
     () => ({
-      title: titleManuallyEdited ? commonDraft.title : autoTitle,
+      title: titleManuallyEdited ? commonDraft.title : aiSuggestedTitle,
       quantity: visibleCommonFieldKeys.has("quantity")
         ? commonDraft.quantity ||
           (understandingQuantity != null
@@ -465,7 +735,8 @@ function TalepOlusturForm() {
             : "")
         : "",
       city: isRealEstate
-        ? realEstateLocationToCity(realEstateLocation) ||
+        ? (cityTouched ? commonDraft.city : "") ||
+          realEstateLocationToCity(realEstateLocation) ||
           commonDraft.city ||
           understandingCity ||
           ""
@@ -488,7 +759,7 @@ function TalepOlusturForm() {
       understandingCity,
       understandingQuantity,
       understandingUnit,
-      autoTitle,
+      aiSuggestedTitle,
       budgetTouched,
       cityTouched,
       commonDraft.budget,
@@ -596,7 +867,12 @@ function TalepOlusturForm() {
   );
 
   const realEstateLocationMissing = isRealEstate
-    ? Boolean(realEstateLocationError(realEstateLocation))
+    ? cityTouched && commonDraft.city.trim()
+      ? commonDraft.city
+          .split(",")
+          .map((value) => parseRealEstateCity(value.trim()))
+          .some((location) => !location?.il || !location.ilce)
+      : Boolean(realEstateLocationError(realEstateLocation))
     : false;
 
   const essentialCommonFields = visibleCommonFields.filter((field) =>
@@ -704,7 +980,9 @@ function TalepOlusturForm() {
     city: mergedCommonDraft.city || understandingCity,
     budget: understanding.budget?.value?.max ?? understanding.budget?.value?.min,
     deliveryDays: undefined,
-    quantity: understandingQuantity,
+    quantity: visibleCommonFieldKeys.has("quantity")
+      ? understandingQuantity
+      : undefined,
     unit: understandingUnit,
     fields: visibleDynamicFields,
     fieldValues: dynamicValues,
@@ -767,6 +1045,20 @@ function TalepOlusturForm() {
   const budgetRequired = visibleCommonFieldKeys.has("budget");
   const hasBudget = Boolean(mergedCommonDraft.budget.trim());
 
+  const budgetConflict = useMemo(() => {
+    const textBudget = understandingBudgetDisplay.trim();
+    const enteredBudget = commonDraft.budget.trim();
+    if (!budgetTouched || !textBudget || !enteredBudget) return null;
+    const textComparable = comparableMoney(textBudget);
+    const enteredComparable = comparableMoney(enteredBudget);
+    if (!textComparable || !enteredComparable || textComparable === enteredComparable) {
+      return null;
+    }
+    const key = `${textComparable}:${enteredComparable}`;
+    if (confirmedBudgetConflictKey === key) return null;
+    return { textBudget, enteredBudget, key };
+  }, [budgetTouched, commonDraft.budget, confirmedBudgetConflictKey, understandingBudgetDisplay]);
+
   const publishable =
     Boolean(mergedCommonDraft.title.trim()) &&
     (!budgetRequired || hasBudget) &&
@@ -775,6 +1067,62 @@ function TalepOlusturForm() {
       !realEstateLocationMissing) &&
     missingFields.length === 0 &&
     !realEstateLocationMissing;
+
+  const missingPublishLabels = useMemo(() => {
+    const labels: string[] = [];
+    if (!mergedCommonDraft.title.trim()) labels.push("Talep başlığı");
+    if (budgetRequired && !hasBudget) labels.push("Bütçe");
+    if (
+      visibleCommonFieldKeys.has("city") &&
+      !mergedCommonDraft.city.trim() &&
+      !understandingCity.trim()
+    ) {
+      labels.push(isRealEstate ? "İl ve ilçe" : "Şehir / bölge");
+    }
+    if (isRealEstate && realEstateLocationMissing) {
+      if (!labels.includes("İl ve ilçe")) labels.push("İl ve ilçe");
+    }
+    labels.push(...missingFields.map((field) => field.label));
+    return [...new Set(labels)];
+  }, [
+    budgetRequired,
+    hasBudget,
+    isRealEstate,
+    mergedCommonDraft.city,
+    mergedCommonDraft.title,
+    missingFields,
+    realEstateLocationMissing,
+    understandingCity,
+    visibleCommonFieldKeys,
+  ]);
+
+  const missingPublishFieldKeys = useMemo(() => {
+    const keys: string[] = [];
+    if (!mergedCommonDraft.title.trim()) keys.push("title");
+    if (budgetRequired && !hasBudget) keys.push("budget");
+    if (
+      visibleCommonFieldKeys.has("city") &&
+      !mergedCommonDraft.city.trim() &&
+      !understandingCity.trim()
+    ) {
+      keys.push("city");
+    }
+    if (isRealEstate && realEstateLocationMissing && !keys.includes("city")) {
+      keys.push("city");
+    }
+    keys.push(...missingFields.map((field) => field.key));
+    return [...new Set(keys)];
+  }, [
+    budgetRequired,
+    hasBudget,
+    mergedCommonDraft.city,
+    mergedCommonDraft.title,
+    missingFields,
+    isRealEstate,
+    realEstateLocationMissing,
+    understandingCity,
+    visibleCommonFieldKeys,
+  ]);
 
   const catalogPreview = useMemo(
     () => toCatalogPreviewModel(understanding),
@@ -786,10 +1134,6 @@ function TalepOlusturForm() {
     const chips = understoodFactsToSummaryChips(facts).filter((chip) =>
       catalogPreview ? !CATALOG_PREVIEW_CHIP_KEYS.has(chip.fieldKey) : true,
     );
-    const composed = (
-      hybrid.state?.lastComposedText?.trim() ||
-      (hybrid.state ? composeNaturalRequestText(hybrid.state) : "")
-    ).replace(/[.!\s]+$/u, "");
     const kind = understanding.requestSubject.kind.value;
     const subtypeLabel =
       kind === "PART"
@@ -798,11 +1142,68 @@ function TalepOlusturForm() {
           ? "Aksesuar"
           : null;
     return {
-      headline: composed || mergedCommonDraft.title.trim() || "Talebiniz",
+      headline: aiSuggestedTitle || "Talebiniz",
       chips,
       subtypeLabel,
     };
-  }, [catalogPreview, hybrid.state, understanding.requestSubject.kind.value, mergedCommonDraft.title]);
+  }, [
+    aiSuggestedTitle,
+    catalogPreview,
+    hybrid.state,
+    understanding.requestSubject.kind.value,
+  ]);
+
+  const yearConditionConfirmation = useMemo(() => {
+    const year =
+      dynamicValues.modelYear ||
+      (typeof understanding.attributes.modelYear?.value === "number"
+        ? String(understanding.attributes.modelYear.value)
+        : "");
+    const rawCondition =
+      dynamicValues.condition ||
+      (understanding.condition?.value === "NEW"
+        ? "Sıfır"
+        : understanding.condition?.value === "USED"
+          ? "İkinci el"
+          : "");
+    if (!year || (rawCondition !== "Sıfır" && rawCondition !== "İkinci el")) {
+      return null;
+    }
+    const condition: "Sıfır" | "İkinci el" = rawCondition;
+    const key = `${year}:${condition}`;
+    if (!shouldConfirmYearCondition(year, condition)) return null;
+    return { year, condition, key };
+  }, [dynamicValues.condition, dynamicValues.modelYear, understanding.attributes.modelYear?.value, understanding.condition?.value]);
+
+  const yearConditionConfirmationPending =
+    yearConditionConfirmation != null &&
+    confirmedYearConditionKey !== yearConditionConfirmation.key;
+
+  const futureModelYearConfirmation = useMemo(() => {
+    const candidates = [
+      dynamicValues.modelYear,
+      dynamicValues.yearMin,
+      dynamicValues.yearMax,
+      understanding.attributes.modelYear?.value,
+      understanding.attributes.yearMin?.value,
+      understanding.attributes.yearMax?.value,
+    ];
+    const raw = candidates.find((value) => value != null && String(value).trim());
+    const year = Number(raw);
+    if (!Number.isInteger(year) || !isImplausibleFutureModelYear(year)) return null;
+    return { year, key: String(year) };
+  }, [
+    dynamicValues.modelYear,
+    dynamicValues.yearMax,
+    dynamicValues.yearMin,
+    understanding.attributes.modelYear?.value,
+    understanding.attributes.yearMax?.value,
+    understanding.attributes.yearMin?.value,
+  ]);
+
+  const futureModelYearConfirmationPending =
+    futureModelYearConfirmation != null &&
+    confirmedFutureModelYearKey !== futureModelYearConfirmation.key;
 
   /**
    * Sole question authority: resolveHybridQuestions (canonical-hybrid).
@@ -831,11 +1232,35 @@ function TalepOlusturForm() {
 
   const enrichmentCandidates = useMemo(() => {
     const visibleKeys = new Set(visibleDynamicFields.map((f) => f.key));
+    const foldedRequestText = requestText
+      .toLocaleLowerCase("tr-TR")
+      .replace(/\u0131/g, "i")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const textAlreadyAnswers = (fieldKey: string, label = "") => {
+      if (fieldKey === "condition" || /araç durumu/iu.test(label)) {
+        const statedYear = requestText.match(/\b((?:19|20)\d{2})\b/u)?.[1];
+        return (
+          /\b(sıfır|sifir|ikinci\s*el|2\.?\s*el|kullanılmış|kullanilmis)\b/iu.test(requestText) ||
+          (activeCategoryId === "automotive" &&
+            statedYear != null &&
+            Number(statedYear) < new Date().getFullYear())
+        );
+      }
+      if (fieldKey.toLowerCase().includes("color") || /renk/iu.test(label)) {
+        return /\b(kirmizi|siyah|beyaz|gri|mavi|lacivert|yesil|sari|turuncu|kahverengi|bej|bordo)\b/u.test(foldedRequestText);
+      }
+      if (fieldKey === "bodyCondition" || /hasar|kasa/iu.test(label)) {
+        return /\b(hasarsiz|hatasiz|boyasiz|degisensiz|kazali)\b/u.test(foldedRequestText);
+      }
+      return false;
+    };
     const list = hybridQuestionResult?.candidates ?? [];
-    return list.filter((q) => {
+    const filtered = list.filter((q) => {
+      if (dynamicValues[q.fieldKey]?.trim() || textAlreadyAnswers(q.fieldKey, q.label)) return false;
       if (
         q.fieldKey === "budget" ||
-        q.fieldKey === "city" ||
+        q.fieldKey === "engine" ||
         q.fieldKey === "specs" ||
         q.fieldKey === "technicalSpecs"
       ) {
@@ -843,6 +1268,7 @@ function TalepOlusturForm() {
       }
       if (
         q.fieldKey === "brand" ||
+        q.fieldKey === "city" ||
         q.fieldKey === "condition" ||
         q.fieldKey === "screenSize" ||
         q.fieldKey === "resolution" ||
@@ -851,8 +1277,171 @@ function TalepOlusturForm() {
         return true;
       }
       return visibleKeys.size === 0 || visibleKeys.has(q.fieldKey);
-    });
-  }, [hybridQuestionResult?.candidates, visibleDynamicFields]);
+    }).map((q) =>
+      q.fieldKey === "city"
+        ? {
+            ...q,
+            inputType: "select" as const,
+            options: isRealEstate
+              ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
+              : TURKEY_CITY_OPTIONS,
+            quickChoices: undefined,
+            multiSelect: true,
+            label: isRealEstate ? "İl ve ilçe" : q.label,
+            placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
+          }
+        : q.fieldKey === "location"
+          ? {
+              ...q,
+              placeholder: "Mahalle, cadde veya sokak bilgisi girin",
+            }
+        : q.fieldKey === "color"
+          ? {
+              ...q,
+              inputType: "select" as const,
+              options: COLOR_PREFERENCE_OPTIONS,
+              quickChoices: undefined,
+              multiSelect: true,
+              placeholder: "Renk seçin",
+            }
+        : q.fieldKey === "features"
+        ? {
+            ...q,
+            placeholder: featureExamplePlaceholder(
+              brain.strategy?.strategy,
+              requestText,
+              q.placeholder,
+            ),
+          }
+        : q.inputType === "select"
+          ? {
+              ...q,
+              quickChoices: undefined,
+              multiSelect: true,
+            }
+          : q,
+    );
+
+    // Show every still-empty field that is relevant to the active category,
+    // including optional preferences that did not enter the ranked shortlist.
+    for (const field of visibleDynamicFields) {
+      if (
+        field.key === "engine" ||
+        field.key === "specs" ||
+        field.key === "technicalSpecs" ||
+        dynamicValues[field.key]?.trim() ||
+        textAlreadyAnswers(field.key, field.label) ||
+        filtered.some((candidate) => candidate.fieldKey === field.key)
+      ) {
+        continue;
+      }
+      filtered.push({
+        fieldKey: field.key,
+        label: field.label,
+        reason: field.required
+          ? "Talebi yayınlamak için gerekli"
+          : "İsteğe bağlı tercih",
+        publishImpact: field.required ? 1 : 0.2,
+        matchingImpact: field.required ? 0.7 : 0.45,
+        priceImpact: 0.25,
+        confidenceImpact: 0.25,
+        priorityScore: field.required ? 1 : 0.3,
+        inputType:
+          field.key === "color" || field.type === "select"
+            ? "select"
+            : field.type === "number"
+              ? "number"
+              : "text",
+        options:
+          field.key === "color" ? COLOR_PREFERENCE_OPTIONS : field.options,
+        quickChoices:
+          field.key === "color" || field.type === "select"
+            ? undefined
+            : field.options,
+        multiSelect: field.key === "color" || field.type === "select",
+        placeholder: field.key === "color" ? "Renk seçin" : field.placeholder,
+      });
+    }
+
+    for (const field of [...missingFields].reverse()) {
+      if (filtered.some((candidate) => candidate.fieldKey === field.key)) continue;
+      filtered.unshift({
+        fieldKey: field.key,
+        label: field.label,
+        reason: "Talebi yayınlamak için gerekli",
+        publishImpact: 1,
+        matchingImpact: 0.7,
+        priceImpact: 0.5,
+        confidenceImpact: 0.5,
+        priorityScore: 1,
+        inputType:
+          field.type === "select"
+            ? "select"
+            : field.type === "number"
+              ? "number"
+              : "text",
+        options: field.options,
+        quickChoices: field.type === "select" ? undefined : field.options,
+        multiSelect: field.type === "select",
+        placeholder: field.placeholder,
+      });
+    }
+
+    if (
+      visibleCommonFieldKeys.has("city") &&
+      ((!mergedCommonDraft.city.trim() && !understandingCity.trim()) ||
+        (isRealEstate && realEstateLocationMissing))
+    ) {
+      filtered.unshift({
+        fieldKey: "city",
+        label: isRealEstate ? "İl ve ilçe" : "Şehir",
+        reason: isRealEstate
+          ? "Talebi yayınlamak için geçerli il ve ilçe gerekli"
+          : "Tekliflerin doğru bölgeden gelmesine yardımcı olur",
+        publishImpact: 0.8,
+        matchingImpact: 0.95,
+        priceImpact: 0.4,
+        confidenceImpact: 0.3,
+        priorityScore: 0.9,
+        inputType: "select",
+        options: isRealEstate
+          ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
+          : TURKEY_CITY_OPTIONS,
+        multiSelect: true,
+        placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
+      });
+    }
+
+    if (budgetRequired && !hasBudget) {
+      filtered.unshift({
+        fieldKey: "budget",
+        label: "Bütçe",
+        reason: "Talebi yayınlamak için gerekli",
+        publishImpact: 1,
+        matchingImpact: 0.5,
+        priceImpact: 0.9,
+        confidenceImpact: 0.5,
+        priorityScore: 1,
+        inputType: "text",
+        placeholder: budgetPlaceholderForStrategy(brain.strategy?.strategy),
+      });
+    }
+
+    return filtered;
+  }, [
+    brain.strategy?.strategy,
+    budgetRequired,
+    hasBudget,
+    hybridQuestionResult?.candidates,
+    isRealEstate,
+    mergedCommonDraft.city,
+    missingFields,
+    realEstateLocationMissing,
+    requestText,
+    understandingCity,
+    visibleCommonFieldKeys,
+    visibleDynamicFields,
+  ]);
 
   const readiness = useMemo(
     () =>
@@ -887,7 +1476,7 @@ function TalepOlusturForm() {
         strategy: brain.strategy?.strategy,
         requiredDynamicKeys,
         dynamicFields: visibleDynamicFields,
-        maxVisible: 4,
+        maxVisible: enrichmentCandidates.length,
       }),
     [
       brain.strategy?.strategy,
@@ -966,11 +1555,6 @@ function TalepOlusturForm() {
       ? `${formatBudgetFromMedian(brain.marketIntelligence.marketRange.low)} – ${formatBudgetFromMedian(brain.marketIntelligence.marketRange.high)}`
       : null;
 
-  const showLocationPrompt =
-    !isRealEstate &&
-    visibleCommonFieldKeys.has("city") &&
-    !mergedCommonDraft.city.trim();
-
   const showBudgetActions =
     visibleCommonFieldKeys.has("budget") &&
     isBudgetMeaningfulForStrategy(brain.strategy?.strategy) &&
@@ -982,6 +1566,52 @@ function TalepOlusturForm() {
   const readinessLabel = readiness.message;
 
   const hasText = requestText.trim().length > 0;
+
+  useEffect(() => {
+    let frame: number | null = null;
+    const syncAiPanelWithPage = () => {
+      frame = null;
+      if (window.innerWidth < 1024) {
+        aiPanelNaturalTopRef.current = null;
+        aiPanelOffsetRef.current = 0;
+        setAiPanelScrollOffset(0);
+        return;
+      }
+
+      const panel = aiPanelFollowRef.current;
+      if (!panel) return;
+
+      if (aiPanelNaturalTopRef.current == null) {
+        aiPanelNaturalTopRef.current =
+          panel.getBoundingClientRect().top +
+          window.scrollY -
+          aiPanelOffsetRef.current;
+      }
+
+      const nextOffset = Math.max(
+        0,
+        window.scrollY - aiPanelNaturalTopRef.current,
+      );
+      aiPanelOffsetRef.current = nextOffset;
+      setAiPanelScrollOffset(Math.round(nextOffset));
+    };
+    const onScroll = () => {
+      if (frame == null) frame = window.requestAnimationFrame(syncAiPanelWithPage);
+    };
+
+    syncAiPanelWithPage();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const onResize = () => {
+      aiPanelNaturalTopRef.current = null;
+      syncAiPanelWithPage();
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      if (frame != null) window.cancelAnimationFrame(frame);
+    };
+  }, []);
 
   function applyExampleChip(example: string) {
     hybrid.resetWithText(example);
@@ -1056,12 +1686,20 @@ function TalepOlusturForm() {
 
   function applyCityFilter(city: string) {
     if (isRealEstate) {
-      const sameIl = city === realEstateLocation.il;
-      updateRealEstateLocation({
-        il: city,
-        ilce: sameIl ? realEstateLocation.ilce : "",
-        mahalleler: sameIl ? realEstateLocation.mahalleler : [],
+      const locations = city
+        .split(",")
+        .map((value) => parseRealEstateCity(value.trim()))
+        .filter((value): value is { il: string; ilce: string } => Boolean(value));
+      if (locations.length === 0) return;
+      setCityTouched(true);
+      setCommonDraft((current) => ({ ...current, city }));
+      setRealEstateTouched(true);
+      setRealEstateDraft({
+        il: locations[0]!.il,
+        ilce: locations[0]!.ilce,
+        mahalleler: [],
       });
+      setPublishedVersion(null);
       return;
     }
     setCityTouched(true);
@@ -1101,7 +1739,12 @@ function TalepOlusturForm() {
   function applyBrainQuestion(question: QuestionCandidate, rawValue: string) {
     const field =
       question.fieldKey === "deliveryDays" ? "delivery" : question.fieldKey;
-    const typed = rawValue.trim();
+    const typed =
+      field === "budget"
+        ? formatBudgetAnswer(rawValue)
+        : field === "quantity"
+          ? formatQuantityAnswer(rawValue)
+          : rawValue.trim();
     if (!typed) return;
 
     const isAny =
@@ -1116,11 +1759,34 @@ function TalepOlusturForm() {
       return;
     }
 
+    const originalText = hybrid.text.trim();
+
     // Canonical hybrid reducer (same path as browse / quick-select).
     hybrid.applyQuickOption(
       field,
       field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed,
       isAny,
+    );
+
+    // Keep the user's original wording and append the answer instead of leaving
+    // the reducer's generated title in the composer.
+    const answerLabel =
+      field === "city"
+        ? "Şehir"
+        : field === "budget"
+          ? "Bütçe"
+          : field === "quantity"
+            ? "Miktar"
+            : field === "delivery"
+              ? "Teslimat"
+              : question.label;
+    const answerValue =
+      field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed;
+    const baseText = originalText.replace(/[.!?]+\s*$/u, "");
+    hybrid.setText(
+      baseText
+        ? `${baseText}. ${answerLabel}: ${answerValue}.`
+        : `${answerLabel}: ${answerValue}.`,
     );
 
     if (field === "delivery") {
@@ -1208,6 +1874,48 @@ function TalepOlusturForm() {
     setPublishError(null);
     setPublishAsUrgent(false);
     setUrgencyPromptVersion(version);
+  }
+
+  function handlePublishAttempt() {
+    // Never publish against the previous analysis after the user edits or
+    // deletes text. The composer is the authority for every category.
+    if (hybrid.isSyncing) {
+      setPublishGuidanceAttempted(true);
+      setPublishError("Talebinizdeki son değişiklikler kontrol ediliyor.");
+      setAiCompanionOpen(true);
+      return;
+    }
+    if (
+      ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS &&
+      missingPublishLabels.length > 0
+    ) {
+      setPublishGuidanceAttempted(true);
+      setPublishButtonAttention(true);
+      window.setTimeout(() => setPublishButtonAttention(false), 650);
+      setAiCompanionOpen(true);
+      setEnrichmentFieldKey(null);
+      setEnrichmentDraft("");
+      window.setTimeout(() => {
+        document.getElementById("talepo-ai-companion")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }, 50);
+      return;
+    }
+    setPublishGuidanceAttempted(true);
+    const locationError = isRealEstate
+      ? realEstateLocationError(realEstateLocation)
+      : null;
+    if (locationError) {
+      requestPublish("ai");
+      return;
+    }
+    setPublishReadyAnimation(true);
+    window.setTimeout(() => {
+      setPublishReadyAnimation(false);
+      requestPublish("ai");
+    }, 900);
   }
 
   function closeUrgencyPrompt() {
@@ -1360,42 +2068,7 @@ function TalepOlusturForm() {
   }
 
   function renderCommonField(field: (typeof visibleCommonFields)[number]) {
-    if (isRealEstate && field.key === "city") {
-      return (
-        <div
-          key={`${activeCategoryId}-location`}
-          className="sm:col-span-2"
-        >
-          <RealEstateLocationFields
-            il={realEstateLocation.il}
-            ilce={realEstateLocation.ilce}
-            mahalleler={realEstateLocation.mahalleler}
-            aiSuggested={!realEstateTouched}
-            onIlChange={(il) =>
-              updateRealEstateLocation({
-                il,
-                ilce: "",
-                mahalleler: [],
-              })
-            }
-            onIlceChange={(ilce) =>
-              updateRealEstateLocation({
-                il: realEstateLocation.il,
-                ilce,
-                mahalleler: [],
-              })
-            }
-            onMahallelerChange={(mahalleler) =>
-              updateRealEstateLocation({
-                il: realEstateLocation.il,
-                ilce: realEstateLocation.ilce,
-                mahalleler,
-              })
-            }
-          />
-        </div>
-      );
-    }
+    if (field.key === "city") return null;
 
     return (
       <CommonField
@@ -1436,11 +2109,54 @@ function TalepOlusturForm() {
           : mergedCommonDraft.title || selectedCategory.label
       }
       understoodChips={requestSummary.chips}
-      enrichmentCandidates={enrichmentCandidates.slice(0, 4)}
+      yearConditionConfirmation={
+        yearConditionConfirmationPending ? yearConditionConfirmation : null
+      }
+      onChangeConfirmedCondition={(value) => {
+        hybrid.applyQuickOption("condition", value, false);
+        updateDynamicField("condition", value);
+      }}
+      onConfirmYearCondition={() =>
+        setConfirmedYearConditionKey(yearConditionConfirmation?.key ?? null)
+      }
+      futureModelYearConfirmation={
+        futureModelYearConfirmationPending ? futureModelYearConfirmation : null
+      }
+      onUseCurrentModelYear={() => {
+        const year = futureModelYearConfirmation?.year;
+        if (!year) return;
+        const currentYear = new Date().getFullYear();
+        hybrid.setText(requestText.replace(String(year), String(currentYear)));
+        setConfirmedFutureModelYearKey(null);
+      }}
+      onConfirmFutureModelYear={() =>
+        setConfirmedFutureModelYearKey(futureModelYearConfirmation?.key ?? null)
+      }
+      budgetConflict={budgetConflict}
+      onChooseBudget={(value) => {
+        if (!budgetConflict) return;
+        if (value === budgetConflict.enteredBudget) {
+          setConfirmedBudgetConflictKey(budgetConflict.key);
+          return;
+        }
+        updateCommonField("budget", value);
+        setConfirmedBudgetConflictKey(null);
+      }}
+      publishGuidance={{
+        attempted: publishGuidanceAttempted,
+        missingLabels: missingPublishLabels,
+        missingFieldKeys: missingPublishFieldKeys,
+      }}
+      enrichmentCandidates={enrichmentCandidates}
       enrichmentFieldKey={enrichmentFieldKey}
       enrichmentDraft={enrichmentDraft}
       humanPrompts={humanPrompts}
       onEnrichmentSelect={(q) => {
+        if (enrichmentFieldKey === q.fieldKey) {
+          setEnrichmentFieldKey(null);
+          setEnrichmentDraft("");
+          return;
+        }
         setEnrichmentFieldKey(q.fieldKey);
         setEnrichmentDraft(dynamicValues[q.fieldKey] ?? "");
         setAiCompanionOpen(true);
@@ -1479,7 +2195,7 @@ function TalepOlusturForm() {
   );
 
   const aiCompanionShell = (
-    <div className="talepo-ai-panel min-h-0 rounded-[2rem] lg:min-h-[32rem]">
+    <div id="talepo-ai-companion" className={`talepo-ai-panel min-h-0 scroll-mt-20 rounded-[2rem] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:flex lg:h-full lg:min-h-0 lg:flex-col" : "lg:min-h-[32rem]"}`}>
       <button
         type="button"
         className="relative z-[1] flex w-full cursor-pointer items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
@@ -1527,7 +2243,7 @@ function TalepOlusturForm() {
       </div>
 
       <div
-        className={`relative z-[1] min-w-0 px-4 pb-5 sm:px-6 sm:pb-7 lg:block lg:pt-4 ${
+        className={`relative z-[1] min-w-0 px-4 pb-5 sm:px-6 sm:pb-7 lg:block lg:pt-4 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:min-h-0 lg:flex-1 lg:overflow-y-auto" : ""} ${
           aiCompanionOpen
             ? "block border-t border-white/10 pt-4 lg:border-t-0"
             : "hidden lg:block"
@@ -1539,7 +2255,7 @@ function TalepOlusturForm() {
   );
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#eef3f2] text-[#0f1f1d]">
+    <main className={`relative min-h-screen overflow-x-hidden bg-[#eef3f2] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
       {/* Atmospheric marketplace backdrop — soft, corporate, non-competing */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(165deg,#d1fae5_0%,#ecfeff_38%,#f0fdfa_68%,#e0f2fe_100%)]" />
@@ -1614,7 +2330,7 @@ function TalepOlusturForm() {
         </div>
       </header>
 
-      <div className="relative z-10 mx-auto max-w-[1280px] px-4 py-4 sm:px-6 lg:px-8">
+      <div className={`relative z-10 mx-auto max-w-[1280px] px-4 py-4 sm:px-6 lg:px-8 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-[calc(100vh-4rem)] lg:overflow-hidden" : ""}`}>
         {publishSuccess ? (
           <PublishSuccessMoment
             title={publishSuccess.title}
@@ -1652,7 +2368,7 @@ function TalepOlusturForm() {
           />
         ) : (
           <>
-            <section className="talepo-rise mx-auto max-w-3xl py-4 text-center sm:py-6">
+            <section className={`talepo-rise mx-auto max-w-3xl py-4 text-center sm:py-6 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
               <p className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/18 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]">
                 <Sparkles className="h-3.5 w-3.5" />
                 ~20 saniyede hazır
@@ -1669,7 +2385,7 @@ function TalepOlusturForm() {
               </p>
             </section>
 
-            <div className="mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/40">
+            <div className={`mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/40 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
               <span className="rounded-full bg-[#0f766e] px-2.5 py-1 text-white">
                 1 · Anlat / seç
               </span>
@@ -1688,11 +2404,11 @@ function TalepOlusturForm() {
             <div
               className={`mx-auto grid items-start gap-5 ${
                 hasText
-                  ? "max-w-[1180px] lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.95fr)] lg:gap-7"
+                  ? `max-w-[1180px] lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.95fr)] lg:gap-7 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : ""}`
                   : "max-w-[920px]"
               }`}
             >
-              <div className="flex min-w-0 flex-col gap-4">
+              <div className={`flex min-w-0 flex-col gap-4 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:h-full lg:overflow-y-auto lg:pr-2" : ""}`}>
                 <div
                   className={`talepo-rise talepo-rise-delay-1 rounded-[1.75rem] border bg-gradient-to-b from-white to-[#f7fdfb] p-4 shadow-[0_16px_48px_rgba(15,118,110,0.08)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 sm:p-5 ${
                     composerFocused
@@ -1713,10 +2429,26 @@ function TalepOlusturForm() {
                     onFocus={() => setComposerFocused(true)}
                     onBlur={() => setComposerFocused(false)}
                     onChange={(event) => {
-                      const nextText = event.target.value;
+                      const nextText = formatBudgetNumbersInText(event.target.value);
+                      // The composer is authoritative. Any field removed from
+                      // the text must not survive as a stale manual answer.
+                      setManualValues({});
+                      setCommonDraft({
+                        title: "",
+                        quantity: "",
+                        city: "",
+                        delivery: "",
+                        budget: "",
+                      });
+                      setTitleManuallyEdited(false);
+                      setCityTouched(false);
+                      setBudgetTouched(false);
+                      setRealEstateTouched(false);
+                      setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+                      setConfirmedYearConditionKey(null);
+                      setConfirmedFutureModelYearKey(null);
+                      setConfirmedBudgetConflictKey(null);
                       hybrid.setText(nextText);
-                      // Keep city/budget/manual answers while the user refines wording.
-                      // Only unlock soft category override so detector can follow the new text.
                       clearCategoryOverridesOnTextEdit();
                       setPublishedVersion(null);
                       setPublishError(null);
@@ -1748,6 +2480,8 @@ function TalepOlusturForm() {
                   <HybridUnderstoodPanel
                     hasText={requestText.trim().length > 0}
                     updating={hybrid.isSyncing}
+                    conditionConfirmationPending={yearConditionConfirmationPending}
+                    modelYearConfirmationPending={futureModelYearConfirmationPending}
                     facts={hybrid.isSyncing ? [] : hybrid.understoodFacts}
                     categoryLabel={
                       hybrid.isSyncing
@@ -1769,18 +2503,6 @@ function TalepOlusturForm() {
                     allowBrandEdit
                     onEditBrandAny={() => {
                       hybrid.setOpenBrowsePanel(true);
-                    }}
-                  />
-
-                  <HybridQuickSelectChips
-                    groups={hybrid.isSyncing ? [] : hybrid.quickGroups}
-                    onSelect={(fieldKey, value, isAny) => {
-                      hybrid.applyQuickOption(fieldKey, value, isAny);
-                      setManualValues((current) => {
-                        const next = { ...current };
-                        delete next[fieldKey];
-                        return next;
-                      });
                     }}
                   />
 
@@ -1824,100 +2546,84 @@ function TalepOlusturForm() {
                 className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
               >
                 <div className="space-y-4">
-                  <RequestSummaryCard
-                    headline={requestSummary.headline}
-                    chips={requestSummary.chips}
-                    catalogPreview={catalogPreview}
-                    categoryLabel={selectedCategory.label}
-                    onEditChip={(fieldKey) => {
-                      if (fieldKey === "city") {
-                        document
-                          .getElementById("talep-location")
-                          ?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                        return;
-                      }
-                      const q =
-                        enrichmentCandidates.find((c) => c.fieldKey === fieldKey) ??
-                        ({
-                          fieldKey,
-                          label: fieldKey,
-                          reason: "",
-                          publishImpact: 0,
-                          matchingImpact: 0,
-                          priceImpact: 0,
-                          confidenceImpact: 0,
-                          priorityScore: 0,
-                          inputType: "text" as const,
-                        } satisfies QuestionCandidate);
-                      setEnrichmentFieldKey(fieldKey);
-                      setEnrichmentDraft(dynamicValues[fieldKey] ?? "");
-                      if (!enrichmentCandidates.some((c) => c.fieldKey === fieldKey)) {
-                        // open advanced if editing a filled field not in enrichment list
-                        setOptionalOpen(true);
-                      }
-                      void q;
-                    }}
-                    onRemoveChip={(fieldKey) => {
-                      if (fieldKey === "city") {
-                        applyCityFilter("");
-                        return;
-                      }
-                      if (fieldKey === "quantity") {
-                        updateCommonField("quantity", "");
-                        return;
-                      }
-                      updateDynamicField(fieldKey, "");
-                    }}
-                  />
-
-                  {/* Title edit (subtle) */}
-                  <div className="rounded-[1.25rem] border border-teal-900/6 bg-white/70 px-4 py-3">
+                  <div className="rounded-[1.5rem] border border-[#0f766e]/15 bg-white/95 p-4 shadow-[0_10px_30px_rgba(15,118,110,0.06)] sm:p-5">
                     <label className="block">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-950/35">
-                        Başlık
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-[#0f1f1d]">
+                          Talep başlığın
+                        </span>
+                        {!titleManuallyEdited ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#dff6ef] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0f766e]">
+                            <Sparkles className="h-3 w-3" aria-hidden />
+                            Talepo AI önerisi
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-700">
+                            Sen düzenledin
+                          </span>
+                        )}
                       </span>
-                      <input
-                        value={mergedCommonDraft.title}
-                        onChange={(e) => updateCommonField("title", e.target.value)}
-                        className="mt-1.5 h-10 w-full bg-transparent text-sm font-medium text-[#0f1f1d] outline-none"
-                        placeholder="Talep başlığı"
-                      />
+                      <span className="mt-1 block text-xs leading-5 text-teal-950/45">
+                        Önerimizi kullanabilir veya kutuya tıklayıp değiştirebilirsin.
+                      </span>
+                      <span className="relative mt-3 block">
+                        <input
+                          value={mergedCommonDraft.title}
+                          onChange={(e) => updateCommonField("title", e.target.value)}
+                          className="h-12 w-full rounded-xl border border-[#0f766e]/20 bg-[#f7fcfa] px-4 pr-24 text-sm font-semibold text-[#0f1f1d] outline-none transition focus:border-[#0f766e]/55 focus:bg-white focus:ring-4 focus:ring-[#0f766e]/8"
+                          placeholder="Talep başlığını yaz"
+                        />
+                        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[11px] font-medium text-[#0f766e]/60">
+                          Düzenle
+                        </span>
+                      </span>
                     </label>
-                    <label className="mt-3 block border-t border-teal-900/6 pt-3">
+                    <label className="mt-4 block border-t border-teal-900/6 pt-4">
                       <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-950/35">
                         Kategori
                       </span>
-                      <select
-                        value={activeCategoryId}
-                        onChange={(event) => {
-                          const next = event.target.value;
-                          if (next === detectedCategoryId) {
-                            setCategoryOverride(null);
-                            setCategoryLockedByUser(false);
-                          } else {
-                            setCategoryOverride(next);
-                            setCategoryLockedByUser(true);
-                          }
-                          setManualValues({});
-                          setPublishedVersion(null);
-                        }}
-                        className="mt-1.5 h-10 w-full rounded-lg border border-teal-900/8 bg-[#fafcfb] px-2.5 text-sm outline-none"
-                      >
-                        {REQUEST_CATEGORIES.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.label}
-                            {category.id === detectedCategoryId ? " · AI" : ""}
-                          </option>
-                        ))}
-                      </select>
+                      <span className="relative mt-1.5 flex h-11 items-center rounded-lg border border-teal-900/8 bg-[#fafcfb] px-3 focus-within:border-[#0f766e]/35">
+                        <select
+                          value={activeCategoryId}
+                          onChange={(event) => {
+                            const next = event.target.value;
+                            if (next === detectedCategoryId) {
+                              setCategoryOverride(null);
+                              setCategoryLockedByUser(false);
+                            } else {
+                              setCategoryOverride(next);
+                              setCategoryLockedByUser(true);
+                            }
+                            setManualValues({});
+                            setPublishedVersion(null);
+                          }}
+                          aria-label="Kategori"
+                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                        >
+                          {REQUEST_CATEGORIES.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-sm font-medium text-[#0f1f1d]">
+                          {selectedCategory.label}
+                        </span>
+                        {activeCategoryId === detectedCategoryId ? (
+                          <span className="ml-1.5 shrink-0 text-xs font-semibold">
+                            <span className="text-[#0f1f1d]/45">- </span>
+                            <span className="text-[#0f766e]">
+                              Talepo AI Tarafından Seçildi!
+                            </span>
+                          </span>
+                        ) : null}
+                        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[#0f1f1d]" aria-hidden />
+                      </span>
                     </label>
                   </div>
 
                   {/* Budget — required, natural prompt */}
-                  {budgetRequired ? (
+                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && budgetRequired ? (
                     <div className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6">
                       <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
                         {budgetCopy.title}
@@ -1967,76 +2673,8 @@ function TalepOlusturForm() {
                     </div>
                   ) : null}
 
-                  {/* Location prompt */}
-                  {isRealEstate ? (
-                    <div
-                      id="talep-location"
-                      className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6"
-                    >
-                      <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
-                        Teklifleri hangi bölgeden almak istersiniz?
-                      </h3>
-                      <div className="mt-4">
-                        <RealEstateLocationFields
-                          il={realEstateLocation.il}
-                          ilce={realEstateLocation.ilce}
-                          mahalleler={realEstateLocation.mahalleler}
-                          aiSuggested={!realEstateTouched}
-                          onIlChange={(il) =>
-                            updateRealEstateLocation({
-                              il,
-                              ilce: "",
-                              mahalleler: [],
-                            })
-                          }
-                          onIlceChange={(ilce) =>
-                            updateRealEstateLocation({
-                              il: realEstateLocation.il,
-                              ilce,
-                              mahalleler: [],
-                            })
-                          }
-                          onMahallelerChange={(mahalleler) =>
-                            updateRealEstateLocation({
-                              il: realEstateLocation.il,
-                              ilce: realEstateLocation.ilce,
-                              mahalleler,
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  ) : showLocationPrompt ? (
-                    <div
-                      id="talep-location"
-                      className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6"
-                    >
-                      <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
-                        Teklifleri hangi bölgeden almak istersiniz?
-                      </h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {QUICK_CITIES.map((city) => (
-                          <button
-                            key={city}
-                            type="button"
-                            onClick={() => applyCityFilter(city)}
-                            className="rounded-full border border-teal-900/10 bg-[#fafcfb] px-3 py-1.5 text-xs font-medium text-teal-950/70 hover:border-[#0f766e]/25 hover:bg-[#f0fdfa]"
-                          >
-                            {city}
-                          </button>
-                        ))}
-                      </div>
-                      <input
-                        value={mergedCommonDraft.city}
-                        onChange={(e) => updateCommonField("city", e.target.value)}
-                        placeholder="veya şehir yazın"
-                        className="mt-3 h-11 w-full rounded-xl border border-teal-900/10 bg-[#fafcfb] px-3.5 text-sm outline-none focus:border-[#0f766e]/35"
-                      />
-                    </div>
-                  ) : null}
-
                   {/* Required dynamic fields still missing — soft blocked prompts */}
-                  {missingFields.length > 0 ? (
+                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && missingFields.length > 0 ? (
                     <div className="rounded-[1.5rem] border border-amber-900/10 bg-[#fffbf5] p-5">
                       <h3 className="text-sm font-semibold text-[#0f1f1d]">
                         Yayınlamak için bir bilgi daha
@@ -2072,10 +2710,10 @@ function TalepOlusturForm() {
                         <ListPlus className="h-4 w-4 shrink-0 text-[#0f766e]" />
                         <span>
                           <span className="block text-sm font-semibold text-[#0f1f1d]">
-                            Tüm detayları düzenle
+                            Verdiğim bilgileri düzenle
                           </span>
                           <span className="mt-0.5 block text-xs text-teal-950/45">
-                            İsteğe bağlı · mevcut tüm alanlar
+                            Bütçe, konum ve diğer cevaplarını kontrol et
                           </span>
                         </span>
                       </span>
@@ -2099,8 +2737,13 @@ function TalepOlusturForm() {
                               }
                             />
                           ))}
-                          {optionalCommonFields
-                            .filter((field) => field.key !== "budget")
+                          {(ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS
+                            ? visibleCommonFields.filter(
+                                (field) => field.key !== "title",
+                              )
+                            : optionalCommonFields.filter(
+                                (field) => field.key !== "budget",
+                              ))
                             .map(renderCommonField)}
                           {optionalDynamicFields.map((field) => (
                             <DynamicFieldInput
@@ -2157,19 +2800,45 @@ function TalepOlusturForm() {
                     </div>
                   ) : null}
 
-                  <div className="rounded-[1.25rem] border border-teal-900/6 bg-[#f7faf9] px-4 py-3">
-                    <p className="text-sm text-teal-950/60">{readiness.message}</p>
-                  </div>
+                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS ? <div
+                    className={`rounded-[1.25rem] border px-4 py-3 ${
+                      missingPublishLabels.length > 0
+                        ? "border-orange-200 bg-orange-50/80"
+                        : "border-[#0f766e]/15 bg-[#ecfdf5]"
+                    }`}
+                  >
+                    {missingPublishLabels.length > 0 ? (
+                      <>
+                        <p className="text-sm font-semibold text-orange-900">
+                          Talebi yayınlamak için şu bilgileri tamamlayın:
+                        </p>
+                        <ul className="mt-2 flex flex-wrap gap-2">
+                          {missingPublishLabels.map((label) => (
+                            <li
+                              key={label}
+                              className="rounded-full border border-orange-200 bg-white px-2.5 py-1 text-xs font-medium text-orange-800"
+                            >
+                              {label}
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <p className="text-sm font-semibold text-[#0f766e]">
+                        Gerekli bilgiler tamamlandı. Talebinizi yayınlayabilirsiniz.
+                      </p>
+                    )}
+                  </div> : null}
 
                   {/* Mobile: AI sits above publish so questions are reachable */}
                   <div className="lg:hidden">{aiCompanionShell}</div>
 
                   <button
                     type="button"
-                    disabled={isPublishing || readiness.state === "BLOCKED"}
-                    onClick={() => requestPublish("ai")}
+                    disabled={isPublishing || publishReadyAnimation}
+                    onClick={handlePublishAttempt}
                     aria-busy={isPublishing}
-                    className="sticky bottom-3 z-20 flex min-h-[54px] w-full items-center justify-between rounded-2xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(15,118,110,0.28)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed disabled:bg-teal-900/25 disabled:shadow-none sm:static"
+                    className={`sticky bottom-3 z-20 flex min-h-[54px] w-full items-center justify-between overflow-hidden rounded-2xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(15,118,110,0.28)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed sm:static ${isPublishing ? "disabled:bg-teal-900/25 disabled:shadow-none" : ""} ${publishReadyAnimation ? "talepo-publish-ready" : ""} ${publishButtonAttention ? "animate-pulse ring-4 ring-orange-300/40" : ""}`}
                   >
                     <span className="flex items-center gap-2">
                       {isPublishing ? (
@@ -2179,10 +2848,12 @@ function TalepOlusturForm() {
                       )}
                       {isPublishing
                         ? "Talebiniz yayınlanıyor..."
-                        : "Talebi yayınla"}
+                        : publishReadyAnimation
+                          ? "Her şey hazır"
+                          : "Talebi yayınla"}
                     </span>
                     {!isPublishing ? (
-                      <ArrowRight className="h-4 w-4 opacity-80" />
+                      <ArrowRight className={`h-4 w-4 opacity-80 ${publishReadyAnimation ? "talepo-publish-arrow" : ""}`} />
                     ) : null}
                   </button>
                 </div>
@@ -2191,8 +2862,14 @@ function TalepOlusturForm() {
               </div>
 
               {hasText ? (
-              <aside className="talepo-rise talepo-rise-delay-2 hidden min-w-0 lg:sticky lg:top-20 lg:block lg:self-start">
-                {aiCompanionShell}
+        <aside className={`talepo-rise talepo-rise-delay-2 hidden min-w-0 lg:block ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : "lg:self-start"}`}>
+                <div
+                  ref={aiPanelFollowRef}
+                  className="lg:will-change-transform"
+                  style={{ transform: `translateY(${aiPanelScrollOffset}px)` }}
+                >
+                  {aiCompanionShell}
+                </div>
               </aside>
               ) : null}
             </div>
@@ -2269,6 +2946,7 @@ function TalepOlusturForm() {
           </div>
         </div>
       ) : null}
+
     </main>
   );
 }

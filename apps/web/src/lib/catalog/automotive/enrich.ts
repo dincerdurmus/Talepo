@@ -301,6 +301,26 @@ export function enrichAutomotiveSubject(
     if (!unresolved.includes(engineHit.raw)) unresolved.push(engineHit.raw);
   }
 
+  // Compact engine tokens such as BMW "320d" can also exist as catalog model
+  // aliases. Once the engine is resolved, prefer its canonical model family.
+  if (
+    engineHit.status === "resolved" &&
+    engineHit.record &&
+    inferredModel &&
+    foldCatalogKey(inferredModel.matchedPhrase ?? "") ===
+      foldCatalogKey(engineHit.record.marketingName)
+  ) {
+    const canonicalModel = idx.modelById.get(engineHit.record.modelId);
+    if (canonicalModel) {
+      inferredModel = {
+        record: canonicalModel,
+        confidence: "high",
+        matchMode: "normalized",
+        matchedPhrase: "",
+      };
+    }
+  }
+
   let engine: AutomotiveSubjectEnrichment["engine"];
   if (engineHit.status === "resolved" && engineHit.record) {
     const rec = engineHit.record;
@@ -441,9 +461,16 @@ export function enrichAutomotiveSubject(
   }
 
   if (inferredModel) {
+    const engineAlias =
+      engine?.status === "resolved" &&
+      (inferredModel.record.aliases ?? []).some(
+        (alias) =>
+          engine.marketingName != null &&
+          foldCatalogKey(alias) === foldCatalogKey(engine.marketingName),
+      );
     result.model = {
       id: inferredModel.record.id,
-      name: compactOrFamilyName(text, inferredModel),
+      name: engineAlias ? inferredModel.record.name : compactOrFamilyName(text, inferredModel),
       confidence: inferredModel.confidence,
       matchMode: inferredModel.matchMode,
     };
