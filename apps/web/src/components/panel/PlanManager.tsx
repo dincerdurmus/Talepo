@@ -447,17 +447,18 @@ export function PlanManager({
                       const Icon = visual.icon;
                       const href = visual.href ?? meta.surface;
                       return (
-                        <li key={key} className="group/feature flex items-center gap-3 py-3 transition hover:px-1">
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
-                          <span className="min-w-0 flex-1">
+                        <li key={key} className={`group/feature relative flex min-h-[68px] items-center gap-3 py-3 transition ${href ? "cursor-pointer" : ""}`}>
+                          {href && <Link href={href} aria-label={`${meta.label} aç`} className="absolute inset-0 z-0 rounded-[12px] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35" />}
+                          <span className={`pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
+                          <span className="pointer-events-none relative z-10 min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-2">
                               <span className="text-[13px] font-bold text-[#102522]">{meta.label}</span>
                               {visual.badge && <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] ${visual.badgeClass}`}>{visual.badge}</span>}
                             </span>
                             <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{meta.description}</span>
                           </span>
-                          <FeatureInfoTooltip feature={key} />
-                          {href && <Link href={href} className={`shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</Link>}
+                          <span className="relative z-20 shrink-0"><FeatureInfoTooltip feature={key} /></span>
+                          {href && <span className={`pointer-events-none relative z-10 shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</span>}
                         </li>
                       );
                     })}
