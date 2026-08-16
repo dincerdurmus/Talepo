@@ -22,6 +22,8 @@ type CategoryVisualThumbProps = {
   coverImageUrl?: string | null;
   size?: ThumbSize;
   className?: string;
+  /** Category stock art is fine on browse listings; opportunity cards pass false. */
+  allowCategoryStockImage?: boolean;
 };
 
 /**
@@ -34,11 +36,14 @@ export function CategoryVisualThumb({
   coverImageUrl,
   size = "md",
   className = "",
+  allowCategoryStockImage = true,
 }: CategoryVisualThumbProps) {
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
   const label = categoryName || "Kategori";
-  const resolvedCover = coverImageUrl || look.image || null;
+  const realCover = coverImageUrl?.trim() || null;
+  const resolvedCover =
+    realCover || (allowCategoryStockImage ? look.image || null : null);
 
   if (resolvedCover) {
     return (

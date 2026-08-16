@@ -4,12 +4,17 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
+  Check,
+  Clock,
   Eye,
   Flame,
+  Gauge,
   LoaderCircle,
+  Shield,
   Star,
   Target,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 
 import { opportunityRequestDetailHref } from "@/lib/panel/opportunity-request-detail-href";
@@ -20,6 +25,7 @@ import {
 } from "@/lib/panel/opportunity-recommended-eligibility";
 import { isOpportunitySaveSupported } from "@/lib/panel/opportunity-save-support";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
+import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 
 type OpportunityContext = "PERSONAL" | "WORKSPACE";
 
@@ -36,13 +42,6 @@ const COMPETITION_LABELS = {
   HIGH: "Yüksek rekabet",
 } as const;
 
-const BUDGET_LABELS = {
-  UNKNOWN: "Bütçe verisi yetersiz",
-  BELOW_MARKET: "Piyasa altı",
-  MARKET: "Piyasa bandında",
-  ABOVE_MARKET: "Piyasa üstü",
-} as const;
-
 const ACTION_LABELS = {
   PREPARE_OFFER: "Teklif hazırlamaya değer",
   REVIEW_REQUEST: "Talebi ayrıntılı incele",
@@ -51,50 +50,138 @@ const ACTION_LABELS = {
   SKIP: "Şimdilik bekle",
 } as const;
 
-const MATERIAL_RISK_PATTERNS = [
-  /piyasa sinyalinin üzerinde/i,
-  /envanterinde uygun ürün bulunamadı/i,
-  /eşleşme sinyali henüz yeterince güçlü değil/i,
-];
-
-function fitLabel(level: OpportunityFeedItem["intelligence"]["fitLevel"]) {
-  return level === "STRONG"
-    ? "Çok uygun"
-    : level === "PROMISING"
-      ? "Uygun"
-      : level === "LIMITED"
-        ? "Kısmen uygun"
-        : "Uygunluk için yeterli veri yok";
-}
+const MATCH_DATA_MISSING = /eşleşme verisi bulunamadı/i;
+const DETAIL_GAP = /talep detay/i;
 
 function uniqueNonEmpty(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
-/** Match reasons first; opportunity signals without duplicating the same line. */
-function opportunityCardReasons(item: OpportunityFeedItem): {
-  fitReasons: string[];
-  extraReasons: string[];
-} {
-  const fitReasons = uniqueNonEmpty(item.matchReasons);
-  const seen = new Set(fitReasons);
-  const extraReasons = uniqueNonEmpty(item.opportunityReasons).filter(
-    (reason) => !seen.has(reason),
-  );
-  return { fitReasons, extraReasons };
+function matchReasonList(item: OpportunityFeedItem): string[] {
+  return uniqueNonEmpty(item.matchReasons).slice(0, 2);
 }
 
-function groundedStatement(item: OpportunityFeedItem): string | null {
-  const { fitReasons, extraReasons } = opportunityCardReasons(item);
-  return fitReasons[0] ?? extraReasons[0] ?? item.intelligence.reasons[0] ?? null;
-}
-
-function isMaterialRiskText(text: string): boolean {
-  return MATERIAL_RISK_PATTERNS.some((pattern) => pattern.test(text));
+function fitBadgeLabel(
+  level: OpportunityFeedItem["intelligence"]["fitLevel"],
+): string | null {
+  return level === "STRONG"
+    ? "Yüksek eşleşme"
+    : level === "PROMISING"
+      ? "Uygun"
+      : level === "LIMITED"
+        ? "Kısmen uygun"
+        : null;
 }
 
 function dataConfidenceLabel(confidence: number): string {
-  return confidence >= 0.7 ? "Yeterli" : "Sınırlı";
+  return confidence >= 0.7 ? "Yeterli" : confidence >= 0.4 ? "Orta" : "Sınırlı";
+}
+
+function isPublishedToday(item: OpportunityFeedItem): boolean {
+  const raw = item.publishedAt ?? item.createdAt;
+  if (!raw) return false;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return false;
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
+
+function freshnessLabel(item: OpportunityFeedItem): string {
+  if (item.intelligence.urgencyReason === "Talep yeni yayınlandı.") {
+    return "Yeni yayınlandı";
+  }
+  const raw = item.publishedAt ?? item.createdAt;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return item.intelligence.urgencyReason;
+  const hours = (Date.now() - date.getTime()) / 3600000;
+  if (hours < 1) return "Az önce";
+  if (hours <= 24) return "Yeni yayınlandı";
+  const days = Math.max(1, Math.floor(hours / 24));
+  return `${days} gün önce`;
+}
+
+function compactRiskLabel(item: OpportunityFeedItem): string | null {
+  const risks = item.intelligence.risks.filter(
+    (risk) => !MATCH_DATA_MISSING.test(risk),
+  );
+  if (risks.some((risk) => DETAIL_GAP.test(risk))) {
+    return "Talep detayları sınırlı";
+  }
+  return risks[0] ? "Eksik bilgi" : null;
+}
+
+function OpportunityBadge({
+  children,
+  tone,
+}: {
+  children: React.ReactNode;
+  tone: "match" | "urgent" | "neutral" | "limited";
+}) {
+  const className =
+    tone === "match"
+      ? "bg-emerald-50 text-emerald-800"
+      : tone === "urgent"
+        ? "bg-amber-100 text-amber-900"
+        : tone === "limited"
+          ? "bg-teal-50 text-teal-800"
+          : "bg-teal-950/[0.04] text-teal-900/65";
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold tracking-wide ${className}`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function OpportunitySignal({
+  icon,
+  title,
+  detail,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  detail?: string | null;
+}) {
+  return (
+    <div className="inline-flex min-w-0 max-w-full items-start gap-1.5">
+      <span className="mt-0.5 text-teal-800/70">{icon}</span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold leading-4 text-teal-950">
+          {title}
+        </p>
+        {detail ? (
+          <p className="text-[10px] leading-4 text-teal-950/45">{detail}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function OpportunitySummaryMetric({
+  value,
+  label,
+  icon,
+  toneClass,
+}: {
+  value: string | number;
+  label: string;
+  icon?: React.ReactNode;
+  toneClass: string;
+}) {
+  return (
+    <div className="min-w-[6.5rem] flex-1 rounded-xl border border-teal-900/8 bg-white px-3 py-2">
+      <div className="flex items-center gap-1.5">
+        <p className={`text-xl font-bold leading-none ${toneClass}`}>{value}</p>
+        {icon}
+      </div>
+      <p className="mt-1 text-[11px] leading-4 text-teal-950/50">{label}</p>
+    </div>
+  );
 }
 
 function OpportunityCard({
@@ -103,217 +190,178 @@ function OpportunityCard({
   busy,
   canSave,
   saveError,
+  view,
 }: {
   item: OpportunityFeedItem;
   onWatchlistToggle: (requestId: string, add: boolean) => void;
   busy: string | null;
   canSave: boolean;
   saveError: string | null;
+  view: OpportunityHubView;
 }) {
-  const { fitReasons, extraReasons } = opportunityCardReasons(item);
+  const fitReasons = matchReasonList(item);
   const detailHref = opportunityRequestDetailHref(item.requestId);
-  const statement = groundedStatement(item);
-  const hasPersonalMatch =
-    item.context === "PERSONAL" &&
-    item.matchScore != null &&
-    item.matchReasons.length > 0;
-  const materialRisks = item.intelligence.risks.filter(isMaterialRiskText);
-  const ordinaryGaps = item.intelligence.risks.filter(
-    (risk) => !isMaterialRiskText(risk),
-  );
-  const ordinaryGap = ordinaryGaps[0] ?? null;
+  const hasGroundedMatch =
+    item.matchScore != null && item.matchReasons.length > 0;
+  const fitLabel = fitBadgeLabel(item.intelligence.fitLevel);
+  const showFitBadge = Boolean(fitLabel);
+  const showGeneralBadge =
+    !showFitBadge && (view === "browse" || !hasGroundedMatch);
   const confidenceLabel = dataConfidenceLabel(item.intelligence.confidence);
+  const signalScore = item.intelligence.opportunityScore;
+  const riskLabel = compactRiskLabel(item);
+  const actionHint =
+    item.intelligence.recommendedAction === "REVIEW_REQUEST"
+      ? null
+      : ACTION_LABELS[item.intelligence.recommendedAction];
 
   return (
-    <article className="rounded-2xl border border-teal-900/8 bg-white p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <article className="rounded-2xl border border-teal-900/10 bg-white p-3 shadow-[0_1px_2px_rgba(15,47,40,0.04)]">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start">
+        <CategoryVisualThumb
+          categorySlug={item.categorySlug}
+          categoryName={item.categoryName}
+          coverImageUrl={item.coverImageUrl}
+          size="sm"
+          allowCategoryStockImage={false}
+          className="self-start"
+        />
+
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {hasPersonalMatch || item.context === "WORKSPACE" ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800">
-                <TrendingUp className="h-3 w-3" aria-hidden />
-                {fitLabel(item.intelligence.fitLevel)}
-              </span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {showFitBadge ? (
+              <OpportunityBadge
+                tone={
+                  item.intelligence.fitLevel === "LIMITED" ? "limited" : "match"
+                }
+              >
+                {fitLabel}
+              </OpportunityBadge>
+            ) : showGeneralBadge ? (
+              <OpportunityBadge tone="neutral">Genel fırsat</OpportunityBadge>
             ) : null}
             {item.isUrgent ? (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">
-                Acil
-              </span>
+              <OpportunityBadge tone="urgent">Acil</OpportunityBadge>
             ) : null}
           </div>
+
           {detailHref ? (
             <Link
               href={detailHref}
-              className="mt-2 block rounded-sm text-base font-semibold text-teal-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+              className="mt-1.5 block truncate rounded-sm text-sm font-semibold text-teal-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
             >
               {item.title}
             </Link>
           ) : (
-            <p className="mt-2 text-base font-semibold text-teal-950">
+            <p className="mt-1.5 truncate text-sm font-semibold text-teal-950">
               {item.title}
             </p>
           )}
-          <p className="mt-1 text-xs text-teal-950/50">
+
+          <p className="mt-0.5 truncate text-xs text-teal-950/45">
             {item.categoryName}
             {item.city ? ` · ${item.city}` : ""}
-            {item.budgetLabel ? ` · ${item.budgetLabel}` : ""}
           </p>
-          {statement ? (
-            <p className="mt-2 text-sm leading-6 text-teal-950/70">{statement}</p>
+
+          {item.budgetLabel ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <p className="text-sm font-bold text-teal-950">
+                {item.budgetLabel}
+              </p>
+              <span className="rounded-md bg-teal-50 px-1.5 py-0.5 text-[10px] font-semibold text-teal-800">
+                Bütçe belirtilmiş
+              </span>
+            </div>
+          ) : null}
+
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            <OpportunitySignal
+              icon={<Gauge className="h-3.5 w-3.5" aria-hidden />}
+              title={`${COMPETITION_LABELS[item.competition]} · ${item.offerCount} teklif`}
+            />
+            <OpportunitySignal
+              icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
+              title={`Veri güveni ${confidenceLabel}`}
+              detail={`Sinyal ${signalScore}/100`}
+            />
+            <OpportunitySignal
+              icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
+              title={freshnessLabel(item)}
+            />
+          </div>
+
+          {fitReasons.length > 0 ? (
+            <ul className="mt-2 space-y-0.5">
+              {fitReasons.map((reason) => (
+                <li
+                  key={reason}
+                  className="flex items-start gap-1.5 text-[11px] leading-4 text-teal-950/70"
+                >
+                  <Check
+                    className="mt-0.5 h-3 w-3 shrink-0 text-teal-700"
+                    aria-hidden
+                  />
+                  <span className="line-clamp-1">{reason}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {riskLabel || actionHint ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-teal-950/45">
+              {riskLabel ? (
+                <span className="inline-flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3 text-amber-700" aria-hidden />
+                  {riskLabel}
+                </span>
+              ) : null}
+              <span>{actionHint}</span>
+            </div>
           ) : null}
         </div>
-        {canSave ? (
-          <div className="shrink-0">
-            <button
-              type="button"
-              disabled={busy === item.requestId}
-              onClick={() =>
-                onWatchlistToggle(item.requestId, !item.isWatchlisted)
-              }
-              title="Talebi kaydet (watchlist) — kayıtlı aramalardan ayrıdır"
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                item.isWatchlisted
-                  ? "bg-teal-900 text-white"
-                  : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
-              }`}
+
+        <div className="flex shrink-0 flex-col items-stretch gap-2 md:w-[9.75rem] md:items-end">
+          {detailHref ? (
+            <Link
+              href={detailHref}
+              className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 md:w-auto"
             >
-              {busy === item.requestId ? (
-                <LoaderCircle className="h-3 w-3 animate-spin" />
-              ) : (
-                <Star
-                  className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
-                />
-              )}
-              {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
-            </button>
-            {saveError ? (
-              <p className="mt-1 max-w-[11rem] text-[11px] font-medium text-rose-700">
-                {saveError}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="mt-4 space-y-3">
-        {fitReasons.length > 0 || extraReasons.length > 0 ? (
-          <div className="rounded-xl bg-teal-50/70 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
-              Neden önemli olabilir
-            </p>
-            {fitReasons.length > 0 ? (
-              <div className="mt-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
-                  Neden sana uygun
+              Talebi incele →
+            </Link>
+          ) : null}
+          {canSave ? (
+            <div className="md:w-full">
+              <button
+                type="button"
+                disabled={busy === item.requestId}
+                onClick={() =>
+                  onWatchlistToggle(item.requestId, !item.isWatchlisted)
+                }
+                title="Talebi kaydet (watchlist) — kayıtlı aramalardan ayrıdır"
+                className={`inline-flex h-8 w-full items-center justify-center gap-1 rounded-xl px-3 text-xs font-semibold transition ${
+                  item.isWatchlisted
+                    ? "bg-teal-900 text-white"
+                    : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
+                }`}
+              >
+                {busy === item.requestId ? (
+                  <LoaderCircle className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Star
+                    className={`h-3 w-3 ${item.isWatchlisted ? "fill-current" : ""}`}
+                  />
+                )}
+                {item.isWatchlisted ? "Kaydedildi" : "Kaydet"}
+              </button>
+              {saveError ? (
+                <p className="mt-1 text-[11px] font-medium text-rose-700">
+                  {saveError}
                 </p>
-                <ul className="mt-1 space-y-0.5 text-xs text-teal-950/70">
-                  {fitReasons.slice(0, 3).map((reason) => (
-                    <li key={reason}>• {reason}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {extraReasons.length > 0 ? (
-              <div className={fitReasons.length > 0 ? "mt-2" : "mt-1"}>
-                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
-                  Fırsat neden ilginç
-                </p>
-                <ul className="mt-1 space-y-0.5 text-xs text-teal-950/70">
-                  {extraReasons.slice(0, 3).map((reason) => (
-                    <li key={reason}>• {reason}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="rounded-xl border border-teal-900/8 bg-[#f7fbfa] p-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-800/65">
-            Fırsat görünümü
-          </p>
-          <dl className="mt-2 grid gap-2 sm:grid-cols-3">
-            <div>
-              <dt className="text-[11px] text-teal-950/45">Uygunluk</dt>
-              <dd className="mt-0.5 text-sm font-semibold text-teal-950">
-                {fitLabel(item.intelligence.fitLevel)}
-              </dd>
+              ) : null}
             </div>
-            <div>
-              <dt className="text-[11px] text-teal-950/45">Rekabet</dt>
-              <dd className="mt-0.5 text-sm font-semibold text-teal-950">
-                {COMPETITION_LABELS[item.competition]}
-              </dd>
-              <p className="mt-0.5 text-[11px] text-teal-950/45">
-                {item.offerCount} teklif · anonim sinyal
-              </p>
-            </div>
-            <div>
-              <dt className="text-[11px] text-teal-950/45">Veri güveni</dt>
-              <dd className="mt-0.5 text-sm font-semibold text-teal-950">
-                Veri güveni: {confidenceLabel}
-              </dd>
-              <p className="mt-0.5 text-[11px] text-teal-950/45">
-                Sinyal gücü {item.intelligence.opportunityScore}/100 ·{" "}
-                {BUDGET_LABELS[item.budgetStatus]}
-              </p>
-            </div>
-          </dl>
+          ) : null}
         </div>
-
-        <p className="text-[11px] leading-5 text-teal-950/45">
-          Veri kalitesi: {confidenceLabel.toLocaleLowerCase()} güven. Bu sayı
-          başarı olasılığı değildir.
-        </p>
-
-        {ordinaryGap ? (
-          <p className="text-xs leading-5 text-teal-950/50">{ordinaryGap}</p>
-        ) : null}
-
-        {materialRisks.length > 0 ? (
-          <div className="rounded-xl border border-amber-900/15 bg-amber-50/70 px-3 py-2">
-            <p className="text-[11px] font-semibold text-amber-950">
-              Dikkat edilmesi gerekenler
-            </p>
-            <p className="mt-1 text-xs text-amber-950/80">{materialRisks[0]}</p>
-          </div>
-        ) : null}
       </div>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-teal-950/[0.04] px-3 py-2.5">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-teal-900/55">
-            Önerilen aksiyon
-          </p>
-          <p className="mt-0.5 text-sm font-semibold text-teal-950">
-            {ACTION_LABELS[item.intelligence.recommendedAction]}
-          </p>
-        </div>
-        {detailHref ? (
-          <Link
-            href={detailHref}
-            className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
-          >
-            Talebi incele →
-          </Link>
-        ) : null}
-      </div>
-
-      {item.recentChanges.length > 0 ? (
-        <div className="mt-3 rounded-xl bg-teal-50/80 px-3 py-2">
-          <p className="flex items-center gap-1 text-[11px] font-semibold text-teal-900">
-            <AlertTriangle className="h-3 w-3" aria-hidden />
-            Son değişiklikler
-          </p>
-          <ul className="mt-1 space-y-0.5 text-[11px] text-teal-900/70">
-            {item.recentChanges.map((change) => (
-              <li key={`${change.field}-${change.newValue}`}>
-                {change.label}: {change.oldValue ?? "—"} → {change.newValue ?? "—"}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
     </article>
   );
 }
@@ -324,30 +372,38 @@ function Section({
   items,
   empty,
   showEmpty = false,
-  summary,
   renderItem,
+  chrome = "full",
+  metrics,
 }: {
   title: string;
   icon: React.ReactNode;
   items: OpportunityFeedItem[];
   empty: React.ReactNode;
   showEmpty?: boolean;
-  summary?: string | null;
   renderItem: (item: OpportunityFeedItem) => React.ReactNode;
+  chrome?: "full" | "plain";
+  metrics?: React.ReactNode;
 }) {
   if (items.length === 0 && !showEmpty) return null;
   return (
-    <section className="rounded-[28px] border border-teal-900/8 bg-white p-6">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h2 className="text-lg font-semibold text-teal-950">{title}</h2>
+    <section
+      className={
+        chrome === "full"
+          ? "rounded-[28px] border border-teal-900/8 bg-white p-5 sm:p-6"
+          : "space-y-3"
+      }
+    >
+      {chrome === "full" ? (
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div className="flex items-center gap-2">
+            {icon}
+            <h2 className="text-lg font-semibold text-teal-950">{title}</h2>
+          </div>
         </div>
-        {summary ? (
-          <p className="text-xs font-medium text-teal-900/45">{summary}</p>
-        ) : null}
-      </div>
-      <div className="mt-4 space-y-3">
+      ) : null}
+      {metrics}
+      <div className={chrome === "full" ? "mt-4 space-y-2.5" : "space-y-2.5"}>
         {items.length > 0 ? (
           items.map((item) => renderItem(item))
         ) : (
@@ -395,6 +451,59 @@ function OpportunityEmptyState() {
   );
 }
 
+function FeedSummaryStrip({
+  items,
+  view,
+}: {
+  items: OpportunityFeedItem[];
+  view: OpportunityHubView;
+}) {
+  if (items.length === 0) return null;
+
+  const recommendedCount = items.filter(
+    (item) => item.matchScore != null && item.matchReasons.length > 0,
+  ).length;
+  const listedCount =
+    view === "suggested" ? recommendedCount || items.length : items.length;
+  const newTodayCount = items.filter(isPublishedToday).length;
+  const urgentCount = items.filter((item) => item.isUrgent).length;
+  const scores = items.map((item) => item.intelligence.opportunityScore);
+  const avgScore = Math.round(
+    scores.reduce((sum, score) => sum + score, 0) / scores.length,
+  );
+  const avgConfidence =
+    items.reduce((sum, item) => sum + item.intelligence.confidence, 0) /
+    items.length;
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <OpportunitySummaryMetric
+        value={listedCount}
+        label={view === "suggested" ? "Önerilen fırsat" : "Fırsat"}
+        toneClass="text-teal-800"
+      />
+      <OpportunitySummaryMetric
+        value={newTodayCount}
+        label="Yeni"
+        icon={<TrendingUp className="h-3.5 w-3.5 text-sky-600" aria-hidden />}
+        toneClass="text-sky-700"
+      />
+      <OpportunitySummaryMetric
+        value={urgentCount}
+        label="Acil"
+        icon={<Zap className="h-3.5 w-3.5 text-amber-600" aria-hidden />}
+        toneClass="text-amber-700"
+      />
+      <OpportunitySummaryMetric
+        value={`${avgScore}/100`}
+        label={`Veri güveni ${dataConfidenceLabel(avgConfidence)}`}
+        icon={<Shield className="h-3.5 w-3.5 text-teal-700" aria-hidden />}
+        toneClass="text-teal-800"
+      />
+    </div>
+  );
+}
+
 export function OpportunitiesHub({
   initialFeed,
   canWatchlist,
@@ -436,11 +545,6 @@ export function OpportunitiesHub({
         : surface === "PERSONAL"
           ? "Sana önerilen fırsatlar"
           : "Sana önerilen fırsatlar";
-
-  const compactSummary =
-    visible.length > 0
-      ? `${visible.length} ${view === "suggested" ? "eşleşme" : "talep"}`
-      : null;
 
   function cardCanSave(item: OpportunityFeedItem) {
     return isOpportunitySaveSupported({
@@ -507,6 +611,7 @@ export function OpportunitiesHub({
         saveError={
           saveError?.requestId === item.requestId ? saveError.message : null
         }
+        view={view}
       />
     );
   }
@@ -527,7 +632,8 @@ export function OpportunitiesHub({
           )
         }
         showEmpty
-        summary={compactSummary}
+        chrome="plain"
+        metrics={<FeedSummaryStrip items={visible} view={view} />}
         renderItem={renderCard}
       />
 

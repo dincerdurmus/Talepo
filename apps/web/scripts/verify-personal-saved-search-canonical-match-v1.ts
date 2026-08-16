@@ -197,13 +197,13 @@ const projection = furnitureLeafProjection();
   const hub = read("src/components/panel/OpportunitiesHub.tsx");
   check(
     "G card renders matchReasons",
-    hub.includes("item.matchReasons") && hub.includes("Neden sana uygun"),
+    hub.includes("item.matchReasons") && hub.includes("matchReasonList"),
   );
   check(
-    "G card keeps opportunityReasons without dumping duplicates",
-    hub.includes("item.opportunityReasons") &&
-      hub.includes("Fırsat neden ilginç") &&
-      hub.includes("opportunityCardReasons"),
+    "G card does not dump opportunityReasons as a second list",
+    !hub.includes("Fırsat neden ilginç") &&
+      !hub.includes("Neden sana uygun") &&
+      hub.includes("fitReasons.map"),
   );
   check(
     "G no fake match reason when absent",

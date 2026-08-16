@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
   Bookmark,
-  Flame,
+  Compass,
+  Lightbulb,
   Radar,
-  Search,
   Zap,
 } from "lucide-react";
 
@@ -70,8 +70,8 @@ const VIEW_TABS: Array<{
   label: string;
   icon: React.ReactNode;
 }> = [
-  { id: "suggested", label: "Önerilen", icon: <Flame className="h-3.5 w-3.5" /> },
-  { id: "browse", label: "Keşfet", icon: <Search className="h-3.5 w-3.5" /> },
+  { id: "suggested", label: "Önerilen", icon: <Lightbulb className="h-3.5 w-3.5" /> },
+  { id: "browse", label: "Keşfet", icon: <Compass className="h-3.5 w-3.5" /> },
   { id: "urgent", label: "Acil", icon: <Zap className="h-3.5 w-3.5" /> },
   { id: "saved", label: "Kaydettiklerim", icon: <Bookmark className="h-3.5 w-3.5" /> },
 ];
@@ -215,7 +215,7 @@ export function ProfessionalDiscoveryWorkspace({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5 rounded-2xl border border-teal-900/8 bg-white p-1">
+        <div className="flex flex-wrap gap-2">
           {VIEW_TABS.filter((tab) => tab.id !== "saved" || canWatchlist).map((tab) => {
             const active = view === tab.id;
             return (
@@ -230,10 +230,10 @@ export function ProfessionalDiscoveryWorkspace({
                   urgent: tab.id === "urgent" ? true : undefined,
                 })}
                 aria-current={active ? "page" : undefined}
-                className={`inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
+                className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
                   active
                     ? "bg-teal-900 text-white"
-                    : "text-teal-900/65 hover:bg-teal-50"
+                    : "border border-teal-900/12 bg-white text-teal-900/70 hover:bg-teal-50"
                 }`}
               >
                 {tab.icon}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 
 import { CorporateOpportunityCenter } from "@/components/panel/discovery/CorporateOpportunityCenter";
 import { ProfessionalDiscoveryWorkspace } from "@/components/panel/discovery/ProfessionalDiscoveryWorkspace";
@@ -184,18 +185,21 @@ export default async function OpportunitiesPage({
           {showCorporateOps ? "Workspace" : "Fırsatlar"}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
-          {showCorporateOps
-            ? "Fırsatlar"
-            : companyId
-              ? "Fırsatlar"
-              : "Sana uygun fırsatlar"}
+          {showCorporateOps || companyId ? (
+            "Fırsatlar"
+          ) : (
+            <span className="inline-flex items-center gap-2">
+              Sana uygun fırsatlar
+              <Sparkles className="h-5 w-5 text-sky-400" aria-hidden />
+            </span>
+          )}
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
           {showCorporateOps
             ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
             : companyId
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
-              : "Talepo talepleri senin için değerlendirir; güçlü eşleşmeleri ve nedenlerini burada gösterir."}
+              : "Kayıtlı aramalarına göre en güçlü fırsatlar burada."}
         </p>
         {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">

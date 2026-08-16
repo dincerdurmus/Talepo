@@ -11,6 +11,8 @@ export type OpportunityFeedItem = {
   requestId: string;
   title: string;
   categoryName: string;
+  categorySlug: string | null;
+  coverImageUrl: string | null;
   city: string | null;
   isUrgent: boolean;
   budgetLabel: string | null;
@@ -122,7 +124,8 @@ export async function buildOpportunitiesFeed(
       viewCount: true,
       publishedAt: true,
       createdAt: true,
-      category: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+      coverImageUrl: true,
     },
   });
 
@@ -194,6 +197,8 @@ export async function buildOpportunitiesFeed(
       requestId: req.id,
       title: req.title,
       categoryName: req.category.name,
+      categorySlug: req.category.slug,
+      coverImageUrl: req.coverImageUrl,
       city: req.city,
       isUrgent: req.isUrgent,
       budgetLabel: formatBudget(budgetMin, budgetMax, req.currency),

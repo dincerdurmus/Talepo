@@ -270,7 +270,8 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
   check(
     "H match reason surfaced",
     hub.includes("item.matchReasons") &&
-      hub.includes("Neden sana uygun") &&
+      hub.includes("matchReasonList") &&
+      hub.includes("fitReasons.map") &&
       intel.reasons.some((reason) => /Kayıtlı aramanızla/.test(reason)),
   );
   check(
@@ -282,13 +283,17 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
   check(
     "J UNKNOWN honest",
     unknown.fitLevel === "UNKNOWN" &&
-      hub.includes("Uygunluk için yeterli veri yok") &&
+      hub.includes("Genel fırsat") &&
+      !hub.includes("Uygunluk için yeterli veri yok") &&
       !hub.includes("Güçlü talep eşleşmesi"),
   );
   check(
     "K percentage not mislabeled as probability",
     hub.includes("Veri güveni") &&
-      hub.includes("başarı olasılığı değildir") &&
+      hub.includes("Sinyal") &&
+      hub.includes("/100") &&
+      !hub.includes("başarı olasılığı") &&
+      !hub.includes("başarı ihtimali") &&
       !hub.includes("% · ") &&
       !/% · /.test(hub),
   );
@@ -446,7 +451,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
     "personal header copy",
     page.includes("Sana uygun fırsatlar") &&
       page.includes(
-        "Talepo talepleri senin için değerlendirir; güçlü eşleşmeleri ve nedenlerini burada gösterir.",
+        "Kayıtlı aramalarına göre en güçlü fırsatlar burada.",
       ),
   );
   check(
@@ -471,6 +476,32 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       read("src/server/monetization/personal-matching.ts").includes(
         "evaluateDiscoveryFilter",
       ),
+  );
+  check(
+    "compact card uses existing OpportunityCard family",
+    hub.includes("function OpportunityCard") &&
+      hub.includes("CategoryVisualThumb") &&
+      hub.includes("allowCategoryStockImage={false}") &&
+      hub.includes("md:flex-row") &&
+      hub.includes("Yüksek eşleşme") &&
+      !hub.includes("Neden sana uygun") &&
+      !hub.includes("Fırsat neden ilginç") &&
+      !hub.includes("Dikkat edilmesi gerekenler"),
+  );
+  check(
+    "summary metrics are feed-derived",
+    hub.includes("function FeedSummaryStrip") &&
+      hub.includes("isPublishedToday") &&
+      hub.includes("Veri güveni") &&
+      !hub.includes("Fırsat Bugün") &&
+      !hub.includes("Aktif 28 gün kaldı"),
+  );
+  check(
+    "personal tabs stay Önerilen / Keşfet / Acil",
+    workspace.includes('label: "Önerilen"') &&
+      workspace.includes("Lightbulb") &&
+      workspace.includes("Compass") &&
+      !workspace.includes("Takip Ettiklerim"),
   );
   check(
     "taxonomy furniture node still exists",

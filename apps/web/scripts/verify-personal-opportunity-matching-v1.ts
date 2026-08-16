@@ -16,7 +16,7 @@ const checks: Array<[string, boolean]> = [
   ["contextual plan education exists", plan.includes("kişisel eşleşme sinyalleri")],
   ["legacy categorySlug uses shared helper", matcher.includes("canonicalFilterFromSavedSearchFilters")],
   ["helper resolves via getTaxonomyNode", helper.includes("getTaxonomyNode")],
-  ["card surfaces matchReasons", hub.includes("item.matchReasons") && hub.includes("Neden sana uygun")],
+  ["card surfaces matchReasons", hub.includes("item.matchReasons") && hub.includes("matchReasonList")],
 ];
 
 const failed = checks.filter(([, ok]) => !ok);
