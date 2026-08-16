@@ -106,6 +106,15 @@ function OpportunityCard({
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+        <span className="rounded-full bg-teal-950 px-2 py-0.5 font-semibold text-white">
+          Fırsat {item.intelligence.opportunityScore}%
+        </span>
+        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
+          {item.intelligence.fitLevel === "STRONG" ? "Güçlü uyum" : item.intelligence.fitLevel === "PROMISING" ? "Umut verici" : "İnceleme gerekli"}
+        </span>
+        <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
+          {item.intelligence.recommendedAction === "PREPARE_OFFER" ? "Teklif hazırla" : item.intelligence.recommendedAction === "CHECK_INVENTORY" ? "Envanteri kontrol et" : "Talebi incele"}
+        </span>
         <span className="rounded-full bg-white/80 px-2 py-0.5 font-medium text-teal-900/70 ring-1 ring-teal-900/10">
           {item.opportunityClassification === "HOT"
             ? "Yüksek eşleşme"
@@ -130,6 +139,12 @@ function OpportunityCard({
             <li key={reason}>• {reason}</li>
           ))}
         </ul>
+      ) : null}
+
+      {item.intelligence.risks.length > 0 ? (
+        <p className="mt-2 text-xs text-amber-900/70">
+          Belirsizlik: {item.intelligence.risks[0]}
+        </p>
       ) : null}
 
       {item.recentChanges.length > 0 ? (

@@ -4,6 +4,7 @@ import { evaluateBudgetOpportunity } from "./budget-opportunity";
 import { getCompetitionSignals } from "./competition-signals";
 import { matchCompanyToRequest } from "./smart-matching";
 import { scoreOpportunity } from "./opportunity-score";
+import { buildOpportunityIntelligence, type OpportunityIntelligence } from "./opportunity-intelligence";
 
 export type OpportunityFeedItem = {
   requestId: string;
@@ -26,6 +27,7 @@ export type OpportunityFeedItem = {
   budgetStatus: "UNKNOWN" | "BELOW_MARKET" | "MARKET" | "ABOVE_MARKET";
   isWatchlisted: boolean;
   recentChanges: { field: string; label: string; oldValue: string | null; newValue: string | null }[];
+  intelligence: OpportunityIntelligence;
 };
 
 function formatBudget(
@@ -171,6 +173,18 @@ export async function buildOpportunitiesFeed(
       budgetMax,
     });
 
+    const intelligence = buildOpportunityIntelligence({
+      matchScore,
+      matchReasons,
+      isUrgent: req.isUrgent,
+      requestCompleteness: req.aiScore,
+      ageHours: (Date.now() - (req.publishedAt ?? req.createdAt).getTime()) / 3600000,
+      inventoryFit: "UNKNOWN",
+      pricePosition: budgetEval.status,
+      priceConfidence: budgetEval.confidence,
+      offerCount: req.offerCount,
+    });
+
     items.push({
       requestId: req.id,
       title: req.title,
@@ -197,6 +211,7 @@ export async function buildOpportunitiesFeed(
         oldValue: c.oldValue,
         newValue: c.newValue,
       })),
+      intelligence,
     });
   }
 

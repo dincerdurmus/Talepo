@@ -9,6 +9,7 @@ import { assignOpportunity } from "@/server/monetization/opportunity-hunter";
 import { scoreOpportunity } from "@/server/monetization/opportunity-score";
 import { getCompetitionSignals } from "@/server/monetization/competition-signals";
 import { evaluateBudgetOpportunity } from "@/server/monetization/budget-opportunity";
+import { buildOpportunityIntelligence } from "@/server/monetization/opportunity-intelligence";
 
 export async function GET(request: Request) {
   try {
@@ -61,7 +62,19 @@ export async function GET(request: Request) {
         budgetMax: req.budgetMax?.toNumber() ?? null,
       });
 
-      return NextResponse.json({ ok: true, score, competition, budget });
+      const intelligence = buildOpportunityIntelligence({
+        matchScore: score.score,
+        matchReasons: score.reasons,
+        isUrgent: req.isUrgent,
+        requestCompleteness: req.aiScore,
+        ageHours: (Date.now() - (req.publishedAt ?? req.createdAt).getTime()) / 3600000,
+        inventoryFit: "UNKNOWN",
+        pricePosition: budget.status,
+        priceConfidence: budget.confidence,
+        offerCount: req.offerCount,
+      });
+
+      return NextResponse.json({ ok: true, score, competition, budget, intelligence });
     }
 
     const matches = await prisma.opportunityMatch.findMany({
