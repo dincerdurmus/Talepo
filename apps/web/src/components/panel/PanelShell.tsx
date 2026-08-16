@@ -158,7 +158,7 @@ export function PanelShell({
 
   return (
     <main
-      className="talepo-plan-theme min-h-screen bg-[#f4f7f6] text-[#0f1f1d]"
+      className="talepo-plan-theme min-h-screen bg-[#edf3f1] text-[#0b2522]"
       style={planThemeStyle}
       data-plan={planTier}
     >
@@ -202,7 +202,7 @@ export function PanelShell({
                 : "mx-auto max-w-[1320px]"
             }`}
           >
-            <header className="relative z-40 flex items-center justify-between overflow-visible rounded-2xl border border-teal-900/8 bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,31,29,0.04)] sm:px-5">
+            <header className="relative z-40 flex items-center justify-between overflow-visible rounded-[20px] border border-teal-900/10 bg-[#fbfdfc] px-4 py-3.5 shadow-[0_12px_34px_rgba(15,31,29,0.06)] sm:px-6">
               <div
                 className="talepo-plan-accent-bar pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-2xl"
                 aria-hidden
@@ -382,7 +382,7 @@ function PersonalSidebar({
 }) {
   return (
     <aside
-      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-teal-900/8 bg-[#eef2f1] py-5 transition-[width,padding] duration-200 ease-out lg:flex ${
+      className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-teal-900/10 bg-[#f8fbfa] py-6 transition-[width,padding] duration-200 ease-out lg:flex ${
         collapsed ? "w-[72px] px-2" : "w-[268px] px-3.5"
       }`}
       data-plan={planTier}
@@ -425,7 +425,7 @@ function PersonalSidebar({
           href="/talep"
           title="Yeni talep"
           aria-label="Yeni talep"
-          className={`talepo-plan-cta mt-5 flex items-center justify-center rounded-xl text-sm font-semibold ${
+          className={`talepo-plan-cta mt-6 flex items-center justify-center rounded-[14px] text-sm font-semibold shadow-[0_10px_22px_rgba(13,116,110,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(13,116,110,0.24)] ${
             collapsed ? "h-10 w-10" : "gap-2 px-4 py-2.5"
           }`}
         >

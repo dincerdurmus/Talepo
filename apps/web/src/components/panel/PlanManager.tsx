@@ -382,30 +382,30 @@ export function PlanManager({
         )}
       </section>
 
-      <section className="rounded-2xl border border-teal-900/10 bg-[#f7faf9] p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/60">PRO değer akışı</p>
-        <h3 className="mt-2 text-xl font-semibold tracking-tight text-[#0f172a]">Talepo yalnızca talepleri göstermez.</h3>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-black/45">Hangi fırsata odaklanmanız gerektiğini, nasıl teklif vermenizi ve ne zaman takip etmenizi anlamanıza yardımcı olur.</p>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <section className="relative overflow-hidden rounded-[28px] border border-teal-900/15 bg-[#0d302d] p-6 text-white shadow-[0_24px_70px_rgba(9,55,50,0.18)] sm:p-8">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-300/10 blur-[70px]" />
+        <div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-teal-200/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100">PRO intelligence</span><span className="text-xs text-white/45">Fırsat → teklif → takip</span></div>
+        <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Talepo yalnızca talepleri göstermez.</h3>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-50/70 sm:text-base">Hangi fırsata odaklanmanız gerektiğini, nasıl teklif vermenizi ve ne zaman takip etmenizi anlamanıza yardımcı olur.</p></div>
+        <div className="relative mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {PRO_VALUE_PILLARS.map((pillar, index) => (
-            <article key={pillar.id} className="rounded-[18px] border border-teal-900/10 bg-white p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/50">0{index + 1}</p>
-              <div className="mt-2 flex items-center gap-1"><h4 className="font-semibold text-[#0f172a]">{pillar.title}</h4><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} /></div>
-              <p className="mt-1 text-sm leading-6 text-black/45">{pillar.description}</p>
-              <p className="mt-3 text-xs font-medium text-teal-800/65">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).join(" · ") || "Takip önerileri ve kullanıcı onayı"}</p>
+            <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
+              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} /></div>
+              <h4 className="mt-5 font-semibold text-white">{pillar.title}</h4><p className="mt-2 text-sm leading-6 text-white/60">{pillar.description}</p>
+              <p className="mt-4 text-[11px] font-medium leading-5 text-white/45">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).slice(0, 3).join(" · ") || "Takip önerisi · kullanıcı onayı"}</p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
+      <section className="rounded-[24px] border border-teal-900/10 bg-[#fbfdfc] p-5 shadow-[0_16px_44px_rgba(15,31,29,0.05)] sm:p-6">
         <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
           Ayrıntılı özellikleriniz
         </h3>
         <p className="mt-2 text-sm text-black/45">
           Geçerli planınıza göre açılan özellikler.
         </p>
-        <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
           {activeFeatureKeys.length === 0 ? (
             <li className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50 sm:col-span-2">
               Bireysel planda temel teklif hakkı dışında profesyonel özellik yok.
@@ -422,7 +422,7 @@ export function PlanManager({
               return (
                 <li
                   key={key}
-                  className={`relative overflow-hidden rounded-[18px] border p-4 ${visual.border} ${visual.surface}`}
+                  className={`relative overflow-hidden rounded-[14px] border p-3.5 ${visual.border} bg-white/70 transition hover:border-teal-900/20 hover:bg-white ${visual.surface}`}
                 >
                   <div
                     className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full blur-[32px] ${visual.glow}`}
