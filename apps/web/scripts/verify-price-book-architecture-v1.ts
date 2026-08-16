@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import { getPriceBookEntry, productKeyForLegacyTier, providerMappingKeyForProduct } from "../src/lib/billing/price-book";
+import { FAIR_USE_POLICIES, INTELLIGENCE_UNIT_WEIGHTS } from "../src/lib/monetization/fair-use-policy";
+import { buildProviderCacheKey, isProviderCacheEntryValid } from "../src/server/price-intelligence/provider-cache-policy";
+assert.equal(getPriceBookEntry("STANDARD", "MONTHLY").amount, null);
+assert.equal(getPriceBookEntry("PRO_PERSONAL", "MONTHLY").currency, "TRY");
+assert.equal(getPriceBookEntry("PRO_PERSONAL", "ANNUAL").checkoutEnabled, false);
+assert.equal(getPriceBookEntry("PRO_WORKSPACE", "MONTHLY").includedSeats, 5);
+assert.equal(productKeyForLegacyTier("PREMIUM"), "PRO_PERSONAL");
+assert.equal(productKeyForLegacyTier("PROFESSIONAL"), "PRO_PERSONAL");
+assert.equal(productKeyForLegacyTier("CORPORATE"), "PRO_WORKSPACE");
+assert.equal(providerMappingKeyForProduct("PRO_PERSONAL"), "PROFESSIONAL");
+assert.equal(FAIR_USE_POLICIES.PERSONAL_PRO.scope, "USER");
+assert.equal(INTELLIGENCE_UNIT_WEIGHTS.providerQuery, 8);
+assert.ok(isProviderCacheEntryValid(new Date(Date.now() - 1000)));
+assert.equal(isProviderCacheEntryValid(new Date(Date.now() - 7 * 60 * 60 * 1000)), false);
+assert.equal(buildProviderCacheKey({ provider: "DataForSEO", strategy: "RETAIL", fingerprint: "iPhone", market: "TR", condition: "new" }), "dataforseo:retail:iphone:tr:new");
+console.log("verify-price-book-architecture-v1: PASS");
