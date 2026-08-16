@@ -16,6 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { opportunityRequestDetailHref } from "@/lib/panel/opportunity-request-detail-href";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 
 type OpportunitiesHubProps = {
@@ -79,6 +80,7 @@ function OpportunityCard({
     NORMAL: "border-teal-900/8 bg-white",
   };
   const { fitReasons, extraReasons } = opportunityCardReasons(item);
+  const detailHref = opportunityRequestDetailHref(item.requestId);
 
   return (
     <article
@@ -97,12 +99,18 @@ function OpportunityCard({
               </span>
             ) : null}
           </div>
-          <Link
-            href={`/panel/talepler/${item.requestId}`}
-            className="mt-2 block text-base font-semibold text-teal-950 hover:underline"
-          >
-            {item.title}
-          </Link>
+          {detailHref ? (
+            <Link
+              href={detailHref}
+              className="mt-2 block rounded-sm text-base font-semibold text-teal-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+            >
+              {item.title}
+            </Link>
+          ) : (
+            <p className="mt-2 text-base font-semibold text-teal-950">
+              {item.title}
+            </p>
+          )}
           <p className="mt-1 text-xs text-teal-950/50">
             {item.categoryName}
             {item.city ? ` · ${item.city}` : ""}
@@ -188,7 +196,14 @@ function OpportunityCard({
           <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-teal-900/55">Önerilen aksiyon</p>
           <p className="mt-0.5 text-sm font-semibold text-teal-950">{ACTION_LABELS[item.intelligence.recommendedAction]}</p>
         </div>
-        <Link href={`/panel/talepler/${item.requestId}`} className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2">Fırsatı incele →</Link>
+        {detailHref ? (
+          <Link
+            href={detailHref}
+            className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+          >
+            Fırsatı incele →
+          </Link>
+        ) : null}
       </div>
 
       {item.recentChanges.length > 0 ? (

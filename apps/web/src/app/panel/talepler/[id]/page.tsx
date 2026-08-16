@@ -42,11 +42,12 @@ export default async function ExploreRequestDetailPage({
   const { id } = await params;
 
   // Minimal fetch first — authorization before loading sensitive fields.
+  // Opportunity cards use this canonical Request.id surface; the owner
+  // filter lives on offer submission, not on viewing a published request.
   const preview = await prisma.request.findFirst({
     where: {
       id,
       deletedAt: null,
-      createdById: { not: user.id },
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],
       },
