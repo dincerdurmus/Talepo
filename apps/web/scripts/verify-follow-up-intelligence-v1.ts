@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { buildFollowUpIntelligence } from "../src/server/follow-up/follow-up-intelligence";
+const now = new Date("2026-08-16T12:00:00Z");
+const base = { context: "PERSONAL" as const, offerCreatedAt: "2026-08-16T10:00:00Z", now, offerStatus: "SUBMITTED" as const };
+assert.equal(buildFollowUpIntelligence({ ...base, offerStatus: "ACCEPTED" }).status, "WON");
+assert.equal(buildFollowUpIntelligence({ ...base, offerStatus: "REJECTED" }).recommendedAction, "STOP_FOLLOWING");
+assert.equal(buildFollowUpIntelligence(base).status, "WAIT");
+const old = buildFollowUpIntelligence({ ...base, offerCreatedAt: "2026-08-12T10:00:00Z", isUrgent: true });
+assert.ok(old.status === "FOLLOW_UP_NOW" || old.status === "FOLLOW_UP_SOON"); assert.equal(old.priority, "HIGH"); assert.ok(old.suggestedMessage);
+assert.equal(buildFollowUpIntelligence({ ...base, buyerResponded: true }).recommendedAction, "OPEN_CONVERSATION");
+assert.equal(buildFollowUpIntelligence({ ...base, context: "WORKSPACE" }).context, "WORKSPACE");
+assert.match(buildFollowUpIntelligence({ ...base, price: undefined, opportunity: undefined }).reason, /takip/);
+console.log("verify-follow-up-intelligence-v1: PASS");
