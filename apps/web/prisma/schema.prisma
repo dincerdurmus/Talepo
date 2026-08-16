@@ -13,6 +13,42 @@ enum UserStatus {
   DELETED
 }
 
+enum PlatformRole {
+  USER
+  SUPPORT
+  MODERATOR
+  ANALYST
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum AdminAuditAction {
+  USER_UPDATED
+  ROLE_CHANGED
+  ACCOUNT_STATUS_CHANGED
+  PLAN_CHANGED
+  CREDIT_CHANGED
+  SENSITIVE_DATA_VIEWED
+  MFA_ENABLED
+  MFA_DISABLED
+  MODERATION_CASE_CREATED
+  MODERATION_CASE_UPDATED
+}
+
+enum ModerationCaseStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum ModerationCasePriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 enum CompanyStatus {
   DRAFT
   PENDING_VERIFICATION
@@ -191,13 +227,16 @@ model User {
   /// Talepo üyelik numarası (ör. TLP-100001)
   membershipNumber String @unique
 
-  phone       String?
-  country     String     @default("Türkiye")
-  city        String?
-  district    String?
-  biography   String?    @db.Text
-  status      UserStatus @default(ACTIVE)
-  lastLoginAt DateTime?
+  phone                   String?
+  country                 String       @default("Türkiye")
+  city                    String?
+  district                String?
+  biography               String?      @db.Text
+  status                  UserStatus   @default(ACTIVE)
+  platformRole            PlatformRole @default(USER)
+  lastLoginAt             DateTime?
+  adminMfaEnabled         Boolean      @default(false)
+  adminMfaSecretEncrypted String?      @db.Text
 
   planTier          PlanTier  @default(STANDARD)
   planExpiresAt     DateTime?
@@ -229,12 +268,62 @@ model User {
   savedSearches SavedSearch[]
 
   /// Phase 4B — critical write idempotency keys
-  idempotencyRecords IdempotencyRecord[]
+  idempotencyRecords      IdempotencyRecord[]
+  adminAuditActions       AdminAuditLog[]     @relation("AdminAuditActor")
+  adminAuditTargets       AdminAuditLog[]     @relation("AdminAuditTargetUser")
+  assignedModerationCases ModerationCase[]    @relation("ModerationAssignee")
+  reportedModerationCases ModerationCase[]    @relation("ModerationReporter")
 
   @@index([status])
   @@index([city, district])
   @@index([createdAt])
   @@index([membershipNumber])
+  @@index([platformRole])
+}
+
+model AdminAuditLog {
+  id            String           @id @default(cuid())
+  actorId       String
+  targetUserId  String?
+  action        AdminAuditAction
+  reason        String           @db.Text
+  before        Json?
+  after         Json?
+  metadata      Json?
+  ipHash        String?
+  correlationId String?
+  createdAt     DateTime         @default(now())
+
+  actor      User  @relation("AdminAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  targetUser User? @relation("AdminAuditTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
+}
+
+model ModerationCase {
+  id             String                 @id @default(cuid())
+  subjectType    String
+  subjectId      String
+  category       String
+  summary        String                 @db.Text
+  priority       ModerationCasePriority @default(MEDIUM)
+  status         ModerationCaseStatus   @default(OPEN)
+  reporterId     String?
+  assigneeId     String?
+  resolutionNote String?                @db.Text
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  resolvedAt     DateTime?
+
+  reporter User? @relation("ModerationReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  assignee User? @relation("ModerationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@index([status, priority, createdAt])
+  @@index([subjectType, subjectId])
+  @@index([assigneeId, status])
 }
 
 model Account {
@@ -1101,15 +1190,15 @@ model BillingSubscription {
   planTier PlanTier
   status   BillingSubscriptionStatus @default(INACTIVE)
 
-  provider                 String?
-  providerCustomerId       String?
-  providerSubscriptionId   String? @unique
-  currentPeriodStart       DateTime?
-  currentPeriodEnd         DateTime?
-  cancelAtPeriodEnd        Boolean  @default(false)
-  canceledAt               DateTime?
-  pastDueAt                DateTime?
-  providerVersion          Int?
+  provider               String?
+  providerCustomerId     String?
+  providerSubscriptionId String?   @unique
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  cancelAtPeriodEnd      Boolean   @default(false)
+  canceledAt             DateTime?
+  pastDueAt              DateTime?
+  providerVersion        Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1125,18 +1214,18 @@ model BillingSubscription {
 model BillingEvent {
   id String @id @default(cuid())
 
-  provider         String
-  providerEventId  String
-  eventType        String
-  subjectType      BillingSubjectType?
-  subjectId        String?
-  subscriptionId   String?
-  status           BillingEventProcessStatus @default(RECEIVED)
-  processedAt      DateTime?
-  eventTimestamp   DateTime?
-  providerVersion  Int?
+  provider        String
+  providerEventId String
+  eventType       String
+  subjectType     BillingSubjectType?
+  subjectId       String?
+  subscriptionId  String?
+  status          BillingEventProcessStatus @default(RECEIVED)
+  processedAt     DateTime?
+  eventTimestamp  DateTime?
+  providerVersion Int?
   /// Redacted / safe metadata only — never raw webhook body or secrets
-  safeMetadata     Json?
+  safeMetadata    Json?
 
   createdAt DateTime @default(now())
 
@@ -1151,13 +1240,13 @@ model BillingEvent {
 model CreditLedgerEntry {
   id String @id @default(cuid())
 
-  subjectType BillingSubjectType
-  subjectId   String
-  entryType   CreditLedgerEntryType
-  credits     Int
-  packId      String?
-  providerEventId String? @unique
-  note        String?
+  subjectType     BillingSubjectType
+  subjectId       String
+  entryType       CreditLedgerEntryType
+  credits         Int
+  packId          String?
+  providerEventId String?               @unique
+  note            String?
 
   createdAt DateTime @default(now())
 

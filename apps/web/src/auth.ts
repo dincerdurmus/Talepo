@@ -87,6 +87,7 @@ export const authOptions: NextAuthOptions = {
             if (resolved.user.name) token.name = resolved.user.name;
             if (resolved.user.email) token.email = resolved.user.email;
             if (resolved.user.image) token.picture = resolved.user.image;
+            token.platformRole = resolved.user.platformRole;
           } else if (resolved?.dbUnavailable) {
             token.dbUnavailable = true;
           }
@@ -104,6 +105,8 @@ export const authOptions: NextAuthOptions = {
         if (token.name) session.user.name = token.name as string;
         if (token.email) session.user.email = token.email as string;
         if (token.picture) session.user.image = token.picture as string;
+        session.user.platformRole =
+          typeof token.platformRole === "string" ? token.platformRole as "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN" : "USER";
         session.dbUnavailable = Boolean(token.dbUnavailable);
       }
 
