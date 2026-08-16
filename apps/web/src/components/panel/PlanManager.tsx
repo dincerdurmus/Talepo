@@ -31,6 +31,7 @@ import {
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { FeatureInfoTooltip } from "./FeatureInfoTooltip";
+import { PRO_FEATURE_PRESENTATION } from "@/lib/membership/feature-presentation";
 
 import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
 import { PremiumUpgradeCta } from "./PremiumUpgradeCta";
@@ -443,22 +444,25 @@ export function PlanManager({
                   <ul className="divide-y divide-teal-900/10 rounded-[16px] border border-teal-900/10 bg-[#f8fbfa] px-3">
                     {groupKeys.map((key) => {
                       const meta = FEATURE_META[key];
+                      const presentation = PRO_FEATURE_PRESENTATION[key];
                       const visual = getFeatureVisual(key);
                       const Icon = visual.icon;
-                      const href = visual.href ?? meta.surface;
+                      const href = visual.href ?? meta.surface ?? ((key === "smart_matching" || key === "competition_signals") ? "/panel/firsatlar" : undefined);
                       return (
                         <li key={key} className={`group/feature relative flex min-h-[68px] items-center gap-3 py-3 transition ${href ? "cursor-pointer" : ""}`}>
                           {href && <Link href={href} aria-label={`${meta.label} aç`} className="absolute inset-0 z-0 rounded-[12px] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35" />}
                           <span className={`pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
                           <span className="pointer-events-none relative z-10 min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-2">
-                              <span className="text-[13px] font-bold text-[#102522]">{meta.label}</span>
+                              <span className="text-[13px] font-bold text-[#102522]">{presentation?.label ?? meta.label}</span>
+                              {presentation?.interactionType && <span className="rounded-full bg-teal-900/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-teal-900/58">{presentation.interactionType === "AUTOMATIC_SIGNAL" ? "Otomatik" : presentation.interactionType === "ASSISTED_ACTION" ? "Araç" : presentation.interactionType === "ALERT" ? "Alarm" : presentation.interactionType === "SAVED_CONFIGURATION" ? "Kayıtlı ayar" : "Analiz"}</span>}
                               {visual.badge && <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] ${visual.badgeClass}`}>{visual.badge}</span>}
                             </span>
-                            <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{meta.description}</span>
+                            <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{presentation?.description ?? meta.description}</span>
+                            {presentation?.resultLocation && <span className="mt-1 block text-[11px] font-medium text-teal-950/48">Sonuç: {presentation.resultLocation}</span>}
                           </span>
                           <span className="relative z-20 shrink-0"><FeatureInfoTooltip feature={key} /></span>
-                          {href && <span className={`pointer-events-none relative z-10 shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100 ${visual.linkClass}`}>Aç →</span>}
+                          {href && <span className={`pointer-events-none relative z-10 shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100 ${visual.linkClass}`}>{presentation?.actionLabel ?? visual.cta ?? "Aç →"}</span>}
                         </li>
                       );
                     })}
@@ -467,6 +471,25 @@ export function PlanManager({
               );
             })
           )}
+        </div>
+      </section>
+
+      <section className="rounded-[22px] border border-teal-900/10 bg-white/80 p-5 shadow-[0_12px_34px_rgba(15,31,29,0.04)] sm:p-6">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/55">Talepo Pro nasıl çalışır?</p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {[
+            ["Eşleşme", "Bana uygun mu?", "text-teal-700"],
+            ["Rekabet", "Rekabet nasıl?", "text-blue-700"],
+            ["Fırsat", "Değerli mi?", "text-indigo-700"],
+            ["Fiyat", "Hangi fiyat?", "text-violet-700"],
+            ["Teklif", "Nasıl teklif?", "text-fuchsia-700"],
+            ["Takip", "Ne zaman takip?", "text-emerald-700"],
+          ].map(([stage, question, tone], index) => (
+            <div key={stage} className="relative rounded-[14px] border border-teal-900/10 bg-[#f8fbfa] px-3 py-3">
+              <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${tone}`}>0{index + 1} · {stage}</span>
+              <p className="mt-1 text-xs font-semibold text-[#172c48]">{question}</p>
+            </div>
+          ))}
         </div>
       </section>
 
