@@ -9,6 +9,7 @@ import {
 } from "@/server/price-intelligence/price-intelligence-engine";
 import { normalizeProductFromRequest } from "@/server/price-intelligence/normalize-product";
 import { prisma } from "@/lib/prisma";
+import { toProPriceIntelligence } from "@/server/price-intelligence/pro-price-intelligence";
 
 export async function GET(request: Request) {
   try {
@@ -17,6 +18,7 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get("categoryId");
     const debug = searchParams.get("debug") === "1";
     const includeExternal = searchParams.get("includeExternal") === "1";
+    const advanced = searchParams.get("advanced") === "1";
 
     if (!categoryId) {
       return NextResponse.json(
@@ -25,7 +27,7 @@ export async function GET(request: Request) {
       );
     }
 
-    await requireEntitledFeature(user.id, "basic_market_insights");
+    await requireEntitledFeature(user.id, advanced ? "advanced_ai_pricing" : "basic_market_insights");
 
     const productFingerprint = searchParams.get("productFingerprint");
     const city = searchParams.get("city");
@@ -97,7 +99,7 @@ export async function GET(request: Request) {
       normalizedProduct,
     });
 
-    return NextResponse.json({ ok: true, intelligence: result });
+    return NextResponse.json({ ok: true, intelligence: advanced ? toProPriceIntelligence(result) : result });
   } catch (error) {
     const ent = entitlementErrorResponse(error);
     if (ent) return ent;
