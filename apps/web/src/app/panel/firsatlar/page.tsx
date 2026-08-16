@@ -190,40 +190,13 @@ export default async function OpportunitiesPage({
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
               : "Kişisel fırsatları, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
         </p>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs">
-          {isCorporatePlan ? (
-            <Link
-              href="/panel/firsatlar?view=ops"
-              className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
-            >
-              Operasyon görünümü
-            </Link>
-          ) : null}
-          <Link
-            href="/panel/firsatlar?view=browse"
-            className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
-          >
-            Kategorilere göre keşfet
-          </Link>
-          <Link
-            href="/panel/talepler"
-            className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
-          >
-            Keşfet (tüm talepler)
-          </Link>
-          <Link
-            href="/panel/kayitli-aramalar"
-            className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
-          >
-            Takipler
-          </Link>
-          <Link
-            href="/panel/uyarilar"
-            className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
-          >
-            Bildirimler
-          </Link>
-        </div>
+        {isCorporatePlan ? (
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <Link href="/panel/firsatlar?view=ops" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Operasyon görünümü</Link>
+            <Link href="/panel/kayitli-aramalar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takipler</Link>
+            <Link href="/panel/uyarilar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Uyarılar</Link>
+          </div>
+        ) : null}
       </section>
 
       <FeatureUpgradeGate feature="hot_opportunities" entitled={entitled}>

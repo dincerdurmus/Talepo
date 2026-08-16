@@ -178,7 +178,7 @@ function Section({
   title: string;
   icon: React.ReactNode;
   items: OpportunityFeedItem[];
-  empty: string;
+  empty: React.ReactNode;
   showEmpty?: boolean;
   renderItem: (item: OpportunityFeedItem) => React.ReactNode;
 }) {
@@ -197,6 +197,31 @@ function Section({
             )}
       </div>
     </section>
+  );
+}
+
+function OpportunityEmptyState() {
+  const stages = ["Talepleri değerlendir", "Uygunluğu kontrol et", "Rekabeti analiz et", "Fırsatı öne çıkar"];
+  return (
+    <div className="rounded-[24px] border border-teal-900/10 bg-gradient-to-br from-white via-[#f7fcfb] to-[#f2f7ff] p-6 shadow-[0_16px_42px_rgba(15,47,43,0.06)] sm:p-8">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 ring-1 ring-teal-700/10">
+        <Flame className="h-6 w-6" />
+      </div>
+      <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#172c48]">Henüz sana uygun güçlü bir fırsat yok.</h3>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">Talepo mevcut talepleri uygunluk ve fırsat sinyalleriyle değerlendirir. Güçlü bir eşleşme oluştuğunda burada görürsün.</p>
+      <div className="mt-6 grid gap-2 sm:grid-cols-4">
+        {stages.map((stage, index) => (
+          <div key={stage} className="relative rounded-xl border border-teal-900/10 bg-white/80 px-3 py-3 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-700/70">0{index + 1}</span>
+            <p className="mt-1 text-xs font-semibold text-teal-950">{stage}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link href="/panel/talepler?tab=newest" className="inline-flex h-10 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800">Tüm talepleri keşfet →</Link>
+        <Link href="/panel/uyarilar" className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900">Akıllı alarm oluştur →</Link>
+      </div>
+    </div>
   );
 }
 
@@ -243,7 +268,7 @@ export function OpportunitiesHub({ initialFeed }: OpportunitiesHubProps) {
         title="Sana önerilen fırsatlar"
         icon={<Flame className="h-5 w-5 text-orange-600" />}
         items={hot}
-        empty="Şu anda öne çıkan güçlü bir fırsat bulunmuyor."
+        empty={<OpportunityEmptyState />}
         showEmpty
         renderItem={(item) => (
           <OpportunityCard
