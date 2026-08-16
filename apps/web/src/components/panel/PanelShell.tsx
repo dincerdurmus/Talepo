@@ -704,15 +704,15 @@ function SidebarLink({
       }`}
     >
       <span
-        className={`relative flex items-center justify-center rounded-md transition ${
+        className={`relative flex items-center justify-center rounded-[10px] border transition duration-150 ${
           collapsed ? "h-8 w-8" : "h-8 w-8"
         } ${
           active
-            ? "bg-[#d2ece9] text-[#18717a]"
-            : "bg-[#eaf6f4] text-[#2c7580] group-hover:bg-[#e0f1ef] group-hover:text-[#216572]"
+            ? "border-[#b9dfdc] bg-gradient-to-br from-[#d8f1ee] to-[#c6e8e4] text-[#0b7880] shadow-[0_3px_8px_rgba(20,115,120,0.12)]"
+            : "border-[#dcefeb] bg-gradient-to-br from-[#f4fbfa] to-[#e5f4f1] text-[#397f88] shadow-[0_2px_5px_rgba(35,100,105,0.06)] group-hover:border-[#c7e5e1] group-hover:from-[#eaf8f5] group-hover:to-[#d9efeb] group-hover:text-[#216b75]"
         }`}
       >
-        <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
+        <Icon className="h-[18px] w-[18px]" strokeWidth={2.05} />
         {badge && collapsed && (
           <span className="talepo-plan-dot absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full ring-2 ring-[#eef2f1]" />
         )}
