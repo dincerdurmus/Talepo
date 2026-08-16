@@ -178,7 +178,7 @@ export default async function OpportunitiesPage({
     <>
       <section className="py-4 sm:py-6">
         <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
-          {showCorporateOps ? "Corporate" : "Profesyonel"}
+          {showCorporateOps ? "Workspace" : "Fırsatlar"}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
           {showCorporateOps ? "Fırsatlar" : companyId ? "Fırsatlar" : "Kişisel fırsatlar"}
@@ -190,7 +190,7 @@ export default async function OpportunitiesPage({
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
               : "Kişisel fırsatları, neden uygun olduklarını ve sonraki en iyi aksiyonu görün."}
         </p>
-        {isCorporatePlan ? (
+        {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <Link href="/panel/firsatlar?view=ops" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Operasyon görünümü</Link>
             <Link href="/panel/kayitli-aramalar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takipler</Link>

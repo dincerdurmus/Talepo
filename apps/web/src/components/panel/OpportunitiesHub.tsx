@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
   Eye,
   Flame,
+  ListChecks,
   LoaderCircle,
   Star,
+  Target,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -201,7 +205,12 @@ function Section({
 }
 
 function OpportunityEmptyState() {
-  const stages = ["Talepleri değerlendir", "Uygunluğu kontrol et", "Rekabeti analiz et", "Fırsatı öne çıkar"];
+  const stages = [
+    ["Talepleri değerlendir", ListChecks],
+    ["Uygunluğu kontrol et", Target],
+    ["Rekabeti analiz et", TrendingUp],
+    ["Fırsatı öne çıkar", CheckCircle2],
+  ] as const;
   return (
     <div className="rounded-[24px] border border-teal-900/10 bg-gradient-to-br from-white via-[#f7fcfb] to-[#f2f7ff] p-6 shadow-[0_16px_42px_rgba(15,47,43,0.06)] sm:p-8">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 ring-1 ring-teal-700/10">
@@ -210,10 +219,12 @@ function OpportunityEmptyState() {
       <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#172c48]">Henüz sana uygun güçlü bir fırsat yok.</h3>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">Talepo mevcut talepleri uygunluk ve fırsat sinyalleriyle değerlendirir. Güçlü bir eşleşme oluştuğunda burada görürsün.</p>
       <div className="mt-6 grid gap-2 sm:grid-cols-4">
-        {stages.map((stage, index) => (
+        {stages.map(([stage, Icon], index) => (
           <div key={stage} className="relative rounded-xl border border-teal-900/10 bg-white/80 px-3 py-3 text-center">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-teal-700/70">0{index + 1}</span>
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-teal-50 text-teal-700 ring-1 ring-teal-700/10"><Icon className="h-4 w-4" /></div>
+            <span className="mt-2 block text-[10px] font-bold uppercase tracking-[0.12em] text-teal-700/70">0{index + 1}</span>
             <p className="mt-1 text-xs font-semibold text-teal-950">{stage}</p>
+            {index < stages.length - 1 && <ChevronRight className="absolute -right-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-teal-700/35 sm:block" />}
           </div>
         ))}
       </div>

@@ -221,14 +221,14 @@ export function ProfessionalDiscoveryWorkspace({
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
           >
             <Radar className="h-3.5 w-3.5" />
-            Takiplerim ({trackedSearchCount})
+            Takiplerim{trackedSearchCount > 0 ? ` (${trackedSearchCount})` : ""}
           </Link>
           <Link
             href="/panel/uyarilar"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
           >
             <Bell className="h-3.5 w-3.5" />
-            Uyarılar ({alertCount})
+            Uyarılar{alertCount > 0 ? ` (${alertCount})` : ""}
           </Link>
         </div>
       </div>
