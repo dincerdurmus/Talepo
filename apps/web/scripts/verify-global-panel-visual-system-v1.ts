@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { getPublicProductLabel } from "../src/lib/membership/product-packaging";
+import { PANEL_NAV_ITEMS } from "../src/components/panel/panel-nav";
+import { isPaidPlan } from "../src/lib/membership/plans";
+assert.equal(getPublicProductLabel("STANDARD", "PERSONAL"), "STANDARD");
+assert.equal(getPublicProductLabel("PROFESSIONAL", "PERSONAL"), "PRO");
+assert.equal(getPublicProductLabel("CORPORATE", "WORKSPACE"), "PRO Workspace");
+assert.equal(isPaidPlan("PROFESSIONAL"), true);
+assert.ok(PANEL_NAV_ITEMS.some((item) => item.href === "/panel/plan"));
+assert.ok(PANEL_NAV_ITEMS.some((item) => item.href === "/panel/mesajlar"));
+assert.ok(PANEL_NAV_ITEMS.some((item) => item.href === "/panel/profil"));
+console.log("verify-global-panel-visual-system-v1: PASS");

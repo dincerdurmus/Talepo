@@ -34,6 +34,8 @@ import {
 } from "@/components/panel/panel-nav";
 import type { FeatureKey } from "@/lib/membership/entitlements";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
+import { getPublicProductLabel } from "@/lib/membership/product-packaging";
+import { isPaidPlan } from "@/lib/membership/plans";
 import type { PlanTierId } from "@/lib/membership/plans";
 
 export type PanelUser = {
@@ -457,14 +459,16 @@ function PersonalSidebar({
 
       {!collapsed && (
         <div className="mt-auto px-0.5">
-          <div className="rounded-xl border border-teal-900/8 bg-white px-3.5 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-              Çalışma notu
+          <div className={`rounded-2xl border px-3.5 py-3 ${isPaidPlan(planTier) ? "border-teal-800/20 bg-[#0f3d3a] text-white" : "border-teal-900/8 bg-white"}`}>
+            <p className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${isPaidPlan(planTier) ? "text-teal-100/65" : "text-teal-800/55"}`}>
+              {getPublicProductLabel(planTier, "PERSONAL")}
             </p>
-            <p className="mt-1.5 text-xs leading-5 text-teal-950/50">
-              Talebinizi net yazın; uygun firmalar tekliflerini buradan takip
-              edin.
+            <p className={`mt-1.5 text-xs leading-5 ${isPaidPlan(planTier) ? "text-white/75" : "text-teal-950/50"}`}>
+              {isPaidPlan(planTier) ? "Fırsatı bul, analiz et, güçlü teklif ver ve doğru zamanda takip et." : "Temel talep ve teklif akışınız hazır."}
             </p>
+            <Link href="/panel/plan" className={`mt-2.5 inline-flex text-xs font-semibold ${isPaidPlan(planTier) ? "text-teal-100 hover:text-white" : "text-teal-800 hover:text-teal-950"}`}>
+              {isPaidPlan(planTier) ? "Planı yönet →" : "PRO’yu keşfet →"}
+            </Link>
           </div>
         </div>
       )}
