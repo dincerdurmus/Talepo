@@ -430,7 +430,7 @@ function PersonalSidebar({
           href="/talep"
           title="Yeni talep"
           aria-label="Yeni talep"
-          className={`talepo-plan-cta mt-7 flex items-center justify-center rounded-[12px] text-[15px] font-semibold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
+          className={`talepo-plan-cta mt-5 flex items-center justify-center rounded-[12px] text-[15px] font-semibold tracking-[-0.01em] shadow-[0_10px_24px_rgba(13,116,110,0.2)] ring-1 ring-teal-900/10 transition duration-150 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_rgba(13,116,110,0.26)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
             collapsed ? "h-10 w-10" : "h-[46px] gap-2 px-4"
           }`}
         >
@@ -439,10 +439,10 @@ function PersonalSidebar({
         </Link>
       </div>
 
-      <nav className={`mt-7 min-h-0 flex-1 space-y-6 overflow-y-auto [scrollbar-width:thin] [scrollbar-color:rgba(15,63,58,.18)_transparent] ${collapsed ? "px-0" : ""}`}>
+      <nav className={`mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${collapsed ? "px-0" : ""}`}>
         {navGroups.map((group) => (
           <div key={group.label}>
-            {!collapsed && <p className="mb-2 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">{group.label}</p>}
+            {!collapsed && <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">{group.label}</p>}
             <div className="space-y-0.5">
               {group.items.map((item) => (
                 <SidebarLink key={`${item.href}-${item.label}`} href={item.href} icon={item.icon} label={item.label} active={isNavActive(pathname, item.href, item.exact)} collapsed={collapsed} badge={item.href === "/panel/mesajlar" && unreadMessages > 0 ? String(unreadMessages) : undefined} />
@@ -693,7 +693,7 @@ function SidebarLink({
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-          className={`group relative flex h-[44px] items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
+          className={`group relative flex h-10 items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
           : "gap-3 px-3"
