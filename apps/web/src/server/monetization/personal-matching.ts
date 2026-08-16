@@ -1,5 +1,4 @@
 import {
-  evaluateDiscoveryFilter,
   hasCanonicalFilterSignal,
   parseDiscoveryProjection,
   validateCanonicalDiscoveryFilter,
@@ -8,23 +7,76 @@ import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
 
-export const PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX =
-  "Kayıtlı aramanızla eşleşiyor:";
+import {
+  matchPersonalAgainstPreferences,
+  type PersonalMatchResult,
+  type PersonalPreferenceFilter,
+} from "./personal-matching-core";
 
-export function formatPersonalSavedSearchMatchReason(name: string): string {
-  return `${PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX} ${name}`;
+export {
+  formatPersonalAlertRuleMatchReason,
+  formatPersonalSavedSearchMatchReason,
+  matchPersonalAgainstPreferences,
+  PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX,
+  type PersonalMatchResult,
+  type PersonalPreferenceFilter,
+} from "./personal-matching-core";
+
+/**
+ * Load USER-owned active preference filters once.
+ * Shared by final matching and preference-driven candidate retrieval —
+ * does not invent a second match rule set.
+ */
+export async function loadPersonalPreferenceFilters(
+  userId: string,
+): Promise<PersonalPreferenceFilter[]> {
+  const [savedSearches, alertRules] = await Promise.all([
+    prisma.savedSearch.findMany({
+      where: { ownerType: "USER", userId, isActive: true },
+      select: { name: true, filters: true },
+      take: 100,
+    }),
+    prisma.alertRule.findMany({
+      where: { ownerType: "USER", userId, isActive: true },
+      select: {
+        name: true,
+        discoveryFilter: true,
+        category: { select: { slug: true } },
+      },
+      take: 100,
+    }),
+  ]);
+
+  const out: PersonalPreferenceFilter[] = [];
+
+  for (const search of savedSearches) {
+    const filters = search.filters as SavedSearchFilters;
+    const resolved = canonicalFilterFromSavedSearchFilters(filters);
+    const canonical = validateCanonicalDiscoveryFilter(resolved);
+    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
+    out.push({
+      kind: "saved_search",
+      name: search.name,
+      filter: canonical.filter,
+    });
+  }
+
+  for (const rule of alertRules) {
+    const resolved = canonicalFilterFromSavedSearchFilters({
+      categorySlug: rule.category?.slug,
+      canonical: rule.discoveryFilter,
+    });
+    const canonical = validateCanonicalDiscoveryFilter(resolved);
+    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
+    out.push({
+      kind: "alert_rule",
+      name: rule.name,
+      filter: canonical.filter,
+    });
+  }
+
+  return out;
 }
-
-export function formatPersonalAlertRuleMatchReason(name: string): string {
-  return `Alarm tercihinizle eşleşiyor: ${name}`;
-}
-
-export type PersonalMatchResult = {
-  source: "PERSONAL";
-  score: number | null;
-  reasons: string[];
-  missingInformation: string[];
-};
 
 /**
  * Personal relevance authority. It only consumes explicit USER-owned
@@ -48,76 +100,7 @@ export async function matchPersonalToRequest(
     };
   }
 
+  const preferences = await loadPersonalPreferenceFilters(userId);
   const projection = parseDiscoveryProjection(request.discoveryProjection);
-  if (!projection) {
-    return {
-      source: "PERSONAL",
-      score: null,
-      reasons: [],
-      missingInformation: ["Talep için canonical keşif verisi yok."],
-    };
-  }
-
-  const [savedSearches, alertRules] = await Promise.all([
-    prisma.savedSearch.findMany({
-      where: { ownerType: "USER", userId, isActive: true },
-      select: { name: true, filters: true },
-      take: 100,
-    }),
-    prisma.alertRule.findMany({
-      where: { ownerType: "USER", userId, isActive: true },
-      select: {
-        name: true,
-        discoveryFilter: true,
-        category: { select: { slug: true } },
-      },
-      take: 100,
-    }),
-  ]);
-
-  const reasons: string[] = [];
-  for (const search of savedSearches) {
-    const filters = search.filters as SavedSearchFilters;
-    const resolved = canonicalFilterFromSavedSearchFilters(filters);
-    const canonical = validateCanonicalDiscoveryFilter(resolved);
-    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
-    const result = evaluateDiscoveryFilter(projection, canonical.filter);
-    if (result.match) {
-      reasons.push(formatPersonalSavedSearchMatchReason(search.name));
-    }
-  }
-
-  for (const rule of alertRules) {
-    const resolved = canonicalFilterFromSavedSearchFilters({
-      categorySlug: rule.category?.slug,
-      canonical: rule.discoveryFilter,
-    });
-    const canonical = validateCanonicalDiscoveryFilter(resolved);
-    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
-    const result = evaluateDiscoveryFilter(projection, canonical.filter);
-    if (result.match) {
-      reasons.push(formatPersonalAlertRuleMatchReason(rule.name));
-    }
-  }
-
-  if (reasons.length === 0) {
-    return {
-      source: "PERSONAL",
-      score: null,
-      reasons: [],
-      missingInformation:
-        savedSearches.length === 0 && alertRules.length === 0
-          ? ["Bu kullanıcı için yeterli kişisel tercih sinyali yok."]
-          : ["Mevcut kişisel tercihlerle eşleşen sinyal bulunamadı."],
-    };
-  }
-
-  return {
-    source: "PERSONAL",
-    // Exact canonical preference matches are explicit relevance signals,
-    // not a probabilistic confidence percentage.
-    score: 100,
-    reasons: [...new Set(reasons)].slice(0, 3),
-    missingInformation: [],
-  };
+  return matchPersonalAgainstPreferences(projection, preferences);
 }

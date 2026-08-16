@@ -83,7 +83,8 @@ check(
 check(
   "D Personal opportunity detail href uses request id + personal-capable route",
   feed.includes('context: companyId ? "WORKSPACE" : "PERSONAL"') &&
-    feed.includes("matchPersonalToRequest") &&
+    (feed.includes("matchPersonalToRequest") ||
+      feed.includes("matchPersonalAgainstPreferences")) &&
     exploreDetail.includes("requireUser") &&
     exploreDetail.includes("ExploreRequestDetailPage") &&
     existsSync(join(root, "src/app/panel/talepler/[id]/page.tsx")),

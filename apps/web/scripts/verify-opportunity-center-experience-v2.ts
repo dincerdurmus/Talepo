@@ -37,6 +37,7 @@ import {
   buildOpportunityIntelligence,
   OPPORTUNITY_ACTION_LABELS,
 } from "../src/server/monetization/opportunity-intelligence";
+import { matchPersonalAgainstPreferences } from "../src/server/monetization/personal-matching-core";
 
 let pass = 0;
 let fail = 0;
@@ -308,8 +309,11 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
   check(
     "K percentage not mislabeled as probability",
     hub.includes("Veri güveni") &&
-      hub.includes("Sinyal") &&
+      hub.includes("Fırsat skoru") &&
       hub.includes("/100") &&
+      !hub.includes("Sinyal ") &&
+      !hub.includes("Yüksek eşleşme") &&
+      !hub.includes("Kısmen uygun") &&
       !hub.includes("başarı olasılığı") &&
       !hub.includes("başarı ihtimali") &&
       !hub.includes("% · ") &&
@@ -423,7 +427,8 @@ console.log("\n=== Q–U ROUTING / ISOLATION ===\n");
     matcher.includes('ownerType: "USER"') &&
       matcher.includes("matchPersonalToRequest") &&
       !/ownerType:\s*"COMPANY"/.test(matcher) &&
-      feedSrc.includes("matchPersonalToRequest") &&
+      (feedSrc.includes("matchPersonalToRequest") ||
+        feedSrc.includes("matchPersonalAgainstPreferences")) &&
       feedSrc.includes("matchCompanyToRequest"),
   );
   check(
@@ -493,7 +498,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !read("src/lib/panel/opportunity-recommended-eligibility.ts").includes(
         "magic",
       ) &&
-      read("src/server/monetization/personal-matching.ts").includes(
+      read("src/server/monetization/personal-matching-core.ts").includes(
         "evaluateDiscoveryFilter",
       ),
   );
@@ -504,7 +509,11 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       hub.includes("allowCategoryStockImage") &&
       !hub.includes("allowCategoryStockImage={false}") &&
       hub.includes("md:flex-row") &&
-      hub.includes("Yüksek eşleşme") &&
+      hub.includes("Güçlü fırsat") &&
+      hub.includes("İyi fırsat") &&
+      hub.includes("opportunityQualityBadgeLabel") &&
+      !hub.includes("Yüksek eşleşme") &&
+      !hub.includes("Kısmen uygun") &&
       !hub.includes("Neden sana uygun") &&
       !hub.includes("Fırsat neden ilginç") &&
       !hub.includes("Dikkat edilmesi gerekenler"),
@@ -515,7 +524,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       hub.includes("buildOpportunityHubSummary") &&
       hub.includes("metrics={<FeedSummaryStrip items={feed} />}") &&
       !hub.includes("FeedSummaryStrip items={visible}") &&
-      hub.includes("En güçlü sinyal") &&
+      hub.includes("En güçlü fırsat skoru") &&
       !hub.includes("Fırsat Bugün") &&
       !hub.includes("Aktif 28 gün kaldı"),
   );
@@ -694,7 +703,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
   check(
     "M Saved Search regression",
     isPersonalRecommendedEligible(yonetici) &&
-      read("src/server/monetization/personal-matching.ts").includes(
+      read("src/server/monetization/personal-matching-core.ts").includes(
         "evaluateDiscoveryFilter",
       ),
   );
@@ -819,6 +828,134 @@ console.log("\n=== CATEGORY ARTWORK FALLBACK ===\n");
       ) &&
       requestCardMediaAlt(withCover, "Mobilya", "Yönetici koltuğu") ===
         "Yönetici koltuğu",
+  );
+}
+
+console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
+{
+  const hub = read("src/components/panel/OpportunitiesHub.tsx");
+  const feedSrc = read("src/server/monetization/opportunities-feed.ts");
+  const candidates = read(
+    "src/server/monetization/personal-preference-candidates.ts",
+  );
+  const matcher = read("src/server/monetization/personal-matching-core.ts");
+  const eligibility = read(
+    "src/lib/panel/opportunity-recommended-eligibility.ts",
+  );
+
+  const limitedNoMatch = buildOpportunityIntelligence({
+    context: "PERSONAL",
+    matchScore: null,
+    isUrgent: true,
+    requestCompleteness: 90,
+    ageHours: 2,
+    inventoryFit: "UNKNOWN",
+    pricePosition: "UNKNOWN",
+  });
+
+  const qualityFn =
+    hub
+      .split("function opportunityQualityBadgeLabel")[1]
+      ?.split("function dataConfidenceLabel")[0] ?? "";
+
+  check(
+    "P1-1 quality labels are not personal-match language",
+    hub.includes("Güçlü fırsat") &&
+      hub.includes("İyi fırsat") &&
+      hub.includes("Fırsat skoru") &&
+      !hub.includes("Yüksek eşleşme") &&
+      !hub.includes("Kısmen uygun") &&
+      qualityFn.includes("Güçlü fırsat") &&
+      qualityFn.includes("Genel fırsat") &&
+      !qualityFn.includes("Yüksek eşleşme"),
+  );
+  check(
+    "P1-2 Diğer without grounded match forces Genel fırsat",
+    hub.includes("personalBrowseWithoutMatch") &&
+      qualityFn.includes('view === "browse"') &&
+      qualityFn.includes("!options.hasGroundedMatch") &&
+      limitedNoMatch.fitLevel === "LIMITED",
+  );
+  check(
+    "P1-3 preference candidate retrieval exists",
+    candidates.includes("collectPersonalPreferenceCandidateIds") &&
+      feedSrc.includes("collectPersonalPreferenceCandidateIds") &&
+      feedSrc.includes("preferenceCandidateIds") &&
+      feedSrc.includes("hasGroundedPersonalMatch"),
+  );
+  check(
+    "P1-3 final match authority unchanged",
+    matcher.includes("matchPersonalAgainstPreferences") &&
+      matcher.includes("evaluateDiscoveryFilter") &&
+      candidates.includes("evaluateDiscoveryFilter") &&
+      eligibility.includes("isPersonalRecommendedEligible") &&
+      !candidates.includes("isPersonalRecommendedEligible"),
+  );
+  check(
+    "P1-3 preference recall only on personal path",
+    feedSrc.includes("isPersonal\n        ? collectPersonalPreferenceCandidateIds") ||
+      feedSrc.includes("isPersonal\r\n        ? collectPersonalPreferenceCandidateIds") ||
+      /isPersonal\s*\?\s*collectPersonalPreferenceCandidateIds/.test(feedSrc),
+  );
+  check(
+    "P1 Diğer empty marketplace CTA",
+    hub.includes('href="/panel/talepler"') && hub.includes("Talepleri keşfet"),
+  );
+  check(
+    "P1-3 own exclusion preserved on feed",
+    feedSrc.includes("createdById: { not: userId }") &&
+      candidates.includes("PERSONAL_PREFERENCE_SCAN_LIMIT") &&
+      candidates.includes("PERSONAL_PREFERENCE_CANDIDATE_CAP"),
+  );
+
+  const furnitureFilter = {
+    version: 1 as const,
+    kind: "canonical_discovery_filter" as const,
+    taxonomyNodeIds: ["tax:furniture"],
+  };
+  const prefs = [
+    {
+      kind: "saved_search" as const,
+      name: "Mobilya aramam",
+      filter: furnitureFilter,
+    },
+  ];
+  const hit = matchPersonalAgainstPreferences(
+    furnitureLeafProjection(),
+    prefs,
+  );
+  const miss = matchPersonalAgainstPreferences(
+    {
+      ...furnitureLeafProjection(),
+      taxonomyNodeIds: ["tax:technology"],
+      primaryLeafId: "tax:technology:phones",
+      categoryId: "technology",
+    },
+    prefs,
+  );
+  check(
+    "P1-3 evaluateDiscoveryFilter remains final match truth",
+    hit.score === 100 &&
+      hit.reasons.some((r) => /Kayıtlı aramanızla/.test(r)) &&
+      miss.score === null &&
+      miss.reasons.length === 0,
+  );
+  check(
+    "P1-3 eligibility still requires grounded match",
+    isPersonalRecommendedEligible({
+      context: "PERSONAL",
+      matchScore: hit.score,
+      matchReasons: hit.reasons,
+      opportunityClassification: "NORMAL",
+      isUrgent: false,
+    }) &&
+      !isPersonalRecommendedEligible({
+        context: "PERSONAL",
+        matchScore: miss.score,
+        matchReasons: miss.reasons,
+        opportunityClassification: "HOT",
+        isUrgent: true,
+      }),
   );
 }
 

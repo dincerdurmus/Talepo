@@ -1,4 +1,6 @@
 import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
+import { hasGroundedPersonalMatch } from "@/lib/panel/opportunity-recommended-eligibility";
+import { parseDiscoveryProjection } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
 
 import { evaluateBudgetOpportunity } from "./budget-opportunity";
@@ -6,7 +8,12 @@ import { getCompetitionSignals } from "./competition-signals";
 import { matchCompanyToRequest } from "./smart-matching";
 import { scoreOpportunity } from "./opportunity-score";
 import { buildOpportunityIntelligence, type OpportunityIntelligence } from "./opportunity-intelligence";
-import { matchPersonalToRequest } from "./personal-matching";
+import {
+  collectPersonalPreferenceCandidateIds,
+  PERSONAL_PREFERENCE_CANDIDATE_CAP,
+} from "./personal-preference-candidates";
+import { matchPersonalAgainstPreferences } from "./personal-matching-core";
+import { loadPersonalPreferenceFilters } from "./personal-matching";
 
 export type OpportunityFeedItem = {
   requestId: string;
@@ -65,6 +72,7 @@ export async function buildOpportunitiesFeed(
   options?: { limit?: number; watchlistOnly?: boolean },
 ): Promise<OpportunityFeedItem[]> {
   const limit = options?.limit ?? 40;
+  const isPersonal = !companyId && Boolean(userId);
 
   const watchlistIds = new Set(
     (
@@ -89,32 +97,54 @@ export async function buildOpportunitiesFeed(
       : {}),
   };
 
+  const personalPreferences =
+    isPersonal && userId
+      ? await loadPersonalPreferenceFilters(userId)
+      : [];
+
   let requestIds: string[] = [];
 
   if (options?.watchlistOnly) {
     requestIds = [...watchlistIds];
   } else {
-    const [matches, openRequests] = await Promise.all([
-      companyId ? prisma.opportunityMatch.findMany({
-        where: { companyId },
-        orderBy: [{ score: "desc" }, { createdAt: "desc" }],
-        take: limit,
-        select: { requestId: true },
-      }) : Promise.resolve([] as { requestId: string }[]),
+    const [matches, openRequests, preferenceCandidateIds] = await Promise.all([
+      companyId
+        ? prisma.opportunityMatch.findMany({
+            where: { companyId },
+            orderBy: [{ score: "desc" }, { createdAt: "desc" }],
+            take: limit,
+            select: { requestId: true },
+          })
+        : Promise.resolve([] as { requestId: string }[]),
       prisma.request.findMany({
         where: openWhere,
         orderBy: [{ isUrgent: "desc" }, { publishedAt: "desc" }],
         take: limit,
         select: { id: true },
       }),
+      isPersonal
+        ? collectPersonalPreferenceCandidateIds({
+            preferences: personalPreferences,
+            openWhere: {
+              deletedAt: null,
+              status: {
+                in: ["PUBLISHED", "RECEIVING_OFFERS"],
+              },
+              ...(userId ? { createdById: { not: userId } } : {}),
+            },
+          })
+        : Promise.resolve([] as string[]),
     ]);
+
+    // Preference candidates first so recall survives the universe cap.
     requestIds = [
       ...new Set([
+        ...preferenceCandidateIds,
         ...matches.map((m) => m.requestId),
         ...openRequests.map((r) => r.id),
         ...watchlistIds,
       ]),
-    ].slice(0, limit * 2);
+    ].slice(0, limit + (isPersonal ? PERSONAL_PREFERENCE_CANDIDATE_CAP : limit));
   }
 
   if (requestIds.length === 0) return [];
@@ -134,6 +164,7 @@ export async function buildOpportunitiesFeed(
       viewCount: true,
       publishedAt: true,
       createdAt: true,
+      discoveryProjection: true,
       category: { select: { name: true, slug: true } },
       coverImageUrl: true,
     },
@@ -158,7 +189,12 @@ export async function buildOpportunitiesFeed(
 
   for (const req of requests) {
     const match = companyId ? await matchCompanyToRequest(companyId, req.id) : null;
-    const personalMatch = !companyId && userId ? await matchPersonalToRequest(userId, req.id) : null;
+    const personalMatch = isPersonal
+      ? matchPersonalAgainstPreferences(
+          parseDiscoveryProjection(req.discoveryProjection),
+          personalPreferences,
+        )
+      : null;
     const matchScore = companyId ? match?.score ?? null : personalMatch?.score ?? null;
     const matchReasons = companyId ? match?.reasons ?? [] : personalMatch?.reasons ?? [];
 
@@ -236,14 +272,35 @@ export async function buildOpportunitiesFeed(
     });
   }
 
-  return items
-    .sort((a, b) => {
-      const classRank = { HOT: 3, GOOD: 2, NORMAL: 1 };
-      const diff =
-        classRank[b.opportunityClassification] -
-        classRank[a.opportunityClassification];
-      if (diff !== 0) return diff;
-      return b.opportunityScore - a.opportunityScore;
-    })
-    .slice(0, limit);
+  const classRank = { HOT: 3, GOOD: 2, NORMAL: 1 } as const;
+  const byOpportunityQuality = (a: OpportunityFeedItem, b: OpportunityFeedItem) => {
+    const diff =
+      classRank[b.opportunityClassification] - classRank[a.opportunityClassification];
+    if (diff !== 0) return diff;
+    return b.opportunityScore - a.opportunityScore;
+  };
+
+  if (isPersonal) {
+    // Keep grounded personal matches in the returned feed so Önerilen recall
+    // is not displaced by unrelated HOT/GOOD freshness ranking.
+    const grounded = items.filter((item) =>
+      hasGroundedPersonalMatch({
+        matchScore: item.matchScore,
+        matchReasons: item.matchReasons,
+      }),
+    );
+    const rest = items
+      .filter(
+        (item) =>
+          !hasGroundedPersonalMatch({
+            matchScore: item.matchScore,
+            matchReasons: item.matchReasons,
+          }),
+      )
+      .sort(byOpportunityQuality);
+    grounded.sort(byOpportunityQuality);
+    return [...grounded, ...rest].slice(0, limit);
+  }
+
+  return items.sort(byOpportunityQuality).slice(0, limit);
 }

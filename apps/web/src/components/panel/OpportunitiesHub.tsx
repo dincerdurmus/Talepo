@@ -62,16 +62,38 @@ function matchReasonList(item: OpportunityFeedItem): string[] {
   return uniqueNonEmpty(item.matchReasons).slice(0, 2);
 }
 
-function fitBadgeLabel(
+/**
+ * Opportunity-quality badge copy — never personal-match language.
+ * Personal grounded match is communicated only via matchReasons.
+ */
+function opportunityQualityBadgeLabel(
   level: OpportunityFeedItem["intelligence"]["fitLevel"],
-): string | null {
-  return level === "STRONG"
-    ? "Yüksek eşleşme"
-    : level === "PROMISING"
-      ? "Uygun"
-      : level === "LIMITED"
-        ? "Kısmen uygun"
-        : null;
+  options: {
+    view: OpportunityHubView;
+    hasGroundedMatch: boolean;
+    context: OpportunityContext;
+  },
+): { label: string; tone: "match" | "neutral" | "limited" } | null {
+  const personalBrowseWithoutMatch =
+    options.context === "PERSONAL" &&
+    options.view === "browse" &&
+    !options.hasGroundedMatch;
+
+  if (personalBrowseWithoutMatch) {
+    return { label: "Genel fırsat", tone: "neutral" };
+  }
+
+  if (level === "STRONG") {
+    return { label: "Güçlü fırsat", tone: "match" };
+  }
+  if (level === "PROMISING") {
+    return { label: "İyi fırsat", tone: "match" };
+  }
+  if (level === "LIMITED") {
+    // Soft personalization copy removed — quality is not personal match.
+    return { label: "Genel fırsat", tone: "limited" };
+  }
+  return null;
 }
 
 function dataConfidenceLabel(confidence: number): string {
@@ -179,6 +201,7 @@ function OpportunityCard({
   canSave,
   saveError,
   view,
+  opportunityContext,
 }: {
   item: OpportunityFeedItem;
   onWatchlistToggle: (requestId: string, add: boolean) => void;
@@ -186,17 +209,24 @@ function OpportunityCard({
   canSave: boolean;
   saveError: string | null;
   view: OpportunityHubView;
+  opportunityContext: OpportunityContext;
 }) {
   const fitReasons = matchReasonList(item);
   const detailHref = opportunityRequestDetailHref(item.requestId);
   const hasGroundedMatch =
     item.matchScore != null && item.matchReasons.length > 0;
-  const fitLabel = fitBadgeLabel(item.intelligence.fitLevel);
-  const showFitBadge = Boolean(fitLabel);
+  const qualityBadge = opportunityQualityBadgeLabel(
+    item.intelligence.fitLevel,
+    {
+      view,
+      hasGroundedMatch,
+      context: opportunityContext,
+    },
+  );
   const showGeneralBadge =
-    !showFitBadge && (view === "browse" || !hasGroundedMatch);
+    !qualityBadge && (view === "browse" || !hasGroundedMatch);
   const confidenceLabel = dataConfidenceLabel(item.intelligence.confidence);
-  const signalScore = item.intelligence.opportunityScore;
+  const opportunityQualityScore = item.intelligence.opportunityScore;
   const riskLabel = compactRiskLabel(item);
   const actionHint =
     item.intelligence.recommendedAction === "REVIEW_REQUEST"
@@ -218,13 +248,9 @@ function OpportunityCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            {showFitBadge ? (
-              <OpportunityBadge
-                tone={
-                  item.intelligence.fitLevel === "LIMITED" ? "limited" : "match"
-                }
-              >
-                {fitLabel}
+            {qualityBadge ? (
+              <OpportunityBadge tone={qualityBadge.tone}>
+                {qualityBadge.label}
               </OpportunityBadge>
             ) : showGeneralBadge ? (
               <OpportunityBadge tone="neutral">Genel fırsat</OpportunityBadge>
@@ -271,7 +297,7 @@ function OpportunityCard({
             <OpportunitySignal
               icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
               title={`Veri güveni ${confidenceLabel}`}
-              detail={`Sinyal ${signalScore}/100`}
+              detail={`Fırsat skoru ${opportunityQualityScore}/100`}
             />
             <OpportunitySignal
               icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
@@ -475,8 +501,8 @@ function FeedSummaryStrip({ items }: { items: OpportunityFeedItem[] }) {
         }
         label={
           confidenceLabel
-            ? `En güçlü sinyal · Veri güveni ${confidenceLabel}`
-            : "En güçlü sinyal"
+            ? `En güçlü fırsat skoru · Veri güveni ${confidenceLabel}`
+            : "En güçlü fırsat skoru"
         }
         icon={<Shield className="h-3.5 w-3.5 text-teal-700" aria-hidden />}
         toneClass="text-teal-800"
@@ -593,6 +619,7 @@ export function OpportunitiesHub({
           saveError?.requestId === item.requestId ? saveError.message : null
         }
         view={view}
+        opportunityContext={surface}
       />
     );
   }
@@ -608,6 +635,16 @@ export function OpportunitiesHub({
             <OpportunityEmptyState />
           ) : view === "urgent" ? (
             "Şu an acil işaretli açık talep yok."
+          ) : surface === "PERSONAL" ? (
+            <div className="space-y-3">
+              <p>Şu an gösterilecek başka açık fırsat yok.</p>
+              <Link
+                href="/panel/talepler"
+                className="inline-flex h-10 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
+              >
+                Talepleri keşfet →
+              </Link>
+            </div>
           ) : (
             "Şu an gösterilecek başka açık fırsat yok."
           )
