@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Bell,
   Bookmark,
   Compass,
   Lightbulb,
@@ -269,18 +268,11 @@ export function ProfessionalDiscoveryWorkspace({
 
         <div className="flex flex-wrap gap-2 text-xs">
           <Link
-            href="/panel/kayitli-aramalar"
+            href="/panel/takiplerim"
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
           >
             <Radar className="h-3.5 w-3.5" />
             Takiplerim{trackedSearchCount > 0 ? ` (${trackedSearchCount})` : ""}
-          </Link>
-          <Link
-            href="/panel/uyarilar"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
-          >
-            <Bell className="h-3.5 w-3.5" />
-            Uyarılar{alertCount > 0 ? ` (${alertCount})` : ""}
           </Link>
         </div>
       </div>
@@ -431,7 +423,7 @@ export function ProfessionalDiscoveryWorkspace({
               ) : null}
               <div className="mt-4 flex flex-wrap justify-center gap-2">
                 <Link
-                  href="/panel/kayitli-aramalar"
+                  href="/panel/takiplerim"
                   className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
                 >
                   Takiplerim

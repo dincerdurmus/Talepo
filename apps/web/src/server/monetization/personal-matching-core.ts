@@ -4,20 +4,28 @@ import {
 import {
   evaluatePreferenceCriteria,
   hasPreferenceSignal,
+  preferenceCriteriaFingerprint,
   type PreferenceRequestFacts,
   type PreferenceViewer,
 } from "@/lib/monetization/preference-criteria";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 
+export const PERSONAL_FOLLOW_MATCH_REASON_PREFIX = "Takibinizle eşleşiyor:";
+
+/** @deprecated Use PERSONAL_FOLLOW_MATCH_REASON_PREFIX — same user-facing copy. */
 export const PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX =
-  "Kayıtlı aramanızla eşleşiyor:";
+  PERSONAL_FOLLOW_MATCH_REASON_PREFIX;
+
+export function formatPersonalFollowMatchReason(name: string): string {
+  return `${PERSONAL_FOLLOW_MATCH_REASON_PREFIX} ${name}`;
+}
 
 export function formatPersonalSavedSearchMatchReason(name: string): string {
-  return `${PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX} ${name}`;
+  return formatPersonalFollowMatchReason(name);
 }
 
 export function formatPersonalAlertRuleMatchReason(name: string): string {
-  return `Alarm tercihinizle eşleşiyor: ${name}`;
+  return formatPersonalFollowMatchReason(name);
 }
 
 export type PersonalMatchResult = {
@@ -31,11 +39,14 @@ export type PersonalPreferenceFilter = {
   kind: "saved_search" | "alert_rule";
   name: string;
   criteria: SavedSearchFilters;
+  fingerprint?: string;
 };
 
 /**
  * Final personal match truth. Uses the shared preference-criteria evaluator
  * (taxonomy via evaluateDiscoveryFilter + location/budget/keyword/urgency).
+ * Duplicate SavedSearch+AlertRule reasons for the same fingerprint collapse
+ * to one follow reason.
  */
 export function matchPersonalAgainstPreferences(
   projection: RequestDiscoveryProjection | null | undefined,
@@ -57,6 +68,7 @@ export function matchPersonalAgainstPreferences(
   }
 
   const reasons: string[] = [];
+  const seen = new Set<string>();
   for (const preference of grounded) {
     const result = evaluatePreferenceCriteria({
       projection,
@@ -65,11 +77,12 @@ export function matchPersonalAgainstPreferences(
       viewer,
     });
     if (!result.match) continue;
-    reasons.push(
-      preference.kind === "saved_search"
-        ? formatPersonalSavedSearchMatchReason(preference.name)
-        : formatPersonalAlertRuleMatchReason(preference.name),
-    );
+    const key =
+      preference.fingerprint ??
+      preferenceCriteriaFingerprint(preference.criteria);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    reasons.push(formatPersonalFollowMatchReason(preference.name));
   }
 
   if (reasons.length === 0) {
@@ -84,7 +97,7 @@ export function matchPersonalAgainstPreferences(
   return {
     source: "PERSONAL",
     score: 100,
-    reasons: [...new Set(reasons)].slice(0, 3),
+    reasons: reasons.slice(0, 3),
     missingInformation: [],
   };
 }

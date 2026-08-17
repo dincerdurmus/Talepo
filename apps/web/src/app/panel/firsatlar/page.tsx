@@ -200,13 +200,12 @@ export default async function OpportunitiesPage({
             ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
             : companyId
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
-              : "Kayıtlı aramalarına göre en güçlü fırsatlar burada."}
+              : "Takiplerinize göre en güçlü fırsatlar burada."}
         </p>
         {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <Link href="/panel/firsatlar?view=ops" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Operasyon görünümü</Link>
-            <Link href="/panel/kayitli-aramalar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takipler</Link>
-            <Link href="/panel/uyarilar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Uyarılar</Link>
+            <Link href="/panel/takiplerim" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takiplerim</Link>
           </div>
         ) : null}
       </section>

@@ -177,18 +177,18 @@ const projection = furnitureLeafProjection();
 // F — reason format used by personal-matching (pure; matcher itself needs prisma)
 {
   const searchName = "[E2E TEST] Mobilya ve Ofis";
-  const reason = `Kayıtlı aramanızla eşleşiyor: ${searchName}`;
+  const reason = `Takibinizle eşleşiyor: ${searchName}`;
   const matcher = read("src/server/monetization/personal-matching-core.ts");
   check(
-    "F reason contains Kayıtlı aramanızla eşleşiyor:",
-    reason.includes("Kayıtlı aramanızla eşleşiyor:") &&
+    "F reason contains Takibinizle eşleşiyor:",
+    reason.includes("Takibinizle eşleşiyor:") &&
       reason.includes(searchName),
     reason,
   );
   check(
     "F personal matcher uses the same reason format",
-    matcher.includes("formatPersonalSavedSearchMatchReason") &&
-      matcher.includes("Kayıtlı aramanızla eşleşiyor:"),
+    matcher.includes("formatPersonalFollowMatchReason") &&
+      matcher.includes("Takibinizle eşleşiyor:"),
   );
 }
 
@@ -208,7 +208,7 @@ const projection = furnitureLeafProjection();
   check(
     "G no fake match reason when absent",
     !hub.includes("Güçlü talep eşleşmesi") &&
-      !/fitReasons\.length === 0[\s\S]*Kayıtlı aramanızla/.test(hub),
+      !/fitReasons\.length === 0[\s\S]*Takibinizle/.test(hub),
   );
 }
 

@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bell,
-  BellRing,
   Bookmark,
   Boxes,
   Crown,
@@ -28,6 +27,8 @@ export type PanelNavItem = {
   exact?: boolean;
   /** If set, item is shown only when the feature entitlement is true. */
   requiresFeature?: FeatureKey;
+  /** If set, item is shown when any listed feature is entitled. */
+  requiresAnyFeature?: FeatureKey[];
   /** Hide when this feature is entitled (plan differentiation). */
   hideIfFeature?: FeatureKey;
   /** Restrict item to a workspace mode. Default: both. */
@@ -81,18 +82,11 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     requiresFeature: "ai_offer_assistant",
   },
   {
-    href: "/panel/uyarilar",
-    icon: BellRing,
-    label: "Alarmlar",
-    mobileLabel: "Alarm",
-    requiresFeature: "smart_alerts",
-  },
-  {
-    href: "/panel/kayitli-aramalar",
+    href: "/panel/takiplerim",
     icon: Bookmark,
-    label: "Kayıtlı aramalar",
-    mobileLabel: "Arama",
-    requiresFeature: "saved_searches",
+    label: "Takiplerim",
+    mobileLabel: "Takip",
+    requiresAnyFeature: ["saved_searches", "smart_alerts"],
   },
   {
     href: "/panel/firsatlar?view=ops",
@@ -156,6 +150,12 @@ export function filterPanelNavItems(
     if (scope !== "both" && scope !== workspace) return false;
     if (item.requiresFeature && features?.[item.requiresFeature] !== true) {
       return false;
+    }
+    if (item.requiresAnyFeature && item.requiresAnyFeature.length > 0) {
+      const any = item.requiresAnyFeature.some(
+        (key) => features?.[key] === true,
+      );
+      if (!any) return false;
     }
     if (item.hideIfFeature && features?.[item.hideIfFeature] === true) {
       return false;

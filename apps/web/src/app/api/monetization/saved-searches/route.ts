@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
-import { normalizePreferenceCriteria, preferenceCriteriaFingerprint } from "@/lib/monetization/preference-criteria";
+import { criteriaFromAlertRule, normalizePreferenceCriteria, preferenceCriteriaFingerprint } from "@/lib/monetization/preference-criteria";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import {
   ownerCreateData,
@@ -82,6 +82,49 @@ export async function POST(request: Request) {
     }
 
     if (body.action === "delete" && body.id) {
+      const existing = await prisma.savedSearch.findFirst({
+        where: { id: body.id, ...ownerScopeWhere(ctx) },
+      });
+      if (existing) {
+        const fingerprint = preferenceCriteriaFingerprint(
+          existing.filters as SavedSearchFilters,
+        );
+        const relatedAlerts = await prisma.alertRule.findMany({
+          where: ownerScopeWhere(ctx),
+          select: {
+            id: true,
+            city: true,
+            district: true,
+            minBudget: true,
+            maxBudget: true,
+            keywords: true,
+            attributes: true,
+            discoveryFilter: true,
+            category: { select: { slug: true } },
+          },
+          take: 200,
+        });
+        const matchingIds = relatedAlerts
+          .filter((rule) => {
+            const criteria = criteriaFromAlertRule({
+              categorySlug: rule.category?.slug,
+              city: rule.city,
+              district: rule.district,
+              minBudget: rule.minBudget,
+              maxBudget: rule.maxBudget,
+              keywords: rule.keywords,
+              attributes: rule.attributes,
+              discoveryFilter: rule.discoveryFilter,
+            });
+            return preferenceCriteriaFingerprint(criteria) === fingerprint;
+          })
+          .map((rule) => rule.id);
+        if (matchingIds.length > 0) {
+          await prisma.alertRule.deleteMany({
+            where: { id: { in: matchingIds }, ...ownerScopeWhere(ctx) },
+          });
+        }
+      }
       await prisma.savedSearch.deleteMany({
         where: { id: body.id, ...ownerScopeWhere(ctx) },
       });

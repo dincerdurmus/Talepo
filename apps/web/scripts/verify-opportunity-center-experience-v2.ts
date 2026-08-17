@@ -141,7 +141,7 @@ function personalItem(
 const yonetici = personalItem({
   requestId: "yonetici",
   matchScore: 100,
-  matchReasons: ["Kayıtlı aramanızla eşleşiyor: [E2E TEST] Mobilya ve Ofis"],
+  matchReasons: ["Takibinizle eşleşiyor: [E2E TEST] Mobilya ve Ofis"],
   opportunityClassification: "GOOD",
   isUrgent: false,
   competition: "MEDIUM",
@@ -168,7 +168,7 @@ const iphone = personalItem({
 const urgentMatch = personalItem({
   requestId: "urgent-match",
   matchScore: 100,
-  matchReasons: ["Alarm tercihinizle eşleşiyor: Ofis"],
+  matchReasons: ["Takibinizle eşleşiyor: Ofis"],
   isUrgent: true,
   opportunityClassification: "HOT",
   competition: "LOW",
@@ -269,7 +269,7 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
   const intel = buildOpportunityIntelligence({
     context: "PERSONAL",
     matchScore: 100,
-    matchReasons: ["Kayıtlı aramanızla eşleşiyor: [E2E TEST] Mobilya ve Ofis"],
+    matchReasons: ["Takibinizle eşleşiyor: [E2E TEST] Mobilya ve Ofis"],
     isUrgent: false,
     requestCompleteness: 40,
     ageHours: 8,
@@ -291,7 +291,7 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
     hub.includes("item.matchReasons") &&
       hub.includes("matchReasonList") &&
       hub.includes("fitReasons.map") &&
-      intel.reasons.some((reason) => /Kayıtlı aramanızla/.test(reason)),
+      intel.reasons.some((reason) => /Takibinizle/.test(reason)),
   );
   check(
     "I competition surfaced",
@@ -340,7 +340,7 @@ console.log("\n=== M–P SAVE / INVENTORY / TABS ===\n");
   const personalPromising = buildOpportunityIntelligence({
     context: "PERSONAL",
     matchScore: 88,
-    matchReasons: ["Kayıtlı aramanızla eşleşiyor: Mobilya"],
+    matchReasons: ["Takibinizle eşleşiyor: Mobilya"],
     isUrgent: false,
     requestCompleteness: 90,
     ageHours: 2,
@@ -475,15 +475,14 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
     "personal header copy",
     page.includes("Sana uygun fırsatlar") &&
       page.includes(
-        "Kayıtlı aramalarına göre en güçlü fırsatlar burada.",
+        "Takiplerinize göre en güçlü fırsatlar burada.",
       ),
   );
   check(
     "personal empty state",
     hub.includes("Henüz sana güçlü şekilde uyan bir fırsat yok.") &&
       hub.includes("Diğer Fırsatlar →") &&
-      hub.includes("/panel/kayitli-aramalar") &&
-      hub.includes("/panel/uyarilar") &&
+      hub.includes("/panel/takiplerim") &&
       hub.includes("/panel/firsatlar?view=browse"),
   );
   check(
@@ -584,7 +583,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
   const recommended = summaryItem({
     requestId: "rec",
     matchScore: 100,
-    matchReasons: ["Kayıtlı aramanızla eşleşiyor: Mobilya"],
+    matchReasons: ["Takibinizle eşleşiyor: Mobilya"],
     opportunityClassification: "GOOD",
     intelligence: { opportunityScore: 62, confidence: 0.8 },
   });
@@ -939,7 +938,7 @@ console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
   check(
     "P1-3 evaluateDiscoveryFilter remains final match truth",
     hit.score === 100 &&
-      hit.reasons.some((r) => /Kayıtlı aramanızla/.test(r)) &&
+      hit.reasons.some((r) => /Takibinizle/.test(r)) &&
       miss.score === null &&
       miss.reasons.length === 0,
   );

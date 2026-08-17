@@ -152,7 +152,7 @@ check(
 check(
   "16 taxonomy follow",
   read("src/components/panel/discovery/CorporateOpportunityCenter.tsx").includes(
-    "kayitli-aramalar",
+    "takiplerim",
   ),
 );
 check(
@@ -265,7 +265,7 @@ check(
 check(
   "31 empty state CTAs",
   read("src/components/panel/discovery/CorporateOpportunityCenter.tsx").includes(
-    "Alarm oluştur",
+    "Takiplerim",
   ),
 );
 

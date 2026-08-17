@@ -1,5 +1,5 @@
 import { parseDiscoveryProjection } from "@/lib/discovery";
-import { criteriaFromAlertRule, normalizePreferenceCriteria } from "@/lib/monetization/preference-criteria";
+import { criteriaFromAlertRule, normalizePreferenceCriteria, preferenceCriteriaFingerprint } from "@/lib/monetization/preference-criteria";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
 
@@ -11,8 +11,10 @@ import {
 
 export {
   formatPersonalAlertRuleMatchReason,
+  formatPersonalFollowMatchReason,
   formatPersonalSavedSearchMatchReason,
   matchPersonalAgainstPreferences,
+  PERSONAL_FOLLOW_MATCH_REASON_PREFIX,
   PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX,
   type PersonalMatchResult,
   type PersonalPreferenceFilter,
@@ -53,27 +55,31 @@ export async function loadPersonalPreferenceFilters(
   for (const search of savedSearches) {
     const raw = search.filters as SavedSearchFilters;
     const normalized = normalizePreferenceCriteria(raw);
+    const criteria = normalized.ok ? normalized.filters : raw;
     out.push({
       kind: "saved_search",
       name: search.name,
-      criteria: normalized.ok ? normalized.filters : raw,
+      criteria,
+      fingerprint: preferenceCriteriaFingerprint(criteria),
     });
   }
 
   for (const rule of alertRules) {
+    const criteria = criteriaFromAlertRule({
+      categorySlug: rule.category?.slug,
+      city: rule.city,
+      district: rule.district,
+      minBudget: rule.minBudget,
+      maxBudget: rule.maxBudget,
+      keywords: rule.keywords,
+      attributes: rule.attributes,
+      discoveryFilter: rule.discoveryFilter,
+    });
     out.push({
       kind: "alert_rule",
       name: rule.name,
-      criteria: criteriaFromAlertRule({
-        categorySlug: rule.category?.slug,
-        city: rule.city,
-        district: rule.district,
-        minBudget: rule.minBudget,
-        maxBudget: rule.maxBudget,
-        keywords: rule.keywords,
-        attributes: rule.attributes,
-        discoveryFilter: rule.discoveryFilter,
-      }),
+      criteria,
+      fingerprint: preferenceCriteriaFingerprint(criteria),
     });
   }
 

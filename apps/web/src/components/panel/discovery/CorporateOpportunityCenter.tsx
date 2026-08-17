@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Bell,
   Bookmark,
   Flame,
   LoaderCircle,
@@ -306,18 +305,11 @@ export function CorporateOpportunityCenter({
               Kategorilere göre keşfet
             </Link>
             <Link
-              href="/panel/kayitli-aramalar"
+              href="/panel/takiplerim"
               className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
             >
               <Radar className="h-3.5 w-3.5" />
-              Takipler ({summary.trackedCategoryCount})
-            </Link>
-            <Link
-              href="/panel/uyarilar"
-              className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
-            >
-              <Bell className="h-3.5 w-3.5" />
-              Bildirimler ({summary.alertCount})
+              Takiplerim ({summary.trackedCategoryCount})
             </Link>
           </div>
         </div>
@@ -371,16 +363,10 @@ export function CorporateOpportunityCenter({
           </p>
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             <Link
-              href="/panel/kayitli-aramalar"
+              href="/panel/takiplerim"
               className="font-semibold text-teal-900 underline-offset-2 hover:underline"
             >
-              Kategori / arama takibi
-            </Link>
-            <Link
-              href="/panel/uyarilar"
-              className="font-semibold text-teal-900 underline-offset-2 hover:underline"
-            >
-              Bildirim kuralları
+              Takiplerim
             </Link>
             <Link
               href="/panel/envanter"
@@ -467,10 +453,10 @@ export function CorporateOpportunityCenter({
               Kategori takip et
             </Link>
             <Link
-              href="/panel/uyarilar"
+              href="/panel/takiplerim"
               className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
             >
-              Alarm oluştur
+              Takiplerim
             </Link>
             <Link
               href="/panel/envanter"

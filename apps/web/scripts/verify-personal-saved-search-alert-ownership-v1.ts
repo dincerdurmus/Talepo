@@ -198,10 +198,14 @@ const uyarilar = readFileSync(
   join(root, "src/app/panel/uyarilar/page.tsx"),
   "utf8",
 );
-check("38 kayitli uses owner scope", kayitli.includes("ownerScopeWhere"));
-check("39 uyarilar uses owner scope", uyarilar.includes("ownerScopeWhere"));
-check("40 no CompanyOwnedFeatureNotice on kayitli", !kayitli.includes("CompanyOwnedFeatureNotice"));
-check("41 no CompanyOwnedFeatureNotice on uyarilar", !uyarilar.includes("CompanyOwnedFeatureNotice"));
+const takipcilerim = readFileSync(
+  join(root, "src/app/panel/takiplerim/page.tsx"),
+  "utf8",
+);
+check("38 takipcilerim uses owner scope", takipcilerim.includes("ownerScopeWhere"));
+check("39 old alert page redirects", uyarilar.includes('redirect("/panel/takiplerim")'));
+check("40 no CompanyOwnedFeatureNotice on takipcilerim", !takipcilerim.includes("CompanyOwnedFeatureNotice"));
+check("41 old saved-search page redirects", kayitli.includes('redirect("/panel/takiplerim")'));
 
 // Optional live DB tests
 console.log("\n=== OPTIONAL LIVE DB ===\n");

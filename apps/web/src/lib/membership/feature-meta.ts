@@ -19,8 +19,8 @@ export const FEATURE_META: Record<
   unlimited_offers: base("Sınırsız teklif", "Aylık teklif kotası olmadan teklif verin."),
   smart_alerts: base(
     "Akıllı talep alarmları",
-    "Kategori, bölge ve bütçeye göre otomatik eşleşme kuralları.",
-    "/panel/uyarilar",
+    "Kategori, bölge ve bütçeye göre takip ve bildirim.",
+    "/panel/takiplerim",
   ),
   ai_offer_assistant: base(
     "AI Teklif Copilot",
@@ -34,7 +34,7 @@ export const FEATURE_META: Record<
   saved_searches: base(
     "Kayıtlı aramalar",
     "Keşif filtrelerinizi kaydedin.",
-    "/panel/kayitli-aramalar",
+    "/panel/takiplerim",
   ),
   advanced_filters: base(
     "Gelişmiş filtreler",
@@ -99,7 +99,7 @@ export const FEATURE_META: Record<
   alert_rules: base(
     "Talep bildirim kuralları",
     "smart_alerts ile aynı (legacy key).",
-    "/panel/uyarilar",
+    "/panel/takiplerim",
   ),
   advanced_ai_pricing: base(
     "Gelişmiş AI fiyat analizi",

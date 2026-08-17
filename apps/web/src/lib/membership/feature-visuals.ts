@@ -70,7 +70,7 @@ export const FEATURE_VISUALS: Partial<Record<FeatureKey, FeatureVisual>> = {
     iconWrap: "bg-[#0d9488]",
     iconClass: "text-white",
     linkClass: "text-teal-900 hover:text-teal-950",
-    href: "/panel/uyarilar",
+    href: "/panel/takiplerim",
     cta: "Kuralları yönet →",
   },
   hidden_inventory: {

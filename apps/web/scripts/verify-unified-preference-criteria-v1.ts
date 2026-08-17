@@ -190,7 +190,7 @@ const ocMiss = matchPersonalAgainstPreferences(furnitureProjection(), prefs, {
   budgetMin: 20000,
   budgetMax: 20000,
 });
-check("7 OC reason only on full match", ocHit.reasons.some((r) => /Kayıtlı aramanızla/.test(r)));
+check("7 OC reason only on full match", ocHit.reasons.some((r) => /Takibinizle/.test(r)));
 check("3 Ankara furniture does not produce İstanbul reason", ocMiss.reasons.length === 0);
 
 const legacyAlert = criteriaFromAlertRule({
@@ -214,24 +214,26 @@ check("10 fingerprint distinguishes location", fpA !== fpB);
 check("10 same criteria same fingerprint", fpA === fpDup);
 
 console.log("\n=== SOURCE CONTRACT ===\n");
-const manager = read("src/components/panel/SavedSearchesManager.tsx");
+const manager = read("src/components/panel/FollowTracksManager.tsx");
+const projection = read("src/lib/monetization/follow-tracks.ts");
 const saveBtn = read("src/components/panel/SaveExploreSearchButton.tsx");
 const alerts = read("src/server/monetization/alert-matching.ts");
 const notify = read("src/server/monetization/alert-notifications.ts");
 const alertRoute = read("src/app/api/monetization/alerts/route.ts");
 const uyarilar = read("src/app/panel/uyarilar/page.tsx");
+const kayitli = read("src/app/panel/kayitli-aramalar/page.tsx");
 const feed = read("src/server/monetization/opportunities-feed.ts");
 const click = read("src/app/panel/bildirimler/r/[id]/page.tsx");
 
-check("run URL is Explore not Opportunity", manager.includes("savedSearchToExploreUrl") && !manager.includes("firsatlar") && !manager.includes("discoveryFilterToWorkspaceUrl"));
-check("Bildirim aç action", manager.includes("Bildirim aç") && manager.includes("createFromSavedSearch"));
+check("run URL is Explore not Opportunity", projection.includes("savedSearchToExploreUrl") && !manager.includes("firsatlar"));
+check("notification toggle uses setFromSavedSearch", manager.includes("setFromSavedSearch") && manager.includes("Bildirimler açık"));
 check("save path passes taxonomyLeaf", saveBtn.includes("taxonomyLeaf"));
 check("alert matcher uses shared evaluator", alerts.includes("evaluatePreferenceCriteria") && !alerts.includes("includesKeyword"));
 check("own-request skipped in notify", notify.includes("createdById"));
 check("dedupe uses alertRuleId actionUrl", notify.includes("alertNotificationActionUrl") || notify.includes("alertRule="));
 check("alert create writes canonical envelope", alertRoute.includes("normalizePreferenceCriteria") && alertRoute.includes("createFromSavedSearch"));
-check("duplicate active alert blocked", alertRoute.includes("alreadyExists"));
-check("alert page does not promise leaf picker", !uyarilar.includes("taxonomy leaf"));
+check("duplicate active alert blocked", alertRoute.includes("alreadyExists") && alertRoute.includes("setFromSavedSearch"));
+check("legacy alert/saved pages redirect", uyarilar.includes('redirect("/panel/takiplerim")') && kayitli.includes('redirect("/panel/takiplerim")'));
 check("OC feed passes full facts", feed.includes("district:") && feed.includes("createdById: req.createdById"));
 check("15 notification click still redirects actionUrl", click.includes("notification.actionUrl") && click.includes("redirect"));
 

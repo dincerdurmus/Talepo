@@ -93,7 +93,9 @@ function getPanelPageTitle(pathname: string) {
   if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet";
   if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
   if (pathname.startsWith("/panel/asistan")) return "AI asistan";
-  if (pathname.startsWith("/panel/uyarilar")) return "Uyarı kuralları";
+  if (pathname.startsWith("/panel/takiplerim")) return "Takiplerim";
+  if (pathname.startsWith("/panel/uyarilar")) return "Takiplerim";
+  if (pathname.startsWith("/panel/kayitli-aramalar")) return "Takiplerim";
   if (pathname.startsWith("/panel/envanter")) return "Gizli envanter";
   if (pathname.startsWith("/panel/ekip")) return "Ekip";
   if (pathname.startsWith("/panel/firma/yeni")) return "Yeni firma oluştur";
@@ -381,7 +383,7 @@ function PersonalSidebar({
   const navGroups = [
     { label: "Genel", items: navItems.filter((item) => ["/", "/panel"].includes(item.href)) },
     { label: "Talep & teklif", items: navItems.filter((item) => ["/panel/taleplerim", "/panel/gelen-teklifler", "/panel/talepler", "/panel/teklifler"].includes(item.href)) },
-    { label: "Araçlar", items: navItems.filter((item) => ["/panel/asistan", "/panel/uyarilar", "/panel/kayitli-aramalar", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
+    { label: "Araçlar", items: navItems.filter((item) => ["/panel/asistan", "/panel/takiplerim", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
     { label: "Hesap", items: navItems.filter((item) => ["/panel/mesajlar", "/panel/profil"].includes(item.href)) },
   ].filter((group) => group.items.length > 0);
 

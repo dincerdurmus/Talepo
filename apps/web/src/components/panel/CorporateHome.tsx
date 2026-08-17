@@ -202,7 +202,7 @@ export function CorporateHome({
 
           <section className="rounded-[24px] border border-black/[0.06] bg-white p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-black/40">
-              Uyarı kuralları
+              Takiplerim
             </p>
             <ul className="mt-4 space-y-3 text-sm">
               {[
@@ -220,10 +220,10 @@ export function CorporateHome({
               ))}
             </ul>
             <Link
-              href="/panel/uyarilar"
+              href="/panel/takiplerim"
               className="mt-4 inline-block text-xs font-semibold text-teal-800"
             >
-              Kuralları yönet →
+              Takiplerim →
             </Link>
           </section>
 

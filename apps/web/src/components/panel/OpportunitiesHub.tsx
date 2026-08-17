@@ -439,7 +439,7 @@ function OpportunityEmptyState() {
         Henüz sana güçlü şekilde uyan bir fırsat yok.
       </h3>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
-        Kayıtlı arama veya alarm ile eşleşen açık talepler burada görünür. Daha
+        Kayıtlı takip kriterlerinizle eşleşen açık talepler burada görünür. Daha
         geniş liste için Diğer Fırsatlar veya Acil sekmelerine bakabilirsiniz.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
@@ -450,16 +450,10 @@ function OpportunityEmptyState() {
           Diğer Fırsatlar →
         </Link>
         <Link
-          href="/panel/kayitli-aramalar"
+          href="/panel/takiplerim"
           className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
         >
-          Kayıtlı arama
-        </Link>
-        <Link
-          href="/panel/uyarilar"
-          className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
-        >
-          Alarm
+          Takiplerim
         </Link>
       </div>
     </div>

@@ -79,7 +79,7 @@ function criteriaFromBody(input: {
   });
 }
 
-async function findDuplicateActiveAlert(
+async function findMatchingAlert(
   ctx: ResourceOwnerContext,
   fingerprint: string,
   excludeId?: string,
@@ -87,12 +87,12 @@ async function findDuplicateActiveAlert(
   const rules = await prisma.alertRule.findMany({
     where: {
       ...ownerScopeWhere(ctx),
-      isActive: true,
       ...(excludeId ? { id: { not: excludeId } } : {}),
     },
     select: {
       id: true,
       name: true,
+      isActive: true,
       city: true,
       district: true,
       minBudget: true,
@@ -100,26 +100,31 @@ async function findDuplicateActiveAlert(
       keywords: true,
       attributes: true,
       discoveryFilter: true,
+      updatedAt: true,
       category: { select: { slug: true } },
     },
     take: 200,
   });
 
-  return (
-    rules.find((rule) => {
-      const criteria = criteriaFromAlertRule({
-        categorySlug: rule.category?.slug,
-        city: rule.city,
-        district: rule.district,
-        minBudget: rule.minBudget,
-        maxBudget: rule.maxBudget,
-        keywords: rule.keywords,
-        attributes: rule.attributes,
-        discoveryFilter: rule.discoveryFilter,
-      });
-      return preferenceCriteriaFingerprint(criteria) === fingerprint;
-    }) ?? null
-  );
+  const matches = rules.filter((rule) => {
+    const criteria = criteriaFromAlertRule({
+      categorySlug: rule.category?.slug,
+      city: rule.city,
+      district: rule.district,
+      minBudget: rule.minBudget,
+      maxBudget: rule.maxBudget,
+      keywords: rule.keywords,
+      attributes: rule.attributes,
+      discoveryFilter: rule.discoveryFilter,
+    });
+    return preferenceCriteriaFingerprint(criteria) === fingerprint;
+  });
+
+  matches.sort((a, b) => {
+    if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
+  });
+  return matches[0] ?? null;
 }
 
 export async function GET() {
@@ -169,7 +174,14 @@ export async function POST(request: Request) {
       companyId?: unknown;
     };
 
-    if (body.action === "createFromSavedSearch" && body.savedSearchId) {
+    if (
+      (body.action === "createFromSavedSearch" ||
+        body.action === "setFromSavedSearch") &&
+      body.savedSearchId
+    ) {
+      const wantActive =
+        body.action === "createFromSavedSearch" ? true : body.isActive !== false;
+
       const search = await prisma.savedSearch.findFirst({
         where: { id: body.savedSearchId, ...ownerScopeWhere(ctx) },
       });
@@ -191,17 +203,28 @@ export async function POST(request: Request) {
       }
 
       const fingerprint = preferenceCriteriaFingerprint(normalized.filters);
-      const duplicate = await findDuplicateActiveAlert(ctx, fingerprint);
-      if (duplicate) {
+      const matching = await findMatchingAlert(ctx, fingerprint);
+      if (matching) {
+        if (matching.isActive !== wantActive) {
+          await prisma.alertRule.updateMany({
+            where: { id: matching.id, ...ownerScopeWhere(ctx) },
+            data: { isActive: wantActive },
+          });
+        }
         const rule = await prisma.alertRule.findFirst({
-          where: { id: duplicate.id, ...ownerScopeWhere(ctx) },
+          where: { id: matching.id, ...ownerScopeWhere(ctx) },
           include: { category: { select: { id: true, name: true, slug: true } } },
         });
         return NextResponse.json({
           ok: true,
-          alreadyExists: true,
+          alreadyExists: matching.isActive && wantActive,
+          reactivated: !matching.isActive && wantActive,
           rule,
         });
+      }
+
+      if (!wantActive) {
+        return NextResponse.json({ ok: true, rule: null });
       }
 
       const columns = criteriaToAlertRuleColumns(normalized.filters);
@@ -265,8 +288,8 @@ export async function POST(request: Request) {
       }
 
       const fingerprint = preferenceCriteriaFingerprint(normalized.filters);
-      const duplicate = await findDuplicateActiveAlert(ctx, fingerprint);
-      if (duplicate) {
+      const duplicate = await findMatchingAlert(ctx, fingerprint);
+      if (duplicate?.isActive) {
         return NextResponse.json(
           {
             ok: false,
@@ -276,6 +299,16 @@ export async function POST(request: Request) {
           },
           { status: 409 },
         );
+      }
+      if (duplicate && !duplicate.isActive) {
+        await prisma.alertRule.updateMany({
+          where: { id: duplicate.id, ...ownerScopeWhere(ctx) },
+          data: { isActive: true, name },
+        });
+        const rule = await prisma.alertRule.findFirst({
+          where: { id: duplicate.id, ...ownerScopeWhere(ctx) },
+        });
+        return NextResponse.json({ ok: true, alreadyExists: false, reactivated: true, rule });
       }
 
       const columns = criteriaToAlertRuleColumns(normalized.filters);
@@ -357,7 +390,7 @@ export async function POST(request: Request) {
           );
         }
         const fingerprint = preferenceCriteriaFingerprint(normalized.filters);
-        const duplicate = await findDuplicateActiveAlert(ctx, fingerprint, body.id);
+        const duplicate = await findMatchingAlert(ctx, fingerprint, body.id);
         if (duplicate && (body.isActive === undefined || body.isActive)) {
           return NextResponse.json(
             {
