@@ -24,7 +24,7 @@ export const FEATURE_META: Record<
   ),
   ai_offer_assistant: base(
     "Teklif taslağı",
-    "Talep metnine göre kural tabanlı taslak. Gerçek AI veya Price Intelligence değildir.",
+    "Talep metnine göre kural tabanlı taslak. Contextual teklif formu capability’si; ana navigasyon ürünü değildir. Gerçek AI veya Price Intelligence değildir.",
     "/panel/asistan",
   ),
   smart_matching: base(

@@ -8,8 +8,16 @@ import {
 } from "lucide-react";
 
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
+import {
+  OfferIntelligenceHub,
+  type OfferIntelligenceReadyItem,
+} from "@/components/panel/OfferIntelligenceHub";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { hasFeature } from "@/lib/membership/entitlements";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import { OFFER_INTELLIGENCE_FEATURE } from "@/lib/monetization/offer-intelligence";
 import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
 import {
   offerNegotiationListInclude,
@@ -22,6 +30,10 @@ import {
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import {
+  getRequestOfferIntelligence,
+  OfferIntelligenceLookupError,
+} from "@/server/monetization/offer-intelligence";
 
 export default async function OffersPage({
   searchParams,
@@ -89,6 +101,56 @@ export default async function OffersPage({
     ? "Firmanızın teklifleri: durum, karşı teklifler ve doluluk."
     : "Gönderdiğiniz teklifler. Alıcı kabul edebilir veya karşı teklif verebilir.";
 
+  const entitlements = await resolveEntitlements(
+    user.id,
+    await getCompanyContextOptions(),
+  );
+  const hasOfferIntelligence = hasFeature(
+    entitlements.features,
+    OFFER_INTELLIGENCE_FEATURE,
+  );
+
+  let intelligenceHubMode: "locked" | "empty" | "ready" = "locked";
+  let readyIntelligence: OfferIntelligenceReadyItem[] = [];
+
+  if (!hasOfferIntelligence) {
+    intelligenceHubMode = "locked";
+  } else {
+    const requestMeta = new Map<string, string>();
+    for (const offer of offers) {
+      if (!requestMeta.has(offer.request.id)) {
+        requestMeta.set(offer.request.id, offer.request.title);
+      }
+    }
+
+    const settled = await Promise.all(
+      [...requestMeta.entries()].map(async ([requestId, requestTitle]) => {
+        try {
+          const intelligence = await getRequestOfferIntelligence({
+            userId: user.id,
+            requestId,
+          });
+          return { requestId, requestTitle, intelligence };
+        } catch (error) {
+          if (error instanceof OfferIntelligenceLookupError) return null;
+          throw error;
+        }
+      }),
+    );
+
+    readyIntelligence = settled.filter(
+      (row): row is OfferIntelligenceReadyItem =>
+        row != null &&
+        row.intelligence.state === "READY" &&
+        row.intelligence.min != null &&
+        row.intelligence.max != null &&
+        row.intelligence.median != null &&
+        row.intelligence.average != null,
+    );
+    intelligenceHubMode =
+      readyIntelligence.length > 0 ? "ready" : "empty";
+  }
+
   return (
     <>
       <section className="py-4 sm:py-6">
@@ -139,6 +201,11 @@ export default async function OffersPage({
           </div>
         ))}
       </div>
+
+      <OfferIntelligenceHub
+        mode={intelligenceHubMode}
+        readyItems={readyIntelligence}
+      />
 
       {offers.length === 0 ? (
         <Gate

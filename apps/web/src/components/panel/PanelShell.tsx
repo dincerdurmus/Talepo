@@ -22,7 +22,6 @@ import {
   Search,
   ShieldCheck,
   UserRound,
-  WandSparkles,
 } from "lucide-react";
 
 const SIDEBAR_COLLAPSED_KEY = "talepo.panel.sidebarCollapsed";
@@ -397,7 +396,6 @@ function PersonalSidebar({
   const planItem = navItems.find((item) => item.href === "/panel/plan");
   const takiplerimItem = navItems.find((item) => item.href === "/panel/takiplerim");
   const firsatlarItem = navItems.find((item) => item.href === "/panel/firsatlar");
-  const asistanItem = navItems.find((item) => item.href === "/panel/asistan");
 
   const showFollows = Boolean(takiplerimItem);
   const showOpportunities = Boolean(firsatlarItem);
@@ -521,7 +519,7 @@ function PersonalSidebar({
           </div>
         ))}
 
-        {(showProCard || analizItem || planItem || asistanItem) && (
+        {(showProCard || analizItem || planItem) && (
           <div>
             {!collapsed && (
               <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">
@@ -536,15 +534,6 @@ function PersonalSidebar({
                 icon={analizItem.icon}
                 label={analizItem.label}
                 active={isNavActive(pathname, analizItem.href, analizItem.exact)}
-                collapsed={collapsed}
-              />
-            ) : null}
-            {asistanItem ? (
-              <SidebarLink
-                href={asistanItem.href}
-                icon={asistanItem.icon ?? WandSparkles}
-                label={asistanItem.label}
-                active={isNavActive(pathname, asistanItem.href, asistanItem.exact)}
                 collapsed={collapsed}
               />
             ) : null}

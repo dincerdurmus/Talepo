@@ -14,7 +14,6 @@ import {
   Search,
   UserRound,
   Users,
-  WandSparkles,
 } from "lucide-react";
 
 import type { FeatureKey } from "@/lib/membership/entitlements";
@@ -74,13 +73,8 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     mobileLabel: "Teklifler",
     requiresFeature: "submit_offer",
   },
-  {
-    href: "/panel/asistan",
-    icon: WandSparkles,
-    label: "Teklif taslağı",
-    mobileLabel: "Taslak",
-    requiresFeature: "ai_offer_assistant",
-  },
+  // Teklif taslağı remains a contextual capability (offer form / deep-link
+  // /panel/asistan). It is not a primary sidebar destination.
   {
     href: "/panel/takiplerim",
     icon: Bookmark,
