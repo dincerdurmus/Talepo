@@ -11,7 +11,7 @@ import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { markConversationAsRead } from "@/server/message/mark-conversation-read";
-import { getDealReviewForSide } from "@/server/offer/deal-review-service";
+import { getDealReviewConversationState } from "@/server/offer/deal-review-service";
 import {
   getCompanyTrustSummary,
   getUserTrustSummary,
@@ -107,13 +107,13 @@ export default async function ConversationDetailPage({
       ? await getCompanyTrustSummary(conversation.offer.company.id)
       : await getUserTrustSummary(conversation.offer.submittedById)
     : null;
-  const ownReview =
+  const reviewState =
     dealCompleted && dealOutcome && dealRole
-      ? await getDealReviewForSide(
+      ? await getDealReviewConversationState(
           dealOutcome.id,
           dealRole === "buyer" ? "BUYER" : "PROVIDER",
         )
-      : null;
+      : { ownReview: null, oppositeReview: null };
 
   return (
     <>
@@ -176,7 +176,8 @@ export default async function ConversationDetailPage({
           {dealCompleted ? (
             <DealReviewPanel
               dealOutcomeId={dealOutcome.id}
-              existingReview={ownReview}
+              existingReview={reviewState.ownReview}
+              oppositeReview={reviewState.oppositeReview}
             />
           ) : null}
         </>

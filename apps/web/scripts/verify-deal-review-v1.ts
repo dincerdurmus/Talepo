@@ -6,12 +6,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import {
+  DEAL_REVIEW_BLIND_HINT,
   DEAL_REVIEW_COMMENT_MAX,
+  DEAL_REVIEWS_PUBLISHED_MESSAGE,
+  DEAL_REVIEWS_PUBLISHED_TITLE,
   averageRatingFrom,
   dealIsReviewEligible,
   formatAverageRating,
   formatReviewCount,
   formatTrustRatingMeta,
+  isDealReviewPairRevealed,
+  isDealReviewRevealed,
   isValidDealRating,
   resolveDealReviewTarget,
 } from "../src/lib/offer/deal-review";
@@ -201,9 +206,10 @@ console.log("\n=== TRUST AGGREGATE ===\n");
       formatCompletedTransactionCount(18) === "18 tamamlanan işlem",
   );
   check(
-    "23 reviewCount from real reviews",
+    "23 reviewCount from revealed reviews",
     trust.includes("_count: { _all: true }") &&
-      trust.includes('reviewerSide: "BUYER"'),
+      trust.includes("REVEALED_REVIEW_WHERE") &&
+      (trust.match(/REVEALED_REVIEW_WHERE/g) ?? []).length >= 4,
   );
   check(
     "24 averageRating arithmetic mean",
@@ -236,11 +242,17 @@ console.log("\n=== TRUST AGGREGATE ===\n");
       panel.includes("değiştirilemez"),
   );
   check(
-    "27 notification",
+    "27 pair reveal notification",
     schema.includes("DEAL_REVIEW_RECEIVED") &&
       notify.includes("DEAL_REVIEW_RECEIVED") &&
       service.includes('type: "DEAL_REVIEW_RECEIVED"') &&
+      service.includes("DEAL_REVIEWS_PUBLISHED_TITLE") &&
+      service.includes("isDealReviewPairRevealed") &&
+      service.includes("alreadyPublished") &&
+      !service.includes("Yeni değerlendirme aldınız") &&
       !service.includes("rating}") &&
+      !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("yıldız") &&
+      DEAL_REVIEWS_PUBLISHED_TITLE === "Değerlendirmeler yayınlandı" &&
       destination.includes("DEAL_REVIEW_RECEIVED") &&
       resolveNotificationDestination({
         type: "DEAL_REVIEW_RECEIVED",
@@ -267,9 +279,124 @@ console.log("\n=== TRUST AGGREGATE ===\n");
     "29 identity privacy",
     !panel.includes("existingCounterpart") &&
       conversation.includes("DealReviewPanel") &&
-      conversation.includes("existingReview={ownReview}") &&
-      !conversation.includes("counterpartReview"),
+      conversation.includes("getDealReviewConversationState") &&
+      conversation.includes("oppositeReview={reviewState.oppositeReview}") &&
+      !conversation.includes("counterpartReview") &&
+      !panel.includes("Karşı taraf sizi değerlendirdi") &&
+      !panel.includes("Karşı taraf değerlendirmesini tamamladı"),
   );
+}
+
+console.log("\n=== BLIND REVIEW / REVEAL ===\n");
+{
+  check("1 no reviews visible count 0", !isDealReviewRevealed({ sides: [] }));
+  check(
+    "2 buyer-only hidden",
+    !isDealReviewRevealed({ sides: ["BUYER"] }) &&
+      !isDealReviewPairRevealed(["BUYER"]),
+  );
+  check(
+    "3 provider-only hidden",
+    !isDealReviewRevealed({ sides: ["PROVIDER"] }),
+  );
+  check(
+    "4 both reviews revealed",
+    isDealReviewRevealed({ sides: ["BUYER", "PROVIDER"] }) &&
+      isDealReviewPairRevealed(["PROVIDER", "BUYER"]),
+  );
+  check(
+    "5 buyer own hidden self-view",
+    service.includes("ownReview") &&
+      panel.includes("Değerlendirmeniz alındı") &&
+      panel.includes("existingReview"),
+  );
+  check(
+    "6/7 opposite hidden until pair",
+    service.includes("getDealReviewConversationState") &&
+      service.includes("isDealReviewPairRevealed") &&
+      service.includes("oppositeReview") &&
+      service.includes("row.reviewerSide !== side"),
+  );
+  check(
+    "8 both submitted each sees opposite",
+    conversation.includes("oppositeReview={reviewState.oppositeReview}") &&
+      panel.includes("Karşı tarafın değerlendirmesi"),
+  );
+  check(
+    "9/10/11/12/14/15 hidden-aware aggregates",
+    trust.includes("REVEALED_REVIEW_WHERE") &&
+      domain.includes("REVEALED_REVIEW_WHERE") &&
+      trust.includes("getUserTrustSummary") &&
+      trust.includes("loadProviderTrustSummaries"),
+  );
+  check(
+    "13 completed transactions unchanged",
+    trust.includes("countCompletedTransactions") &&
+      !trust.includes("dealReview.count") &&
+      formatCompletedTransactionCount(18) === "18 tamamlanan işlem",
+  );
+  check(
+    "16 no fake trust label",
+    panel.includes("DEAL_REVIEW_BLIND_HINT") &&
+      DEAL_REVIEW_BLIND_HINT.includes("iki taraf") &&
+      !panel.includes("çok güvenilir"),
+  );
+  check(
+    "17 first review notification NO",
+    service.includes("if (isDealReviewPairRevealed") &&
+      !service.includes("Yeni değerlendirme aldınız"),
+  );
+  check(
+    "18 second review reveal notification",
+    service.includes("DEAL_REVIEWS_PUBLISHED_TITLE") &&
+      DEAL_REVIEWS_PUBLISHED_TITLE === "Değerlendirmeler yayınlandı" &&
+      DEAL_REVIEWS_PUBLISHED_MESSAGE ===
+        "İşlem değerlendirmeleri artık görünür.",
+  );
+  check(
+    "19 no rating/comment in notification body",
+    !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("yıldız") &&
+      !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("rating") &&
+      !service.slice(service.indexOf("tx.notification.create")).includes("created.rating"),
+  );
+  check(
+    "20 duplicate second-submit notification prevented",
+    service.includes("alreadyPublished") &&
+      service.includes("title: DEAL_REVIEWS_PUBLISHED_TITLE"),
+  );
+  check(
+    "21 simultaneous reviews race",
+    service.includes("FOR UPDATE") && service.includes("$transaction"),
+  );
+  check(
+    "22 company two members race",
+    schema.includes("@@unique([dealOutcomeId, reviewerSide])"),
+  );
+  check(
+    "23 immutable remains",
+    !service.includes("prisma.dealReview.update") &&
+      !service.includes("prisma.dealReview.delete") &&
+      panel.includes("değiştirilemez"),
+  );
+  check(
+    "24 legacy one-sided review hidden",
+    !isDealReviewRevealed({ sides: ["BUYER"] }) &&
+      !schema.includes("revealedAt") &&
+      !schema.includes("visibleAt"),
+  );
+  check(
+    "25 legacy paired reviews visible",
+    isDealReviewRevealed({ sides: ["BUYER", "PROVIDER"] }),
+  );
+  check(
+    "timeout hook exists but unused",
+    domain.includes("autoRevealAfterMs") &&
+      !domain.includes("7 * 24") &&
+      !domain.includes("14 * 24") &&
+      !domain.includes("30 * 24") &&
+      !service.includes("autoRevealAfterMs"),
+  );
+  check("no cron job added", !service.includes("cron") && !trust.includes("cron"));
 }
 
 console.log("\n=== MODEL / SECURITY / COPY ===\n");

@@ -1,5 +1,6 @@
 import {
   emptyTrustSummary,
+  REVEALED_REVIEW_WHERE,
   roundAverageRating,
   type TrustSummary,
 } from "@/lib/offer/deal-review";
@@ -54,6 +55,7 @@ export async function getUserTrustSummary(
         targetType: "USER",
         targetUserId: userId,
         reviewerSide: "BUYER",
+        ...REVEALED_REVIEW_WHERE,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -64,6 +66,7 @@ export async function getUserTrustSummary(
         targetUserId: userId,
         reviewerSide: "BUYER",
         comment: { not: null },
+        ...REVEALED_REVIEW_WHERE,
       },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -101,6 +104,7 @@ export async function getCompanyTrustSummary(
         targetType: "COMPANY",
         targetCompanyId: companyId,
         reviewerSide: "BUYER",
+        ...REVEALED_REVIEW_WHERE,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -111,6 +115,7 @@ export async function getCompanyTrustSummary(
         targetCompanyId: companyId,
         reviewerSide: "BUYER",
         comment: { not: null },
+        ...REVEALED_REVIEW_WHERE,
       },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -148,6 +153,7 @@ export async function getBuyerTrustSummary(
         targetType: "USER",
         targetUserId: userId,
         reviewerSide: "PROVIDER",
+        ...REVEALED_REVIEW_WHERE,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -177,6 +183,7 @@ export async function loadProviderTrustSummaries(input: {
       ? prisma.dealReview.findMany({
           where: {
             reviewerSide: "BUYER",
+            ...REVEALED_REVIEW_WHERE,
             OR: [
               ...(personalIds.length
                 ? [{ targetType: "USER" as const, targetUserId: { in: personalIds } }]

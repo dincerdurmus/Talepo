@@ -11,13 +11,15 @@ import {
   DEAL_REVIEW_DUPLICATE_MESSAGE,
   DEAL_REVIEW_NOT_ELIGIBLE_MESSAGE,
   DEAL_REVIEW_RATING_MESSAGE,
+  DEAL_REVIEWS_PUBLISHED_MESSAGE,
+  DEAL_REVIEWS_PUBLISHED_TITLE,
   dealIsReviewEligible,
+  isDealReviewPairRevealed,
   isValidDealRating,
   resolveDealReviewTarget,
   type DealReviewDto,
 } from "@/lib/offer/deal-review";
 import { prisma } from "@/lib/prisma";
-import { createNotification } from "@/server/notifications/create-notification";
 import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 import { BILATERAL_COMPLETED_WHERE } from "@/lib/offer/deal-completion";
 
@@ -56,6 +58,31 @@ export async function getDealReviewForSide(
   return row ? toDto(row) : null;
 }
 
+export async function getDealReviewConversationState(
+  dealOutcomeId: string,
+  side: "BUYER" | "PROVIDER",
+) {
+  const rows = await prisma.dealReview.findMany({
+    where: { dealOutcomeId },
+    select: {
+      id: true,
+      reviewerSide: true,
+      rating: true,
+      comment: true,
+      createdAt: true,
+    },
+  });
+  const revealed = isDealReviewPairRevealed(rows.map((row) => row.reviewerSide));
+  const own = rows.find((row) => row.reviewerSide === side) ?? null;
+  const opposite = revealed
+    ? (rows.find((row) => row.reviewerSide !== side) ?? null)
+    : null;
+  return {
+    ownReview: own ? toDto(own) : null,
+    oppositeReview: opposite ? toDto(opposite) : null,
+  };
+}
+
 export async function createDealReview(input: {
   userId: string;
   dealOutcomeId: string;
@@ -68,6 +95,7 @@ export async function createDealReview(input: {
       userMessage: DEAL_REVIEW_RATING_MESSAGE,
     });
   }
+  const rating = input.rating;
 
   let comment: string | null = null;
   if (input.comment != null && String(input.comment).trim()) {
@@ -137,50 +165,70 @@ export async function createDealReview(input: {
   );
 
   try {
-    const created = await prisma.dealReview.create({
-      data: {
-        dealOutcomeId: deal.id,
-        offerId: deal.offerId,
-        requestId: deal.requestId,
-        reviewerUserId: input.userId,
-        reviewerSide: side,
-        targetType: target.targetType,
-        targetUserId: target.targetUserId,
-        targetCompanyId: target.targetCompanyId,
-        rating: input.rating,
-        comment,
-      },
-      select: {
-        id: true,
-        reviewerSide: true,
-        rating: true,
-        comment: true,
-        createdAt: true,
-      },
-    });
+    return await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "DealOutcome" WHERE id = ${deal.id} FOR UPDATE`;
 
-    const recipientId =
-      side === "BUYER" ? deal.offer.submittedById : deal.buyerUserId;
-    if (recipientId && recipientId !== input.userId) {
-      try {
-        await createNotification({
-          userId: recipientId,
-          type: "DEAL_REVIEW_RECEIVED",
-          title: "Yeni değerlendirme aldınız",
-          message: "Tamamlanan bir işlem için yeni bir değerlendirme var.",
-          actionUrl: deal.conversationId
-            ? `/panel/mesajlar/${deal.conversationId}`
-            : "/panel/mesajlar",
-          requestId: deal.requestId,
+      const created = await tx.dealReview.create({
+        data: {
+          dealOutcomeId: deal.id,
           offerId: deal.offerId,
-          companyId: deal.companyId ?? undefined,
-        });
-      } catch {
-        /* non-blocking */
-      }
-    }
+          requestId: deal.requestId,
+          reviewerUserId: input.userId,
+          reviewerSide: side,
+          targetType: target.targetType,
+          targetUserId: target.targetUserId,
+          targetCompanyId: target.targetCompanyId,
+          rating,
+          comment,
+        },
+        select: {
+          id: true,
+          reviewerSide: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+        },
+      });
 
-    return toDto(created);
+      const sides = await tx.dealReview.findMany({
+        where: { dealOutcomeId: deal.id },
+        select: { reviewerSide: true },
+      });
+
+      if (isDealReviewPairRevealed(sides.map((row) => row.reviewerSide))) {
+        const alreadyPublished = await tx.notification.findFirst({
+          where: {
+            offerId: deal.offerId,
+            type: "DEAL_REVIEW_RECEIVED",
+            title: DEAL_REVIEWS_PUBLISHED_TITLE,
+          },
+          select: { id: true },
+        });
+
+        if (!alreadyPublished) {
+          const recipients = [...new Set([deal.buyerUserId, deal.offer.submittedById])];
+          const actionUrl = deal.conversationId
+            ? `/panel/mesajlar/${deal.conversationId}`
+            : "/panel/mesajlar";
+          for (const userId of recipients) {
+            await tx.notification.create({
+              data: {
+                userId,
+                type: "DEAL_REVIEW_RECEIVED",
+                title: DEAL_REVIEWS_PUBLISHED_TITLE,
+                message: DEAL_REVIEWS_PUBLISHED_MESSAGE,
+                actionUrl,
+                requestId: deal.requestId,
+                offerId: deal.offerId,
+                companyId: deal.companyId,
+              },
+            });
+          }
+        }
+      }
+
+      return toDto(created);
+    });
   } catch (error) {
     if (isPrismaUniqueViolation(error)) {
       throw new DomainError({

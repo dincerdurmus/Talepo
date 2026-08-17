@@ -19,6 +19,23 @@ export const DEAL_REVIEW_COMMENT_LENGTH_MESSAGE =
 export const DEAL_REVIEW_CONTACT_MESSAGE =
   "Yorumda telefon, e-posta veya IBAN paylaşmayın.";
 
+export const DEAL_REVIEWS_PUBLISHED_TITLE = "Değerlendirmeler yayınlandı";
+export const DEAL_REVIEWS_PUBLISHED_MESSAGE =
+  "İşlem değerlendirmeleri artık görünür.";
+
+export const DEAL_REVIEW_BLIND_HINT =
+  "Değerlendirmeler, iki taraf da değerlendirmesini tamamladığında görünür.";
+
+/** Query-time: both sides have submitted. Timeout is opt-in and unused in V1.1. */
+export const REVEALED_REVIEW_WHERE = {
+  dealOutcome: {
+    AND: [
+      { reviews: { some: { reviewerSide: "BUYER" as const } } },
+      { reviews: { some: { reviewerSide: "PROVIDER" as const } } },
+    ],
+  },
+};
+
 export type TrustSummary = {
   completedTransactions: number;
   reviewCount: number;
@@ -115,4 +132,34 @@ export function averageRatingFrom(ratings: number[]) {
   return roundAverageRating(
     ratings.reduce((sum, value) => sum + value, 0) / ratings.length,
   );
+}
+
+export function isDealReviewPairRevealed(
+  sides: ReadonlyArray<"BUYER" | "PROVIDER">,
+) {
+  return sides.includes("BUYER") && sides.includes("PROVIDER");
+}
+
+/**
+ * Canonical reveal rule. Auto-reveal duration is not product-decided yet;
+ * pass autoRevealAfterMs only when a later milestone sets a real deadline.
+ */
+export function isDealReviewRevealed(input: {
+  sides: ReadonlyArray<"BUYER" | "PROVIDER">;
+  autoRevealAfterMs?: number | null;
+  createdAt?: Date | string | null;
+  now?: Date;
+}) {
+  if (isDealReviewPairRevealed(input.sides)) return true;
+  if (
+    input.autoRevealAfterMs != null &&
+    input.autoRevealAfterMs > 0 &&
+    input.createdAt
+  ) {
+    const created = new Date(input.createdAt).getTime();
+    if (!Number.isFinite(created)) return false;
+    const now = (input.now ?? new Date()).getTime();
+    return now - created >= input.autoRevealAfterMs;
+  }
+  return false;
 }

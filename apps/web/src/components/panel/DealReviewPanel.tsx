@@ -5,16 +5,33 @@ import { useState } from "react";
 import { LoaderCircle, Star } from "lucide-react";
 
 import {
+  DEAL_REVIEW_BLIND_HINT,
   DEAL_REVIEW_COMMENT_MAX,
   type DealReviewDto,
 } from "@/lib/offer/deal-review";
 
+function StarRow({ rating }: { rating: number }) {
+  return (
+    <div className="mt-2 flex gap-1 text-amber-500">
+      {[1, 2, 3, 4, 5].map((value) => (
+        <Star
+          key={value}
+          className="h-4 w-4"
+          fill={rating >= value ? "currentColor" : "none"}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function DealReviewPanel({
   dealOutcomeId,
   existingReview,
+  oppositeReview = null,
 }: {
   dealOutcomeId: string;
   existingReview: DealReviewDto | null;
+  oppositeReview?: DealReviewDto | null;
 }) {
   const router = useRouter();
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
@@ -29,9 +46,35 @@ export function DealReviewPanel({
         <p className="text-sm font-semibold text-teal-950">
           Değerlendirmeniz alındı.
         </p>
-        <p className="mt-1 text-xs text-black/45">
+        <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_BLIND_HINT}</p>
+        {existingReview ? (
+          <>
+            <StarRow rating={existingReview.rating} />
+            {existingReview.comment ? (
+              <p className="mt-2 text-sm leading-6 text-black/65">
+                {existingReview.comment}
+              </p>
+            ) : null}
+          </>
+        ) : rating > 0 ? (
+          <StarRow rating={rating} />
+        ) : null}
+        <p className="mt-2 text-xs text-black/40">
           Değerlendirmeler gönderildikten sonra değiştirilemez.
         </p>
+        {oppositeReview ? (
+          <div className="mt-3 border-t border-teal-900/8 pt-3">
+            <p className="text-xs font-medium text-black/40">
+              Karşı tarafın değerlendirmesi
+            </p>
+            <StarRow rating={oppositeReview.rating} />
+            {oppositeReview.comment ? (
+              <p className="mt-2 text-sm leading-6 text-black/65">
+                {oppositeReview.comment}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -69,9 +112,7 @@ export function DealReviewPanel({
       <p className="text-sm font-semibold text-[#0f1f1d]">
         Deneyiminizi değerlendirin
       </p>
-      <p className="mt-1 text-xs text-black/45">
-        Yalnız tamamlanan işlemler için değerlendirme yapılabilir.
-      </p>
+      <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_BLIND_HINT}</p>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {[1, 2, 3, 4, 5].map((value) => {
