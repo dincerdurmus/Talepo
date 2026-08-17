@@ -71,7 +71,7 @@ export const FEATURE_META: Record<
   professional_analytics: base(
     "Teklif Zekâsı",
     "Teklif verdiğiniz taleplerde anonim fiyat dağılımı ve kendi konumunuz. Temel Analiz tüm planlarda açıktır.",
-    "/panel/talepler",
+    "/panel/teklifler",
   ),
   talepo_radar: base(
     "Talepo Radar",

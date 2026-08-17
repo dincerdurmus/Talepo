@@ -7,17 +7,22 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   Bell,
+  Bookmark,
   Building2,
   ChevronLeft,
   ChevronRight,
+  Crown,
+  Flame,
   LayoutDashboard,
   MessageCircle,
   PanelLeftClose,
   PanelLeftOpen,
+  PieChart,
   Plus,
   Search,
   ShieldCheck,
   UserRound,
+  WandSparkles,
 } from "lucide-react";
 
 const SIDEBAR_COLLAPSED_KEY = "talepo.panel.sidebarCollapsed";
@@ -183,6 +188,7 @@ export function PanelShell({
             navItems={navItems}
             unreadMessages={unreadMessages}
             planTier={planTier}
+            features={features}
             collapsed={collapsed}
             onToggle={onToggleSidebar}
           />
@@ -377,15 +383,59 @@ function PersonalSidebar({
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
   planTier: PlanTierId;
+  features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
   onToggle: () => void;
 }) {
   const navGroups = [
     { label: "Genel", items: navItems.filter((item) => ["/", "/panel"].includes(item.href)) },
     { label: "Talep & teklif", items: navItems.filter((item) => ["/panel/taleplerim", "/panel/gelen-teklifler", "/panel/talepler", "/panel/teklifler"].includes(item.href)) },
-    { label: "Araçlar", items: navItems.filter((item) => ["/panel/asistan", "/panel/takiplerim", "/panel/firsatlar", "/panel/analiz", "/panel/plan"].includes(item.href)) },
     { label: "Hesap", items: navItems.filter((item) => ["/panel/mesajlar", "/panel/profil"].includes(item.href)) },
   ].filter((group) => group.items.length > 0);
+
+  const analizItem = navItems.find((item) => item.href === "/panel/analiz");
+  const planItem = navItems.find((item) => item.href === "/panel/plan");
+  const takiplerimItem = navItems.find((item) => item.href === "/panel/takiplerim");
+  const firsatlarItem = navItems.find((item) => item.href === "/panel/firsatlar");
+  const asistanItem = navItems.find((item) => item.href === "/panel/asistan");
+
+  const showFollows = Boolean(takiplerimItem);
+  const showOpportunities = Boolean(firsatlarItem);
+  const showProCard = showFollows || showOpportunities;
+
+  // Canonical Professional destinations only — Radar & Teklif Zekâsı are
+  // nested capabilities (Fırsatlar tabs / offer detail), not sidebar products.
+  const proTools: ProToolItem[] = [];
+  if (showOpportunities) {
+    proTools.push({
+      href: "/panel/firsatlar",
+      icon: Flame,
+      title: "Fırsatlar",
+      description: "Sana uygun açık talepler",
+      tone: "opportunities",
+      active: pathname.startsWith("/panel/firsatlar"),
+    });
+  }
+  if (showFollows) {
+    proTools.push({
+      href: "/panel/takiplerim",
+      icon: Bookmark,
+      title: "Takiplerim",
+      description: "Kriterlerinle fırsatları kaçırma",
+      tone: "follows",
+      active: isNavActive(pathname, "/panel/takiplerim"),
+    });
+  }
+  if (analizItem) {
+    proTools.push({
+      href: "/panel/analiz",
+      icon: PieChart,
+      title: "Analiz",
+      description: "Performansını ölç, gelişimini gör",
+      tone: "analytics",
+      active: isNavActive(pathname, "/panel/analiz"),
+    });
+  }
 
   return (
     <aside
@@ -442,12 +492,96 @@ function PersonalSidebar({
       </div>
 
       <nav className={`mt-5 min-h-0 flex-1 space-y-4 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${collapsed ? "px-0" : ""}`}>
-        {navGroups.map((group) => (
+        {navGroups
+          .filter((group) => group.label !== "Hesap")
+          .map((group) => (
           <div key={group.label}>
-            {!collapsed && <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">{group.label}</p>}
+            {!collapsed && (
+              <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">
+                {group.label}
+              </p>
+            )}
             <div className="space-y-0.5">
               {group.items.map((item) => (
-                <SidebarLink key={`${item.href}-${item.label}`} href={item.href} icon={item.icon} label={item.label} active={isNavActive(pathname, item.href, item.exact)} collapsed={collapsed} badge={item.href === "/panel/mesajlar" && unreadMessages > 0 ? String(unreadMessages) : undefined} />
+                <SidebarLink
+                  key={`${item.href}-${item.label}`}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  active={isNavActive(pathname, item.href, item.exact)}
+                  collapsed={collapsed}
+                  badge={
+                    item.href === "/panel/mesajlar" && unreadMessages > 0
+                      ? String(unreadMessages)
+                      : undefined
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {(showProCard || analizItem || planItem || asistanItem) && (
+          <div>
+            {!collapsed && (
+              <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">
+                Araçlar
+              </p>
+            )}
+            {showProCard ? (
+              <ProToolsCard items={proTools} collapsed={collapsed} />
+            ) : analizItem ? (
+              <SidebarLink
+                href={analizItem.href}
+                icon={analizItem.icon}
+                label={analizItem.label}
+                active={isNavActive(pathname, analizItem.href, analizItem.exact)}
+                collapsed={collapsed}
+              />
+            ) : null}
+            {asistanItem ? (
+              <SidebarLink
+                href={asistanItem.href}
+                icon={asistanItem.icon ?? WandSparkles}
+                label={asistanItem.label}
+                active={isNavActive(pathname, asistanItem.href, asistanItem.exact)}
+                collapsed={collapsed}
+              />
+            ) : null}
+            {planItem ? (
+              <PlanNavRow
+                href={planItem.href}
+                active={isNavActive(pathname, planItem.href)}
+                collapsed={collapsed}
+              />
+            ) : null}
+          </div>
+        )}
+
+        {navGroups
+          .filter((group) => group.label === "Hesap")
+          .map((group) => (
+          <div key={group.label}>
+            {!collapsed && (
+              <p className="mb-1.5 px-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-[#7387a0]">
+                {group.label}
+              </p>
+            )}
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <SidebarLink
+                  key={`${item.href}-${item.label}`}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  active={isNavActive(pathname, item.href, item.exact)}
+                  collapsed={collapsed}
+                  badge={
+                    item.href === "/panel/mesajlar" && unreadMessages > 0
+                      ? String(unreadMessages)
+                      : undefined
+                  }
+                />
               ))}
             </div>
           </div>
@@ -674,6 +808,186 @@ function CorporateSidebar({
   );
 }
 
+type ProToolTone = "follows" | "opportunities" | "analytics";
+
+type ProToolItem = {
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  tone: ProToolTone;
+  badge?: string;
+  active: boolean;
+};
+
+const PRO_TOOL_ICON_WRAP: Record<ProToolTone, string> = {
+  follows: "bg-[#f8ddd2] text-[#c45c42]",
+  opportunities: "bg-[#f5d6e3] text-[#b44d75]",
+  analytics: "bg-[#e6dff3] text-[#6b56a3]",
+};
+
+function ProToolsCard({
+  items,
+  collapsed,
+}: {
+  items: ProToolItem[];
+  collapsed: boolean;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-[16px] border border-[rgba(196,154,108,0.32)] shadow-[0_10px_24px_rgba(176,108,128,0.12),inset_0_1px_0_rgba(255,255,255,0.72)] ${
+        collapsed ? "px-1 py-1.5" : "px-2 py-2"
+      }`}
+      style={{
+        background:
+          "linear-gradient(180deg, rgba(255,246,234,0.92) 0%, rgba(253,232,228,0.9) 28%, rgba(246,228,238,0.9) 64%, rgba(235,228,246,0.94) 100%)",
+      }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-3 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(212,175,110,0.55),transparent)]"
+      />
+      {!collapsed && (
+        <div className="mb-1.5 flex items-start gap-2 px-1 pt-0.5">
+          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#f4e6c8] text-[#b8893a] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <Crown className="h-3.5 w-3.5" strokeWidth={2.1} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13.5px] font-semibold leading-4 tracking-[-0.02em] text-[#1c2430]">
+              Pro Araçlar
+            </p>
+            <p className="mt-0.5 text-[11px] leading-4 text-[#6b7284]">
+              Profesyonel işleriniz için akıllı araçlar
+            </p>
+          </div>
+        </div>
+      )}
+      <div className={collapsed ? "space-y-1" : ""}>
+        {items.map((item, index) => (
+          <ProToolRow
+            key={item.href}
+            item={item}
+            collapsed={collapsed}
+            showSeparator={!collapsed && index < items.length - 1}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProToolRow({
+  item,
+  collapsed,
+  showSeparator,
+}: {
+  item: ProToolItem;
+  collapsed: boolean;
+  showSeparator: boolean;
+}) {
+  const Icon = item.icon;
+  const accessibleLabel = item.badge
+    ? `${item.title}, ${item.badge.toLocaleLowerCase("tr-TR")}. ${item.description}`
+    : `${item.title}. ${item.description}`;
+
+  return (
+    <>
+      <Link
+        href={item.href}
+        title={item.title}
+        aria-label={accessibleLabel}
+        aria-current={item.active ? "page" : undefined}
+        className={`group flex items-center rounded-[10px] transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8893a]/45 focus-visible:ring-offset-1 ${
+          collapsed
+            ? "mx-auto h-9 w-9 justify-center"
+            : "gap-2 px-1.5 py-1.5"
+        } ${
+          item.active
+            ? "bg-white/70 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)]"
+            : "hover:bg-white/45 hover:translate-x-px"
+        }`}
+      >
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${PRO_TOOL_ICON_WRAP[item.tone]}`}
+        >
+          <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
+        </span>
+        {!collapsed && (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1.5">
+                <span className="truncate text-[13px] font-semibold leading-4 tracking-[-0.01em] text-[#1c2430]">
+                  {item.title}
+                </span>
+                {item.badge ? (
+                  <span className="rounded-[5px] bg-[#f3cdd8] px-1.5 py-px text-[8.5px] font-bold uppercase tracking-[0.08em] text-[#b44d75]">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </span>
+              <span className="mt-0.5 block truncate text-[11px] leading-4 text-[#6b7284]">
+                {item.description}
+              </span>
+            </span>
+            <ChevronRight
+              className="h-3.5 w-3.5 shrink-0 text-[#9aa3b2] transition duration-150 group-hover:text-[#6b7284]"
+              strokeWidth={2}
+            />
+          </>
+        )}
+      </Link>
+      {showSeparator ? (
+        <div
+          aria-hidden
+          className="mx-2 h-px bg-[linear-gradient(90deg,transparent,rgba(140,110,130,0.12),transparent)]"
+        />
+      ) : null}
+    </>
+  );
+}
+
+function PlanNavRow({
+  href,
+  active,
+  collapsed,
+}: {
+  href: string;
+  active: boolean;
+  collapsed: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      title="Plan"
+      aria-label="Plan"
+      aria-current={active ? "page" : undefined}
+      className={`mt-2 flex items-center rounded-[12px] border border-[#eadfc8] bg-[#faf7f2] shadow-[inset_0_1px_0_rgba(212,175,110,0.42)] transition duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8893a]/40 focus-visible:ring-offset-1 ${
+        collapsed
+          ? "mx-auto h-10 w-10 justify-center"
+          : "gap-2.5 px-2.5 py-2"
+      } ${
+        active
+          ? "bg-[#f3ead8]"
+          : "hover:bg-[#f6f0e6]"
+      }`}
+    >
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#f4e6c8] text-[#b8893a]">
+        <Crown className="h-3.5 w-3.5" strokeWidth={2.1} />
+      </span>
+      {!collapsed && (
+        <>
+          <span className="min-w-0 flex-1 text-[13.5px] font-semibold tracking-[-0.01em] text-[#1c2430]">
+            Plan
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#9aa3b2]" strokeWidth={2} />
+        </>
+      )}
+    </Link>
+  );
+}
+
 function SidebarLink({
   href,
   icon: Icon,
@@ -681,6 +995,7 @@ function SidebarLink({
   active = false,
   badge,
   collapsed = false,
+  tone = "default",
 }: {
   href: string;
   icon: LucideIcon;
@@ -688,28 +1003,43 @@ function SidebarLink({
   active?: boolean;
   badge?: string;
   collapsed?: boolean;
+  tone?: "default" | "tools";
 }) {
+  const isTools = tone === "tools";
+
   return (
     <Link
       href={href}
       title={label}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-          className={`group relative flex h-10 items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-1 ${
+      className={`group relative flex h-10 items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
+        isTools
+          ? "focus-visible:ring-[#5b4a78]/45"
+          : "focus-visible:ring-teal-700"
+      } ${
         collapsed
           ? "mx-auto h-10 w-10 justify-center px-0"
           : "gap-3 px-3"
       } ${
         active
-          ? "border border-[#d6eceb] bg-[#e8f5f5] font-semibold text-[#172c48]"
-          : "text-[#263a5a] hover:bg-[#f3f8fa] hover:text-[#172c48]"
+          ? isTools
+            ? "border border-[#d4cce0] bg-[#ebe6f2] font-semibold text-[#2f2740]"
+            : "border border-[#d6eceb] bg-[#e8f5f5] font-semibold text-[#172c48]"
+          : isTools
+            ? "text-[#3d3550] hover:bg-[#efeaf5] hover:text-[#2f2740]"
+            : "text-[#263a5a] hover:bg-[#f3f8fa] hover:text-[#172c48]"
       }`}
     >
       <span
         className={`relative flex h-8 w-8 items-center justify-center transition duration-150 ${
           active
-            ? "text-[#087b82]"
-            : "text-[#397f88] group-hover:text-[#216572]"
+            ? isTools
+              ? "text-[#5b4a78]"
+              : "text-[#087b82]"
+            : isTools
+              ? "text-[#7a6b94] group-hover:text-[#5b4a78]"
+              : "text-[#397f88] group-hover:text-[#216572]"
         }`}
       >
         <Icon className="h-[18px] w-[18px]" strokeWidth={2.05} />
