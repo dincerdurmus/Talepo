@@ -2,6 +2,7 @@ import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import { hasGroundedPersonalMatch } from "@/lib/panel/opportunity-recommended-eligibility";
 import { parseDiscoveryProjection } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
+import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 import { evaluateBudgetOpportunity } from "./budget-opportunity";
 import { getCompetitionSignals } from "./competition-signals";
@@ -48,6 +49,8 @@ export type OpportunityFeedItem = {
     recentOfferCount: number | null;
     alreadyOffered: boolean;
   };
+  /** Server-signed detail href with acquisition touch (Attribution V1). */
+  attributedDetailHref?: string | null;
 };
 
 function formatBudget(
@@ -293,6 +296,15 @@ export async function buildOpportunitiesFeed(
       })),
       intelligence,
       context: companyId ? "WORKSPACE" : "PERSONAL",
+      ...(userId
+        ? {
+            attributedDetailHref: attributedRequestDetailHref({
+              userId,
+              requestId: req.id,
+              source: "DISCOVERY",
+            }),
+          }
+        : {}),
     });
   }
 

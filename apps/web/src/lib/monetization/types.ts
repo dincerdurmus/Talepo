@@ -125,7 +125,8 @@ export type TrustAnalyticsSummary = {
 };
 
 /**
- * Professional commercial intelligence — deterministic, no source attribution claims.
+ * Professional commercial intelligence — deterministic.
+ * Source rows require persisted OfferAttribution (no inferred Radar/Follow claims).
  */
 export type CommercialPerformanceMetrics = {
   /** Bilateral completed deals with completedAt in window. */
@@ -150,6 +151,24 @@ export type CommercialPerformanceMetrics = {
   insights: CommercialInsightDto[];
   /** Lifetime trust snapshot (revealed reviews only). */
   trust: TrustAnalyticsSummary;
+  /**
+   * Source performance from persisted OfferAttribution only.
+   * UNKNOWN is omitted from the product UI list.
+   */
+  sourcePerformance: SourcePerformanceRow[];
+};
+
+export type SourcePerformanceRow = {
+  source: "RADAR" | "FOLLOW" | "OPPORTUNITY" | "DISCOVERY";
+  label: string;
+  submitted: number;
+  accepted: number;
+  completed: number;
+  winRate: number | null;
+  winRatePresentation: WinRatePresentation;
+  volumesByCurrency: CurrencyVolumeMetrics[];
+  primaryVolume: CurrencyVolumeMetrics | null;
+  mixedCurrency: boolean;
 };
 
 export type InventoryImportResult = {

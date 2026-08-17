@@ -149,6 +149,7 @@ export default async function OpportunitiesPage({
           city,
           limit: 40,
           excludeCreatedById: user.id,
+          viewerUserId: user.id,
         })
       : [];
 

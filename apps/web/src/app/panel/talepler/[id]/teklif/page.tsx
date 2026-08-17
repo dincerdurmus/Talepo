@@ -17,8 +17,10 @@ import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
 
 export default async function OfferRequestPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requireUser();
   const entitlements = await resolveEntitlements(
@@ -27,6 +29,11 @@ export default async function OfferRequestPage({
   );
   const entitlementDto = toEntitlementDTO(entitlements);
   const { id } = await params;
+  const query = await searchParams;
+  const attributionTouch =
+    typeof query.acq === "string" && query.acq.trim()
+      ? query.acq.trim()
+      : null;
 
   const request = await prisma.request.findFirst({
     where: {
@@ -138,6 +145,7 @@ export default async function OfferRequestPage({
                 requestId={request.id}
                 entitlements={entitlementDto}
                 categorySlug={categorySlug}
+                attributionTouch={attributionTouch}
                 budgetMin={
                   request.budgetMin ? Number(request.budgetMin) : null
                 }

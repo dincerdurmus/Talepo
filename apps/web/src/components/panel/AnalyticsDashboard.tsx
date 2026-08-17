@@ -127,6 +127,9 @@ function ProfessionalLockedSection() {
         <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
           Gerçek veriden içgörüler
         </li>
+        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+          Kaynak performansı (Radar / Takiplerim / Fırsatlar)
+        </li>
       </ul>
       <Link
         href="/panel/plan"
@@ -334,6 +337,84 @@ function ProfessionalCommerceSection({
           </ul>
         </div>
       ) : null}
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold text-teal-950">
+            Talepo sana nereden iş getiriyor?
+          </h3>
+          <p className="mt-1 text-xs text-teal-950/45">
+            Yalnız teklif oluşturulurken doğrulanmış ürün kaynağı. Sonradan
+            Radar&apos;a giren talepler eski teklifleri değiştirmez. Kaynak
+            bilinmeyen teklifler burada listelenmez.
+          </p>
+        </div>
+        {advanced.sourcePerformance.length === 0 ? (
+          <p className="text-sm text-teal-950/55">
+            Henüz yeterli kaynak verisi yok. Radar, Takiplerim, Fırsatlar veya
+            Talepleri Keşfet üzerinden teklif verdikçe burada görünür.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {advanced.sourcePerformance.map((row) => (
+              <div
+                key={row.source}
+                className="rounded-2xl border border-teal-900/8 bg-white/90 p-4"
+              >
+                <p className="text-sm font-semibold text-teal-950">{row.label}</p>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <dt className="text-[10px] uppercase text-teal-950/45">
+                      Teklif
+                    </dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                      {row.submitted}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase text-teal-950/45">
+                      Kabul
+                    </dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                      {row.accepted}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[10px] uppercase text-teal-950/45">
+                      Tamamlanan
+                    </dt>
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                      {row.completed}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-2 text-xs text-teal-950/50">
+                  Kazanma:{" "}
+                  {formatWinRateValue({
+                    accepted: row.accepted,
+                    submitted: row.submitted,
+                    winRate: row.winRate,
+                    winRatePresentation: row.winRatePresentation,
+                  })}
+                </p>
+                {row.primaryVolume ? (
+                  <p className="mt-1 text-xs text-teal-950/55">
+                    Bu kaynaktan başlayan tamamlanmış işlemler:{" "}
+                    {formatMoneyAmount(
+                      row.primaryVolume.totalAgreedAmount,
+                      row.primaryVolume.currency,
+                    )}
+                  </p>
+                ) : row.mixedCurrency ? (
+                  <p className="mt-1 text-xs text-teal-950/45">
+                    Birden fazla para birimi — tek toplam yok.
+                  </p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="space-y-3">
         <h3 className="text-base font-semibold text-teal-950">

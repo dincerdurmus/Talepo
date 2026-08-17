@@ -269,14 +269,17 @@ console.log("\n=== CATEGORY / INSIGHTS / LOW SAMPLE ===\n");
 console.log("\n=== ATTRIBUTION HONESTY ===\n");
 {
   check(
-    "27 Radar fake attribution yok",
-    !commercial.includes("Radar") &&
-      !dash.includes("Radar'dan") &&
-      !commercial.includes("talepo_radar"),
+    "27 Radar fake attribution yok — yalnız OfferAttribution",
+    commercial.includes("OfferAttribution") &&
+      commercial.includes("sourcePerformance") &&
+      !commercial.includes("talepo_radar") &&
+      !dash.includes("Radar sayesinde ₺") &&
+      !dash.includes("Radar'dan 9 teklif"),
   );
   check(
-    "28 Takiplerim fake attribution yok",
-    !dash.includes("Takiplerim") &&
+    "28 Takiplerim fake attribution yok — yalnız OfferAttribution",
+    dash.includes("Talepo sana nereden iş getiriyor") &&
+      !dash.includes("Takiplerim sayesinde") &&
       !commercial.includes("SavedSearch") &&
       !commercial.includes("AlertRule") &&
       !commercial.includes("opportunityWatchlistItem"),

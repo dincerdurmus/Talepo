@@ -1,4 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
+import { Prisma, type Prisma as PrismaTypes } from "@/generated/prisma/client";
 import { BILATERAL_COMPLETED_WHERE } from "@/lib/offer/deal-completion";
 import {
   ANALIZ_MIN_CATEGORY_RANK_SAMPLE,
@@ -7,10 +7,16 @@ import {
   buildCommercialInsights,
   cohortWinRate,
 } from "@/lib/monetization/performance-metrics";
+import {
+  ANALIZ_SOURCE_PERFORMANCE_SOURCES,
+  OFFER_ACQUISITION_SOURCE_LABELS,
+  type AnalizSourcePerformanceSource,
+} from "@/lib/offer/offer-attribution";
 import type {
   CategoryPerformanceRow,
   CommercialPerformanceMetrics,
   CurrencyVolumeMetrics,
+  SourcePerformanceRow,
 } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
 import {
@@ -19,7 +25,7 @@ import {
 } from "@/server/offer/trust-summary";
 import type { AnalyticsOwner } from "@/server/monetization/professional-analytics";
 
-function offerOwnerWhere(owner: AnalyticsOwner): Prisma.OfferWhereInput {
+function offerOwnerWhere(owner: AnalyticsOwner): PrismaTypes.OfferWhereInput {
   if (owner.scope === "personal") {
     return { submittedById: owner.userId, companyId: null };
   }
@@ -30,7 +36,7 @@ function submittedCohortWhere(
   owner: AnalyticsOwner,
   from: Date,
   to: Date,
-): Prisma.OfferWhereInput {
+): PrismaTypes.OfferWhereInput {
   return {
     ...offerOwnerWhere(owner),
     submittedAt: { gte: from, lte: to },
@@ -158,6 +164,140 @@ async function loadCategoryRows(
   });
 }
 
+async function loadSourcePerformance(
+  owner: AnalyticsOwner,
+  from: Date,
+  to: Date,
+): Promise<SourcePerformanceRow[]> {
+  const ownerSql =
+    owner.scope === "personal"
+      ? Prisma.sql`o."submittedById" = ${owner.userId} AND o."companyId" IS NULL`
+      : Prisma.sql`o."companyId" = ${owner.companyId}`;
+
+  const rows = await prisma.$queryRaw<
+    {
+      source: AnalizSourcePerformanceSource;
+      submitted: number;
+      accepted: number;
+      completed: number;
+    }[]
+  >`
+    SELECT
+      a.source::text AS source,
+      COUNT(*)::int AS submitted,
+      COUNT(*) FILTER (WHERE o.status = 'ACCEPTED')::int AS accepted,
+      COUNT(*) FILTER (
+        WHERE d.status = 'COMPLETED'
+          AND d."confirmationLevel" = 'BOTH_CONFIRMED'
+          AND d."completedAt" IS NOT NULL
+          AND d."buyerConfirmedAt" IS NOT NULL
+          AND d."supplierConfirmedAt" IS NOT NULL
+      )::int AS completed
+    FROM "Offer" o
+    INNER JOIN "OfferAttribution" a ON a."offerId" = o.id
+    LEFT JOIN "DealOutcome" d ON d."offerId" = o.id
+    WHERE ${ownerSql}
+      AND o.status <> 'DRAFT'
+      AND o."submittedAt" IS NOT NULL
+      AND o."submittedAt" >= ${from}
+      AND o."submittedAt" <= ${to}
+      AND a.source IN ('RADAR', 'FOLLOW', 'OPPORTUNITY', 'DISCOVERY')
+    GROUP BY a.source
+  `;
+
+  const volumeRows = await prisma.$queryRaw<
+    {
+      source: AnalizSourcePerformanceSource;
+      currency: string;
+      dealCount: number;
+      total: number | null;
+      average: number | null;
+    }[]
+  >`
+    SELECT
+      a.source::text AS source,
+      d.currency::text AS currency,
+      COUNT(*)::int AS "dealCount",
+      SUM(d."agreedPrice")::float AS total,
+      AVG(d."agreedPrice")::float AS average
+    FROM "DealOutcome" d
+    INNER JOIN "Offer" o ON o.id = d."offerId"
+    INNER JOIN "OfferAttribution" a ON a."offerId" = o.id
+    WHERE ${ownerSql}
+      AND d.status = 'COMPLETED'
+      AND d."confirmationLevel" = 'BOTH_CONFIRMED'
+      AND d."completedAt" IS NOT NULL
+      AND d."buyerConfirmedAt" IS NOT NULL
+      AND d."supplierConfirmedAt" IS NOT NULL
+      AND d."completedAt" >= ${from}
+      AND d."completedAt" <= ${to}
+      AND d."agreedPrice" IS NOT NULL
+      AND a.source IN ('RADAR', 'FOLLOW', 'OPPORTUNITY', 'DISCOVERY')
+    GROUP BY a.source, d.currency
+  `;
+
+  const bySource = new Map<
+    AnalizSourcePerformanceSource,
+    {
+      submitted: number;
+      accepted: number;
+      completed: number;
+      volumes: CurrencyVolumeMetrics[];
+    }
+  >();
+
+  for (const source of ANALIZ_SOURCE_PERFORMANCE_SOURCES) {
+    bySource.set(source, {
+      submitted: 0,
+      accepted: 0,
+      completed: 0,
+      volumes: [],
+    });
+  }
+
+  for (const row of rows) {
+    const bucket = bySource.get(row.source);
+    if (!bucket) continue;
+    bucket.submitted = row.submitted;
+    bucket.accepted = row.accepted;
+    bucket.completed = row.completed;
+  }
+
+  for (const row of volumeRows) {
+    const bucket = bySource.get(row.source);
+    if (!bucket) continue;
+    bucket.volumes.push(
+      toVolumeRow({
+        currency: row.currency,
+        dealCount: row.dealCount,
+        total: row.total,
+        average: row.average,
+      }),
+    );
+  }
+
+  return ANALIZ_SOURCE_PERFORMANCE_SOURCES.map((source) => {
+    const bucket = bySource.get(source)!;
+    const volumesByCurrency = bucket.volumes
+      .filter((v) => v.dealCount > 0)
+      .sort((a, b) => b.dealCount - a.dealCount);
+    const mixedCurrency = volumesByCurrency.length > 1;
+    const win = cohortWinRate(bucket.accepted, bucket.submitted);
+    return {
+      source,
+      label: OFFER_ACQUISITION_SOURCE_LABELS[source],
+      submitted: bucket.submitted,
+      accepted: bucket.accepted,
+      completed: bucket.completed,
+      winRate: win.rate,
+      winRatePresentation: win.presentation,
+      volumesByCurrency,
+      primaryVolume: volumesByCurrency.length === 1 ? volumesByCurrency[0] : null,
+      mixedCurrency,
+    };
+  }).filter((row) => row.submitted > 0 || row.completed > 0);
+}
+
 /**
  * Professional commercial intelligence for the selected window.
  * Uses DealOutcome.agreedPrice for money and bilateral completion only.
@@ -174,7 +314,7 @@ export async function getCommercialPerformance(
     ...BILATERAL_COMPLETED_WHERE,
     completedAt: { gte: from, lte: to },
     offer: offerWhere,
-  } satisfies Prisma.DealOutcomeWhereInput;
+  } satisfies PrismaTypes.DealOutcomeWhereInput;
 
   const [
     completedDeals,
@@ -185,6 +325,7 @@ export async function getCommercialPerformance(
     negotiatedCompleted,
     negotiatedPriceRows,
     categories,
+    sourcePerformance,
     trustRaw,
   ] = await Promise.all([
     prisma.dealOutcome.count({ where: completedWhere }),
@@ -232,6 +373,7 @@ export async function getCommercialPerformance(
       },
     }),
     loadCategoryRows(owner, from, to),
+    loadSourcePerformance(owner, from, to),
     owner.scope === "personal"
       ? getUserTrustSummary(owner.userId)
       : getCompanyTrustSummary(owner.companyId),
@@ -306,6 +448,7 @@ export async function getCommercialPerformance(
     negotiationPriceDeltaSample: negotiatedPriceRows.length,
     categories,
     insights,
+    sourcePerformance,
     trust: {
       completedTransactions: trustRaw.completedTransactions,
       reviewCount: trustRaw.reviewCount,

@@ -17,6 +17,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import {
+  persistOfferAttribution,
+  resolveOfferAttribution,
+} from "@/server/offer/resolve-offer-attribution";
 
 const log = createSubsystemLogger("offer");
 
@@ -55,6 +59,11 @@ type CreateOfferInput = {
    * 0–5 photos immediately after create. Default locks an empty set.
    */
   deferMediaFinalize?: boolean;
+  /**
+   * Signed acquisition touch from a product surface. Never trust bare source enums.
+   * Missing/invalid → UNKNOWN attribution row.
+   */
+  attributionTouch?: string | null;
 };
 
 type UpdateOfferInput = {
@@ -283,6 +292,13 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
   const sanitizedDescription = sanitizeCommercialText(input.description.trim());
   const now = new Date();
 
+  const attribution = await resolveOfferAttribution({
+    userId,
+    requestId: input.requestId,
+    companyId,
+    attributionTouch: input.attributionTouch,
+  });
+
   let offer;
   try {
     offer = await prisma.$transaction(async (tx) => {
@@ -338,6 +354,8 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
         mediaFinalizedAt: true,
       },
     });
+
+    await persistOfferAttribution(tx, created.id, attribution);
 
     await tx.request.update({
       where: { id: input.requestId },

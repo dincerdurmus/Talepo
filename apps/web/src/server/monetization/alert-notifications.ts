@@ -1,7 +1,5 @@
-import {
-  alertNotificationActionUrl,
-} from "@/lib/monetization/preference-criteria";
 import { prisma } from "@/lib/prisma";
+import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 import { matchRequestToAlertRules } from "./alert-matching";
 
@@ -11,7 +9,8 @@ const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
  * Deliver in-app notifications for alert rule matches on publish.
  * USER alerts → target user only (never the request author).
  * COMPANY alerts → company members (OWNER/ADMIN/MANAGER), skipping the publisher.
- * Dedupe keys on actionUrl + alertRuleId so a rule rename does not re-notify.
+ * Action URLs carry a per-user signed FOLLOW attribution touch.
+ * Dedupe on user+request+alert name (tokens change; do not key on full actionUrl).
  * Non-blocking — failures must not break request publish.
  */
 export async function deliverAlertRuleNotifications(
@@ -43,13 +42,19 @@ export async function deliverAlertRuleNotifications(
         skipped += 1;
         continue;
       }
-      const actionUrl = alertNotificationActionUrl(request.id, match.alertRuleId);
+      const actionUrl = attributedRequestDetailHref({
+        userId: match.userId,
+        requestId: request.id,
+        source: "FOLLOW",
+        alertRuleId: match.alertRuleId,
+      });
       const duplicate = await prisma.notification.findFirst({
         where: {
           userId: match.userId,
           requestId: request.id,
           companyId: null,
-          actionUrl,
+          title: "Yeni talep alarmınızla eşleşti",
+          message: { contains: `(${match.alertRuleName})` },
         },
         select: { id: true },
       });
@@ -86,29 +91,31 @@ export async function deliverAlertRuleNotifications(
       select: { userId: true },
     });
 
-    const actionUrl = alertNotificationActionUrl(request.id, match.alertRuleId);
-
     for (const member of members) {
       if (member.userId === request.createdById) {
         skipped += 1;
         continue;
       }
-
+      const actionUrl = attributedRequestDetailHref({
+        userId: member.userId,
+        requestId: request.id,
+        source: "FOLLOW",
+        alertRuleId: match.alertRuleId,
+      });
       const duplicate = await prisma.notification.findFirst({
         where: {
           userId: member.userId,
           requestId: request.id,
           companyId: match.companyId,
-          actionUrl,
+          title: "Yeni talep alarmınızla eşleşti",
+          message: { contains: `(${match.alertRuleName})` },
         },
         select: { id: true },
       });
-
       if (duplicate) {
         skipped += 1;
         continue;
       }
-
       await prisma.notification.create({
         data: {
           userId: member.userId,

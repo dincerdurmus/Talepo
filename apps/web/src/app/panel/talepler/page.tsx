@@ -33,6 +33,7 @@ import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
 import { ensureEngineCategories } from "@/server/company/sync-company-categories";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
@@ -772,7 +773,11 @@ export default async function ExploreRequestsPage({
               return (
                 <li key={request.id}>
                   <ExploreRequestCard
-                    href={`/panel/talepler/${request.id}`}
+                    href={attributedRequestDetailHref({
+                      userId: user.id,
+                      requestId: request.id,
+                      source: "DISCOVERY",
+                    })}
                     title={request.title}
                     categoryName={request.category.name}
                     categorySlug={request.category.slug}

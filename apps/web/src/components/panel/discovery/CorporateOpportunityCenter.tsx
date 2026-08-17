@@ -104,7 +104,7 @@ function CorporateOpportunityCard({
             </span>
           </div>
           <Link
-            href={`/panel/talepler/${item.requestId}`}
+            href={item.detailHref}
             className="mt-2 block text-base font-semibold text-teal-950 hover:underline"
           >
             {item.title}
@@ -135,13 +135,13 @@ function CorporateOpportunityCard({
 
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <Link
-          href={`/panel/talepler/${item.requestId}`}
+          href={item.detailHref}
           className="inline-flex h-9 items-center rounded-xl border border-teal-900/12 px-3 text-xs font-semibold text-teal-900"
         >
           İncele
         </Link>
         <Link
-          href={`/panel/talepler/${item.requestId}/teklif`}
+          href={item.offerHref}
           className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white"
         >
           Teklif ver

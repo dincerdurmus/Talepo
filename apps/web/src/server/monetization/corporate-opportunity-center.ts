@@ -10,6 +10,10 @@ import {
   type DiscoveryMatchBand,
 } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
+import {
+  attributedOfferFormHref,
+  attributedRequestDetailHref,
+} from "@/server/offer/attributed-request-href";
 
 export type CorporateOpportunityFilter =
   | "all"
@@ -50,6 +54,9 @@ export type CorporateOpportunityItem = {
   budgetLabel: string | null;
   publishedAt: Date | null;
   createdAt: Date;
+  /** Signed acquisition hrefs (Attribution V1). */
+  detailHref: string;
+  offerHref: string;
 };
 
 export type CorporateOpportunitySummary = {
@@ -345,6 +352,18 @@ export async function buildCorporateOpportunityCenter(input: {
       ),
       publishedAt: m.request.publishedAt,
       createdAt: m.createdAt,
+      detailHref: attributedRequestDetailHref({
+        userId: input.userId,
+        requestId: m.requestId,
+        source: "OPPORTUNITY",
+        opportunityMatchId: m.id,
+      }),
+      offerHref: attributedOfferFormHref({
+        userId: input.userId,
+        requestId: m.requestId,
+        source: "OPPORTUNITY",
+        opportunityMatchId: m.id,
+      }),
     });
   }
 

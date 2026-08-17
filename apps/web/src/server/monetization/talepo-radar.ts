@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 
 import type { OpportunityFeedItem } from "./opportunities-feed";
 import type { OpportunityIntelligence } from "./opportunity-intelligence";
+import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 function radarNeutralIntelligence(
   context: "PERSONAL" | "WORKSPACE",
@@ -197,6 +198,12 @@ export async function loadTalepoRadarFeed(input: {
         recentOfferCount,
         alreadyOffered: offered,
       },
+      attributedDetailHref: attributedRequestDetailHref({
+        userId: input.userId,
+        requestId: req.id,
+        source: "RADAR",
+        radarTier: signal.tier,
+      }),
     });
   }
 

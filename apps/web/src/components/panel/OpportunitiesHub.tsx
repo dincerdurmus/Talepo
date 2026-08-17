@@ -213,7 +213,9 @@ function OpportunityCard({
   opportunityContext: OpportunityContext;
 }) {
   const fitReasons = matchReasonList(item);
-  const detailHref = opportunityRequestDetailHref(item.requestId);
+  const detailHref =
+    item.attributedDetailHref ??
+    opportunityRequestDetailHref(item.requestId);
   const hasGroundedMatch =
     item.matchScore != null && item.matchReasons.length > 0;
   const qualityBadge = opportunityQualityBadgeLabel(

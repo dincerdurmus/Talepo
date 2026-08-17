@@ -204,11 +204,11 @@ console.log("\n=== REMOVED / HONEST UI ===\n");
   );
   check("10 no RequestMatch card", !server.includes("requestMatch") && !dash.includes("Eşleşen talep"));
   check(
-    "14 watchlist not Takiplerim",
-    !dash.includes("Takiplerim") &&
-      !server.includes("opportunityWatchlistItem") &&
+    "14 watchlist not Takiplerim attribution without OfferAttribution",
+    !server.includes("opportunityWatchlistItem") &&
       !dash.includes("Aktif takip listesi") &&
-      !dash.includes("takibe alınan"),
+      !dash.includes("takibe alınan") &&
+      !dash.includes("Takiplerim sayesinde"),
   );
   check(
     "premium insight uses count/aggregate not take 1000 sample",

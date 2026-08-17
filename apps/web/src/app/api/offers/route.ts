@@ -92,6 +92,10 @@ export async function POST(request: Request) {
         deliveryDays: body.deliveryDays ? Number(body.deliveryDays) : undefined,
         title: body.title ? String(body.title) : undefined,
         deferMediaFinalize: body.deferMediaFinalize === true,
+        attributionTouch:
+          typeof body.attributionTouch === "string"
+            ? body.attributionTouch
+            : null,
       });
 
       if (idempotencyKey) {

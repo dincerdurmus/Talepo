@@ -15,6 +15,10 @@ import {
   type DiscoveryReasonCode,
 } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
+import {
+  attributedOfferFormHref,
+  attributedRequestDetailHref,
+} from "@/server/offer/attributed-request-href";
 
 export type DiscoveryWorkspaceItem = {
   requestId: string;
@@ -32,6 +36,8 @@ export type DiscoveryWorkspaceItem = {
   reasonLabels: string[];
   matchBand: DiscoveryMatchBand | null;
   isWatchlisted: boolean;
+  detailHref?: string;
+  offerHref?: string;
 };
 
 function formatBudget(
@@ -75,6 +81,8 @@ export async function queryDiscoveryWorkspace(input: {
   limit?: number;
   /** Viewer user id — own buy-side requests are not company opportunities. */
   excludeCreatedById?: string | null;
+  /** When set, stamps DISCOVERY acquisition touches on hrefs. */
+  viewerUserId?: string | null;
 }): Promise<DiscoveryWorkspaceItem[]> {
   const limit = input.limit ?? 40;
   const openWhere = {
@@ -189,6 +197,20 @@ export async function queryDiscoveryWorkspace(input: {
         .slice(0, 4),
       matchBand,
       isWatchlisted: watchlistIds.has(row.id),
+      ...(input.viewerUserId
+        ? {
+            detailHref: attributedRequestDetailHref({
+              userId: input.viewerUserId,
+              requestId: row.id,
+              source: "DISCOVERY",
+            }),
+            offerHref: attributedOfferFormHref({
+              userId: input.viewerUserId,
+              requestId: row.id,
+              source: "DISCOVERY",
+            }),
+          }
+        : {}),
     });
 
     if (out.length >= limit) break;

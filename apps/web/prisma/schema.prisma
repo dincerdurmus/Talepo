@@ -184,6 +184,16 @@ enum OfferNegotiationStatus {
   CANCELLED
 }
 
+/// Immutable commercial acquisition source for an Offer (Attribution V1).
+enum OfferAcquisitionSource {
+  DIRECT
+  DISCOVERY
+  RADAR
+  FOLLOW
+  OPPORTUNITY
+  UNKNOWN
+}
+
 enum MessageType {
   TEXT
   FILE
@@ -975,6 +985,7 @@ model Offer {
   media             OfferMedia[]
   negotiations      OfferNegotiation[]
   dealReviews       DealReview[]
+  attribution       OfferAttribution?
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -985,6 +996,26 @@ model Offer {
   @@index([status])
   @@index([submittedAt])
   @@index([createdAt])
+}
+
+/// 1:1 immutable acquisition provenance for an Offer. Never backfilled from history.
+model OfferAttribution {
+  offerId String @id
+
+  source OfferAcquisitionSource @default(UNKNOWN)
+
+  savedSearchId        String?
+  alertRuleId          String?
+  opportunityMatchId   String?
+  /// Radar tier at signed exposure (RADAR | FAST | HOT). Not re-derived later.
+  radarTier            String?
+
+  capturedAt DateTime @default(now())
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([source])
+  @@index([capturedAt])
 }
 
 /// Offer product photos. Bytes live in private storage; this row is the index.

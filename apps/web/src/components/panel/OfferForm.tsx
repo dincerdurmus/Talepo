@@ -14,6 +14,10 @@ import { OfferPhotoPicker, type PendingOfferPhoto } from "@/components/panel/Off
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { formatTrNumber, parseTrNumber } from "@/lib/format/tr-number";
+import {
+  OFFER_ATTRIBUTION_TOUCH_PARAM,
+  readAttributionTouchFromSearchParams,
+} from "@/lib/offer/offer-attribution";
 import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
@@ -32,6 +36,8 @@ type OfferFormProps = {
   categorySlug?: string;
   budgetMin?: number | null;
   existingOffer?: ExistingOfferValues | null;
+  /** Server-passed signed touch; falls back to ?acq= in the URL. */
+  attributionTouch?: string | null;
 };
 
 type StoredDraft = {
@@ -185,10 +191,14 @@ export function OfferForm({
   categorySlug,
   budgetMin,
   existingOffer = null,
+  attributionTouch: attributionTouchProp = null,
 }: OfferFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyDraftFromQuery = searchParams.get("taslak") === "1";
+  const attributionTouch =
+    attributionTouchProp ??
+    readAttributionTouchFromSearchParams(searchParams);
   const isRevise = Boolean(existingOffer);
   const initialFields = useMemo(
     () =>
@@ -230,8 +240,13 @@ export function OfferForm({
     if (!draft) return;
 
     sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
-    router.replace(`/panel/talepler/${requestId}/teklif`, { scroll: false });
-  }, [applyDraftFromQuery, isRevise, requestId, router]);
+    router.replace(
+      attributionTouch
+        ? `/panel/talepler/${requestId}/teklif?${OFFER_ATTRIBUTION_TOUCH_PARAM}=${encodeURIComponent(attributionTouch)}`
+        : `/panel/talepler/${requestId}/teklif`,
+      { scroll: false },
+    );
+  }, [applyDraftFromQuery, attributionTouch, isRevise, requestId, router]);
 
   function validateFields(): string | null {
     if (!isRevise) {
@@ -313,6 +328,7 @@ export function OfferForm({
             amount: parseTrNumber(amount),
             deliveryDays: deliveryDays ? Number(deliveryDays) : null,
             deferMediaFinalize: photos.length > 0,
+            attributionTouch: attributionTouch ?? undefined,
           }),
         });
         const result = (await response.json()) as {

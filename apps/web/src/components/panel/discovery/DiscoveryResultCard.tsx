@@ -30,6 +30,10 @@ export function DiscoveryResultCard({
 }) {
   const band = matchBandLabel(item.matchBand);
   const attrEntries = Object.entries(item.attributes).slice(0, 4);
+  const detailHref =
+    item.detailHref ?? `/panel/talepler/${item.requestId}`;
+  const offerHref =
+    item.offerHref ?? `/panel/talepler/${item.requestId}/teklif`;
 
   return (
     <article className="rounded-2xl border border-teal-900/8 bg-white p-4 shadow-[0_8px_30px_rgba(15,60,50,0.03)]">
@@ -51,7 +55,7 @@ export function DiscoveryResultCard({
             </span>
           </div>
           <Link
-            href={`/panel/talepler/${item.requestId}`}
+            href={detailHref}
             className="mt-2 block text-base font-semibold text-teal-950 hover:underline"
           >
             {item.title}
@@ -130,13 +134,13 @@ export function DiscoveryResultCard({
 
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
-          href={`/panel/talepler/${item.requestId}`}
+          href={detailHref}
           className="inline-flex h-9 items-center rounded-xl border border-teal-900/12 px-3 text-xs font-semibold text-teal-900"
         >
           Talebi görüntüle
         </Link>
         <Link
-          href={`/panel/talepler/${item.requestId}/teklif`}
+          href={offerHref}
           className="inline-flex h-9 items-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white"
         >
           Teklif ver

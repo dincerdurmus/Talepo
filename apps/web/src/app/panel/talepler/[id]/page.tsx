@@ -33,8 +33,10 @@ import { matchCompanyToRequest } from "@/server/monetization/smart-matching";
 
 export default async function ExploreRequestDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const user = await requireUser();
   const entitlements = await resolveEntitlements(
@@ -42,6 +44,11 @@ export default async function ExploreRequestDetailPage({
     await getCompanyContextOptions(),
   );
   const { id } = await params;
+  const query = await searchParams;
+  const attributionTouch =
+    typeof query.acq === "string" && query.acq.trim()
+      ? query.acq.trim()
+      : null;
 
   // Minimal fetch first — authorization before loading sensitive fields.
   // Opportunity cards use this canonical Request.id surface; the owner
@@ -138,7 +145,9 @@ export default async function ExploreRequestDetailPage({
         userId: user.id,
         requestId: request.id,
       });
-  const teklifHref = `/panel/talepler/${request.id}/teklif`;
+  const teklifHref = attributionTouch
+    ? `/panel/talepler/${request.id}/teklif?acq=${encodeURIComponent(attributionTouch)}`
+    : `/panel/talepler/${request.id}/teklif`;
   const canCreateFreshOffer =
     !existingOffer ||
     ["REJECTED", "WITHDRAWN", "EXPIRED"].includes(existingOffer.status);
