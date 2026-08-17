@@ -49,12 +49,13 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
     cta: "Profesyonel'e geç",
   },
   professional_analytics: {
-    title: "Gelişmiş analizler",
+    title: "Teklif Zekâsı",
     description:
-      "Temel talep ve teklif analiziniz tüm planlarda açıktır. Gelişmiş Analiz, anonim platform özeti gibi ek yetenekleri kapsar.",
+      "Teklif verdiğiniz taleplerde anonim fiyat dağılımını ve kendi teklifinizin medyana göre konumunu görün. Kazanma tahmini yoktur.",
     bullets: [
-      "Anonim platform talep özeti",
-      "Temel Analiz Standard dahil açıktır",
+      "Kendi teklifiniz gönderildikten sonra açılır",
+      "En az 3 diğer anonim teklif gerekir",
+      "Kimlik, mesaj ve teklif listesi gösterilmez",
     ],
     cta: "Planları incele",
   },

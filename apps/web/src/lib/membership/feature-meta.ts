@@ -69,8 +69,8 @@ export const FEATURE_META: Record<
   ),
   watchlist: base("Takip listesi", "Talepleri izleme listesine alın."),
   professional_analytics: base(
-    "Gelişmiş analizler",
-    "Analiz sayfasındaki gelişmiş yetenekler. Temel talep ve teklif performansı tüm planlarda açıktır.",
+    "Teklif Zekâsı",
+    "Teklif verdiğiniz taleplerde anonim fiyat dağılımı ve kendi konumunuz. Temel Analiz tüm planlarda açıktır.",
     "/panel/analiz",
   ),
   talepo_insights: base(

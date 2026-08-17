@@ -12,6 +12,7 @@ import {
 
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
 import { OfferDraftSuggestion } from "@/components/panel/OfferDraftSuggestion";
+import { OfferIntelligenceCard } from "@/components/panel/OfferIntelligenceCard";
 import { RequestChangeBanner } from "@/components/panel/RequestChangeBanner";
 import { SmartMatchPanel } from "@/components/panel/SmartMatchPanel";
 import { WatchlistToggle } from "@/components/panel/WatchlistToggle";
@@ -27,6 +28,7 @@ import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
+import { getRequestOfferIntelligence } from "@/server/monetization/offer-intelligence";
 import { matchCompanyToRequest } from "@/server/monetization/smart-matching";
 
 export default async function ExploreRequestDetailPage({
@@ -130,6 +132,12 @@ export default async function ExploreRequestDetailPage({
   const categoryLook = getCategoryVisual(categorySlug);
   const existingOffer = await findSupplierOfferOnRequest(user.id, request.id);
   const isRequestOwner = request.createdById === user.id;
+  const offerIntelligence = isRequestOwner
+    ? null
+    : await getRequestOfferIntelligence({
+        userId: user.id,
+        requestId: request.id,
+      });
   const teklifHref = `/panel/talepler/${request.id}/teklif`;
   const canCreateFreshOffer =
     !existingOffer ||
@@ -330,6 +338,10 @@ export default async function ExploreRequestDetailPage({
           <OfferSendCta href={teklifHref} />
         )}
       </section>
+
+      {offerIntelligence ? (
+        <OfferIntelligenceCard intelligence={offerIntelligence} />
+      ) : null}
 
       {!isRequestOwner &&
       entitlements.features.ai_offer_assistant &&

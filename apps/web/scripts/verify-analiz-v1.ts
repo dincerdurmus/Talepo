@@ -261,9 +261,8 @@ console.log("\n=== COPY ===\n");
 {
   const analyticsCopy = `${FEATURE_META.professional_analytics.label} ${FEATURE_META.professional_analytics.description} ${PRO_FEATURE_PRESENTATION.professional_analytics?.label} ${UPGRADE_COPY.professional_analytics?.title}`;
   check(
-    "professional_analytics copy is gelişmiş not page access",
-    analyticsCopy.toLowerCase().includes("gelişmiş") &&
-      FEATURE_META.professional_analytics.description.includes("tüm planlarda"),
+    "professional_analytics is not Analiz page-access copy",
+    FEATURE_META.professional_analytics.description.includes("tüm planlarda"),
   );
   check(
     "analytics copy does not sell yanıt süresi",
