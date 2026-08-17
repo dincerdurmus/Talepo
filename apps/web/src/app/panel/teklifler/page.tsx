@@ -2,9 +2,12 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle2,
+  CircleDot,
   Handshake,
   MessageCircle,
   Pencil,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -181,25 +184,80 @@ export default async function OffersPage({
         </section>
       )}
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-4">
-        {[
-          { label: "Açık", value: counts.open, tone: "bg-[#eef6f4]" },
-          {
-            label: "Pazarlık",
-            value: counts.negotiating,
-            tone: "bg-amber-50",
-          },
-          { label: "Kabul", value: counts.accepted, tone: "bg-[#e7f7f2]" },
-          { label: "Red", value: counts.rejected, tone: "bg-[#fff1ee]" },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className={`rounded-2xl border border-black/[0.05] ${item.tone} p-4`}
-          >
-            <p className="text-xs text-black/45">{item.label}</p>
-            <p className="mt-1 text-2xl font-semibold">{item.value}</p>
-          </div>
-        ))}
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {(
+          [
+            {
+              label: "Açık",
+              value: counts.open,
+              hint: "Bekleyen teklifler",
+              icon: CircleDot,
+              wrap: "border-teal-900/10 bg-[linear-gradient(160deg,#f3faf8_0%,#e8f4f1_55%,#f7fbfa_100%)] shadow-[0_10px_24px_rgba(15,118,110,0.08)]",
+              iconWrap: "bg-teal-800/10 text-teal-800",
+              valueClass: "text-teal-950",
+            },
+            {
+              label: "Pazarlık",
+              value: counts.negotiating,
+              hint: "Karşı teklif turları",
+              icon: Handshake,
+              wrap: "border-amber-200/70 bg-[linear-gradient(160deg,#fffbeb_0%,#fef3c7_55%,#fff8eb_100%)] shadow-[0_10px_24px_rgba(217,119,6,0.1)]",
+              iconWrap: "bg-amber-500/15 text-amber-800",
+              valueClass: "text-amber-950",
+            },
+            {
+              label: "Kabul",
+              value: counts.accepted,
+              hint: "Sonuçlanan kazanç",
+              icon: ThumbsUp,
+              wrap: "border-emerald-200/70 bg-[linear-gradient(160deg,#ecfdf5_0%,#d1fae5_55%,#f0fdf7_100%)] shadow-[0_10px_24px_rgba(5,150,105,0.1)]",
+              iconWrap: "bg-emerald-600/12 text-emerald-800",
+              valueClass: "text-emerald-950",
+            },
+            {
+              label: "Red",
+              value: counts.rejected,
+              hint: "Kapanmış teklifler",
+              icon: ThumbsDown,
+              wrap: "border-rose-200/70 bg-[linear-gradient(160deg,#fff1f2_0%,#ffe4e6_55%,#fff7f7_100%)] shadow-[0_10px_24px_rgba(225,29,72,0.08)]",
+              iconWrap: "bg-rose-500/12 text-rose-800",
+              valueClass: "text-rose-950",
+            },
+          ] as const
+        ).map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+              className={`relative overflow-hidden rounded-[18px] border p-4 ${item.wrap}`}
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/45 blur-2xl"
+              />
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-black/40">
+                    {item.label}
+                  </p>
+                  <p
+                    className={`mt-1.5 text-3xl font-semibold tracking-tight tabular-nums ${item.valueClass}`}
+                  >
+                    {item.value}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-4 text-black/40">
+                    {item.hint}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${item.iconWrap}`}
+                >
+                  <Icon className="h-4 w-4" strokeWidth={2.25} />
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <OfferIntelligenceHub

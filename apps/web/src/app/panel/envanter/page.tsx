@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Crown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
+import { HiddenInventoryOfferCard } from "@/components/panel/CompanyAddonOfferCard";
 import { InventoryManager } from "@/components/panel/InventoryManager";
 import { hasHiddenInventoryAccess } from "@/lib/membership/hidden-inventory-access";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
@@ -35,13 +36,7 @@ export default async function InventoryPage() {
     return (
       <>
         <PageHeader companyName={workspace.companyName} />
-        <Locked
-          title="Ücretli firma eklentisi"
-          body="Gizli Envanter, firma çalışma alanına özel ücretli bir eklentidir. Professional üyeliğe veya çalışma alanı açmaya otomatik dahil değildir. Self-serve satın alma henüz açık değil."
-          href="/panel/firma"
-          cta="Firma çalışma alanına dön"
-          icon
-        />
+        <HiddenInventoryOfferCard />
       </>
     );
   }
@@ -94,20 +89,15 @@ function Locked({
   body,
   href,
   cta = "Plana git",
-  icon,
 }: {
   title: string;
   body: string;
   href: string;
   cta?: string;
-  icon?: boolean;
 }) {
   return (
     <div className="rounded-[28px] border border-teal-800/15 bg-[#e7f7f2] p-8">
-      {icon ? <Crown className="h-8 w-8 text-teal-800" /> : null}
-      <h2 className={`text-2xl font-semibold text-teal-950 ${icon ? "mt-4" : ""}`}>
-        {title}
-      </h2>
+      <h2 className="text-2xl font-semibold text-teal-950">{title}</h2>
       <p className="mt-3 max-w-xl text-sm leading-6 text-teal-950/70">{body}</p>
       <Link
         href={href}
