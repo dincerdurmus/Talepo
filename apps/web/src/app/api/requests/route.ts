@@ -17,14 +17,25 @@ import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { createRequest } from "@/server/request/create-request";
 import {
   parseCreateRequestInput,
+  parseJsonObject,
   RequestValidationError,
 } from "@/server/request/request-schema";
+
+function publishOperation(error: unknown): string {
+  if (error instanceof AuthenticationError) return "publish.auth";
+  if (error instanceof RequestValidationError) return "publish.validate";
+  if (error instanceof EntitlementError) return "publish.entitlement";
+  return "publish.create";
+}
 
 export async function POST(request: Request) {
   const store = bindCorrelationFromRequest(request, { surface: "api.requests" });
 
   return runWithCorrelationAsync(store, async () => {
     try {
+      // Read the stream before auth/cookies so the body cannot be consumed twice.
+      const rawBody = await request.text();
+
       assertRateLimit({
         key: clientKeyFromRequest(request, "request.publish"),
         limit: 20,
@@ -40,7 +51,7 @@ export async function POST(request: Request) {
         windowMs: 60_000,
       });
 
-      const body = await request.json();
+      const body = parseJsonObject(rawBody);
       const input = parseCreateRequestInput(body);
       const headerKey = readIdempotencyKeyFromRequest(request);
       const createdRequest = await createRequest(user.id, {
@@ -61,26 +72,13 @@ export async function POST(request: Request) {
       }
       return res;
     } catch (error) {
-      if (
-        error instanceof AuthenticationError ||
-        error instanceof EntitlementError ||
-        error instanceof RequestValidationError
-      ) {
-        const res = safeErrorResponse(error, {
-          service: "request",
-          event: "request.publish.failed",
-          correlationId: store.correlationId,
-        });
-        for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
-          res.headers.set(k, v);
-        }
-        return res;
-      }
-
       const res = safeErrorResponse(error, {
         service: "request",
         event: "request.publish.failed",
         correlationId: store.correlationId,
+        context: {
+          operation: publishOperation(error),
+        },
       });
       for (const [k, v] of Object.entries(correlationResponseHeaders(store))) {
         res.headers.set(k, v);

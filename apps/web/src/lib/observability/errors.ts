@@ -83,6 +83,25 @@ function statusForCode(code: DomainErrorCode): number {
 const USER_SAFE_FALLBACK =
   "İşlem tamamlanamadı. Lütfen biraz sonra tekrar deneyin.";
 
+export function firstApplicationFrame(error: unknown): string | null {
+  if (!(error instanceof Error) || !error.stack) return null;
+  for (const line of error.stack.split("\n")) {
+    const match = line.match(/src[\\/][^\s)]+/);
+    if (match && !match[0].includes("node_modules")) {
+      return match[0].replace(/\\/g, "/").slice(0, 240);
+    }
+  }
+  return null;
+}
+
+export function safeDiagnosticMessage(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown";
+  return error.message
+    .replace(/postgres(?:ql)?:\/\/\S+/gi, "postgresql://[REDACTED]")
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "[REDACTED_EMAIL]")
+    .slice(0, 240);
+}
+
 export type SafeErrorBody = {
   ok: false;
   code: DomainErrorCode | string;
@@ -223,6 +242,12 @@ export function safeErrorResponse(
     context: {
       status: mapped.status,
       ...options?.context,
+      errorName: error instanceof Error ? error.name : "unknown",
+      errorMessage:
+        error instanceof DomainError
+          ? error.diagnostic ?? error.userMessage
+          : safeDiagnosticMessage(error),
+      applicationFrame: firstApplicationFrame(error),
       diagnostic:
         error instanceof DomainError
           ? error.diagnostic
