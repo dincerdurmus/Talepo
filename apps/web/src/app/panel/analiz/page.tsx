@@ -46,7 +46,6 @@ export default async function AnalyticsPage() {
           <BasicMarketInsights
             requestCount={marketInsight.requestCount}
             averageBudget={marketInsight.averageBudget}
-            trend={marketInsight.trend}
             insufficientData={marketInsight.insufficientData}
           />
           <FeatureUpgradeGate feature="professional_analytics" entitled={false} />

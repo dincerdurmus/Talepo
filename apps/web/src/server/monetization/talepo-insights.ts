@@ -4,7 +4,8 @@ import type { MarketInsightResult } from "@/lib/monetization/types";
 const MIN_AGGREGATE_COUNT = 5;
 
 /**
- * Anonymized aggregate market insight — no individual user/company exposure.
+ * Anonymized aggregate of published Request rows — not Price Intelligence.
+ * Trend is not inferred; always UNKNOWN (no previous-period comparison).
  */
 export async function generateMarketInsight(input: {
   categoryId?: string;
@@ -12,25 +13,28 @@ export async function generateMarketInsight(input: {
   from: Date;
   to: Date;
 }): Promise<MarketInsightResult> {
-  const requests = await prisma.request.findMany({
-    where: {
-      deletedAt: null,
-      publishedAt: { gte: input.from, lte: input.to },
-      ...(input.categoryId ? { categoryId: input.categoryId } : {}),
-      ...(input.city ? { city: input.city } : {}),
-    },
-    select: {
-      budgetMin: true,
-      budgetMax: true,
-      offerCount: true,
-      publishedAt: true,
-    },
-    take: 1000,
-  });
+  const where = {
+    deletedAt: null,
+    publishedAt: { gte: input.from, lte: input.to },
+    ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+    ...(input.city ? { city: input.city } : {}),
+  };
 
-  if (requests.length < MIN_AGGREGATE_COUNT) {
+  const [requestCount, budgetAgg, offerAgg] = await Promise.all([
+    prisma.request.count({ where }),
+    prisma.request.aggregate({
+      where: { ...where, budgetMax: { not: null } },
+      _avg: { budgetMax: true },
+    }),
+    prisma.request.aggregate({
+      where,
+      _sum: { offerCount: true },
+    }),
+  ]);
+
+  if (requestCount < MIN_AGGREGATE_COUNT) {
     return {
-      requestCount: requests.length,
+      requestCount,
       averageBudget: null,
       medianBudget: null,
       offerCount: 0,
@@ -40,42 +44,21 @@ export async function generateMarketInsight(input: {
     };
   }
 
-  const budgets: number[] = [];
-  let totalOffers = 0;
-
-  for (const r of requests) {
-    const b = r.budgetMax?.toNumber() ?? r.budgetMin?.toNumber();
-    if (b !== undefined && b !== null) budgets.push(b);
-    totalOffers += r.offerCount;
-  }
-
-  budgets.sort((a, b) => a - b);
-  const medianBudget =
-    budgets.length > 0
-      ? budgets[Math.floor(budgets.length / 2)] ?? null
-      : null;
+  const avgMax = budgetAgg._avg.budgetMax;
   const averageBudget =
-    budgets.length > 0
-      ? Math.round(budgets.reduce((a, b) => a + b, 0) / budgets.length)
-      : null;
-
-  const mid = Math.floor(requests.length / 2);
-  const firstHalf = requests.slice(0, mid).length;
-  const secondHalf = requests.length - mid;
-  let trend: MarketInsightResult["trend"] = "FLAT";
-  if (secondHalf > firstHalf * 1.15) trend = "UP";
-  else if (secondHalf < firstHalf * 0.85) trend = "DOWN";
+    avgMax == null ? null : Math.round(Number(avgMax));
+  const totalOffers = offerAgg._sum.offerCount ?? 0;
 
   return {
-    requestCount: requests.length,
+    requestCount,
     averageBudget,
-    medianBudget,
+    medianBudget: null,
     offerCount: totalOffers,
     averageOffersPerRequest:
-      requests.length > 0
-        ? Math.round((totalOffers / requests.length) * 10) / 10
+      requestCount > 0
+        ? Math.round((totalOffers / requestCount) * 10) / 10
         : null,
-    trend,
+    trend: "UNKNOWN",
     insufficientData: false,
   };
 }

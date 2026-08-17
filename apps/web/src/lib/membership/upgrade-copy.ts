@@ -51,7 +51,12 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   professional_analytics: {
     title: "Profesyonel analiz",
     description:
-      "Firma çalışma alanında teklif ve eşleşme metriklerini görün. (Kişisel panelde ince yüzey.)",
+      "Yayınladığınız taleplerin ve gönderdiğiniz tekliflerin gerçek özetini görün. Kişisel hesapta kendi veriniz, firma çalışma alanında şirket teklifleri.",
+    bullets: [
+      "Talep başına teklif ve teklifsiz talepler",
+      "Gönderilen / kabul / bekleyen teklifler",
+      "Kazanma oranı (dönemde gönderilen kohort)",
+    ],
     cta: "Profesyonel'e geç",
   },
   watchlist: {

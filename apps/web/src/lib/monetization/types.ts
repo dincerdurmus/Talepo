@@ -1,4 +1,5 @@
 import type { CanonicalDiscoveryFilter } from "@/lib/discovery";
+import type { WinRatePresentation } from "./performance-metrics";
 
 /** Typed saved-search / explore filter payload (Premium+). */
 export type SavedSearchFilters = {
@@ -63,16 +64,33 @@ export type MarketInsightResult = {
   insufficientData: boolean;
 };
 
-export type CompanyPerformanceMetrics = {
-  offersSubmitted: number;
-  offersAccepted: number;
-  acceptanceRate: number | null;
-  averageResponseTimeHours: number | null;
-  matchedRequests: number;
-  /** Watchlist items added during the selected period */
-  watchlistAddsInPeriod: number;
-  /** Total active watchlist items (current) */
-  activeWatchedRequests: number;
+export type OfferPerformanceMetrics = {
+  submitted: number;
+  accepted: number;
+  pending: number;
+  rejected: number;
+  unsuccessful: number;
+  winRate: number | null;
+  winRatePresentation: WinRatePresentation;
+  /** Request.publishedAt → Offer.submittedAt average; null when no reliable pairs. */
+  averageOfferLatencyHours: number | null;
+};
+
+export type RequestPerformanceMetrics = {
+  published: number;
+  active: number;
+  withOffers: number;
+  withoutOffers: number;
+  totalOffersReceived: number;
+  averageOffersPerRequest: number | null;
+  acceptedOutcome: number;
+};
+
+export type WorkspacePerformanceMetrics = {
+  scope: "personal" | "company";
+  companyName: string | null;
+  requests: RequestPerformanceMetrics | null;
+  offers: OfferPerformanceMetrics;
 };
 
 export type InventoryImportResult = {

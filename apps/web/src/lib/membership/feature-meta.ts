@@ -42,8 +42,9 @@ export const FEATURE_META: Record<
     "/panel/talepler",
   ),
   basic_market_insights: base(
-    "Temel piyasa içgörüleri",
-    "Anonim toplu talep istatistikleri.",
+    "Platform talep özeti",
+    "Anonim yayınlanan talep sayısı ve ortalama talep bütçesi. Piyasa fiyatı değildir.",
+    "/panel/analiz",
   ),
   hot_opportunities: base(
     "Sıcak fırsatlar",
@@ -69,7 +70,7 @@ export const FEATURE_META: Record<
   watchlist: base("Takip listesi", "Talepleri izleme listesine alın."),
   professional_analytics: base(
     "Profesyonel analitik",
-    "Teklif kabul oranı, yanıt süresi ve eşleşme metrikleri.",
+    "Kişisel talep/teklif performansı veya firma teklif özeti. Kazanma oranı gönderim kohortuna göredir.",
     "/panel/analiz",
   ),
   talepo_insights: base(
