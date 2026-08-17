@@ -11,10 +11,16 @@ import {
   DEAL_REVIEW_DUPLICATE_MESSAGE,
   DEAL_REVIEW_NOT_ELIGIBLE_MESSAGE,
   DEAL_REVIEW_RATING_MESSAGE,
+  DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE,
   DEAL_REVIEWS_PUBLISHED_MESSAGE,
   DEAL_REVIEWS_PUBLISHED_TITLE,
   dealIsReviewEligible,
+  formatDealReviewDeadline,
+  getDealReviewDeadline,
+  isDealReviewDeadlineElapsed,
   isDealReviewPairRevealed,
+  isDealReviewRevealed,
+  isDealReviewWindowOpen,
   isValidDealRating,
   resolveDealReviewTarget,
   type DealReviewDto,
@@ -61,7 +67,14 @@ export async function getDealReviewForSide(
 export async function getDealReviewConversationState(
   dealOutcomeId: string,
   side: "BUYER" | "PROVIDER",
+  now: Date = new Date(),
 ) {
+  const deal = await prisma.dealOutcome.findUnique({
+    where: { id: dealOutcomeId },
+    select: { completedAt: true },
+  });
+  const completedAt = deal?.completedAt ?? null;
+
   const rows = await prisma.dealReview.findMany({
     where: { dealOutcomeId },
     select: {
@@ -72,14 +85,30 @@ export async function getDealReviewConversationState(
       createdAt: true,
     },
   });
-  const revealed = isDealReviewPairRevealed(rows.map((row) => row.reviewerSide));
+  const sides = rows.map((row) => row.reviewerSide);
+  const revealed = isDealReviewRevealed({
+    sides,
+    completedAt,
+    now,
+  });
   const own = rows.find((row) => row.reviewerSide === side) ?? null;
   const opposite = revealed
     ? (rows.find((row) => row.reviewerSide !== side) ?? null)
     : null;
+  const windowOpen = isDealReviewWindowOpen(completedAt, now);
+  const windowExpired = isDealReviewDeadlineElapsed(completedAt, now);
+
   return {
     ownReview: own ? toDto(own) : null,
     oppositeReview: opposite ? toDto(opposite) : null,
+    canCreateReview: !own && windowOpen,
+    windowExpired,
+    reviewDeadlineIso: completedAt
+      ? getDealReviewDeadline(completedAt).toISOString()
+      : null,
+    reviewDeadlineLabel: completedAt
+      ? formatDealReviewDeadline(completedAt)
+      : null,
   };
 }
 
@@ -139,6 +168,13 @@ export async function createDealReview(input: {
     });
   }
 
+  if (isDealReviewDeadlineElapsed(deal.completedAt)) {
+    throw new DomainError({
+      code: DomainErrorCode.VALIDATION_FAILED,
+      userMessage: DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE,
+    });
+  }
+
   const side = await resolveNegotiationActorSide(
     {
       id: deal.offer.id,
@@ -167,6 +203,17 @@ export async function createDealReview(input: {
   try {
     return await prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "DealOutcome" WHERE id = ${deal.id} FOR UPDATE`;
+
+      const fresh = await tx.dealOutcome.findUniqueOrThrow({
+        where: { id: deal.id },
+        select: { completedAt: true },
+      });
+      if (isDealReviewDeadlineElapsed(fresh.completedAt)) {
+        throw new DomainError({
+          code: DomainErrorCode.VALIDATION_FAILED,
+          userMessage: DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE,
+        });
+      }
 
       const created = await tx.dealReview.create({
         data: {
@@ -206,7 +253,9 @@ export async function createDealReview(input: {
         });
 
         if (!alreadyPublished) {
-          const recipients = [...new Set([deal.buyerUserId, deal.offer.submittedById])];
+          const recipients = [
+            ...new Set([deal.buyerUserId, deal.offer.submittedById]),
+          ];
           const actionUrl = deal.conversationId
             ? `/panel/mesajlar/${deal.conversationId}`
             : "/panel/mesajlar";
@@ -230,6 +279,7 @@ export async function createDealReview(input: {
       return toDto(created);
     });
   } catch (error) {
+    if (error instanceof DomainError) throw error;
     if (isPrismaUniqueViolation(error)) {
       throw new DomainError({
         code: DomainErrorCode.VALIDATION_FAILED,

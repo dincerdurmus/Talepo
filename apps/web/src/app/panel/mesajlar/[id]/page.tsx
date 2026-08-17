@@ -113,7 +113,14 @@ export default async function ConversationDetailPage({
           dealOutcome.id,
           dealRole === "buyer" ? "BUYER" : "PROVIDER",
         )
-      : { ownReview: null, oppositeReview: null };
+      : {
+          ownReview: null,
+          oppositeReview: null,
+          canCreateReview: false,
+          windowExpired: false,
+          reviewDeadlineIso: null,
+          reviewDeadlineLabel: null,
+        };
 
   return (
     <>
@@ -178,6 +185,9 @@ export default async function ConversationDetailPage({
               dealOutcomeId={dealOutcome.id}
               existingReview={reviewState.ownReview}
               oppositeReview={reviewState.oppositeReview}
+              canCreateReview={reviewState.canCreateReview}
+              windowExpired={reviewState.windowExpired}
+              reviewDeadlineLabel={reviewState.reviewDeadlineLabel}
             />
           ) : null}
         </>

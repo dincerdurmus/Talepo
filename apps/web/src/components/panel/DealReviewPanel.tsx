@@ -7,6 +7,8 @@ import { LoaderCircle, Star } from "lucide-react";
 import {
   DEAL_REVIEW_BLIND_HINT,
   DEAL_REVIEW_COMMENT_MAX,
+  DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE,
+  DEAL_REVIEW_WINDOW_HINT,
   type DealReviewDto,
 } from "@/lib/offer/deal-review";
 
@@ -28,10 +30,16 @@ export function DealReviewPanel({
   dealOutcomeId,
   existingReview,
   oppositeReview = null,
+  canCreateReview = true,
+  windowExpired = false,
+  reviewDeadlineLabel = null,
 }: {
   dealOutcomeId: string;
   existingReview: DealReviewDto | null;
   oppositeReview?: DealReviewDto | null;
+  canCreateReview?: boolean;
+  windowExpired?: boolean;
+  reviewDeadlineLabel?: string | null;
 }) {
   const router = useRouter();
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
@@ -40,13 +48,15 @@ export function DealReviewPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(Boolean(existingReview));
 
-  if (submitted) {
+  if (submitted || existingReview) {
     return (
       <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-3.5">
         <p className="text-sm font-semibold text-teal-950">
           Değerlendirmeniz alındı.
         </p>
-        <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_BLIND_HINT}</p>
+        {!oppositeReview && !windowExpired ? (
+          <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_BLIND_HINT}</p>
+        ) : null}
         {existingReview ? (
           <>
             <StarRow rating={existingReview.rating} />
@@ -75,6 +85,16 @@ export function DealReviewPanel({
             ) : null}
           </div>
         ) : null}
+      </div>
+    );
+  }
+
+  if (windowExpired || !canCreateReview) {
+    return (
+      <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-3.5">
+        <p className="text-sm font-semibold text-teal-950">
+          {DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE}
+        </p>
       </div>
     );
   }
@@ -112,7 +132,13 @@ export function DealReviewPanel({
       <p className="text-sm font-semibold text-[#0f1f1d]">
         Deneyiminizi değerlendirin
       </p>
-      <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_BLIND_HINT}</p>
+      <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_WINDOW_HINT}</p>
+      {reviewDeadlineLabel ? (
+        <p className="mt-0.5 text-xs text-black/45">
+          Son tarih: {reviewDeadlineLabel}
+        </p>
+      ) : null}
+      <p className="mt-1 text-xs text-black/40">{DEAL_REVIEW_BLIND_HINT}</p>
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {[1, 2, 3, 4, 5].map((value) => {

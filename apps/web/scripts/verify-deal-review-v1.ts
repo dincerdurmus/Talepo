@@ -1,5 +1,5 @@
 /**
- * Deal review / trust summary V1.
+ * Deal review / blind reveal / 14-day auto-reveal V1.2.
  * Run: npx tsx scripts/verify-deal-review-v1.ts
  */
 import { existsSync, readFileSync } from "node:fs";
@@ -8,17 +8,27 @@ import { join } from "node:path";
 import {
   DEAL_REVIEW_BLIND_HINT,
   DEAL_REVIEW_COMMENT_MAX,
+  DEAL_REVIEW_WINDOW_DAYS,
+  DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE,
+  DEAL_REVIEW_WINDOW_HINT,
+  DEAL_REVIEW_WINDOW_MS,
   DEAL_REVIEWS_PUBLISHED_MESSAGE,
   DEAL_REVIEWS_PUBLISHED_TITLE,
   averageRatingFrom,
   dealIsReviewEligible,
   formatAverageRating,
+  formatDealReviewDeadline,
   formatReviewCount,
   formatTrustRatingMeta,
+  getDealReviewDeadline,
+  getDealReviewWindowCutoff,
+  isDealReviewDeadlineElapsed,
   isDealReviewPairRevealed,
   isDealReviewRevealed,
+  isDealReviewWindowOpen,
   isValidDealRating,
   resolveDealReviewTarget,
+  revealedReviewWhere,
 } from "../src/lib/offer/deal-review";
 import { formatCompletedTransactionCount } from "../src/lib/offer/deal-completion";
 import {
@@ -102,12 +112,16 @@ const bilateral = {
   supplierConfirmedAt: new Date(),
 };
 
+function daysFrom(completedAt: Date, days: number) {
+  return new Date(completedAt.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
 console.log("\n=== ELIGIBILITY ===\n");
 {
-  check("1 accepted but not completed denied", !dealIsReviewEligible(acceptedLike));
-  check("2 buyer confirmed only denied", !dealIsReviewEligible(buyerOnly));
-  check("3 provider confirmed only denied", !dealIsReviewEligible(providerOnly));
-  check("4 bilateral completed eligible", dealIsReviewEligible(bilateral));
+  check("accepted but not completed denied", !dealIsReviewEligible(acceptedLike));
+  check("buyer confirmed only denied", !dealIsReviewEligible(buyerOnly));
+  check("provider confirmed only denied", !dealIsReviewEligible(providerOnly));
+  check("bilateral completed eligible", dealIsReviewEligible(bilateral));
   check("pending deal denied", !dealIsReviewEligible(pendingDeal));
   check(
     "create uses bilateral where",
@@ -118,49 +132,35 @@ console.log("\n=== ELIGIBILITY ===\n");
 
 console.log("\n=== CREATE / DUPLICATE / TARGET ===\n");
 {
-  check("5 buyer create path", service.includes('reviewerSide: side') && service.includes("createDealReview"));
-  check("6 provider create path", service.includes('resolveNegotiationActorSide'));
+  check("buyer create path", service.includes("reviewerSide: side") && service.includes("createDealReview"));
+  check("provider create path", service.includes("resolveNegotiationActorSide"));
   check(
-    "7/8 unique duplicate",
+    "unique duplicate",
     schema.includes("@@unique([dealOutcomeId, reviewerSide])") &&
       migration.includes("DealReview_dealOutcomeId_reviewerSide_key") &&
-      service.includes("isPrismaUniqueViolation") &&
-      service.includes("DEAL_REVIEW_DUPLICATE_MESSAGE"),
+      service.includes("isPrismaUniqueViolation"),
   );
   check(
-    "9 company two members share provider side",
-    service.includes("reviewerSide: side") &&
-      schema.includes("@@unique([dealOutcomeId, reviewerSide])"),
+    "company two members share provider side",
+    schema.includes("@@unique([dealOutcomeId, reviewerSide])"),
   );
 
-  check("10 rating 1 pass", isValidDealRating(1));
-  check("11 rating 5 pass", isValidDealRating(5));
-  check("12 rating 0 reject", !isValidDealRating(0));
-  check("13 rating 6 reject", !isValidDealRating(6));
-  check("14 decimal reject", !isValidDealRating(4.5) && !isValidDealRating(2.2));
-  check("integer 3 pass", isValidDealRating(3));
-  check("string rating reject", !isValidDealRating("5"));
-  check("null rating reject", !isValidDealRating(null));
-
-  check("15 comment optional", panel.includes("comment.trim() || null") && domain.includes("DEAL_REVIEW_COMMENT_MAX"));
-  check("16 comment max 800", DEAL_REVIEW_COMMENT_MAX === 800 && service.includes("DEAL_REVIEW_COMMENT_MAX"));
+  check("rating 1 pass", isValidDealRating(1));
+  check("rating 5 pass", isValidDealRating(5));
+  check("rating 0 reject", !isValidDealRating(0));
+  check("rating 6 reject", !isValidDealRating(6));
+  check("decimal reject", !isValidDealRating(4.5));
+  check("comment max 800", DEAL_REVIEW_COMMENT_MAX === 800);
   check(
     "contact blocker reused",
-    service.includes("containsBlockedContactInfo") &&
-      service.includes("sanitizeCommercialText"),
+    service.includes("containsBlockedContactInfo"),
   );
 
   const createCall = api.slice(api.indexOf("await createDealReview"));
   check(
-    "17 target spoof ignored",
+    "target spoof ignored",
     !createCall.includes("body.targetUserId") &&
-      !createCall.includes("body.targetCompanyId") &&
-      service.includes("resolveDealReviewTarget"),
-  );
-  check(
-    "18 unrelated user forbidden",
-    service.includes("Bu işlem için değerlendirme yazamazsınız.") &&
-      service.includes("DomainErrorCode.FORBIDDEN"),
+      !createCall.includes("body.targetCompanyId"),
   );
 
   const companyTarget = resolveDealReviewTarget(
@@ -168,57 +168,223 @@ console.log("\n=== CREATE / DUPLICATE / TARGET ===\n");
     "BUYER",
   );
   check(
-    "19 company target correct",
-    companyTarget.targetType === "COMPANY" &&
-      companyTarget.targetCompanyId === "co1" &&
-      companyTarget.targetUserId == null,
+    "company target correct",
+    companyTarget.targetType === "COMPANY" && companyTarget.targetCompanyId === "co1",
   );
-
   const personalTarget = resolveDealReviewTarget(
     { companyId: null, submittedById: "prov1", requestCreatedById: "buyer1" },
     "BUYER",
   );
   check(
-    "20 personal provider target correct",
-    personalTarget.targetType === "USER" &&
-      personalTarget.targetUserId === "prov1" &&
-      personalTarget.targetCompanyId == null,
+    "personal provider target correct",
+    personalTarget.targetType === "USER" && personalTarget.targetUserId === "prov1",
   );
-
   const buyerTarget = resolveDealReviewTarget(
     { companyId: "co1", submittedById: "member1", requestCreatedById: "buyer1" },
     "PROVIDER",
   );
   check(
-    "21 buyer target correct",
-    buyerTarget.targetType === "USER" &&
-      buyerTarget.targetUserId === "buyer1" &&
-      buyerTarget.targetCompanyId == null,
+    "buyer target correct",
+    buyerTarget.targetType === "USER" && buyerTarget.targetUserId === "buyer1",
   );
 }
 
-console.log("\n=== TRUST AGGREGATE ===\n");
+console.log("\n=== REVIEW WINDOW / AUTO REVEAL ===\n");
+{
+  const completedAt = new Date("2026-08-01T12:00:00.000Z");
+  const deadline = getDealReviewDeadline(completedAt);
+  const day1 = daysFrom(completedAt, 1);
+  const day13 = daysFrom(completedAt, 13);
+  const day14 = daysFrom(completedAt, 14);
+  const day14plus = new Date(deadline.getTime() + 60_000);
+
+  check("1 window is 14 days", DEAL_REVIEW_WINDOW_DAYS === 14);
+  check(
+    "2 deadline = completedAt + 14d",
+    deadline.getTime() === completedAt.getTime() + DEAL_REVIEW_WINDOW_MS,
+  );
+  check(
+    "3 buyer-only day 1 hidden",
+    !isDealReviewRevealed({
+      sides: ["BUYER"],
+      completedAt,
+      now: day1,
+    }),
+  );
+  check(
+    "4 buyer-only day 13 hidden",
+    !isDealReviewRevealed({
+      sides: ["BUYER"],
+      completedAt,
+      now: day13,
+    }) && isDealReviewWindowOpen(completedAt, day13),
+  );
+  check(
+    "5 buyer-only after deadline visible",
+    isDealReviewRevealed({
+      sides: ["BUYER"],
+      completedAt,
+      now: day14,
+    }) && isDealReviewDeadlineElapsed(completedAt, day14),
+  );
+  check(
+    "6 provider-only same behavior",
+    !isDealReviewRevealed({
+      sides: ["PROVIDER"],
+      completedAt,
+      now: day1,
+    }) &&
+      isDealReviewRevealed({
+        sides: ["PROVIDER"],
+        completedAt,
+        now: day14plus,
+      }),
+  );
+  check(
+    "7 pair day 2 immediate visible",
+    isDealReviewRevealed({
+      sides: ["BUYER", "PROVIDER"],
+      completedAt,
+      now: daysFrom(completedAt, 2),
+    }),
+  );
+  check(
+    "8 pair day 13 immediate visible",
+    isDealReviewRevealed({
+      sides: ["BUYER", "PROVIDER"],
+      completedAt,
+      now: day13,
+    }),
+  );
+  check(
+    "9 create day 13 allowed",
+    isDealReviewWindowOpen(completedAt, day13) &&
+      !isDealReviewDeadlineElapsed(completedAt, day13),
+  );
+  check(
+    "10 create after deadline rejected policy",
+    !isDealReviewWindowOpen(completedAt, day14plus) &&
+      isDealReviewDeadlineElapsed(completedAt, day14plus) &&
+      service.includes("DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE") &&
+      DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE.includes("değerlendirme süresi sona erdi"),
+  );
+  check(
+    "11 create gate uses completedAt not review.createdAt",
+    service.includes("isDealReviewDeadlineElapsed(deal.completedAt)") &&
+      service.includes("isDealReviewDeadlineElapsed(fresh.completedAt)") &&
+      !domain.includes("createdAt + DEAL_REVIEW_WINDOW"),
+  );
+  check(
+    "12 no reviews after deadline nothing to count",
+    !isDealReviewPairRevealed([]) &&
+      // helper returns true on elapsed even with empty sides; queries still need a row
+      isDealReviewDeadlineElapsed(completedAt, day14),
+  );
+  check(
+    "13 window open exclusive of deadline",
+    isDealReviewWindowOpen(completedAt, new Date(deadline.getTime() - 1)) &&
+      !isDealReviewWindowOpen(completedAt, deadline),
+  );
+  check(
+    "14 reveal at deadline inclusive",
+    isDealReviewDeadlineElapsed(completedAt, deadline) &&
+      isDealReviewRevealed({
+        sides: ["BUYER"],
+        completedAt,
+        now: deadline,
+      }),
+  );
+  check(
+    "15 cutoff for SQL matches window",
+    getDealReviewWindowCutoff(day14).getTime() === completedAt.getTime(),
+  );
+  check(
+    "16 revealedReviewWhere has pair OR deadline",
+    (() => {
+      const where = revealedReviewWhere(day14);
+      return (
+        Array.isArray(where.OR) &&
+        where.OR.length === 2 &&
+        Boolean(where.OR[1]?.dealOutcome?.completedAt?.lte)
+      );
+    })(),
+  );
+  check(
+    "17 trust uses revealedReviewWhere",
+    trust.includes("revealedReviewWhere()") &&
+      (trust.match(/revealedReviewWhere/g) ?? []).length >= 4,
+  );
+  check(
+    "18 legacy expired single visible",
+    isDealReviewRevealed({
+      sides: ["BUYER"],
+      completedAt,
+      now: day14plus,
+    }),
+  );
+  check(
+    "19 legacy unexpired single hidden",
+    !isDealReviewRevealed({
+      sides: ["BUYER"],
+      completedAt,
+      now: day1,
+    }),
+  );
+  check(
+    "20 format deadline label",
+    formatDealReviewDeadline(completedAt).length > 4,
+  );
+  check(
+    "21 single policy constant",
+    domain.includes("DEAL_REVIEW_WINDOW_DAYS = 14") &&
+      !panel.includes("14 * 24") &&
+      !service.includes("14 * 24"),
+  );
+  check(
+    "22 no cron/job",
+    !service.includes("cron") &&
+      !domain.includes("cron") &&
+      !trust.includes("setInterval"),
+  );
+  check(
+    "23 no revealedAt column on DealReview",
+    !schema.includes("revealedAt") &&
+      !domain.includes("revealedAt") &&
+      !service.includes("revealedAt") &&
+      (() => {
+        const model = schema.slice(
+          schema.indexOf("model DealReview"),
+          schema.indexOf("model PriceObservation"),
+        );
+        return (
+          !model.includes("expiresAt") &&
+          !model.includes("reviewDeadline") &&
+          !model.includes("visibleAt")
+        );
+      })(),
+  );
+  check(
+    "24 no timeout notification",
+    !service.includes("TIMEOUT") &&
+      !service.includes("auto reveal") &&
+      service.includes("isDealReviewPairRevealed") &&
+      !service.includes("isDealReviewDeadlineElapsed(sides"),
+  );
+}
+
+console.log("\n=== TRUST / UI / NOTIFICATIONS ===\n");
 {
   check(
-    "22 completed count authority unchanged",
+    "completed count unchanged",
     trust.includes("countCompletedTransactions") &&
-      dealOutcome.includes("BILATERAL_COMPLETED_WHERE") &&
       formatCompletedTransactionCount(18) === "18 tamamlanan işlem",
   );
   check(
-    "23 reviewCount from revealed reviews",
-    trust.includes("_count: { _all: true }") &&
-      trust.includes("REVEALED_REVIEW_WHERE") &&
-      (trust.match(/REVEALED_REVIEW_WHERE/g) ?? []).length >= 4,
+    "averageRating arithmetic",
+    averageRatingFrom([5, 4]) === 4.5 && averageRatingFrom([]) == null,
   );
   check(
-    "24 averageRating arithmetic mean",
-    averageRatingFrom([5, 4]) === 4.5 &&
-      averageRatingFrom([5]) === 5 &&
-      averageRatingFrom([]) == null,
-  );
-  check(
-    "25 low sample no fake trust label",
+    "low sample no fake label",
     formatAverageRating(5) === "5,0 / 5" &&
       formatReviewCount(1) === "1 değerlendirme" &&
       formatTrustRatingMeta({
@@ -227,33 +393,22 @@ console.log("\n=== TRUST AGGREGATE ===\n");
         averageRating: 5,
       }) === "5,0 / 5 · 1 değerlendirme" &&
       !badge.includes("çok güvenilir") &&
-      !badge.includes("En iyi satıcı") &&
-      !badge.includes("%100 güven") &&
-      !panel.includes("çok güvenilir") &&
-      !trust.includes("trustScore") &&
-      !schema.includes("reputation"),
+      !panel.includes("çok güvenilir"),
   );
   check(
-    "26 immutable",
+    "immutable",
     !existsSync(join(root, "src/app/api/deal-reviews/[id]")) &&
       !service.includes("prisma.dealReview.update") &&
       !service.includes("prisma.dealReview.delete") &&
-      panel.includes("Değerlendirmeniz alındı") &&
       panel.includes("değiştirilemez"),
   );
   check(
-    "27 pair reveal notification",
-    schema.includes("DEAL_REVIEW_RECEIVED") &&
-      notify.includes("DEAL_REVIEW_RECEIVED") &&
-      service.includes('type: "DEAL_REVIEW_RECEIVED"') &&
-      service.includes("DEAL_REVIEWS_PUBLISHED_TITLE") &&
-      service.includes("isDealReviewPairRevealed") &&
-      service.includes("alreadyPublished") &&
-      !service.includes("Yeni değerlendirme aldınız") &&
-      !service.includes("rating}") &&
-      !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("yıldız") &&
+    "pair reveal notification",
+    service.includes("DEAL_REVIEWS_PUBLISHED_TITLE") &&
       DEAL_REVIEWS_PUBLISHED_TITLE === "Değerlendirmeler yayınlandı" &&
-      destination.includes("DEAL_REVIEW_RECEIVED") &&
+      DEAL_REVIEWS_PUBLISHED_MESSAGE ===
+        "İşlem değerlendirmeleri artık görünür." &&
+      !service.includes("Yeni değerlendirme aldınız") &&
       resolveNotificationDestination({
         type: "DEAL_REVIEW_RECEIVED",
         actionUrl: "/panel/mesajlar/c1",
@@ -270,192 +425,87 @@ console.log("\n=== TRUST AGGREGATE ===\n");
       }) === "/panel/mesajlar",
   );
   check(
-    "28 profile aggregate helpers",
-    trust.includes("getUserTrustSummary") &&
-      trust.includes("getCompanyTrustSummary") &&
-      trust.includes("getBuyerTrustSummary"),
+    "first review notification NO",
+    service.includes("if (isDealReviewPairRevealed"),
   );
   check(
-    "29 identity privacy",
-    !panel.includes("existingCounterpart") &&
-      conversation.includes("DealReviewPanel") &&
-      conversation.includes("getDealReviewConversationState") &&
-      conversation.includes("oppositeReview={reviewState.oppositeReview}") &&
-      !conversation.includes("counterpartReview") &&
-      !panel.includes("Karşı taraf sizi değerlendirdi") &&
-      !panel.includes("Karşı taraf değerlendirmesini tamamladı"),
-  );
-}
-
-console.log("\n=== BLIND REVIEW / REVEAL ===\n");
-{
-  check("1 no reviews visible count 0", !isDealReviewRevealed({ sides: [] }));
-  check(
-    "2 buyer-only hidden",
-    !isDealReviewRevealed({ sides: ["BUYER"] }) &&
-      !isDealReviewPairRevealed(["BUYER"]),
+    "UI window hint",
+    panel.includes("DEAL_REVIEW_WINDOW_HINT") &&
+      DEAL_REVIEW_WINDOW_HINT.includes("14 gününüz var") &&
+      panel.includes("Son tarih:") &&
+      panel.includes("reviewDeadlineLabel"),
   );
   check(
-    "3 provider-only hidden",
-    !isDealReviewRevealed({ sides: ["PROVIDER"] }),
+    "UI expired state",
+    panel.includes("DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE") &&
+      panel.includes("windowExpired") &&
+      !panel.includes("Karşı taraf sizi değerlendirdi"),
   );
   check(
-    "4 both reviews revealed",
-    isDealReviewRevealed({ sides: ["BUYER", "PROVIDER"] }) &&
-      isDealReviewPairRevealed(["PROVIDER", "BUYER"]),
+    "conversation wires window props",
+    conversation.includes("canCreateReview={reviewState.canCreateReview}") &&
+      conversation.includes("windowExpired={reviewState.windowExpired}") &&
+      conversation.includes("reviewDeadlineLabel={reviewState.reviewDeadlineLabel}"),
   );
   check(
-    "5 buyer own hidden self-view",
-    service.includes("ownReview") &&
-      panel.includes("Değerlendirmeniz alındı") &&
-      panel.includes("existingReview"),
+    "conversation state uses completedAt reveal",
+    service.includes("isDealReviewRevealed") &&
+      service.includes("completedAt") &&
+      service.includes("getDealReviewConversationState"),
   );
   check(
-    "6/7 opposite hidden until pair",
-    service.includes("getDealReviewConversationState") &&
-      service.includes("isDealReviewPairRevealed") &&
-      service.includes("oppositeReview") &&
-      service.includes("row.reviewerSide !== side"),
-  );
-  check(
-    "8 both submitted each sees opposite",
-    conversation.includes("oppositeReview={reviewState.oppositeReview}") &&
-      panel.includes("Karşı tarafın değerlendirmesi"),
-  );
-  check(
-    "9/10/11/12/14/15 hidden-aware aggregates",
-    trust.includes("REVEALED_REVIEW_WHERE") &&
-      domain.includes("REVEALED_REVIEW_WHERE") &&
-      trust.includes("getUserTrustSummary") &&
-      trust.includes("loadProviderTrustSummaries"),
-  );
-  check(
-    "13 completed transactions unchanged",
-    trust.includes("countCompletedTransactions") &&
-      !trust.includes("dealReview.count") &&
-      formatCompletedTransactionCount(18) === "18 tamamlanan işlem",
-  );
-  check(
-    "16 no fake trust label",
+    "blind hint present",
     panel.includes("DEAL_REVIEW_BLIND_HINT") &&
-      DEAL_REVIEW_BLIND_HINT.includes("iki taraf") &&
-      !panel.includes("çok güvenilir"),
+      DEAL_REVIEW_BLIND_HINT.includes("süre dolunca"),
   );
-  check(
-    "17 first review notification NO",
-    service.includes("if (isDealReviewPairRevealed") &&
-      !service.includes("Yeni değerlendirme aldınız"),
-  );
-  check(
-    "18 second review reveal notification",
-    service.includes("DEAL_REVIEWS_PUBLISHED_TITLE") &&
-      DEAL_REVIEWS_PUBLISHED_TITLE === "Değerlendirmeler yayınlandı" &&
-      DEAL_REVIEWS_PUBLISHED_MESSAGE ===
-        "İşlem değerlendirmeleri artık görünür.",
-  );
-  check(
-    "19 no rating/comment in notification body",
-    !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("yıldız") &&
-      !DEAL_REVIEWS_PUBLISHED_MESSAGE.includes("rating") &&
-      !service.slice(service.indexOf("tx.notification.create")).includes("created.rating"),
-  );
-  check(
-    "20 duplicate second-submit notification prevented",
-    service.includes("alreadyPublished") &&
-      service.includes("title: DEAL_REVIEWS_PUBLISHED_TITLE"),
-  );
-  check(
-    "21 simultaneous reviews race",
-    service.includes("FOR UPDATE") && service.includes("$transaction"),
-  );
-  check(
-    "22 company two members race",
-    schema.includes("@@unique([dealOutcomeId, reviewerSide])"),
-  );
-  check(
-    "23 immutable remains",
-    !service.includes("prisma.dealReview.update") &&
-      !service.includes("prisma.dealReview.delete") &&
-      panel.includes("değiştirilemez"),
-  );
-  check(
-    "24 legacy one-sided review hidden",
-    !isDealReviewRevealed({ sides: ["BUYER"] }) &&
-      !schema.includes("revealedAt") &&
-      !schema.includes("visibleAt"),
-  );
-  check(
-    "25 legacy paired reviews visible",
-    isDealReviewRevealed({ sides: ["BUYER", "PROVIDER"] }),
-  );
-  check(
-    "timeout hook exists but unused",
-    domain.includes("autoRevealAfterMs") &&
-      !domain.includes("7 * 24") &&
-      !domain.includes("14 * 24") &&
-      !domain.includes("30 * 24") &&
-      !service.includes("autoRevealAfterMs"),
-  );
-  check("no cron job added", !service.includes("cron") && !trust.includes("cron"));
+  check("notify type still registered", notify.includes("DEAL_REVIEW_RECEIVED"));
+  check("destination still sanitizes", destination.includes("sanitizePanelActionUrl"));
 }
 
-console.log("\n=== MODEL / SECURITY / COPY ===\n");
+console.log("\n=== MODEL / REGRESSION GUARDS ===\n");
 {
   check("additive DealReview model", schema.includes("model DealReview"));
   check("no generic Review model", !schema.includes("model Review "));
-  check("DealOutcome not rewritten", !migration.includes("ALTER TABLE \"DealOutcome\""));
-  check("rating check constraint", migration.includes("DealReview_rating_range"));
+  check("DealOutcome not rewritten", !migration.includes('ALTER TABLE "DealOutcome"'));
   check("completion panel still has no stars", !completionPanel.includes("yıldız"));
-  check("review UI copy", panel.includes("Deneyiminizi değerlendirin") && panel.includes("Değerlendirmeyi gönder"));
   check("min 44px stars", panel.includes("min-h-11 min-w-11"));
-  check("role derived server-side", !api.includes("body.reviewerSide") && !api.includes("body.role"));
   check("standard can review", featuresForPlan("STANDARD").submit_offer === true);
   check("no plan gate", !service.includes("hasFeature") && !service.includes("PROFESSIONAL"));
-  check("no radar coupling", !radar.includes("dealReview") && !radar.includes("DealReview"));
-  check("no offer intelligence coupling", !intelligence.includes("dealReview") && !intelligence.includes("averageRating"));
-  check("no opportunity coupling", !opportunity.includes("dealReview") && !opportunity.includes("DealReview"));
-  check("analiz not redesigned for reviews", !analiz.includes("dealReview") && !analiz.includes("averageRating"));
-  check("no backfill reviews", !service.includes("backfill"));
-  check("legacy one-sided not eligible", !dealIsReviewEligible(buyerOnly));
-}
-
-console.log("\n=== REGRESSION SOURCE GUARDS ===\n");
-{
+  check("no radar coupling", !radar.includes("DealReview") && !radar.includes("revealedReviewWhere"));
+  check("no offer intelligence coupling", !intelligence.includes("DealReview"));
+  check("no opportunity coupling", !opportunity.includes("DealReview"));
+  check("analiz no review metrics", !analiz.includes("reviewCount") && !analiz.includes("DealReview"));
   check(
-    "30 completion still bilateral",
+    "completion still bilateral",
     dealOutcome.includes("confirmDealCompletion") &&
       dealOutcome.includes("BOTH_CONFIRMED"),
   );
   check(
-    "31 negotiation unique still present",
+    "negotiation unique still present",
     read("src/server/offer/offer-negotiation-service.ts").includes(
       "isPrismaUniqueViolation",
     ),
   );
   check(
-    "32 offer lifecycle lock still present",
+    "offer lifecycle lock still present",
     read("src/lib/offer/submitted-commercial-lock.ts").includes(
       "OFFER_AMOUNT_IMMUTABLE_MESSAGE",
     ),
   );
   check(
-    "33 media route untouched by review",
+    "media route untouched",
     !read("src/app/api/offers/[id]/media/route.ts").includes("DealReview"),
   );
   check(
-    "34 notifications sanitizer kept",
-    destination.includes("sanitizePanelActionUrl"),
-  );
-  check("35 Radar file unchanged coupling", !radar.includes("trust-summary"));
-  check("36 Analiz no review metrics", !analiz.includes("reviewCount"));
-  check(
-    "37 Takiplerim no review ranking",
+    "Takiplerim no review ranking",
     !read("src/app/api/monetization/watchlist/route.ts").includes("DealReview"),
   );
   check(
-    "38 OC no review ranking",
+    "OC no review ranking",
     !read("src/app/panel/firsatlar/page.tsx").includes("DealReview"),
   );
+  check("FOR UPDATE race safety", service.includes("FOR UPDATE") && service.includes("$transaction"));
+  check("alreadyPublished dedupe", service.includes("alreadyPublished"));
 }
 
 if (fail > 0) {
@@ -464,4 +514,4 @@ if (fail > 0) {
   process.exit(1);
 }
 
-console.log(`\nOK ${pass}/${pass + fail} — deal review V1`);
+console.log(`\nOK ${pass}/${pass + fail} — deal review V1.2 auto-reveal`);

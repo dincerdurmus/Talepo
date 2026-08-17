@@ -4,6 +4,11 @@ export const DEAL_REVIEW_MIN_RATING = 1;
 export const DEAL_REVIEW_MAX_RATING = 5;
 export const DEAL_REVIEW_COMMENT_MAX = 800;
 
+/** Canonical review window after bilateral completion. */
+export const DEAL_REVIEW_WINDOW_DAYS = 14;
+export const DEAL_REVIEW_WINDOW_MS =
+  DEAL_REVIEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
 export const DEAL_REVIEW_NOT_ELIGIBLE_MESSAGE =
   "Yalnız taraflarca tamamlandı olarak onaylanan işlemler değerlendirilebilir.";
 
@@ -19,22 +24,17 @@ export const DEAL_REVIEW_COMMENT_LENGTH_MESSAGE =
 export const DEAL_REVIEW_CONTACT_MESSAGE =
   "Yorumda telefon, e-posta veya IBAN paylaşmayın.";
 
+export const DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE =
+  "Bu işlem için değerlendirme süresi sona erdi.";
+
 export const DEAL_REVIEWS_PUBLISHED_TITLE = "Değerlendirmeler yayınlandı";
 export const DEAL_REVIEWS_PUBLISHED_MESSAGE =
   "İşlem değerlendirmeleri artık görünür.";
 
 export const DEAL_REVIEW_BLIND_HINT =
-  "Değerlendirmeler, iki taraf da değerlendirmesini tamamladığında görünür.";
+  "Değerlendirmeler, iki taraf da değerlendirmesini tamamladığında veya süre dolunca görünür.";
 
-/** Query-time: both sides have submitted. Timeout is opt-in and unused in V1.1. */
-export const REVEALED_REVIEW_WHERE = {
-  dealOutcome: {
-    AND: [
-      { reviews: { some: { reviewerSide: "BUYER" as const } } },
-      { reviews: { some: { reviewerSide: "PROVIDER" as const } } },
-    ],
-  },
-};
+export const DEAL_REVIEW_WINDOW_HINT = `Değerlendirme için ${DEAL_REVIEW_WINDOW_DAYS} gününüz var.`;
 
 export type TrustSummary = {
   completedTransactions: number;
@@ -98,6 +98,48 @@ export function dealIsReviewEligible(deal: {
   return isBilateralDealCompleted(deal);
 }
 
+export function getDealReviewDeadline(completedAt: Date | string) {
+  const start = new Date(completedAt).getTime();
+  if (!Number.isFinite(start)) {
+    throw new Error("Invalid completedAt for review deadline");
+  }
+  return new Date(start + DEAL_REVIEW_WINDOW_MS);
+}
+
+/** Cutoff for SQL: completedAt <= now - window ⇒ deadline elapsed. */
+export function getDealReviewWindowCutoff(now: Date = new Date()) {
+  return new Date(now.getTime() - DEAL_REVIEW_WINDOW_MS);
+}
+
+/** Open window: completedAt .. deadline (exclusive end). */
+export function isDealReviewWindowOpen(
+  completedAt: Date | string | null | undefined,
+  now: Date = new Date(),
+) {
+  if (!completedAt) return false;
+  const deadline = getDealReviewDeadline(completedAt).getTime();
+  if (!Number.isFinite(deadline)) return false;
+  return now.getTime() < deadline;
+}
+
+export function isDealReviewDeadlineElapsed(
+  completedAt: Date | string | null | undefined,
+  now: Date = new Date(),
+) {
+  if (!completedAt) return false;
+  const deadline = getDealReviewDeadline(completedAt).getTime();
+  if (!Number.isFinite(deadline)) return false;
+  return now.getTime() >= deadline;
+}
+
+export function formatDealReviewDeadline(completedAt: Date | string) {
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(getDealReviewDeadline(completedAt));
+}
+
 export function resolveDealReviewTarget(
   offer: {
     companyId: string | null;
@@ -141,25 +183,39 @@ export function isDealReviewPairRevealed(
 }
 
 /**
- * Canonical reveal rule. Auto-reveal duration is not product-decided yet;
- * pass autoRevealAfterMs only when a later milestone sets a real deadline.
+ * Canonical reveal: both sides submitted, OR review window deadline elapsed.
+ * Deadline source is DealOutcome.completedAt (not review.createdAt).
  */
 export function isDealReviewRevealed(input: {
   sides: ReadonlyArray<"BUYER" | "PROVIDER">;
-  autoRevealAfterMs?: number | null;
-  createdAt?: Date | string | null;
+  completedAt?: Date | string | null;
   now?: Date;
 }) {
   if (isDealReviewPairRevealed(input.sides)) return true;
-  if (
-    input.autoRevealAfterMs != null &&
-    input.autoRevealAfterMs > 0 &&
-    input.createdAt
-  ) {
-    const created = new Date(input.createdAt).getTime();
-    if (!Number.isFinite(created)) return false;
-    const now = (input.now ?? new Date()).getTime();
-    return now - created >= input.autoRevealAfterMs;
-  }
-  return false;
+  return isDealReviewDeadlineElapsed(input.completedAt, input.now);
+}
+
+/**
+ * Query-time visibility for trust aggregates / lists.
+ * Pair present OR completedAt past the 14-day window.
+ */
+export function revealedReviewWhere(now: Date = new Date()) {
+  const cutoff = getDealReviewWindowCutoff(now);
+  return {
+    OR: [
+      {
+        dealOutcome: {
+          AND: [
+            { reviews: { some: { reviewerSide: "BUYER" as const } } },
+            { reviews: { some: { reviewerSide: "PROVIDER" as const } } },
+          ],
+        },
+      },
+      {
+        dealOutcome: {
+          completedAt: { lte: cutoff },
+        },
+      },
+    ],
+  };
 }

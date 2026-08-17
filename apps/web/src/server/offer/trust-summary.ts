@@ -1,6 +1,6 @@
 import {
   emptyTrustSummary,
-  REVEALED_REVIEW_WHERE,
+  revealedReviewWhere,
   roundAverageRating,
   type TrustSummary,
 } from "@/lib/offer/deal-review";
@@ -48,6 +48,7 @@ function fromAgg(
 export async function getUserTrustSummary(
   userId: string,
 ): Promise<TrustSummaryWithComments> {
+  const visible = revealedReviewWhere();
   const [completedTransactions, agg, recent] = await Promise.all([
     countCompletedTransactions({ personalProviderUserId: userId }),
     prisma.dealReview.aggregate({
@@ -55,7 +56,7 @@ export async function getUserTrustSummary(
         targetType: "USER",
         targetUserId: userId,
         reviewerSide: "BUYER",
-        ...REVEALED_REVIEW_WHERE,
+        ...visible,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -66,7 +67,7 @@ export async function getUserTrustSummary(
         targetUserId: userId,
         reviewerSide: "BUYER",
         comment: { not: null },
-        ...REVEALED_REVIEW_WHERE,
+        ...visible,
       },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -97,6 +98,7 @@ export async function getUserTrustSummary(
 export async function getCompanyTrustSummary(
   companyId: string,
 ): Promise<TrustSummaryWithComments> {
+  const visible = revealedReviewWhere();
   const [completedTransactions, agg, recent] = await Promise.all([
     countCompletedTransactions({ companyId }),
     prisma.dealReview.aggregate({
@@ -104,7 +106,7 @@ export async function getCompanyTrustSummary(
         targetType: "COMPANY",
         targetCompanyId: companyId,
         reviewerSide: "BUYER",
-        ...REVEALED_REVIEW_WHERE,
+        ...visible,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -115,7 +117,7 @@ export async function getCompanyTrustSummary(
         targetCompanyId: companyId,
         reviewerSide: "BUYER",
         comment: { not: null },
-        ...REVEALED_REVIEW_WHERE,
+        ...visible,
       },
       orderBy: { createdAt: "desc" },
       take: 5,
@@ -146,6 +148,7 @@ export async function getCompanyTrustSummary(
 export async function getBuyerTrustSummary(
   userId: string,
 ): Promise<TrustSummaryWithComments> {
+  const visible = revealedReviewWhere();
   const [completedTransactions, agg] = await Promise.all([
     countCompletedTransactions({ buyerUserId: userId }),
     prisma.dealReview.aggregate({
@@ -153,7 +156,7 @@ export async function getBuyerTrustSummary(
         targetType: "USER",
         targetUserId: userId,
         reviewerSide: "PROVIDER",
-        ...REVEALED_REVIEW_WHERE,
+        ...visible,
       },
       _avg: { rating: true },
       _count: { _all: true },
@@ -174,6 +177,7 @@ export async function loadProviderTrustSummaries(input: {
   for (const id of personalIds) personal.set(id, emptySummary());
   for (const id of companyIds) company.set(id, emptySummary());
 
+  const visible = revealedReviewWhere();
   const [completedCounts, reviews] = await Promise.all([
     loadCompletedTransactionCounts({
       personalUserIds: personalIds,
@@ -183,19 +187,28 @@ export async function loadProviderTrustSummaries(input: {
       ? prisma.dealReview.findMany({
           where: {
             reviewerSide: "BUYER",
-            ...REVEALED_REVIEW_WHERE,
-            OR: [
-              ...(personalIds.length
-                ? [{ targetType: "USER" as const, targetUserId: { in: personalIds } }]
-                : []),
-              ...(companyIds.length
-                ? [
-                    {
-                      targetType: "COMPANY" as const,
-                      targetCompanyId: { in: companyIds },
-                    },
-                  ]
-                : []),
+            AND: [
+              visible,
+              {
+                OR: [
+                  ...(personalIds.length
+                    ? [
+                        {
+                          targetType: "USER" as const,
+                          targetUserId: { in: personalIds },
+                        },
+                      ]
+                    : []),
+                  ...(companyIds.length
+                    ? [
+                        {
+                          targetType: "COMPANY" as const,
+                          targetCompanyId: { in: companyIds },
+                        },
+                      ]
+                    : []),
+                ],
+              },
             ],
           },
           select: {
