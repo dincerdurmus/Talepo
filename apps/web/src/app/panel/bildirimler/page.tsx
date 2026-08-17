@@ -3,13 +3,23 @@ import { Bell, BriefcaseBusiness, Building2, MessageCircle, Package } from "luci
 import type { LucideIcon } from "lucide-react";
 
 import { InviteActions } from "@/components/panel/InviteActions";
+import { MarkAllNotificationsReadButton } from "@/components/panel/MarkAllNotificationsReadButton";
+import {
+  notificationIsUnread,
+  unreadNotificationWhere,
+} from "@/lib/notifications/unread";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 
-export default async function NotificationsPage() {
+export default async function NotificationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ hedef?: string }>;
+}) {
   const user = await requireUser();
+  const { hedef } = await searchParams;
 
-  const [notifications, pendingInvites] = await Promise.all([
+  const [notifications, pendingInvites, unreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -29,24 +39,42 @@ export default async function NotificationsPage() {
         company: { select: { id: true, name: true } },
       },
     }),
+    prisma.notification.count({
+      where: { userId: user.id, ...unreadNotificationWhere },
+    }),
   ]);
 
   const pendingByCompany = new Map(
     pendingInvites.map((invite) => [invite.companyId, invite.company.name]),
   );
+  const missingTarget = hedef === "bulunamadi";
 
   return (
     <>
       <section className="py-4 sm:py-6">
         <p className="talepo-page-eyebrow">Bildirimler</p>
-        <h1 className="talepo-page-title mt-3 text-4xl sm:text-5xl">
-          Hareketler
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-teal-950/50">
-          Talepleriniz, teklifleriniz, mesajlarınız ve firma davetleriyle ilgili
-          güncellemeler burada listelenir.
-        </p>
+        <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="talepo-page-title text-4xl sm:text-5xl">
+              Hareketler
+            </h1>
+            <p className="mt-4 max-w-2xl text-base leading-7 text-teal-950/50">
+              Talepleriniz, teklifleriniz, mesajlarınız ve firma davetleriyle ilgili
+              güncellemeler burada listelenir.
+            </p>
+          </div>
+          {notifications.length > 0 ? (
+            <MarkAllNotificationsReadButton unreadCount={unreadCount} />
+          ) : null}
+        </div>
       </section>
+
+      {missingTarget ? (
+        <section className="mb-5 rounded-2xl border border-amber-200/80 bg-amber-50 px-5 py-3.5 text-sm leading-6 text-amber-950/80">
+          Bu bildirimin hedefi artık yok veya açılamıyor. Bildirim okundu olarak
+          işaretlendi.
+        </section>
+      ) : null}
 
       {pendingInvites.length > 0 && (
         <section className="mb-5 space-y-3">
@@ -103,7 +131,7 @@ export default async function NotificationsPage() {
       ) : (
         <section className="divide-y divide-black/[0.06] overflow-hidden rounded-[28px] border border-black/[0.06] bg-white shadow-[0_18px_60px_rgba(0,0,0,0.04)]">
           {notifications.map((notification) => {
-            const isUnread = notification.status === "UNREAD";
+            const isUnread = notificationIsUnread(notification.status);
             const isInvite = notification.type === "COMPANY_INVITATION";
             const inviteCompanyId = notification.companyId;
             const stillPending =
@@ -111,7 +139,7 @@ export default async function NotificationsPage() {
               inviteCompanyId &&
               pendingByCompany.has(inviteCompanyId);
             const clickThroughHref =
-              !stillPending && !isInvite && (notification.actionUrl || isUnread)
+              !stillPending && !isInvite
                 ? `/panel/bildirimler/r/${notification.id}`
                 : null;
             const rowClassName = [

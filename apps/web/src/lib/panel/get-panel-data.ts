@@ -1,4 +1,5 @@
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
+import { unreadNotificationWhere } from "@/lib/notifications/unread";
 import { prisma } from "@/lib/prisma";
 
 const ACTIVE_REQUEST_STATUSES = [
@@ -19,7 +20,7 @@ export async function getPanelSummary(userId: string) {
         },
       }),
       prisma.notification.count({
-        where: { userId, status: "UNREAD" },
+        where: { userId, ...unreadNotificationWhere },
       }),
       prisma.offer.count({
         where: {

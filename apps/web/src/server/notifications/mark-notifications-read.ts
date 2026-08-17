@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
+import { unreadNotificationWhere } from "@/lib/notifications/unread";
 
 /**
- * Marks every unread notification for the user as READ.
- * Used when the user opens the notifications inbox.
+ * Marks every unread notification for the authenticated user as READ.
+ * Ownership is always the server session userId — never a client-supplied id.
  */
 export async function markAllNotificationsAsRead(userId: string) {
   const now = new Date();
@@ -10,7 +11,7 @@ export async function markAllNotificationsAsRead(userId: string) {
   return prisma.notification.updateMany({
     where: {
       userId,
-      status: "UNREAD",
+      ...unreadNotificationWhere,
     },
     data: {
       status: "READ",
@@ -33,7 +34,7 @@ export async function markNotificationAsRead(
     where: {
       id: notificationId,
       userId,
-      status: "UNREAD",
+      ...unreadNotificationWhere,
     },
     data: {
       status: "READ",

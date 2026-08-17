@@ -434,11 +434,7 @@ function RecentActivity({
           {notifications.map((notification) => (
             <Link
               key={notification.id}
-              href={
-                notification.actionUrl
-                  ? `/panel/bildirimler/r/${notification.id}`
-                  : "/panel/bildirimler"
-              }
+              href={`/panel/bildirimler/r/${notification.id}`}
               className="flex items-start gap-3 px-5 py-4 transition hover:bg-[#f7faf9] sm:px-6"
             >
               <ActivityIcon type={notification.type} />
