@@ -8,7 +8,7 @@ import { runOfferAssistant } from "@/server/monetization/ai-offer-assistant";
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
-    // Personal Premium may use AI without entering a company workspace.
+    // Personal Professional may use the draft tool without a company workspace.
     // Canonical personal UI remains /api/ai/offer-assistant.
     await requireEntitledFeature(user.id, "ai_offer_assistant");
 

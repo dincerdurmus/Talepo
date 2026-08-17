@@ -25,16 +25,22 @@ import {
 import {
   getAvailablePlans,
   PLAN_DEFINITIONS,
-  planTierRank,
   type PlanTierId,
 } from "@/lib/membership/plans";
+import {
+  getPublicFacingPlanId,
+  getPublicFacingPlanLabel,
+  isSelfServeCheckoutPlan,
+  PROFESSIONAL_WORKSPACE_NOTE,
+  PUBLIC_PLAN_TAGLINES,
+  toPublicPlanId,
+} from "@/lib/membership/product-packaging";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { FeatureInfoTooltip } from "./FeatureInfoTooltip";
 import { PRO_FEATURE_PRESENTATION } from "@/lib/membership/feature-presentation";
 
 import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
-import { PremiumUpgradeCta } from "./PremiumUpgradeCta";
 
 export type CompanyOption = {
   id: string;
@@ -42,17 +48,17 @@ export type CompanyOption = {
 };
 
 const DETAIL_GROUPS = [
-  { id: "capture", title: "Fırsatları yakala", accent: "cyan", keys: PRO_VALUE_PILLARS[0].features },
-  { id: "analyze", title: "Fırsatı analiz et", accent: "blue", keys: PRO_VALUE_PILLARS[1].features },
-  { id: "offer", title: "Daha güçlü teklif ver", accent: "violet", keys: PRO_VALUE_PILLARS[2].features },
-  { id: "follow-up", title: "Satışı takip et", accent: "mint", keys: ["budget_change_alerts", "watchlist"] as const },
+  { id: "capture", title: "Keşfet", accent: "cyan", keys: PRO_VALUE_PILLARS[0].features },
+  { id: "analyze", title: "Karar ver", accent: "blue", keys: PRO_VALUE_PILLARS[1].features },
+  { id: "offer", title: "Ölç / geliştir", accent: "violet", keys: PRO_VALUE_PILLARS[2].features },
+  { id: "follow-up", title: "Takip et", accent: "mint", keys: PRO_VALUE_PILLARS[3].features },
 ] as const;
 
 const PILLAR_FEATURE_KEY: Record<string, keyof typeof FEATURE_META> = {
-  capture: "smart_matching",
-  analyze: "advanced_opportunity_analysis",
-  offer: "ai_offer_assistant",
-  "follow-up": "watchlist",
+  capture: "talepo_radar",
+  analyze: "professional_analytics",
+  offer: "basic_market_insights",
+  "follow-up": "saved_searches",
 };
 
 type BillingStatusProps = {
@@ -102,7 +108,11 @@ export function PlanManager({
       billing?.providerStatus === "IYZICO_READY" ||
       billing?.providerStatus === "IYZICO_CONFIGURED");
 
-  const visualKey = entitlements.effectivePlanTier;
+  const publicPlanId = getPublicFacingPlanId(
+    entitlements.storedPlanTier,
+    entitlements.effectivePlanTier,
+  );
+  const visualKey = publicPlanId;
   const currentVisual = PLAN_VISUALS[visualKey];
   const remainingLabel = formatQuotaRemaining(entitlements.quota);
   const activeFeatureKeys = PLAN_SUMMARY_FEATURE_KEYS.filter(
@@ -112,34 +122,44 @@ export function PlanManager({
   const mismatchDetail = personalMismatch
     ? formatPersonalPlanMismatchDetail(entitlements)
     : undefined;
-  const currentRank = planTierRank(entitlements.effectivePlanTier);
 
   function canSelectPlan(planId: PlanTierId): boolean {
     if (!canMutateBilling) return false;
-    if (planId === entitlements.effectivePlanTier) return false;
+    if (planId === "PREMIUM" || planId === "CORPORATE") return false;
+    if (publicPlanId === planId) return false;
     if (planId === "STANDARD") return mockUpgradeEnabled;
-    if (checkoutAvailable && planTierRank(planId) > currentRank) return true;
-    return mockUpgradeEnabled && planTierRank(planId) > currentRank;
+    if (
+      isSelfServeCheckoutPlan(planId) &&
+      checkoutAvailable &&
+      publicPlanId === "STANDARD"
+    ) {
+      return true;
+    }
+    return mockUpgradeEnabled && planId === "PROFESSIONAL" && publicPlanId === "STANDARD";
   }
 
   function planButtonLabel(planId: PlanTierId): string {
-    if (planId === entitlements.effectivePlanTier) {
+    if (publicPlanId === planId) {
       return "Aktif plan";
     }
     if (planId === "STANDARD") {
       return mockUpgradeEnabled ? "Bireysel'e geç (test)" : "Ücretsiz başla";
     }
     const plan = PLAN_DEFINITIONS[planId];
-    if (checkoutAvailable && planTierRank(planId) > currentRank) {
+    if (
+      isSelfServeCheckoutPlan(planId) &&
+      checkoutAvailable &&
+      publicPlanId === "STANDARD"
+    ) {
       return `Ödemeye geç · ₺${plan.priceTry?.toLocaleString("tr-TR")}/ay`;
     }
-    if (mockUpgradeEnabled && planTierRank(planId) > currentRank) {
+    if (mockUpgradeEnabled && planId === "PROFESSIONAL" && publicPlanId === "STANDARD") {
       return `Test yükselt · ₺${plan.priceTry?.toLocaleString("tr-TR")}/ay`;
     }
     if (plan.priceTry) {
-      return `₺${plan.priceTry.toLocaleString("tr-TR")}/ay · provider gerekli`;
+      return `₺${plan.priceTry.toLocaleString("tr-TR")}/ay`;
     }
-    return "Yükselt";
+    return "İncele";
   }
 
   function mountIyzicoCheckoutForm(checkoutFormContent: string) {
@@ -326,7 +346,10 @@ export function PlanManager({
           <p>
             Kayıtlı plan:{" "}
             <strong className="text-black">
-              {PLAN_DEFINITIONS[entitlements.storedPlanTier].label}
+              {getPublicFacingPlanLabel(
+                entitlements.storedPlanTier,
+                entitlements.effectivePlanTier,
+              )}
             </strong>
           </p>
           <p>
@@ -401,13 +424,13 @@ export function PlanManager({
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-300/10 blur-[70px]" />
         <div className="pointer-events-none absolute bottom-[-8rem] left-1/3 h-64 w-64 rounded-full bg-violet-400/10 blur-[90px]" />
         <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-teal-200/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100">PRO intelligence</span><span className="text-xs text-white/45">Fırsat → teklif → takip</span></div>
-        <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Talepo yalnızca talepleri göstermez.</h3>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-50/70 sm:text-base">Hangi fırsata odaklanmanız gerektiğini, nasıl teklif vermenizi ve ne zaman takip etmenizi anlamanıza yardımcı olur.</p></div>
+        <div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-teal-200/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100">Profesyonel</span><span className="text-xs text-white/45">Keşfet → karar ver → ölç</span></div>
+        <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Fırsatı bul. Doğru teklifi ver. Performansını geliştir.</h3>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-50/70 sm:text-base">Talepo Radar hareketi gösterir. Teklif Zekâsı aynı talepteki anonim fiyat dağılımını gösterir. Analiz sizin performansınızdır.</p></div>
         <div className="relative mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {PRO_VALUE_PILLARS.map((pillar, index) => (
             <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 xl:not-last:after:absolute xl:not-last:after:-right-3 xl:not-last:after:top-1/2 xl:not-last:after:h-px xl:not-last:after:w-3 xl:not-last:after:bg-white/20 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
-              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "smart_matching" : pillar.id === "analyze" ? "opportunity_intelligence" : pillar.id === "offer" ? "ai_offer_assistant" : "follow_up_intelligence"} description={pillar.id === "capture" ? (entitlements.subject.type === "company" ? "Talepo şirket profiliniz ve desteklenen çalışma alanı sinyalleriyle fırsat uygunluğunu değerlendirir." : "Talepo kayıtlı tercihleriniz ve desteklenen kişisel eşleşme sinyalleriyle fırsatların size ne kadar ilgili olduğunu değerlendirir.") : undefined} /></div>
+              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "talepo_radar" : pillar.id === "analyze" ? "professional_analytics" : pillar.id === "offer" ? "basic_market_insights" : "saved_searches"} /></div>
               <h4 className="mt-5 font-semibold text-white">{pillar.title}</h4><p className="mt-2 text-sm leading-6 text-white/60">{pillar.description}</p>
               <p className="mt-4 text-[11px] font-medium leading-5 text-white/45">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).slice(0, 3).join(" · ") || "Takip önerisi · kullanıcı onayı"}</p>
             </article>
@@ -425,8 +448,9 @@ export function PlanManager({
         <div className="mt-6 space-y-6">
           {activeFeatureKeys.length === 0 ? (
             <p className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50">
-              Bireysel planda temel teklif hakkı dışında profesyonel özellik yok.
-              Yükseltme ile AI asistan, anında erişim ve uyarı kuralları açılır.
+              Bireysel planda talep oluşturma, ayda 5 teklif, keşif ve temel
+              Analiz açıktır. Radar, Teklif Zekâsı, Fırsatlar ve Takiplerim
+              Profesyonel ile açılır.
             </p>
           ) : (
             DETAIL_GROUPS.map((group) => {
@@ -475,15 +499,15 @@ export function PlanManager({
       </section>
 
       <section className="rounded-[22px] border border-teal-900/10 bg-white/80 p-5 shadow-[0_12px_34px_rgba(15,31,29,0.04)] sm:p-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/55">Talepo Pro nasıl çalışır?</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/55">Profesyonel nasıl çalışır?</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {[
-            ["Eşleşme", "Bana uygun mu?", "text-teal-700"],
-            ["Rekabet", "Rekabet nasıl?", "text-blue-700"],
-            ["Fırsat", "Değerli mi?", "text-indigo-700"],
-            ["Fiyat", "Hangi fiyat?", "text-violet-700"],
-            ["Teklif", "Nasıl teklif?", "text-fuchsia-700"],
-            ["Takip", "Ne zaman takip?", "text-emerald-700"],
+            ["Radar", "Nerede hareket var?", "text-teal-700"],
+            ["Fırsatlar", "Bana uygun mu?", "text-blue-700"],
+            ["Takiplerim", "Ne zaman haberim olsun?", "text-indigo-700"],
+            ["Teklif Zekâsı", "Bu talepte fiyat nasıl?", "text-violet-700"],
+            ["Analiz", "Ben nasıl gidiyorum?", "text-fuchsia-700"],
+            ["Teklif", "Sınırsız teklif hakkı", "text-emerald-700"],
           ].map(([stage, question, tone], index) => (
             <div key={stage} className="relative rounded-[14px] border border-teal-900/10 bg-[#f8fbfa] px-3 py-3">
               <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${tone}`}>0{index + 1} · {stage}</span>
@@ -510,7 +534,7 @@ export function PlanManager({
           const visual = PLAN_VISUALS[plan.id];
           const theme = PLAN_THEME_TOKENS[plan.id];
           const Icon = visual.icon;
-          const isCurrent = entitlements.effectivePlanTier === plan.id;
+          const isCurrent = publicPlanId === plan.id;
 
           return (
             <article
@@ -576,11 +600,9 @@ export function PlanManager({
                   ) : (
                     <p className="text-xl font-semibold">Ücretsiz</p>
                   )}
-                  {plan.id === "PROFESSIONAL" && (
-                    <p className="mt-1 text-xs font-medium text-teal-900/70">
-                      5 ekip koltuğu dahil
-                    </p>
-                  )}
+                  <p className="mt-1 text-xs font-medium text-teal-900/70">
+                    {PUBLIC_PLAN_TAGLINES[toPublicPlanId(plan.id)]}
+                  </p>
                   <p className="mt-1 text-xs text-black/35">
                     Teklif kotası:{" "}
                     {plan.monthlyOfferQuota === null
@@ -608,6 +630,11 @@ export function PlanManager({
                     </li>
                   ))}
                 </ul>
+                {plan.id === "PROFESSIONAL" ? (
+                  <p className="mt-4 text-[11px] leading-5 text-black/40">
+                    {PROFESSIONAL_WORKSPACE_NOTE}
+                  </p>
+                ) : null}
 
                 <button
                   type="button"
@@ -616,7 +643,7 @@ export function PlanManager({
                   }
                   onClick={() => {
                     if (!canSelectPlan(plan.id)) return;
-                    if (checkoutAvailable && plan.id !== "STANDARD") {
+                    if (checkoutAvailable && isSelfServeCheckoutPlan(plan.id)) {
                       void startCheckout(plan.id as PlanTierId);
                       return;
                     }
@@ -642,7 +669,7 @@ export function PlanManager({
             </article>
           );
         })}
-      </section> : <PremiumUpgradeCta compact />}
+      </section> : null}
 
       <p className="text-xs leading-5 text-black/35">
         {checkoutAvailable

@@ -1,4 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { EntitlementError } from "@/lib/membership/types";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import { canCreateCompanyWorkspace } from "@/lib/membership/workspace-effective-plan";
 
 import { slugifyCompanyName } from "./slug";
 import {
@@ -44,9 +47,21 @@ async function uniqueSlug(name: string): Promise<string> {
 
 /**
  * Create a company and attach the creator as OWNER + ACTIVE member.
- * Defaults: STANDARD plan, ACTIVE status (usable immediately, unverified).
+ * Requires the actor's personal effective Professional membership.
+ * Company.planTier stays STANDARD (workspace is not a sold plan).
  */
 export async function createCompanyForUser(input: CreateCompanyInput) {
+  const personal = await resolveEntitlements(input.userId, {
+    preferUserSubject: true,
+  });
+  if (!canCreateCompanyWorkspace(personal.effectivePlanTier)) {
+    throw new EntitlementError(
+      "PLAN_REQUIRED",
+      "Firma çalışma alanı Profesyonel üyelik gerektirir.",
+      403,
+    );
+  }
+
   const name = input.name.trim().slice(0, 120);
   if (name.length < 2) {
     throw new CompanyValidationError("Firma adı en az 2 karakter olmalı.");

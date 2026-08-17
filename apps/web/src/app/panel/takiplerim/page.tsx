@@ -113,7 +113,7 @@ export default async function FollowsPage() {
     <>
       <section className="py-4 sm:py-6">
         <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
-          Premium · {workspaceLabel}
+          Profesyonel · {workspaceLabel}
         </p>
         <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">Takiplerim</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">

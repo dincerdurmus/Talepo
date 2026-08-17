@@ -1,9 +1,10 @@
 import {
   canonicalizePlanTier,
+  isPaidPlan,
   normalizeStoredPlanTier,
   type PlanTierId,
 } from "./plans";
-import { getPlanDefinition, isPaidPlan } from "./plans";
+import { getPublicFacingPlanLabel } from "./product-packaging";
 import type { PersonalPlanSnapshot } from "./types";
 
 /**
@@ -40,12 +41,11 @@ export function buildPersonalPlanSnapshot(
     expiresAt,
     now,
   );
-  const plan = getPlanDefinition(effectivePlanTier);
 
   return {
     storedPlanTier,
     effectivePlanTier,
-    planLabel: plan.label,
+    planLabel: getPublicFacingPlanLabel(storedPlanTier, effectivePlanTier),
     expiresAt: expiresAt ?? null,
     isExpired,
   };

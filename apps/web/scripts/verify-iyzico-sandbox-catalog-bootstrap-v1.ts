@@ -69,7 +69,7 @@ check(
   "4 no seat quantity to iyzico",
   !bootstrap.includes("includedSeats") &&
     bootstrap.includes("seats are Talepo-side only") &&
-    getIncludedSeats("CORPORATE") === 5,
+    getIncludedSeats("CORPORATE") === 1,
 );
 check(
   "5 no checkout/payment",

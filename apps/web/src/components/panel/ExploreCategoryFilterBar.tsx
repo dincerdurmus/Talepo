@@ -40,7 +40,7 @@ export function ExploreCategoryFilterBar({
   advancedFiltersEnabled?: boolean;
   /** Show "Sadece acil" when user has urgent priority (Professional+) */
   showUrgentFilter?: boolean;
-  /** Enable save-search button (Premium saved_searches) */
+  /** Enable save-search button (saved_searches) */
   savedSearchesEnabled?: boolean;
   city?: string;
   taxonomyLeaf?: string;

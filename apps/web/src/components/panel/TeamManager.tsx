@@ -62,8 +62,12 @@ export function TeamManager({
   currentUserId: string;
   currentUserRole: string | null;
   initialOffersByUserId?: Record<string, MemberOfferDTO[]>;
-  /** Corporate included-seat usage; null when no seat cap. */
-  seatUsage?: { activeSeats: number; includedSeats: number } | null;
+  /** Professional workspace seat usage; null when no seat cap (legacy Standard). */
+  seatUsage?: {
+    activeSeats: number;
+    includedSeats: number;
+    extraSeatPurchaseReady?: boolean;
+  } | null;
 }) {
   const router = useRouter();
   const [members, setMembers] = useState(initialMembers);
@@ -82,6 +86,7 @@ export function TeamManager({
   const includedSeats = seatUsage?.includedSeats ?? null;
   const seatAtLimit =
     includedSeats != null && activeSeatCount >= includedSeats;
+  const extraSeatPurchaseReady = Boolean(seatUsage?.extraSeatPurchaseReady);
 
   const ownerCount = members.filter(
     (m) => m.role === "OWNER" && m.status === "ACTIVE",
@@ -194,13 +199,15 @@ export function TeamManager({
             Yalnız aktif üyeler koltuk tüketir (sahip dahil). Bekleyen davet
             koltuk sayılmaz.
             {seatAtLimit
-              ? " Limit doldu; yeni üye aktifleştirilemez."
+              ? extraSeatPurchaseReady
+                ? " Limit doldu; ek koltuk satın alın."
+                : " Ek koltuk gerekli. Extra seat satın alma henüz açık değil."
               : ""}
           </p>
         </div>
       )}
 
-      {canInvite && (
+      {canInvite && !seatAtLimit && (
         <form
           onSubmit={onInvite}
           className="rounded-[24px] border border-black/[0.06] bg-white p-5 shadow-sm"
@@ -246,6 +253,16 @@ export function TeamManager({
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           {message && <p className="mt-3 text-sm text-teal-800">{message}</p>}
         </form>
+      )}
+
+      {canInvite && seatAtLimit && (
+        <div className="rounded-[24px] border border-amber-800/20 bg-[#fff8ef] p-5">
+          <p className="text-sm font-semibold text-amber-950">Ek koltuk gerekli</p>
+          <p className="mt-2 text-sm leading-6 text-amber-950/70">
+            Aktif üye limiti doldu. Extra seat satın alma henüz self-serve açık
+            değil; fiyat uydurulmaz.
+          </p>
+        </div>
       )}
 
       {!canInvite && (error || message) && (

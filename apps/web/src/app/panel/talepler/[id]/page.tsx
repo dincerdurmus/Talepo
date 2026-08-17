@@ -423,7 +423,7 @@ function LockedRequestPreview({
         </p>
         <p className="mt-5 text-base leading-8 text-teal-950/55">
           Bu talep henüz standart erişime açılmadı. Tam açıklama, teknik
-          detaylar, bütçe ve teklif formu Premium üyeler için anında
+          detaylar, bütçe ve teklif formu Profesyonel üyeler için anında
           görünür.
         </p>
         <ul className="mt-6 space-y-2 text-sm text-teal-950/45">
@@ -446,18 +446,18 @@ function LockedRequestPreview({
           <Crown className="mt-0.5 h-5 w-5 text-teal-800" />
           <div>
             <p className="font-semibold text-[#0f1f1d]">
-              Bu talebe hemen erişmek için Premium&apos;a geç.
+              Bu talebe hemen erişmek için Profesyonel&apos;e geç.
             </p>
             <p className="mt-2 text-sm leading-6 text-teal-950/55">
-              Premium üyeler yeni talepleri anında görür, sınırsız teklif verir
-              ve AI araçlarından yararlanır.
+              Profesyonel üyeler yeni talepleri anında görür ve sınırsız teklif
+              verir.
             </p>
             <Link
               href="/panel/plan"
               className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-[#115e59]"
             >
               <Zap className="h-3.5 w-3.5" />
-              Premium&apos;a geç
+              Profesyonel&apos;e geç
             </Link>
           </div>
         </div>

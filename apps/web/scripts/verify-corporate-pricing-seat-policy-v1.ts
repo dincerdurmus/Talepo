@@ -59,12 +59,13 @@ check(
 );
 
 // --- Seat policy (not entitlements) ---
-check("7 corporate includedSeats = 5", getIncludedSeats("CORPORATE") === 5);
+check("7 corporate base includedSeats = 1", getIncludedSeats("CORPORATE") === 1);
 check(
-  "8 non-corporate seat caps null this phase",
+  "8 standard/premium seat caps null; professional/corporate base is 1",
   getIncludedSeats("STANDARD") === null &&
     getIncludedSeats("PREMIUM") === null &&
-    getIncludedSeats("PROFESSIONAL") === null,
+    getIncludedSeats("PROFESSIONAL") === 1 &&
+    getIncludedSeats("CORPORATE") === 1,
 );
 check(
   "9 seat policy separate from featuresForPlan",
@@ -72,13 +73,26 @@ check(
     'from "./entitlements"',
   ) &&
     !read("src/lib/membership/seat-policy.ts").includes("prisma") &&
-    PLAN_SEAT_POLICY.CORPORATE.includedSeats === 5,
+    PLAN_SEAT_POLICY.CORPORATE.includedSeats === 1,
 );
 check(
   "9b owner counts / pending does not (usage builder)",
-  buildSeatUsage({ planTier: "CORPORATE", activeSeats: 4 }).remaining === 1 &&
-    buildSeatUsage({ planTier: "CORPORATE", activeSeats: 5 }).atLimit === true &&
-    buildSeatUsage({ planTier: "CORPORATE", activeSeats: 1 }).activeSeats === 1,
+  buildSeatUsage({
+    planTier: "PROFESSIONAL",
+    workspaceEffectivePlanTier: "PROFESSIONAL",
+    activeSeats: 1,
+  }).atLimit === true &&
+    buildSeatUsage({
+      planTier: "PROFESSIONAL",
+      workspaceEffectivePlanTier: "PROFESSIONAL",
+      activeSeats: 1,
+      extraSeatsPurchased: 1,
+    }).includedSeats === 2 &&
+    buildSeatUsage({
+      planTier: "PROFESSIONAL",
+      workspaceEffectivePlanTier: "PROFESSIONAL",
+      activeSeats: 1,
+    }).activeSeats === 1,
 );
 check(
   "9c server assert uses ACTIVE count only",
@@ -113,7 +127,7 @@ check(
     "SEAT_LIMIT_REACHED",
   ) &&
     read("src/server/company/assert-company-seat.ts").includes(
-      "Kurumsal planınızda",
+      "Firma çalışma alanında",
     ),
 );
 check(
@@ -137,15 +151,17 @@ check(
 // --- UI ---
 const planMgr = read("src/components/panel/PlanManager.tsx");
 check(
-  "16 plan UI self-service corporate (no forced custom-sale)",
-  !planMgr.includes('if (planId === "CORPORATE") return false') &&
-    !planMgr.includes("Kurumsal · özel satış") &&
-    planMgr.includes("5 ekip koltuğu dahil"),
+  "16 plan UI is Standard+Professional only, no Corporate checkout",
+  planMgr.includes('planId === "PREMIUM" || planId === "CORPORATE"') &&
+    planMgr.includes("lg:grid-cols-2") &&
+    !planMgr.includes("Şirket çalışma alanı") &&
+    !planMgr.includes("Kurumsal'a geç") &&
+    !planMgr.includes("5 ekip koltuğu dahil"),
 );
 check(
   "17 team seat usage UI",
   read("src/components/panel/TeamManager.tsx").includes("koltuk kullanılıyor") &&
-    read("src/app/panel/ekip/page.tsx").includes("getIncludedSeats"),
+    read("src/app/panel/ekip/page.tsx").includes("getCompanySeatUsage"),
 );
 
 // --- Billing subject / no client price / no add-on ---

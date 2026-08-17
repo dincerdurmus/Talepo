@@ -298,7 +298,7 @@ export function seedCatalogFactsIntoFields(
 }
 
 /**
- * Premium /talep preview blocks. No IDs, no confidence, no sources.
+ * Paid /talep preview blocks. No IDs, no confidence, no sources.
  * Unknown catalog facts simply omit the line — never block publish.
  */
 export function toCatalogPreviewModel(

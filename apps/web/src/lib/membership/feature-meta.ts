@@ -18,13 +18,13 @@ export const FEATURE_META: Record<
   ),
   unlimited_offers: base("Sınırsız teklif", "Aylık teklif kotası olmadan teklif verin."),
   smart_alerts: base(
-    "Akıllı talep alarmları",
+    "Takiplerim",
     "Kategori, bölge ve bütçeye göre takip ve bildirim.",
     "/panel/takiplerim",
   ),
   ai_offer_assistant: base(
-    "AI Teklif Copilot",
-    "Talebi, fırsat sinyallerini ve fiyat rehberini kullanarak stratejili teklif taslağı hazırlayın.",
+    "Teklif taslağı",
+    "Talep metnine göre kural tabanlı taslak. Gerçek AI veya Price Intelligence değildir.",
     "/panel/asistan",
   ),
   smart_matching: base(
@@ -32,8 +32,8 @@ export const FEATURE_META: Record<
     "Firma profili ile talepler arasında skorlu eşleşme.",
   ),
   saved_searches: base(
-    "Kayıtlı aramalar",
-    "Keşif filtrelerinizi kaydedin.",
+    "Takiplerim",
+    "Takip kriterlerinizi kaydedin; yeni eşleşmede bildirim alın.",
     "/panel/takiplerim",
   ),
   advanced_filters: base(
@@ -47,8 +47,8 @@ export const FEATURE_META: Record<
     "/panel/analiz",
   ),
   hot_opportunities: base(
-    "Sıcak fırsatlar",
-    "Skorlanmış yüksek potansiyelli talepler.",
+    "Fırsatlar",
+    "Sana uygun açık talepleri yakala.",
     "/panel/firsatlar",
   ),
   high_budget_opportunities: base(
@@ -71,7 +71,7 @@ export const FEATURE_META: Record<
   professional_analytics: base(
     "Teklif Zekâsı",
     "Teklif verdiğiniz taleplerde anonim fiyat dağılımı ve kendi konumunuz. Temel Analiz tüm planlarda açıktır.",
-    "/panel/analiz",
+    "/panel/talepler",
   ),
   talepo_radar: base(
     "Talepo Radar",
@@ -85,7 +85,7 @@ export const FEATURE_META: Record<
   team_management: base("Ekip yönetimi", "Davet, rol ve üye yönetimi.", "/panel/ekip"),
   hidden_inventory: base(
     "Gizli envanter",
-    "Herkese açık olmayan stok eşleştirmesi.",
+    "Firma çalışma alanında ücretli eklenti. Professional üyeliğe otomatik dahil değildir.",
     "/panel/envanter",
   ),
   automatic_opportunity_hunter: base(
@@ -108,8 +108,8 @@ export const FEATURE_META: Record<
     "/panel/takiplerim",
   ),
   advanced_ai_pricing: base(
-    "Gelişmiş AI fiyat analizi",
-    "Legacy — basic_market_insights ile hizalanır.",
+    "Kategori fiyat bandı",
+    "Kategori katsayılarına dayalı taslak bant. Price Intelligence veya piyasa fiyatı değildir.",
     "/panel/asistan",
   ),
   urgent_request_priority: base(
@@ -123,10 +123,40 @@ export const FEATURE_META: Record<
 };
 
 export const PRO_VALUE_PILLARS = [
-  { id: "capture", title: "Fırsatları Yakala", description: "Size uygun talepleri bulun ve önemli fırsatları kaçırmayın.", features: ["smart_matching", "hot_opportunities", "talepo_radar", "smart_alerts", "saved_searches", "advanced_filters"] as FeatureKey[] },
-  { id: "analyze", title: "Fırsatı Analiz Et", description: "Teklif vermeden önce fırsatın değerini, riskini ve piyasa konumunu anlayın.", features: ["advanced_opportunity_analysis", "basic_market_insights", "competition_signals", "talepo_insights"] as FeatureKey[] },
-  { id: "offer", title: "Daha Güçlü Teklif Ver", description: "Fırsata uygun fiyat ve stratejiyle daha güçlü teklif hazırlayın.", features: ["ai_offer_assistant", "advanced_ai_pricing"] as FeatureKey[] },
-  { id: "follow-up", title: "Satışı Takip Et", description: "Tekliften sonra doğru zamanda doğru aksiyonu alın.", features: [] as FeatureKey[] },
+  {
+    id: "capture",
+    title: "Keşfet",
+    description:
+      "Sana uygun açık talepleri ve platformda olağan dışı hareketi yakala.",
+    features: [
+      "talepo_radar",
+      "hot_opportunities",
+      "saved_searches",
+      "smart_alerts",
+      "smart_matching",
+      "advanced_filters",
+    ] as FeatureKey[],
+  },
+  {
+    id: "analyze",
+    title: "Karar ver",
+    description:
+      "Teklif verdikten sonra aynı talebe gelen anonim fiyat dağılımını gör.",
+    features: ["professional_analytics", "competition_signals"] as FeatureKey[],
+  },
+  {
+    id: "offer",
+    title: "Ölç / geliştir",
+    description:
+      "Kendi performansını ve platform talep özetini Analiz’de takip et.",
+    features: ["basic_market_insights"] as FeatureKey[],
+  },
+  {
+    id: "follow-up",
+    title: "Takip et",
+    description: "Kriterlerini kaydet; yeni eşleşmede bildirim al.",
+    features: ["watchlist", "budget_change_alerts"] as FeatureKey[],
+  },
 ] as const;
 
 /** Features shown on the plan entitlement summary (user-facing). */

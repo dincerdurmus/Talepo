@@ -4,6 +4,7 @@ import type { FeatureKey } from "@/lib/membership/entitlements";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import type { EntitlementContext } from "@/lib/membership/types";
 import { EntitlementError } from "@/lib/membership/types";
+import { hasHiddenInventoryAccess } from "@/lib/membership/hidden-inventory-access";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -36,6 +37,21 @@ export async function requireCompanyFeature(
     throw new EntitlementError(
       "PLAN_REQUIRED",
       "Bu özellik firma çalışma alanında kullanılabilir.",
+      403,
+    );
+  }
+
+  if (
+    feature === "hidden_inventory" &&
+    !hasHiddenInventoryAccess({
+      effectivePlanTier: entitlements.effectivePlanTier,
+      subjectType: entitlements.subject.type,
+      features: entitlements.features,
+    })
+  ) {
+    throw new EntitlementError(
+      "FEATURE_NOT_AVAILABLE",
+      "Gizli Envanter, firma çalışma alanında ücretli eklenti olarak açılır.",
       403,
     );
   }

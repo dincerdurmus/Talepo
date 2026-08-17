@@ -5,6 +5,7 @@ import { requireCompanyFeature } from "@/lib/membership/require-company-feature"
 import {
   assertCompanyMembership,
 } from "@/lib/panel/company-workspace";
+import { assertCanActivateCompanySeat } from "@/server/company/assert-company-seat";
 import {
   isMembershipNumberInput,
   normalizeMembershipNumberInput,
@@ -123,6 +124,8 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    await assertCanActivateCompanySeat({ companyId: workspace.companyId });
 
     const body = (await request.json()) as {
       email?: string;

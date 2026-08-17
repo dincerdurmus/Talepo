@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   try {
     const user = await requireUser();
     const entitlements = await resolveEntitlements(user.id, await getCompanyContextOptions());
-    if (!entitlements.features.ai_offer_assistant && !entitlements.features.advanced_ai_pricing) return NextResponse.json({ ok: false, message: "Follow-up Intelligence PRO planınızda kapalı." }, { status: 403 });
+    if (!entitlements.features.ai_offer_assistant && !entitlements.features.advanced_ai_pricing) return NextResponse.json({ ok: false, message: "Bu araç Profesyonel planda kapalı." }, { status: 403 });
     const body = (await request.json()) as FollowUpInput;
     const context = entitlements.subject.type === "company" ? "WORKSPACE" : "PERSONAL";
     return NextResponse.json({ ok: true, followUp: buildFollowUpIntelligence({ ...body, context }) });

@@ -426,11 +426,29 @@ model Company {
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                 @relation("MessageCompanySender")
 
+  addonEntitlement CompanyAddonEntitlement?
+
   @@index([createdById])
   @@index([status])
   @@index([isVerified])
   @@index([city, district])
   @@index([createdAt])
+}
+
+/// Company-only commercial add-ons. Not a PlanTier and not a public membership SKU.
+model CompanyAddonEntitlement {
+  id        String  @id @default(cuid())
+  companyId String  @unique
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  hiddenInventoryEnabled   Boolean   @default(false)
+  hiddenInventoryExpiresAt DateTime?
+
+  extraSeatsPurchased Int       @default(0)
+  extraSeatsExpiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model CompanyInventoryItem {

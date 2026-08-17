@@ -399,7 +399,7 @@ export function OfferForm({
         <p className="rounded-xl bg-teal-50/80 px-3.5 py-2.5 text-sm text-teal-950/80">
           {isRevise
             ? "Teklif tutarı gönderimden sonra değiştirilemez. Açıklamanızı güncelleyebilirsiniz."
-            : "AI taslağı uygulandı. İstediğiniz alanları düzenleyin."}
+            : "Taslak uygulandı. İstediğiniz alanları düzenleyin."}
         </p>
       )}
 
@@ -507,7 +507,7 @@ export function OfferForm({
             className="inline-flex items-center gap-1.5 text-sm text-teal-800/70 transition hover:text-teal-900"
           >
             <WandSparkles className="h-3.5 w-3.5" />
-            AI ile taslak oluştur
+            Teklif taslağı oluştur
           </Link>
         )}
 

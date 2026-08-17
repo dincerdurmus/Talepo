@@ -10,12 +10,12 @@ type PlanMismatchInput = Pick<
 /**
  * Üyelik kuralları (ürün özeti)
  *
- * 1. Firma bağlamı aktifken tedarikçi/ekip özellikleri yalnızca Company.planTier'dan gelir.
- * 2. User.planTier kişisel modda geçerlidir; firma aboneliği personal planı yükseltmez.
- * 3. Kişisel Premium + Standart firma → firma bağlamında Standart haklar (uyarı göster).
- * 4. Firma planı (Premium/Profesyonel/Kurumsal) yalnız seçili firma workspace'inde geçerlidir.
+ * 1. Firma bağlamı: Company.planTier storage + Professional owner inheritance.
+ * 2. User.planTier kişisel modda geçerlidir; Company.planTier'a yazılmaz.
+ * 3. Professional owner'ın workspace'i Professional capability kullanır.
+ * 4. Hidden Inventory ayrı company add-on'dur; PlanTier değildir.
  * 5. Kişisel ve firma bonus/kota havuzları birleştirilmez.
- * 6. Corporate company membership ≠ USER planTier mutation.
+ * 6. Legacy Corporate/Premium stored → effective Professional.
  * 7. PLAN entitlement ≠ ROLE permission — ikisi de gerekli.
  */
 
@@ -23,14 +23,14 @@ export const PERSONAL_PREMIUM_MISMATCH_TITLE =
   "Kişisel Profesyonel üyelik ekibe yansımaz";
 
 export const PERSONAL_PREMIUM_MISMATCH_BODY =
-  "Kişisel hesabınızdaki Profesyonel üyelik firma çalışma alanında geçerli değildir. Ekip için Profesyonel üyeliğin firma hesabına tanımlanması gerekir.";
+  "Kişisel Profesyonel üyeliğiniz, sahip olduğunuz firma çalışma alanında geçerlidir. Sahip olmadığınız ekiplerde firma planı geçerlidir.";
 
 export const TEAM_PLAN_SCOPE_NOTE =
-  "Firma planı tüm ekip üyelerine firma bağlamında uygulanır. Kişisel plan yalnızca kişisel modda geçerlidir.";
+  "Firma çalışma alanında Profesyonel sahip üyeliği ekibe yansır. Gizli Envanter ve ekstra koltuklar ayrı ücretli eklentilerdir.";
 
 /**
- * Kişisel plan firma planından yüksekse (ör. User Premium + Company Standart).
- * Yalnızca firma bağlamında anlamlıdır.
+ * Kişisel plan firma planından yüksekse (ör. User Profesyonel + Company Standart
+ * ve inheritance yok). Yalnızca firma bağlamında anlamlıdır.
  */
 export function hasPersonalPlanMismatch(ctx: PlanMismatchInput): boolean {
   if (ctx.subject.type !== "company" || !ctx.personalPlan) {
@@ -53,5 +53,5 @@ export function formatPersonalPlanMismatchDetail(ctx: PlanMismatchInput): string
   const personal = ctx.personalPlan.planLabel;
   const company = ctx.planLabel;
 
-  return `Kişisel planınız ${personal}; firma planı ${company}. Ekip özellikleri firma planına göre açılır.`;
+  return `Kişisel planınız ${personal}; firma çalışma alanı ${company}. Sahip olduğunuz firmada Profesyonel haklar korunur.`;
 }

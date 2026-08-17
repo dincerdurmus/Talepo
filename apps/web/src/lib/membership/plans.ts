@@ -1,7 +1,14 @@
 export type PlanTierId = "STANDARD" | "PREMIUM" | "PROFESSIONAL" | "CORPORATE";
 
-/** Public product catalog. PREMIUM/CORPORATE remain legacy storage values only. */
-export const AVAILABLE_PLAN_IDS = ["STANDARD", "PROFESSIONAL"] as const;
+/**
+ * User-facing catalog: Standard → Professional.
+ * PREMIUM and CORPORATE remain legacy storage/enum values (canonicalize → PROFESSIONAL).
+ * Company Workspace is not a plan; extra seats and Hidden Inventory are add-ons.
+ */
+export const AVAILABLE_PLAN_IDS = [
+  "STANDARD",
+  "PROFESSIONAL",
+] as const;
 export type AvailablePlanTierId = (typeof AVAILABLE_PLAN_IDS)[number];
 
 /** Storage accepts 4 legacy plan values; normalize unknowns to STANDARD. */
@@ -85,7 +92,8 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     id: "STANDARD",
     label: "Bireysel",
     badge: "Ücretsiz",
-    description: "Talep oluşturma ücretsiz. Firmalar ayda 5 teklif hakkı ile başlar.",
+    description:
+      "Talepo'yu kullanmaya başla. Talep oluştur, ayda 5 teklif ver, talepleri keşfet ve temel Analiz'ini gör.",
     monthlyOfferQuota: 5,
     requestAccessDelayHours: ENABLE_STANDARD_REQUEST_ACCESS_DELAY
       ? STANDARD_REQUEST_ACCESS_DELAY_HOURS
@@ -101,10 +109,10 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
   },
   PREMIUM: {
     id: "PREMIUM",
-    label: "Premium",
+    label: "Profesyonel",
     badge: "Popüler",
     description:
-      "Hız: anında erişim, sınırsız teklif, akıllı alarmlar, AI asistan ve gelişmiş filtreler.",
+      "Legacy storage — user-facing product is Profesyonel. Do not sell as a separate plan.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -121,7 +129,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Profesyonel",
     badge: "Pro",
     description:
-      "Tüm profesyonel özellikler: sınırsız teklif, AI, fırsatlar, ekip, envanter, analiz ve otomasyon.",
+      "Fırsatı bul. Doğru teklifi ver. Performansını geliştir. Radar, Teklif Zekâsı, Fırsatlar, Takiplerim ve Analiz. Firma çalışma alanında ek ekip koltukları ve ücretli Gizli Envanter ile genişletilebilir.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,
@@ -130,7 +138,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     alertRules: true,
     urgentRequestPriority: true,
     advancedFilters: true,
-    hiddenInventory: true,
+    hiddenInventory: false,
     priceTry: 2490,
   },
   CORPORATE: {
@@ -138,7 +146,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Kurumsal",
     badge: "Kurumsal",
     description:
-      "Otomasyon ve veri: Profesyonel haklar + 5 ekip koltuğu, gizli envanter, fırsat merkezi, lead dağıtımı.",
+      "Legacy storage/billing — not a user-facing package. Do not sell as a separate plan.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,

@@ -71,7 +71,7 @@ export function OfferDraftSuggestion({
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-semibold text-teal-950">{label}</h2>
             <span className="rounded-full bg-teal-900/8 px-2 py-0.5 text-[10px] font-semibold uppercase text-teal-800">
-              Premium
+              Profesyonel
             </span>
           </div>
           <p className="mt-1 text-sm text-teal-950/55">

@@ -1,4 +1,3 @@
-import type { PlanTierId } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
 import { assertCanActivateCompanySeat } from "@/server/company/assert-company-seat";
 import { createNotification } from "@/server/notifications/create-notification";
@@ -66,7 +65,6 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
 
     await assertCanActivateCompanySeat({
       companyId,
-      planTier: membership.company.planTier as PlanTierId,
       db: tx,
     });
 

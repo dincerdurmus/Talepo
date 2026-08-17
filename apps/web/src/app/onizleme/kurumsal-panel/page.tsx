@@ -26,7 +26,7 @@ const CORP_NAV = [
   { icon: Search, label: "Talepleri keşfet" },
   { icon: FileText, label: "Tekliflerimiz" },
   { icon: BellRing, label: "Uyarı kuralları" },
-  { icon: WandSparkles, label: "AI asistan" },
+  { icon: WandSparkles, label: "Teklif taslağı" },
   { icon: Boxes, label: "Gizli envanter" },
   { icon: Users, label: "Ekip" },
   { icon: Crown, label: "Plan" },
@@ -289,7 +289,7 @@ function CorporateShell() {
               <div className="flex items-center gap-2 text-teal-200/80">
                 <Sparkles className="h-4 w-4" />
                 <p className="text-xs font-semibold uppercase tracking-[0.14em]">
-                  AI asistan
+                  Teklif taslağı
                 </p>
               </div>
               <h3 className="mt-3 text-lg font-semibold">

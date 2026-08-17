@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { hasHiddenInventoryAccess } from "@/lib/membership/hidden-inventory-access";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -15,7 +16,14 @@ export async function DELETE(_request: Request, { params }: Params) {
     const { id } = await params;
     const workspace = await getCompanyWorkspace(user.id);
 
-    if (!workspace?.features.hidden_inventory) {
+    if (
+      !workspace ||
+      !hasHiddenInventoryAccess({
+        effectivePlanTier: workspace.planTier,
+        subjectType: "company",
+        features: workspace.features,
+      })
+    ) {
       return NextResponse.json(
         { ok: false, message: "Bu işlem için yetkiniz yok." },
         { status: 403 },

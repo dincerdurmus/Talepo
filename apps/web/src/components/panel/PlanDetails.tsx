@@ -61,7 +61,7 @@ export async function PlanDetails({
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
           Talep oluşturmak ücretsiz kalır. Profesyonel üyelik doğrulanmış ödeme
-          sonrası açılır.
+          sonrası açılır. Firma çalışma alanı ayrı bir paket değildir.
         </p>
       </section>
       <PlanManager

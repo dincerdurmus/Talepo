@@ -1,21 +1,24 @@
 import { prisma } from "@/lib/prisma";
 
+import {
+  applyCompanyWorkspaceFeatureOverlay,
+  isHiddenInventoryAddonActive,
+} from "./company-addon-policy";
 import { featuresForPlan } from "./entitlements";
 import {
   buildPersonalPlanSnapshot,
   resolveStoredPlanTier,
   resolveEffectivePlanTier,
 } from "./plan-tier-utils";
-import {
-  getPlanDefinition,
-  type PlanTierId,
-} from "./plans";
+import { getPlanDefinition, type PlanTierId } from "./plans";
+import { getPublicFacingPlanLabel } from "./product-packaging";
 import type {
   EntitlementContext,
   EntitlementSubject,
   QuotaInfo,
   ResolveEntitlementsOptions,
 } from "./types";
+import { resolveWorkspaceEffectivePlan } from "./workspace-effective-plan";
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -56,9 +59,10 @@ function buildQuota(
  * PERSONAL (default): User.planTier / user quota / user bonus.
  * COMPANY: only when options.companyId is set AND membership is ACTIVE.
  *
- * Company plan NEVER mutates or replaces personal User.planTier.
- * No MAX(userPlan, companyPlan). No implicit company-first upgrade.
- * User + company bonuses are never summed.
+ * Company.planTier is never mutated from the user's personal plan.
+ * Professional owner membership is inherited into workspace effective plan
+ * (not MAX of two sold SKUs; workspace is not a second catalog plan).
+ * Hidden Inventory is an add-on overlay, not a Professional plan key.
  */
 export async function resolveEntitlements(
   userId: string,
@@ -136,8 +140,63 @@ export async function resolveEntitlements(
   if (company) {
     subject = { type: "company", id: company.id, name: company.name };
     storedPlanTier = resolveStoredPlanTier(company.planTier);
-    expiresAt = company.planExpiresAt;
     bonusCredits = company.bonusOfferCredits;
+
+    const [owner, addon] = await Promise.all([
+      prisma.companyMember.findFirst({
+        where: {
+          companyId: company.id,
+          role: "OWNER",
+          status: "ACTIVE",
+        },
+        select: {
+          user: { select: { planTier: true, planExpiresAt: true } },
+        },
+      }),
+      prisma.companyAddonEntitlement.findUnique({
+        where: { companyId: company.id },
+        select: {
+          hiddenInventoryEnabled: true,
+          hiddenInventoryExpiresAt: true,
+        },
+      }),
+    ]);
+
+    const workspace = resolveWorkspaceEffectivePlan({
+      companyStoredPlanTier: storedPlanTier,
+      companyExpiresAt: company.planExpiresAt,
+      ownerStoredPlanTier: owner
+        ? resolveStoredPlanTier(owner.user.planTier)
+        : null,
+      ownerExpiresAt: owner?.user.planExpiresAt ?? null,
+      now,
+    });
+
+    const inherited = workspace.inheritedFromOwner;
+    const source = inherited
+      ? resolveEffectivePlanTier(
+          resolveStoredPlanTier(owner!.user.planTier),
+          owner!.user.planExpiresAt,
+          now,
+        )
+      : resolveEffectivePlanTier(storedPlanTier, company.planExpiresAt, now);
+
+    expiresAt = inherited
+      ? (owner?.user.planExpiresAt ?? null)
+      : company.planExpiresAt;
+    const effectivePlanTier = workspace.effectivePlanTier;
+    const isExpired = source.isExpired;
+    const plan = getPlanDefinition(effectivePlanTier);
+    const hiddenInventoryActive = isHiddenInventoryAddonActive({
+      enabled: Boolean(addon?.hiddenInventoryEnabled),
+      expiresAt: addon?.hiddenInventoryExpiresAt,
+      now,
+    });
+    const features = applyCompanyWorkspaceFeatureOverlay({
+      features: featuresForPlan(effectivePlanTier),
+      workspaceEffectiveIsProfessional: effectivePlanTier === "PROFESSIONAL",
+      hiddenInventoryAddonActive: hiddenInventoryActive,
+    });
 
     usedOffersThisMonth = await prisma.offer.count({
       where: {
@@ -146,21 +205,41 @@ export async function resolveEntitlements(
         status: { notIn: ["DRAFT", "WITHDRAWN"] },
       },
     });
-  } else {
-    subject = { type: "user", id: userId };
-    storedPlanTier = resolveStoredPlanTier(user.planTier);
-    expiresAt = user.planExpiresAt;
-    bonusCredits = user.bonusOfferCredits;
 
-    usedOffersThisMonth = await prisma.offer.count({
-      where: {
-        submittedById: userId,
-        companyId: null,
-        submittedAt: { gte: monthStart },
-        status: { notIn: ["DRAFT", "WITHDRAWN"] },
-      },
-    });
+    const personalPlan = buildPersonalPlanSnapshot(
+      resolveStoredPlanTier(user.planTier),
+      user.planExpiresAt,
+      now,
+    );
+
+    return {
+      userId,
+      subject,
+      storedPlanTier,
+      effectivePlanTier,
+      planLabel: getPublicFacingPlanLabel(storedPlanTier, effectivePlanTier),
+      expiresAt,
+      isExpired,
+      features,
+      quota: buildQuota(plan.monthlyOfferQuota, usedOffersThisMonth, bonusCredits),
+      requestAccessDelayHours: plan.requestAccessDelayHours,
+      personalPlan,
+    };
   }
+
+  subject = { type: "user", id: userId };
+  storedPlanTier = resolveStoredPlanTier(user.planTier);
+  expiresAt = user.planExpiresAt;
+  bonusCredits = user.bonusOfferCredits;
+
+  usedOffersThisMonth = await prisma.offer.count({
+    where: {
+      submittedById: userId,
+      companyId: null,
+      submittedAt: { gte: monthStart },
+      status: { notIn: ["DRAFT", "WITHDRAWN"] },
+    },
+  });
 
   const { effectivePlanTier, isExpired } = resolveEffectivePlanTier(
     storedPlanTier,
@@ -180,7 +259,7 @@ export async function resolveEntitlements(
     subject,
     storedPlanTier,
     effectivePlanTier,
-    planLabel: plan.label,
+    planLabel: getPublicFacingPlanLabel(storedPlanTier, effectivePlanTier),
     expiresAt,
     isExpired,
     features: featuresForPlan(effectivePlanTier),

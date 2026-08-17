@@ -7,14 +7,19 @@ import {
   PLAN_VISUALS,
 } from "@/lib/membership/plan-visuals";
 import {
-  FEATURE_BOOST_OPTIONS,
   getAvailablePlans,
+  FEATURE_BOOST_OPTIONS,
   OFFER_CREDIT_PACKS,
 } from "@/lib/membership/plans";
-import { getPublicProductLabel } from "@/lib/membership/product-packaging";
+import {
+  getPublicProductLabel,
+  PROFESSIONAL_WORKSPACE_NOTE,
+  PUBLIC_PLAN_TAGLINES,
+  toPublicPlanId,
+} from "@/lib/membership/product-packaging";
 
 export function PricingPlans() {
-  const plans = getAvailablePlans().filter((plan) => plan.id === "STANDARD" || plan.id === "PROFESSIONAL");
+  const plans = getAvailablePlans();
 
   return (
     <section
@@ -33,14 +38,15 @@ export function PricingPlans() {
           <h2 className="mt-6 text-3xl font-semibold tracking-[-0.045em] text-[#0f1f1d] sm:text-4xl">
             Talebini yaz, teklifleri topla.
             <span className="block text-teal-800/45">
-              Firmalar hız ve erişim için plan seçer.
+            Firmalar keşif, fiyat kararı ve performans için plan seçer.
             </span>
           </h2>
 
           <p className="mt-5 text-base leading-7 text-teal-950/50 sm:text-[17px]">
-            Bireysel üyelik ücretsizdir. Profesyonel üyelik; bireysel
-            profesyoneller ve ekip koltuğu kullanan şirketler için tüm gelişmiş
-            özellikleri tek planda sunar.
+            Bireysel üyelik ücretsizdir. Profesyonel; Radar, Teklif Zekâsı,
+            Fırsatlar, Takiplerim ve Analiz sunar. Firma kullanımı ayrı bir
+            paket değil — Profesyonel müşteri isterse firma çalışma alanını
+            açar.
           </p>
         </div>
 
@@ -107,11 +113,9 @@ export function PricingPlans() {
                         Ücretsiz
                       </p>
                     )}
-                    {plan.id === "PROFESSIONAL" && (
-                      <p className="mt-1 text-xs font-medium text-teal-900/70">
-                        5 ekip koltuğu dahil
-                      </p>
-                    )}
+                    <p className="mt-1 text-xs font-medium text-teal-900/70">
+                      {PUBLIC_PLAN_TAGLINES[toPublicPlanId(plan.id)]}
+                    </p>
                   </div>
 
                   <ul className="mt-5 space-y-2.5">
@@ -133,14 +137,19 @@ export function PricingPlans() {
                       </li>
                     ))}
                   </ul>
+                  {plan.id === "PROFESSIONAL" ? (
+                    <p className="mt-4 text-[11px] leading-5 text-teal-950/45">
+                      {PROFESSIONAL_WORKSPACE_NOTE}
+                    </p>
+                  ) : null}
 
                   <Link
                     href={plan.id === "STANDARD" ? "/kayit" : "/panel/plan"}
                     className={`mt-7 flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition ${visual.button}`}
                   >
                     {plan.id === "STANDARD"
-                        ? "Ücretsiz başla"
-                        : "Planları inceleyin"}
+                      ? "Ücretsiz başla"
+                      : "Profesyonel'e geç"}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -151,12 +160,12 @@ export function PricingPlans() {
 
         <div className="mt-8 rounded-2xl border border-teal-900/10 bg-[#eef6f4] px-6 py-6 sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/70">
-            Ekip vs kişisel
+            İki üyelik
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-teal-900/75">
-            PRO kişisel kullanımda gelişmiş intelligence motorlarını sunar;
-            Workspace context’inde aynı PRO değerini şirket envanteri ve ekip
-            yetkileriyle genişletir.
+            Standart ile başlayın. Profesyonel ticaret yapan kullanıcı içindir:
+            keşfet, karar ver, ölç. Firma çalışma alanı ayrı bir üyelik paketi
+            değildir.
           </p>
         </div>
 

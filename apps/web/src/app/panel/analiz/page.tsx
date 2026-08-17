@@ -48,7 +48,7 @@ export default async function AnalyticsPage() {
             <h2 className="text-lg font-semibold text-teal-950">Platform özeti</h2>
             <p className="mt-2 text-sm text-teal-950/55">
               Yayınlanan taleplerin anonim sayısı ve ortalama talep bütçesi
-              Premium ile açılır. Kendi talep ve teklif analiziniz yukarıda
+              Profesyonel ile açılır. Kendi talep ve teklif analiziniz yukarıda
               açıktır.
             </p>
             <Link

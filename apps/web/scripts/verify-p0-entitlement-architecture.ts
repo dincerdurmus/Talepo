@@ -151,10 +151,11 @@ check(
   resolveEntitlementsTs.includes("resolveStoredPlanTier"),
 );
 check(
-  "16 resolver keeps personal snapshot and does not collapse user/company plans",
+  "16 resolver keeps personal snapshot and does not collapse stored plans",
   resolveEntitlementsTs.includes("buildPersonalPlanSnapshot") &&
-    resolveEntitlementsTs.includes("Company plan NEVER mutates") &&
-    !resolveEntitlementsTs.includes("max(userPlan, companyPlan)"),
+    resolveEntitlementsTs.includes("Company.planTier is never mutated") &&
+    resolveEntitlementsTs.includes("resolveWorkspaceEffectivePlan") &&
+    !resolveEntitlementsTs.toLowerCase().includes("max(userplan, companyplan)"),
 );
 check(
   "17 company workspace helper uses centralized helper",

@@ -77,8 +77,8 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/panel/asistan",
     icon: WandSparkles,
-    label: "AI asistan",
-    mobileLabel: "AI",
+    label: "Teklif taslağı",
+    mobileLabel: "Taslak",
     requiresFeature: "ai_offer_assistant",
   },
   {
@@ -114,7 +114,7 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     icon: Boxes,
     label: "Gizli envanter",
     mobileLabel: "Envanter",
-    // Always visible in corporate; page/API gate with hidden_inventory upsell.
+    // Always visible in company workspace; page/API gate as paid add-on.
     workspace: "corporate",
   },
   {

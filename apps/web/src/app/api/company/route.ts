@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { COMPANY_CONTEXT_COOKIE } from "@/lib/membership/company-context";
+import { EntitlementError } from "@/lib/membership/types";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -83,6 +84,12 @@ export async function POST(request: Request) {
     }
     if (error instanceof DatabaseUnavailableError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 503 });
+    }
+    if (error instanceof EntitlementError) {
+      return NextResponse.json(
+        { ok: false, code: error.code, message: error.message },
+        { status: error.status },
+      );
     }
     if (error instanceof CompanyValidationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 400 });

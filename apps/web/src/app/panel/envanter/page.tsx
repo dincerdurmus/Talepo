@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Crown } from "lucide-react";
 
 import { InventoryManager } from "@/components/panel/InventoryManager";
+import { hasHiddenInventoryAccess } from "@/lib/membership/hidden-inventory-access";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -15,23 +16,30 @@ export default async function InventoryPage() {
       <>
         <PageHeader />
         <Locked
-          title="Firma bağlamı gerekli"
-          body="Gizli envanter firma hesabında çalışır. Plan sayfasından firmanızı seçin."
-          href="/panel/plan"
+          title="Firma çalışma alanı gerekli"
+          body="Gizli Envanter yalnız firma çalışma alanında, ücretli eklenti olarak kullanılır. Bireysel Professional hesapta açılmaz."
+          href="/panel/firma/yeni"
+          cta="Firma oluştur"
         />
       </>
     );
   }
 
-  if (!workspace.features.hidden_inventory) {
+  if (
+    !hasHiddenInventoryAccess({
+      effectivePlanTier: workspace.planTier,
+      subjectType: "company",
+      features: workspace.features,
+    })
+  ) {
     return (
       <>
         <PageHeader companyName={workspace.companyName} />
         <Locked
-          title="Kurumsal planda açılır"
-          body="Gizli envanter firma içi stok listesidir; rakipler görmez. Aktif kullanım yalnızca Kurumsal pakette açılır."
-          href="/panel/plan"
-          cta="Kurumsal plana geç"
+          title="Ücretli firma eklentisi"
+          body="Gizli Envanter, firma çalışma alanına özel ücretli bir eklentidir. Professional üyeliğe veya çalışma alanı açmaya otomatik dahil değildir. Self-serve satın alma henüz açık değil."
+          href="/panel/firma"
+          cta="Firma çalışma alanına dön"
           icon
         />
       </>
@@ -68,7 +76,7 @@ function PageHeader({ companyName }: { companyName?: string }) {
   return (
     <section className="py-4 sm:py-6">
       <p className="text-sm font-semibold text-teal-800/60">
-        {companyName ?? "Kurumsal"}
+        {companyName ?? "Firma"}
       </p>
       <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
         Gizli envanter

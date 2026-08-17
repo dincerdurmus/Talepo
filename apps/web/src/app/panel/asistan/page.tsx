@@ -67,20 +67,20 @@ export default async function AiAssistantPage({
     return (
       <>
         <section className="py-4 sm:py-6">
-          <p className="text-sm font-semibold text-teal-800/55">Premium özellik</p>
+          <p className="text-sm font-semibold text-teal-800/55">Profesyonel özellik</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-            AI teklif asistanı
+            Teklif taslağı
           </h1>
         </section>
 
         <div className="rounded-2xl border border-teal-900/10 bg-white p-8 shadow-[0_12px_36px_rgba(15,31,29,0.04)]">
           <Crown className="h-8 w-8 text-teal-800" />
           <h2 className="mt-4 text-2xl font-semibold text-[#0f1f1d]">
-            Bu özellik Premium ve üzeri planlarda açılır
+            Bu özellik Profesyonel planda açılır
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-teal-950/55">
-            AI teklif asistanı ve gelişmiş fiyat analizi için planınızı
-            yükseltmeniz gerekir.
+            Kural tabanlı teklif taslağı için planınızı yükseltmeniz gerekir.
+            Bu araç gerçek AI veya Price Intelligence değildir.
           </p>
           <Link
             href="/panel/plan"
@@ -97,13 +97,13 @@ export default async function AiAssistantPage({
   return (
     <>
       <section className="py-4 sm:py-6">
-        <p className="text-sm font-semibold text-teal-800/55">Premium özellik</p>
+        <p className="text-sm font-semibold text-teal-800/55">Profesyonel özellik</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-          AI teklif asistanı
+          Teklif taslağı
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-          Talep bağlamına göre teklif taslağı, fiyat bandı ve teslim notu
-          üretin. Fiyatlar tahmini olup kategori katsayılarına dayanır.
+          Talep bağlamına göre kural tabanlı teklif taslağı ve kategori
+          katsayılı fiyat bandı. Gerçek AI veya piyasa fiyatı değildir.
         </p>
       </section>
 

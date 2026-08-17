@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { hasHiddenInventoryAccess } from "@/lib/membership/hidden-inventory-access";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -21,9 +22,15 @@ export async function GET() {
       );
     }
 
-    if (!workspace.features.hidden_inventory) {
+    if (
+      !hasHiddenInventoryAccess({
+        effectivePlanTier: workspace.planTier,
+        subjectType: "company",
+        features: workspace.features,
+      })
+    ) {
       return NextResponse.json(
-        { ok: false, message: "Gizli envanter bu planda kapalı." },
+        { ok: false, message: "Gizli envanter bu hesapta kapalı." },
         { status: 403 },
       );
     }
@@ -57,9 +64,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!workspace.features.hidden_inventory) {
+    if (
+      !hasHiddenInventoryAccess({
+        effectivePlanTier: workspace.planTier,
+        subjectType: "company",
+        features: workspace.features,
+      })
+    ) {
       return NextResponse.json(
-        { ok: false, message: "Gizli envanter bu planda kapalı." },
+        { ok: false, message: "Gizli envanter bu hesapta kapalı." },
         { status: 403 },
       );
     }

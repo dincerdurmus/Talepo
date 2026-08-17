@@ -9,12 +9,12 @@ export async function POST(request: Request) {
     const user = await requireUser();
     const entitlements = await resolveEntitlements(user.id, await getCompanyContextOptions());
     if (!entitlements.features.ai_offer_assistant && !entitlements.features.advanced_ai_pricing) {
-      return NextResponse.json({ ok: false, message: "Offer Copilot PRO planınızda kapalı." }, { status: 403 });
+      return NextResponse.json({ ok: false, message: "Teklif taslağı Profesyonel planınızda kapalı." }, { status: 403 });
     }
     const body = (await request.json()) as OfferCopilotInput;
     const context = entitlements.subject.type === "company" ? "WORKSPACE" : "PERSONAL";
     return NextResponse.json({ ok: true, copilot: buildOfferCopilot({ ...body, context }) });
   } catch {
-    return NextResponse.json({ ok: false, message: "Offer Copilot önerisi oluşturulamadı." }, { status: 500 });
+    return NextResponse.json({ ok: false, message: "Teklif taslağı önerisi oluşturulamadı." }, { status: 500 });
   }
 }

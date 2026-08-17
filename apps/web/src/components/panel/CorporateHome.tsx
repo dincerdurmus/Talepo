@@ -18,7 +18,7 @@ type CorporateHomeProps = {
   planLabel: string;
   unreadMessages: number;
   openOffersHint?: number;
-  /** Feature key: hidden_inventory (CORPORATE plan). */
+  /** Feature key: hidden_inventory (company-only paid add-on). */
   hasHiddenInventory?: boolean;
   /** Kişisel plan firma planından yüksekse uyarı metni. */
   personalPlanMismatchDetail?: string | null;
@@ -68,7 +68,7 @@ export function CorporateHome({
         <div className="talepo-plan-accent-bar absolute inset-x-0 top-0 h-[3px]" aria-hidden />
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/55">
-            Kurumsal çalışma alanı
+            Firma çalışma alanı
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-[#0f1f1d]">
             {companyName} özeti
@@ -144,10 +144,10 @@ export function CorporateHome({
               </span>
             ) : (
               <Link
-                href="/panel/plan"
+                href="/panel/envanter"
                 className="rounded-full bg-[#fbf4ea] px-3 py-1 text-xs font-semibold text-[#7a4e1a]"
               >
-                Kurumsal planda açılır
+                Ücretli eklenti
               </Link>
             )}
           </div>
@@ -183,19 +183,19 @@ export function CorporateHome({
             <div className="flex items-center gap-2 text-teal-200/80">
               <Sparkles className="h-4 w-4" />
               <p className="text-xs font-semibold uppercase tracking-[0.14em]">
-                AI asistan
+                Teklif taslağı
               </p>
             </div>
             <h3 className="mt-3 text-lg font-semibold">Teklif taslakları</h3>
             <p className="mt-2 text-sm leading-6 text-white/55">
-              Kurumsal planda AI asistan özelliği açıktır. Teklif taslağı aracı
-              yakında kullanıma sunulacak.
+              Kural tabanlı teklif taslağı Profesyonel yeteneğidir. Gerçek AI
+              veya Price Intelligence değildir.
             </p>
             <Link
               href="/panel/asistan"
               className="talepo-plan-cta mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold"
             >
-              Asistanı aç
+              Taslağı aç
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </section>

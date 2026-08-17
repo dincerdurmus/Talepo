@@ -1,7 +1,7 @@
 import type { CanonicalDiscoveryFilter } from "@/lib/discovery";
 import type { WinRatePresentation } from "./performance-metrics";
 
-/** Typed saved-search / explore filter payload (Premium+). */
+/** Typed saved-search / explore filter payload (Professional+). */
 export type SavedSearchFilters = {
   /** Phase 3A — optional versioned envelope (1 = legacy flat + optional canonical). */
   version?: 1;

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { Check, Crown, Lock } from "lucide-react";
 
 import { minimumPlanForFeature, type FeatureKey } from "@/lib/membership/entitlements";
+import { COMPANY_ONLY_FEATURES } from "@/lib/membership/feature-scope";
 import { getPlanPricing } from "@/lib/membership/pricing-config";
-import { getPlanDefinition } from "@/lib/membership/plans";
 import { UPGRADE_COPY } from "@/lib/membership/upgrade-copy";
 import { getPublicProductLabel, PRO_VALUE_MESSAGES } from "@/lib/membership/product-packaging";
 
@@ -32,17 +32,31 @@ export function FeatureUpgradeGate({
     return <>{children}</>;
   }
 
+  const isCompanyCapability = (COMPANY_ONLY_FEATURES as readonly string[]).includes(
+    feature,
+  );
   const copy = UPGRADE_COPY[feature];
-  const title = titleProp ?? copy?.title ?? "PRO özelliği";
+  const title = titleProp ?? copy?.title ?? (isCompanyCapability ? "Firma özelliği" : "Profesyonel özelliği");
   const description =
     descriptionProp ??
     copy?.description ??
-    PRO_VALUE_MESSAGES[feature] ?? "Bu özellik PRO planında aktif.";
+    PRO_VALUE_MESSAGES[feature] ??
+    (isCompanyCapability
+      ? "Bu özellik firma çalışma alanında ücretli eklenti olarak açılır."
+      : "Bu özellik Profesyonel planda açılır.");
   const bullets = copy?.bullets;
-  const ctaLabel = ctaLabelProp ?? copy?.cta ?? "Planları incele";
+  const ctaLabel =
+    ctaLabelProp ??
+    copy?.cta ??
+    (isCompanyCapability ? "Firma çalışma alanına git" : "Profesyonel'e geç");
+  const ctaHref =
+    feature === "hidden_inventory"
+      ? "/panel/envanter"
+      : isCompanyCapability
+        ? "/panel/firma"
+        : "/panel/plan";
 
   const requiredTier = minimumPlanForFeature(feature);
-  const plan = getPlanDefinition(requiredTier);
   const pricing = getPlanPricing(requiredTier);
 
   return (
@@ -52,7 +66,9 @@ export function FeatureUpgradeGate({
           <Lock className="h-7 w-7" />
         </div>
         <p className="mt-5 text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/45">
-          {getPublicProductLabel(requiredTier)} gerekli
+          {isCompanyCapability
+            ? "Firma eklentisi"
+            : `${getPublicProductLabel(requiredTier)} gerekli`}
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-teal-950">
           {title}
@@ -71,14 +87,16 @@ export function FeatureUpgradeGate({
             ))}
           </ul>
         ) : null}
-        <p className="mt-3 text-sm text-teal-950/40">
-          {pricing.tagline}
-          {pricing.priceTry
-            ? ` · ${pricing.priceTry.toLocaleString("tr-TR")} TL/ay`
-            : ""}
-        </p>
+        {!isCompanyCapability ? (
+          <p className="mt-3 text-sm text-teal-950/40">
+            {pricing.tagline}
+            {pricing.priceTry
+              ? ` · ${pricing.priceTry.toLocaleString("tr-TR")} TL/ay`
+              : ""}
+          </p>
+        ) : null}
         <Link
-          href="/panel/plan"
+          href={ctaHref}
           className="mt-8 inline-flex items-center gap-2 rounded-full bg-teal-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-950"
         >
           <Crown className="h-4 w-4" />

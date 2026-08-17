@@ -9,55 +9,56 @@ export type UpgradeCopy = {
 
 export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   smart_alerts: {
-    title: "Akıllı talep alarmları",
+    title: "Takiplerim",
     description:
-      "Yeni talepler yayınlandığında haberdar olun. Kategori, bölge ve bütçeye göre kurallar tanımlayın.",
+      "İlgilendiğiniz talepleri kaydedin. Yeni eşleşmede bildirim alın.",
     bullets: [
-      "Yeni talep yayınlandığında otomatik eşleşme",
-      "Birden fazla alarm kuralı",
-      "Aktif/pasif yönetimi",
+      "Takip kriteri (kategori, bölge, bütçe)",
+      "Bildirim aç/kapa",
+      "Kişisel veya firma çalışma alanı",
     ],
     cta: "Profesyonel'e geç",
   },
   saved_searches: {
-    title: "Kayıtlı aramalar",
+    title: "Takiplerim",
     description:
-      "Keşif filtrelerinizi kaydedin, tek tıkla tekrar çalıştırın. Kişisel veya firma çalışma alanında ayrı tutulur.",
-    bullets: ["Filtre setlerini isimlendirme", "Tek tıkla keşfe dön", "Aktif arama yönetimi"],
+      "İlgilendiğiniz talepleri kaydedin. Yeni eşleşmede bildirim alın.",
+    bullets: [
+      "Takip kriteri (kategori, bölge, bütçe)",
+      "Bildirim aç/kapa",
+      "Kişisel veya firma çalışma alanı",
+    ],
     cta: "Profesyonel'e geç",
   },
   smart_matching: {
-    title: "Akıllı eşleştirme",
-    description:
-      "Size en uygun talepleri öne çıkarın. Kategori, bölge ve uzmanlık sinyallerine göre skor.",
+    title: "Fırsatlar",
+    description: "Sana uygun açık talepleri yakala.",
     cta: "Profesyonel'e geç",
   },
   advanced_filters: {
-    title: "Gelişmiş filtreler",
-    description: "Bütçe, aciliyet, yayın tarihi ve kategoriye özel alanlarla doğru taleplere odaklanın.",
+    title: "Fırsatlar",
+    description: "Doğru taleplere odaklanmak için keşif filtreleri.",
     cta: "Profesyonel'e geç",
   },
   hot_opportunities: {
-    title: "Fırsatlar merkezi",
-    description:
-      "Doğru fırsatlara odaklanın. Sıcak talepler ve takip listesi Profesyonel keşif yüzeyinde.",
+    title: "Fırsatlar",
+    description: "Sana uygun açık talepleri yakala.",
     bullets: [
-      "Sıcak fırsat görünürlüğü",
-      "Takip listesi",
-      "Keşif workspace",
+      "Takiplerinize göre önerilen fırsatlar",
+      "Açık talep keşfi",
     ],
     cta: "Profesyonel'e geç",
   },
   professional_analytics: {
     title: "Teklif Zekâsı",
     description:
-      "Teklif verdiğiniz taleplerde anonim fiyat dağılımını ve kendi teklifinizin medyana göre konumunu görün. Kazanma tahmini yoktur.",
+      "Teklif verdikten sonra, yeterli anonim veri oluştuğunda aynı talebe gelen tekliflerin fiyat dağılımını gör. Kazanma tahmini yoktur.",
     bullets: [
       "Kendi teklifiniz gönderildikten sonra açılır",
       "En az 3 diğer anonim teklif gerekir",
       "Kimlik, mesaj ve teklif listesi gösterilmez",
     ],
-    cta: "Planları incele",
+    cta: "Profesyonel ile aç",
   },
   talepo_radar: {
     title: "Talepo Radar",
@@ -68,18 +69,28 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
       "Takiplerinizle sınırlı değildir",
       "Fırsatlar içinde Talepo Radar sekmesi",
     ],
-    cta: "Profesyonel’e geç",
+    cta: "Profesyonel'e geç",
+  },
+  hidden_inventory: {
+    title: "Gizli Envanter",
+    description:
+      "Firma kendi stok kayıtlarını Talepo'ya özel olarak ekler. Public listing değildir. Professional üyeliğe veya çalışma alanı açmaya otomatik dahil değildir.",
+    bullets: [
+      "Yalnız firma çalışma alanında",
+      "Ücretli eklenti olarak açılır",
+      "Self-serve satın alma henüz yok",
+    ],
+    cta: "Firma çalışma alanına git",
   },
   watchlist: {
-    title: "Takip listesi",
-    description:
-      "İlgilendiğiniz talepleri izleyin. Takip kayıtları firma çalışma alanında tutulur.",
+    title: "Fırsatlar",
+    description: "İlgilendiğiniz talepleri izleyin.",
     cta: "Profesyonel'e geç",
   },
   talepo_insights: {
-    title: "Talepo Insights",
+    title: "Platform özeti",
     description:
-      "Anonim piyasa sinyalleri. Tam analitik yüzey firma/Pro bağlamında açılır.",
+      "Yayınlanan taleplerin anonim sayısı ve ortalama talep bütçesi Analiz’de açılır.",
     cta: "Profesyonel'e geç",
   },
 };

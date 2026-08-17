@@ -249,11 +249,14 @@ console.log("\n=== REMOVED / HONEST UI ===\n");
     page.includes("<AnalyticsDashboard") &&
       page.includes("hasPlatformRequestSummary") &&
       page.includes("BasicMarketInsights") &&
-      page.includes("Premium ile açılır"),
+      page.includes("Profesyonel ile açılır"),
   );
   check(
-    "page is not branded as Profesyonel lock",
-    !page.includes("Profesyonel") && page.includes(">Analiz<"),
+    "page is not a Professional-only lock",
+    !page.includes("Bu özellik Premium") &&
+      !page.includes("FeatureUpgradeGate") &&
+      page.includes(">Analiz<") &&
+      page.includes("Profesyonel ile açılır"),
   );
 }
 

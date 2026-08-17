@@ -1,9 +1,6 @@
-import { PlanDetails } from "@/components/panel/PlanDetails";
+import { redirect } from "next/navigation";
 
-export default function PremiumPlanPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{ billing?: string }>;
-}) {
-  return <PlanDetails searchParams={searchParams} />;
+/** Legacy Premium marketing route — product is Profesyonel. */
+export default function PremiumPlanPage() {
+  redirect("/panel/plan");
 }

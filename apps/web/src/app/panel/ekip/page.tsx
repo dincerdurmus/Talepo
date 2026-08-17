@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
 
 import { TeamManager } from "@/components/panel/TeamManager";
-import { getIncludedSeats } from "@/lib/membership/seat-policy";
+import { getCompanySeatUsage } from "@/server/company/assert-company-seat";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
@@ -67,7 +67,7 @@ export default async function TeamPage() {
     );
   }
 
-  // PLAN entitlement: team_management (Corporate+) — role gates invitations separately
+  // PLAN entitlement: team_management (legacy CORPORATE_KEYS; not a purchasable Corporate SKU).
   if (!workspace.features.team_management) {
     return (
       <>
@@ -75,17 +75,17 @@ export default async function TeamPage() {
         <div className="rounded-[28px] border border-amber-800/15 bg-[#fff8ef] p-8">
           <Users className="h-8 w-8 text-amber-900" />
           <h2 className="mt-4 text-2xl font-semibold text-amber-950">
-            Ekip yönetimi Kurumsal planda
+            Ekip yönetimi Profesyonel çalışma alanında
           </h2>
           <p className="mt-3 max-w-xl text-sm leading-6 text-amber-950/70">
-            Bu firma çalışma alanında ekip yönetimi açık değil. Firma planını
-            yükseltin; kişisel plan ekip özelliklerini açmaz.
+            Ekip davetleri, Profesyonel üyelikli firma çalışma alanında seat
+            hakkına göre açılır. Ayrı bir Kurumsal paket yoktur.
           </p>
           <Link
             href="/panel/plan"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-amber-900 px-5 py-3 text-sm font-semibold text-white"
           >
-            Planı gör
+            Profesyonel'e geç
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -164,8 +164,9 @@ export default async function TeamPage() {
     }
   }
 
-  const includedSeats = getIncludedSeats(workspace.planTier);
-  const activeSeats = members.filter((m) => m.status === "ACTIVE").length;
+  const seatUsage = await getCompanySeatUsage({
+    companyId: workspace.companyId,
+  });
 
   return (
     <>
@@ -179,8 +180,12 @@ export default async function TeamPage() {
         currentUserRole={membership?.role ?? null}
         initialOffersByUserId={offersByUserId}
         seatUsage={
-          includedSeats != null
-            ? { activeSeats, includedSeats }
+          seatUsage.includedSeats != null
+            ? {
+                activeSeats: seatUsage.activeSeats,
+                includedSeats: seatUsage.includedSeats,
+                extraSeatPurchaseReady: false,
+              }
             : null
         }
         initialMembers={members.map((member) => ({
@@ -200,7 +205,7 @@ function PageHeader({ companyName }: { companyName?: string }) {
   return (
     <section className="py-4 sm:py-6">
       <p className="text-sm font-semibold text-teal-800/60">
-        {companyName ?? "Kurumsal"}
+        {companyName ?? "Firma"}
       </p>
       <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
         Ekip

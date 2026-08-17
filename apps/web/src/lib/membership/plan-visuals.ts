@@ -1,10 +1,8 @@
 import type { CSSProperties } from "react";
 import { Building2, Crown, Sparkles, Zap } from "lucide-react";
 
-import {
-  ENABLE_STANDARD_REQUEST_ACCESS_DELAY,
-  type PlanTierId,
-} from "./plans";
+import { type PlanTierId } from "./plans";
+import { PUBLIC_PLAN_CARD_FEATURES } from "./product-packaging";
 
 /** CSS custom properties applied to panel chrome for the active plan. */
 export type PlanThemeTokens = {
@@ -209,36 +207,10 @@ export const PLAN_VISUALS: Record<
 };
 
 export const PLAN_FEATURES: Record<PlanTierId, string[]> = {
-  STANDARD: [
-    "Ücretsiz talep oluşturma (alıcı tarafı)",
-    "Ayda 5 teklif hakkı",
-    "Temel firma profili",
-    ENABLE_STANDARD_REQUEST_ACCESS_DELAY
-      ? "Yeni taleplere 24 saat gecikmeli erişim"
-      : "Temel talep erişimi",
-  ],
-  PREMIUM: [
-    "Hız — anında erişim ve sınırsız teklif",
-    "Akıllı alarmlar ve kayıtlı aramalar",
-    "AI teklif asistanı (altyapı)",
-    "Akıllı eşleştirme ve gelişmiş filtreler",
-    "Temel piyasa içgörüleri",
-  ],
-  PROFESSIONAL: [
-    "Tüm gelişmiş özellikler tek pakette",
-    "Anında erişim, sınırsız teklif ve AI teklif asistanı",
-    "Sıcak fırsatlar ve rekabet sinyalleri",
-    "5 ekip koltuğu, ekip yönetimi ve lead dağıtımı",
-    "Gizli envanter, CSV aktarımı ve otomatik fırsat avcısı",
-    "Profesyonel analizler ve Talepo Insights",
-  ],
-  CORPORATE: [
-    "Profesyonel'deki tüm özellikler dahil",
-    "5 ekip koltuğu dahil",
-    "Gizli envanter ve Opportunity Center",
-    "Ekip yönetimi ve lead dağıtımı",
-    "CSV envanter aktarımı ve otomatik fırsat avcısı",
-  ],
+  STANDARD: PUBLIC_PLAN_CARD_FEATURES.STANDARD,
+  PREMIUM: PUBLIC_PLAN_CARD_FEATURES.PROFESSIONAL,
+  PROFESSIONAL: PUBLIC_PLAN_CARD_FEATURES.PROFESSIONAL,
+  CORPORATE: PUBLIC_PLAN_CARD_FEATURES.PROFESSIONAL,
 };
 
 export function getPlanVisual(tier: PlanTierId) {

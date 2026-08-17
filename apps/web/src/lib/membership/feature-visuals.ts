@@ -50,7 +50,7 @@ export const FEATURE_VISUALS: Partial<Record<FeatureKey, FeatureVisual>> = {
     iconClass: "text-white",
     linkClass: "text-teal-900 hover:text-teal-950",
     href: "/panel/asistan",
-    cta: "Asistanı aç →",
+    cta: "Taslağı aç →",
   },
   advanced_ai_pricing: {
     icon: LineChart,
@@ -61,7 +61,7 @@ export const FEATURE_VISUALS: Partial<Record<FeatureKey, FeatureVisual>> = {
     iconClass: "text-white",
     linkClass: "text-teal-900 hover:text-teal-950",
     href: "/panel/asistan?tab=fiyat",
-    cta: "Fiyat analizi →",
+    cta: "Fiyat bandı →",
   },
   alert_rules: {
     icon: BellRing,

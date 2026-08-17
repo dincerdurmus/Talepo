@@ -25,7 +25,7 @@ export const PLAN_PRICING: Record<PlanTierId, PlanPricing> = {
     tier: "PREMIUM",
     priceTry: 990,
     billingPeriod: "month",
-    label: "Premium",
+    label: "Profesyonel",
     tagline: "Hız",
   },
   PROFESSIONAL: {
@@ -33,14 +33,14 @@ export const PLAN_PRICING: Record<PlanTierId, PlanPricing> = {
     priceTry: 2490,
     billingPeriod: "month",
     label: "Profesyonel",
-    tagline: "Zeka",
+    tagline: "Keşfet, karar ver, ölç",
   },
   CORPORATE: {
     tier: "CORPORATE",
     priceTry: 5990,
     billingPeriod: "month",
     label: "Kurumsal",
-    tagline: "Otomasyon ve veri",
+    tagline: "Şirket çalışma alanı",
   },
 };
 
