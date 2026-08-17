@@ -321,6 +321,17 @@ export function Header({ tone = "default" }: HeaderProps) {
                     >
                       Profilim
                     </Link>
+
+                    {session.user.platformRole !== "USER" && (
+                      <Link
+                        href="/admin"
+                        role="menuitem"
+                        onClick={() => setProfileMenuOpen(false)}
+                        className="mt-1 flex items-center rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                      >
+                        Admin Paneli
+                      </Link>
+                    )}
                   </div>
 
                   <div className="border-t border-teal-900/6 py-1.5">
