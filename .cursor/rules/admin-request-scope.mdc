@@ -1,0 +1,22 @@
+---
+description: Tuğrul Admin ve Talep çalışma kapsamını ve branch çakışma kontrolünü uygular
+alwaysApply: true
+---
+
+# Admin and Request Scope
+
+- Bu worktree yalnız Admin ve Talep kapsamındaki işler içindir.
+- Her görevin başında branch, HEAD, upstream ve git status doğrulanır.
+- Her görevin başında `git fetch origin` yapılır.
+- Değiştirilecek dosyalar işe başlamadan önce listelenir.
+- Aynı dosyanın başka aktif branch'teki benzersiz commitler tarafından değiştirilmiş olması gerçek çakışma sayılır ve kod yazmadan önce raporlanır.
+- Eski taban nedeniyle oluşan tip-diff, gerçek branch çakışması sayılmaz.
+- Yalnız diğer branch'in benzersiz commitlerinin dokunduğu dosyalar çakışma kabul edilir.
+- Archive/recovery branch'leri aktif conflict source değildir; `recovery/friend-worktree-2026-08-16` yalnız özel kayıp dosya araştırmasında incelenir.
+- Dinçer recovery branch'i için yalnız `4f7fdba`, `a495506` ve `d4ee2d3` değişiklikleri dikkate alınır.
+- Analytics işi `fix/analytics-runtime-error` branch'inde kalır.
+- Dinçer recovery branch'ine dokunulmaz.
+- Admin veya Talep dışındaki değişiklikler aynı commit'e eklenmez.
+- `git add .`, force push, reset, clean, stash ve discard kullanılmaz.
+- Yalnız görev kapsamındaki açık dosyalar stage edilir.
+- Canonical branch'e entegrasyon açık onayla yapılır.
