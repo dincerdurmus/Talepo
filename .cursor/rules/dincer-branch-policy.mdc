@@ -1,0 +1,49 @@
+---
+description: Dinçer Git/branch policy for parallel Talepo development with Tuğrul
+alwaysApply: true
+---
+
+# Dinçer development branch policy
+
+This PC is Dinçer’s primary Talepo machine. Apply on every development task.
+
+## Namespaces
+
+- Dinçer new work: `feature/dincer-<iş-adı>` only. Never `feature/<iş>` for Dinçer work.
+- Tuğrul: `feature/tugrul-*` — do not develop, commit, merge, delete, force-push, or rewrite.
+- Integration: `cursor/talepo-web-core-platform` — not a daily working branch. Never merge/push there without an explicit user instruction.
+
+Examples: `feature/dincer-personal-opportunity-matching-v1`, `feature/dincer-price-intelligence-v2`.
+
+## Start a new feature
+
+1. Preflight and report: CURRENT BRANCH, HEAD, REMOTE HEAD, WORKING TREE, UNTRACKED, LOCAL-ONLY COMMITS, REMOTE DRIFT, relation to `origin/cursor/talepo-web-core-platform`.
+2. `git fetch origin`. Create the new branch from the current integration checkpoint:
+   `git switch cursor/talepo-web-core-platform` → `git pull --ff-only` → `git switch -c feature/dincer-<iş-adı>`.
+3. If the working tree is dirty, remote has drifted, unexpected commits exist, or fast-forward is impossible: STOP and report. No destructive git.
+
+Keep independent large features on separate branches. Keep a chain only when the work is a natural continuation of the same feature.
+
+## Parallel safety
+
+Before coding, identify files you will touch. If another active branch also changes PanelShell, Prisma schema, entitlements/plans, request understanding, canonical request flow, Opportunity engine, Price Intelligence, shared metadata, auth, or shared UI primitives, report `PARALLEL CONFLICT RISK: HIGH`. Do not edit the other developer’s branch because of that.
+
+If Tuğrul’s work has landed on integration, check divergence before continuing. Plan a safe include of integration; never auto-resolve conflicts. Inspect each conflict; do not drop existing product behavior.
+
+## Commits, push, merge
+
+- Conventional commits (`feat|fix|refactor|test|chore`). Do not put the developer name in the message.
+- Push Dinçer work to `origin/feature/dincer-<iş-adı>`. Verify LOCAL HEAD == REMOTE HEAD. Force push is forbidden unless the user explicitly approves.
+- Do not auto-merge to `main` or `cursor/talepo-web-core-platform`. Run tests/build, report, wait for an explicit integration instruction.
+
+## Secrets and artifacts
+
+Never commit `.env`, `.env.local`, secrets, `node_modules`, logs, screenshots, or temp artifacts. Never print secret values. Never delete or rewrite env files when switching branches.
+
+## Forbidden without explicit approval
+
+`git reset --hard`, `git clean -fd`, `git push --force` / `--force-with-lease`, branch delete, history rewrite, destructive rebase. If user work could be lost: STOP.
+
+## Checkpoint report (every development close)
+
+DEVELOPER: DINCER · BRANCH · PARENT · COMMIT · REMOTE · LOCAL HEAD == REMOTE · INTEGRATION BRANCH CHANGED: NO · TUGRUL BRANCH CHANGED: NO · PARALLEL CONFLICT RISK · ENV COMMITTED: NO · SECRETS COMMITTED: NO · DB CHANGED · MIGRATION · TSC · BUILD · PUSH · SAFE CHECKPOINT
