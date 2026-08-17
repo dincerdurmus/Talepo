@@ -86,6 +86,18 @@ console.log("\n=== STANDARD / PROFESSIONAL ACCESS ===\n");
     "37 unauthorized API uses requireUser",
     route.includes("requireUser()") && route.includes("AuthenticationError"),
   );
+  check(
+    "39 analytics failures expose safe correlation diagnostics server-side",
+    route.includes("bindCorrelationFromRequest") &&
+      route.includes("correlationResponseHeaders") &&
+      route.includes("firstApplicationFrame") &&
+      route.includes('logger.error("analytics.request.failed"'),
+  );
+  check(
+    "40 invalid analytics dates fail safely",
+    route.includes("Geçersiz tarih aralığı") &&
+      route.includes("Number.isNaN(fromDate.getTime())"),
+  );
 }
 
 console.log("\n=== OWNER ISOLATION ===\n");
