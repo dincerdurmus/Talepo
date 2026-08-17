@@ -42,12 +42,14 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
   },
   hot_opportunities: {
     title: "Fırsatlar",
-    description: "Sana uygun açık talepleri yakala.",
+    description:
+      "Takiplerinize uyan talepleri, Talepo Radar’daki hareketlenen fırsatları ve ticari fırsat havuzunu tek yerde görün.",
     bullets: [
-      "Takiplerinize göre önerilen fırsatlar",
-      "Açık talep keşfi",
+      "Önerilen: Takiplerim kriterlerinizle eşleşen talepler",
+      "Talepo Radar: platformda olağan dışı teklif hareketi",
+      "Fırsat Havuzu: diğer açık ticari fırsatlar",
     ],
-    cta: "Profesyonel'e geç",
+    cta: "Professional ile aç",
   },
   professional_analytics: {
     title: "Teklif Zekâsı",

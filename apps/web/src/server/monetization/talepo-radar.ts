@@ -187,6 +187,7 @@ export async function loadTalepoRadarFeed(input: {
             : "LOW",
       budgetStatus: "UNKNOWN",
       isWatchlisted: false,
+      alreadyOffered: offered,
       recentChanges: [],
       intelligence: radarNeutralIntelligence(context),
       context,

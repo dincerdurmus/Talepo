@@ -195,8 +195,8 @@ check(
       (item) => item.requestId !== "mercedes" && item.requestId !== "iphone",
     ),
 );
-check(
-  "C non-matching open request in Diğer Fırsatlar, not duplicate of Önerilen",
+  check(
+    "C non-matching open request in Fırsat Havuzu, not duplicate of Önerilen",
   selectOpportunityHubItems(feed, "browse").some(
     (item) => item.requestId === "mercedes",
   ) &&
@@ -290,7 +290,8 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
     "H match reason surfaced",
     hub.includes("item.matchReasons") &&
       hub.includes("matchReasonList") &&
-      hub.includes("fitReasons.map") &&
+      (hub.includes("fitReasons.map") || hub.includes("secondaryReasons.map")) &&
+      hub.includes("primaryReason") &&
       intel.reasons.some((reason) => /Takibinizle/.test(reason)),
   );
   check(
@@ -302,7 +303,7 @@ console.log("\n=== H–L CARD COPY / SIGNALS ===\n");
   check(
     "J UNKNOWN honest",
     unknown.fitLevel === "UNKNOWN" &&
-      hub.includes("Genel fırsat") &&
+      hub.includes("Açık fırsat") &&
       !hub.includes("Uygunluk için yeterli veri yok") &&
       !hub.includes("Güçlü talep eşleşmesi"),
   );
@@ -380,7 +381,8 @@ console.log("\n=== M–P SAVE / INVENTORY / TABS ===\n");
       page.includes(
         'Boolean(companyId) && hasFeature(entitlements.features, "watchlist")',
       ) &&
-      workspace.includes('tab.id !== "saved" || canWatchlist'),
+      (workspace.includes('tab.id !== "saved" || canWatchlist') ||
+        workspace.includes('tab.id === "saved" && !canWatchlist')),
   );
   check(
     "P Workspace watchlist preserved",
@@ -464,24 +466,21 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
     "personal tabs do not share one filter",
     workspace.includes('label: "Önerilen"') &&
       workspace.includes('label: "Keşfet"') &&
-      workspace.includes('label: "Diğer Fırsatlar"') &&
-      workspace.includes('label: "Acil"') &&
+      workspace.includes('label: "Fırsat Havuzu"') &&
+      !workspace.includes('label: "Acil"') &&
       workspace.includes("selectOpportunityHubItems") === false &&
       hub.includes("selectOpportunityHubItems") &&
-      hub.includes('view === "browse"') &&
-      hub.includes('view === "urgent"'),
+      hub.includes('view === "browse"'),
   );
   check(
     "personal header copy",
     page.includes("Sana uygun fırsatlar") &&
-      page.includes(
-        "Takiplerinize göre en güçlü fırsatlar burada.",
-      ),
+      page.includes("Fırsat Havuzu"),
   );
   check(
     "personal empty state",
-    hub.includes("Henüz sana güçlü şekilde uyan bir fırsat yok.") &&
-      hub.includes("Diğer Fırsatlar →") &&
+    hub.includes("Henüz takip kriterlerinize güçlü şekilde uyan açık bir fırsat yok.") &&
+      hub.includes("Fırsat Havuzu →") &&
       hub.includes("/panel/takiplerim") &&
       hub.includes("/panel/firsatlar?view=browse"),
   );
@@ -511,8 +510,7 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       hub.includes("allowCategoryStockImage") &&
       !hub.includes("allowCategoryStockImage={false}") &&
       hub.includes("md:flex-row") &&
-      hub.includes("Güçlü fırsat") &&
-      hub.includes("İyi fırsat") &&
+      hub.includes("primaryReason") &&
       hub.includes("opportunityQualityBadgeLabel") &&
       !hub.includes("Yüksek eşleşme") &&
       !hub.includes("Kısmen uygun") &&
@@ -526,18 +524,18 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       hub.includes("buildOpportunityHubSummary") &&
       hub.includes("FeedSummaryStrip items={feed}") &&
       !hub.includes("FeedSummaryStrip items={visible}") &&
-      hub.includes("En güçlü fırsat skoru") &&
       !hub.includes("Fırsat Bugün") &&
       !hub.includes("Aktif 28 gün kaldı"),
   );
   check(
-    "personal tabs stay Önerilen / Talepo Radar / Diğer Fırsatlar / Acil",
+    "personal tabs stay Önerilen / Talepo Radar / Fırsat Havuzu",
     workspace.includes('label: "Önerilen"') &&
       workspace.includes('label: "Talepo Radar"') &&
-      workspace.includes('label: "Diğer Fırsatlar"') &&
+      workspace.includes('label: "Fırsat Havuzu"') &&
       workspace.includes("Lightbulb") &&
       workspace.includes("Compass") &&
       workspace.includes("Activity") &&
+      !workspace.includes('label: "Acil"') &&
       !workspace.includes("Takip Ettiklerim") &&
       read("src/components/panel/panel-nav.ts").includes(
         'mobileLabel: "Talepler"',
@@ -728,7 +726,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
       buildOpportunityHubSummary([], now).strongestSignalScore === null,
   );
   check(
-    "recommended item excluded from Diğer Fırsatlar",
+    "recommended item excluded from Fırsat Havuzu",
     isOtherOpportunityEligible(urgentOnly) &&
       !isOtherOpportunityEligible(recommended) &&
       selectOpportunityHubItems(universe, "browse").every(
@@ -870,11 +868,11 @@ console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
       !hub.includes("Yüksek eşleşme") &&
       !hub.includes("Kısmen uygun") &&
       qualityFn.includes("Güçlü fırsat") &&
-      qualityFn.includes("Genel fırsat") &&
+      qualityFn.includes("Açık fırsat") &&
       !qualityFn.includes("Yüksek eşleşme"),
   );
   check(
-    "P1-2 Diğer without grounded match forces Genel fırsat",
+    "P1-2 Diğer without grounded match forces Açık fırsat",
     hub.includes("personalBrowseWithoutMatch") &&
       qualityFn.includes('view === "browse"') &&
       qualityFn.includes("!options.hasGroundedMatch") &&

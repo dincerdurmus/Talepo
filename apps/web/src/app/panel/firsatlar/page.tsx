@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import { CorporateOpportunityCenter } from "@/components/panel/discovery/CorporateOpportunityCenter";
@@ -24,9 +25,10 @@ import { buildOpportunitiesFeed } from "@/server/monetization/opportunities-feed
 import { loadTalepoRadarFeed } from "@/server/monetization/talepo-radar";
 import { assertCompanyMembership } from "@/lib/panel/company-workspace";
 
-type WorkspaceView = "suggested" | "browse" | "urgent" | "saved" | "ops" | "radar";
+/** User-facing views after Acil tab removal. `urgent` only for legacy parse. */
+type WorkspaceView = "suggested" | "browse" | "saved" | "ops" | "radar";
 
-function parseView(raw: string | undefined): WorkspaceView {
+function parseView(raw: string | undefined): WorkspaceView | "urgent" {
   if (
     raw === "browse" ||
     raw === "urgent" ||
@@ -55,6 +57,20 @@ function parseOpsFilter(raw: string | undefined): CorporateOpportunityFilter {
   return "all";
 }
 
+/**
+ * PAGE GATE: hot_opportunities (nav + upgrade surface).
+ * LEGACY ALIAS: advanced_opportunity_analysis still grants access on Pro/Corp.
+ * RADAR GATE: talepo_radar (tab + feed load).
+ */
+function hasFirsatlarPageAccess(
+  features: Parameters<typeof hasFeature>[0],
+): boolean {
+  return (
+    hasFeature(features, "hot_opportunities") ||
+    hasFeature(features, "advanced_opportunity_analysis")
+  );
+}
+
 export default async function OpportunitiesPage({
   searchParams,
 }: {
@@ -62,11 +78,30 @@ export default async function OpportunitiesPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+
+  // Legacy Acil tab → Fırsat Havuzu with urgent context (no 404, no hidden tab).
+  if (params.view === "urgent") {
+    const q = new URLSearchParams();
+    q.set("view", "browse");
+    q.set("urgent", "1");
+    for (const key of [
+      "taxonomyNode",
+      "taxonomyLeaf",
+      "leafExact",
+      "city",
+    ] as const) {
+      const value = params[key]?.trim();
+      if (value) q.set(key, value);
+    }
+    redirect(`/panel/firsatlar?${q.toString()}`);
+  }
+
   const entitlements = await resolveEntitlements(
     user.id,
     await getCompanyContextOptions(),
   );
-  const entitled = hasFeature(entitlements.features, "advanced_opportunity_analysis");
+  const entitled = hasFirsatlarPageAccess(entitlements.features);
+  const canRadar = hasFeature(entitlements.features, "talepo_radar");
 
   const companyId =
     entitled && entitlements.subject.type === "company"
@@ -78,10 +113,13 @@ export default async function OpportunitiesPage({
     hasFeature(entitlements.features, "lead_distribution") ||
     hasFeature(entitlements.features, "automatic_opportunity_hunter");
 
-  let view = parseView(params.view);
+  let view = parseView(params.view) as WorkspaceView;
   // Corporate default landing = Opportunity Center ops
   if (!params.view && isCorporatePlan && companyId) {
     view = "ops";
+  }
+  if (view === "radar" && !canRadar) {
+    view = "suggested";
   }
 
   const taxonomyNode = params.taxonomyNode?.trim() || null;
@@ -89,16 +127,14 @@ export default async function OpportunitiesPage({
   const leafExact = params.leafExact === "1" || params.leafExact === "true";
   const city = params.city?.trim() || null;
   const urgent =
-    params.urgent === "1" ||
-    params.urgent === "true" ||
-    view === "urgent";
+    params.urgent === "1" || params.urgent === "true";
 
   const rawFilter = buildCanonicalFilterFromWorkspaceParams({
     taxonomyNode,
     taxonomyLeaf,
     leafExact,
     city,
-    urgent: view === "browse" ? urgent : view === "urgent",
+    urgent: view === "browse" ? urgent : false,
   });
   const validated = rawFilter
     ? validateCanonicalDiscoveryFilter(rawFilter)
@@ -122,8 +158,7 @@ export default async function OpportunitiesPage({
     membership && canAssignOpportunities(membership.role),
   );
 
-  const needsDiscoveryQuery =
-    view === "browse" || view === "urgent" || view === "saved";
+  const needsDiscoveryQuery = view === "browse" || view === "saved";
 
   const feed =
     entitled && view !== "ops" && view !== "radar"
@@ -131,7 +166,7 @@ export default async function OpportunitiesPage({
       : [];
 
   const radarFeed =
-    entitled && view === "radar"
+    entitled && canRadar && view === "radar"
       ? await loadTalepoRadarFeed({
           userId: user.id,
           companyId,
@@ -144,7 +179,7 @@ export default async function OpportunitiesPage({
       ? await queryDiscoveryWorkspace({
           companyId,
           filter: view === "saved" ? null : filter,
-          urgentOnly: view === "urgent" || (view === "browse" && urgent),
+          urgentOnly: view === "browse" && urgent,
           watchlistOnly: view === "saved",
           city,
           limit: 40,
@@ -212,7 +247,7 @@ export default async function OpportunitiesPage({
             ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
             : companyId
               ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
-              : "Takiplerinize göre en güçlü fırsatlar burada."}
+              : "Takiplerinize uyan talepleri, Talepo Radar’daki hareketlenen fırsatları ve Fırsat Havuzu’nu tek yerde görün."}
         </p>
         {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
@@ -223,7 +258,13 @@ export default async function OpportunitiesPage({
         ) : null}
       </section>
 
-      <FeatureUpgradeGate feature="hot_opportunities" entitled={entitled}>
+      <FeatureUpgradeGate
+        feature="hot_opportunities"
+        entitled={entitled}
+        title="Fırsatlar"
+        description="Takiplerinize uyan talepleri, Talepo Radar’daki hareketlenen fırsatları ve ticari fırsat havuzunu tek yerde görün."
+        ctaLabel="Professional ile aç"
+      >
         {showCorporateOps && corporateCenter ? (
           <CorporateOpportunityCenter
             filter={parseOpsFilter(params.opsFilter)}
@@ -248,6 +289,7 @@ export default async function OpportunitiesPage({
             canSaveSearch={canSaveSearch}
             canCreateAlert={canCreateAlert}
             canWatchlist={canWatchlist}
+            canRadar={canRadar}
             trackedSearchCount={trackedSearchCount}
             alertCount={alertCount}
             opportunityContext={companyId ? "WORKSPACE" : "PERSONAL"}

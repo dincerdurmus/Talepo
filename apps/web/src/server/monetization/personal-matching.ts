@@ -30,12 +30,13 @@ export async function loadPersonalPreferenceFilters(
   const [savedSearches, alertRules] = await Promise.all([
     prisma.savedSearch.findMany({
       where: { ownerType: "USER", userId, isActive: true },
-      select: { name: true, filters: true },
+      select: { id: true, name: true, filters: true },
       take: 100,
     }),
     prisma.alertRule.findMany({
       where: { ownerType: "USER", userId, isActive: true },
       select: {
+        id: true,
         name: true,
         discoveryFilter: true,
         city: true,
@@ -58,6 +59,7 @@ export async function loadPersonalPreferenceFilters(
     const criteria = normalized.ok ? normalized.filters : raw;
     out.push({
       kind: "saved_search",
+      id: search.id,
       name: search.name,
       criteria,
       fingerprint: preferenceCriteriaFingerprint(criteria),
@@ -77,6 +79,7 @@ export async function loadPersonalPreferenceFilters(
     });
     out.push({
       kind: "alert_rule",
+      id: rule.id,
       name: rule.name,
       criteria,
       fingerprint: preferenceCriteriaFingerprint(criteria),
@@ -112,6 +115,7 @@ export async function matchPersonalToRequest(
       score: null,
       reasons: [],
       missingInformation: ["Talep eşleşme görünümü için bulunamadı."],
+      matchedPreference: null,
     };
   }
 

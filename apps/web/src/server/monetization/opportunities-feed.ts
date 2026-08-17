@@ -1,6 +1,7 @@
 import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import { hasGroundedPersonalMatch } from "@/lib/panel/opportunity-recommended-eligibility";
 import { parseDiscoveryProjection } from "@/lib/discovery";
+import { OFFER_INTELLIGENCE_STATUSES } from "@/lib/monetization/offer-intelligence";
 import { prisma } from "@/lib/prisma";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
@@ -38,6 +39,8 @@ export type OpportunityFeedItem = {
   competition: "LOW" | "MEDIUM" | "HIGH";
   budgetStatus: "UNKNOWN" | "BELOW_MARKET" | "MARKET" | "ABOVE_MARKET";
   isWatchlisted: boolean;
+  /** Viewer already submitted an eligible offer on this request. */
+  alreadyOffered: boolean;
   recentChanges: { field: string; label: string; oldValue: string | null; newValue: string | null }[];
   intelligence: OpportunityIntelligence;
   context: "PERSONAL" | "WORKSPACE";
@@ -200,6 +203,22 @@ export async function buildOpportunitiesFeed(
     changesByRequest.set(c.requestId, list);
   }
 
+  const offeredRows =
+    userId
+      ? await prisma.offer.findMany({
+          where: {
+            requestId: { in: requests.map((r) => r.id) },
+            status: { in: [...OFFER_INTELLIGENCE_STATUSES] },
+            ...(companyId
+              ? { companyId }
+              : { submittedById: userId, companyId: null }),
+          },
+          select: { requestId: true },
+          distinct: ["requestId"],
+        })
+      : [];
+  const alreadyOfferedIds = new Set(offeredRows.map((row) => row.requestId));
+
   const items: OpportunityFeedItem[] = [];
 
   for (const req of requests) {
@@ -224,6 +243,10 @@ export async function buildOpportunitiesFeed(
       : null;
     const matchScore = companyId ? match?.score ?? null : personalMatch?.score ?? null;
     const matchReasons = companyId ? match?.reasons ?? [] : personalMatch?.reasons ?? [];
+    const groundedPersonal = hasGroundedPersonalMatch({
+      matchScore,
+      matchReasons,
+    });
 
     const budgetMin = req.budgetMin?.toNumber() ?? null;
     const budgetMax = req.budgetMax?.toNumber() ?? null;
@@ -266,6 +289,37 @@ export async function buildOpportunitiesFeed(
       offerCount: req.offerCount,
     });
 
+    const alreadyOffered = alreadyOfferedIds.has(req.id);
+
+    let attributedDetailHref: string | null | undefined;
+    if (userId) {
+      if (
+        isPersonal &&
+        groundedPersonal &&
+        personalMatch?.matchedPreference
+      ) {
+        attributedDetailHref = attributedRequestDetailHref({
+          userId,
+          requestId: req.id,
+          source: "FOLLOW",
+          savedSearchId:
+            personalMatch.matchedPreference.kind === "saved_search"
+              ? personalMatch.matchedPreference.id
+              : null,
+          alertRuleId:
+            personalMatch.matchedPreference.kind === "alert_rule"
+              ? personalMatch.matchedPreference.id
+              : null,
+        });
+      } else {
+        attributedDetailHref = attributedRequestDetailHref({
+          userId,
+          requestId: req.id,
+          source: "DISCOVERY",
+        });
+      }
+    }
+
     items.push({
       requestId: req.id,
       title: req.title,
@@ -288,6 +342,7 @@ export async function buildOpportunitiesFeed(
       competition: competition.estimatedCompetition,
       budgetStatus: budgetEval.status,
       isWatchlisted: watchlistIds.has(req.id),
+      alreadyOffered,
       recentChanges: (changesByRequest.get(req.id) ?? []).map((c) => ({
         field: c.field,
         label: CHANGE_LABELS[c.field] ?? c.field,
@@ -296,15 +351,7 @@ export async function buildOpportunitiesFeed(
       })),
       intelligence,
       context: companyId ? "WORKSPACE" : "PERSONAL",
-      ...(userId
-        ? {
-            attributedDetailHref: attributedRequestDetailHref({
-              userId,
-              requestId: req.id,
-              source: "DISCOVERY",
-            }),
-          }
-        : {}),
+      ...(attributedDetailHref ? { attributedDetailHref } : {}),
     });
   }
 

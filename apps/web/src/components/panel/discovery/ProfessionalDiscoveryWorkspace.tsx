@@ -9,7 +9,6 @@ import {
   Compass,
   Lightbulb,
   Radar,
-  Zap,
 } from "lucide-react";
 
 import {
@@ -31,7 +30,7 @@ import { DiscoveryWorkspaceActions } from "./DiscoveryWorkspaceActions";
 import { TaxonomyCascadeBrowse } from "./TaxonomyCascadeBrowse";
 import { TaxonomySearchBox } from "./TaxonomySearchBox";
 
-export type WorkspaceView = "suggested" | "browse" | "urgent" | "saved" | "radar";
+export type WorkspaceView = "suggested" | "browse" | "saved" | "radar";
 
 export type ProfessionalDiscoveryWorkspaceProps = {
   view: WorkspaceView;
@@ -45,6 +44,7 @@ export type ProfessionalDiscoveryWorkspaceProps = {
   canSaveSearch: boolean;
   canCreateAlert: boolean;
   canWatchlist: boolean;
+  canRadar?: boolean;
   trackedSearchCount: number;
   alertCount: number;
   opportunityContext?: "PERSONAL" | "WORKSPACE";
@@ -77,7 +77,6 @@ const VIEW_TABS: Array<{
   { id: "suggested", label: "Önerilen", icon: <Lightbulb className="h-3.5 w-3.5" /> },
   { id: "radar", label: "Talepo Radar", icon: <Activity className="h-3.5 w-3.5" /> },
   { id: "browse", label: "Keşfet", icon: <Compass className="h-3.5 w-3.5" /> },
-  { id: "urgent", label: "Acil", icon: <Zap className="h-3.5 w-3.5" /> },
   { id: "saved", label: "Kaydettiklerim", icon: <Bookmark className="h-3.5 w-3.5" /> },
 ];
 
@@ -93,6 +92,7 @@ export function ProfessionalDiscoveryWorkspace({
   canSaveSearch,
   canCreateAlert,
   canWatchlist,
+  canRadar = true,
   trackedSearchCount,
   alertCount,
   opportunityContext,
@@ -121,9 +121,9 @@ export function ProfessionalDiscoveryWorkspace({
         taxonomyLeaf,
         leafExact,
         city,
-        urgent: urgent || view === "urgent",
+        urgent: Boolean(urgent),
       }),
-    [taxonomyNode, taxonomyLeaf, leafExact, city, urgent, view],
+    [taxonomyNode, taxonomyLeaf, leafExact, city, urgent],
   );
 
   const selectedNodeId = taxonomyLeaf || taxonomyNode || null;
@@ -213,33 +213,31 @@ export function ProfessionalDiscoveryWorkspace({
     !isPersonalSurface && (view === "browse" || Boolean(selectedNodeId));
   const showDiscoveryResults =
     !isPersonalSurface &&
-    (view === "browse" || view === "urgent" || view === "saved");
+    (view === "browse" || view === "saved");
   const hubView =
-    view === "urgent"
-      ? "urgent"
-      : view === "browse"
-        ? "browse"
-        : view === "radar"
-          ? "radar"
-          : "suggested";
+    view === "browse"
+      ? "browse"
+      : view === "radar"
+        ? "radar"
+        : "suggested";
 
-  const viewTabs = VIEW_TABS.filter(
-    (tab) => tab.id !== "saved" || canWatchlist,
-  ).map((tab) =>
+  const viewTabs = VIEW_TABS.filter((tab) => {
+    if (tab.id === "saved" && !canWatchlist) return false;
+    if (tab.id === "radar" && !canRadar) return false;
+    return true;
+  }).map((tab) =>
     tab.id === "browse" && isPersonalSurface
-      ? { ...tab, label: "Diğer Fırsatlar" }
+      ? { ...tab, label: "Fırsat Havuzu" }
       : tab,
   );
 
   const personalViewHint =
     isPersonalSurface && view === "suggested"
-      ? "Talepo’nun kayıtlı arama ve alarm sinyallerinize göre öne çıkardığı fırsatlar."
+      ? "Takiplerim kriterlerinizle gerçekten eşleşen açık talepler."
       : isPersonalSurface && view === "radar"
         ? "Takip etmediğiniz kategoriler de dahil, platformda olağan dışı ilgi gören açık talepler."
         : isPersonalSurface && view === "browse"
-        ? "Değerlendirebileceğiniz diğer açık fırsatlar."
-        : isPersonalSurface && view === "urgent"
-          ? "Acil işaretli açık fırsatlar."
+        ? "Önerilen kriterlerinize girmeyen fakat platformda açık olan diğer ticari fırsatlar."
           : null;
 
   return (
@@ -258,10 +256,9 @@ export function ProfessionalDiscoveryWorkspace({
                     taxonomyLeaf: tab.id === "browse" ? taxonomyLeaf : null,
                     leafExact: tab.id === "browse" ? leafExact : false,
                     city,
-                    urgent: tab.id === "urgent" ? true : undefined,
                   })}
                   aria-current={active ? "page" : undefined}
-                  className={`inline-flex h-9 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
+                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
                     active
                       ? "bg-teal-900 text-white"
                       : "border border-teal-900/12 bg-white text-teal-900/70 hover:bg-teal-50"
@@ -381,8 +378,8 @@ export function ProfessionalDiscoveryWorkspace({
               <h2 className="text-lg font-semibold text-teal-950">
                 {view === "saved"
                   ? "Kaydettiklerim"
-                  : view === "urgent"
-                    ? "Acil talepler"
+                  : urgent
+                    ? "Acil keşif sonuçları"
                     : "Keşif sonuçları"}
               </h2>
               <p className="mt-1 text-sm text-teal-950/50">

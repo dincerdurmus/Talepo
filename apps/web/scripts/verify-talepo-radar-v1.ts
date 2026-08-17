@@ -194,10 +194,10 @@ console.log("\n=== UI / COPY ===\n");
   );
   check("no competitor prices on radar cards", !hub.includes("OfferIntelligence"));
   check(
-    "14 recommended/other/urgent still present",
+    "14 recommended/pool still present",
     workspace.includes('label: "Önerilen"') &&
-      workspace.includes("Diğer Fırsatlar") &&
-      workspace.includes('label: "Acil"'),
+      workspace.includes("Fırsat Havuzu") &&
+      !workspace.includes('label: "Acil"'),
   );
 }
 

@@ -183,7 +183,10 @@ console.log("\n=== SURFACE STAMPS ===\n");
     read("src/server/monetization/discovery-workspace-query.ts").includes(
       'source: "DISCOVERY"',
     ) &&
-      read("src/app/panel/talepler/page.tsx").includes('source: "DISCOVERY"'),
+      read("src/app/panel/talepler/page.tsx").includes('source: "DISCOVERY"') &&
+      read("src/server/monetization/opportunities-feed.ts").includes(
+        'source: "FOLLOW"',
+      ),
   );
 }
 

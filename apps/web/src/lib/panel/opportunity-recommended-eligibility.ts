@@ -95,9 +95,13 @@ export function sortPersonalRecommended<
     createdAt: Date | string;
     opportunityScore: number;
     competition: "LOW" | "MEDIUM" | "HIGH";
+    alreadyOffered?: boolean;
   },
 >(items: readonly T[]): T[] {
   return [...items].sort((a, b) => {
+    const offeredA = a.alreadyOffered === true;
+    const offeredB = b.alreadyOffered === true;
+    if (offeredA !== offeredB) return offeredA ? 1 : -1;
     const matchDiff = (b.matchScore ?? -1) - (a.matchScore ?? -1);
     if (matchDiff !== 0) return matchDiff;
     if (a.isUrgent !== b.isUrgent) return a.isUrgent ? -1 : 1;
@@ -108,5 +112,17 @@ export function sortPersonalRecommended<
     const bTime = new Date(b.publishedAt ?? b.createdAt).getTime();
     if (aTime !== bTime) return bTime - aTime;
     return b.opportunityScore - a.opportunityScore;
+  });
+}
+
+/** Demote already-offered items within any hub lens without removing them. */
+export function demoteAlreadyOffered<
+  T extends { alreadyOffered?: boolean; radar?: { alreadyOffered?: boolean } },
+>(items: readonly T[]): T[] {
+  return [...items].sort((a, b) => {
+    const offeredA = a.alreadyOffered === true || a.radar?.alreadyOffered === true;
+    const offeredB = b.alreadyOffered === true || b.radar?.alreadyOffered === true;
+    if (offeredA === offeredB) return 0;
+    return offeredA ? 1 : -1;
   });
 }

@@ -33,10 +33,17 @@ export type PersonalMatchResult = {
   score: number | null;
   reasons: string[];
   missingInformation: string[];
+  /** First grounded preference used for FOLLOW attribution (server-signed). */
+  matchedPreference: {
+    kind: "saved_search" | "alert_rule";
+    id: string;
+  } | null;
 };
 
 export type PersonalPreferenceFilter = {
   kind: "saved_search" | "alert_rule";
+  /** SavedSearch.id or AlertRule.id — required for FOLLOW attribution in production. */
+  id?: string;
   name: string;
   criteria: SavedSearchFilters;
   fingerprint?: string;
@@ -64,11 +71,14 @@ export function matchPersonalAgainstPreferences(
       score: null,
       reasons: [],
       missingInformation: ["Bu kullanıcı için yeterli kişisel tercih sinyali yok."],
+      matchedPreference: null,
     };
   }
 
   const reasons: string[] = [];
   const seen = new Set<string>();
+  let matchedPreference: PersonalMatchResult["matchedPreference"] = null;
+
   for (const preference of grounded) {
     const result = evaluatePreferenceCriteria({
       projection,
@@ -83,6 +93,9 @@ export function matchPersonalAgainstPreferences(
     if (seen.has(key)) continue;
     seen.add(key);
     reasons.push(formatPersonalFollowMatchReason(preference.name));
+    if (!matchedPreference && preference.id) {
+      matchedPreference = { kind: preference.kind, id: preference.id };
+    }
   }
 
   if (reasons.length === 0) {
@@ -91,6 +104,7 @@ export function matchPersonalAgainstPreferences(
       score: null,
       reasons: [],
       missingInformation: ["Mevcut kişisel tercihlerle eşleşen sinyal bulunamadı."],
+      matchedPreference: null,
     };
   }
 
@@ -99,5 +113,6 @@ export function matchPersonalAgainstPreferences(
     score: 100,
     reasons: reasons.slice(0, 3),
     missingInformation: [],
+    matchedPreference,
   };
 }

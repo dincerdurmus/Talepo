@@ -23,6 +23,7 @@ import { opportunityRequestDetailHref } from "@/lib/panel/opportunity-request-de
 import {
   selectOpportunityHubItems,
   sortPersonalRecommended,
+  demoteAlreadyOffered,
   type OpportunityHubView,
 } from "@/lib/panel/opportunity-recommended-eligibility";
 import { isOpportunitySaveSupported } from "@/lib/panel/opportunity-save-support";
@@ -75,24 +76,32 @@ function opportunityQualityBadgeLabel(
     context: OpportunityContext;
   },
 ): { label: string; tone: "match" | "neutral" | "limited" } | null {
+  // Personal grounded match uses primary reason — never quality score copy.
+  if (options.context === "PERSONAL" && options.hasGroundedMatch) {
+    return null;
+  }
+
   const personalBrowseWithoutMatch =
     options.context === "PERSONAL" &&
     options.view === "browse" &&
     !options.hasGroundedMatch;
 
   if (personalBrowseWithoutMatch) {
-    return { label: "Genel fırsat", tone: "neutral" };
+    return { label: "Açık fırsat", tone: "neutral" };
   }
 
-  if (level === "STRONG") {
-    return { label: "Güçlü fırsat", tone: "match" };
+  // Workspace / pool may still show qualitative fit — not 0–100.
+  if (options.context === "WORKSPACE") {
+    if (level === "STRONG") {
+      return { label: "Güçlü fırsat", tone: "match" };
+    }
+    if (level === "PROMISING") {
+      return { label: "İyi fırsat", tone: "match" };
+    }
   }
-  if (level === "PROMISING") {
-    return { label: "İyi fırsat", tone: "match" };
-  }
-  if (level === "LIMITED") {
-    // Soft personalization copy removed — quality is not personal match.
-    return { label: "Genel fırsat", tone: "limited" };
+
+  if (level === "LIMITED" && options.view === "browse") {
+    return { label: "Açık fırsat", tone: "limited" };
   }
   return null;
 }
@@ -213,6 +222,8 @@ function OpportunityCard({
   opportunityContext: OpportunityContext;
 }) {
   const fitReasons = matchReasonList(item);
+  const primaryReason = fitReasons[0] ?? null;
+  const secondaryReasons = fitReasons.slice(1);
   const detailHref =
     item.attributedDetailHref ??
     opportunityRequestDetailHref(item.requestId);
@@ -227,7 +238,12 @@ function OpportunityCard({
     },
   );
   const showGeneralBadge =
-    !qualityBadge && (view === "browse" || !hasGroundedMatch);
+    !item.radar &&
+    !primaryReason &&
+    !qualityBadge &&
+    (view === "browse" || !hasGroundedMatch);
+  const showScoreStrip =
+    !item.radar && opportunityContext === "WORKSPACE";
   const confidenceLabel = dataConfidenceLabel(item.intelligence.confidence);
   const opportunityQualityScore = item.intelligence.opportunityScore;
   const riskLabel = compactRiskLabel(item);
@@ -235,6 +251,8 @@ function OpportunityCard({
     item.intelligence.recommendedAction === "REVIEW_REQUEST"
       ? null
       : ACTION_LABELS[item.intelligence.recommendedAction];
+  const alreadyOffered =
+    item.alreadyOffered === true || item.radar?.alreadyOffered === true;
 
   return (
     <article className="rounded-2xl border border-teal-900/10 bg-white p-3 shadow-[0_1px_2px_rgba(15,47,40,0.04)]">
@@ -253,15 +271,20 @@ function OpportunityCard({
           <div className="flex flex-wrap items-center gap-1.5">
             {item.radar ? (
               <OpportunityBadge tone="match">{item.radar.label}</OpportunityBadge>
+            ) : primaryReason ? (
+              <OpportunityBadge tone="match">{primaryReason}</OpportunityBadge>
             ) : qualityBadge ? (
               <OpportunityBadge tone={qualityBadge.tone}>
                 {qualityBadge.label}
               </OpportunityBadge>
             ) : showGeneralBadge ? (
-              <OpportunityBadge tone="neutral">Genel fırsat</OpportunityBadge>
+              <OpportunityBadge tone="neutral">Açık fırsat</OpportunityBadge>
             ) : null}
             {item.isUrgent ? (
               <OpportunityBadge tone="urgent">Acil</OpportunityBadge>
+            ) : null}
+            {alreadyOffered ? (
+              <OpportunityBadge tone="neutral">Teklif verdiniz</OpportunityBadge>
             ) : null}
           </div>
 
@@ -300,7 +323,7 @@ function OpportunityCard({
                 icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
                 title={item.radar.reason}
                 detail={
-                  item.radar.alreadyOffered
+                  alreadyOffered
                     ? "Bu talebe teklif verdiniz"
                     : `${item.radar.eligibleOfferCount} teklif`
                 }
@@ -311,22 +334,22 @@ function OpportunityCard({
                 title={`${COMPETITION_LABELS[item.competition]} · ${item.offerCount} teklif`}
               />
             )}
-            {item.radar ? null : (
+            {showScoreStrip ? (
               <OpportunitySignal
                 icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
                 title={`Veri güveni ${confidenceLabel}`}
                 detail={`Fırsat skoru ${opportunityQualityScore}/100`}
               />
-            )}
+            ) : null}
             <OpportunitySignal
               icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
               title={freshnessLabel(item)}
             />
           </div>
 
-          {!item.radar && fitReasons.length > 0 ? (
+          {!item.radar && secondaryReasons.length > 0 ? (
             <ul className="mt-2 space-y-0.5">
-              {fitReasons.map((reason) => (
+              {secondaryReasons.map((reason) => (
                 <li
                   key={reason}
                   className="flex items-start gap-1.5 text-[11px] leading-4 text-teal-950/70"
@@ -358,7 +381,7 @@ function OpportunityCard({
           {detailHref ? (
             <Link
               href={detailHref}
-              className="inline-flex h-9 w-full items-center justify-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 md:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 md:w-auto"
             >
               Talebi incele →
             </Link>
@@ -372,7 +395,7 @@ function OpportunityCard({
                   onWatchlistToggle(item.requestId, !item.isWatchlisted)
                 }
                 title="Talebi kaydet (watchlist) — kayıtlı aramalardan ayrıdır"
-                className={`inline-flex h-8 w-full items-center justify-center gap-1 rounded-xl px-3 text-xs font-semibold transition ${
+                className={`inline-flex min-h-11 w-full items-center justify-center gap-1 rounded-xl px-3 text-xs font-semibold transition ${
                   item.isWatchlisted
                     ? "bg-teal-900 text-white"
                     : "border border-teal-900/15 text-teal-900/70 hover:bg-teal-50"
@@ -455,22 +478,23 @@ function OpportunityEmptyState() {
         <Target className="h-6 w-6" aria-hidden />
       </div>
       <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#172c48]">
-        Henüz sana güçlü şekilde uyan bir fırsat yok.
+        Henüz takip kriterlerinize güçlü şekilde uyan açık bir fırsat yok.
       </h3>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
-        Kayıtlı takip kriterlerinizle eşleşen açık talepler burada görünür. Daha
-        geniş liste için Diğer Fırsatlar veya Acil sekmelerine bakabilirsiniz.
+        Takiplerim kriterlerinizle eşleşen açık talepler burada görünür. Daha
+        geniş liste için Fırsat Havuzu’na bakabilir veya kriterlerinizi
+        güncelleyebilirsiniz.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
         <Link
           href="/panel/firsatlar?view=browse"
-          className="inline-flex h-10 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
+          className="inline-flex min-h-11 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
         >
-          Diğer Fırsatlar →
+          Fırsat Havuzu →
         </Link>
         <Link
           href="/panel/takiplerim"
-          className="inline-flex h-10 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
+          className="inline-flex min-h-11 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
         >
           Takiplerim
         </Link>
@@ -479,13 +503,15 @@ function OpportunityEmptyState() {
   );
 }
 
-function FeedSummaryStrip({ items }: { items: OpportunityFeedItem[] }) {
+function FeedSummaryStrip({
+  items,
+  surface,
+}: {
+  items: OpportunityFeedItem[];
+  surface: OpportunityContext;
+}) {
   if (items.length === 0) return null;
   const summary = buildOpportunityHubSummary(items);
-  const confidenceLabel =
-    summary.strongestSignalConfidence != null
-      ? dataConfidenceLabel(summary.strongestSignalConfidence)
-      : null;
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -506,20 +532,18 @@ function FeedSummaryStrip({ items }: { items: OpportunityFeedItem[] }) {
         icon={<Zap className="h-3.5 w-3.5 text-amber-600" aria-hidden />}
         toneClass="text-amber-700"
       />
-      <OpportunitySummaryMetric
-        value={
-          summary.strongestSignalScore != null
-            ? `${summary.strongestSignalScore}/100`
-            : "—"
-        }
-        label={
-          confidenceLabel
-            ? `En güçlü fırsat skoru · Veri güveni ${confidenceLabel}`
-            : "En güçlü fırsat skoru"
-        }
-        icon={<Shield className="h-3.5 w-3.5 text-teal-700" aria-hidden />}
-        toneClass="text-teal-800"
-      />
+      {surface === "WORKSPACE" ? (
+        <OpportunitySummaryMetric
+          value={
+            summary.strongestSignalScore != null
+              ? `${summary.strongestSignalScore}/100`
+              : "—"
+          }
+          label="En güçlü fırsat skoru"
+          icon={<Shield className="h-3.5 w-3.5 text-teal-700" aria-hidden />}
+          toneClass="text-teal-800"
+        />
+      ) : null}
     </div>
   );
 }
@@ -547,7 +571,7 @@ export function OpportunitiesHub({
     if (view === "suggested" && surface === "PERSONAL") {
       return sortPersonalRecommended(selected);
     }
-    return selected;
+    return demoteAlreadyOffered(selected);
   }, [feed, view, surface]);
 
   const highBudget = feed.filter((i) => i.budgetStatus === "ABOVE_MARKET");
@@ -560,13 +584,11 @@ export function OpportunitiesHub({
   const sectionTitle =
     view === "browse"
       ? surface === "PERSONAL"
-        ? "Diğer fırsatlar"
+        ? "Fırsat Havuzu"
         : "Keşif"
-      : view === "urgent"
-        ? "Acil talepler"
-        : view === "radar"
-          ? "Dikkat çeken talepler"
-          : "Sana önerilen fırsatlar";
+      : view === "radar"
+        ? "Dikkat çeken talepler"
+        : "Sana önerilen fırsatlar";
 
   function cardCanSave(item: OpportunityFeedItem) {
     return isOpportunitySaveSupported({
@@ -650,30 +672,32 @@ export function OpportunitiesHub({
             <OpportunityEmptyState />
           ) : view === "radar" ? (
             <div className="space-y-2">
-              <p>Şu an olağan dışı ilgi gören açık talep yok.</p>
+              <p>Şu an olağan dışı teklif hareketi olan açık talep yok.</p>
               <p className="text-xs text-teal-950/50">
                 Radar, 10 ve üzeri gerçek teklif alan açık talepleri gösterir.
               </p>
             </div>
-          ) : view === "urgent" ? (
-            "Şu an acil işaretli açık talep yok."
           ) : surface === "PERSONAL" ? (
             <div className="space-y-3">
-              <p>Şu an gösterilecek başka açık fırsat yok.</p>
+              <p>Şu an gösterilecek açık fırsat yok.</p>
               <Link
                 href="/panel/talepler"
-                className="inline-flex h-10 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
+                className="inline-flex min-h-11 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
               >
                 Talepleri keşfet →
               </Link>
             </div>
           ) : (
-            "Şu an gösterilecek başka açık fırsat yok."
+            "Şu an gösterilecek açık fırsat yok."
           )
         }
         showEmpty
         chrome="plain"
-        metrics={view === "radar" ? undefined : <FeedSummaryStrip items={feed} />}
+        metrics={
+          view === "radar" ? undefined : (
+            <FeedSummaryStrip items={feed} surface={surface} />
+          )
+        }
         renderItem={renderCard}
       />
 
