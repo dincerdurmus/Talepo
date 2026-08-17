@@ -21,16 +21,18 @@ import {
 import { queryDiscoveryWorkspace } from "@/server/monetization/discovery-workspace-query";
 import { canAssignOpportunities } from "@/server/monetization/opportunity-assignment";
 import { buildOpportunitiesFeed } from "@/server/monetization/opportunities-feed";
+import { loadTalepoRadarFeed } from "@/server/monetization/talepo-radar";
 import { assertCompanyMembership } from "@/lib/panel/company-workspace";
 
-type WorkspaceView = "suggested" | "browse" | "urgent" | "saved" | "ops";
+type WorkspaceView = "suggested" | "browse" | "urgent" | "saved" | "ops" | "radar";
 
 function parseView(raw: string | undefined): WorkspaceView {
   if (
     raw === "browse" ||
     raw === "urgent" ||
     raw === "saved" ||
-    raw === "ops"
+    raw === "ops" ||
+    raw === "radar"
   ) {
     return raw;
   }
@@ -124,8 +126,17 @@ export default async function OpportunitiesPage({
     view === "browse" || view === "urgent" || view === "saved";
 
   const feed =
-    entitled && view !== "ops"
+    entitled && view !== "ops" && view !== "radar"
       ? await buildOpportunitiesFeed(companyId ?? undefined, user.id)
+      : [];
+
+  const radarFeed =
+    entitled && view === "radar"
+      ? await loadTalepoRadarFeed({
+          userId: user.id,
+          companyId,
+          entitlements,
+        })
       : [];
 
   const discoveryRaw =
@@ -205,6 +216,7 @@ export default async function OpportunitiesPage({
         {showCorporateOps ? (
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
             <Link href="/panel/firsatlar?view=ops" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Operasyon görünümü</Link>
+            <Link href="/panel/firsatlar?view=radar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Talepo Radar</Link>
             <Link href="/panel/takiplerim" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takiplerim</Link>
           </div>
         ) : null}
@@ -225,7 +237,7 @@ export default async function OpportunitiesPage({
         ) : (
           <ProfessionalDiscoveryWorkspace
             view={view === "ops" ? "suggested" : view}
-            feed={feed}
+            feed={view === "radar" ? radarFeed : feed}
             discoveryItems={discoveryItems}
             taxonomyNode={taxonomyNode}
             taxonomyLeaf={taxonomyLeaf}

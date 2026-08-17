@@ -73,6 +73,11 @@ export const FEATURE_META: Record<
     "Teklif verdiğiniz taleplerde anonim fiyat dağılımı ve kendi konumunuz. Temel Analiz tüm planlarda açıktır.",
     "/panel/analiz",
   ),
+  talepo_radar: base(
+    "Talepo Radar",
+    "Platformda olağan dışı ilgi gören talepleri takip alanlarınızın dışında bile keşfedin.",
+    "/panel/firsatlar?view=radar",
+  ),
   talepo_insights: base(
     "Talepo Insights",
     "Anonim piyasa verisi — yetersiz veride insufficientData.",
@@ -118,7 +123,7 @@ export const FEATURE_META: Record<
 };
 
 export const PRO_VALUE_PILLARS = [
-  { id: "capture", title: "Fırsatları Yakala", description: "Size uygun talepleri bulun ve önemli fırsatları kaçırmayın.", features: ["smart_matching", "hot_opportunities", "smart_alerts", "saved_searches", "advanced_filters"] as FeatureKey[] },
+  { id: "capture", title: "Fırsatları Yakala", description: "Size uygun talepleri bulun ve önemli fırsatları kaçırmayın.", features: ["smart_matching", "hot_opportunities", "talepo_radar", "smart_alerts", "saved_searches", "advanced_filters"] as FeatureKey[] },
   { id: "analyze", title: "Fırsatı Analiz Et", description: "Teklif vermeden önce fırsatın değerini, riskini ve piyasa konumunu anlayın.", features: ["advanced_opportunity_analysis", "basic_market_insights", "competition_signals", "talepo_insights"] as FeatureKey[] },
   { id: "offer", title: "Daha Güçlü Teklif Ver", description: "Fırsata uygun fiyat ve stratejiyle daha güçlü teklif hazırlayın.", features: ["ai_offer_assistant", "advanced_ai_pricing"] as FeatureKey[] },
   { id: "follow-up", title: "Satışı Takip Et", description: "Tekliften sonra doğru zamanda doğru aksiyonu alın.", features: [] as FeatureKey[] },
@@ -134,6 +139,7 @@ export const PLAN_SUMMARY_FEATURE_KEYS: FeatureKey[] = [
   "saved_searches",
   "advanced_filters",
   "hot_opportunities",
+  "talepo_radar",
   "competition_signals",
   "professional_analytics",
   "hidden_inventory",

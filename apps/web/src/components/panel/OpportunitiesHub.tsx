@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  Activity,
   AlertTriangle,
   Check,
   Clock,
@@ -248,7 +249,9 @@ function OpportunityCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
-            {qualityBadge ? (
+            {item.radar ? (
+              <OpportunityBadge tone="match">{item.radar.label}</OpportunityBadge>
+            ) : qualityBadge ? (
               <OpportunityBadge tone={qualityBadge.tone}>
                 {qualityBadge.label}
               </OpportunityBadge>
@@ -290,22 +293,36 @@ function OpportunityCard({
           ) : null}
 
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-            <OpportunitySignal
-              icon={<Gauge className="h-3.5 w-3.5" aria-hidden />}
-              title={`${COMPETITION_LABELS[item.competition]} · ${item.offerCount} teklif`}
-            />
-            <OpportunitySignal
-              icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
-              title={`Veri güveni ${confidenceLabel}`}
-              detail={`Fırsat skoru ${opportunityQualityScore}/100`}
-            />
+            {item.radar ? (
+              <OpportunitySignal
+                icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
+                title={item.radar.reason}
+                detail={
+                  item.radar.alreadyOffered
+                    ? "Bu talebe teklif verdiniz"
+                    : `${item.radar.eligibleOfferCount} teklif`
+                }
+              />
+            ) : (
+              <OpportunitySignal
+                icon={<Gauge className="h-3.5 w-3.5" aria-hidden />}
+                title={`${COMPETITION_LABELS[item.competition]} · ${item.offerCount} teklif`}
+              />
+            )}
+            {item.radar ? null : (
+              <OpportunitySignal
+                icon={<Shield className="h-3.5 w-3.5" aria-hidden />}
+                title={`Veri güveni ${confidenceLabel}`}
+                detail={`Fırsat skoru ${opportunityQualityScore}/100`}
+              />
+            )}
             <OpportunitySignal
               icon={<Clock className="h-3.5 w-3.5" aria-hidden />}
               title={freshnessLabel(item)}
             />
           </div>
 
-          {fitReasons.length > 0 ? (
+          {!item.radar && fitReasons.length > 0 ? (
             <ul className="mt-2 space-y-0.5">
               {fitReasons.map((reason) => (
                 <li
@@ -535,7 +552,7 @@ export function OpportunitiesHub({
   const showHighBudget = surface === "WORKSPACE" && highBudget.length > 0;
   const watchlist = feed.filter((i) => i.isWatchlisted);
   const competitionHigh = feed.filter((i) => i.competition === "LOW");
-  const showSavedSection = canWatchlist;
+  const showSavedSection = canWatchlist && view !== "radar";
   const showWorkspaceExtras = surface === "WORKSPACE" && view === "suggested";
 
   const sectionTitle =
@@ -545,7 +562,9 @@ export function OpportunitiesHub({
         : "Keşif"
       : view === "urgent"
         ? "Acil talepler"
-        : "Sana önerilen fırsatlar";
+        : view === "radar"
+          ? "Dikkat çeken talepler"
+          : "Sana önerilen fırsatlar";
 
   function cardCanSave(item: OpportunityFeedItem) {
     return isOpportunitySaveSupported({
@@ -627,6 +646,13 @@ export function OpportunitiesHub({
         empty={
           view === "suggested" ? (
             <OpportunityEmptyState />
+          ) : view === "radar" ? (
+            <div className="space-y-2">
+              <p>Şu an olağan dışı ilgi gören açık talep yok.</p>
+              <p className="text-xs text-teal-950/50">
+                Radar, 10 ve üzeri gerçek teklif alan açık talepleri gösterir.
+              </p>
+            </div>
           ) : view === "urgent" ? (
             "Şu an acil işaretli açık talep yok."
           ) : surface === "PERSONAL" ? (
@@ -645,7 +671,7 @@ export function OpportunitiesHub({
         }
         showEmpty
         chrome="plain"
-        metrics={<FeedSummaryStrip items={feed} />}
+        metrics={view === "radar" ? undefined : <FeedSummaryStrip items={feed} />}
         renderItem={renderCard}
       />
 

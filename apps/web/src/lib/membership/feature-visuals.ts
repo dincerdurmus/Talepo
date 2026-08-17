@@ -3,6 +3,7 @@ import {
   BellRing,
   Filter,
   LineChart,
+  Activity,
   Sparkles,
   WandSparkles,
   Zap,
@@ -109,6 +110,19 @@ export const FEATURE_VISUALS: Partial<Record<FeatureKey, FeatureVisual>> = {
     badgeClass: "bg-[#eef6f4] text-teal-800",
     href: "/panel/talepler?tab=all",
     cta: "Filtreleri aç →",
+  },
+  talepo_radar: {
+    icon: Activity,
+    surface: "bg-[#f7faf9]",
+    border: "border-teal-900/10",
+    glow: "bg-teal-200/20",
+    iconWrap: "bg-[#0f1f1d]",
+    iconClass: "text-white",
+    linkClass: "text-teal-900 hover:text-teal-950",
+    badge: "Pro",
+    badgeClass: "bg-[#eef6f4] text-teal-800",
+    href: "/panel/firsatlar?view=radar",
+    cta: "Radar’ı aç →",
   },
 };
 

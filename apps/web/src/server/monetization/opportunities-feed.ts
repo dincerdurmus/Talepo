@@ -40,6 +40,14 @@ export type OpportunityFeedItem = {
   recentChanges: { field: string; label: string; oldValue: string | null; newValue: string | null }[];
   intelligence: OpportunityIntelligence;
   context: "PERSONAL" | "WORKSPACE";
+  radar?: {
+    tier: "RADAR" | "FAST" | "HOT";
+    reason: string;
+    label: string;
+    eligibleOfferCount: number;
+    recentOfferCount: number | null;
+    alreadyOffered: boolean;
+  };
 };
 
 function formatBudget(

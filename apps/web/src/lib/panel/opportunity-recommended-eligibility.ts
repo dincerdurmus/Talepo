@@ -21,7 +21,7 @@
  * queryDiscoveryWorkspace, not this browse filter.
  */
 
-export type OpportunityHubView = "suggested" | "browse" | "urgent";
+export type OpportunityHubView = "suggested" | "browse" | "urgent" | "radar";
 
 export type OpportunityRecommendedSignal = {
   context: "PERSONAL" | "WORKSPACE";
@@ -72,6 +72,9 @@ export function selectOpportunityHubItems<T extends OpportunityRecommendedSignal
   items: readonly T[],
   view: OpportunityHubView,
 ): T[] {
+  if (view === "radar") {
+    return [...items];
+  }
   if (view === "browse") {
     return items.filter(isOtherOpportunityEligible);
   }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Activity,
   Bookmark,
   Compass,
   Lightbulb,
@@ -18,6 +19,10 @@ import {
 import { OpportunitiesHub } from "@/components/panel/OpportunitiesHub";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 import type { DiscoveryWorkspaceItem } from "@/server/monetization/discovery-workspace-query";
+import {
+  RADAR_BRAND_LINE,
+  RADAR_BRAND_SUBLINE,
+} from "@/lib/monetization/talepo-radar";
 import type { TaxonomyNode } from "@/lib/taxonomy";
 
 import { DiscoveryActiveFilterBar } from "./DiscoveryActiveFilterBar";
@@ -26,7 +31,7 @@ import { DiscoveryWorkspaceActions } from "./DiscoveryWorkspaceActions";
 import { TaxonomyCascadeBrowse } from "./TaxonomyCascadeBrowse";
 import { TaxonomySearchBox } from "./TaxonomySearchBox";
 
-export type WorkspaceView = "suggested" | "browse" | "urgent" | "saved";
+export type WorkspaceView = "suggested" | "browse" | "urgent" | "saved" | "radar";
 
 export type ProfessionalDiscoveryWorkspaceProps = {
   view: WorkspaceView;
@@ -70,6 +75,7 @@ const VIEW_TABS: Array<{
   icon: React.ReactNode;
 }> = [
   { id: "suggested", label: "Önerilen", icon: <Lightbulb className="h-3.5 w-3.5" /> },
+  { id: "radar", label: "Talepo Radar", icon: <Activity className="h-3.5 w-3.5" /> },
   { id: "browse", label: "Keşfet", icon: <Compass className="h-3.5 w-3.5" /> },
   { id: "urgent", label: "Acil", icon: <Zap className="h-3.5 w-3.5" /> },
   { id: "saved", label: "Kaydettiklerim", icon: <Bookmark className="h-3.5 w-3.5" /> },
@@ -209,7 +215,13 @@ export function ProfessionalDiscoveryWorkspace({
     !isPersonalSurface &&
     (view === "browse" || view === "urgent" || view === "saved");
   const hubView =
-    view === "urgent" ? "urgent" : view === "browse" ? "browse" : "suggested";
+    view === "urgent"
+      ? "urgent"
+      : view === "browse"
+        ? "browse"
+        : view === "radar"
+          ? "radar"
+          : "suggested";
 
   const viewTabs = VIEW_TABS.filter(
     (tab) => tab.id !== "saved" || canWatchlist,
@@ -222,7 +234,9 @@ export function ProfessionalDiscoveryWorkspace({
   const personalViewHint =
     isPersonalSurface && view === "suggested"
       ? "Talepo’nun kayıtlı arama ve alarm sinyallerinize göre öne çıkardığı fırsatlar."
-      : isPersonalSurface && view === "browse"
+      : isPersonalSurface && view === "radar"
+        ? "Takip etmediğiniz kategoriler de dahil, platformda olağan dışı ilgi gören açık talepler."
+        : isPersonalSurface && view === "browse"
         ? "Değerlendirebileceğiniz diğer açık fırsatlar."
         : isPersonalSurface && view === "urgent"
           ? "Acil işaretli açık fırsatlar."
@@ -439,12 +453,27 @@ export function ProfessionalDiscoveryWorkspace({
           )}
         </section>
       ) : (
-        <OpportunitiesHub
-          initialFeed={feed}
-          canWatchlist={canWatchlist}
-          view={hubView}
-          opportunityContext={surface}
-        />
+        <div className="space-y-4">
+          {view === "radar" ? (
+            <section className="rounded-[24px] border border-teal-900/10 bg-white px-5 py-4 sm:px-6 sm:py-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-800/70">
+                Talepo Radar
+              </p>
+              <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-teal-950 sm:text-2xl">
+                {RADAR_BRAND_LINE}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-950/55">
+                {RADAR_BRAND_SUBLINE}
+              </p>
+            </section>
+          ) : null}
+          <OpportunitiesHub
+            initialFeed={feed}
+            canWatchlist={canWatchlist}
+            view={hubView}
+            opportunityContext={surface}
+          />
+        </div>
       )}
     </div>
   );

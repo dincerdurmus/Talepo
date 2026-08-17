@@ -59,6 +59,17 @@ export const UPGRADE_COPY: Partial<Record<FeatureKey, UpgradeCopy>> = {
     ],
     cta: "Planları incele",
   },
+  talepo_radar: {
+    title: "Talepo Radar",
+    description:
+      "Platformda olağan dışı ilgi gören talepleri takip alanlarınızın dışında bile keşfedin. Satış tahmini yoktur.",
+    bullets: [
+      "10 ve üzeri gerçek teklif alan açık talepler",
+      "Takiplerinizle sınırlı değildir",
+      "Fırsatlar içinde Talepo Radar sekmesi",
+    ],
+    cta: "Profesyonel’e geç",
+  },
   watchlist: {
     title: "Takip listesi",
     description:

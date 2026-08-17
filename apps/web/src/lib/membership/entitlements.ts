@@ -31,6 +31,7 @@ export const FEATURE_KEYS = [
   "budget_change_alerts",
   "watchlist",
   "professional_analytics",
+  "talepo_radar",
   "talepo_insights",
 
   // Corporate — automation + team + inventory + data
@@ -88,6 +89,7 @@ const PROFESSIONAL_KEYS: readonly FeatureKey[] = [
   "budget_change_alerts",
   "watchlist",
   "professional_analytics",
+  "talepo_radar",
   "talepo_insights",
 ];
 
@@ -134,6 +136,7 @@ export const PLAN_FEATURE_GROUPS = {
     "budget_change_alerts",
     "watchlist",
     "professional_analytics",
+    "talepo_radar",
     "talepo_insights",
   ] as FeatureKey[],
   CORPORATE: [

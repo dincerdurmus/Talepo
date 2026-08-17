@@ -522,20 +522,22 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
   );
   check(
     "summary metrics are page-level from full feed",
-    hub.includes("function FeedSummaryStrip") &&
+      hub.includes("function FeedSummaryStrip") &&
       hub.includes("buildOpportunityHubSummary") &&
-      hub.includes("metrics={<FeedSummaryStrip items={feed} />}") &&
+      hub.includes("FeedSummaryStrip items={feed}") &&
       !hub.includes("FeedSummaryStrip items={visible}") &&
       hub.includes("En güçlü fırsat skoru") &&
       !hub.includes("Fırsat Bugün") &&
       !hub.includes("Aktif 28 gün kaldı"),
   );
   check(
-    "personal tabs stay Önerilen / Diğer Fırsatlar / Acil",
+    "personal tabs stay Önerilen / Talepo Radar / Diğer Fırsatlar / Acil",
     workspace.includes('label: "Önerilen"') &&
+      workspace.includes('label: "Talepo Radar"') &&
       workspace.includes('label: "Diğer Fırsatlar"') &&
       workspace.includes("Lightbulb") &&
       workspace.includes("Compass") &&
+      workspace.includes("Activity") &&
       !workspace.includes("Takip Ettiklerim") &&
       read("src/components/panel/panel-nav.ts").includes(
         'mobileLabel: "Talepler"',
@@ -609,7 +611,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
     pageSummary.recommendedCount === 1 &&
       pageSummary.urgentCount === 1 &&
       suggestedSummary.urgentCount === 0 &&
-      hub.includes("metrics={<FeedSummaryStrip items={feed} />}") &&
+      hub.includes("FeedSummaryStrip items={feed}") &&
       !hub.includes("FeedSummaryStrip items={visible}"),
   );
   check(
