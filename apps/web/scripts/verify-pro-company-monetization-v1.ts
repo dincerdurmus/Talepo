@@ -11,6 +11,7 @@ import {
   EXTRA_SEAT_ADDON,
   HIDDEN_INVENTORY_ADDON,
   applyCompanyWorkspaceFeatureOverlay,
+  formatAddonDisplayPriceLine,
   isHiddenInventoryAddonActive,
 } from "../src/lib/membership/company-addon-policy";
 import { featuresForPlan } from "../src/lib/membership/entitlements";
@@ -82,8 +83,21 @@ assert.equal(
 
 assert.equal(HIDDEN_INVENTORY_ADDON.checkoutEnabled, false);
 assert.equal(HIDDEN_INVENTORY_ADDON.priceTry, null);
+assert.equal(HIDDEN_INVENTORY_ADDON.sku, null);
+assert.equal(HIDDEN_INVENTORY_ADDON.displayPriceLabel, "Konuşulacak");
 assert.equal(EXTRA_SEAT_ADDON.checkoutEnabled, false);
 assert.equal(EXTRA_SEAT_ADDON.priceTry, null);
+assert.equal(EXTRA_SEAT_ADDON.sku, null);
+assert.equal(EXTRA_SEAT_ADDON.billingEnabled, false);
+assert.equal(EXTRA_SEAT_ADDON.displayPriceLabel, "Konuşulacak");
+assert.equal(
+  formatAddonDisplayPriceLine(EXTRA_SEAT_ADDON.displayPriceLabel),
+  "Fiyat: Konuşulacak",
+);
+assert.equal(
+  formatAddonDisplayPriceLine(HIDDEN_INVENTORY_ADDON.displayPriceLabel),
+  "Fiyat: Konuşulacak",
+);
 
 const proFeatures = featuresForPlan("PROFESSIONAL");
 assert.equal(proFeatures.hidden_inventory, false);
@@ -151,6 +165,15 @@ assert.ok(assertSeat.includes("Ek koltuk gerekli"));
 const teamRoute = read("src/app/api/company/team/route.ts");
 assert.ok(teamRoute.includes("assertCanActivateCompanySeat"));
 
+const teamMgr = read("src/components/panel/TeamManager.tsx");
+assert.ok(teamMgr.includes("ExtraSeatOfferCard"));
+assert.ok(!teamMgr.includes("Konuşulacak"));
+
+const offerCard = read("src/components/panel/CompanyAddonOfferCard.tsx");
+assert.ok(offerCard.includes("EXTRA_SEAT_ADDON"));
+assert.ok(offerCard.includes("HIDDEN_INVENTORY_ADDON"));
+assert.ok(offerCard.includes("formatAddonDisplayPriceLine"));
+assert.ok(!offerCard.includes("Konuşulacak"));
 const planMgr = read("src/components/panel/PlanManager.tsx");
 assert.ok(!planMgr.includes("Kurumsal'a geç"));
 assert.ok(planMgr.includes("lg:grid-cols-2"));

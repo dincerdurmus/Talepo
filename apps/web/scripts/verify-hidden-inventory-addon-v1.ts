@@ -73,8 +73,15 @@ const envanter = read("src/app/panel/envanter/page.tsx");
 assert.ok(envanter.includes("hasHiddenInventoryAccess"));
 assert.ok(!envanter.includes("Kurumsal plana geç"));
 assert.ok(!envanter.includes("Kurumsal planda"));
-assert.ok(envanter.includes("Ücretli firma eklentisi"));
+assert.ok(envanter.includes("HiddenInventoryOfferCard"));
+assert.ok(envanter.includes("Bireysel Professional hesapta açılmaz"));
 assert.ok(envanter.includes("/panel/firma/yeni"));
+assert.ok(!envanter.includes("Konuşulacak"));
+
+const offerCard = read("src/components/panel/CompanyAddonOfferCard.tsx");
+assert.ok(offerCard.includes("HIDDEN_INVENTORY_ADDON"));
+assert.ok(offerCard.includes("Ücretli firma eklentisi"));
+assert.ok(!offerCard.includes("Konuşulacak"));
 
 const inventoryList = read("src/app/api/company/inventory/route.ts");
 assert.ok(inventoryList.includes("hasHiddenInventoryAccess"));

@@ -5,7 +5,8 @@ import { buildProviderCacheKey, isProviderCacheEntryValid } from "../src/server/
 assert.equal(getPriceBookEntry("STANDARD", "MONTHLY").amount, null);
 assert.equal(getPriceBookEntry("PRO_PERSONAL", "MONTHLY").currency, "TRY");
 assert.equal(getPriceBookEntry("PRO_PERSONAL", "ANNUAL").checkoutEnabled, false);
-assert.equal(getPriceBookEntry("PRO_WORKSPACE", "MONTHLY").includedSeats, 5);
+assert.equal(getPriceBookEntry("PRO_WORKSPACE", "MONTHLY").additionalSeatPrice, null);
+assert.equal(getPriceBookEntry("PRO_WORKSPACE", "MONTHLY").additionalSeatBillingEnabled, false);
 assert.equal(productKeyForLegacyTier("PREMIUM"), "PRO_PERSONAL");
 assert.equal(productKeyForLegacyTier("PROFESSIONAL"), "PRO_PERSONAL");
 assert.equal(productKeyForLegacyTier("CORPORATE"), "PRO_WORKSPACE");
