@@ -155,6 +155,16 @@ enum PriceConfidenceLevel {
   VERY_HIGH
 }
 
+enum DealReviewSide {
+  BUYER
+  PROVIDER
+}
+
+enum DealReviewTargetType {
+  USER
+  COMPANY
+}
+
 enum ConversationStatus {
   ACTIVE
   ARCHIVED
@@ -195,6 +205,7 @@ enum NotificationType {
   COUNTER_OFFER_REJECTED
   DEAL_COMPLETION_REQUESTED
   DEAL_COMPLETED
+  DEAL_REVIEW_RECEIVED
   NEW_MESSAGE
   COMPANY_INVITATION
   COMPANY_MEMBER_JOINED
@@ -276,6 +287,8 @@ model User {
   submittedOffers   Offer[]       @relation("OfferSubmitter")
   buyerDealOutcomes DealOutcome[] @relation("DealBuyer")
   offerNegotiations OfferNegotiation[] @relation("OfferNegotiationProposer")
+  authoredDealReviews DealReview[] @relation("DealReviewAuthor")
+  receivedDealReviews DealReview[] @relation("DealReviewTargetUser")
 
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                 @relation("MessageSender")
@@ -441,6 +454,7 @@ model Company {
   offers         Offer[]
   requestMatches RequestMatch[]
   dealOutcomes   DealOutcome[]
+  receivedDealReviews DealReview[]
 
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                 @relation("MessageCompanySender")
@@ -879,6 +893,7 @@ model Request {
   opportunityMatches OpportunityMatch[]
   dealOutcomes       DealOutcome[]
   priceObservations  PriceObservation[]
+  dealReviews        DealReview[]
 
   @@index([createdById])
   @@index([companyId])
@@ -959,6 +974,7 @@ model Offer {
   priceObservations PriceObservation[]
   media             OfferMedia[]
   negotiations      OfferNegotiation[]
+  dealReviews       DealReview[]
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -1164,12 +1180,48 @@ model DealOutcome {
   company      Company?      @relation(fields: [companyId], references: [id], onDelete: SetNull)
 
   priceObservations PriceObservation[]
+  reviews           DealReview[]
 
   @@index([requestId])
   @@index([buyerUserId])
   @@index([companyId])
   @@index([status])
   @@index([createdAt])
+}
+
+/// Post-completion review. Eligible only after bilateral DealOutcome completion.
+model DealReview {
+  id String @id @default(cuid())
+
+  dealOutcomeId String
+  offerId       String
+  requestId     String
+
+  reviewerUserId String
+  reviewerSide   DealReviewSide
+
+  targetType      DealReviewTargetType
+  targetUserId    String?
+  targetCompanyId String?
+
+  rating  Int
+  comment String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dealOutcome DealOutcome @relation(fields: [dealOutcomeId], references: [id], onDelete: Cascade)
+  offer       Offer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  request     Request     @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  reviewer    User        @relation("DealReviewAuthor", fields: [reviewerUserId], references: [id], onDelete: Restrict)
+  targetUser  User?       @relation("DealReviewTargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  targetCompany Company?  @relation(fields: [targetCompanyId], references: [id], onDelete: SetNull)
+
+  @@unique([dealOutcomeId, reviewerSide])
+  @@index([targetUserId, createdAt])
+  @@index([targetCompanyId, createdAt])
+  @@index([offerId])
+  @@index([requestId])
 }
 
 /// Raw price signal storage for Talepo Price Intelligence

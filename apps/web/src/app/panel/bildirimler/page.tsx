@@ -264,7 +264,8 @@ function NotificationIcon({
     type === "COUNTER_OFFER_ACCEPTED" ||
     type === "COUNTER_OFFER_REJECTED" ||
     type === "DEAL_COMPLETION_REQUESTED" ||
-    type === "DEAL_COMPLETED"
+    type === "DEAL_COMPLETED" ||
+    type === "DEAL_REVIEW_RECEIVED"
   ) {
     Icon = BriefcaseBusiness;
     background =
@@ -272,7 +273,9 @@ function NotificationIcon({
       type === "COUNTER_OFFER_RECEIVED" ||
       type === "DEAL_COMPLETION_REQUESTED"
         ? "bg-amber-50"
-        : type === "COUNTER_OFFER_ACCEPTED" || type === "DEAL_COMPLETED"
+        : type === "COUNTER_OFFER_ACCEPTED" ||
+            type === "DEAL_COMPLETED" ||
+            type === "DEAL_REVIEW_RECEIVED"
           ? "bg-[#e9f8e5]"
           : "bg-[#e5efff]";
   }

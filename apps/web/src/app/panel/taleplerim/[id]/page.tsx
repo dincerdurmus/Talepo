@@ -16,7 +16,7 @@ import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
-import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
+import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
 import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -32,7 +32,10 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { canEditRequestStatus } from "@/server/request/update-request";
-import { loadCompletedTransactionCounts } from "@/server/price-intelligence/deal-outcome";
+import {
+  loadProviderTrustSummaries,
+  trustForOfferProvider,
+} from "@/server/offer/trust-summary";
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Taslak",
@@ -104,7 +107,7 @@ export default async function RequestDetailPage({
 
   if (!request) notFound();
 
-  const completedCounts = await loadCompletedTransactionCounts({
+  const trustSummaries = await loadProviderTrustSummaries({
     personalUserIds: request.offers
       .filter((offer) => !offer.company)
       .map((offer) => offer.submittedBy.id),
@@ -322,14 +325,8 @@ export default async function RequestDetailPage({
                             "Firma"}
                         </p>
                         <div className="mt-1">
-                          <CompletedTransactionBadge
-                            count={
-                              offer.company
-                                ? completedCounts.company.get(offer.company.id) ?? 0
-                                : completedCounts.personal.get(
-                                    offer.submittedBy.id,
-                                  ) ?? 0
-                            }
+                          <TrustSummaryBadge
+                            summary={trustForOfferProvider(trustSummaries, offer)}
                           />
                         </div>
                         <p className="mt-1 text-sm text-black/40">

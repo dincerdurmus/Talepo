@@ -91,6 +91,7 @@ export function deriveNotificationPath(
       return "/panel/teklifler";
     case "DEAL_COMPLETION_REQUESTED":
     case "DEAL_COMPLETED":
+    case "DEAL_REVIEW_RECEIVED":
     case "NEW_MESSAGE":
       return "/panel/mesajlar";
     case "COMPANY_MEMBER_JOINED":

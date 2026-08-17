@@ -16,9 +16,14 @@ import { ProfileEditor } from "@/components/panel/ProfileEditor";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
+import { formatAverageRating, formatReviewCount } from "@/lib/offer/deal-review";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-import { countCompletedTransactions } from "@/server/price-intelligence/deal-outcome";
+import {
+  getBuyerTrustSummary,
+  getCompanyTrustSummary,
+  getUserTrustSummary,
+} from "@/server/offer/trust-summary";
 
 export default async function ProfilePage() {
   const sessionUser = await requireUser();
@@ -54,12 +59,10 @@ export default async function ProfilePage() {
 
   const companyId =
     entitlements.subject.type === "company" ? entitlements.subject.id : null;
-  const [personalSold, companySold, purchased] = await Promise.all([
-    countCompletedTransactions({ personalProviderUserId: user.id }),
-    companyId
-      ? countCompletedTransactions({ companyId })
-      : Promise.resolve(0),
-    countCompletedTransactions({ buyerUserId: user.id }),
+  const [personalTrust, companyTrust, buyerTrust] = await Promise.all([
+    getUserTrustSummary(user.id),
+    companyId ? getCompanyTrustSummary(companyId) : Promise.resolve(null),
+    getBuyerTrustSummary(user.id),
   ]);
 
   const initials = getInitials(user.name, user.email);
@@ -109,22 +112,42 @@ export default async function ProfilePage() {
               label="Verdiğim teklifler"
               value={String(user._count.submittedOffers)}
             />
-            {personalSold > 0 ? (
+            {personalTrust.completedTransactions > 0 ? (
               <StatRow
                 label="Tamamlanan işlem"
-                value={String(personalSold)}
+                value={String(personalTrust.completedTransactions)}
               />
             ) : null}
-            {companySold > 0 ? (
+            {personalTrust.reviewCount > 0 && personalTrust.averageRating != null ? (
+              <StatRow
+                label="Değerlendirme"
+                value={`${formatAverageRating(personalTrust.averageRating)} · ${formatReviewCount(personalTrust.reviewCount)}`}
+              />
+            ) : null}
+            {companyTrust && companyTrust.completedTransactions > 0 ? (
               <StatRow
                 label="Firma tamamlanan işlem"
-                value={String(companySold)}
+                value={String(companyTrust.completedTransactions)}
               />
             ) : null}
-            {purchased > 0 ? (
+            {companyTrust &&
+            companyTrust.reviewCount > 0 &&
+            companyTrust.averageRating != null ? (
+              <StatRow
+                label="Firma değerlendirme"
+                value={`${formatAverageRating(companyTrust.averageRating)} · ${formatReviewCount(companyTrust.reviewCount)}`}
+              />
+            ) : null}
+            {buyerTrust.completedTransactions > 0 ? (
               <StatRow
                 label="Tamamlanan alım"
-                value={String(purchased)}
+                value={String(buyerTrust.completedTransactions)}
+              />
+            ) : null}
+            {buyerTrust.reviewCount > 0 && buyerTrust.averageRating != null ? (
+              <StatRow
+                label="Alıcı değerlendirme"
+                value={`${formatAverageRating(buyerTrust.averageRating)} · ${formatReviewCount(buyerTrust.reviewCount)}`}
               />
             ) : null}
             <StatRow
@@ -176,6 +199,43 @@ export default async function ProfilePage() {
               biography: user.biography ?? "",
             }}
           />
+
+          {personalTrust.recentComments.length > 0 ||
+          (companyTrust && companyTrust.recentComments.length > 0) ? (
+            <div className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] sm:p-8">
+              <h3 className="text-xl font-semibold tracking-tight">
+                Son değerlendirmeler
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {[
+                  ...personalTrust.recentComments.map((row) => ({
+                    ...row,
+                    scope: "Kişisel",
+                  })),
+                  ...(companyTrust?.recentComments ?? []).map((row) => ({
+                    ...row,
+                    scope: "Firma",
+                  })),
+                ]
+                  .slice(0, 5)
+                  .map((row, index) => (
+                    <li
+                      key={`${row.createdAt}-${index}`}
+                      className="rounded-2xl bg-[#f6f6f2] px-4 py-3"
+                    >
+                      <p className="text-xs font-medium text-black/40">
+                        {row.scope} ·{" "}
+                        {row.reviewerSide === "BUYER" ? "Alıcı" : "Teklif veren"} ·{" "}
+                        {row.rating}/5
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-black/70">
+                        {row.comment}
+                      </p>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          ) : null}
 
           <div className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] sm:p-8">
             <h3 className="text-xl font-semibold tracking-tight">

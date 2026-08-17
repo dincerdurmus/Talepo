@@ -4,15 +4,19 @@ import { ArrowLeft, FileText } from "lucide-react";
 
 import { MessageComposer } from "@/components/panel/MessageComposer";
 import { DealOutcomePanel } from "@/components/panel/DealOutcomePanel";
-import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
+import { DealReviewPanel } from "@/components/panel/DealReviewPanel";
+import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
+import { isBilateralDealCompleted } from "@/lib/offer/deal-completion";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { markConversationAsRead } from "@/server/message/mark-conversation-read";
+import { getDealReviewForSide } from "@/server/offer/deal-review-service";
 import {
-  countCompletedTransactions,
-  getDealOutcomeForConversation,
-} from "@/server/price-intelligence/deal-outcome";
+  getCompanyTrustSummary,
+  getUserTrustSummary,
+} from "@/server/offer/trust-summary";
+import { getDealOutcomeForConversation } from "@/server/price-intelligence/deal-outcome";
 
 export default async function ConversationDetailPage({
   params,
@@ -88,22 +92,27 @@ export default async function ConversationDetailPage({
     ? `/panel/taleplerim/${request.id}`
     : `/panel/talepler/${request.id}`;
 
-  const dealOutcome =
-    offerAccepted ? await getDealOutcomeForConversation(id) : null;
-  const providerCompletedCount =
-    isBuyer && offerAccepted
-      ? conversation.offer.company?.id
-        ? await countCompletedTransactions({
-            companyId: conversation.offer.company.id,
-          })
-        : await countCompletedTransactions({
-            personalProviderUserId: conversation.offer.submittedById,
-          })
-      : 0;
   const dealRole: "buyer" | "supplier" | null = isBuyer
     ? "buyer"
     : isSupplier
       ? "supplier"
+      : null;
+  const dealOutcome =
+    offerAccepted ? await getDealOutcomeForConversation(id) : null;
+  const dealCompleted = dealOutcome
+    ? isBilateralDealCompleted(dealOutcome)
+    : false;
+  const providerTrust = isBuyer
+    ? conversation.offer.company?.id
+      ? await getCompanyTrustSummary(conversation.offer.company.id)
+      : await getUserTrustSummary(conversation.offer.submittedById)
+    : null;
+  const ownReview =
+    dealCompleted && dealOutcome && dealRole
+      ? await getDealReviewForSide(
+          dealOutcome.id,
+          dealRole === "buyer" ? "BUYER" : "PROVIDER",
+        )
       : null;
 
   return (
@@ -119,8 +128,8 @@ export default async function ConversationDetailPage({
           </Link>
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             {counterpart}
-            {isBuyer ? (
-              <CompletedTransactionBadge count={providerCompletedCount} />
+            {isBuyer && providerTrust ? (
+              <TrustSummaryBadge summary={providerTrust} />
             ) : null}
           </p>
         </div>
@@ -149,19 +158,28 @@ export default async function ConversationDetailPage({
       </header>
 
       {dealOutcome && dealRole && (
-        <DealOutcomePanel
-          dealOutcome={{
-            id: dealOutcome.id,
-            status: dealOutcome.status,
-            confirmationLevel: dealOutcome.confirmationLevel,
-            agreedPrice: dealOutcome.agreedPrice?.toNumber() ?? null,
-            currency: dealOutcome.currency,
-            buyerConfirmedAt: dealOutcome.buyerConfirmedAt?.toISOString() ?? null,
-            supplierConfirmedAt: dealOutcome.supplierConfirmedAt?.toISOString() ?? null,
-            completedAt: dealOutcome.completedAt?.toISOString() ?? null,
-          }}
-          role={dealRole}
-        />
+        <>
+          <DealOutcomePanel
+            dealOutcome={{
+              id: dealOutcome.id,
+              status: dealOutcome.status,
+              confirmationLevel: dealOutcome.confirmationLevel,
+              agreedPrice: dealOutcome.agreedPrice?.toNumber() ?? null,
+              currency: dealOutcome.currency,
+              buyerConfirmedAt: dealOutcome.buyerConfirmedAt?.toISOString() ?? null,
+              supplierConfirmedAt:
+                dealOutcome.supplierConfirmedAt?.toISOString() ?? null,
+              completedAt: dealOutcome.completedAt?.toISOString() ?? null,
+            }}
+            role={dealRole}
+          />
+          {dealCompleted ? (
+            <DealReviewPanel
+              dealOutcomeId={dealOutcome.id}
+              existingReview={ownReview}
+            />
+          ) : null}
+        </>
       )}
 
       <section className="mt-5 flex min-h-[420px] flex-col overflow-hidden rounded-2xl border border-teal-900/8 bg-white shadow-[0_18px_55px_rgba(15,118,110,0.05)]">

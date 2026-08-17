@@ -10,7 +10,7 @@ import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
-import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
+import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   compareOffersByCompleteness,
@@ -23,7 +23,11 @@ import {
 } from "@/lib/offer/offer-negotiation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-import { loadCompletedTransactionCounts } from "@/server/price-intelligence/deal-outcome";
+import {
+  loadProviderTrustSummaries,
+  trustForOfferProvider,
+} from "@/server/offer/trust-summary";
+import type { TrustSummary } from "@/lib/offer/deal-review";
 
 const statusLabels: Record<string, string> = {
   SUBMITTED: "Yeni",
@@ -95,7 +99,7 @@ export default async function IncomingOffersPage() {
     },
   })) as OfferRow[];
 
-  const completedCounts = await loadCompletedTransactionCounts({
+  const trustSummaries = await loadProviderTrustSummaries({
     personalUserIds: offers
       .filter((offer) => !offer.company)
       .map((offer) => offer.submittedBy.id),
@@ -276,11 +280,7 @@ export default async function IncomingOffersPage() {
                             offer={offer}
                             actionable
                             completeness={offer.completeness}
-                            completedCount={
-                              offer.company
-                                ? completedCounts.company.get(offer.company.id) ?? 0
-                                : completedCounts.personal.get(offer.submittedBy.id) ?? 0
-                            }
+                            trust={trustForOfferProvider(trustSummaries, offer)}
                             rank={
                               group.pending.length >= 2 ? index + 1 : undefined
                             }
@@ -300,11 +300,7 @@ export default async function IncomingOffersPage() {
                           <IncomingOfferCard
                             key={offer.id}
                             offer={offer}
-                            completedCount={
-                              offer.company
-                                ? completedCounts.company.get(offer.company.id) ?? 0
-                                : completedCounts.personal.get(offer.submittedBy.id) ?? 0
-                            }
+                            trust={trustForOfferProvider(trustSummaries, offer)}
                           />
                         ))}
                       </div>
@@ -351,13 +347,13 @@ function IncomingOfferCard({
   actionable = false,
   completeness,
   rank,
-  completedCount = 0,
+  trust,
 }: {
   offer: OfferRow;
   actionable?: boolean;
   completeness?: OfferCompleteness;
   rank?: number;
-  completedCount?: number;
+  trust?: TrustSummary;
 }) {
   const firmName = offer.company?.name || offer.submittedBy.name || "Firma";
   const amount = Number(offer.amount);
@@ -391,7 +387,7 @@ function IncomingOfferCard({
                 Doğrulanmış firma
               </span>
             )}
-            <CompletedTransactionBadge count={completedCount} />
+            {trust ? <TrustSummaryBadge summary={trust} /> : null}
           </div>
           <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#0f1f1d]">
             {firmName}
