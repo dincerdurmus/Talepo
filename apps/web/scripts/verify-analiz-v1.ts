@@ -17,6 +17,14 @@ import { isPersonalApiCapable } from "../src/lib/membership/feature-scope";
 import { FEATURE_META } from "../src/lib/membership/feature-meta";
 import { PRO_FEATURE_PRESENTATION } from "../src/lib/membership/feature-presentation";
 import { UPGRADE_COPY } from "../src/lib/membership/upgrade-copy";
+import {
+  hasAdvancedAnaliz,
+  hasPlatformRequestSummary,
+} from "../src/lib/monetization/analiz-access";
+import {
+  filterPanelNavItems,
+  PANEL_NAV_ITEMS,
+} from "../src/components/panel/panel-nav";
 
 let pass = 0;
 let fail = 0;
@@ -95,25 +103,51 @@ console.log("\n=== ENTITLEMENT / SCOPE ===\n");
   const dash = read("src/components/panel/AnalyticsDashboard.tsx");
 
   check(
-    "7 performance uses requireEntitledFeature not requireCompanyFeature",
+    "7 performance API is auth+owner, not professional_analytics",
     (() => {
       const start = route.indexOf('if (type === "performance")');
       const demand = route.indexOf('if (type === "demand")');
       const perfBlock =
         start >= 0 && demand > start ? route.slice(start, demand) : "";
       return (
-        perfBlock.includes('requireEntitledFeature(user.id, "professional_analytics")') &&
+        route.includes("requireUser()") &&
+        perfBlock.includes("resolveAnalyticsOwner(user.id)") &&
+        !perfBlock.includes("requireEntitledFeature") &&
+        !perfBlock.includes("professional_analytics") &&
         !perfBlock.includes("requireCompanyFeature")
       );
     })(),
   );
   check(
-    "professional_analytics is personal API capable",
-    isPersonalApiCapable("professional_analytics"),
+    "professional_analytics remains a plan key, not page access",
+    isPersonalApiCapable("professional_analytics") &&
+      hasAdvancedAnaliz(featuresForPlan("PROFESSIONAL")) &&
+      !hasAdvancedAnaliz(featuresForPlan("STANDARD")) &&
+      hasPlatformRequestSummary(featuresForPlan("PREMIUM")) &&
+      !hasPlatformRequestSummary(featuresForPlan("STANDARD")),
   );
   check(
-    "17 page still gates professional_analytics",
-    page.includes('"professional_analytics"'),
+    "page always renders AnalyticsDashboard, no upgrade wall",
+    page.includes("<AnalyticsDashboard") &&
+      !page.includes("FeatureUpgradeGate") &&
+      !page.includes('"professional_analytics"'),
+  );
+  const analizNav = PANEL_NAV_ITEMS.find((item) => item.href === "/panel/analiz");
+  check(
+    "single Analiz nav item without feature gate",
+    Boolean(analizNav) &&
+      analizNav?.label === "Analiz" &&
+      analizNav?.requiresFeature === undefined &&
+      PANEL_NAV_ITEMS.filter((item) => item.href === "/panel/analiz").length === 1,
+  );
+  const standardNav = filterPanelNavItems(
+    PANEL_NAV_ITEMS,
+    featuresForPlan("STANDARD"),
+    "personal",
+  );
+  check(
+    "STANDARD PERSONAL nav includes Analiz",
+    standardNav.some((item) => item.href === "/panel/analiz" && item.label === "Analiz"),
   );
   check(
     "personal offer owner companyId null",
@@ -142,7 +176,7 @@ console.log("\n=== ENTITLEMENT / SCOPE ===\n");
     dash.includes("type=performance&from=") && dash.includes("rangeDates"),
   );
   check(
-    "PROFESSIONAL has analytics STANDARD does not",
+    "plan matrix unchanged: Pro has professional_analytics, Standard does not",
     featuresForPlan("PROFESSIONAL").professional_analytics === true &&
       featuresForPlan("STANDARD").professional_analytics === false &&
       featuresForPlan("PREMIUM").professional_analytics === false &&
@@ -210,16 +244,26 @@ console.log("\n=== REMOVED / HONEST UI ===\n");
   );
   check("personal sections", dash.includes("Talep performansı") && dash.includes("Teklif performansı"));
   check("company section", dash.includes("Şirket teklif performansı"));
-  check("no 7/30/90 removed", dash.includes("Son {days} gün"));
+  check(
+    "premium platform summary is additive on same page",
+    page.includes("<AnalyticsDashboard") &&
+      page.includes("hasPlatformRequestSummary") &&
+      page.includes("BasicMarketInsights") &&
+      page.includes("Premium ile açılır"),
+  );
+  check(
+    "page is not branded as Profesyonel lock",
+    !page.includes("Profesyonel") && page.includes(">Analiz<"),
+  );
 }
 
 console.log("\n=== COPY ===\n");
 {
-  const analyticsCopy = `${FEATURE_META.professional_analytics.description} ${PRO_FEATURE_PRESENTATION.professional_analytics?.description} ${UPGRADE_COPY.professional_analytics?.description}`;
+  const analyticsCopy = `${FEATURE_META.professional_analytics.label} ${FEATURE_META.professional_analytics.description} ${PRO_FEATURE_PRESENTATION.professional_analytics?.label} ${UPGRADE_COPY.professional_analytics?.title}`;
   check(
-    "analytics copy is personal+company performance",
-    analyticsCopy.toLowerCase().includes("kişisel") &&
-      analyticsCopy.toLowerCase().includes("teklif"),
+    "professional_analytics copy is gelişmiş not page access",
+    analyticsCopy.toLowerCase().includes("gelişmiş") &&
+      FEATURE_META.professional_analytics.description.includes("tüm planlarda"),
   );
   check(
     "analytics copy does not sell yanıt süresi",
@@ -248,7 +292,11 @@ console.log("\n=== COHORT QUERY SHAPE ===\n");
   );
   check("groupBy status", server.includes('by: ["status"]'));
   check("no take 500 JS response average", !server.includes("take: 500"));
-  check("unbounded offer findMany removed", !server.includes("findMany"));
+  check(
+    "owner resolver ignores professional_analytics",
+    server.includes("export async function resolveAnalyticsOwner") &&
+      !server.includes("professional_analytics"),
+  );
 }
 
 if (fail > 0) {

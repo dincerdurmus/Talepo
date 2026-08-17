@@ -69,8 +69,8 @@ export const FEATURE_META: Record<
   ),
   watchlist: base("Takip listesi", "Talepleri izleme listesine alın."),
   professional_analytics: base(
-    "Profesyonel analitik",
-    "Kişisel talep/teklif performansı veya firma teklif özeti. Kazanma oranı gönderim kohortuna göredir.",
+    "Gelişmiş analizler",
+    "Analiz sayfasındaki gelişmiş yetenekler. Temel talep ve teklif performansı tüm planlarda açıktır.",
     "/panel/analiz",
   ),
   talepo_insights: base(

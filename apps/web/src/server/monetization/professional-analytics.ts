@@ -1,7 +1,10 @@
 import type { Prisma } from "@/generated/prisma/client";
-import { prisma } from "@/lib/prisma";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { summarizeOfferCohort } from "@/lib/monetization/performance-metrics";
 import type { WorkspacePerformanceMetrics } from "@/lib/monetization/types";
+import { assertCompanyMembership } from "@/lib/panel/company-workspace";
+import { prisma } from "@/lib/prisma";
 
 const ACTIVE_REQUEST_STATUSES = [
   "PUBLISHED",
@@ -182,5 +185,34 @@ export async function getWorkspacePerformance(
     companyName: owner.scope === "company" ? owner.companyName : null,
     requests,
     offers,
+  };
+}
+
+/**
+ * Authenticated workspace owner for basic Analiz. Page access is not a plan
+ * feature. Client must not send owner ids.
+ */
+export async function resolveAnalyticsOwner(userId: string): Promise<AnalyticsOwner> {
+  const entitlements = await resolveEntitlements(
+    userId,
+    await getCompanyContextOptions(),
+  );
+
+  if (entitlements.subject.type !== "company") {
+    return { scope: "personal", userId };
+  }
+
+  const membership = await assertCompanyMembership(
+    userId,
+    entitlements.subject.id,
+  );
+  if (!membership) {
+    return { scope: "personal", userId };
+  }
+
+  return {
+    scope: "company",
+    companyId: entitlements.subject.id,
+    companyName: entitlements.subject.name?.trim() || "Firma",
   };
 }

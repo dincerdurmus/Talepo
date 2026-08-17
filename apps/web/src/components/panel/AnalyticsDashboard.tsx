@@ -347,15 +347,8 @@ export function BasicMarketInsights({
         <h2 className="text-lg font-semibold text-teal-950">Platform özeti</h2>
         <p className="mt-2 text-sm text-teal-950/55">
           Son 30 günde anonim yayınlanan talep sayısı henüz yeterli değil (
-          {requestCount} talep). Kendi talep ve teklif performansınız Profesyonel
-          Analiz ile açılır.
+          {requestCount} talep).
         </p>
-        <Link
-          href="/panel/plan"
-          className="mt-4 inline-flex text-sm font-semibold text-teal-800 underline"
-        >
-          Profesyonel planı incele
-        </Link>
       </section>
     );
   }

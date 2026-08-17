@@ -108,7 +108,6 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     href: "/panel/analiz",
     icon: BarChart3,
     label: "Analiz",
-    requiresFeature: "professional_analytics",
   },
   {
     href: "/panel/envanter",

@@ -23,6 +23,6 @@ export const PRO_FEATURE_PRESENTATION: Partial<Record<FeatureKey | "follow_up_in
   competition_signals: { label: "Rekabet Sinyalleri", description: "Bir fırsatta ne kadar rekabet olduğunu anlamana yardımcı olur.", howItWorks: "Mevcut anonim fırsat ve teklif sinyallerini değerlendirir.", resultLocation: "Fırsat analizi", interactionType: "AUTOMATIC_SIGNAL", status: "LIVE", actionLabel: "Fırsatı gör →", contexts: ["PERSONAL", "WORKSPACE"] },
   hidden_inventory: { label: "Gizli Envanter", description: "Workspace şirketinizin herkese açık olmayan stok bilgisini uygun taleplerle eşleştirmesine yardımcı olur.", contexts: ["WORKSPACE"] },
   team_management: { label: "Ekip Yönetimi", description: "Workspace üyelerini ve mevcut rollerini yönetmenize yardımcı olur.", contexts: ["WORKSPACE"] },
-  professional_analytics: { label: "Profesyonel Analitik", description: "Kişisel hesabınızda talep ve teklif performansınızı, firma çalışma alanında şirket teklif özetini gösterir.", contexts: ["PERSONAL", "WORKSPACE"] },
+  professional_analytics: { label: "Gelişmiş Analizler", description: "Analiz sayfasındaki gelişmiş yetenekler. Temel talep ve teklif performansınız plana bağlı olmadan açıktır.", contexts: ["PERSONAL", "WORKSPACE"] },
   corporate_intelligence: { label: "Workspace Insights", description: "Mevcut workspace verileri üzerinden talep trendleri ve kategori/şehir dağılımını görmenize yardımcı olur.", contexts: ["WORKSPACE"] },
 };

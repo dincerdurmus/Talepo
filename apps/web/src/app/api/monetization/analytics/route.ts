@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
-import { requireEntitledFeature } from "@/lib/membership/require-entitled-feature";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
-import { getWorkspacePerformance } from "@/server/monetization/professional-analytics";
 import { getDemandIntelligence } from "@/server/monetization/corporate-intelligence";
+import {
+  getWorkspacePerformance,
+  resolveAnalyticsOwner,
+} from "@/server/monetization/professional-analytics";
 import { generateMarketInsight } from "@/server/monetization/talepo-insights";
 
 export async function GET(request: Request) {
@@ -19,15 +21,7 @@ export async function GET(request: Request) {
     const toDate = to ? new Date(to) : new Date();
 
     if (type === "performance") {
-      const ctx = await requireEntitledFeature(user.id, "professional_analytics");
-      const owner =
-        ctx.companyId
-          ? {
-              scope: "company" as const,
-              companyId: ctx.companyId,
-              companyName: ctx.companyName ?? "Firma",
-            }
-          : { scope: "personal" as const, userId: ctx.userId };
+      const owner = await resolveAnalyticsOwner(user.id);
       const metrics = await getWorkspacePerformance(owner, fromDate, toDate);
       return NextResponse.json({ ok: true, metrics });
     }
