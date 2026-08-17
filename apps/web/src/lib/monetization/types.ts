@@ -95,6 +95,63 @@ export type WorkspacePerformanceMetrics = {
   offers: OfferPerformanceMetrics;
 };
 
+export type CurrencyVolumeMetrics = {
+  currency: string;
+  dealCount: number;
+  totalAgreedAmount: number;
+  averageAgreedAmount: number | null;
+};
+
+export type CategoryPerformanceRow = {
+  categoryId: string;
+  categoryName: string;
+  submitted: number;
+  accepted: number;
+  completed: number;
+  winRate: number | null;
+  winRatePresentation: WinRatePresentation;
+  rankEligible: boolean;
+};
+
+export type CommercialInsightDto = {
+  id: string;
+  text: string;
+};
+
+export type TrustAnalyticsSummary = {
+  completedTransactions: number;
+  reviewCount: number;
+  averageRating: number | null;
+};
+
+/**
+ * Professional commercial intelligence — deterministic, no source attribution claims.
+ */
+export type CommercialPerformanceMetrics = {
+  /** Bilateral completed deals with completedAt in window. */
+  completedDeals: number;
+  /** Offers submitted in window that later have a bilateral completed DealOutcome. */
+  completedFromSubmittedCohort: number;
+  completionRate: number | null;
+  completionRatePresentation: WinRatePresentation;
+  volumesByCurrency: CurrencyVolumeMetrics[];
+  /** Present only when a single currency exists in the window. */
+  primaryVolume: CurrencyVolumeMetrics | null;
+  mixedCurrency: boolean;
+  directCompleted: number;
+  negotiatedCompleted: number;
+  /**
+   * Mean (agreedPrice - Offer.amount) / Offer.amount on negotiated completed deals.
+   * Negative means final agreed price below the original submitted offer amount.
+   */
+  negotiationPriceDelta: number | null;
+  negotiationPriceDeltaSample: number;
+  categories: CategoryPerformanceRow[];
+  insights: CommercialInsightDto[];
+  /** Lifetime trust snapshot (revealed reviews only). */
+  trust: TrustAnalyticsSummary;
+};
+
 export type InventoryImportResult = {
   created: number;
   updated: number;

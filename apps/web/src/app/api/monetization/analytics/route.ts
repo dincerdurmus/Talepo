@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import { hasAdvancedAnaliz } from "@/lib/monetization/analiz-access";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { getCommercialPerformance } from "@/server/monetization/commercial-performance";
 import { getDemandIntelligence } from "@/server/monetization/corporate-intelligence";
 import {
   getWorkspacePerformance,
@@ -23,7 +27,22 @@ export async function GET(request: Request) {
     if (type === "performance") {
       const owner = await resolveAnalyticsOwner(user.id);
       const metrics = await getWorkspacePerformance(owner, fromDate, toDate);
-      return NextResponse.json({ ok: true, metrics });
+
+      const entitlements = await resolveEntitlements(
+        user.id,
+        await getCompanyContextOptions(),
+      );
+      const advancedAvailable = hasAdvancedAnaliz(entitlements.features);
+      const advanced = advancedAvailable
+        ? await getCommercialPerformance(owner, fromDate, toDate)
+        : null;
+
+      return NextResponse.json({
+        ok: true,
+        metrics,
+        advanced,
+        advancedAvailable,
+      });
     }
 
     if (type === "demand") {
