@@ -10,6 +10,8 @@ import {
   LetterSendButton,
   waitForLetterSend,
 } from "@/components/panel/LetterSendButton";
+import { OfferPhotoPicker, type PendingOfferPhoto } from "@/components/panel/OfferPhotoPicker";
+import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { formatTrNumber, parseTrNumber } from "@/lib/format/tr-number";
 import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
@@ -21,6 +23,7 @@ type ExistingOfferValues = {
   description: string;
   amount: number;
   deliveryDays: number | null;
+  media?: { id: string }[];
 };
 
 type OfferFormProps = {
@@ -123,6 +126,59 @@ function resolveInitialOfferFields(
   };
 }
 
+async function uploadOfferPhotos(
+  offerId: string,
+  photos: PendingOfferPhoto[],
+  setPhotos: (photos: PendingOfferPhoto[]) => void,
+) {
+  let current = photos;
+  for (const photo of photos) {
+    if (photo.status === "uploaded") continue;
+    current = current.map((item) =>
+      item.localId === photo.localId
+        ? { ...item, status: "uploading", error: undefined }
+        : item,
+    );
+    setPhotos(current);
+
+    const body = new FormData();
+    body.append("file", photo.file, photo.file.name);
+    const response = await fetch(`/api/offers/${offerId}/media`, {
+      method: "POST",
+      body,
+    });
+    const result = (await response.json()) as { message?: string };
+    if (!response.ok) {
+      current = current.map((item) =>
+        item.localId === photo.localId
+          ? {
+              ...item,
+              status: "error",
+              error: result.message || "Yüklenemedi",
+            }
+          : item,
+      );
+      setPhotos(current);
+      throw new Error(
+        `${photo.name}: ${result.message || "Fotoğraf yüklenemedi."}`,
+      );
+    }
+
+    current = current.map((item) =>
+      item.localId === photo.localId ? { ...item, status: "uploaded" } : item,
+    );
+    setPhotos(current);
+  }
+
+  const finalize = await fetch(`/api/offers/${offerId}/media/finalize`, {
+    method: "POST",
+  });
+  if (!finalize.ok) {
+    const result = (await finalize.json()) as { message?: string };
+    throw new Error(result.message || "Fotoğraflar kilitlenemedi.");
+  }
+}
+
 export function OfferForm({
   requestId,
   entitlements,
@@ -148,6 +204,8 @@ export function OfferForm({
   const [quotaExceeded, setQuotaExceeded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftApplied] = useState(initialFields.draftApplied);
+  const [photos, setPhotos] = useState<PendingOfferPhoto[]>([]);
+  const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
 
   const placeholders = useMemo(
     () => getPlaceholders(categorySlug, budgetMin),
@@ -220,52 +278,80 @@ export function OfferForm({
     setQuotaExceeded(false);
     setIsSubmitting(true);
     const startedAt = Date.now();
+    let submittedOfferId = createdOfferId;
 
     try {
-      const payload = isRevise
-        ? { description }
-        : {
+      if (isRevise && existingOffer) {
+        const response = await fetch(`/api/offers/${existingOffer.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(isRevise ? { description } : { description }),
+        });
+        const result = (await response.json()) as {
+          message?: string;
+          code?: string;
+          redirectTo?: string;
+        };
+        if (!response.ok) {
+          throw new Error(result.message || "Teklif güncellenemedi.");
+        }
+        sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
+        await waitForLetterSend(startedAt);
+        router.push(result.redirectTo || `/panel/teklifler?guncellendi=1`);
+        router.refresh();
+        return;
+      }
+
+      let offerId = submittedOfferId;
+      if (!offerId) {
+        const response = await fetch("/api/offers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             requestId,
             description,
             amount: parseTrNumber(amount),
             deliveryDays: deliveryDays ? Number(deliveryDays) : null,
-          };
-
-      const response = await fetch(
-        isRevise && existingOffer
-          ? `/api/offers/${existingOffer.id}`
-          : "/api/offers",
-        {
-          method: isRevise ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      const result = (await response.json()) as {
-        message?: string;
-        code?: string;
-        redirectTo?: string;
-      };
-
-      if (!response.ok) {
-        if (result.code === "OFFER_QUOTA_EXCEEDED") {
-          setQuotaExceeded(true);
+            deferMediaFinalize: photos.length > 0,
+          }),
+        });
+        const result = (await response.json()) as {
+          message?: string;
+          code?: string;
+          redirectTo?: string;
+          offer?: { id: string };
+        };
+        if (!response.ok) {
+          if (result.code === "OFFER_QUOTA_EXCEEDED") {
+            setQuotaExceeded(true);
+          }
+          throw new Error(result.message || "Teklif gönderilemedi.");
         }
-        throw new Error(
-          result.message ||
-            (isRevise ? "Teklif güncellenemedi." : "Teklif gönderilemedi."),
-        );
+        offerId = result.offer?.id ?? null;
+        if (!offerId) {
+          throw new Error("Teklif oluşturuldu ancak kimlik alınamadı.");
+        }
+        setCreatedOfferId(offerId);
+        submittedOfferId = offerId;
+      }
+
+      if (offerId && (photos.length > 0 || createdOfferId)) {
+        if (photos.length > 0) {
+          await uploadOfferPhotos(offerId, photos, setPhotos);
+        } else {
+          const finalize = await fetch(`/api/offers/${offerId}/media/finalize`, {
+            method: "POST",
+          });
+          if (!finalize.ok) {
+            const result = (await finalize.json()) as { message?: string };
+            throw new Error(result.message || "Fotoğraflar kilitlenemedi.");
+          }
+        }
       }
 
       sessionStorage.removeItem(OFFER_DRAFT_STORAGE_KEY);
       await waitForLetterSend(startedAt);
-      router.push(
-        result.redirectTo ||
-          (isRevise
-            ? `/panel/teklifler?guncellendi=1`
-            : `/panel/teklifler?gonderildi=1`),
-      );
+      router.push(`/panel/teklifler?gonderildi=1`);
       router.refresh();
     } catch (submitError) {
       setError(
@@ -273,7 +359,9 @@ export function OfferForm({
           ? submitError.message
           : isRevise
             ? "Teklif güncellenirken bir hata oluştu."
-            : "Teklif gönderilirken bir hata oluştu.",
+            : submittedOfferId
+              ? "Teklif kaydedildi; fotoğraf yüklemesi tamamlanamadı. Tekrar deneyin."
+              : "Teklif gönderilirken bir hata oluştu.",
       );
       setIsSubmitting(false);
       setStep("edit");
@@ -328,6 +416,26 @@ export function OfferForm({
               {description}
             </p>
           </div>
+          {!isRevise && photos.length > 0 ? (
+            <div className="border-t border-teal-900/8 px-4 py-3.5">
+              <p className="text-xs text-teal-900/45">Ürün fotoğrafları</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {photos.map((photo) => (
+                  <span
+                    key={photo.localId}
+                    className="h-14 w-14 overflow-hidden rounded-xl bg-white ring-1 ring-teal-900/10"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.previewUrl}
+                      alt={photo.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <div className="border-t border-teal-900/8 px-4 py-3.5">
             <p className="text-xs text-teal-900/45">Alıcı karşılaştırması</p>
             <p className="mt-1 text-sm font-semibold text-[#0f1f1d]">
@@ -367,14 +475,22 @@ export function OfferForm({
             disabled={!canSubmit}
             onClick={() => void handleConfirmSend()}
             statusLabel={
-              isRevise ? "Not güncelleniyor…" : "Teklif gönderiliyor…"
+              isRevise
+                ? "Not güncelleniyor…"
+                : createdOfferId && photos.length > 0
+                  ? "Fotoğraflar yükleniyor…"
+                  : "Teklif gönderiliyor…"
             }
             withCloud={false}
           >
             <span className="flex min-w-0 items-center gap-3">
               <Send className="h-4 w-4 shrink-0" />
               <span className="text-base font-semibold">
-                {isRevise ? "Notu güncelle" : "Teklifi gönder"}
+                {isRevise
+                  ? "Notu güncelle"
+                  : createdOfferId
+                    ? "Fotoğrafları tamamla"
+                    : "Teklifi gönder"}
               </span>
             </span>
           </LetterSendButton>
@@ -395,11 +511,13 @@ export function OfferForm({
 
   return (
     <form onSubmit={handlePreview} className="space-y-4">
-      {(isRevise || draftApplied) && (
+      {(isRevise || draftApplied || createdOfferId) && (
         <p className="rounded-xl bg-teal-50/80 px-3.5 py-2.5 text-sm text-teal-950/80">
           {isRevise
             ? "Teklif tutarı gönderimden sonra değiştirilemez. Açıklamanızı güncelleyebilirsiniz."
-            : "Taslak uygulandı. İstediğiniz alanları düzenleyin."}
+            : createdOfferId
+              ? "Teklif kaydedildi. Fotoğraf yüklemesini tamamlayın; tutar artık değişmez."
+              : "Taslak uygulandı. İstediğiniz alanları düzenleyin."}
         </p>
       )}
 
@@ -476,6 +594,29 @@ export function OfferForm({
           className={areaClass}
         />
       </label>
+
+      {isRevise && existingOffer?.media && existingOffer.media.length > 0 ? (
+        <div className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3.5">
+          <p className="text-sm font-medium text-teal-950/70">
+            Ürün fotoğrafları
+          </p>
+          <p className="mt-1 text-xs text-teal-950/45">
+            Fotoğraflar gönderimden sonra değiştirilemez.
+          </p>
+          <OfferMediaThumbStrip
+            offerId={existingOffer.id}
+            mediaIds={existingOffer.media.map((item) => item.id)}
+          />
+        </div>
+      ) : null}
+
+      {!isRevise ? (
+        <OfferPhotoPicker
+          photos={photos}
+          onChange={setPhotos}
+          disabled={isSubmitting}
+        />
+      ) : null}
 
       <div className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3">
         <div className="flex items-center justify-between gap-2 text-xs">

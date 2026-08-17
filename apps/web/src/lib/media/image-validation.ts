@@ -11,8 +11,108 @@ export type ParsedImageDataUrl = {
   byteLength: number;
 };
 
+export type AllowedImageMime = ParsedImageDataUrl["mimeType"];
+
 export function isAllowedImageMime(mime: string | null | undefined): boolean {
   return Boolean(mime && ALLOWED_MIME.has(mime.toLowerCase()));
+}
+
+const BLOCKED_NAME_RE =
+  /\.(svg|gif|html?|xhtml|xml|js|mjs|cjs|ts|tsx|json|exe|dll|bat|cmd|ps1|sh|php|py|rb|jar|wasm|pdf|doc|docx|xls|xlsx|zip|rar|7z)$/i;
+
+export function looksLikeBlockedUploadName(name: string | null | undefined) {
+  if (!name) return false;
+  const base = name.split(/[/\\]/).pop() ?? name;
+  return BLOCKED_NAME_RE.test(base.trim());
+}
+
+export function detectImageMime(buffer: Buffer): AllowedImageMime | null {
+  if (buffer.length < 12) return null;
+  if (matchesMagicBytes(buffer, "image/jpeg")) return "image/jpeg";
+  if (matchesMagicBytes(buffer, "image/png")) return "image/png";
+  if (matchesMagicBytes(buffer, "image/webp")) return "image/webp";
+  return null;
+}
+
+function looksLikeSvgOrScript(buffer: Buffer) {
+  const head = buffer.subarray(0, 256).toString("utf8").trimStart().toLowerCase();
+  if (head.startsWith("<svg") || head.includes("<svg")) return true;
+  if (head.startsWith("<?xml") && head.includes("<svg")) return true;
+  if (head.startsWith("<!doctype html") || head.startsWith("<html")) return true;
+  if (head.startsWith("<?php") || head.startsWith("<script")) return true;
+  // MZ executable
+  if (buffer[0] === 0x4d && buffer[1] === 0x5a) return true;
+  return false;
+}
+
+export type ValidatedImageBuffer = {
+  mimeType: AllowedImageMime;
+  byteLength: number;
+};
+
+export function validateImageBuffer(
+  buffer: Buffer,
+  options?: {
+    claimedMime?: string | null;
+    originalName?: string | null;
+    maxBytes?: number;
+  },
+): ValidatedImageBuffer {
+  const maxBytes = options?.maxBytes ?? MESSAGE_IMAGE_MAX_BYTES;
+
+  if (looksLikeBlockedUploadName(options?.originalName)) {
+    throw new Error(
+      "Yalnızca JPEG, PNG veya WebP kabul edilir. SVG, GIF ve belgeler yüklenemez.",
+    );
+  }
+
+  if (looksLikeSvgOrScript(buffer)) {
+    throw new Error(
+      "Yalnızca JPEG, PNG veya WebP kabul edilir. SVG, GIF ve belgeler yüklenemez.",
+    );
+  }
+
+  if (buffer.byteLength < 32) {
+    throw new Error("Görsel dosyası geçersiz veya bozuk.");
+  }
+
+  if (buffer.byteLength > maxBytes) {
+    throw new Error(
+      "Görsel çok büyük. Lütfen 2.5 MB altındaki bir görsel yükleyin.",
+    );
+  }
+
+  const detected = detectImageMime(buffer);
+  if (!detected) {
+    throw new Error(
+      "Yalnızca JPEG, PNG veya WebP kabul edilir. SVG, GIF ve belgeler yüklenemez.",
+    );
+  }
+
+  const claimed = options?.claimedMime?.toLowerCase() ?? "";
+  if (
+    claimed &&
+    claimed !== "application/octet-stream" &&
+    !isAllowedImageMime(claimed)
+  ) {
+    throw new Error(
+      "Yalnızca JPEG, PNG veya WebP kabul edilir. SVG, GIF ve belgeler yüklenemez.",
+    );
+  }
+
+  if (claimed && isAllowedImageMime(claimed) && claimed !== detected) {
+    throw new Error(
+      "Görsel içeriği dosya türüyle uyuşmuyor. Farklı bir görsel deneyin.",
+    );
+  }
+
+  if (!matchesMagicBytes(buffer, detected)) {
+    throw new Error(
+      "Görsel içeriği dosya türüyle uyuşmuyor. Farklı bir görsel deneyin.",
+    );
+  }
+
+  return { mimeType: detected, byteLength: buffer.byteLength };
 }
 
 export function parseImageDataUrl(dataUrl: string): ParsedImageDataUrl {

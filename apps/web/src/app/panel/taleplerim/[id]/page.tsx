@@ -14,6 +14,7 @@ import {
 
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
+import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -83,6 +84,10 @@ export default async function RequestDetailPage({
           company: { select: { name: true, isVerified: true } },
           submittedBy: { select: { name: true } },
           conversation: { select: { id: true } },
+          media: {
+            orderBy: { sortOrder: "asc" },
+            select: { id: true },
+          },
         },
       },
       _count: { select: { matches: true } },
@@ -307,6 +312,10 @@ export default async function RequestDetailPage({
                         <p className="mt-3 text-sm leading-6 text-black/55">
                           {offer.description}
                         </p>
+                        <OfferMediaThumbStrip
+                          offerId={offer.id}
+                          mediaIds={offer.media.map((item) => item.id)}
+                        />
                       </div>
                       <p className="shrink-0 text-lg font-semibold text-black/85">
                         {formatMoney(Number(offer.amount), offer.currency)}

@@ -48,6 +48,11 @@ type CreateOfferInput = {
   amount: number;
   deliveryDays?: number;
   title?: string;
+  /**
+   * When true, leave mediaFinalizedAt null so the submitter can attach
+   * 0–5 photos immediately after create. Default locks an empty set.
+   */
+  deferMediaFinalize?: boolean;
 };
 
 type UpdateOfferInput = {
@@ -117,6 +122,10 @@ export async function findSupplierOfferOnRequest(
         deliveryDays: true,
         title: true,
         conversation: { select: { id: true } },
+        media: {
+          orderBy: { sortOrder: "asc" },
+          select: { id: true },
+        },
       },
     });
   }
@@ -137,6 +146,10 @@ export async function findSupplierOfferOnRequest(
       deliveryDays: true,
       title: true,
       conversation: { select: { id: true } },
+      media: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true },
+      },
     },
   });
 }
@@ -313,12 +326,14 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
         deliveryDays: input.deliveryDays,
         status: "SUBMITTED",
         submittedAt: now,
+        mediaFinalizedAt: input.deferMediaFinalize ? null : now,
       },
       select: {
         id: true,
         requestId: true,
         amount: true,
         currency: true,
+        mediaFinalizedAt: true,
       },
     });
 

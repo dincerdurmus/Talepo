@@ -922,6 +922,8 @@ model Offer {
   rejectedAt  DateTime?
   withdrawnAt DateTime?
   expiredAt   DateTime?
+  /// Set when the photo set is closed. Null only during the create→attach window.
+  mediaFinalizedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -935,6 +937,7 @@ model Offer {
   conversation      Conversation?
   dealOutcome       DealOutcome?
   priceObservations PriceObservation[]
+  media             OfferMedia[]
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -945,6 +948,24 @@ model Offer {
   @@index([status])
   @@index([submittedAt])
   @@index([createdAt])
+}
+
+/// Offer product photos. Bytes live in private storage; this row is the index.
+model OfferMedia {
+  id String @id @default(cuid())
+
+  offerId String
+  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  storageKey   String
+  mimeType     String
+  byteLength   Int
+  sortOrder    Int     @default(0)
+  originalName String?
+
+  createdAt DateTime @default(now())
+
+  @@index([offerId, sortOrder])
 }
 
 model Conversation {

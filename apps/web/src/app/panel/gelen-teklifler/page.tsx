@@ -8,6 +8,7 @@ import {
 
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
+import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   compareOffersByCompleteness,
@@ -44,6 +45,7 @@ type OfferRow = {
   company: { name: string; isVerified: boolean } | null;
   submittedBy: { name: string | null };
   conversation: { id: string } | null;
+  media: { id: string }[];
 };
 
 export default async function IncomingOffersPage() {
@@ -69,6 +71,10 @@ export default async function IncomingOffersPage() {
       company: { select: { name: true, isVerified: true } },
       submittedBy: { select: { name: true } },
       conversation: { select: { id: true } },
+      media: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true },
+      },
     },
   })) as OfferRow[];
 
@@ -378,6 +384,12 @@ function IncomingOfferCard({
           {offer.description}
         </p>
       ) : null}
+
+      <OfferMediaThumbStrip
+        offerId={offer.id}
+        mediaIds={offer.media.map((item) => item.id)}
+        compact
+      />
 
       {actionable && <OfferActions offerId={offer.id} />}
 

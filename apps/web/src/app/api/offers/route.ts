@@ -91,6 +91,7 @@ export async function POST(request: Request) {
         amount: Number(body.amount),
         deliveryDays: body.deliveryDays ? Number(body.deliveryDays) : undefined,
         title: body.title ? String(body.title) : undefined,
+        deferMediaFinalize: body.deferMediaFinalize === true,
       });
 
       if (idempotencyKey) {

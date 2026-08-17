@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
+import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
 import {
   formatMoney,
@@ -53,6 +54,10 @@ export default async function OffersPage({
       },
       submittedBy: { select: { name: true } },
       conversation: { select: { id: true } },
+      media: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true },
+      },
     },
     take: 50,
   });
@@ -102,7 +107,7 @@ export default async function OffersPage({
           <p className="mt-1.5 text-sm leading-6 text-teal-900/70">
             {justUpdated
               ? "Alıcı güncel açıklamanızı görür. Tutar ve teslim süresi aynı kalır."
-              : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya pazarlık ile mesajlaşma açılır."}
+              : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya pazarlık ile mesajlaşma açılır. Ürün fotoğrafları gönderimden sonra değişmez."}
           </p>
         </section>
       )}
@@ -191,6 +196,11 @@ export default async function OffersPage({
                     <p className="mt-3 line-clamp-2 text-sm text-black/55">
                       {offer.description}
                     </p>
+                    <OfferMediaThumbStrip
+                      offerId={offer.id}
+                      mediaIds={offer.media.map((item) => item.id)}
+                      compact
+                    />
                     <div className="mt-3 flex items-center gap-2">
                       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-teal-900/10">
                         <div

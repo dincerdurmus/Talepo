@@ -148,6 +148,7 @@ export default async function OfferRequestPage({
                         description: existingOffer.description,
                         amount: Number(existingOffer.amount),
                         deliveryDays: existingOffer.deliveryDays,
+                        media: existingOffer.media,
                       }
                     : null
                 }
