@@ -131,6 +131,22 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
 export const PANEL_NOTIFICATIONS_HREF = "/panel/bildirimler";
 export { Bell };
 
+/**
+ * Narrow-screen web bottom bar (lg:hidden). Not a native app nav.
+ * Professional gets Fırsatlar + Tekliflerim; Standard keeps Keşfet + Profil.
+ */
+export function getResponsiveBottomNavVariant(
+  features?: Partial<Record<FeatureKey, boolean>>,
+  workspace: "personal" | "corporate" = "personal",
+): "standard" | "professional" {
+  const items = filterPanelNavItems(PANEL_NAV_ITEMS, features, workspace);
+  const hasFirsatlar = items.some(
+    (item) => item.href.split("?")[0] === "/panel/firsatlar",
+  );
+  const hasTeklifler = items.some((item) => item.href === "/panel/teklifler");
+  return hasFirsatlar && hasTeklifler ? "professional" : "standard";
+}
+
 export function filterPanelNavItems(
   items: PanelNavItem[],
   features?: Partial<Record<FeatureKey, boolean>>,

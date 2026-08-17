@@ -53,6 +53,8 @@ export default async function PanelPage() {
   let planLabel = "Standart";
   let personalPlanMismatchDetail: string | null = null;
   let pendingInvite: { companyId: string; companyName: string } | null = null;
+  let canOpenFirsatlar = false;
+  let canOpenTakiplerim = false;
 
   if (!dbUnavailable) {
     try {
@@ -90,6 +92,13 @@ export default async function PanelPage() {
       }
       hasHiddenInventory = entitlements.features.hidden_inventory === true;
       hasActiveCompany = Boolean(activeMembership);
+      canOpenFirsatlar =
+        entitlements.features.hot_opportunities === true ||
+        entitlements.features.advanced_opportunity_analysis === true ||
+        entitlements.features.lead_distribution === true;
+      canOpenTakiplerim =
+        entitlements.features.saved_searches === true ||
+        entitlements.features.smart_alerts === true;
       if (hasPersonalPlanMismatch(entitlements)) {
         personalPlanMismatchDetail = formatPersonalPlanMismatchDetail(entitlements);
       }
@@ -259,6 +268,14 @@ export default async function PanelPage() {
           <div className="divide-y divide-teal-900/6 p-2">
             <QuickLink href="/panel/taleplerim" label="Taleplerim" />
             <QuickLink href="/panel/gelen-teklifler" label="Gelen teklifler" />
+            <QuickLink href="/panel/teklifler" label="Tekliflerim" />
+            {canOpenFirsatlar ? (
+              <QuickLink href="/panel/firsatlar" label="Fırsatlar" />
+            ) : null}
+            {canOpenTakiplerim ? (
+              <QuickLink href="/panel/takiplerim" label="Takiplerim" />
+            ) : null}
+            <QuickLink href="/panel/analiz" label="Analiz" />
             <QuickLink href="/panel/mesajlar" label="Mesajlar" />
             <QuickLink href="/panel/firma/yeni" label="Firma oluştur" />
             <QuickLink href="/panel/plan" label="Plan ve üyelik" />

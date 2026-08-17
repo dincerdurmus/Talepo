@@ -225,6 +225,12 @@ export function CorporateHome({
             >
               Takiplerim →
             </Link>
+            <Link
+              href="/panel/analiz"
+              className="mt-2 inline-block text-xs font-semibold text-teal-800"
+            >
+              Analiz →
+            </Link>
           </section>
 
           <section className="rounded-[24px] border border-black/[0.06] bg-white p-5">

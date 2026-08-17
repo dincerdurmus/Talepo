@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Crown,
+  FileText,
   Flame,
   LayoutDashboard,
   MessageCircle,
@@ -33,6 +34,7 @@ import {
 import { PlanBadge } from "@/components/panel/PlanBadge";
 import {
   filterPanelNavItems,
+  getResponsiveBottomNavVariant,
   PANEL_NAV_ITEMS,
   PANEL_NOTIFICATIONS_HREF,
 } from "@/components/panel/panel-nav";
@@ -82,8 +84,9 @@ function getInitials(name: string | null | undefined, email: string | null | und
 }
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {
-  if (exact) return pathname === href;
-  return pathname === href || pathname.startsWith(`${href}/`);
+  const path = href.split("?")[0] ?? href;
+  if (exact) return pathname === path;
+  return pathname === path || pathname.startsWith(`${path}/`);
 }
 
 function getPanelPageTitle(pathname: string) {
@@ -96,6 +99,8 @@ function getPanelPageTitle(pathname: string) {
   }
   if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet";
   if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
+  if (pathname.startsWith("/panel/firsatlar")) return "Fırsatlar";
+  if (pathname.startsWith("/panel/analiz")) return "Analiz";
   if (pathname.startsWith("/panel/asistan")) return "AI asistan";
   if (pathname.startsWith("/panel/takiplerim")) return "Takiplerim";
   if (pathname.startsWith("/panel/uyarilar")) return "Takiplerim";
@@ -132,6 +137,7 @@ export function PanelShell({
   const planTier = workspace?.planTier ?? "STANDARD";
   const planThemeStyle = getPlanThemeStyle(planTier);
   const navItems = filterPanelNavItems(PANEL_NAV_ITEMS, features, mode);
+  const bottomNavVariant = getResponsiveBottomNavVariant(features, mode);
   const companyName = workspace?.companyName?.trim() || "Firma";
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
@@ -194,7 +200,7 @@ export function PanelShell({
         )}
 
         <section
-          className={`min-w-0 flex-1 pb-28 pt-4 transition-[padding] duration-200 ease-out sm:px-6 lg:pb-8 ${
+          className={`min-w-0 flex-1 pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] pt-4 transition-[padding] duration-200 ease-out sm:px-6 lg:pb-8 ${
             collapsed
               ? "px-4 lg:pl-4 lg:pr-6"
               : "px-4 lg:px-8"
@@ -290,42 +296,76 @@ export function PanelShell({
         </section>
       </div>
 
-      <nav className="fixed bottom-3 left-3 right-3 z-50 rounded-[25px] border border-teal-900/10 bg-white/92 px-4 py-3 shadow-[0_18px_50px_rgba(15,31,29,0.12)] backdrop-blur-xl lg:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-between">
+      <nav
+        className="fixed bottom-3 left-3 right-3 z-50 rounded-[25px] border border-teal-900/10 bg-white/92 px-2 py-2 shadow-[0_18px_50px_rgba(15,31,29,0.12)] backdrop-blur-xl lg:hidden"
+        style={{
+          paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0px))",
+        }}
+        aria-label="Panel gezinme"
+      >
+        <div className="mx-auto flex max-w-md items-end justify-between gap-0.5">
           <MobileLink
             href="/panel"
             icon={LayoutDashboard}
             label="Sayfam"
             active={isNavActive(pathname, "/panel", true)}
           />
-          <MobileLink
-            href="/panel/talepler"
-            icon={Search}
-            label="Keşfet"
-            active={isNavActive(pathname, "/panel/talepler")}
-          />
+          {bottomNavVariant === "professional" ? (
+            <MobileLink
+              href="/panel/firsatlar"
+              icon={Flame}
+              label="Fırsatlar"
+              active={isNavActive(pathname, "/panel/firsatlar")}
+            />
+          ) : (
+            <MobileLink
+              href="/panel/talepler"
+              icon={Search}
+              label="Keşfet"
+              active={isNavActive(pathname, "/panel/talepler")}
+            />
+          )}
 
           <Link
             href={isCorporate ? "/panel/talepler" : "/talep"}
             aria-label={isCorporate ? "Talepleri keşfet" : "Talep oluştur"}
-            className="talepo-plan-cta -mt-8 flex h-16 w-16 items-center justify-center rounded-full border-[5px] border-[#f4f7f6] shadow-[0_12px_30px_var(--plan-glow)]"
+            className="talepo-plan-cta -mt-8 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[5px] border-[#f4f7f6] shadow-[0_12px_30px_var(--plan-glow)]"
           >
             {isCorporate ? <Search className="h-7 w-7" /> : <Plus className="h-7 w-7" />}
           </Link>
 
-          <MobileLink
-            href="/panel/mesajlar"
-            icon={MessageCircle}
-            label="Mesajlar"
-            active={isNavActive(pathname, "/panel/mesajlar")}
-            badge={unreadMessages > 0 ? unreadMessages : undefined}
-          />
-          <MobileLink
-            href="/panel/profil"
-            icon={UserRound}
-            label="Profil"
-            active={isNavActive(pathname, "/panel/profil")}
-          />
+          {bottomNavVariant === "professional" ? (
+            <MobileLink
+              href="/panel/teklifler"
+              icon={FileText}
+              label="Tekliflerim"
+              active={isNavActive(pathname, "/panel/teklifler")}
+            />
+          ) : (
+            <MobileLink
+              href="/panel/mesajlar"
+              icon={MessageCircle}
+              label="Mesajlar"
+              active={isNavActive(pathname, "/panel/mesajlar")}
+              badge={unreadMessages > 0 ? unreadMessages : undefined}
+            />
+          )}
+          {bottomNavVariant === "professional" ? (
+            <MobileLink
+              href="/panel/mesajlar"
+              icon={MessageCircle}
+              label="Mesajlar"
+              active={isNavActive(pathname, "/panel/mesajlar")}
+              badge={unreadMessages > 0 ? unreadMessages : undefined}
+            />
+          ) : (
+            <MobileLink
+              href="/panel/profil"
+              icon={UserRound}
+              label="Profil"
+              active={isNavActive(pathname, "/panel/profil")}
+            />
+          )}
         </div>
       </nav>
     </main>
@@ -1095,15 +1135,17 @@ function MobileLink({
   return (
     <Link
       href={href}
-      className={`relative flex min-w-14 flex-col items-center gap-1.5 text-[11px] font-medium ${
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      className={`relative flex min-h-11 min-w-14 max-w-[4.75rem] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium leading-tight sm:text-[11px] ${
         active ? "" : "text-teal-950/35"
       }`}
       style={active ? { color: "var(--plan-primary)" } : undefined}
     >
-      <Icon className="h-5 w-5" />
-      <span>{label}</span>
+      <Icon className="h-5 w-5 shrink-0" />
+      <span className="max-w-full truncate">{label}</span>
       {badge !== undefined && badge > 0 && (
-        <span className="talepo-plan-cta absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] shadow-none">
+        <span className="talepo-plan-cta absolute right-1 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] shadow-none">
           {badge}
         </span>
       )}
