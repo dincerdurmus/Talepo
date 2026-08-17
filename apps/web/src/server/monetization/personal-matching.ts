@@ -1,9 +1,5 @@
-import {
-  hasCanonicalFilterSignal,
-  parseDiscoveryProjection,
-  validateCanonicalDiscoveryFilter,
-} from "@/lib/discovery";
-import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-search-canonical";
+import { parseDiscoveryProjection } from "@/lib/discovery";
+import { criteriaFromAlertRule, normalizePreferenceCriteria } from "@/lib/monetization/preference-criteria";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
 
@@ -24,8 +20,7 @@ export {
 
 /**
  * Load USER-owned active preference filters once.
- * Shared by final matching and preference-driven candidate retrieval —
- * does not invent a second match rule set.
+ * Shared by final matching and preference-driven candidate retrieval.
  */
 export async function loadPersonalPreferenceFilters(
   userId: string,
@@ -41,6 +36,12 @@ export async function loadPersonalPreferenceFilters(
       select: {
         name: true,
         discoveryFilter: true,
+        city: true,
+        district: true,
+        minBudget: true,
+        maxBudget: true,
+        keywords: true,
+        attributes: true,
         category: { select: { slug: true } },
       },
       take: 100,
@@ -50,45 +51,53 @@ export async function loadPersonalPreferenceFilters(
   const out: PersonalPreferenceFilter[] = [];
 
   for (const search of savedSearches) {
-    const filters = search.filters as SavedSearchFilters;
-    const resolved = canonicalFilterFromSavedSearchFilters(filters);
-    const canonical = validateCanonicalDiscoveryFilter(resolved);
-    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
+    const raw = search.filters as SavedSearchFilters;
+    const normalized = normalizePreferenceCriteria(raw);
     out.push({
       kind: "saved_search",
       name: search.name,
-      filter: canonical.filter,
+      criteria: normalized.ok ? normalized.filters : raw,
     });
   }
 
   for (const rule of alertRules) {
-    const resolved = canonicalFilterFromSavedSearchFilters({
-      categorySlug: rule.category?.slug,
-      canonical: rule.discoveryFilter,
-    });
-    const canonical = validateCanonicalDiscoveryFilter(resolved);
-    if (!canonical.ok || !hasCanonicalFilterSignal(canonical.filter)) continue;
     out.push({
       kind: "alert_rule",
       name: rule.name,
-      filter: canonical.filter,
+      criteria: criteriaFromAlertRule({
+        categorySlug: rule.category?.slug,
+        city: rule.city,
+        district: rule.district,
+        minBudget: rule.minBudget,
+        maxBudget: rule.maxBudget,
+        keywords: rule.keywords,
+        attributes: rule.attributes,
+        discoveryFilter: rule.discoveryFilter,
+      }),
     });
   }
 
   return out;
 }
 
-/**
- * Personal relevance authority. It only consumes explicit USER-owned
- * saved-search and alert filters; workspace/company data never enters here.
- */
 export async function matchPersonalToRequest(
   userId: string,
   requestId: string,
 ): Promise<PersonalMatchResult> {
   const request = await prisma.request.findUnique({
     where: { id: requestId },
-    select: { discoveryProjection: true },
+    select: {
+      discoveryProjection: true,
+      title: true,
+      description: true,
+      city: true,
+      district: true,
+      budgetMin: true,
+      budgetMax: true,
+      isUrgent: true,
+      createdById: true,
+      companyId: true,
+    },
   });
 
   if (!request) {
@@ -102,5 +111,20 @@ export async function matchPersonalToRequest(
 
   const preferences = await loadPersonalPreferenceFilters(userId);
   const projection = parseDiscoveryProjection(request.discoveryProjection);
-  return matchPersonalAgainstPreferences(projection, preferences);
+  return matchPersonalAgainstPreferences(
+    projection,
+    preferences,
+    {
+      title: request.title,
+      description: request.description,
+      city: request.city,
+      district: request.district,
+      budgetMin: request.budgetMin?.toNumber() ?? null,
+      budgetMax: request.budgetMax?.toNumber() ?? null,
+      isUrgent: request.isUrgent,
+      createdById: request.createdById,
+      companyId: request.companyId,
+    },
+    { userId },
+  );
 }

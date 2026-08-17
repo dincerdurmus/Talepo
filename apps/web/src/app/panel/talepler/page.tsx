@@ -166,6 +166,9 @@ export default async function ExploreRequestsPage({
   const categoryFilter = params.category?.trim() || "";
   const editingInterests = params.edit === "1";
   const canonicalExploreFilter = parseCanonicalFilterFromParams(params);
+  const taxonomyLeaf = params.taxonomyLeaf?.trim() || undefined;
+  const taxonomyNode = params.taxonomyNode?.trim() || undefined;
+  const leafExact = params.leafExact === "1" || params.leafExact === "true";
 
   await ensureEngineCategories();
 
@@ -618,12 +621,19 @@ export default async function ExploreRequestsPage({
                   tab: "all",
                   category: categoryFilter,
                   ...(cityFilter ? { city: cityFilter } : {}),
+                  ...(districtFilter ? { district: districtFilter } : {}),
+                  ...(taxonomyLeaf ? { taxonomyLeaf } : {}),
+                  ...(taxonomyNode ? { taxonomyNode } : {}),
+                  ...(leafExact ? { leafExact: "1" } : {}),
                 }}
                 clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}`}
                 advancedFiltersEnabled={hasAdvancedFilters}
                 showUrgentFilter={hasUrgentPriority}
                 savedSearchesEnabled={hasSavedSearches}
                 city={cityFilter}
+                taxonomyLeaf={taxonomyLeaf}
+                taxonomyNode={taxonomyNode}
+                leafExact={leafExact}
               />
             ) : null}
           </div>
@@ -662,10 +672,20 @@ export default async function ExploreRequestsPage({
             <ExploreCategoryFilterBar
               interestOptions={interestOptions}
               filters={exploreFilters}
+              hiddenFields={{
+                ...(districtFilter ? { district: districtFilter } : {}),
+                ...(taxonomyLeaf ? { taxonomyLeaf } : {}),
+                ...(taxonomyNode ? { taxonomyNode } : {}),
+                ...(leafExact ? { leafExact: "1" } : {}),
+              }}
               clearHref={clearMatchedFiltersHref}
               advancedFiltersEnabled={hasAdvancedFilters}
               showUrgentFilter={hasUrgentPriority}
               savedSearchesEnabled={hasSavedSearches}
+              city={cityFilter}
+              taxonomyLeaf={taxonomyLeaf}
+              taxonomyNode={taxonomyNode}
+                leafExact={leafExact}
             />
             {hasSmartMatching && profileReadiness && !profileReadiness.ready ? (
               <div className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-4 py-3 text-sm text-amber-950/80">

@@ -25,12 +25,12 @@ const checks: Array<[string, boolean]> = [
   ["preference recall wired", feed.includes("collectPersonalPreferenceCandidateIds")],
   ["personal inventory is not used", !matcherCore.includes("inventory")],
   ["contextual plan education exists", plan.includes("kişisel eşleşme sinyalleri")],
-  ["legacy categorySlug uses shared helper", matcher.includes("canonicalFilterFromSavedSearchFilters")],
+  ["legacy categorySlug uses shared helper", matcher.includes("criteriaFromAlertRule")],
   ["helper resolves via getTaxonomyNode", helper.includes("getTaxonomyNode")],
   ["card surfaces matchReasons", hub.includes("item.matchReasons") && hub.includes("matchReasonList")],
   [
     "recall is not a second match engine",
-    candidates.includes("evaluateDiscoveryFilter") &&
+    candidates.includes("evaluatePreferenceCriteria") &&
       candidates.includes("Does NOT decide"),
   ],
   [

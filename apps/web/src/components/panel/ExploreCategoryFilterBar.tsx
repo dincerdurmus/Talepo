@@ -28,6 +28,9 @@ export function ExploreCategoryFilterBar({
   showUrgentFilter = false,
   savedSearchesEnabled = false,
   city,
+  taxonomyLeaf,
+  taxonomyNode,
+  leafExact,
 }: {
   interestOptions: InterestOption[];
   filters: ParsedExploreFilters;
@@ -40,6 +43,9 @@ export function ExploreCategoryFilterBar({
   /** Enable save-search button (Premium saved_searches) */
   savedSearchesEnabled?: boolean;
   city?: string;
+  taxonomyLeaf?: string;
+  taxonomyNode?: string;
+  leafExact?: boolean;
 }) {
   const focus = filters.focus || interestOptions[0]?.slug || "";
   const defs = focus ? getExploreFilterDefs(focus) : [];
@@ -158,6 +164,9 @@ export function ExploreCategoryFilterBar({
                 filters={filters}
                 categorySlug={focus || undefined}
                 city={city}
+                taxonomyLeaf={taxonomyLeaf}
+                taxonomyNode={taxonomyNode}
+                leafExact={leafExact}
                 enabled
               />
             ) : null}

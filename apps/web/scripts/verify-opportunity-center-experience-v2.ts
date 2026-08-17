@@ -498,8 +498,11 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !read("src/lib/panel/opportunity-recommended-eligibility.ts").includes(
         "magic",
       ) &&
-      read("src/server/monetization/personal-matching-core.ts").includes(
+      read("src/lib/monetization/preference-criteria.ts").includes(
         "evaluateDiscoveryFilter",
+      ) &&
+      read("src/server/monetization/personal-matching-core.ts").includes(
+        "evaluatePreferenceCriteria",
       ),
   );
   check(
@@ -703,7 +706,7 @@ console.log("\n=== SUMMARY + MEDIA CONSISTENCY ===\n");
   check(
     "M Saved Search regression",
     isPersonalRecommendedEligible(yonetici) &&
-      read("src/server/monetization/personal-matching-core.ts").includes(
+      read("src/lib/monetization/preference-criteria.ts").includes(
         "evaluateDiscoveryFilter",
       ),
   );
@@ -886,8 +889,8 @@ console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
   check(
     "P1-3 final match authority unchanged",
     matcher.includes("matchPersonalAgainstPreferences") &&
-      matcher.includes("evaluateDiscoveryFilter") &&
-      candidates.includes("evaluateDiscoveryFilter") &&
+      matcher.includes("evaluatePreferenceCriteria") &&
+      candidates.includes("evaluatePreferenceCriteria") &&
       eligibility.includes("isPersonalRecommendedEligible") &&
       !candidates.includes("isPersonalRecommendedEligible"),
   );
@@ -917,7 +920,7 @@ console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
     {
       kind: "saved_search" as const,
       name: "Mobilya aramam",
-      filter: furnitureFilter,
+      criteria: { version: 1 as const, canonical: furnitureFilter },
     },
   ];
   const hit = matchPersonalAgainstPreferences(

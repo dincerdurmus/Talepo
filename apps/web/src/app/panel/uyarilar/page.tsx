@@ -90,7 +90,7 @@ export default async function AlertRulesPage() {
           Talep bildirim kuralları
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
-          Kategori, taxonomy leaf, bölge ve bütçeye göre otomatik uyarı kuralları.
+          Kategori, bölge, bütçe ve anahtar kelimeye göre otomatik uyarı kuralları.
         </p>
       </section>
 

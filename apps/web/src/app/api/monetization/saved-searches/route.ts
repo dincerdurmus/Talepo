@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
-import { validateCanonicalDiscoveryFilter } from "@/lib/discovery";
-import { canonicalFilterFromSavedSearchFilters } from "@/lib/monetization/saved-search-canonical";
+import { normalizePreferenceCriteria, preferenceCriteriaFingerprint } from "@/lib/monetization/preference-criteria";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 import {
   ownerCreateData,
@@ -11,42 +10,6 @@ import {
 } from "@/lib/membership/resource-owner";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
-
-function normalizeSavedSearchFilters(
-  filters: SavedSearchFilters,
-): { ok: true; filters: SavedSearchFilters } | { ok: false; message: string } {
-  if (filters.canonical) {
-    const validated = validateCanonicalDiscoveryFilter(filters.canonical);
-    if (!validated.ok) {
-      return {
-        ok: false,
-        message: validated.errors[0] ?? "Geçersiz canonical filter.",
-      };
-    }
-    const withCanonical: SavedSearchFilters = {
-      ...filters,
-      version: 1,
-      canonical: validated.filter,
-    };
-    const resolved = canonicalFilterFromSavedSearchFilters(withCanonical);
-    return {
-      ok: true,
-      filters: resolved
-        ? { ...withCanonical, canonical: resolved }
-        : withCanonical,
-    };
-  }
-
-  const resolved = canonicalFilterFromSavedSearchFilters(filters);
-  return {
-    ok: true,
-    filters: {
-      ...filters,
-      version: filters.version ?? 1,
-      ...(resolved ? { canonical: resolved } : {}),
-    },
-  };
-}
 
 export async function GET() {
   try {
@@ -58,7 +21,15 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json({ ok: true, searches });
+    return NextResponse.json({
+      ok: true,
+      searches: searches.map((search) => ({
+        ...search,
+        criteriaFingerprint: preferenceCriteriaFingerprint(
+          search.filters as SavedSearchFilters,
+        ),
+      })),
+    });
   } catch (error) {
     const ent = entitlementErrorResponse(error);
     if (ent) return ent;
@@ -93,7 +64,7 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const normalized = normalizeSavedSearchFilters(body.filters);
+      const normalized = normalizePreferenceCriteria(body.filters);
       if (!normalized.ok) {
         return NextResponse.json(
           { ok: false, message: normalized.message },
@@ -120,7 +91,7 @@ export async function POST(request: Request) {
     if (body.action === "update" && body.id) {
       let filtersUpdate: SavedSearchFilters | undefined;
       if (body.filters) {
-        const normalized = normalizeSavedSearchFilters(body.filters);
+        const normalized = normalizePreferenceCriteria(body.filters);
         if (!normalized.ok) {
           return NextResponse.json(
             { ok: false, message: normalized.message },

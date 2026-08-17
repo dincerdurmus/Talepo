@@ -154,7 +154,9 @@ export async function buildOpportunitiesFeed(
     select: {
       id: true,
       title: true,
+      description: true,
       city: true,
+      district: true,
       isUrgent: true,
       aiScore: true,
       budgetMin: true,
@@ -164,6 +166,8 @@ export async function buildOpportunitiesFeed(
       viewCount: true,
       publishedAt: true,
       createdAt: true,
+      createdById: true,
+      companyId: true,
       discoveryProjection: true,
       category: { select: { name: true, slug: true } },
       coverImageUrl: true,
@@ -193,6 +197,18 @@ export async function buildOpportunitiesFeed(
       ? matchPersonalAgainstPreferences(
           parseDiscoveryProjection(req.discoveryProjection),
           personalPreferences,
+          {
+            title: req.title,
+            description: req.description,
+            city: req.city,
+            district: req.district,
+            budgetMin: req.budgetMin?.toNumber() ?? null,
+            budgetMax: req.budgetMax?.toNumber() ?? null,
+            isUrgent: req.isUrgent,
+            createdById: req.createdById,
+            companyId: req.companyId,
+          },
+          userId ? { userId } : undefined,
         )
       : null;
     const matchScore = companyId ? match?.score ?? null : personalMatch?.score ?? null;

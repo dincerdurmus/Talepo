@@ -1,3 +1,6 @@
+import {
+  alertNotificationActionUrl,
+} from "@/lib/monetization/preference-criteria";
 import { prisma } from "@/lib/prisma";
 
 import { matchRequestToAlertRules } from "./alert-matching";
@@ -6,8 +9,9 @@ const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
 
 /**
  * Deliver in-app notifications for alert rule matches on publish.
- * USER alerts → target user only.
- * COMPANY alerts → company members (OWNER/ADMIN/MANAGER).
+ * USER alerts → target user only (never the request author).
+ * COMPANY alerts → company members (OWNER/ADMIN/MANAGER), skipping the publisher.
+ * Dedupe keys on actionUrl + alertRuleId so a rule rename does not re-notify.
  * Non-blocking — failures must not break request publish.
  */
 export async function deliverAlertRuleNotifications(
@@ -22,6 +26,7 @@ export async function deliverAlertRuleNotifications(
       id: true,
       title: true,
       city: true,
+      createdById: true,
       category: { select: { name: true } },
     },
   });
@@ -34,13 +39,17 @@ export async function deliverAlertRuleNotifications(
 
   for (const match of matches) {
     if (match.ownerType === "USER" && match.userId) {
+      if (match.userId === request.createdById) {
+        skipped += 1;
+        continue;
+      }
+      const actionUrl = alertNotificationActionUrl(request.id, match.alertRuleId);
       const duplicate = await prisma.notification.findFirst({
         where: {
           userId: match.userId,
           requestId: request.id,
           companyId: null,
-          title: "Yeni talep alarmınızla eşleşti",
-          message: { contains: match.alertRuleName },
+          actionUrl,
         },
         select: { id: true },
       });
@@ -54,7 +63,7 @@ export async function deliverAlertRuleNotifications(
           type: "GENERAL",
           title: "Yeni talep alarmınızla eşleşti",
           message: `${request.title}${location ? ` · ${location}` : ""} (${match.alertRuleName})`,
-          actionUrl: `/panel/talepler/${request.id}`,
+          actionUrl,
           requestId: request.id,
           companyId: null,
         },
@@ -77,14 +86,20 @@ export async function deliverAlertRuleNotifications(
       select: { userId: true },
     });
 
+    const actionUrl = alertNotificationActionUrl(request.id, match.alertRuleId);
+
     for (const member of members) {
+      if (member.userId === request.createdById) {
+        skipped += 1;
+        continue;
+      }
+
       const duplicate = await prisma.notification.findFirst({
         where: {
           userId: member.userId,
           requestId: request.id,
           companyId: match.companyId,
-          title: "Yeni talep alarmınızla eşleşti",
-          message: { contains: match.alertRuleName },
+          actionUrl,
         },
         select: { id: true },
       });
@@ -100,7 +115,7 @@ export async function deliverAlertRuleNotifications(
           type: "GENERAL",
           title: "Yeni talep alarmınızla eşleşti",
           message: `${request.title}${location ? ` · ${location}` : ""} (${match.alertRuleName})`,
-          actionUrl: `/panel/talepler/${request.id}`,
+          actionUrl,
           requestId: request.id,
           companyId: match.companyId,
         },

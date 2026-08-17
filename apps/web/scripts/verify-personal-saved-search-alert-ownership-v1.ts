@@ -181,8 +181,8 @@ const filter = validateCanonicalDiscoveryFilter({
 });
 check("35 canonical filter still validates", filter.ok);
 check(
-  "36 saved normalize still calls validateCanonicalDiscoveryFilter",
-  savedRoute.includes("validateCanonicalDiscoveryFilter"),
+  "36 saved normalize uses shared preference criteria",
+  savedRoute.includes("normalizePreferenceCriteria"),
 );
 check(
   "37 alert route still validates discoveryFilter",

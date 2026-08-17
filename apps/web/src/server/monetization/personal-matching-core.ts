@@ -1,8 +1,13 @@
 import {
-  evaluateDiscoveryFilter,
-  type CanonicalDiscoveryFilter,
   type RequestDiscoveryProjection,
 } from "@/lib/discovery";
+import {
+  evaluatePreferenceCriteria,
+  hasPreferenceSignal,
+  type PreferenceRequestFacts,
+  type PreferenceViewer,
+} from "@/lib/monetization/preference-criteria";
+import type { SavedSearchFilters } from "@/lib/monetization/types";
 
 export const PERSONAL_SAVED_SEARCH_MATCH_REASON_PREFIX =
   "Kayıtlı aramanızla eşleşiyor:";
@@ -25,30 +30,40 @@ export type PersonalMatchResult = {
 export type PersonalPreferenceFilter = {
   kind: "saved_search" | "alert_rule";
   name: string;
-  filter: CanonicalDiscoveryFilter;
+  criteria: SavedSearchFilters;
 };
 
 /**
- * Final personal match truth against already-loaded preference filters.
- * Same evaluateDiscoveryFilter rules as matchPersonalToRequest.
- * Pure — no Prisma (safe for verifiers / batch feed scoring).
+ * Final personal match truth. Uses the shared preference-criteria evaluator
+ * (taxonomy via evaluateDiscoveryFilter + location/budget/keyword/urgency).
  */
 export function matchPersonalAgainstPreferences(
   projection: RequestDiscoveryProjection | null | undefined,
   preferences: readonly PersonalPreferenceFilter[],
+  facts: PreferenceRequestFacts = {},
+  viewer?: PreferenceViewer,
 ): PersonalMatchResult {
-  if (!projection) {
+  const grounded = preferences.filter((preference) =>
+    hasPreferenceSignal(preference.criteria),
+  );
+
+  if (grounded.length === 0) {
     return {
       source: "PERSONAL",
       score: null,
       reasons: [],
-      missingInformation: ["Talep için canonical keşif verisi yok."],
+      missingInformation: ["Bu kullanıcı için yeterli kişisel tercih sinyali yok."],
     };
   }
 
   const reasons: string[] = [];
-  for (const preference of preferences) {
-    const result = evaluateDiscoveryFilter(projection, preference.filter);
+  for (const preference of grounded) {
+    const result = evaluatePreferenceCriteria({
+      projection,
+      facts,
+      criteria: preference.criteria,
+      viewer,
+    });
     if (!result.match) continue;
     reasons.push(
       preference.kind === "saved_search"
@@ -62,17 +77,12 @@ export function matchPersonalAgainstPreferences(
       source: "PERSONAL",
       score: null,
       reasons: [],
-      missingInformation:
-        preferences.length === 0
-          ? ["Bu kullanıcı için yeterli kişisel tercih sinyali yok."]
-          : ["Mevcut kişisel tercihlerle eşleşen sinyal bulunamadı."],
+      missingInformation: ["Mevcut kişisel tercihlerle eşleşen sinyal bulunamadı."],
     };
   }
 
   return {
     source: "PERSONAL",
-    // Exact canonical preference matches are explicit relevance signals,
-    // not a probabilistic confidence percentage.
     score: 100,
     reasons: [...new Set(reasons)].slice(0, 3),
     missingInformation: [],

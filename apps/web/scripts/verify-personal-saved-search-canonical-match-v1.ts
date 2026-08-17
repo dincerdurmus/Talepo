@@ -178,7 +178,7 @@ const projection = furnitureLeafProjection();
 {
   const searchName = "[E2E TEST] Mobilya ve Ofis";
   const reason = `Kayıtlı aramanızla eşleşiyor: ${searchName}`;
-  const matcher = read("src/server/monetization/personal-matching.ts");
+  const matcher = read("src/server/monetization/personal-matching-core.ts");
   check(
     "F reason contains Kayıtlı aramanızla eşleşiyor:",
     reason.includes("Kayıtlı aramanızla eşleşiyor:") &&
@@ -282,7 +282,8 @@ const projection = furnitureLeafProjection();
 const personalMatching = read("src/server/monetization/personal-matching.ts");
 check(
   "personal matcher uses shared helper",
-  personalMatching.includes("canonicalFilterFromSavedSearchFilters"),
+  personalMatching.includes("criteriaFromAlertRule") &&
+    personalMatching.includes("normalizePreferenceCriteria"),
 );
 check(
   "personal matcher does not string-compare Request.category.slug",
@@ -301,6 +302,7 @@ const saveButton = read("src/components/panel/SaveExploreSearchButton.tsx");
 check(
   "SaveExploreSearchButton does not construct taxonomy IDs",
   saveButton.includes("exploreFiltersToSavedSearch") &&
+    saveButton.includes("taxonomyLeaf") &&
     !saveButton.includes("tax:"),
 );
 

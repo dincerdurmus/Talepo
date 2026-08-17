@@ -10,6 +10,9 @@ type SaveExploreSearchButtonProps = {
   filters: ParsedExploreFilters;
   categorySlug?: string;
   city?: string;
+  taxonomyLeaf?: string;
+  taxonomyNode?: string;
+  leafExact?: boolean;
   enabled?: boolean;
 };
 
@@ -22,6 +25,9 @@ export function SaveExploreSearchButton({
   filters,
   categorySlug,
   city,
+  taxonomyLeaf,
+  taxonomyNode,
+  leafExact,
   enabled = true,
 }: SaveExploreSearchButtonProps) {
   const [open, setOpen] = useState(false);
@@ -53,6 +59,9 @@ export function SaveExploreSearchButton({
       urgentOnly: filters.advanced.urgentOnly,
       sinceDays: filters.advanced.sinceDays,
       fieldParams,
+      taxonomyLeaf,
+      taxonomyNode,
+      leafExact,
     });
 
     try {
