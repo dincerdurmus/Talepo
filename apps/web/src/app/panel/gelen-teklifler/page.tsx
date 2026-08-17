@@ -9,11 +9,17 @@ import {
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
+import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   compareOffersByCompleteness,
   type OfferCompleteness,
 } from "@/lib/offer/offer-completeness";
+import {
+  offerNegotiationListInclude,
+  toOfferNegotiationDtos,
+  type OfferNegotiationDto,
+} from "@/lib/offer/offer-negotiation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 
@@ -46,6 +52,14 @@ type OfferRow = {
   submittedBy: { name: string | null };
   conversation: { id: string } | null;
   media: { id: string }[];
+  negotiations: Array<{
+    id: string;
+    amount: unknown;
+    currency: string;
+    proposedBySide: OfferNegotiationDto["proposedBySide"];
+    status: OfferNegotiationDto["status"];
+    createdAt: Date;
+  }>;
 };
 
 export default async function IncomingOffersPage() {
@@ -75,6 +89,7 @@ export default async function IncomingOffersPage() {
         orderBy: { sortOrder: "asc" },
         select: { id: true },
       },
+      negotiations: offerNegotiationListInclude,
     },
   })) as OfferRow[];
 
@@ -134,7 +149,7 @@ export default async function IncomingOffersPage() {
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-black/45">
               Teklifler taleplerinize göre gruplanır. Birden fazla teklifte
-              doluluğa göre karşılaştırın; kabul, red veya pazarlık seçin.
+              doluluğa göre karşılaştırın; kabul, red veya karşı teklif verin.
             </p>
           </div>
           {pendingTotal > 0 && (
@@ -391,7 +406,26 @@ function IncomingOfferCard({
         compact
       />
 
-      {actionable && <OfferActions offerId={offer.id} />}
+      {actionable || offer.negotiations.length > 0 ? (
+        <OfferNegotiationPanel
+          offerId={offer.id}
+          originalAmount={amount}
+          currency={offer.currency}
+          offerStatus={offer.status}
+          viewer="buyer"
+          negotiations={toOfferNegotiationDtos(offer.negotiations)}
+          canMutate={actionable}
+        />
+      ) : null}
+
+      {actionable && (
+        <OfferActions
+          offerId={offer.id}
+          hasPendingNegotiation={offer.negotiations.some(
+            (row) => row.status === "PENDING",
+          )}
+        />
+      )}
 
       {offer.status === "ACCEPTED" && offer.conversation && (
         <Link

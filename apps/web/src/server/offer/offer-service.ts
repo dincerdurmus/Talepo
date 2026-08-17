@@ -15,6 +15,8 @@ import {
   OFFER_NO_LONGER_EDITABLE_MESSAGE,
 } from "@/lib/offer/submitted-commercial-lock";
 import { prisma } from "@/lib/prisma";
+import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
+import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 
 const log = createSubsystemLogger("offer");
 
@@ -618,27 +620,36 @@ async function ensureOfferConversation(
   }
 }
 
-export async function acceptOffer(userId: string, offerId: string) {
+export async function acceptOffer(
+  userId: string,
+  offerId: string,
+  options?: { negotiationId?: string },
+) {
   const started = Date.now();
 
-  // Idempotent replay: already accepted by this buyer → return conversation
+  // Idempotent replay: already accepted → return conversation for authorized parties
   const already = await prisma.offer.findFirst({
     where: {
       id: offerId,
       status: "ACCEPTED",
-      request: { createdById: userId, deletedAt: null },
+      request: { deletedAt: null },
     },
     select: {
       id: true,
       requestId: true,
       companyId: true,
+      submittedById: true,
       amount: true,
       currency: true,
       conversation: { select: { id: true } },
+      request: { select: { createdById: true } },
     },
   });
   if (already?.conversation?.id) {
-    return { offer: already, conversationId: already.conversation.id };
+    const replaySide = await resolveNegotiationActorSide(already, userId);
+    if (replaySide || already.request.createdById === userId) {
+      return { offer: already, conversationId: already.conversation.id };
+    }
   }
 
   const offer = await prisma.offer.findFirst({
@@ -646,12 +657,11 @@ export async function acceptOffer(userId: string, offerId: string) {
       id: offerId,
       status: { in: ["SUBMITTED", "VIEWED"] },
       request: {
-        createdById: userId,
         deletedAt: null,
       },
     },
     include: {
-      request: { select: { id: true, title: true } },
+      request: { select: { id: true, title: true, createdById: true } },
       submittedBy: { select: { id: true, name: true } },
       company: { select: { id: true, name: true } },
       conversation: { select: { id: true } },
@@ -662,14 +672,54 @@ export async function acceptOffer(userId: string, offerId: string) {
     throw new OfferValidationError(["Teklif bulunamadı veya kabul edilemez durumda."]);
   }
 
+  const actorSide = await resolveNegotiationActorSide(offer, userId);
+  if (!actorSide) {
+    throw new OfferValidationError(["Teklif bulunamadı veya kabul edilemez durumda."]);
+  }
+
+  if (!options?.negotiationId && actorSide !== "BUYER") {
+    throw new OfferValidationError(["Orijinal teklifi yalnız talep sahibi kabul edebilir."]);
+  }
+
   const now = new Date();
+  let commercialAmount = Number(offer.amount);
 
   return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Offer" WHERE id = ${offerId} FOR UPDATE`;
+
+    if (options?.negotiationId) {
+      const claimedNegotiation = await tx.offerNegotiation.updateMany({
+        where: {
+          id: options.negotiationId,
+          offerId,
+          status: "PENDING",
+          proposedBySide: actorSide === "BUYER" ? "PROVIDER" : "BUYER",
+        },
+        data: { status: "ACCEPTED", respondedAt: now },
+      });
+      if (claimedNegotiation.count !== 1) {
+        throw new OfferValidationError(["Karşı teklif artık beklenmiyor."]);
+      }
+      const acceptedNegotiation = await tx.offerNegotiation.findUniqueOrThrow({
+        where: { id: options.negotiationId },
+        select: { amount: true },
+      });
+      commercialAmount = resolveOfferCommercialAmount({
+        offerAmount: offer.amount.toString(),
+        acceptedNegotiationAmount: acceptedNegotiation.amount.toString(),
+      });
+    } else {
+      await tx.offerNegotiation.updateMany({
+        where: { offerId, status: "PENDING" },
+        data: { status: "CANCELLED", respondedAt: now },
+      });
+    }
+
     // Atomic claim: only one accept can transition the request into OFFER_SELECTED.
     const claimedRequest = await tx.request.updateMany({
       where: {
         id: offer.requestId,
-        createdById: userId,
+        createdById: offer.request.createdById,
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
@@ -721,18 +771,26 @@ export async function acceptOffer(userId: string, offerId: string) {
       await tx.offer.updateMany({
         where: {
           id: { in: siblings.map((s) => s.id) },
+          status: { in: ["SUBMITTED", "VIEWED"] },
         },
         data: {
           status: "REJECTED",
           rejectedAt: now,
         },
       });
+      await tx.offerNegotiation.updateMany({
+        where: {
+          offerId: { in: siblings.map((s) => s.id) },
+          status: "PENDING",
+        },
+        data: { status: "CANCELLED", respondedAt: now },
+      });
     }
 
     const conversation = await ensureOfferConversation(tx, {
       offerId: offer.id,
       requestTitle: offer.request.title,
-      buyerUserId: userId,
+      buyerUserId: offer.request.createdById,
       supplierUserId: offer.submittedById,
       companyId: offer.companyId,
       now,
@@ -759,19 +817,21 @@ export async function acceptOffer(userId: string, offerId: string) {
       requestTitle: offer.request.title,
     };
   }).then(async (result) => {
-    try {
-      await createNotification({
-        userId: offer.submittedById,
-        type: "OFFER_ACCEPTED",
-        title: "Teklifiniz kabul edildi",
-        message: `“${result.requestTitle}” talebi için teklifiniz kabul edildi. Mesajlaşma açıldı.`,
-        actionUrl: `/panel/mesajlar/${result.conversationId}`,
-        requestId: offer.requestId,
-        offerId: offer.id,
-        companyId: offer.companyId ?? undefined,
-      });
-    } catch {
-      /* non-blocking */
+    if (!options?.negotiationId) {
+      try {
+        await createNotification({
+          userId: offer.submittedById,
+          type: "OFFER_ACCEPTED",
+          title: "Teklifiniz kabul edildi",
+          message: `“${result.requestTitle}” talebi için teklifiniz kabul edildi. Mesajlaşma açıldı.`,
+          actionUrl: `/panel/mesajlar/${result.conversationId}`,
+          requestId: offer.requestId,
+          offerId: offer.id,
+          companyId: offer.companyId ?? undefined,
+        });
+      } catch {
+        /* non-blocking */
+      }
     }
 
     for (const sibling of result.siblingNotify) {
@@ -795,9 +855,9 @@ export async function acceptOffer(userId: string, offerId: string) {
         requestId: offer.requestId,
         offerId: offer.id,
         conversationId: result.conversationId,
-        buyerUserId: userId,
+        buyerUserId: offer.request.createdById,
         companyId: offer.companyId,
-        offerAmount: offer.amount.toNumber(),
+        offerAmount: commercialAmount,
         currency: offer.currency,
       });
     } catch (dealError) {
@@ -972,12 +1032,28 @@ export async function rejectOffer(userId: string, offerId: string) {
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
 
-  const updated = await prisma.offer.update({
-    where: { id: offerId },
-    data: {
-      status: "REJECTED",
-      rejectedAt: new Date(),
-    },
+  const now = new Date();
+  const updated = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "Offer" WHERE id = ${offerId} FOR UPDATE`;
+    const rows = await tx.offer.updateMany({
+      where: {
+        id: offerId,
+        status: { in: ["SUBMITTED", "VIEWED"] },
+        request: { createdById: userId, deletedAt: null },
+      },
+      data: {
+        status: "REJECTED",
+        rejectedAt: now,
+      },
+    });
+    if (rows.count !== 1) {
+      throw new OfferValidationError(["Teklif bulunamadı veya artık reddedilemez."]);
+    }
+    await tx.offerNegotiation.updateMany({
+      where: { offerId, status: "PENDING" },
+      data: { status: "CANCELLED", respondedAt: now },
+    });
+    return tx.offer.findUniqueOrThrow({ where: { id: offerId } });
   });
 
   await createNotification({

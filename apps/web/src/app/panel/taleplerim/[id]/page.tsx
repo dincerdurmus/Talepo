@@ -15,10 +15,15 @@ import {
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
+import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { displayRequestFieldValue } from "@/lib/field-display";
+import {
+  offerNegotiationListInclude,
+  toOfferNegotiationDtos,
+} from "@/lib/offer/offer-negotiation";
 import {
   formatListingBudget,
   getCategoryVisual,
@@ -88,6 +93,7 @@ export default async function RequestDetailPage({
             orderBy: { sortOrder: "asc" },
             select: { id: true },
           },
+          negotiations: offerNegotiationListInclude,
         },
       },
       _count: { select: { matches: true } },
@@ -287,7 +293,7 @@ export default async function RequestDetailPage({
                   >
                     Gelen teklifler
                   </Link>{" "}
-                  sayfasında görünür. Kabul veya pazarlık ile sohbet açılır.
+                  sayfasında görünür. Kabul veya karşı teklif ile süreç ilerler.
                 </p>
               </div>
             ) : (
@@ -321,8 +327,27 @@ export default async function RequestDetailPage({
                         {formatMoney(Number(offer.amount), offer.currency)}
                       </p>
                     </div>
+                    {["SUBMITTED", "VIEWED"].includes(offer.status) ||
+                    offer.negotiations.length > 0 ? (
+                      <OfferNegotiationPanel
+                        offerId={offer.id}
+                        originalAmount={Number(offer.amount)}
+                        currency={offer.currency}
+                        offerStatus={offer.status}
+                        viewer="buyer"
+                        negotiations={toOfferNegotiationDtos(offer.negotiations)}
+                        canMutate={["SUBMITTED", "VIEWED"].includes(
+                          offer.status,
+                        )}
+                      />
+                    ) : null}
                     {["SUBMITTED", "VIEWED"].includes(offer.status) && (
-                      <OfferActions offerId={offer.id} />
+                      <OfferActions
+                        offerId={offer.id}
+                        hasPendingNegotiation={offer.negotiations.some(
+                          (row) => row.status === "PENDING",
+                        )}
+                      />
                     )}
                     {offer.conversation?.id &&
                     ["SUBMITTED", "VIEWED", "ACCEPTED"].includes(

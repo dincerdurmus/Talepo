@@ -259,11 +259,18 @@ function NotificationIcon({
     type === "OFFER_ACCEPTED" ||
     type === "OFFER_VIEWED" ||
     type === "OFFER_REJECTED" ||
-    type === "OFFER_NEGOTIATE"
+    type === "OFFER_NEGOTIATE" ||
+    type === "COUNTER_OFFER_RECEIVED" ||
+    type === "COUNTER_OFFER_ACCEPTED" ||
+    type === "COUNTER_OFFER_REJECTED"
   ) {
     Icon = BriefcaseBusiness;
     background =
-      type === "OFFER_NEGOTIATE" ? "bg-amber-50" : "bg-[#e5efff]";
+      type === "OFFER_NEGOTIATE" || type === "COUNTER_OFFER_RECEIVED"
+        ? "bg-amber-50"
+        : type === "COUNTER_OFFER_ACCEPTED"
+          ? "bg-[#e9f8e5]"
+          : "bg-[#e5efff]";
   }
 
   if (type === "NEW_MESSAGE") {

@@ -129,12 +129,12 @@ export default async function MessagesPage() {
                 </li>
                 <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
                   <span className="font-semibold text-[#0f1f1d]">2.</span> Siz{" "}
-                  <strong>Kabul et</strong> veya <strong>Pazarlık et</strong>{" "}
-                  dersiniz
+                  <strong>Kabul et</strong> veya <strong>karşı teklif</strong>{" "}
+                  verirsiniz
                 </li>
                 <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
-                  <span className="font-semibold text-[#0f1f1d]">3.</span> Yazışma{" "}
-                  <strong>burada</strong> açılır
+                  <span className="font-semibold text-[#0f1f1d]">3.</span> Anlaşma
+                  sonrası yazışma <strong>burada</strong> açılır
                 </li>
               </>
             )}

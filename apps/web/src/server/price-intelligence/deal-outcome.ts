@@ -59,6 +59,7 @@ export async function createPendingDealOutcome(input: {
       companyId: input.companyId,
       status: "PENDING",
       currency: input.currency as "TRY",
+      agreedPrice: input.offerAmount,
     },
     update: {
       conversationId: input.conversationId,

@@ -9,7 +9,12 @@ import {
 
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
+import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
+import {
+  offerNegotiationListInclude,
+  toOfferNegotiationDtos,
+} from "@/lib/offer/offer-negotiation";
 import {
   formatMoney,
   formatOfferStatus,
@@ -58,14 +63,16 @@ export default async function OffersPage({
         orderBy: { sortOrder: "asc" },
         select: { id: true },
       },
+      negotiations: offerNegotiationListInclude,
     },
     take: 50,
   });
 
   const negotiating = offers.filter(
     (o) =>
-      o.conversation?.id &&
-      ["SUBMITTED", "VIEWED"].includes(o.status),
+      ["SUBMITTED", "VIEWED"].includes(o.status) &&
+      (Boolean(o.conversation?.id) ||
+        o.negotiations.some((row) => row.status === "PENDING")),
   ).length;
 
   const counts = {
@@ -79,8 +86,8 @@ export default async function OffersPage({
 
   const pageTitle = workspace ? "Tekliflerimiz" : "Tekliflerim";
   const pageSubtitle = workspace
-    ? "Firmanızın teklifleri: durum, pazarlık sohbetleri ve doluluk."
-    : "Gönderdiğiniz teklifler. Alıcı kabul veya pazarlık ile sohbet açabilir.";
+    ? "Firmanızın teklifleri: durum, karşı teklifler ve doluluk."
+    : "Gönderdiğiniz teklifler. Alıcı kabul edebilir veya karşı teklif verebilir.";
 
   return (
     <>
@@ -107,7 +114,7 @@ export default async function OffersPage({
           <p className="mt-1.5 text-sm leading-6 text-teal-900/70">
             {justUpdated
               ? "Alıcı güncel açıklamanızı görür. Tutar ve teslim süresi aynı kalır."
-              : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya pazarlık ile mesajlaşma açılır. Ürün fotoğrafları gönderimden sonra değişmez."}
+              : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya karşı teklif ile süreç ilerler. Ürün fotoğrafları gönderimden sonra değişmez."}
           </p>
         </section>
       )}
@@ -144,6 +151,9 @@ export default async function OffersPage({
         <section className="grid gap-3">
           {offers.map((offer) => {
             const hasConversation = Boolean(offer.conversation?.id);
+            const pendingNegotiation = offer.negotiations.some(
+              (row) => row.status === "PENDING",
+            );
             const status = formatOfferStatus(offer.status, {
               hasConversation,
             });
@@ -160,7 +170,7 @@ export default async function OffersPage({
               <article
                 key={offer.id}
                 className={`rounded-[24px] border bg-white p-5 shadow-sm ${
-                  hasConversation && canRevise
+                  (hasConversation || pendingNegotiation) && canRevise
                     ? "border-amber-200/80 ring-1 ring-amber-100"
                     : "border-black/[0.06]"
                 }`}
@@ -173,7 +183,12 @@ export default async function OffersPage({
                           Acil talep
                         </span>
                       ) : null}
-                      {hasConversation && canRevise ? (
+                      {pendingNegotiation && canRevise ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
+                          <Handshake className="h-3 w-3" />
+                          Karşı teklif
+                        </span>
+                      ) : hasConversation && canRevise ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
                           <Handshake className="h-3 w-3" />
                           Pazarlık açık
@@ -224,6 +239,17 @@ export default async function OffersPage({
                     </span>
                   </div>
                 </div>
+                {canRevise || offer.negotiations.length > 0 ? (
+                  <OfferNegotiationPanel
+                    offerId={offer.id}
+                    originalAmount={Number(offer.amount)}
+                    currency={offer.currency}
+                    offerStatus={offer.status}
+                    viewer="provider"
+                    negotiations={toOfferNegotiationDtos(offer.negotiations)}
+                    canMutate={canRevise}
+                  />
+                ) : null}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link
                     href={`/panel/talepler/${offer.request.id}`}

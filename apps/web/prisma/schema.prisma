@@ -161,6 +161,19 @@ enum ConversationStatus {
   CLOSED
 }
 
+enum OfferNegotiationSide {
+  BUYER
+  PROVIDER
+}
+
+enum OfferNegotiationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  SUPERSEDED
+  CANCELLED
+}
+
 enum MessageType {
   TEXT
   FILE
@@ -177,6 +190,9 @@ enum NotificationType {
   OFFER_ACCEPTED
   OFFER_REJECTED
   OFFER_NEGOTIATE
+  COUNTER_OFFER_RECEIVED
+  COUNTER_OFFER_ACCEPTED
+  COUNTER_OFFER_REJECTED
   NEW_MESSAGE
   COMPANY_INVITATION
   COMPANY_MEMBER_JOINED
@@ -257,6 +273,7 @@ model User {
   createdRequests   Request[]     @relation("RequestCreator")
   submittedOffers   Offer[]       @relation("OfferSubmitter")
   buyerDealOutcomes DealOutcome[] @relation("DealBuyer")
+  offerNegotiations OfferNegotiation[] @relation("OfferNegotiationProposer")
 
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                 @relation("MessageSender")
@@ -853,6 +870,7 @@ model Request {
 
   fieldValues        RequestFieldValue[]
   offers             Offer[]
+  negotiations       OfferNegotiation[]
   matches            RequestMatch[]
   watchlistItems     OpportunityWatchlistItem[]
   changes            RequestChange[]
@@ -938,6 +956,7 @@ model Offer {
   dealOutcome       DealOutcome?
   priceObservations PriceObservation[]
   media             OfferMedia[]
+  negotiations      OfferNegotiation[]
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -966,6 +985,34 @@ model OfferMedia {
   createdAt DateTime @default(now())
 
   @@index([offerId, sortOrder])
+}
+
+/// Structured price counter. Does not overwrite Offer.amount.
+model OfferNegotiation {
+  id String @id @default(cuid())
+
+  offerId   String
+  requestId String
+
+  proposedByUserId String
+  proposedBySide   OfferNegotiationSide
+
+  amount   Decimal  @db.Decimal(18, 2)
+  currency Currency
+
+  status OfferNegotiationStatus @default(PENDING)
+
+  createdAt   DateTime  @default(now())
+  respondedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  offer      Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  request    Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  proposedBy User   @relation("OfferNegotiationProposer", fields: [proposedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([offerId, createdAt])
+  @@index([offerId, status])
+  @@index([requestId])
 }
 
 model Conversation {

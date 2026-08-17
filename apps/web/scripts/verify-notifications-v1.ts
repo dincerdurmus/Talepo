@@ -71,6 +71,36 @@ console.log("\n=== DESTINATION CONTRACT ===\n");
     }) === "/panel/gelen-teklifler",
   );
   check(
+    "counter received fallback stays in panel",
+    deriveNotificationPath({
+      type: "COUNTER_OFFER_RECEIVED",
+      actionUrl: null,
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/teklifler",
+  );
+  check(
+    "counter actionUrl wins over fallback",
+    resolveNotificationDestination({
+      type: "COUNTER_OFFER_RECEIVED",
+      actionUrl: "/panel/gelen-teklifler",
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/gelen-teklifler",
+  );
+  check(
+    "counter accepted conversation url allowed",
+    resolveNotificationDestination({
+      type: "COUNTER_OFFER_ACCEPTED",
+      actionUrl: "/panel/mesajlar/conv1",
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/mesajlar/conv1",
+  );
+  check(
     "valid actionUrl wins",
     resolveNotificationDestination({
       type: "REQUEST_PUBLISHED",

@@ -85,6 +85,9 @@ export function deriveNotificationPath(
     case "OFFER_NEGOTIATE":
     case "OFFER_REJECTED":
     case "OFFER_VIEWED":
+    case "COUNTER_OFFER_RECEIVED":
+    case "COUNTER_OFFER_ACCEPTED":
+    case "COUNTER_OFFER_REJECTED":
       return "/panel/teklifler";
     case "NEW_MESSAGE":
       return "/panel/mesajlar";
