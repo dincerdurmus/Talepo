@@ -138,13 +138,22 @@ export async function PATCH(
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
 
+    const amountProvided = Object.prototype.hasOwnProperty.call(body, "amount");
+    const deliveryDaysProvided = Object.prototype.hasOwnProperty.call(
+      body,
+      "deliveryDays",
+    );
+
     const offer = await updateOffer(user.id, id, {
       description: String(body.description ?? ""),
-      amount: Number(body.amount),
-      deliveryDays:
-        body.deliveryDays === undefined || body.deliveryDays === null
+      amount: amountProvided ? Number(body.amount) : undefined,
+      amountProvided,
+      deliveryDays: deliveryDaysProvided
+        ? body.deliveryDays === null || body.deliveryDays === ""
           ? null
-          : Number(body.deliveryDays),
+          : Number(body.deliveryDays)
+        : undefined,
+      deliveryDaysProvided,
       title: body.title ? String(body.title) : undefined,
     });
 

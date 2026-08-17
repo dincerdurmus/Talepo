@@ -10,6 +10,10 @@ import { EntitlementError, type EntitlementContext } from "@/lib/membership/type
 import { isPrismaUniqueViolation } from "@/lib/observability/idempotency";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
+import {
+  collectSubmittedCommercialLockIssues,
+  OFFER_NO_LONGER_EDITABLE_MESSAGE,
+} from "@/lib/offer/submitted-commercial-lock";
 import { prisma } from "@/lib/prisma";
 
 const log = createSubsystemLogger("offer");
@@ -48,8 +52,11 @@ type CreateOfferInput = {
 
 type UpdateOfferInput = {
   description: string;
-  amount: number;
+  /** Present only when the client attempted to send amount. */
+  amount?: number;
+  amountProvided?: boolean;
   deliveryDays?: number | null;
+  deliveryDaysProvided?: boolean;
   title?: string;
 };
 
@@ -424,9 +431,17 @@ export async function updateOffer(
   offerId: string,
   input: UpdateOfferInput,
 ) {
-  const issues = validateOfferFields(input);
-  if (issues.length) {
-    throw new OfferValidationError(issues);
+  const descriptionIssues: string[] = [];
+  if (!input.description || input.description.trim().length < 10) {
+    descriptionIssues.push("Teklif açıklaması en az 10 karakter olmalı.");
+  }
+  if (containsBlockedContactInfo(input.description)) {
+    descriptionIssues.push(
+      "Teklif metninde telefon, IBAN veya platform dışı iletişim bilgisi paylaşılamaz.",
+    );
+  }
+  if (descriptionIssues.length) {
+    throw new OfferValidationError(descriptionIssues);
   }
 
   const entitlements = await resolveEntitlements(
@@ -437,13 +452,15 @@ export async function updateOffer(
   const companyId =
     entitlements.subject.type === "company" ? entitlements.subject.id : null;
 
+  const ownerWhere = companyId
+    ? { companyId }
+    : { submittedById: userId, companyId: null };
+
   const existing = await prisma.offer.findFirst({
     where: {
       id: offerId,
       status: { in: [...AWAITING_RESPONSE_STATUSES] },
-      ...(companyId
-        ? { companyId }
-        : { submittedById: userId, companyId: null }),
+      ...ownerWhere,
       request: {
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
@@ -453,6 +470,8 @@ export async function updateOffer(
       id: true,
       requestId: true,
       companyId: true,
+      amount: true,
+      deliveryDays: true,
       request: {
         select: {
           title: true,
@@ -463,29 +482,52 @@ export async function updateOffer(
   });
 
   if (!existing) {
-    throw new OfferValidationError([
-      "Teklif bulunamadı veya artık güncellenemez.",
-    ]);
+    throw new OfferValidationError([OFFER_NO_LONGER_EDITABLE_MESSAGE]);
+  }
+
+  const commercialIssues = collectSubmittedCommercialLockIssues({
+    currentAmount: existing.amount.toString(),
+    currentDeliveryDays: existing.deliveryDays,
+    nextAmount: input.amount,
+    nextDeliveryDays: input.deliveryDays,
+    amountProvided:
+      input.amountProvided === true || input.amount !== undefined,
+    deliveryDaysProvided:
+      input.deliveryDaysProvided === true || input.deliveryDays !== undefined,
+  });
+  if (commercialIssues.length) {
+    throw new OfferValidationError(commercialIssues);
   }
 
   const sanitizedDescription = sanitizeCommercialText(input.description.trim());
 
-  const updated = await prisma.offer.update({
-    where: { id: existing.id },
+  const revised = await prisma.offer.updateMany({
+    where: {
+      id: existing.id,
+      status: { in: [...AWAITING_RESPONSE_STATUSES] },
+      ...ownerWhere,
+      request: {
+        deletedAt: null,
+        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      },
+    },
     data: {
       description: sanitizedDescription,
-      amount: input.amount,
-      deliveryDays:
-        input.deliveryDays === undefined
-          ? undefined
-          : input.deliveryDays && input.deliveryDays > 0
-            ? input.deliveryDays
-            : null,
-      title: input.title?.trim() || null,
-      // Keep awaiting-response semantics; treat revision as a fresh submit signal.
+      ...(input.title === undefined
+        ? {}
+        : { title: input.title.trim() || null }),
+      // Text revision is a fresh signal for the buyer; commercial terms stay.
       status: "SUBMITTED",
       viewedAt: null,
     },
+  });
+
+  if (revised.count !== 1) {
+    throw new OfferValidationError([OFFER_NO_LONGER_EDITABLE_MESSAGE]);
+  }
+
+  const updated = await prisma.offer.findUniqueOrThrow({
+    where: { id: existing.id },
     select: {
       id: true,
       requestId: true,

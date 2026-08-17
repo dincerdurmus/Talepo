@@ -118,11 +118,11 @@ export default async function OfferRequestPage({
         {/* Form first on mobile */}
         <section className="order-1 rounded-2xl border border-teal-900/8 bg-white p-5 shadow-[0_10px_32px_rgba(15,31,29,0.04)] sm:p-6 lg:order-2 lg:sticky lg:top-6 lg:p-7">
           <h1 className="text-xl font-semibold tracking-tight text-[#0f1f1d] sm:text-2xl">
-            {isRevise ? "Teklifi güncelle" : "Teklifini yaz"}
+            {isRevise ? "Teklif notunu güncelle" : "Teklifini yaz"}
           </h1>
           <p className="mt-1 text-sm text-teal-950/45">
             {isRevise
-              ? "Değiştir, önizle, gönder."
+              ? "Açıklamanızı güncelleyebilirsiniz. Tutar gönderimden sonra değişmez."
               : "Tutar ve kısa not yeterli. Sonra önizleyip gönderirsiniz."}
           </p>
 

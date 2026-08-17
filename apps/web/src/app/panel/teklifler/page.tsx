@@ -96,12 +96,12 @@ export default async function OffersPage({
           <p className="flex items-center gap-2 text-sm font-semibold text-teal-900">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
             {justUpdated
-              ? "Teklifiniz güncellendi"
+              ? "Teklif notunuz güncellendi"
               : "Teklifiniz alıcıya iletildi"}
           </p>
           <p className="mt-1.5 text-sm leading-6 text-teal-900/70">
             {justUpdated
-              ? "Alıcı güncel teklifinizi görür. Pazarlık açıldıysa sohbetten devam edebilirsiniz."
+              ? "Alıcı güncel açıklamanızı görür. Tutar ve teslim süresi aynı kalır."
               : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya pazarlık ile mesajlaşma açılır."}
           </p>
         </section>
@@ -227,7 +227,7 @@ export default async function OffersPage({
                       className="inline-flex items-center gap-1.5 rounded-xl border border-teal-800/15 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-950"
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      Güncelle
+                      Notu güncelle
                     </Link>
                   ) : null}
                   {hasConversation ? (

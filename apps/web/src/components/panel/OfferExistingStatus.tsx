@@ -37,8 +37,8 @@ export function OfferExistingStatus({
               </p>
               <p className="mt-1 text-sm leading-6 text-teal-950/55">
                 {messagesHref
-                  ? "Alıcı pazarlık başlattı veya yanıt bekliyor. Sohbetten konuşabilir, teklifinizi güncelleyebilirsiniz."
-                  : "Alıcı yanıtlayana kadar yeni teklif gönderemezsiniz. Mevcut teklifinizi gözden geçirip güncelleyebilirsiniz."}
+                  ? "Alıcı pazarlık başlattı veya yanıt bekliyor. Sohbetten konuşabilir, teklif notunuzu güncelleyebilirsiniz."
+                  : "Alıcı yanıtlayana kadar yeni teklif gönderemezsiniz. Teklif notunuzu güncelleyebilirsiniz; tutar gönderimden sonra değişmez."}
               </p>
             </div>
           </div>
@@ -58,7 +58,7 @@ export function OfferExistingStatus({
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#115e59]"
               >
                 <Pencil className="h-4 w-4" />
-                Teklifi güncelle
+                Teklif notunu güncelle
               </Link>
             )}
           </div>

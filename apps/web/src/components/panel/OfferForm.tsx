@@ -176,18 +176,20 @@ export function OfferForm({
   }, [applyDraftFromQuery, isRevise, requestId, router]);
 
   function validateFields(): string | null {
-    const parsedAmount = parseTrNumber(amount);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      return "Geçerli bir teklif tutarı girin.";
+    if (!isRevise) {
+      const parsedAmount = parseTrNumber(amount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        return "Geçerli bir teklif tutarı girin.";
+      }
+      if (deliveryDays) {
+        const days = Number(deliveryDays);
+        if (!Number.isFinite(days) || days <= 0) {
+          return "Yanıt / teslim süresi geçerli bir gün olmalı.";
+        }
+      }
     }
     if (!description.trim()) {
       return "Kısa açıklama gerekli.";
-    }
-    if (deliveryDays) {
-      const days = Number(deliveryDays);
-      if (!Number.isFinite(days) || days <= 0) {
-        return "Yanıt / teslim süresi geçerli bir gün olmalı.";
-      }
     }
     return null;
   }
@@ -220,11 +222,14 @@ export function OfferForm({
     const startedAt = Date.now();
 
     try {
-      const payload = {
-        description,
-        amount: parseTrNumber(amount),
-        deliveryDays: deliveryDays ? Number(deliveryDays) : null,
-      };
+      const payload = isRevise
+        ? { description }
+        : {
+            requestId,
+            description,
+            amount: parseTrNumber(amount),
+            deliveryDays: deliveryDays ? Number(deliveryDays) : null,
+          };
 
       const response = await fetch(
         isRevise && existingOffer
@@ -233,9 +238,7 @@ export function OfferForm({
         {
           method: isRevise ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(
-            isRevise ? payload : { ...payload, requestId },
-          ),
+          body: JSON.stringify(payload),
         },
       );
 
@@ -364,14 +367,14 @@ export function OfferForm({
             disabled={!canSubmit}
             onClick={() => void handleConfirmSend()}
             statusLabel={
-              isRevise ? "Teklif güncelleniyor…" : "Teklif gönderiliyor…"
+              isRevise ? "Not güncelleniyor…" : "Teklif gönderiliyor…"
             }
             withCloud={false}
           >
             <span className="flex min-w-0 items-center gap-3">
               <Send className="h-4 w-4 shrink-0" />
               <span className="text-base font-semibold">
-                {isRevise ? "Güncellemeyi gönder" : "Teklifi gönder"}
+                {isRevise ? "Notu güncelle" : "Teklifi gönder"}
               </span>
             </span>
           </LetterSendButton>
@@ -395,37 +398,70 @@ export function OfferForm({
       {(isRevise || draftApplied) && (
         <p className="rounded-xl bg-teal-50/80 px-3.5 py-2.5 text-sm text-teal-950/80">
           {isRevise
-            ? "Mevcut teklifiniz yüklendi. Değiştirip önizleyebilirsiniz."
+            ? "Teklif tutarı gönderimden sonra değiştirilemez. Açıklamanızı güncelleyebilirsiniz."
             : "AI taslağı uygulandı. İstediğiniz alanları düzenleyin."}
         </p>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block text-sm text-teal-950/55">
-            Tutar (₺)
-          </span>
-          <TrMoneyInput
-            required
-            value={amount}
-            onValueChange={setAmount}
-            placeholder={placeholders.amount}
-            className={fieldClass}
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-sm text-teal-950/55">
-            {placeholders.deliveryLabel}
-          </span>
-          <input
-            inputMode="numeric"
-            value={deliveryDays}
-            onChange={(event) => setDeliveryDays(event.target.value)}
-            placeholder={placeholders.delivery}
-            className={fieldClass}
-          />
-        </label>
-      </div>
+      {isRevise ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <span className="mb-1.5 block text-sm text-teal-950/55">
+              Tutar (₺)
+            </span>
+            <p
+              className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
+            >
+              {Number.isFinite(parsedAmount) && parsedAmount > 0
+                ? formatTry(parsedAmount)
+                : "—"}
+            </p>
+            <p className="mt-1.5 text-xs leading-5 text-teal-950/45">
+              Teklif tutarı gönderimden sonra değiştirilemez.
+            </p>
+          </div>
+          <div>
+            <span className="mb-1.5 block text-sm text-teal-950/55">
+              {placeholders.deliveryLabel}
+            </span>
+            <p
+              className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
+            >
+              {deliveryDays ? `${deliveryDays} gün` : "Belirtilmedi"}
+            </p>
+            <p className="mt-1.5 text-xs leading-5 text-teal-950/45">
+              Teslim süresi gönderimden sonra değiştirilemez.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-teal-950/55">
+              Tutar (₺)
+            </span>
+            <TrMoneyInput
+              required
+              value={amount}
+              onValueChange={setAmount}
+              placeholder={placeholders.amount}
+              className={fieldClass}
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm text-teal-950/55">
+              {placeholders.deliveryLabel}
+            </span>
+            <input
+              inputMode="numeric"
+              value={deliveryDays}
+              onChange={(event) => setDeliveryDays(event.target.value)}
+              placeholder={placeholders.delivery}
+              className={fieldClass}
+            />
+          </label>
+        </div>
+      )}
 
       <label className="block">
         <span className="mb-1.5 block text-sm text-teal-950/55">
