@@ -4,6 +4,7 @@ import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { summarizeOfferCohort } from "@/lib/monetization/performance-metrics";
 import type { WorkspacePerformanceMetrics } from "@/lib/monetization/types";
 import { assertCompanyMembership } from "@/lib/panel/company-workspace";
+import { BILATERAL_COMPLETED_WHERE } from "@/lib/offer/deal-completion";
 import { prisma } from "@/lib/prisma";
 
 const ACTIVE_REQUEST_STATUSES = [
@@ -102,8 +103,15 @@ async function getOfferPerformance(
 
   const offers = summarizeOfferCohort(counts);
   const averageOfferLatencyHours = await offerLatencyHours(owner, from, to);
+  const completedTransactions = await prisma.dealOutcome.count({
+    where: {
+      ...BILATERAL_COMPLETED_WHERE,
+      completedAt: { gte: from, lte: to },
+      offer: offerOwnerWhere(owner),
+    },
+  });
 
-  return { ...offers, averageOfferLatencyHours };
+  return { ...offers, averageOfferLatencyHours, completedTransactions };
 }
 
 async function getPersonalRequestPerformance(

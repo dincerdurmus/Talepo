@@ -287,6 +287,12 @@ export function AnalyticsDashboard() {
                 icon={<Target className="h-4 w-4" />}
               />
               <MetricCard
+                label="Tamamlanan işlemler"
+                value={offers.completedTransactions}
+                hint="İki tarafın da onayladığı işlemler"
+                icon={<Target className="h-4 w-4" />}
+              />
+              <MetricCard
                 label="Bekleyen"
                 value={offers.pending}
                 icon={<Inbox className="h-4 w-4" />}
@@ -327,6 +333,7 @@ export function AnalyticsDashboard() {
           : "Metrikler kişisel hesabınız ve seçilen tarih aralığında, gönderim / yayın tarihine göre hesaplanır."}
         {" "}
         Kazanma oranı, dönemde gönderilen tekliflerin şu an kabul edilen payıdır.
+        Tamamlanan işlemler, aynı dönemde iki tarafça onaylanan kayıtlardır; kabul ile aynı şey değildir.
       </p>
     </div>
   );

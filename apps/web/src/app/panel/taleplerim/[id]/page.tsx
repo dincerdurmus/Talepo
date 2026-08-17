@@ -16,6 +16,7 @@ import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
+import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
 import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -31,6 +32,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { canEditRequestStatus } from "@/server/request/update-request";
+import { loadCompletedTransactionCounts } from "@/server/price-intelligence/deal-outcome";
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Taslak",
@@ -86,8 +88,8 @@ export default async function RequestDetailPage({
       offers: {
         orderBy: { createdAt: "desc" },
         include: {
-          company: { select: { name: true, isVerified: true } },
-          submittedBy: { select: { name: true } },
+          company: { select: { id: true, name: true, isVerified: true } },
+          submittedBy: { select: { id: true, name: true } },
           conversation: { select: { id: true } },
           media: {
             orderBy: { sortOrder: "asc" },
@@ -101,6 +103,15 @@ export default async function RequestDetailPage({
   });
 
   if (!request) notFound();
+
+  const completedCounts = await loadCompletedTransactionCounts({
+    personalUserIds: request.offers
+      .filter((offer) => !offer.company)
+      .map((offer) => offer.submittedBy.id),
+    companyIds: request.offers
+      .map((offer) => offer.company?.id)
+      .filter((id): id is string => Boolean(id)),
+  });
 
   const editable = canEditRequestStatus(request.status);
   const matchedCompanyCount = request._count.matches;
@@ -310,6 +321,17 @@ export default async function RequestDetailPage({
                             offer.submittedBy.name ||
                             "Firma"}
                         </p>
+                        <div className="mt-1">
+                          <CompletedTransactionBadge
+                            count={
+                              offer.company
+                                ? completedCounts.company.get(offer.company.id) ?? 0
+                                : completedCounts.personal.get(
+                                    offer.submittedBy.id,
+                                  ) ?? 0
+                            }
+                          />
+                        </div>
                         <p className="mt-1 text-sm text-black/40">
                           {offer.deliveryDays
                             ? `${offer.deliveryDays} gün teslim`

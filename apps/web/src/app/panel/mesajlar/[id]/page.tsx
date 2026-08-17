@@ -4,11 +4,15 @@ import { ArrowLeft, FileText } from "lucide-react";
 
 import { MessageComposer } from "@/components/panel/MessageComposer";
 import { DealOutcomePanel } from "@/components/panel/DealOutcomePanel";
+import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { markConversationAsRead } from "@/server/message/mark-conversation-read";
-import { getDealOutcomeForConversation } from "@/server/price-intelligence/deal-outcome";
+import {
+  countCompletedTransactions,
+  getDealOutcomeForConversation,
+} from "@/server/price-intelligence/deal-outcome";
 
 export default async function ConversationDetailPage({
   params,
@@ -86,6 +90,16 @@ export default async function ConversationDetailPage({
 
   const dealOutcome =
     offerAccepted ? await getDealOutcomeForConversation(id) : null;
+  const providerCompletedCount =
+    isBuyer && offerAccepted
+      ? conversation.offer.company?.id
+        ? await countCompletedTransactions({
+            companyId: conversation.offer.company.id,
+          })
+        : await countCompletedTransactions({
+            personalProviderUserId: conversation.offer.submittedById,
+          })
+      : 0;
   const dealRole: "buyer" | "supplier" | null = isBuyer
     ? "buyer"
     : isSupplier
@@ -103,7 +117,12 @@ export default async function ConversationDetailPage({
             <ArrowLeft className="h-4 w-4" />
             Mesajlar
           </Link>
-          <p className="text-sm font-semibold text-slate-800">{counterpart}</p>
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            {counterpart}
+            {isBuyer ? (
+              <CompletedTransactionBadge count={providerCompletedCount} />
+            ) : null}
+          </p>
         </div>
 
         <Link
@@ -139,6 +158,7 @@ export default async function ConversationDetailPage({
             currency: dealOutcome.currency,
             buyerConfirmedAt: dealOutcome.buyerConfirmedAt?.toISOString() ?? null,
             supplierConfirmedAt: dealOutcome.supplierConfirmedAt?.toISOString() ?? null,
+            completedAt: dealOutcome.completedAt?.toISOString() ?? null,
           }}
           role={dealRole}
         />

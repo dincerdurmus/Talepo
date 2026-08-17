@@ -262,13 +262,17 @@ function NotificationIcon({
     type === "OFFER_NEGOTIATE" ||
     type === "COUNTER_OFFER_RECEIVED" ||
     type === "COUNTER_OFFER_ACCEPTED" ||
-    type === "COUNTER_OFFER_REJECTED"
+    type === "COUNTER_OFFER_REJECTED" ||
+    type === "DEAL_COMPLETION_REQUESTED" ||
+    type === "DEAL_COMPLETED"
   ) {
     Icon = BriefcaseBusiness;
     background =
-      type === "OFFER_NEGOTIATE" || type === "COUNTER_OFFER_RECEIVED"
+      type === "OFFER_NEGOTIATE" ||
+      type === "COUNTER_OFFER_RECEIVED" ||
+      type === "DEAL_COMPLETION_REQUESTED"
         ? "bg-amber-50"
-        : type === "COUNTER_OFFER_ACCEPTED"
+        : type === "COUNTER_OFFER_ACCEPTED" || type === "DEAL_COMPLETED"
           ? "bg-[#e9f8e5]"
           : "bg-[#e5efff]";
   }

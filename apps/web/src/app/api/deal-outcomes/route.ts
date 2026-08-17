@@ -1,12 +1,39 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
+import { DomainError, safeErrorResponse } from "@/lib/observability/errors";
+import {
+  assertRateLimit,
+  clientKeyFromRequest,
+  userKey,
+} from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
+  assertCanAccessDealOutcome,
+  confirmDealCompletion,
   getDealOutcomeForConversation,
-  submitDealConfirmation,
-  type DealConfirmationResponse,
 } from "@/server/price-intelligence/deal-outcome";
+
+function serializeDeal(deal: {
+  agreedPrice: { toNumber(): number } | number | null;
+  buyerConfirmedAt: Date | null;
+  supplierConfirmedAt: Date | null;
+  completedAt: Date | null;
+  [key: string]: unknown;
+}) {
+  return {
+    ...deal,
+    agreedPrice:
+      deal.agreedPrice == null
+        ? null
+        : typeof deal.agreedPrice === "number"
+          ? deal.agreedPrice
+          : deal.agreedPrice.toNumber(),
+    buyerConfirmedAt: deal.buyerConfirmedAt?.toISOString() ?? null,
+    supplierConfirmedAt: deal.supplierConfirmedAt?.toISOString() ?? null,
+    completedAt: deal.completedAt?.toISOString() ?? null,
+  };
+}
 
 export async function GET(request: Request) {
   try {
@@ -26,66 +53,81 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: true, dealOutcome: null });
     }
 
+    await assertCanAccessDealOutcome(user.id, deal);
+
     return NextResponse.json({
       ok: true,
-      dealOutcome: {
-        ...deal,
-        agreedPrice: deal.agreedPrice?.toNumber() ?? null,
-        buyerConfirmedAt: deal.buyerConfirmedAt?.toISOString() ?? null,
-        supplierConfirmedAt: deal.supplierConfirmedAt?.toISOString() ?? null,
-        completedAt: deal.completedAt?.toISOString() ?? null,
-      },
+      dealOutcome: serializeDeal(deal),
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
-    return NextResponse.json({ ok: false, message: "Kayıt alınamadı." }, { status: 500 });
+    return safeErrorResponse(error, {
+      service: "deal",
+      event: "deal.outcome.read.failed",
+    });
   }
 }
 
 export async function POST(request: Request) {
   try {
+    assertRateLimit({
+      key: clientKeyFromRequest(request, "deal.completion"),
+      limit: 30,
+      windowMs: 60_000,
+    });
     const user = await requireUser();
-    const workspace = await getCompanyWorkspace(user.id);
-    const body = await request.json();
+    assertRateLimit({
+      key: userKey("deal.completion", user.id),
+      limit: 20,
+      windowMs: 60_000,
+    });
 
-    const dealOutcomeId = body.dealOutcomeId as string;
-    const role = body.role as "buyer" | "supplier";
-    const response = body.response as DealConfirmationResponse;
-    const agreedPrice =
-      body.agreedPrice != null ? Number(body.agreedPrice) : undefined;
+    const body = (await request.json()) as {
+      dealOutcomeId?: string;
+      response?: string;
+    };
 
-    if (!dealOutcomeId || !role || !response) {
+    if (!body.dealOutcomeId) {
       return NextResponse.json(
-        { ok: false, message: "Eksik alanlar." },
+        { ok: false, message: "dealOutcomeId gerekli." },
         { status: 400 },
       );
     }
 
-    const updated = await submitDealConfirmation({
-      dealOutcomeId,
-      role,
-      response,
-      agreedPrice,
-      userId: user.id,
-      companyId: workspace?.companyId ?? null,
-    });
+    if (body.response && body.response !== "COMPLETED") {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Bu sürümde yalnız işlemin tamamlandığını onaylayabilirsiniz.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const updated = await confirmDealCompletion(user.id, body.dealOutcomeId);
+    revalidatePath("/panel/mesajlar");
+    revalidatePath("/panel/profil");
+    revalidatePath("/panel/analiz");
 
     return NextResponse.json({
       ok: true,
-      dealOutcome: {
-        ...updated,
-        agreedPrice: updated.agreedPrice?.toNumber() ?? null,
-        buyerConfirmedAt: updated.buyerConfirmedAt?.toISOString() ?? null,
-        supplierConfirmedAt: updated.supplierConfirmedAt?.toISOString() ?? null,
-      },
+      dealOutcome: serializeDeal(updated),
     });
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
-    const message = error instanceof Error ? error.message : "Kaydedilemedi.";
-    return NextResponse.json({ ok: false, message }, { status: 400 });
+    if (error instanceof DomainError) {
+      return safeErrorResponse(error, {
+        service: "deal",
+        event: "deal.completion.failed",
+      });
+    }
+    return safeErrorResponse(error, {
+      service: "deal",
+      event: "deal.completion.failed",
+    });
   }
 }

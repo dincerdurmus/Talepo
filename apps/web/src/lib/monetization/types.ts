@@ -72,6 +72,8 @@ export type OfferPerformanceMetrics = {
   unsuccessful: number;
   winRate: number | null;
   winRatePresentation: WinRatePresentation;
+  /** Bilateral completed deals with completedAt in the selected window. */
+  completedTransactions: number;
   /** Request.publishedAt → Offer.submittedAt average; null when no reliable pairs. */
   averageOfferLatencyHours: number | null;
 };

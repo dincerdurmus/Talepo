@@ -101,6 +101,16 @@ console.log("\n=== DESTINATION CONTRACT ===\n");
     }) === "/panel/mesajlar/conv1",
   );
   check(
+    "deal completed conversation url allowed",
+    resolveNotificationDestination({
+      type: "DEAL_COMPLETED",
+      actionUrl: "/panel/mesajlar/conv1",
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/mesajlar/conv1",
+  );
+  check(
     "valid actionUrl wins",
     resolveNotificationDestination({
       type: "REQUEST_PUBLISHED",

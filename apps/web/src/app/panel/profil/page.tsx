@@ -18,6 +18,7 @@ import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { countCompletedTransactions } from "@/server/price-intelligence/deal-outcome";
 
 export default async function ProfilePage() {
   const sessionUser = await requireUser();
@@ -50,6 +51,16 @@ export default async function ProfilePage() {
   });
 
   if (!user) redirect("/giris?callbackUrl=/panel/profil");
+
+  const companyId =
+    entitlements.subject.type === "company" ? entitlements.subject.id : null;
+  const [personalSold, companySold, purchased] = await Promise.all([
+    countCompletedTransactions({ personalProviderUserId: user.id }),
+    companyId
+      ? countCompletedTransactions({ companyId })
+      : Promise.resolve(0),
+    countCompletedTransactions({ buyerUserId: user.id }),
+  ]);
 
   const initials = getInitials(user.name, user.email);
 
@@ -98,6 +109,24 @@ export default async function ProfilePage() {
               label="Verdiğim teklifler"
               value={String(user._count.submittedOffers)}
             />
+            {personalSold > 0 ? (
+              <StatRow
+                label="Tamamlanan işlem"
+                value={String(personalSold)}
+              />
+            ) : null}
+            {companySold > 0 ? (
+              <StatRow
+                label="Firma tamamlanan işlem"
+                value={String(companySold)}
+              />
+            ) : null}
+            {purchased > 0 ? (
+              <StatRow
+                label="Tamamlanan alım"
+                value={String(purchased)}
+              />
+            ) : null}
             <StatRow
               label="Kalan teklif hakkı"
               value={formatQuotaRemaining(entitlements.quota)}

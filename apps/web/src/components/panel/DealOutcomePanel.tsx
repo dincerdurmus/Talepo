@@ -1,7 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCircle2, HelpCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
+
+import { isBilateralDealCompleted } from "@/lib/offer/deal-completion";
 
 type DealOutcomeState = {
   id: string;
@@ -11,15 +14,8 @@ type DealOutcomeState = {
   currency: string;
   buyerConfirmedAt: string | null;
   supplierConfirmedAt: string | null;
+  completedAt?: string | null;
 };
-
-const RESPONSES = [
-  { value: "COMPLETED", label: "İşlem tamamlandı" },
-  { value: "CANCELLED", label: "İptal edildi" },
-  { value: "PRICE_DISAGREEMENT", label: "Fiyat konusunda anlaşamadık" },
-  { value: "PRODUCT_UNAVAILABLE", label: "Ürün bulunamadı" },
-  { value: "PENDING", label: "Henüz sonuçlanmadı" },
-] as const;
 
 export function DealOutcomePanel({
   dealOutcome,
@@ -28,43 +24,44 @@ export function DealOutcomePanel({
   dealOutcome: DealOutcomeState;
   role: "buyer" | "supplier";
 }) {
-  const [selected, setSelected] = useState<string>("");
-  const [agreedPrice, setAgreedPrice] = useState("");
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [local, setLocal] = useState(dealOutcome);
 
-  const alreadyConfirmed =
+  const mineConfirmed =
     role === "buyer"
       ? Boolean(local.buyerConfirmedAt)
       : Boolean(local.supplierConfirmedAt);
+  const otherConfirmed =
+    role === "buyer"
+      ? Boolean(local.supplierConfirmedAt)
+      : Boolean(local.buyerConfirmedAt);
+  const completed = isBilateralDealCompleted(local);
 
-  async function handleSubmit() {
-    if (!selected) return;
+  async function confirm() {
+    if (submitting || mineConfirmed) return;
     setSubmitting(true);
     setMessage(null);
-
     try {
       const res = await fetch("/api/deal-outcomes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           dealOutcomeId: local.id,
-          role,
-          response: selected,
-          agreedPrice:
-            selected === "COMPLETED" && agreedPrice
-              ? Number(agreedPrice)
-              : undefined,
+          response: "COMPLETED",
         }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as {
+        message?: string;
+        dealOutcome?: DealOutcomeState;
+      };
       if (!res.ok) {
         setMessage(data.message ?? "Kaydedilemedi.");
         return;
       }
-      setLocal(data.dealOutcome);
-      setMessage("Yanıtınız kaydedildi.");
+      if (data.dealOutcome) setLocal(data.dealOutcome);
+      router.refresh();
     } catch {
       setMessage("Bağlantı hatası.");
     } finally {
@@ -72,84 +69,64 @@ export function DealOutcomePanel({
     }
   }
 
-  if (local.status === "COMPLETED" && local.confirmationLevel === "BOTH_CONFIRMED") {
+  const amountLabel =
+    local.agreedPrice != null
+      ? `${local.agreedPrice.toLocaleString("tr-TR")} ${local.currency}`
+      : null;
+
+  if (completed) {
     return (
-      <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-        <div className="flex items-center gap-2 font-medium">
-          <CheckCircle2 className="h-4 w-4" />
-          İşlem her iki tarafça tamamlandı olarak teyit edildi.
-        </div>
-        {local.agreedPrice != null && (
-          <p className="mt-1 text-emerald-800/80">
-            Anlaşılan tutar: {local.agreedPrice.toLocaleString("tr-TR")} {local.currency}
-          </p>
-        )}
+      <div className="mt-4 rounded-xl border border-teal-900/10 bg-[#eef6f4] px-4 py-3.5">
+        <p className="flex items-center gap-2 text-sm font-semibold text-teal-950">
+          <CheckCircle2 className="h-4 w-4 text-teal-800" />
+          İşlem taraflarca tamamlandı olarak onaylandı.
+        </p>
+        {amountLabel ? (
+          <p className="mt-1 text-xs text-teal-900/65">Anlaşılan tutar: {amountLabel}</p>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
-      <div className="flex items-start gap-2">
-        <HelpCircle className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-800">
-            Bu işlem gerçekleşti mi?
-          </p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Yanıtınız piyasa verisi kalitesini artırır. Alıcı ve firma bağımsız cevap verir.
-          </p>
+    <div className="mt-4 rounded-xl border border-teal-900/10 bg-white px-4 py-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+        İşlem durumu
+      </p>
+      <p className="mt-1.5 text-sm font-medium text-[#0f1f1d]">
+        {mineConfirmed
+          ? "Karşı tarafın onayı bekleniyor."
+          : otherConfirmed
+            ? "Karşı taraf işlemin tamamlandığını onayladı."
+            : "Henüz kimse tamamlandığını onaylamadı."}
+      </p>
+      <p className="mt-1 text-xs leading-5 text-black/45">
+        Onay, ürün teslimini veya ödemeyi Talepo’nun doğruladığı anlamına gelmez.
+        {amountLabel ? ` Anlaşılan tutar: ${amountLabel}.` : ""}
+      </p>
 
-          {alreadyConfirmed ? (
-            <p className="mt-2 text-xs font-medium text-teal-700">
-              Yanıtınız kaydedildi. Karşı tarafın teyidini bekliyoruz.
-            </p>
+      {mineConfirmed ? (
+        <p className="mt-3 text-xs font-medium text-amber-900/80">
+          Siz onayladınız. Karşı tarafın onayı bekleniyor.
+        </p>
+      ) : (
+        <button
+          type="button"
+          disabled={submitting}
+          onClick={() => void confirm()}
+          className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white disabled:opacity-50"
+        >
+          {submitting ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
           ) : (
-            <div className="mt-3 space-y-2">
-              {RESPONSES.map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex cursor-pointer items-center gap-2 text-sm text-slate-700"
-                >
-                  <input
-                    type="radio"
-                    name="deal-response"
-                    value={opt.value}
-                    checked={selected === opt.value}
-                    onChange={() => setSelected(opt.value)}
-                    className="text-teal-700"
-                  />
-                  {opt.label}
-                </label>
-              ))}
-
-              {selected === "COMPLETED" && (
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="Gerçek anlaşma tutarı (opsiyonel)"
-                  value={agreedPrice}
-                  onChange={(e) => setAgreedPrice(e.target.value)}
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                />
-              )}
-
-              <button
-                type="button"
-                disabled={!selected || submitting}
-                onClick={handleSubmit}
-                className="mt-2 rounded-lg bg-teal-800 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-              >
-                {submitting ? "Kaydediliyor…" : "Yanıtı gönder"}
-              </button>
-            </div>
+            "Bu işlemin tamamlandığını onaylıyorum"
           )}
+        </button>
+      )}
 
-          {message && (
-            <p className="mt-2 text-xs text-slate-600">{message}</p>
-          )}
-        </div>
-      </div>
+      {message ? (
+        <p className="mt-2 text-xs font-semibold text-[#8b352b]">{message}</p>
+      ) : null}
     </div>
   );
 }

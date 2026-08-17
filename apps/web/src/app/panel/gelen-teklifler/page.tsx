@@ -10,6 +10,7 @@ import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
+import { CompletedTransactionBadge } from "@/components/panel/CompletedTransactionBadge";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   compareOffersByCompleteness,
@@ -22,6 +23,7 @@ import {
 } from "@/lib/offer/offer-negotiation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { loadCompletedTransactionCounts } from "@/server/price-intelligence/deal-outcome";
 
 const statusLabels: Record<string, string> = {
   SUBMITTED: "Yeni",
@@ -48,8 +50,8 @@ type OfferRow = {
     city: string | null;
     status: string;
   };
-  company: { name: string; isVerified: boolean } | null;
-  submittedBy: { name: string | null };
+  company: { id: string; name: string; isVerified: boolean } | null;
+  submittedBy: { id: string; name: string | null };
   conversation: { id: string } | null;
   media: { id: string }[];
   negotiations: Array<{
@@ -82,8 +84,8 @@ export default async function IncomingOffersPage() {
           status: true,
         },
       },
-      company: { select: { name: true, isVerified: true } },
-      submittedBy: { select: { name: true } },
+      company: { select: { id: true, name: true, isVerified: true } },
+      submittedBy: { select: { id: true, name: true } },
       conversation: { select: { id: true } },
       media: {
         orderBy: { sortOrder: "asc" },
@@ -92,6 +94,15 @@ export default async function IncomingOffersPage() {
       negotiations: offerNegotiationListInclude,
     },
   })) as OfferRow[];
+
+  const completedCounts = await loadCompletedTransactionCounts({
+    personalUserIds: offers
+      .filter((offer) => !offer.company)
+      .map((offer) => offer.submittedBy.id),
+    companyIds: offers
+      .map((offer) => offer.company?.id)
+      .filter((id): id is string => Boolean(id)),
+  });
 
   const byRequest = new Map<
     string,
@@ -265,6 +276,11 @@ export default async function IncomingOffersPage() {
                             offer={offer}
                             actionable
                             completeness={offer.completeness}
+                            completedCount={
+                              offer.company
+                                ? completedCounts.company.get(offer.company.id) ?? 0
+                                : completedCounts.personal.get(offer.submittedBy.id) ?? 0
+                            }
                             rank={
                               group.pending.length >= 2 ? index + 1 : undefined
                             }
@@ -281,7 +297,15 @@ export default async function IncomingOffersPage() {
                       </p>
                       <div className="grid gap-3">
                         {group.others.map((offer) => (
-                          <IncomingOfferCard key={offer.id} offer={offer} />
+                          <IncomingOfferCard
+                            key={offer.id}
+                            offer={offer}
+                            completedCount={
+                              offer.company
+                                ? completedCounts.company.get(offer.company.id) ?? 0
+                                : completedCounts.personal.get(offer.submittedBy.id) ?? 0
+                            }
+                          />
                         ))}
                       </div>
                     </div>
@@ -327,11 +351,13 @@ function IncomingOfferCard({
   actionable = false,
   completeness,
   rank,
+  completedCount = 0,
 }: {
   offer: OfferRow;
   actionable?: boolean;
   completeness?: OfferCompleteness;
   rank?: number;
+  completedCount?: number;
 }) {
   const firmName = offer.company?.name || offer.submittedBy.name || "Firma";
   const amount = Number(offer.amount);
@@ -365,6 +391,7 @@ function IncomingOfferCard({
                 Doğrulanmış firma
               </span>
             )}
+            <CompletedTransactionBadge count={completedCount} />
           </div>
           <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#0f1f1d]">
             {firmName}
