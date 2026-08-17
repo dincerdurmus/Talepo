@@ -23,6 +23,7 @@ import {
   offerNegotiationListInclude,
   toOfferNegotiationDtos,
 } from "@/lib/offer/offer-negotiation";
+import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import {
   formatMoney,
   formatOfferStatus,
@@ -83,8 +84,7 @@ export default async function OffersPage({
   const negotiating = offers.filter(
     (o) =>
       ["SUBMITTED", "VIEWED"].includes(o.status) &&
-      (Boolean(o.conversation?.id) ||
-        o.negotiations.some((row) => row.status === "PENDING")),
+      o.negotiations.some((row) => row.status === "PENDING"),
   ).length;
 
   const counts = {
@@ -221,8 +221,21 @@ export default async function OffersPage({
             const pendingNegotiation = offer.negotiations.some(
               (row) => row.status === "PENDING",
             );
+            const acceptedNegotiation = offer.negotiations.find(
+              (row) => row.status === "ACCEPTED",
+            );
+            const commercialAmount = resolveOfferCommercialAmount({
+              offerAmount: Number(offer.amount),
+              acceptedNegotiationAmount: acceptedNegotiation
+                ? Number(acceptedNegotiation.amount)
+                : null,
+            });
+            const originalAmount = Number(offer.amount);
+            const showAgreedPrice =
+              offer.status === "ACCEPTED" &&
+              commercialAmount !== originalAmount;
             const status = formatOfferStatus(offer.status, {
-              hasConversation,
+              hasPendingNegotiation: pendingNegotiation,
             });
             const completeness = scoreOfferCompleteness({
               amount: offer.amount,
@@ -237,7 +250,7 @@ export default async function OffersPage({
               <article
                 key={offer.id}
                 className={`rounded-[24px] border bg-white p-5 shadow-sm ${
-                  (hasConversation || pendingNegotiation) && canRevise
+                  pendingNegotiation && canRevise
                     ? "border-amber-200/80 ring-1 ring-amber-100"
                     : "border-black/[0.06]"
                 }`}
@@ -253,12 +266,7 @@ export default async function OffersPage({
                       {pendingNegotiation && canRevise ? (
                         <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
                           <Handshake className="h-3 w-3" />
-                          Karşı teklif
-                        </span>
-                      ) : hasConversation && canRevise ? (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
-                          <Handshake className="h-3 w-3" />
-                          Pazarlık açık
+                          Pazarlık
                         </span>
                       ) : null}
                     </div>
@@ -296,9 +304,49 @@ export default async function OffersPage({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-teal-900">
-                      {formatMoney(offer.amount, offer.currency)}
-                    </p>
+                    {showAgreedPrice ? (
+                      <>
+                        <p className="text-lg font-semibold text-teal-900">
+                          {formatMoney(commercialAmount, offer.currency)}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-teal-800/70">
+                          Anlaşılan
+                        </p>
+                        <p className="mt-1 text-[11px] text-black/40">
+                          İlk teklif{" "}
+                          {formatMoney(originalAmount, offer.currency)}
+                        </p>
+                      </>
+                    ) : pendingNegotiation && canRevise ? (
+                      <>
+                        <p className="text-lg font-semibold text-amber-900">
+                          {formatMoney(
+                            Number(
+                              offer.negotiations.find(
+                                (row) => row.status === "PENDING",
+                              )!.amount,
+                            ),
+                            offer.currency,
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-amber-900/70">
+                          Bekleyen karşı teklif
+                        </p>
+                        <p className="mt-1 text-[11px] text-black/40">
+                          İlk teklif{" "}
+                          {formatMoney(originalAmount, offer.currency)}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-lg font-semibold text-teal-900">
+                          {formatMoney(offer.amount, offer.currency)}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-black/40">
+                          İlk teklif
+                        </p>
+                      </>
+                    )}
                     <span
                       className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${status.tone}`}
                     >
@@ -320,28 +368,26 @@ export default async function OffersPage({
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link
                     href={`/panel/talepler/${offer.request.id}`}
-                    className="rounded-xl bg-teal-800 px-3 py-2 text-xs font-semibold text-white"
+                    className="inline-flex min-h-11 items-center rounded-xl bg-teal-800 px-3 text-xs font-semibold text-white"
                   >
                     Talebi aç
                   </Link>
                   {canRevise ? (
                     <Link
                       href={`/panel/talepler/${offer.request.id}/teklif`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-teal-800/15 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-950"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-teal-800/15 bg-teal-50 px-3 text-xs font-semibold text-teal-950"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                       Notu güncelle
                     </Link>
                   ) : null}
-                  {hasConversation ? (
+                  {offer.status === "ACCEPTED" && hasConversation ? (
                     <Link
                       href={`/panel/mesajlar/${offer.conversation!.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-950"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#0f1f1d] px-3 text-xs font-semibold text-white"
                     >
                       <MessageCircle className="h-3.5 w-3.5" />
-                      {offer.status === "ACCEPTED"
-                        ? "Mesajlar"
-                        : "Pazarlık sohbeti"}
+                      Mesajlar
                     </Link>
                   ) : null}
                 </div>

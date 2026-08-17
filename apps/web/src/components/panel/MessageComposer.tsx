@@ -10,8 +10,6 @@ type MessageComposerProps = {
   conversationId: string;
   canSend?: boolean;
   canSendImages?: boolean;
-  /** Text chat open before accept (pazarlık). */
-  negotiationMode?: boolean;
 };
 
 const CLIENT_MAX_FILE_BYTES = 8_000_000;
@@ -20,7 +18,6 @@ export function MessageComposer({
   conversationId,
   canSend = true,
   canSendImages = false,
-  negotiationMode = false,
 }: MessageComposerProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -122,13 +119,7 @@ export function MessageComposer({
     >
       {!canSend && (
         <p className="mb-3 rounded-xl border border-amber-200/70 bg-amber-50/90 px-3 py-2 text-sm font-medium text-amber-950/80">
-          Bu sohbet için mesajlaşma kapalı.
-        </p>
-      )}
-      {canSend && negotiationMode && (
-        <p className="mb-3 rounded-xl border border-teal-800/15 bg-teal-50/90 px-3 py-2 text-sm font-medium text-teal-950/80">
-          Pazarlık açık — teklif henüz kabul edilmedi. Telefon ve e-posta
-          paylaşmayın.
+          Mesajlaşma yalnızca anlaşmadan sonra açılır.
         </p>
       )}
       {error && (
@@ -213,9 +204,7 @@ export function MessageComposer({
       <p className="mt-2.5 text-[11px] leading-5 text-teal-900/40">
         {canSendImages
           ? "Fotoğraflar otomatik denetlenir; müstehcen veya taleple ilgisiz görseller reddedilir. Telefon ve IBAN paylaşılamaz."
-          : negotiationMode
-            ? "Pazarlık sohbeti: fiyat ve koşulları konuşun. Kabulden önce iletişim bilgileri gizlidir."
-            : "Telefon, e-posta ve IBAN paylaşılamaz."}
+          : "Telefon, e-posta ve IBAN paylaşılamaz."}
       </p>
     </form>
   );

@@ -94,9 +94,7 @@ export default async function OfferRequestPage({
             status={existingOffer.status}
             messagesHref={
               existingOffer.conversation?.id &&
-              ["ACCEPTED", "SUBMITTED", "VIEWED"].includes(
-                existingOffer.status,
-              )
+              existingOffer.status === "ACCEPTED"
                 ? `/panel/mesajlar/${existingOffer.conversation.id}`
                 : undefined
             }

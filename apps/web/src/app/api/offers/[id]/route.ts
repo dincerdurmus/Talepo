@@ -95,16 +95,8 @@ export async function POST(
     }
 
     if (body.action === "negotiate") {
-      const result = await negotiateOffer(user.id, id, body.note);
-      revalidatePath("/panel/gelen-teklifler");
-      revalidatePath("/panel/mesajlar");
-      revalidatePath("/panel/teklifler");
-      revalidatePath("/panel/taleplerim");
-      return NextResponse.json({
-        ok: true,
-        conversationId: result.conversationId,
-        redirectTo: `/panel/mesajlar/${result.conversationId}`,
-      });
+      // Legacy pre-accept chat pazarlık — no longer opens Conversation.
+      await negotiateOffer(user.id, id, body.note);
     }
 
     return NextResponse.json(

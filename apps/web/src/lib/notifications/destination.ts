@@ -82,13 +82,18 @@ export function deriveNotificationPath(
     case "NEW_OFFER":
       return "/panel/gelen-teklifler";
     case "OFFER_ACCEPTED":
-    case "OFFER_NEGOTIATE":
     case "OFFER_REJECTED":
     case "OFFER_VIEWED":
-    case "COUNTER_OFFER_RECEIVED":
-    case "COUNTER_OFFER_ACCEPTED":
-    case "COUNTER_OFFER_REJECTED":
       return "/panel/teklifler";
+    case "OFFER_NEGOTIATE":
+      // Legacy chat-pazarlık notifications: list surface, not dead mesajlar deep-link alone.
+      return "/panel/teklifler";
+    case "COUNTER_OFFER_RECEIVED":
+    case "COUNTER_OFFER_REJECTED":
+      // Role-specific actionUrl is required; avoid wrong Tekliflerim/Gelen fallback.
+      return null;
+    case "COUNTER_OFFER_ACCEPTED":
+      return "/panel/mesajlar";
     case "DEAL_COMPLETION_REQUESTED":
     case "DEAL_COMPLETED":
     case "DEAL_REVIEW_RECEIVED":

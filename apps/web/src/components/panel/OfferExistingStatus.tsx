@@ -31,27 +31,16 @@ export function OfferExistingStatus({
             </span>
             <div className="min-w-0">
               <p className="text-lg font-semibold tracking-tight text-[#0f1f1d]">
-                {messagesHref
-                  ? "Pazarlık / cevap bekleniyor"
-                  : "Teklife cevap bekleniyor"}
+                Teklife cevap bekleniyor
               </p>
               <p className="mt-1 text-sm leading-6 text-teal-950/55">
-                {messagesHref
-                  ? "Alıcı pazarlık başlattı veya yanıt bekliyor. Sohbetten konuşabilir, teklif notunuzu güncelleyebilirsiniz."
-                  : "Alıcı yanıtlayana kadar yeni teklif gönderemezsiniz. Teklif notunuzu güncelleyebilirsiniz; tutar gönderimden sonra değişmez."}
+                Alıcı kabul edebilir veya karşı teklif verebilir. Tutar
+                gönderimden sonra değişmez; fiyat pazarlığı karşı teklif
+                turlarıyla yürür. Mesajlaşma anlaşmadan sonra açılır.
               </p>
             </div>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
-            {messagesHref && (
-              <Link
-                href={messagesHref}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-teal-800/15 bg-teal-50 px-4 py-2.5 text-sm font-semibold text-teal-950 transition hover:bg-teal-50/80"
-              >
-                <MessageSquare className="h-4 w-4" />
-                Pazarlık sohbeti
-              </Link>
-            )}
             {reviseHref && (
               <Link
                 href={reviseHref}

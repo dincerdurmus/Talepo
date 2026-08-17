@@ -328,7 +328,7 @@ export default async function ExploreRequestDetailPage({
             }
             messagesHref={
               existingOffer.conversation?.id &&
-              ["ACCEPTED", "SUBMITTED", "VIEWED"].includes(existingOffer.status)
+              existingOffer.status === "ACCEPTED"
                 ? `/panel/mesajlar/${existingOffer.conversation.id}`
                 : undefined
             }

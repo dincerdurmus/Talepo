@@ -81,7 +81,7 @@ export default async function MessagesPage() {
         <p className="relative mt-3 max-w-2xl text-sm leading-7 text-teal-950/50 sm:text-[15px]">
           {workspace
             ? "Firmanızın tekliflerine bağlı yazışmalar. İletişim teklif kabulünden sonra açılır."
-            : "Teklif sürecindeki firmalar ve müşterilerle yazışmalarınızı buradan takip edin."}
+            : "Anlaşma sonrası açılan yazışmalar. Fiyat pazarlığı karşı teklif turlarıyla yapılır; mesajlaşma teklif kabulünden sonra açılır."}
         </p>
       </section>
 
@@ -94,8 +94,8 @@ export default async function MessagesPage() {
             Henüz mesajınız yok
           </h2>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-teal-950/50">
-            Mesajlar otomatik gelmez. Teklif sonrası alıcı kabul veya pazarlık
-            ile sohbeti açar.
+            Mesajlar otomatik gelmez. Karşı teklif ve pazarlık tutar üzerinden
+            yürür; yazışma ancak anlaşmadan sonra açılır.
           </p>
 
           <ol className="mx-auto mt-6 max-w-md space-y-3 text-left text-sm text-teal-950/60">
@@ -107,8 +107,8 @@ export default async function MessagesPage() {
                 </li>
                 <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
                   <span className="font-semibold text-teal-900/80">2.</span> Alıcı{" "}
-                  <strong>kabul eder</strong> veya <strong>pazarlık</strong>{" "}
-                  başlatır
+                  <strong>kabul eder</strong> veya <strong>karşı teklif</strong>{" "}
+                  verir. Anlaşma olunca yazışma açılır
                 </li>
                 <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
                   <span className="font-semibold text-teal-900/80">3.</span> Yazışma{" "}
@@ -229,6 +229,11 @@ export default async function MessagesPage() {
                     <p className="mt-2.5 truncate text-[15px] font-semibold text-slate-800">
                       {counterpart}
                     </p>
+                    {conversation.offer.status !== "ACCEPTED" ? (
+                      <p className="mt-1 text-[11px] font-semibold text-amber-800">
+                        Salt okunur · mesajlaşma anlaşmadan sonra açılır
+                      </p>
+                    ) : null}
                     {conversation.offer.request.city && (
                       <p className="mt-0.5 truncate text-xs text-slate-400">
                         {conversation.offer.request.city}

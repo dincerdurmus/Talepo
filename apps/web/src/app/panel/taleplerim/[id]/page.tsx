@@ -366,19 +366,18 @@ export default async function RequestDetailPage({
                         hasPendingNegotiation={offer.negotiations.some(
                           (row) => row.status === "PENDING",
                         )}
+                        originalAmountLabel={formatMoney(
+                          Number(offer.amount),
+                          offer.currency,
+                        )}
                       />
                     )}
-                    {offer.conversation?.id &&
-                    ["SUBMITTED", "VIEWED", "ACCEPTED"].includes(
-                      offer.status,
-                    ) ? (
+                    {offer.status === "ACCEPTED" && offer.conversation?.id ? (
                       <Link
                         href={`/panel/mesajlar/${offer.conversation.id}`}
-                        className="mt-3 inline-flex text-xs font-semibold text-[#0f766e] underline-offset-2 hover:underline"
+                        className="mt-3 inline-flex min-h-11 items-center text-xs font-semibold text-[#0f766e] underline-offset-2 hover:underline"
                       >
-                        {offer.status === "ACCEPTED"
-                          ? "Mesajlara git"
-                          : "Pazarlık sohbetini aç"}
+                        Mesajlara git
                       </Link>
                     ) : null}
                     {offer.status === "ACCEPTED" && !offer.conversation?.id ? (

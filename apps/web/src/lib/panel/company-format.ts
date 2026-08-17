@@ -1,12 +1,12 @@
 export function formatOfferStatus(
   status: string,
-  options?: { hasConversation?: boolean },
+  options?: {
+    hasConversation?: boolean;
+    hasPendingNegotiation?: boolean;
+  },
 ) {
-  const negotiating =
-    options?.hasConversation &&
-    (status === "SUBMITTED" || status === "VIEWED");
-
-  if (negotiating) {
+  const awaiting = status === "SUBMITTED" || status === "VIEWED";
+  if (options?.hasPendingNegotiation && awaiting) {
     return {
       label: "Pazarlık",
       tone: "bg-amber-50 text-amber-900 ring-1 ring-amber-200/80",

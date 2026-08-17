@@ -20,6 +20,10 @@ export const OFFER_NEGOTIATION_PENDING_EXISTS_MESSAGE =
 export const OFFER_NEGOTIATION_CLOSED_MESSAGE =
   "Bu teklifte artık pazarlık yapılamaz.";
 
+/** User-facing reject when a client still posts action=negotiate (legacy chat). */
+export const LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE =
+  "Sohbet üzerinden pazarlık kapatıldı. Fiyat için karşı teklif kullanın; mesajlaşma anlaşmadan sonra açılır.";
+
 export type OfferNegotiationDto = {
   id: string;
   amount: number;

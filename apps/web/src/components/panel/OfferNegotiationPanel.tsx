@@ -114,11 +114,11 @@ export function OfferNegotiationPanel({
   return (
     <div className="mt-3 rounded-xl border border-teal-900/8 bg-white px-3.5 py-3">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
-        Fiyat
+        {pendingRow || negotiations.length > 0 ? "Pazarlık" : "Fiyat"}
       </p>
       <p className="mt-1 text-sm text-[#0f1f1d]">
         <span className="font-semibold">{formatMoneyLabel(originalAmount, currency)}</span>
-        <span className="ml-1.5 text-xs text-black/40">Orijinal teklif</span>
+        <span className="ml-1.5 text-xs text-black/40">İlk teklif</span>
       </p>
 
       {pendingRow ? (
@@ -127,7 +127,9 @@ export function OfferNegotiationPanel({
             {formatMoneyLabel(pendingRow.amount, currency)}
           </span>
           <span className="ml-1.5 text-xs text-amber-900/70">
-            {myPending ? "Yanıt bekleniyor" : "Karşı teklif · yanıt bekleniyor"}
+            {myPending
+              ? "Karşı teklif · sıra karşı tarafta"
+              : "Karşı teklif · sıra sizde"}
           </span>
         </p>
       ) : null}
@@ -178,8 +180,8 @@ export function OfferNegotiationPanel({
           >
             {pending === "accept" ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : viewer === "buyer" ? (
-              "Karşı teklifi kabul et"
+            ) : pendingRow ? (
+              `Kabul et · ${formatMoneyLabel(pendingRow.amount, currency)}`
             ) : (
               "Kabul et"
             )}
@@ -223,8 +225,8 @@ export function OfferNegotiationPanel({
       {myPending && awaiting ? (
         <p className="mt-2 text-xs text-amber-900/70">
           {viewer === "provider"
-            ? "Alıcının yanıtı bekleniyor."
-            : "Teklif verenin yanıtı bekleniyor."}
+            ? "Sıra alıcıda. Karşı teklifiniz yanıtlanınca pazarlık devam eder veya anlaşma oluşur."
+            : "Sıra teklif verende. Yanıt gelince pazarlık devam eder veya anlaşma oluşur."}
         </p>
       ) : null}
 
@@ -242,7 +244,7 @@ export function OfferNegotiationPanel({
             className="mt-2 h-11 w-full rounded-xl border border-teal-900/10 bg-white px-3.5 text-sm outline-none focus:border-teal-700/25 focus:ring-2 focus:ring-teal-700/10"
           />
           <p className="mt-1.5 text-[11px] leading-5 text-black/40">
-            Karşı teklifiniz satıcıya iletilir. Orijinal teklif değişmez.
+            Karşı teklifiniz karşı tarafa iletilir. İlk teklif tutarı değişmez.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button

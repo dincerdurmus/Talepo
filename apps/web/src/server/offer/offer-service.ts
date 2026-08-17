@@ -16,6 +16,7 @@ import {
 } from "@/lib/offer/submitted-commercial-lock";
 import { prisma } from "@/lib/prisma";
 import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
+import { LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE } from "@/lib/offer/offer-negotiation";
 import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 import {
   persistOfferAttribution,
@@ -935,103 +936,17 @@ export async function acceptOffer(
   });
 }
 
-/** Buyer opens negotiation (pazarlık) — unlocks chat without accepting yet. */
+/**
+ * Legacy chat-based "pazarlık" — retired from the product journey.
+ * Canonical path: OfferNegotiation (karşı teklif turları) → ACCEPTED → Conversation.
+ * Kept as a hard reject so old clients cannot open pre-accept chat.
+ */
 export async function negotiateOffer(
-  userId: string,
-  offerId: string,
-  note?: string,
-) {
-  const offer = await prisma.offer.findFirst({
-    where: {
-      id: offerId,
-      status: { in: ["SUBMITTED", "VIEWED"] },
-      request: {
-        createdById: userId,
-        deletedAt: null,
-      },
-    },
-    include: {
-      request: { select: { id: true, title: true } },
-      submittedBy: { select: { id: true } },
-      company: { select: { id: true } },
-    },
-  });
-
-  if (!offer) {
-    throw new OfferValidationError(["Teklif bulunamadı veya pazarlık açılamaz."]);
-  }
-
-  const cleanNote = note?.trim() ?? "";
-  if (cleanNote.length > 2000) {
-    throw new OfferValidationError(["Pazarlık notu çok uzun."]);
-  }
-  if (cleanNote && containsBlockedContactInfo(cleanNote)) {
-    throw new OfferValidationError([
-      "Pazarlık notunda telefon veya e-posta paylaşmayın.",
-    ]);
-  }
-
-  const now = new Date();
-
-  return prisma.$transaction(async (tx) => {
-    // Mark as viewed so buyer engagement is visible.
-    if (offer.status === "SUBMITTED") {
-      await tx.offer.update({
-        where: { id: offerId },
-        data: { status: "VIEWED", viewedAt: now },
-      });
-    }
-
-    const conversation = await ensureOfferConversation(tx, {
-      offerId: offer.id,
-      requestTitle: offer.request.title,
-      buyerUserId: userId,
-      supplierUserId: offer.submittedById,
-      companyId: offer.companyId,
-      now,
-    });
-
-    await tx.message.create({
-      data: {
-        conversationId: conversation.id,
-        senderUserId: userId,
-        type: "SYSTEM",
-        content:
-          "Alıcı pazarlık başlattı. Teklif henüz kabul edilmedi — fiyat ve koşulları bu sohbette konuşabilirsiniz.",
-      },
-    });
-
-    if (cleanNote) {
-      await tx.message.create({
-        data: {
-          conversationId: conversation.id,
-          senderUserId: userId,
-          type: "TEXT",
-          content: sanitizeCommercialText(cleanNote),
-        },
-      });
-    }
-
-    await tx.conversation.update({
-      where: { id: conversation.id },
-      data: { lastMessageAt: now },
-    });
-
-    await createNotification({
-      userId: offer.submittedById,
-      type: "OFFER_NEGOTIATE",
-      title: "Pazarlık talebi",
-      message: cleanNote
-        ? `“${offer.request.title}” için alıcı pazarlık istedi: ${cleanNote.slice(0, 120)}`
-        : `“${offer.request.title}” için alıcı pazarlık istedi. Sohbet açıldı.`,
-      actionUrl: `/panel/mesajlar/${conversation.id}`,
-      requestId: offer.requestId,
-      offerId: offer.id,
-      companyId: offer.companyId ?? undefined,
-    });
-
-    return { conversationId: conversation.id };
-  });
+  _userId: string,
+  _offerId: string,
+  _note?: string,
+): Promise<{ conversationId: string }> {
+  throw new OfferValidationError([LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE]);
 }
 
 export async function rejectOffer(userId: string, offerId: string) {

@@ -12,6 +12,7 @@ import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
+import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import {
   compareOffersByCompleteness,
   type OfferCompleteness,
@@ -357,6 +358,21 @@ function IncomingOfferCard({
 }) {
   const firmName = offer.company?.name || offer.submittedBy.name || "Firma";
   const amount = Number(offer.amount);
+  const pendingNegotiation = offer.negotiations.find(
+    (row) => row.status === "PENDING",
+  );
+  const acceptedNegotiation = offer.negotiations.find(
+    (row) => row.status === "ACCEPTED",
+  );
+  const commercialAmount = resolveOfferCommercialAmount({
+    offerAmount: amount,
+    acceptedNegotiationAmount: acceptedNegotiation
+      ? Number(acceptedNegotiation.amount)
+      : null,
+  });
+  const originalLabel = Number.isFinite(amount)
+    ? `₺${amount.toLocaleString("tr-TR")}`
+    : undefined;
   const computed =
     completeness ??
     compareOffersByCompleteness([
@@ -398,11 +414,38 @@ function IncomingOfferCard({
         </div>
 
         <div className="text-right">
-          <p className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
-            {Number.isFinite(amount)
-              ? `₺${amount.toLocaleString("tr-TR")}`
-              : "—"}
-          </p>
+          {offer.status === "ACCEPTED" && commercialAmount !== amount ? (
+            <>
+              <p className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
+                ₺{commercialAmount.toLocaleString("tr-TR")}
+              </p>
+              <p className="mt-0.5 text-[11px] text-teal-800/70">Anlaşılan</p>
+              <p className="mt-1 text-[11px] text-black/40">
+                İlk teklif ₺{amount.toLocaleString("tr-TR")}
+              </p>
+            </>
+          ) : pendingNegotiation ? (
+            <>
+              <p className="text-2xl font-semibold tracking-tight text-amber-950">
+                ₺{Number(pendingNegotiation.amount).toLocaleString("tr-TR")}
+              </p>
+              <p className="mt-0.5 text-[11px] text-amber-900/70">
+                Bekleyen karşı teklif
+              </p>
+              <p className="mt-1 text-[11px] text-black/40">
+                İlk teklif ₺{amount.toLocaleString("tr-TR")}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
+                {Number.isFinite(amount)
+                  ? `₺${amount.toLocaleString("tr-TR")}`
+                  : "—"}
+              </p>
+              <p className="mt-0.5 text-[11px] text-black/40">İlk teklif</p>
+            </>
+          )}
           {offer.deliveryDays != null && (
             <p className="mt-1 text-xs text-black/45">
               {offer.deliveryDays} gün teslim
@@ -444,31 +487,20 @@ function IncomingOfferCard({
       {actionable && (
         <OfferActions
           offerId={offer.id}
-          hasPendingNegotiation={offer.negotiations.some(
-            (row) => row.status === "PENDING",
-          )}
+          hasPendingNegotiation={Boolean(pendingNegotiation)}
+          originalAmountLabel={originalLabel}
         />
       )}
 
       {offer.status === "ACCEPTED" && offer.conversation && (
         <Link
           href={`/panel/mesajlar/${offer.conversation.id}`}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#0f1f1d] px-4 py-2.5 text-xs font-semibold text-white"
+          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0f1f1d] px-4 text-xs font-semibold text-white"
         >
           <MessageCircle className="h-3.5 w-3.5" />
           Mesajlara git
         </Link>
       )}
-
-      {actionable && offer.conversation && offer.status !== "ACCEPTED" ? (
-        <Link
-          href={`/panel/mesajlar/${offer.conversation.id}`}
-          className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#0f766e] transition hover:text-[#0d6a63]"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          Pazarlık sohbetini aç
-        </Link>
-      ) : null}
     </article>
   );
 }

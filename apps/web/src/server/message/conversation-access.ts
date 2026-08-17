@@ -47,12 +47,12 @@ export async function getSendableConversation(userId: string, conversationId: st
 
   const offer = participant.conversation.offer;
   const status = offer.status;
-  const canNegotiateChat =
-    status === "SUBMITTED" || status === "VIEWED" || status === "ACCEPTED";
 
-  if (!canNegotiateChat) {
+  // Messaging is only for agreed deals. Historical pre-accept chats remain
+  // readable via the conversation page, but new sends are blocked.
+  if (status !== "ACCEPTED") {
     throw new MessageValidationError(
-      "Bu teklif için mesajlaşma artık açık değil.",
+      "Mesajlaşma yalnızca teklif kabul edildikten sonra açılır. Fiyat için karşı teklif kullanın.",
     );
   }
 
@@ -66,8 +66,7 @@ export async function getSendableConversation(userId: string, conversationId: st
     senderCompanyId: isSupplier ? (workspace?.companyId ?? offer.companyId) : null,
     isSupplier,
     request: offer.request,
-    /** Full accept unlocks images / post-deal flow; pazarlık allows text only. */
-    offerAccepted: status === "ACCEPTED",
-    canNegotiate: status === "SUBMITTED" || status === "VIEWED",
+    offerAccepted: true,
+    canNegotiate: false,
   };
 }

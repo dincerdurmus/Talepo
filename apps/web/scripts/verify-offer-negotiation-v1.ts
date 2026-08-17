@@ -234,8 +234,12 @@ console.log("\n=== AUTH / ISOLATION ===\n");
 console.log("\n=== CONVERSATION / NOTIFICATIONS ===\n");
 {
   check("negotiation route does not create conversation on propose", !route.includes("ensureOfferConversation"));
-  check("existing negotiateOffer kept", service.includes("export async function negotiateOffer"));
-  check("offer POST still has negotiate", offerRoute.includes("negotiateOffer"));
+  check("legacy negotiateOffer still exported", service.includes("export async function negotiateOffer"));
+  check("legacy negotiateOffer does not create conversation", !service.slice(
+    service.indexOf("export async function negotiateOffer"),
+  ).includes("ensureOfferConversation"));
+  check("legacy negotiateOffer throws closed message", service.includes("LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE"));
+  check("offer POST still handles negotiate action", offerRoute.includes('action === "negotiate"'));
   check("buyer UI removed chat pazarlık CTA", !actions.includes("Pazarlık et"));
   check("notifications reuse createNotification", negotiationService.includes("createNotification"));
   check("COUNTER_OFFER_RECEIVED", createNotification.includes("COUNTER_OFFER_RECEIVED"));
@@ -256,14 +260,24 @@ console.log("\n=== CONVERSATION / NOTIFICATIONS ===\n");
     }) === "/panel/gelen-teklifler",
   );
   check(
-    "fallback stays in /panel",
-    deriveNotificationPath({
-      type: "COUNTER_OFFER_REJECTED",
+    "counter received without actionUrl does not dump to teklifler",
+    resolveNotificationDestination({
+      type: "COUNTER_OFFER_RECEIVED",
       actionUrl: null,
       requestId: "r",
       offerId: "o",
       companyId: null,
-    })?.startsWith("/panel/") === true,
+    }) === "/panel/bildirimler",
+  );
+  check(
+    "counter accepted fallback is mesajlar",
+    deriveNotificationPath({
+      type: "COUNTER_OFFER_ACCEPTED",
+      actionUrl: null,
+      requestId: "r",
+      offerId: "o",
+      companyId: null,
+    }) === "/panel/mesajlar",
   );
 }
 
@@ -291,7 +305,7 @@ console.log("\n=== UI SURFACES ===\n");
   check("gelen uses panel", gelen.includes("OfferNegotiationPanel"));
   check("teklifler uses panel", teklifler.includes("OfferNegotiationPanel"));
   check("request detail uses panel", taleplerim.includes("OfferNegotiationPanel"));
-  check("original amount labelled", panel.includes("Orijinal teklif"));
+  check("original amount labelled", panel.includes("İlk teklif"));
   check("agreed amount labelled", panel.includes("Anlaşılan fiyat"));
   check("no personal names in timeline", panel.includes("Alıcının önerisi") && panel.includes("Teklif verenin önerisi"));
   check("min 44px targets", panel.includes("min-h-11"));

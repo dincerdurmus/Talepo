@@ -70,10 +70,7 @@ export default async function ConversationDetailPage({
 
   const offerStatus = participant.conversation.offer.status;
   const offerAccepted = offerStatus === "ACCEPTED";
-  const canSendMessages =
-    offerAccepted ||
-    offerStatus === "SUBMITTED" ||
-    offerStatus === "VIEWED";
+  const canSendMessages = offerAccepted;
   const { conversation } = participant;
   const request = conversation.offer.request;
   const isBuyer = request.createdById === user.id;
@@ -85,9 +82,7 @@ export default async function ConversationDetailPage({
     ? conversation.offer.company?.name ||
       conversation.offer.submittedBy.name ||
       "Firma"
-    : offerAccepted
-      ? "Alıcı"
-      : "Alıcı (pazarlık)";
+    : "Alıcı";
   const requestHref = isBuyer
     ? `/panel/taleplerim/${request.id}`
     : `/panel/talepler/${request.id}`;
@@ -163,6 +158,13 @@ export default async function ConversationDetailPage({
           </span>
         </Link>
       </header>
+
+      {!offerAccepted ? (
+        <p className="mt-4 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950/80">
+          Bu yazışma salt okunur. Fiyat pazarlığı karşı teklif turlarıyla
+          yapılır; yeni mesaj ancak anlaşmadan sonra gönderilebilir.
+        </p>
+      ) : null}
 
       {dealOutcome && dealRole && (
         <>
@@ -273,7 +275,6 @@ export default async function ConversationDetailPage({
           conversationId={conversation.id}
           canSend={canSendMessages}
           canSendImages={offerAccepted && isSupplier}
-          negotiationMode={canSendMessages && !offerAccepted}
         />
       </section>
     </>
