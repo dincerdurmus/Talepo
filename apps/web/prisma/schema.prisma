@@ -986,6 +986,7 @@ model Offer {
   negotiations      OfferNegotiation[]
   dealReviews       DealReview[]
   attribution       OfferAttribution?
+  intelligenceExposure OfferIntelligenceExposure?
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -1016,6 +1017,26 @@ model OfferAttribution {
 
   @@index([source])
   @@index([capturedAt])
+}
+
+/// First real READY view of Teklif Zekâsı for an Offer (decision assistance, not acquisition).
+model OfferIntelligenceExposure {
+  offerId String @id
+
+  requestId    String
+  viewerUserId String
+  /// Workspace subject at first exposure; null = personal offer subject.
+  companyId    String?
+
+  /// First READY exposure only — never overwritten.
+  viewedAt DateTime @default(now())
+
+  offer Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([viewerUserId])
+  @@index([companyId])
+  @@index([requestId])
+  @@index([viewedAt])
 }
 
 /// Offer product photos. Bytes live in private storage; this row is the index.

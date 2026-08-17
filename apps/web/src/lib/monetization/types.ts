@@ -124,6 +124,37 @@ export type TrustAnalyticsSummary = {
   averageRating: number | null;
 };
 
+export type SourcePerformanceRow = {
+  source: "RADAR" | "FOLLOW" | "OPPORTUNITY" | "DISCOVERY";
+  label: string;
+  submitted: number;
+  accepted: number;
+  completed: number;
+  winRate: number | null;
+  winRatePresentation: WinRatePresentation;
+  volumesByCurrency: CurrencyVolumeMetrics[];
+  primaryVolume: CurrencyVolumeMetrics | null;
+  mixedCurrency: boolean;
+};
+
+/**
+ * Observational Teklif Zekâsı exposure cohort (persisted READY views only).
+ * No causal uplift claims. No viewed-vs-non-viewed comparison in V1
+ * (historical eligibility cannot be reconstructed honestly).
+ */
+export type IntelligenceAssistanceMetrics = {
+  exposedOffers: number;
+  accepted: number;
+  completed: number;
+  winRate: number | null;
+  winRatePresentation: WinRatePresentation;
+  volumesByCurrency: CurrencyVolumeMetrics[];
+  primaryVolume: CurrencyVolumeMetrics | null;
+  mixedCurrency: boolean;
+  /** Always false in V1 — eligible-but-not-viewed is not reconstructable. */
+  comparisonAvailable: false;
+};
+
 /**
  * Professional commercial intelligence — deterministic.
  * Source rows require persisted OfferAttribution (no inferred Radar/Follow claims).
@@ -156,19 +187,8 @@ export type CommercialPerformanceMetrics = {
    * UNKNOWN is omitted from the product UI list.
    */
   sourcePerformance: SourcePerformanceRow[];
-};
-
-export type SourcePerformanceRow = {
-  source: "RADAR" | "FOLLOW" | "OPPORTUNITY" | "DISCOVERY";
-  label: string;
-  submitted: number;
-  accepted: number;
-  completed: number;
-  winRate: number | null;
-  winRatePresentation: WinRatePresentation;
-  volumesByCurrency: CurrencyVolumeMetrics[];
-  primaryVolume: CurrencyVolumeMetrics | null;
-  mixedCurrency: boolean;
+  /** Persisted Teklif Zekâsı READY exposures in the submitted-at window. */
+  intelligenceAssistance: IntelligenceAssistanceMetrics;
 };
 
 export type InventoryImportResult = {

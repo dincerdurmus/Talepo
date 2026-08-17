@@ -130,6 +130,9 @@ function ProfessionalLockedSection() {
         <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
           Kaynak performansı (Radar / Takiplerim / Fırsatlar)
         </li>
+        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+          Teklif Zekâsı görüntüleme özeti
+        </li>
       </ul>
       <Link
         href="/panel/plan"
@@ -337,6 +340,81 @@ function ProfessionalCommerceSection({
           </ul>
         </div>
       ) : null}
+
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold text-teal-950">
+            Teklif Zekâsı etkisi
+          </h3>
+          <p className="mt-1 text-xs text-teal-950/45">
+            Yalnız gerçekten açılmış Teklif Zekâsı sonuçları. Plan kilidi veya
+            yetersiz örnek ekranı exposure sayılmaz. Bu bir nedensellik iddiası
+            değildir.
+          </p>
+        </div>
+        {advanced.intelligenceAssistance.exposedOffers === 0 ? (
+          <p className="text-sm text-teal-950/55">
+            Bu dönemde görüntülenen Teklif Zekâsı kaydı yok.
+          </p>
+        ) : (
+          <div className="rounded-2xl border border-teal-900/8 bg-white/90 p-4">
+            <dl className="grid grid-cols-3 gap-2 text-center">
+              <div>
+                <dt className="text-[10px] uppercase text-teal-950/45">
+                  Görüntülenen teklif
+                </dt>
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                  {advanced.intelligenceAssistance.exposedOffers}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase text-teal-950/45">
+                  Kabul
+                </dt>
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                  {advanced.intelligenceAssistance.accepted}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-[10px] uppercase text-teal-950/45">
+                  Tamamlanan
+                </dt>
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                  {advanced.intelligenceAssistance.completed}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-2 text-xs text-teal-950/50">
+              Kazanma:{" "}
+              {formatWinRateValue({
+                accepted: advanced.intelligenceAssistance.accepted,
+                submitted: advanced.intelligenceAssistance.exposedOffers,
+                winRate: advanced.intelligenceAssistance.winRate,
+                winRatePresentation:
+                  advanced.intelligenceAssistance.winRatePresentation,
+              })}
+            </p>
+            {advanced.intelligenceAssistance.primaryVolume ? (
+              <p className="mt-1 text-xs text-teal-950/55">
+                Bu tekliflerden başlayan tamamlanmış işlemler:{" "}
+                {formatMoneyAmount(
+                  advanced.intelligenceAssistance.primaryVolume
+                    .totalAgreedAmount,
+                  advanced.intelligenceAssistance.primaryVolume.currency,
+                )}
+              </p>
+            ) : advanced.intelligenceAssistance.mixedCurrency ? (
+              <p className="mt-1 text-xs text-teal-950/45">
+                Birden fazla para birimi — tek toplam yok.
+              </p>
+            ) : null}
+            <p className="mt-2 text-[11px] text-teal-950/40">
+              Görüntülenmeyen tekliflerle karşılaştırma bu sürümde yok; geçmiş
+              eligibility güvenilir biçimde yeniden kurulamıyor.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="space-y-3">
         <div>

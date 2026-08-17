@@ -349,7 +349,10 @@ export default async function ExploreRequestDetailPage({
       </section>
 
       {offerIntelligence ? (
-        <OfferIntelligenceCard intelligence={offerIntelligence} />
+        <OfferIntelligenceCard
+          intelligence={offerIntelligence}
+          requestId={request.id}
+        />
       ) : null}
 
       {!isRequestOwner &&

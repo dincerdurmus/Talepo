@@ -16,6 +16,7 @@ import type {
   CategoryPerformanceRow,
   CommercialPerformanceMetrics,
   CurrencyVolumeMetrics,
+  IntelligenceAssistanceMetrics,
   SourcePerformanceRow,
 } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
@@ -298,6 +299,96 @@ async function loadSourcePerformance(
   }).filter((row) => row.submitted > 0 || row.completed > 0);
 }
 
+async function loadIntelligenceAssistance(
+  owner: AnalyticsOwner,
+  from: Date,
+  to: Date,
+): Promise<IntelligenceAssistanceMetrics> {
+  const ownerSql =
+    owner.scope === "personal"
+      ? Prisma.sql`o."submittedById" = ${owner.userId} AND o."companyId" IS NULL`
+      : Prisma.sql`o."companyId" = ${owner.companyId}`;
+
+  const [funnel] = await prisma.$queryRaw<
+    { exposed: number; accepted: number; completed: number }[]
+  >`
+    SELECT
+      COUNT(*)::int AS exposed,
+      COUNT(*) FILTER (WHERE o.status = 'ACCEPTED')::int AS accepted,
+      COUNT(*) FILTER (
+        WHERE d.status = 'COMPLETED'
+          AND d."confirmationLevel" = 'BOTH_CONFIRMED'
+          AND d."completedAt" IS NOT NULL
+          AND d."buyerConfirmedAt" IS NOT NULL
+          AND d."supplierConfirmedAt" IS NOT NULL
+      )::int AS completed
+    FROM "OfferIntelligenceExposure" e
+    INNER JOIN "Offer" o ON o.id = e."offerId"
+    LEFT JOIN "DealOutcome" d ON d."offerId" = o.id
+    WHERE ${ownerSql}
+      AND o.status <> 'DRAFT'
+      AND o."submittedAt" IS NOT NULL
+      AND o."submittedAt" >= ${from}
+      AND o."submittedAt" <= ${to}
+  `;
+
+  const volumeRows = await prisma.$queryRaw<
+    {
+      currency: string;
+      dealCount: number;
+      total: number | null;
+      average: number | null;
+    }[]
+  >`
+    SELECT
+      d.currency::text AS currency,
+      COUNT(*)::int AS "dealCount",
+      SUM(d."agreedPrice")::float AS total,
+      AVG(d."agreedPrice")::float AS average
+    FROM "DealOutcome" d
+    INNER JOIN "Offer" o ON o.id = d."offerId"
+    INNER JOIN "OfferIntelligenceExposure" e ON e."offerId" = o.id
+    WHERE ${ownerSql}
+      AND d.status = 'COMPLETED'
+      AND d."confirmationLevel" = 'BOTH_CONFIRMED'
+      AND d."completedAt" IS NOT NULL
+      AND d."buyerConfirmedAt" IS NOT NULL
+      AND d."supplierConfirmedAt" IS NOT NULL
+      AND d."completedAt" >= ${from}
+      AND d."completedAt" <= ${to}
+      AND d."agreedPrice" IS NOT NULL
+    GROUP BY d.currency
+  `;
+
+  const exposed = funnel?.exposed ?? 0;
+  const accepted = funnel?.accepted ?? 0;
+  const completed = funnel?.completed ?? 0;
+  const win = cohortWinRate(accepted, exposed);
+  const volumesByCurrency = volumeRows
+    .map((row) =>
+      toVolumeRow({
+        currency: row.currency,
+        dealCount: row.dealCount,
+        total: row.total,
+        average: row.average,
+      }),
+    )
+    .filter((row) => row.dealCount > 0)
+    .sort((a, b) => b.dealCount - a.dealCount);
+
+  return {
+    exposedOffers: exposed,
+    accepted,
+    completed,
+    winRate: win.rate,
+    winRatePresentation: win.presentation,
+    volumesByCurrency,
+    primaryVolume: volumesByCurrency.length === 1 ? volumesByCurrency[0] : null,
+    mixedCurrency: volumesByCurrency.length > 1,
+    comparisonAvailable: false,
+  };
+}
+
 /**
  * Professional commercial intelligence for the selected window.
  * Uses DealOutcome.agreedPrice for money and bilateral completion only.
@@ -326,6 +417,7 @@ export async function getCommercialPerformance(
     negotiatedPriceRows,
     categories,
     sourcePerformance,
+    intelligenceAssistance,
     trustRaw,
   ] = await Promise.all([
     prisma.dealOutcome.count({ where: completedWhere }),
@@ -374,6 +466,7 @@ export async function getCommercialPerformance(
     }),
     loadCategoryRows(owner, from, to),
     loadSourcePerformance(owner, from, to),
+    loadIntelligenceAssistance(owner, from, to),
     owner.scope === "personal"
       ? getUserTrustSummary(owner.userId)
       : getCompanyTrustSummary(owner.companyId),
@@ -449,6 +542,7 @@ export async function getCommercialPerformance(
     categories,
     insights,
     sourcePerformance,
+    intelligenceAssistance,
     trust: {
       completedTransactions: trustRaw.completedTransactions,
       reviewCount: trustRaw.reviewCount,

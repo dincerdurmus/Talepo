@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { LineChart } from "lucide-react";
 
 import type { OfferIntelligenceDTO } from "@/lib/monetization/offer-intelligence";
@@ -24,11 +27,42 @@ function formatVsMedian(pct: number | null) {
   return pct > 0 ? `Medyanın %${abs} üzerinde` : `Medyanın %${abs} altında`;
 }
 
+/**
+ * READY stats are decision assistance. Locked / insufficient shells are not exposure.
+ * First real READY mount POSTs requestId; server re-validates and writes once.
+ */
 export function OfferIntelligenceCard({
   intelligence,
+  requestId,
 }: {
   intelligence: OfferIntelligenceDTO;
+  requestId: string;
 }) {
+  const reported = useRef(false);
+
+  useEffect(() => {
+    if (intelligence.state !== "READY") return;
+    if (
+      intelligence.min == null ||
+      intelligence.max == null ||
+      intelligence.median == null ||
+      intelligence.average == null
+    ) {
+      return;
+    }
+    if (reported.current) return;
+    reported.current = true;
+
+    void fetch("/api/monetization/offer-intelligence/exposure", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId }),
+    }).catch(() => {
+      // Non-blocking telemetry — do not surface to the user.
+      reported.current = false;
+    });
+  }, [intelligence, requestId]);
+
   if (intelligence.state === "NOT_APPLICABLE") return null;
 
   return (
