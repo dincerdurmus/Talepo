@@ -67,6 +67,22 @@ function asCleanString(value: unknown, maxLength: number) {
   return value.trim().slice(0, maxLength);
 }
 
+/** Parse a POST body without using Request.json() (which yields 500 SyntaxError). */
+export function parseJsonObject(raw: string): unknown {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
+    }
+    throw error;
+  }
+}
+
 export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   if (!value || typeof value !== "object") {
     throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
