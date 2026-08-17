@@ -1,0 +1,25 @@
+---
+description: Tuğrul için güvenli branch, worktree ve GitHub çalışma düzeni
+alwaysApply: true
+---
+
+# Tuğrul Branch Workflow
+
+- Normal geliştirme branch'i: `feature/tugrul-admin-menu-v1`.
+- Admin menü kapsamındaki çalışmalara bu branch'te devam et.
+- Başka bağımsız bir özellik için, güncel `origin/feature/dincer-personal-opportunity-e2e-v1` tabanından yeni ve açıklayıcı bir `feature/tugrul-...` branch'i oluştur.
+- Analytics observability/düzeltme işi yalnız `fix/analytics-runtime-error` branch'inde yürütülür.
+- `main` branch'ine doğrudan commit veya push yapma.
+- `recovery/dincer-local-wip-2026-08-17` branch'ine dokunma.
+- `recovery/friend-worktree-2026-08-16` yalnız arşivdir; geliştirme tabanı olarak kullanma.
+- Başka kullanıcıya ait branch veya worktree'de checkout, reset, clean, stash, discard, commit veya push yapma.
+- Korunan untracked `.recovery-snapshots/` ve test-output dosyalarını açık onay olmadan silme, taşıma veya commit etme.
+- Her görevin başında current directory, branch, HEAD, upstream ve `git status` doğrula.
+- Yeni işe başlamadan önce `git fetch origin` ile canonical branch'in ilerleyip ilerlemediğini kontrol et.
+- Kendi branch'in canonical'ın gerisindeyse değişiklikleri otomatik birleştirme; ahead/behind ve olası conflict durumunu raporla, sonra kontrollü entegrasyon yap.
+- Yalnız kendi aktif branch'ine commit ve normal push yap.
+- Force push kullanma.
+- `git add .` kullanma; yalnız görev kapsamındaki açık dosyaları stage et.
+- Dirty veya untracked kullanıcı çalışmasını kaybetmeye yol açabilecek komutları çalıştırma.
+- Commit öncesinde ilgili testleri çalıştır ve diff kapsamını raporla.
+- Bir özellik tamamlanınca canonical branch'e kendiliğinden merge etme; entegrasyon için onay bekle.
