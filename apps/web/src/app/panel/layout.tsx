@@ -7,7 +7,7 @@ import {
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import {
-  countSellerActionableOutgoingOffersForScope,
+  countUnreadOutgoingOfferEvents,
   getPanelSummary,
   getUnreadMessageCount,
 } from "@/lib/panel/get-panel-data";
@@ -38,8 +38,8 @@ export default async function PanelLayout({
 
   let unreadNotifications = 0;
   let unreadMessages = 0;
-  let newIncomingOffers = 0;
-  let pendingOutgoingNegotiations = 0;
+  let unreadIncomingOfferEvents = 0;
+  let unreadOutgoingOfferEvents = 0;
   let features: Record<string, boolean> | undefined;
   let companies: { id: string; name: string }[] = [];
   let workspace: PanelWorkspace = {
@@ -94,7 +94,7 @@ export default async function PanelLayout({
 
       unreadNotifications = summary.unreadNotifications;
       unreadMessages = messageCount;
-      newIncomingOffers = summary.newOffers;
+      unreadIncomingOfferEvents = summary.unreadIncomingOfferEvents;
       features = entitlements.features;
 
       // Any active company subject is a company workspace. Plan tier only
@@ -102,20 +102,17 @@ export default async function PanelLayout({
       const inCompanyWorkspace = entitlements.subject.type === "company";
       const companyId = inCompanyWorkspace ? entitlements.subject.id : null;
 
-      const [companyMedia, pendingCount] = await Promise.all([
+      const [companyMedia, outgoingUnread] = await Promise.all([
         companyId
           ? prisma.company.findUnique({
               where: { id: companyId },
               select: { logoUrl: true },
             })
           : Promise.resolve(null),
-        countSellerActionableOutgoingOffersForScope({
-          userId: user.id,
-          companyId,
-        }),
+        countUnreadOutgoingOfferEvents(user.id, companyId),
       ]);
 
-      pendingOutgoingNegotiations = pendingCount;
+      unreadOutgoingOfferEvents = outgoingUnread;
       const companyLogoUrl = companyMedia?.logoUrl ?? null;
 
       workspace = {
@@ -146,8 +143,8 @@ export default async function PanelLayout({
       }}
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}
-      newIncomingOffers={newIncomingOffers}
-      pendingOutgoingNegotiations={pendingOutgoingNegotiations}
+      unreadIncomingOfferEvents={unreadIncomingOfferEvents}
+      unreadOutgoingOfferEvents={unreadOutgoingOfferEvents}
       dbUnavailable={dbUnavailable}
       features={features}
       workspace={workspace}

@@ -305,6 +305,8 @@ model User {
 
   notifications Notification[]
 
+  offerArchives OfferArchive[]
+
   /// Personal-owned Premium resources (workspace = USER)
   alertRules    AlertRule[]
   savedSearches SavedSearch[]
@@ -465,6 +467,7 @@ model Company {
   requestMatches RequestMatch[]
   dealOutcomes   DealOutcome[]
   receivedDealReviews DealReview[]
+  offerArchives  OfferArchive[]
 
   conversationParticipants ConversationParticipant[]
   sentMessages             Message[]                 @relation("MessageCompanySender")
@@ -987,6 +990,7 @@ model Offer {
   dealReviews       DealReview[]
   attribution       OfferAttribution?
   intelligenceExposure OfferIntelligenceExposure?
+  archives             OfferArchive[]
 
   /// Phase 4B — partial unique indexes (see migration):
   /// - (requestId, companyId) where companyId IS NOT NULL AND status active
@@ -997,6 +1001,27 @@ model Offer {
   @@index([status])
   @@index([submittedAt])
   @@index([createdAt])
+}
+
+/// Per-user personal archive for terminal offers. Does not mutate offer state.
+/// Partial unique indexes (personal vs company scope) live in migration SQL.
+model OfferArchive {
+  id String @id @default(cuid())
+
+  userId    String
+  offerId   String
+  companyId String?
+
+  archivedAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offer   Offer    @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  @@index([userId, offerId])
+  @@index([userId, companyId])
+  @@index([offerId])
+  @@index([archivedAt])
 }
 
 /// 1:1 immutable acquisition provenance for an Offer. Never backfilled from history.

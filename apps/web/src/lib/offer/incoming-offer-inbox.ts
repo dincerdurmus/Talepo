@@ -9,6 +9,7 @@ import type { OutgoingOfferInboxInput } from "@/lib/offer/outgoing-offer-inbox";
 
 export const INCOMING_OFFER_INBOX_FILTERS = [
   "all",
+  "unread",
   "new",
   "negotiating",
   "accepted",
@@ -27,6 +28,7 @@ export type IncomingOfferInboxBucket =
 
 const DURUM_TO_FILTER = {
   yeni: "new",
+  okunmadi: "unread",
   pazarlik: "negotiating",
   kabul: "accepted",
   red: "rejected",
@@ -35,6 +37,7 @@ const DURUM_TO_FILTER = {
 
 const FILTER_TO_DURUM: Record<IncomingOfferInboxFilter, string | null> = {
   all: null,
+  unread: "okunmadi",
   new: "yeni",
   negotiating: "pazarlik",
   accepted: "kabul",
@@ -46,6 +49,7 @@ export const INCOMING_OFFER_INBOX_LABELS: Record<
   string
 > = {
   all: "Tümü",
+  unread: "Okunmadı",
   new: "Yeni teklifler",
   negotiating: "Pazarlıkta",
   accepted: "Kabul edilen",
@@ -57,6 +61,7 @@ export const INCOMING_OFFER_INBOX_EMPTY: Record<
   string
 > = {
   all: "Henüz gelen teklif yok.",
+  unread: "Okunmamış teklif yok.",
   new: "Yanıtınızı bekleyen yeni teklif yok.",
   negotiating: "Devam eden pazarlığınız yok.",
   accepted: "Henüz kabul ettiğiniz teklif yok.",
@@ -85,15 +90,31 @@ export function classifyIncomingOfferInbox(
 export function offerMatchesIncomingInboxFilter(
   bucket: IncomingOfferInboxBucket,
   filter: IncomingOfferInboxFilter,
+  options?: { offerId?: string; unreadOfferIds?: ReadonlySet<string> },
 ): boolean {
+  if (filter === "unread") {
+    return Boolean(
+      options?.offerId &&
+        options.unreadOfferIds?.has(options.offerId),
+    );
+  }
   if (filter === "all") return true;
   return bucket === filter;
 }
 
-export function countIncomingOfferInbox(offers: OutgoingOfferInboxInput[]) {
+export function countIncomingOfferInbox(
+  offers: OutgoingOfferInboxInput[],
+  unreadOfferIds?: ReadonlySet<string>,
+) {
   const outgoing = countOutgoingOfferInbox(offers);
+  const unreadCount = unreadOfferIds
+    ? offers.filter((offer) =>
+        unreadOfferIds.has((offer as { id?: string }).id ?? ""),
+      ).length
+    : 0;
   return {
     all: outgoing.all,
+    unread: unreadCount,
     new: outgoing.sent,
     negotiating: outgoing.negotiating,
     accepted: outgoing.accepted,
@@ -107,6 +128,10 @@ export function resolveIncomingOfferInboxFilter(input: {
   explicit: boolean;
   highlightBucket: IncomingOfferInboxBucket | null;
 }) {
+  if (input.requested === "unread") {
+    return { filter: "unread" as const, redirect: false };
+  }
+
   const mapped =
     input.highlightBucket === "new"
       ? ("sent" as const)
@@ -130,11 +155,13 @@ export function buildIncomingOffersPath(input: {
   filter: IncomingOfferInboxFilter;
   teklif?: string | null;
   tur?: string | null;
+  archiveView?: boolean;
 }): string {
   const params = new URLSearchParams();
   const durum = FILTER_TO_DURUM[input.filter];
   if (durum) params.set("durum", durum);
   else if (input.teklif || input.tur) params.set("durum", "tumu");
+  if (input.archiveView) params.set("gorunum", "arsiv");
   if (input.teklif) params.set("teklif", input.teklif);
   if (input.tur) params.set("tur", input.tur);
   const query = params.toString();

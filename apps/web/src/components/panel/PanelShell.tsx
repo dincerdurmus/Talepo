@@ -40,8 +40,11 @@ import {
 } from "@/components/panel/panel-nav";
 import {
   formatPanelCountBadge,
-  sellerPendingNegotiationAria,
 } from "@/lib/offer/outgoing-offer-inbox";
+import {
+  OFFER_INBOX_BADGE_EVENT,
+  type OfferInboxBadgeEventDetail,
+} from "@/lib/offer/offer-inbox-badge-events";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
@@ -68,8 +71,8 @@ type PanelShellProps = {
   user: PanelUser;
   unreadNotifications: number;
   unreadMessages: number;
-  newIncomingOffers?: number;
-  pendingOutgoingNegotiations?: number;
+  unreadIncomingOfferEvents?: number;
+  unreadOutgoingOfferEvents?: number;
   dbUnavailable?: boolean;
   features?: Partial<Record<FeatureKey, boolean>>;
   workspace?: PanelWorkspace;
@@ -84,7 +87,13 @@ function formatNavCountBadge(count: number): string | undefined {
 function incomingOffersBadgeAria(count: number): string | undefined {
   if (count <= 0) return undefined;
   const display = count > 99 ? "99+" : String(count);
-  return `yanıtınızı bekleyen ${display} teklif`;
+  return `okunmamış ${display} gelen teklif`;
+}
+
+function outgoingOffersBadgeAria(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  const display = count > 99 ? "99+" : String(count);
+  return `okunmamış ${display} teklif`;
 }
 
 function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
@@ -94,22 +103,22 @@ function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
 function sidebarNavBadge(
   href: string,
   unreadMessages: number,
-  newIncomingOffers: number,
-  pendingOutgoingNegotiations: number,
+  unreadIncomingOfferEvents: number,
+  unreadOutgoingOfferEvents: number,
 ): { badge?: string; badgeAriaLabel?: string } {
   if (href === "/panel/mesajlar" && unreadMessages > 0) {
     return { badge: String(unreadMessages) };
   }
   if (href === "/panel/gelen-teklifler") {
     return {
-      badge: formatNavCountBadge(newIncomingOffers),
-      badgeAriaLabel: incomingOffersBadgeAria(newIncomingOffers),
+      badge: formatNavCountBadge(unreadIncomingOfferEvents),
+      badgeAriaLabel: incomingOffersBadgeAria(unreadIncomingOfferEvents),
     };
   }
   if (href === "/panel/teklifler") {
     return {
-      badge: formatNavCountBadge(pendingOutgoingNegotiations),
-      badgeAriaLabel: sellerPendingNegotiationAria(pendingOutgoingNegotiations),
+      badge: formatNavCountBadge(unreadOutgoingOfferEvents),
+      badgeAriaLabel: outgoingOffersBadgeAria(unreadOutgoingOfferEvents),
     };
   }
   return {};
@@ -163,8 +172,8 @@ export function PanelShell({
   user,
   unreadNotifications,
   unreadMessages,
-  newIncomingOffers = 0,
-  pendingOutgoingNegotiations = 0,
+  unreadIncomingOfferEvents = 0,
+  unreadOutgoingOfferEvents = 0,
   dbUnavailable = false,
   features,
   workspace,
@@ -187,7 +196,52 @@ export function PanelShell({
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
   const [collapsed, setCollapsed] = useState(false);
+  // Server counts stay authoritative: an optimistic override is keyed by the
+  // server snapshot it was applied to, so a refreshed layout discards it.
+  const serverBadgeKey = `${unreadIncomingOfferEvents}:${unreadOutgoingOfferEvents}`;
+  const [badgeOverride, setBadgeOverride] = useState<{
+    key: string;
+    incoming: number;
+    outgoing: number;
+  } | null>(null);
+  const activeOverride =
+    badgeOverride && badgeOverride.key === serverBadgeKey ? badgeOverride : null;
+  const liveIncomingUnread = activeOverride
+    ? activeOverride.incoming
+    : unreadIncomingOfferEvents;
+  const liveOutgoingUnread = activeOverride
+    ? activeOverride.outgoing
+    : unreadOutgoingOfferEvents;
   const skipPersistRef = useRef(true);
+
+  useEffect(() => {
+    const onBadgeUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<OfferInboxBadgeEventDetail>).detail;
+      if (!detail) return;
+      setBadgeOverride((current) => {
+        const base =
+          current && current.key === serverBadgeKey
+            ? current
+            : {
+                key: serverBadgeKey,
+                incoming: unreadIncomingOfferEvents,
+                outgoing: unreadOutgoingOfferEvents,
+              };
+        if (detail.role === "buyer") {
+          return {
+            ...base,
+            incoming: detail.mode === "clear" ? 0 : Math.max(0, base.incoming - 1),
+          };
+        }
+        return {
+          ...base,
+          outgoing: detail.mode === "clear" ? 0 : Math.max(0, base.outgoing - 1),
+        };
+      });
+    };
+    window.addEventListener(OFFER_INBOX_BADGE_EVENT, onBadgeUpdate);
+    return () => window.removeEventListener(OFFER_INBOX_BADGE_EVENT, onBadgeUpdate);
+  }, [serverBadgeKey, unreadIncomingOfferEvents, unreadOutgoingOfferEvents]);
 
   useEffect(() => {
     try {
@@ -223,7 +277,7 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
-            pendingOutgoingNegotiations={pendingOutgoingNegotiations}
+            unreadOutgoingOfferEvents={liveOutgoingUnread}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
             planTier={planTier}
@@ -238,8 +292,8 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
-            newIncomingOffers={newIncomingOffers}
-            pendingOutgoingNegotiations={pendingOutgoingNegotiations}
+            unreadIncomingOfferEvents={liveIncomingUnread}
+            unreadOutgoingOfferEvents={liveOutgoingUnread}
             planTier={planTier}
             features={features}
             collapsed={collapsed}
@@ -388,9 +442,9 @@ export function PanelShell({
               icon={FileText}
               label="Tekliflerim"
               active={isNavActive(pathname, "/panel/teklifler")}
-              badge={formatNavCountBadge(pendingOutgoingNegotiations)}
-              badgeAriaLabel={sellerPendingNegotiationAria(
-                pendingOutgoingNegotiations,
+              badge={formatNavCountBadge(liveOutgoingUnread)}
+              badgeAriaLabel={outgoingOffersBadgeAria(
+                liveOutgoingUnread,
               )}
             />
           ) : (
@@ -466,8 +520,8 @@ function PersonalSidebar({
   pathname,
   navItems,
   unreadMessages,
-  newIncomingOffers,
-  pendingOutgoingNegotiations,
+  unreadIncomingOfferEvents,
+  unreadOutgoingOfferEvents,
   planTier,
   collapsed,
   onToggle,
@@ -475,8 +529,8 @@ function PersonalSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
-  newIncomingOffers: number;
-  pendingOutgoingNegotiations: number;
+  unreadIncomingOfferEvents: number;
+  unreadOutgoingOfferEvents: number;
   planTier: PlanTierId;
   features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
@@ -600,8 +654,8 @@ function PersonalSidebar({
                 const navBadge = sidebarNavBadge(
                   item.href,
                   unreadMessages,
-                  newIncomingOffers,
-                  pendingOutgoingNegotiations,
+                  unreadIncomingOfferEvents,
+                  unreadOutgoingOfferEvents,
                 );
                 return (
                 <SidebarLink
@@ -661,8 +715,8 @@ function PersonalSidebar({
                 const navBadge = sidebarNavBadge(
                   item.href,
                   unreadMessages,
-                  newIncomingOffers,
-                  pendingOutgoingNegotiations,
+                  unreadIncomingOfferEvents,
+                  unreadOutgoingOfferEvents,
                 );
                 return (
                 <SidebarLink
@@ -689,7 +743,7 @@ function CorporateSidebar({
   pathname,
   navItems,
   unreadMessages,
-  pendingOutgoingNegotiations,
+  unreadOutgoingOfferEvents,
   companyName,
   companyLogoUrl,
   planTier,
@@ -702,7 +756,7 @@ function CorporateSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
-  pendingOutgoingNegotiations: number;
+  unreadOutgoingOfferEvents: number;
   companyName: string;
   companyLogoUrl?: string | null;
   planTier: PlanTierId;
@@ -827,7 +881,7 @@ function CorporateSidebar({
             item.href,
             unreadMessages,
             0,
-            pendingOutgoingNegotiations,
+            unreadOutgoingOfferEvents,
           );
           const hasBadge = Boolean(navBadge.badge);
           const linkLabel = sidebarLinkAriaLabel(
