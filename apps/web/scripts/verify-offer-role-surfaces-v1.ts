@@ -323,8 +323,8 @@ console.log("\n=== ACTION-NEEDED BADGES ===\n");
   );
   check(
     "badge authorities stay distinct",
-    shell.includes("newIncomingOffers") &&
-      shell.includes("pendingOutgoingNegotiations") &&
+    shell.includes("unreadIncomingOfferEvents") &&
+      shell.includes("unreadOutgoingOfferEvents") &&
       shell.includes("unreadNotifications"),
   );
 }
@@ -350,12 +350,12 @@ console.log("\n=== CARD COPY ===\n");
   const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
   const outgoingCard = read("src/components/panel/OutgoingOfferCard.tsx");
   const history = read("src/components/panel/NegotiationHistory.tsx");
-  check("buyer Satıcının önerisi", incomingCard.includes("Satıcının önerisi"));
-  check("buyer Son öneriniz", incomingCard.includes("Son öneriniz"));
-  check("seller Alıcının önerisi", outgoingCard.includes("Alıcının önerisi"));
-  check("seller Son öneriniz", outgoingCard.includes("Son öneriniz"));
-  check("turn Sıra sizde / Sıra alıcıda / Sıra satıcıda", incomingCard.includes("Sıra satıcıda") && outgoingCard.includes("Sıra alıcıda") && outgoingCard.includes("Sıra sizde"));
-  check("history collapsed by default", history.includes("Pazarlık geçmişi") && history.includes("aria-expanded"));
+  const statusLib = read("src/lib/offer/offer-card-status.ts");
+  check("buyer Satıcının son önerisi", statusLib.includes("Satıcının son önerisi"));
+  check("buyer Son öneriniz via caption helper", incomingCard.includes("resolveOfferPriceCaption"));
+  check("seller Alıcının son önerisi", statusLib.includes("Alıcının son önerisi"));
+  check("history accordion title", history.includes("Fiyat ve pazarlık geçmişi"));
+  check("turn waiting headers", statusLib.includes("Satıcının yanıtı bekleniyor") && statusLib.includes("Alıcının yanıtı bekleniyor"));
   check("no technical enum in buyer card", !incomingCard.includes("COUNTER_OFFER_RECEIVED"));
 }
 

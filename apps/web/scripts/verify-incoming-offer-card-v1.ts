@@ -47,16 +47,20 @@ console.log("\n=== STRUCTURE ===\n");
   check("compact request counters", group.includes("yanıt bekliyor"));
   check("page pill removed", !page.includes("bekleyen ·"));
   check("seller header firmName", card.includes("firmName"));
-  check("status Yeni", card.includes('SUBMITTED: "Yeni"'));
-  check("status Yanıt bekliyor", card.includes('VIEWED: "Yanıt bekliyor"'));
-  check("status Pazarlıkta", card.includes('"Pazarlıkta"'));
-  check("price caption İlk teklif", card.includes('"İlk teklif"'));
-  check("thin Teklif kapsamı", card.includes("Teklif kapsamı"));
+  check("status Yanıtınız bekleniyor", read("src/lib/offer/offer-card-status.ts").includes("Yanıtınız bekleniyor"));
+  check("status header resolver", card.includes("resolveOfferCardStatusHeader"));
+  check("price caption İlk teklif", card.includes("resolveOfferPriceCaption"));
+  check("message block", card.includes("OfferMessageBlock"));
+  check("completeness in details accordion", card.includes("NegotiationHistory") && !card.includes("Teklif kapsamı"));
   check(
     "no huge completeness box",
     !card.includes("rounded-xl border border-teal-900/[0.06] bg-white px-3.5 py-3"),
   );
   check("action bar OfferActions", card.includes("<OfferActions"));
+  check("decision footer layout", card.includes('layout="footer"'));
+  check("footer after history", card.indexOf("NegotiationHistory") < card.indexOf("<OfferActions"));
+  check("OfferDecisionOutcome wired", actions.includes("OfferDecisionOutcome"));
+  check("Teklifi kabul et copy", actions.includes("Teklifi kabul et"));
 }
 
 console.log("\n=== COPY ===\n");
@@ -88,7 +92,7 @@ console.log("\n=== ACTIONS ===\n");
   check("actions only current buyer turn", card.includes("showActions") && card.includes("!myPending"));
   check("composer opens from bargain", card.includes("onBargain={() => setComposerOpen(true)}"));
   check("hideTriggers on inbox panel", card.includes("hideTriggers"));
-  check("double-submit guard", actions.includes("if (loadingAction) return") && panel.includes("if (pending) return"));
+  check("double-submit guard", actions.includes('resolvedPhase !== "idle"') && panel.includes("if (pending) return"));
   check("pending counter preserves reject copy", actions.includes("Karşı teklifi reddet"));
   check("original accept preserved", actions.includes("Orijinal teklifi kabul et"));
 }
@@ -98,7 +102,8 @@ console.log("\n=== A11Y / RESPONSIVE ===\n");
   check("aria-label Pazarlık yap", actions.includes('aria-label="Pazarlık yap"'));
   check("full-width mobile buttons", actions.includes("w-full"));
   check("min 44px", actions.includes("min-h-11") && panel.includes("min-h-11"));
-  check("compare rail stacks on mobile", card.includes("lg:grid-cols-[7.75rem_minmax(0,1fr)]"));
+  check("compare rail removed from card", !card.includes("CompareRail"));
+  check("collapsible compare group", group.includes("CollapsibleOfferGroup"));
 }
 
 if (fail > 0) {

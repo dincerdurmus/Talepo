@@ -137,15 +137,15 @@ console.log("\n=== ACCEPT HIERARCHY / PRICE LABELS ===\n");
   check("whose turn copy", panel.includes("sıra sizde") || panel.includes("Sıra alıcıda"));
   check("original accept is secondary when pending", actions.includes("Orijinal teklifi kabul et"));
   check("pending warning copy", actions.includes("anlaşılan tutar o tutar olur"));
-  check("teklifler dual label Anlaşılan", outgoingCard.includes("Anlaşılan fiyat"));
+  check("teklifler Anlaşılan caption", read("src/lib/offer/offer-card-status.ts").includes("Anlaşılan fiyat"));
   check(
-    "teklifler dual label İlk teklif",
-    outgoingCard.includes("İlk teklifiniz"),
+    "teklifler İlk teklif caption",
+    read("src/lib/offer/offer-card-status.ts").includes("İlk teklifiniz"),
   );
   check(
-    "gelen dual pending amount",
-    incomingCard.includes("Satıcının önerisi") ||
-      incomingCard.includes("Son öneriniz"),
+    "gelen pending caption",
+    read("src/lib/offer/offer-card-status.ts").includes("Satıcının son önerisi") ||
+      read("src/lib/offer/offer-card-status.ts").includes("Son öneriniz"),
   );
   check("panel min-h-11", panel.includes("min-h-11") && actions.includes("min-h-11"));
 }

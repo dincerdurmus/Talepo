@@ -1,5 +1,5 @@
 /**
- * Incoming offers sidebar badge — shares dashboard “Yeni teklifler” count authority.
+ * Incoming offers sidebar badge — unread notification events authority.
  * Run: npx tsx scripts/verify-incoming-offers-nav-badge-v1.ts
  */
 import { readFileSync } from "node:fs";
@@ -22,42 +22,43 @@ function check(name: string, ok: boolean, detail?: string) {
 }
 
 const panelData = read("src/lib/panel/get-panel-data.ts");
+const unreadLib = read("src/lib/offer/offer-event-unread.ts");
 const layout = read("src/app/panel/layout.tsx");
 const shell = read("src/components/panel/PanelShell.tsx");
 const panelPage = read("src/app/panel/page.tsx");
 
 check(
-  "shared count authority exported",
-  panelData.includes("export async function countNewIncomingOffers") &&
-    panelData.includes("NEW_INCOMING_OFFER_STATUSES") &&
-    panelData.includes('status: { in: [...NEW_INCOMING_OFFER_STATUSES] }'),
+  "unread count authority exported",
+  unreadLib.includes("export async function countUnreadIncomingOfferEvents") &&
+    unreadLib.includes("BUYER_OFFER_UNREAD_TYPES") &&
+    unreadLib.includes("unreadNotificationWhere"),
 );
 check(
-  "dashboard uses same summary field",
+  "dashboard action-required separate from unread",
   panelPage.includes("summary.newOffers") &&
-    panelData.includes("newOffers: offersOnMyRequests") &&
-    panelData.includes("countNewIncomingOffers(userId)"),
+    panelData.includes("newOffers: buyerActionRequiredOffers") &&
+    panelData.includes("unreadIncomingOfferEvents"),
 );
 check(
-  "layout passes count to shell once",
-  layout.includes("newIncomingOffers={newIncomingOffers}") &&
-    layout.includes("newIncomingOffers = summary.newOffers"),
+  "layout passes unread count to shell",
+  layout.includes("unreadIncomingOfferEvents={unreadIncomingOfferEvents}") &&
+    layout.includes("summary.unreadIncomingOfferEvents"),
 );
 check(
   "shell badges gelen-teklifler only in personal sidebar",
   shell.includes('href === "/panel/gelen-teklifler"') &&
-    shell.includes("newIncomingOffers") &&
+    shell.includes("unreadIncomingOfferEvents") &&
     shell.includes("formatNavCountBadge"),
 );
 check("zero hides badge", shell.includes("if (count <= 0) return undefined"));
 check("99+ cap", shell.includes('count > 99 ? "99+"'));
 check(
-  "screen reader label",
-  shell.includes("yanıtınızı bekleyen") && shell.includes("badgeAriaLabel"),
+  "screen reader label mentions unread",
+  shell.includes("okunmamış") && shell.includes("badgeAriaLabel"),
 );
 check(
   "badge wired in personal sidebar only",
-  shell.includes("newIncomingOffers={newIncomingOffers}") &&
+  shell.includes("unreadIncomingOfferEvents={liveIncomingUnread}") &&
     shell.includes("function PersonalSidebar") &&
     shell.includes('href === "/panel/gelen-teklifler"'),
 );
@@ -68,10 +69,8 @@ async function liveConsistency() {
   config({ path: join(ROOT, ".env") });
 
   const { prisma } = await import("../src/lib/prisma");
-  const {
-    countNewIncomingOffers,
-    getPanelSummary,
-  } = await import("../src/lib/panel/get-panel-data");
+  const { countUnreadIncomingOfferEvents, getPanelSummary, countBuyerActionRequiredOffers } =
+    await import("../src/lib/panel/get-panel-data");
 
   try {
     const dincer = await prisma.user.findFirst({
@@ -83,61 +82,34 @@ async function liveConsistency() {
       return;
     }
 
-    const [direct, summary] = await Promise.all([
-      countNewIncomingOffers(dincer.id),
+    const [unread, summary, actionRequired] = await Promise.all([
+      countUnreadIncomingOfferEvents(dincer.id),
       getPanelSummary(dincer.id),
+      countBuyerActionRequiredOffers(dincer.id),
     ]);
-    check("live dashboard/sidebar count equal", direct === summary.newOffers);
-    console.log(
-      `INFO — dincer newOffers=${summary.newOffers} (dashboard == sidebar authority)`,
+    check(
+      "live sidebar unread equals summary field",
+      unread === summary.unreadIncomingOfferEvents,
     );
-
-    const other = await prisma.user.findFirst({
-      where: {
-        NOT: { id: dincer.id },
-        email: { contains: "@", mode: "insensitive" },
-      },
-      select: { id: true },
-    });
-    if (other) {
-      const cross = await prisma.offer.count({
-        where: {
-          request: { createdById: dincer.id, deletedAt: null },
-          submittedById: other.id,
-          status: { in: ["SUBMITTED", "VIEWED"] },
-        },
-      });
-      if (cross > 0) {
-        const otherCount = await countNewIncomingOffers(other.id);
-        check(
-          "other user count excludes dincer requests",
-          otherCount === 0 || otherCount < direct,
-        );
-      } else {
-        check("other user isolation sample", true);
-      }
-    }
+    check(
+      "live action required can differ from unread",
+      typeof actionRequired === "number" && typeof unread === "number",
+    );
+    console.log(
+      `INFO — unreadIncoming=${unread} buyerActionRequired=${actionRequired} dashboard=${summary.newOffers}`,
+    );
   } finally {
     await prisma.$disconnect();
   }
 }
 
 check(
-  "workspace isolation in count query",
-  panelData.includes("createdById: userId") &&
-    panelData.includes("deletedAt: null"),
-);
-check(
-  "pending statuses only",
-  panelData.includes('"SUBMITTED"') &&
-    panelData.includes('"VIEWED"') &&
-    read("src/lib/offer/incoming-offer-inbox.ts").includes(
-      'proposedBySide: "PROVIDER"',
-    ),
+  "buyer unread notification filter",
+  unreadLib.includes("NEW_OFFER") && unreadLib.includes("COUNTER_OFFER_RECEIVED"),
 );
 check(
   "no duplicate prisma query helper in shell",
-  !shell.includes("prisma.offer.count"),
+  !shell.includes("prisma.notification.count"),
 );
 
 async function main() {

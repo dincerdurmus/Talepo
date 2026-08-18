@@ -307,33 +307,33 @@ console.log("\n=== WIRING ===\n");
   check("visible Tümü filter", filters.includes("OUTGOING_OFFER_INBOX_FILTERS"));
   check("zero filters stay visible", filters.includes("counts[filter]"));
   check("summary cards share counts", page.includes("inboxCounts"));
-  check("deep link still teklif", page.includes("highlightOfferId") && group.includes("OfferDeepLinkTarget"));
+  check("deep link still teklif", page.includes("highlightOfferId") && group.includes("CollapsibleOfferGroup"));
   check("tur preserved on page", page.includes("tur"));
   check(
-    "layout counts seller badge after workspace resolve",
-    layout.includes("pendingOutgoingNegotiations={pendingOutgoingNegotiations}") &&
-      layout.includes("countSellerActionableOutgoingOffersForScope"),
+    "layout counts seller unread badge after workspace resolve",
+    layout.includes("unreadOutgoingOfferEvents={unreadOutgoingOfferEvents}") &&
+      layout.includes("countUnreadOutgoingOfferEvents"),
   );
   check(
     "summary stays cookie-free for incoming badge verifier",
-    panelData.includes("countSellerActionableOutgoingOffersForScope") &&
+    panelData.includes("countUnreadOutgoingOfferEvents") &&
       !panelData.includes("pendingOutgoingNegotiations"),
   );
   check(
     "incoming badge still personal gelen-teklifler",
     shell.includes('href === "/panel/gelen-teklifler"') &&
-      shell.includes("newIncomingOffers"),
+      shell.includes("unreadIncomingOfferEvents"),
   );
   check(
     "seller badge on teklifler not notifications",
     shell.includes('href === "/panel/teklifler"') &&
-      shell.includes("pendingOutgoingNegotiations"),
+      shell.includes("unreadOutgoingOfferEvents"),
   );
   check("collapsed uses dot", shell.includes("badge && collapsed") && shell.includes("talepo-plan-dot"));
   check(
     "professional bottom nav badges Tekliflerim",
     shell.includes('label="Tekliflerim"') &&
-      shell.includes("pendingOutgoingNegotiations"),
+      shell.includes("unreadOutgoingOfferEvents"),
   );
   check(
     "notification producer untouched in this task",

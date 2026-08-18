@@ -128,13 +128,14 @@ console.log("\n=== SURFACE ===\n");
   check("group SİZİN TALEBİNİZ", group.includes("Sizin talebiniz"));
   check("group Hedef bütçe", group.includes("Hedef bütçe"));
   check("group Talep detayları", group.includes("Talep detayları"));
-  check("group GELEN TEKLİF", card.includes("Gelen teklif"));
+  check("group seller message block", card.includes("Satıcının mesajı"));
   check("page uses coverImageUrl", page.includes("coverImageUrl"));
   check("page uses budget fields", page.includes("budgetMin") && page.includes("budgetMax"));
   check("quantity from fieldValues", page.includes('key: { in: ["quantity", "commonQuantity"] }'));
   check("request cover uses resolveRequestCardMedia", cover.includes("resolveRequestCardMedia"));
   check("no fake chair image", !cover.includes("sandalye") && !page.includes("executive-chair"));
   check("multi-offer sticky left", group.includes("lg:sticky"));
+  check("three-column compare strip", group.includes("OfferCompareRail") && group.includes("grid-cols-[minmax(0,17.5rem)_9.5rem"));
   check("request shown once", group.includes("IncomingRequestSummary"));
   check("hardcoded 45000 absent", !page.includes("45000") && !card.includes("45000"));
 }

@@ -66,9 +66,9 @@ console.log("=== P1-1 BUYER OFFER COPY ===\n");
     !compare.includes("Eksik:"),
   );
   check(
-    "buyer incoming uses scope label not missing-field list",
-    (incomingCard.includes("Teklif kapsamı") || incomingCard.includes("Teklif detayı")) &&
-      !buyerPage.includes("Eksik:") &&
+    "buyer incoming uses scope in details accordion not main card",
+    read("src/components/panel/NegotiationHistory.tsx").includes("Teklif ayrıntıları") &&
+      read("src/components/panel/NegotiationHistory.tsx").includes("Teklif kapsamı") &&
       !incomingCard.includes("Eksik:"),
   );
   check(
