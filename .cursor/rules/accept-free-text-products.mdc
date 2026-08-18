@@ -1,0 +1,12 @@
+---
+description: Accept free-text product requests even when not in taxonomy; optionally integrate later
+alwaysApply: true
+---
+
+# Free-text products outside taxonomy
+
+- Never reject or block a user’s written request because the product/service is missing from browse taxonomy or category leaves.
+- Treat free-text as valid demand: map to the closest category/subcategory when confident; otherwise keep category tentative/unknown and preserve the subject name / productType from text.
+- Do not invent fake browse nodes just to “force” a match; do not overwrite the user’s product wording with an unrelated taxonomy leaf.
+- When the same missing product appears repeatedly in real usage, prefer integrating it into the relevant taxonomy (generator + `data/taxonomy/...`) rather than leaving a permanent gap.
+- Browse hierarchies are navigation aids, not a closed allowlist of what users may request.

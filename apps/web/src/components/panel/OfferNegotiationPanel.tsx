@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle } from "lucide-react";
 
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
@@ -17,6 +17,12 @@ type OfferNegotiationPanelProps = {
   viewer: "buyer" | "provider";
   negotiations: OfferNegotiationDto[];
   canMutate: boolean;
+  hideTriggers?: boolean;
+  composerOpen?: boolean;
+  onComposerOpenChange?: (open: boolean) => void;
+  onBusyChange?: (busy: string | null) => void;
+  onProposeSuccess?: () => void;
+  bargainCopy?: boolean;
 };
 
 function formatMoneyLabel(amount: number, currency: string) {
@@ -45,12 +51,28 @@ export function OfferNegotiationPanel({
   viewer,
   negotiations,
   canMutate,
+  hideTriggers = false,
+  composerOpen,
+  onComposerOpenChange,
+  onBusyChange,
+  onProposeSuccess,
+  bargainCopy = false,
 }: OfferNegotiationPanelProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const open = composerOpen ?? uncontrolledOpen;
+
+  useEffect(() => {
+    onBusyChange?.(pending);
+  }, [pending, onBusyChange]);
+
+  function setOpen(next: boolean) {
+    onComposerOpenChange?.(next);
+    if (composerOpen === undefined) setUncontrolledOpen(next);
+  }
 
   const pendingRow = negotiations.find((row) => row.status === "PENDING");
   const acceptedRow = negotiations.find((row) => row.status === "ACCEPTED");
@@ -90,6 +112,10 @@ export function OfferNegotiationPanel({
       }
       setOpen(false);
       setAmount("");
+      if (action === "propose" && onProposeSuccess) {
+        onProposeSuccess();
+        return;
+      }
       if (result.redirectTo) {
         router.push(result.redirectTo);
         return;
@@ -105,23 +131,53 @@ export function OfferNegotiationPanel({
   function submitPropose() {
     const parsed = parseTrNumber(amount);
     if (!Number.isFinite(parsed) || parsed <= 0) {
-      setError("Geçerli bir karşı teklif tutarı girin.");
+      setError(
+        bargainCopy
+          ? "Geçerli bir fiyat girin."
+          : "Geçerli bir karşı teklif tutarı girin.",
+      );
       return;
     }
     void post("propose", parsed);
   }
 
-  return (
-    <div className="mt-3 rounded-xl border border-teal-900/8 bg-white px-3.5 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
-        {pendingRow || negotiations.length > 0 ? "Pazarlık" : "Fiyat"}
-      </p>
-      <p className="mt-1 text-sm text-[#0f1f1d]">
-        <span className="font-semibold">{formatMoneyLabel(originalAmount, currency)}</span>
-        <span className="ml-1.5 text-xs text-black/40">İlk teklif</span>
-      </p>
+  const proposeCta = bargainCopy ? "Pazarlık yap" : "Karşı teklif ver";
+  const formTitle = bargainCopy ? "Pazarlık yap" : "Karşı teklifiniz";
+  const formHelp = bargainCopy
+    ? viewer === "provider"
+      ? "Yeni fiyatınızı iletin; alıcı kabul edebilir veya farklı bir fiyat önerebilir."
+      : "Yeni fiyatınızı iletin; satıcı kabul edebilir veya yeni bir fiyat önerebilir."
+    : "Karşı teklifiniz karşı tarafa iletilir. İlk teklif tutarı değişmez.";
+  const submitLabel = bargainCopy ? "Pazarlık teklifini gönder" : "Teklif et";
+  const showHistory =
+    !hideTriggers &&
+    (Boolean(pendingRow) || Boolean(acceptedRow) || negotiations.length > 0);
+  const showShell =
+    !hideTriggers || open || Boolean(error) || showHistory;
 
-      {pendingRow ? (
+  if (!showShell) return null;
+
+  return (
+    <div
+      className={
+        hideTriggers
+          ? "mt-3"
+          : "mt-3 rounded-xl border border-teal-900/8 bg-white px-3.5 py-3"
+      }
+    >
+      {hideTriggers ? null : (
+        <>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+            {pendingRow || negotiations.length > 0 ? "Pazarlık" : "Fiyat"}
+          </p>
+          <p className="mt-1 text-sm text-[#0f1f1d]">
+            <span className="font-semibold">{formatMoneyLabel(originalAmount, currency)}</span>
+            <span className="ml-1.5 text-xs text-black/40">İlk teklif</span>
+          </p>
+        </>
+      )}
+
+      {!hideTriggers && pendingRow ? (
         <p className="mt-2 text-sm">
           <span className="font-semibold text-amber-900">
             {formatMoneyLabel(pendingRow.amount, currency)}
@@ -134,7 +190,7 @@ export function OfferNegotiationPanel({
         </p>
       ) : null}
 
-      {acceptedRow ? (
+      {!hideTriggers && acceptedRow ? (
         <p className="mt-2 text-sm">
           <span className="font-semibold text-teal-800">
             {formatMoneyLabel(commercial, currency)}
@@ -143,8 +199,8 @@ export function OfferNegotiationPanel({
         </p>
       ) : null}
 
-      {negotiations.length > 0 ? (
-        <ol className="mt-3 space-y-1 border-t border-teal-900/8 pt-3">
+      {showHistory && negotiations.length > 0 ? (
+        <ol className="mt-1 space-y-1">
           {negotiations.map((row) => (
             <li
               key={row.id}
@@ -170,7 +226,7 @@ export function OfferNegotiationPanel({
         </ol>
       ) : null}
 
-      {canRespond ? (
+      {!hideTriggers && canRespond ? (
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
@@ -192,7 +248,7 @@ export function OfferNegotiationPanel({
             onClick={() => setOpen(true)}
             className="inline-flex min-h-11 items-center justify-center rounded-xl border border-teal-800/15 bg-teal-50 px-3.5 text-xs font-semibold text-teal-950 disabled:opacity-50"
           >
-            Karşı teklif ver
+            {proposeCta}
           </button>
           <button
             type="button"
@@ -211,18 +267,18 @@ export function OfferNegotiationPanel({
         </div>
       ) : null}
 
-      {canPropose && !canRespond ? (
+      {!hideTriggers && canPropose && !canRespond ? (
         <button
           type="button"
           disabled={Boolean(pending)}
           onClick={() => setOpen(true)}
           className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl border border-teal-800/15 bg-teal-50 px-3.5 text-xs font-semibold text-teal-950 disabled:opacity-50"
         >
-          Karşı teklif ver
+          {proposeCta}
         </button>
       ) : null}
 
-      {myPending && awaiting ? (
+      {!hideTriggers && myPending && awaiting ? (
         <p className="mt-2 text-xs text-amber-900/70">
           {viewer === "provider"
             ? "Sıra alıcıda. Karşı teklifiniz yanıtlanınca pazarlık devam eder veya anlaşma oluşur."
@@ -235,18 +291,17 @@ export function OfferNegotiationPanel({
       ) : null}
 
       {open ? (
-        <div className="mt-3 rounded-xl border border-teal-900/10 bg-[#f7faf9] p-3">
-          <p className="text-sm font-medium text-[#0f1f1d]">Karşı teklifiniz</p>
+        <div className="mt-3 rounded-xl border border-teal-900/10 bg-[#f7faf9] p-3 motion-safe:animate-[txn-morph-in_280ms_cubic-bezier(0.22,1,0.36,1)_forwards]">
+          <p className="text-sm font-medium text-[#0f1f1d]">{formTitle}</p>
+          <p className="mt-1 text-[11px] leading-5 text-black/45">{formHelp}</p>
           <TrMoneyInput
             value={amount}
             onValueChange={setAmount}
             placeholder={formatTrNumber(originalAmount)}
+            aria-label={bargainCopy ? "Yeni pazarlık fiyatı" : "Karşı teklif tutarı"}
             className="mt-2 h-11 w-full rounded-xl border border-teal-900/10 bg-white px-3.5 text-sm outline-none focus:border-teal-700/25 focus:ring-2 focus:ring-teal-700/10"
           />
-          <p className="mt-1.5 text-[11px] leading-5 text-black/40">
-            Karşı teklifiniz karşı tarafa iletilir. İlk teklif tutarı değişmez.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               disabled={Boolean(pending)}
@@ -254,9 +309,12 @@ export function OfferNegotiationPanel({
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white disabled:opacity-50"
             >
               {pending === "propose" ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
+                <>
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  Gönderiliyor…
+                </>
               ) : (
-                "Teklif et"
+                submitLabel
               )}
             </button>
             <button

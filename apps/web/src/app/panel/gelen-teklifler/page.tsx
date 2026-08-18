@@ -1,43 +1,50 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  GitCompareArrows,
-  MapPin,
-  MessageCircle,
-} from "lucide-react";
+import { redirect } from "next/navigation";
+import { ArrowRight, GitCompareArrows } from "lucide-react";
 
-import { OfferActions } from "@/components/panel/OfferActions";
-import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
-import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
-import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
-import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
-import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
-import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import {
-  compareOffersByCompleteness,
-  type OfferCompleteness,
-} from "@/lib/offer/offer-completeness";
+  IncomingOfferCompareGroup,
+  type IncomingRequestSummaryData,
+} from "@/components/panel/IncomingOfferCompareGroup";
+import {
+  type IncomingOfferCardData,
+} from "@/components/panel/IncomingOfferCard";
+import {
+  IncomingOfferInboxEmpty,
+  IncomingOfferInboxFilters,
+} from "@/components/panel/IncomingOfferInboxFilters";
+import { MarkAllOfferInboxReadButton } from "@/components/panel/MarkAllOfferInboxReadButton";
+import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
+import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
+import { formatRequestQuantity } from "@/lib/offer/budget-offer-compare";
+import {
+  buildIncomingOffersPath,
+  classifyIncomingOfferInbox,
+  countIncomingOfferInbox,
+  isBuyerActionableIncomingOffer,
+  offerMatchesIncomingInboxFilter,
+  parseIncomingOfferInboxDurum,
+  resolveIncomingOfferInboxFilter,
+} from "@/lib/offer/incoming-offer-inbox";
+import { listUnreadIncomingOfferIds } from "@/lib/offer/offer-event-unread";
+import {
+  filterOffersByArchiveView,
+  parseOfferArchiveView,
+} from "@/lib/offer/offer-archive";
+import { compareOffersByCompleteness } from "@/lib/offer/offer-completeness";
 import {
   offerNegotiationListInclude,
   toOfferNegotiationDtos,
   type OfferNegotiationDto,
 } from "@/lib/offer/offer-negotiation";
 import { prisma } from "@/lib/prisma";
+import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
+import { listArchivedOfferIds } from "@/server/offer/offer-archive-service";
 import {
   loadProviderTrustSummaries,
   trustForOfferProvider,
 } from "@/server/offer/trust-summary";
-import type { TrustSummary } from "@/lib/offer/deal-review";
-
-const statusLabels: Record<string, string> = {
-  SUBMITTED: "Yeni",
-  VIEWED: "Görüldü",
-  ACCEPTED: "Kabul edildi",
-  REJECTED: "Reddedildi",
-  WITHDRAWN: "Geri çekildi",
-  EXPIRED: "Süresi doldu",
-};
 
 type OfferRow = {
   id: string;
@@ -54,6 +61,15 @@ type OfferRow = {
     title: string;
     city: string | null;
     status: string;
+    coverImageUrl: string | null;
+    budgetMin: unknown;
+    budgetMax: unknown;
+    currency: string;
+    category: { name: string; slug: string };
+    fieldValues: Array<{
+      textValue: string | null;
+      numberValue: unknown;
+    }>;
   };
   company: { id: string; name: string; isVerified: boolean } | null;
   submittedBy: { id: string; name: string | null };
@@ -66,11 +82,69 @@ type OfferRow = {
     proposedBySide: OfferNegotiationDto["proposedBySide"];
     status: OfferNegotiationDto["status"];
     createdAt: Date;
+    respondedAt?: Date | null;
   }>;
 };
 
-export default async function IncomingOffersPage() {
+function toNumber(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toCardData(offer: OfferRow): IncomingOfferCardData {
+  return {
+    id: offer.id,
+    amount: Number(offer.amount),
+    currency: offer.currency,
+    deliveryDays: offer.deliveryDays,
+    title: offer.title,
+    description: offer.description,
+    status: offer.status,
+    companyName: offer.company?.name ?? null,
+    companyVerified: Boolean(offer.company?.isVerified),
+    submittedByName: offer.submittedBy.name,
+    conversationId: offer.conversation?.id ?? null,
+    mediaIds: offer.media.map((item) => item.id),
+    negotiations: toOfferNegotiationDtos(offer.negotiations),
+    createdAt: offer.createdAt.toISOString(),
+  };
+}
+
+function toRequestSummary(request: OfferRow["request"]): IncomingRequestSummaryData {
+  const quantity = request.fieldValues[0];
+  const budgetMin = toNumber(request.budgetMin);
+  const budgetMax = toNumber(request.budgetMax);
+  return {
+    id: request.id,
+    title: request.title,
+    city: request.city,
+    status: request.status,
+    coverImageUrl: request.coverImageUrl,
+    categorySlug: request.category.slug,
+    categoryName: request.category.name,
+    quantityLabel: formatRequestQuantity({
+      textValue: quantity?.textValue ?? null,
+      numberValue: toNumber(quantity?.numberValue),
+    }),
+    budgetMin,
+    budgetMax,
+    currency: request.currency,
+    budgetLabel: formatListingBudget(budgetMin, budgetMax, request.currency),
+  };
+}
+
+export default async function IncomingOffersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ teklif?: string; tur?: string; durum?: string; gorunum?: string }>;
+}) {
   const user = await requireUser();
+  const { teklif, tur, durum, gorunum } = await searchParams;
+  const archiveView = parseOfferArchiveView(gorunum) === "archive";
+  const highlightOfferId = teklif?.trim() || null;
+  const highlightNegotiationId = tur?.trim() || null;
+  const parsedDurum = parseIncomingOfferInboxDurum(durum);
 
   const offers = (await prisma.offer.findMany({
     where: {
@@ -78,6 +152,8 @@ export default async function IncomingOffersPage() {
         createdById: user.id,
         deletedAt: null,
       },
+      status: { not: "DRAFT" },
+      NOT: { submittedById: user.id, companyId: null },
     },
     orderBy: { createdAt: "desc" },
     include: {
@@ -87,6 +163,16 @@ export default async function IncomingOffersPage() {
           title: true,
           city: true,
           status: true,
+          coverImageUrl: true,
+          budgetMin: true,
+          budgetMax: true,
+          currency: true,
+          category: { select: { name: true, slug: true } },
+          fieldValues: {
+            where: { field: { key: { in: ["quantity", "commonQuantity"] } } },
+            take: 1,
+            select: { textValue: true, numberValue: true },
+          },
         },
       },
       company: { select: { id: true, name: true, isVerified: true } },
@@ -99,6 +185,73 @@ export default async function IncomingOffersPage() {
       negotiations: offerNegotiationListInclude,
     },
   })) as OfferRow[];
+
+  const archivedOfferIds = await listArchivedOfferIds({
+    userId: user.id,
+    companyId: null,
+  });
+
+  const highlightOffer = highlightOfferId
+    ? (offers.find((row) => row.id === highlightOfferId) ?? null)
+    : null;
+
+  if (
+    highlightOffer &&
+    archivedOfferIds.has(highlightOffer.id) &&
+    !archiveView
+  ) {
+    redirect(
+      buildIncomingOffersPath({
+        filter: parsedDurum.filter,
+        teklif: highlightOfferId,
+        tur: highlightNegotiationId,
+        archiveView: true,
+      }),
+    );
+  }
+
+  const visibleOffers = filterOffersByArchiveView(
+    offers,
+    archivedOfferIds,
+    archiveView ? "archive" : "active",
+  );
+
+  const highlightOfferResolved = highlightOfferId
+    ? (visibleOffers.find((row) => row.id === highlightOfferId) ?? null)
+    : null;
+  const resolvedFilter = resolveIncomingOfferInboxFilter({
+    requested: parsedDurum.filter,
+    explicit: parsedDurum.explicit,
+    highlightBucket: highlightOfferResolved
+      ? classifyIncomingOfferInbox(highlightOfferResolved)
+      : null,
+  });
+  if (resolvedFilter.redirect) {
+    redirect(
+      buildIncomingOffersPath({
+        filter: resolvedFilter.filter,
+        teklif: highlightOfferId,
+        tur: highlightNegotiationId,
+        archiveView,
+      }),
+    );
+  }
+
+  const unreadOfferIds = await listUnreadIncomingOfferIds(user.id);
+  const activeFilter = resolvedFilter.filter;
+  const inboxCounts = countIncomingOfferInbox(
+    filterOffersByArchiveView(offers, archivedOfferIds, "active"),
+    unreadOfferIds,
+  );
+  const actionRequiredCount = visibleOffers.filter(isBuyerActionableIncomingOffer)
+    .length;
+  const listed = visibleOffers.filter((offer) =>
+    offerMatchesIncomingInboxFilter(
+      classifyIncomingOfferInbox(offer),
+      activeFilter,
+      { offerId: offer.id, unreadOfferIds },
+    ),
+  );
 
   const trustSummaries = await loadProviderTrustSummaries({
     personalUserIds: offers
@@ -118,7 +271,7 @@ export default async function IncomingOffersPage() {
     }
   >();
 
-  for (const offer of offers) {
+  for (const offer of listed) {
     const key = offer.request.id;
     const bucket = byRequest.get(key) ?? {
       request: offer.request,
@@ -148,33 +301,19 @@ export default async function IncomingOffersPage() {
     return bLatest - aLatest;
   });
 
-  const pendingTotal = offers.filter((o) =>
-    ["SUBMITTED", "VIEWED"].includes(o.status),
-  ).length;
-
   return (
     <>
       <section className="py-4 sm:py-6">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-950/35">
-          Alıcı
+          ALICI
         </p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-[-0.04em] text-[#0f1f1d] sm:text-4xl">
-              Gelen teklifler
-            </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-black/45">
-              Teklifler taleplerinize göre gruplanır. Birden fazla teklifte
-              doluluğa göre karşılaştırın; kabul, red veya karşı teklif verin.
-            </p>
-          </div>
-          {pendingTotal > 0 && (
-            <span className="rounded-xl border border-teal-800/15 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-950">
-              {pendingTotal} bekleyen · {groups.filter((g) => g.pending.length).length}{" "}
-              talep
-            </span>
-          )}
-        </div>
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0f1f1d] sm:text-4xl">
+          Taleplerime gelen teklifler
+        </h1>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-black/45">
+          Taleplerinize gelen teklifleri karşılaştırın, pazarlık yapın ve
+          sonuçları takip edin.
+        </p>
       </section>
 
       {offers.length === 0 ? (
@@ -196,311 +335,101 @@ export default async function IncomingOffersPage() {
           </Link>
         </section>
       ) : (
-        <div className="space-y-6">
-          {groups.map((group) => {
-            const total = group.pending.length + group.others.length;
-            const rankedPending = compareOffersByCompleteness(
-              group.pending.map((offer) => ({
-                ...offer,
-                companyVerified: Boolean(offer.company?.isVerified),
-              })),
-            );
+        <>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <IncomingOfferInboxFilters
+              active={activeFilter}
+              counts={{
+                all: inboxCounts.all,
+                unread: inboxCounts.unread,
+                new: inboxCounts.new,
+                negotiating: inboxCounts.negotiating,
+                accepted: inboxCounts.accepted,
+                rejected: inboxCounts.rejected,
+              }}
+              teklif={highlightOfferId}
+              tur={highlightNegotiationId}
+              archiveView={archiveView}
+              archiveCount={archivedOfferIds.size}
+            />
+            <MarkAllOfferInboxReadButton
+              unreadCount={unreadOfferIds.size}
+              role="buyer"
+            />
+          </div>
+          {actionRequiredCount > 0 ? (
+            <p className="mb-4 text-sm text-black/45">
+              {actionRequiredCount} teklifte yanıtınız bekleniyor
+              {unreadOfferIds.size > 0
+                ? ` · ${unreadOfferIds.size} okunmamış teklif`
+                : ""}
+            </p>
+          ) : unreadOfferIds.size > 0 ? (
+            <p className="mb-4 text-sm text-black/45">
+              {unreadOfferIds.size} okunmamış teklif
+            </p>
+          ) : null}
+          {listed.length === 0 ? (
+            <IncomingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
+          ) : (
+            <div className="space-y-6">
+              {groups.map((group) => {
+                const rankedPending = compareOffersByCompleteness(
+                  group.pending.map((offer) => ({
+                    ...offer,
+                    companyVerified: Boolean(offer.company?.isVerified),
+                  })),
+                );
 
-            return (
-              <section
-                key={group.request.id}
-                className="overflow-hidden rounded-[1.75rem] border border-teal-900/10 bg-white shadow-[0_14px_40px_rgba(15,31,29,0.04)]"
-              >
-                {/* Prominent request header */}
-                <div className="border-b border-teal-900/[0.06] bg-gradient-to-br from-[#0f766e]/[0.07] via-white to-[#f4f7f6] px-5 py-5 sm:px-6">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-900/45">
-                        Talebiniz
-                      </p>
-                      <Link
-                        href={`/panel/taleplerim/${group.request.id}`}
-                        className="mt-1.5 inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-[#0f1f1d] transition hover:text-[#0f766e] sm:text-2xl"
-                      >
-                        <span className="line-clamp-2">{group.request.title}</span>
-                        <ArrowRight className="h-4 w-4 shrink-0 opacity-40" />
-                      </Link>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-black/45">
-                        {group.request.city ? (
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {group.request.city}
-                          </span>
-                        ) : null}
-                        <span className="rounded-md bg-white/80 px-2 py-0.5 font-medium text-teal-950/60 ring-1 ring-teal-900/8">
-                          {total} teklif
-                        </span>
-                        {group.pending.length > 0 ? (
-                          <span className="rounded-md bg-amber-50 px-2 py-0.5 font-semibold text-amber-900/80 ring-1 ring-amber-200/80">
-                            {group.pending.length} yanıt bekliyor
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4 p-4 sm:p-5">
-                  {group.pending.length >= 2 ? (
-                    <OfferCompareToggle
-                      offers={rankedPending.map((offer) => ({
-                        id: offer.id,
-                        firmName:
-                          offer.company?.name ||
-                          offer.submittedBy.name ||
-                          "Firma",
-                        amount: Number(offer.amount),
-                        deliveryDays: offer.deliveryDays,
-                        completeness: offer.completeness,
-                        verified: Boolean(offer.company?.isVerified),
-                      }))}
-                    />
-                  ) : null}
-
-                  {group.pending.length > 0 ? (
-                    <div className="space-y-3">
-                      {group.pending.length >= 2 ? (
-                        <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
-                          <GitCompareArrows className="h-3.5 w-3.5" />
-                          Doluluğa göre sıralı
-                        </p>
-                      ) : (
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
-                          Yanıt bekleyen
-                        </p>
-                      )}
-                      <div className="grid gap-3">
-                        {rankedPending.map((offer, index) => (
-                          <IncomingOfferCard
-                            key={offer.id}
-                            offer={offer}
-                            actionable
-                            completeness={offer.completeness}
-                            trust={trustForOfferProvider(trustSummaries, offer)}
-                            rank={
-                              group.pending.length >= 2 ? index + 1 : undefined
-                            }
+                return (
+                  <IncomingOfferCompareGroup
+                    key={group.request.id}
+                    request={toRequestSummary(group.request)}
+                    highlightOfferId={highlightOfferId}
+                    highlightNegotiationId={highlightNegotiationId}
+                    unreadOfferIds={unreadOfferIds}
+                    archivedOfferIds={archivedOfferIds}
+                    archiveView={archiveView}
+                    compareSlot={
+                      group.pending.length >= 2 ? (
+                        <div className="space-y-2 bg-white px-4 py-3">
+                          <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+                            <GitCompareArrows className="h-3.5 w-3.5" />
+                            Doluluğa göre sıralı
+                          </p>
+                          <OfferCompareToggle
+                            offers={rankedPending.map((offer) => ({
+                              id: offer.id,
+                              firmName:
+                                offer.company?.name ||
+                                offer.submittedBy.name ||
+                                "Firma",
+                              amount: Number(offer.amount),
+                              deliveryDays: offer.deliveryDays,
+                              completeness: offer.completeness,
+                              verified: Boolean(offer.company?.isVerified),
+                            }))}
                           />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {group.others.length > 0 ? (
-                    <div className="space-y-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-black/35">
-                        Diğer
-                      </p>
-                      <div className="grid gap-3">
-                        {group.others.map((offer) => (
-                          <IncomingOfferCard
-                            key={offer.id}
-                            offer={offer}
-                            trust={trustForOfferProvider(trustSummaries, offer)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                        </div>
+                      ) : null
+                    }
+                    pending={rankedPending.map((offer, index) => ({
+                      offer: toCardData(offer),
+                      completeness: offer.completeness,
+                      trust: trustForOfferProvider(trustSummaries, offer),
+                      rank: group.pending.length >= 2 ? index + 1 : undefined,
+                    }))}
+                    others={group.others.map((offer) => ({
+                      offer: toCardData(offer),
+                      trust: trustForOfferProvider(trustSummaries, offer),
+                    }))}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </>
-  );
-}
-
-function CompletenessBar({ completeness }: { completeness: OfferCompleteness }) {
-  const tone =
-    completeness.score >= 85
-      ? "bg-emerald-500"
-      : completeness.score >= 65
-        ? "bg-teal-500"
-        : completeness.score >= 40
-          ? "bg-amber-500"
-          : "bg-rose-400";
-
-  return (
-    <div className="min-w-[120px]">
-      <div className="flex items-center justify-between gap-2 text-[11px]">
-        <span className="font-semibold text-teal-950/55">Teklif detayı</span>
-        <span className="tabular-nums text-black/40">{completeness.score}%</span>
-      </div>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-teal-900/8">
-        <div
-          className={`h-full rounded-full ${tone}`}
-          style={{ width: `${completeness.score}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function IncomingOfferCard({
-  offer,
-  actionable = false,
-  completeness,
-  rank,
-  trust,
-}: {
-  offer: OfferRow;
-  actionable?: boolean;
-  completeness?: OfferCompleteness;
-  rank?: number;
-  trust?: TrustSummary;
-}) {
-  const firmName = offer.company?.name || offer.submittedBy.name || "Firma";
-  const amount = Number(offer.amount);
-  const pendingNegotiation = offer.negotiations.find(
-    (row) => row.status === "PENDING",
-  );
-  const acceptedNegotiation = offer.negotiations.find(
-    (row) => row.status === "ACCEPTED",
-  );
-  const commercialAmount = resolveOfferCommercialAmount({
-    offerAmount: amount,
-    acceptedNegotiationAmount: acceptedNegotiation
-      ? Number(acceptedNegotiation.amount)
-      : null,
-  });
-  const originalLabel = Number.isFinite(amount)
-    ? `₺${amount.toLocaleString("tr-TR")}`
-    : undefined;
-  const computed =
-    completeness ??
-    compareOffersByCompleteness([
-      { ...offer, companyVerified: Boolean(offer.company?.isVerified) },
-    ])[0]?.completeness;
-
-  return (
-    <article className="rounded-2xl border border-teal-900/[0.07] bg-[#fbfcfc] p-4 sm:p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            {rank != null ? (
-              <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-[#0f1f1d] px-1.5 text-[11px] font-bold text-white">
-                #{rank}
-              </span>
-            ) : null}
-            <span
-              className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${
-                actionable
-                  ? "bg-teal-50 text-teal-900"
-                  : "bg-[#f3f4f6] text-[#4b5563]"
-              }`}
-            >
-              {statusLabels[offer.status] ?? offer.status}
-            </span>
-            {offer.company?.isVerified && (
-              <span className="text-[11px] font-medium text-emerald-700">
-                Doğrulanmış firma
-              </span>
-            )}
-            {trust ? <TrustSummaryBadge summary={trust} /> : null}
-          </div>
-          <h3 className="mt-2 text-lg font-semibold tracking-tight text-[#0f1f1d]">
-            {firmName}
-          </h3>
-          {offer.title ? (
-            <p className="mt-0.5 text-sm text-black/45">{offer.title}</p>
-          ) : null}
-        </div>
-
-        <div className="text-right">
-          {offer.status === "ACCEPTED" && commercialAmount !== amount ? (
-            <>
-              <p className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
-                ₺{commercialAmount.toLocaleString("tr-TR")}
-              </p>
-              <p className="mt-0.5 text-[11px] text-teal-800/70">Anlaşılan</p>
-              <p className="mt-1 text-[11px] text-black/40">
-                İlk teklif ₺{amount.toLocaleString("tr-TR")}
-              </p>
-            </>
-          ) : pendingNegotiation ? (
-            <>
-              <p className="text-2xl font-semibold tracking-tight text-amber-950">
-                ₺{Number(pendingNegotiation.amount).toLocaleString("tr-TR")}
-              </p>
-              <p className="mt-0.5 text-[11px] text-amber-900/70">
-                Bekleyen karşı teklif
-              </p>
-              <p className="mt-1 text-[11px] text-black/40">
-                İlk teklif ₺{amount.toLocaleString("tr-TR")}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
-                {Number.isFinite(amount)
-                  ? `₺${amount.toLocaleString("tr-TR")}`
-                  : "—"}
-              </p>
-              <p className="mt-0.5 text-[11px] text-black/40">İlk teklif</p>
-            </>
-          )}
-          {offer.deliveryDays != null && (
-            <p className="mt-1 text-xs text-black/45">
-              {offer.deliveryDays} gün teslim
-            </p>
-          )}
-        </div>
-      </div>
-
-      {computed ? (
-        <div className="mt-4 rounded-xl border border-teal-900/[0.06] bg-white px-3.5 py-3">
-          <CompletenessBar completeness={computed} />
-        </div>
-      ) : null}
-
-      {offer.description ? (
-        <p className="mt-3 line-clamp-3 rounded-xl bg-white px-4 py-3 text-sm leading-6 text-black/65 ring-1 ring-teal-900/[0.05]">
-          {offer.description}
-        </p>
-      ) : null}
-
-      <OfferMediaThumbStrip
-        offerId={offer.id}
-        mediaIds={offer.media.map((item) => item.id)}
-        compact
-      />
-
-      {actionable || offer.negotiations.length > 0 ? (
-        <OfferNegotiationPanel
-          offerId={offer.id}
-          originalAmount={amount}
-          currency={offer.currency}
-          offerStatus={offer.status}
-          viewer="buyer"
-          negotiations={toOfferNegotiationDtos(offer.negotiations)}
-          canMutate={actionable}
-        />
-      ) : null}
-
-      {actionable && (
-        <OfferActions
-          offerId={offer.id}
-          hasPendingNegotiation={Boolean(pendingNegotiation)}
-          originalAmountLabel={originalLabel}
-        />
-      )}
-
-      {offer.status === "ACCEPTED" && offer.conversation && (
-        <Link
-          href={`/panel/mesajlar/${offer.conversation.id}`}
-          className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0f1f1d] px-4 text-xs font-semibold text-white"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          Mesajlara git
-        </Link>
-      )}
-    </article>
   );
 }

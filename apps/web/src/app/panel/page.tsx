@@ -216,7 +216,7 @@ export default async function PanelPage() {
             href="/panel/taleplerim"
           />
           <MetricCell
-            label="Yeni teklifler"
+            label="Yanıt bekleyen"
             value={String(summary.newOffers)}
             accent="text-white"
             href="/panel/gelen-teklifler"

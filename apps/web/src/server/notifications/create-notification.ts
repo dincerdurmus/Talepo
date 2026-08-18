@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { unarchiveOfferOnNewEvent } from "@/server/offer/offer-archive-service";
 
 type CreateNotificationInput = {
   userId: string;
@@ -41,4 +42,31 @@ export async function createNotification(input: CreateNotificationInput) {
       companyId: input.companyId,
     },
   });
+}
+
+/** One row per recipient + type + offer + exact actionUrl (includes negotiation round). */
+export async function createNotificationIfAbsent(
+  input: CreateNotificationInput,
+) {
+  if (input.offerId && input.actionUrl) {
+    const existing = await prisma.notification.findFirst({
+      where: {
+        userId: input.userId,
+        type: input.type,
+        offerId: input.offerId,
+        actionUrl: input.actionUrl,
+      },
+      select: { id: true },
+    });
+    if (existing) return existing;
+  }
+  const created = await createNotification(input);
+  if (input.offerId) {
+    await unarchiveOfferOnNewEvent({
+      userId: input.userId,
+      offerId: input.offerId,
+      companyId: input.companyId ?? null,
+    });
+  }
+  return created;
 }

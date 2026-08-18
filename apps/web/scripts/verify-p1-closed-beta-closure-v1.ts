@@ -54,20 +54,22 @@ ensureTaxonomyLoaded();
 console.log("=== P1-1 BUYER OFFER COPY ===\n");
 {
   const buyerPage = read("src/app/panel/gelen-teklifler/page.tsx");
+  const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
   const compare = read("src/components/panel/OfferCompareToggle.tsx");
   const sellerForm = read("src/components/panel/OfferForm.tsx");
   check(
     "buyer incoming cards do not print Eksik:",
-    !buyerPage.includes("Eksik:"),
+    !buyerPage.includes("Eksik:") && !incomingCard.includes("Eksik:"),
   );
   check(
     "buyer compare table does not print Eksik:",
     !compare.includes("Eksik:"),
   );
   check(
-    "buyer incoming uses Teklif detayı not missing-field list",
-    buyerPage.includes("Teklif detayı") &&
-      !buyerPage.includes("completeness.missing"),
+    "buyer incoming uses scope in details accordion not main card",
+    read("src/components/panel/NegotiationHistory.tsx").includes("Teklif ayrıntıları") &&
+      read("src/components/panel/NegotiationHistory.tsx").includes("Teklif kapsamı") &&
+      !incomingCard.includes("Eksik:"),
   );
   check(
     "seller OfferForm still has completeness guidance",

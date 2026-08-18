@@ -134,6 +134,8 @@ const form = read("src/components/panel/OfferForm.tsx");
 const existingStatus = read("src/components/panel/OfferExistingStatus.tsx");
 const teklifPage = read("src/app/panel/talepler/[id]/teklif/page.tsx");
 const tekliflerPage = read("src/app/panel/teklifler/page.tsx");
+const outgoingCompareGroup = read("src/components/panel/OutgoingOfferCompareGroup.tsx");
+const outgoingOfferCard = read("src/components/panel/OutgoingOfferCard.tsx");
 const requestDetail = read("src/app/panel/talepler/[id]/page.tsx");
 const intelligenceUi = read("src/components/panel/OfferIntelligenceCard.tsx");
 const intelligenceService = read("src/server/monetization/offer-intelligence.ts");
@@ -260,7 +262,28 @@ console.log("\n=== OFFER FORM UX ===\n");
     "teklif page heading is note update",
     teklifPage.includes("Teklif notunu güncelle"),
   );
-  check("teklifler list CTA is note update", tekliflerPage.includes("Notu güncelle"));
+  // The Tekliflerim list composes the CTA through OutgoingOfferCard, so assert the
+  // composition and route contract instead of a string in the page file.
+  check(
+    "teklifler list composes outgoing offer card",
+    tekliflerPage.includes("OutgoingOfferCompareGroup") &&
+      /canMutate=\{canRevise\}/.test(tekliflerPage) &&
+      outgoingCompareGroup.includes("<OutgoingOfferCard") &&
+      /canMutate=\{canMutate\}/.test(outgoingCompareGroup),
+  );
+  check(
+    "teklifler revise gate is SUBMITTED|VIEWED",
+    /const canRevise = \["SUBMITTED", "VIEWED"\]\.includes\(offer\.status\)/.test(
+      tekliflerPage,
+    ),
+  );
+  check(
+    "outgoing card note CTA routes to revise page behind canMutate",
+    outgoingOfferCard.includes("Notu güncelle") &&
+      /canMutate \? \(\s*<Link[\s\S]{0,120}href=\{`\/panel\/talepler\/\$\{offer\.requestId\}\/teklif`\}/.test(
+        outgoingOfferCard,
+      ),
+  );
   const reviseFieldsStart = form.indexOf("{isRevise ? (");
   const createFieldsStart = form.indexOf(") : (", reviseFieldsStart);
   const reviseFields = form.slice(reviseFieldsStart, createFieldsStart);

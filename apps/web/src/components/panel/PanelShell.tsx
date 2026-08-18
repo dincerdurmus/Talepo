@@ -38,7 +38,13 @@ import {
   PANEL_NAV_ITEMS,
   PANEL_NOTIFICATIONS_HREF,
 } from "@/components/panel/panel-nav";
-import type { FeatureKey } from "@/lib/membership/entitlements";
+import {
+  formatPanelCountBadge,
+} from "@/lib/offer/outgoing-offer-inbox";
+import {
+  OFFER_INBOX_BADGE_EVENT,
+  type OfferInboxBadgeEventDetail,
+} from "@/lib/offer/offer-inbox-badge-events";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
@@ -66,12 +72,58 @@ type PanelShellProps = {
   user: PanelUser;
   unreadNotifications: number;
   unreadMessages: number;
+  unreadIncomingOfferEvents?: number;
+  unreadOutgoingOfferEvents?: number;
   dbUnavailable?: boolean;
   features?: Partial<Record<FeatureKey, boolean>>;
   workspace?: PanelWorkspace;
   companies?: PanelCompanyOption[];
   children: React.ReactNode;
 };
+
+function formatNavCountBadge(count: number): string | undefined {
+  return formatPanelCountBadge(count);
+}
+
+function incomingOffersBadgeAria(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  const display = count > 99 ? "99+" : String(count);
+  return `okunmamış ${display} gelen teklif`;
+}
+
+function outgoingOffersBadgeAria(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  const display = count > 99 ? "99+" : String(count);
+  return `okunmamış ${display} teklif`;
+}
+
+function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
+  return badgeAriaLabel ? `${label}, ${badgeAriaLabel}` : label;
+}
+
+function sidebarNavBadge(
+  href: string,
+  unreadMessages: number,
+  unreadIncomingOfferEvents: number,
+  unreadOutgoingOfferEvents: number,
+): { badge?: string; badgeAriaLabel?: string } {
+  if (href === "/panel/mesajlar" && unreadMessages > 0) {
+    return { badge: String(unreadMessages) };
+  }
+  if (href === "/panel/gelen-teklifler") {
+    return {
+      badge: formatNavCountBadge(unreadIncomingOfferEvents),
+      badgeAriaLabel: incomingOffersBadgeAria(unreadIncomingOfferEvents),
+    };
+  }
+  if (href === "/panel/teklifler") {
+    return {
+      badge: formatNavCountBadge(unreadOutgoingOfferEvents),
+      badgeAriaLabel: outgoingOffersBadgeAria(unreadOutgoingOfferEvents),
+    };
+  }
+  return {};
+}
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
   const source = name?.trim() || email?.trim() || "K";
@@ -121,6 +173,8 @@ export function PanelShell({
   user,
   unreadNotifications,
   unreadMessages,
+  unreadIncomingOfferEvents = 0,
+  unreadOutgoingOfferEvents = 0,
   dbUnavailable = false,
   features,
   workspace,
@@ -143,7 +197,52 @@ export function PanelShell({
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
   const [collapsed, setCollapsed] = useState(false);
+  // Server counts stay authoritative: an optimistic override is keyed by the
+  // server snapshot it was applied to, so a refreshed layout discards it.
+  const serverBadgeKey = `${unreadIncomingOfferEvents}:${unreadOutgoingOfferEvents}`;
+  const [badgeOverride, setBadgeOverride] = useState<{
+    key: string;
+    incoming: number;
+    outgoing: number;
+  } | null>(null);
+  const activeOverride =
+    badgeOverride && badgeOverride.key === serverBadgeKey ? badgeOverride : null;
+  const liveIncomingUnread = activeOverride
+    ? activeOverride.incoming
+    : unreadIncomingOfferEvents;
+  const liveOutgoingUnread = activeOverride
+    ? activeOverride.outgoing
+    : unreadOutgoingOfferEvents;
   const skipPersistRef = useRef(true);
+
+  useEffect(() => {
+    const onBadgeUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<OfferInboxBadgeEventDetail>).detail;
+      if (!detail) return;
+      setBadgeOverride((current) => {
+        const base =
+          current && current.key === serverBadgeKey
+            ? current
+            : {
+                key: serverBadgeKey,
+                incoming: unreadIncomingOfferEvents,
+                outgoing: unreadOutgoingOfferEvents,
+              };
+        if (detail.role === "buyer") {
+          return {
+            ...base,
+            incoming: detail.mode === "clear" ? 0 : Math.max(0, base.incoming - 1),
+          };
+        }
+        return {
+          ...base,
+          outgoing: detail.mode === "clear" ? 0 : Math.max(0, base.outgoing - 1),
+        };
+      });
+    };
+    window.addEventListener(OFFER_INBOX_BADGE_EVENT, onBadgeUpdate);
+    return () => window.removeEventListener(OFFER_INBOX_BADGE_EVENT, onBadgeUpdate);
+  }, [serverBadgeKey, unreadIncomingOfferEvents, unreadOutgoingOfferEvents]);
 
   useEffect(() => {
     try {
@@ -179,6 +278,7 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
+            unreadOutgoingOfferEvents={liveOutgoingUnread}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
             planTier={planTier}
@@ -193,6 +293,8 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
+            unreadIncomingOfferEvents={liveIncomingUnread}
+            unreadOutgoingOfferEvents={liveOutgoingUnread}
             planTier={planTier}
             features={features}
             collapsed={collapsed}
@@ -342,6 +444,10 @@ export function PanelShell({
               icon={FileText}
               label="Tekliflerim"
               active={isNavActive(pathname, "/panel/teklifler")}
+              badge={formatNavCountBadge(liveOutgoingUnread)}
+              badgeAriaLabel={outgoingOffersBadgeAria(
+                liveOutgoingUnread,
+              )}
             />
           ) : (
             <MobileLink
@@ -416,6 +522,8 @@ function PersonalSidebar({
   pathname,
   navItems,
   unreadMessages,
+  unreadIncomingOfferEvents,
+  unreadOutgoingOfferEvents,
   planTier,
   collapsed,
   onToggle,
@@ -423,6 +531,8 @@ function PersonalSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
+  unreadIncomingOfferEvents: number;
+  unreadOutgoingOfferEvents: number;
   planTier: PlanTierId;
   features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
@@ -542,7 +652,14 @@ function PersonalSidebar({
               </p>
             )}
             <div className="space-y-0.5">
-              {group.items.map((item) => (
+              {group.items.map((item) => {
+                const navBadge = sidebarNavBadge(
+                  item.href,
+                  unreadMessages,
+                  unreadIncomingOfferEvents,
+                  unreadOutgoingOfferEvents,
+                );
+                return (
                 <SidebarLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -550,13 +667,10 @@ function PersonalSidebar({
                   label={item.label}
                   active={isNavActive(pathname, item.href, item.exact)}
                   collapsed={collapsed}
-                  badge={
-                    item.href === "/panel/mesajlar" && unreadMessages > 0
-                      ? String(unreadMessages)
-                      : undefined
-                  }
+                  badge={navBadge.badge}
+                  badgeAriaLabel={navBadge.badgeAriaLabel}
                 />
-              ))}
+              );})}
             </div>
           </div>
         ))}
@@ -599,7 +713,14 @@ function PersonalSidebar({
               </p>
             )}
             <div className="space-y-0.5">
-              {group.items.map((item) => (
+              {group.items.map((item) => {
+                const navBadge = sidebarNavBadge(
+                  item.href,
+                  unreadMessages,
+                  unreadIncomingOfferEvents,
+                  unreadOutgoingOfferEvents,
+                );
+                return (
                 <SidebarLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -607,13 +728,10 @@ function PersonalSidebar({
                   label={item.label}
                   active={isNavActive(pathname, item.href, item.exact)}
                   collapsed={collapsed}
-                  badge={
-                    item.href === "/panel/mesajlar" && unreadMessages > 0
-                      ? String(unreadMessages)
-                      : undefined
-                  }
+                  badge={navBadge.badge}
+                  badgeAriaLabel={navBadge.badgeAriaLabel}
                 />
-              ))}
+              );})}
             </div>
           </div>
         ))}
@@ -627,6 +745,7 @@ function CorporateSidebar({
   pathname,
   navItems,
   unreadMessages,
+  unreadOutgoingOfferEvents,
   companyName,
   companyLogoUrl,
   planTier,
@@ -639,6 +758,7 @@ function CorporateSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
+  unreadOutgoingOfferEvents: number;
   companyName: string;
   companyLogoUrl?: string | null;
   planTier: PlanTierId;
@@ -759,14 +879,23 @@ function CorporateSidebar({
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isNavActive(pathname, item.href, item.exact);
-          const hasBadge =
-            item.href === "/panel/mesajlar" && unreadMessages > 0;
+          const navBadge = sidebarNavBadge(
+            item.href,
+            unreadMessages,
+            0,
+            unreadOutgoingOfferEvents,
+          );
+          const hasBadge = Boolean(navBadge.badge);
+          const linkLabel = sidebarLinkAriaLabel(
+            item.label,
+            navBadge.badgeAriaLabel,
+          );
           return (
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
-              title={item.label}
-              aria-label={item.label}
+              title={linkLabel}
+              aria-label={linkLabel}
               aria-current={active ? "page" : undefined}
               className={`relative flex items-center rounded-xl text-sm transition ${
                 collapsed
@@ -789,13 +918,14 @@ function CorporateSidebar({
               )}
               {hasBadge && !collapsed && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
                     active
                       ? "bg-white/20 text-white"
                       : "bg-white/10 text-white/80"
                   }`}
+                  aria-hidden="true"
                 >
-                  {unreadMessages}
+                  {navBadge.badge}
                 </span>
               )}
               {hasBadge && collapsed && (
@@ -1025,6 +1155,7 @@ function SidebarLink({
   label,
   active = false,
   badge,
+  badgeAriaLabel,
   collapsed = false,
   tone = "default",
 }: {
@@ -1033,16 +1164,18 @@ function SidebarLink({
   label: string;
   active?: boolean;
   badge?: string;
+  badgeAriaLabel?: string;
   collapsed?: boolean;
   tone?: "default" | "tools";
 }) {
   const isTools = tone === "tools";
+  const linkLabel = sidebarLinkAriaLabel(label, badgeAriaLabel);
 
   return (
     <Link
       href={href}
-      title={label}
-      aria-label={label}
+      title={linkLabel}
+      aria-label={linkLabel}
       aria-current={active ? "page" : undefined}
       className={`group relative flex h-10 items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
         isTools
@@ -1083,9 +1216,10 @@ function SidebarLink({
           <span className="min-w-0 flex-1 truncate">{label}</span>
           {badge && (
             <span
-              className={`flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold ${
-                active ? "bg-white/15 text-white" : "talepo-plan-cta"
+              className={`flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold tabular-nums talepo-plan-cta ${
+                active ? "ring-1 ring-teal-900/10" : ""
               }`}
+              aria-hidden="true"
             >
               {badge}
             </span>
@@ -1127,30 +1261,43 @@ function MobileLink({
   label,
   active = false,
   badge,
+  badgeAriaLabel,
 }: {
   href: string;
   icon: LucideIcon;
   label: string;
   active?: boolean;
-  badge?: number;
+  badge?: number | string;
+  badgeAriaLabel?: string;
 }) {
+  const visibleBadge =
+    badge !== undefined && badge !== 0 && badge !== "0";
+  const displayBadge =
+    typeof badge === "number" ? formatNavCountBadge(badge) : badge;
+  const linkLabel = sidebarLinkAriaLabel(label, badgeAriaLabel);
+
   return (
     <Link
       href={href}
-      aria-label={label}
+      aria-label={linkLabel}
       aria-current={active ? "page" : undefined}
       className={`relative flex min-h-11 min-w-14 max-w-[4.75rem] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium leading-tight sm:text-[11px] ${
         active ? "" : "text-teal-950/35"
       }`}
       style={active ? { color: "var(--plan-primary)" } : undefined}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <span className="relative">
+        <Icon className="h-5 w-5 shrink-0" />
+        {visibleBadge && displayBadge && (
+          <span
+            className="talepo-plan-cta absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums shadow-none"
+            aria-hidden="true"
+          >
+            {displayBadge}
+          </span>
+        )}
+      </span>
       <span className="max-w-full truncate">{label}</span>
-      {badge !== undefined && badge > 0 && (
-        <span className="talepo-plan-cta absolute right-1 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] shadow-none">
-          {badge}
-        </span>
-      )}
     </Link>
   );
 }

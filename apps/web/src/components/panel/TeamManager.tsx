@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { ExtraSeatOfferCard } from "@/components/panel/CompanyAddonOfferCard";
 import {
   formatMemberRole,
   formatMemberStatus,
@@ -201,11 +202,13 @@ export function TeamManager({
             {seatAtLimit
               ? extraSeatPurchaseReady
                 ? " Limit doldu; ek koltuk satın alın."
-                : " Ek koltuk gerekli. Extra seat satın alma henüz açık değil."
+                : " Limit doldu."
               : ""}
           </p>
         </div>
       )}
+
+      {includedSeats != null ? <ExtraSeatOfferCard /> : null}
 
       {canInvite && !seatAtLimit && (
         <form
@@ -253,16 +256,6 @@ export function TeamManager({
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           {message && <p className="mt-3 text-sm text-teal-800">{message}</p>}
         </form>
-      )}
-
-      {canInvite && seatAtLimit && (
-        <div className="rounded-[24px] border border-amber-800/20 bg-[#fff8ef] p-5">
-          <p className="text-sm font-semibold text-amber-950">Ek koltuk gerekli</p>
-          <p className="mt-2 text-sm leading-6 text-amber-950/70">
-            Aktif üye limiti doldu. Extra seat satın alma henüz self-serve açık
-            değil; fiyat uydurulmaz.
-          </p>
-        </div>
       )}
 
       {!canInvite && (error || message) && (
