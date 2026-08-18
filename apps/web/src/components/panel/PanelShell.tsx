@@ -48,6 +48,7 @@ export type PanelUser = {
   email: string | null;
   image: string | null;
   membershipNumber?: string | null;
+  platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
 };
 
 export type PanelWorkspace = {
@@ -273,6 +274,7 @@ export function PanelShell({
                   companyName={workspace?.companyName}
                   activeCompanyId={workspace?.companyId}
                   companies={companies}
+                  platformRole={user.platformRole}
                 />
               </div>
             </header>

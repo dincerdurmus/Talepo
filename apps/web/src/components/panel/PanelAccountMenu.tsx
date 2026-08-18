@@ -11,6 +11,7 @@ import {
   Home,
   LayoutDashboard,
   LogOut,
+  ShieldCheck,
   UserRound,
   Users,
 } from "lucide-react";
@@ -32,7 +33,19 @@ type PanelAccountMenuProps = {
   companyName?: string | null;
   activeCompanyId?: string | null;
   companies: PanelCompanyOption[];
+  platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
 };
+
+function getPlatformRoleLabel(
+  role: PanelAccountMenuProps["platformRole"],
+) {
+  if (role === "SUPPORT") return "Sup";
+  if (role === "MODERATOR") return "Mod";
+  if (role === "ANALYST") return "Analist";
+  if (role === "ADMIN") return "A";
+  if (role === "SUPER_ADMIN") return "SA";
+  return null;
+}
 
 export function PanelAccountMenu({
   displayName,
@@ -44,12 +57,14 @@ export function PanelAccountMenu({
   companyName,
   activeCompanyId,
   companies,
+  platformRole,
 }: PanelAccountMenuProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const inCompanyContext = Boolean(activeCompanyId);
+  const platformRoleLabel = getPlatformRoleLabel(platformRole);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -122,6 +137,11 @@ export function PanelAccountMenu({
         )}
         <span className="hidden max-w-28 truncate text-sm font-medium text-[#0f1f1d] sm:block">
           {displayName.split(" ")[0]}
+          {platformRoleLabel ? (
+            <span className="ml-1.5 text-xs font-bold text-red-600">
+              {platformRoleLabel}
+            </span>
+          ) : null}
         </span>
         <ChevronDown
           className={`hidden h-4 w-4 text-teal-950/35 transition sm:block ${
@@ -138,6 +158,11 @@ export function PanelAccountMenu({
           <div className="border-b border-teal-900/6 px-3 py-3">
             <p className="truncate text-sm font-semibold text-[#0f1f1d]">
               {displayName}
+              {platformRoleLabel ? (
+                <span className="ml-1.5 text-xs font-bold text-red-600">
+                  {platformRoleLabel}
+                </span>
+              ) : null}
             </p>
             <p className="mt-1 truncate text-xs text-teal-950/45">{email ?? ""}</p>
             {membershipNumber ? (
@@ -190,6 +215,18 @@ export function PanelAccountMenu({
               <CreditCard className="h-4 w-4 text-teal-950/35" />
               Plan ve üyelik
             </Link>
+
+            {platformRole !== "USER" && (
+              <Link
+                href="/admin"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+              >
+                <ShieldCheck className="h-4 w-4 text-amber-800/75" />
+                Admin Paneli
+              </Link>
+            )}
 
             {isCorporate && (
               <Link

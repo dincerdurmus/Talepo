@@ -537,3 +537,100 @@ body {
     transform: none;
   }
 }
+form[method="get"] > button {
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(110, 231, 183, 0.12);
+  transition: transform 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+form[method="get"] > button:hover {
+  transform: translateY(-2px);
+  background-color: rgb(167 243 208);
+  box-shadow: 0 10px 28px rgba(110, 231, 183, 0.22);
+}
+
+form[method="get"] > button:active,
+form[method="get"] > a[href="/admin/users"]:active {
+  transform: translateY(0) scale(0.98);
+}
+
+form[method="get"] > a[href="/admin/users"] {
+  cursor: pointer;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+form[method="get"] > a[href="/admin/users"]:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: white;
+}
+
+/* Admin comparison actions: make the controls visibly interactive. */
+section.mt-6 button {
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+section.mt-6 button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(110, 231, 183, 0.55);
+  background-color: rgba(110, 231, 183, 0.12);
+  color: rgb(209 250 229);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+section.mt-6 button:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}
+
+section.mt-6 button:focus-visible {
+  outline: 2px solid rgba(110, 231, 183, 0.9);
+  outline-offset: 2px;
+}
+
+section.mt-6 button.bg-emerald-300:hover:not(:disabled) {
+  background-color: rgb(167 243 208);
+  color: rgb(7 19 16);
+  box-shadow: 0 10px 26px rgba(110, 231, 183, 0.24);
+}
+
+/* Keep chart tooltip anchored to the hovered point instead of the chart edge. */
+section.mt-6 .pointer-events-none.absolute.z-30 {
+  transform: translate(-50%, calc(-100% + 50px));
+  white-space: nowrap;
+}
+
+section.mt-6 svg > text {
+  paint-order: stroke;
+  stroke: #071310;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+section.mt-6 svg > text:nth-last-of-type(2),
+section.mt-6 svg > text:last-of-type {
+  transform: translateY(8px);
+}
+
+section.mt-6 .mt-5.rounded-2xl {
+  padding-bottom: 2.75rem;
+  overflow: visible;
+}
+
+section.mt-6 svg.h-56 {
+  height: 14rem;
+  overflow: visible;
+}
+
+section.mt-6 svg > text:first-of-type,
+section.mt-6 svg > text:nth-of-type(2) {
+  transform: translateY(12px);
+}
+
+section.mt-6 svg > text:nth-last-of-type(2),
+section.mt-6 svg > text:last-of-type {
+  transform: translate(-28px, 12px);
+}

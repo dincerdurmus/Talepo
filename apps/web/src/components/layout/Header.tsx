@@ -17,6 +17,15 @@ type HeaderProps = {
   tone?: "default" | "ink";
 };
 
+function getPlatformRoleLabel(role: string | undefined) {
+  if (role === "SUPPORT") return "Sup";
+  if (role === "MODERATOR") return "Mod";
+  if (role === "ANALYST") return "Analist";
+  if (role === "ADMIN") return "A";
+  if (role === "SUPER_ADMIN") return "SA";
+  return null;
+}
+
 export function Header({ tone = "default" }: HeaderProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -134,6 +143,7 @@ export function Header({ tone = "default" }: HeaderProps) {
   const headerActiveCompanyId = isAuthenticated ? activeCompanyId : null;
   const headerActiveCompanyName = isAuthenticated ? activeCompanyName : null;
   const inCompanyContext = Boolean(headerActiveCompanyId);
+  const platformRoleLabel = getPlatformRoleLabel(session?.user?.platformRole);
 
   return (
     <header
@@ -231,6 +241,11 @@ export function Header({ tone = "default" }: HeaderProps) {
                   }`}
                 >
                   {session.user.name ?? "Kullanıcı"}
+                  {platformRoleLabel ? (
+                    <span className="ml-1.5 text-xs font-bold text-red-600">
+                      {platformRoleLabel}
+                    </span>
+                  ) : null}
                 </span>
 
                 <svg
@@ -259,6 +274,11 @@ export function Header({ tone = "default" }: HeaderProps) {
                   <div className="border-b border-teal-900/6 px-3 py-3">
                     <p className="truncate text-sm font-semibold text-[#0f1f1d]">
                       {session.user.name ?? "Kullanıcı"}
+                      {platformRoleLabel ? (
+                        <span className="ml-1.5 text-xs font-bold text-red-600">
+                          {platformRoleLabel}
+                        </span>
+                      ) : null}
                     </p>
 
                     <p className="mt-1 truncate text-xs text-teal-950/45">

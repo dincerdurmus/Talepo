@@ -131,6 +131,7 @@ export default async function PanelLayout({
         email: user.email,
         image: user.image,
         membershipNumber: user.membershipNumber,
+        platformRole: user.platformRole,
       }}
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}
