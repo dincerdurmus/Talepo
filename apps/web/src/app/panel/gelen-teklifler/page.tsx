@@ -111,8 +111,14 @@ function toRequestSummary(request: OfferRow["request"]): IncomingRequestSummaryD
   };
 }
 
-export default async function IncomingOffersPage() {
+export default async function IncomingOffersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ teklif?: string }>;
+}) {
   const user = await requireUser();
+  const { teklif } = await searchParams;
+  const highlightOfferId = teklif?.trim() || null;
 
   const offers = (await prisma.offer.findMany({
     where: {
@@ -247,6 +253,7 @@ export default async function IncomingOffersPage() {
               <IncomingOfferCompareGroup
                 key={group.request.id}
                 request={toRequestSummary(group.request)}
+                highlightOfferId={highlightOfferId}
                 compareSlot={
                   group.pending.length >= 2 ? (
                     <div className="space-y-2 bg-white px-4 py-3">

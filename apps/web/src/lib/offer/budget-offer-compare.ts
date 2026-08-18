@@ -100,6 +100,15 @@ export function compareBuyerBudgetToOffer(input: {
   };
 }
 
+export function formatOfferMoney(
+  amount: number | string | null | undefined,
+  currency: string,
+) {
+  const cents = toPositiveCents(amount);
+  if (cents == null) return "—";
+  return formatMoneyFromCents(cents, currency);
+}
+
 export function formatMoneyFromCents(cents: number, currency: string) {
   const amount = cents / 100;
   const fraction = cents % 100 === 0 ? 0 : 2;

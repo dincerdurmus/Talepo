@@ -22,6 +22,9 @@ type OfferActionsProps = {
   layout?: "default" | "toolbar" | "stack";
   pendingCounter?: {
     amountLabel: string;
+    acceptLabel?: string;
+    rejectLabel?: string;
+    hideOfferLifecycle?: boolean;
     onAccept: () => void;
     onReject: () => void;
     busy: string | null;
@@ -200,6 +203,7 @@ export function OfferActions({
         }
         error={error}
         footer={
+          pendingCounter.hideOfferLifecycle ? undefined : (
           <div
             className={`mt-2 flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-4 ${isToolbar ? "sm:justify-end" : ""}`}
           >
@@ -231,6 +235,7 @@ export function OfferActions({
               )}
             </button>
           </div>
+          )
         }
       >
         <div className={buttonRow}>
@@ -246,7 +251,10 @@ export function OfferActions({
             ) : (
               <>
                 <Check className="h-4 w-4 shrink-0" aria-hidden />
-                <span>Kabul et · {pendingCounter.amountLabel}</span>
+                <span>
+                  {pendingCounter.acceptLabel ??
+                    `Kabul et · ${pendingCounter.amountLabel}`}
+                </span>
               </>
             )}
           </button>
@@ -267,14 +275,16 @@ export function OfferActions({
             disabled={busy}
             onClick={pendingCounter.onReject}
             className={rejectClass}
-            aria-label="Karşı teklifi reddet"
+            aria-label={
+              pendingCounter.rejectLabel ?? "Karşı teklifi reddet"
+            }
           >
             {pendingCounter.busy === "reject" ? (
               <LoaderCircle className="h-4 w-4 animate-spin" />
             ) : (
               <>
                 <X className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                Karşı teklifi reddet
+                {pendingCounter.rejectLabel ?? "Karşı teklifi reddet"}
               </>
             )}
           </button>

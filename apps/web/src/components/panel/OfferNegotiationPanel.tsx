@@ -138,7 +138,9 @@ export function OfferNegotiationPanel({
   const proposeCta = bargainCopy ? "Pazarlık yap" : "Karşı teklif ver";
   const formTitle = bargainCopy ? "Pazarlık yap" : "Karşı teklifiniz";
   const formHelp = bargainCopy
-    ? "Yeni fiyatınızı iletin; satıcı kabul edebilir veya yeni bir fiyat önerebilir."
+    ? viewer === "provider"
+      ? "Yeni fiyatınızı iletin; alıcı kabul edebilir veya farklı bir fiyat önerebilir."
+      : "Yeni fiyatınızı iletin; satıcı kabul edebilir veya yeni bir fiyat önerebilir."
     : "Karşı teklifiniz karşı tarafa iletilir. İlk teklif tutarı değişmez.";
   const submitLabel = bargainCopy ? "Pazarlık teklifini gönder" : "Teklif et";
   const showHistory =

@@ -212,7 +212,12 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
         incomingCard.includes("IncomingOfferGallery") ||
         incomingGallery.includes("offerMediaSrc")),
   );
-  check("42 Tekliflerim include media ids", mine.includes("OfferMediaThumbStrip"));
+  check(
+    "42 Tekliflerim include media ids",
+    mine.includes("select: { id: true }") &&
+      (mine.includes("OfferMediaThumbStrip") ||
+        mine.includes("OutgoingOfferCompareGroup")),
+  );
   check("43 request detail include media", requestDetail.includes("OfferMediaThumbStrip"));
   check(
     "44 list include is ids only (no bytes)",

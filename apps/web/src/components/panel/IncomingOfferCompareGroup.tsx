@@ -7,6 +7,7 @@ import {
   type IncomingBudgetContext,
   type IncomingOfferCardData,
 } from "@/components/panel/IncomingOfferCard";
+import { OfferDeepLinkTarget } from "@/components/panel/OfferDeepLinkTarget";
 import { IncomingRequestCover } from "@/components/panel/IncomingRequestCover";
 import type { OfferCompleteness } from "@/lib/offer/offer-completeness";
 import type { TrustSummary } from "@/lib/offer/deal-review";
@@ -38,10 +39,17 @@ const REQUEST_STATUS: Record<string, string> = {
 function IncomingRequestSummary({
   request,
   sticky,
+  eyebrow = "Sizin talebiniz",
+  detailHref,
+  detailLabel = "Talep detayları",
 }: {
   request: IncomingRequestSummaryData;
   sticky: boolean;
+  eyebrow?: string;
+  detailHref?: string;
+  detailLabel?: string;
 }) {
+  const href = detailHref ?? `/panel/taleplerim/${request.id}`;
   return (
     <aside
       className={`border-b border-teal-900/[0.06] bg-[#f7f3ec] px-4 py-4 sm:px-5 lg:border-b-0 lg:border-r ${
@@ -49,7 +57,7 @@ function IncomingRequestSummary({
       }`}
     >
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-900/70">
-        Sizin talebiniz
+        {eyebrow}
       </p>
       <div className="mt-3">
         <IncomingRequestCover
@@ -95,14 +103,24 @@ function IncomingRequestSummary({
         </div>
       </dl>
       <Link
-        href={`/panel/taleplerim/${request.id}`}
+        href={href}
         className="mt-4 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-[#0f766e] hover:underline"
       >
-        Talep detayları
+        {detailLabel}
         <ArrowRight className="h-4 w-4" />
       </Link>
     </aside>
   );
+}
+
+export function RequestCompareSummary(props: {
+  request: IncomingRequestSummaryData;
+  sticky: boolean;
+  eyebrow?: string;
+  detailHref?: string;
+  detailLabel?: string;
+}) {
+  return <IncomingRequestSummary {...props} />;
 }
 
 export function IncomingOfferCompareGroup({
@@ -110,6 +128,7 @@ export function IncomingOfferCompareGroup({
   pending,
   others,
   compareSlot,
+  highlightOfferId,
 }: {
   request: IncomingRequestSummaryData;
   pending: Array<{
@@ -123,6 +142,7 @@ export function IncomingOfferCompareGroup({
     trust?: TrustSummary;
   }>;
   compareSlot?: ReactNode;
+  highlightOfferId?: string | null;
 }) {
   const budget: IncomingBudgetContext = {
     budgetMin: request.budgetMin,
@@ -160,15 +180,20 @@ export function IncomingOfferCompareGroup({
         <div className="min-w-0 divide-y divide-teal-900/[0.06]">
           {compareSlot}
           {pending.map((row) => (
-            <IncomingOfferCard
+            <OfferDeepLinkTarget
               key={row.offer.id}
-              offer={row.offer}
-              budget={budget}
-              actionable
-              completeness={row.completeness}
-              trust={row.trust}
-              rank={row.rank}
-            />
+              offerId={row.offer.id}
+              active={highlightOfferId === row.offer.id}
+            >
+              <IncomingOfferCard
+                offer={row.offer}
+                budget={budget}
+                actionable
+                completeness={row.completeness}
+                trust={row.trust}
+                rank={row.rank}
+              />
+            </OfferDeepLinkTarget>
           ))}
           {others.length > 0 && pending.length > 0 ? (
             <p className="bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-black/35">
@@ -176,12 +201,17 @@ export function IncomingOfferCompareGroup({
             </p>
           ) : null}
           {others.map((row) => (
-            <IncomingOfferCard
+            <OfferDeepLinkTarget
               key={row.offer.id}
-              offer={row.offer}
-              budget={budget}
-              trust={row.trust}
-            />
+              offerId={row.offer.id}
+              active={highlightOfferId === row.offer.id}
+            >
+              <IncomingOfferCard
+                offer={row.offer}
+                budget={budget}
+                trust={row.trust}
+              />
+            </OfferDeepLinkTarget>
           ))}
         </div>
       </div>

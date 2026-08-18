@@ -62,11 +62,13 @@ const actions = read("src/components/panel/OfferActions.tsx");
 const gelen = read("src/app/panel/gelen-teklifler/page.tsx");
 const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
+const outgoingCard = read("src/components/panel/OutgoingOfferCard.tsx");
 const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
 const intelligence = read("src/server/monetization/offer-intelligence.ts");
 const radar = read("src/server/monetization/talepo-radar.ts");
 const destination = read("src/lib/notifications/destination.ts");
 const createNotification = read("src/server/notifications/create-notification.ts");
+const notify = read("src/server/offer/offer-negotiation-notifications.ts");
 const dealOutcome = read("src/server/price-intelligence/deal-outcome.ts");
 
 console.log("\n=== COMMERCIAL AMOUNT AUTHORITY ===\n");
@@ -242,10 +244,37 @@ console.log("\n=== CONVERSATION / NOTIFICATIONS ===\n");
   check("legacy negotiateOffer throws closed message", service.includes("LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE"));
   check("offer POST still handles negotiate action", offerRoute.includes('action === "negotiate"'));
   check("buyer UI removed chat pazarlık CTA", !actions.includes("Pazarlık et"));
-  check("notifications reuse createNotification", negotiationService.includes("createNotification"));
+  check(
+    "notifications reuse createNotification",
+    notify.includes("createNotificationIfAbsent") &&
+      createNotification.includes("createNotificationIfAbsent"),
+  );
   check("COUNTER_OFFER_RECEIVED", createNotification.includes("COUNTER_OFFER_RECEIVED"));
   check("COUNTER_OFFER_ACCEPTED", createNotification.includes("COUNTER_OFFER_ACCEPTED"));
   check("COUNTER_OFFER_REJECTED", createNotification.includes("COUNTER_OFFER_REJECTED"));
+  check(
+    "buyer propose copy is pazarlık",
+    notify.includes("Teklifinize yeni pazarlık teklifi geldi") &&
+      notify.includes("tutarında yeni bir fiyat önerildi"),
+  );
+  check(
+    "seller inbox deep link includes offer id",
+    notify.includes("negotiationInboxPath") &&
+      read("src/lib/offer/negotiation-inbox-path.ts").includes("?teklif="),
+  );
+  check(
+    "actor is excluded from recipients",
+    notify.includes("!== actorUserId") || notify.includes("=== input.actorUserId) return"),
+  );
+  check(
+    "company recipients are ACTIVE members",
+    notify.includes('status: "ACTIVE"') && notify.includes("companyMember.findMany"),
+  );
+  check(
+    "idempotent create uses actionUrl",
+    createNotification.includes("createNotificationIfAbsent") &&
+      createNotification.includes("actionUrl: input.actionUrl"),
+  );
   check(
     "destination sanitizer includes counter types",
     destination.includes("COUNTER_OFFER_RECEIVED"),
@@ -308,7 +337,11 @@ console.log("\n=== UI SURFACES ===\n");
     gelen.includes("OfferNegotiationPanel") ||
       incomingCard.includes("OfferNegotiationPanel"),
   );
-  check("teklifler uses panel", teklifler.includes("OfferNegotiationPanel"));
+  check(
+    "teklifler uses panel",
+    teklifler.includes("OutgoingOfferCompareGroup") &&
+      outgoingCard.includes("OfferNegotiationPanel"),
+  );
   check("request detail uses panel", taleplerim.includes("OfferNegotiationPanel"));
   check("original amount labelled", panel.includes("İlk teklif"));
   check("agreed amount labelled", panel.includes("Anlaşılan fiyat"));

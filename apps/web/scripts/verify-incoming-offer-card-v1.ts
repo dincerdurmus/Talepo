@@ -32,7 +32,9 @@ const card = read("src/components/panel/IncomingOfferCard.tsx");
 const panel = read("src/components/panel/OfferNegotiationPanel.tsx");
 const actions = read("src/components/panel/OfferActions.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
+const outgoingCard = read("src/components/panel/OutgoingOfferCard.tsx");
 const service = read("src/server/offer/offer-negotiation-service.ts");
+const notify = read("src/server/offer/offer-negotiation-notifications.ts");
 
 console.log("\n=== STRUCTURE ===\n");
 {
@@ -65,9 +67,17 @@ console.log("\n=== COPY ===\n");
   check("helper copy", panel.includes("Yeni fiyatınızı iletin; satıcı kabul edebilir veya yeni bir fiyat önerebilir."));
   check("cancel Vazgeç", panel.includes("Vazgeç"));
   check("page intro pazarlık yapın", page.includes("pazarlık yapın"));
-  check("seller surface keeps Karşı teklif ver", panel.includes("Karşı teklif ver"));
-  check("seller list not bargainCopy", !teklifler.includes("bargainCopy"));
-  check("no domain rename", service.includes("proposeOfferNegotiation") && service.includes("COUNTER_OFFER_RECEIVED"));
+  check("seller surface can still say Karşı teklif ver", panel.includes("Karşı teklif ver"));
+  check(
+    "seller list uses Pazarlık yap",
+    teklifler.includes("OutgoingOfferCompareGroup") && outgoingCard.includes("bargainCopy"),
+  );
+  check(
+    "no domain rename",
+    service.includes("proposeOfferNegotiation") &&
+      (service.includes("COUNTER_OFFER_RECEIVED") ||
+        notify.includes("COUNTER_OFFER_RECEIVED")),
+  );
 }
 
 console.log("\n=== ACTIONS ===\n");

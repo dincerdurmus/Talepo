@@ -46,6 +46,7 @@ const composer = read("src/components/panel/MessageComposer.tsx");
 const gelen = read("src/app/panel/gelen-teklifler/page.tsx");
 const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
+const outgoingCard = read("src/components/panel/OutgoingOfferCard.tsx");
 const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
 const talepler = read("src/app/panel/talepler/[id]/page.tsx");
 const teklifForm = read("src/app/panel/talepler/[id]/teklif/page.tsx");
@@ -136,8 +137,11 @@ console.log("\n=== ACCEPT HIERARCHY / PRICE LABELS ===\n");
   check("whose turn copy", panel.includes("sıra sizde") || panel.includes("Sıra alıcıda"));
   check("original accept is secondary when pending", actions.includes("Orijinal teklifi kabul et"));
   check("pending warning copy", actions.includes("anlaşılan tutar o tutar olur"));
-  check("teklifler dual label Anlaşılan", teklifler.includes("Anlaşılan"));
-  check("teklifler dual label İlk teklif", teklifler.includes("İlk teklif"));
+  check("teklifler dual label Anlaşılan", outgoingCard.includes("Anlaşılan fiyat"));
+  check(
+    "teklifler dual label İlk teklif",
+    outgoingCard.includes("İlk teklifiniz"),
+  );
   check(
     "gelen dual pending amount",
     gelen.includes("Bekleyen karşı teklif") ||
