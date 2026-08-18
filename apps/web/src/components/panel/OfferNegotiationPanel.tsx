@@ -21,6 +21,7 @@ type OfferNegotiationPanelProps = {
   composerOpen?: boolean;
   onComposerOpenChange?: (open: boolean) => void;
   onBusyChange?: (busy: string | null) => void;
+  onProposeSuccess?: () => void;
   bargainCopy?: boolean;
 };
 
@@ -54,6 +55,7 @@ export function OfferNegotiationPanel({
   composerOpen,
   onComposerOpenChange,
   onBusyChange,
+  onProposeSuccess,
   bargainCopy = false,
 }: OfferNegotiationPanelProps) {
   const router = useRouter();
@@ -110,6 +112,10 @@ export function OfferNegotiationPanel({
       }
       setOpen(false);
       setAmount("");
+      if (action === "propose" && onProposeSuccess) {
+        onProposeSuccess();
+        return;
+      }
       if (result.redirectTo) {
         router.push(result.redirectTo);
         return;
@@ -285,7 +291,7 @@ export function OfferNegotiationPanel({
       ) : null}
 
       {open ? (
-        <div className="mt-3 rounded-xl border border-teal-900/10 bg-[#f7faf9] p-3">
+        <div className="mt-3 rounded-xl border border-teal-900/10 bg-[#f7faf9] p-3 motion-safe:animate-[txn-morph-in_280ms_cubic-bezier(0.22,1,0.36,1)_forwards]">
           <p className="text-sm font-medium text-[#0f1f1d]">{formTitle}</p>
           <p className="mt-1 text-[11px] leading-5 text-black/45">{formHelp}</p>
           <TrMoneyInput
@@ -303,7 +309,10 @@ export function OfferNegotiationPanel({
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white disabled:opacity-50"
             >
               {pending === "propose" ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
+                <>
+                  <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
+                  Gönderiliyor…
+                </>
               ) : (
                 submitLabel
               )}

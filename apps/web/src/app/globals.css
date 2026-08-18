@@ -516,6 +516,248 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Offer decision footer — Digital Transaction Pulse motion system.
+   Signals travel on a hairline between two party nodes; the medallion in the
+   middle carries the verified / exchanged / severed outcome. */
+
+/* Signal travelling left → right on a track; the signal is 20% of the track,
+   so translateX(400%) lands its trailing edge on the far node. */
+@keyframes txn-signal-forward {
+  0% {
+    transform: translateX(0%);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-signal-back {
+  0% {
+    transform: translateX(400%);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0%);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-node-idle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes txn-node-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  45% {
+    transform: scale(1.85);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes txn-converge-left {
+  0% {
+    transform: translateX(-20px) scale(0.7);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  68% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-converge-right {
+  0% {
+    transform: translateX(20px) scale(0.7);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  68% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(0) scale(0.35);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-ring {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-line-settle {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes txn-sever-left {
+  0% {
+    transform: translateX(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(-12px);
+    opacity: 0.2;
+  }
+}
+
+@keyframes txn-sever-right {
+  0% {
+    transform: translateX(0);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(12px);
+    opacity: 0.2;
+  }
+}
+
+@keyframes txn-draw {
+  from {
+    stroke-dashoffset: var(--txn-dash, 26);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes txn-scan {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+@keyframes txn-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes txn-morph-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* One-shot balance nudge that ties the decision area to the terazi strip. */
+@keyframes txn-balance {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  32% {
+    transform: rotate(-4deg);
+  }
+  68% {
+    transform: rotate(2.5deg);
+  }
+}
+
+@keyframes txn-chip-lock {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.97);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.talepo-offer-unread-glow {
+  box-shadow:
+    0 0 0 1px rgba(15, 118, 110, 0.14),
+    0 10px 28px rgba(15, 118, 110, 0.12);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .talepo-offer-unread-glow {
+    animation: talepo-offer-unread-glow 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes talepo-offer-unread-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(15, 118, 110, 0.14),
+      0 10px 28px rgba(15, 118, 110, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(15, 118, 110, 0.22),
+      0 14px 34px rgba(15, 118, 110, 0.16);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .talepo-rise,
   .talepo-ai-status-dot,
