@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { unarchiveOfferOnNewEvent } from "@/server/offer/offer-archive-service";
 
 type CreateNotificationInput = {
   userId: string;
@@ -59,5 +60,13 @@ export async function createNotificationIfAbsent(
     });
     if (existing) return existing;
   }
-  return createNotification(input);
+  const created = await createNotification(input);
+  if (input.offerId) {
+    await unarchiveOfferOnNewEvent({
+      userId: input.userId,
+      offerId: input.offerId,
+      companyId: input.companyId ?? null,
+    });
+  }
+  return created;
 }
