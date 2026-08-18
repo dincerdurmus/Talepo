@@ -47,6 +47,7 @@ import {
 } from "@/lib/offer/offer-inbox-badge-events";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
+import type { FeatureKey } from "@/lib/membership/entitlements";
 
 export type PanelUser = {
   id: string;

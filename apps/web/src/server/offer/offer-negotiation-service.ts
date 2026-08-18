@@ -181,7 +181,7 @@ export async function proposeOfferNegotiation(
       actorSide: side,
       offer,
       negotiationId: created.id,
-      amount: created.amount,
+      amount: created.amount.toString(),
       currency: created.currency,
     });
 
@@ -238,7 +238,7 @@ export async function rejectPendingNegotiation(userId: string, offerId: string) 
     negotiationId: pending.id,
     proposedByUserId: pending.proposedByUserId,
     proposedBySide: pending.proposedBySide,
-    amount: pending.amount,
+    amount: pending.amount.toString(),
     currency: pending.currency,
   });
 
@@ -278,7 +278,7 @@ export async function acceptPendingNegotiation(userId: string, offerId: string) 
     offer,
     negotiationId: pending.id,
     proposedByUserId: pending.proposedByUserId,
-    amount: pending.amount,
+    amount: pending.amount.toString(),
     currency: pending.currency,
     conversationId: result.conversationId,
   });
