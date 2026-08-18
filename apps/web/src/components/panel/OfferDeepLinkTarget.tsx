@@ -17,12 +17,5 @@ export function OfferDeepLinkTarget({
     node?.scrollIntoView({ block: "start", behavior: "smooth" });
   }, [active, offerId]);
 
-  return (
-    <div
-      id={`teklif-${offerId}`}
-      className={active ? "rounded-[24px] ring-2 ring-amber-300/90" : undefined}
-    >
-      {children}
-    </div>
-  );
+  return <>{children}</>;
 }

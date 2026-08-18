@@ -18,6 +18,7 @@ import {
   OutgoingOfferInboxEmpty,
   OutgoingOfferInboxFilters,
 } from "@/components/panel/OutgoingOfferInboxFilters";
+import { MarkAllOfferInboxReadButton } from "@/components/panel/MarkAllOfferInboxReadButton";
 import { OutgoingOfferCompareGroup } from "@/components/panel/OutgoingOfferCompareGroup";
 import type { OutgoingOfferCardData } from "@/components/panel/OutgoingOfferCard";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -31,7 +32,13 @@ import {
   offerNegotiationListInclude,
   toOfferNegotiationDtos,
 } from "@/lib/offer/offer-negotiation";
+import { listUnreadOutgoingOfferIds } from "@/lib/offer/offer-event-unread";
 import {
+  filterOffersByArchiveView,
+  parseOfferArchiveView,
+} from "@/lib/offer/offer-archive";
+import {
+  isSellerActionableOutgoingOffer,
   OUTGOING_OFFER_INBOX_EMPTY,
   buildOutgoingOffersPath,
   classifyOutgoingOfferInbox,
@@ -44,6 +51,7 @@ import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
+import { listArchivedOfferIds } from "@/server/offer/offer-archive-service";
 import {
   getRequestOfferIntelligence,
   OfferIntelligenceLookupError,
@@ -64,11 +72,14 @@ export default async function OffersPage({
     teklif?: string;
     tur?: string;
     durum?: string;
+    gorunum?: string;
   }>;
 }) {
   const user = await requireUser();
   const workspace = await getCompanyWorkspace(user.id);
-  const { gonderildi, guncellendi, teklif, tur, durum } = await searchParams;
+  const { gonderildi, guncellendi, teklif, tur, durum, gorunum } =
+    await searchParams;
+  const archiveView = parseOfferArchiveView(gorunum) === "archive";
   const justSubmitted = gonderildi === "1";
   const justUpdated = guncellendi === "1";
   const highlightOfferId = teklif?.trim() || null;
@@ -117,14 +128,47 @@ export default async function OffersPage({
     take: 50,
   });
 
+  const archivedOfferIds = await listArchivedOfferIds({
+    userId: user.id,
+    companyId: workspace?.companyId ?? null,
+  });
+
   const highlightOffer = highlightOfferId
     ? (offers.find((row) => row.id === highlightOfferId) ?? null)
     : null;
+
+  if (
+    highlightOffer &&
+    archivedOfferIds.has(highlightOffer.id) &&
+    !archiveView
+  ) {
+    redirect(
+      buildOutgoingOffersPath({
+        filter: parsedDurum.filter,
+        teklif: highlightOfferId,
+        tur: highlightNegotiationId,
+        gonderildi: justSubmitted ? "1" : null,
+        guncellendi: justUpdated ? "1" : null,
+        archiveView: true,
+      }),
+    );
+  }
+
+  const visibleOffers = filterOffersByArchiveView(
+    offers,
+    archivedOfferIds,
+    archiveView ? "archive" : "active",
+  );
+
+  const highlightOfferResolved = highlightOfferId
+    ? (visibleOffers.find((row) => row.id === highlightOfferId) ?? null)
+    : null;
+
   const resolvedFilter = resolveOutgoingOfferInboxFilter({
     requested: parsedDurum.filter,
     explicit: parsedDurum.explicit,
-    highlightBucket: highlightOffer
-      ? classifyOutgoingOfferInbox(highlightOffer)
+    highlightBucket: highlightOfferResolved
+      ? classifyOutgoingOfferInbox(highlightOfferResolved)
       : null,
   });
   if (resolvedFilter.redirect) {
@@ -135,16 +179,27 @@ export default async function OffersPage({
         tur: highlightNegotiationId,
         gonderildi: justSubmitted ? "1" : null,
         guncellendi: justUpdated ? "1" : null,
+        archiveView,
       }),
     );
   }
 
+  const unreadOfferIds = await listUnreadOutgoingOfferIds(
+    user.id,
+    workspace?.companyId ?? null,
+  );
   const activeFilter = resolvedFilter.filter;
-  const inboxCounts = countOutgoingOfferInbox(offers);
-  const listed = offers.filter((offer) =>
+  const inboxCounts = countOutgoingOfferInbox(
+    filterOffersByArchiveView(offers, archivedOfferIds, "active"),
+    unreadOfferIds,
+  );
+  const actionRequiredCount = visibleOffers.filter(isSellerActionableOutgoingOffer)
+    .length;
+  const listed = visibleOffers.filter((offer) =>
     offerMatchesOutgoingInboxFilter(
       classifyOutgoingOfferInbox(offer),
       activeFilter,
+      { offerId: offer.id, unreadOfferIds },
     ),
   );
 
@@ -327,12 +382,32 @@ export default async function OffersPage({
         })}
       </div>
 
-      <OutgoingOfferInboxFilters
-        active={activeFilter}
-        counts={inboxCounts}
-        teklif={highlightOfferId}
-        tur={highlightNegotiationId}
-      />
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <OutgoingOfferInboxFilters
+          active={activeFilter}
+          counts={inboxCounts}
+          teklif={highlightOfferId}
+          tur={highlightNegotiationId}
+          archiveView={archiveView}
+          archiveCount={archivedOfferIds.size}
+        />
+        <MarkAllOfferInboxReadButton
+          unreadCount={unreadOfferIds.size}
+          role="seller"
+        />
+      </div>
+      {actionRequiredCount > 0 ? (
+        <p className="mb-4 text-sm text-black/45">
+          {actionRequiredCount} teklifte yanıtınız bekleniyor
+          {unreadOfferIds.size > 0
+            ? ` · ${unreadOfferIds.size} okunmamış teklif`
+            : ""}
+        </p>
+      ) : unreadOfferIds.size > 0 ? (
+        <p className="mb-4 text-sm text-black/45">
+          {unreadOfferIds.size} okunmamış teklif
+        </p>
+      ) : null}
 
       <OfferIntelligenceHub
         mode={intelligenceHubMode}
@@ -347,7 +422,7 @@ export default async function OffersPage({
           cta="Talepleri keşfet"
         />
       ) : listed.length === 0 ? (
-        <OutgoingOfferInboxEmpty filter={activeFilter} />
+        <OutgoingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
       ) : (
         <section className="grid gap-6">
           {listed.map((offer) => {
@@ -406,6 +481,9 @@ export default async function OffersPage({
                 completeness={completeness}
                 canMutate={canRevise}
                 highlight={highlightOfferId === offer.id}
+                isUnread={unreadOfferIds.has(offer.id)}
+                archivedOfferIds={archivedOfferIds}
+                archiveView={archiveView}
                 highlightNegotiationId={
                   highlightOfferId === offer.id ? highlightNegotiationId : null
                 }

@@ -13,6 +13,7 @@ import {
   IncomingOfferInboxEmpty,
   IncomingOfferInboxFilters,
 } from "@/components/panel/IncomingOfferInboxFilters";
+import { MarkAllOfferInboxReadButton } from "@/components/panel/MarkAllOfferInboxReadButton";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { formatRequestQuantity } from "@/lib/offer/budget-offer-compare";
@@ -20,10 +21,16 @@ import {
   buildIncomingOffersPath,
   classifyIncomingOfferInbox,
   countIncomingOfferInbox,
+  isBuyerActionableIncomingOffer,
   offerMatchesIncomingInboxFilter,
   parseIncomingOfferInboxDurum,
   resolveIncomingOfferInboxFilter,
 } from "@/lib/offer/incoming-offer-inbox";
+import { listUnreadIncomingOfferIds } from "@/lib/offer/offer-event-unread";
+import {
+  filterOffersByArchiveView,
+  parseOfferArchiveView,
+} from "@/lib/offer/offer-archive";
 import { compareOffersByCompleteness } from "@/lib/offer/offer-completeness";
 import {
   offerNegotiationListInclude,
@@ -33,6 +40,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
+import { listArchivedOfferIds } from "@/server/offer/offer-archive-service";
 import {
   loadProviderTrustSummaries,
   trustForOfferProvider,
@@ -129,10 +137,11 @@ function toRequestSummary(request: OfferRow["request"]): IncomingRequestSummaryD
 export default async function IncomingOffersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ teklif?: string; tur?: string; durum?: string }>;
+  searchParams: Promise<{ teklif?: string; tur?: string; durum?: string; gorunum?: string }>;
 }) {
   const user = await requireUser();
-  const { teklif, tur, durum } = await searchParams;
+  const { teklif, tur, durum, gorunum } = await searchParams;
+  const archiveView = parseOfferArchiveView(gorunum) === "archive";
   const highlightOfferId = teklif?.trim() || null;
   const highlightNegotiationId = tur?.trim() || null;
   const parsedDurum = parseIncomingOfferInboxDurum(durum);
@@ -177,14 +186,44 @@ export default async function IncomingOffersPage({
     },
   })) as OfferRow[];
 
+  const archivedOfferIds = await listArchivedOfferIds({
+    userId: user.id,
+    companyId: null,
+  });
+
   const highlightOffer = highlightOfferId
     ? (offers.find((row) => row.id === highlightOfferId) ?? null)
+    : null;
+
+  if (
+    highlightOffer &&
+    archivedOfferIds.has(highlightOffer.id) &&
+    !archiveView
+  ) {
+    redirect(
+      buildIncomingOffersPath({
+        filter: parsedDurum.filter,
+        teklif: highlightOfferId,
+        tur: highlightNegotiationId,
+        archiveView: true,
+      }),
+    );
+  }
+
+  const visibleOffers = filterOffersByArchiveView(
+    offers,
+    archivedOfferIds,
+    archiveView ? "archive" : "active",
+  );
+
+  const highlightOfferResolved = highlightOfferId
+    ? (visibleOffers.find((row) => row.id === highlightOfferId) ?? null)
     : null;
   const resolvedFilter = resolveIncomingOfferInboxFilter({
     requested: parsedDurum.filter,
     explicit: parsedDurum.explicit,
-    highlightBucket: highlightOffer
-      ? classifyIncomingOfferInbox(highlightOffer)
+    highlightBucket: highlightOfferResolved
+      ? classifyIncomingOfferInbox(highlightOfferResolved)
       : null,
   });
   if (resolvedFilter.redirect) {
@@ -193,16 +232,24 @@ export default async function IncomingOffersPage({
         filter: resolvedFilter.filter,
         teklif: highlightOfferId,
         tur: highlightNegotiationId,
+        archiveView,
       }),
     );
   }
 
+  const unreadOfferIds = await listUnreadIncomingOfferIds(user.id);
   const activeFilter = resolvedFilter.filter;
-  const inboxCounts = countIncomingOfferInbox(offers);
-  const listed = offers.filter((offer) =>
+  const inboxCounts = countIncomingOfferInbox(
+    filterOffersByArchiveView(offers, archivedOfferIds, "active"),
+    unreadOfferIds,
+  );
+  const actionRequiredCount = visibleOffers.filter(isBuyerActionableIncomingOffer)
+    .length;
+  const listed = visibleOffers.filter((offer) =>
     offerMatchesIncomingInboxFilter(
       classifyIncomingOfferInbox(offer),
       activeFilter,
+      { offerId: offer.id, unreadOfferIds },
     ),
   );
 
@@ -289,20 +336,41 @@ export default async function IncomingOffersPage({
         </section>
       ) : (
         <>
-          <IncomingOfferInboxFilters
-            active={activeFilter}
-            counts={{
-              all: inboxCounts.all,
-              new: inboxCounts.new,
-              negotiating: inboxCounts.negotiating,
-              accepted: inboxCounts.accepted,
-              rejected: inboxCounts.rejected,
-            }}
-            teklif={highlightOfferId}
-            tur={highlightNegotiationId}
-          />
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <IncomingOfferInboxFilters
+              active={activeFilter}
+              counts={{
+                all: inboxCounts.all,
+                unread: inboxCounts.unread,
+                new: inboxCounts.new,
+                negotiating: inboxCounts.negotiating,
+                accepted: inboxCounts.accepted,
+                rejected: inboxCounts.rejected,
+              }}
+              teklif={highlightOfferId}
+              tur={highlightNegotiationId}
+              archiveView={archiveView}
+              archiveCount={archivedOfferIds.size}
+            />
+            <MarkAllOfferInboxReadButton
+              unreadCount={unreadOfferIds.size}
+              role="buyer"
+            />
+          </div>
+          {actionRequiredCount > 0 ? (
+            <p className="mb-4 text-sm text-black/45">
+              {actionRequiredCount} teklifte yanıtınız bekleniyor
+              {unreadOfferIds.size > 0
+                ? ` · ${unreadOfferIds.size} okunmamış teklif`
+                : ""}
+            </p>
+          ) : unreadOfferIds.size > 0 ? (
+            <p className="mb-4 text-sm text-black/45">
+              {unreadOfferIds.size} okunmamış teklif
+            </p>
+          ) : null}
           {listed.length === 0 ? (
-            <IncomingOfferInboxEmpty filter={activeFilter} />
+            <IncomingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
           ) : (
             <div className="space-y-6">
               {groups.map((group) => {
@@ -319,6 +387,9 @@ export default async function IncomingOffersPage({
                     request={toRequestSummary(group.request)}
                     highlightOfferId={highlightOfferId}
                     highlightNegotiationId={highlightNegotiationId}
+                    unreadOfferIds={unreadOfferIds}
+                    archivedOfferIds={archivedOfferIds}
+                    archiveView={archiveView}
                     compareSlot={
                       group.pending.length >= 2 ? (
                         <div className="space-y-2 bg-white px-4 py-3">

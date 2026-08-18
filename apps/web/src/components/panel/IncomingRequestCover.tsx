@@ -13,11 +13,13 @@ export function IncomingRequestCover({
   categorySlug,
   categoryName,
   requestTitle,
+  compact = false,
 }: {
   coverImageUrl?: string | null;
   categorySlug?: string | null;
   categoryName?: string | null;
   requestTitle?: string | null;
+  compact?: boolean;
 }) {
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
@@ -46,7 +48,11 @@ export function IncomingRequestCover({
   );
 
   return (
-    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[#efe8dc] ring-1 ring-black/[0.06]">
+    <div
+      className={`relative w-full overflow-hidden bg-[#efe8dc] ring-1 ring-black/[0.06] ${
+        compact ? "aspect-square rounded-xl" : "aspect-[4/3] rounded-2xl"
+      }`}
+    >
       {imageSrc ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -61,7 +67,10 @@ export function IncomingRequestCover({
           role="img"
           aria-label={alt}
         >
-          <Icon className={`h-10 w-10 ${look.iconTone}`} strokeWidth={1.5} />
+          <Icon
+            className={`${compact ? "h-5 w-5" : "h-10 w-10"} ${look.iconTone}`}
+            strokeWidth={1.5}
+          />
         </div>
       )}
     </div>

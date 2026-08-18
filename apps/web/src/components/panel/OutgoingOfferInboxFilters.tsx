@@ -13,11 +13,15 @@ export function OutgoingOfferInboxFilters({
   counts,
   teklif,
   tur,
+  archiveView = false,
+  archiveCount = 0,
 }: {
   active: OutgoingOfferInboxFilter;
   counts: Record<OutgoingOfferInboxFilter, number>;
   teklif?: string | null;
   tur?: string | null;
+  archiveView?: boolean;
+  archiveCount?: number;
 }) {
   return (
     <div
@@ -26,8 +30,13 @@ export function OutgoingOfferInboxFilters({
       aria-label="Teklif durumu filtreleri"
     >
       {OUTGOING_OFFER_INBOX_FILTERS.map((filter) => {
-        const selected = filter === active;
-        const href = buildOutgoingOffersPath({ filter, teklif, tur });
+        const selected = !archiveView && filter === active;
+        const href = buildOutgoingOffersPath({
+          filter,
+          teklif,
+          tur,
+          archiveView: false,
+        });
         return (
           <Link
             key={filter}
@@ -48,19 +57,44 @@ export function OutgoingOfferInboxFilters({
           </Link>
         );
       })}
+      <Link
+        href={buildOutgoingOffersPath({
+          filter: active,
+          teklif,
+          tur,
+          archiveView: true,
+        })}
+        role="tab"
+        aria-selected={archiveView}
+        data-inbox-filter="archive"
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold tabular-nums transition ${
+          archiveView
+            ? "bg-teal-800 text-white shadow-[0_8px_18px_rgba(15,118,110,0.18)]"
+            : "border border-teal-900/10 bg-white text-teal-950/70 hover:bg-[#f4faf9]"
+        }`}
+      >
+        <span>Arşiv</span>
+        <span className={archiveView ? "text-white/80" : "text-teal-950/40"}>
+          {archiveCount}
+        </span>
+      </Link>
     </div>
   );
 }
 
 export function OutgoingOfferInboxEmpty({
   filter,
+  archiveView = false,
 }: {
   filter: OutgoingOfferInboxFilter;
+  archiveView?: boolean;
 }) {
   return (
     <div className="talepo-card px-5 py-8 text-center sm:text-left">
       <p className="text-sm leading-6 text-black/50">
-        {OUTGOING_OFFER_INBOX_EMPTY[filter]}
+        {archiveView
+          ? "Arşivde teklif yok."
+          : OUTGOING_OFFER_INBOX_EMPTY[filter]}
       </p>
     </div>
   );
