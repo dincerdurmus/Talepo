@@ -9,6 +9,20 @@ const ACTIVE_REQUEST_STATUSES = [
   "IN_PROGRESS",
 ] as const;
 
+/** Matches dashboard “Yeni teklifler” and gelen-teklifler inbox pending rows. */
+export const NEW_INCOMING_OFFER_STATUSES = ["SUBMITTED", "VIEWED"] as const;
+
+export function newIncomingOffersWhere(userId: string) {
+  return {
+    request: { createdById: userId, deletedAt: null },
+    status: { in: [...NEW_INCOMING_OFFER_STATUSES] },
+  } as const;
+}
+
+export async function countNewIncomingOffers(userId: string) {
+  return prisma.offer.count({ where: newIncomingOffersWhere(userId) });
+}
+
 export async function getPanelSummary(userId: string) {
   const [activeRequests, unreadNotifications, offersOnMyRequests, recentNotifications] =
     await Promise.all([
@@ -22,12 +36,7 @@ export async function getPanelSummary(userId: string) {
       prisma.notification.count({
         where: { userId, ...unreadNotificationWhere },
       }),
-      prisma.offer.count({
-        where: {
-          request: { createdById: userId, deletedAt: null },
-          status: { in: ["SUBMITTED", "VIEWED"] },
-        },
-      }),
+      countNewIncomingOffers(userId),
       prisma.notification.findMany({
         where: { userId },
         orderBy: { createdAt: "desc" },

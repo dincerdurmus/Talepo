@@ -37,6 +37,7 @@ export default async function PanelLayout({
 
   let unreadNotifications = 0;
   let unreadMessages = 0;
+  let newIncomingOffers = 0;
   let features: Record<string, boolean> | undefined;
   let companies: { id: string; name: string }[] = [];
   let workspace: PanelWorkspace = {
@@ -91,6 +92,7 @@ export default async function PanelLayout({
 
       unreadNotifications = summary.unreadNotifications;
       unreadMessages = messageCount;
+      newIncomingOffers = summary.newOffers;
       features = entitlements.features;
 
       // Any active company subject is a company workspace. Plan tier only
@@ -134,6 +136,7 @@ export default async function PanelLayout({
       }}
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}
+      newIncomingOffers={newIncomingOffers}
       dbUnavailable={dbUnavailable}
       features={features}
       workspace={workspace}

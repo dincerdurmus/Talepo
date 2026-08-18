@@ -65,12 +65,45 @@ type PanelShellProps = {
   user: PanelUser;
   unreadNotifications: number;
   unreadMessages: number;
+  newIncomingOffers?: number;
   dbUnavailable?: boolean;
   features?: Partial<Record<FeatureKey, boolean>>;
   workspace?: PanelWorkspace;
   companies?: PanelCompanyOption[];
   children: React.ReactNode;
 };
+
+function formatNavCountBadge(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  return count > 99 ? "99+" : String(count);
+}
+
+function incomingOffersBadgeAria(count: number): string | undefined {
+  if (count <= 0) return undefined;
+  const display = count > 99 ? "99+" : String(count);
+  return `${display} yeni gelen teklif`;
+}
+
+function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
+  return badgeAriaLabel ? `${label}, ${badgeAriaLabel}` : label;
+}
+
+function sidebarNavBadge(
+  href: string,
+  unreadMessages: number,
+  newIncomingOffers: number,
+): { badge?: string; badgeAriaLabel?: string } {
+  if (href === "/panel/mesajlar" && unreadMessages > 0) {
+    return { badge: String(unreadMessages) };
+  }
+  if (href === "/panel/gelen-teklifler") {
+    return {
+      badge: formatNavCountBadge(newIncomingOffers),
+      badgeAriaLabel: incomingOffersBadgeAria(newIncomingOffers),
+    };
+  }
+  return {};
+}
 
 function getInitials(name: string | null | undefined, email: string | null | undefined) {
   const source = name?.trim() || email?.trim() || "K";
@@ -120,6 +153,7 @@ export function PanelShell({
   user,
   unreadNotifications,
   unreadMessages,
+  newIncomingOffers = 0,
   dbUnavailable = false,
   features,
   workspace,
@@ -192,6 +226,7 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
+            newIncomingOffers={newIncomingOffers}
             planTier={planTier}
             features={features}
             collapsed={collapsed}
@@ -414,6 +449,7 @@ function PersonalSidebar({
   pathname,
   navItems,
   unreadMessages,
+  newIncomingOffers,
   planTier,
   collapsed,
   onToggle,
@@ -421,6 +457,7 @@ function PersonalSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
+  newIncomingOffers: number;
   planTier: PlanTierId;
   features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
@@ -540,7 +577,13 @@ function PersonalSidebar({
               </p>
             )}
             <div className="space-y-0.5">
-              {group.items.map((item) => (
+              {group.items.map((item) => {
+                const navBadge = sidebarNavBadge(
+                  item.href,
+                  unreadMessages,
+                  newIncomingOffers,
+                );
+                return (
                 <SidebarLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -548,13 +591,10 @@ function PersonalSidebar({
                   label={item.label}
                   active={isNavActive(pathname, item.href, item.exact)}
                   collapsed={collapsed}
-                  badge={
-                    item.href === "/panel/mesajlar" && unreadMessages > 0
-                      ? String(unreadMessages)
-                      : undefined
-                  }
+                  badge={navBadge.badge}
+                  badgeAriaLabel={navBadge.badgeAriaLabel}
                 />
-              ))}
+              );})}
             </div>
           </div>
         ))}
@@ -597,7 +637,13 @@ function PersonalSidebar({
               </p>
             )}
             <div className="space-y-0.5">
-              {group.items.map((item) => (
+              {group.items.map((item) => {
+                const navBadge = sidebarNavBadge(
+                  item.href,
+                  unreadMessages,
+                  newIncomingOffers,
+                );
+                return (
                 <SidebarLink
                   key={`${item.href}-${item.label}`}
                   href={item.href}
@@ -605,13 +651,10 @@ function PersonalSidebar({
                   label={item.label}
                   active={isNavActive(pathname, item.href, item.exact)}
                   collapsed={collapsed}
-                  badge={
-                    item.href === "/panel/mesajlar" && unreadMessages > 0
-                      ? String(unreadMessages)
-                      : undefined
-                  }
+                  badge={navBadge.badge}
+                  badgeAriaLabel={navBadge.badgeAriaLabel}
                 />
-              ))}
+              );})}
             </div>
           </div>
         ))}
@@ -1023,6 +1066,7 @@ function SidebarLink({
   label,
   active = false,
   badge,
+  badgeAriaLabel,
   collapsed = false,
   tone = "default",
 }: {
@@ -1031,16 +1075,18 @@ function SidebarLink({
   label: string;
   active?: boolean;
   badge?: string;
+  badgeAriaLabel?: string;
   collapsed?: boolean;
   tone?: "default" | "tools";
 }) {
   const isTools = tone === "tools";
+  const linkLabel = sidebarLinkAriaLabel(label, badgeAriaLabel);
 
   return (
     <Link
       href={href}
-      title={label}
-      aria-label={label}
+      title={linkLabel}
+      aria-label={linkLabel}
       aria-current={active ? "page" : undefined}
       className={`group relative flex h-10 items-center rounded-[10px] text-[14.5px] font-medium leading-5 transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 ${
         isTools
@@ -1081,9 +1127,10 @@ function SidebarLink({
           <span className="min-w-0 flex-1 truncate">{label}</span>
           {badge && (
             <span
-              className={`flex h-5 min-w-5 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold ${
-                active ? "bg-white/15 text-white" : "talepo-plan-cta"
+              className={`flex h-5 min-w-5 shrink-0 items-center justify-center rounded-md px-1.5 text-[11px] font-semibold tabular-nums talepo-plan-cta ${
+                active ? "ring-1 ring-teal-900/10" : ""
               }`}
+              aria-hidden="true"
             >
               {badge}
             </span>
