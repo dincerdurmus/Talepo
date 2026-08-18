@@ -42,3 +42,22 @@ export async function createNotification(input: CreateNotificationInput) {
     },
   });
 }
+
+/** One row per recipient + type + offer + exact actionUrl (includes negotiation round). */
+export async function createNotificationIfAbsent(
+  input: CreateNotificationInput,
+) {
+  if (input.offerId && input.actionUrl) {
+    const existing = await prisma.notification.findFirst({
+      where: {
+        userId: input.userId,
+        type: input.type,
+        offerId: input.offerId,
+        actionUrl: input.actionUrl,
+      },
+      select: { id: true },
+    });
+    if (existing) return existing;
+  }
+  return createNotification(input);
+}

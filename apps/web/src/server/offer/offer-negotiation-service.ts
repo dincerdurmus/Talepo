@@ -16,9 +16,13 @@ import {
 } from "@/lib/offer/offer-negotiation";
 import { DomainError, DomainErrorCode } from "@/lib/observability/errors";
 import { prisma } from "@/lib/prisma";
-import { createNotification } from "@/server/notifications/create-notification";
 import { acceptOffer, OfferValidationError } from "@/server/offer/offer-service";
 import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import {
+  notifyNegotiationAccepted,
+  notifyNegotiationProposed,
+  notifyNegotiationRejected,
+} from "@/server/offer/offer-negotiation-notifications";
 
 type Tx = Prisma.TransactionClient;
 
@@ -172,29 +176,14 @@ export async function proposeOfferNegotiation(
       });
     });
 
-    const recipientId =
-      side === "BUYER" ? offer.submittedById : offer.request.createdById;
-    const actionUrl =
-      side === "BUYER" ? "/panel/teklifler" : "/panel/gelen-teklifler";
-    const amountLabel = Number(created.amount).toLocaleString("tr-TR");
-
-    try {
-      await createNotification({
-        userId: recipientId,
-        type: "COUNTER_OFFER_RECEIVED",
-        title: "Yeni karşı teklif",
-        message:
-          side === "BUYER"
-            ? `Alıcı teklifiniz için ${amountLabel} TL önerdi.`
-            : `Teklif veren ${amountLabel} TL karşı teklif gönderdi.`,
-        actionUrl,
-        requestId: offer.requestId,
-        offerId: offer.id,
-        companyId: offer.companyId ?? undefined,
-      });
-    } catch {
-      /* non-blocking */
-    }
+    await notifyNegotiationProposed({
+      actorUserId: userId,
+      actorSide: side,
+      offer,
+      negotiationId: created.id,
+      amount: created.amount,
+      currency: created.currency,
+    });
 
     return created;
   } catch (error) {
@@ -243,26 +232,15 @@ export async function rejectPendingNegotiation(userId: string, offerId: string) 
     return row;
   });
 
-  const recipientId = pending.proposedByUserId;
-  const actionUrl =
-    pending.proposedBySide === "BUYER"
-      ? "/panel/gelen-teklifler"
-      : "/panel/teklifler";
-
-  try {
-    await createNotification({
-      userId: recipientId,
-      type: "COUNTER_OFFER_REJECTED",
-      title: "Karşı teklif reddedildi",
-      message: "Karşı taraf önerinizi kabul etmedi.",
-      actionUrl,
-      requestId: offer.requestId,
-      offerId: offer.id,
-      companyId: offer.companyId ?? undefined,
-    });
-  } catch {
-    /* non-blocking */
-  }
+  await notifyNegotiationRejected({
+    actorUserId: userId,
+    offer,
+    negotiationId: pending.id,
+    proposedByUserId: pending.proposedByUserId,
+    proposedBySide: pending.proposedBySide,
+    amount: pending.amount,
+    currency: pending.currency,
+  });
 
   return { id: pending.id, status: "REJECTED" as const };
 }
@@ -295,21 +273,15 @@ export async function acceptPendingNegotiation(userId: string, offerId: string) 
     negotiationId: pending.id,
   });
 
-  const amountLabel = Number(pending.amount).toLocaleString("tr-TR");
-  try {
-    await createNotification({
-      userId: pending.proposedByUserId,
-      type: "COUNTER_OFFER_ACCEPTED",
-      title: "Karşı teklifiniz kabul edildi",
-      message: `${amountLabel} TL tutarındaki karşı teklif kabul edildi.`,
-      actionUrl: `/panel/mesajlar/${result.conversationId}`,
-      requestId: offer.requestId,
-      offerId: offer.id,
-      companyId: offer.companyId ?? undefined,
-    });
-  } catch {
-    /* non-blocking */
-  }
+  await notifyNegotiationAccepted({
+    actorUserId: userId,
+    offer,
+    negotiationId: pending.id,
+    proposedByUserId: pending.proposedByUserId,
+    amount: pending.amount,
+    currency: pending.currency,
+    conversationId: result.conversationId,
+  });
 
   return result;
 }

@@ -78,7 +78,27 @@ console.log("\n=== DESTINATION CONTRACT ===\n");
       requestId: "req1",
       offerId: "off1",
       companyId: null,
-    }) === "/panel/teklifler",
+    }) == null,
+  );
+  check(
+    "counter received missing actionUrl stays on bildirimler",
+    resolveNotificationDestination({
+      type: "COUNTER_OFFER_RECEIVED",
+      actionUrl: null,
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/bildirimler",
+  );
+  check(
+    "counter offer deep link with query is kept",
+    resolveNotificationDestination({
+      type: "COUNTER_OFFER_RECEIVED",
+      actionUrl: "/panel/teklifler?teklif=off1&tur=neg1",
+      requestId: "req1",
+      offerId: "off1",
+      companyId: null,
+    }) === "/panel/teklifler?teklif=off1&tur=neg1",
   );
   check(
     "counter actionUrl wins over fallback",
