@@ -1,0 +1,2 @@
+"use client";
+export function AdminPrivacyNotice({ sensitive }: { sensitive: boolean }) { return <div className="mt-4 rounded-2xl border border-white/[.08] bg-white/[.03] px-4 py-3 text-xs text-white/60"><strong className="text-white/80">Yetki görünürlüğü:</strong> {sensitive ? "Kullanıcı, firma ve iletişim bilgilerini yetkiniz kapsamında görebilir; ekran salt okunurdur." : "Analist olarak anonim kullanıcı ve firma verilerini, metrikleri ve trendleri görebilirsiniz. Kişi, iletişim, hassas firma ayrıntıları ve yönetim işlemleri gizlidir."}</div>; }

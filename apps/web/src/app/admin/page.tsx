@@ -14,6 +14,10 @@ import {
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
 import { AdminSecurityGate } from "@/components/admin/AdminSecurityGate";
 import { AdminOperationsCenter } from "@/components/admin/AdminOperationsCenter";
+import { DateRangeComparison } from "@/components/admin/DateRangeComparison";
+import { AdminHealthMeta } from "@/components/admin/AdminHealthMeta";
+import { AdminChartInsights } from "@/components/admin/AdminChartInsights";
+import { AdminPrivacyNotice } from "@/components/admin/AdminPrivacyNotice";
 import { Header } from "@/components/layout/Header";
 import { prisma } from "@/lib/prisma";
 import {
@@ -103,16 +107,22 @@ export default async function AdminPage() {
           <div className="flex items-center gap-2 rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.07] px-4 py-3 text-sm text-emerald-100"><span className="h-2 w-2 rounded-full bg-emerald-300" /> Sistem aktif</div>
         </div>
 
+        <AdminPrivacyNotice sensitive={canSeeSensitive} />
+
         <section className="my-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Metric icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" />
-          <Metric icon={Building2} label="Şirket" value={companyCount} tone="cyan" />
-          <Metric icon={FileText} label="Talep" value={requestCount} tone="amber" />
-          <Metric icon={HandCoins} label="Teklif" value={offerCount} tone="violet" />
+          <Metric href="/admin/users" icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" />
+          <Metric href="/admin/companies" icon={Building2} label="Şirket" value={companyCount} tone="cyan" />
+          <Metric href="/admin/requests" icon={FileText} label="Talep" value={requestCount} tone="amber" />
+          <Metric href="/admin/offers" icon={HandCoins} label="Teklif" value={offerCount} tone="violet" />
         </section>
 
         <AdminUsersTable initialUsers={serializedUsers} permissions={permissions} />
 
         <AdminOperationsCenter permissions={permissions} />
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <DateRangeComparison /> : null}
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminHealthMeta /> : null}
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminChartInsights /> : null}
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/health" className="mt-5 inline-flex items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20">Sağlık merkezini aç</Link> : null}
 
         <div className="mt-5 flex items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-5 py-4 text-xs text-white/35"><Activity className="h-4 w-4 text-emerald-300/60" /> Değişiklikler yalnızca sunucuda doğrulanan admin oturumuyla uygulanır.</div>
       </main>
@@ -130,7 +140,7 @@ function maskMembership(value: string) {
   return `***${value.slice(-4)}`;
 }
 
-function Metric({ icon: Icon, label, value, tone }: { icon: typeof Users; label: string; value: number; tone: "emerald" | "cyan" | "amber" | "violet" }) {
+function Metric({ href, icon: Icon, label, value, tone }: { href: string; icon: typeof Users; label: string; value: number; tone: "emerald" | "cyan" | "amber" | "violet" }) {
   const colors = { emerald: "bg-emerald-300/10 text-emerald-200", cyan: "bg-cyan-300/10 text-cyan-200", amber: "bg-amber-300/10 text-amber-200", violet: "bg-violet-300/10 text-violet-200" };
-  return <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.045] p-5"><div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors[tone]}`}><Icon className="h-5 w-5" /></div><p className="mt-5 text-sm text-white/40">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight">{value}</p></div>;
+  return <Link href={href} className="group rounded-[24px] border border-white/[0.08] bg-white/[0.045] p-5 transition hover:-translate-y-0.5 hover:border-emerald-300/30 hover:bg-white/[0.07]"><div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors[tone]}`}><Icon className="h-5 w-5" /></div><p className="mt-5 text-sm text-white/40 group-hover:text-white/65">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight">{value}</p></Link>;
 }

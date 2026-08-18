@@ -1,0 +1,17 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+
+type Offer = { id: string; title: string | null; amount: string; status: string; createdAt: string; submittedBy: { id: string; name: string | null; email: string | null }; conversation: { messages: Array<{ id: string; content: string | null; createdAt: string; sender: { name: string | null; email: string | null } }> } | null };
+const statusLabels: Record<string, string> = { DRAFT: "Taslak", SUBMITTED: "Gönderildi", ACCEPTED: "Kabul edildi", REJECTED: "Reddedildi", WITHDRAWN: "Geri çekildi", COMPLETED: "Tamamlandı" };
+
+export function RequestOffersDrawer({ requestTitle, offers }: { requestTitle: string; offers: Offer[] }) {
+  const [open, setOpen] = useState(false);
+  return <>
+    <button type="button" onClick={() => offers.length && setOpen(true)} disabled={!offers.length} className={offers.length ? "cursor-pointer font-semibold text-emerald-200 underline-offset-4 hover:text-emerald-100 hover:underline" : "text-white/55"}>{offers.length}</button>
+    {open ? <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Talep teklifleri"><button type="button" aria-label="Paneli kapat" onClick={() => setOpen(false)} className="absolute inset-0 cursor-pointer bg-black/60" /><aside className="absolute right-0 top-0 h-full w-full max-w-lg overflow-y-auto border-l border-white/10 bg-[#0b1c18] p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-[.18em] text-emerald-200/60">Talep teklifleri</p><h2 className="mt-2 text-2xl font-semibold">{requestTitle}</h2></div><button type="button" onClick={() => setOpen(false)} className="cursor-pointer rounded-lg px-3 py-2 text-white/60 hover:bg-white/10 hover:text-white" aria-label="Kapat">✕</button></div><div className="mt-6 grid gap-3">{offers.map((offer) => <OfferCard key={offer.id} offer={offer} />)}</div></aside></div> : null}
+  </>;
+}
+
+function OfferCard({ offer }: { offer: Offer }) { const [historyOpen, setHistoryOpen] = useState(false); const messages = offer.conversation?.messages ?? []; return <div className="rounded-2xl border border-white/10 bg-white/[.04] p-4"><p className="font-semibold text-white/85">{offer.title ?? "Teklif"}</p><p className="mt-2 text-sm text-emerald-100">{offer.amount}</p><Link href={`/admin/users/${offer.submittedBy.id}`} className="mt-2 inline-block text-sm text-emerald-200 underline-offset-4 hover:underline">{offer.submittedBy.name ?? offer.submittedBy.email ?? "Teklif veren"}</Link><p className="mt-1 text-xs text-white/50">{statusLabels[offer.status] ?? offer.status} · {offer.createdAt}</p><button type="button" onClick={() => setHistoryOpen((value) => !value)} className="mt-4 flex w-full cursor-pointer items-center justify-between border-t border-white/10 pt-3 text-left text-sm font-medium text-white/75 hover:text-white"><span>Konuşma geçmişi</span><span>{historyOpen ? "−" : "+"}</span></button>{historyOpen ? <div className="mt-3 grid gap-2">{messages.length ? messages.map((message) => <div key={message.id} className="rounded-xl bg-black/20 p-3"><p className="text-xs text-emerald-100/70">{message.sender.name ?? message.sender.email ?? "Kullanıcı"} · {message.createdAt}</p><p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.content ?? "(İçerik yok)"}</p></div>) : <p className="rounded-xl border border-dashed border-white/15 p-3 text-sm text-white/50">Henüz konuşma geçmişi yok.</p>}</div> : null}</div>; }
