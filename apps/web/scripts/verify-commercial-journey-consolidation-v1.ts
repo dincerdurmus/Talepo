@@ -44,6 +44,7 @@ const actions = read("src/components/panel/OfferActions.tsx");
 const existing = read("src/components/panel/OfferExistingStatus.tsx");
 const composer = read("src/components/panel/MessageComposer.tsx");
 const gelen = read("src/app/panel/gelen-teklifler/page.tsx");
+const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
 const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
 const talepler = read("src/app/panel/talepler/[id]/page.tsx");
@@ -137,7 +138,11 @@ console.log("\n=== ACCEPT HIERARCHY / PRICE LABELS ===\n");
   check("pending warning copy", actions.includes("anlaşılan tutar o tutar olur"));
   check("teklifler dual label Anlaşılan", teklifler.includes("Anlaşılan"));
   check("teklifler dual label İlk teklif", teklifler.includes("İlk teklif"));
-  check("gelen dual pending amount", gelen.includes("Bekleyen karşı teklif"));
+  check(
+    "gelen dual pending amount",
+    gelen.includes("Bekleyen karşı teklif") ||
+      incomingCard.includes("Bekleyen karşı teklif"),
+  );
   check("panel min-h-11", panel.includes("min-h-11") && actions.includes("min-h-11"));
 }
 

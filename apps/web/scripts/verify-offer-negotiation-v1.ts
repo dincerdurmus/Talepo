@@ -60,6 +60,7 @@ const offerRoute = read("src/app/api/offers/[id]/route.ts");
 const panel = read("src/components/panel/OfferNegotiationPanel.tsx");
 const actions = read("src/components/panel/OfferActions.tsx");
 const gelen = read("src/app/panel/gelen-teklifler/page.tsx");
+const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
 const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
 const intelligence = read("src/server/monetization/offer-intelligence.ts");
@@ -302,7 +303,11 @@ console.log("\n=== OFFER INTELLIGENCE / RADAR / ENTITLEMENT ===\n");
 console.log("\n=== UI SURFACES ===\n");
 {
   check("reusable panel exists", panel.includes("export function OfferNegotiationPanel"));
-  check("gelen uses panel", gelen.includes("OfferNegotiationPanel"));
+  check(
+    "gelen uses panel",
+    gelen.includes("OfferNegotiationPanel") ||
+      incomingCard.includes("OfferNegotiationPanel"),
+  );
   check("teklifler uses panel", teklifler.includes("OfferNegotiationPanel"));
   check("request detail uses panel", taleplerim.includes("OfferNegotiationPanel"));
   check("original amount labelled", panel.includes("İlk teklif"));

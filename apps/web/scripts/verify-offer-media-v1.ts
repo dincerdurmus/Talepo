@@ -141,6 +141,7 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   const form = read("src/components/panel/OfferForm.tsx");
   const picker = read("src/components/panel/OfferPhotoPicker.tsx");
   const incoming = read("src/app/panel/gelen-teklifler/page.tsx");
+  const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
   const mine = read("src/app/panel/teklifler/page.tsx");
   const requestDetail = read("src/app/panel/taleplerim/[id]/page.tsx");
   const intelligenceLib = read("src/lib/monetization/offer-intelligence.ts");
@@ -203,7 +204,12 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   );
   check("39 photos optional on form", form.includes("deferMediaFinalize: photos.length > 0"));
   check("40 retry keeps created offer", form.includes("createdOfferId"));
-  check("41 Gelen teklifler include media ids", incoming.includes("OfferMediaThumbStrip"));
+  const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
+  check(
+    "41 Gelen teklifler include media ids",
+    incoming.includes("OfferMediaThumbStrip") ||
+      incomingCard.includes("OfferMediaThumbStrip"),
+  );
   check("42 Tekliflerim include media ids", mine.includes("OfferMediaThumbStrip"));
   check("43 request detail include media", requestDetail.includes("OfferMediaThumbStrip"));
   check(
