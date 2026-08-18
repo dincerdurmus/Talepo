@@ -33,6 +33,7 @@ enum AdminAuditAction {
   MFA_DISABLED
   MODERATION_CASE_CREATED
   MODERATION_CASE_UPDATED
+  DATA_EXPORTED
 }
 
 enum ModerationCaseStatus {

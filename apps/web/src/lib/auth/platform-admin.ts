@@ -5,7 +5,7 @@ const PERMISSIONS: Record<PlatformRole, readonly AdminPermission[]> = {
   USER: [],
   SUPPORT: ["admin.view", "users.view", "moderation.view"],
   MODERATOR: ["admin.view", "users.view", "moderation.view", "moderation.manage"],
-  ANALYST: ["admin.view", "analytics.view"],
+  ANALYST: ["admin.view", "users.view", "analytics.view"],
   ADMIN: ["admin.view", "users.view", "users.manage", "moderation.view", "moderation.manage", "analytics.view"],
   SUPER_ADMIN: ["admin.view", "users.view", "users.manage", "roles.manage", "billing.manage", "moderation.view", "moderation.manage", "analytics.view", "audit.view", "sensitive.view"],
 };
