@@ -1,5 +1,5 @@
 /**
- * Incoming offer card redesign + buyer bargain copy.
+ * Incoming offer card + bargain copy.
  * Run: npx tsx scripts/verify-incoming-offer-card-v1.ts
  */
 import { readFileSync } from "node:fs";
@@ -27,6 +27,7 @@ function read(rel: string) {
 }
 
 const page = read("src/app/panel/gelen-teklifler/page.tsx");
+const group = read("src/components/panel/IncomingOfferCompareGroup.tsx");
 const card = read("src/components/panel/IncomingOfferCard.tsx");
 const panel = read("src/components/panel/OfferNegotiationPanel.tsx");
 const actions = read("src/components/panel/OfferActions.tsx");
@@ -36,17 +37,23 @@ const service = read("src/server/offer/offer-negotiation-service.ts");
 console.log("\n=== STRUCTURE ===\n");
 {
   check("card is client component", card.includes('"use client"'));
-  check("page uses IncomingOfferCard", page.includes("IncomingOfferCard"));
-  check("request eyebrow Talebiniz", page.includes("Talebiniz"));
-  check("compact request counters", page.includes("yanıt bekliyor"));
+  check(
+    "page uses compare group",
+    page.includes("IncomingOfferCompareGroup") && page.includes("IncomingOfferCard"),
+  );
+  check("request eyebrow Sizin talebiniz", group.includes("Sizin talebiniz"));
+  check("compact request counters", group.includes("yanıt bekliyor"));
   check("page pill removed", !page.includes("bekleyen ·"));
-  check("four-section card seller header", card.includes("firmName"));
+  check("seller header firmName", card.includes("firmName"));
   check("status Yeni", card.includes('SUBMITTED: "Yeni"'));
   check("status Yanıt bekliyor", card.includes('VIEWED: "Yanıt bekliyor"'));
   check("status Pazarlıkta", card.includes('"Pazarlıkta"'));
   check("price caption İlk teklif", card.includes('"İlk teklif"'));
-  check("thin Teklif detayı", card.includes("Teklif detayı"));
-  check("no huge completeness box", !card.includes("rounded-xl border border-teal-900/[0.06] bg-white px-3.5 py-3"));
+  check("thin Teklif kapsamı", card.includes("Teklif kapsamı"));
+  check(
+    "no huge completeness box",
+    !card.includes("rounded-xl border border-teal-900/[0.06] bg-white px-3.5 py-3"),
+  );
   check("action bar OfferActions", card.includes("<OfferActions"));
 }
 
@@ -66,7 +73,7 @@ console.log("\n=== COPY ===\n");
 console.log("\n=== ACTIONS ===\n");
 {
   check("accept primary teal", actions.includes("bg-[#0f766e]"));
-  check("bargain amber", actions.includes("bg-amber-50") && actions.includes("text-amber-950"));
+  check("bargain amber", actions.includes("border-amber") && actions.includes("text-amber-950"));
   check("reject tertiary", actions.includes("Teklifi reddet"));
   check("actions only current buyer turn", card.includes("showActions") && card.includes("!myPending"));
   check("composer opens from bargain", card.includes("onBargain={() => setComposerOpen(true)}"));
@@ -79,9 +86,9 @@ console.log("\n=== ACTIONS ===\n");
 console.log("\n=== A11Y / RESPONSIVE ===\n");
 {
   check("aria-label Pazarlık yap", actions.includes('aria-label="Pazarlık yap"'));
-  check("full-width mobile buttons", actions.includes("w-full") && actions.includes("sm:w-auto"));
+  check("full-width mobile buttons", actions.includes("w-full"));
   check("min 44px", actions.includes("min-h-11") && panel.includes("min-h-11"));
-  check("price stacks on mobile", card.includes("sm:flex-row sm:items-start"));
+  check("compare rail stacks on mobile", card.includes("lg:grid-cols-[7.75rem_minmax(0,1fr)]"));
 }
 
 if (fail > 0) {

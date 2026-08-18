@@ -204,11 +204,13 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   );
   check("39 photos optional on form", form.includes("deferMediaFinalize: photos.length > 0"));
   check("40 retry keeps created offer", form.includes("createdOfferId"));
-  const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
+  const incomingGallery = read("src/components/panel/IncomingOfferGallery.tsx");
   check(
     "41 Gelen teklifler include media ids",
-    incoming.includes("OfferMediaThumbStrip") ||
-      incomingCard.includes("OfferMediaThumbStrip"),
+    incoming.includes("select: { id: true }") &&
+      (incoming.includes("OfferMediaThumbStrip") ||
+        incomingCard.includes("IncomingOfferGallery") ||
+        incomingGallery.includes("offerMediaSrc")),
   );
   check("42 Tekliflerim include media ids", mine.includes("OfferMediaThumbStrip"));
   check("43 request detail include media", requestDetail.includes("OfferMediaThumbStrip"));

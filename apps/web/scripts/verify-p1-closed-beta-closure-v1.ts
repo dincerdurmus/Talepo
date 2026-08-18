@@ -66,9 +66,9 @@ console.log("=== P1-1 BUYER OFFER COPY ===\n");
     !compare.includes("Eksik:"),
   );
   check(
-    "buyer incoming uses Teklif detayı not missing-field list",
-    (buyerPage.includes("Teklif detayı") || incomingCard.includes("Teklif detayı")) &&
-      !buyerPage.includes("completeness.missing") &&
+    "buyer incoming uses scope label not missing-field list",
+    (incomingCard.includes("Teklif kapsamı") || incomingCard.includes("Teklif detayı")) &&
+      !buyerPage.includes("Eksik:") &&
       !incomingCard.includes("Eksik:"),
   );
   check(
