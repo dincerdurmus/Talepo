@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
@@ -13,6 +14,10 @@ import {
   OfferIntelligenceHub,
   type OfferIntelligenceReadyItem,
 } from "@/components/panel/OfferIntelligenceHub";
+import {
+  OutgoingOfferInboxEmpty,
+  OutgoingOfferInboxFilters,
+} from "@/components/panel/OutgoingOfferInboxFilters";
 import { OutgoingOfferCompareGroup } from "@/components/panel/OutgoingOfferCompareGroup";
 import type { OutgoingOfferCardData } from "@/components/panel/OutgoingOfferCard";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
@@ -26,6 +31,15 @@ import {
   offerNegotiationListInclude,
   toOfferNegotiationDtos,
 } from "@/lib/offer/offer-negotiation";
+import {
+  OUTGOING_OFFER_INBOX_EMPTY,
+  buildOutgoingOffersPath,
+  classifyOutgoingOfferInbox,
+  countOutgoingOfferInbox,
+  offerMatchesOutgoingInboxFilter,
+  parseOutgoingOfferInboxDurum,
+  resolveOutgoingOfferInboxFilter,
+} from "@/lib/offer/outgoing-offer-inbox";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
@@ -48,14 +62,18 @@ export default async function OffersPage({
     gonderildi?: string;
     guncellendi?: string;
     teklif?: string;
+    tur?: string;
+    durum?: string;
   }>;
 }) {
   const user = await requireUser();
   const workspace = await getCompanyWorkspace(user.id);
-  const { gonderildi, guncellendi, teklif } = await searchParams;
+  const { gonderildi, guncellendi, teklif, tur, durum } = await searchParams;
   const justSubmitted = gonderildi === "1";
   const justUpdated = guncellendi === "1";
   const highlightOfferId = teklif?.trim() || null;
+  const highlightNegotiationId = tur?.trim() || null;
+  const parsedDurum = parseOutgoingOfferInboxDurum(durum);
 
   const offers = await prisma.offer.findMany({
     where: workspace
@@ -99,19 +117,42 @@ export default async function OffersPage({
     take: 50,
   });
 
-  const negotiating = offers.filter(
-    (o) =>
-      ["SUBMITTED", "VIEWED"].includes(o.status) &&
-      o.negotiations.some((row) => row.status === "PENDING"),
-  ).length;
+  const highlightOffer = highlightOfferId
+    ? (offers.find((row) => row.id === highlightOfferId) ?? null)
+    : null;
+  const resolvedFilter = resolveOutgoingOfferInboxFilter({
+    requested: parsedDurum.filter,
+    explicit: parsedDurum.explicit,
+    highlightBucket: highlightOffer
+      ? classifyOutgoingOfferInbox(highlightOffer)
+      : null,
+  });
+  if (resolvedFilter.redirect) {
+    redirect(
+      buildOutgoingOffersPath({
+        filter: resolvedFilter.filter,
+        teklif: highlightOfferId,
+        tur: highlightNegotiationId,
+        gonderildi: justSubmitted ? "1" : null,
+        guncellendi: justUpdated ? "1" : null,
+      }),
+    );
+  }
+
+  const activeFilter = resolvedFilter.filter;
+  const inboxCounts = countOutgoingOfferInbox(offers);
+  const listed = offers.filter((offer) =>
+    offerMatchesOutgoingInboxFilter(
+      classifyOutgoingOfferInbox(offer),
+      activeFilter,
+    ),
+  );
 
   const counts = {
-    open: offers.filter((o) =>
-      ["SUBMITTED", "VIEWED"].includes(o.status),
-    ).length,
-    negotiating,
-    accepted: offers.filter((o) => o.status === "ACCEPTED").length,
-    rejected: offers.filter((o) => o.status === "REJECTED").length,
+    open: inboxCounts.sent,
+    negotiating: inboxCounts.negotiating,
+    accepted: inboxCounts.accepted,
+    rejected: inboxCounts.rejected,
   };
 
   const pageTitle = workspace ? "Tekliflerimiz" : "Tekliflerim";
@@ -203,24 +244,27 @@ export default async function OffersPage({
         {(
           [
             {
-              label: "Açık",
+              filter: "sent" as const,
+              label: "Gönderilen",
               value: counts.open,
-              hint: "Bekleyen teklifler",
+              hint: "Pazarlık yok, yanıt bekleniyor",
               icon: CircleDot,
               wrap: "border-teal-900/10 bg-[linear-gradient(160deg,#f3faf8_0%,#e8f4f1_55%,#f7fbfa_100%)] shadow-[0_10px_24px_rgba(15,118,110,0.08)]",
               iconWrap: "bg-teal-800/10 text-teal-800",
               valueClass: "text-teal-950",
             },
             {
+              filter: "negotiating" as const,
               label: "Pazarlık",
               value: counts.negotiating,
-              hint: "Karşı teklif turları",
+              hint: "Açık pazarlık turları",
               icon: Handshake,
               wrap: "border-amber-200/70 bg-[linear-gradient(160deg,#fffbeb_0%,#fef3c7_55%,#fff8eb_100%)] shadow-[0_10px_24px_rgba(217,119,6,0.1)]",
               iconWrap: "bg-amber-500/15 text-amber-800",
               valueClass: "text-amber-950",
             },
             {
+              filter: "accepted" as const,
               label: "Kabul",
               value: counts.accepted,
               hint: "Sonuçlanan kazanç",
@@ -230,9 +274,10 @@ export default async function OffersPage({
               valueClass: "text-emerald-950",
             },
             {
+              filter: "rejected" as const,
               label: "Red",
               value: counts.rejected,
-              hint: "Kapanmış teklifler",
+              hint: "Alıcı tarafından reddedildi",
               icon: ThumbsDown,
               wrap: "border-rose-200/70 bg-[linear-gradient(160deg,#fff1f2_0%,#ffe4e6_55%,#fff7f7_100%)] shadow-[0_10px_24px_rgba(225,29,72,0.08)]",
               iconWrap: "bg-rose-500/12 text-rose-800",
@@ -241,10 +286,18 @@ export default async function OffersPage({
           ] as const
         ).map((item) => {
           const Icon = item.icon;
+          const selected = activeFilter === item.filter;
           return (
-            <div
+            <Link
               key={item.label}
-              className={`relative overflow-hidden rounded-[18px] border p-4 ${item.wrap}`}
+              href={buildOutgoingOffersPath({
+                filter: item.filter,
+                teklif: highlightOfferId,
+                tur: highlightNegotiationId,
+              })}
+              className={`relative overflow-hidden rounded-[18px] border p-4 text-left transition hover:-translate-y-0.5 ${item.wrap} ${
+                selected ? "ring-2 ring-teal-800/25" : ""
+              }`}
             >
               <div
                 aria-hidden
@@ -270,10 +323,17 @@ export default async function OffersPage({
                   <Icon className="h-4 w-4" strokeWidth={2.25} />
                 </span>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
+
+      <OutgoingOfferInboxFilters
+        active={activeFilter}
+        counts={inboxCounts}
+        teklif={highlightOfferId}
+        tur={highlightNegotiationId}
+      />
 
       <OfferIntelligenceHub
         mode={intelligenceHubMode}
@@ -282,14 +342,16 @@ export default async function OffersPage({
 
       {offers.length === 0 ? (
         <Gate
-          title="Henüz teklif yok"
+          title={OUTGOING_OFFER_INBOX_EMPTY.all}
           body="Keşiften uygun taleplere teklif verin; burada talep ve teklifiniz yan yana görünür."
           href="/panel/talepler"
           cta="Talepleri keşfet"
         />
+      ) : listed.length === 0 ? (
+        <OutgoingOfferInboxEmpty filter={activeFilter} />
       ) : (
         <section className="grid gap-6">
-          {offers.map((offer) => {
+          {listed.map((offer) => {
             const canRevise = ["SUBMITTED", "VIEWED"].includes(offer.status);
             const completeness = scoreOfferCompleteness({
               amount: offer.amount,

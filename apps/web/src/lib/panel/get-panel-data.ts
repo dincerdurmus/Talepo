@@ -1,5 +1,6 @@
-import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { unreadNotificationWhere } from "@/lib/notifications/unread";
+import { sellerActionableOutgoingOffersWhere } from "@/lib/offer/outgoing-offer-inbox";
+import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 
 const ACTIVE_REQUEST_STATUSES = [
@@ -21,6 +22,15 @@ export function newIncomingOffersWhere(userId: string) {
 
 export async function countNewIncomingOffers(userId: string) {
   return prisma.offer.count({ where: newIncomingOffersWhere(userId) });
+}
+
+export async function countSellerActionableOutgoingOffersForScope(scope: {
+  userId: string;
+  companyId: string | null;
+}) {
+  return prisma.offer.count({
+    where: sellerActionableOutgoingOffersWhere(scope),
+  });
 }
 
 export async function getPanelSummary(userId: string) {

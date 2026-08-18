@@ -38,7 +38,10 @@ import {
   PANEL_NAV_ITEMS,
   PANEL_NOTIFICATIONS_HREF,
 } from "@/components/panel/panel-nav";
-import type { FeatureKey } from "@/lib/membership/entitlements";
+import {
+  formatPanelCountBadge,
+  sellerPendingNegotiationAria,
+} from "@/lib/offer/outgoing-offer-inbox";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
 import type { PlanTierId } from "@/lib/membership/plans";
 
@@ -66,6 +69,7 @@ type PanelShellProps = {
   unreadNotifications: number;
   unreadMessages: number;
   newIncomingOffers?: number;
+  pendingOutgoingNegotiations?: number;
   dbUnavailable?: boolean;
   features?: Partial<Record<FeatureKey, boolean>>;
   workspace?: PanelWorkspace;
@@ -74,8 +78,7 @@ type PanelShellProps = {
 };
 
 function formatNavCountBadge(count: number): string | undefined {
-  if (count <= 0) return undefined;
-  return count > 99 ? "99+" : String(count);
+  return formatPanelCountBadge(count);
 }
 
 function incomingOffersBadgeAria(count: number): string | undefined {
@@ -92,6 +95,7 @@ function sidebarNavBadge(
   href: string,
   unreadMessages: number,
   newIncomingOffers: number,
+  pendingOutgoingNegotiations: number,
 ): { badge?: string; badgeAriaLabel?: string } {
   if (href === "/panel/mesajlar" && unreadMessages > 0) {
     return { badge: String(unreadMessages) };
@@ -100,6 +104,12 @@ function sidebarNavBadge(
     return {
       badge: formatNavCountBadge(newIncomingOffers),
       badgeAriaLabel: incomingOffersBadgeAria(newIncomingOffers),
+    };
+  }
+  if (href === "/panel/teklifler") {
+    return {
+      badge: formatNavCountBadge(pendingOutgoingNegotiations),
+      badgeAriaLabel: sellerPendingNegotiationAria(pendingOutgoingNegotiations),
     };
   }
   return {};
@@ -154,6 +164,7 @@ export function PanelShell({
   unreadNotifications,
   unreadMessages,
   newIncomingOffers = 0,
+  pendingOutgoingNegotiations = 0,
   dbUnavailable = false,
   features,
   workspace,
@@ -212,6 +223,7 @@ export function PanelShell({
             pathname={pathname}
             navItems={navItems}
             unreadMessages={unreadMessages}
+            pendingOutgoingNegotiations={pendingOutgoingNegotiations}
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
             planTier={planTier}
@@ -227,6 +239,7 @@ export function PanelShell({
             navItems={navItems}
             unreadMessages={unreadMessages}
             newIncomingOffers={newIncomingOffers}
+            pendingOutgoingNegotiations={pendingOutgoingNegotiations}
             planTier={planTier}
             features={features}
             collapsed={collapsed}
@@ -375,6 +388,10 @@ export function PanelShell({
               icon={FileText}
               label="Tekliflerim"
               active={isNavActive(pathname, "/panel/teklifler")}
+              badge={formatNavCountBadge(pendingOutgoingNegotiations)}
+              badgeAriaLabel={sellerPendingNegotiationAria(
+                pendingOutgoingNegotiations,
+              )}
             />
           ) : (
             <MobileLink
@@ -450,6 +467,7 @@ function PersonalSidebar({
   navItems,
   unreadMessages,
   newIncomingOffers,
+  pendingOutgoingNegotiations,
   planTier,
   collapsed,
   onToggle,
@@ -458,6 +476,7 @@ function PersonalSidebar({
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
   newIncomingOffers: number;
+  pendingOutgoingNegotiations: number;
   planTier: PlanTierId;
   features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
@@ -582,6 +601,7 @@ function PersonalSidebar({
                   item.href,
                   unreadMessages,
                   newIncomingOffers,
+                  pendingOutgoingNegotiations,
                 );
                 return (
                 <SidebarLink
@@ -642,6 +662,7 @@ function PersonalSidebar({
                   item.href,
                   unreadMessages,
                   newIncomingOffers,
+                  pendingOutgoingNegotiations,
                 );
                 return (
                 <SidebarLink
@@ -668,6 +689,7 @@ function CorporateSidebar({
   pathname,
   navItems,
   unreadMessages,
+  pendingOutgoingNegotiations,
   companyName,
   companyLogoUrl,
   planTier,
@@ -680,6 +702,7 @@ function CorporateSidebar({
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
   unreadMessages: number;
+  pendingOutgoingNegotiations: number;
   companyName: string;
   companyLogoUrl?: string | null;
   planTier: PlanTierId;
@@ -800,14 +823,23 @@ function CorporateSidebar({
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isNavActive(pathname, item.href, item.exact);
-          const hasBadge =
-            item.href === "/panel/mesajlar" && unreadMessages > 0;
+          const navBadge = sidebarNavBadge(
+            item.href,
+            unreadMessages,
+            0,
+            pendingOutgoingNegotiations,
+          );
+          const hasBadge = Boolean(navBadge.badge);
+          const linkLabel = sidebarLinkAriaLabel(
+            item.label,
+            navBadge.badgeAriaLabel,
+          );
           return (
             <Link
               key={`${item.href}-${item.label}`}
               href={item.href}
-              title={item.label}
-              aria-label={item.label}
+              title={linkLabel}
+              aria-label={linkLabel}
               aria-current={active ? "page" : undefined}
               className={`relative flex items-center rounded-xl text-sm transition ${
                 collapsed
@@ -830,13 +862,14 @@ function CorporateSidebar({
               )}
               {hasBadge && !collapsed && (
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
                     active
                       ? "bg-white/20 text-white"
                       : "bg-white/10 text-white/80"
                   }`}
+                  aria-hidden="true"
                 >
-                  {unreadMessages}
+                  {navBadge.badge}
                 </span>
               )}
               {hasBadge && collapsed && (
@@ -1172,30 +1205,43 @@ function MobileLink({
   label,
   active = false,
   badge,
+  badgeAriaLabel,
 }: {
   href: string;
   icon: LucideIcon;
   label: string;
   active?: boolean;
-  badge?: number;
+  badge?: number | string;
+  badgeAriaLabel?: string;
 }) {
+  const visibleBadge =
+    badge !== undefined && badge !== 0 && badge !== "0";
+  const displayBadge =
+    typeof badge === "number" ? formatNavCountBadge(badge) : badge;
+  const linkLabel = sidebarLinkAriaLabel(label, badgeAriaLabel);
+
   return (
     <Link
       href={href}
-      aria-label={label}
+      aria-label={linkLabel}
       aria-current={active ? "page" : undefined}
       className={`relative flex min-h-11 min-w-14 max-w-[4.75rem] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium leading-tight sm:text-[11px] ${
         active ? "" : "text-teal-950/35"
       }`}
       style={active ? { color: "var(--plan-primary)" } : undefined}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <span className="relative">
+        <Icon className="h-5 w-5 shrink-0" />
+        {visibleBadge && displayBadge && (
+          <span
+            className="talepo-plan-cta absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-semibold tabular-nums shadow-none"
+            aria-hidden="true"
+          >
+            {displayBadge}
+          </span>
+        )}
+      </span>
       <span className="max-w-full truncate">{label}</span>
-      {badge !== undefined && badge > 0 && (
-        <span className="talepo-plan-cta absolute right-1 top-0 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] shadow-none">
-          {badge}
-        </span>
-      )}
     </Link>
   );
 }

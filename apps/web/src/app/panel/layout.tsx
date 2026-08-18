@@ -7,6 +7,7 @@ import {
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import {
+  countSellerActionableOutgoingOffersForScope,
   getPanelSummary,
   getUnreadMessageCount,
 } from "@/lib/panel/get-panel-data";
@@ -38,6 +39,7 @@ export default async function PanelLayout({
   let unreadNotifications = 0;
   let unreadMessages = 0;
   let newIncomingOffers = 0;
+  let pendingOutgoingNegotiations = 0;
   let features: Record<string, boolean> | undefined;
   let companies: { id: string; name: string }[] = [];
   let workspace: PanelWorkspace = {
@@ -98,19 +100,27 @@ export default async function PanelLayout({
       // Any active company subject is a company workspace. Plan tier only
       // gates features (envanter etc.), not whether the firm appears in UI.
       const inCompanyWorkspace = entitlements.subject.type === "company";
+      const companyId = inCompanyWorkspace ? entitlements.subject.id : null;
 
-      let companyLogoUrl: string | null = null;
-      if (inCompanyWorkspace && entitlements.subject.id) {
-        const companyMedia = await prisma.company.findUnique({
-          where: { id: entitlements.subject.id },
-          select: { logoUrl: true },
-        });
-        companyLogoUrl = companyMedia?.logoUrl ?? null;
-      }
+      const [companyMedia, pendingCount] = await Promise.all([
+        companyId
+          ? prisma.company.findUnique({
+              where: { id: companyId },
+              select: { logoUrl: true },
+            })
+          : Promise.resolve(null),
+        countSellerActionableOutgoingOffersForScope({
+          userId: user.id,
+          companyId,
+        }),
+      ]);
+
+      pendingOutgoingNegotiations = pendingCount;
+      const companyLogoUrl = companyMedia?.logoUrl ?? null;
 
       workspace = {
         mode: inCompanyWorkspace ? "corporate" : "personal",
-        companyId: inCompanyWorkspace ? entitlements.subject.id : null,
+        companyId,
         companyName: inCompanyWorkspace
           ? entitlements.subject.name
           : null,
@@ -137,6 +147,7 @@ export default async function PanelLayout({
       unreadNotifications={unreadNotifications}
       unreadMessages={unreadMessages}
       newIncomingOffers={newIncomingOffers}
+      pendingOutgoingNegotiations={pendingOutgoingNegotiations}
       dbUnavailable={dbUnavailable}
       features={features}
       workspace={workspace}
