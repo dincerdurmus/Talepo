@@ -1,4 +1,5 @@
 import { unreadNotificationWhere } from "@/lib/notifications/unread";
+import { buyerActionableIncomingOffersWhere } from "@/lib/offer/incoming-offer-inbox";
 import { sellerActionableOutgoingOffersWhere } from "@/lib/offer/outgoing-offer-inbox";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
@@ -10,14 +11,14 @@ const ACTIVE_REQUEST_STATUSES = [
   "IN_PROGRESS",
 ] as const;
 
-/** Matches dashboard “Yeni teklifler” and gelen-teklifler inbox pending rows. */
+/** Open incoming offers that still need a buyer response. */
 export const NEW_INCOMING_OFFER_STATUSES = ["SUBMITTED", "VIEWED"] as const;
 
 export function newIncomingOffersWhere(userId: string) {
   return {
-    request: { createdById: userId, deletedAt: null },
+    ...buyerActionableIncomingOffersWhere(userId),
     status: { in: [...NEW_INCOMING_OFFER_STATUSES] },
-  } as const;
+  };
 }
 
 export async function countNewIncomingOffers(userId: string) {

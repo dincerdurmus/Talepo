@@ -82,7 +82,7 @@ export function OfferMediaLightbox({
   return (
     <div
       ref={dialogRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0f1f1d]/80 p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0f1f1d]/80 p-4 pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))] lg:pb-4"
       role="dialog"
       aria-modal="true"
       aria-label="Teklif fotoğrafını büyüt"
@@ -115,7 +115,7 @@ export function OfferMediaLightbox({
       <img
         src={offerMediaSrc(offerId, mediaId)}
         alt={alt}
-        className="max-h-[86vh] max-w-full rounded-2xl object-contain"
+        className="max-h-[min(72vh,calc(100dvh-10rem))] max-w-full rounded-2xl object-contain"
         onClick={(event) => event.stopPropagation()}
       />
       {mediaIds.length > 1 ? (

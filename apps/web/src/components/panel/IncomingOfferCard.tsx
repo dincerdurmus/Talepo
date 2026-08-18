@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { Clock, MessageCircle, Scale } from "lucide-react";
 
 import { IncomingOfferGallery } from "@/components/panel/IncomingOfferGallery";
+import { NegotiationHistory } from "@/components/panel/NegotiationHistory";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import { TrustSummaryBadge } from "@/components/panel/TrustSummaryBadge";
@@ -17,6 +18,7 @@ import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import type { TrustSummary } from "@/lib/offer/deal-review";
 import type { OfferCompleteness } from "@/lib/offer/offer-completeness";
 import type { OfferNegotiationDto } from "@/lib/offer/offer-negotiation";
+import { currentPendingNegotiation } from "@/lib/offer/outgoing-offer-inbox";
 
 export type IncomingOfferCardData = {
   id: string;
@@ -26,6 +28,7 @@ export type IncomingOfferCardData = {
   title: string | null;
   description: string;
   status: string;
+  createdAt?: string | null;
   companyName: string | null;
   companyVerified: boolean;
   submittedByName: string | null;
@@ -64,6 +67,8 @@ function statusLabel(
   status: string,
   pending: OfferNegotiationDto | undefined,
 ) {
+  if (status === "ACCEPTED") return "Kabul edildi";
+  if (status === "REJECTED") return "Reddedildi";
   if (pending && ["SUBMITTED", "VIEWED"].includes(status)) {
     return "Pazarlıkta";
   }
@@ -105,6 +110,9 @@ function CompareRail({
         <Scale className="h-4 w-4" />
       </span>
       <div className="min-w-0 lg:text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800/70">
+          Fiyat karşılaştırması
+        </p>
         <p className={`text-sm font-semibold tracking-tight ${tone}`}>
           {copy.deltaLabel}
         </p>
@@ -125,6 +133,7 @@ export function IncomingOfferCard({
   completeness,
   rank,
   trust,
+  highlightNegotiationId,
 }: {
   offer: IncomingOfferCardData;
   budget?: IncomingBudgetContext;
@@ -132,6 +141,7 @@ export function IncomingOfferCard({
   completeness?: OfferCompleteness;
   rank?: number;
   trust?: TrustSummary;
+  highlightNegotiationId?: string | null;
 }) {
   const router = useRouter();
   const [composerOpen, setComposerOpen] = useState(false);
@@ -141,9 +151,7 @@ export function IncomingOfferCard({
 
   const firmName = offer.companyName || offer.submittedByName || "Firma";
   const amount = offer.amount;
-  const pendingNegotiation = offer.negotiations.find(
-    (row) => row.status === "PENDING",
-  );
+  const pendingNegotiation = currentPendingNegotiation(offer.negotiations);
   const acceptedNegotiation = offer.negotiations.find(
     (row) => row.status === "ACCEPTED",
   );
@@ -176,8 +184,8 @@ export function IncomingOfferCard({
       : amount;
   const priceCaption = pendingNegotiation
     ? myPending
-      ? "Güncel teklif · sıra satıcıda"
-      : "Bekleyen karşı teklif"
+      ? "Son öneriniz"
+      : "Satıcının önerisi"
     : offer.status === "ACCEPTED" && commercialAmount !== amount
       ? "Anlaşılan fiyat"
       : "İlk teklif";
@@ -190,6 +198,13 @@ export function IncomingOfferCard({
     offerCurrency: offer.currency,
   });
   const compareCopy = budgetCompareCopy(compare, offer.currency);
+  const railCopy = pendingNegotiation
+    ? {
+        ...compareCopy,
+        relativeLabel: myPending ? "Sıra satıcıda" : "Sıra sizde",
+        tone: myPending ? ("neutral" as const) : ("amber" as const),
+      }
+    : compareCopy;
 
   const postPending = useCallback(
     async (action: "accept" | "reject") => {
@@ -225,7 +240,7 @@ export function IncomingOfferCard({
 
   return (
     <div className="grid lg:grid-cols-[7.75rem_minmax(0,1fr)]">
-      <CompareRail copy={compareCopy} />
+      <CompareRail copy={railCopy} />
       <article className="min-w-0 bg-[#f4faf9] px-4 py-4 sm:px-5">
         <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800/70">
           Gelen teklif
@@ -329,7 +344,7 @@ export function IncomingOfferCard({
           sellerName={firmName}
         />
 
-        {actionable || offer.negotiations.length > 0 || composerOpen ? (
+        {actionable || composerOpen ? (
           <OfferNegotiationPanel
             offerId={offer.id}
             originalAmount={amount}
@@ -346,11 +361,18 @@ export function IncomingOfferCard({
           />
         ) : null}
 
+        <NegotiationHistory
+          viewer="buyer"
+          originalAmount={amount}
+          currency={offer.currency}
+          offerStatus={offer.status}
+          offerCreatedAt={offer.createdAt}
+          negotiations={offer.negotiations}
+          highlightNegotiationId={highlightNegotiationId}
+        />
+
         {myPending && awaiting ? (
-          <p className="mt-2 text-xs text-amber-900/70">
-            Sıra teklif verende. Yanıt gelince pazarlık devam eder veya anlaşma
-            oluşur.
-          </p>
+          <p className="mt-2 text-xs text-amber-900/70">Sıra satıcıda.</p>
         ) : null}
 
         {pendingError ? (

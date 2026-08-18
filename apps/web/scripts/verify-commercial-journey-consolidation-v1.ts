@@ -144,8 +144,8 @@ console.log("\n=== ACCEPT HIERARCHY / PRICE LABELS ===\n");
   );
   check(
     "gelen dual pending amount",
-    gelen.includes("Bekleyen karşı teklif") ||
-      incomingCard.includes("Bekleyen karşı teklif"),
+    incomingCard.includes("Satıcının önerisi") ||
+      incomingCard.includes("Son öneriniz"),
   );
   check("panel min-h-11", panel.includes("min-h-11") && actions.includes("min-h-11"));
 }

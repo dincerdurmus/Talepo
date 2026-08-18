@@ -14,12 +14,14 @@ export function OutgoingOfferCompareGroup({
   completeness,
   canMutate,
   highlight,
+  highlightNegotiationId,
 }: {
   request: IncomingRequestSummaryData;
   offer: OutgoingOfferCardData;
   completeness?: OfferCompleteness;
   canMutate: boolean;
   highlight?: boolean;
+  highlightNegotiationId?: string | null;
 }) {
   const budget: OutgoingBudgetContext = {
     budgetMin: request.budgetMin,
@@ -54,6 +56,7 @@ export function OutgoingOfferCompareGroup({
             budget={budget}
             completeness={completeness}
             canMutate={canMutate}
+            highlightNegotiationId={highlight ? highlightNegotiationId : null}
           />
         </div>
       </section>

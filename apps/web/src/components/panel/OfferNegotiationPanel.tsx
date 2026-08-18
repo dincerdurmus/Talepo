@@ -144,8 +144,10 @@ export function OfferNegotiationPanel({
     : "Karşı teklifiniz karşı tarafa iletilir. İlk teklif tutarı değişmez.";
   const submitLabel = bargainCopy ? "Pazarlık teklifini gönder" : "Teklif et";
   const showHistory =
-    Boolean(pendingRow) || Boolean(acceptedRow) || negotiations.length > 0;
-  const showShell = !hideTriggers || showHistory || open || Boolean(error) || Boolean(myPending && awaiting);
+    !hideTriggers &&
+    (Boolean(pendingRow) || Boolean(acceptedRow) || negotiations.length > 0);
+  const showShell =
+    !hideTriggers || open || Boolean(error) || showHistory;
 
   if (!showShell) return null;
 
@@ -191,7 +193,7 @@ export function OfferNegotiationPanel({
         </p>
       ) : null}
 
-      {negotiations.length > 0 ? (
+      {showHistory && negotiations.length > 0 ? (
         <ol className="mt-1 space-y-1">
           {negotiations.map((row) => (
             <li
@@ -270,7 +272,7 @@ export function OfferNegotiationPanel({
         </button>
       ) : null}
 
-      {myPending && awaiting ? (
+      {!hideTriggers && myPending && awaiting ? (
         <p className="mt-2 text-xs text-amber-900/70">
           {viewer === "provider"
             ? "Sıra alıcıda. Karşı teklifiniz yanıtlanınca pazarlık devam eder veya anlaşma oluşur."

@@ -155,10 +155,9 @@ export default async function OffersPage({
     rejected: inboxCounts.rejected,
   };
 
-  const pageTitle = workspace ? "Tekliflerimiz" : "Tekliflerim";
-  const pageSubtitle = workspace
-    ? "Firmanızın tekliflerini talep bütçesi ve pazarlıkla aynı kartta karşılaştırın."
-    : "Gönderdiğiniz teklifleri müşteri talebiyle karşılaştırın; sıra sizdeyse pazarlık yapın.";
+  const pageTitle = "Teklif verdiğim talepler";
+  const pageSubtitle =
+    "Teklif gönderdiğiniz talepleri, pazarlıkları ve sonuçlanan süreçleri buradan takip edin.";
 
   const entitlements = await resolveEntitlements(
     user.id,
@@ -213,8 +212,8 @@ export default async function OffersPage({
   return (
     <>
       <section className="py-4 sm:py-6">
-        <p className="talepo-page-eyebrow">
-          {workspace ? workspace.companyName : "Teklif takibi"}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-950/35">
+          SATICI
         </p>
         <h1 className="talepo-page-title mt-3 text-4xl sm:text-5xl">
           {pageTitle}
@@ -393,6 +392,7 @@ export default async function OffersPage({
               title: offer.title,
               description: offer.description,
               status: offer.status,
+              createdAt: offer.createdAt.toISOString(),
               conversationId: offer.conversation?.id ?? null,
               mediaIds: offer.media.map((item) => item.id),
               negotiations: toOfferNegotiationDtos(offer.negotiations),
@@ -406,6 +406,9 @@ export default async function OffersPage({
                 completeness={completeness}
                 canMutate={canRevise}
                 highlight={highlightOfferId === offer.id}
+                highlightNegotiationId={
+                  highlightOfferId === offer.id ? highlightNegotiationId : null
+                }
               />
             );
           })}

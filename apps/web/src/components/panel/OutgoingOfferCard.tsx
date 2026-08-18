@@ -6,6 +6,7 @@ import { useCallback, useState } from "react";
 import { Clock, MessageCircle, Scale } from "lucide-react";
 
 import { IncomingOfferGallery } from "@/components/panel/IncomingOfferGallery";
+import { NegotiationHistory } from "@/components/panel/NegotiationHistory";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
 import {
@@ -20,6 +21,7 @@ import {
   compareNegotiationPrices,
   negotiationCompareCopy,
 } from "@/lib/offer/negotiation-price-compare";
+import { currentPendingNegotiation } from "@/lib/offer/outgoing-offer-inbox";
 
 export type OutgoingOfferCardData = {
   id: string;
@@ -30,6 +32,7 @@ export type OutgoingOfferCardData = {
   title: string | null;
   description: string;
   status: string;
+  createdAt?: string | null;
   conversationId: string | null;
   mediaIds: string[];
   negotiations: OfferNegotiationDto[];
@@ -44,12 +47,11 @@ export type OutgoingBudgetContext = {
 function statusLabel(
   status: string,
   pending: OfferNegotiationDto | undefined,
-  myPending: boolean,
 ) {
   if (status === "ACCEPTED") return "Kabul edildi";
   if (status === "REJECTED") return "Reddedildi";
   if (pending && ["SUBMITTED", "VIEWED"].includes(status)) {
-    return myPending ? "Yanıt bekleniyor" : "Sıra sizde";
+    return "Pazarlıkta";
   }
   if (status === "SUBMITTED") return "Gönderildi";
   if (status === "VIEWED") return "Yanıt bekleniyor";
@@ -87,6 +89,9 @@ function CompareRail({
         <Scale className="h-4 w-4" />
       </span>
       <div className="min-w-0 lg:text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-800/70">
+          Pazarlık durumu
+        </p>
         <p className={`text-sm font-semibold tracking-tight ${color}`}>
           {deltaLabel}
         </p>
@@ -105,11 +110,13 @@ export function OutgoingOfferCard({
   budget,
   completeness,
   canMutate,
+  highlightNegotiationId,
 }: {
   offer: OutgoingOfferCardData;
   budget?: OutgoingBudgetContext;
   completeness?: OfferCompleteness;
   canMutate: boolean;
+  highlightNegotiationId?: string | null;
 }) {
   const router = useRouter();
   const [composerOpen, setComposerOpen] = useState(false);
@@ -118,9 +125,7 @@ export function OutgoingOfferCard({
   const [pendingError, setPendingError] = useState<string | null>(null);
 
   const amount = offer.amount;
-  const pendingNegotiation = offer.negotiations.find(
-    (row) => row.status === "PENDING",
-  );
+  const pendingNegotiation = currentPendingNegotiation(offer.negotiations);
   const acceptedNegotiation = offer.negotiations.find(
     (row) => row.status === "ACCEPTED",
   );
@@ -139,7 +144,7 @@ export function OutgoingOfferCard({
     canMutate && awaiting && pendingNegotiation && !myPending,
   );
   const showActions = canMutate && awaiting && !myPending && Boolean(pendingNegotiation);
-  const displayStatus = statusLabel(offer.status, pendingNegotiation, myPending);
+  const displayStatus = statusLabel(offer.status, pendingNegotiation);
   const busy = Boolean(panelBusy) || Boolean(pendingBusy);
   const originalLabel = formatOfferMoney(amount, offer.currency);
   const pendingLabel = pendingNegotiation
@@ -169,7 +174,7 @@ export function OutgoingOfferCard({
   const rail = pendingNegotiation && negotiationCopy
     ? {
         deltaLabel: negotiationCopy.deltaLabel,
-        relativeLabel: myPending ? "Yanıt bekleniyor" : "Sıra sizde",
+        relativeLabel: myPending ? "Sıra alıcıda" : "Sıra sizde",
         tone: myPending ? ("neutral" as const) : negotiationCopy.tone,
       }
     : {
@@ -230,7 +235,7 @@ export function OutgoingOfferCard({
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span
             className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-              displayStatus === "Sıra sizde"
+              displayStatus === "Pazarlıkta" || displayStatus === "Sıra sizde"
                 ? "bg-amber-50 text-amber-950 ring-1 ring-amber-200/80"
                 : displayStatus === "Kabul edildi"
                   ? "bg-teal-50 text-teal-900"
@@ -255,7 +260,7 @@ export function OutgoingOfferCard({
         <p className="mt-1.5 text-[11px] font-medium text-black/40">
           {pendingNegotiation
             ? myPending
-              ? "Güncel teklifiniz · sıra alıcıda"
+              ? "Son öneriniz"
               : "Alıcının önerisi"
             : offer.status === "ACCEPTED" && commercialAmount !== amount
               ? "Anlaşılan fiyat"
@@ -310,7 +315,7 @@ export function OutgoingOfferCard({
           sellerName="Teklifiniz"
         />
 
-        {canMutate || offer.negotiations.length > 0 || composerOpen ? (
+        {canMutate || composerOpen ? (
           <OfferNegotiationPanel
             offerId={offer.id}
             originalAmount={amount}
@@ -327,11 +332,18 @@ export function OutgoingOfferCard({
           />
         ) : null}
 
+        <NegotiationHistory
+          viewer="seller"
+          originalAmount={amount}
+          currency={offer.currency}
+          offerStatus={offer.status}
+          offerCreatedAt={offer.createdAt}
+          negotiations={offer.negotiations}
+          highlightNegotiationId={highlightNegotiationId}
+        />
+
         {myPending && awaiting ? (
-          <p className="mt-2 text-xs text-amber-900/70">
-            Sıra alıcıda. Karşı taraf yanıtlayınca pazarlık devam eder veya
-            anlaşma oluşur.
-          </p>
+          <p className="mt-2 text-xs text-amber-900/70">Sıra alıcıda.</p>
         ) : null}
 
         {pendingError ? (

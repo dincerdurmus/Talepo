@@ -53,7 +53,7 @@ check("zero hides badge", shell.includes("if (count <= 0) return undefined"));
 check("99+ cap", shell.includes('count > 99 ? "99+"'));
 check(
   "screen reader label",
-  shell.includes("yeni gelen teklif") && shell.includes("badgeAriaLabel"),
+  shell.includes("yanıtınızı bekleyen") && shell.includes("badgeAriaLabel"),
 );
 check(
   "badge wired in personal sidebar only",
@@ -129,7 +129,11 @@ check(
 );
 check(
   "pending statuses only",
-  panelData.includes('"SUBMITTED"') && panelData.includes('"VIEWED"'),
+  panelData.includes('"SUBMITTED"') &&
+    panelData.includes('"VIEWED"') &&
+    read("src/lib/offer/incoming-offer-inbox.ts").includes(
+      'proposedBySide: "PROVIDER"',
+    ),
 );
 check(
   "no duplicate prisma query helper in shell",

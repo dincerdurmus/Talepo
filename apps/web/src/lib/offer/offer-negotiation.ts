@@ -31,6 +31,7 @@ export type OfferNegotiationDto = {
   proposedBySide: "BUYER" | "PROVIDER";
   status: "PENDING" | "ACCEPTED" | "REJECTED" | "SUPERSEDED" | "CANCELLED";
   createdAt: string;
+  respondedAt?: string | null;
 };
 
 export const offerNegotiationListInclude = {
@@ -42,6 +43,7 @@ export const offerNegotiationListInclude = {
     proposedBySide: true,
     status: true,
     createdAt: true,
+    respondedAt: true,
   },
 };
 
@@ -53,6 +55,7 @@ export function toOfferNegotiationDtos(
     proposedBySide: OfferNegotiationDto["proposedBySide"];
     status: OfferNegotiationDto["status"];
     createdAt: Date;
+    respondedAt?: Date | null;
   }>,
 ): OfferNegotiationDto[] {
   return rows.map((row) => ({
@@ -62,5 +65,6 @@ export function toOfferNegotiationDtos(
     proposedBySide: row.proposedBySide,
     status: row.status,
     createdAt: row.createdAt.toISOString(),
+    respondedAt: row.respondedAt ? row.respondedAt.toISOString() : null,
   }));
 }

@@ -129,6 +129,7 @@ export function IncomingOfferCompareGroup({
   others,
   compareSlot,
   highlightOfferId,
+  highlightNegotiationId,
 }: {
   request: IncomingRequestSummaryData;
   pending: Array<{
@@ -143,6 +144,7 @@ export function IncomingOfferCompareGroup({
   }>;
   compareSlot?: ReactNode;
   highlightOfferId?: string | null;
+  highlightNegotiationId?: string | null;
 }) {
   const budget: IncomingBudgetContext = {
     budgetMin: request.budgetMin,
@@ -192,6 +194,11 @@ export function IncomingOfferCompareGroup({
                 completeness={row.completeness}
                 trust={row.trust}
                 rank={row.rank}
+                highlightNegotiationId={
+                  highlightOfferId === row.offer.id
+                    ? highlightNegotiationId
+                    : null
+                }
               />
             </OfferDeepLinkTarget>
           ))}
@@ -210,6 +217,11 @@ export function IncomingOfferCompareGroup({
                 offer={row.offer}
                 budget={budget}
                 trust={row.trust}
+                highlightNegotiationId={
+                  highlightOfferId === row.offer.id
+                    ? highlightNegotiationId
+                    : null
+                }
               />
             </OfferDeepLinkTarget>
           ))}

@@ -84,7 +84,7 @@ function formatNavCountBadge(count: number): string | undefined {
 function incomingOffersBadgeAria(count: number): string | undefined {
   if (count <= 0) return undefined;
   const display = count > 99 ? "99+" : String(count);
-  return `${display} yeni gelen teklif`;
+  return `yanıtınızı bekleyen ${display} teklif`;
 }
 
 function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
