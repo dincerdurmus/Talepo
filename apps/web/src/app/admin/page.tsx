@@ -8,6 +8,7 @@ import {
   FileText,
   HandCoins,
   ShieldCheck,
+  StickyNote,
   Users,
 } from "lucide-react";
 
@@ -111,6 +112,8 @@ export default async function AdminPage() {
         </div>
 
         <AdminPrivacyNotice sensitive={canSeeSensitive} />
+
+        <Link href="/admin/notlar" className="mt-5 inline-flex items-center gap-2 rounded-xl border border-sky-200/25 bg-sky-200/[.07] px-4 py-2.5 text-sm font-semibold text-sky-100 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-200/[.12] active:translate-y-0"><StickyNote className="h-4 w-4" />İç not kayıtlarını aç</Link>
 
         <section className="my-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {hasAdminPermission(admin.platformRole, "users.view") ? <Metric href="/admin/users" icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" /> : null}
