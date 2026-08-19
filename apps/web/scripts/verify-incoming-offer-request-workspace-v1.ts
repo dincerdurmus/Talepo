@@ -99,9 +99,14 @@ console.log("\n=== ROUTES & SURFACES ===\n");
     ),
   );
   check(
-    "workspace back uses inbox href with filter",
+    "inbox back href built on page",
     workspace.includes("inboxBackHref") &&
       workspace.includes("buildIncomingOffersInboxPath"),
+  );
+  check(
+    "workspace inbox back is prominent link",
+    workspaceClient.includes("Gelen tekliflere dön") &&
+      workspaceClient.includes("href={inboxBackHref}"),
   );
   check(
     "workspace card uses compareStripLayout",
@@ -297,7 +302,11 @@ console.log("\n=== MOBILE & A11Y ===\n");
 {
   const workspace = read("src/components/panel/IncomingOfferWorkspace.tsx");
   const listItem = read("src/components/panel/IncomingOfferWorkspaceListItem.tsx");
-  check("mobile list/detail toggle", workspace.includes('mobileView === "detail"') && workspace.includes("Tekliflere dön"));
+  check(
+    "mobile list/detail toggle",
+    workspace.includes('mobileView === "detail"') &&
+      workspace.includes("Teklif listesine dön"),
+  );
   check("desktop two columns", workspace.includes("lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]"));
   check("selected aria-current", listItem.includes("aria-current"));
   check(

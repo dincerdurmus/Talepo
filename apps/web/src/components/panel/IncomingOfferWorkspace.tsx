@@ -62,6 +62,7 @@ export function IncomingOfferWorkspace({
   const unreadSet = new Set(unreadOfferIds);
   const archivedSet = new Set(archivedOfferIds);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const listHeadingRef = useRef<HTMLHeadingElement>(null);
   const comparePanelId = useId();
 
   const defaultOfferId =
@@ -92,6 +93,22 @@ export function IncomingOfferWorkspace({
     },
     [archiveView, highlightNegotiationId, request.id],
   );
+
+  const returnToOfferList = useCallback(() => {
+    setMobileView("list");
+    window.requestAnimationFrame(() => {
+      const selectedButton = selectedOfferId
+        ? document.querySelector<HTMLElement>(
+            `#workspace-offer-${selectedOfferId} button`,
+          )
+        : null;
+      if (selectedButton) {
+        selectedButton.focus();
+        return;
+      }
+      listHeadingRef.current?.focus();
+    });
+  }, [selectedOfferId]);
 
   useEffect(() => {
     if (mobileView !== "detail" || !selected) return;
@@ -132,6 +149,14 @@ export function IncomingOfferWorkspace({
 
   return (
     <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:space-y-4 lg:pb-0">
+      <Link
+        href={inboxBackHref}
+        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-3.5 py-2 text-sm font-semibold text-teal-950/80 shadow-[0_1px_2px_rgba(15,31,29,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2"
+      >
+        <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+        Gelen tekliflere dön
+      </Link>
+
       <section className="talepo-card overflow-hidden">
         <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="h-[4.5rem] w-[4.5rem] shrink-0 sm:h-20 sm:w-20">
@@ -144,14 +169,7 @@ export function IncomingOfferWorkspace({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <Link
-              href={inboxBackHref}
-              className="inline-flex min-h-9 items-center gap-1 text-xs font-medium text-black/45 hover:text-black/70 sm:text-sm"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 shrink-0" aria-hidden />
-              Gelen teklifler
-            </Link>
-            <div className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
               <h1 className="truncate text-base font-semibold tracking-tight text-[#0f1f1d] sm:text-lg">
                 {request.title}
               </h1>
@@ -230,7 +248,11 @@ export function IncomingOfferWorkspace({
           }`}
           aria-label="Teklif listesi"
         >
-          <h2 className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+          <h2
+            ref={listHeadingRef}
+            tabIndex={-1}
+            className="px-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40 outline-none"
+          >
             Teklifler
           </h2>
           {offers.map((row) => {
@@ -269,11 +291,11 @@ export function IncomingOfferWorkspace({
           {mobileView === "detail" ? (
             <button
               type="button"
-              onClick={() => setMobileView("list")}
-              className="mb-2 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-[#0f766e] lg:hidden"
+              onClick={returnToOfferList}
+              className="mb-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-3.5 py-2 text-sm font-semibold text-teal-950/80 shadow-[0_1px_2px_rgba(15,31,29,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2 lg:hidden"
             >
-              <ArrowLeft className="h-4 w-4" aria-hidden />
-              Tekliflere dön
+              <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
+              Teklif listesine dön
             </button>
           ) : null}
 
