@@ -55,8 +55,9 @@ export async function PATCH(request: Request) {
     const current = await prisma.moderationCase.findUnique({ where: { id: body.id }, include: { targetUser: { select: { id: true, name: true, moderationRestrictedUntil: true } } } });
     if (!current) return NextResponse.json({ ok: false, message: "Kayıt bulunamadı." }, { status: 404 });
     const enforcement = ENFORCEMENTS.includes(body.enforcement as typeof ENFORCEMENTS[number]) ? body.enforcement as typeof ENFORCEMENTS[number] : null;
+    const submittedInternalNote = body.internalNote?.trim();
     if (enforcement && admin.platformRole === "SUPPORT") return NextResponse.json({ ok: false, message: "Support içerik veya kullanıcı yaptırımı uygulayamaz." }, { status: 403 });
-    const reason = body.resolutionNote?.trim() || body.internalNote?.trim() || "";
+    const reason = body.resolutionNote?.trim() || submittedInternalNote || "";
     if (enforcement && reason.length < 5) return NextResponse.json({ ok: false, message: "Yaptırım gerekçesi en az 5 karakter olmalı." }, { status: 400 });
     if (enforcement && !current.targetUserId) return NextResponse.json({ ok: false, message: "Bu kayıtta yaptırım uygulanacak kullanıcı bulunamadı." }, { status: 400 });
     if (["HIDE_CONTENT", "RESTORE_CONTENT"].includes(enforcement ?? "") && !["REQUEST", "OFFER"].includes(current.subjectType)) return NextResponse.json({ ok: false, message: "Bu kayıt için içerik yaptırımı uygulanamaz." }, { status: 400 });
@@ -80,7 +81,11 @@ export async function PATCH(request: Request) {
         await tx.user.update({ where: { id: current.targetUserId! }, data: { moderationRestrictedUntil: new Date(Date.now() + hours * 60 * 60 * 1000), moderationRestrictionReason: reason } });
       }
       if (enforcement === "LIFT_RESTRICTION") await tx.user.update({ where: { id: current.targetUserId! }, data: { moderationRestrictedUntil: null, moderationRestrictionReason: null } });
-      const updated = await tx.moderationCase.update({ where: { id: body.id }, data: { status, priority, assigneeId, internalNote: body.internalNote?.trim() || current.internalNote, resolutionNote: body.resolutionNote?.trim() || current.resolutionNote, resolvedAt: ["RESOLVED", "DISMISSED"].includes(status) ? new Date() : null } });
+      const updated = await tx.moderationCase.update({ where: { id: body.id }, data: { status, priority, assigneeId, internalNote: submittedInternalNote || current.internalNote, resolutionNote: body.resolutionNote?.trim() || current.resolutionNote, resolvedAt: ["RESOLVED", "DISMISSED"].includes(status) ? new Date() : null } });
+      if (admin.platformRole === "SUPER_ADMIN" && submittedInternalNote && submittedInternalNote !== current.internalNote) {
+        const superAdmins = await tx.user.findMany({ where: { platformRole: "SUPER_ADMIN", status: "ACTIVE", deletedAt: null, id: { not: admin.id } }, select: { id: true } });
+        if (superAdmins.length) await tx.notification.createMany({ data: superAdmins.map((user) => ({ userId: user.id, type: "GENERAL", title: "Şikâyete iç not eklendi", message: `Şikâyet #${current.complaintNumber ?? "—"} için yeni bir iç takip notu eklendi.`, actionUrl: "/admin" })) });
+      }
       if (assigneeId && assigneeId !== current.assigneeId) await tx.notification.create({ data: { userId: assigneeId, type: "GENERAL", title: "Size şikayet atandı", message: `Şikayet #${current.complaintNumber ?? "—"} sizin takibinize atandı.`, actionUrl: "/admin" } });
       if (current.reporterId && (body.resolutionNote?.trim() || status !== current.status)) await tx.notification.create({ data: { userId: current.reporterId, type: "GENERAL", title: "Şikayetiniz güncellendi", message: body.resolutionNote?.trim() || "Şikayetinizin durumu güncellendi.", actionUrl: `/panel/bildirimler?complaint=${current.id}` } });
       if (enforcement) {

@@ -361,6 +361,7 @@ model RoleUserNote {
   targetUserId String
   authorId     String
   body         String   @db.Text
+  visibleToRoles PlatformRole[] @default([])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
