@@ -1,8 +1,14 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
+
+/** Homepage-optimized WebP covers (1280px); panel routes keep canonical PNG. */
+function homeCategoryImage(slug: string) {
+  return `/categories/home/${slug}.webp`;
+}
 
 const SPOTLIGHT = "real-estate";
 
@@ -50,19 +56,22 @@ function meta(slug: string) {
 function CategoryImage({
   slug,
   className = "",
+  sizes = "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
 }: {
   slug: string;
   className?: string;
+  sizes?: string;
 }) {
   const cat = meta(slug);
   const crop = CINEMATIC_CROP[slug] ?? "object-center";
   if (cat.image) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={cat.image}
+      <Image
+        src={homeCategoryImage(slug)}
         alt=""
-        className={`h-full w-full scale-[1.08] object-cover ${crop} ${className}`}
+        fill
+        sizes={sizes}
+        className={`scale-[1.08] object-cover ${crop} ${className}`}
       />
     );
   }
@@ -108,6 +117,7 @@ export function HomeOneExplore() {
           <div className="relative aspect-[16/7] min-h-[240px] overflow-hidden sm:min-h-[320px] lg:min-h-[380px]">
             <CategoryImage
               slug={SPOTLIGHT}
+              sizes="(max-width: 1024px) 100vw, 76rem"
               className="transition duration-[900ms] ease-out group-hover:scale-[1.02]"
             />
             <div
@@ -214,7 +224,11 @@ export function HomeOneExplore() {
                 className="talepo-home1-card-hover group w-[min(240px,78vw)] shrink-0 snap-start overflow-hidden rounded-2xl bg-[#f4f7f6]"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#e8f0ee]">
-                  <CategoryImage slug={cat.slug} className="transition duration-500 group-hover:scale-[1.04]" />
+                  <CategoryImage
+                    slug={cat.slug}
+                    sizes="(max-width: 640px) 78vw, 240px"
+                    className="transition duration-500 group-hover:scale-[1.04]"
+                  />
                 </div>
                 <div className="px-4 py-3.5">
                   <p className="text-[15px] font-semibold tracking-tight text-[#0f1f1d]">
