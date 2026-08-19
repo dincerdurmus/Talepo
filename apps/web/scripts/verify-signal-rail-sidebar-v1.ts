@@ -105,6 +105,25 @@ console.log("\n=== NAV TARGETS ===\n");
   for (const target of targets) {
     check(`target present ${target}`, shell.includes(target) || rail.includes(target));
   }
+  const talepTeklifOrder = filterPanelNavItems(
+    PANEL_NAV_ITEMS,
+    featuresForPlan("PROFESSIONAL"),
+    "personal",
+  )
+    .map((item) => item.href)
+    .filter((href) =>
+      [
+        "/panel/talepler",
+        "/panel/taleplerim",
+        "/panel/gelen-teklifler",
+        "/panel/teklifler",
+      ].includes(href),
+    );
+  check(
+    "talep-teklif dock order is keşfet, taleplerim, gelen, tekliflerim",
+    talepTeklifOrder.join(",") ===
+      "/panel/talepler,/panel/taleplerim,/panel/gelen-teklifler,/panel/teklifler",
+  );
 }
 
 console.log("\n=== ROUTE ACTIVE STATE ===\n");
@@ -112,7 +131,7 @@ console.log("\n=== ROUTE ACTIVE STATE ===\n");
   check("path section resolver", rail.includes("getSectionFromPath"));
   check("plan route maps to plan section", rail.includes('pathname.startsWith("/panel/plan")'));
   check("araclar excludes plan path", !rail.includes('"/panel/plan"') || rail.includes('return "plan"'));
-  check("isNavActive strips query", rail.includes('href.split("?")[0]'));
+  check("isNavActive strips query", rail.includes("isPanelNavActive") && read("src/components/panel/panel-nav.ts").includes('href.split("?")[0]'));
   check("nested profil under hesap", rail.includes('pathname.startsWith("/panel/profil")'));
   check("path section highlights collapsed rail", rail.includes("pathSection === section"));
 }
@@ -182,7 +201,7 @@ console.log("\n=== INTERACTION ===\n");
     rail.includes('menu: "Menü"') &&
       rail.includes('create: "Yeni talep"') &&
       rail.includes('genel: "Sayfam"') &&
-      rail.includes('"talep-teklif": "Talepler"') &&
+      rail.includes('"talep-teklif": "Talep"') &&
       rail.includes('araclar: "Pro araçlar"') &&
       rail.includes('plan: "Plan"') &&
       rail.includes('hesap: "Hesap"') &&

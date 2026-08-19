@@ -69,7 +69,7 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("uses getResponsiveBottomNavVariant", shell.includes("getResponsiveBottomNavVariant"));
   check("professional Fırsatlar item", shell.includes('label="Fırsatlar"') && shell.includes('href="/panel/firsatlar"'));
   check("professional Tekliflerim item", shell.includes('label="Tekliflerim"') && shell.includes('href="/panel/teklifler"'));
-  check("standard Talepler kept", shell.includes('href="/panel/talepler"') && shell.includes('label="Talepler"') && !shell.includes('label="Keşfet"'));
+  check("standard Talepler marketplace kept", shell.includes('href="/panel/talepler"') && shell.includes('label="Keşfet"') && shell.includes("Talepleri keşfet"));
   check("standard Profil kept", shell.includes('label="Profil"'));
   check("create CTA still /talep for personal", shell.includes('href={isCorporate ? "/panel/talepler" : "/talep"}'));
   check("lg:hidden only", shell.includes("lg:hidden"));
@@ -78,7 +78,7 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("min-h-11 mobile targets", shell.includes("min-h-11"));
   check("safe-area padding", shell.includes("safe-area-inset-bottom"));
   check("aria-current on MobileLink", shell.includes('aria-current={active ? "page" : undefined}'));
-  check("isNavActive strips query", shell.includes('href.split("?")[0]'));
+  check("isNavActive strips query", shell.includes("isPanelNavActive") && nav.includes('href.split("?")[0]'));
 }
 
 console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
