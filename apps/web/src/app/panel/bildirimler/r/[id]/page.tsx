@@ -27,6 +27,7 @@ export default async function NotificationRedirectPage({
     select: {
       id: true,
       type: true,
+      title: true,
       actionUrl: true,
       requestId: true,
       offerId: true,
@@ -38,9 +39,24 @@ export default async function NotificationRedirectPage({
 
   await markNotificationAsRead(user.id, notification.id);
 
+  const complaintId = complaintIdFromActionUrl(notification.actionUrl);
+  if (complaintId) {
+    redirect(`/panel/bildirimler?sikayet=${encodeURIComponent(complaintId)}`);
+  }
+
+  if (notification.title === "Şikayetiniz güncellendi") {
+    redirect(`/panel/bildirimler?sikayetBildirimi=${encodeURIComponent(notification.id)}`);
+  }
+
   const destination = resolveNotificationDestination(notification);
   const reachable = await assertDestinationReachable(user.id, destination);
   redirect(reachable);
+}
+
+function complaintIdFromActionUrl(actionUrl: string | null) {
+  if (!actionUrl) return null;
+  const match = /^\/panel\/bildirimler\?complaint=([^&#/?]+)$/.exec(actionUrl);
+  return match?.[1] ?? null;
 }
 
 async function assertDestinationReachable(userId: string, destination: string) {

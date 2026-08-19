@@ -256,6 +256,7 @@ export default async function ExploreRequestsPage({
 
   const baseWhere = {
     deletedAt: null,
+    isModerationHidden: false,
     createdById: { not: user.id },
     status: { in: OPEN_STATUSES },
     ...visibilityFilter,

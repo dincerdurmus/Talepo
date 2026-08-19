@@ -381,6 +381,27 @@ getMembershipContext(userId): MembershipContext  // → resolveEntitlements wrap
 | T8 | Bonus kredi 3, aylık kota dolu | 4. teklif bonus'tan düşer |
 | T9 | aiOfferAssistant feature check | STANDARD → false, PREMIUM → true |
 | T10 | Deep link /panel/talepler/[id] standart kilitli | İçerik görünmez |
+| T11 | Şikayet fotoğraf eki Storage'a yüklenir | Yalnız yetkili Support/Admin görür; tür/boyut/erişim politikası uygulanır |
+| T12 | Açık şikayet 24 saati aşar | ADMIN ve SUPER_ADMIN'e yalnız bir kez eskalasyon bildirimi gider |
+| T13 | Giriş yapmış kullanıcı bir talebi şikayet eder | Şikayet numarası üretilir; kayıt OPEN durumunda moderasyon kuyruğuna düşer |
+| T14 | Talep sahibi, kendisine gelen teklifi şikayet eder | Yalnız ilgili talebin sahibi veya teklif sahibi teklif şikayeti açabilir |
+| T15 | Kullanıcı, teklif vermeden bir talebi şikayet eder | Gerekçe ile şikayet açılabilir; talep içeriği moderasyonda görünür |
+| T16 | Aynı kullanıcı aynı talebi 24 saat içinde tekrar şikayet eder | İkinci kayıt reddedilir; 24 saat sonra yeniden şikayet açılabilir |
+| T17 | Açık aynı şikayet tekrar gönderilir | Yinelenen açık kayıt oluşmaz |
+| T18 | Şikayete fotoğraf eklenir | En çok 3 geçerli görsel kabul edilir; geçersiz tür veya büyük dosya reddedilir |
+| T19 | Yeni şikayet oluşur | Tüm Support kullanıcılarının panelinde açık kayıt olarak görünür |
+| T20 | Support şikayeti üzerine alır | Yalnız kendine atayabilir; kendisine atananlar görünümünde görünür |
+| T21 | Moderator/Admin/Super Admin atama yapar | İstenen Support kullanıcısına atama yapılır ve atanan kişiye bildirim gider |
+| T22 | Şikayet İncelemede, Çözüldü veya Kapat durumuna alınır | Gerekçe/çözüm notu kaydedilir; Çözüldü ve Kapat açık kuyruktan çıkar |
+| T23 | Şikayet detayında taraf adlarına tıklanır | Yalnız yetkili görevli, ilgili kişinin e-posta ve kayıtlı telefonunu görür |
+| T24 | Support talep numarasıyla talep açar | Genel talep listesine erişmeden, numara ve Talebe Git akışıyla ilgili talebi görüntüler |
+| T25 | 4 saat işlem görmeyen veya 24 saati aşan açık şikayet | Admin/Super Admin takip metriklerinde doğru grupta görünür |
+| T26 | Çözümlenen ya da kapatılan şikayet | Kullanıcıya durum güncellemesi bildirimi gider; iç Support notu kullanıcıya görünmez |
+| T27 | Saatlik şikayet alarmı zamanlanmış istekle çalışır | Geçerli `CRON_SECRET` olmadan istek reddedilir; geçerli istekte aynı açık şikayet için ikinci eskalasyon oluşmaz |
+| T28 | Moderatör operasyon raporunu açar | Toplam metrikleri ve şehir/durum filtrelerini görür; kullanıcı e-posta/telefonu gibi hassas verileri göremez |
+| T29 | Operasyon raporu şehir ve talep durumu ile filtrelenir | Talep, teklif ve kategori metrikleri filtrelenir; kullanıcı/firma/ödeme toplamları genel kalır |
+| T30 | Firma pasife alınır veya planı değiştirilir | Firma ayarı ve denetim kaydı güncellenir; firma üyelerinin kişisel hesabı ve diğer firma üyelikleri değişmez |
+| T31 | Firma üyelikleri topluca pasife/aktife alınır | Yalnız ilgili firmadaki ACTIVE/REMOVED üyelikler değişir; gerekçe ve denetim kaydı oluşur |
 
 ---
 

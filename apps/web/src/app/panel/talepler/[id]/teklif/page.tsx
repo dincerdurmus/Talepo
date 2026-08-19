@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
+import { ComplaintForm } from "@/components/panel/ComplaintForm";
 import { OfferForm } from "@/components/panel/OfferForm";
 import { OfferRequestPreview } from "@/components/panel/OfferRequestPreview";
 import { displayRequestFieldValue } from "@/lib/field-display";
@@ -39,6 +40,7 @@ export default async function OfferRequestPage({
     where: {
       id,
       deletedAt: null,
+      isModerationHidden: false,
       createdById: { not: user.id },
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],
@@ -46,6 +48,7 @@ export default async function OfferRequestPage({
     },
     select: {
       id: true,
+      createdById: true,
       title: true,
       description: true,
       professionalDescription: true,
@@ -179,6 +182,8 @@ export default async function OfferRequestPage({
               }),
             }))}
           />
+          <ComplaintForm subjectType="REQUEST" subjectId={request.id} targetUserId={request.createdById} />
+          {existingOffer ? <ComplaintForm subjectType="OFFER" subjectId={existingOffer.id} /> : null}
         </div>
       </div>
     </div>

@@ -281,6 +281,8 @@ model User {
   planTier          PlanTier  @default(STANDARD)
   planExpiresAt     DateTime?
   bonusOfferCredits Int       @default(0)
+  moderationRestrictedUntil DateTime?
+  moderationRestrictionReason String? @db.Text
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -318,6 +320,11 @@ model User {
   adminAuditTargets       AdminAuditLog[]     @relation("AdminAuditTargetUser")
   assignedModerationCases ModerationCase[]    @relation("ModerationAssignee")
   reportedModerationCases ModerationCase[]    @relation("ModerationReporter")
+  targetedModerationCases ModerationCase[]    @relation("ModerationTarget")
+  roleNotesAuthored      RoleUserNote[]      @relation("RoleUserNoteAuthor")
+  roleNotesReceived      RoleUserNote[]      @relation("RoleUserNoteTarget")
+  roleNoteEventsAuthored RoleUserNoteEvent[] @relation("RoleUserNoteEventActor")
+  roleNoteEventsReceived RoleUserNoteEvent[] @relation("RoleUserNoteEventTarget")
 
   @@index([status])
   @@index([city, district])
@@ -348,27 +355,73 @@ model AdminAuditLog {
   @@index([createdAt])
 }
 
+/// Internal follow-up notes for non-USER platform accounts. Visible only to Admin and Super Admin.
+model RoleUserNote {
+  id           String   @id @default(cuid())
+  targetUserId String
+  authorId     String
+  body         String   @db.Text
+  visibleToRoles PlatformRole[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime?
+  deletedById  String?
+
+  targetUser User @relation("RoleUserNoteTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  author     User @relation("RoleUserNoteAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([targetUserId, createdAt])
+  @@index([authorId, createdAt])
+}
+
+/// Immutable activity history for internal role-user notes. Kept after a note is soft-deleted.
+model RoleUserNoteEvent {
+  id           String   @id @default(cuid())
+  noteId       String
+  targetUserId String
+  actorId      String
+  action       String
+  beforeBody   String?  @db.Text
+  afterBody    String?  @db.Text
+  createdAt    DateTime @default(now())
+
+  targetUser User @relation("RoleUserNoteEventTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  actor      User @relation("RoleUserNoteEventActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([targetUserId, createdAt])
+  @@index([noteId, createdAt])
+}
+
 model ModerationCase {
   id             String                 @id @default(cuid())
+  complaintNumber Int?                 @unique @default(autoincrement())
   subjectType    String
   subjectId      String
   category       String
   summary        String                 @db.Text
+  details        String?                @db.Text
+  isComplaint    Boolean                @default(false)
+  attachmentUrls Json?
   priority       ModerationCasePriority @default(MEDIUM)
   status         ModerationCaseStatus   @default(OPEN)
   reporterId     String?
+  targetUserId   String?
   assigneeId     String?
   resolutionNote String?                @db.Text
+  internalNote   String?                @db.Text
+  escalationNotifiedAt DateTime?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
   resolvedAt     DateTime?
 
   reporter User? @relation("ModerationReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  targetUser User? @relation("ModerationTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
   assignee User? @relation("ModerationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
   @@index([status, priority, createdAt])
   @@index([subjectType, subjectId])
   @@index([assigneeId, status])
+  @@index([targetUserId, createdAt])
 }
 
 model Account {
@@ -837,6 +890,7 @@ model RequestFieldValue {
 
 model Request {
   id String @id @default(cuid())
+  requestNumber Int? @unique @default(autoincrement())
 
   createdById String
   companyId   String?
@@ -847,6 +901,13 @@ model Request {
   description String @db.Text
 
   status RequestStatus @default(DRAFT)
+
+  /// Moderation visibility is independent from the commercial lifecycle.
+  /// Hidden content remains recoverable and its normal status is preserved.
+  isModerationHidden Boolean   @default(false)
+  moderationHiddenAt DateTime?
+  moderationHiddenById String?
+  moderationReason   String?   @db.Text
 
   country  String  @default("Türkiye")
   city     String?
@@ -964,6 +1025,12 @@ model Offer {
   validUntil   DateTime?
 
   status OfferStatus @default(DRAFT)
+
+  /// Moderation visibility is independent from offer withdrawal/rejection.
+  isModerationHidden Boolean   @default(false)
+  moderationHiddenAt DateTime?
+  moderationHiddenById String?
+  moderationReason   String?   @db.Text
 
   submittedAt DateTime?
   viewedAt    DateTime?

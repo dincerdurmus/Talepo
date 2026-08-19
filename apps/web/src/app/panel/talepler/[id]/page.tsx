@@ -17,6 +17,7 @@ import { RequestChangeBanner } from "@/components/panel/RequestChangeBanner";
 import { SmartMatchPanel } from "@/components/panel/SmartMatchPanel";
 import { WatchlistToggle } from "@/components/panel/WatchlistToggle";
 import { OfferSendCta } from "@/components/panel/OfferSendCta";
+import { ComplaintForm } from "@/components/panel/ComplaintForm";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
@@ -57,6 +58,7 @@ export default async function ExploreRequestDetailPage({
     where: {
       id,
       deletedAt: null,
+      isModerationHidden: false,
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],
       },
@@ -181,10 +183,7 @@ export default async function ExploreRequestDetailPage({
             : Promise.resolve(null),
           hasWatchlist
             ? prisma.requestChange.findMany({
-                where: {
-                  requestId: request.id,
-                  createdAt: { gte: new Date(Date.now() - 14 * 86400000) },
-                },
+                where: { requestId: request.id },
                 orderBy: { createdAt: "desc" },
                 take: 5,
               })
@@ -395,6 +394,10 @@ export default async function ExploreRequestDetailPage({
           </div>
         </section>
       )}
+
+      <div className="mt-8">
+        <ComplaintForm subjectType="REQUEST" subjectId={request.id} targetUserId={request.createdById} />
+      </div>
     </>
   );
 }

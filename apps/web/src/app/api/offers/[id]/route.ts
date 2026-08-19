@@ -14,6 +14,7 @@ import {
   userKey,
 } from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import {
   acceptOffer,
   negotiateOffer,
@@ -34,6 +35,7 @@ export async function POST(
     });
 
     const user = await requireUser();
+    await assertUserCanAct(user.id);
     assertRateLimit({
       key: userKey("offer.action", user.id),
       limit: 20,
@@ -96,7 +98,7 @@ export async function POST(
 
     if (body.action === "negotiate") {
       // Legacy pre-accept chat pazarlık — no longer opens Conversation.
-      await negotiateOffer(user.id, id, body.note);
+      await negotiateOffer();
     }
 
     return NextResponse.json(
@@ -127,6 +129,7 @@ export async function PATCH(
 ) {
   try {
     const user = await requireUser();
+    await assertUserCanAct(user.id);
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
 

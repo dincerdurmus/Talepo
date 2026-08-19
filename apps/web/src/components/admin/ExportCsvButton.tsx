@@ -1,8 +1,17 @@
 "use client";
 
 export function ExportCsvButton({ rows, filename = "admin-kayitlari.csv", onExport }: { rows: Array<Record<string, unknown>>; filename?: string; onExport?: () => void }) {
-  function exportCsv() {
+  async function exportCsv() {
     if (!rows.length) return;
+    const response = await fetch("/api/admin/audit/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename, rowCount: rows.length }),
+    });
+    if (!response.ok) {
+      window.alert("Dışa aktarma denetim kaydı oluşturulamadı. Lütfen yönetici doğrulamanızı yenileyin.");
+      return;
+    }
     onExport?.();
     const headers = Object.keys(rows[0]);
     const escape = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;

@@ -8,6 +8,7 @@ import {
   FileText,
   HandCoins,
   ShieldCheck,
+  StickyNote,
   Users,
 } from "lucide-react";
 
@@ -50,8 +51,9 @@ export default async function AdminPage() {
   const permissions = adminPermissions(admin.platformRole);
   const canSeeSensitive = hasAdminPermission(admin.platformRole, "sensitive.view");
   const canManageBilling = hasAdminPermission(admin.platformRole, "billing.manage");
+  const canViewBilling = hasAdminPermission(admin.platformRole, "billing.view") || canManageBilling;
 
-  const [users, userCount, companyCount, requestCount, offerCount] = await Promise.all([
+  const [users, counts, billingSubscriptions] = await Promise.all([
     prisma.user.findMany({
       where: { deletedAt: null, ...(admin.platformRole !== "SUPER_ADMIN" ? { platformRole: { not: "SUPER_ADMIN" as const } } : {}) },
       orderBy: { createdAt: "desc" },
@@ -69,17 +71,19 @@ export default async function AdminPage() {
       },
       take: 100,
     }),
-    prisma.user.count({ where: { deletedAt: null } }),
-    prisma.company.count({ where: { deletedAt: null } }),
-    prisma.request.count({ where: { deletedAt: null } }),
-    prisma.offer.count(),
+    loadDashboardCounts(),
+    canViewBilling ? prisma.billingSubscription.findMany({ where: { subjectType: "USER" }, select: { subjectId: true, status: true, currentPeriodEnd: true } }) : Promise.resolve([]),
   ]);
 
+  const { userCount, companyCount, requestCount, offerCount } = counts;
+  const billingByUser = new Map(billingSubscriptions.map((subscription) => [subscription.subjectId, subscription]));
   const serializedUsers = users.map((user) => ({
     ...user,
     email: canSeeSensitive ? user.email : maskEmail(user.email),
     membershipNumber: canSeeSensitive ? user.membershipNumber : maskMembership(user.membershipNumber),
-    planTier: canManageBilling ? user.planTier : null,
+    planTier: canViewBilling ? user.planTier : null,
+    billingStatus: canViewBilling ? billingByUser.get(user.id)?.status ?? "INACTIVE" : null,
+    billingPeriodEnd: canViewBilling ? billingByUser.get(user.id)?.currentPeriodEnd?.toISOString() ?? null : null,
     bonusOfferCredits: canManageBilling ? user.bonusOfferCredits : 0,
     createdAt: user.createdAt.toISOString(),
     lastLoginAt: canSeeSensitive ? user.lastLoginAt?.toISOString() ?? null : null,
@@ -109,14 +113,16 @@ export default async function AdminPage() {
 
         <AdminPrivacyNotice sensitive={canSeeSensitive} />
 
+        <Link href="/admin/notlar" className="mt-5 inline-flex items-center gap-2 rounded-xl border border-sky-200/25 bg-sky-200/[.07] px-4 py-2.5 text-sm font-semibold text-sky-100 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-200/[.12] active:translate-y-0"><StickyNote className="h-4 w-4" />İç not kayıtlarını aç</Link>
+
         <section className="my-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Metric href="/admin/users" icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" />
-          <Metric href="/admin/companies" icon={Building2} label="Şirket" value={companyCount} tone="cyan" />
-          <Metric href="/admin/requests" icon={FileText} label="Talep" value={requestCount} tone="amber" />
-          <Metric href="/admin/offers" icon={HandCoins} label="Teklif" value={offerCount} tone="violet" />
+          {hasAdminPermission(admin.platformRole, "users.view") ? <Metric href="/admin/users" icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" /> : null}
+          {hasAdminPermission(admin.platformRole, "analytics.view") ? <Metric href="/admin/companies" icon={Building2} label="Şirket" value={companyCount} tone="cyan" /> : null}
+          {hasAdminPermission(admin.platformRole, "requests.view") ? <Metric href="/admin/requests" icon={FileText} label="Talep" value={requestCount} tone="amber" /> : null}
+          {hasAdminPermission(admin.platformRole, "offers.view") ? <Metric href="/admin/offers" icon={HandCoins} label="Teklif" value={offerCount} tone="violet" /> : null}
         </section>
 
-        <AdminUsersTable initialUsers={serializedUsers} permissions={permissions} />
+        <AdminUsersTable initialUsers={serializedUsers} permissions={permissions} currentUserId={admin.id} />
 
         <AdminOperationsCenter permissions={permissions} />
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <DateRangeComparison /> : null}
@@ -138,6 +144,24 @@ function maskEmail(email: string | null) {
 
 function maskMembership(value: string) {
   return `***${value.slice(-4)}`;
+}
+
+type DashboardCounts = { userCount: number; companyCount: number; requestCount: number; offerCount: number };
+
+async function loadDashboardCounts(): Promise<DashboardCounts> {
+  const directUrl = process.env.DIRECT_URL?.trim() || process.env.DATABASE_URL?.trim();
+  if (!directUrl) throw new Error("Dashboard sayacı için veritabanı bağlantısı bulunamadı.");
+  const connectionString = directUrl.replace(":6543/", ":5432/").replace("?pgbouncer=true", "").replace("&pgbouncer=true", "");
+  const { Client } = await import("pg");
+  const client = new Client({ connectionString });
+  try {
+    await client.connect();
+    const result = await client.query('SELECT (SELECT count(*)::int FROM "User" WHERE "deletedAt" IS NULL) AS "userCount", (SELECT count(*)::int FROM "Company" WHERE "deletedAt" IS NULL) AS "companyCount", (SELECT count(*)::int FROM "Request" WHERE "deletedAt" IS NULL) AS "requestCount", (SELECT count(*)::int FROM "Offer") AS "offerCount"');
+    const row = result.rows[0] ?? {};
+    return { userCount: Number(row.userCount ?? 0), companyCount: Number(row.companyCount ?? 0), requestCount: Number(row.requestCount ?? 0), offerCount: Number(row.offerCount ?? 0) };
+  } finally {
+    await client.end();
+  }
 }
 
 function Metric({ href, icon: Icon, label, value, tone }: { href: string; icon: typeof Users; label: string; value: number; tone: "emerald" | "cyan" | "amber" | "violet" }) {
