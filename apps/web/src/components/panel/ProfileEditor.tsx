@@ -1,8 +1,14 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, LoaderCircle, Save } from "lucide-react";
+import { Check, Eye, LoaderCircle, Save } from "lucide-react";
+
+import {
+  formatPublicLocation,
+  PUBLIC_PROFILE_BIO_MAX,
+  PUBLIC_PROFILE_NAME_MAX,
+} from "@/lib/profile/public-profile";
 
 export type ProfileEditorValues = {
   name: string;
@@ -20,6 +26,12 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  const previewLocation = useMemo(
+    () => formatPublicLocation(form.city, form.district, form.country),
+    [form.city, form.district, form.country],
+  );
 
   function update<K extends keyof ProfileEditorValues>(
     key: K,
@@ -31,6 +43,19 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
+    if (busy) return;
+
+    const name = form.name.trim();
+    if (!name || name.length > PUBLIC_PROFILE_NAME_MAX) {
+      setError(`Ad soyad zorunlu ve en fazla ${PUBLIC_PROFILE_NAME_MAX} karakter olabilir.`);
+      return;
+    }
+
+    if (form.biography.length > PUBLIC_PROFILE_BIO_MAX) {
+      setError(`Hakkımda en fazla ${PUBLIC_PROFILE_BIO_MAX} karakter olabilir.`);
+      return;
+    }
+
     setBusy(true);
     setError(null);
     setSaved(false);
@@ -79,22 +104,57 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
             Profili düzenle
           </h3>
           <p className="mt-1 text-sm text-black/45">
-            İletişim ve konum bilgilerinizi güncel tutun.
+            Konuşmalarda görünen güvenli alanları güncelleyin.
           </p>
         </div>
-        {saved && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e7f7f2] px-3 py-1.5 text-xs font-semibold text-[#0f766e]">
-            <Check className="h-3.5 w-3.5" />
-            Kaydedildi
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowPreview((value) => !value)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-black/60"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            {showPreview ? "Önizlemeyi gizle" : "Önizleme"}
+          </button>
+          {saved && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e7f7f2] px-3 py-1.5 text-xs font-semibold text-[#0f766e]">
+              <Check className="h-3.5 w-3.5" />
+              Kaydedildi
+            </span>
+          )}
+        </div>
       </div>
+
+      {showPreview ? (
+        <div className="mt-5 rounded-2xl border border-teal-900/10 bg-[#f7fbfa] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/45">
+            Konuşmalarda görünen önizleme
+          </p>
+          <p className="mt-2 text-lg font-semibold text-[#0f1f1d]">
+            {form.name.trim() || "Adınız"}
+          </p>
+          {previewLocation ? (
+            <p className="mt-1 text-sm text-black/50">{previewLocation}</p>
+          ) : null}
+          {form.biography.trim() ? (
+            <p className="mt-3 text-sm leading-6 text-black/65">
+              {form.biography.trim()}
+            </p>
+          ) : (
+            <p className="mt-3 text-sm text-black/35">Henüz tanıtım eklenmedi.</p>
+          )}
+          <p className="mt-3 text-[11px] text-black/35">
+            E-posta ve telefon karşı tarafa profil üzerinden gösterilmez.
+          </p>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Field
           label="Ad soyad"
           required
           value={form.name}
+          maxLength={PUBLIC_PROFILE_NAME_MAX}
           onChange={(value) => update("name", value)}
           placeholder="Adınız Soyadınız"
         />
@@ -139,12 +199,12 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
             value={form.biography}
             onChange={(event) => update("biography", event.target.value)}
             rows={4}
-            maxLength={1000}
+            maxLength={PUBLIC_PROFILE_BIO_MAX}
             placeholder="Kısaca kendinizi veya firmanızı anlatın…"
             className="mt-1.5 w-full resize-none rounded-xl border border-black/10 bg-[#f7f8f6] px-3 py-2.5 text-sm outline-none focus:border-black/25"
           />
           <span className="mt-1 block text-[11px] text-black/35">
-            {form.biography.length}/1000
+            {form.biography.length}/{PUBLIC_PROFILE_BIO_MAX}
           </span>
         </label>
       </div>
@@ -178,12 +238,14 @@ function Field({
   onChange,
   placeholder,
   required,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   required?: boolean;
+  maxLength?: number;
 }) {
   return (
     <label className="block">
@@ -191,6 +253,7 @@ function Field({
       <input
         required={required}
         value={value}
+        maxLength={maxLength}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className="mt-1.5 w-full rounded-xl border border-black/10 bg-[#f7f8f6] px-3 py-2.5 text-sm outline-none focus:border-black/25"
