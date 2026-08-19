@@ -34,8 +34,8 @@ function read(rel: string) {
 
 const shell = read("src/components/panel/PanelShell.tsx");
 const commandSidebar = read("src/components/panel/CommandPersonalSidebar.tsx");
+const proCatalog = read("src/lib/panel/signal-rail-pro-tools.ts");
 const nav = read("src/components/panel/panel-nav.ts");
-const home = read("src/app/panel/page.tsx");
 const sayfamHome = read("src/components/panel/sayfam/PanelSayfamHome.tsx");
 const navItems = read("src/components/panel/panel-nav.ts");
 const layout = read("src/app/layout.tsx");
@@ -85,16 +85,28 @@ console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
 {
   check("CommandPersonalSidebar wired in shell", shell.includes("CommandPersonalSidebar"));
   check("Pro Araçlar in signal rail", commandSidebar.includes("Pro Araçlar"));
-  check("desktop Takiplerim tool", commandSidebar.includes('title: "Takiplerim"'));
-  check("desktop Analiz tool", commandSidebar.includes('title: "Analiz"'));
-  check("desktop Fırsatlar tool", commandSidebar.includes('title: "Fırsatlar"'));
+  check(
+    "desktop Takiplerim tool",
+    proCatalog.includes('title: "Takiplerim"') ||
+      commandSidebar.includes('title: "Takiplerim"'),
+  );
+  check(
+    "desktop Analiz tool",
+    commandSidebar.includes('"/panel/analiz"') ||
+      commandSidebar.includes('title: "Analiz"'),
+  );
+  check(
+    "desktop Fırsatlar tool",
+    proCatalog.includes('title: "Fırsatlar"') ||
+      commandSidebar.includes('title: "Fırsatlar"'),
+  );
   check("plan section in rail", commandSidebar.includes('id: "plan"') || commandSidebar.includes('"plan"'));
   check("sidebar collapse localStorage key", commandSidebar.includes("sidebarCollapsed") || shell.includes("SIDEBAR_COLLAPSED_KEY"));
   check("rail hover + pinned dock", commandSidebar.includes("hoverSection") && commandSidebar.includes("pinnedOpen"));
   check("no asistan sidebar", !commandSidebar.includes("/panel/asistan"));
   check(
-    "Radar not a sidebar product title",
-    !commandSidebar.includes('title: "Talepo Radar"'),
+    "Radar is a catalogued pro tool",
+    proCatalog.includes('title: "Talepo Radar"'),
   );
   check(
     "no /panel/asistan in PANEL_NAV_ITEMS",

@@ -261,8 +261,42 @@ console.log("\n=== SOURCE ===\n");
     requestDetail.includes("media:") && requestDetail.includes("prisma.request.findFirst"),
   );
   check(
-    "PanelShell not rewritten in this file set",
+    "PanelShell bell uses unreadNotifications",
     panelShell.includes("unreadNotifications") && panelShell.includes("Bell"),
+  );
+  check(
+    "read route revalidates panel surfaces",
+    mark.includes("revalidatePath(\"/panel\", \"layout\")") &&
+      mark.includes("revalidatePath(\"/panel\")") &&
+      mark.includes("revalidatePath(\"/panel/bildirimler\")"),
+  );
+  check(
+    "read route is dynamic",
+    redirect.includes("export const dynamic = \"force-dynamic\"") &&
+      redirect.includes("await connection()"),
+  );
+  check(
+    "owned lookup is user-scoped",
+    redirect.includes("where: { id, userId: user.id }") &&
+      mark.includes("id: notificationId") &&
+      mark.includes("userId"),
+  );
+  check(
+    "single-row mark is unread-gated and idempotent",
+    mark.includes("unreadNotificationWhere") &&
+      mark.includes("status: \"READ\"") &&
+      mark.includes("readAt: now"),
+  );
+  check(
+    "list and sayfam skip prefetch of read route",
+    list.includes("prefetch={false}") &&
+      read("src/components/panel/sayfam/PanelSayfamActivityFeed.tsx").includes(
+        "prefetch={false}",
+      ),
+  );
+  check(
+    "back navigation refreshes stale layout",
+    panelShell.includes("pageshow") && panelShell.includes("event.persisted"),
   );
 }
 
