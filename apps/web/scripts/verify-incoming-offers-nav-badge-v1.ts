@@ -27,6 +27,7 @@ const layout = read("src/app/panel/layout.tsx");
 const shell = read("src/components/panel/PanelShell.tsx");
 const commandShell = read("src/components/panel/CommandPersonalSidebar.tsx");
 const panelPage = read("src/app/panel/page.tsx");
+const sayfamHomeData = read("src/lib/panel/sayfam-home-data.ts");
 
 check(
   "unread count authority exported",
@@ -36,7 +37,9 @@ check(
 );
 check(
   "dashboard action-required separate from unread",
-  panelPage.includes("summary.newOffers") &&
+  (panelPage.includes("summary.newOffers") ||
+    sayfamHomeData.includes("summary.newOffers")) &&
+    sayfamHomeData.includes("actionRequiredOffers: summary.newOffers") &&
     panelData.includes("newOffers: buyerActionRequiredOffers") &&
     panelData.includes("unreadIncomingOfferEvents"),
 );
