@@ -63,7 +63,7 @@ console.log("\n=== SURFACE ===\n");
   check("deep link highlight", group.includes("isDeepLinked") && page.includes("teklif"));
   check("no buyer identity on seller card", !card.includes("createdBy.name") && !group.includes("Alıcı:"));
   check("buyer page still Sizin talebiniz", incomingGroup.includes("Sizin talebiniz"));
-  check("buyer page preserved compare group", buyerPage.includes("IncomingOfferCompareGroup"));
+  check("buyer page preserved compare group", buyerPage.includes("IncomingOfferWorkspace") || read("src/app/panel/gelen-teklifler/[requestId]/page.tsx").includes("IncomingOfferWorkspace"));
 }
 
 console.log("\n=== COMPARE ===\n");
