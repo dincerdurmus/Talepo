@@ -44,6 +44,7 @@ export function mapIncomingOfferCardData(
     mediaIds: offer.media.map((item) => item.id),
     negotiations: mapNegotiations(offer.negotiations),
     createdAt: offer.createdAt.toISOString(),
+    updatedAt: offer.updatedAt.toISOString(),
   };
 }
 

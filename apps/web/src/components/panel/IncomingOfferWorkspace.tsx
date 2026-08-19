@@ -239,15 +239,20 @@ export function IncomingOfferWorkspace({
             return (
               <div key={row.card.id} id={`workspace-offer-${row.card.id}`}>
                 <IncomingOfferWorkspaceListItem
-                  offerId={row.card.id}
                   firmName={firmName}
                   amount={row.card.amount}
                   currency={row.card.currency}
                   deliveryDays={row.card.deliveryDays}
                   status={row.card.status}
                   negotiations={row.card.negotiations}
+                  description={row.card.description}
                   createdAt={row.card.createdAt ?? new Date().toISOString()}
+                  updatedAt={row.card.updatedAt ?? undefined}
                   photoCount={row.card.mediaIds.length}
+                  budgetMin={request.budgetMin}
+                  budgetMax={request.budgetMax}
+                  requestCurrency={request.currency}
+                  trust={row.trust}
                   isSelected={selectedOfferId === row.card.id}
                   isUnread={unreadSet.has(row.card.id)}
                   onSelect={() => selectOffer(row.card.id)}

@@ -169,6 +169,22 @@ export function budgetCompareCopy(
   };
 }
 
+export function budgetCompareListDeltaLabel(
+  result: BudgetOfferCompareResult,
+  currency: string,
+): string | null {
+  if (result.kind === "above" && result.diffCents != null) {
+    return `${formatMoneyFromCents(result.diffCents, currency)} bütçe üstünde`;
+  }
+  if (result.kind === "below" && result.diffCents != null) {
+    return `${formatMoneyFromCents(result.diffCents, currency)} bütçe altında`;
+  }
+  if (result.kind === "equal") {
+    return "Bütçe ile aynı";
+  }
+  return null;
+}
+
 export function formatRequestQuantity(input: {
   textValue?: string | null;
   numberValue?: number | string | null;
