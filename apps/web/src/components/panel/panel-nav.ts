@@ -34,6 +34,23 @@ export type PanelNavItem = {
   workspace?: "personal" | "corporate" | "both";
 };
 
+export const TALEP_TEKLIF_NAV_HREFS = [
+  "/panel/talepler",
+  "/panel/taleplerim",
+  "/panel/gelen-teklifler",
+  "/panel/teklifler",
+] as const;
+
+export function isPanelNavActive(
+  pathname: string,
+  href: string,
+  exact?: boolean,
+) {
+  const path = href.split("?")[0] ?? href;
+  if (exact) return pathname === path;
+  return pathname === path || pathname.startsWith(`${path}/`);
+}
+
 export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/",
@@ -48,6 +65,12 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     exact: true,
   },
   {
+    href: "/panel/talepler",
+    icon: Search,
+    label: "Talepleri keşfet",
+    mobileLabel: "Keşfet",
+  },
+  {
     href: "/panel/taleplerim",
     icon: FileText,
     label: "Taleplerim",
@@ -59,12 +82,6 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
     label: "Gelen teklifler",
     mobileLabel: "Gelen",
     workspace: "personal",
-  },
-  {
-    href: "/panel/talepler",
-    icon: Search,
-    label: "Talepler",
-    mobileLabel: "Talepler",
   },
   {
     href: "/panel/teklifler",
@@ -133,7 +150,7 @@ export { Bell };
 
 /**
  * Narrow-screen web bottom bar (lg:hidden). Not a native app nav.
- * Professional gets Fırsatlar + Tekliflerim; Standard keeps Talepler + Profil.
+ * Professional gets Fırsatlar + Tekliflerim; Standard keeps Talepleri keşfet + Profil.
  */
 export function getResponsiveBottomNavVariant(
   features?: Partial<Record<FeatureKey, boolean>>,

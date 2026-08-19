@@ -34,6 +34,7 @@ import { PlanBadge } from "@/components/panel/PlanBadge";
 import {
   filterPanelNavItems,
   getResponsiveBottomNavVariant,
+  isPanelNavActive,
   PANEL_NAV_ITEMS,
   PANEL_NOTIFICATIONS_HREF,
 } from "@/components/panel/panel-nav";
@@ -137,9 +138,7 @@ function getInitials(name: string | null | undefined, email: string | null | und
 }
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {
-  const path = href.split("?")[0] ?? href;
-  if (exact) return pathname === path;
-  return pathname === path || pathname.startsWith(`${path}/`);
+  return isPanelNavActive(pathname, href, exact);
 }
 
 function getPanelPageTitle(pathname: string) {
@@ -150,7 +149,7 @@ function getPanelPageTitle(pathname: string) {
   if (pathname.includes("/panel/talepler/") && pathname.endsWith("/teklif")) {
     return "Teklif ver";
   }
-  if (pathname.startsWith("/panel/talepler")) return "Talepler";
+  if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet";
   if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
   if (pathname.startsWith("/panel/firsatlar")) return "Fırsatlar";
   if (pathname.startsWith("/panel/analiz")) return "Analiz";
@@ -423,14 +422,14 @@ export function PanelShell({
             <MobileLink
               href="/panel/talepler"
               icon={Search}
-              label="Talepler"
+              label="Keşfet"
               active={isNavActive(pathname, "/panel/talepler")}
             />
           )}
 
           <Link
             href={isCorporate ? "/panel/talepler" : "/talep"}
-            aria-label={isCorporate ? "Talepler" : "Talep oluştur"}
+            aria-label={isCorporate ? "Talepleri keşfet" : "Talep oluştur"}
             className="talepo-plan-cta -mt-8 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[5px] border-[#f4f7f6] shadow-[0_12px_30px_var(--plan-glow)]"
           >
             {isCorporate ? <Search className="h-7 w-7" /> : <Plus className="h-7 w-7" />}
@@ -749,6 +748,7 @@ function PanelBackLink({ pathname }: { pathname: string }) {
 
   if (pathname === "/panel") return null;
   if (pathname === "/panel/talepler") return null;
+  if (pathname === "/panel/taleplerim") return null;
   if (/^\/panel\/gelen-teklifler\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/profil\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/firma-profil\/[^/]+$/.test(pathname)) return null;
@@ -797,7 +797,11 @@ function MobileLink({
   return (
     <Link
       href={href}
-      aria-label={linkLabel}
+      aria-label={
+        href === "/panel/talepler"
+          ? sidebarLinkAriaLabel("Talepleri keşfet", badgeAriaLabel)
+          : linkLabel
+      }
       aria-current={active ? "page" : undefined}
       className={`relative flex min-h-11 min-w-14 max-w-[4.75rem] flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium leading-tight sm:text-[11px] ${
         active ? "" : "text-teal-950/35"

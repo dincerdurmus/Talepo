@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
-import { deleteRequest } from "@/server/request/delete-request";
+import {
+  deleteRequest,
+  RequestDeleteNotAllowedError,
+} from "@/server/request/delete-request";
 import {
   parseCreateRequestInput,
   RequestValidationError,
@@ -71,6 +74,13 @@ export async function DELETE(
       return NextResponse.json(
         { ok: false, message: error.message },
         { status: 401 },
+      );
+    }
+
+    if (error instanceof RequestDeleteNotAllowedError) {
+      return NextResponse.json(
+        { ok: false, message: error.message },
+        { status: 409 },
       );
     }
 

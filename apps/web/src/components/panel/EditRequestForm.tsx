@@ -63,7 +63,13 @@ type CommonDraft = {
   budget: string;
 };
 
-export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
+export function EditRequestForm({
+  initial,
+  cloneSuccess = false,
+}: {
+  initial: EditRequestInitial;
+  cloneSuccess?: boolean;
+}) {
   const router = useRouter();
   const [requestText, setRequestText] = useState(
     initial.description || initial.professionalDescription || "",
@@ -330,6 +336,15 @@ export function EditRequestForm({ initial }: { initial: EditRequestInitial }) {
           Talebi düzenliyorsunuz
         </span>
       </header>
+
+      {cloneSuccess ? (
+        <p
+          role="status"
+          className="rounded-[20px] border border-teal-900/10 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-900"
+        >
+          Yeni taslağın hazır.
+        </p>
+      ) : null}
 
       <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-white p-6 shadow-[0_16px_48px_rgba(15,31,29,0.05)] sm:p-8">
         <div className="relative flex items-center gap-3">

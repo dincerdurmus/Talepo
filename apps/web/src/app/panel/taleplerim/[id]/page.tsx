@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
+import { CloneRequestAsDraftControl } from "@/components/panel/my-requests/CloneRequestAsDraftControl";
+import { ConcludedProcessPanel } from "@/components/panel/my-requests/ConcludedProcessPanel";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
@@ -21,6 +23,8 @@ import { UrgentBroadcastBanner } from "@/components/panel/UrgentBroadcastBanner"
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { displayRequestFieldValue } from "@/lib/field-display";
+import { buildConcludedProcessHistory } from "@/lib/panel/concluded-process-history";
+import { MY_REQUEST_CONCLUDED_STATUSES } from "@/lib/panel/my-requests-surface";
 import {
   offerNegotiationListInclude,
   toOfferNegotiationDtos,
@@ -31,7 +35,9 @@ import {
 } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { canCloneRequestAsDraft } from "@/server/request/clone-request-as-draft";
 import { canEditRequestStatus } from "@/server/request/update-request";
+import { canDeleteRequestStatus } from "@/server/request/delete-request";
 import {
   loadProviderTrustSummaries,
   trustForOfferProvider,
@@ -93,12 +99,30 @@ export default async function RequestDetailPage({
         include: {
           company: { select: { id: true, name: true, isVerified: true } },
           submittedBy: { select: { id: true, name: true } },
-          conversation: { select: { id: true } },
+          conversation: { select: { id: true, createdAt: true } },
           media: {
             orderBy: { sortOrder: "asc" },
             select: { id: true },
           },
           negotiations: offerNegotiationListInclude,
+        },
+      },
+      dealOutcomes: {
+        select: {
+          status: true,
+          agreedPrice: true,
+          currency: true,
+          completedAt: true,
+          buyerConfirmedAt: true,
+          supplierConfirmedAt: true,
+          conversationId: true,
+          reviews: {
+            select: {
+              id: true,
+              reviewerSide: true,
+              createdAt: true,
+            },
+          },
         },
       },
       _count: { select: { matches: true } },
@@ -117,6 +141,44 @@ export default async function RequestDetailPage({
   });
 
   const editable = canEditRequestStatus(request.status);
+  const deletable = canDeleteRequestStatus(request.status);
+  const cloneable = canCloneRequestAsDraft(request.status);
+  const concluded = MY_REQUEST_CONCLUDED_STATUSES.has(request.status);
+  const processHistory = concluded
+    ? buildConcludedProcessHistory({
+        status: request.status,
+        createdAt: request.createdAt,
+        publishedAt: request.publishedAt,
+        completedAt: request.completedAt,
+        cancelledAt: request.cancelledAt,
+        offers: request.offers.map((offer) => ({
+          id: offer.id,
+          status: offer.status,
+          amount: Number(offer.amount),
+          currency: offer.currency,
+          createdAt: offer.createdAt,
+          submittedAt: offer.submittedAt,
+          acceptedAt: offer.acceptedAt,
+          companyName: offer.company?.name ?? null,
+          submittedByName: offer.submittedBy.name,
+          mediaIds: offer.media.map((item) => item.id),
+          conversationId: offer.conversation?.id ?? null,
+          conversationCreatedAt: offer.conversation?.createdAt ?? null,
+          negotiations: toOfferNegotiationDtos(offer.negotiations),
+        })),
+        dealOutcomes: request.dealOutcomes.map((deal) => ({
+          status: deal.status,
+          agreedPrice:
+            deal.agreedPrice != null ? Number(deal.agreedPrice) : null,
+          currency: deal.currency,
+          completedAt: deal.completedAt,
+          buyerConfirmedAt: deal.buyerConfirmedAt,
+          supplierConfirmedAt: deal.supplierConfirmedAt,
+          conversationId: deal.conversationId,
+          reviews: deal.reviews,
+        })),
+      })
+    : null;
   const matchedCompanyCount = request._count.matches;
   const categorySlug = request.category.slug;
   const categoryLook = getCategoryVisual(categorySlug);
@@ -144,7 +206,15 @@ export default async function RequestDetailPage({
               Talebimi düzelt
             </Link>
           )}
-          <DeleteRequestButton requestId={request.id} variant="header" />
+          {cloneable ? (
+            <CloneRequestAsDraftControl
+              requestId={request.id}
+              variant="header"
+            />
+          ) : null}
+          {deletable ? (
+            <DeleteRequestButton requestId={request.id} variant="header" />
+          ) : null}
         </div>
       </header>
 
@@ -227,6 +297,9 @@ export default async function RequestDetailPage({
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
         <section className="space-y-5">
+          {processHistory ? (
+            <ConcludedProcessPanel model={processHistory} />
+          ) : null}
           <div className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] transition-shadow duration-300 hover:shadow-[0_22px_70px_rgba(15,118,110,0.07)] sm:p-8">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-teal-50 text-teal-700">
@@ -279,6 +352,7 @@ export default async function RequestDetailPage({
             </div>
           )}
 
+          {!concluded ? (
           <div className="rounded-[28px] border border-black/[0.06] bg-white p-6 shadow-[0_18px_60px_rgba(0,0,0,0.04)] transition-shadow duration-300 hover:shadow-[0_22px_70px_rgba(15,118,110,0.07)] sm:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -390,6 +464,7 @@ export default async function RequestDetailPage({
               </div>
             )}
           </div>
+          ) : null}
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -462,9 +537,19 @@ export default async function RequestDetailPage({
                 Talebimi düzelt
               </Link>
             )}
-            <div className={editable ? "" : "mt-4"}>
-              <DeleteRequestButton requestId={request.id} variant="aside" />
-            </div>
+            {cloneable ? (
+              <div className={editable ? "mt-3" : "mt-4"}>
+                <CloneRequestAsDraftControl
+                  requestId={request.id}
+                  variant="header"
+                />
+              </div>
+            ) : null}
+            {deletable ? (
+              <div className={editable || cloneable ? "" : "mt-4"}>
+                <DeleteRequestButton requestId={request.id} variant="aside" />
+              </div>
+            ) : null}
           </div>
         </aside>
       </div>

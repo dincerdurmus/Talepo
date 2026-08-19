@@ -2323,3 +2323,109 @@ section.mt-6 svg > text:last-of-type {
     transform: none;
   }
 }
+
+.talepo-my-requests-banner {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(244, 251, 249, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 251, 249, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(
+      ellipse 70% 90% at 100% 0%,
+      rgba(45, 212, 191, 0.16),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #0c1d1a 0%, #13332e 46%, #0f4a43 100%);
+}
+
+@media (min-width: 1024px) {
+  .talepo-my-requests-banner {
+    min-height: 11.5rem;
+  }
+}
+
+.talepo-my-requests-banner-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+  mask-image: radial-gradient(ellipse 72% 88% at 88% 12%, #000 0%, transparent 72%);
+}
+
+.talepo-my-requests-banner-glow {
+  position: absolute;
+  left: -12%;
+  top: -40%;
+  width: 46%;
+  height: 120%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgba(244, 251, 249, 0.12),
+    transparent 68%
+  );
+}
+
+.talepo-my-requests-summary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 1rem;
+  padding: 0.7rem 0.85rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.talepo-my-requests-flow {
+  color: #9ee8dc;
+}
+
+.talepo-my-requests-card {
+  overflow: visible;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(15, 31, 29, 0.08);
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.talepo-my-requests-card--active .talepo-my-requests-status {
+  color: #115e59;
+}
+
+.talepo-my-requests-card--draft {
+  border-style: dashed;
+}
+
+.talepo-my-requests-card--draft .talepo-my-requests-status {
+  color: rgba(15, 31, 29, 0.45);
+}
+
+.talepo-my-requests-card--concluded,
+.talepo-my-requests-card--expired {
+  background: #f7f8f7;
+}
+
+.talepo-my-requests-card--concluded .talepo-my-requests-status,
+.talepo-my-requests-card--concluded h2,
+.talepo-my-requests-card--expired .talepo-my-requests-status,
+.talepo-my-requests-card--expired h2 {
+  color: rgba(15, 31, 29, 0.48);
+}
+
+.talepo-my-requests-status {
+  color: rgba(15, 31, 29, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talepo-my-requests-card,
+  .talepo-my-requests button,
+  .talepo-my-requests a,
+  .talepo-my-requests-banner,
+  .talepo-my-requests-flow {
+    transition: none;
+    animation: none;
+  }
+}

@@ -23,6 +23,8 @@ import {
 
 import {
   filterPanelNavItems,
+  isPanelNavActive,
+  TALEP_TEKLIF_NAV_HREFS,
   type PanelNavItem,
 } from "@/components/panel/panel-nav";
 import { formatPanelCountBadge } from "@/lib/offer/outgoing-offer-inbox";
@@ -45,7 +47,7 @@ export const SIGNAL_RAIL_ICON_LABELS = {
   menu: "Menü",
   create: "Yeni talep",
   genel: "Sayfam",
-  "talep-teklif": "Talepler",
+  "talep-teklif": "Talep",
   araclar: "Pro araçlar",
   plan: "Plan",
   hesap: "Hesap",
@@ -116,9 +118,7 @@ const SECTION_META: Record<
 };
 
 function isNavActive(pathname: string, href: string, exact?: boolean) {
-  const path = href.split("?")[0] ?? href;
-  if (exact) return pathname === path;
-  return pathname === path || pathname.startsWith(`${path}/`);
+  return isPanelNavActive(pathname, href, exact);
 }
 
 function sidebarLinkAriaLabel(label: string, badgeAriaLabel?: string) {
@@ -221,7 +221,7 @@ function railSectionAriaLabel(
 ) {
   if (!badge) return sectionLabel;
   if (section === "talep-teklif") {
-    return `Talepler, okunmamış ${badge} gelen teklif`;
+    return `Talep ve teklif, okunmamış ${badge} gelen teklif`;
   }
   if (section === "hesap") {
     return `Hesap, okunmamış ${badge} mesaj`;
@@ -394,14 +394,9 @@ export function CommandPersonalSidebar({
         {
           id: "talep-teklif" as const,
           label: "Talep ve teklif",
-          items: navItems.filter((item) =>
-            [
-              "/panel/taleplerim",
-              "/panel/gelen-teklifler",
-              "/panel/talepler",
-              "/panel/teklifler",
-            ].includes(item.href),
-          ),
+          items: TALEP_TEKLIF_NAV_HREFS.map((href) =>
+            navItems.find((item) => item.href === href),
+          ).filter((item): item is PanelNavItem => Boolean(item)),
         },
         {
           id: "hesap" as const,
@@ -688,11 +683,7 @@ function DockSectionContent({
             key={`${item.href}-${item.label}`}
             href={item.href}
             icon={item.icon}
-            label={
-              item.href.split("?")[0] === "/panel/talepler"
-                ? "Talepler"
-                : item.label
-            }
+            label={item.label}
             active={isNavActive(pathname, item.href, item.exact)}
             badge={navBadge.badge}
             badgeAriaLabel={navBadge.badgeAriaLabel}
