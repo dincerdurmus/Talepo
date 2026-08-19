@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { ArrowRight, Building2 } from "lucide-react";
-
 import { CorporateHome } from "@/components/panel/CorporateHome";
 import { InviteActions } from "@/components/panel/InviteActions";
 import { PanelSayfamHome } from "@/components/panel/sayfam/PanelSayfamHome";
@@ -9,11 +6,13 @@ import {
   formatPersonalPlanMismatchDetail,
   hasPersonalPlanMismatch,
 } from "@/lib/membership/membership-rules";
-import type { PlanTierId } from "@/lib/membership/plans";
+import { getPlanDefinition, type PlanTierId } from "@/lib/membership/plans";
+import { sayfamGreetingFirstName } from "@/lib/panel/sayfam-focus";
 import {
   buildSayfamHomeData,
   buildSayfamHomeDataUnavailable,
 } from "@/lib/panel/sayfam-home-data";
+import type { SayfamHomeData } from "@/lib/panel/sayfam-home-types";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { getUnreadMessageCount } from "@/lib/panel/get-panel-data";
 import { prisma } from "@/lib/prisma";
@@ -29,26 +28,18 @@ export default async function PanelPage() {
 
   let isCorporate = false;
   let companyName = "Firma";
-  let hasActiveCompany = false;
   let hasHiddenInventory = false;
   let planTier: PlanTierId = "STANDARD";
-  let planLabel = "Standart";
+  let planLabel = getPlanDefinition("STANDARD").label;
   let personalPlanMismatchDetail: string | null = null;
   let pendingInvite: { companyId: string; companyName: string } | null = null;
   let openOffersHint = 0;
+  let homeData: SayfamHomeData | null = null;
 
   if (!dbUnavailable) {
     try {
-      const [entitlements, activeMembership, invite, homeData] = await Promise.all([
+      const [entitlements, invite, builtHome] = await Promise.all([
         resolveEntitlements(user.id, await getCompanyContextOptions()),
-        prisma.companyMember.findFirst({
-          where: {
-            userId: user.id,
-            status: "ACTIVE",
-            company: { deletedAt: null },
-          },
-          select: { id: true },
-        }),
         prisma.companyMember.findFirst({
           where: {
             userId: user.id,
@@ -73,8 +64,7 @@ export default async function PanelPage() {
         companyName = entitlements.subject.name;
       }
       hasHiddenInventory = entitlements.features.hidden_inventory === true;
-      hasActiveCompany = Boolean(activeMembership);
-      openOffersHint = homeData.metrics.actionRequiredOffers;
+      openOffersHint = builtHome.metrics.actionRequiredOffers;
       if (hasPersonalPlanMismatch(entitlements)) {
         personalPlanMismatchDetail = formatPersonalPlanMismatchDetail(entitlements);
       }
@@ -84,82 +74,9 @@ export default async function PanelPage() {
           companyName: invite.company.name,
         };
       }
-
-      if (isCorporate) {
-        return (
-          <CorporateHome
-            companyName={companyName}
-            planTier={planTier}
-            planLabel={planLabel}
-            unreadMessages={unreadMessages}
-            openOffersHint={openOffersHint}
-            hasHiddenInventory={hasHiddenInventory}
-            personalPlanMismatchDetail={personalPlanMismatchDetail}
-          />
-        );
-      }
-
-      const firstName =
-        user.name?.trim().split(/\s+/)[0] ||
-        user.email?.split("@")[0] ||
-        "Kullanıcı";
-
-      return (
-        <>
-          {pendingInvite && (
-            <section className="mb-5 rounded-2xl border border-teal-800/15 bg-[#e7f7f2] px-5 py-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/70">
-                Firma daveti
-              </p>
-              <p className="mt-2 font-semibold text-teal-950">
-                {pendingInvite.companyName} sizi ekibe davet etti
-              </p>
-              <InviteActions
-                companyId={pendingInvite.companyId}
-                companyName={pendingInvite.companyName}
-              />
-            </section>
-          )}
-
-          {!hasActiveCompany && (
-            <section className="relative mb-5 overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-5 py-5 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:px-6">
-              <div className="relative flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#eef6f4] text-teal-800">
-                    <Building2 className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold tracking-tight text-[#0f1f1d]">
-                      Firma hesabı oluşturun
-                    </h2>
-                    <p className="mt-1 max-w-xl text-sm leading-6 text-teal-950/55">
-                      Satıcı veya ekip olarak çalışacaksanız firmanızı oluşturun;
-                      ardından ekip daveti ve kurumsal araçlar açılır.
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/panel/firma/yeni"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#115e59]"
-                >
-                  Firma oluştur
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </section>
-          )}
-
-          <PanelSayfamHome
-            firstName={firstName}
-            planTier={planTier}
-            planLabel={planLabel}
-            supplierHref="/panel/talepler"
-            home={homeData}
-          />
-        </>
-      );
+      homeData = builtHome;
     } catch {
-      // fall through to unavailable home below
+      homeData = null;
     }
   }
 
@@ -177,10 +94,36 @@ export default async function PanelPage() {
     );
   }
 
-  const firstName =
-    user.name?.trim().split(/\s+/)[0] ||
-    user.email?.split("@")[0] ||
-    "Kullanıcı";
+  const firstName = sayfamGreetingFirstName(user.name);
+
+  if (homeData) {
+    return (
+      <>
+        {pendingInvite && (
+          <section className="mb-5 rounded-2xl border border-teal-800/15 bg-[#e7f7f2] px-5 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/70">
+              Firma daveti
+            </p>
+            <p className="mt-2 font-semibold text-teal-950">
+              {pendingInvite.companyName} sizi ekibe davet etti
+            </p>
+            <InviteActions
+              companyId={pendingInvite.companyId}
+              companyName={pendingInvite.companyName}
+            />
+          </section>
+        )}
+
+        <PanelSayfamHome
+          firstName={firstName}
+          planTier={planTier}
+          planLabel={planLabel}
+          supplierHref="/panel/talepler"
+          home={homeData}
+        />
+      </>
+    );
+  }
 
   return (
     <PanelSayfamHome

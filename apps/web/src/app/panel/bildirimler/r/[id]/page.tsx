@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 
 import {
   NOTIFICATION_MISSING_TARGET_HREF,
@@ -10,6 +11,8 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { markNotificationAsRead } from "@/server/notifications/mark-notifications-read";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Click-through: mark one owned notification READ, then continue to a
  * sanitized panel destination. Notification.id is never used as Request.id.
@@ -20,6 +23,7 @@ export default async function NotificationRedirectPage({
   params: Promise<{ id: string }>;
 }) {
   const user = await requireUser();
+  await connection();
   const { id } = await params;
 
   const notification = await prisma.notification.findFirst({

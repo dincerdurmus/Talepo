@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+import { useHoverDisclosure } from "@/hooks/useHoverDisclosure";
 
 type HeaderCompany = {
   id: string;
@@ -31,7 +32,6 @@ function getPlatformRoleLabel(role: string | undefined) {
 export function Header({ tone = "default", variant = "default" }: HeaderProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [companies, setCompanies] = useState<HeaderCompany[]>([]);
   const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
@@ -39,34 +39,9 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
     null,
   );
   const [membershipNumber, setMembershipNumber] = useState<string | null>(null);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const accountMenu = useHoverDisclosure();
   const ink = tone === "ink";
   const home1 = variant === "home1";
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
-        setProfileMenuOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setProfileMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -119,7 +94,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
       });
       const data = (await response.json()) as { ok?: boolean };
       if (response.ok && data.ok) {
-        setProfileMenuOpen(false);
+        accountMenu.close();
         if (companyId) {
           setActiveCompanyId(companyId);
           setActiveCompanyName(
@@ -250,22 +225,14 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
               }`}
             />
           ) : session?.user ? (
-            <div
-              ref={profileMenuRef}
-              className="relative z-50"
-              onMouseEnter={() => setProfileMenuOpen(true)}
-              onMouseLeave={() => setProfileMenuOpen(false)}
-            >
+            <div {...accountMenu.getRootProps()} className="relative z-50">
               <button
                 type="button"
-                onClick={() => setProfileMenuOpen((current) => !current)}
-                onFocus={() => setProfileMenuOpen(true)}
-                aria-expanded={profileMenuOpen}
-                aria-haspopup="menu"
+                {...accountMenu.getTriggerProps()}
                 aria-label="Hesap menüsü"
                 className={`flex items-center gap-2 rounded-full p-1.5 pr-3 transition ${
                   ink ? "hover:bg-white/[0.06]" : "hover:bg-teal-900/[0.04]"
-                } ${profileMenuOpen ? (ink ? "bg-white/[0.06]" : "bg-teal-900/[0.04]") : ""}`}
+                } ${accountMenu.open ? (ink ? "bg-white/[0.06]" : "bg-teal-900/[0.04]") : ""}`}
               >
                 {session.user.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -302,7 +269,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                   fill="none"
                   className={`hidden h-4 w-4 transition sm:block ${
                     ink ? "text-white/40" : "text-teal-950/40"
-                  } ${profileMenuOpen ? "rotate-180" : ""}`}
+                  } ${accountMenu.open ? "rotate-180" : ""}`}
                 >
                   <path
                     d="m6 8 4 4 4-4"
@@ -314,10 +281,10 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                 </svg>
               </button>
 
-              {profileMenuOpen && (
+              {accountMenu.open && (
                 <div
-                  role="menu"
-                  className="absolute right-0 top-full z-[200] mt-1 w-72 overflow-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.12)] before:absolute before:-top-2 before:right-0 before:left-0 before:h-2 before:content-['']"
+                  {...accountMenu.getMenuProps()}
+                  className="absolute right-0 top-full z-[200] mt-1 max-h-[min(24rem,calc(100dvh-5rem))] w-72 overflow-y-auto overflow-x-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.12)] before:absolute before:-top-2 before:right-0 before:left-0 before:h-2 before:content-['']"
                 >
                   <div className="border-b border-teal-900/6 px-3 py-3">
                     <p className="truncate text-sm font-semibold text-[#0f1f1d]">
@@ -348,7 +315,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
                     >
                       Sayfam
@@ -357,7 +324,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel/taleplerim"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Taleplerim
@@ -366,7 +333,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel/talepler"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Talepleri keşfet
@@ -375,7 +342,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel/teklifler"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Tekliflerim
@@ -384,7 +351,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel/profil"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Profilim
@@ -394,7 +361,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                       <Link
                         href="/admin"
                         role="menuitem"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={() => accountMenu.close()}
                         className="mt-1 flex items-center rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                       >
                         Admin Paneli
@@ -410,7 +377,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                     <Link
                       href="/panel/firma/yeni"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       {headerCompanies.length === 0
@@ -422,7 +389,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                       <Link
                         href="/panel/bildirimler"
                         role="menuitem"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={() => accountMenu.close()}
                         className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                       >
                         Firmaya bağlan

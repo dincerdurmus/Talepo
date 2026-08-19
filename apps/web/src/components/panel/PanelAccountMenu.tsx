@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+} from "react";
 import {
   Building2,
   ChevronDown,
@@ -17,14 +21,20 @@ import {
 } from "lucide-react";
 
 import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+import { useHoverDisclosure } from "@/hooks/useHoverDisclosure";
 
 export type PanelCompanyOption = {
   id: string;
   name: string;
 };
 
+export type PanelAccountMenuHandle = {
+  openMenu: () => void;
+};
+
 type PanelAccountMenuProps = {
   displayName: string;
+  triggerName: string | null;
   email: string | null;
   membershipNumber?: string | null;
   image: string | null;
@@ -34,6 +44,7 @@ type PanelAccountMenuProps = {
   activeCompanyId?: string | null;
   companies: PanelCompanyOption[];
   platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
+  planLabel: string;
 };
 
 function getPlatformRoleLabel(
@@ -47,43 +58,40 @@ function getPlatformRoleLabel(
   return null;
 }
 
-export function PanelAccountMenu({
-  displayName,
-  email,
-  membershipNumber,
-  image,
-  initials,
-  isCorporate,
-  companyName,
-  activeCompanyId,
-  companies,
-  platformRole,
-}: PanelAccountMenuProps) {
+export const PanelAccountMenu = forwardRef<
+  PanelAccountMenuHandle,
+  PanelAccountMenuProps
+>(function PanelAccountMenu(
+  {
+    displayName,
+    triggerName,
+    email,
+    membershipNumber,
+    image,
+    initials,
+    isCorporate,
+    companyName,
+    activeCompanyId,
+    companies,
+    platformRole,
+    planLabel,
+  },
+  ref,
+) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const accountMenu = useHoverDisclosure();
   const inCompanyContext = Boolean(activeCompanyId);
+  const hasCompanies = companies.length > 0;
   const platformRoleLabel = getPlatformRoleLabel(platformRole);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
+  useImperativeHandle(
+    ref,
+    () => ({
+      openMenu: accountMenu.openMenu,
+    }),
+    [accountMenu.openMenu],
+  );
 
   async function setCompanyContext(companyId: string | null) {
     setBusy(true);
@@ -98,7 +106,7 @@ export function PanelAccountMenu({
       });
       const data = (await response.json()) as { ok?: boolean };
       if (response.ok && data.ok) {
-        setOpen(false);
+        accountMenu.close();
         router.refresh();
       }
     } finally {
@@ -107,12 +115,10 @@ export function PanelAccountMenu({
   }
 
   return (
-    <div ref={menuRef} className="relative z-50">
+    <div {...accountMenu.getRootProps()} className="relative z-50">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
-        aria-haspopup="menu"
+        {...accountMenu.getTriggerProps()}
         aria-label="Hesap menüsü"
         className="flex h-11 items-center gap-2 rounded-2xl border border-teal-900/8 bg-[#f7faf9] px-2 pr-3 transition hover:bg-white"
       >
@@ -135,27 +141,29 @@ export function PanelAccountMenu({
             {initials}
           </div>
         )}
-        <span className="hidden max-w-28 truncate text-sm font-medium text-[#0f1f1d] sm:block">
-          {displayName.split(" ")[0]}
-          {platformRoleLabel ? (
-            <span className="ml-1.5 text-xs font-bold text-red-600">
-              {platformRoleLabel}
-            </span>
-          ) : null}
-        </span>
+        {triggerName ? (
+          <span className="hidden max-w-28 truncate text-sm font-medium text-[#0f1f1d] sm:block">
+            {triggerName}
+            {platformRoleLabel ? (
+              <span className="ml-1.5 text-xs font-bold text-red-600">
+                {platformRoleLabel}
+              </span>
+            ) : null}
+          </span>
+        ) : null}
         <ChevronDown
           className={`hidden h-4 w-4 text-teal-950/35 transition sm:block ${
-            open ? "rotate-180" : ""
+            accountMenu.open ? "rotate-180" : ""
           }`}
         />
       </button>
 
-      {open && (
+      {accountMenu.open && (
         <div
-          role="menu"
-          className="absolute right-0 top-full z-[200] mt-2 w-72 overflow-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.18)]"
+          {...accountMenu.getMenuProps()}
+          className="absolute right-0 top-full z-[200] mt-1 max-h-[min(32rem,calc(100dvh-4.5rem))] w-72 overflow-y-auto overflow-x-visible rounded-2xl border border-teal-900/10 bg-white p-1.5 shadow-[0_20px_60px_rgba(15,31,29,0.18)] before:absolute before:-top-2.5 before:right-0 before:left-0 before:h-2.5 before:content-['']"
         >
-          <div className="border-b border-teal-900/6 px-3 py-3">
+          <div className="border-b border-teal-900/6 px-3 py-2">
             <p className="truncate text-sm font-semibold text-[#0f1f1d]">
               {displayName}
               {platformRoleLabel ? (
@@ -164,23 +172,115 @@ export function PanelAccountMenu({
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 truncate text-xs text-teal-950/45">{email ?? ""}</p>
             {membershipNumber ? (
               <MembershipNumberLabel membershipNumber={membershipNumber} />
             ) : null}
-            <p className="mt-2 text-[11px] font-medium text-teal-950/40">
-              {inCompanyContext
-                ? `${isCorporate ? "Kurumsal" : "Firma"} · ${companyName ?? "Firma"}`
-                : "Kişisel hesap"}
+            {email ? (
+              <p className="mt-0.5 truncate text-xs text-teal-950/45">{email}</p>
+            ) : null}
+            <p className="mt-1 text-[11px] font-medium text-teal-950/45">
+              Plan · {planLabel}
             </p>
+            {inCompanyContext ? (
+              <p className="mt-0.5 truncate text-[11px] text-teal-950/40">
+                {isCorporate ? "Kurumsal" : "Firma"} · {companyName ?? "Firma"}
+              </p>
+            ) : null}
           </div>
 
-          <div className="py-1.5">
+          <div className="py-1">
+            <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/35">
+              Çalışma alanları
+            </p>
+
+            {inCompanyContext ? (
+              <button
+                type="button"
+                role="menuitem"
+                disabled={busy}
+                onClick={() => void setCompanyContext(null)}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d] disabled:opacity-60"
+              >
+                <UserRound className="h-4 w-4 text-teal-950/35" />
+                Kişisel çalışma alanı
+              </button>
+            ) : (
+              <div className="flex items-center gap-2.5 rounded-xl bg-[#f4faf8] px-3 py-2 text-sm font-medium text-[#0f1f1d]">
+                <UserRound className="h-4 w-4 text-teal-800/70" />
+                <span className="min-w-0 flex-1 truncate">
+                  Kişisel çalışma alanı
+                </span>
+                <span className="shrink-0 text-[11px] font-semibold text-teal-800/70">
+                  Aktif
+                </span>
+              </div>
+            )}
+
+            {hasCompanies
+              ? companies.map((company) => {
+                  const active = activeCompanyId === company.id;
+                  if (active) {
+                    return (
+                      <div
+                        key={company.id}
+                        className="flex items-center gap-2.5 rounded-xl bg-[#f4faf8] px-3 py-2 text-sm font-medium text-[#0f1f1d]"
+                      >
+                        <Building2 className="h-4 w-4 text-teal-800/70" />
+                        <span className="min-w-0 flex-1 truncate">
+                          {company.name}
+                        </span>
+                        <span className="shrink-0 text-[11px] font-semibold text-teal-800/70">
+                          Aktif
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const label =
+                    companies.length === 1
+                      ? "Kurumsal hesaba geç"
+                      : `${company.name} hesabına geç`;
+
+                  return (
+                    <button
+                      key={company.id}
+                      type="button"
+                      role="menuitem"
+                      disabled={busy}
+                      onClick={() => void setCompanyContext(company.id)}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9] disabled:opacity-60"
+                    >
+                      <Building2 className="h-4 w-4 text-teal-800/70" />
+                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                    </button>
+                  );
+                })
+              : (
+                <Link
+                  href="/panel/firma/yeni"
+                  role="menuitem"
+                  onClick={() => accountMenu.close()}
+                  className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/80 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                >
+                  <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-800/70" />
+                  <span className="min-w-0">
+                    <span className="block font-medium text-[#0f1f1d]">
+                      Firma hesabı oluştur
+                    </span>
+                    <span className="mt-0.5 block text-[11px] leading-4 text-teal-950/50">
+                      Ekibinizle çalışmak için bir firma alanı açın.
+                    </span>
+                  </span>
+                </Link>
+              )}
+          </div>
+
+          <div className="border-t border-teal-900/6 py-1">
             <Link
               href="/panel"
               role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
+              onClick={() => accountMenu.close()}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
             >
               <LayoutDashboard className="h-4 w-4 text-teal-950/35" />
               Sayfam
@@ -189,8 +289,8 @@ export function PanelAccountMenu({
             <Link
               href="/"
               role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              onClick={() => accountMenu.close()}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
             >
               <Home className="h-4 w-4 text-teal-950/35" />
               Ana sayfa
@@ -199,8 +299,8 @@ export function PanelAccountMenu({
             <Link
               href="/panel/profil"
               role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              onClick={() => accountMenu.close()}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
             >
               <UserRound className="h-4 w-4 text-teal-950/35" />
               Profili düzenle
@@ -209,8 +309,8 @@ export function PanelAccountMenu({
             <Link
               href="/panel/plan"
               role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              onClick={() => accountMenu.close()}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
             >
               <CreditCard className="h-4 w-4 text-teal-950/35" />
               Plan ve üyelik
@@ -220,8 +320,8 @@ export function PanelAccountMenu({
               <Link
                 href="/admin"
                 role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
+                onClick={() => accountMenu.close()}
+                className="flex items-center gap-2.5 rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
               >
                 <ShieldCheck className="h-4 w-4 text-amber-800/75" />
                 Admin Paneli
@@ -232,8 +332,8 @@ export function PanelAccountMenu({
               <Link
                 href="/panel/ekip"
                 role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                onClick={() => accountMenu.close()}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
               >
                 <Users className="h-4 w-4 text-teal-950/35" />
                 Ekip
@@ -244,8 +344,8 @@ export function PanelAccountMenu({
               <Link
                 href="/panel/firma"
                 role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                onClick={() => accountMenu.close()}
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
               >
                 <Building2 className="h-4 w-4 text-teal-950/35" />
                 Firma ayarları
@@ -253,72 +353,7 @@ export function PanelAccountMenu({
             )}
           </div>
 
-          <div className="border-t border-teal-900/6 py-1.5">
-            <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/35">
-              Firma
-            </p>
-
-            <Link
-              href="/panel/firma/yeni"
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-            >
-              <Building2 className="h-4 w-4 text-teal-800/70" />
-              {companies.length === 0 ? "Firma oluştur" : "Yeni firma oluştur"}
-            </Link>
-
-            {inCompanyContext && (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={busy}
-                onClick={() => void setCompanyContext(null)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d] disabled:opacity-60"
-              >
-                <UserRound className="h-4 w-4 text-teal-950/35" />
-                Kişisel hesaba geç
-              </button>
-            )}
-
-            {companies.map((company) => {
-              const active = activeCompanyId === company.id;
-              if (active) {
-                return (
-                  <div
-                    key={company.id}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-teal-950/45"
-                  >
-                    <Building2 className="h-4 w-4 text-teal-800/50" />
-                    <span className="min-w-0 flex-1 truncate">
-                      {company.name} (aktif)
-                    </span>
-                  </div>
-                );
-              }
-
-              const label =
-                companies.length === 1
-                  ? "Kurumsal hesaba geç"
-                  : `${company.name} hesabına geç`;
-
-              return (
-                <button
-                  key={company.id}
-                  type="button"
-                  role="menuitem"
-                  disabled={busy}
-                  onClick={() => void setCompanyContext(company.id)}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9] disabled:opacity-60"
-                >
-                  <Building2 className="h-4 w-4 text-teal-800/70" />
-                  <span className="min-w-0 flex-1 truncate">{label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-teal-900/6 pt-1.5">
+          <div className="border-t border-teal-900/6 pt-1">
             <button
               type="button"
               role="menuitem"
@@ -333,4 +368,4 @@ export function PanelAccountMenu({
       )}
     </div>
   );
-}
+});

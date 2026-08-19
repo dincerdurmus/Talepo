@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 
+import {
+  SAYFAM_CAROUSEL_INTERVAL_MS,
+  shouldShowSayfamCarouselControls,
+} from "@/lib/panel/sayfam-focus";
 import type { SayfamFocusItem } from "@/lib/panel/sayfam-home-types";
 import { CategoryVisualThumb } from "@/components/visuals/CategoryVisualThumb";
-
-const CAROUSEL_MS = 10_000;
 
 function SpotlightSlide({ item }: { item: SayfamFocusItem }) {
   return (
@@ -47,12 +56,23 @@ export function PanelSayfamSpotlightCarousel({
   items: SayfamFocusItem[];
 }) {
   const count = items.length;
+  const showControls = shouldShowSayfamCarouselControls(count);
+  const labelId = useId();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [resumeKey, setResumeKey] = useState(0);
 
-  const item = count > 0 ? items[index]! : null;
+  const bumpResume = useCallback(() => {
+    setResumeKey((current) => current + 1);
+  }, []);
+  const skipClickRef = useRef(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    x: number;
+    moved: boolean;
+  } | null>(null);
 
   const goTo = useCallback(
     (next: number) => {
@@ -62,8 +82,9 @@ export function PanelSayfamSpotlightCarousel({
     [count],
   );
 
-  const goNext = useCallback(() => goTo(index + 1), [goTo, index]);
-  const goPrev = useCallback(() => goTo(index - 1), [goTo, index]);
+  const activeIndex = count > 0 ? ((index % count) + count) % count : 0;
+  const goNext = useCallback(() => goTo(activeIndex + 1), [goTo, activeIndex]);
+  const goPrev = useCallback(() => goTo(activeIndex - 1), [goTo, activeIndex]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -74,28 +95,65 @@ export function PanelSayfamSpotlightCarousel({
   }, []);
 
   useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (paused || reduceMotion || count <= 1) return;
+    const onVisibility = () => setHidden(document.hidden);
+    onVisibility();
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
 
-    timerRef.current = setInterval(() => {
+  useEffect(() => {
+    if (paused || hidden || reduceMotion || !showControls) return;
+    const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % count);
-    }, CAROUSEL_MS);
+    }, SAYFAM_CAROUSEL_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [paused, hidden, reduceMotion, showControls, count, resumeKey]);
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!showControls || (event.pointerType === "mouse" && event.button !== 0)) {
+      return;
+    }
+    dragRef.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      moved: false,
     };
-  }, [paused, reduceMotion, count]);
+  };
 
-  if (!item) {
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (Math.abs(event.clientX - drag.x) > 8) drag.moved = true;
+  };
+
+  const endPointer = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    const dx = event.clientX - drag.x;
+    if (Math.abs(dx) < 48) return;
+    skipClickRef.current = true;
+    bumpResume();
+    if (dx < 0) goNext();
+    else goPrev();
+  };
+
+  const onSlideClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!skipClickRef.current) return;
+    event.preventDefault();
+    skipClickRef.current = false;
+  };
+
+  if (count === 0) {
     return (
       <div className="talepo-beacon-spotlight talepo-rise rounded-[1.35rem] border border-dashed border-[#0f1f1d]/10 bg-white/80 px-5 py-8 text-center sm:px-8">
-        <p className="text-[15px] font-semibold text-[#0f1f1d]">Henüz odak talep yok</p>
+        <p className="text-[15px] font-semibold text-[#0f1f1d]">Henüz aktif süreç yok</p>
         <p className="mt-2 text-[14px] leading-relaxed text-[#0f1f1d]/48">
-          İlk talebinizi oluşturduğunuzda teklifler ve güncellemeler burada görünür.
+          İlk talebinizi yazdığınızda süreçler burada görünür.
         </p>
         <Link
           href="/talep"
-          className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0f766e] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#115e59]"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#0f766e] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#115e59]"
         >
           İlk talebinizi oluşturun
           <ArrowRight className="h-4 w-4" strokeWidth={2} />
@@ -116,58 +174,110 @@ export function PanelSayfamSpotlightCarousel({
         }
       }}
     >
-      <Link
-        href={item.href}
-        className="talepo-beacon-spotlight talepo-rise group block"
-        aria-label={`${item.title}, ${item.statusLabel}`}
+      <div
+        className="talepo-beacon-spotlight talepo-rise"
+        role="region"
+        aria-roledescription={showControls ? "carousel" : undefined}
+        aria-labelledby={labelId}
+        tabIndex={showControls ? 0 : undefined}
+        onKeyDown={(event) => {
+          if (!showControls) return;
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            bumpResume();
+            goNext();
+          }
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            bumpResume();
+            goPrev();
+          }
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPointer}
+        onPointerCancel={endPointer}
       >
         <div className="talepo-beacon-spotlight-ring" aria-hidden />
-        <div
-          key={item.id}
-          className="talepo-beacon-spotlight-slide relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5"
-        >
-          <SpotlightSlide item={item} />
-        </div>
-      </Link>
-
-      {count > 1 ? (
-        <div className="mt-3 flex items-center justify-between gap-3">
+        <p id={labelId} className="sr-only">
+          Aktif süreçler
+        </p>
+        <div className="talepo-beacon-spotlight-viewport">
           <div
-            className="flex items-center gap-1.5"
-            role="tablist"
-            aria-label="Odak talepleri"
+            className="talepo-beacon-spotlight-track"
+            data-instant={reduceMotion ? "true" : undefined}
+            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
           >
-            {items.map((focus, i) => (
-              <button
-                key={focus.id}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                aria-label={`${focus.title} (${i + 1}/${count})`}
-                className={`talepo-beacon-carousel-dot ${i === index ? "talepo-beacon-carousel-dot--active" : ""}`}
-                onClick={() => goTo(i)}
-              />
+            {items.map((item, i) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="talepo-beacon-spotlight-slide"
+                aria-hidden={i !== activeIndex}
+                tabIndex={i === activeIndex ? 0 : -1}
+                aria-label={`${item.title}, ${item.statusLabel}`}
+                onClick={onSlideClick}
+              >
+                <SpotlightSlide item={item} />
+              </Link>
             ))}
           </div>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              className="talepo-beacon-carousel-nav"
-              aria-label="Önceki talep"
-              onClick={goPrev}
+      {showControls ? (
+        <div className="talepo-beacon-carousel-bar">
+          <button
+            type="button"
+            className="talepo-beacon-carousel-nav"
+            aria-label="Önceki talep"
+            onClick={() => {
+              bumpResume();
+              goPrev();
+            }}
+          >
+            <ChevronLeft className="h-4 w-4" strokeWidth={2} />
+          </button>
+
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="talepo-beacon-carousel-count" aria-hidden>
+              {activeIndex + 1} / {count}
+            </p>
+            <div
+              className="flex items-center"
+              role="tablist"
+              aria-label="Aktif süreçler"
             >
-              <ChevronLeft className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button
-              type="button"
-              className="talepo-beacon-carousel-nav"
-              aria-label="Sonraki talep"
-              onClick={goNext}
-            >
-              <ChevronRight className="h-4 w-4" strokeWidth={2} />
-            </button>
+              {items.map((focus, i) => (
+                <button
+                  key={focus.id}
+                  type="button"
+                  role="tab"
+                    aria-selected={i === activeIndex}
+                    aria-label={`${focus.title} (${i + 1}/${count})`}
+                    className={`talepo-beacon-carousel-dot ${
+                      i === activeIndex ? "talepo-beacon-carousel-dot--active" : ""
+                    }`}
+                  onClick={() => {
+                    bumpResume();
+                    goTo(i);
+                  }}
+                />
+              ))}
+            </div>
           </div>
+
+          <button
+            type="button"
+            className="talepo-beacon-carousel-nav"
+            aria-label="Sonraki talep"
+            onClick={() => {
+              bumpResume();
+              goNext();
+            }}
+          >
+            <ChevronRight className="h-4 w-4" strokeWidth={2} />
+          </button>
         </div>
       ) : null}
     </div>

@@ -27,6 +27,7 @@ const SIDEBAR_COLLAPSED_KEY = "talepo.panel.sidebarCollapsed";
 import { CommandPersonalSidebar } from "@/components/panel/CommandPersonalSidebar";
 import {
   PanelAccountMenu,
+  type PanelAccountMenuHandle,
   type PanelCompanyOption,
 } from "@/components/panel/PanelAccountMenu";
 import { PlanBadge } from "@/components/panel/PlanBadge";
@@ -44,7 +45,7 @@ import {
   type OfferInboxBadgeEventDetail,
 } from "@/lib/offer/offer-inbox-badge-events";
 import { getPlanThemeStyle } from "@/lib/membership/plan-visuals";
-import type { PlanTierId } from "@/lib/membership/plans";
+import { getPlanDefinition, type PlanTierId } from "@/lib/membership/plans";
 import type { FeatureKey } from "@/lib/membership/entitlements";
 
 export type PanelUser = {
@@ -181,10 +182,10 @@ export function PanelShell({
   children,
 }: PanelShellProps) {
   const pathname = usePathname();
-  const displayName =
-    user.name?.trim() ||
-    user.email?.split("@")[0] ||
-    "Kullanıcı";
+  const router = useRouter();
+  const accountMenuRef = useRef<PanelAccountMenuHandle>(null);
+  const displayName = user.name?.trim() || "Kullanıcı";
+  const triggerName = user.name?.trim().split(/\s+/)[0] ?? null;
   const initials = getInitials(user.name, user.email);
   const mode = workspace?.mode ?? "personal";
   const isCorporate = mode === "corporate";
@@ -244,10 +245,20 @@ export function PanelShell({
   }, [serverBadgeKey, unreadIncomingOfferEvents, unreadOutgoingOfferEvents]);
 
   useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) router.refresh();
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [router]);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      /* eslint-disable react-hooks/set-state-in-effect -- restore rail collapse from localStorage */
       if (stored === "0") setCollapsed(false);
       else if (stored === "1") setCollapsed(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
     } catch {
       /* ignore */
     }
@@ -283,7 +294,7 @@ export function PanelShell({
             companyName={companyName}
             companyLogoUrl={companyLogoUrl}
             planTier={planTier}
-            planLabel={workspace?.planLabel ?? "Standart"}
+            planLabel={workspace?.planLabel ?? getPlanDefinition("STANDARD").label}
             quotaUnlimited={workspace?.quotaUnlimited ?? true}
             quotaRemaining={workspace?.quotaRemaining ?? null}
             collapsed={collapsed}
@@ -297,6 +308,7 @@ export function PanelShell({
             unreadIncomingOfferEvents={liveIncomingUnread}
             unreadOutgoingOfferEvents={liveOutgoingUnread}
             planTier={planTier}
+            features={features}
             collapsed={collapsed}
             onToggle={onToggleSidebar}
           />
@@ -304,58 +316,53 @@ export function PanelShell({
 
         <section className="min-w-0 flex-1 px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))] pt-4 sm:px-6 lg:pb-8 lg:px-8">
           <div className="mx-auto w-full max-w-[1320px]">
-            <header className="relative z-40 flex items-center justify-between overflow-visible rounded-[20px] border border-teal-900/10 bg-[#fbfdfc] px-4 py-3.5 shadow-[0_12px_34px_rgba(15,31,29,0.06)] sm:px-6">
+            <header className="relative z-40 flex items-center justify-between gap-3 overflow-visible rounded-[18px] border border-teal-900/10 bg-[#f7fbfa] px-3.5 py-2.5 shadow-[0_8px_24px_rgba(15,31,29,0.05)] sm:px-5">
               <div
-                className="talepo-plan-accent-bar pointer-events-none absolute inset-x-0 top-0 h-[3px] rounded-t-2xl"
+                className="pointer-events-none absolute inset-x-0 top-0 h-[2px] rounded-t-[18px] bg-[#0f766e]"
                 aria-hidden
               />
-              <div className="flex min-w-0 items-center gap-3 lg:hidden">
-                <div className="text-2xl font-semibold tracking-[-0.06em] text-[#0f1f1d]">
-                  tale<span className="text-teal-800/40">po</span>
-                </div>
-                {isCorporate && (
-                  <PlanBadge
-                    planTier={planTier}
-                    planLabel={workspace?.planLabel}
-                    size="sm"
-                    linked
-                  />
-                )}
-              </div>
-
-              <div className="hidden min-w-0 flex-1 items-center gap-2 lg:flex">
+              <div className="flex min-w-0 flex-1 items-center gap-2.5">
                 <div className="min-w-0">
-                  <p className="truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-                    {isCorporate ? companyName : `Merhaba, ${displayName.split(" ")[0]}`}
+                  <p className="truncate text-[15px] font-semibold tracking-tight text-[#0f1f1d] sm:text-base">
+                    {pageTitle}
                   </p>
-                  <div className="flex min-w-0 items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-[#0f1f1d]">
-                      {pageTitle}
-                    </p>
-                    <PlanBadge
-                      planTier={planTier}
-                      planLabel={workspace?.planLabel}
-                      size="sm"
-                      linked
-                    />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => accountMenuRef.current?.openMenu()}
+                    className="mt-0.5 block max-w-full truncate text-left text-[12px] leading-4 text-teal-950/48 transition hover:text-teal-900"
+                  >
+                    {isCorporate ? companyName : "Kişisel çalışma alanı"}
+                  </button>
                 </div>
+                <PlanBadge
+                  planTier={planTier}
+                  planLabel={workspace?.planLabel ?? getPlanDefinition("STANDARD").label}
+                  size="sm"
+                  showStandard
+                  linked
+                />
               </div>
 
               <div className="relative z-50 flex shrink-0 items-center gap-2">
                 <Link
                   href={PANEL_NOTIFICATIONS_HREF}
-                  aria-label="Bildirimler"
-                  className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-teal-900/8 bg-[#f7faf9] transition hover:bg-white"
+                  aria-label={
+                    unreadNotifications > 0
+                      ? `Bildirimler, ${unreadNotifications} okunmamış`
+                      : "Bildirimler"
+                  }
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-teal-900/8 bg-[#f7faf9] transition hover:bg-white sm:h-11 sm:w-11"
                 >
                   <Bell className="h-5 w-5 text-[#0f1f1d]/70" />
                   {unreadNotifications > 0 && (
-                    <span className="talepo-plan-dot absolute right-2.5 top-2.5 h-2 w-2 rounded-full" />
+                    <span className="talepo-plan-dot absolute right-2 top-2 h-2 w-2 rounded-full sm:right-2.5 sm:top-2.5" />
                   )}
                 </Link>
 
                 <PanelAccountMenu
+                  ref={accountMenuRef}
                   displayName={displayName}
+                  triggerName={triggerName}
                   email={user.email}
                   membershipNumber={user.membershipNumber}
                   image={user.image}
@@ -365,6 +372,9 @@ export function PanelShell({
                   activeCompanyId={workspace?.companyId}
                   companies={companies}
                   platformRole={user.platformRole}
+                  planLabel={
+                    workspace?.planLabel ?? getPlanDefinition("STANDARD").label
+                  }
                 />
               </div>
             </header>

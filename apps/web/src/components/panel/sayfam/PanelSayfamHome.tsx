@@ -4,11 +4,11 @@ import { ArrowUpRight } from "lucide-react";
 import { PlanBadge } from "@/components/panel/PlanBadge";
 import { PanelSayfamActivityFeed } from "@/components/panel/sayfam/PanelSayfamActivityFeed";
 import { PanelSayfamSpotlightCarousel } from "@/components/panel/sayfam/PanelSayfamSpotlightCarousel";
-import { isPaidPlan, type PlanTierId } from "@/lib/membership/plans";
+import type { PlanTierId } from "@/lib/membership/plans";
 import type { SayfamHomeData } from "@/lib/panel/sayfam-home-types";
 
 type PanelSayfamHomeProps = {
-  firstName: string;
+  firstName: string | null;
   planTier: PlanTierId;
   planLabel: string;
   supplierHref: string;
@@ -52,7 +52,7 @@ export function PanelSayfamHome({
 
           <div className="relative flex flex-wrap items-center gap-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.26em] text-white/42">
-              Talepo · {isPaidPlan(planTier) ? "Profesyonel" : "Standart"}
+              Talepo · {planLabel}
             </p>
             <PlanBadge
               planTier={planTier}
@@ -66,7 +66,14 @@ export function PanelSayfamHome({
           <div className="relative mt-6 flex flex-col gap-6 sm:mt-7 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="talepo-beacon-title font-semibold text-white">
-                Merhaba, <span className="talepo-beacon-title-accent">{firstName}</span>
+                {firstName ? (
+                  <>
+                    Merhaba,{" "}
+                    <span className="talepo-beacon-title-accent">{firstName}</span>
+                  </>
+                ) : (
+                  "Merhaba"
+                )}
               </h1>
               <p className="mt-3 max-w-md text-[15px] leading-relaxed text-white/52 sm:text-[16px]">
                 {home.heroHint}
@@ -101,10 +108,6 @@ export function PanelSayfamHome({
             <div className="flex min-w-0 flex-col gap-5">
               <PanelSayfamSpotlightCarousel items={home.focusItems} />
 
-              <div className="talepo-rise talepo-rise-delay-1 lg:hidden">
-                <PanelSayfamActivityFeed items={home.activity} />
-              </div>
-
               <section
                 className="talepo-rise talepo-rise-delay-1 grid grid-cols-1 gap-3 sm:grid-cols-2"
                 aria-label="Hızlı eylemler"
@@ -137,10 +140,20 @@ export function PanelSayfamHome({
                   <ArrowUpRight className="h-5 w-5 shrink-0" strokeWidth={2} />
                 </Link>
               </section>
+
+              <div className="talepo-rise talepo-rise-delay-2 lg:hidden">
+                <PanelSayfamActivityFeed
+                  items={home.activity}
+                  unreadCount={home.unreadNotifications}
+                />
+              </div>
             </div>
 
             <div className="talepo-rise talepo-rise-delay-2 hidden lg:block">
-              <PanelSayfamActivityFeed items={home.activity} />
+              <PanelSayfamActivityFeed
+                items={home.activity}
+                unreadCount={home.unreadNotifications}
+              />
             </div>
           </div>
         </div>

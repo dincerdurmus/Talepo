@@ -2015,9 +2015,43 @@ section.mt-6 svg > text:last-of-type {
     border-color 0.25s ease;
 }
 
+.talepo-beacon-rail-row--unread {
+  border-color: rgba(15, 118, 110, 0.12);
+  background: rgba(240, 253, 250, 0.88);
+}
+
+.talepo-beacon-unread-dot {
+  display: inline-block;
+  height: 0.4rem;
+  width: 0.4rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: #0f766e;
+}
+
+.talepo-beacon-unread-chip {
+  display: inline-flex;
+  margin-left: 0.4rem;
+  vertical-align: 0.08em;
+  border-radius: 9999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(204, 251, 241, 0.55);
+  padding: 0.05rem 0.35rem;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
 .talepo-beacon-rail-row:hover {
   background: #fff;
   border-color: rgba(15, 118, 110, 0.12);
+}
+
+.talepo-beacon-rail-row--unread:hover {
+  background: rgba(240, 253, 250, 0.96);
+  border-color: rgba(15, 118, 110, 0.18);
 }
 
 .talepo-beacon-rail-feed {
@@ -2035,25 +2069,66 @@ section.mt-6 svg > text:last-of-type {
   min-width: 0;
 }
 
-.talepo-beacon-spotlight-slide {
-  animation: talepo-beacon-slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+.talepo-beacon-spotlight-viewport {
+  overflow: hidden;
+  touch-action: pan-y;
 }
 
-@keyframes talepo-beacon-slide-in {
-  from {
-    opacity: 0.35;
-    transform: translateY(4px);
+.talepo-beacon-spotlight-track {
+  display: flex;
+  width: 100%;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.talepo-beacon-spotlight-track[data-instant="true"] {
+  transition: none;
+}
+
+.talepo-beacon-spotlight-slide {
+  display: flex;
+  width: 100%;
+  min-width: 100%;
+  flex: 0 0 100%;
+  flex-direction: column;
+  gap: 1rem;
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.talepo-beacon-spotlight-slide[aria-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 640px) {
+  .talepo-beacon-spotlight-slide {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+}
+
+.talepo-beacon-carousel-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.talepo-beacon-carousel-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: rgba(15, 31, 29, 0.42);
+  white-space: nowrap;
 }
 
 .talepo-beacon-carousel-dot {
   display: inline-flex;
   min-height: 2.75rem;
-  min-width: 2.75rem;
+  min-width: 1.75rem;
   align-items: center;
   justify-content: center;
   border: none;
@@ -2069,12 +2144,12 @@ section.mt-6 svg > text:last-of-type {
   border-radius: 9999px;
   background: rgba(15, 118, 110, 0.18);
   transition:
-    width 0.3s ease,
-    background 0.3s ease;
+    width 0.22s ease,
+    background 0.22s ease;
 }
 
 .talepo-beacon-carousel-dot--active::after {
-  width: 1.35rem;
+  width: 1.15rem;
   background: rgba(15, 118, 110, 0.72);
 }
 
@@ -2089,15 +2164,95 @@ section.mt-6 svg > text:last-of-type {
   background: rgba(255, 255, 255, 0.92);
   color: rgba(15, 31, 29, 0.55);
   transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease;
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.talepo-beacon-carousel-nav:hover {
+.talepo-beacon-carousel-nav:hover,
+.talepo-beacon-carousel-nav:focus-visible,
+.talepo-beacon-carousel-dot:focus-visible {
   border-color: rgba(15, 118, 110, 0.18);
   color: #0f766e;
   background: #fff;
+  outline: 2px solid rgba(15, 118, 110, 0.28);
+  outline-offset: 2px;
+}
+
+.talepo-beacon-activity-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 0.75rem;
+}
+
+.talepo-beacon-activity-toggle:focus-visible {
+  outline: 2px solid rgba(15, 118, 110, 0.35);
+  outline-offset: 3px;
+}
+
+.talepo-beacon-activity-count {
+  display: inline-flex;
+  min-width: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(15, 118, 110, 0.12);
+  background: rgba(240, 253, 250, 0.9);
+  padding: 0.05rem 0.4rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgba(15, 118, 110, 0.78);
+}
+
+.talepo-beacon-activity-preview {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(15, 31, 29, 0.48);
+}
+
+.talepo-beacon-activity-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 200ms ease,
+    opacity 200ms ease;
+}
+
+.talepo-beacon-activity-panel--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.talepo-beacon-activity-panel-inner {
+  overflow: hidden;
+}
+
+.talepo-beacon-activity-scroll {
+  max-height: 21.25rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 0.25rem;
+}
+
+.talepo-beacon-carousel-dot:focus-visible {
+  background: transparent;
+}
+
+@media (max-width: 639px) {
+  .talepo-beacon-activity-scroll {
+    max-height: 16.5rem;
+    padding-bottom: 0.5rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2106,8 +2261,10 @@ section.mt-6 svg > text:last-of-type {
     animation: none;
   }
 
-  .talepo-beacon-spotlight-slide {
-    animation: none;
+  .talepo-beacon-spotlight-track,
+  .talepo-beacon-spotlight-slide,
+  .talepo-beacon-activity-panel {
+    transition: none;
   }
 
   .talepo-beacon-spotlight:hover,

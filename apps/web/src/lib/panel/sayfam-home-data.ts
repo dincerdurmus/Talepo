@@ -3,12 +3,10 @@ import {
   sortIncomingRequestGroups,
   type IncomingRequestGroup,
 } from "@/lib/offer/incoming-request-inbox";
-import {
-  buildIncomingRequestWorkspacePath,
-  type IncomingOfferInboxFilter,
-} from "@/lib/offer/incoming-offer-inbox";
+import { buildIncomingRequestWorkspacePath } from "@/lib/offer/incoming-offer-inbox";
 import { mapIncomingRequestOfferRow, mapIncomingRequestSummary } from "@/lib/offer/incoming-offer-mapper";
 import { filterOffersByArchiveView } from "@/lib/offer/offer-archive";
+import { currentPendingNegotiation } from "@/lib/offer/outgoing-offer-inbox";
 import type { BuyerIncomingOfferRow } from "@/server/offer/load-buyer-incoming-offers";
 import { loadBuyerIncomingOffers } from "@/server/offer/load-buyer-incoming-offers";
 import { prisma } from "@/lib/prisma";
@@ -17,18 +15,25 @@ import {
   getPanelSummary,
   getUnreadMessageCount,
 } from "@/lib/panel/get-panel-data";
+import {
+  SAYFAM_ACTIVE_PROCESS_STATUSES,
+  SAYFAM_ACTIVITY_MAX_ITEMS,
+  SAYFAM_UNAVAILABLE_HINT,
+  classifySayfamProcess,
+  dedupeSayfamFocusByRequest,
+  resolveSayfamHeroHint,
+  resolveSayfamProcessHref,
+  sayfamProcessPriority,
+  sayfamProcessStatusLabel,
+  sortSayfamFocusItems,
+  toSayfamFocusItems,
+  type RankedSayfamFocusItem,
+  type SayfamProcessKind,
+} from "@/lib/panel/sayfam-focus";
 import type {
   SayfamActivityItem,
-  SayfamFocusItem,
   SayfamHomeData,
 } from "@/lib/panel/sayfam-home-types";
-
-const ACTIVE_REQUEST_STATUSES = [
-  "PUBLISHED",
-  "RECEIVING_OFFERS",
-  "OFFER_SELECTED",
-  "IN_PROGRESS",
-] as const;
 
 function formatRelativeTime(date: Date): string {
   const diffMs = Date.now() - date.getTime();
@@ -47,48 +52,102 @@ function formatRelativeTime(date: Date): string {
   }).format(date);
 }
 
-function resolveFocusFilter(group: IncomingRequestGroup): IncomingOfferInboxFilter {
-  if (group.actionRequiredCount > 0) return "action_required";
-  if (group.unreadCount > 0) return "unread";
-  if (group.newCount > 0) return "new";
-  if (group.negotiatingCount > 0) return "negotiating";
-  return "all";
+function groupWaitingForCounterparty(group: IncomingRequestGroup): boolean {
+  return group.offers.some((offer) => {
+    const pending = currentPendingNegotiation(offer.negotiations);
+    return pending?.proposedBySide === "BUYER";
+  });
 }
 
-function resolveFocusStatusLabel(group: IncomingRequestGroup): string {
-  if (group.actionRequiredCount > 0) return "Yanıtınız bekleniyor";
-  if (group.unreadCount > 0 || group.newCount > 0) return "Yeni teklif var";
-  if (group.negotiatingCount > 0) return "Pazarlık devam ediyor";
-  return "Teklifleri inceleyin";
+function incomingWorkspacePath(
+  requestId: string,
+  filter: "action_required" | "unread" | "new" | "negotiating",
+) {
+  return buildIncomingRequestWorkspacePath({ requestId, filter });
 }
 
-function resolveFocusDetailLabel(group: IncomingRequestGroup): string {
+function conversationIdForRequest(
+  requestId: string,
+  offers: BuyerIncomingOfferRow[],
+): string | null {
+  const accepted = offers.find(
+    (row) => row.request.id === requestId && row.status === "ACCEPTED" && row.conversation?.id,
+  );
+  if (accepted?.conversation?.id) return accepted.conversation.id;
+  const any = offers.find(
+    (row) => row.request.id === requestId && row.conversation?.id,
+  );
+  return any?.conversation?.id ?? null;
+}
+
+function resolveFocusDetailLabel(input: {
+  kind: SayfamProcessKind;
+  totalOffers: number;
+  lastActivityLabel: string;
+}): string {
   const parts: string[] = [];
-  if (group.totalOffers > 0) {
+  if (input.kind !== "awaiting_offers" && input.totalOffers > 0) {
     parts.push(
-      group.totalOffers === 1 ? "1 teklif" : `${group.totalOffers} teklif`,
+      input.totalOffers === 1 ? "1 teklif" : `${input.totalOffers} teklif`,
     );
   }
-  if (group.lastActivityLabel) {
-    parts.push(`Son güncelleme ${group.lastActivityLabel}`);
+  if (input.lastActivityLabel) {
+    parts.push(`Son güncelleme ${input.lastActivityLabel}`);
   }
   return parts.join(" · ");
 }
 
-function mapGroupToFocusItem(group: IncomingRequestGroup): SayfamFocusItem {
+function rankedItemFromSignals(input: {
+  requestId: string;
+  title: string;
+  categorySlug: string | null;
+  categoryName: string | null;
+  coverImageUrl: string | null;
+  requestStatus: string;
+  totalOffers: number;
+  actionRequiredCount: number;
+  unreadCount: number;
+  newCount: number;
+  negotiatingCount: number;
+  waitingForCounterparty: boolean;
+  lastActivityAt: Date;
+  lastActivityLabel: string;
+  conversationId: string | null;
+}): RankedSayfamFocusItem | null {
+  const kind = classifySayfamProcess({
+    requestStatus: input.requestStatus,
+    totalOffers: input.totalOffers,
+    actionRequiredCount: input.actionRequiredCount,
+    unreadCount: input.unreadCount,
+    newCount: input.newCount,
+    negotiatingCount: input.negotiatingCount,
+    waitingForCounterparty: input.waitingForCounterparty,
+  });
+  if (!kind) return null;
+
   return {
-    id: group.request.id,
-    requestId: group.request.id,
-    title: group.request.title,
-    categorySlug: group.request.categorySlug,
-    categoryName: group.request.categoryName,
-    coverImageUrl: group.request.coverImageUrl,
-    statusLabel: resolveFocusStatusLabel(group),
-    detailLabel: resolveFocusDetailLabel(group),
-    href: buildIncomingRequestWorkspacePath({
-      requestId: group.request.id,
-      filter: resolveFocusFilter(group),
+    id: input.requestId,
+    requestId: input.requestId,
+    title: input.title,
+    categorySlug: input.categorySlug,
+    categoryName: input.categoryName,
+    coverImageUrl: input.coverImageUrl,
+    statusLabel: sayfamProcessStatusLabel(kind),
+    detailLabel: resolveFocusDetailLabel({
+      kind,
+      totalOffers: input.totalOffers,
+      lastActivityLabel: input.lastActivityLabel,
     }),
+    href: resolveSayfamProcessHref({
+      kind,
+      requestId: input.requestId,
+      unreadCount: input.unreadCount,
+      conversationId: input.conversationId,
+      incomingWorkspacePath,
+    }),
+    priority: sayfamProcessPriority(kind),
+    kind,
+    lastActivityAt: input.lastActivityAt.getTime(),
   };
 }
 
@@ -125,65 +184,80 @@ function aggregateActiveGroups(
   );
 }
 
-async function loadWaitingRequestFocus(
+function mapGroupToRankedItem(
+  group: IncomingRequestGroup,
+  offers: BuyerIncomingOfferRow[],
+): RankedSayfamFocusItem | null {
+  return rankedItemFromSignals({
+    requestId: group.request.id,
+    title: group.request.title,
+    categorySlug: group.request.categorySlug,
+    categoryName: group.request.categoryName,
+    coverImageUrl: group.request.coverImageUrl,
+    requestStatus: group.request.status,
+    totalOffers: group.totalOffers,
+    actionRequiredCount: group.actionRequiredCount,
+    unreadCount: group.unreadCount,
+    newCount: group.newCount,
+    negotiatingCount: group.negotiatingCount,
+    waitingForCounterparty: groupWaitingForCounterparty(group),
+    lastActivityAt: group.lastActivityAt,
+    lastActivityLabel: group.lastActivityLabel,
+    conversationId: conversationIdForRequest(group.request.id, offers),
+  });
+}
+
+async function loadRemainingActiveProcesses(
   userId: string,
-  excludeRequestIds: ReadonlySet<string>,
-): Promise<SayfamFocusItem | null> {
-  const request = await prisma.request.findFirst({
+  coveredRequestIds: ReadonlySet<string>,
+): Promise<RankedSayfamFocusItem[]> {
+  const requests = await prisma.request.findMany({
     where: {
       createdById: userId,
       deletedAt: null,
-      status: { in: [...ACTIVE_REQUEST_STATUSES] },
-      ...(excludeRequestIds.size > 0
-        ? { id: { notIn: [...excludeRequestIds] } }
+      status: { in: [...SAYFAM_ACTIVE_PROCESS_STATUSES] },
+      ...(coveredRequestIds.size > 0
+        ? { id: { notIn: [...coveredRequestIds] } }
         : {}),
     },
     orderBy: { updatedAt: "desc" },
+    take: 24,
     select: {
       id: true,
       title: true,
+      status: true,
       coverImageUrl: true,
       updatedAt: true,
       category: { select: { slug: true, name: true } },
+      offers: {
+        where: { status: "ACCEPTED" },
+        take: 1,
+        select: { conversation: { select: { id: true } } },
+      },
     },
   });
 
-  if (!request) return null;
-
-  const offerCount = await prisma.offer.count({
-    where: {
-      requestId: request.id,
-      status: { not: "DRAFT" },
-      NOT: { submittedById: userId, companyId: null },
-    },
-  });
-
-  if (offerCount > 0) return null;
-
-  return {
-    id: request.id,
-    requestId: request.id,
-    title: request.title,
-    categorySlug: request.category.slug,
-    categoryName: request.category.name,
-    coverImageUrl: request.coverImageUrl,
-    statusLabel: "Teklif bekleniyor",
-    detailLabel: `Son güncelleme ${formatRelativeTime(request.updatedAt)}`,
-    href: `/panel/taleplerim/${request.id}`,
-  };
-}
-
-function resolveHeroHint(input: {
-  focusCount: number;
-  activeRequests: number;
-}): string {
-  if (input.focusCount > 0) {
-    return `${input.focusCount} talebinizde hareket var — odak kartı sırayla döner.`;
-  }
-  if (input.activeRequests > 0) {
-    return "Aktif talepleriniz var — teklifler geldiğinde burada görünür.";
-  }
-  return "Talep yazın, teklif toplayın, karar verin.";
+  return requests
+    .map((request) =>
+      rankedItemFromSignals({
+        requestId: request.id,
+        title: request.title,
+        categorySlug: request.category.slug,
+        categoryName: request.category.name,
+        coverImageUrl: request.coverImageUrl,
+        requestStatus: request.status,
+        totalOffers: 0,
+        actionRequiredCount: 0,
+        unreadCount: 0,
+        newCount: 0,
+        negotiatingCount: 0,
+        waitingForCounterparty: false,
+        lastActivityAt: request.updatedAt,
+        lastActivityLabel: formatRelativeTime(request.updatedAt),
+        conversationId: request.offers[0]?.conversation?.id ?? null,
+      }),
+    )
+    .filter((item): item is RankedSayfamFocusItem => item != null);
 }
 
 export async function buildSayfamHomeData(userId: string): Promise<SayfamHomeData> {
@@ -204,28 +278,34 @@ export async function buildSayfamHomeData(userId: string): Promise<SayfamHomeDat
     incoming.unreadOfferIds,
   );
 
-  const focusGroups = sortedGroups.filter(
-    (group) => group.sortRank < 4 && group.totalOffers > 0,
+  const fromOffers = sortedGroups
+    .map((group) => mapGroupToRankedItem(group, visibleOffers))
+    .filter((item): item is RankedSayfamFocusItem => item != null);
+
+  const remaining = await loadRemainingActiveProcesses(
+    userId,
+    new Set(fromOffers.map((item) => item.requestId)),
   );
 
-  let focusItems = focusGroups.map(mapGroupToFocusItem);
+  const focusItems = toSayfamFocusItems(
+    sortSayfamFocusItems(dedupeSayfamFocusByRequest([...fromOffers, ...remaining])),
+  );
 
-  if (focusItems.length === 0) {
-    const coveredIds = new Set(sortedGroups.map((group) => group.request.id));
-    const waiting = await loadWaitingRequestFocus(userId, coveredIds);
-    if (waiting) focusItems = [waiting];
-  }
-
-  const activity: SayfamActivityItem[] = summary.recentNotifications.map(
-    (notification) => ({
+  const seenActivity = new Set<string>();
+  const activity: SayfamActivityItem[] = [];
+  for (const notification of summary.recentNotifications) {
+    if (seenActivity.has(notification.id)) continue;
+    seenActivity.add(notification.id);
+    if (activity.length >= SAYFAM_ACTIVITY_MAX_ITEMS) break;
+    activity.push({
       id: notification.id,
       title: notification.title,
       message: notification.message,
       href: `/panel/bildirimler/r/${notification.id}`,
       timeLabel: formatRelativeTime(notification.createdAt),
       unread: notification.status === "UNREAD",
-    }),
-  );
+    });
+  }
 
   return {
     metrics: {
@@ -233,12 +313,10 @@ export async function buildSayfamHomeData(userId: string): Promise<SayfamHomeDat
       actionRequiredOffers: summary.newOffers,
       unreadMessages,
     },
+    unreadNotifications: summary.unreadNotifications,
     focusItems,
     activity,
-    heroHint: resolveHeroHint({
-      focusCount: focusItems.length,
-      activeRequests: summary.activeRequests,
-    }),
+    heroHint: resolveSayfamHeroHint(),
   };
 }
 
@@ -249,8 +327,9 @@ export async function buildSayfamHomeDataUnavailable(): Promise<SayfamHomeData> 
       actionRequiredOffers: 0,
       unreadMessages: 0,
     },
+    unreadNotifications: 0,
     focusItems: [],
     activity: [],
-    heroHint: "Veritabanına şu an ulaşılamıyor. Kısa süre sonra tekrar deneyin.",
+    heroHint: SAYFAM_UNAVAILABLE_HINT,
   };
 }

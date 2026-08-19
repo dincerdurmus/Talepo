@@ -27,6 +27,7 @@ export type SayfamHomeData = {
     actionRequiredOffers: number;
     unreadMessages: number;
   };
+  unreadNotifications: number;
   focusItems: SayfamFocusItem[];
   activity: SayfamActivityItem[];
   heroHint: string;

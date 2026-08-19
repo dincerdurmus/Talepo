@@ -1,5 +1,13 @@
+import { revalidatePath } from "next/cache";
+
 import { prisma } from "@/lib/prisma";
 import { unreadNotificationWhere } from "@/lib/notifications/unread";
+
+function revalidateNotificationSurfaces() {
+  revalidatePath("/panel", "layout");
+  revalidatePath("/panel");
+  revalidatePath("/panel/bildirimler");
+}
 
 /**
  * Marks every unread notification for the authenticated user as READ.
@@ -8,7 +16,7 @@ import { unreadNotificationWhere } from "@/lib/notifications/unread";
 export async function markAllNotificationsAsRead(userId: string) {
   const now = new Date();
 
-  return prisma.notification.updateMany({
+  const result = await prisma.notification.updateMany({
     where: {
       userId,
       ...unreadNotificationWhere,
@@ -18,6 +26,8 @@ export async function markAllNotificationsAsRead(userId: string) {
       readAt: now,
     },
   });
+  revalidateNotificationSurfaces();
+  return result;
 }
 
 /**
@@ -30,7 +40,7 @@ export async function markNotificationAsRead(
 ) {
   const now = new Date();
 
-  return prisma.notification.updateMany({
+  const result = await prisma.notification.updateMany({
     where: {
       id: notificationId,
       userId,
@@ -41,4 +51,6 @@ export async function markNotificationAsRead(
       readAt: now,
     },
   });
+  revalidateNotificationSurfaces();
+  return result;
 }

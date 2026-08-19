@@ -10,11 +10,13 @@ import {
   FileText,
   Flame,
   Home,
+  Lock,
   PanelLeftClose,
   PanelLeftOpen,
   PieChart,
   Plus,
   Sparkles,
+  Activity,
   UserRound,
   X,
 } from "lucide-react";
@@ -25,31 +27,51 @@ import {
 } from "@/components/panel/panel-nav";
 import { formatPanelCountBadge } from "@/lib/offer/outgoing-offer-inbox";
 import { getPlanDefinition, type PlanTierId } from "@/lib/membership/plans";
+import type { FeatureKey } from "@/lib/membership/entitlements";
+import {
+  resolveSignalRailProTools,
+  signalRailHasLockedProTools,
+  SIGNAL_RAIL_LOCKED_HINT,
+  type ResolvedSignalRailProTool,
+  type SignalRailProToolId,
+  type SignalRailProToolTone,
+} from "@/lib/panel/signal-rail-pro-tools";
 
 type CommandSection = "genel" | "talep-teklif" | "araclar" | "plan" | "hesap";
 
-const RAIL_WIDTH_PX = 68;
-const DOCK_WIDTH_PX = 284;
+export const SIGNAL_RAIL_WIDTH_PX = 84;
+export const SIGNAL_RAIL_DOCK_WIDTH_PX = 284;
+export const SIGNAL_RAIL_ICON_LABELS = {
+  menu: "Menü",
+  create: "Yeni talep",
+  genel: "Sayfam",
+  "talep-teklif": "Talepler",
+  araclar: "Pro araçlar",
+  plan: "Plan",
+  hesap: "Hesap",
+} as const;
 
-type ProToolTone = "follows" | "opportunities" | "analytics";
+const RAIL_WIDTH_PX = SIGNAL_RAIL_WIDTH_PX;
+const DOCK_WIDTH_PX = SIGNAL_RAIL_DOCK_WIDTH_PX;
 
-type ProToolItem = {
-  href: string;
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  tone: ProToolTone;
-  badge?: string;
-  active: boolean;
-};
+type ProToolTone = SignalRailProToolTone;
 
 const PRO_TOOL_ICON_WRAP: Record<ProToolTone, string> = {
   follows:
     "bg-amber-400/15 text-amber-100 border border-amber-400/25",
   opportunities:
     "bg-rose-400/15 text-rose-100 border border-rose-400/25",
-  analytics:
-    "bg-purple-400/15 text-purple-100 border border-purple-400/25",
+  radar:
+    "bg-teal-400/15 text-teal-100 border border-teal-400/25",
+  intelligence:
+    "bg-white/10 text-white/80 border border-white/15",
+};
+
+const PRO_TOOL_ICONS: Record<SignalRailProToolId, LucideIcon> = {
+  firsatlar: Flame,
+  takiplerim: Bookmark,
+  radar: Activity,
+  "teklif-zekasi": PieChart,
 };
 
 const PREMIUM_RAIL_ACTIVE =
@@ -69,27 +91,27 @@ const SECTION_META: Record<
   genel: {
     title: "Genel",
     description: "Ana sayfa ve panel özeti",
-    railLabel: "Genel",
+    railLabel: SIGNAL_RAIL_ICON_LABELS.genel,
   },
   "talep-teklif": {
-    title: "Talep & teklif",
+    title: "Talep ve teklif",
     description: "Talepleriniz, teklifler ve keşif",
-    railLabel: "Talep",
+    railLabel: SIGNAL_RAIL_ICON_LABELS["talep-teklif"],
   },
   araclar: {
-    title: "Araçlar",
+    title: "Pro araçlar",
     description: "Profesyonel plana özel akıllı araçlar",
-    railLabel: "Pro araçlar",
+    railLabel: SIGNAL_RAIL_ICON_LABELS.araclar,
   },
   plan: {
     title: "Plan",
     description: "Üyelik, teklif hakları ve faturalandırma",
-    railLabel: "Plan",
+    railLabel: SIGNAL_RAIL_ICON_LABELS.plan,
   },
   hesap: {
     title: "Hesap",
     description: "Mesajlar ve profil",
-    railLabel: "Hesap",
+    railLabel: SIGNAL_RAIL_ICON_LABELS.hesap,
   },
 };
 
@@ -139,6 +161,14 @@ function sidebarNavBadge(
   return {};
 }
 
+const RAIL_SECTIONS: CommandSection[] = [
+  "genel",
+  "talep-teklif",
+  "araclar",
+  "plan",
+  "hesap",
+];
+
 function getSectionFromPath(pathname: string): CommandSection {
   if (
     pathname.startsWith("/panel/mesajlar") ||
@@ -153,7 +183,6 @@ function getSectionFromPath(pathname: string): CommandSection {
   if (
     pathname.startsWith("/panel/firsatlar") ||
     pathname.startsWith("/panel/takiplerim") ||
-    pathname.startsWith("/panel/analiz") ||
     pathname.startsWith("/panel/uyarilar") ||
     pathname.startsWith("/panel/kayitli-aramalar")
   ) {
@@ -185,6 +214,118 @@ function sectionRailIcon(section: CommandSection): LucideIcon {
   }
 }
 
+function railSectionAriaLabel(
+  section: CommandSection,
+  sectionLabel: string,
+  badge?: string,
+) {
+  if (!badge) return sectionLabel;
+  if (section === "talep-teklif") {
+    return `Talepler, okunmamış ${badge} gelen teklif`;
+  }
+  if (section === "hesap") {
+    return `Hesap, okunmamış ${badge} mesaj`;
+  }
+  return `${sectionLabel}, ${badge}`;
+}
+
+function RailCaption({
+  children,
+  active = false,
+  premium = false,
+}: {
+  children: string;
+  active?: boolean;
+  premium?: boolean;
+}) {
+  return (
+    <span
+      className={`mt-1 line-clamp-2 max-w-[4.5rem] text-center text-[10px] font-medium leading-[1.15] ${
+        premium
+          ? active
+            ? "text-amber-50"
+            : "text-amber-100/78"
+          : active
+            ? "text-teal-100"
+            : "text-white/58"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function RailSectionButton({
+  section,
+  label,
+  icon: Icon,
+  premium = false,
+  active,
+  badge,
+  onMouseEnter,
+  onClick,
+  isCurrent,
+}: {
+  section: CommandSection;
+  label: string;
+  icon: LucideIcon;
+  premium?: boolean;
+  active: boolean;
+  badge?: string;
+  onMouseEnter: () => void;
+  onClick: () => void;
+  isCurrent: boolean;
+}) {
+  return (
+    <div
+      className="relative flex w-full justify-center"
+      onMouseEnter={onMouseEnter}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={railSectionAriaLabel(section, label, badge)}
+        aria-expanded={isCurrent}
+        className="relative flex min-h-11 w-full flex-col items-center justify-center px-1 py-1"
+      >
+        {active ? (
+          <span
+            aria-hidden
+            className={`absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r ${
+              premium ? "bg-amber-400" : "bg-teal-400"
+            }`}
+          />
+        ) : null}
+        <span
+          className={`relative flex h-10 w-10 items-center justify-center rounded-xl transition ${
+            premium
+              ? active
+                ? PREMIUM_RAIL_ACTIVE
+                : PREMIUM_RAIL_IDLE
+              : active
+                ? RAIL_ACTIVE
+                : RAIL_IDLE
+          }`}
+        >
+          <Icon className="h-5 w-5" strokeWidth={2} />
+          {badge ? (
+            <span
+              className={`absolute -right-0.5 -top-0.5 z-[1] flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#070a09] px-0.5 text-[9px] font-bold text-white ${
+                premium ? "bg-rose-500" : "bg-teal-600"
+              }`}
+            >
+              {badge}
+            </span>
+          ) : null}
+        </span>
+        <RailCaption active={active} premium={premium}>
+          {label}
+        </RailCaption>
+      </button>
+    </div>
+  );
+}
+
 export type CommandPersonalSidebarProps = {
   pathname: string;
   navItems: ReturnType<typeof filterPanelNavItems>;
@@ -192,6 +333,7 @@ export type CommandPersonalSidebarProps = {
   unreadIncomingOfferEvents: number;
   unreadOutgoingOfferEvents: number;
   planTier: PlanTierId;
+  features?: Partial<Record<FeatureKey, boolean>>;
   collapsed: boolean;
   onToggle: () => void;
 };
@@ -203,6 +345,7 @@ export function CommandPersonalSidebar({
   unreadIncomingOfferEvents,
   unreadOutgoingOfferEvents,
   planTier,
+  features,
   collapsed,
   onToggle,
 }: CommandPersonalSidebarProps) {
@@ -211,6 +354,8 @@ export function CommandPersonalSidebar({
   const [hoverSection, setHoverSection] = useState<CommandSection | null>(null);
 
   useEffect(() => {
+    // Keep the pinned dock on the route the user just opened.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- path-driven section
     setActiveSection(pathSection);
   }, [pathSection]);
 
@@ -242,11 +387,13 @@ export function CommandPersonalSidebar({
         {
           id: "genel" as const,
           label: "Genel",
-          items: navItems.filter((item) => ["/", "/panel"].includes(item.href)),
+          items: navItems.filter((item) =>
+            ["/", "/panel", "/panel/analiz"].includes(item.href),
+          ),
         },
         {
           id: "talep-teklif" as const,
-          label: "Talep & teklif",
+          label: "Talep ve teklif",
           items: navItems.filter((item) =>
             [
               "/panel/taleplerim",
@@ -267,58 +414,12 @@ export function CommandPersonalSidebar({
     [navItems],
   );
 
-  const analizItem = navItems.find((item) => item.href === "/panel/analiz");
   const planItem = navItems.find((item) => item.href === "/panel/plan");
-  const takiplerimItem = navItems.find((item) => item.href === "/panel/takiplerim");
-  const firsatlarItem = navItems.find((item) => item.href === "/panel/firsatlar");
 
-  const showFollows = Boolean(takiplerimItem);
-  const showOpportunities = Boolean(firsatlarItem);
-  const showProCard = showFollows || showOpportunities;
-
-  const proTools: ProToolItem[] = useMemo(() => {
-    const tools: ProToolItem[] = [];
-    if (showOpportunities) {
-      tools.push({
-        href: "/panel/firsatlar",
-        icon: Flame,
-        title: "Fırsatlar",
-        description: "Sana uygun açık talepler",
-        tone: "opportunities",
-        active: pathname.startsWith("/panel/firsatlar"),
-      });
-    }
-    if (showFollows) {
-      tools.push({
-        href: "/panel/takiplerim",
-        icon: Bookmark,
-        title: "Takiplerim",
-        description: "Kriterlerinle fırsatları kaçırma",
-        tone: "follows",
-        active: isNavActive(pathname, "/panel/takiplerim"),
-      });
-    }
-    if (analizItem) {
-      tools.push({
-        href: "/panel/analiz",
-        icon: PieChart,
-        title: "Analiz",
-        description: "Performansını ölç, gelişimini gör",
-        tone: "analytics",
-        active: isNavActive(pathname, "/panel/analiz"),
-      });
-    }
-    return tools;
-  }, [analizItem, pathname, showFollows, showOpportunities]);
-
-  const hasToolsSection = showProCard || Boolean(analizItem);
-
-  const railSections = useMemo(() => {
-    const sections: CommandSection[] = ["genel", "talep-teklif"];
-    if (hasToolsSection) sections.push("araclar");
-    sections.push("plan", "hesap");
-    return sections;
-  }, [hasToolsSection]);
+  const proTools = useMemo(
+    () => resolveSignalRailProTools(features, pathname),
+    [features, pathname],
+  );
 
   const planHref = planItem?.href ?? "/panel/plan";
   const planLabel = getPlanDefinition(planTier).label;
@@ -365,7 +466,7 @@ export function CommandPersonalSidebar({
         onMouseLeave={() => setHoverSection(null)}
       >
       <aside
-        className="flex h-full shrink-0 flex-col items-center border-r border-white/10 bg-gradient-to-b from-[#0b100f] to-[#070a09] py-4"
+        className="flex h-full min-h-0 shrink-0 flex-col items-center border-r border-white/10 bg-gradient-to-b from-[#0b100f] to-[#070a09] py-3"
         style={{ width: RAIL_WIDTH_PX }}
         data-plan={planTier}
         aria-label="Panel gezinme"
@@ -373,8 +474,7 @@ export function CommandPersonalSidebar({
         <Link
           href="/"
           aria-label="Ana sayfa"
-          title="talepo"
-          className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-700 to-teal-500 text-sm font-extrabold tracking-tighter text-white shadow-[0_4px_20px_rgba(45,212,191,0.22)]"
+          className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-teal-700 to-teal-500 text-sm font-extrabold tracking-tighter text-white shadow-[0_4px_20px_rgba(45,212,191,0.22)]"
         >
           tp
         </Link>
@@ -384,92 +484,80 @@ export function CommandPersonalSidebar({
           onClick={onToggle}
           aria-expanded={dockVisible}
           aria-label={pinnedOpen ? "Menüyü daralt" : "Menüyü aç"}
-          title={pinnedOpen ? "Menüyü daralt" : "Menüyü aç"}
-          className="mb-3 flex h-8 w-8 items-center justify-center rounded-lg border border-white/14 bg-white/8 text-white/78 transition hover:border-white/20 hover:bg-white/12 hover:text-white"
+          className="mb-2 flex min-h-11 w-full flex-col items-center justify-center px-1 py-1"
         >
-          {pinnedOpen ? (
-            <PanelLeftClose className="h-4 w-4" />
-          ) : (
-            <PanelLeftOpen className="h-4 w-4" />
-          )}
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/14 bg-white/8 text-white/78 transition hover:border-white/20 hover:bg-white/12 hover:text-white">
+            {pinnedOpen ? (
+              <PanelLeftClose className="h-4 w-4" />
+            ) : (
+              <PanelLeftOpen className="h-4 w-4" />
+            )}
+          </span>
+          <RailCaption>{SIGNAL_RAIL_ICON_LABELS.menu}</RailCaption>
         </button>
 
         <Link
           href="/talep"
-          title="Yeni talep"
-          aria-label="Yeni talep"
-          className="mb-4 flex h-11 w-11 items-center justify-center rounded-[14px] bg-white text-[#0f1f1d] shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition hover:-translate-y-0.5"
+          aria-label={SIGNAL_RAIL_ICON_LABELS.create}
+          className="group mb-2 flex min-h-11 w-full flex-col items-center justify-center px-1 py-1"
         >
-          <Plus className="h-5 w-5" strokeWidth={2.25} />
+          <span className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-white text-[#0f1f1d] shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition group-hover:-translate-y-0.5">
+            <Plus className="h-5 w-5" strokeWidth={2.25} />
+          </span>
+          <RailCaption>{SIGNAL_RAIL_ICON_LABELS.create}</RailCaption>
         </Link>
 
-        <nav className="flex w-full flex-1 flex-col items-center gap-1">
-          {railSections.map((section) => {
-            const Icon = sectionRailIcon(section);
-            const isProRail = section === "araclar" && showProCard;
-            const sectionLabel =
-              section === "araclar" && !showProCard
-                ? "Araçlar"
-                : SECTION_META[section].railLabel;
-            const isActive = pinnedOpen
-              ? activeSection === section
-              : hoverSection === section || pathSection === section;
-            const badge = sectionBadge(section);
-            return (
-              <div
+        <nav
+          className="flex min-h-0 w-full flex-1 flex-col items-center gap-2 overflow-y-auto overflow-x-hidden py-1 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-white/12"
+          aria-label="Bölümler"
+        >
+          {RAIL_SECTIONS
+            .filter((section) => section !== "plan" && section !== "hesap")
+            .map((section) => (
+              <RailSectionButton
                 key={section}
-                className="relative flex w-full justify-center"
+                section={section}
+                label={SECTION_META[section].railLabel}
+                icon={sectionRailIcon(section)}
+                premium={section === "araclar"}
+                active={
+                  pinnedOpen
+                    ? activeSection === section
+                    : hoverSection === section || pathSection === section
+                }
+                badge={sectionBadge(section)}
                 onMouseEnter={() => {
                   setHoverSection(section);
                   if (pinnedOpen) setActiveSection(section);
                 }}
-              >
-                <button
-                  type="button"
-                  onClick={() => handleRailClick(section)}
-                  aria-label={sectionLabel}
-                  aria-expanded={pinnedOpen && activeSection === section}
-                  className={`relative flex h-11 w-11 items-center justify-center rounded-xl transition ${
-                    isProRail
-                      ? isActive
-                        ? PREMIUM_RAIL_ACTIVE
-                        : PREMIUM_RAIL_IDLE
-                      : isActive
-                        ? RAIL_ACTIVE
-                        : RAIL_IDLE
-                  }`}
-                >
-                  <Icon className="h-5 w-5" strokeWidth={2} />
-                  {isProRail ? (
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-[4px] bg-gradient-to-r from-[#fbbf24] via-[#fb7185] to-[#c084fc] px-1 py-px text-[7px] font-bold uppercase tracking-[0.06em] text-white shadow-[0_2px_8px_rgba(251,191,36,0.35)]"
-                    >
-                      Pro
-                    </span>
-                  ) : null}
-                  {badge ? (
-                    <span
-                      className={`absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-[#070a09] px-0.5 text-[9px] font-bold text-white ${
-                        isProRail ? "bg-rose-500" : "bg-teal-600"
-                      }`}
-                    >
-                      {badge}
-                    </span>
-                  ) : null}
-                  {isActive ? (
-                    <span
-                      aria-hidden
-                      className={`absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r ${
-                        isProRail ? "bg-amber-400" : "bg-teal-400"
-                      }`}
-                    />
-                  ) : null}
-                </button>
-              </div>
-            );
-          })}
+                onClick={() => handleRailClick(section)}
+                isCurrent={pinnedOpen && activeSection === section}
+              />
+            ))}
         </nav>
+
+        <div className="mt-auto flex w-full shrink-0 flex-col items-center gap-2 pt-2">
+          {(["plan", "hesap"] as const).map((section) => (
+            <RailSectionButton
+              key={section}
+              section={section}
+              label={SECTION_META[section].railLabel}
+              icon={sectionRailIcon(section)}
+              active={
+                pinnedOpen
+                  ? activeSection === section
+                  : hoverSection === section || pathSection === section
+              }
+              badge={sectionBadge(section)}
+              onMouseEnter={() => {
+                setHoverSection(section);
+                if (pinnedOpen) setActiveSection(section);
+              }}
+              onClick={() => handleRailClick(section)}
+              isCurrent={pinnedOpen && activeSection === section}
+            />
+          ))}
+        </div>
       </aside>
 
       {dockVisible ? (
@@ -507,8 +595,6 @@ export function CommandPersonalSidebar({
                   section={dockSection}
                   navGroups={navGroups}
                   proTools={proTools}
-                  showProCard={showProCard}
-                  analizItem={analizItem}
                   planHref={planHref}
                   planLabel={planLabel}
                   pathname={pathname}
@@ -529,8 +615,6 @@ function DockSectionContent({
   section,
   navGroups,
   proTools,
-  showProCard,
-  analizItem,
   planHref,
   planLabel,
   pathname,
@@ -540,9 +624,7 @@ function DockSectionContent({
 }: {
   section: CommandSection;
   navGroups: Array<{ id: CommandSection; label: string; items: PanelNavItem[] }>;
-  proTools: ProToolItem[];
-  showProCard: boolean;
-  analizItem?: PanelNavItem;
+  proTools: ResolvedSignalRailProTool[];
   planHref: string;
   planLabel: string;
   pathname: string;
@@ -553,24 +635,10 @@ function DockSectionContent({
   if (section === "araclar") {
     return (
       <div className="space-y-3">
-        <p
-          className={`px-2 text-[11px] font-bold uppercase tracking-[0.08em] ${
-            showProCard ? "text-amber-200/50" : "text-white/35"
-          }`}
-        >
-          {showProCard ? "Profesyonel araçlar" : "Araçlar"}
+        <p className="px-2 text-[11px] font-bold uppercase tracking-[0.08em] text-amber-200/50">
+          Profesyonel araçlar
         </p>
-        {showProCard ? (
-          <CommandProToolsCard items={proTools} />
-        ) : analizItem ? (
-          <DockNavLink
-            href={analizItem.href}
-            icon={analizItem.icon}
-            label={analizItem.label}
-            active={isNavActive(pathname, analizItem.href, analizItem.exact)}
-            premium
-          />
-        ) : null}
+        <CommandProToolsCard items={proTools} />
       </div>
     );
   }
@@ -697,33 +765,40 @@ function DockNavLink({
   );
 }
 
-function CommandProToolsCard({ items }: { items: ProToolItem[] }) {
+function CommandProToolsCard({
+  items,
+}: {
+  items: ResolvedSignalRailProTool[];
+}) {
   if (items.length === 0) return null;
+  const hasLocked = signalRailHasLockedProTools(items);
 
   return (
-    <div className="overflow-hidden rounded-[16px] border border-amber-400/28 bg-[linear-gradient(145deg,rgba(251,191,36,0.14)_0%,rgba(244,63,94,0.1)_48%,rgba(168,85,247,0.12)_100%)] px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_0_28px_rgba(251,191,36,0.1)] backdrop-blur-md">
+    <div className="overflow-hidden rounded-[16px] border border-white/12 bg-white/[0.04] px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
       <div className="mb-1.5 flex items-start gap-2 px-1 pt-0.5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-amber-300/35 bg-gradient-to-br from-[#fbbf24]/35 via-[#fb7185]/28 to-[#c084fc]/30 text-amber-50 shadow-[0_0_14px_rgba(251,191,36,0.25)]">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-teal-400/25 bg-teal-400/12 text-teal-100">
           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.1} />
         </span>
         <div className="min-w-0">
           <p className="text-[13.5px] font-semibold leading-4 tracking-[-0.02em] text-white/95">
             Pro Araçlar
           </p>
-          <p className="mt-0.5 text-[11px] leading-4 text-amber-100/50">
-            Yalnız Profesyonel planda
-          </p>
         </div>
       </div>
       <div>
         {items.map((item, index) => (
           <CommandProToolRow
-            key={item.href}
+            key={item.id}
             item={item}
             showSeparator={index < items.length - 1}
           />
         ))}
       </div>
+      {hasLocked ? (
+        <p className="px-1.5 pb-1 pt-2 text-[11px] leading-4 text-white/42">
+          {SIGNAL_RAIL_LOCKED_HINT}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -732,52 +807,75 @@ function CommandProToolRow({
   item,
   showSeparator,
 }: {
-  item: ProToolItem;
+  item: ResolvedSignalRailProTool;
   showSeparator: boolean;
 }) {
-  const Icon = item.icon;
-  const accessibleLabel = item.badge
-    ? `${item.title}, ${item.badge.toLocaleLowerCase("tr-TR")}. ${item.description}`
-    : `${item.title}. ${item.description}`;
+  const Icon = PRO_TOOL_ICONS[item.id];
 
   return (
     <>
-      <Link
-        href={item.href}
-        title={item.title}
-        aria-label={accessibleLabel}
-        aria-current={item.active ? "page" : undefined}
-        className={`group flex items-center gap-2 rounded-[10px] px-1.5 py-1.5 transition ${
-          item.active
-            ? "border border-amber-300/28 bg-gradient-to-r from-amber-400/12 via-rose-400/8 to-purple-400/10"
-            : "hover:bg-white/6"
-        }`}
-      >
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${PRO_TOOL_ICON_WRAP[item.tone]}`}
+      {item.locked || !item.href ? (
+        <div
+          role="group"
+          aria-disabled="true"
+          aria-label={`${item.title}, kilitli`}
+          className="flex cursor-default items-center gap-2 rounded-[10px] px-1.5 py-1.5 text-white/58"
         >
-          <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-1.5">
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-white/10 bg-white/5 text-white/45`}
+          >
+            <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-1.5">
+              <span className="truncate text-[13px] font-medium leading-4 text-white/70">
+                {item.title}
+              </span>
+              <span className="rounded-[5px] border border-white/10 px-1.5 py-px text-[8.5px] font-semibold uppercase tracking-[0.06em] text-white/45">
+                Profesyonel
+              </span>
+            </span>
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/32">
+              {item.description}
+            </span>
+          </span>
+          <Lock
+            className="h-3.5 w-3.5 shrink-0 text-white/40"
+            strokeWidth={2}
+            aria-hidden
+          />
+          <span className="sr-only">Kilitli</span>
+        </div>
+      ) : (
+        <Link
+          href={item.href}
+          aria-label={`${item.title}. ${item.description}`}
+          aria-current={item.active ? "page" : undefined}
+          className={`group flex items-center gap-2 rounded-[10px] px-1.5 py-1.5 transition ${
+            item.active
+              ? "border border-teal-400/25 bg-teal-400/12"
+              : "hover:bg-white/6"
+          }`}
+        >
+          <span
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${PRO_TOOL_ICON_WRAP[item.tone]}`}
+          >
+            <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
+          </span>
+          <span className="min-w-0 flex-1">
             <span className="truncate text-[13px] font-semibold leading-4 tracking-[-0.01em] text-white/88">
               {item.title}
             </span>
-            {item.badge ? (
-              <span className="rounded-[5px] bg-gradient-to-r from-amber-400/30 to-purple-400/25 px-1.5 py-px text-[8.5px] font-bold uppercase tracking-[0.08em] text-amber-50">
-                {item.badge}
-              </span>
-            ) : null}
+            <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/38">
+              {item.description}
+            </span>
           </span>
-          <span className="mt-0.5 block truncate text-[11px] leading-4 text-white/38">
-            {item.description}
-          </span>
-        </span>
-        <ChevronRight
-          className="h-3.5 w-3.5 shrink-0 text-white/30 transition group-hover:text-white/55"
-          strokeWidth={2}
-        />
-      </Link>
+          <ChevronRight
+            className="h-3.5 w-3.5 shrink-0 text-white/30 transition group-hover:text-white/55"
+            strokeWidth={2}
+          />
+        </Link>
+      )}
       {showSeparator ? (
         <div
           aria-hidden
