@@ -300,6 +300,25 @@ console.log("\n=== MOBILE & A11Y ===\n");
   check("mobile list/detail toggle", workspace.includes('mobileView === "detail"') && workspace.includes("Tekliflere dön"));
   check("desktop two columns", workspace.includes("lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]"));
   check("selected aria-current", listItem.includes("aria-current"));
+  check(
+    "list item budget compare authority",
+    listItem.includes("compareBuyerBudgetToOffer") &&
+      listItem.includes("budgetCompareListDeltaLabel"),
+  );
+  check(
+    "list item status authority",
+    listItem.includes("resolveOfferCardStatusHeader"),
+  );
+  check(
+    "list item message preview",
+    listItem.includes("line-clamp-2") && listItem.includes("previewMessage"),
+  );
+  check(
+    "list item metadata icons",
+    listItem.includes("Clock") &&
+      listItem.includes("Camera") &&
+      listItem.includes("ArrowLeftRight"),
+  );
   check("detail focus on select", workspace.includes("detailHeadingRef"));
   check("gallery in card not always open", read("src/components/panel/IncomingOfferGallery.tsx").includes("mediaIds.length === 0) return null"));
   check("actions only buyer turn", read("src/components/panel/IncomingOfferCard.tsx").includes("showActions") && read("src/components/panel/OfferActions.tsx").includes("Teklifi kabul et"));

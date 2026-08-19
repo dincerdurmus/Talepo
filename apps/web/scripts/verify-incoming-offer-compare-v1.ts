@@ -7,6 +7,7 @@ import { join } from "node:path";
 
 import {
   budgetCompareCopy,
+  budgetCompareListDeltaLabel,
   compareBuyerBudgetToOffer,
   formatRequestQuantity,
   resolveTargetBudgetCents,
@@ -69,6 +70,14 @@ console.log("\n=== BUDGET COMPARE ===\n");
   check(
     "below copy",
     budgetCompareCopy(below, "TRY").relativeLabel === "Bütçenin %5 altında",
+  );
+  check(
+    "list delta below copy",
+    budgetCompareListDeltaLabel(below, "TRY") === "₺2.500 bütçe altında",
+  );
+  check(
+    "list delta above copy",
+    budgetCompareListDeltaLabel(above, "TRY") === "₺3.000 bütçe üstünde",
   );
 
   const equal = compareBuyerBudgetToOffer({
