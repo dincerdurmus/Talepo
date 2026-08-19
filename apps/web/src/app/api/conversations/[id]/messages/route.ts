@@ -6,12 +6,16 @@ import {
   clientKeyFromRequest,
   userKey,
 } from "@/lib/observability/rate-limit";
+import { MAX_MESSAGE_IMAGES } from "@/lib/message/limits";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
   MessageValidationError,
   sendMessage,
 } from "@/server/message/send-message";
-import { sendImageMessage } from "@/server/message/send-image-message";
+import {
+  sendImageMessage,
+  sendImageMessages,
+} from "@/server/message/send-image-message";
 
 export async function POST(
   request: Request,
@@ -61,7 +65,25 @@ export async function POST(
       content?: string;
       imageDataUrl?: string;
       fileName?: string;
+      images?: Array<{ imageDataUrl?: string; fileName?: string | null }>;
     };
+
+    if (Array.isArray(body.images) && body.images.length > 0) {
+      if (body.images.length > MAX_MESSAGE_IMAGES) {
+        throw new MessageValidationError(
+          "Bir mesaja en fazla 3 fotoğraf ekleyebilirsiniz.",
+        );
+      }
+
+      const messages = await sendImageMessages(user.id, id, {
+        images: body.images.map((item) => ({
+          imageDataUrl: String(item.imageDataUrl ?? ""),
+          fileName: item.fileName ?? null,
+        })),
+        caption: body.content ?? "",
+      });
+      return NextResponse.json({ ok: true, messages }, { status: 201 });
+    }
 
     if (body.imageDataUrl) {
       const message = await sendImageMessage(user.id, id, {
