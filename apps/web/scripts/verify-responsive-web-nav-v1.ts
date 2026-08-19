@@ -69,7 +69,7 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("uses getResponsiveBottomNavVariant", shell.includes("getResponsiveBottomNavVariant"));
   check("professional Fırsatlar item", shell.includes('label="Fırsatlar"') && shell.includes('href="/panel/firsatlar"'));
   check("professional Tekliflerim item", shell.includes('label="Tekliflerim"') && shell.includes('href="/panel/teklifler"'));
-  check("standard Keşfet kept", shell.includes('label="Keşfet"'));
+  check("standard Talepler kept", shell.includes('href="/panel/talepler"') && shell.includes('label="Talepler"') && !shell.includes('label="Keşfet"'));
   check("standard Profil kept", shell.includes('label="Profil"'));
   check("create CTA still /talep for personal", shell.includes('href={isCorporate ? "/panel/talepler" : "/talep"}'));
   check("lg:hidden only", shell.includes("lg:hidden"));

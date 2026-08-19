@@ -85,7 +85,7 @@ console.log("\n=== ROUTES / NAV ===\n");
   check("4 toggle uses setFromSavedSearch", manager.includes("setFromSavedSearch"));
   check("10 locked notifications when no alert entitlement", manager.includes("alertsEnabled") && manager.includes("/panel/plan"));
   check("16 rename is not fake criteria edit", manager.includes("Yeniden adlandır") && !manager.includes(">Düzenle<"));
-  check("18 empty state", manager.includes("Henüz bir takibiniz yok.") && manager.includes("Talepleri keşfet"));
+  check("18 empty state", manager.includes("Henüz bir takibiniz yok.") && manager.includes("Talepler"));
 }
 
 console.log("\n=== OPPORTUNITY REASON DEDUPE ===\n");

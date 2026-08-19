@@ -54,6 +54,27 @@ console.log("\n=== WIRING ===\n");
   check("default collapsed rail on first visit", shell.includes("useState(true)"));
   check("flex width rail layout", rail.includes("RAIL_WIDTH_PX") && rail.includes("DOCK_WIDTH_PX"));
   check("dock pushes content not overlay-only", rail.includes("transition-[width]"));
+  check(
+    "opened dock keeps glass transparency",
+    rail.includes("talepo-signal-dock") &&
+      rail.includes("backdrop-blur-[40px]") &&
+      !rail.includes("bg-transparent"),
+  );
+  check(
+    "dock tab icons and labels stay opaque",
+    rail.includes("text-white hover:bg-white/10") &&
+      rail.includes("border-white/20 bg-white/15 text-white") &&
+      rail.includes("talepo-signal-dock-solid") &&
+      !rail.includes("text-white/72 hover:bg-white/6"),
+  );
+  const dockCss = read("src/app/globals.css");
+  check(
+    "dock category labels stay readable on glass",
+    dockCss.includes("talepo-signal-dock-solid") &&
+      dockCss.includes("text-shadow") &&
+      rail.includes('uppercase tracking-[0.08em] text-white') &&
+      !rail.includes('uppercase tracking-[0.08em] text-white/70'),
+  );
   const railWidth = Number(
     rail.match(/export const SIGNAL_RAIL_WIDTH_PX = (\d+)/)?.[1] ?? "",
   );
