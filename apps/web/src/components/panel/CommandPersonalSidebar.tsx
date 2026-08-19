@@ -413,7 +413,7 @@ export function CommandPersonalSidebar({
                 : SECTION_META[section].railLabel;
             const isActive = pinnedOpen
               ? activeSection === section
-              : hoverSection === section;
+              : hoverSection === section || pathSection === section;
             const badge = sectionBadge(section);
             return (
               <div

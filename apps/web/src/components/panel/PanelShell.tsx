@@ -195,7 +195,7 @@ export function PanelShell({
   const companyName = workspace?.companyName?.trim() || "Firma";
   const companyLogoUrl = workspace?.companyLogoUrl ?? null;
   const pageTitle = getPanelPageTitle(pathname);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   // Server counts stay authoritative: an optimistic override is keyed by the
   // server snapshot it was applied to, so a refreshed layout discards it.
   const serverBadgeKey = `${unreadIncomingOfferEvents}:${unreadOutgoingOfferEvents}`;
@@ -245,7 +245,9 @@ export function PanelShell({
 
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (stored === "0") setCollapsed(false);
+      else if (stored === "1") setCollapsed(true);
     } catch {
       /* ignore */
     }

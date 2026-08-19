@@ -39,6 +39,7 @@ console.log("\n=== WIRING ===\n");
   check("personal uses CommandPersonalSidebar", shell.includes("<CommandPersonalSidebar"));
   check("corporate keeps CorporateSidebar", shell.includes("<CorporateSidebar"));
   check("collapse key in PanelShell", shell.includes("talepo.panel.sidebarCollapsed"));
+  check("default collapsed rail on first visit", shell.includes("useState(true)"));
   check("flex width rail layout", rail.includes("RAIL_WIDTH_PX") && rail.includes("DOCK_WIDTH_PX"));
   check("dock pushes content not overlay-only", rail.includes("transition-[width]"));
 }
@@ -72,7 +73,7 @@ console.log("\n=== ROUTE ACTIVE STATE ===\n");
   check("araclar excludes plan path", !rail.includes('"/panel/plan"') || rail.includes('return "plan"'));
   check("isNavActive strips query", rail.includes('href.split("?")[0]'));
   check("nested profil under hesap", rail.includes('pathname.startsWith("/panel/profil")'));
-  check("firsatlar query route active", rail.includes('pathname.startsWith("/panel/firsatlar")'));
+  check("path section highlights collapsed rail", rail.includes("pathSection === section"));
 }
 
 console.log("\n=== ENTITLEMENT MATRIX ===\n");
