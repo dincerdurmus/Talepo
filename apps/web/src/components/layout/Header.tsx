@@ -259,6 +259,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
               <button
                 type="button"
                 onClick={() => setProfileMenuOpen((current) => !current)}
+                onFocus={() => setProfileMenuOpen(true)}
                 aria-expanded={profileMenuOpen}
                 aria-haspopup="menu"
                 aria-label="Hesap menüsü"

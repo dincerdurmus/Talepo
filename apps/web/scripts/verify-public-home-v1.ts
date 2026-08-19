@@ -54,6 +54,7 @@ console.log("\n=== HEADER NAV ===\n");
   check("home1 planlar anchor", header.includes('href="#planlar"'));
   check("home1 saticilar anchor", header.includes('href="#saticilar"'));
   check("profile hover open", header.includes("onMouseEnter={() => setProfileMenuOpen(true)}"));
+  check("profile focus open", header.includes("onFocus={() => setProfileMenuOpen(true)}"));
   check("login route", header.includes('href="/giris"'));
   check("register route", header.includes('href="/kayit"'));
   check("talep CTA", header.includes('href="/talep"'));
@@ -74,6 +75,9 @@ console.log("\n=== HERO & COMPOSER ===\n");
 console.log("\n=== SECTIONS ===\n");
 {
   check("kategoriler id", explore.includes('id="kategoriler"'));
+  check("free-text category copy", explore.includes("Listede olmayan"));
+  check("home webp delivery", explore.includes("/categories/home/") && explore.includes("next/image"));
+  check("category image sizes", explore.includes("sizes="));
   check("nasil id", flow.includes('id="nasil"'));
   check("saticilar id", flow.includes('id="saticilar"'));
   check("planlar id", plans.includes('id="planlar"'));

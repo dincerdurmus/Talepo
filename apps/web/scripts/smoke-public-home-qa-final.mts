@@ -3,9 +3,10 @@
  * Run: npx tsx scripts/smoke-public-home-qa-final.mts
  */
 import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const OUT = join("C:\\Users\\HP\\AppData\\Local\\Temp\\talepo-public-home-qa-final");
+const OUT = join(tmpdir(), "talepo-public-home-qa-final");
 const BASE = process.env.PUBLIC_HOME_URL ?? "http://localhost:3000";
 
 async function main() {
@@ -91,6 +92,18 @@ async function main() {
   await page.setViewportSize({ width: 768, height: 1024 });
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
   await page.screenshot({ path: join(OUT, "14-tablet-768.png"), fullPage: true });
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  await page.screenshot({ path: join(OUT, "desktop-1280.png"), fullPage: true });
+
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  await page.screenshot({ path: join(OUT, "laptop-1024.png"), fullPage: true });
+
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
+  await page.screenshot({ path: join(OUT, "mobile-360.png"), fullPage: true });
 
   const failed = checks.filter((c) => !c.ok);
   await browser.close();
