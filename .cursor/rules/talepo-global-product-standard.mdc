@@ -1,0 +1,65 @@
+---
+description: Talepo işlerinde dünya çapında ürün, tasarım ve yazılım standardını uygular
+alwaysApply: true
+---
+
+# Talepo Global Product Standard
+
+Her göreve başlamadan önce kendine şunu sor:
+
+> Bu ürünü Apple, SpaceX veya dünya çapında saygın bir teknoloji şirketi geliştirseydi kullanıcı problemini görsel, yazılımsal ve ürün mantığı açısından nasıl çözerdi?
+
+Bu şirketlerin görünümünü, marka dilini veya tasarımını kopyalama. Onların ürün disiplinini Talepo'nun kendi kimliğine uygula.
+
+## Temel çalışma prensibi
+
+- Önce kullanıcının gerçek problemini ve beklediği sonucu tanımla.
+- Karmaşık sistemi kullanıcıya basit, açık ve güven veren bir yüzey olarak sun.
+- Her ekranda tek birincil amaç ve net görsel hiyerarşi kur.
+- Gereksiz kutu, metin, tekrar, CTA, badge, renk ve boşluk üretme.
+- Bilgiyi önem sırasına göre göster; ayrıntıları progressive disclosure ile aç.
+- Talepo'nun teal, ink ve frost kimliğini tutarlı kullan.
+- "Teknolojik" görünmek için neon, ağır glassmorphism, anlamsız animasyon veya bilimkurgu dekoru ekleme.
+- Motion yalnız durum değişimini, yönü, başarıyı veya ilişkiyi anlatıyorsa kullan.
+- Desktop ve dar ekran responsive web'i birlikte tasarla. Native uygulama veya ayrı mobil mimari kurma.
+- Klavye erişimi, focus, screen reader, reduced motion ve kontrastı baştan düşün.
+- Loading, empty, error, success, unread, disabled ve edge-case durumlarını ana tasarımın parçası say.
+- Görsel iyileştirme yaparken mevcut iş mantığını, yetkilendirmeyi ve veri authority'sini bozma.
+- Aynı bilgi için birden fazla source of truth oluşturma.
+- Sahte veri, sahte doğrulama, çalışmayan CTA veya var olmayan yetenek gösterme.
+- Gizlilik ve güvenlik kararlarını UI kolaylığı uğruna gevşetme.
+- Yeni paket, migration veya mimari yalnız kanıtlanmış ihtiyaç varsa ekle.
+- Mevcut yapıyı gereksiz yere yeniden yazma; en küçük doğru ve sürdürülebilir çözümü seç.
+- Kullanıcı dilini sade, insani ve eylem odaklı tut; teknik sistem dilini kullanıcıya gösterme.
+- Talepo, başka bir markanın taklidi değil; kendi güvenilir dijital ticaret kimliğine sahip olmalı.
+
+## Uygulama öncesi kontrol
+
+Kod yazmadan önce kısa biçimde doğrula:
+
+1. Kullanıcının asıl problemi nedir?
+2. En önemli bilgi ve eylem hangisidir?
+3. Neler gizlenmeli, ertelenmeli veya tamamen kaldırılmalıdır?
+4. Bu çözüm mevcut Talepo sistemine ve veri authority'sine nasıl bağlanır?
+5. Responsive, erişilebilirlik, gizlilik ve hata durumları nasıl çalışır?
+
+## Teslim standardı
+
+Bir işi tamamlanmış saymadan önce:
+
+- İş mantığını ve yetkilendirmeyi doğrula.
+- Desktop ve 390 px responsive görünümü kontrol et.
+- Loading, empty, error ve success durumlarını değerlendir.
+- Tekrar eden bilgi ve gereksiz görsel yoğunluk olmadığını kontrol et.
+- İlgili verifier/testleri çalıştır.
+- Gerçek runtime görsel QA gerekiyorsa yap.
+- Commit kapsamını unrelated WIP'den ayır.
+- Final raporda "Bunu ne için yapıyoruz?" bölümünü ekle.
+
+## Son öz değerlendirme
+
+Her teslimden önce kendine tekrar sor:
+
+> Bu çözüm dünya çapında bir teknoloji ürününe yakışacak kadar sade, açık, güvenilir, hızlı ve düşünülmüş mü; yoksa yalnızca çalışıyor mu?
+
+Yalnızca çalışması yeterli değildir. Talepo'ya özgü, anlaşılır ve sürdürülebilir bir ürün deneyimi oluştur.
