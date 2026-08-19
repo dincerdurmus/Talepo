@@ -14,6 +14,7 @@ import {
   userKey,
 } from "@/lib/observability/rate-limit";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import { createRequest } from "@/server/request/create-request";
 import {
   parseCreateRequestInput,
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
       });
 
       const user = await requireUser();
+      await assertUserCanAct(user.id);
       store.userId = user.id;
 
       assertRateLimit({

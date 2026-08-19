@@ -23,6 +23,7 @@ import {
 } from "@/lib/observability/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import {
   createOffer,
   OfferQuotaExceededError,
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       });
 
       const user = await requireUser();
+      await assertUserCanAct(user.id);
       store.userId = user.id;
 
       assertRateLimit({

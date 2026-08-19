@@ -3,6 +3,7 @@ import { Bell, BriefcaseBusiness, Building2, MessageCircle, Package } from "luci
 import type { LucideIcon } from "lucide-react";
 
 import { InviteActions } from "@/components/panel/InviteActions";
+import { ComplaintNotificationDialog } from "@/components/panel/ComplaintNotificationDialog";
 import { MarkAllNotificationsReadButton } from "@/components/panel/MarkAllNotificationsReadButton";
 import {
   notificationIsUnread,
@@ -14,12 +15,12 @@ import { requireUser } from "@/server/auth/require-user";
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ hedef?: string }>;
+  searchParams: Promise<{ hedef?: string; sikayet?: string; sikayetBildirimi?: string }>;
 }) {
   const user = await requireUser();
-  const { hedef } = await searchParams;
+  const { hedef, sikayet, sikayetBildirimi } = await searchParams;
 
-  const [notifications, pendingInvites, unreadCount] = await Promise.all([
+  const [notifications, pendingInvites, unreadCount, complaintCase, complaintNotice] = await Promise.all([
     prisma.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
@@ -42,6 +43,18 @@ export default async function NotificationsPage({
     prisma.notification.count({
       where: { userId: user.id, ...unreadNotificationWhere },
     }),
+    sikayet
+      ? prisma.moderationCase.findFirst({
+          where: { id: sikayet, reporterId: user.id, isComplaint: true },
+          select: { complaintNumber: true, summary: true, details: true, status: true, resolutionNote: true, updatedAt: true },
+        })
+      : Promise.resolve(null),
+    sikayetBildirimi
+      ? prisma.notification.findFirst({
+          where: { id: sikayetBildirimi, userId: user.id, title: "Şikayetiniz güncellendi" },
+          select: { title: true, message: true, createdAt: true },
+        })
+      : Promise.resolve(null),
   ]);
 
   const pendingByCompany = new Map(
@@ -74,6 +87,24 @@ export default async function NotificationsPage({
           Bu bildirimin hedefi artık yok veya açılamıyor. Bildirim okundu olarak
           işaretlendi.
         </section>
+      ) : null}
+
+      {(complaintCase || complaintNotice) ? (
+        <ComplaintNotificationDialog
+          complaint={complaintCase ? {
+            complaintNumber: complaintCase.complaintNumber,
+            summary: complaintCase.summary,
+            details: complaintCase.details,
+            status: complaintCase.status,
+            resolutionNote: complaintCase.resolutionNote,
+            updatedAt: complaintCase.updatedAt.toISOString(),
+          } : null}
+          notice={complaintNotice ? {
+            title: complaintNotice.title,
+            message: complaintNotice.message,
+            createdAt: complaintNotice.createdAt.toISOString(),
+          } : null}
+        />
       ) : null}
 
       {pendingInvites.length > 0 && (

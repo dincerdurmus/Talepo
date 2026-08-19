@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { DeleteRequestButton } from "@/components/panel/DeleteRequestButton";
+import { ComplaintForm } from "@/components/panel/ComplaintForm";
 import { OfferActions } from "@/components/panel/OfferActions";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { OfferNegotiationPanel } from "@/components/panel/OfferNegotiationPanel";
@@ -468,6 +469,7 @@ export default async function RequestDetailPage({
           </div>
         </aside>
       </div>
+      <ComplaintForm subjectType="REQUEST" subjectId={request.id} />
     </>
   );
 }

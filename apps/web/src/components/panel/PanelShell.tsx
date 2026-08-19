@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowLeft,
   Bell,
+  BellRing,
   Bookmark,
   Building2,
   ChevronLeft,
@@ -361,7 +362,7 @@ export function PanelShell({
                   aria-label="Bildirimler"
                   className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-teal-900/8 bg-[#f7faf9] transition hover:bg-white"
                 >
-                  <Bell className="h-5 w-5 text-[#0f1f1d]/70" />
+                  {unreadNotifications > 0 ? <BellRing className="h-5 w-5 text-teal-700" aria-hidden="true" /> : <Bell className="h-5 w-5 text-[#0f1f1d]/70" aria-hidden="true" />}
                   {unreadNotifications > 0 && (
                     <span className="talepo-plan-dot absolute right-2.5 top-2.5 h-2 w-2 rounded-full" />
                   )}

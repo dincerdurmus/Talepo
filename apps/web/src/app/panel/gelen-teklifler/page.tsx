@@ -148,9 +148,11 @@ export default async function IncomingOffersPage({
 
   const offers = (await prisma.offer.findMany({
     where: {
+      isModerationHidden: false,
       request: {
         createdById: user.id,
         deletedAt: null,
+        isModerationHidden: false,
       },
       status: { not: "DRAFT" },
       NOT: { submittedById: user.id, companyId: null },

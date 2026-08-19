@@ -248,6 +248,7 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
     where: {
       id: input.requestId,
       deletedAt: null,
+      isModerationHidden: false,
       createdById: { not: userId },
       status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
     },
@@ -496,9 +497,11 @@ export async function updateOffer(
     where: {
       id: offerId,
       status: { in: [...AWAITING_RESPONSE_STATUSES] },
+      isModerationHidden: false,
       ...ownerWhere,
       request: {
         deletedAt: null,
+        isModerationHidden: false,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
     },
@@ -541,9 +544,11 @@ export async function updateOffer(
     where: {
       id: existing.id,
       status: { in: [...AWAITING_RESPONSE_STATUSES] },
+      isModerationHidden: false,
       ...ownerWhere,
       request: {
         deletedAt: null,
+        isModerationHidden: false,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
     },
@@ -651,7 +656,8 @@ export async function acceptOffer(
     where: {
       id: offerId,
       status: "ACCEPTED",
-      request: { deletedAt: null },
+      isModerationHidden: false,
+      request: { deletedAt: null, isModerationHidden: false },
     },
     select: {
       id: true,
@@ -675,8 +681,10 @@ export async function acceptOffer(
     where: {
       id: offerId,
       status: { in: ["SUBMITTED", "VIEWED"] },
+      isModerationHidden: false,
       request: {
         deletedAt: null,
+        isModerationHidden: false,
       },
     },
     include: {
@@ -740,6 +748,7 @@ export async function acceptOffer(
         id: offer.requestId,
         createdById: offer.request.createdById,
         deletedAt: null,
+        isModerationHidden: false,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
       data: { status: "OFFER_SELECTED" },
@@ -756,6 +765,7 @@ export async function acceptOffer(
         id: offerId,
         requestId: offer.requestId,
         status: { in: ["SUBMITTED", "VIEWED"] },
+        isModerationHidden: false,
       },
       data: {
         status: "ACCEPTED",
@@ -941,11 +951,7 @@ export async function acceptOffer(
  * Canonical path: OfferNegotiation (karşı teklif turları) → ACCEPTED → Conversation.
  * Kept as a hard reject so old clients cannot open pre-accept chat.
  */
-export async function negotiateOffer(
-  _userId: string,
-  _offerId: string,
-  _note?: string,
-): Promise<{ conversationId: string }> {
+export async function negotiateOffer(): Promise<{ conversationId: string }> {
   throw new OfferValidationError([LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE]);
 }
 
@@ -954,7 +960,8 @@ export async function rejectOffer(userId: string, offerId: string) {
     where: {
       id: offerId,
       status: { in: ["SUBMITTED", "VIEWED"] },
-      request: { createdById: userId, deletedAt: null },
+      isModerationHidden: false,
+      request: { createdById: userId, deletedAt: null, isModerationHidden: false },
     },
     include: {
       request: { select: { id: true, title: true } },
@@ -972,7 +979,8 @@ export async function rejectOffer(userId: string, offerId: string) {
       where: {
         id: offerId,
         status: { in: ["SUBMITTED", "VIEWED"] },
-        request: { createdById: userId, deletedAt: null },
+        isModerationHidden: false,
+        request: { createdById: userId, deletedAt: null, isModerationHidden: false },
       },
       data: {
         status: "REJECTED",

@@ -79,7 +79,25 @@ export async function PATCH(request: Request) {
     const after = { status: body.status ?? current.status, platformRole: body.platformRole ?? current.platformRole, planTier: body.planTier ?? current.planTier, bonusOfferCredits: body.bonusOfferCredits ?? current.bonusOfferCredits };
     const changed = Object.entries(after).filter(([key, value]) => current[key as keyof typeof current] !== value).map(([key]) => key);
     if (!changed.length) return NextResponse.json({ ok: true, message: "Değişiklik bulunmuyor." });
-    if (changed.includes("platformRole") || (current.platformRole !== "USER" && changed.includes("status"))) await requirePlatformAdmin("roles.manage");
+    if (changed.includes("platformRole")) {
+      const hasFullRoleManagement = hasAdminPermission(admin.platformRole, "roles.manage");
+      if (hasFullRoleManagement) {
+        await requirePlatformAdmin("roles.manage");
+      } else {
+        await requirePlatformAdmin("roles.manage.limited");
+        const protectedRoles = ["ADMIN", "SUPER_ADMIN"] as const;
+        if (protectedRoles.includes(current.platformRole as typeof protectedRoles[number]) || protectedRoles.includes(after.platformRole as typeof protectedRoles[number])) {
+          return NextResponse.json({ ok: false, message: "Admin yalnızca Kullanıcı, Support, Moderatör ve Analist rollerini düzenleyebilir." }, { status: 403 });
+        }
+      }
+    }
+    if (current.platformRole !== "USER" && changed.includes("status")) {
+      if (hasAdminPermission(admin.platformRole, "roles.manage")) await requirePlatformAdmin("roles.manage");
+      else {
+        await requirePlatformAdmin("roles.manage.limited");
+        if (["ADMIN", "SUPER_ADMIN"].includes(current.platformRole)) return NextResponse.json({ ok: false, message: "Admin, Admin veya Süper Admin hesabını aktifleştiremez ya da pasifleştiremez." }, { status: 403 });
+      }
+    }
     if (changed.includes("planTier") || changed.includes("bonusOfferCredits")) await requirePlatformAdmin("billing.manage");
     if (current.platformRole === "SUPER_ADMIN" && (after.platformRole !== "SUPER_ADMIN" || after.status !== "ACTIVE")) {
       const activeSuperAdmins = await prisma.user.count({ where: { platformRole: "SUPER_ADMIN", status: "ACTIVE", deletedAt: null } });

@@ -1,4 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 /**
@@ -32,13 +33,22 @@ function resolvePrismaConnectionString(): string {
 
 const connectionString = resolvePrismaConnectionString();
 
-const adapter = new PrismaPg({
-  connectionString,
-});
-
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  prismaPool: Pool | undefined;
 };
+
+// The direct Supabase endpoint is session-mode and has a small connection cap.
+// Reuse one bounded pool across Turbopack reloads instead of using pg's default
+// pool size for every Prisma adapter instance.
+const pool = globalForPrisma.prismaPool ?? new Pool({
+  connectionString,
+  max: 3,
+  idleTimeoutMillis: 10_000,
+  connectionTimeoutMillis: 5_000,
+});
+
+const adapter = new PrismaPg(pool);
 
 export const prisma =
   globalForPrisma.prisma ??
@@ -48,4 +58,5 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
+  globalForPrisma.prismaPool = pool;
 }
