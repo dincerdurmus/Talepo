@@ -4,6 +4,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { randomUUID } from "node:crypto";
 
 import {
   encodeGroupFileName,
@@ -67,6 +68,7 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
       sendImages.includes("sendImageMessages"),
   );
 
+  const groupId = randomUUID();
   const grouped = groupConversationMessages(
     [
       {
@@ -74,7 +76,7 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
         type: "IMAGE",
         content: "caption",
         fileUrl: "a",
-        fileName: encodeGroupFileName("g1", 0, "a.jpg"),
+        fileName: encodeGroupFileName(groupId, 0, "a.jpg"),
         senderUserId: "u1",
         createdAt: "2026-01-01T00:00:00.000Z",
       },
@@ -83,7 +85,7 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
         type: "IMAGE",
         content: null,
         fileUrl: "b",
-        fileName: encodeGroupFileName("g1", 1, "b.jpg"),
+        fileName: encodeGroupFileName(groupId, 1, "b.jpg"),
         senderUserId: "u1",
         createdAt: "2026-01-01T00:00:00.100Z",
       },
@@ -98,10 +100,11 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
       grouped[0].images.length === 2,
   );
 
-  const parsed = parseGroupFileName(encodeGroupFileName("abc", 2, "x.png"));
+  const roundtripId = randomUUID();
+  const parsed = parseGroupFileName(encodeGroupFileName(roundtripId, 2, "x.png"));
   check(
     "group fileName roundtrip",
-    parsed?.groupId === "abc" && parsed.index === 2,
+    parsed?.groupId === roundtripId && parsed.index === 2,
   );
 
   const outcome = read("src/components/panel/DealOutcomePanel.tsx");

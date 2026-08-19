@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { encodeGroupFileName } from "@/lib/message/attachment-group";
+import { encodeGroupFileName, sanitizeUserFileName } from "@/lib/message/attachment-group";
 import { prisma } from "@/lib/prisma";
 import {
   containsBlockedContactInfo,
@@ -78,10 +78,9 @@ export async function sendImageMessages(
       );
     }
 
-    const safeName =
-      (item.fileName?.trim() || `fotograf-${index + 1}.jpg`)
-        .replace(/[^\w.\-()+\sğüşıöçĞÜŞİÖÇ]/gi, "")
-        .slice(0, 120) || `fotograf-${index + 1}.jpg`;
+    const safeName = sanitizeUserFileName(
+      item.fileName?.trim() || `fotograf-${index + 1}.jpg`,
+    );
 
     moderated.push({
       dataUrl: moderation.dataUrl,
@@ -138,17 +137,19 @@ export async function sendImageMessages(
   const photoLabel =
     messages.length === 1 ? "yeni fotoğraf" : `${messages.length} yeni fotoğraf`;
 
-  await Promise.all(
-    recipients.map((recipientId) =>
-      createNotification({
-        userId: recipientId,
-        type: "NEW_MESSAGE",
-        title: "Yeni mesajınız var",
-        message: `“${access.request.title}” sohbetinde ${photoLabel}.`,
-        actionUrl: `/panel/mesajlar/${conversationId}`,
-      }),
-    ),
-  );
+  if (recipients.length > 0) {
+    await Promise.all(
+      recipients.map((recipientId) =>
+        createNotification({
+          userId: recipientId,
+          type: "NEW_MESSAGE",
+          title: "Yeni mesajınız var",
+          message: `“${access.request.title}” sohbetinde ${photoLabel}.`,
+          actionUrl: `/panel/mesajlar/${conversationId}`,
+        }),
+      ),
+    );
+  }
 
   return messages;
 }
