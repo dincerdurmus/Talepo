@@ -33,6 +33,7 @@ function read(rel: string) {
 }
 
 const shell = read("src/components/panel/PanelShell.tsx");
+const commandSidebar = read("src/components/panel/CommandPersonalSidebar.tsx");
 const nav = read("src/components/panel/panel-nav.ts");
 const home = read("src/app/panel/page.tsx");
 const layout = read("src/app/layout.tsx");
@@ -78,15 +79,20 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("isNavActive strips query", shell.includes('href.split("?")[0]'));
 }
 
-console.log("\n=== DESKTOP IA UNCHANGED ===\n");
+console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
 {
-  check("Pro Araçlar still in sidebar", shell.includes("Pro Araçlar"));
-  check("desktop Takiplerim tool", shell.includes('title: "Takiplerim"'));
-  check("desktop Analiz tool", shell.includes('title: "Analiz"'));
-  check("no asistan sidebar", !shell.includes("asistanItem"));
+  check("CommandPersonalSidebar wired in shell", shell.includes("CommandPersonalSidebar"));
+  check("Pro Araçlar in signal rail", commandSidebar.includes("Pro Araçlar"));
+  check("desktop Takiplerim tool", commandSidebar.includes('title: "Takiplerim"'));
+  check("desktop Analiz tool", commandSidebar.includes('title: "Analiz"'));
+  check("desktop Fırsatlar tool", commandSidebar.includes('title: "Fırsatlar"'));
+  check("plan section in rail", commandSidebar.includes('id: "plan"') || commandSidebar.includes('"plan"'));
+  check("sidebar collapse localStorage key", commandSidebar.includes("sidebarCollapsed") || shell.includes("SIDEBAR_COLLAPSED_KEY"));
+  check("rail hover + pinned dock", commandSidebar.includes("hoverSection") && commandSidebar.includes("pinnedOpen"));
+  check("no asistan sidebar", !commandSidebar.includes("/panel/asistan"));
   check(
     "Radar not a sidebar product title",
-    !shell.includes('title: "Talepo Radar"'),
+    !commandSidebar.includes('title: "Talepo Radar"'),
   );
   check(
     "no /panel/asistan in PANEL_NAV_ITEMS",
