@@ -24,6 +24,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { hasFeature } from "@/lib/membership/entitlements";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import { offerFormHref } from "@/lib/panel/offer-form-href";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -145,9 +146,7 @@ export default async function ExploreRequestDetailPage({
         userId: user.id,
         requestId: request.id,
       });
-  const teklifHref = attributionTouch
-    ? `/panel/talepler/${request.id}/teklif?acq=${encodeURIComponent(attributionTouch)}`
-    : `/panel/talepler/${request.id}/teklif`;
+  const teklifHref = offerFormHref(request.id, attributionTouch);
   const canCreateFreshOffer =
     !existingOffer ||
     ["REJECTED", "WITHDRAWN", "EXPIRED"].includes(existingOffer.status);

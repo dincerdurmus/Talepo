@@ -2,6 +2,7 @@ import {
   appendAttributionTouch,
   type OfferAcquisitionSource,
 } from "@/lib/offer/offer-attribution";
+import { offerFormHref } from "@/lib/panel/offer-form-href";
 import { OPPORTUNITY_REQUEST_DETAIL_BASE } from "@/lib/panel/opportunity-request-detail-href";
 import {
   issueOfferAttributionTouch,
@@ -40,5 +41,14 @@ export function attributedOfferFormHref(input: {
   opportunityMatchId?: string | null;
   radarTier?: RadarTierAtExposure | null;
 }): string {
-  return attributedRequestDetailHref({ ...input, pathSuffix: "/teklif" });
+  const touch = issueOfferAttributionTouch({
+    userId: input.userId,
+    requestId: input.requestId,
+    source: input.source,
+    savedSearchId: input.savedSearchId,
+    alertRuleId: input.alertRuleId,
+    opportunityMatchId: input.opportunityMatchId,
+    radarTier: input.radarTier,
+  });
+  return appendAttributionTouch(offerFormHref(input.requestId), touch);
 }
