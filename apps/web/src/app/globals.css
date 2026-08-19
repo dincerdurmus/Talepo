@@ -226,7 +226,209 @@ body {
   animation-delay: 0.22s;
 }
 
-/* Legacy hero illustration utilities (kept for unused assets) */
+/* Ana Sayfa 1 — premium landing rhythm */
+.talepo-home1-display {
+  font-size: clamp(2.35rem, 4.8vw, 4.15rem);
+  line-height: 1.02;
+  letter-spacing: -0.048em;
+}
+
+.talepo-home1-section-title {
+  font-size: clamp(2rem, 3.6vw, 3.35rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.talepo-home1-visual-frame {
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.02) 48%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 32px 96px rgba(0, 0, 0, 0.42);
+}
+
+.talepo-home1-hero-scene {
+  isolation: isolate;
+  background: #070c0b;
+}
+
+.talepo-home1-hero-illustration {
+  isolation: isolate;
+}
+
+.talepo-home1-hero-canvas {
+  background-color: #0e1614;
+  background-image:
+    radial-gradient(
+      ellipse 115% 95% at 24% 46%,
+      rgba(45, 212, 191, 0.13) 0%,
+      rgba(45, 212, 191, 0.03) 38%,
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 75% 55% at 78% 22%,
+      rgba(94, 234, 212, 0.06) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse 90% 45% at 50% 108%,
+      rgba(0, 0, 0, 0.22) 0%,
+      transparent 58%
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 20%);
+}
+
+.talepo-home1-hero-horizon {
+  box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.talepo-home1-composer-wrap {
+  position: relative;
+}
+
+.talepo-home1-composer-field {
+  position: relative;
+  isolation: isolate;
+}
+
+.talepo-home1-composer-field::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    118deg,
+    rgba(45, 212, 191, 0.22) 0%,
+    rgba(255, 255, 255, 0.04) 38%,
+    rgba(45, 212, 191, 0.1) 72%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  opacity: 0.28;
+  animation: talepo-home1-composer-border 11s ease-in-out infinite;
+}
+
+.talepo-home1-composer-field.is-focused::before {
+  opacity: 0.48;
+}
+
+.talepo-home1-composer-field::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(45, 212, 191, 0.07) 0%,
+    transparent 68%
+  );
+  opacity: 0.85;
+}
+
+.talepo-home1-composer-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.talepo-home1-composer-label::before {
+  content: "";
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: rgba(94, 234, 212, 0.55);
+  box-shadow: 0 0 10px rgba(45, 212, 191, 0.35);
+  animation: talepo-home1-composer-dot 3.6s ease-in-out infinite;
+}
+
+@keyframes talepo-home1-composer-border {
+  0%,
+  100% {
+    opacity: 0.26;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes talepo-home1-composer-dot {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.talepo-home1-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+  opacity: 0.35;
+}
+
+.talepo-home1-card-hover {
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.talepo-home1-card-hover:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talepo-home1-card-hover,
+  .talepo-home1-card-hover:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+.talepo-home1-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.talepo-home1-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.talepo-home1-hero-parallax {
+  transition: transform 0.1s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talepo-home1-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .talepo-home1-hero-parallax {
+    transform: none !important;
+    transition: none;
+  }
+
+  .talepo-home1-composer-field::before,
+  .talepo-home1-composer-label::before {
+    animation: none;
+  }
+}
+
 @keyframes talepo-hero-enter {
   from {
     opacity: 0;

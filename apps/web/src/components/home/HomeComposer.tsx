@@ -16,9 +16,11 @@ const SUGGESTIONS = [
 type HomeComposerProps = {
   /** When true, secondary links are tuned for a dark atmospheric hero. */
   onInk?: boolean;
+  /** Ana Sayfa 1 preview — subtle composer polish without affecting production `/`. */
+  variant?: "default" | "home1";
 };
 
-export function HomeComposer({ onInk = false }: HomeComposerProps) {
+export function HomeComposer({ onInk = false, variant = "default" }: HomeComposerProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,16 +68,17 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
   }
 
   const canSubmit = text.trim().length > 0;
+  const home1 = variant === "home1" && onInk;
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${home1 ? "talepo-home1-composer-wrap" : ""}`}>
       <form onSubmit={onSubmit} className="talepo-composer w-full">
         <div className="flex items-baseline justify-between gap-3 px-1">
           <label
             htmlFor={fieldId}
             className={`text-[11px] font-medium uppercase tracking-[0.2em] ${
               onInk ? "text-white/35" : "text-[#0a1210]/40"
-            }`}
+            } ${home1 ? "talepo-home1-composer-label" : ""}`}
           >
             Talep
           </label>
@@ -92,7 +95,11 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
 
         <div
           className={`mt-3 flex items-end gap-2 rounded-[1.75rem] border px-3 py-2.5 backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-300 sm:gap-3 sm:px-4 sm:py-3 ${
-            onInk
+            home1
+              ? focused
+                ? "talepo-home1-composer-field is-focused border-teal-300/22 bg-white/[0.11] shadow-[0_0_0_1px_rgba(45,212,191,0.08),0_16px_48px_rgba(0,0,0,0.22)]"
+                : "talepo-home1-composer-field border-white/10 bg-white/[0.07] hover:border-white/14 hover:bg-white/[0.09]"
+              : onInk
               ? focused
                 ? "border-white/18 bg-white/[0.12] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
                 : "border-white/10 bg-white/[0.08] hover:border-white/14 hover:bg-white/[0.1]"
@@ -127,7 +134,11 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
           <button
             type="submit"
             className={`mb-1 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-medium tracking-[0.01em] transition sm:h-11 sm:px-5 ${
-              onInk
+              home1
+                ? canSubmit
+                  ? "bg-white text-[#070c0b] shadow-[0_8px_24px_rgba(255,255,255,0.12)] hover:bg-white/92"
+                  : "bg-white/10 text-white/55 hover:bg-white/14 hover:text-white/78"
+                : onInk
                 ? canSubmit
                   ? "bg-white text-[#070c0b] hover:bg-white/92"
                   : "bg-white/12 text-white/55 hover:bg-white/16 hover:text-white/75"
@@ -141,14 +152,16 @@ export function HomeComposer({ onInk = false }: HomeComposerProps) {
           </button>
         </div>
 
-        <ul className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 px-1 sm:mt-5">
+        <ul className="mt-4 flex flex-wrap items-center justify-center gap-2 px-1 sm:mt-5 lg:justify-start">
           {SUGGESTIONS.map((suggestion) => (
             <li key={suggestion}>
               <button
                 type="button"
                 onClick={() => applySuggestion(suggestion)}
                 className={`text-[12.5px] tracking-[0.01em] transition sm:text-[13px] ${
-                  onInk
+                  home1
+                    ? "rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-white/42 backdrop-blur-sm hover:border-white/14 hover:bg-white/[0.07] hover:text-white/72"
+                    : onInk
                     ? "text-white/32 hover:text-white/62"
                     : "text-[#0a1210]/38 hover:text-[#0a1210]/70"
                 }`}
