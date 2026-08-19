@@ -1,6 +1,4 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { PublicProfileCard } from "@/components/panel/ParticipantProfileDrawer";
 import { requireUser } from "@/server/auth/require-user";
@@ -26,21 +24,13 @@ export default async function PublicCompanyProfilePage({
     });
 
     return (
-      <>
-        <section className="py-4 sm:py-6">
-          <Link
-            href={`/panel/mesajlar/${conversation}`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-black/45 hover:text-black/70"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Sohbete dön
-          </Link>
-          <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-            Firma profili
-          </h1>
-        </section>
-        <PublicProfileCard profile={profile} />
-      </>
+      <section className="py-4 pb-28 sm:py-6 sm:pb-8">
+        <PublicProfileCard
+          profile={profile}
+          conversationBackHref={`/panel/mesajlar/${conversation}`}
+          backLabel="Mesajlaşmaya dön"
+        />
+      </section>
     );
   } catch (error) {
     if (error instanceof PublicProfileAccessError) {

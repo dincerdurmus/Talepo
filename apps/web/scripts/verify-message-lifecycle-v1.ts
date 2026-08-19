@@ -131,9 +131,9 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
 
   const profileService = read("src/server/profile/public-profile-service.ts");
   check(
-    "public profile service excludes email/phone",
-    !profileService.includes("email:") &&
-      !profileService.includes("phone:") &&
+    "public profile service excludes email/phone from dto",
+    profileService.includes("formatParticipantLocation(user.city, user.country)") &&
+      !profileService.match(/return\s*\{[\s\S]*email:/) &&
       profileService.includes("assertConversationParticipantAccess"),
   );
 
@@ -141,7 +141,7 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
   check(
     "participant profile drawer + full profile link",
     drawer.includes("ParticipantProfileDrawer") &&
-      drawer.includes("Profili görüntüle") &&
+      drawer.includes("Tam profili görüntüle") &&
       drawer.includes("role=\"dialog\""),
   );
 
@@ -153,11 +153,11 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
       lightbox.includes("Escape"),
   );
 
-  const editor = read("src/components/panel/ProfileEditor.tsx");
+  const preview = read("src/components/panel/profile/PublicProfilePreviewPanel.tsx");
   check(
-    "profile editor preview aligned to public fields",
-    editor.includes("Konuşmalarda görünen önizleme") &&
-      editor.includes("PUBLIC_PROFILE_BIO_MAX"),
+    "profile preview uses public participant card",
+    preview.includes("PublicProfileCard") &&
+      preview.includes("PublicUserProfileDto"),
   );
 }
 

@@ -1,5 +1,14 @@
 import type { TrustSummary } from "@/lib/offer/deal-review";
 
+export type PublicRatingDistribution = Record<1 | 2 | 3 | 4 | 5, number>;
+
+export type PublicVisibleReview = {
+  rating: number;
+  comment: string;
+  reviewerSide: "BUYER" | "PROVIDER";
+  createdAt: string;
+};
+
 /** Whitelist fields safe to expose in conversation / public profile surfaces. */
 export type PublicUserProfileDto = {
   kind: "user";
@@ -13,6 +22,8 @@ export type PublicUserProfileDto = {
   expertiseCategories: string[];
   trust: TrustSummary;
   verifiedIndicators: string[];
+  ratingDistribution: PublicRatingDistribution;
+  recentVisibleReviews: PublicVisibleReview[];
 };
 
 export type PublicCompanyProfileDto = {
@@ -30,6 +41,8 @@ export type PublicCompanyProfileDto = {
   expertiseCategories: string[];
   trust: TrustSummary;
   verifiedIndicators: string[];
+  ratingDistribution: PublicRatingDistribution;
+  recentVisibleReviews: PublicVisibleReview[];
 };
 
 export type PublicProfileDto = PublicUserProfileDto | PublicCompanyProfileDto;
@@ -43,6 +56,15 @@ export function formatPublicLocation(
   country: string | null | undefined,
 ): string | null {
   const parts = [district, city, country].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
+/** Participant-facing location: city + country only (district stays private). */
+export function formatParticipantLocation(
+  city: string | null | undefined,
+  country: string | null | undefined,
+): string | null {
+  const parts = [city, country].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : null;
 }
 

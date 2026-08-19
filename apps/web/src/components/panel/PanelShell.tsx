@@ -1236,6 +1236,8 @@ function PanelBackLink({ pathname }: { pathname: string }) {
 
   if (pathname === "/panel") return null;
   if (/^\/panel\/gelen-teklifler\/[^/]+$/.test(pathname)) return null;
+  if (/^\/panel\/profil\/[^/]+$/.test(pathname)) return null;
+  if (/^\/panel\/firma-profil\/[^/]+$/.test(pathname)) return null;
 
   const handleBack = () => {
     if (typeof window !== "undefined" && window.history.length > 1) {

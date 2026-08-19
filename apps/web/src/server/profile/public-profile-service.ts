@@ -1,15 +1,20 @@
 import {
   formatMemberSince,
-  formatPublicLocation,
+  formatParticipantLocation,
   type PublicCompanyProfileDto,
   type PublicProfileDto,
   type PublicUserProfileDto,
 } from "@/lib/profile/public-profile";
+import {
+  buildCompanyVerifiedIndicators,
+  buildUserVerifiedIndicators,
+} from "@/lib/profile/verified-indicators";
 import { prisma } from "@/lib/prisma";
 import {
   getCompanyTrustSummary,
   getUserTrustSummary,
 } from "@/server/offer/trust-summary";
+import { ratingDistributionForTarget } from "@/server/profile/self-profile-trust";
 
 import {
   assertConversationParticipantAccess,
@@ -17,11 +22,13 @@ import {
   PublicProfileAccessError,
 } from "./public-profile-access";
 
+/** Provider-side expertise only — never buyer-created request categories. */
 async function loadUserCategories(userId: string): Promise<string[]> {
   const rows = await prisma.offer.findMany({
     where: {
       submittedById: userId,
       companyId: null,
+      status: { in: ["SUBMITTED", "VIEWED", "ACCEPTED"] },
     },
     include: {
       request: { select: { category: { select: { name: true } } } },
@@ -70,6 +77,7 @@ export async function getPublicUserProfile(
       district: true,
       country: true,
       createdAt: true,
+      emailVerified: true,
     },
   });
 
@@ -77,10 +85,19 @@ export async function getPublicUserProfile(
     throw new PublicProfileAccessError("Profil bulunamadı.", 404);
   }
 
-  const [trust, expertiseCategories] = await Promise.all([
+  const [trust, expertiseCategories, ratingDistribution] = await Promise.all([
     getUserTrustSummary(user.id),
     loadUserCategories(user.id),
+    ratingDistributionForTarget({
+      targetType: "USER",
+      targetUserId: user.id,
+      reviewerSide: "BUYER",
+    }),
   ]);
+
+  const verifiedIndicators = buildUserVerifiedIndicators({
+    emailVerified: user.emailVerified,
+  });
 
   return {
     kind: "user",
@@ -89,7 +106,7 @@ export async function getPublicUserProfile(
     avatarUrl: user.image,
     accountType: "personal",
     biography: user.biography,
-    locationLabel: formatPublicLocation(user.city, user.district, user.country),
+    locationLabel: formatParticipantLocation(user.city, user.country),
     memberSinceLabel: formatMemberSince(user.createdAt),
     expertiseCategories,
     trust: {
@@ -97,7 +114,9 @@ export async function getPublicUserProfile(
       reviewCount: trust.reviewCount,
       averageRating: trust.averageRating,
     },
-    verifiedIndicators: [],
+    verifiedIndicators,
+    ratingDistribution,
+    recentVisibleReviews: trust.recentComments.slice(0, 5),
   };
 }
 
@@ -145,13 +164,19 @@ export async function getPublicCompanyProfile(
     representativeAvatarUrl = rep?.image ?? null;
   }
 
-  const [trust, expertiseCategories] = await Promise.all([
+  const [trust, expertiseCategories, ratingDistribution] = await Promise.all([
     getCompanyTrustSummary(company.id),
     loadCompanyCategories(company.id),
+    ratingDistributionForTarget({
+      targetType: "COMPANY",
+      targetCompanyId: company.id,
+      reviewerSide: "BUYER",
+    }),
   ]);
 
-  const verifiedIndicators: string[] = [];
-  if (company.isVerified) verifiedIndicators.push("Doğrulanmış firma");
+  const verifiedIndicators = buildCompanyVerifiedIndicators({
+    isVerified: company.isVerified,
+  });
 
   return {
     kind: "company",
@@ -163,11 +188,7 @@ export async function getPublicCompanyProfile(
     representativeName,
     representativeAvatarUrl,
     biography: company.description,
-    locationLabel: formatPublicLocation(
-      company.city,
-      company.district,
-      company.country,
-    ),
+    locationLabel: formatParticipantLocation(company.city, company.country),
     memberSinceLabel: formatMemberSince(company.createdAt),
     expertiseCategories,
     trust: {
@@ -176,6 +197,8 @@ export async function getPublicCompanyProfile(
       averageRating: trust.averageRating,
     },
     verifiedIndicators,
+    ratingDistribution,
+    recentVisibleReviews: trust.recentComments.slice(0, 5),
   };
 }
 
