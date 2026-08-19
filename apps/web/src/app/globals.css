@@ -1723,7 +1723,34 @@ section.mt-6 svg > text:last-of-type {
   }
 }
 
-/* Beacon — panel home preview (attention focal) */
+.talepo-signal-dock {
+  isolation: isolate;
+}
+
+.talepo-signal-dock-solid,
+.talepo-signal-dock a,
+.talepo-signal-dock button,
+.talepo-signal-dock svg {
+  opacity: 1;
+}
+
+.talepo-signal-dock-solid,
+.talepo-signal-dock a {
+  color: #fff;
+  text-shadow:
+    0 1px 2px rgba(7, 12, 11, 0.55),
+    0 0 16px rgba(7, 12, 11, 0.42);
+}
+
+.talepo-signal-dock-muted {
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 2px rgba(7, 12, 11, 0.45);
+}
+
+.talepo-signal-dock svg {
+  filter: drop-shadow(0 1px 2px rgba(7, 12, 11, 0.4));
+}
+
 .talepo-beacon-shell {
   border: 1px solid rgba(15, 31, 29, 0.06);
   background: #f7faf9;
@@ -1755,6 +1782,28 @@ section.mt-6 svg > text:last-of-type {
     transparent 68%
   );
   pointer-events: none;
+}
+
+.talepo-explore-banner {
+  overflow: hidden;
+  background: linear-gradient(180deg, #eef1f4 0%, #e4e8ee 52%, #dce2ea 100%);
+}
+
+.talepo-explore-banner-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse 58% 90% at 100% 0%,
+      rgba(71, 85, 105, 0.18),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 42% 70% at 82% 100%,
+      rgba(15, 23, 42, 0.1),
+      transparent 60%
+    );
 }
 
 .talepo-beacon-plan {

@@ -157,7 +157,7 @@ export function SavedSearchesManager({
             Kayıtlı aramalar / kategori takipleri
           </h2>
           <p className="mt-1 text-sm text-teal-950/50">
-            Canonical taxonomy filtrelerini kaydedin; Keşfet’te tek tıkla
+            Canonical taxonomy filtrelerini kaydedin; Talepler’de tek tıkla
             çalıştırın. Tek tek talepler için Kaydettiklerim (watchlist) ayrıdır.
           </p>
         </div>
@@ -178,7 +178,7 @@ export function SavedSearchesManager({
         <div className="mt-6 rounded-xl bg-teal-50/60 p-5 text-sm text-teal-950/50">
           Henüz kayıtlı arama yok.{" "}
           <Link href="/panel/talepler" className="font-semibold text-teal-800 underline">
-            Keşfet
+            Talepler
           </Link>
           {" "}sayfasında filtreleri kaydedin.
         </div>

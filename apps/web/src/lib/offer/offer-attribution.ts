@@ -41,7 +41,7 @@ export const OFFER_ACQUISITION_SOURCE_LABELS: Record<
   string
 > = {
   DIRECT: "Doğrudan",
-  DISCOVERY: "Talepleri Keşfet",
+  DISCOVERY: "Talepler",
   RADAR: "Talepo Radar",
   FOLLOW: "Takiplerim",
   OPPORTUNITY: "Fırsatlar",

@@ -69,7 +69,7 @@ export function ExploreRequestCard({
   return (
     <Link
       href={href}
-      className={`talepo-card group relative flex overflow-hidden bg-gradient-to-r ${look.glow} transition duration-200 hover:-translate-y-0.5 hover:border-teal-700/20 hover:shadow-[var(--talepo-shadow-md)]`}
+      className="group relative flex overflow-hidden rounded-[1.35rem] border border-[rgba(15,118,110,0.14)] bg-white"
     >
       <span className={`w-1 shrink-0 ${look.bar}`} aria-hidden />
 
@@ -86,22 +86,20 @@ export function ExploreRequestCard({
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <h2 className="truncate font-[family-name:var(--font-explore-display)] text-[15px] font-semibold tracking-tight text-[#0f3d38] sm:text-[16px] group-hover:text-teal-900">
+            <h2 className="truncate text-[15px] font-semibold tracking-tight text-[#0f1f1d] sm:text-[16px]">
               {title}
             </h2>
             {isFresh ? (
-              <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
-                Yeni
-              </span>
+              <span className="talepo-beacon-unread-chip">Yeni</span>
             ) : null}
             {isUrgent ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-[#fff7ed] px-2 py-0.5 text-[10px] font-bold text-[#c2410c] ring-1 ring-[#fdba74]/60">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-[#fff7ed] px-2 py-0.5 text-[10px] font-semibold text-[#c2410c]">
                 <Zap className="h-3 w-3" />
                 Acil
               </span>
             ) : null}
             {isFeatured ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-teal-700/10 px-2 py-0.5 text-[10px] font-bold text-teal-800">
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-teal-700/10 px-2 py-0.5 text-[10px] font-semibold text-teal-800">
                 <Sparkles className="h-3 w-3" />
                 Öne çıkan
               </span>
@@ -109,7 +107,7 @@ export function ExploreRequestCard({
           </div>
 
           {blurb ? (
-            <p className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-[#5a7a74]">
+            <p className="mt-1.5 line-clamp-2 text-[13px] leading-5 text-[#0f1f1d]/48">
               {blurb}
             </p>
           ) : null}
@@ -121,19 +119,19 @@ export function ExploreRequestCard({
               {categoryName}
             </span>
             {city ? (
-              <span className="inline-flex items-center gap-1 font-medium text-[#5a7a74]">
+              <span className="inline-flex items-center gap-1 font-medium text-[#0f1f1d]/48">
                 <MapPin className="h-3 w-3 text-teal-700/70" />
                 {city}
               </span>
             ) : null}
             {budgetLabel ? (
-              <span className="inline-flex items-center gap-1 font-semibold text-teal-900/80">
+              <span className="inline-flex items-center gap-1 font-semibold text-[#0f1f1d]/70">
                 <Wallet className="h-3 w-3 text-teal-700/70" />
                 {budgetLabel}
               </span>
             ) : null}
             {typeof matchScore === "number" && matchScore > 0 ? (
-              <span className="inline-flex items-center rounded-full bg-teal-800/10 px-2 py-0.5 text-[11px] font-bold tabular-nums text-teal-900">
+              <span className="inline-flex items-center rounded-full bg-teal-800/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-teal-900">
                 Eşleşme %{Math.round(matchScore)}
               </span>
             ) : null}
@@ -141,24 +139,24 @@ export function ExploreRequestCard({
               ? matchReasons.slice(0, 3).map((reason) => (
                   <span
                     key={reason}
-                    className="font-medium text-teal-700/75"
+                    className="font-medium text-[#0f1f1d]/45"
                   >
                     {reason}
                   </span>
                 ))
               : matchReason ? (
-                  <span className="font-medium text-teal-700/75">{matchReason}</span>
+                  <span className="font-medium text-[#0f1f1d]/45">{matchReason}</span>
                 ) : null}
           </div>
 
           <div className="mt-2.5 flex flex-wrap items-center gap-2 sm:hidden">
-            <span className="inline-flex items-center gap-1 rounded-lg bg-white/85 px-2 py-1 text-[11px] font-bold tabular-nums text-teal-900 shadow-sm ring-1 ring-teal-900/5">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white/85 px-2 py-1 text-[11px] font-semibold tabular-nums text-[#0f1f1d]">
               <MessageSquareText className="h-3 w-3" />
               {offerCount} teklif
             </span>
             <span
               className={`text-[11px] font-semibold ${
-                emphasizeTime ? "text-emerald-700" : "text-[#7a9a94]"
+                emphasizeTime ? "text-teal-800" : "text-[#0f1f1d]/40"
               }`}
             >
               {timeLabel}
@@ -167,19 +165,19 @@ export function ExploreRequestCard({
         </div>
 
         <div className="hidden shrink-0 flex-col items-end justify-between py-0.5 sm:flex">
-          <p className="inline-flex items-center gap-1 rounded-xl bg-white/85 px-2.5 py-1 text-xs font-bold tabular-nums text-teal-900 shadow-sm ring-1 ring-teal-900/5">
+          <p className="inline-flex items-center gap-1 rounded-xl bg-white/85 px-2.5 py-1 text-xs font-semibold tabular-nums text-[#0f1f1d]">
             <MessageSquareText className="h-3.5 w-3.5" />
             {offerCount} teklif
           </p>
           <p
             className={`text-[11px] font-semibold ${
-              emphasizeTime ? "text-emerald-700" : "text-[#7a9a94]"
+              emphasizeTime ? "text-teal-800" : "text-[#0f1f1d]/40"
             }`}
           >
             {timeLabel}
           </p>
-          <span className="mt-auto flex h-9 w-9 items-center justify-center rounded-full bg-teal-700 text-white opacity-90 shadow-sm transition group-hover:scale-105 group-hover:opacity-100">
-            <ArrowRight className="h-4 w-4" />
+          <span className="talepo-beacon-spotlight-cta mt-auto">
+            <ArrowRight className="h-4 w-4" strokeWidth={2.25} />
           </span>
         </div>
       </div>

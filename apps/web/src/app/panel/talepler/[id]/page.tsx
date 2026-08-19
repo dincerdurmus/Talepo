@@ -406,7 +406,7 @@ function DetailHeader({ locked }: { locked: boolean }) {
         className="talepo-cloud-pill px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
       >
         <ArrowLeft className="h-4 w-4" />
-        Talepleri keşfet
+        Talepler
       </Link>
       <span
         className={`rounded-full border px-3.5 py-2 text-xs font-semibold shadow-[0_6px_18px_rgba(15,31,29,0.04)] ${

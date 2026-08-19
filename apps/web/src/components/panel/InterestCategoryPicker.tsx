@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 
@@ -50,62 +50,61 @@ export function InterestCategoryPicker({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-teal-700/15 bg-gradient-to-br from-[#eefcf8] via-white to-[#fff8ee] px-5 py-8 sm:px-8">
-      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#9ae89a]/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-12 left-8 h-36 w-36 rounded-full bg-[#7ec8ff]/20 blur-3xl" />
+    <div className="relative overflow-hidden rounded-[1.35rem] border border-[rgba(15,118,110,0.14)] bg-white px-5 py-7 sm:px-7 sm:py-8">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0f766e]">
+        Kategori seç
+      </p>
+      <h2 className="mt-3 text-[1.35rem] font-semibold tracking-[-0.03em] text-[#0f1f1d] sm:text-[1.5rem]">
+        Hangi kategoride arıyorsunuz?
+      </h2>
+      <p className="mt-2 max-w-lg text-sm leading-6 text-[#0f1f1d]/48">
+        Birkaç alan seçin; Size uygun sekmesi bu ilanları göstersin. Bu seçim
+        yalnızca bu gezintide kalır — çıkıp girince yeniden sorulur.
+      </p>
 
-      <div className="relative">
-        <p className="inline-flex items-center gap-1.5 rounded-full bg-teal-700/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800">
-          <Sparkles className="h-3.5 w-3.5" />
-          Size özel akış
-        </p>
-        <h2 className="mt-3 font-[family-name:var(--font-explore-display)] text-2xl font-semibold tracking-tight text-[#0f3d38] sm:text-3xl">
-          Hangi kategoride arıyorsunuz?
-        </h2>
-        <p className="mt-2 max-w-lg text-sm leading-6 text-[#3d5c57]">
-          Birkaç alan seçin; Size uygun sekmesi bu ilanları göstersin. Bu seçim
-          yalnızca bu oturum gezintisinde kalır — çıkıp girince yeniden sorulur.
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {categories.map((category) => {
-            const active = selected.includes(category.slug);
-            const look = getCategoryVisual(category.slug);
-            const Icon = look.icon;
-            return (
-              <button
-                key={category.slug}
-                type="button"
-                onClick={() => toggle(category.slug)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
-                  active
-                    ? "border-teal-700 bg-teal-700 text-white shadow-sm"
-                    : `border-teal-900/10 ${look.chip} hover:border-teal-700/30`
-                }`}
-              >
-                {active ? (
-                  <Check className="h-3.5 w-3.5" />
-                ) : (
-                  <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
-                )}
-                {category.name}
-              </button>
-            );
-          })}
-        </div>
-
-        {error ? <p className="mt-4 text-sm text-[#8b352b]">{error}</p> : null}
-
-        <button
-          type="button"
-          onClick={save}
-          disabled={pending}
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-teal-700 to-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(13,148,136,0.25)] transition hover:brightness-105 disabled:opacity-60"
-        >
-          {pending ? "Açılıyor…" : "Talepleri göster"}
-          <ArrowRight className="h-4 w-4" />
-        </button>
+      <div className="mt-6 flex flex-wrap gap-2">
+        {categories.map((category) => {
+          const active = selected.includes(category.slug);
+          const look = getCategoryVisual(category.slug);
+          const Icon = look.icon;
+          return (
+            <button
+              key={category.slug}
+              type="button"
+              onClick={() => toggle(category.slug)}
+              className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-semibold transition ${
+                active
+                  ? "border-teal-700/30 bg-teal-700/10 text-teal-950"
+                  : `border-[#0f1f1d]/10 bg-white/80 text-[#0f1f1d] hover:border-teal-700/25`
+              }`}
+              aria-pressed={active}
+            >
+              {active ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+              )}
+              {category.name}
+            </button>
+          );
+        })}
       </div>
+
+      {error ? (
+        <p className="mt-4 text-sm text-[#8b352b]" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={save}
+        disabled={pending}
+        className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#115e59] disabled:opacity-60"
+      >
+        {pending ? "Açılıyor…" : "Talepleri göster"}
+        <ArrowRight className="h-4 w-4" />
+      </button>
     </div>
   );
 }

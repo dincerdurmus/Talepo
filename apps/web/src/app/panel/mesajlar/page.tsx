@@ -148,7 +148,7 @@ export default async function MessagesPage() {
                   href="/panel/talepler"
                   className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Talepleri keşfet
+                  Talepler
                 </Link>
                 <Link
                   href="/panel/teklifler"

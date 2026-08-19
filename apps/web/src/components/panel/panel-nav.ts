@@ -63,7 +63,7 @@ export const PANEL_NAV_ITEMS: PanelNavItem[] = [
   {
     href: "/panel/talepler",
     icon: Search,
-    label: "Talepleri keşfet",
+    label: "Talepler",
     mobileLabel: "Talepler",
   },
   {
@@ -133,7 +133,7 @@ export { Bell };
 
 /**
  * Narrow-screen web bottom bar (lg:hidden). Not a native app nav.
- * Professional gets Fırsatlar + Tekliflerim; Standard keeps Keşfet + Profil.
+ * Professional gets Fırsatlar + Tekliflerim; Standard keeps Talepler + Profil.
  */
 export function getResponsiveBottomNavVariant(
   features?: Partial<Record<FeatureKey, boolean>>,

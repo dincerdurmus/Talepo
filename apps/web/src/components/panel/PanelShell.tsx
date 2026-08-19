@@ -150,7 +150,7 @@ function getPanelPageTitle(pathname: string) {
   if (pathname.includes("/panel/talepler/") && pathname.endsWith("/teklif")) {
     return "Teklif ver";
   }
-  if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet";
+  if (pathname.startsWith("/panel/talepler")) return "Talepler";
   if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
   if (pathname.startsWith("/panel/firsatlar")) return "Fırsatlar";
   if (pathname.startsWith("/panel/analiz")) return "Analiz";
@@ -423,14 +423,14 @@ export function PanelShell({
             <MobileLink
               href="/panel/talepler"
               icon={Search}
-              label="Keşfet"
+              label="Talepler"
               active={isNavActive(pathname, "/panel/talepler")}
             />
           )}
 
           <Link
             href={isCorporate ? "/panel/talepler" : "/talep"}
-            aria-label={isCorporate ? "Talepleri keşfet" : "Talep oluştur"}
+            aria-label={isCorporate ? "Talepler" : "Talep oluştur"}
             className="talepo-plan-cta -mt-8 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[5px] border-[#f4f7f6] shadow-[0_12px_30px_var(--plan-glow)]"
           >
             {isCorporate ? <Search className="h-7 w-7" /> : <Plus className="h-7 w-7" />}
@@ -748,6 +748,7 @@ function PanelBackLink({ pathname }: { pathname: string }) {
   const router = useRouter();
 
   if (pathname === "/panel") return null;
+  if (pathname === "/panel/talepler") return null;
   if (/^\/panel\/gelen-teklifler\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/profil\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/firma-profil\/[^/]+$/.test(pathname)) return null;

@@ -185,7 +185,7 @@ function ProfessionalCommerceSection({
           title="İlk teklifinizi verin"
           body="Gönderilen teklifler oluştukça ticari performans özeti burada görünür."
           href="/panel/talepler"
-          cta="Talepleri keşfet"
+          cta="Talepler"
         />
       ) : null}
 
@@ -194,7 +194,7 @@ function ProfessionalCommerceSection({
           title="Henüz kabul edilen teklifiniz yok"
           body="Kabul edilen teklifler oluştukça kazanma oranı burada güçlenir."
           href="/panel/talepler"
-          cta="Talepleri keşfet"
+          cta="Talepler"
         />
       ) : null}
 
@@ -430,7 +430,7 @@ function ProfessionalCommerceSection({
         {advanced.sourcePerformance.length === 0 ? (
           <p className="text-sm text-teal-950/55">
             Henüz yeterli kaynak verisi yok. Radar, Takiplerim, Fırsatlar veya
-            Talepleri Keşfet üzerinden teklif verdikçe burada görünür.
+            Talepler üzerinden teklif verdikçe burada görünür.
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -680,7 +680,7 @@ export function AnalyticsDashboard() {
           title="Teklif performansı"
           body="Açık taleplere teklif verdiğinizde kazanma oranınız burada görünür."
           href="/panel/talepler"
-          cta="Talepleri keşfet"
+          cta="Talepler"
         />
       ) : null}
 
@@ -689,7 +689,7 @@ export function AnalyticsDashboard() {
           title="Bu dönemde gönderilmiş teklif yok"
           body="Şirket teklif performansı, çalışma alanındaki gönderilmiş tekliflerden hesaplanır."
           href="/panel/talepler"
-          cta="Talepleri keşfet"
+          cta="Talepler"
         />
       ) : null}
 
@@ -788,7 +788,7 @@ export function AnalyticsDashboard() {
               title="Bu dönemde gönderilmiş teklif yok"
               body="Açık taleplere teklif verdiğinizde kabul ve kazanma özeti burada görünür."
               href="/panel/talepler"
-              cta="Talepleri keşfet"
+              cta="Talepler"
             />
           ) : offers ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

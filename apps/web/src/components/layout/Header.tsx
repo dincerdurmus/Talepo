@@ -336,7 +336,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
                       onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
-                      Talepleri keşfet
+                      Talepler
                     </Link>
 
                     <Link
