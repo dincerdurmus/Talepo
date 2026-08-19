@@ -1,5 +1,6 @@
 export const IdempotencyScope = {
   REQUEST_PUBLISH: "request.publish",
+  REQUEST_CLONE_DRAFT: "request.clone_draft",
   OFFER_SUBMIT: "offer.submit",
   OFFER_ACCEPT: "offer.accept",
 } as const;
@@ -29,13 +30,36 @@ async function getPrisma() {
   return prisma;
 }
 
+type IdempotencyStore = {
+  idempotencyRecord: {
+    findUnique: (args: {
+      where: {
+        userId_scope_key: { userId: string; scope: string; key: string };
+      };
+      select: { resourceId: true };
+    }) => Promise<{ resourceId: string } | null>;
+    create: (args: {
+      data: {
+        userId: string;
+        scope: string;
+        key: string;
+        resourceId: string;
+      };
+    }) => Promise<unknown>;
+    deleteMany: (args: {
+      where: { userId: string; scope: string; key: string };
+    }) => Promise<unknown>;
+  };
+};
+
 export async function findIdempotentResource(input: {
   userId: string;
   scope: IdempotencyScope;
   key: string;
+  db?: IdempotencyStore;
 }): Promise<{ resourceId: string } | null> {
-  const prisma = await getPrisma();
-  const row = await prisma.idempotencyRecord.findUnique({
+  const db = input.db ?? (await getPrisma());
+  const row = await db.idempotencyRecord.findUnique({
     where: {
       userId_scope_key: {
         userId: input.userId,
@@ -53,10 +77,11 @@ export async function saveIdempotentResource(input: {
   scope: IdempotencyScope;
   key: string;
   resourceId: string;
+  db?: IdempotencyStore;
 }): Promise<void> {
-  const prisma = await getPrisma();
+  const db = input.db ?? (await getPrisma());
   try {
-    await prisma.idempotencyRecord.create({
+    await db.idempotencyRecord.create({
       data: {
         userId: input.userId,
         scope: input.scope,

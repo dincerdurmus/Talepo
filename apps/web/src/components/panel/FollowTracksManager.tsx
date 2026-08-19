@@ -202,14 +202,14 @@ export function FollowTracksManager({
         <div className="mt-6 rounded-xl bg-teal-50/60 p-5 text-sm text-teal-950/55">
           <p className="font-semibold text-teal-950">Henüz bir takibiniz yok.</p>
           <p className="mt-1">
-            Keşfet’te filtreleyin ve takibe ekleyin. Yeni eşleşmelerde bildirim
+            Talepler’de filtreleyin ve takibe ekleyin. Yeni eşleşmelerde bildirim
             almayı dilediğiniz zaman açabilirsiniz.
           </p>
           <Link
             href="/panel/talepler"
             className="mt-3 inline-flex font-semibold text-teal-800 underline"
           >
-            Talepleri keşfet
+            Talepler
           </Link>
         </div>
       ) : (

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
+import { useHoverDisclosure } from "@/hooks/useHoverDisclosure";
 
 type HeaderCompany = {
   id: string;
@@ -15,6 +16,8 @@ type HeaderCompany = {
 type HeaderProps = {
   /** Ink tone blends the chrome into a dark atmospheric homepage hero. */
   tone?: "default" | "ink";
+  /** Slim landing-page chrome used on Ana Sayfa 1 preview. */
+  variant?: "default" | "home1";
 };
 
 function getPlatformRoleLabel(role: string | undefined) {
@@ -26,10 +29,9 @@ function getPlatformRoleLabel(role: string | undefined) {
   return null;
 }
 
-export function Header({ tone = "default" }: HeaderProps) {
+export function Header({ tone = "default", variant = "default" }: HeaderProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [companies, setCompanies] = useState<HeaderCompany[]>([]);
   const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
@@ -37,33 +39,9 @@ export function Header({ tone = "default" }: HeaderProps) {
     null,
   );
   const [membershipNumber, setMembershipNumber] = useState<string | null>(null);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const accountMenu = useHoverDisclosure();
   const ink = tone === "ink";
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        profileMenuRef.current &&
-        !profileMenuRef.current.contains(event.target as Node)
-      ) {
-        setProfileMenuOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setProfileMenuOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, []);
+  const home1 = variant === "home1";
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -116,7 +94,7 @@ export function Header({ tone = "default" }: HeaderProps) {
       });
       const data = (await response.json()) as { ok?: boolean };
       if (response.ok && data.ok) {
-        setProfileMenuOpen(false);
+        accountMenu.close();
         if (companyId) {
           setActiveCompanyId(companyId);
           setActiveCompanyName(
@@ -148,12 +126,18 @@ export function Header({ tone = "default" }: HeaderProps) {
   return (
     <header
       className={`sticky top-0 z-50 border-b backdrop-blur-xl ${
-        ink
-          ? "border-white/[0.06] bg-[#070c0b]/78"
-          : "border-teal-900/8 bg-[#f4f7f6]/92"
+        home1
+          ? "border-white/[0.05] bg-[#0e1614]/72"
+          : ink
+            ? "border-white/[0.06] bg-[#070c0b]/78"
+            : "border-teal-900/8 bg-[#f4f7f6]/92"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5 sm:px-6 lg:px-8">
+      <div
+        className={`mx-auto flex items-center justify-between gap-6 px-5 sm:px-6 lg:px-8 ${
+          home1 ? "h-14 max-w-[76rem]" : "h-16 max-w-6xl"
+        }`}
+      >
         <div className="flex min-w-0 items-center gap-8 lg:gap-10">
           <Link
             href="/"
@@ -161,9 +145,11 @@ export function Header({ tone = "default" }: HeaderProps) {
             className="shrink-0"
           >
             <span
-              className={`text-[1.45rem] font-semibold tracking-[-0.05em] ${
-                ink ? "text-white" : "text-[#0f1f1d]"
-              }`}
+              className={`font-semibold tracking-[-0.05em] ${
+                home1
+                  ? "text-[1.3rem]"
+                  : "text-[1.45rem]"
+              } ${ink ? "text-white" : "text-[#0f1f1d]"}`}
             >
               tale
               <span className={ink ? "text-teal-300/55" : "text-[#0f766e]"}>
@@ -173,30 +159,61 @@ export function Header({ tone = "default" }: HeaderProps) {
           </Link>
 
           <nav
-            className={`hidden items-center gap-7 text-sm md:flex ${
-              ink ? "text-white/45" : "text-teal-950/50"
-            }`}
+            className={`hidden items-center text-sm md:flex ${
+              home1 ? "gap-6 text-[13px]" : "gap-7"
+            } ${ink ? "text-white/45" : "text-teal-950/50"}`}
           >
-            <Link
-              className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
-              href="/#nasil"
-            >
-              Nasıl çalışır
-            </Link>
+            {home1 ? (
+              <>
+                <Link
+                  className="transition hover:text-white/88"
+                  href="#kategoriler"
+                >
+                  Kategoriler
+                </Link>
+                <Link
+                  className="transition hover:text-white/88"
+                  href="#nasil"
+                >
+                  Nasıl çalışır
+                </Link>
+                <Link
+                  className="transition hover:text-white/88"
+                  href="#planlar"
+                >
+                  Planlar
+                </Link>
+                <Link
+                  className="transition hover:text-white/88"
+                  href="#saticilar"
+                >
+                  Satıcılar
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
+                  href="/#nasil"
+                >
+                  Nasıl çalışır
+                </Link>
 
-            <Link
-              className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
-              href="/#planlar"
-            >
-              Planlar
-            </Link>
+                <Link
+                  className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
+                  href="/#planlar"
+                >
+                  Planlar
+                </Link>
 
-            <Link
-              className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
-              href="/#firmalar"
-            >
-              Firmalar
-            </Link>
+                <Link
+                  className={`transition ${ink ? "hover:text-white" : "hover:text-[#0f1f1d]"}`}
+                  href="/#firmalar"
+                >
+                  Firmalar
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -208,16 +225,14 @@ export function Header({ tone = "default" }: HeaderProps) {
               }`}
             />
           ) : session?.user ? (
-            <div ref={profileMenuRef} className="relative z-50">
+            <div {...accountMenu.getRootProps()} className="relative z-50">
               <button
                 type="button"
-                onClick={() => setProfileMenuOpen((current) => !current)}
-                aria-expanded={profileMenuOpen}
-                aria-haspopup="menu"
+                {...accountMenu.getTriggerProps()}
                 aria-label="Hesap menüsü"
                 className={`flex items-center gap-2 rounded-full p-1.5 pr-3 transition ${
                   ink ? "hover:bg-white/[0.06]" : "hover:bg-teal-900/[0.04]"
-                }`}
+                } ${accountMenu.open ? (ink ? "bg-white/[0.06]" : "bg-teal-900/[0.04]") : ""}`}
               >
                 {session.user.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -254,7 +269,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                   fill="none"
                   className={`hidden h-4 w-4 transition sm:block ${
                     ink ? "text-white/40" : "text-teal-950/40"
-                  } ${profileMenuOpen ? "rotate-180" : ""}`}
+                  } ${accountMenu.open ? "rotate-180" : ""}`}
                 >
                   <path
                     d="m6 8 4 4 4-4"
@@ -266,10 +281,10 @@ export function Header({ tone = "default" }: HeaderProps) {
                 </svg>
               </button>
 
-              {profileMenuOpen && (
+              {accountMenu.open && (
                 <div
-                  role="menu"
-                  className="absolute right-0 top-full z-[200] mt-3 w-72 overflow-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.12)]"
+                  {...accountMenu.getMenuProps()}
+                  className="absolute right-0 top-full z-[200] mt-1 max-h-[min(24rem,calc(100dvh-5rem))] w-72 overflow-y-auto overflow-x-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.12)] before:absolute before:-top-2 before:right-0 before:left-0 before:h-2 before:content-['']"
                 >
                   <div className="border-b border-teal-900/6 px-3 py-3">
                     <p className="truncate text-sm font-semibold text-[#0f1f1d]">
@@ -300,7 +315,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
                     >
                       Sayfam
@@ -309,7 +324,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel/taleplerim"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Taleplerim
@@ -318,7 +333,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel/talepler"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Talepleri keşfet
@@ -327,7 +342,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel/teklifler"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Tekliflerim
@@ -336,7 +351,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel/profil"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       Profilim
@@ -346,7 +361,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                       <Link
                         href="/admin"
                         role="menuitem"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={() => accountMenu.close()}
                         className="mt-1 flex items-center rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
                       >
                         Admin Paneli
@@ -362,7 +377,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                     <Link
                       href="/panel/firma/yeni"
                       role="menuitem"
-                      onClick={() => setProfileMenuOpen(false)}
+                      onClick={() => accountMenu.close()}
                       className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                     >
                       {headerCompanies.length === 0
@@ -374,7 +389,7 @@ export function Header({ tone = "default" }: HeaderProps) {
                       <Link
                         href="/panel/bildirimler"
                         role="menuitem"
-                        onClick={() => setProfileMenuOpen(false)}
+                        onClick={() => accountMenu.close()}
                         className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
                       >
                         Firmaya bağlan
@@ -471,10 +486,12 @@ export function Header({ tone = "default" }: HeaderProps) {
 
           <Link
             href="/talep"
-            className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition ${
-              ink
-                ? "bg-white text-[#070c0b] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-white/92"
-                : "bg-[#0f766e] text-white shadow-[0_8px_20px_rgba(15,118,110,0.18)] hover:bg-[#115e59]"
+            className={`font-semibold transition ${
+              home1
+                ? "rounded-full bg-white px-4 py-2 text-[13px] text-[#070c0b] hover:bg-white/92"
+                : ink
+                  ? "rounded-xl px-5 py-2.5 text-sm bg-white text-[#070c0b] shadow-[0_8px_24px_rgba(0,0,0,0.25)] hover:bg-white/92"
+                  : "rounded-xl px-5 py-2.5 text-sm bg-[#0f766e] text-white shadow-[0_8px_20px_rgba(15,118,110,0.18)] hover:bg-[#115e59]"
             }`}
           >
             Talep oluştur

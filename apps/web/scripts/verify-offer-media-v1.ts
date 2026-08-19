@@ -141,6 +141,7 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   const form = read("src/components/panel/OfferForm.tsx");
   const picker = read("src/components/panel/OfferPhotoPicker.tsx");
   const incoming = read("src/app/panel/gelen-teklifler/page.tsx");
+  const incomingLoader = read("src/server/offer/load-buyer-incoming-offers.ts");
   const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
   const mine = read("src/app/panel/teklifler/page.tsx");
   const requestDetail = read("src/app/panel/taleplerim/[id]/page.tsx");
@@ -207,9 +208,8 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   const incomingGallery = read("src/components/panel/IncomingOfferGallery.tsx");
   check(
     "41 Gelen teklifler include media ids",
-    incoming.includes("select: { id: true }") &&
-      (incoming.includes("OfferMediaThumbStrip") ||
-        incomingCard.includes("IncomingOfferGallery") ||
+    incomingLoader.includes("select: { id: true }") &&
+      (incomingCard.includes("IncomingOfferGallery") ||
         incomingGallery.includes("offerMediaSrc")),
   );
   check(
@@ -221,7 +221,7 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
   check("43 request detail include media", requestDetail.includes("OfferMediaThumbStrip"));
   check(
     "44 list include is ids only (no bytes)",
-    incoming.includes("select: { id: true }") && mine.includes("select: { id: true }"),
+    incomingLoader.includes("select: { id: true }") && mine.includes("select: { id: true }"),
   );
   check(
     "45 acceptOffer does not delete media",

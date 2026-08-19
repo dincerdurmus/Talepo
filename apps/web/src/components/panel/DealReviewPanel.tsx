@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { LoaderCircle, Star } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { LoaderCircle, Star, X } from "lucide-react";
 
 import {
   DEAL_REVIEW_BLIND_HINT,
@@ -33,6 +33,7 @@ export function DealReviewPanel({
   canCreateReview = true,
   windowExpired = false,
   reviewDeadlineLabel = null,
+  compact = false,
 }: {
   dealOutcomeId: string;
   existingReview: DealReviewDto | null;
@@ -40,15 +41,58 @@ export function DealReviewPanel({
   canCreateReview?: boolean;
   windowExpired?: boolean;
   reviewDeadlineLabel?: string | null;
+  compact?: boolean;
 }) {
   const router = useRouter();
+  const panelId = useId();
+  const openRef = useRef<HTMLButtonElement>(null);
+  const dismissKey = `talepo-review-dismiss:${dealOutcomeId}`;
+  const [dismissed, setDismissed] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [rating, setRating] = useState(existingReview?.rating ?? 0);
   const [comment, setComment] = useState(existingReview?.comment ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(Boolean(existingReview));
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setDismissed(window.localStorage.getItem(dismissKey) === "1");
+  }, [dismissKey]);
+
+  function dismiss() {
+    setDismissed(true);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(dismissKey, "1");
+    }
+    setExpanded(false);
+    openRef.current?.focus();
+  }
+
   if (submitted || existingReview) {
+    if (compact) {
+      return (
+        <div className="mt-2 rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3.5 py-2.5">
+          <p className="text-xs font-semibold text-teal-950">
+            Değerlendirmeniz alındı
+          </p>
+          {existingReview ? <StarRow rating={existingReview.rating} /> : null}
+          {oppositeReview ? (
+            <div className="mt-2 border-t border-teal-900/8 pt-2">
+              <p className="text-[11px] font-medium text-black/40">
+                Karşı tarafın değerlendirmesi
+              </p>
+              <StarRow rating={oppositeReview.rating} />
+            </div>
+          ) : !windowExpired ? (
+            <p className="mt-1 text-[11px] text-black/40">
+              {DEAL_REVIEW_BLIND_HINT}
+            </p>
+          ) : null}
+        </div>
+      );
+    }
+
     return (
       <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-3.5">
         <p className="text-sm font-semibold text-teal-950">
@@ -69,9 +113,6 @@ export function DealReviewPanel({
         ) : rating > 0 ? (
           <StarRow rating={rating} />
         ) : null}
-        <p className="mt-2 text-xs text-black/40">
-          Değerlendirmeler gönderildikten sonra değiştirilemez.
-        </p>
         {oppositeReview ? (
           <div className="mt-3 border-t border-teal-900/8 pt-3">
             <p className="text-xs font-medium text-black/40">
@@ -90,11 +131,30 @@ export function DealReviewPanel({
   }
 
   if (windowExpired || !canCreateReview) {
+    if (compact) return null;
     return (
       <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-3.5">
         <p className="text-sm font-semibold text-teal-950">
           {DEAL_REVIEW_WINDOW_EXPIRED_MESSAGE}
         </p>
+      </div>
+    );
+  }
+
+  if (compact && dismissed && !expanded) {
+    return (
+      <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 py-2">
+        <p className="text-xs font-medium text-teal-950/80">
+          Deneyiminizi değerlendirebilirsiniz
+        </p>
+        <button
+          ref={openRef}
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="shrink-0 rounded-lg bg-[#0f1f1d] px-3 py-1.5 text-[11px] font-semibold text-white"
+        >
+          Aç
+        </button>
       </div>
     );
   }
@@ -127,12 +187,31 @@ export function DealReviewPanel({
     }
   }
 
+  const shellClass = compact
+    ? "mt-2 rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3.5 py-3"
+    : "mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-4";
+
   return (
-    <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-4">
-      <p className="text-sm font-semibold text-[#0f1f1d]">
-        Deneyiminizi değerlendirin
-      </p>
-      <p className="mt-1 text-xs text-black/45">{DEAL_REVIEW_WINDOW_HINT}</p>
+    <div id={panelId} className={shellClass}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold text-[#0f1f1d]">
+            Deneyiminizi değerlendirin
+          </p>
+          <p className="mt-0.5 text-xs text-black/45">{DEAL_REVIEW_WINDOW_HINT}</p>
+        </div>
+        {compact ? (
+          <button
+            type="button"
+            onClick={dismiss}
+            className="rounded-lg p-1 text-teal-900/40 hover:bg-teal-900/5"
+            aria-label="Değerlendirme çağrısını kapat"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : null}
+      </div>
+
       {reviewDeadlineLabel ? (
         <p className="mt-0.5 text-xs text-black/45">
           Son tarih: {reviewDeadlineLabel}

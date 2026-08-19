@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
@@ -67,7 +67,7 @@ export default async function OfferRequestPage({
 
   if (!request) notFound();
   if (!canAccessRequest(entitlements, request)) {
-    notFound();
+    redirect(`/panel/talepler/${id}`);
   }
 
   const existingOffer = await findSupplierOfferOnRequest(user.id, request.id);

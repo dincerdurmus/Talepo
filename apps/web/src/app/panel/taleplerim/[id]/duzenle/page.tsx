@@ -10,11 +10,14 @@ import { canEditRequestStatus } from "@/server/request/update-request";
 
 export default async function EditMyRequestPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ yeni?: string }>;
 }) {
   const user = await requireUser();
   const { id } = await params;
+  const query = await searchParams;
 
   const request = await prisma.request.findFirst({
     where: {
@@ -59,5 +62,10 @@ export default async function EditMyRequestPage({
     fieldValues,
   };
 
-  return <EditRequestForm initial={initial} />;
+  return (
+    <EditRequestForm
+      initial={initial}
+      cloneSuccess={query.yeni === "1"}
+    />
+  );
 }

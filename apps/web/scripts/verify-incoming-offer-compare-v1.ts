@@ -7,6 +7,7 @@ import { join } from "node:path";
 
 import {
   budgetCompareCopy,
+  budgetCompareListDeltaLabel,
   compareBuyerBudgetToOffer,
   formatRequestQuantity,
   resolveTargetBudgetCents,
@@ -70,6 +71,14 @@ console.log("\n=== BUDGET COMPARE ===\n");
     "below copy",
     budgetCompareCopy(below, "TRY").relativeLabel === "Bütçenin %5 altında",
   );
+  check(
+    "list delta below copy",
+    budgetCompareListDeltaLabel(below, "TRY") === "₺2.500 bütçe altında",
+  );
+  check(
+    "list delta above copy",
+    budgetCompareListDeltaLabel(above, "TRY") === "₺3.000 bütçe üstünde",
+  );
 
   const equal = compareBuyerBudgetToOffer({
     budgetMax: "48000.00",
@@ -125,18 +134,25 @@ console.log("\n=== BUDGET COMPARE ===\n");
 
 console.log("\n=== SURFACE ===\n");
 {
-  check("group SİZİN TALEBİNİZ", group.includes("Sizin talebiniz"));
+  const workspace = read("src/app/panel/gelen-teklifler/[requestId]/page.tsx");
+  const workspaceClient = read("src/components/panel/IncomingOfferWorkspace.tsx");
+  const requestCard = read("src/components/panel/IncomingRequestInboxCard.tsx");
+  const loader = read("src/server/offer/load-buyer-incoming-offers.ts");
+
+  check("group SİZİN TALEBİNİZ (compare group preserved)", group.includes("Sizin talebiniz"));
   check("group Hedef bütçe", group.includes("Hedef bütçe"));
   check("group Talep detayları", group.includes("Talep detayları"));
   check("group seller message block", card.includes("Satıcının mesajı"));
-  check("page uses coverImageUrl", page.includes("coverImageUrl"));
-  check("page uses budget fields", page.includes("budgetMin") && page.includes("budgetMax"));
-  check("quantity from fieldValues", page.includes('key: { in: ["quantity", "commonQuantity"] }'));
+  check("loader uses coverImageUrl", loader.includes("coverImageUrl"));
+  check("loader uses budget fields", loader.includes("budgetMin") && loader.includes("budgetMax"));
+  check("quantity from fieldValues", loader.includes('key: { in: ["quantity", "commonQuantity"] }'));
   check("request cover uses resolveRequestCardMedia", cover.includes("resolveRequestCardMedia"));
   check("no fake chair image", !cover.includes("sandalye") && !page.includes("executive-chair"));
-  check("multi-offer sticky left", group.includes("lg:sticky"));
-  check("three-column compare strip", group.includes("OfferCompareRail") && group.includes("grid-cols-[minmax(0,17.5rem)_9.5rem"));
-  check("request shown once", group.includes("IncomingRequestSummary"));
+  check("workspace compare collapsible", workspaceClient.includes("Teklifleri karşılaştır"));
+  check("workspace uses OfferCompareRail", workspaceClient.includes("OfferCompareRail"));
+  check("inbox request card cover", requestCard.includes("IncomingRequestCover"));
+  check("inbox no inline compare", !page.includes("IncomingOfferCompareGroup"));
+  check("request shown in workspace summary", workspaceClient.includes("request.title"));
   check("hardcoded 45000 absent", !page.includes("45000") && !card.includes("45000"));
 }
 

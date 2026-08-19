@@ -50,6 +50,15 @@ export async function assertCompanyMembership(userId: string, companyId: string)
   });
 }
 
+/**
+ * Company write authority used by inventory create/update.
+ * ACTIVE membership is required separately. VIEWER is read-only.
+ * Platform ADMIN is not a membership substitute.
+ */
+export function canMutateCompanyWorkspace(role: string | null | undefined) {
+  return Boolean(role) && role !== "VIEWER";
+}
+
 export {
   formatMemberRole,
   formatMemberStatus,

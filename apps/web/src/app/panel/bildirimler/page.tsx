@@ -251,6 +251,7 @@ export default async function NotificationsPage({
                 <Link
                   key={notification.id}
                   href={clickThroughHref}
+                  prefetch={false}
                   className={rowClassName}
                 >
                   {rowContent}

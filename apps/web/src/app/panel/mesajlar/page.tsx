@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 
+import { formatImageMessagePreview } from "@/lib/message/attachment-group";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -147,7 +148,7 @@ export default async function MessagesPage() {
                   href="/panel/talepler"
                   className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
                 >
-                  Talepleri keşfet
+                  Talepler
                 </Link>
                 <Link
                   href="/panel/teklifler"
@@ -200,9 +201,10 @@ export default async function MessagesPage() {
               ? lastMessage.type === "SYSTEM"
                 ? lastMessage.content
                 : lastMessage.type === "IMAGE"
-                  ? `${lastMessage.senderUser?.name ?? "Sistem"}: Fotoğraf${
-                      lastMessage.content ? ` · ${lastMessage.content}` : ""
-                    }`
+                  ? `${lastMessage.senderUser?.name ?? "Sistem"}: ${formatImageMessagePreview(
+                      lastMessage.fileName,
+                      lastMessage.content,
+                    )}`
                   : `${lastMessage.senderUser?.name ?? "Sistem"}: ${
                       lastMessage.content ??
                       lastMessage.fileName ??

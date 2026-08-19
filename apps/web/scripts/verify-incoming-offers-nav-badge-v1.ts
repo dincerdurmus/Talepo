@@ -25,7 +25,9 @@ const panelData = read("src/lib/panel/get-panel-data.ts");
 const unreadLib = read("src/lib/offer/offer-event-unread.ts");
 const layout = read("src/app/panel/layout.tsx");
 const shell = read("src/components/panel/PanelShell.tsx");
+const commandShell = read("src/components/panel/CommandPersonalSidebar.tsx");
 const panelPage = read("src/app/panel/page.tsx");
+const sayfamHomeData = read("src/lib/panel/sayfam-home-data.ts");
 
 check(
   "unread count authority exported",
@@ -35,7 +37,9 @@ check(
 );
 check(
   "dashboard action-required separate from unread",
-  panelPage.includes("summary.newOffers") &&
+  (panelPage.includes("summary.newOffers") ||
+    sayfamHomeData.includes("summary.newOffers")) &&
+    sayfamHomeData.includes("actionRequiredOffers: summary.newOffers") &&
     panelData.includes("newOffers: buyerActionRequiredOffers") &&
     panelData.includes("unreadIncomingOfferEvents"),
 );
@@ -46,21 +50,21 @@ check(
 );
 check(
   "shell badges gelen-teklifler only in personal sidebar",
-  shell.includes('href === "/panel/gelen-teklifler"') &&
-    shell.includes("unreadIncomingOfferEvents") &&
-    shell.includes("formatNavCountBadge"),
+  commandShell.includes('href === "/panel/gelen-teklifler"') &&
+    commandShell.includes("unreadIncomingOfferEvents") &&
+    commandShell.includes("formatPanelCountBadge"),
 );
-check("zero hides badge", shell.includes("if (count <= 0) return undefined"));
-check("99+ cap", shell.includes('count > 99 ? "99+"'));
+check("zero hides badge", commandShell.includes("if (count <= 0) return undefined"));
+check("99+ cap", commandShell.includes('count > 99 ? "99+"'));
 check(
   "screen reader label mentions unread",
-  shell.includes("okunmamış") && shell.includes("badgeAriaLabel"),
+  commandShell.includes("okunmamış") && commandShell.includes("badgeAriaLabel"),
 );
 check(
-  "badge wired in personal sidebar only",
+  "badge wired in command personal sidebar",
   shell.includes("unreadIncomingOfferEvents={liveIncomingUnread}") &&
-    shell.includes("function PersonalSidebar") &&
-    shell.includes('href === "/panel/gelen-teklifler"'),
+    shell.includes("CommandPersonalSidebar") &&
+    commandShell.includes('href === "/panel/gelen-teklifler"'),
 );
 
 async function liveConsistency() {

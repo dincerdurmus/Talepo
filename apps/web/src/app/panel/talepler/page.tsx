@@ -1,6 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { Fraunces, Manrope } from "next/font/google";
 import { ArrowRight, PencilLine } from "lucide-react";
 
 import { ExploreAutoRefresh } from "@/components/panel/ExploreAutoRefresh";
@@ -8,6 +6,11 @@ import { ExploreCategoryFilterBar } from "@/components/panel/ExploreCategoryFilt
 import { ExploreFilterUpsell } from "@/components/panel/ExploreFilterUpsell";
 import { ExploreRequestCard } from "@/components/panel/ExploreRequestCard";
 import { InterestCategoryPicker } from "@/components/panel/InterestCategoryPicker";
+import {
+  ExploreTabLink,
+  PanelExploreHome,
+} from "@/components/panel/explore/PanelExploreHome";
+import { ExploreLocationFilterFields } from "@/components/panel/explore/ExploreLocationFilterFields";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
@@ -29,7 +32,6 @@ import { parseInterestSlugs } from "@/lib/explore/interest-categories";
 import { buildSupplierVisibilityFilter } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
-import { formatQuotaRemaining } from "@/lib/membership/serialize";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -37,16 +39,6 @@ import { attributedRequestDetailHref } from "@/server/offer/attributed-request-h
 import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
 import { ensureEngineCategories } from "@/server/company/sync-company-categories";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
-
-const exploreDisplay = Fraunces({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-explore-display",
-});
-
-const exploreSans = Manrope({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-explore-sans",
-});
 
 type ExploreTab = "matched" | "all" | "newest";
 
@@ -401,7 +393,6 @@ export default async function ExploreRequestsPage({
     }
   }
 
-  const remainingLabel = formatQuotaRemaining(entitlements.quota);
   const interestLabels = interestCategories.map((c) => c.name);
   const interestOptions = interestCategories.map((c) => ({
     slug: c.slug,
@@ -417,6 +408,15 @@ export default async function ExploreRequestsPage({
     return s ? `/panel/talepler?${s}` : "/panel/talepler";
   })();
 
+  const editInterestsHref = (() => {
+    const q = new URLSearchParams();
+    q.set("edit", "1");
+    if (interestSlugs.length > 0) {
+      q.set("interest", interestSlugs.join(","));
+    }
+    return `/panel/talepler?${q.toString()}`;
+  })();
+
   const tabHref = (next: ExploreTab) => {
     const q = new URLSearchParams();
     if (next === "all") q.set("tab", "all");
@@ -427,6 +427,7 @@ export default async function ExploreRequestsPage({
     if (next === "all") {
       if (categoryFilter) q.set("category", categoryFilter);
       if (cityFilter) q.set("city", cityFilter);
+      if (districtFilter) q.set("district", districtFilter);
       if (params.q?.trim()) q.set("q", params.q.trim());
     }
     const s = q.toString();
@@ -434,77 +435,59 @@ export default async function ExploreRequestsPage({
   };
 
   return (
-    <div
-      className={`${exploreDisplay.variable} ${exploreSans.variable} font-[family-name:var(--font-explore-sans)]`}
-    >
+    <>
       <ExploreAutoRefresh enabled={tab === "newest"} />
-      <section className="relative overflow-hidden py-4 sm:py-6">
-        <div className="pointer-events-none absolute -left-16 top-0 h-40 w-40 rounded-full bg-[#9ae89a]/20 blur-3xl" />
-        <div className="pointer-events-none absolute right-0 top-8 h-32 w-32 rounded-full bg-[#ffe08a]/25 blur-3xl" />
-
-        <p className="relative text-xs font-semibold uppercase tracking-[0.16em] text-teal-800/70">
-          Keşfet
-        </p>
-        <div className="relative mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="font-[family-name:var(--font-explore-display)] text-3xl font-semibold tracking-[-0.03em] text-[#0f3d38] sm:text-4xl">
-              Size yakışan talepler
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[#3d5c57]">
-              Kategorilerinize göre fırsatlar burada. Kendi talepleriniz{" "}
-              <Link
-                href="/panel/taleplerim"
-                className="font-semibold text-teal-800 underline-offset-2 hover:underline"
-              >
-                Taleplerim
-              </Link>
-              ’de.
-            </p>
-          </div>
-          <p className="rounded-full bg-teal-700/10 px-3 py-1.5 text-xs font-medium text-teal-900">
-            {entitlements.planLabel} · {remainingLabel} teklif
-            {companyMeta ? ` · ${companyMeta.name}` : ""}
-          </p>
-        </div>
-
-        <div className="relative mt-6 flex gap-1 border-b border-teal-900/10">
-          <TabLink href={tabHref("matched")} active={tab === "matched"}>
-            Size uygun
-            {!showInterestPicker && matchedCount > 0 ? (
-              <span className="ml-1.5 rounded-full bg-teal-700/15 px-1.5 py-0.5 text-[11px] text-teal-900">
-                {matchedCount}
-              </span>
-            ) : null}
-          </TabLink>
-          <TabLink href={tabHref("all")} active={tab === "all"}>
-            Tümü
-          </TabLink>
-          <TabLink href={tabHref("newest")} active={tab === "newest"}>
-            En yeniler
-            {tab === "newest" ? (
-              <span className="ml-1.5 inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            ) : null}
-          </TabLink>
-        </div>
-      </section>
-
-      <section className="pb-10">
+      <PanelExploreHome
+        matchedCount={matchedCount}
+        matchedHref={tabHref("matched")}
+        showInterestPicker={showInterestPicker}
+        tabs={
+          <>
+            <ExploreTabLink href={tabHref("matched")} active={tab === "matched"}>
+              Size uygun
+              {!showInterestPicker && matchedCount > 0 ? (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[11px] tabular-nums ${
+                    tab === "matched"
+                      ? "bg-white/15 text-white"
+                      : "bg-teal-700/10 text-teal-900"
+                  }`}
+                >
+                  {matchedCount}
+                </span>
+              ) : null}
+            </ExploreTabLink>
+            <ExploreTabLink href={tabHref("all")} active={tab === "all"}>
+              Tümü
+            </ExploreTabLink>
+            <ExploreTabLink href={tabHref("newest")} active={tab === "newest"}>
+              En yeniler
+              {tab === "newest" ? (
+                <span
+                  className="talepo-beacon-unread-dot"
+                  aria-hidden
+                />
+              ) : null}
+            </ExploreTabLink>
+          </>
+        }
+      >
         {tab === "all" && (
           <div className="mb-5 space-y-3">
             <form
               method="get"
-              className="flex flex-col gap-2 rounded-2xl border border-teal-900/10 bg-white/80 p-3 shadow-sm sm:flex-row sm:items-end"
+              className="flex flex-col gap-2 rounded-[1.35rem] border border-[#0f1f1d]/10 bg-white/80 p-3 sm:flex-row sm:items-end"
             >
               <input type="hidden" name="tab" value="all" />
               {params.q?.trim() ? (
                 <input type="hidden" name="q" value={params.q.trim()} />
               ) : null}
-              <label className="flex-1 text-xs font-semibold text-teal-900/55">
+              <label className="flex-1 text-xs font-semibold text-[#0f1f1d]/45">
                 Kategori
                 <select
                   name="category"
                   defaultValue={categoryFilter}
-                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                  className="mt-1 h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm text-[#0f1f1d] outline-none focus:border-[#0f1f1d]/30"
                 >
                   <option value="">Tüm kategoriler</option>
                   {categories.map((category) => (
@@ -514,27 +497,14 @@ export default async function ExploreRequestsPage({
                   ))}
                 </select>
               </label>
-              <label className="flex-1 text-xs font-semibold text-teal-900/55">
-                Şehir
-                <input
-                  name="city"
-                  defaultValue={cityFilter}
-                  placeholder="ör. İstanbul"
-                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
-                />
-              </label>
-              <label className="flex-1 text-xs font-semibold text-teal-900/55">
-                İlçe
-                <input
-                  name="district"
-                  defaultValue={districtFilter}
-                  placeholder="ör. Kadıköy"
-                  className="mt-1 h-11 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
-                />
-              </label>
+              <ExploreLocationFilterFields
+                key={`${cityFilter}|${districtFilter}`}
+                initialCities={cityFilter}
+                initialDistricts={districtFilter}
+              />
               <button
                 type="submit"
-                className="h-11 rounded-xl bg-[#0f766e] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
+                className="h-11 rounded-xl bg-[#0f1f1d] px-5 text-sm font-semibold text-white transition hover:bg-black"
               >
                 Filtrele
               </button>
@@ -543,13 +513,13 @@ export default async function ExploreRequestsPage({
             {hasAdvancedFilters && !categoryFilter ? (
               <form
                 method="get"
-                className="rounded-2xl border border-teal-900/10 bg-white/80 p-3 shadow-sm"
+                className="rounded-[1.35rem] border border-[#0f1f1d]/10 bg-white/80 p-3"
               >
                 <input type="hidden" name="tab" value="all" />
                 {cityFilter ? (
                   <input type="hidden" name="city" value={cityFilter} />
                 ) : null}
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-sky-800/60">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#0f766e]">
                   Gelişmiş filtreler
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
@@ -571,7 +541,7 @@ export default async function ExploreRequestsPage({
                       name="budgetMin"
                       defaultValue={allExploreFilters.advanced.budgetMin}
                       placeholder="ör. 10.000"
-                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                      className="mt-1 h-10 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm text-[#0f1f1d] outline-none focus:border-teal-600/50"
                     />
                   </label>
                   <label className="min-w-[7rem] flex-1 text-xs font-semibold text-teal-900/55 sm:max-w-[9rem]">
@@ -580,7 +550,7 @@ export default async function ExploreRequestsPage({
                       name="budgetMax"
                       defaultValue={allExploreFilters.advanced.budgetMax}
                       placeholder="ör. 500.000"
-                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                      className="mt-1 h-10 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm text-[#0f1f1d] outline-none focus:border-teal-600/50"
                     />
                   </label>
                   <label className="min-w-[8rem] flex-1 text-xs font-semibold text-teal-900/55 sm:max-w-[10rem]">
@@ -592,7 +562,7 @@ export default async function ExploreRequestsPage({
                           ? String(allExploreFilters.advanced.sinceDays)
                           : ""
                       }
-                      className="mt-1 h-10 w-full rounded-xl border border-teal-900/10 bg-[#f7fbfa] px-3 text-sm outline-none focus:border-teal-600/50"
+                      className="mt-1 h-10 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm text-[#0f1f1d] outline-none focus:border-teal-600/50"
                     >
                       <option value="">Tüm zamanlar</option>
                       <option value="1">Son 24 saat</option>
@@ -603,7 +573,7 @@ export default async function ExploreRequestsPage({
                   </label>
                   <button
                     type="submit"
-                    className="h-10 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-black"
+                    className="h-10 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white transition hover:bg-black"
                   >
                     Uygula
                   </button>
@@ -628,7 +598,7 @@ export default async function ExploreRequestsPage({
                   ...(taxonomyNode ? { taxonomyNode } : {}),
                   ...(leafExact ? { leafExact: "1" } : {}),
                 }}
-                clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}`}
+                clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}${districtFilter ? `&district=${encodeURIComponent(districtFilter)}` : ""}`}
                 advancedFiltersEnabled={hasAdvancedFilters}
                 showUrgentFilter={hasUrgentPriority}
                 savedSearchesEnabled={hasSavedSearches}
@@ -652,20 +622,20 @@ export default async function ExploreRequestsPage({
         ) : tab === "matched" && interestLabels.length > 0 ? (
           <>
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-teal-900/50">
-                İlgi alanlarınız:
+              <span className="text-xs font-medium text-[#0f1f1d]/45">
+                İlgi alanlarınız
               </span>
               {interestLabels.map((label) => (
                 <span
                   key={label}
-                  className="rounded-full bg-teal-700/10 px-2.5 py-1 text-xs font-semibold text-teal-900"
+                  className="rounded-full border border-[#0f1f1d]/8 bg-white/80 px-2.5 py-1 text-xs font-semibold text-[#0f1f1d]"
                 >
                   {label}
                 </span>
               ))}
               <Link
-                href="/panel/talepler"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-teal-800 hover:underline"
+                href={editInterestsHref}
+                className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-teal-800 hover:underline"
               >
                 <PencilLine className="h-3.5 w-3.5" />
                 Değiştir
@@ -690,25 +660,25 @@ export default async function ExploreRequestsPage({
                 leafExact={leafExact}
             />
             {hasSmartMatching && profileReadiness && !profileReadiness.ready ? (
-              <div className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-4 py-3 text-sm text-amber-950/80">
+              <div className="mb-4 rounded-[1.25rem] border border-[#0f1f1d]/8 bg-white/80 px-4 py-3 text-sm text-[#0f1f1d]/75">
                 Akıllı eşleştirme için firma profilinizi tamamlayın:{" "}
                 {profileReadiness.missing.join(", ")}.{" "}
                 <Link
                   href="/panel/firma"
-                  className="font-semibold text-teal-800 underline"
+                  className="font-semibold text-teal-800 underline-offset-2 hover:underline"
                 >
                   Firma ayarları
                 </Link>
               </div>
             ) : null}
             {advancedFiltersAttempted ? (
-              <p className="mb-4 rounded-xl border border-amber-200/60 bg-amber-50 px-3 py-2 text-xs text-amber-900/80">
+              <p className="mb-4 rounded-[1.25rem] border border-[#0f1f1d]/8 bg-white/80 px-3 py-2 text-xs text-[#0f1f1d]/70">
                 Gelişmiş filtre parametreleri Profesyonel planda geçerlidir; şu an
                 uygulanmadı.
               </p>
             ) : null}
             {hasUrgentPriority ? (
-              <p className="mb-4 text-xs font-medium text-sky-800/70">
+              <p className="mb-4 text-xs font-medium text-[#0f1f1d]/45">
                 Acil talepler listenizde öncelikli sıralanır.
               </p>
             ) : null}
@@ -716,7 +686,7 @@ export default async function ExploreRequestsPage({
         ) : null}
 
         {tab === "newest" && requests.length > 0 ? (
-          <p className="mb-3 text-xs font-medium text-emerald-800/70">
+          <p className="mb-3 text-xs font-medium text-[#0f1f1d]/45">
             En son yayınlanan açık talepler · yaklaşık 20 sn’de bir yenilenir
           </p>
         ) : null}
@@ -752,7 +722,7 @@ export default async function ExploreRequestsPage({
               tab === "matched" && filtersActive
                 ? clearMatchedFiltersHref
                 : tab === "matched"
-                  ? "/panel/talepler?edit=1"
+                  ? editInterestsHref
                   : tab === "newest"
                     ? "/panel/talepler"
                     : "/panel/talepler?tab=newest"
@@ -812,31 +782,8 @@ export default async function ExploreRequestsPage({
             })}
           </ul>
         ) : null}
-      </section>
-    </div>
-  );
-}
-
-function TabLink({
-  href,
-  active,
-  children,
-}: {
-  href: string;
-  active: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition ${
-        active
-          ? "border-teal-700 text-teal-900"
-          : "border-transparent text-[#6b8681] hover:text-teal-900"
-      }`}
-    >
-      {children}
-    </Link>
+      </PanelExploreHome>
+    </>
   );
 }
 
@@ -854,17 +801,17 @@ function EmptyState({
   actionLabel: string;
 }) {
   return (
-    <div className="talepo-card px-6 py-10 text-center">
+    <div className="rounded-[1.35rem] border border-[rgba(15,118,110,0.14)] bg-white px-6 py-10 text-center">
       <EmptyIllustration variant={variant} />
-      <p className="mt-5 font-[family-name:var(--font-explore-display)] text-xl font-semibold text-[#0f3d38]">
+      <p className="mt-5 text-xl font-semibold tracking-tight text-[#0f1f1d]">
         {title}
       </p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a7a74]">
+      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#0f1f1d]/48">
         {body}
       </p>
       <Link
         href={actionHref}
-        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#115e59]"
+        className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#115e59]"
       >
         {actionLabel}
         <ArrowRight className="h-4 w-4" />

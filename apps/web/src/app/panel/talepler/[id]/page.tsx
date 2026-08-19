@@ -25,6 +25,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { hasFeature } from "@/lib/membership/entitlements";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
+import { offerFormHref } from "@/lib/panel/offer-form-href";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -147,9 +148,7 @@ export default async function ExploreRequestDetailPage({
         userId: user.id,
         requestId: request.id,
       });
-  const teklifHref = attributionTouch
-    ? `/panel/talepler/${request.id}/teklif?acq=${encodeURIComponent(attributionTouch)}`
-    : `/panel/talepler/${request.id}/teklif`;
+  const teklifHref = offerFormHref(request.id, attributionTouch);
   const canCreateFreshOffer =
     !existingOffer ||
     ["REJECTED", "WITHDRAWN", "EXPIRED"].includes(existingOffer.status);
@@ -410,7 +409,7 @@ function DetailHeader({ locked }: { locked: boolean }) {
         className="talepo-cloud-pill px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
       >
         <ArrowLeft className="h-4 w-4" />
-        Talepleri keşfet
+        Talepler
       </Link>
       <span
         className={`rounded-full border px-3.5 py-2 text-xs font-semibold shadow-[0_6px_18px_rgba(15,31,29,0.04)] ${

@@ -136,7 +136,7 @@ function EmptyBody() {
           href="/panel/talepler"
           className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-[rgba(196,154,108,0.35)] bg-white/80 px-5 text-sm font-semibold text-[#1c2430] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition hover:bg-white"
         >
-          Talepleri keşfet
+          Talepler
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>

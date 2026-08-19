@@ -684,7 +684,7 @@ export function OpportunitiesHub({
                 href="/panel/talepler"
                 className="inline-flex min-h-11 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
               >
-                Talepleri keşfet →
+                Talepler →
               </Link>
             </div>
           ) : (
@@ -716,7 +716,7 @@ export function OpportunitiesHub({
           title="Kaydettiklerim"
           icon={<Eye className="h-5 w-5 text-teal-700" />}
           items={watchlist}
-          empty="Henüz kaydettiğiniz talep yok. Kategori takibi için Keşfet sekmesini kullanın."
+          empty="Henüz kaydettiğiniz talep yok. Kategori takibi için Talepler sekmesini kullanın."
           renderItem={renderCard}
         />
       ) : null}

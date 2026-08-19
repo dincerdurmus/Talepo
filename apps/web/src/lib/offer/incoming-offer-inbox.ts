@@ -11,9 +11,9 @@ export const INCOMING_OFFER_INBOX_FILTERS = [
   "all",
   "unread",
   "new",
+  "action_required",
   "negotiating",
-  "accepted",
-  "rejected",
+  "concluded",
 ] as const;
 
 export type IncomingOfferInboxFilter =
@@ -29,9 +29,11 @@ export type IncomingOfferInboxBucket =
 const DURUM_TO_FILTER = {
   yeni: "new",
   okunmadi: "unread",
+  yanit: "action_required",
   pazarlik: "negotiating",
-  kabul: "accepted",
-  red: "rejected",
+  sonuclanan: "concluded",
+  kabul: "concluded",
+  red: "concluded",
   tumu: "all",
 } as const satisfies Record<string, IncomingOfferInboxFilter>;
 
@@ -39,9 +41,9 @@ const FILTER_TO_DURUM: Record<IncomingOfferInboxFilter, string | null> = {
   all: null,
   unread: "okunmadi",
   new: "yeni",
+  action_required: "yanit",
   negotiating: "pazarlik",
-  accepted: "kabul",
-  rejected: "red",
+  concluded: "sonuclanan",
 };
 
 export const INCOMING_OFFER_INBOX_LABELS: Record<
@@ -51,9 +53,9 @@ export const INCOMING_OFFER_INBOX_LABELS: Record<
   all: "Tümü",
   unread: "Okunmadı",
   new: "Yeni teklifler",
+  action_required: "Yanıtınız beklenenler",
   negotiating: "Pazarlıkta",
-  accepted: "Kabul edilen",
-  rejected: "Reddedilen",
+  concluded: "Sonuçlananlar",
 };
 
 export const INCOMING_OFFER_INBOX_EMPTY: Record<
@@ -61,11 +63,11 @@ export const INCOMING_OFFER_INBOX_EMPTY: Record<
   string
 > = {
   all: "Henüz gelen teklif yok.",
-  unread: "Okunmamış teklif yok.",
-  new: "Yanıtınızı bekleyen yeni teklif yok.",
-  negotiating: "Devam eden pazarlığınız yok.",
-  accepted: "Henüz kabul ettiğiniz teklif yok.",
-  rejected: "Reddedilen teklif yok.",
+  unread: "Okunmamış teklif bulunan talep yok.",
+  new: "Yeni teklif bulunan talep yok.",
+  action_required: "Yanıtınızı bekleyen teklif bulunan talep yok.",
+  negotiating: "Pazarlıktaki teklif bulunan talep yok.",
+  concluded: "Sonuçlanmış teklif bulunan talep yok.",
 };
 
 export function parseIncomingOfferInboxDurum(
@@ -90,7 +92,11 @@ export function classifyIncomingOfferInbox(
 export function offerMatchesIncomingInboxFilter(
   bucket: IncomingOfferInboxBucket,
   filter: IncomingOfferInboxFilter,
-  options?: { offerId?: string; unreadOfferIds?: ReadonlySet<string> },
+  options?: {
+    offerId?: string;
+    unreadOfferIds?: ReadonlySet<string>;
+    offer?: OutgoingOfferInboxInput;
+  },
 ): boolean {
   if (filter === "unread") {
     return Boolean(
@@ -98,7 +104,14 @@ export function offerMatchesIncomingInboxFilter(
         options.unreadOfferIds?.has(options.offerId),
     );
   }
+  if (filter === "action_required") {
+    return Boolean(options?.offer && isBuyerActionableIncomingOffer(options.offer));
+  }
+  if (filter === "concluded") {
+    return bucket === "accepted" || bucket === "rejected" || bucket === "closed";
+  }
   if (filter === "all") return true;
+  if (filter === "new") return bucket === "new";
   return bucket === filter;
 }
 
@@ -116,10 +129,9 @@ export function countIncomingOfferInbox(
     all: outgoing.all,
     unread: unreadCount,
     new: outgoing.sent,
+    action_required: offers.filter(isBuyerActionableIncomingOffer).length,
     negotiating: outgoing.negotiating,
-    accepted: outgoing.accepted,
-    rejected: outgoing.rejected,
-    closed: outgoing.closed,
+    concluded: outgoing.accepted + outgoing.rejected + outgoing.closed,
   };
 }
 
@@ -128,17 +140,24 @@ export function resolveIncomingOfferInboxFilter(input: {
   explicit: boolean;
   highlightBucket: IncomingOfferInboxBucket | null;
 }) {
-  if (input.requested === "unread") {
-    return { filter: "unread" as const, redirect: false };
+  if (
+    input.requested === "unread" ||
+    input.requested === "action_required" ||
+    input.requested === "concluded"
+  ) {
+    return { filter: input.requested, redirect: false };
   }
 
   const mapped =
     input.highlightBucket === "new"
       ? ("sent" as const)
-      : input.highlightBucket;
+      : input.highlightBucket === "accepted" ||
+          input.highlightBucket === "rejected" ||
+          input.highlightBucket === "closed"
+        ? ("closed" as const)
+        : input.highlightBucket;
   const resolved = resolveOutgoingOfferInboxFilter({
-    requested:
-      input.requested === "new" ? "sent" : input.requested,
+    requested: input.requested === "new" ? "sent" : input.requested,
     explicit: input.explicit,
     highlightBucket: mapped === "closed" ? "closed" : mapped,
   });
@@ -151,21 +170,68 @@ export function resolveIncomingOfferInboxFilter(input: {
   };
 }
 
-export function buildIncomingOffersPath(input: {
+export function buildIncomingOffersInboxPath(input: {
   filter: IncomingOfferInboxFilter;
-  teklif?: string | null;
-  tur?: string | null;
   archiveView?: boolean;
 }): string {
   const params = new URLSearchParams();
   const durum = FILTER_TO_DURUM[input.filter];
   if (durum) params.set("durum", durum);
-  else if (input.teklif || input.tur) params.set("durum", "tumu");
+  if (input.archiveView) params.set("gorunum", "arsiv");
+  const query = params.toString();
+  return query ? `/panel/gelen-teklifler?${query}` : "/panel/gelen-teklifler";
+}
+
+export function buildIncomingRequestWorkspacePath(input: {
+  requestId: string;
+  filter?: IncomingOfferInboxFilter;
+  teklif?: string | null;
+  tur?: string | null;
+  archiveView?: boolean;
+}): string {
+  const params = new URLSearchParams();
+  const durum = input.filter ? FILTER_TO_DURUM[input.filter] : null;
+  if (durum) params.set("durum", durum);
   if (input.archiveView) params.set("gorunum", "arsiv");
   if (input.teklif) params.set("teklif", input.teklif);
   if (input.tur) params.set("tur", input.tur);
   const query = params.toString();
-  return query ? `/panel/gelen-teklifler?${query}` : "/panel/gelen-teklifler";
+  return query
+    ? `/panel/gelen-teklifler/${input.requestId}?${query}`
+    : `/panel/gelen-teklifler/${input.requestId}`;
+}
+
+/** @deprecated Use buildIncomingOffersInboxPath or buildIncomingRequestWorkspacePath */
+export function buildIncomingOffersPath(input: {
+  filter: IncomingOfferInboxFilter;
+  teklif?: string | null;
+  tur?: string | null;
+  archiveView?: boolean;
+  requestId?: string | null;
+}): string {
+  if (input.requestId) {
+    return buildIncomingRequestWorkspacePath({
+      requestId: input.requestId,
+      filter: input.filter,
+      teklif: input.teklif,
+      tur: input.tur,
+      archiveView: input.archiveView,
+    });
+  }
+  if (input.teklif || input.tur) {
+    const params = new URLSearchParams();
+    const durum = FILTER_TO_DURUM[input.filter];
+    if (durum) params.set("durum", durum);
+    else params.set("durum", "tumu");
+    if (input.archiveView) params.set("gorunum", "arsiv");
+    if (input.teklif) params.set("teklif", input.teklif);
+    if (input.tur) params.set("tur", input.tur);
+    return `/panel/gelen-teklifler?${params.toString()}`;
+  }
+  return buildIncomingOffersInboxPath({
+    filter: input.filter,
+    archiveView: input.archiveView,
+  });
 }
 
 export function isBuyerActionableIncomingOffer(offer: OutgoingOfferInboxInput) {

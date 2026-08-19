@@ -72,7 +72,7 @@ export const PUBLIC_PLAN_CARD_FEATURES: Record<PublicPlanId, string[]> = {
     "Ayda 5 teklif",
     ENABLE_STANDARD_REQUEST_ACCESS_DELAY
       ? "Yeni taleplere 24 saat gecikmeli erişim"
-      : "Talepleri keşfet",
+      : "Talepler",
     "Temel Analiz",
   ],
   PROFESSIONAL: [

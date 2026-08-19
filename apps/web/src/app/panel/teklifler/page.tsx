@@ -417,9 +417,9 @@ export default async function OffersPage({
       {offers.length === 0 ? (
         <Gate
           title={OUTGOING_OFFER_INBOX_EMPTY.all}
-          body="Keşiften uygun taleplere teklif verin; burada talep ve teklifiniz yan yana görünür."
+          body="Açık taleplere teklif verin; burada talep ve teklifiniz yan yana görünür."
           href="/panel/talepler"
-          cta="Talepleri keşfet"
+          cta="Talepler"
         />
       ) : listed.length === 0 ? (
         <OutgoingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />

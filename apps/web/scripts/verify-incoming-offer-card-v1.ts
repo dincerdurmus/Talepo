@@ -38,10 +38,17 @@ const notify = read("src/server/offer/offer-negotiation-notifications.ts");
 
 console.log("\n=== STRUCTURE ===\n");
 {
+  const workspace = read("src/app/panel/gelen-teklifler/[requestId]/page.tsx");
+  const workspaceClient = read("src/components/panel/IncomingOfferWorkspace.tsx");
   check("card is client component", card.includes('"use client"'));
   check(
-    "page uses compare group",
-    page.includes("IncomingOfferCompareGroup") && page.includes("IncomingOfferCard"),
+    "inbox is request-card only",
+    page.includes("IncomingRequestInboxCard") && !page.includes("IncomingOfferCard"),
+  );
+  check(
+    "workspace uses offer card",
+    workspace.includes("IncomingOfferWorkspace") &&
+      workspaceClient.includes("IncomingOfferCard"),
   );
   check("request eyebrow Sizin talebiniz", group.includes("Sizin talebiniz"));
   check("compact request counters", group.includes("yanıt bekliyor"));
@@ -70,7 +77,7 @@ console.log("\n=== COPY ===\n");
   check("submit Pazarlık teklifini gönder", panel.includes("Pazarlık teklifini gönder"));
   check("helper copy", panel.includes("Yeni fiyatınızı iletin; satıcı kabul edebilir veya yeni bir fiyat önerebilir."));
   check("cancel Vazgeç", panel.includes("Vazgeç"));
-  check("page intro pazarlık yapın", page.includes("pazarlık yapın"));
+  check("page intro çalışma alanı", page.includes("çalışma alanı"));
   check("seller surface can still say Karşı teklif ver", panel.includes("Karşı teklif ver"));
   check(
     "seller list uses Pazarlık yap",

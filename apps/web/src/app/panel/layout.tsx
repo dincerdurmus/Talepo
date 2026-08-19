@@ -5,6 +5,7 @@ import {
   type PanelWorkspace,
 } from "@/components/panel/PanelShell";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import {
   countUnreadOutgoingOfferEvents,
@@ -17,6 +18,9 @@ import {
   requireUser,
 } from "@/server/auth/require-user";
 import { processUrgentNoOfferNudges } from "@/server/request/urgent-no-offer-nudge";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function PanelLayout({
   children,
@@ -45,7 +49,7 @@ export default async function PanelLayout({
   let workspace: PanelWorkspace = {
     mode: "personal",
     planTier: "STANDARD",
-    planLabel: "Standart",
+    planLabel: getPlanDefinition("STANDARD").label,
     quotaUnlimited: false,
     quotaRemaining: 5,
   };

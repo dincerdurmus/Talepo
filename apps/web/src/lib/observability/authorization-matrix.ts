@@ -56,6 +56,15 @@ export const AUTHORIZATION_MATRIX: AuthzRule[] = [
   {
     actor: "buyer",
     resource: "request",
+    action: "create",
+    condition:
+      "createdById === userId; deletedAt null; status COMPLETED|CANCELLED; companyId from source+ACTIVE membership not client; new DRAFT id; source unchanged",
+    enforcedBy:
+      "POST /api/requests/[id]/clone-draft + cloneRequestAsDraft + requireUser",
+  },
+  {
+    actor: "buyer",
+    resource: "request",
     action: "update",
     condition: "createdById === userId",
     enforcedBy: "request mutation routes / panel ownership filters",

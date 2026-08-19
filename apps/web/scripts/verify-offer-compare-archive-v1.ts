@@ -170,7 +170,7 @@ console.log("\n=== ARCHIVE RULES ===\n");
   check("50 parse archive view", parseOfferArchiveView("arsiv") === "archive");
   check("51 unread excludes archived ids", read("src/lib/offer/offer-event-unread.ts").includes("archivedOfferIdsForScope"));
   check("52 auto unarchive on notification", read("src/server/notifications/create-notification.ts").includes("unarchiveOfferOnNewEvent"));
-  check("53 deep link archived redirect incoming", read("src/app/panel/gelen-teklifler/page.tsx").includes("archiveView: true"));
+  check("53 deep link archived redirect incoming", read("src/app/panel/gelen-teklifler/[requestId]/page.tsx").includes("archiveView: true"));
   check("54 deep link archived redirect outgoing", read("src/app/panel/teklifler/page.tsx").includes("archiveView: true"));
   check("55 decision amount helper", resolveOfferDecisionAmount({
     status: "SUBMITTED",

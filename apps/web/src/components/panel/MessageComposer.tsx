@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, Send, X } from "lucide-react";
 
+import { MAX_MESSAGE_IMAGES } from "@/lib/message/limits";
 import { compressImageToDataUrl } from "@/lib/media/compress-image";
 
 type MessageComposerProps = {
@@ -12,7 +13,18 @@ type MessageComposerProps = {
   canSendImages?: boolean;
 };
 
+type PendingImage = {
+  id: string;
+  dataUrl: string;
+  name: string;
+  fingerprint: string;
+};
+
 const CLIENT_MAX_FILE_BYTES = 8_000_000;
+
+function fingerprintFile(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
+}
 
 export function MessageComposer({
   conversationId,
@@ -22,51 +34,76 @@ export function MessageComposer({
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [content, setContent] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageName, setImageName] = useState<string | null>(null);
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
-  async function onPickImage(file: File | undefined) {
-    if (!file || !canSendImages) return;
+  async function onPickImages(fileList: FileList | null) {
+    if (!fileList || !canSendImages) return;
     setError(null);
 
-    if (!file.type.startsWith("image/")) {
-      setError("Yalnızca görsel dosyaları yüklenebilir (JPEG, PNG, WebP).");
+    const files = Array.from(fileList);
+    if (images.length + files.length > MAX_MESSAGE_IMAGES) {
+      setError("Bir mesaja en fazla 3 fotoğraf ekleyebilirsiniz.");
       return;
     }
 
-    if (file.size > CLIENT_MAX_FILE_BYTES) {
-      setError("Görsel en fazla 8 MB olabilir.");
-      return;
+    const next: PendingImage[] = [];
+    const existing = new Set(images.map((item) => item.fingerprint));
+
+    for (const file of files) {
+      if (images.length + next.length >= MAX_MESSAGE_IMAGES) {
+        setError("Bir mesaja en fazla 3 fotoğraf ekleyebilirsiniz.");
+        break;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        setError("Yalnızca görsel dosyaları yüklenebilir (JPEG, PNG, WebP).");
+        continue;
+      }
+
+      if (file.size > CLIENT_MAX_FILE_BYTES) {
+        setError("Görsel en fazla 8 MB olabilir.");
+        continue;
+      }
+
+      const fingerprint = fingerprintFile(file);
+      if (existing.has(fingerprint)) continue;
+
+      try {
+        const dataUrl = await compressImageToDataUrl(file, {
+          maxWidth: 1600,
+          maxHeight: 1600,
+          quality: 0.82,
+          maxBytes: 700_000,
+        });
+        next.push({
+          id: `${fingerprint}-${Date.now()}`,
+          dataUrl,
+          name: file.name,
+          fingerprint,
+        });
+        existing.add(fingerprint);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Görsel hazırlanamadı.");
+      }
     }
 
-    try {
-      const dataUrl = await compressImageToDataUrl(file, {
-        maxWidth: 1600,
-        maxHeight: 1600,
-        quality: 0.82,
-        maxBytes: 700_000,
-      });
-      setImagePreview(dataUrl);
-      setImageName(file.name);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Görsel hazırlanamadı.");
-      setImagePreview(null);
-      setImageName(null);
+    if (next.length > 0) {
+      setImages((current) => [...current, ...next].slice(0, MAX_MESSAGE_IMAGES));
     }
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function clearImage() {
-    setImagePreview(null);
-    setImageName(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  function removeImage(id: string) {
+    setImages((current) => current.filter((item) => item.id !== id));
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (isSending || !canSend) return;
-    if (!content.trim() && !imagePreview) return;
+    if (!content.trim() && images.length === 0) return;
 
     setIsSending(true);
     setError(null);
@@ -78,11 +115,13 @@ export function MessageComposer({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
-            imagePreview
+            images.length > 0
               ? {
                   content: content.trim() || undefined,
-                  imageDataUrl: imagePreview,
-                  fileName: imageName ?? "fotograf.jpg",
+                  images: images.map((item) => ({
+                    imageDataUrl: item.dataUrl,
+                    fileName: item.name,
+                  })),
                 }
               : { content },
           ),
@@ -96,7 +135,7 @@ export function MessageComposer({
       }
 
       setContent("");
-      clearImage();
+      setImages([]);
       router.refresh();
     } catch (sendError) {
       setError(
@@ -110,12 +149,12 @@ export function MessageComposer({
   }
 
   const canSubmit =
-    canSend && !isSending && Boolean(content.trim() || imagePreview);
+    canSend && !isSending && Boolean(content.trim() || images.length > 0);
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="border-t border-teal-900/8 bg-gradient-to-b from-white to-[#f7fbfa] p-4"
+      className="border-t border-teal-900/8 bg-gradient-to-b from-white to-[#f7fbfa] p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
     >
       {!canSend && (
         <p className="mb-3 rounded-xl border border-amber-200/70 bg-amber-50/90 px-3 py-2 text-sm font-medium text-amber-950/80">
@@ -128,30 +167,29 @@ export function MessageComposer({
         </p>
       )}
 
-      {imagePreview && (
-        <div className="mb-3 flex items-start gap-3 rounded-xl border border-teal-900/10 bg-white/90 p-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imagePreview}
-            alt="Gönderilecek görsel"
-            className="h-16 w-16 rounded-lg object-cover"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold text-teal-950/80">
-              {imageName || "Fotoğraf"}
-            </p>
-            <p className="mt-0.5 text-[11px] text-teal-900/45">
-              Göndermeden önce içerik kontrolünden geçer.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={clearImage}
-            className="rounded-lg p-1.5 text-teal-900/40 transition hover:bg-teal-900/5 hover:text-teal-900/70"
-            aria-label="Görseli kaldır"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      {images.length > 0 && (
+        <div className="mb-3 grid grid-cols-3 gap-2 sm:max-w-sm">
+          {images.map((item) => (
+            <div
+              key={item.id}
+              className="relative overflow-hidden rounded-xl border border-teal-900/10 bg-white/90"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.dataUrl}
+                alt={item.name}
+                className="aspect-square w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(item.id)}
+                className="absolute right-1 top-1 rounded-lg bg-black/55 p-1 text-white"
+                aria-label={`${item.name} fotoğrafını kaldır`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -162,18 +200,19 @@ export function MessageComposer({
               ref={fileInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
+              multiple
               className="hidden"
-              onChange={(event) => onPickImage(event.target.files?.[0])}
+              onChange={(event) => void onPickImages(event.target.files)}
             />
             <button
               type="button"
-              disabled={!canSend || isSending}
+              disabled={!canSend || isSending || images.length >= MAX_MESSAGE_IMAGES}
               onClick={() => fileInputRef.current?.click()}
               className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-teal-900/10 bg-white text-teal-800/80 transition hover:border-teal-800/25 hover:bg-[#eef8f5] disabled:opacity-40"
               aria-label="Fotoğraf ekle"
               title="Fotoğraf ekle"
             >
-              <ImagePlus className="h-4.5 w-4.5 h-[18px] w-[18px]" />
+              <ImagePlus className="h-[18px] w-[18px]" />
             </button>
           </>
         )}
@@ -182,7 +221,7 @@ export function MessageComposer({
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder={
-            imagePreview
+            images.length > 0
               ? "İsteğe bağlı açıklama yazın..."
               : "Mesajınızı yazın..."
           }
@@ -193,6 +232,7 @@ export function MessageComposer({
           type="submit"
           disabled={!canSubmit}
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0f766e] text-white transition hover:bg-[#115e59] disabled:opacity-40"
+          aria-label="Mesaj gönder"
         >
           {isSending ? (
             <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -203,7 +243,7 @@ export function MessageComposer({
       </div>
       <p className="mt-2.5 text-[11px] leading-5 text-teal-900/40">
         {canSendImages
-          ? "Fotoğraflar otomatik denetlenir; müstehcen veya taleple ilgisiz görseller reddedilir. Telefon ve IBAN paylaşılamaz."
+          ? "Mesaj başına en fazla 3 fotoğraf. Görseller otomatik denetlenir; telefon ve IBAN paylaşılamaz."
           : "Telefon, e-posta ve IBAN paylaşılamaz."}
       </p>
     </form>

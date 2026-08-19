@@ -33,8 +33,11 @@ function read(rel: string) {
 }
 
 const shell = read("src/components/panel/PanelShell.tsx");
+const commandSidebar = read("src/components/panel/CommandPersonalSidebar.tsx");
+const proCatalog = read("src/lib/panel/signal-rail-pro-tools.ts");
 const nav = read("src/components/panel/panel-nav.ts");
-const home = read("src/app/panel/page.tsx");
+const sayfamHome = read("src/components/panel/sayfam/PanelSayfamHome.tsx");
+const navItems = read("src/components/panel/panel-nav.ts");
 const layout = read("src/app/layout.tsx");
 const corporateHome = read("src/components/panel/CorporateHome.tsx");
 
@@ -66,7 +69,7 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("uses getResponsiveBottomNavVariant", shell.includes("getResponsiveBottomNavVariant"));
   check("professional Fırsatlar item", shell.includes('label="Fırsatlar"') && shell.includes('href="/panel/firsatlar"'));
   check("professional Tekliflerim item", shell.includes('label="Tekliflerim"') && shell.includes('href="/panel/teklifler"'));
-  check("standard Keşfet kept", shell.includes('label="Keşfet"'));
+  check("standard Talepler marketplace kept", shell.includes('href="/panel/talepler"') && shell.includes('label="Keşfet"') && shell.includes("Talepleri keşfet"));
   check("standard Profil kept", shell.includes('label="Profil"'));
   check("create CTA still /talep for personal", shell.includes('href={isCorporate ? "/panel/talepler" : "/talep"}'));
   check("lg:hidden only", shell.includes("lg:hidden"));
@@ -75,18 +78,35 @@ console.log("\n=== PANEL SHELL BOTTOM BAR ===\n");
   check("min-h-11 mobile targets", shell.includes("min-h-11"));
   check("safe-area padding", shell.includes("safe-area-inset-bottom"));
   check("aria-current on MobileLink", shell.includes('aria-current={active ? "page" : undefined}'));
-  check("isNavActive strips query", shell.includes('href.split("?")[0]'));
+  check("isNavActive strips query", shell.includes("isPanelNavActive") && nav.includes('href.split("?")[0]'));
 }
 
-console.log("\n=== DESKTOP IA UNCHANGED ===\n");
+console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
 {
-  check("Pro Araçlar still in sidebar", shell.includes("Pro Araçlar"));
-  check("desktop Takiplerim tool", shell.includes('title: "Takiplerim"'));
-  check("desktop Analiz tool", shell.includes('title: "Analiz"'));
-  check("no asistan sidebar", !shell.includes("asistanItem"));
+  check("CommandPersonalSidebar wired in shell", shell.includes("CommandPersonalSidebar"));
+  check("Pro Araçlar in signal rail", commandSidebar.includes("Pro Araçlar"));
   check(
-    "Radar not a sidebar product title",
-    !shell.includes('title: "Talepo Radar"'),
+    "desktop Takiplerim tool",
+    proCatalog.includes('title: "Takiplerim"') ||
+      commandSidebar.includes('title: "Takiplerim"'),
+  );
+  check(
+    "desktop Analiz tool",
+    commandSidebar.includes('"/panel/analiz"') ||
+      commandSidebar.includes('title: "Analiz"'),
+  );
+  check(
+    "desktop Fırsatlar tool",
+    proCatalog.includes('title: "Fırsatlar"') ||
+      commandSidebar.includes('title: "Fırsatlar"'),
+  );
+  check("plan section in rail", commandSidebar.includes('id: "plan"') || commandSidebar.includes('"plan"'));
+  check("sidebar collapse localStorage key", commandSidebar.includes("sidebarCollapsed") || shell.includes("SIDEBAR_COLLAPSED_KEY"));
+  check("rail hover + pinned dock", commandSidebar.includes("hoverSection") && commandSidebar.includes("pinnedOpen"));
+  check("no asistan sidebar", !commandSidebar.includes("/panel/asistan"));
+  check(
+    "Radar is a catalogued pro tool",
+    proCatalog.includes('title: "Talepo Radar"'),
   );
   check(
     "no /panel/asistan in PANEL_NAV_ITEMS",
@@ -96,10 +116,17 @@ console.log("\n=== DESKTOP IA UNCHANGED ===\n");
 
 console.log("\n=== SECONDARY ACCESS ===\n");
 {
-  check("Sayfam has Takiplerim shortcut", home.includes('label="Takiplerim"'));
-  check("Sayfam has Analiz shortcut", home.includes('label="Analiz"'));
-  check("Sayfam has Profil shortcut", home.includes('label="Profil ayarları"'));
-  check("Sayfam has Gelen teklifler", home.includes('label="Gelen teklifler"'));
+  const railHas = (label: string) =>
+    navItems.includes(`label: "${label}"`) || commandSidebar.includes(`"${label}"`);
+  check(
+    "Sayfam metrics link gelen teklifler",
+    sayfamHome.includes('href: "/panel/gelen-teklifler"') ||
+      sayfamHome.includes('href="/panel/gelen-teklifler"'),
+  );
+  check("Signal rail has Takiplerim", railHas("Takiplerim"));
+  check("Signal rail has Analiz", railHas("Analiz"));
+  check("Signal rail has Profil", railHas("Profil") || navItems.includes("/panel/profil"));
+  check("Signal rail has Gelen teklifler", railHas("Gelen teklifler"));
   check("company home Analiz link", corporateHome.includes('href="/panel/analiz"'));
   check("company home Takiplerim link", corporateHome.includes('href="/panel/takiplerim"'));
 }

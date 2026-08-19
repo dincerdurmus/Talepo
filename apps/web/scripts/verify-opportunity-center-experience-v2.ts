@@ -901,7 +901,7 @@ console.log("\n=== P1 SCORE SEMANTICS + RECALL ===\n");
   );
   check(
     "P1 Diğer empty marketplace CTA",
-    hub.includes('href="/panel/talepler"') && hub.includes("Talepleri keşfet"),
+    hub.includes('href="/panel/talepler"') && hub.includes("Talepler →"),
   );
   check(
     "P1-3 own exclusion preserved on feed",

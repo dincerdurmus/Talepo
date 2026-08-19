@@ -68,13 +68,14 @@ function dto(
 console.log("\n=== ROLE ROUTING ===\n");
 {
   const incoming = read("src/app/panel/gelen-teklifler/page.tsx");
+  const incomingLoader = read("src/server/offer/load-buyer-incoming-offers.ts");
   const outgoing = read("src/app/panel/teklifler/page.tsx");
   const path = read("src/lib/offer/negotiation-inbox-path.ts");
   check(
     "buyer page request owner authority",
-    incoming.includes("createdById: user.id") &&
-      incoming.includes("deletedAt: null") &&
-      incoming.includes("NOT: { submittedById: user.id, companyId: null }"),
+    incomingLoader.includes("createdById: userId") &&
+      incomingLoader.includes("deletedAt: null") &&
+      incomingLoader.includes("NOT: { submittedById: userId, companyId: null }"),
   );
   check(
     "seller page submitter/company authority",
@@ -82,7 +83,7 @@ console.log("\n=== ROLE ROUTING ===\n");
       outgoing.includes("companyId: null") &&
       outgoing.includes("companyId: workspace.companyId"),
   );
-  check("buyer title", incoming.includes("Taleplerime gelen teklifler"));
+  check("buyer title", incoming.includes("Gelen teklifler"));
   check("buyer tag ALICI", incoming.includes("ALICI"));
   check("seller title", outgoing.includes("Teklif verdiğim talepler"));
   check("seller tag SATICI", outgoing.includes("SATICI"));
@@ -101,6 +102,7 @@ console.log("\n=== ROLE ROUTING ===\n");
 
 console.log("\n=== SAME OFFER NOT IN BOTH ROLE FILTERS ===\n");
 {
+  const incomingLoader = read("src/server/offer/load-buyer-incoming-offers.ts");
   const first = offer("SUBMITTED");
   check(
     "first offer is buyer Yeni, seller Gönderilen",
@@ -117,9 +119,7 @@ console.log("\n=== SAME OFFER NOT IN BOTH ROLE FILTERS ===\n");
   );
   check(
     "buyer page excludes self-submitted personal offers",
-    read("src/app/panel/gelen-teklifler/page.tsx").includes(
-      "NOT: { submittedById: user.id, companyId: null }",
-    ),
+    incomingLoader.includes("NOT: { submittedById: userId, companyId: null }"),
   );
 }
 

@@ -1,5 +1,11 @@
 import type { Prisma } from "@/generated/prisma/client";
 
+import {
+  cityFilterWhere,
+  districtFilterWhere,
+  parseExploreLocationList,
+  pruneExploreDistricts,
+} from "@/lib/explore/location-filter";
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
 
 export type ExploreFilterInput = "text" | "select" | "number";
@@ -390,8 +396,11 @@ export function parseExploreFilters(
   return {
     q,
     focus,
-    city: params.city?.trim() ?? "",
-    district: params.district?.trim() ?? "",
+    city: parseExploreLocationList(params.city).join(","),
+    district: pruneExploreDistricts(
+      parseExploreLocationList(params.city),
+      parseExploreLocationList(params.district),
+    ).join(","),
     fields,
     advanced: parseAdvancedExploreFilters(params),
   };
@@ -517,17 +526,13 @@ export function buildExploreFilterWhere(
     and.push(fieldValueWhere(def, value));
   }
 
-  if (filters.city) {
-    and.push({
-      city: { contains: filters.city, mode: "insensitive" as const },
-    });
-  }
+  const cityWhere = cityFilterWhere(parseExploreLocationList(filters.city));
+  if (cityWhere) and.push(cityWhere);
 
-  if (filters.district) {
-    and.push({
-      district: { contains: filters.district, mode: "insensitive" as const },
-    });
-  }
+  const districtWhere = districtFilterWhere(
+    parseExploreLocationList(filters.district),
+  );
+  if (districtWhere) and.push(districtWhere);
 
   if (filters.advanced.urgentOnly) {
     and.push({ isUrgent: true });

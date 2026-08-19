@@ -34,6 +34,7 @@ export type IncomingOfferCardData = {
   description: string;
   status: string;
   createdAt?: string | null;
+  updatedAt?: string | null;
   companyName: string | null;
   companyVerified: boolean;
   submittedByName: string | null;
