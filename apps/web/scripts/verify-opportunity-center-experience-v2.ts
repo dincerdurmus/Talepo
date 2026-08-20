@@ -538,10 +538,13 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !workspace.includes('label: "Acil"') &&
       !workspace.includes("Takip Ettiklerim") &&
       read("src/components/panel/panel-nav.ts").includes(
-        'mobileLabel: "Talepler"',
+        'label: "Talepleri keşfet"',
+      ) &&
+      read("src/components/panel/panel-nav.ts").includes(
+        'mobileLabel: "Keşfet"',
       ) &&
       !read("src/components/panel/panel-nav.ts").includes(
-        'mobileLabel: "Keşfet"',
+        'mobileLabel: "Talepler"',
       ),
   );
   check(

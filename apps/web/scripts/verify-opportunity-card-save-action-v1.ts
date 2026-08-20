@@ -139,7 +139,8 @@ check(
 );
 check(
   "D workspace hides Kaydettiklerim tab without watchlist",
-  workspace.includes('tab.id !== "saved" || canWatchlist'),
+  workspace.includes('tab.id !== "saved" || canWatchlist') ||
+    workspace.includes('tab.id === "saved" && !canWatchlist'),
 );
 check(
   "D no localStorage fake persist",

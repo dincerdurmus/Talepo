@@ -181,19 +181,18 @@ check(
     !css.includes("talepo-explore-banner-cards"),
 );
 check(
-  "visible product name is Talepler, not Keşfet",
+  "explore page copy stays Talepler, chrome is Talepleri keşfet",
   /\n\s+Talepler\n/.test(home) &&
     !home.includes("Keşfet") &&
     shell.includes(
-      'if (pathname.startsWith("/panel/talepler")) return "Talepler"',
+      'if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet"',
     ) &&
-    shell.includes('label="Talepler"') &&
-    !shell.includes('label="Keşfet"') &&
-    !shell.includes("Talepleri keşfet") &&
-    nav.includes('label: "Talepler"') &&
-    !nav.includes('label: "Talepleri keşfet"') &&
-    rail.includes('item.href.split("?")[0] === "/panel/talepler"') &&
-    rail.includes('? "Talepler"'),
+    shell.includes('label="Keşfet"') &&
+    shell.includes("Talepleri keşfet") &&
+    nav.includes('label: "Talepleri keşfet"') &&
+    !nav.includes('label: "Talepler"') &&
+    rail.includes("TALEP_TEKLIF_NAV_HREFS") &&
+    rail.includes("item.label"),
 );
 
 {

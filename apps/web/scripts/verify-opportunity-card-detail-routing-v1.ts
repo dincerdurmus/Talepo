@@ -126,6 +126,7 @@ const allowedIdPages = new Set([
   "taleplerim/[id]/duzenle/page.tsx",
   "mesajlar/[id]/page.tsx",
   "bildirimler/r/[id]/page.tsx",
+  "firma-profil/[id]/page.tsx",
 ]);
 const idPages = [...knownPages].filter((p) => p.includes("[id]/page.tsx"));
 check(
