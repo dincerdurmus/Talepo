@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 
 import {
   IncomingOfferInboxEmpty,
@@ -8,6 +7,8 @@ import {
 } from "@/components/panel/IncomingOfferInboxFilters";
 import { IncomingRequestInboxCard } from "@/components/panel/IncomingRequestInboxCard";
 import { MarkAllOfferInboxReadButton } from "@/components/panel/MarkAllOfferInboxReadButton";
+import { OfferInboxShell } from "@/components/panel/offer-inbox/OfferInboxShell";
+import { OfferInboxToolbar } from "@/components/panel/offer-inbox/OfferInboxToolbar";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import {
   buildIncomingOffersInboxPath,
@@ -147,75 +148,83 @@ export default async function IncomingOffersInboxPage({
     (sum, group) => sum + group.totalOffers,
     0,
   );
+  const actionRequiredCount = inboxCounts.action_required;
+  const unreadCount = unreadOfferIds.size;
+  const emptyInbox = offers.length === 0;
+  const summary = emptyInbox
+    ? "Talepleriniz yayıma çıktıkça teklifler burada toplanır."
+    : actionRequiredCount > 0
+      ? `${actionRequiredCount} talepte yanıtınız bekleniyor.`
+      : unreadCount > 0
+        ? `${unreadCount} yeni teklif var.`
+        : `${totalRequests} talep · ${totalOffers} teklif`;
 
   return (
-    <>
-      <section className="py-4 sm:py-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-950/35">
-          ALICI
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#0f1f1d] sm:text-4xl">
-          Gelen teklifler
-        </h1>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-black/45">
-          Taleplerinize gelen teklifleri önce talep kutusundan seçin; karşılaştırma
-          ve karar işlemleri teklif çalışma alanında yapılır.
-        </p>
-      </section>
-
-      {offers.length === 0 ? (
-        <section className="talepo-card px-6 py-14 text-center">
+    <OfferInboxShell
+      tone="incoming"
+      eyebrow="ALICI"
+      title="Gelen teklifler"
+      description="Taleplerinize kim teklif verdi ve şimdi ne yapmanız gerekiyor? Karşılaştırma ve karar teklif çalışma alanında yapılır."
+      summary={summary}
+      cta={
+        emptyInbox
+          ? { href: "/panel/taleplerim", label: "Taleplerim" }
+          : null
+      }
+      toolbar={
+        emptyInbox ? null : (
+          <OfferInboxToolbar
+            filters={
+              <IncomingOfferInboxFilters
+                active={activeFilter}
+                counts={inboxCounts}
+                archiveView={archiveView}
+                archiveCount={archiveCount}
+              />
+            }
+            action={
+              unreadCount > 0 ? (
+                <MarkAllOfferInboxReadButton
+                  unreadCount={unreadCount}
+                  role="buyer"
+                />
+              ) : null
+            }
+          />
+        )
+      }
+    >
+      {emptyInbox ? (
+        <section className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white px-6 py-12 text-center sm:px-10 sm:py-14">
           <EmptyIllustration variant="inbox" />
-          <h2 className="mt-5 text-xl font-semibold tracking-tight">
+          <h2 className="mt-6 text-xl font-semibold tracking-tight text-[#0f1f1d]">
             Henüz gelen teklif yok
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/45">
-            Bir talep yayınladığınızda firmalar teklif gönderir; talepleriniz burada
-            gruplanır.
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#0f1f1d]/55">
+            Bir talep yayınladığınızda firmalar teklif gönderir; talepleriniz
+            burada gruplanır.
           </p>
           <Link
             href="/panel/taleplerim"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#0f1f1d] px-5 py-3 text-sm font-semibold text-white"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f766e] px-5 text-sm font-semibold text-white transition hover:bg-[#115e59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
           >
-            Taleplerime git
-            <ArrowRight className="h-4 w-4" />
+            Taleplerim
           </Link>
         </section>
+      ) : filteredGroups.length === 0 ? (
+        <IncomingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
       ) : (
-        <>
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <IncomingOfferInboxFilters
-              active={activeFilter}
-              counts={inboxCounts}
+        <section className="grid gap-3" aria-label="Gelen teklif talepleri">
+          {filteredGroups.map((group) => (
+            <IncomingRequestInboxCard
+              key={group.request.id}
+              group={group}
+              filter={activeFilter}
               archiveView={archiveView}
-              archiveCount={archiveCount}
             />
-            <MarkAllOfferInboxReadButton
-              unreadCount={unreadOfferIds.size}
-              role="buyer"
-            />
-          </div>
-
-          <p className="mb-4 text-sm font-medium text-teal-950/70">
-            {totalRequests} talep · {totalOffers} teklif
-          </p>
-
-          {filteredGroups.length === 0 ? (
-            <IncomingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
-          ) : (
-            <div className="space-y-3">
-              {filteredGroups.map((group) => (
-                <IncomingRequestInboxCard
-                  key={group.request.id}
-                  group={group}
-                  filter={activeFilter}
-                  archiveView={archiveView}
-                />
-              ))}
-            </div>
-          )}
-        </>
+          ))}
+        </section>
       )}
-    </>
+    </OfferInboxShell>
   );
 }

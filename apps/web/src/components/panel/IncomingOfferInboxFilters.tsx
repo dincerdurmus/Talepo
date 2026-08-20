@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
+import { OfferInboxFilterRail } from "@/components/panel/offer-inbox/OfferInboxFilterRail";
+import { offerInboxFilterChipClass } from "@/components/panel/offer-inbox/offerInboxFilterStyles";
 import {
   INCOMING_OFFER_INBOX_EMPTY,
   INCOMING_OFFER_INBOX_FILTERS,
@@ -25,71 +27,57 @@ export function IncomingOfferInboxFilters({
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const node = scrollerRef.current?.querySelector<HTMLElement>(
-      '[aria-selected="true"]',
-    );
-    node?.scrollIntoView({
-      inline: "center",
+    const scroller = scrollerRef.current;
+    const node = scroller?.querySelector<HTMLElement>('[aria-selected="true"]');
+    if (!scroller || !node) return;
+    const rail = scroller.getBoundingClientRect();
+    const tab = node.getBoundingClientRect();
+    if (tab.left >= rail.left && tab.right <= rail.right) return;
+    node.scrollIntoView({
+      inline: "nearest",
       block: "nearest",
-      behavior: "smooth",
     });
   }, [active, archiveView]);
 
   return (
-    <div className="relative -mx-1 mb-5 min-w-0">
-      <div
-        ref={scrollerRef}
-        className="flex gap-2 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label="Gelen teklif durumu filtreleri"
-      >
-        {INCOMING_OFFER_INBOX_FILTERS.map((filter) => {
-          const selected = !archiveView && filter === active;
-          return (
-            <Link
-              key={filter}
-              href={buildIncomingOffersInboxPath({ filter, archiveView: false })}
-              role="tab"
-              aria-selected={selected}
-              data-inbox-filter={filter}
-              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold tabular-nums transition ${
-                selected
-                  ? "bg-teal-800 text-white shadow-[0_8px_18px_rgba(15,118,110,0.18)]"
-                  : "border border-teal-900/10 bg-white text-teal-950/70 hover:bg-[#f4faf9]"
-              }`}
-            >
-              <span>{INCOMING_OFFER_INBOX_LABELS[filter]}</span>
-              <span className={selected ? "text-white/80" : "text-teal-950/40"}>
-                {counts[filter]}
-              </span>
-            </Link>
-          );
+    <OfferInboxFilterRail
+      ariaLabel="Gelen teklif durumu filtreleri"
+      scrollerRef={scrollerRef}
+    >
+      {INCOMING_OFFER_INBOX_FILTERS.map((filter) => {
+        const selected = !archiveView && filter === active;
+        return (
+          <Link
+            key={filter}
+            href={buildIncomingOffersInboxPath({ filter, archiveView: false })}
+            role="tab"
+            aria-selected={selected}
+            data-inbox-filter={filter}
+            className={offerInboxFilterChipClass(selected)}
+          >
+            <span>{INCOMING_OFFER_INBOX_LABELS[filter]}</span>
+            <span className={selected ? "text-white/75" : "text-[#0f1f1d]/40"}>
+              {counts[filter]}
+            </span>
+          </Link>
+        );
+      })}
+      <Link
+        href={buildIncomingOffersInboxPath({
+          filter: active,
+          archiveView: true,
         })}
-        <Link
-          href={buildIncomingOffersInboxPath({
-            filter: active,
-            archiveView: true,
-          })}
-          role="tab"
-          aria-selected={archiveView}
-          data-inbox-filter="archive"
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold tabular-nums transition ${
-            archiveView
-              ? "bg-teal-800 text-white shadow-[0_8px_18px_rgba(15,118,110,0.18)]"
-              : "border border-teal-900/10 bg-white text-teal-950/70 hover:bg-[#f4faf9]"
-          }`}
-        >
-          <span>Arşiv</span>
-          <span className={archiveView ? "text-white/80" : "text-teal-950/40"}>
-            {archiveCount}
-          </span>
-        </Link>
-      </div>
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#eef6f4] via-[#eef6f4]/80 to-transparent"
-        aria-hidden
-      />
-    </div>
+        role="tab"
+        aria-selected={archiveView}
+        data-inbox-filter="archive"
+        className={offerInboxFilterChipClass(archiveView)}
+      >
+        <span>Arşiv</span>
+        <span className={archiveView ? "text-white/75" : "text-[#0f1f1d]/40"}>
+          {archiveCount}
+        </span>
+      </Link>
+    </OfferInboxFilterRail>
   );
 }
 
@@ -101,8 +89,8 @@ export function IncomingOfferInboxEmpty({
   archiveView?: boolean;
 }) {
   return (
-    <div className="talepo-card px-5 py-8 text-center sm:text-left">
-      <p className="text-sm leading-6 text-black/50">
+    <div className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white px-6 py-10 text-center sm:px-8 sm:text-left">
+      <p className="text-sm leading-6 text-[#0f1f1d]/55">
         {archiveView
           ? "Arşivde teklif yok."
           : INCOMING_OFFER_INBOX_EMPTY[filter]}

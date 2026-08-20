@@ -45,7 +45,7 @@ console.log("\n=== TEKLIFLERIM HUB ===\n");
 {
   check("1/5 hub on teklifler page", page.includes("OfferIntelligenceHub"));
   check("hub component exists", hub.includes("Teklif Zekâsı"));
-  check("2 Standard locked mode", hub.includes('mode === "locked"') && hub.includes("Professional ile aç"));
+  check("2 Standard locked mode", hub.includes('mode === "locked"') && hub.includes("Profesyonel ile aç"));
   check("4 Standard CTA /panel/plan", hub.includes('href="/panel/plan"'));
   check(
     "3 Standard no fake stats in locked",

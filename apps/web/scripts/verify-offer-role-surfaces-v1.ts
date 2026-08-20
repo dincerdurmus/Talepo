@@ -85,7 +85,7 @@ console.log("\n=== ROLE ROUTING ===\n");
   );
   check("buyer title", incoming.includes("Gelen teklifler"));
   check("buyer tag ALICI", incoming.includes("ALICI"));
-  check("seller title", outgoing.includes("Teklif verdiğim talepler"));
+  check("seller title", outgoing.includes("Tekliflerim"));
   check("seller tag SATICI", outgoing.includes("SATICI"));
   check(
     "buyer deep-link route",
