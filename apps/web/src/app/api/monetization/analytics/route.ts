@@ -37,18 +37,24 @@ export async function GET(request: Request) {
         ? await getCommercialPerformance(owner, fromDate, toDate)
         : null;
 
-      return NextResponse.json({
-        ok: true,
-        metrics,
-        advanced,
-        advancedAvailable,
-      });
+      return NextResponse.json(
+        {
+          ok: true,
+          metrics,
+          advanced,
+          advancedAvailable,
+        },
+        { headers: { "Cache-Control": "private, no-store" } },
+      );
     }
 
     if (type === "demand") {
       const ctx = await requireCompanyFeature(user.id, "corporate_intelligence");
       const data = await getDemandIntelligence(ctx.companyId, fromDate, toDate);
-      return NextResponse.json({ ok: true, data });
+      return NextResponse.json(
+        { ok: true, data },
+        { headers: { "Cache-Control": "private, no-store" } },
+      );
     }
 
     if (type === "market") {
@@ -61,16 +67,28 @@ export async function GET(request: Request) {
         from: fromDate,
         to: toDate,
       });
-      return NextResponse.json({ ok: true, insight });
+      return NextResponse.json(
+        { ok: true, insight },
+        { headers: { "Cache-Control": "private, no-store" } },
+      );
     }
 
-    return NextResponse.json({ ok: false, message: "Geçersiz analiz tipi." }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, message: "Geçersiz analiz tipi." },
+      { status: 400, headers: { "Cache-Control": "private, no-store" } },
+    );
   } catch (error) {
     const ent = entitlementErrorResponse(error);
     if (ent) return ent;
     if (error instanceof AuthenticationError) {
-      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+      return NextResponse.json(
+        { ok: false, message: error.message },
+        { status: 401, headers: { "Cache-Control": "private, no-store" } },
+      );
     }
-    return NextResponse.json({ ok: false, message: "Analiz alınamadı." }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, message: "Analiz alınamadı." },
+      { status: 500, headers: { "Cache-Control": "private, no-store" } },
+    );
   }
 }

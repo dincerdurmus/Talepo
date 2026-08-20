@@ -2429,3 +2429,97 @@ section.mt-6 svg > text:last-of-type {
     animation: none;
   }
 }
+
+.talepo-analysis-banner {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(244, 251, 249, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 251, 249, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(
+      ellipse 64% 88% at 100% 0%,
+      rgba(45, 212, 191, 0.14),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #0c1d1a 0%, #12302c 48%, #0f4a43 100%);
+}
+
+.talepo-analysis-banner-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 1.4rem 1.4rem;
+  mask-image: radial-gradient(ellipse 70% 86% at 90% 8%, #000 0%, transparent 74%);
+}
+
+.talepo-analysis-banner-glow {
+  position: absolute;
+  left: -10%;
+  top: -38%;
+  width: 42%;
+  height: 110%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at center,
+    rgba(244, 251, 249, 0.1),
+    transparent 68%
+  );
+}
+
+.talepo-analysis-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.22rem 0.6rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(204, 251, 241, 0.9);
+}
+
+.talepo-analysis-metric {
+  min-height: 7.25rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(15, 31, 29, 0.06);
+  background: rgba(255, 255, 255, 0.82);
+  padding: 1rem 1.05rem;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.talepo-analysis-metric:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(15, 118, 110, 0.14);
+  transform: translateY(-1px);
+}
+
+.talepo-analysis-tab[aria-selected="true"] {
+  background: #0f1f1d;
+  color: #f4fbf9;
+}
+
+.talepo-analysis-flow-bar {
+  transition: width 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talepo-analysis-metric,
+  .talepo-analysis-banner,
+  .talepo-analysis-flow-bar,
+  .talepo-analysis button,
+  .talepo-analysis a {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}

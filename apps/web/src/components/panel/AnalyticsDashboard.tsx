@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import {
   BarChart3,
   Clock,
@@ -22,6 +22,17 @@ import type {
   CommercialPerformanceMetrics,
   WorkspacePerformanceMetrics,
 } from "@/lib/monetization/types";
+import {
+  ANALYSIS_ROLE_TABS,
+  analysisHeadlineInsight,
+  analysisWorkspaceCopy,
+  buyerFlowSteps,
+  displayEmptyMetric,
+  resolveAnalysisNextStep,
+  sellerFlowSteps,
+  type AnalysisFlowStep,
+  type AnalysisRoleView,
+} from "@/lib/panel/analysis-signal";
 
 type RangeDays = 7 | 30 | 90;
 
@@ -42,15 +53,23 @@ function MetricCard({
   hint?: string | null;
   icon: React.ReactNode;
 }) {
+  const shown = displayEmptyMetric(value);
   return (
-    <div className="rounded-2xl border border-teal-900/8 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2 text-teal-800/60">
+    <div className="talepo-analysis-metric">
+      <div className="flex items-center gap-2 text-[#0f766e]/70">
         {icon}
-        <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+          {label}
+        </span>
       </div>
-      <p className="mt-3 text-3xl font-semibold tabular-nums text-teal-950">{value}</p>
+      <p
+        className="mt-3 text-[1.65rem] font-semibold tabular-nums tracking-[-0.03em] text-[#0f1f1d]"
+        aria-label={`${label}: ${shown}`}
+      >
+        {shown}
+      </p>
       {hint ? (
-        <p className="mt-1 text-xs leading-5 text-teal-950/45">{hint}</p>
+        <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/45">{hint}</p>
       ) : null}
     </div>
   );
@@ -68,12 +87,12 @@ function EmptyAction({
   cta: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-teal-900/8 bg-teal-50/40 px-5 py-6">
-      <h3 className="text-base font-semibold text-teal-950">{title}</h3>
-      <p className="mt-1 text-sm text-teal-950/55">{body}</p>
+    <div className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white/80 px-5 py-6">
+      <h3 className="text-base font-semibold text-[#0f1f1d]">{title}</h3>
+      <p className="mt-1 text-sm leading-6 text-[#0f1f1d]/55">{body}</p>
       <Link
         href={href}
-        className="mt-4 inline-flex text-sm font-semibold text-teal-800 underline"
+        className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-[#0f766e] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
       >
         {cta}
       </Link>
@@ -93,50 +112,95 @@ function completionRateDisplay(
   });
 }
 
+function FlowChart({
+  title,
+  summary,
+  steps,
+}: {
+  title: string;
+  summary: string;
+  steps: AnalysisFlowStep[];
+}) {
+  const max = Math.max(...steps.map((step) => step.value), 1);
+  const empty = steps.every((step) => step.value === 0);
+  if (empty) return null;
+
+  return (
+    <section className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white/80 p-5">
+      <h3 className="text-base font-semibold text-[#0f1f1d]">{title}</h3>
+      <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/50">{summary}</p>
+      <ul className="mt-4 space-y-3">
+        {steps.map((step) => (
+          <li key={step.key}>
+            <Link
+              href={step.href}
+              className="block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
+            >
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="font-medium text-[#0f1f1d]">{step.label}</span>
+                <span className="tabular-nums text-[#0f1f1d]/70">{step.value}</span>
+              </div>
+              <div
+                className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#0f1f1d]/6"
+                aria-hidden
+              >
+                <div
+                  className="talepo-analysis-flow-bar h-full rounded-full bg-[#0f766e]"
+                  style={{ width: `${Math.max(8, (step.value / max) * 100)}%` }}
+                />
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function ProfessionalLockedSection() {
   return (
-    <section className="rounded-[28px] border border-rose-200/70 bg-gradient-to-br from-rose-50/80 via-white to-violet-50/50 p-6 shadow-sm">
+    <section className="rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white/80 p-6">
       <div className="flex items-start gap-3">
-        <div className="rounded-2xl bg-rose-100/80 p-2 text-rose-700">
+        <div className="rounded-2xl bg-[#0f766e]/10 p-2 text-[#0f766e]">
           <Sparkles className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700/70">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0f766e]/70">
             Professional
           </p>
-          <h2 className="mt-1 text-xl font-semibold text-teal-950">
+          <h2 className="mt-1 text-xl font-semibold text-[#0f1f1d]">
             Professional ile Ticari Performans Zekâsı
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-950/60">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#0f1f1d]/60">
             Temel Analiz tüm planlarda açıktır. Professional, tamamlanan
             işlemlerinizden ticaret hacmi, pazarlık ve kategori sonuçlarını
-            gösterir.
+            gösterir. Kilitli alanda sahte sayı yok.
           </p>
         </div>
       </div>
-      <ul className="mt-5 grid gap-2 text-sm text-teal-950/70 sm:grid-cols-2">
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+      <ul className="mt-5 grid gap-2 text-sm text-[#0f1f1d]/70 sm:grid-cols-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Tamamlanan ticaret hacmi
         </li>
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Pazarlık performansı
         </li>
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Kategori performansı
         </li>
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Gerçek veriden içgörüler
         </li>
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Kaynak performansı (Radar / Takiplerim / Fırsatlar)
         </li>
-        <li className="rounded-xl border border-teal-900/6 bg-white/70 px-3 py-2">
+        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
           Teklif Zekâsı görüntüleme özeti
         </li>
       </ul>
       <Link
         href="/panel/plan"
-        className="mt-5 inline-flex rounded-full bg-rose-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-rose-800"
+        className="mt-5 inline-flex min-h-11 items-center rounded-full bg-[#0f766e] px-5 text-sm font-semibold text-white hover:bg-[#115e59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
       >
         Professional ile aç
       </Link>
@@ -165,15 +229,15 @@ function ProfessionalCommerceSection({
   );
 
   return (
-    <section className="space-y-6 rounded-[28px] border border-rose-200/60 bg-gradient-to-br from-rose-50/50 via-white to-violet-50/40 p-6 shadow-sm">
+    <section className="space-y-6 rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white/80 p-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-rose-700/70">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0f766e]/70">
           Professional · Ticari Performans Zekâsı
         </p>
-        <h2 className="mt-1 text-xl font-semibold text-teal-950">
+        <h2 className="mt-1 text-xl font-semibold text-[#0f1f1d]">
           Nerede kazanıyorsunuz, nerede kaybediyorsunuz?
         </h2>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-teal-950/55">
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[#0f1f1d]/55">
           Kazanma oranı gönderim tarihine göre; tamamlanan hacim ise işlem
           tamamlanma tarihine göre hesaplanır (son {rangeDays} gün). Bunlar
           aynı cohort değildir.
@@ -202,12 +266,12 @@ function ProfessionalCommerceSection({
         <EmptyAction
           title="Tamamlanan işlem bekleniyor"
           body="Tamamlanan işlemler oluştukça ticaret hacminiz burada görünür."
-          href="/panel/gelen-teklifler"
-          cta="Tekliflere git"
+          href="/panel/teklifler"
+          cta="Tekliflerim"
         />
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <MetricCard
           label="Tamamlanan işlem"
           value={advanced.completedDeals}
@@ -223,7 +287,7 @@ function ProfessionalCommerceSection({
         {advanced.mixedCurrency ? (
           <MetricCard
             label="Gerçekleşen ticaret hacmi"
-            value="—"
+            value="Karışık"
             hint="Birden fazla para birimi var; tek toplam gösterilmiyor"
             icon={<BarChart3 className="h-4 w-4" />}
           />
@@ -236,7 +300,7 @@ function ProfessionalCommerceSection({
                     advanced.primaryVolume.totalAgreedAmount,
                     advanced.primaryVolume.currency,
                   )
-                : "—"
+                : "Veri yok"
             }
             hint={
               hasCompleted
@@ -254,9 +318,7 @@ function ProfessionalCommerceSection({
                   advanced.primaryVolume.averageAgreedAmount,
                   advanced.primaryVolume.currency,
                 )
-              : advanced.mixedCurrency
-                ? "—"
-                : "—"
+              : "Veri yok"
           }
           hint={
             advanced.mixedCurrency
@@ -280,7 +342,8 @@ function ProfessionalCommerceSection({
         <MetricCard
           label="İlk teklif → anlaşma farkı"
           value={
-            formatRelativePriceDelta(advanced.negotiationPriceDelta) ?? "—"
+            formatRelativePriceDelta(advanced.negotiationPriceDelta) ??
+            "Veri yok"
           }
           hint={
             advanced.negotiationPriceDeltaSample > 0
@@ -292,18 +355,18 @@ function ProfessionalCommerceSection({
       </div>
 
       {advanced.mixedCurrency && advanced.volumesByCurrency.length > 0 ? (
-        <div className="rounded-2xl border border-teal-900/8 bg-white/80 p-4">
-          <h3 className="text-sm font-semibold text-teal-950">
+        <div className="rounded-2xl border border-[#0f1f1d]/8 bg-white p-4">
+          <h3 className="text-sm font-semibold text-[#0f1f1d]">
             Para birimine göre hacim
           </h3>
-          <p className="mt-1 text-xs text-teal-950/45">
+          <p className="mt-1 text-xs text-[#0f1f1d]/45">
             Farklı para birimleri toplanmaz; kur çevrimi yapılmaz.
           </p>
           <ul className="mt-3 space-y-2">
             {advanced.volumesByCurrency.map((row) => (
               <li
                 key={row.currency}
-                className="flex items-center justify-between text-sm text-teal-950"
+                className="flex items-center justify-between text-sm text-[#0f1f1d]"
               >
                 <span>
                   {row.currency} · {row.dealCount} işlem
@@ -321,10 +384,10 @@ function ProfessionalCommerceSection({
       ) : null}
 
       {advanced.insights.length > 0 ? (
-        <div className="rounded-2xl border border-rose-200/50 bg-white/90 p-5">
+        <div className="rounded-2xl border border-[#0f1f1d]/8 bg-[#f7faf9] p-5">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-rose-700" />
-            <h3 className="text-base font-semibold text-teal-950">
+            <Sparkles className="h-4 w-4 text-[#0f766e]" />
+            <h3 className="text-base font-semibold text-[#0f1f1d]">
               Talepo İçgörüleri
             </h3>
           </div>
@@ -332,7 +395,7 @@ function ProfessionalCommerceSection({
             {advanced.insights.map((insight) => (
               <li
                 key={insight.id}
-                className="rounded-xl border border-teal-900/6 bg-teal-50/40 px-3 py-2.5 text-sm leading-6 text-teal-950/80"
+                className="rounded-xl border border-[#0f1f1d]/6 bg-white px-3 py-2.5 text-sm leading-6 text-[#0f1f1d]/80"
               >
                 {insight.text}
               </li>
@@ -343,59 +406,61 @@ function ProfessionalCommerceSection({
 
       <div className="space-y-3">
         <div>
-          <h3 className="text-base font-semibold text-teal-950">
+          <h3 className="text-base font-semibold text-[#0f1f1d]">
             Teklif Zekâsı etkisi
           </h3>
-          <p className="mt-1 text-xs text-teal-950/45">
+          <p className="mt-1 text-xs text-[#0f1f1d]/45">
             Yalnız gerçekten açılmış Teklif Zekâsı sonuçları. Plan kilidi veya
             yetersiz örnek ekranı exposure sayılmaz. Bu bir nedensellik iddiası
             değildir.
           </p>
         </div>
         {advanced.intelligenceAssistance.exposedOffers === 0 ? (
-          <p className="text-sm text-teal-950/55">
+          <p className="text-sm text-[#0f1f1d]/55">
             Bu dönemde görüntülenen Teklif Zekâsı kaydı yok.
           </p>
         ) : (
-          <div className="rounded-2xl border border-teal-900/8 bg-white/90 p-4">
+          <div className="rounded-2xl border border-[#0f1f1d]/8 bg-white p-4">
             <dl className="grid grid-cols-3 gap-2 text-center">
               <div>
-                <dt className="text-[10px] uppercase text-teal-950/45">
+                <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                   Görüntülenen teklif
                 </dt>
-                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                   {advanced.intelligenceAssistance.exposedOffers}
                 </dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase text-teal-950/45">
+                <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                   Kabul
                 </dt>
-                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                   {advanced.intelligenceAssistance.accepted}
                 </dd>
               </div>
               <div>
-                <dt className="text-[10px] uppercase text-teal-950/45">
+                <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                   Tamamlanan
                 </dt>
-                <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                   {advanced.intelligenceAssistance.completed}
                 </dd>
               </div>
             </dl>
-            <p className="mt-2 text-xs text-teal-950/50">
+            <p className="mt-2 text-xs text-[#0f1f1d]/50">
               Kazanma:{" "}
-              {formatWinRateValue({
-                accepted: advanced.intelligenceAssistance.accepted,
-                submitted: advanced.intelligenceAssistance.exposedOffers,
-                winRate: advanced.intelligenceAssistance.winRate,
-                winRatePresentation:
-                  advanced.intelligenceAssistance.winRatePresentation,
-              })}
+              {displayEmptyMetric(
+                formatWinRateValue({
+                  accepted: advanced.intelligenceAssistance.accepted,
+                  submitted: advanced.intelligenceAssistance.exposedOffers,
+                  winRate: advanced.intelligenceAssistance.winRate,
+                  winRatePresentation:
+                    advanced.intelligenceAssistance.winRatePresentation,
+                }),
+              )}
             </p>
             {advanced.intelligenceAssistance.primaryVolume ? (
-              <p className="mt-1 text-xs text-teal-950/55">
+              <p className="mt-1 text-xs text-[#0f1f1d]/55">
                 Bu tekliflerden başlayan tamamlanmış işlemler:{" "}
                 {formatMoneyAmount(
                   advanced.intelligenceAssistance.primaryVolume
@@ -404,11 +469,11 @@ function ProfessionalCommerceSection({
                 )}
               </p>
             ) : advanced.intelligenceAssistance.mixedCurrency ? (
-              <p className="mt-1 text-xs text-teal-950/45">
-                Birden fazla para birimi — tek toplam yok.
+              <p className="mt-1 text-xs text-[#0f1f1d]/45">
+                Birden fazla para birimi. Tek toplam yok.
               </p>
             ) : null}
-            <p className="mt-2 text-[11px] text-teal-950/40">
+            <p className="mt-2 text-[11px] text-[#0f1f1d]/40">
               Görüntülenmeyen tekliflerle karşılaştırma bu sürümde yok; geçmiş
               eligibility güvenilir biçimde yeniden kurulamıyor.
             </p>
@@ -418,17 +483,17 @@ function ProfessionalCommerceSection({
 
       <div className="space-y-3">
         <div>
-          <h3 className="text-base font-semibold text-teal-950">
+          <h3 className="text-base font-semibold text-[#0f1f1d]">
             Talepo sana nereden iş getiriyor?
           </h3>
-          <p className="mt-1 text-xs text-teal-950/45">
+          <p className="mt-1 text-xs text-[#0f1f1d]/45">
             Yalnız teklif oluşturulurken doğrulanmış ürün kaynağı. Sonradan
             Radar&apos;a giren talepler eski teklifleri değiştirmez. Kaynak
             bilinmeyen teklifler burada listelenmez.
           </p>
         </div>
         {advanced.sourcePerformance.length === 0 ? (
-          <p className="text-sm text-teal-950/55">
+          <p className="text-sm text-[#0f1f1d]/55">
             Henüz yeterli kaynak verisi yok. Radar, Takiplerim, Fırsatlar veya
             Talepler üzerinden teklif verdikçe burada görünür.
           </p>
@@ -437,46 +502,48 @@ function ProfessionalCommerceSection({
             {advanced.sourcePerformance.map((row) => (
               <div
                 key={row.source}
-                className="rounded-2xl border border-teal-900/8 bg-white/90 p-4"
+                className="rounded-2xl border border-[#0f1f1d]/8 bg-white p-4"
               >
-                <p className="text-sm font-semibold text-teal-950">{row.label}</p>
+                <p className="text-sm font-semibold text-[#0f1f1d]">{row.label}</p>
                 <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <dt className="text-[10px] uppercase text-teal-950/45">
+                    <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                       Teklif
                     </dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                       {row.submitted}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-[10px] uppercase text-teal-950/45">
+                    <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                       Kabul
                     </dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                       {row.accepted}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-[10px] uppercase text-teal-950/45">
+                    <dt className="text-[10px] uppercase text-[#0f1f1d]/45">
                       Tamamlanan
                     </dt>
-                    <dd className="mt-1 text-lg font-semibold tabular-nums text-teal-950">
+                    <dd className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
                       {row.completed}
                     </dd>
                   </div>
                 </dl>
-                <p className="mt-2 text-xs text-teal-950/50">
+                <p className="mt-2 text-xs text-[#0f1f1d]/50">
                   Kazanma:{" "}
-                  {formatWinRateValue({
-                    accepted: row.accepted,
-                    submitted: row.submitted,
-                    winRate: row.winRate,
-                    winRatePresentation: row.winRatePresentation,
-                  })}
+                  {displayEmptyMetric(
+                    formatWinRateValue({
+                      accepted: row.accepted,
+                      submitted: row.submitted,
+                      winRate: row.winRate,
+                      winRatePresentation: row.winRatePresentation,
+                    }),
+                  )}
                 </p>
                 {row.primaryVolume ? (
-                  <p className="mt-1 text-xs text-teal-950/55">
+                  <p className="mt-1 text-xs text-[#0f1f1d]/55">
                     Bu kaynaktan başlayan tamamlanmış işlemler:{" "}
                     {formatMoneyAmount(
                       row.primaryVolume.totalAgreedAmount,
@@ -484,8 +551,8 @@ function ProfessionalCommerceSection({
                     )}
                   </p>
                 ) : row.mixedCurrency ? (
-                  <p className="mt-1 text-xs text-teal-950/45">
-                    Birden fazla para birimi — tek toplam yok.
+                  <p className="mt-1 text-xs text-[#0f1f1d]/45">
+                    Birden fazla para birimi. Tek toplam yok.
                   </p>
                 ) : null}
               </div>
@@ -495,17 +562,17 @@ function ProfessionalCommerceSection({
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-base font-semibold text-teal-950">
+        <h3 className="text-base font-semibold text-[#0f1f1d]">
           Kategori performansı
         </h3>
         {!showCategoryTable ? (
-          <p className="text-sm text-teal-950/55">
+          <p className="text-sm text-[#0f1f1d]/55">
             Daha fazla işlem verisi oluştuğunda kategori karşılaştırması açılır.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-teal-900/8 bg-white">
+          <div className="overflow-x-auto rounded-2xl border border-[#0f1f1d]/8 bg-white">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-teal-900/8 text-xs uppercase tracking-wide text-teal-950/45">
+              <thead className="border-b border-[#0f1f1d]/8 text-xs uppercase tracking-wide text-[#0f1f1d]/45">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Kategori</th>
                   <th className="px-4 py-3 font-semibold">Teklif</th>
@@ -518,21 +585,23 @@ function ProfessionalCommerceSection({
                 {eligibleCategories.slice(0, 5).map((row) => (
                   <tr
                     key={row.categoryId}
-                    className="border-b border-teal-900/5 last:border-0"
+                    className="border-b border-[#0f1f1d]/5 last:border-0"
                   >
-                    <td className="px-4 py-3 font-medium text-teal-950">
+                    <td className="px-4 py-3 font-medium text-[#0f1f1d]">
                       {row.categoryName}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{row.submitted}</td>
                     <td className="px-4 py-3 tabular-nums">{row.accepted}</td>
                     <td className="px-4 py-3 tabular-nums">{row.completed}</td>
                     <td className="px-4 py-3 tabular-nums">
-                      {formatWinRateValue({
-                        accepted: row.accepted,
-                        submitted: row.submitted,
-                        winRate: row.winRate,
-                        winRatePresentation: row.winRatePresentation,
-                      })}
+                      {displayEmptyMetric(
+                        formatWinRateValue({
+                          accepted: row.accepted,
+                          submitted: row.submitted,
+                          winRate: row.winRate,
+                          winRatePresentation: row.winRatePresentation,
+                        }),
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -542,37 +611,37 @@ function ProfessionalCommerceSection({
         )}
       </div>
 
-      <div className="rounded-2xl border border-teal-900/8 bg-white/80 p-4">
-        <h3 className="text-sm font-semibold text-teal-950">
+      <div className="rounded-2xl border border-[#0f1f1d]/8 bg-white p-4">
+        <h3 className="text-sm font-semibold text-[#0f1f1d]">
           Güven özeti (ömür boyu)
         </h3>
-        <p className="mt-1 text-xs text-teal-950/45">
+        <p className="mt-1 text-xs text-[#0f1f1d]/45">
           Yalnız görünür değerlendirmeler. Seçilen 7/30/90 gün penceresinden
           bağımsızdır.
         </p>
         <dl className="mt-3 grid gap-3 sm:grid-cols-3">
           <div>
-            <dt className="text-xs uppercase text-teal-950/45">
+            <dt className="text-xs uppercase text-[#0f1f1d]/45">
               Tamamlanan işlem
             </dt>
-            <dd className="mt-1 text-xl font-semibold tabular-nums text-teal-950">
+            <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0f1f1d]">
               {advanced.trust.completedTransactions}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-teal-950/45">
+            <dt className="text-xs uppercase text-[#0f1f1d]/45">
               Görünür değerlendirme
             </dt>
-            <dd className="mt-1 text-xl font-semibold tabular-nums text-teal-950">
+            <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0f1f1d]">
               {advanced.trust.reviewCount}
             </dd>
           </div>
           <div>
-            <dt className="text-xs uppercase text-teal-950/45">Ortalama puan</dt>
-            <dd className="mt-1 text-xl font-semibold tabular-nums text-teal-950">
+            <dt className="text-xs uppercase text-[#0f1f1d]/45">Ortalama puan</dt>
+            <dd className="mt-1 text-xl font-semibold tabular-nums text-[#0f1f1d]">
               {advanced.trust.averageRating != null
                 ? advanced.trust.averageRating.toFixed(1)
-                : "—"}
+                : "Veri yok"}
             </dd>
           </div>
         </dl>
@@ -581,9 +650,18 @@ function ProfessionalCommerceSection({
   );
 }
 
-export function AnalyticsDashboard() {
+export function AnalyticsDashboard({
+  planLabel,
+  workspaceKind,
+  children,
+}: {
+  planLabel: string;
+  workspaceKind: "user" | "company";
+  children?: ReactNode;
+}) {
   const [range, setRange] = useState<RangeDays>(30);
-  const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState<AnalysisRoleView>("overview");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<WorkspacePerformanceMetrics | null>(
     null,
@@ -592,6 +670,7 @@ export function AnalyticsDashboard() {
     null,
   );
   const [advancedAvailable, setAdvancedAvailable] = useState(false);
+  const tablistId = useId();
 
   const load = useCallback(async (days: RangeDays) => {
     setLoading(true);
@@ -600,6 +679,7 @@ export function AnalyticsDashboard() {
     try {
       const response = await fetch(
         `/api/monetization/analytics?type=performance&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+        { cache: "no-store" },
       );
       const data = (await response.json()) as {
         ok?: boolean;
@@ -623,20 +703,85 @@ export function AnalyticsDashboard() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- remote analytics snapshot
     void load(range);
   }, [load, range]);
 
   const offers = metrics?.offers;
   const requests = metrics?.requests;
-  const isCompany = metrics?.scope === "company";
+  const isCompany = metrics?.scope === "company" || workspaceKind === "company";
   const hasRequestData = (requests?.published ?? 0) > 0;
   const hasOfferData = (offers?.submitted ?? 0) > 0;
   const showPersonalEmpty =
     metrics?.scope === "personal" && !hasRequestData && !hasOfferData && !loading;
-  const showCompanyEmpty = isCompany && !hasOfferData && !loading;
+  const showCompanyEmpty = isCompany && !hasOfferData && !loading && !error;
+  const workspaceLabel = analysisWorkspaceCopy({
+    kind: metrics?.scope === "company" ? "company" : workspaceKind,
+    companyName: metrics?.companyName ?? null,
+  });
+  const insight = analysisHeadlineInsight(metrics, range);
+  const nextStep = resolveAnalysisNextStep(metrics);
+  const buyerFlow = metrics ? buyerFlowSteps(metrics) : null;
+  const sellerFlow = metrics
+    ? sellerFlowSteps(
+        metrics,
+        advancedAvailable ? (advanced?.negotiatedCompleted ?? null) : null,
+      )
+    : null;
+
+  const visibleTabs = useMemo(
+    () =>
+      ANALYSIS_ROLE_TABS.filter(
+        (tab) => tab.id !== "buyer" || metrics?.scope !== "company",
+      ),
+    [metrics?.scope],
+  );
+
+  const activeRole: AnalysisRoleView =
+    metrics?.scope === "company" && role === "buyer" ? "overview" : role;
 
   return (
-    <div className="space-y-8">
+    <>
+      <header className="talepo-my-requests-banner relative px-5 py-4 sm:px-8 sm:py-5 lg:px-9 lg:py-6">
+        <div className="talepo-my-requests-banner-grid" aria-hidden />
+        <div className="talepo-my-requests-banner-glow" aria-hidden />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
+          <div className="min-w-0 max-w-xl">
+            <p className="text-[10px] font-semibold tracking-[0.2em] text-[#c8f4eb]">
+              PERFORMANS MERKEZİ
+            </p>
+            <p className="mt-1.5 text-[1.5rem] font-semibold tracking-[-0.03em] text-[#f4fbf9] sm:text-[1.75rem]">
+              Analiz
+            </p>
+            <p className="mt-1.5 max-w-md text-[14px] leading-relaxed text-[#d7ece7] sm:text-[15px]">
+              İşlerin nasıl gittiğini ve sonraki adımı tek bakışta görün.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="talepo-analysis-chip">{planLabel}</span>
+              <span className="talepo-analysis-chip">{workspaceLabel}</span>
+            </div>
+          </div>
+          <div className="flex w-full min-w-0 flex-col gap-3 lg:w-[19.5rem] lg:shrink-0">
+            <div
+              className="talepo-my-requests-summary"
+              aria-live="polite"
+            >
+              <p className="text-[13px] leading-5 text-[#e7f3f0]">
+                {loading ? "Metrikler yükleniyor..." : insight}
+              </p>
+            </div>
+            <Link
+              href={nextStep.href}
+              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#f4fbf9] px-4 text-sm font-semibold text-[#0c1d1a] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              {nextStep.cta}
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div className="talepo-beacon-body relative space-y-6 px-5 py-5 sm:px-8 sm:py-6 lg:px-9">
+
       <div className="flex flex-wrap items-center gap-2">
         {([7, 30, 90] as RangeDays[]).map((days) => (
           <button
@@ -644,10 +789,10 @@ export function AnalyticsDashboard() {
             type="button"
             aria-pressed={range === days}
             onClick={() => setRange(days)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`min-h-11 rounded-full px-4 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40 ${
               range === days
-                ? "bg-teal-900 text-white"
-                : "border border-teal-900/10 bg-white text-teal-900/70 hover:bg-teal-50"
+                ? "bg-[#0f1f1d] text-white"
+                : "border border-[#0f1f1d]/10 bg-white text-[#0f1f1d]/70 hover:bg-white"
             }`}
           >
             Son {days} gün
@@ -656,14 +801,39 @@ export function AnalyticsDashboard() {
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 text-sm text-teal-950/50">
-          <LoaderCircle className="h-4 w-4 animate-spin" />
-          Metrikler yükleniyor...
+        <div
+          className="grid min-h-[7.25rem] gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          aria-busy="true"
+          aria-live="polite"
+        >
+          <span className="sr-only">Metrikler yükleniyor...</span>
+          {[0, 1, 2, 3].map((slot) => (
+            <div
+              key={slot}
+              className="talepo-analysis-metric animate-pulse bg-[#0f1f1d]/4"
+            />
+          ))}
+          <div className="col-span-full flex items-center gap-2 text-sm text-[#0f1f1d]/50">
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+            Metrikler yükleniyor...
+          </div>
         </div>
       ) : null}
 
       {error ? (
-        <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <p>{error}</p>
+          <p className="mt-1 text-rose-800/80">
+            Veriler şu anda okunamıyor. Sayfayı yenilemeden tekrar deneyin.
+          </p>
+          <button
+            type="button"
+            onClick={() => void load(range)}
+            className="mt-3 inline-flex min-h-11 items-center rounded-full bg-rose-800 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+          >
+            Yeniden dene
+          </button>
+        </div>
       ) : null}
 
       {showPersonalEmpty ? (
@@ -693,13 +863,83 @@ export function AnalyticsDashboard() {
         />
       ) : null}
 
-      {metrics?.scope === "personal" && !showPersonalEmpty ? (
+      {metrics && !loading && !error ? (
+        <div
+          role="tablist"
+          aria-label="Alıcı ve satıcı görünümü"
+          id={tablistId}
+          className="flex flex-wrap gap-2"
+        >
+          {visibleTabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeRole === tab.id}
+              className="talepo-analysis-tab min-h-11 rounded-full border border-[#0f1f1d]/10 bg-white px-4 text-sm font-semibold text-[#0f1f1d]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
+              onClick={() => setRole(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {metrics && !loading && !error && activeRole === "overview" && !showPersonalEmpty && !showCompanyEmpty ? (
+        <section aria-labelledby="analysis-overview-heading" className="space-y-4">
+          <h2 id="analysis-overview-heading" className="text-lg font-semibold text-[#0f1f1d]">
+            Genel görünüm
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {metrics.scope === "personal" && requests ? (
+              <MetricCard
+                label="Yayınlanan talepler"
+                value={requests.published}
+                hint="Alıcı olarak, yayın tarihine göre"
+                icon={<FileText className="h-4 w-4" />}
+              />
+            ) : null}
+            <MetricCard
+              label="Gönderilen teklif"
+              value={offers?.submitted ?? 0}
+              hint="Satıcı olarak, gönderim tarihine göre"
+              icon={<BarChart3 className="h-4 w-4" />}
+            />
+            <MetricCard
+              label="Kazanma oranı"
+              value={offers ? formatWinRateValue(offers) : "Veri yok"}
+              hint={offers ? formatWinRateHint(offers) : null}
+              icon={<Target className="h-4 w-4" />}
+            />
+            {metrics.scope === "personal" && requests && requests.withoutOffers > 0 ? (
+              <MetricCard
+                label="Teklifsiz"
+                value={requests.withoutOffers}
+                hint="Dikkat: henüz teklif almayan talepler"
+                icon={<Inbox className="h-4 w-4" />}
+              />
+            ) : (
+              <MetricCard
+                label="Bekleyen"
+                value={offers?.pending ?? 0}
+                hint="Yanıt bekleyen gönderilmiş teklifler"
+                icon={<Inbox className="h-4 w-4" />}
+              />
+            )}
+          </div>
+        </section>
+      ) : null}
+
+      {metrics?.scope === "personal" &&
+      !showPersonalEmpty &&
+      !loading &&
+      activeRole === "buyer" ? (
         <section className="space-y-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/45">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/70">
               Talep performansı
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-teal-950">
+            <h2 className="mt-1 text-lg font-semibold text-[#0f1f1d]">
               Yayınladığınız talepler
             </h2>
           </div>
@@ -712,7 +952,7 @@ export function AnalyticsDashboard() {
             />
           ) : requests ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <MetricCard
                   label="Yayınlanan talepler"
                   value={requests.published}
@@ -743,7 +983,7 @@ export function AnalyticsDashboard() {
                   value={
                     requests.averageOffersPerRequest != null
                       ? requests.averageOffersPerRequest
-                      : "—"
+                      : "Veri yok"
                   }
                   icon={<BarChart3 className="h-4 w-4" />}
                 />
@@ -753,12 +993,19 @@ export function AnalyticsDashboard() {
                   icon={<Target className="h-4 w-4" />}
                 />
               </div>
+              {buyerFlow ? (
+                <FlowChart
+                  title="Alıcı süreci"
+                  summary="Talep, gelen teklif ve kabul. Satıcı sayıları burada yok."
+                  steps={buyerFlow}
+                />
+              ) : null}
               {requests.withoutOffers > 0 ? (
-                <p className="text-sm text-teal-950/60">
+                <p className="text-sm text-[#0f1f1d]/60">
                   {requests.withoutOffers} talebiniz henüz teklif almadı.{" "}
                   <Link
                     href="/panel/taleplerim"
-                    className="font-semibold text-teal-800 underline"
+                    className="font-semibold text-[#0f766e] underline"
                   >
                     Taleplerim
                   </Link>
@@ -769,13 +1016,17 @@ export function AnalyticsDashboard() {
         </section>
       ) : null}
 
-      {metrics && !showPersonalEmpty && !showCompanyEmpty ? (
+      {metrics &&
+      !showPersonalEmpty &&
+      !showCompanyEmpty &&
+      !loading &&
+      activeRole === "seller" ? (
         <section className="space-y-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/45">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/70">
               {isCompany ? "Şirket teklif performansı" : "Teklif performansı"}
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-teal-950">
+            <h2 className="mt-1 text-lg font-semibold text-[#0f1f1d]">
               {isCompany
                 ? metrics.companyName
                   ? `${metrics.companyName} teklifleri`
@@ -791,59 +1042,68 @@ export function AnalyticsDashboard() {
               cta="Talepler"
             />
           ) : offers ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <MetricCard
-                label="Gönderilen teklif"
-                value={offers.submitted}
-                icon={<BarChart3 className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Kabul edilen"
-                value={offers.accepted}
-                icon={<Target className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Tamamlanan işlemler"
-                value={offers.completedTransactions}
-                hint="İki tarafın da onayladığı işlemler"
-                icon={<Target className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Bekleyen"
-                value={offers.pending}
-                icon={<Inbox className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Reddedilen"
-                value={offers.rejected}
-                icon={<FileText className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Sonuçsuz"
-                value={offers.unsuccessful}
-                hint="Süresi dolan veya geri çekilen"
-                icon={<FileText className="h-4 w-4" />}
-              />
-              <MetricCard
-                label="Kazanma oranı"
-                value={formatWinRateValue(offers)}
-                hint={formatWinRateHint(offers)}
-                icon={<Target className="h-4 w-4" />}
-              />
-              {offers.averageOfferLatencyHours != null ? (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <MetricCard
-                  label="Ort. teklif verme süresi"
-                  value={`${offers.averageOfferLatencyHours} sa`}
-                  hint="Talep yayınından teklif gönderimine"
-                  icon={<Clock className="h-4 w-4" />}
+                  label="Gönderilen teklif"
+                  value={offers.submitted}
+                  icon={<BarChart3 className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Kabul edilen"
+                  value={offers.accepted}
+                  icon={<Target className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Tamamlanan işlemler"
+                  value={offers.completedTransactions}
+                  hint="İki tarafın da onayladığı işlemler"
+                  icon={<Target className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Bekleyen"
+                  value={offers.pending}
+                  icon={<Inbox className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Reddedilen"
+                  value={offers.rejected}
+                  icon={<FileText className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Sonuçsuz"
+                  value={offers.unsuccessful}
+                  hint="Süresi dolan veya geri çekilen"
+                  icon={<FileText className="h-4 w-4" />}
+                />
+                <MetricCard
+                  label="Kazanma oranı"
+                  value={formatWinRateValue(offers)}
+                  hint={formatWinRateHint(offers)}
+                  icon={<Target className="h-4 w-4" />}
+                />
+                {offers.averageOfferLatencyHours != null ? (
+                  <MetricCard
+                    label="Ort. teklif verme süresi"
+                    value={`${offers.averageOfferLatencyHours} sa`}
+                    hint="Talep yayınından teklif gönderimine"
+                    icon={<Clock className="h-4 w-4" />}
+                  />
+                ) : null}
+              </div>
+              {sellerFlow ? (
+                <FlowChart
+                  title="Satıcı süreci"
+                  summary="Gönderilen teklif, bekleyen yanıt ve tamamlanan işlem. Alıcı sayıları burada yok."
+                  steps={sellerFlow}
                 />
               ) : null}
-            </div>
+            </>
           ) : null}
         </section>
       ) : null}
 
-      {!loading && metrics ? (
+      {!loading && metrics && activeRole !== "buyer" ? (
         advancedAvailable && advanced ? (
           <ProfessionalCommerceSection
             advanced={advanced}
@@ -856,15 +1116,18 @@ export function AnalyticsDashboard() {
         )
       ) : null}
 
-      <p className="text-xs text-teal-950/40">
+      {children}
+
+      <p className="text-xs text-[#0f1f1d]/40">
         {isCompany
           ? "Metrikler seçili firma çalışma alanı ve tarih aralığında, gönderim tarihine göre hesaplanır."
-          : "Metrikler kişisel hesabınız ve seçilen tarih aralığında, gönderim / yayın tarihine göre hesaplanır."}
-        {" "}
+          : "Metrikler kişisel hesabınız ve seçilen tarih aralığında, gönderim / yayın tarihine göre hesaplanır."}{" "}
         Kazanma oranı, dönemde gönderilen tekliflerin şu an kabul edilen payıdır.
-        Tamamlanan işlemler, aynı dönemde iki tarafça onaylanan kayıtlardır; kabul ile aynı şey değildir.
+        Tamamlanan işlemler, aynı dönemde iki tarafça onaylanan kayıtlardır; kabul
+        ile aynı şey değildir.
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -879,9 +1142,9 @@ export function BasicMarketInsights({
 }) {
   if (insufficientData) {
     return (
-      <section className="rounded-[24px] border border-teal-900/8 bg-teal-50/40 p-6">
-        <h2 className="text-lg font-semibold text-teal-950">Platform özeti</h2>
-        <p className="mt-2 text-sm text-teal-950/55">
+      <section className="rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white/80 p-6">
+        <h2 className="text-lg font-semibold text-[#0f1f1d]">Platform özeti</h2>
+        <p className="mt-2 text-sm text-[#0f1f1d]/55">
           Son 30 günde anonim yayınlanan talep sayısı henüz yeterli değil (
           {requestCount} talep).
         </p>
@@ -890,29 +1153,29 @@ export function BasicMarketInsights({
   }
 
   return (
-    <section className="rounded-[24px] border border-teal-900/8 bg-white p-6">
-      <h2 className="text-lg font-semibold text-teal-950">Platform özeti</h2>
-      <p className="mt-1 text-sm text-teal-950/50">
+    <section className="rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white p-6">
+      <h2 className="text-lg font-semibold text-[#0f1f1d]">Platform özeti</h2>
+      <p className="mt-1 text-sm text-[#0f1f1d]/50">
         Son 30 günde yayınlanan taleplerin anonim toplu özeti. Talep bütçesi
         ortalamasıdır; piyasa fiyatı veya Price Intelligence değildir.
       </p>
       <dl className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <dt className="text-xs font-semibold uppercase text-teal-950/45">
+          <dt className="text-xs font-semibold uppercase text-[#0f1f1d]/45">
             Yayınlanan talep
           </dt>
-          <dd className="mt-1 text-2xl font-semibold text-teal-950">
+          <dd className="mt-1 text-2xl font-semibold text-[#0f1f1d]">
             {requestCount}
           </dd>
         </div>
         <div>
-          <dt className="text-xs font-semibold uppercase text-teal-950/45">
+          <dt className="text-xs font-semibold uppercase text-[#0f1f1d]/45">
             Ort. talep bütçesi
           </dt>
-          <dd className="mt-1 text-2xl font-semibold text-teal-950">
+          <dd className="mt-1 text-2xl font-semibold text-[#0f1f1d]">
             {averageBudget != null
               ? `${averageBudget.toLocaleString("tr-TR")} ₺`
-              : "—"}
+              : "Veri yok"}
           </dd>
         </div>
       </dl>
