@@ -149,7 +149,7 @@ console.log("\n=== SURFACE ===\n");
   check("request cover uses resolveRequestCardMedia", cover.includes("resolveRequestCardMedia"));
   check("no fake chair image", !cover.includes("sandalye") && !page.includes("executive-chair"));
   check("workspace compare collapsible", workspaceClient.includes("Teklifleri karşılaştır"));
-  check("workspace uses OfferCompareRail", workspaceClient.includes("OfferCompareRail"));
+  check("workspace uses OfferDecisionStrip", workspaceClient.includes("OfferDecisionStrip"));
   check("inbox request card cover", requestCard.includes("IncomingRequestCover"));
   check("inbox no inline compare", !page.includes("IncomingOfferCompareGroup"));
   check("request shown in workspace summary", workspaceClient.includes("request.title"));

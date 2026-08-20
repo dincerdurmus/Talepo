@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeftRight,
   Check,
+  Info,
   LoaderCircle,
   X,
 } from "lucide-react";
@@ -23,7 +24,7 @@ type OfferActionsProps = {
   onBargain?: () => void;
   bargainDisabled?: boolean;
   locked?: boolean;
-  layout?: "default" | "toolbar" | "stack" | "footer";
+  layout?: "default" | "toolbar" | "stack" | "footer" | "compact";
   pendingCounter?: {
     amountLabel: string;
     acceptLabel?: string;
@@ -427,39 +428,51 @@ export function OfferActions({
 
   const isFooter = layout === "footer" || layout === "stack";
   const isToolbar = layout === "toolbar";
+  const isCompact = layout === "compact";
 
   const footerRow =
     "flex w-full flex-col gap-2 sm:flex-row sm:items-stretch";
+  const compactRow =
+    "flex w-full flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-end";
   const plainRow = "flex flex-col gap-2 sm:flex-row sm:flex-wrap";
   const inboxToolbar =
     "flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:rounded-xl sm:border sm:border-teal-900/10 sm:bg-white/90 sm:p-1 sm:shadow-[0_4px_18px_rgba(15,31,29,0.04)]";
 
-  const buttonRow = isFooter
-    ? footerRow
-    : isToolbar
-      ? inboxToolbar
-      : plainRow;
+  const buttonRow = isCompact
+    ? compactRow
+    : isFooter
+      ? footerRow
+      : isToolbar
+        ? inboxToolbar
+        : plainRow;
 
-  const primaryClass = isFooter
-    ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(15,118,110,0.18)] transition hover:bg-[#0d6a63] disabled:opacity-50 sm:min-w-0"
-    : isToolbar
-      ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(15,118,110,0.24)] transition hover:bg-[#0d6a63] hover:shadow-[0_8px_22px_rgba(15,118,110,0.28)] disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem] sm:rounded-lg"
-      : "inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white transition hover:bg-[#0d6a63] disabled:opacity-50 sm:w-auto";
+  const primaryClass = isCompact
+    ? "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl bg-[#0f766e] px-3.5 text-xs font-semibold text-white transition hover:bg-[#0d6a63] disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem] sm:order-3"
+    : isFooter
+      ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_6px_16px_rgba(15,118,110,0.18)] transition hover:bg-[#0d6a63] disabled:opacity-50 sm:min-w-0"
+      : isToolbar
+        ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(15,118,110,0.24)] transition hover:bg-[#0d6a63] hover:shadow-[0_8px_22px_rgba(15,118,110,0.28)] disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem] sm:rounded-lg"
+        : "inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white transition hover:bg-[#0d6a63] disabled:opacity-50 sm:w-auto";
 
-  const bargainClass = isFooter
-    ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-2 rounded-xl border border-amber-300/80 bg-gradient-to-b from-amber-50 to-white px-4 text-sm font-semibold text-amber-950 shadow-[0_2px_10px_rgba(180,83,9,0.06)] transition hover:border-amber-400/80 hover:from-amber-100/80 disabled:opacity-50 sm:min-w-0"
-    : isToolbar
-      ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-b from-amber-50 to-[#fff8eb] px-4 text-sm font-semibold text-amber-950 shadow-[0_2px_10px_rgba(180,83,9,0.08)] transition hover:border-amber-400/80 hover:from-amber-100/80 hover:to-amber-50 disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem] sm:rounded-lg sm:border-transparent sm:bg-transparent sm:shadow-none sm:hover:bg-amber-50/90"
-      : "inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-amber-200/90 bg-amber-50 px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100/80 disabled:opacity-50 sm:w-auto";
+  const bargainClass = isCompact
+    ? "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-indigo-200/70 bg-indigo-50/60 px-3 text-xs font-semibold text-indigo-950 transition hover:bg-indigo-50 disabled:opacity-50 sm:w-auto sm:order-2"
+    : isFooter
+      ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-2 rounded-xl border border-amber-300/80 bg-gradient-to-b from-amber-50 to-white px-4 text-sm font-semibold text-amber-950 shadow-[0_2px_10px_rgba(180,83,9,0.06)] transition hover:border-amber-400/80 hover:from-amber-100/80 disabled:opacity-50 sm:min-w-0"
+      : isToolbar
+        ? "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-amber-300/70 bg-gradient-to-b from-amber-50 to-[#fff8eb] px-4 text-sm font-semibold text-amber-950 shadow-[0_2px_10px_rgba(180,83,9,0.08)] transition hover:border-amber-400/80 hover:from-amber-100/80 hover:to-amber-50 disabled:opacity-50 sm:w-auto sm:min-w-[8.5rem] sm:rounded-lg sm:border-transparent sm:bg-transparent sm:shadow-none sm:hover:bg-amber-50/90"
+        : "inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-amber-200/90 bg-amber-50 px-4 text-sm font-semibold text-amber-950 transition hover:bg-amber-100/80 disabled:opacity-50 sm:w-auto";
 
-  const rejectClass = isFooter
-    ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-1.5 rounded-xl border border-black/10 bg-white px-4 text-sm font-medium text-[#8b352b]/80 transition hover:border-[#8b352b]/25 hover:bg-red-50/40 hover:text-[#8b352b] disabled:opacity-50 sm:min-w-0"
-    : isToolbar
-      ? "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-black/45 transition hover:bg-black/[0.03] hover:text-[#8b352b] disabled:opacity-50 sm:w-auto sm:rounded-lg"
-      : "inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-black/10 bg-transparent px-4 text-sm font-medium text-black/55 transition hover:bg-black/[0.03] hover:text-[#8b352b] disabled:opacity-50 sm:w-auto";
+  const rejectClass = isCompact
+    ? "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl border border-black/8 bg-white px-3 text-xs font-medium text-[#8b352b]/75 transition hover:bg-red-50/40 disabled:opacity-50 sm:w-auto sm:order-1"
+    : isFooter
+      ? "inline-flex min-h-11 w-full flex-1 items-center justify-center gap-1.5 rounded-xl border border-black/10 bg-white px-4 text-sm font-medium text-[#8b352b]/80 transition hover:border-[#8b352b]/25 hover:bg-red-50/40 hover:text-[#8b352b] disabled:opacity-50 sm:min-w-0"
+      : isToolbar
+        ? "inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-black/45 transition hover:bg-black/[0.03] hover:text-[#8b352b] disabled:opacity-50 sm:w-auto sm:rounded-lg"
+        : "inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-black/10 bg-transparent px-4 text-sm font-medium text-black/55 transition hover:bg-black/[0.03] hover:text-[#8b352b] disabled:opacity-50 sm:w-auto";
 
-  const secondaryAcceptClass =
-    "inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-xl border border-black/10 bg-white px-4 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03] disabled:opacity-50 sm:min-w-0";
+  const secondaryAcceptClass = isCompact
+    ? "inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-black/8 bg-white px-3 text-xs font-semibold text-black/65 transition hover:bg-black/[0.03] disabled:opacity-50 sm:w-auto sm:order-3"
+    : "inline-flex min-h-11 w-full flex-1 items-center justify-center rounded-xl border border-black/10 bg-white px-4 text-sm font-semibold text-black/70 transition hover:bg-black/[0.03] disabled:opacity-50 sm:min-w-0";
 
   const buttons = (
     <DecisionButtons
@@ -522,7 +535,7 @@ export function OfferActions({
       </div>
     ) : null;
 
-  if (isFooter) {
+  if (isFooter || isCompact) {
     return (
       <OfferDecisionOutcome
         phase={resolvedPhase}
@@ -540,7 +553,19 @@ export function OfferActions({
         confirmRejectBusy={resolvedPhase === "reject-loading"}
       >
         {pendingHint ? (
-          <p className="mb-3 text-xs leading-5 text-black/50">{pendingHint}</p>
+          <p
+            className={`mb-2.5 flex gap-2 text-xs leading-5 text-black/50 ${
+              isCompact
+                ? ""
+                : "rounded-[12px] border border-black/[0.05] bg-[#f7faf9] px-3 py-2.5"
+            }`}
+          >
+            <Info
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-teal-800/50"
+              aria-hidden
+            />
+            <span>{pendingHint}</span>
+          </p>
         ) : null}
         {buttons}
         {lifecycleFooter}

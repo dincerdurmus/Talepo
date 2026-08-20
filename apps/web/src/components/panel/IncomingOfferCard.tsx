@@ -71,6 +71,7 @@ export function IncomingOfferCard({
   highlightNegotiationId,
   isUnread: isUnreadProp = false,
   compareStripLayout = false,
+  decisionDesk = false,
   canArchive = false,
   isArchived = false,
 }: {
@@ -82,6 +83,8 @@ export function IncomingOfferCard({
   highlightNegotiationId?: string | null;
   isUnread?: boolean;
   compareStripLayout?: boolean;
+  /** Selected-offer decision workspace: stronger header, editorial note, slim waiting. */
+  decisionDesk?: boolean;
   canArchive?: boolean;
   isArchived?: boolean;
 }) {
@@ -185,28 +188,37 @@ export function IncomingOfferCard({
 
   return (
     <article
-      className={`min-w-0 bg-[#f4faf9] px-4 py-4 sm:px-5 ${
-        compareStripLayout ? "flex flex-col" : ""
-      }`}
+      className={`min-w-0 ${
+        decisionDesk ? "bg-white px-4 pb-4 pt-3 sm:px-5 sm:pb-5" : "bg-[#f4faf9] px-4 py-4 sm:px-5"
+      } ${compareStripLayout ? "flex flex-col" : ""}`}
     >
-      <div className={`flex flex-wrap items-center gap-2 ${compareStripLayout ? "order-1" : ""}`}>
+      <div
+        className={`flex flex-wrap items-start gap-2.5 ${
+          compareStripLayout ? "order-1" : ""
+        }`}
+      >
         {rank != null ? (
           <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#0f1f1d] px-1.5 text-[10px] font-bold text-white">
             #{rank}
           </span>
         ) : null}
         <span
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0f766e] text-[11px] font-semibold text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0f5149] text-[11px] font-semibold text-white"
           aria-hidden
         >
           {sellerInitials(firmName)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold tracking-tight text-[#0f1f1d]">
+          <h3 className="truncate text-[15px] font-semibold tracking-tight text-[#0f1f1d] sm:text-base">
             {firmName}
           </h3>
           {offer.title ? (
             <p className="truncate text-xs text-black/40">{offer.title}</p>
+          ) : null}
+          {trust ? (
+            <div className="mt-1">
+              <TrustSummaryBadge summary={trust} />
+            </div>
           ) : null}
         </div>
         {isUnread ? (
@@ -219,54 +231,44 @@ export function IncomingOfferCard({
             Doğrulanmış firma
           </span>
         ) : null}
-        {trust ? <TrustSummaryBadge summary={trust} /> : null}
       </div>
 
       {isUnread ? (
         <p className={`sr-only ${compareStripLayout ? "order-1" : ""}`}>Okunmadı</p>
       ) : null}
 
-      <div className={compareStripLayout ? "order-1" : ""}>
+      <div className={`${decisionDesk ? "mt-2.5" : "mt-3"} ${compareStripLayout ? "order-1" : ""}`}>
         <p
-          className={`mt-3 text-sm font-semibold ${
+          className={`${
+            decisionDesk
+              ? "text-[1.6rem] sm:text-[1.75rem]"
+              : "text-[1.55rem] sm:text-[1.7rem]"
+          } font-semibold leading-none tracking-tight tabular-nums ${
+            pendingNegotiation ? "text-amber-950" : "text-[#0f1f1d]"
+          }`}
+        >
+          {Number.isFinite(displayAmount)
+            ? formatMoneyLabel(displayAmount, offer.currency)
+            : "—"}
+        </p>
+        <p
+          className={`mt-1.5 text-[13px] font-semibold ${
             actionRequired
-              ? "text-amber-950"
+              ? "text-[#7a5a2b]"
               : statusHeader === "Kabul edildi"
                 ? "text-teal-900"
                 : statusHeader === "Reddedildi"
                   ? "text-[#6b7280]"
-                  : "text-[#0f1f1d]"
+                  : "text-[#0f1f1d]/70"
           }`}
         >
           {statusHeader}
         </p>
-
         {!compareStripLayout ? (
-          <>
-            <p
-              className={`mt-3 text-[1.85rem] font-semibold leading-none tracking-tight tabular-nums ${
-                pendingNegotiation ? "text-amber-950" : "text-[#0f1f1d]"
-              }`}
-            >
-              {Number.isFinite(displayAmount)
-                ? formatMoneyLabel(displayAmount, offer.currency)
-                : "—"}
-            </p>
-            <p className="mt-1.5 text-[11px] font-medium text-black/40">
-              {priceCaption}
-            </p>
-          </>
-        ) : (
-          <p
-            className={`mt-3 text-xl font-semibold leading-none tracking-tight tabular-nums lg:sr-only ${
-              pendingNegotiation ? "text-amber-950" : "text-[#0f1f1d]"
-            }`}
-          >
-            {Number.isFinite(displayAmount)
-              ? formatMoneyLabel(displayAmount, offer.currency)
-              : "—"}
+          <p className="mt-1 text-[11px] font-medium text-black/40">
+            {priceCaption}
           </p>
-        )}
+        ) : null}
       </div>
 
       <div className={sectionOrder}>
@@ -274,6 +276,7 @@ export function IncomingOfferCard({
           label="Satıcının mesajı"
           message={offer.description}
           emptyLabel="Satıcı henüz bir açıklama eklemedi."
+          variant={decisionDesk ? "editorial" : "panel"}
         />
       </div>
 
@@ -320,7 +323,7 @@ export function IncomingOfferCard({
       ) : null}
 
       {showActions ? (
-        <div className={footerOrder}>
+        <div className={`${footerOrder} ${decisionDesk ? "mt-4" : ""}`}>
           <OfferActions
             offerId={offer.id}
             hasPendingNegotiation={Boolean(pendingNegotiation)}
@@ -330,7 +333,7 @@ export function IncomingOfferCard({
             onBargain={() => setComposerOpen(true)}
             bargainDisabled={busy || composerOpen}
             locked={Boolean(panelBusy)}
-            layout="footer"
+            layout={decisionDesk ? "compact" : "footer"}
             composerOpen={composerOpen}
             negotiationSent={negotiationSent}
             negotiationSubmitting={panelBusy === "propose"}
@@ -353,8 +356,12 @@ export function IncomingOfferCard({
       ) : null}
 
       {showWaitingFooter ? (
-        <div className={footerOrder}>
-          <OfferWaitingFooter message={statusHeader} hint={waitingHint} />
+        <div className={`${footerOrder} ${decisionDesk ? "mt-2" : ""}`}>
+          <OfferWaitingFooter
+            message={decisionDesk ? waitingHint : statusHeader}
+            hint={decisionDesk ? undefined : waitingHint}
+            compact={decisionDesk}
+          />
         </div>
       ) : null}
 

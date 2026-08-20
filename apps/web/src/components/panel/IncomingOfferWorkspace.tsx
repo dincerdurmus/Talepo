@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   GitCompareArrows,
   MapPin,
   Wallet,
@@ -16,8 +17,8 @@ import {
 import { IncomingOfferWorkspaceListItem } from "@/components/panel/IncomingOfferWorkspaceListItem";
 import { IncomingRequestCover } from "@/components/panel/IncomingRequestCover";
 import { OfferCardSeenMarker } from "@/components/panel/OfferCardSeenMarker";
-import { OfferCompareRail } from "@/components/panel/OfferCompareRail";
 import { OfferCompareToggle } from "@/components/panel/OfferCompareToggle";
+import { OfferDecisionStrip } from "@/components/panel/OfferDecisionStrip";
 import { OfferGroupLiveUnreadProvider } from "@/components/panel/OfferGroupLiveUnreadContext";
 import type { IncomingRequestSummaryData } from "@/components/panel/IncomingOfferCompareGroup";
 import { compareOffersByCompleteness } from "@/lib/offer/offer-completeness";
@@ -147,19 +148,26 @@ export function IncomingOfferWorkspace({
     .filter(Boolean)
     .join(" · ");
 
+  const metaLine = [
+    request.city,
+    request.budgetLabel,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:space-y-4 lg:pb-0">
+    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] lg:space-y-3.5 lg:pb-0">
       <Link
         href={inboxBackHref}
-        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-3.5 py-2 text-sm font-semibold text-teal-950/80 shadow-[0_1px_2px_rgba(15,31,29,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2"
+        className="inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1.5 text-sm font-medium text-teal-950/65 transition hover:bg-black/[0.03] hover:text-teal-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2"
       >
         <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
         Gelen tekliflere dön
       </Link>
 
-      <section className="talepo-card overflow-hidden">
-        <div className="flex items-center gap-3 px-3 py-2.5 sm:px-4 sm:py-3">
-          <div className="h-[4.5rem] w-[4.5rem] shrink-0 sm:h-20 sm:w-20">
+      <section className="overflow-hidden rounded-[18px] border border-teal-900/8 bg-[linear-gradient(135deg,#FAFCFB_0%,#F5F8F7_100%)] px-3 py-2.5 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-3">
+          <div className="h-14 w-14 shrink-0 sm:h-16 sm:w-16">
             <IncomingRequestCover
               coverImageUrl={request.coverImageUrl}
               categorySlug={request.categorySlug}
@@ -169,57 +177,67 @@ export function IncomingOfferWorkspace({
             />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <h1 className="truncate text-base font-semibold tracking-tight text-[#0f1f1d] sm:text-lg">
-                {request.title}
-              </h1>
-              {request.city ? (
-                <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-black/45">
-                  <MapPin className="h-3 w-3" aria-hidden />
-                  {request.city}
-                </span>
-              ) : null}
-              {request.budgetLabel ? (
-                <span className="inline-flex shrink-0 items-center gap-0.5 text-xs text-black/45">
-                  <Wallet className="h-3 w-3" aria-hidden />
-                  {request.budgetLabel}
-                </span>
-              ) : null}
-            </div>
-            <p className="mt-0.5 line-clamp-1 text-xs text-teal-950/70 sm:text-sm">
+            <h1 className="truncate text-[15px] font-semibold tracking-tight text-[#0f1f1d] sm:text-base">
+              {request.title}
+            </h1>
+            {metaLine ? (
+              <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-black/45">
+                {request.city ? (
+                  <span className="inline-flex items-center gap-0.5">
+                    <MapPin className="h-3 w-3" aria-hidden />
+                    {request.city}
+                  </span>
+                ) : null}
+                {request.budgetLabel ? (
+                  <span className="inline-flex items-center gap-0.5">
+                    <Wallet className="h-3 w-3" aria-hidden />
+                    {request.budgetLabel}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            <p className="mt-0.5 line-clamp-1 text-[12px] text-teal-950/65">
               {statsLine}
             </p>
-            <Link
-              href={`/panel/taleplerim/${request.id}`}
-              className="mt-1 inline-flex min-h-9 items-center text-xs font-semibold text-[#0f766e] hover:underline sm:text-sm"
-            >
-              Talebi aç
-            </Link>
           </div>
+          <Link
+            href={`/panel/taleplerim/${request.id}`}
+            className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-xl border border-teal-900/10 bg-white/80 px-3 text-[12px] font-semibold text-teal-900/80 transition hover:bg-white"
+          >
+            Talebi aç
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+          </Link>
         </div>
       </section>
 
       {rankedForCompare.length >= 2 ? (
-        <div className="rounded-2xl border border-teal-900/10 bg-white">
+        <div className="overflow-hidden rounded-[16px] border border-teal-900/8 bg-[linear-gradient(135deg,#FAFCFB_0%,#F4F7F6_100%)]">
           <button
             type="button"
             aria-expanded={compareOpen}
             aria-controls={comparePanelId}
             onClick={() => setCompareOpen((value) => !value)}
-            className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left"
+            className="flex min-h-12 w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-white/50 sm:px-4"
           >
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#0f1f1d]">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[#f4efe6] text-[#8a6a3d] ring-1 ring-amber-900/5">
               <GitCompareArrows className="h-4 w-4" aria-hidden />
-              Teklifleri karşılaştır
             </span>
-            <span className="text-xs text-black/40">
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-[#0f1f1d]">
+                Teklifleri karşılaştır
+              </span>
+              <span className="mt-0.5 block text-[12px] text-black/40">
+                {rankedForCompare.length} teklifi yan yana inceleyin
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full border border-teal-900/10 bg-white px-2.5 py-1 text-[11px] font-semibold text-teal-950/65">
               {compareOpen ? "Gizle" : "Göster"}
             </span>
           </button>
           {compareOpen ? (
             <div
               id={comparePanelId}
-              className="border-t border-teal-900/8 px-4 py-3"
+              className="border-t border-teal-900/8 bg-white/70 px-3.5 py-3 sm:px-4"
             >
               <OfferCompareToggle
                 offers={rankedForCompare.map((row) => {
@@ -241,9 +259,9 @@ export function IncomingOfferWorkspace({
         </div>
       ) : null}
 
-      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] lg:items-start lg:gap-4">
+      <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(260px,30%)_minmax(0,1fr)] lg:items-start lg:gap-4">
         <section
-          className={`min-w-0 space-y-2 lg:max-h-[calc(100dvh-12rem)] lg:overflow-y-auto ${
+          className={`min-w-0 space-y-2 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto lg:pr-0.5 ${
             mobileView === "detail" ? "hidden lg:block" : ""
           }`}
           aria-label="Teklif listesi"
@@ -292,7 +310,7 @@ export function IncomingOfferWorkspace({
             <button
               type="button"
               onClick={returnToOfferList}
-              className="mb-2 inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-3.5 py-2 text-sm font-semibold text-teal-950/80 shadow-[0_1px_2px_rgba(15,31,29,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2 lg:hidden"
+              className="mb-2 inline-flex min-h-10 items-center gap-2 rounded-full px-2.5 py-1.5 text-sm font-medium text-teal-950/65 transition hover:bg-black/[0.03] lg:hidden"
             >
               <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
               Teklif listesine dön
@@ -300,16 +318,16 @@ export function IncomingOfferWorkspace({
           ) : null}
 
           {selected ? (
-            <div className="talepo-card relative min-w-0 overflow-hidden">
+            <div className="relative min-w-0 overflow-hidden rounded-[20px] border border-teal-900/10 bg-white shadow-[0_10px_36px_rgba(15,31,29,0.04)]">
               <h2
                 ref={detailHeadingRef}
                 tabIndex={-1}
-                className="border-b border-teal-900/8 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40 outline-none"
+                className="border-b border-teal-900/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40 outline-none sm:px-5"
               >
                 Seçilen teklif
               </h2>
-              <div className="flex min-w-0 flex-col overflow-x-hidden lg:grid lg:grid-cols-[5.75rem_minmax(0,1fr)]">
-                <OfferCompareRail
+              <div className="px-4 pt-2.5 sm:px-5">
+                <OfferDecisionStrip
                   viewer="buyer"
                   offer={{
                     status: selected.card.status,
@@ -321,37 +339,38 @@ export function IncomingOfferWorkspace({
                   budgetMax={request.budgetMax}
                   requestCurrency={request.currency}
                 />
-                <OfferGroupLiveUnreadProvider isUnread={selectedUnread}>
-                  <IncomingOfferCard
-                    offer={selected.card}
-                    actionable={selected.actionable}
-                    completeness={selected.completeness}
-                    trust={selected.trust}
-                    rank={selected.rank}
-                    isUnread={selectedUnread}
-                    compareStripLayout
-                    canArchive={canArchiveOffer({
-                      offer: {
-                        status: selected.card.status,
-                        negotiations: selected.card.negotiations,
-                      },
-                      isUnread: selectedUnread,
-                      isActionRequired: isActionRequiredOffer("buyer", {
-                        status: selected.card.status,
-                        negotiations: selected.card.negotiations,
-                      }),
-                    })}
-                    isArchived={
-                      archivedSet.has(selected.card.id) || archiveView
-                    }
-                    highlightNegotiationId={
-                      selectedOfferId === initialOfferId
-                        ? highlightNegotiationId
-                        : null
-                    }
-                  />
-                </OfferGroupLiveUnreadProvider>
               </div>
+              <OfferGroupLiveUnreadProvider isUnread={selectedUnread}>
+                <IncomingOfferCard
+                  offer={selected.card}
+                  actionable={selected.actionable}
+                  completeness={selected.completeness}
+                  trust={selected.trust}
+                  rank={selected.rank}
+                  isUnread={selectedUnread}
+                  compareStripLayout
+                  decisionDesk
+                  canArchive={canArchiveOffer({
+                    offer: {
+                      status: selected.card.status,
+                      negotiations: selected.card.negotiations,
+                    },
+                    isUnread: selectedUnread,
+                    isActionRequired: isActionRequiredOffer("buyer", {
+                      status: selected.card.status,
+                      negotiations: selected.card.negotiations,
+                    }),
+                  })}
+                  isArchived={
+                    archivedSet.has(selected.card.id) || archiveView
+                  }
+                  highlightNegotiationId={
+                    selectedOfferId === initialOfferId
+                      ? highlightNegotiationId
+                      : null
+                  }
+                />
+              </OfferGroupLiveUnreadProvider>
               {selectedUnread ? (
                 <OfferCardSeenMarker
                   offerId={selected.card.id}
@@ -363,7 +382,7 @@ export function IncomingOfferWorkspace({
               ) : null}
             </div>
           ) : (
-            <div className="talepo-card px-5 py-10 text-center text-sm text-black/45">
+            <div className="rounded-[20px] border border-teal-900/8 bg-white px-5 py-10 text-center text-sm text-black/45">
               Görüntülemek için bir teklif seçin.
             </div>
           )}
