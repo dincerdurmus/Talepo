@@ -1390,6 +1390,33 @@ export function getDistrictsForProvince(il: string): string[] {
   return found?.ilceler ?? [];
 }
 
+/** Map free-text province to canonical registry label (Turkish case-fold). */
+export function resolveCanonicalProvince(value: string | null | undefined): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  const needle = trimmed.toLocaleLowerCase("tr-TR");
+  return (
+    TURKEY_IL_NAMES.find(
+      (name) => name.toLocaleLowerCase("tr-TR") === needle,
+    ) ?? trimmed
+  );
+}
+
+/** Map free-text district to canonical label for a province (Turkish case-fold). */
+export function resolveCanonicalDistrict(
+  il: string,
+  value: string | null | undefined,
+): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed || !il) return "";
+  const districts = getDistrictsForProvince(il);
+  const needle = trimmed.toLocaleLowerCase("tr-TR");
+  return (
+    districts.find((name) => name.toLocaleLowerCase("tr-TR") === needle) ??
+    trimmed
+  );
+}
+
 export function formatRealEstateCity(il: string, ilce: string): string {
   return `${il} / ${ilce}`;
 }

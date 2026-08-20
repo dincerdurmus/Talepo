@@ -86,6 +86,12 @@ check("private fields marked with lock", account.includes("Özel"));
 const preview = read("src/components/panel/profile/PublicProfilePreviewPanel.tsx");
 check("preview uses same PublicProfileCard", preview.includes("PublicProfileCard"));
 check("preview embedded mode label", preview.includes("Başkalarının gördüğü görünüm"));
+check(
+  "profile editor city/district use turkey districts authority",
+  editor.includes("TURKEY_IL_NAMES") &&
+    editor.includes("getDistrictsForProvince") &&
+    editor.includes("resolveCanonicalProvince"),
+);
 
 const drawer = read("src/components/panel/ParticipantProfileDrawer.tsx");
 check("drawer skeleton while loading", drawer.includes("DrawerSkeleton"));

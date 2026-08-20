@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Bell, Crown, Lock } from "lucide-react";
+import { ArrowRight, Bell, Crown } from "lucide-react";
 
 import type { ProfileEditorValues } from "@/components/panel/ProfileEditor";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
@@ -82,15 +82,15 @@ export function ProfileAccountPanel({
 
 function PrivateField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-teal-950/[0.06] bg-white/70 px-4 py-3.5">
-      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-950/40">
-        <Lock className="h-3 w-3" aria-hidden />
-        {label} · Özel
-      </p>
-      <p className="mt-1.5 text-sm font-semibold text-[#0f1f1d]">{value}</p>
-      <div className="mt-1.5">
+    <div className="rounded-[12px] border border-teal-950/[0.07] bg-white px-3.5 py-3">
+      <p className="inline-flex flex-wrap items-center gap-2 text-[12px] font-medium text-[#0f1f1d]/58">
+        <span>
+          {label}
+          <span className="text-[#0f1f1d]/35"> · Özel</span>
+        </span>
         <SignalPrivateLabel />
-      </div>
+      </p>
+      <p className="mt-1.5 text-[13px] font-semibold text-[#0f1f1d]">{value}</p>
     </div>
   );
 }

@@ -87,6 +87,7 @@ export function ProfilePageContent({
         image={hero.image}
         initials={hero.initials}
         accountTypeLabel={hero.accountTypeLabel}
+        planLabel={account.planLabel}
         locationLabel={hero.locationLabel}
         memberSinceLabel={hero.memberSinceLabel}
         completionPercent={hero.completionPercent}

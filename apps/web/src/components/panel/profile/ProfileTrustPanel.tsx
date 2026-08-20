@@ -18,7 +18,6 @@ import {
 import { StarRatingDistribution } from "./StarRatingDistribution";
 
 export function ProfileTrustPanel({
-  trustAuthority,
   personalTrust,
   companyTrust,
   buyerTrust,
@@ -72,7 +71,7 @@ export function ProfileTrustPanel({
         >
           <ProfileTrustCompactEmptyState
             showCompletedSignal={false}
-            className="max-h-[260px] sm:max-h-[220px]"
+            className="sm:max-h-none"
           />
           {pendingBlindCount > 0 ? (
             <p className="mt-5 rounded-xl border border-teal-900/10 bg-teal-950/[0.02] px-4 py-3 text-sm text-teal-950/70">
@@ -95,15 +94,15 @@ export function ProfileTrustPanel({
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
             <div className="motion-safe:animate-[signalFadeIn_220ms_ease-out]">
               <div className="flex items-end gap-3">
-                <p className="text-5xl font-semibold tabular-nums tracking-tight text-[#0f1f1d]">
+                <p className="text-4xl font-semibold tabular-nums tracking-tight text-[#0f1f1d] sm:text-5xl">
                   {formatAverageRating(primaryTrust.averageRating)}
                 </p>
                 <Star
-                  className="mb-2 h-7 w-7 fill-amber-400 text-amber-400"
+                  className="mb-1.5 h-6 w-6 fill-amber-400 text-amber-400"
                   aria-hidden
                 />
               </div>
-              <p className="mt-1 text-sm text-teal-950/50">
+              <p className="mt-1 text-[13px] text-[#0f1f1d]/52">
                 {formatReviewCount(primaryTrust.reviewCount)} ·{" "}
                 {primaryTrust.completedTransactions} tamamlanan işlem
               </p>
@@ -205,16 +204,16 @@ function TrustChannel({
   completedLabel: string;
 }) {
   return (
-    <div className="rounded-xl border border-teal-950/[0.06] bg-white/60 px-3.5 py-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-teal-950/40">
+    <div className="rounded-[12px] border border-teal-950/[0.07] bg-white/75 px-3.5 py-3">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#0f1f1d]/48">
         {label}
       </p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-[#0f1f1d]">
+      <p className="mt-1 text-[15px] font-semibold tabular-nums text-[#0f1f1d]">
         {trust.averageRating != null
           ? formatAverageRating(trust.averageRating)
           : "—"}
       </p>
-      <p className="mt-0.5 text-[11px] text-teal-950/45">
+      <p className="mt-0.5 text-[11px] text-[#0f1f1d]/52">
         {formatReviewCount(trust.reviewCount)} · {trust.completedTransactions}{" "}
         {completedLabel}
       </p>
