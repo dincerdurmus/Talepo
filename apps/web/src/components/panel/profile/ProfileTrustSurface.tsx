@@ -32,22 +32,26 @@ export function ProfileTrustCompactEmptyState({
 }) {
   return (
     <div
-      className={`rounded-xl border border-dashed border-teal-900/12 bg-teal-950/[0.02] px-5 py-6 text-center sm:max-h-[220px] sm:py-7 ${className}`}
+      className={`rounded-[14px] border border-teal-900/[0.08] bg-[#f7faf9] px-3.5 py-3.5 ${className}`}
     >
-      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border border-teal-800/10 bg-white/70">
-        <Orbit className="h-4 w-4 text-teal-800/45" aria-hidden />
-      </div>
-      <p className="mt-3 text-sm font-semibold text-[#0f1f1d]">
-        Güven profili oluşuyor
-      </p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-teal-950/50">
-        {description}
-      </p>
-      {showCompletedSignal && completedTransactions > 0 ? (
-        <div className="mt-3 flex justify-center">
-          <CompletedTransactionBadge count={completedTransactions} />
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] border border-teal-800/10 bg-white text-teal-800/50">
+          <Orbit className="h-3.5 w-3.5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold text-[#0f1f1d]">
+            Güven profili oluşuyor
+          </p>
+          <p className="mt-1 text-[12px] leading-5 text-[#0f1f1d]/55">
+            {description}
+          </p>
+          {showCompletedSignal && completedTransactions > 0 ? (
+            <div className="mt-2">
+              <CompletedTransactionBadge count={completedTransactions} />
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -65,7 +69,7 @@ export function ProfileTrustPublicSections({
     return (
       <ProfileTrustCompactEmptyState
         completedTransactions={profile.trust.completedTransactions}
-        className="max-h-[260px] sm:max-h-[220px]"
+        className="sm:max-h-none"
       />
     );
   }

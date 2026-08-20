@@ -17,11 +17,13 @@ import {
   signalSurface,
 } from "@/components/panel/profile/ProfileSignal";
 import {
+  ProfileTrustCompactEmptyState,
   ProfileTrustDrawerFollowUp,
   ProfileTrustHeroMetrics,
   ProfileTrustPublicSections,
 } from "@/components/panel/profile/ProfileTrustSurface";
 import type { PublicProfileDto } from "@/lib/profile/public-profile";
+import { shouldShowTrustCompactEmpty } from "@/lib/profile/trust-surface";
 
 type ParticipantProfileDrawerProps = {
   open: boolean;
@@ -296,45 +298,48 @@ export function PublicProfileCard({
   const bio = profile.biography?.trim() ?? "";
   const bioPreview =
     bio.length > 280 && !bioExpanded ? `${bio.slice(0, 280).trim()}…` : bio;
+  const hasTrustSignal =
+    profile.trust.reviewCount > 0 || profile.trust.completedTransactions > 0;
+  const showTrustSections = !shouldShowTrustCompactEmpty(
+    profile.trust,
+    profile.recentVisibleReviews,
+  );
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
       <div className={`${signalHeroSurface} p-5 sm:p-6`}>
-        <SignalOrbitDecor />
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3.5">
             <ProfileAvatar profile={profile} size="lg" />
             <div className="min-w-0">
-              <h1 className="text-3xl font-semibold tracking-tight text-[#0f1f1d] sm:text-4xl">
+              <h1 className="text-[1.55rem] font-semibold tracking-tight text-[#0f1f1d] sm:text-[1.75rem]">
                 {profile.displayName}
               </h1>
-              <p className="mt-1 text-sm text-teal-950/50">
-                {profile.accountType === "company" ? "Firma profili" : "Kişisel profil"}
+              <p className="mt-1 text-[13px] text-[#3d5c58]/85">
+                {profile.accountType === "company"
+                  ? "Firma profili"
+                  : "Kişisel profil"}
               </p>
               {profile.kind === "company" && profile.representativeName ? (
-                <p className="mt-1 text-sm text-teal-950/45">
+                <p className="mt-0.5 text-[12px] text-[#0f1f1d]/50">
                   Temsilci: {profile.representativeName}
                 </p>
               ) : null}
               {profile.locationLabel ? (
-                <p className="mt-3 inline-flex items-center gap-2 text-sm text-teal-950/55">
-                  <MapPin className="h-4 w-4 shrink-0" />
-                  {profile.locationLabel} · {profile.memberSinceLabel}
+                <p className="mt-2 inline-flex items-center gap-1.5 text-[13px] text-[#0f1f1d]/58">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                  {profile.locationLabel}
                 </p>
-              ) : (
-                <p className="mt-3 text-sm text-teal-950/45">
-                  {profile.memberSinceLabel}
-                </p>
-              )}
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <ProfileTrustHeroMetrics trust={profile.trust} />
-              </div>
+              ) : null}
+              <p className="mt-1 text-[12px] text-[#0f1f1d]/48">
+                Üyelik: {profile.memberSinceLabel}
+              </p>
               {profile.verifiedIndicators.length > 0 ? (
-                <ul className="mt-3 flex flex-wrap gap-1.5">
+                <ul className="mt-2.5 flex flex-wrap gap-1.5">
                   {profile.verifiedIndicators.map((item) => (
                     <li
                       key={item}
-                      className="inline-flex items-center gap-1 rounded-full border border-teal-900/10 bg-white/70 px-2.5 py-1 text-xs font-medium text-teal-900/75"
+                      className="inline-flex items-center gap-1 rounded-full border border-teal-900/10 bg-white/80 px-2.5 py-1 text-[11px] font-medium text-teal-900/75"
                     >
                       <CheckCircle2 className="h-3.5 w-3.5" />
                       {item}
@@ -345,75 +350,94 @@ export function PublicProfileCard({
             </div>
           </div>
 
-          {!previewMode && conversationBackHref ? (
-            <div className="hidden shrink-0 lg:block">
+          <div className="w-full shrink-0 sm:max-w-[14.5rem]">
+            {hasTrustSignal ? (
+              <div className="rounded-[14px] border border-teal-900/[0.08] bg-white/75 px-3.5 py-3">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#3d5c58]/75">
+                  Güven özeti
+                </p>
+                <div className="mt-2">
+                  <ProfileTrustHeroMetrics trust={profile.trust} />
+                </div>
+              </div>
+            ) : (
+              <ProfileTrustCompactEmptyState
+                showCompletedSignal={false}
+                description="İlk tamamlanan ve görünür değerlendirmeden sonra puan ve yorumlar burada gösterilecek."
+              />
+            )}
+          </div>
+        </div>
+
+        {!previewMode && conversationBackHref ? (
+          <>
+            <div className="relative mt-5 hidden lg:block">
               <Link
                 href={conversationBackHref}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-teal-900/12 bg-white/70 px-5 py-2.5 text-sm font-semibold text-teal-950 transition hover:border-teal-800/25 hover:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/12 bg-white/80 px-4 text-sm font-semibold text-teal-950 transition hover:border-teal-800/20"
               >
                 <MessageSquare className="h-4 w-4" />
                 {backLabel}
               </Link>
-              <p className="mt-2 max-w-[220px] text-[11px] leading-5 text-teal-950/40">
+              <p className="mt-2 max-w-sm text-[11px] leading-5 text-[#0f1f1d]/45">
                 Doğrudan telefon veya e-posta paylaşımı yapılmaz.
               </p>
             </div>
-          ) : null}
-        </div>
-
-        {!previewMode && conversationBackHref ? (
-          <div className="relative mt-5 lg:hidden">
-            <Link
-              href={conversationBackHref}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white"
-            >
-              <MessageSquare className="h-4 w-4" />
-              {backLabel}
-            </Link>
-            <p className="mt-2 text-center text-[11px] leading-5 text-teal-950/40">
-              Doğrudan telefon veya e-posta paylaşımı yapılmaz.
-            </p>
-          </div>
+            <div className="relative mt-5 lg:hidden">
+              <Link
+                href={conversationBackHref}
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white"
+              >
+                <MessageSquare className="h-4 w-4" />
+                {backLabel}
+              </Link>
+              <p className="mt-2 text-center text-[11px] leading-5 text-[#0f1f1d]/45">
+                Doğrudan telefon veya e-posta paylaşımı yapılmaz.
+              </p>
+            </div>
+          </>
         ) : null}
       </div>
 
       {bio ? (
-        <div className={`${signalSurface} p-5 sm:p-6`}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+        <section className={`${signalSurface} p-4 sm:p-5`}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/75">
             Hakkında
           </p>
-          <p className="mt-2 text-sm leading-7 text-teal-950/65">{bioPreview}</p>
+          <p className="mt-2 text-[14px] leading-6 text-[#0f1f1d]/78">{bioPreview}</p>
           {bio.length > 280 ? (
             <button
               type="button"
               onClick={() => setBioExpanded((value) => !value)}
-              className="mt-2 text-sm font-semibold text-teal-800"
+              className="mt-2 text-[13px] font-semibold text-teal-800"
             >
               {bioExpanded ? "Daha az göster" : "Devamını oku"}
             </button>
           ) : null}
-        </div>
+        </section>
       ) : null}
 
       {profile.expertiseCategories.length > 0 ? (
-        <div className={`${signalSurface} p-5 sm:p-6`}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/40">
+        <section className={`${signalSurface} p-4 sm:p-5`}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/75">
             Uzmanlık alanları
           </p>
-          <div className="mt-2 flex flex-wrap gap-1.5">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {profile.expertiseCategories.map((category) => (
               <span
                 key={category}
-                className="rounded-full bg-teal-950/[0.04] px-2.5 py-1 text-xs font-medium text-teal-900/70"
+                className="rounded-full border border-teal-900/8 bg-white px-2.5 py-1 text-[12px] font-medium text-teal-900/75"
               >
                 {category}
               </span>
             ))}
           </div>
-        </div>
+        </section>
       ) : null}
 
-      <ProfileTrustPublicSections profile={profile} />
+      {showTrustSections ? (
+        <ProfileTrustPublicSections profile={profile} />
+      ) : null}
     </div>
   );
 }

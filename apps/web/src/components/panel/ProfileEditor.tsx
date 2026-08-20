@@ -2,8 +2,14 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle, Save } from "lucide-react";
+import { ChevronDown, Eye, LoaderCircle, Save } from "lucide-react";
 
+import {
+  getDistrictsForProvince,
+  resolveCanonicalDistrict,
+  resolveCanonicalProvince,
+  TURKEY_IL_NAMES,
+} from "@/lib/geo/turkey-districts";
 import {
   PUBLIC_PROFILE_BIO_MAX,
   PUBLIC_PROFILE_NAME_MAX,
@@ -13,7 +19,10 @@ import {
   SignalPrivateLabel,
   SignalSaveSuccess,
   SignalSection,
+  signalEditorialInput,
+  signalHelper,
   signalInput,
+  signalLabel,
 } from "./profile/ProfileSignal";
 
 export type ProfileEditorValues = {
@@ -24,17 +33,43 @@ export type ProfileEditorValues = {
   biography: string;
 };
 
+function hydrateLocation(values: ProfileEditorValues): ProfileEditorValues {
+  const city = resolveCanonicalProvince(values.city);
+  const district = resolveCanonicalDistrict(city, values.district);
+  return { ...values, city, district };
+}
+
 export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
   const router = useRouter();
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState(() => hydrateLocation(initial));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
+  const hydratedInitial = useMemo(() => hydrateLocation(initial), [initial]);
+
   const isDirty = useMemo(
-    () => JSON.stringify(form) !== JSON.stringify(initial),
-    [form, initial],
+    () => JSON.stringify(form) !== JSON.stringify(hydratedInitial),
+    [form, hydratedInitial],
   );
+
+  const cityOptions = useMemo(() => {
+    if (form.city && !TURKEY_IL_NAMES.includes(form.city)) {
+      return [form.city, ...TURKEY_IL_NAMES];
+    }
+    return TURKEY_IL_NAMES;
+  }, [form.city]);
+
+  const districtOptions = useMemo(() => {
+    const known = form.city ? getDistrictsForProvince(form.city) : [];
+    if (form.district && known.length > 0 && !known.includes(form.district)) {
+      return [form.district, ...known];
+    }
+    if (form.district && known.length === 0) {
+      return [form.district];
+    }
+    return known;
+  }, [form.city, form.district]);
 
   function update<K extends keyof ProfileEditorValues>(
     key: K,
@@ -42,6 +77,18 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
   ) {
     setSaved(false);
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function onCityChange(nextCity: string) {
+    setSaved(false);
+    setForm((current) => {
+      const districts = nextCity ? getDistrictsForProvince(nextCity) : [];
+      const keepDistrict =
+        current.district && districts.includes(current.district)
+          ? current.district
+          : "";
+      return { ...current, city: nextCity, district: keepDistrict };
+    });
   }
 
   async function onSubmit(event: FormEvent) {
@@ -98,14 +145,14 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
   }
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className="space-y-4">
       <SignalSection
-        title="Profil bilgileri"
-        description="Konuşmalarda görünen güvenli alanları güncelleyin."
+        title="Görünen profil"
+        description="Konuşmalarda ve herkese açık profilinizde görünen alanlar."
         action={
           <div className="flex flex-col items-end gap-1">
             {isDirty && !saved ? (
-              <span className="text-[11px] font-medium text-amber-700">
+              <span className="text-[11px] font-medium text-amber-800/85">
                 Kaydedilmemiş değişiklikler
               </span>
             ) : null}
@@ -113,7 +160,7 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
           </div>
         }
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-x-4 sm:gap-y-3">
           <Field
             label="Ad soyad / görünen ad"
             required
@@ -128,57 +175,87 @@ export function ProfileEditor({ initial }: { initial: ProfileEditorValues }) {
             onChange={(value) => update("country", value)}
             placeholder="Türkiye"
           />
-          <Field
+          <SelectField
             label="Şehir"
             value={form.city}
-            onChange={(value) => update("city", value)}
-            placeholder="İstanbul"
+            onChange={onCityChange}
+            placeholder="Şehir seçin"
+            options={cityOptions}
           />
-          <Field
-            label="İlçe"
-            value={form.district}
-            onChange={(value) => update("district", value)}
-            placeholder="Bağcılar"
-            privateField
-            hint="Public profilde gösterilmez"
-          />
-          <label className="block sm:col-span-2">
-            <span className="text-xs font-medium text-teal-950/45">Hakkımda</span>
+        </div>
+
+        <div className="mt-5 border-t border-teal-950/[0.06] pt-5">
+          <label className="block w-full">
+            <span className="inline-flex flex-wrap items-center gap-2">
+              <span className={signalLabel}>Hakkımda</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[#3d5c58]/80">
+                <Eye className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                Herkese açık
+              </span>
+            </span>
             <textarea
               value={form.biography}
               onChange={(event) => update("biography", event.target.value)}
-              rows={4}
+              rows={5}
               maxLength={PUBLIC_PROFILE_BIO_MAX}
               placeholder="Kısaca kendinizi veya uzmanlığınızı anlatın…"
-              className={`${signalInput} resize-none`}
+              className={signalEditorialInput}
             />
-            <span className="mt-1 block text-[11px] text-teal-950/35">
-              {form.biography.length}/{PUBLIC_PROFILE_BIO_MAX}
+            <span className="mt-1.5 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+              <span className={signalHelper}>
+                Kısa ve net tutun · Herkese açık profilinizde görünür
+              </span>
+              <span className="shrink-0 text-[11px] tabular-nums text-[#0f1f1d]/52">
+                {form.biography.length} / {PUBLIC_PROFILE_BIO_MAX}
+              </span>
             </span>
           </label>
         </div>
+      </SignalSection>
 
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
-
-        <div className="mt-6 border-t border-teal-950/[0.06] pt-5">
-          <button
-            type="submit"
-            disabled={busy || !isDirty}
-            className={`inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
-              isDirty
-                ? "bg-[#0f1f1d] text-white hover:bg-black"
-                : "border border-teal-950/10 bg-white/60 text-teal-950/35"
-            } disabled:opacity-60`}
-          >
-            {busy ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            Kaydet
-          </button>
+      <SignalSection
+        title="Özel bilgiler"
+        description="Bu alanlar herkese açık profilinizde gösterilmez."
+      >
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-x-4">
+          <SelectField
+            label="İlçe"
+            value={form.district}
+            onChange={(value) => update("district", value)}
+            placeholder={form.city ? "İlçe seçin" : "Önce şehir seçin"}
+            options={districtOptions}
+            disabled={!form.city}
+            privateField
+            hint="Herkese açık profilinizde gösterilmez"
+          />
         </div>
       </SignalSection>
+
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+
+      <div className="flex flex-wrap items-center gap-3 pt-1">
+        <button
+          type="submit"
+          disabled={busy || !isDirty}
+          className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold transition sm:w-auto ${
+            isDirty
+              ? "bg-[#0f766e] text-white hover:bg-[#0d6a63]"
+              : "border border-teal-950/10 bg-white text-[#0f1f1d]/35"
+          } disabled:opacity-60`}
+        >
+          {busy ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          Değişiklikleri kaydet
+        </button>
+        {isDirty && !saved ? (
+          <span className="text-[12px] text-amber-800/80">
+            Kaydetmeden ayrılırsanız değişiklikler kaybolur.
+          </span>
+        ) : null}
+      </div>
     </form>
   );
 }
@@ -190,8 +267,6 @@ function Field({
   placeholder,
   required,
   maxLength,
-  hint,
-  privateField,
 }: {
   label: string;
   value: string;
@@ -199,15 +274,10 @@ function Field({
   placeholder?: string;
   required?: boolean;
   maxLength?: number;
-  hint?: string;
-  privateField?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="inline-flex flex-wrap items-center gap-2 text-xs font-medium text-teal-950/45">
-        {label}
-        {privateField ? <SignalPrivateLabel /> : null}
-      </span>
+      <span className={signalLabel}>{label}</span>
       <input
         required={required}
         value={value}
@@ -216,9 +286,56 @@ function Field({
         placeholder={placeholder}
         className={signalInput}
       />
-      {hint ? (
-        <span className="mt-1 block text-[11px] text-teal-950/35">{hint}</span>
-      ) : null}
+    </label>
+  );
+}
+
+function SelectField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  options,
+  disabled = false,
+  privateField = false,
+  hint,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  options: string[];
+  disabled?: boolean;
+  privateField?: boolean;
+  hint?: string;
+}) {
+  return (
+    <label className="block">
+      <span className="inline-flex flex-wrap items-center gap-2">
+        <span className={signalLabel}>{label}</span>
+        {privateField ? <SignalPrivateLabel /> : null}
+      </span>
+      <span className="relative mt-1.5 block">
+        <select
+          value={value}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${signalInput} mt-0 appearance-none pr-10 disabled:cursor-not-allowed disabled:bg-[#f4f6f5] disabled:text-[#0f1f1d]/40`}
+          aria-label={label}
+        >
+          <option value="">{placeholder}</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0f1f1d]/40"
+          aria-hidden
+        />
+      </span>
+      {hint ? <span className={signalHelper}>{hint}</span> : null}
     </label>
   );
 }
