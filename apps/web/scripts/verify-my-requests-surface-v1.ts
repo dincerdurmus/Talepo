@@ -175,8 +175,9 @@ check(
 );
 
 check(
-  "Geri hidden on exact Taleplerim dest only",
-  shell.includes('if (pathname === "/panel/taleplerim") return null') &&
+  "PanelBackLink shows frost Geri to /panel on Taleplerim list",
+  /pathname === "\/panel\/taleplerim"[\s\S]*?href="\/panel"/.test(shell) &&
+    !shell.includes('if (pathname === "/panel/taleplerim") return null') &&
     !shell.includes('if (pathname.startsWith("/panel/taleplerim")) return null'),
 );
 

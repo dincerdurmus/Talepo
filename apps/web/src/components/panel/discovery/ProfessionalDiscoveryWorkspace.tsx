@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Binoculars,
   Bookmark,
   Compass,
   Lightbulb,
@@ -30,7 +31,12 @@ import { DiscoveryWorkspaceActions } from "./DiscoveryWorkspaceActions";
 import { TaxonomyCascadeBrowse } from "./TaxonomyCascadeBrowse";
 import { TaxonomySearchBox } from "./TaxonomySearchBox";
 
-export type WorkspaceView = "suggested" | "browse" | "saved" | "radar";
+export type WorkspaceView =
+  | "suggested"
+  | "browse"
+  | "saved"
+  | "radar"
+  | "tracking";
 
 export type ProfessionalDiscoveryWorkspaceProps = {
   view: WorkspaceView;
@@ -77,12 +83,14 @@ const VIEW_TABS: Array<{
   { id: "suggested", label: "Önerilen", icon: <Lightbulb className="h-3.5 w-3.5" /> },
   { id: "radar", label: "Talepo Radar", icon: <Radar className="h-3.5 w-3.5" /> },
   { id: "browse", label: "Keşfet", icon: <Compass className="h-3.5 w-3.5" /> },
+  { id: "tracking", label: "Takip", icon: <Binoculars className="h-3.5 w-3.5" /> },
   { id: "saved", label: "Kaydettiklerim", icon: <Bookmark className="h-3.5 w-3.5" /> },
 ];
 
 function workspaceChrome(
   view: WorkspaceView,
   isPersonalSurface: boolean,
+  criteriaCount: number,
 ): {
   title: string;
   description: string;
@@ -110,6 +118,17 @@ function workspaceChrome(
       title: "Kaydettiklerim",
       description: "Daha sonra bakmak için kaydettiğiniz talepler.",
       summary: "Kayıtlı talepler",
+    };
+  }
+  if (view === "tracking") {
+    return {
+      title: "Takip",
+      description:
+        "Kayıtlı takip kriterlerinizden gelen açık fırsatlar. Kuralları Takiplerim’de yönetirsiniz.",
+      summary:
+        criteriaCount > 0
+          ? `${criteriaCount} aktif takip kriteri`
+          : "Henüz takip kriteri yok",
     };
   }
   return {
@@ -260,11 +279,17 @@ export function ProfessionalDiscoveryWorkspace({
       ? "browse"
       : view === "radar"
         ? "radar"
-        : "suggested";
+        : view === "tracking"
+          ? "tracking"
+          : "suggested";
+
+  const criteriaCount = trackedSearchCount + alertCount;
 
   const viewTabs = VIEW_TABS.filter((tab) => {
     if (tab.id === "saved" && !canWatchlist) return false;
     if (tab.id === "radar" && !canRadar) return false;
+    // Takip results live in the personal opportunity family only.
+    if (tab.id === "tracking" && !isPersonalSurface) return false;
     return true;
   }).map((tab) =>
     tab.id === "browse" && isPersonalSurface
@@ -272,21 +297,32 @@ export function ProfessionalDiscoveryWorkspace({
       : tab,
   );
 
-  const chrome = workspaceChrome(view, isPersonalSurface);
+  const chrome = workspaceChrome(view, isPersonalSurface, criteriaCount);
   const isRadarView = view === "radar";
   const isPoolView = view === "browse";
-  const shellTone = isRadarView ? "radar" : isPoolView ? "pool" : "opportunity";
+  const isTrackingView = view === "tracking";
+  const shellTone = isRadarView
+    ? "radar"
+    : isPoolView
+      ? "pool"
+      : isTrackingView
+        ? "follows"
+        : "opportunity";
   const shellClass = isRadarView
     ? "talepo-opportunity-shell talepo-opportunity-shell--radar"
     : isPoolView
       ? "talepo-opportunity-shell talepo-opportunity-shell--pool"
-      : "talepo-opportunity-shell";
+      : isTrackingView
+        ? "talepo-opportunity-shell talepo-opportunity-shell--follows"
+        : "talepo-opportunity-shell";
 
   return (
     <SignalActivityShell
       tone={shellTone}
       className={shellClass}
-      eyebrow={isRadarView ? "Talepo Radar" : "Fırsatlar"}
+      eyebrow={
+        isRadarView ? "Talepo Radar" : isTrackingView ? "Takip" : "Fırsatlar"
+      }
       title={chrome.title}
       description={chrome.description}
       summary={chrome.summary}
@@ -317,11 +353,15 @@ export function ProfessionalDiscoveryWorkspace({
             );
           })}
         </nav>
-
-        <Link href="/panel/takiplerim" className="talepo-opportunity-follow">
-          <Radar className="h-3.5 w-3.5" />
-          Takiplerim{trackedSearchCount > 0 ? ` (${trackedSearchCount})` : ""}
-        </Link>
+        {isTrackingView ? (
+          <Link
+            href="/panel/takiplerim"
+            className="talepo-opportunity-manage"
+          >
+            <Binoculars className="h-3.5 w-3.5" aria-hidden />
+            Takipleri yönet
+          </Link>
+        ) : null}
       </div>
 
       <div className="space-y-5">
@@ -492,6 +532,7 @@ export function ProfessionalDiscoveryWorkspace({
           canWatchlist={canWatchlist}
           view={hubView}
           opportunityContext={surface}
+          followCriteriaCount={criteriaCount}
         />
       )}
       </div>

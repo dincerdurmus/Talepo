@@ -7,6 +7,7 @@ import {
   getTaxonomyAncestorIds,
   getTaxonomyNode,
 } from "@/lib/taxonomy";
+import { getCategoryById } from "@/lib/request-category-engine";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
 
 import type { CanonicalDiscoveryFilter } from "./types";
@@ -94,7 +95,12 @@ export function summarizeSavedSearchFilters(filters: SavedSearchFilters): string
     return extras.length ? `${canonical} · ${extras.join(" · ")}` : canonical;
   }
   const parts: string[] = [];
-  if (filters.categorySlug) parts.push(filters.categorySlug);
+  if (filters.categorySlug) {
+    const category = getCategoryById(filters.categorySlug);
+    parts.push(
+      category.id === filters.categorySlug ? category.label : filters.categorySlug,
+    );
+  }
   if (filters.city) parts.push(filters.city);
   if (filters.keyword) parts.push(`"${filters.keyword}"`);
   if (filters.urgent) parts.push("Acil");

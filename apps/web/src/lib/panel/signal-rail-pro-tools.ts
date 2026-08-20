@@ -5,14 +5,12 @@ export const SIGNAL_RAIL_LOCKED_HINT =
 
 export type SignalRailProToolId =
   | "firsatlar"
-  | "takiplerim"
-  | "radar"
+  | "takip"
   | "teklif-zekasi";
 
 export type SignalRailProToolTone =
   | "opportunities"
   | "follows"
-  | "radar"
   | "intelligence";
 
 export type SignalRailProToolDefinition = {
@@ -28,6 +26,7 @@ export type SignalRailProToolDefinition = {
  * Personal Signal Rail Pro catalog.
  * Entitlement is decided with hasFeature(), never plan tier or admin role.
  * Basic Analiz is intentionally absent: it is a core panel surface.
+ * Talepo Radar is not a top-level Pro entry — it lives inside Fırsatlar.
  */
 export const SIGNAL_RAIL_PRO_TOOLS: readonly SignalRailProToolDefinition[] = [
   {
@@ -39,20 +38,12 @@ export const SIGNAL_RAIL_PRO_TOOLS: readonly SignalRailProToolDefinition[] = [
     requireAny: ["hot_opportunities"],
   },
   {
-    id: "takiplerim",
-    title: "Takiplerim",
-    description: "Kriterlerinle fırsatları kaçırma",
-    href: "/panel/takiplerim",
+    id: "takip",
+    title: "Takip",
+    description: "Kriterlerinden gelen fırsatlar",
+    href: "/panel/firsatlar?view=tracking",
     tone: "follows",
     requireAny: ["saved_searches", "smart_alerts"],
-  },
-  {
-    id: "radar",
-    title: "Talepo Radar",
-    description: "Olağan dışı ilgi gören açık talepler",
-    href: "/panel/firsatlar?view=radar",
-    tone: "radar",
-    requireAny: ["talepo_radar"],
   },
   {
     id: "teklif-zekasi",
@@ -88,7 +79,8 @@ function isProToolActive(
   href: string,
   id: SignalRailProToolId,
 ): boolean {
-  if (id === "radar" || id === "teklif-zekasi") return false;
+  // Query destinations share /panel/firsatlar with Fırsatlar — avoid dual-active.
+  if (id === "takip" || id === "teklif-zekasi") return false;
   const path = href.split("?")[0] ?? href;
   return pathname === path || pathname.startsWith(`${path}/`);
 }

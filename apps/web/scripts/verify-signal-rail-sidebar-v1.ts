@@ -262,9 +262,9 @@ console.log("\n=== PRO TOOLS LOCKED CATALOG ===\n");
   check(
     "all pro-only tools are catalogued",
     titles.includes("Fırsatlar") &&
-      titles.includes("Takiplerim") &&
-      titles.includes("Talepo Radar") &&
+      titles.includes("Takip") &&
       titles.includes("Teklif Zekâsı") &&
+      !titles.includes("Talepo Radar") &&
       standardTools.length === SIGNAL_RAIL_PRO_TOOLS.length,
   );
   check(
@@ -297,12 +297,11 @@ console.log("\n=== PRO TOOLS LOCKED CATALOG ===\n");
     professionalTools.every((tool) => tool.locked === false && typeof tool.href === "string") &&
       professionalTools.find((tool) => tool.id === "firsatlar")?.href ===
         "/panel/firsatlar" &&
-      professionalTools.find((tool) => tool.id === "takiplerim")?.href ===
-        "/panel/takiplerim" &&
-      professionalTools.find((tool) => tool.id === "radar")?.href ===
-        "/panel/firsatlar?view=radar" &&
+      professionalTools.find((tool) => tool.id === "takip")?.href ===
+        "/panel/firsatlar?view=tracking" &&
       professionalTools.find((tool) => tool.id === "teklif-zekasi")?.href ===
-        "/panel/teklifler",
+        "/panel/teklifler" &&
+      !SIGNAL_RAIL_PRO_TOOLS.some((tool) => tool.id === "radar"),
   );
   check(
     "professional tools have no lock flag",

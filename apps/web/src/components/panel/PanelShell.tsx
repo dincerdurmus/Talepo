@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -752,10 +752,35 @@ function CorporateSidebar({
 
 function PanelBackLink({ pathname }: { pathname: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const frostBackClass =
+    "talepo-cloud-pill mb-2 px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]";
+
+  // Canonical list destinations — fixed Links, never history.
+  if (pathname === "/panel/talepler") {
+    const href =
+      searchParams.get("from") === "takiplerim"
+        ? "/panel/takiplerim"
+        : "/panel";
+    return (
+      <Link href={href} className={frostBackClass}>
+        <ArrowLeft className="h-4 w-4 shrink-0" />
+        Geri
+      </Link>
+    );
+  }
+
+  if (pathname === "/panel/taleplerim") {
+    return (
+      <Link href="/panel" className={frostBackClass}>
+        <ArrowLeft className="h-4 w-4 shrink-0" />
+        Geri
+      </Link>
+    );
+  }
 
   if (pathname === "/panel") return null;
-  if (pathname === "/panel/talepler") return null;
-  if (pathname === "/panel/taleplerim") return null;
   if (/^\/panel\/gelen-teklifler\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/profil\/[^/]+$/.test(pathname)) return null;
   if (/^\/panel\/firma-profil\/[^/]+$/.test(pathname)) return null;
@@ -769,11 +794,7 @@ function PanelBackLink({ pathname }: { pathname: string }) {
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleBack}
-      className="talepo-cloud-pill mb-2 px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
-    >
+    <button type="button" onClick={handleBack} className={frostBackClass}>
       <ArrowLeft className="h-4 w-4 shrink-0" />
       Geri
     </button>

@@ -29,7 +29,6 @@ import {
 } from "@/lib/membership/plans";
 import {
   getPublicFacingPlanId,
-  getPublicFacingPlanLabel,
   isSelfServeCheckoutPlan,
   PROFESSIONAL_WORKSPACE_NOTE,
   PUBLIC_PLAN_TAGLINES,
@@ -48,18 +47,88 @@ export type CompanyOption = {
 };
 
 const DETAIL_GROUPS = [
-  { id: "capture", title: "Keşfet", accent: "cyan", keys: PRO_VALUE_PILLARS[0].features },
-  { id: "analyze", title: "Karar ver", accent: "blue", keys: PRO_VALUE_PILLARS[1].features },
-  { id: "offer", title: "Ölç / geliştir", accent: "violet", keys: PRO_VALUE_PILLARS[2].features },
-  { id: "follow-up", title: "Takip et", accent: "mint", keys: PRO_VALUE_PILLARS[3].features },
+  {
+    id: "capture",
+    title: "Keşfet",
+    accent: "cyan",
+    keys: [
+      "talepo_radar",
+      "hot_opportunities",
+      "saved_searches",
+      "smart_matching",
+      "advanced_filters",
+    ] as const,
+  },
+  {
+    id: "analyze",
+    title: "Karar ver",
+    accent: "blue",
+    keys: ["professional_analytics", "competition_signals"] as const,
+  },
+  {
+    id: "offer",
+    title: "Ölç",
+    accent: "violet",
+    keys: ["basic_market_insights"] as const,
+  },
+  {
+    id: "follow-up",
+    title: "Takip et",
+    accent: "mint",
+    keys: ["smart_alerts", "watchlist", "budget_change_alerts"] as const,
+  },
 ] as const;
 
-const PILLAR_FEATURE_KEY: Record<string, keyof typeof FEATURE_META> = {
-  capture: "talepo_radar",
-  analyze: "professional_analytics",
-  offer: "basic_market_insights",
-  "follow-up": "saved_searches",
+const SECTION_INFO: Record<
+  string,
+  { label: string; description: string }
+> = {
+  capture: {
+    label: "Keşfet",
+    description:
+      "Yeni fırsatları bulma ve kriterlerinize uygun talepleri ayırt etme araçları.",
+  },
+  analyze: {
+    label: "Karar ver",
+    description:
+      "Bir fırsata teklif verip vermemeyi ve teklif stratejinizi değerlendirmenize yardımcı olan araçlar.",
+  },
+  offer: {
+    label: "Ölç",
+    description:
+      "Platform talep özeti ve performans görünürlüğüyle sonuçlarınızı takip etmenize yardımcı olan araçlar.",
+  },
+  "follow-up": {
+    label: "Takip et",
+    description:
+      "Belirlediğiniz kriterleri sürekli izleyerek yeni eşleşmelerden haberdar olmanızı sağlayan araçlar.",
+  },
 };
+
+function planFeatureTooltipDescription(
+  key: string,
+  subjectType: EntitlementDTO["subject"]["type"],
+): string | undefined {
+  if (key === "smart_matching") {
+    return subjectType === "company"
+      ? "Talepo şirket profiliniz ve desteklenen çalışma alanı sinyalleriyle fırsat uygunluğunu değerlendirir."
+      : "Talepo kayıtlı tercihleriniz ve desteklenen kişisel eşleşme sinyalleriyle fırsatların size ne kadar ilgili olduğunu değerlendirir.";
+  }
+  return undefined;
+}
+
+function planFeatureLabel(key: string): string {
+  if (key === "smart_alerts") return "Anlık bildirimler";
+  if (key === "saved_searches") return "Takiplerim";
+  const presentation =
+    PRO_FEATURE_PRESENTATION[key as keyof typeof PRO_FEATURE_PRESENTATION];
+  return (
+    presentation?.label ??
+    FEATURE_META[key as keyof typeof FEATURE_META]?.label ??
+    key
+  );
+}
+
 
 type BillingStatusProps = {
   subscriptionStatus?: string;
@@ -272,28 +341,28 @@ export function PlanManager({
       )}
 
       {entitlements.subject.type === "company" && (
-        <p className="rounded-[18px] border border-teal-900/10 bg-[#f0fdfa] px-4 py-3 text-sm leading-6 text-teal-900/70">
+        <p className="talepo-plan-status">
           {TEAM_PLAN_SCOPE_NOTE}
         </p>
       )}
 
       {entitlements.subject.type === "company" && !canMutateBilling && (
-        <p className="rounded-[18px] border border-teal-900/10 bg-white px-4 py-3 text-sm leading-6 text-teal-950/70">
+        <p className="talepo-plan-status">
           Firma planı ve ödeme işlemlerini yalnızca sahip veya yönetici
           başlatabilir. Mevcut plan haklarınızı görebilirsiniz.
         </p>
       )}
 
       {billingPending && (
-        <p className="rounded-[18px] border border-amber-900/15 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950/80">
+        <p className="talepo-plan-status talepo-plan-status--warn">
           Ödemeniz doğrulanıyor. Plan hakları, ödeme sağlayıcısı webhook ile
           onaylanana kadar açılmaz.
         </p>
       )}
 
       {billing?.subscriptionStatus && billing.subscriptionStatus !== "INACTIVE" && (
-        <p className="text-sm text-black/45">
-          Abonelik durumu: <strong>{billing.subscriptionStatus}</strong>
+        <p className="text-sm text-teal-950/48">
+          Abonelik durumu: <strong className="font-semibold text-[#0f1f1d]">{billing.subscriptionStatus}</strong>
           {billing.currentPeriodEnd
             ? ` · dönem sonu: ${formatDate(billing.currentPeriodEnd)}`
             : ""}
@@ -303,10 +372,8 @@ export function PlanManager({
 
       {(message || error) && (
         <p
-          className={`rounded-[18px] px-4 py-3 text-sm ${
-            error
-              ? "border border-red-200 bg-red-50 text-red-800"
-              : "border border-teal-900/10 bg-[#f0fdfa] text-teal-900/80"
+          className={`talepo-plan-status ${
+            error ? "border-red-200 bg-red-50 text-red-800" : ""
           }`}
         >
           {error || message}
@@ -314,7 +381,7 @@ export function PlanManager({
       )}
 
       <section
-        className={`relative overflow-hidden rounded-[28px] border p-6 ${currentVisual.border} ${currentVisual.surface}`}
+        className={`talepo-plan-current relative ${currentVisual.border} ${currentVisual.surface}`}
       >
         <div
           className="talepo-plan-accent-bar absolute inset-x-0 top-0 h-[3px]"
@@ -323,18 +390,26 @@ export function PlanManager({
         <div
           className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full blur-[40px] ${currentVisual.glow}`}
         />
-        <p className="text-sm text-black/40">Mevcut planınız</p>
-        <div className="relative mt-3 flex items-center gap-3">
+        <p className="talepo-plan-current-mark">Mevcut plan</p>
+        <div className="relative mt-3 flex flex-wrap items-center gap-3">
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${currentVisual.accent} ${currentVisual.iconClass}`}
           >
             <CurrentIcon className="h-5 w-5" />
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold">{entitlements.planLabel}</h2>
-            <p className="text-sm text-black/45">
-              Kalan teklif: {remainingLabel} · Bu ay kullanılan:{" "}
-              {entitlements.quota.used}
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-2xl font-semibold tracking-tight text-[#0f1f1d]">
+                {entitlements.planLabel}
+              </h2>
+              <span className="rounded-full border border-teal-900/12 bg-teal-900/[0.05] px-2.5 py-0.5 text-[11px] font-semibold text-teal-900/70">
+                Aktif
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-teal-950/48">
+              {remainingLabel === "Sınırsız"
+                ? "Sınırsız teklif"
+                : `Kalan teklif: ${remainingLabel}`}
               {entitlements.quota.bonusCredits > 0
                 ? ` · Bonus: ${entitlements.quota.bonusCredits}`
                 : ""}
@@ -342,56 +417,37 @@ export function PlanManager({
           </div>
         </div>
 
-        <div className="relative mt-5 grid gap-2 text-sm text-black/45 sm:grid-cols-2">
-          <p>
-            Kayıtlı plan:{" "}
-            <strong className="text-black">
-              {getPublicFacingPlanLabel(
-                entitlements.storedPlanTier,
-                entitlements.effectivePlanTier,
-              )}
-            </strong>
-          </p>
-          <p>
-            Geçerli plan:{" "}
-            <strong className="text-black">{entitlements.planLabel}</strong>
-          </p>
-          <p>
-            Hesap türü:{" "}
-            <strong className="text-black">
-              {entitlements.subject.type === "company"
-                ? `Firma · ${entitlements.subject.name ?? "Firma"}`
-                : "Kişisel hesap"}
-            </strong>
-          </p>
-          <p>
-            Kişisel plan:{" "}
-            <strong className="text-black">
-              {entitlements.personalPlan?.planLabel ?? "Bireysel"}
-            </strong>
-            {entitlements.subject.type === "company" &&
-            entitlements.personalPlan &&
-            entitlements.personalPlan.effectivePlanTier !==
-              entitlements.effectivePlanTier ? (
-              <span className="ml-1 text-xs text-amber-700">
+        <div className="talepo-plan-meta relative">
+          <span>
+            {entitlements.subject.type === "company"
+              ? `Firma · ${entitlements.subject.name ?? "Firma"}`
+              : "Kişisel hesap"}
+          </span>
+          {entitlements.expiresAt ? (
+            <span>
+              Bitiş: <strong>{formatDate(entitlements.expiresAt)}</strong>
+              {entitlements.isExpired ? " (süresi dolmuş)" : ""}
+            </span>
+          ) : null}
+          {personalMismatch && entitlements.personalPlan ? (
+            <span>
+              Kişisel plan:{" "}
+              <strong>{entitlements.personalPlan.planLabel}</strong>
+              <span className="ml-1 text-amber-700">
                 (firma bağlamında geçerli değil)
               </span>
-            ) : null}
-          </p>
-          <p>
-            Bitiş:{" "}
-            <strong className="text-black">
-              {entitlements.expiresAt
-                ? formatDate(entitlements.expiresAt)
-                : "—"}
-            </strong>
-            {entitlements.isExpired ? " (süresi dolmuş)" : ""}
-          </p>
+            </span>
+          ) : null}
         </div>
 
+        <p className="relative mt-4 text-[12px] leading-5 text-teal-950/42">
+          Talep oluşturmak ücretsizdir. Profesyonel üyelik doğrulanmış ödeme
+          sonrası açılır.
+        </p>
+
         {companies.length >= 1 && (
-          <label className="relative mt-5 block max-w-md">
-            <span className="mb-2 block text-xs text-black/40">
+          <label className="relative mt-4 block max-w-md">
+            <span className="mb-1.5 block text-[11px] font-medium text-teal-950/42">
               Firma bağlamı
             </span>
             <select
@@ -407,7 +463,7 @@ export function PlanManager({
                   companyId: value || null,
                 });
               }}
-              className="h-12 w-full rounded-[14px] border border-black/10 bg-white/70 px-3 text-sm text-black outline-none"
+              className="h-11 w-full rounded-[12px] border border-teal-900/10 bg-white/80 px-3 text-sm text-[#0f1f1d] outline-none"
             >
               <option value="">Kişisel hesap</option>
               {companies.map((company) => (
@@ -420,116 +476,71 @@ export function PlanManager({
         )}
       </section>
 
-      <section className="relative overflow-hidden rounded-[28px] border border-teal-900/15 bg-[#0d302d] p-6 text-white shadow-[0_24px_70px_rgba(9,55,50,0.18)] sm:p-8">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-300/10 blur-[70px]" />
-        <div className="pointer-events-none absolute bottom-[-8rem] left-1/3 h-64 w-64 rounded-full bg-violet-400/10 blur-[90px]" />
-        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(rgba(255,255,255,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.5)_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="relative"><div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-teal-200/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-teal-100">Profesyonel</span><span className="text-xs text-white/45">Keşfet → karar ver → ölç</span></div>
-        <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">Fırsatı bul. Doğru teklifi ver. Performansını geliştir.</h3>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-50/70 sm:text-base">Talepo Radar hareketi gösterir. Teklif Zekâsı aynı talepteki anonim fiyat dağılımını gösterir. Analiz sizin performansınızdır.</p></div>
-        <div className="relative mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <section className="relative overflow-hidden rounded-[1.35rem] border border-teal-900/12 bg-[#16262f] p-6 text-white sm:p-7">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-teal-300/10 blur-[70px]" />
+        <div className="pointer-events-none absolute bottom-[-6rem] left-1/3 h-48 w-48 rounded-full bg-amber-200/8 blur-[80px]" />
+        <div className="relative">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-white/12 bg-white/8 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-100/90">
+              Profesyonel
+            </span>
+            <span className="text-xs text-white/45">Keşfet → karar ver → ölç</span>
+          </div>
+          <h3 className="mt-4 max-w-2xl text-[1.65rem] font-semibold tracking-[-0.04em] sm:text-3xl">
+            Fırsatı bul. Doğru teklifi ver. Performansını geliştir.
+          </h3>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65 sm:text-[15px]">
+            Talepo Radar hareketi gösterir. Teklif Zekâsı aynı talepteki anonim fiyat dağılımını gösterir. Analiz sizin performansınızdır.
+          </p>
+        </div>
+        <div className="relative mt-7 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {PRO_VALUE_PILLARS.map((pillar, index) => (
-            <article key={pillar.id} className={`group relative rounded-[20px] border p-5 transition hover:-translate-y-0.5 xl:not-last:after:absolute xl:not-last:after:-right-3 xl:not-last:after:top-1/2 xl:not-last:after:h-px xl:not-last:after:w-3 xl:not-last:after:bg-white/20 ${index === 0 ? "border-cyan-200/20 bg-cyan-200/10" : index === 1 ? "border-blue-200/20 bg-blue-200/10" : index === 2 ? "border-violet-200/20 bg-violet-200/10" : "border-emerald-200/20 bg-emerald-200/10"}`}>
-              <div className="flex items-start justify-between"><p className="text-2xl font-semibold tracking-[-0.05em] text-white/35">0{index + 1}</p><FeatureInfoTooltip feature={pillar.id === "capture" ? "talepo_radar" : pillar.id === "analyze" ? "professional_analytics" : pillar.id === "offer" ? "basic_market_insights" : "saved_searches"} /></div>
-              <h4 className="mt-5 font-semibold text-white">{pillar.title}</h4><p className="mt-2 text-sm leading-6 text-white/60">{pillar.description}</p>
-              <p className="mt-4 text-[11px] font-medium leading-5 text-white/45">{pillar.features.map((key) => FEATURE_META[key]?.label).filter(Boolean).slice(0, 3).join(" · ") || "Takip önerisi · kullanıcı onayı"}</p>
+            <article
+              key={pillar.id}
+              className={`rounded-[1.1rem] border p-4 ${
+                index === 0
+                  ? "border-cyan-200/15 bg-cyan-200/8"
+                  : index === 1
+                    ? "border-blue-200/15 bg-blue-200/8"
+                    : index === 2
+                      ? "border-violet-200/15 bg-violet-200/8"
+                      : "border-emerald-200/15 bg-emerald-200/8"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <p className="text-xl font-semibold tracking-[-0.05em] text-white/30">
+                  0{index + 1}
+                </p>
+                <FeatureInfoTooltip
+                  feature={
+                    pillar.id === "capture"
+                      ? "talepo_radar"
+                      : pillar.id === "analyze"
+                        ? "professional_analytics"
+                        : pillar.id === "offer"
+                          ? "basic_market_insights"
+                          : "saved_searches"
+                  }
+                />
+              </div>
+              <h4 className="mt-4 font-semibold text-white">{pillar.title}</h4>
+              <p className="mt-2 text-sm leading-6 text-white/55">{pillar.description}</p>
+              <p className="mt-3 text-[11px] font-medium leading-5 text-white/40">
+                {pillar.features
+                  .map((key) => planFeatureLabel(key))
+                  .filter((label, index, list) => list.indexOf(label) === index)
+                  .slice(0, 3)
+                  .join(" · ") || "Takip önerisi · kullanıcı onayı"}
+              </p>
             </article>
           ))}
         </div>
       </section>
 
-      <section className="rounded-[24px] border border-teal-900/10 bg-[#fbfdfc] p-5 shadow-[0_16px_44px_rgba(15,31,29,0.05)] sm:p-6">
-        <h3 className="text-xl font-semibold tracking-tight text-[#0f172a]">
-          Ayrıntılı özellikleriniz
-        </h3>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-black/52">
-          Geçerli planınıza göre açılan özellikler; fırsatı bulmadan takibe kadar tek bir akışta.
-        </p>
-        <div className="mt-6 space-y-6">
-          {activeFeatureKeys.length === 0 ? (
-            <p className="rounded-[18px] bg-[#f6f6f2] p-4 text-sm text-black/50">
-              Bireysel planda talep oluşturma, ayda 5 teklif, keşif ve temel
-              Analiz açıktır. Radar, Teklif Zekâsı, Fırsatlar ve Takiplerim
-              Profesyonel ile açılır.
-            </p>
-          ) : (
-            DETAIL_GROUPS.map((group) => {
-              const groupKeys = group.keys.filter((key) => activeFeatureKeys.includes(key));
-              if (groupKeys.length === 0) return null;
-              const pillarKey = PILLAR_FEATURE_KEY[group.id];
-              return (
-                <div key={group.id}>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${group.accent === "cyan" ? "bg-cyan-500" : group.accent === "blue" ? "bg-blue-500" : group.accent === "violet" ? "bg-violet-500" : "bg-emerald-500"}`} />
-                    <h4 className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/72">{group.title}</h4>
-                    <span className="h-px flex-1 bg-teal-900/10" />
-                    <FeatureInfoTooltip feature={pillarKey} />
-                  </div>
-                  <ul className="divide-y divide-teal-900/10 rounded-[16px] border border-teal-900/10 bg-[#f8fbfa] px-3">
-                    {groupKeys.map((key) => {
-                      const meta = FEATURE_META[key];
-                      const presentation = PRO_FEATURE_PRESENTATION[key];
-                      const visual = getFeatureVisual(key);
-                      const Icon = visual.icon;
-                      const href = visual.href ?? meta.surface ?? ((key === "smart_matching" || key === "competition_signals") ? "/panel/firsatlar" : undefined);
-                      return (
-                        <li key={key} className={`group/feature relative flex min-h-[68px] items-center gap-3 py-3 transition ${href ? "cursor-pointer" : ""}`}>
-                          {href && <Link href={href} aria-label={`${meta.label} aç`} className="absolute inset-0 z-0 rounded-[12px] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35" />}
-                          <span className={`pointer-events-none relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] ${visual.iconWrap}`}><Icon className={`h-4 w-4 ${visual.iconClass}`} /></span>
-                          <span className="pointer-events-none relative z-10 min-w-0 flex-1">
-                            <span className="flex flex-wrap items-center gap-2">
-                              <span className="text-[13px] font-bold text-[#102522]">{presentation?.label ?? meta.label}</span>
-                              {presentation?.interactionType && <span className="rounded-full bg-teal-900/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] text-teal-900/58">{presentation.interactionType === "AUTOMATIC_SIGNAL" ? "Otomatik" : presentation.interactionType === "ASSISTED_ACTION" ? "Araç" : presentation.interactionType === "ALERT" ? "Alarm" : presentation.interactionType === "SAVED_CONFIGURATION" ? "Kayıtlı ayar" : "Analiz"}</span>}
-                              {visual.badge && <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.1em] ${visual.badgeClass}`}>{visual.badge}</span>}
-                            </span>
-                            <span className="mt-0.5 block text-[13px] leading-5 text-teal-950/62">{presentation?.description ?? meta.description}</span>
-                            {presentation?.resultLocation && <span className="mt-1 block text-[11px] font-medium text-teal-950/48">Sonuç: {presentation.resultLocation}</span>}
-                          </span>
-                          <span className="relative z-20 shrink-0"><FeatureInfoTooltip feature={key} description={key === "smart_matching" ? (entitlements.subject.type === "company" ? "Talepo şirket profiliniz ve desteklenen çalışma alanı sinyalleriyle fırsat uygunluğunu değerlendirir." : "Talepo kayıtlı tercihleriniz ve desteklenen kişisel eşleşme sinyalleriyle fırsatların size ne kadar ilgili olduğunu değerlendirir.") : undefined} /></span>
-                          {href && <span className={`pointer-events-none relative z-10 shrink-0 text-xs font-bold opacity-85 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100 ${visual.linkClass}`}>{presentation?.actionLabel ?? visual.cta ?? "Aç →"}</span>}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      <section className="rounded-[22px] border border-teal-900/10 bg-white/80 p-5 shadow-[0_12px_34px_rgba(15,31,29,0.04)] sm:p-6">
-        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-950/55">Profesyonel nasıl çalışır?</p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {[
-            ["Radar", "Nerede hareket var?", "text-teal-700"],
-            ["Fırsatlar", "Bana uygun mu?", "text-blue-700"],
-            ["Takiplerim", "Ne zaman haberim olsun?", "text-indigo-700"],
-            ["Teklif Zekâsı", "Bu talepte fiyat nasıl?", "text-violet-700"],
-            ["Analiz", "Ben nasıl gidiyorum?", "text-fuchsia-700"],
-            ["Teklif", "Sınırsız teklif hakkı", "text-emerald-700"],
-          ].map(([stage, question, tone], index) => (
-            <div key={stage} className="relative rounded-[14px] border border-teal-900/10 bg-[#f8fbfa] px-3 py-3">
-              <span className={`text-[10px] font-bold uppercase tracking-[0.12em] ${tone}`}>0{index + 1} · {stage}</span>
-              <p className="mt-1 text-xs font-semibold text-[#172c48]">{question}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {message && (
-        <div className="rounded-[20px] bg-[#e4f4df] p-4 text-sm font-semibold text-[#356d3a]">
-          {message}
-        </div>
-      )}
-
-      {error && (
-        <div className="rounded-[20px] bg-[#ffe4df] p-4 text-sm font-semibold text-[#8b352b]">
-          {error}
-        </div>
-      )}
-
-      {showPlanChoices ? <section className="grid gap-5 lg:grid-cols-2">
+      {showPlanChoices ? (
+        <section>
+          <p className="talepo-plan-section-label">Planları karşılaştır</p>
+          <div className="grid gap-5 lg:grid-cols-2">
         {getAvailablePlans().map((plan) => {
           const visual = PLAN_VISUALS[plan.id];
           const theme = PLAN_THEME_TOKENS[plan.id];
@@ -539,11 +550,11 @@ export function PlanManager({
           return (
             <article
               key={plan.id}
-              className={`relative overflow-hidden rounded-[28px] border p-6 sm:p-7 ${visual.border} ${visual.surface} ${
+              className={`relative overflow-hidden rounded-[1.35rem] border p-5 sm:p-6 ${visual.border} ${visual.surface} ${
                 visual.highlight
                   ? (visual.highlightClass ??
-                    "shadow-[0_16px_55px_rgba(0,0,0,0.04)]")
-                  : "shadow-[0_16px_55px_rgba(0,0,0,0.04)]"
+                    "shadow-[0_12px_36px_rgba(15,31,29,0.05)]")
+                  : "shadow-[0_10px_28px_rgba(15,31,29,0.04)]"
               }`}
             >
               <div
@@ -565,20 +576,19 @@ export function PlanManager({
                     <Icon className="h-5 w-5" />
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {isCurrent ? (
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${visual.activeBadge}`}
+                    >
+                      Aktif
+                    </span>
+                  ) : (
                     <span
                       className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${visual.badge}`}
                     >
                       {visual.badgeText}
                     </span>
-                    {isCurrent && (
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${visual.activeBadge}`}
-                      >
-                        Aktif
-                      </span>
-                    )}
-                  </div>
+                  )}
                 </div>
 
                 <h3 className="mt-5 text-2xl font-semibold tracking-tight">
@@ -669,7 +679,84 @@ export function PlanManager({
             </article>
           );
         })}
-      </section> : null}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="rounded-[1.35rem] border border-teal-900/10 bg-white/75 p-5 sm:p-6">
+        <p className="talepo-plan-section-label">Özellikler</p>
+        <h3 className="mt-1 text-lg font-semibold tracking-tight text-[#0f172a]">
+          Planınızda açılan yetenekler
+        </h3>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-black/48">
+          Geçerli planınıza göre açılan özellikler; keşiften takibe kadar.
+        </p>
+        <div className="mt-6 space-y-6">
+          {activeFeatureKeys.length === 0 ? (
+            <p className="rounded-[16px] bg-[#f6f6f2] p-4 text-sm text-black/50">
+              Standard planda talep oluşturma, ayda 5 teklif, keşif ve temel
+              Analiz açıktır. Radar, Teklif Zekâsı, Fırsatlar ve Takiplerim
+              Profesyonel ile açılır.
+            </p>
+          ) : (
+            DETAIL_GROUPS.map((group) => {
+              const groupKeys = group.keys.filter((key) => activeFeatureKeys.includes(key));
+              if (groupKeys.length === 0) return null;
+              const sectionInfo = SECTION_INFO[group.id];
+              return (
+                <div key={group.id}>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className={`h-1.5 w-1.5 rounded-full ${group.accent === "cyan" ? "bg-cyan-500" : group.accent === "blue" ? "bg-blue-500" : group.accent === "violet" ? "bg-violet-500" : "bg-emerald-500"}`} />
+                    <h4 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-950/55">{group.title}</h4>
+                    <span className="h-px flex-1 bg-teal-900/8" />
+                    {sectionInfo ? (
+                      <FeatureInfoTooltip
+                        label={sectionInfo.label}
+                        description={sectionInfo.description}
+                      />
+                    ) : null}
+                  </div>
+                  <ul className="divide-y divide-teal-900/8 rounded-[14px] border border-teal-900/8 bg-[#f8fbfa]/70 px-3">
+                    {groupKeys.map((key) => {
+                      const meta = FEATURE_META[key];
+                      const presentation = PRO_FEATURE_PRESENTATION[key];
+                      const visual = getFeatureVisual(key);
+                      const Icon = visual.icon;
+                      const href = visual.href ?? meta.surface ?? ((key === "smart_matching" || key === "competition_signals") ? "/panel/firsatlar" : undefined);
+                      return (
+                        <li key={key} className={`group/feature relative flex min-h-[60px] items-center gap-3 py-2.5 transition ${href ? "cursor-pointer" : ""}`}>
+                          {href && <Link href={href} aria-label={`${planFeatureLabel(key)} aç`} className="absolute inset-0 z-0 rounded-[12px] transition hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35" />}
+                          <span className="pointer-events-none relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-teal-900/[0.03] text-teal-900/45"><Icon className="h-3.5 w-3.5" /></span>
+                          <span className="pointer-events-none relative z-10 min-w-0 flex-1">
+                            <span className="flex flex-wrap items-center gap-1.5">
+                              <span className="text-[13px] font-semibold text-[#102522]">{planFeatureLabel(key)}</span>
+                              <span className="pointer-events-auto relative z-20">
+                                <FeatureInfoTooltip
+                                  feature={key}
+                                  label={planFeatureLabel(key)}
+                                  description={planFeatureTooltipDescription(
+                                    key,
+                                    entitlements.subject.type,
+                                  )}
+                                />
+                              </span>
+                            </span>
+                            <span className="mt-0.5 block text-[12px] leading-5 text-teal-950/50">{presentation?.description ?? meta.description}</span>
+                          </span>
+                          {href && <span className="pointer-events-none relative z-10 shrink-0 text-xs font-semibold text-teal-900/50 opacity-80 transition group-hover/feature:translate-x-0.5 group-hover/feature:opacity-100">{presentation?.actionLabel ?? visual.cta ?? "Aç →"}</span>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <p className="mt-5 text-[11px] leading-5 text-black/40">
+          Profesyonel üyelik ile firma çalışma alanı açılabilir; koltuklar ayrıca yönetilir. Gizli Envanter şirket alanına bağlı ücretli bir eklentidir — üçüncü bir kullanıcı planı değildir.
+        </p>
+      </section>
 
       <p className="text-xs leading-5 text-black/35">
         {checkoutAvailable

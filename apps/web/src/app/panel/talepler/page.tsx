@@ -158,6 +158,9 @@ export default async function ExploreRequestsPage({
   const tab = parseExploreTab(params.tab);
   const categoryFilter = params.category?.trim() || "";
   const editingInterests = params.edit === "1";
+  const fromRaw = params.from;
+  const fromValue = Array.isArray(fromRaw) ? fromRaw[0] : fromRaw;
+  const fromTakiplerim = fromValue === "takiplerim";
   const canonicalExploreFilter = parseCanonicalFilterFromParams(params);
   const taxonomyLeaf = params.taxonomyLeaf?.trim() || undefined;
   const taxonomyNode = params.taxonomyNode?.trim() || undefined;
@@ -404,6 +407,7 @@ export default async function ExploreRequestsPage({
     if (interestSlugs.length > 0) {
       q.set("interest", interestSlugs.join(","));
     }
+    if (fromTakiplerim) q.set("from", "takiplerim");
     const s = q.toString();
     return s ? `/panel/talepler?${s}` : "/panel/talepler";
   })();
@@ -414,6 +418,7 @@ export default async function ExploreRequestsPage({
     if (interestSlugs.length > 0) {
       q.set("interest", interestSlugs.join(","));
     }
+    if (fromTakiplerim) q.set("from", "takiplerim");
     return `/panel/talepler?${q.toString()}`;
   })();
 
@@ -430,6 +435,7 @@ export default async function ExploreRequestsPage({
       if (districtFilter) q.set("district", districtFilter);
       if (params.q?.trim()) q.set("q", params.q.trim());
     }
+    if (fromTakiplerim) q.set("from", "takiplerim");
     const s = q.toString();
     return s ? `/panel/talepler?${s}` : "/panel/talepler";
   };
@@ -479,6 +485,9 @@ export default async function ExploreRequestsPage({
               className="flex flex-col gap-2 rounded-[1.35rem] border border-[#0f1f1d]/10 bg-white/80 p-3 sm:flex-row sm:items-end"
             >
               <input type="hidden" name="tab" value="all" />
+              {fromTakiplerim ? (
+                <input type="hidden" name="from" value="takiplerim" />
+              ) : null}
               {params.q?.trim() ? (
                 <input type="hidden" name="q" value={params.q.trim()} />
               ) : null}
@@ -516,6 +525,9 @@ export default async function ExploreRequestsPage({
                 className="rounded-[1.35rem] border border-[#0f1f1d]/10 bg-white/80 p-3"
               >
                 <input type="hidden" name="tab" value="all" />
+                {fromTakiplerim ? (
+                  <input type="hidden" name="from" value="takiplerim" />
+                ) : null}
                 {cityFilter ? (
                   <input type="hidden" name="city" value={cityFilter} />
                 ) : null}
@@ -592,13 +604,14 @@ export default async function ExploreRequestsPage({
                 hiddenFields={{
                   tab: "all",
                   category: categoryFilter,
+                  ...(fromTakiplerim ? { from: "takiplerim" } : {}),
                   ...(cityFilter ? { city: cityFilter } : {}),
                   ...(districtFilter ? { district: districtFilter } : {}),
                   ...(taxonomyLeaf ? { taxonomyLeaf } : {}),
                   ...(taxonomyNode ? { taxonomyNode } : {}),
                   ...(leafExact ? { leafExact: "1" } : {}),
                 }}
-                clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}${districtFilter ? `&district=${encodeURIComponent(districtFilter)}` : ""}`}
+                clearHref={`/panel/talepler?tab=all&category=${encodeURIComponent(categoryFilter)}${fromTakiplerim ? "&from=takiplerim" : ""}${cityFilter ? `&city=${encodeURIComponent(cityFilter)}` : ""}${districtFilter ? `&district=${encodeURIComponent(districtFilter)}` : ""}`}
                 advancedFiltersEnabled={hasAdvancedFilters}
                 showUrgentFilter={hasUrgentPriority}
                 savedSearchesEnabled={hasSavedSearches}
@@ -618,6 +631,7 @@ export default async function ExploreRequestsPage({
               name: c.name,
             }))}
             initialSelected={interestSlugs}
+            preserveFrom={fromTakiplerim ? "takiplerim" : undefined}
           />
         ) : tab === "matched" && interestLabels.length > 0 ? (
           <>
@@ -645,6 +659,7 @@ export default async function ExploreRequestsPage({
               interestOptions={interestOptions}
               filters={exploreFilters}
               hiddenFields={{
+                ...(fromTakiplerim ? { from: "takiplerim" } : {}),
                 ...(districtFilter ? { district: districtFilter } : {}),
                 ...(taxonomyLeaf ? { taxonomyLeaf } : {}),
                 ...(taxonomyNode ? { taxonomyNode } : {}),
@@ -724,8 +739,12 @@ export default async function ExploreRequestsPage({
                 : tab === "matched"
                   ? editInterestsHref
                   : tab === "newest"
-                    ? "/panel/talepler"
-                    : "/panel/talepler?tab=newest"
+                    ? fromTakiplerim
+                      ? "/panel/talepler?from=takiplerim"
+                      : "/panel/talepler"
+                    : fromTakiplerim
+                      ? "/panel/talepler?tab=newest&from=takiplerim"
+                      : "/panel/talepler?tab=newest"
             }
             actionLabel={
               tab === "matched" && filtersActive

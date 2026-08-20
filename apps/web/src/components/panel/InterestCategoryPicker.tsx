@@ -14,9 +14,12 @@ type CategoryOption = {
 export function InterestCategoryPicker({
   categories,
   initialSelected = [],
+  preserveFrom,
 }: {
   categories: CategoryOption[];
   initialSelected?: string[];
+  /** Keep follow-create context across interest save navigation. */
+  preserveFrom?: string;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<string[]>(initialSelected);
@@ -45,6 +48,7 @@ export function InterestCategoryPicker({
       // Panelden çıkıp tekrar girince seçim sıfırlanır.
       const q = new URLSearchParams();
       q.set("interest", selected.join(","));
+      if (preserveFrom) q.set("from", preserveFrom);
       router.replace(`/panel/talepler?${q.toString()}`);
     });
   }

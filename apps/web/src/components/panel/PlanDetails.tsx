@@ -1,4 +1,5 @@
 import { PlanManager } from "@/components/panel/PlanManager";
+import { SignalActivityShell } from "@/components/panel/signal/SignalActivityShell";
 import { canMutateCompanyBilling } from "@/lib/billing/billing-authority";
 import { isBillingMockAllowed } from "@/lib/billing/provider";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
@@ -53,17 +54,13 @@ export async function PlanDetails({
   const params = searchParams ? await searchParams : undefined;
 
   return (
-    <>
-      <section className="py-4 sm:py-6">
-        <p className="text-sm font-semibold text-black/35">Üyelik</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">
-          Plan ve teklif hakları
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-          Talep oluşturmak ücretsiz kalır. Profesyonel üyelik doğrulanmış ödeme
-          sonrası açılır. Firma çalışma alanı ayrı bir paket değildir.
-        </p>
-      </section>
+    <SignalActivityShell
+      tone="membership"
+      eyebrow="Üyelik"
+      title="Plan ve teklif hakları"
+      description="Üyeliğinizi, teklif haklarınızı ve Profesyonel araçlarınızı yönetin."
+      summary={`Mevcut plan · ${entitlements.planLabel}`}
+    >
       <PlanManager
         entitlements={toEntitlementDTO(entitlements)}
         companies={companies}
@@ -80,6 +77,6 @@ export async function PlanDetails({
           redirectPending: params?.billing === "pending",
         }}
       />
-    </>
+    </SignalActivityShell>
   );
 }

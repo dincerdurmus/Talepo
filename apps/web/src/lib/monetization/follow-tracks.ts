@@ -6,8 +6,10 @@
  */
 
 import { summarizeSavedSearchFilters } from "@/lib/discovery";
+import { getCategoryById } from "@/lib/request-category-engine";
 import { savedSearchToExploreUrl } from "@/lib/monetization/saved-search-url";
 import type { SavedSearchFilters } from "@/lib/monetization/types";
+import { getTaxonomyNode } from "@/lib/taxonomy";
 
 import { preferenceCriteriaFingerprint } from "./preference-criteria";
 
@@ -21,6 +23,8 @@ export type FollowTrack = {
   alertRuleId: string | null;
   notificationsOn: boolean;
   runUrl: string;
+  categorySlug: string | null;
+  categoryLabel: string | null;
 };
 
 export type FollowTrackSearchInput = {
@@ -42,6 +46,92 @@ function stamp(value: Date | string | undefined): number {
   if (!value) return 0;
   const t = typeof value === "string" ? Date.parse(value) : value.getTime();
   return Number.isFinite(t) ? t : 0;
+}
+
+function resolveFollowCategory(filters: SavedSearchFilters): {
+  categorySlug: string | null;
+  categoryLabel: string | null;
+} {
+  const fromCanonical = filters.canonical?.primaryLeafId
+    ? getTaxonomyNode(filters.canonical.primaryLeafId)?.categoryId
+    : filters.canonical?.taxonomyNodeIds?.[0]
+      ? getTaxonomyNode(filters.canonical.taxonomyNodeIds[0])?.categoryId
+      : null;
+  const slug =
+    (filters.categorySlug ?? filters.categoryId ?? fromCanonical ?? "").trim() ||
+    null;
+  if (!slug) return { categorySlug: null, categoryLabel: null };
+  const category = getCategoryById(slug);
+  return {
+    categorySlug: slug,
+    categoryLabel: category.id === slug ? category.label : null,
+  };
+}
+
+function formatBudgetChip(
+  min: number | null | undefined,
+  max: number | null | undefined,
+): string | null {
+  if (min == null && max == null) return null;
+  const fmt = (n: number) =>
+    n.toLocaleString("tr-TR", { maximumFractionDigits: 0 });
+  if (min != null && max != null) return `₺${fmt(min)}–₺${fmt(max)}`;
+  if (min != null) return `₺${fmt(min)}+`;
+  return `₺${fmt(max!)}'e kadar`;
+}
+
+/** Human-readable criterion chips from real filter fields only. */
+export function followCriteriaChips(
+  filters: SavedSearchFilters,
+  limit = 4,
+): { chips: string[]; overflow: number } {
+  const chips: string[] = [];
+
+  const city =
+    filters.city?.trim() || filters.canonical?.location?.city?.trim();
+  if (city) chips.push(city);
+
+  const budget = formatBudgetChip(
+    filters.budgetMin ?? null,
+    filters.budgetMax ?? null,
+  );
+  if (budget) chips.push(budget);
+
+  const keyword = filters.keyword?.trim();
+  if (keyword) chips.push(`“${keyword}”`);
+
+  if (filters.urgent || filters.canonical?.urgency) chips.push("Acil");
+
+  if (chips.length <= limit) return { chips, overflow: 0 };
+  return {
+    chips: chips.slice(0, limit),
+    overflow: chips.length - limit,
+  };
+}
+
+function toTrack(input: {
+  id: string;
+  name: string;
+  filters: SavedSearchFilters;
+  savedSearchId: string | null;
+  alertRuleId: string | null;
+  notificationsOn: boolean;
+  fingerprint: string;
+}): FollowTrack {
+  const category = resolveFollowCategory(input.filters);
+  return {
+    id: input.id,
+    name: input.name,
+    summary: summarizeSavedSearchFilters(input.filters),
+    filters: input.filters,
+    criteriaFingerprint: input.fingerprint,
+    savedSearchId: input.savedSearchId,
+    alertRuleId: input.alertRuleId,
+    notificationsOn: input.notificationsOn,
+    runUrl: savedSearchToExploreUrl(input.filters),
+    categorySlug: category.categorySlug,
+    categoryLabel: category.categoryLabel,
+  };
 }
 
 /**
@@ -82,17 +172,17 @@ export function projectFollowTracks(
     const fingerprint = preferenceCriteriaFingerprint(search.filters);
     const alert = pickAlert(fingerprint);
     usedFingerprints.add(fingerprint);
-    tracks.push({
-      id: `search:${search.id}`,
-      name: search.name,
-      summary: summarizeSavedSearchFilters(search.filters),
-      filters: search.filters,
-      criteriaFingerprint: fingerprint,
-      savedSearchId: search.id,
-      alertRuleId: alert?.id ?? null,
-      notificationsOn: Boolean(alert?.isActive),
-      runUrl: savedSearchToExploreUrl(search.filters),
-    });
+    tracks.push(
+      toTrack({
+        id: `search:${search.id}`,
+        name: search.name,
+        filters: search.filters,
+        fingerprint,
+        savedSearchId: search.id,
+        alertRuleId: alert?.id ?? null,
+        notificationsOn: Boolean(alert?.isActive),
+      }),
+    );
   }
 
   const leftoverAlerts = [...alerts]
@@ -110,17 +200,17 @@ export function projectFollowTracks(
     const fingerprint = preferenceCriteriaFingerprint(alert.criteria);
     if (leftoverSeen.has(fingerprint)) continue;
     leftoverSeen.add(fingerprint);
-    tracks.push({
-      id: `alert:${alert.id}`,
-      name: alert.name,
-      summary: summarizeSavedSearchFilters(alert.criteria),
-      filters: alert.criteria,
-      criteriaFingerprint: fingerprint,
-      savedSearchId: null,
-      alertRuleId: alert.id,
-      notificationsOn: alert.isActive,
-      runUrl: savedSearchToExploreUrl(alert.criteria),
-    });
+    tracks.push(
+      toTrack({
+        id: `alert:${alert.id}`,
+        name: alert.name,
+        filters: alert.criteria,
+        fingerprint,
+        savedSearchId: null,
+        alertRuleId: alert.id,
+        notificationsOn: alert.isActive,
+      }),
+    );
   }
 
   return tracks;
