@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
-import { Radar } from "lucide-react";
+import { BadgeCheck, Binoculars, Radar } from "lucide-react";
 
 const RADAR_MARK_INLINE = <Radar strokeWidth={1.75} aria-hidden />;
 const RADAR_MARK_FIELD = <Radar strokeWidth={1.15} aria-hidden />;
+const FOLLOWS_MARK_FIELD = <Binoculars strokeWidth={1.15} aria-hidden />;
+const MEMBERSHIP_MARK_FIELD = <BadgeCheck strokeWidth={1.15} aria-hidden />;
 
 export function SignalActivityShell({
   tone,
@@ -14,7 +16,14 @@ export function SignalActivityShell({
   className,
   children,
 }: {
-  tone: "activity" | "communication" | "opportunity" | "radar" | "pool";
+  tone:
+    | "activity"
+    | "communication"
+    | "opportunity"
+    | "radar"
+    | "pool"
+    | "follows"
+    | "membership";
   eyebrow: string;
   title: string;
   description: string;
@@ -25,6 +34,8 @@ export function SignalActivityShell({
 }) {
   const hasAside = Boolean(summary || action);
   const showRadarMark = tone === "radar";
+  const showFollowsMark = tone === "follows";
+  const showMembershipMark = tone === "membership";
 
   return (
     <div
@@ -39,6 +50,22 @@ export function SignalActivityShell({
           {showRadarMark ? (
             <div className="talepo-radar-mark-field" aria-hidden>
               {RADAR_MARK_FIELD}
+            </div>
+          ) : null}
+          {showFollowsMark ? (
+            <div
+              className="talepo-signal-mark-field talepo-signal-mark-field--follows"
+              aria-hidden
+            >
+              {FOLLOWS_MARK_FIELD}
+            </div>
+          ) : null}
+          {showMembershipMark ? (
+            <div
+              className="talepo-signal-mark-field talepo-signal-mark-field--membership"
+              aria-hidden
+            >
+              {MEMBERSHIP_MARK_FIELD}
             </div>
           ) : null}
           <div className="relative z-[1] flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
@@ -59,7 +86,7 @@ export function SignalActivityShell({
               </p>
             </div>
             {hasAside ? (
-              <div className="flex w-full min-w-0 flex-col gap-3 lg:w-[18.5rem] lg:shrink-0">
+              <div className="relative z-[2] flex w-full min-w-0 flex-col gap-3 lg:w-[18.5rem] lg:shrink-0">
                 {summary ? (
                   <div
                     className="talepo-my-requests-summary"

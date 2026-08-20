@@ -86,9 +86,9 @@ console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
   check("CommandPersonalSidebar wired in shell", shell.includes("CommandPersonalSidebar"));
   check("Pro Araçlar in signal rail", commandSidebar.includes("Pro Araçlar"));
   check(
-    "desktop Takiplerim tool",
-    proCatalog.includes('title: "Takiplerim"') ||
-      commandSidebar.includes('title: "Takiplerim"'),
+    "desktop Takip tool",
+    proCatalog.includes('title: "Takip"') ||
+      commandSidebar.includes('title: "Takip"'),
   );
   check(
     "desktop Analiz tool",
@@ -105,8 +105,10 @@ console.log("\n=== DESKTOP SIGNAL RAIL ===\n");
   check("rail hover + pinned dock", commandSidebar.includes("hoverSection") && commandSidebar.includes("pinnedOpen"));
   check("no asistan sidebar", !commandSidebar.includes("/panel/asistan"));
   check(
-    "Radar is a catalogued pro tool",
-    proCatalog.includes('title: "Talepo Radar"'),
+    "Takip is a catalogued pro tool; Radar is not top-level",
+    proCatalog.includes('title: "Takip"') &&
+      proCatalog.includes("/panel/firsatlar?view=tracking") &&
+      !proCatalog.includes('title: "Talepo Radar"'),
   );
   check(
     "no /panel/asistan in PANEL_NAV_ITEMS",

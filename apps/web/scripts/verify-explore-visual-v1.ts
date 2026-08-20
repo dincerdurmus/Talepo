@@ -35,6 +35,7 @@ const picker = read("src/components/panel/InterestCategoryPicker.tsx");
 const card = read("src/components/panel/ExploreRequestCard.tsx");
 const upsell = read("src/components/panel/ExploreFilterUpsell.tsx");
 const shell = read("src/components/panel/PanelShell.tsx");
+const followSource = read("src/components/panel/FollowTracksManager.tsx");
 const nav = read("src/components/panel/panel-nav.ts");
 const css = read("src/app/globals.css");
 const rail = read("src/components/panel/CommandPersonalSidebar.tsx");
@@ -83,9 +84,31 @@ check(
 );
 
 check(
-  "Geri hidden on primary Talepler dest",
-  shell.includes('if (pathname === "/panel/talepler") return null') &&
-    !shell.includes('if (pathname.startsWith("/panel/talepler")) return null'),
+  "CASE 1: /panel/talepler back Link to /panel",
+  /pathname === "\/panel\/talepler"[\s\S]*?href =\s*[\s\S]*?\? "\/panel\/takiplerim"\s*:\s*"\/panel"/.test(
+    shell,
+  ) &&
+    !shell.includes('if (pathname === "/panel/talepler") return null') &&
+    !home.includes("backHref") &&
+    !page.includes("backHref="),
+);
+
+check(
+  "CASE 2: /panel/talepler?from=takiplerim back to /panel/takiplerim",
+  shell.includes('searchParams.get("from") === "takiplerim"') &&
+    shell.includes('? "/panel/takiplerim"') &&
+    followSource.includes('href="/panel/talepler?from=takiplerim"'),
+);
+
+check(
+  "CASE 3: /panel/taleplerim back Link to /panel",
+  /pathname === "\/panel\/taleplerim"[\s\S]*?href="\/panel"/.test(shell) &&
+    !shell.includes('if (pathname === "/panel/taleplerim") return null'),
+);
+
+check(
+  "CASE 4: /panel keeps PanelBackLink null",
+  shell.includes('if (pathname === "/panel") return null'),
 );
 
 check(

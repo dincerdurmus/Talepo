@@ -25,7 +25,13 @@ import { loadTalepoRadarFeed } from "@/server/monetization/talepo-radar";
 import { assertCompanyMembership } from "@/lib/panel/company-workspace";
 
 /** User-facing views after Acil tab removal. `urgent` only for legacy parse. */
-type WorkspaceView = "suggested" | "browse" | "saved" | "ops" | "radar";
+type WorkspaceView =
+  | "suggested"
+  | "browse"
+  | "saved"
+  | "ops"
+  | "radar"
+  | "tracking";
 
 function parseView(raw: string | undefined): WorkspaceView | "urgent" {
   if (
@@ -33,7 +39,8 @@ function parseView(raw: string | undefined): WorkspaceView | "urgent" {
     raw === "urgent" ||
     raw === "saved" ||
     raw === "ops" ||
-    raw === "radar"
+    raw === "radar" ||
+    raw === "tracking"
   ) {
     return raw;
   }
@@ -120,6 +127,10 @@ export default async function OpportunitiesPage({
   if (view === "radar" && !canRadar) {
     view = "suggested";
   }
+  // Tracking results are personal opportunity-family only (company IA unchanged).
+  if (view === "tracking" && companyId) {
+    view = "suggested";
+  }
 
   const taxonomyNode = params.taxonomyNode?.trim() || null;
   const taxonomyLeaf = params.taxonomyLeaf?.trim() || null;
@@ -193,20 +204,22 @@ export default async function OpportunitiesPage({
     createdAt: item.createdAt,
   }));
 
-  const [trackedSearchCount, alertCount] = companyId
-    ? await Promise.all([
-        canSaveSearch
-          ? prisma.savedSearch.count({
-              where: { ownerType: "COMPANY", companyId, isActive: true },
-            })
-          : Promise.resolve(0),
-        canCreateAlert
-          ? prisma.alertRule.count({
-              where: { ownerType: "COMPANY", companyId, isActive: true },
-            })
-          : Promise.resolve(0),
-      ])
-    : [0, 0];
+  const [trackedSearchCount, alertCount] = await Promise.all([
+    canSaveSearch
+      ? prisma.savedSearch.count({
+          where: companyId
+            ? { ownerType: "COMPANY", companyId, isActive: true }
+            : { ownerType: "USER", userId: user.id, isActive: true },
+        })
+      : Promise.resolve(0),
+    canCreateAlert
+      ? prisma.alertRule.count({
+          where: companyId
+            ? { ownerType: "COMPANY", companyId, isActive: true }
+            : { ownerType: "USER", userId: user.id, isActive: true },
+        })
+      : Promise.resolve(0),
+  ]);
 
   const corporateCenter =
     companyId && view === "ops" && isCorporatePlan

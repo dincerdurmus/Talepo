@@ -2923,6 +2923,457 @@ section.mt-6 svg > text:last-of-type {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+.talepo-activity-banner--follows {
+  --activity-eyebrow: #b9d9d4;
+  --activity-title: #f3f8f7;
+  --activity-copy: #c5d8d5;
+  --activity-summary: #dce8e6;
+  min-height: 8.25rem;
+  border-bottom-color: rgba(243, 248, 247, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(243, 248, 247, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(
+      ellipse 64% 88% at 100% 0%,
+      rgba(15, 118, 110, 0.22),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #24324a 0%, #2d3f58 48%, #344763 100%);
+}
+
+.talepo-activity-banner--follows .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(184, 220, 214, 0.14),
+    transparent 68%
+  );
+}
+
+.talepo-activity-banner--membership {
+  --activity-eyebrow: #e8d6b8;
+  --activity-title: #fbf6ee;
+  --activity-copy: #e2d2b8;
+  --activity-summary: #f0e4ce;
+  min-height: 8.25rem;
+  border-bottom-color: rgba(251, 246, 238, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(251, 246, 238, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(
+      ellipse 62% 90% at 100% 0%,
+      rgba(138, 106, 43, 0.2),
+      transparent 56%
+    ),
+    linear-gradient(135deg, #2a2434 0%, #3a3146 48%, #4a3f52 100%);
+}
+
+.talepo-activity-banner--membership .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(240, 228, 206, 0.12),
+    transparent 68%
+  );
+}
+
+.talepo-follow-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.talepo-follow-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fbfcfc;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.talepo-follow-card:hover {
+  border-color: rgba(15, 118, 110, 0.16);
+  background: #fff;
+}
+
+.talepo-follow-card-main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 14rem;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.talepo-follow-category-tile {
+  height: 3.5rem !important;
+  width: 3.5rem !important;
+  border-radius: 0.9rem !important;
+  box-shadow: none !important;
+}
+
+.talepo-follow-category-tile img {
+  transform: none !important;
+}
+
+.talepo-follow-category-tile > span:last-child {
+  bottom: 0.3rem;
+  left: 0.3rem;
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+.talepo-follow-card-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f1f1d;
+}
+
+.talepo-follow-card-category {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(15, 31, 29, 0.52);
+}
+
+.talepo-follow-card-summary {
+  margin: 0.3rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(15, 31, 29, 0.48);
+}
+
+.talepo-follow-criteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.talepo-follow-criterion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: rgba(15, 118, 110, 0.04);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(15, 31, 29, 0.62);
+}
+
+.talepo-follow-criterion--more {
+  background: transparent;
+  border-style: dashed;
+  color: rgba(15, 31, 29, 0.45);
+}
+
+.talepo-follow-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.talepo-follow-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: #1b4f47;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.talepo-follow-cta:hover {
+  background: #163f39;
+  color: #fff;
+}
+
+.talepo-follow-notify {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 47, 40, 0.1);
+  background: transparent;
+  color: rgba(15, 31, 29, 0.68);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.talepo-follow-notify:hover {
+  background: rgba(15, 118, 110, 0.05);
+}
+
+.talepo-follow-notify--on {
+  border-color: rgba(15, 118, 110, 0.18);
+  background: rgba(15, 118, 110, 0.09);
+  color: #1b4f47;
+}
+
+.talepo-follow-notify:disabled {
+  opacity: 0.45;
+}
+
+.talepo-follow-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2.15rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: #fff;
+  color: #1b4f47;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.talepo-follow-open:hover {
+  background: rgba(15, 118, 110, 0.05);
+  border-color: rgba(15, 118, 110, 0.28);
+}
+
+.talepo-follow-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.15rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.talepo-follow-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 47, 40, 0.1);
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(15, 31, 29, 0.7);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.talepo-follow-chip:hover {
+  background: rgba(15, 118, 110, 0.05);
+  color: #0f1f1d;
+}
+
+.talepo-follow-chip:focus-visible {
+  outline: 2px solid #1b4f47;
+  outline-offset: 2px;
+}
+
+.talepo-follow-chip:disabled {
+  opacity: 0.45;
+}
+
+.talepo-follow-chip--on {
+  border-color: rgba(15, 118, 110, 0.18);
+  background: rgba(15, 118, 110, 0.08);
+  color: #1b4f47;
+}
+
+.talepo-follow-chip--primary {
+  border-color: transparent;
+  background: #1b4f47;
+  color: #fff;
+}
+
+.talepo-follow-chip--primary:hover {
+  background: #163f39;
+  color: #fff;
+}
+
+.talepo-follow-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: rgba(15, 31, 29, 0.5);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.talepo-follow-icon-btn:hover {
+  background: rgba(15, 47, 40, 0.05);
+  color: #0f1f1d;
+}
+
+.talepo-follow-icon-btn--danger {
+  color: #8a4a4a;
+}
+
+.talepo-follow-icon-btn--danger:hover {
+  background: rgba(154, 74, 74, 0.07);
+  color: #734040;
+}
+
+.talepo-follow-empty {
+  padding: 1.25rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 47, 40, 0.07);
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.talepo-follow-empty p {
+  margin: 0;
+}
+
+.talepo-signal-mark-field {
+  position: absolute;
+  right: -1.75rem;
+  top: 50%;
+  z-index: 0;
+  width: 10.5rem;
+  height: 10.5rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 46%);
+}
+
+.talepo-signal-mark-field svg {
+  width: 100%;
+  height: 100%;
+}
+
+.talepo-signal-mark-field--follows {
+  color: rgba(185, 217, 212, 0.11);
+}
+
+.talepo-signal-mark-field--membership {
+  color: rgba(232, 214, 184, 0.12);
+}
+
+.talepo-plan-current {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.35rem;
+  padding: 1.35rem 1.25rem;
+}
+
+.talepo-plan-current-mark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  background: rgba(15, 118, 110, 0.06);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1b4f47;
+}
+
+.talepo-plan-status {
+  border-radius: 1rem;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #f7faf9;
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: rgba(15, 31, 29, 0.68);
+}
+
+.talepo-plan-status--warn {
+  border-color: rgba(138, 106, 43, 0.22);
+  background: #fcfaf5;
+  color: #5c4a28;
+}
+
+.talepo-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-top: 0.85rem;
+  font-size: 0.8125rem;
+  color: rgba(15, 31, 29, 0.5);
+}
+
+.talepo-plan-meta strong {
+  color: #0f1f1d;
+  font-weight: 600;
+}
+
+.talepo-plan-section-label {
+  margin: 0 0 0.85rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(15, 31, 29, 0.42);
+}
+
+@media (max-width: 639px) {
+  .talepo-follow-card-actions {
+    width: 100%;
+  }
+
+  .talepo-follow-open {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .talepo-signal-mark-field {
+    display: none;
+  }
+
+  .talepo-follow-category-tile {
+    height: 3rem !important;
+    width: 3rem !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .talepo-signal-mark-field {
+    width: 8.25rem;
+    height: 8.25rem;
+    right: -2.4rem;
+    opacity: 0.85;
+  }
+}
+
 .talepo-radar-mark-inline {
   display: inline-flex;
   width: 1.15rem;
@@ -2971,6 +3422,15 @@ section.mt-6 svg > text:last-of-type {
       180deg,
       rgba(232, 247, 244, 0.55) 0%,
       rgba(247, 252, 251, 0.96) 100%
+    );
+}
+
+.talepo-opportunity-shell--follows .talepo-beacon-body {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(238, 242, 255, 0.55) 0%,
+      rgba(247, 250, 252, 0.96) 100%
     );
 }
 
@@ -3032,6 +3492,11 @@ section.mt-6 svg > text:last-of-type {
   color: #123b3a;
 }
 
+.talepo-opportunity-shell--follows .talepo-opportunity-tab[aria-current="page"] {
+  background: #334155;
+  color: #f8fafc;
+}
+
 .talepo-opportunity-follow {
   display: inline-flex;
   align-items: center;
@@ -3044,6 +3509,39 @@ section.mt-6 svg > text:last-of-type {
   color: rgba(15, 47, 40, 0.7);
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.talepo-opportunity-manage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  height: 2.75rem;
+  padding: 0 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(49, 70, 110, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.talepo-opportunity-manage:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  background: rgba(238, 242, 255, 0.9);
+  color: #0f3f3a;
+}
+
+.talepo-opportunity-manage:focus-visible {
+  outline: 2px solid #334155;
+  outline-offset: 2px;
 }
 
 .talepo-opportunity-card {
@@ -3511,6 +4009,12 @@ a.talepo-account-menu-item {
   .talepo-opportunity-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .talepo-opportunity-manage {
+    align-self: flex-start;
+    width: fit-content;
+    max-width: 100%;
   }
 
   .talepo-radar-mark-field {
@@ -4351,6 +4855,7 @@ a.talepo-account-menu-item {
   .talepo-opportunity-tab,
   .talepo-opportunity-card,
   .talepo-opportunity-follow,
+  .talepo-opportunity-manage,
   .talepo-radar-mark-field,
   .talepo-radar-mark-inline,
   .talepo-header-action,

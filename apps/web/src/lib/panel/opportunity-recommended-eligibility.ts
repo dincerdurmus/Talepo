@@ -21,7 +21,12 @@
  * queryDiscoveryWorkspace, not this browse filter.
  */
 
-export type OpportunityHubView = "suggested" | "browse" | "urgent" | "radar";
+export type OpportunityHubView =
+  | "suggested"
+  | "browse"
+  | "urgent"
+  | "radar"
+  | "tracking";
 
 export type OpportunityRecommendedSignal = {
   context: "PERSONAL" | "WORKSPACE";
@@ -79,6 +84,7 @@ export function selectOpportunityHubItems<T extends OpportunityRecommendedSignal
     return items.filter(isOtherOpportunityEligible);
   }
   if (view === "urgent") return items.filter((item) => item.isUrgent);
+  // suggested + tracking: grounded personal follow matches (DERIVABLE reuse)
   return items.filter(isRecommendedEligible);
 }
 

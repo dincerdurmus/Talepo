@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
-  Bookmark,
+  Binoculars,
   ChevronRight,
   Crown,
   FileText,
@@ -16,7 +16,6 @@ import {
   PieChart,
   Plus,
   Sparkles,
-  Activity,
   UserRound,
   X,
 } from "lucide-react";
@@ -36,8 +35,11 @@ import {
   SIGNAL_RAIL_LOCKED_HINT,
   type ResolvedSignalRailProTool,
   type SignalRailProToolId,
-  type SignalRailProToolTone,
 } from "@/lib/panel/signal-rail-pro-tools";
+import {
+  signalNavIconToneForHref,
+  signalNavIconWellClass,
+} from "@/lib/panel/signal-nav-icon-tone";
 
 type CommandSection = "genel" | "talep-teklif" | "araclar" | "plan" | "hesap";
 
@@ -56,23 +58,18 @@ export const SIGNAL_RAIL_ICON_LABELS = {
 const RAIL_WIDTH_PX = SIGNAL_RAIL_WIDTH_PX;
 const DOCK_WIDTH_PX = SIGNAL_RAIL_DOCK_WIDTH_PX;
 
-type ProToolTone = SignalRailProToolTone;
-
-const PRO_TOOL_ICON_WRAP: Record<ProToolTone, string> = {
-  follows:
-    "bg-amber-400/25 text-amber-50 border border-amber-300/40",
-  opportunities:
-    "bg-rose-400/25 text-rose-50 border border-rose-300/40",
-  radar:
-    "bg-teal-400/25 text-teal-50 border border-teal-300/40",
-  intelligence:
-    "bg-white/18 text-white border border-white/25",
+const PRO_TOOL_JEWEL: Record<SignalRailProToolId, string> = {
+  firsatlar:
+    "border border-[#A85B68]/42 bg-[#A85B68]/22 text-[#f0c4cb] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+  takip:
+    "border border-[#6671B8]/42 bg-[#6671B8]/22 text-[#c9cef0] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
+  "teklif-zekasi":
+    "border border-[#B28A35]/42 bg-[#B28A35]/22 text-[#f0d9a0] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]",
 };
 
 const PRO_TOOL_ICONS: Record<SignalRailProToolId, LucideIcon> = {
   firsatlar: Flame,
-  takiplerim: Bookmark,
-  radar: Activity,
+  takip: Binoculars,
   "teklif-zekasi": PieChart,
 };
 
@@ -628,14 +625,7 @@ function DockSectionContent({
   unreadOutgoingOfferEvents: number;
 }) {
   if (section === "araclar") {
-    return (
-      <div className="space-y-3">
-        <p className="talepo-signal-dock-solid px-2 text-[11px] font-bold uppercase tracking-[0.08em] text-amber-200">
-          Profesyonel araçlar
-        </p>
-        <CommandProToolsCard items={proTools} />
-      </div>
-    );
+    return <CommandProToolsCard items={proTools} />;
   }
 
   if (section === "plan") {
@@ -715,10 +705,13 @@ function DockNavLink({
   const activeClass = premium
     ? "border border-amber-300/30 bg-gradient-to-r from-amber-400/14 via-rose-400/10 to-purple-400/14 font-semibold text-amber-50"
     : "border border-teal-400/20 bg-teal-400/12 font-semibold text-teal-50";
-  const iconActiveClass = premium
-    ? "border-amber-300/30 bg-gradient-to-br from-amber-400/25 via-rose-400/20 to-purple-400/22 text-amber-50"
-    : "border-teal-400/30 bg-teal-400/20 text-white";
   const indicatorClass = premium ? "bg-amber-400" : "bg-teal-300";
+  const tone = signalNavIconToneForHref(href);
+  const iconWellClass = premium
+    ? active
+      ? "border-amber-300/30 bg-gradient-to-br from-amber-400/25 via-rose-400/20 to-purple-400/22 text-amber-50"
+      : "border-amber-400/28 bg-amber-400/12 text-amber-100/85"
+    : signalNavIconWellClass(tone, active);
 
   return (
     <Link
@@ -739,10 +732,8 @@ function DockNavLink({
         />
       ) : null}
       <span
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border ${
-          active
-            ? iconActiveClass
-            : "border-white/20 bg-white/15 text-white"
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] border transition ${iconWellClass} ${
+          active ? "" : "group-hover:brightness-110"
         }`}
       >
         <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
@@ -769,14 +760,24 @@ function CommandProToolsCard({
   const hasLocked = signalRailHasLockedProTools(items);
 
   return (
-    <div className="overflow-hidden rounded-[16px] border border-white/12 bg-white/10 px-2 py-2">
+    <div className="relative overflow-hidden rounded-[16px] border border-white/14 bg-[linear-gradient(165deg,rgba(255,255,255,0.11)_0%,rgba(255,255,255,0.045)_55%,rgba(15,118,110,0.08)_100%)] px-2 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/40 to-transparent"
+      />
       <div className="mb-1.5 flex items-start gap-2 px-1 pt-0.5">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-teal-300/40 bg-teal-400/20 text-white">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-teal-300/45 bg-teal-400/22 text-teal-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]">
           <Sparkles className="h-3.5 w-3.5" strokeWidth={2.1} />
         </span>
         <div className="min-w-0">
-          <p className="talepo-signal-dock-solid text-[13.5px] font-semibold leading-4 tracking-[-0.02em] text-white">
+          <p className="talepo-signal-dock-solid flex items-center gap-1.5 text-[13.5px] font-semibold leading-4 tracking-[-0.02em] text-white">
             Pro Araçlar
+            <span className="rounded-[5px] border border-teal-200/30 bg-teal-400/15 px-1.5 py-px text-[8.5px] font-semibold uppercase tracking-[0.08em] text-teal-50/90">
+              Pro
+            </span>
+          </p>
+          <p className="mt-0.5 text-[11px] leading-4 text-white/62">
+            Profesyonel plana özel akıllı araçlar
           </p>
         </div>
       </div>
@@ -806,6 +807,7 @@ function CommandProToolRow({
   showSeparator: boolean;
 }) {
   const Icon = PRO_TOOL_ICONS[item.id];
+  const jewel = PRO_TOOL_JEWEL[item.id];
 
   return (
     <>
@@ -817,7 +819,7 @@ function CommandProToolRow({
           className="flex cursor-default items-center gap-2 rounded-[10px] px-1.5 py-1.5 text-white/70"
         >
           <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] border border-white/20 bg-white/10 text-white`}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${jewel} opacity-70`}
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
           </span>
@@ -848,12 +850,12 @@ function CommandProToolRow({
           aria-current={item.active ? "page" : undefined}
           className={`group flex items-center gap-2 rounded-[10px] px-1.5 py-1.5 transition ${
             item.active
-              ? "border border-teal-300/30 bg-teal-400/15"
-              : "hover:bg-white/10"
+              ? "border border-white/18 bg-white/10"
+              : "hover:bg-white/[0.07]"
           }`}
         >
           <span
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${PRO_TOOL_ICON_WRAP[item.tone]}`}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] ${jewel}`}
           >
             <Icon className="h-3.5 w-3.5" strokeWidth={2.05} />
           </span>

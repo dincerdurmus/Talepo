@@ -16,6 +16,7 @@ import { requireUser } from "@/server/auth/require-user";
 
 import { FeatureUpgradeGate } from "@/components/panel/FeatureUpgradeGate";
 import { FollowTracksManager } from "@/components/panel/FollowTracksManager";
+import { SignalActivityShell } from "@/components/panel/signal/SignalActivityShell";
 
 export default async function FollowsPage() {
   const user = await requireUser();
@@ -108,26 +109,34 @@ export default async function FollowsPage() {
 
   const workspaceLabel =
     entitlements.subject.type === "company" ? "Firma" : "Kişisel";
+  const notifyingCount = tracks.filter((track) => track.notificationsOn).length;
+  const summary = canOpenModule
+    ? tracks.length === 0
+      ? "Henüz aktif takibiniz yok."
+      : notifyingCount > 0
+        ? `${tracks.length} takip · ${notifyingCount} bildirim açık`
+        : `${tracks.length} takip`
+    : null;
 
   return (
-    <>
-      <section className="py-4 sm:py-6">
-        <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
-          Profesyonel · {workspaceLabel}
-        </p>
-        <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">Takiplerim</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
-          İlgilendiğiniz talepleri kaydedin, yeni eşleşmelerde bildirim alın.
-        </p>
-      </section>
-
-      <FeatureUpgradeGate feature="saved_searches" entitled={canOpenModule}>
+    <SignalActivityShell
+      tone="follows"
+      eyebrow={`Takiplerim · ${workspaceLabel}`}
+      title="Takiplerim"
+      description="Kayıtlı kriterlerinizi izleyin. Yeni eşleşmelerde bildirim alın veya aynı aramayı yeniden açın."
+      summary={summary}
+    >
+      <FeatureUpgradeGate
+        feature="saved_searches"
+        entitled={canOpenModule}
+        presentation="signal"
+      >
         <FollowTracksManager
           initialTracks={tracks}
           alertsEnabled={canAlert}
           canCreateTrack={canSave}
         />
       </FeatureUpgradeGate>
-    </>
+    </SignalActivityShell>
   );
 }

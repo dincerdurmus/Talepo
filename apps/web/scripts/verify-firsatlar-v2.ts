@@ -65,10 +65,12 @@ console.log("\n=== TABS / IA ===\n");
       !workspace.includes('id: "urgent"'),
   );
   check(
-    "29 three personal tabs",
+    "29 four personal opportunity tabs",
     workspace.includes('label: "Önerilen"') &&
       workspace.includes('label: "Talepo Radar"') &&
-      workspace.includes('label: "Fırsat Havuzu"'),
+      workspace.includes('label: "Fırsat Havuzu"') &&
+      workspace.includes('label: "Takip"') &&
+      workspace.includes('id: "tracking"'),
   );
   check(
     "8 Fırsat Havuzu label",

@@ -528,13 +528,14 @@ console.log("\n=== SORT / TABS / HEADER / OWNER CTA ===\n");
       !hub.includes("Aktif 28 gün kaldı"),
   );
   check(
-    "personal tabs stay Önerilen / Talepo Radar / Fırsat Havuzu",
+    "personal tabs Önerilen / Talepo Radar / Fırsat Havuzu / Takip",
     workspace.includes('label: "Önerilen"') &&
       workspace.includes('label: "Talepo Radar"') &&
       workspace.includes('label: "Fırsat Havuzu"') &&
+      workspace.includes('label: "Takip"') &&
       workspace.includes("Lightbulb") &&
       workspace.includes("Compass") &&
-      workspace.includes("Activity") &&
+      workspace.includes("Binoculars") &&
       !workspace.includes('label: "Acil"') &&
       !workspace.includes("Takip Ettiklerim") &&
       read("src/components/panel/panel-nav.ts").includes(

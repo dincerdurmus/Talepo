@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  Binoculars,
   Check,
   Clock,
   Eye,
@@ -37,6 +38,8 @@ type OpportunitiesHubProps = {
   canWatchlist: boolean;
   view?: OpportunityHubView;
   opportunityContext?: OpportunityContext;
+  /** Active SavedSearch + AlertRule count for tracking empty states. */
+  followCriteriaCount?: number;
 };
 
 const COMPETITION_LABELS = {
@@ -514,6 +517,68 @@ function OpportunityEmptyState() {
   );
 }
 
+function TrackingEmptyState({ criteriaCount }: { criteriaCount: number }) {
+  if (criteriaCount <= 0) {
+    return (
+      <div className="talepo-opportunity-empty">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-700/10">
+          <Binoculars className="h-6 w-6" aria-hidden />
+        </div>
+        <h3 className="mt-5 text-xl font-semibold tracking-[-0.03em] text-[#172c48] sm:text-2xl">
+          Henüz takip oluşturmadınız
+        </h3>
+        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
+          Talepler’de filtreleyip takip kaydedin. Eşleşen açık fırsatlar burada
+          listelenir.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link
+            href="/panel/talepler?from=takiplerim"
+            className="inline-flex min-h-11 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
+          >
+            Yeni takip →
+          </Link>
+          <Link
+            href="/panel/takiplerim"
+            className="inline-flex min-h-11 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
+          >
+            Takipleri yönet
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="talepo-opportunity-empty">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-700/10">
+        <Binoculars className="h-6 w-6" aria-hidden />
+      </div>
+      <h3 className="mt-5 text-xl font-semibold tracking-[-0.03em] text-[#172c48] sm:text-2xl">
+        Takip kriterlerinize uyan yeni fırsat yok
+      </h3>
+      <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
+        Kayıtlı kriterleriniz aktif. Yeni eşleşmeler oluştukça burada görünür;
+        bildirimler de sizi haberdar eder.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          href="/panel/takiplerim"
+          className="inline-flex min-h-11 items-center rounded-xl bg-teal-900 px-4 text-xs font-semibold text-white transition hover:bg-teal-800"
+        >
+          Takipleri yönet →
+        </Link>
+        <Link
+          href="/panel/firsatlar?view=browse"
+          className="inline-flex min-h-11 items-center rounded-xl border border-teal-900/12 bg-white px-4 text-xs font-semibold text-teal-900"
+        >
+          Fırsat Havuzu
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 function FeedSummaryStrip({
   items,
   surface,
@@ -564,6 +629,7 @@ export function OpportunitiesHub({
   canWatchlist,
   view = "suggested",
   opportunityContext,
+  followCriteriaCount = 0,
 }: OpportunitiesHubProps) {
   const [feed, setFeed] = useState(initialFeed);
   const [busy, setBusy] = useState<string | null>(null);
@@ -579,7 +645,10 @@ export function OpportunitiesHub({
 
   const visible = useMemo(() => {
     const selected = selectOpportunityHubItems(feed, view);
-    if (view === "suggested" && surface === "PERSONAL") {
+    if (
+      (view === "suggested" || view === "tracking") &&
+      surface === "PERSONAL"
+    ) {
       return sortPersonalRecommended(selected);
     }
     return demoteAlreadyOffered(selected);
@@ -599,7 +668,9 @@ export function OpportunitiesHub({
         : "Keşif"
       : view === "radar"
         ? "Dikkat çeken talepler"
-        : "Sana önerilen fırsatlar";
+        : view === "tracking"
+          ? "Takip sonuçları"
+          : "Sana önerilen fırsatlar";
 
   function cardCanSave(item: OpportunityFeedItem) {
     return isOpportunitySaveSupported({
@@ -679,7 +750,9 @@ export function OpportunitiesHub({
         icon={<Flame className="h-5 w-5 text-teal-700" />}
         items={visible}
         empty={
-          view === "suggested" ? (
+          view === "tracking" ? (
+            <TrackingEmptyState criteriaCount={followCriteriaCount} />
+          ) : view === "suggested" ? (
             <OpportunityEmptyState />
           ) : view === "radar" ? (
             <div className="talepo-opportunity-empty space-y-2">

@@ -78,3 +78,80 @@ export function placeCollisionPopover(input: {
 
   return { top, left, side };
 }
+
+/**
+ * Collision-aware tooltip placement.
+ * Prefer right → left → bottom → top; always keep viewport padding.
+ */
+export function placeCollisionTooltip(input: {
+  trigger: CollisionBox;
+  menu: { width: number; height: number };
+  viewport: { width: number; height: number };
+  padding?: CollisionPadding;
+  gap?: number;
+}): {
+  top: number;
+  left: number;
+  placement: "right" | "left" | "top" | "bottom";
+} {
+  const padding = input.padding ?? DESKTOP_COLLISION_PADDING;
+  const gap = input.gap ?? 8;
+  const menuWidth = Math.min(
+    input.menu.width,
+    Math.max(48, input.viewport.width - padding.left - padding.right),
+  );
+  const menuHeight = Math.min(
+    input.menu.height,
+    Math.max(44, input.viewport.height - padding.top - padding.bottom),
+  );
+
+  const spaceRight =
+    input.viewport.width -
+    (input.trigger.left + input.trigger.width) -
+    padding.right;
+  const spaceLeft = input.trigger.left - padding.left;
+  const spaceBelow =
+    input.viewport.height -
+    (input.trigger.top + input.trigger.height) -
+    padding.bottom;
+  const spaceAbove = input.trigger.top - padding.top;
+
+  let placement: "right" | "left" | "top" | "bottom";
+  if (spaceRight >= menuWidth + gap) {
+    placement = "right";
+  } else if (spaceLeft >= menuWidth + gap) {
+    placement = "left";
+  } else if (spaceBelow >= menuHeight + gap || spaceBelow >= spaceAbove) {
+    placement = "bottom";
+  } else {
+    placement = "top";
+  }
+
+  let top: number;
+  let left: number;
+
+  if (placement === "right") {
+    left = input.trigger.left + input.trigger.width + gap;
+    top = input.trigger.top + input.trigger.height / 2 - menuHeight / 2;
+  } else if (placement === "left") {
+    left = input.trigger.left - menuWidth - gap;
+    top = input.trigger.top + input.trigger.height / 2 - menuHeight / 2;
+  } else if (placement === "bottom") {
+    top = input.trigger.top + input.trigger.height + gap;
+    left = input.trigger.left + input.trigger.width / 2 - menuWidth / 2;
+  } else {
+    top = input.trigger.top - menuHeight - gap;
+    left = input.trigger.left + input.trigger.width / 2 - menuWidth / 2;
+  }
+
+  top = Math.min(
+    Math.max(padding.top, top),
+    input.viewport.height - menuHeight - padding.bottom,
+  );
+  left = Math.min(
+    Math.max(padding.left, left),
+    input.viewport.width - menuWidth - padding.right,
+  );
+
+  return { top, left, placement };
+}
