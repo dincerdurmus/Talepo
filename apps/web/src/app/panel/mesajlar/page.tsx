@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 
+import { ConversationCategoryArt } from "@/components/panel/ConversationCategoryArt";
+import { SignalActivityShell } from "@/components/panel/signal/SignalActivityShell";
 import { formatImageMessagePreview } from "@/lib/message/attachment-group";
+import { resolveRequestCardMedia } from "@/lib/panel/request-card-media";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
@@ -26,7 +29,15 @@ export default async function MessagesPage() {
         include: {
           offer: {
             include: {
-              request: { select: { id: true, title: true, city: true } },
+              request: {
+                select: {
+                  id: true,
+                  title: true,
+                  city: true,
+                  coverImageUrl: true,
+                  category: { select: { slug: true, name: true } },
+                },
+              },
               company: { select: { id: true, name: true } },
               submittedBy: { select: { name: true } },
             },
@@ -69,56 +80,64 @@ export default async function MessagesPage() {
     : unique;
 
   const list = workspace ? companyScoped : unique;
+  const unreadCount = list.filter(({ conversation, lastReadAt }) =>
+    Boolean(
+      conversation.lastMessageAt &&
+        (!lastReadAt || lastReadAt < conversation.lastMessageAt),
+    ),
+  ).length;
+  const summary =
+    unreadCount > 0
+      ? `${unreadCount} yazışmada yeni gelişme var.`
+      : list.length > 0
+        ? "Tüm yazışmalar güncel."
+        : "Yazışma, teklif kabulünden sonra açılır.";
 
   return (
-    <>
-      <section className="relative overflow-hidden rounded-2xl border border-teal-900/10 bg-white px-5 py-6 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:px-7 sm:py-7">
-        <p className="relative text-xs font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-          {workspace ? workspace.companyName : "İletişim"}
-        </p>
-        <h1 className="talepo-page-title relative mt-2 text-3xl sm:text-4xl">
-          Mesajlar
-        </h1>
-        <p className="relative mt-3 max-w-2xl text-sm leading-7 text-teal-950/50 sm:text-[15px]">
-          {workspace
-            ? "Firmanızın tekliflerine bağlı yazışmalar. İletişim teklif kabulünden sonra açılır."
-            : "Anlaşma sonrası açılan yazışmalar. Fiyat pazarlığı karşı teklif turlarıyla yapılır; mesajlaşma teklif kabulünden sonra açılır."}
-        </p>
-      </section>
-
+    <SignalActivityShell
+      tone="communication"
+      eyebrow={workspace ? workspace.companyName : "İLETİŞİM"}
+      title="Mesajlar"
+      description={
+        workspace
+          ? "Firmanızın tekliflerine bağlı yazışmalar. İletişim teklif kabulünden sonra açılır."
+          : "Anlaşma sonrası açılan yazışmalar. Fiyat pazarlığı karşı teklif turlarıyla yapılır; mesajlaşma teklif kabulünden sonra açılır."
+      }
+      summary={summary}
+    >
       {list.length === 0 ? (
-        <section className="mt-5 rounded-2xl border border-teal-900/10 bg-white p-8 text-center shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:p-14">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-xl bg-[#eef6f4] text-teal-800">
-            <MessageCircle className="h-7 w-7" />
-          </div>
-          <h2 className="mt-6 text-2xl font-semibold tracking-tight text-[#0f1f1d]">
-            Henüz mesajınız yok
+        <section className="talepo-activity-empty">
+          <span className="talepo-activity-icon" aria-hidden>
+            <MessageCircle className="h-4 w-4" />
+          </span>
+          <h2 className="text-lg font-semibold tracking-tight text-[#0f1f1d]">
+            Anlaşma sonrası yazışmalar burada
           </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-teal-950/50">
+          <p className="max-w-lg text-sm leading-6 text-[#0f1f1d]/52">
             Mesajlar otomatik gelmez. Karşı teklif ve pazarlık tutar üzerinden
             yürür; yazışma ancak anlaşmadan sonra açılır.
           </p>
 
-          <ol className="mx-auto mt-6 max-w-md space-y-3 text-left text-sm text-teal-950/60">
+          <ol className="talepo-activity-empty-steps">
             {workspace ? (
               <>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
-                  <span className="font-semibold text-teal-900/80">1.</span>{" "}
+                <li className="talepo-activity-empty-step">
+                  <span className="font-semibold text-[#0f1f1d]/80">1.</span>{" "}
                   Keşiften bir talebe <strong>teklif gönderin</strong>
                 </li>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
-                  <span className="font-semibold text-teal-900/80">2.</span> Alıcı{" "}
+                <li className="talepo-activity-empty-step">
+                  <span className="font-semibold text-[#0f1f1d]/80">2.</span> Alıcı{" "}
                   <strong>kabul eder</strong> veya <strong>karşı teklif</strong>{" "}
                   verir. Anlaşma olunca yazışma açılır
                 </li>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
-                  <span className="font-semibold text-teal-900/80">3.</span> Yazışma{" "}
+                <li className="talepo-activity-empty-step">
+                  <span className="font-semibold text-[#0f1f1d]/80">3.</span> Yazışma{" "}
                   <strong>burada</strong> açılır
                 </li>
               </>
             ) : (
               <>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                <li className="talepo-activity-empty-step">
                   <span className="font-semibold text-[#0f1f1d]">1.</span> Firma
                   talebinize <strong>teklif gönderir</strong> →{" "}
                   <Link
@@ -128,12 +147,12 @@ export default async function MessagesPage() {
                     Gelen teklifler
                   </Link>
                 </li>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                <li className="talepo-activity-empty-step">
                   <span className="font-semibold text-[#0f1f1d]">2.</span> Siz{" "}
                   <strong>Kabul et</strong> veya <strong>karşı teklif</strong>{" "}
                   verirsiniz
                 </li>
-                <li className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
+                <li className="talepo-activity-empty-step">
                   <span className="font-semibold text-[#0f1f1d]">3.</span> Anlaşma
                   sonrası yazışma <strong>burada</strong> açılır
                 </li>
@@ -141,18 +160,18 @@ export default async function MessagesPage() {
             )}
           </ol>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="talepo-activity-actions">
             {workspace ? (
               <>
                 <Link
                   href="/panel/talepler"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
+                  className="talepo-activity-cta talepo-activity-cta--primary"
                 >
                   Talepler
                 </Link>
                 <Link
                   href="/panel/teklifler"
-                  className="inline-flex items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-5 py-3 text-sm font-semibold text-[#0f1f1d]"
+                  className="talepo-activity-cta talepo-activity-cta--secondary"
                 >
                   Tekliflerimiz
                 </Link>
@@ -161,13 +180,13 @@ export default async function MessagesPage() {
               <>
                 <Link
                   href="/panel/gelen-teklifler"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0f766e] px-5 py-3 text-sm font-semibold text-white"
+                  className="talepo-activity-cta talepo-activity-cta--primary"
                 >
                   Gelen teklifler
                 </Link>
                 <Link
                   href="/panel/taleplerim"
-                  className="inline-flex items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-5 py-3 text-sm font-semibold text-[#0f1f1d]"
+                  className="talepo-activity-cta talepo-activity-cta--secondary"
                 >
                   Taleplerim
                 </Link>
@@ -176,7 +195,7 @@ export default async function MessagesPage() {
           </div>
         </section>
       ) : (
-        <section className="mt-5 grid gap-3">
+        <section className="talepo-activity-list" aria-label="Yazışmalar">
           {list.map(({ conversation, lastReadAt }) => {
             const lastMessage = conversation.messages[0];
             const isSupplierSide = Boolean(
@@ -192,10 +211,16 @@ export default async function MessagesPage() {
               conversation.offer.request.title ||
               conversation.title ||
               "Talep";
-            const requestId = conversation.offer.request.id;
             const unread =
               conversation.lastMessageAt &&
               (!lastReadAt || lastReadAt < conversation.lastMessageAt);
+            const identityMark = counterpart.trim().charAt(0).toUpperCase() || "T";
+            const request = conversation.offer.request;
+            const hasArtwork =
+              resolveRequestCardMedia({
+                coverImageUrl: request.coverImageUrl,
+                categorySlug: request.category?.slug,
+              }).kind !== "icon";
 
             const preview = lastMessage
               ? lastMessage.type === "SYSTEM"
@@ -216,57 +241,75 @@ export default async function MessagesPage() {
               <Link
                 key={conversation.id}
                 href={`/panel/mesajlar/${conversation.id}`}
-                className="group rounded-2xl border border-teal-900/8 bg-white/95 p-5 shadow-[0_10px_36px_rgba(15,118,110,0.04)] transition hover:border-teal-700/20 hover:bg-[#f8fcfb] hover:shadow-[0_14px_42px_rgba(15,118,110,0.07)]"
+                className={[
+                  "talepo-activity-row talepo-activity-row--clickable",
+                  unread ? "talepo-activity-row--unread" : "",
+                  hasArtwork ? "talepo-activity-row--with-art" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-label={
+                  unread
+                    ? `${counterpart}, ${requestTitle}, okunmadı`
+                    : `${counterpart}, ${requestTitle}`
+                }
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="inline-flex max-w-full flex-col gap-0.5 rounded-xl border border-teal-800/10 bg-[#f0faf7] px-2.5 py-1.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-800/55">
-                        Talep başlığı
-                      </span>
-                      <span className="truncate text-[13px] font-semibold text-teal-950/90">
+                <span className="talepo-activity-icon text-sm font-semibold" aria-hidden>
+                  {identityMark}
+                </span>
+                <div className="relative z-[1] min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p
+                        className={
+                          unread
+                            ? "truncate font-semibold tracking-tight text-[#0f1f1d]"
+                            : "truncate font-semibold tracking-tight text-[#0f1f1d]/78"
+                        }
+                      >
+                        {unread ? (
+                          <span className="talepo-beacon-unread-dot mr-2 inline-block align-middle" aria-hidden />
+                        ) : null}
+                        {counterpart}
+                        {unread ? <span className="sr-only"> Okunmadı</span> : null}
+                      </p>
+                      <p className="mt-0.5 truncate text-[13px] text-[#0f1f1d]/52">
                         {requestTitle}
-                      </span>
+                        {conversation.offer.request.city
+                          ? ` · ${conversation.offer.request.city}`
+                          : ""}
+                      </p>
                     </div>
-                    <p className="mt-2.5 truncate text-[15px] font-semibold text-slate-800">
-                      {counterpart}
-                    </p>
-                    {conversation.offer.status !== "ACCEPTED" ? (
-                      <p className="mt-1 text-[11px] font-semibold text-amber-800">
-                        Salt okunur · mesajlaşma anlaşmadan sonra açılır
-                      </p>
-                    ) : null}
-                    {conversation.offer.request.city && (
-                      <p className="mt-0.5 truncate text-xs text-slate-400">
-                        {conversation.offer.request.city}
-                      </p>
-                    )}
-                    <p className="mt-3 truncate text-sm text-slate-500">
-                      {preview}
-                    </p>
-                    <p className="mt-2 text-[11px] font-medium text-slate-400">
-                      Talep no · {requestId.slice(-8)}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    {conversation.lastMessageAt && (
-                      <p className="text-xs text-slate-400">
+                    {conversation.lastMessageAt ? (
+                      <time
+                        dateTime={conversation.lastMessageAt.toISOString()}
+                        className="shrink-0 pt-0.5 text-[11px] tabular-nums text-[#0f1f1d]/38"
+                      >
                         {formatDate(conversation.lastMessageAt)}
-                      </p>
-                    )}
-                    {unread && (
-                      <span className="mt-2 inline-flex rounded-lg bg-teal-700/90 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm shadow-teal-900/10">
-                        Yeni
-                      </span>
-                    )}
+                      </time>
+                    ) : null}
                   </div>
+                  {conversation.offer.status !== "ACCEPTED" ? (
+                    <p className="mt-1 text-[11px] font-medium text-[#8a5a18]">
+                      Salt okunur · mesajlaşma anlaşmadan sonra açılır
+                    </p>
+                  ) : null}
+                  <p className="mt-1.5 truncate text-sm text-[#0f1f1d]/48">
+                    {preview}
+                  </p>
                 </div>
+                {hasArtwork ? (
+                  <ConversationCategoryArt
+                    coverImageUrl={request.coverImageUrl}
+                    categorySlug={request.category?.slug}
+                  />
+                ) : null}
               </Link>
             );
           })}
         </section>
       )}
-    </>
+    </SignalActivityShell>
   );
 }
 

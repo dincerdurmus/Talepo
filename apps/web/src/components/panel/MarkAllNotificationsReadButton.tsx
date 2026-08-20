@@ -12,7 +12,10 @@ export function MarkAllNotificationsReadButton({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const disabled = unreadCount <= 0 || pending;
+
+  if (unreadCount <= 0 && !pending) return null;
+
+  const disabled = pending;
 
   async function onClick() {
     if (disabled) return;
@@ -44,19 +47,15 @@ export function MarkAllNotificationsReadButton({
         type="button"
         onClick={() => void onClick()}
         disabled={disabled}
-        aria-label={
-          unreadCount > 0
-            ? "Tüm bildirimleri okundu işaretle"
-            : "Tüm bildirimler okundu"
-        }
-        className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-3.5 py-2 text-sm font-semibold text-teal-950/75 transition hover:bg-[#f7faf9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/25 disabled:cursor-not-allowed disabled:opacity-45"
+        aria-label="Tüm bildirimleri okundu işaretle"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[#0f1f1d]/8 bg-transparent px-3 text-sm font-medium text-[#0f1f1d]/55 transition hover:border-[#0f1f1d]/12 hover:bg-white/80 hover:text-[#0f1f1d]/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f1d]/30 disabled:cursor-not-allowed disabled:opacity-45"
       >
         {pending ? (
-          <LoaderCircle className="h-4 w-4 animate-spin" />
+          <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
         ) : (
-          <CheckCheck className="h-4 w-4" />
+          <CheckCheck className="h-4 w-4" aria-hidden />
         )}
-        {unreadCount > 0 ? "Tümünü okundu işaretle" : "Tümü okundu"}
+        Tümü okundu
       </button>
       {error ? (
         <p className="mt-2 text-xs text-[#8b352b]" role="alert">

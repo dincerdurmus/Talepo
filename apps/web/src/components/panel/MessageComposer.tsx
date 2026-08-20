@@ -152,17 +152,14 @@ export function MessageComposer({
     canSend && !isSending && Boolean(content.trim() || images.length > 0);
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="border-t border-teal-900/8 bg-gradient-to-b from-white to-[#f7fbfa] p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
-    >
+    <form onSubmit={handleSubmit} className="talepo-conversation-composer">
       {!canSend && (
-        <p className="mb-3 rounded-xl border border-amber-200/70 bg-amber-50/90 px-3 py-2 text-sm font-medium text-amber-950/80">
+        <p className="talepo-activity-alert mb-3">
           Mesajlaşma yalnızca anlaşmadan sonra açılır.
         </p>
       )}
       {error && (
-        <p className="mb-3 rounded-xl border border-rose-200/70 bg-rose-50/90 px-3 py-2 text-sm font-medium text-rose-900/85">
+        <p className="mb-3 rounded-[0.95rem] border border-[#8b352b]/20 bg-[#fff1ee] px-3 py-2 text-sm font-medium text-[#8b352b]" role="alert">
           {error}
         </p>
       )}
@@ -208,7 +205,7 @@ export function MessageComposer({
               type="button"
               disabled={!canSend || isSending || images.length >= MAX_MESSAGE_IMAGES}
               onClick={() => fileInputRef.current?.click()}
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-teal-900/10 bg-white text-teal-800/80 transition hover:border-teal-800/25 hover:bg-[#eef8f5] disabled:opacity-40"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[#0f1f1d]/10 bg-white text-[#0f4a43] transition hover:border-[#0f1f1d]/16 hover:bg-[#f7fbfa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f1d]/30 disabled:opacity-40"
               aria-label="Fotoğraf ekle"
               title="Fotoğraf ekle"
             >
@@ -226,12 +223,12 @@ export function MessageComposer({
               : "Mesajınızı yazın..."
           }
           disabled={!canSend}
-          className="min-h-[48px] flex-1 resize-none rounded-xl border border-teal-900/10 bg-white px-4 py-3 text-sm text-teal-950/85 outline-none ring-teal-700/20 transition placeholder:text-teal-900/30 focus:border-teal-700/30 focus:ring-2 disabled:opacity-50"
+          className="min-h-[48px] flex-1 resize-none rounded-xl border border-[#0f1f1d]/10 bg-white px-4 py-3 text-sm text-[#0f1f1d]/85 outline-none transition placeholder:text-[#0f1f1d]/32 focus:border-[#0f4a43]/30 focus:ring-2 focus:ring-[#0f1f1d]/20 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={!canSubmit}
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0f766e] text-white transition hover:bg-[#115e59] disabled:opacity-40"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0f1f1d] text-[#f4fbf9] transition hover:bg-[#16302c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f1d]/40 disabled:opacity-40"
           aria-label="Mesaj gönder"
         >
           {isSending ? (
@@ -241,11 +238,11 @@ export function MessageComposer({
           )}
         </button>
       </div>
-      <p className="mt-2.5 text-[11px] leading-5 text-teal-900/40">
-        {canSendImages
-          ? "Mesaj başına en fazla 3 fotoğraf. Görseller otomatik denetlenir; telefon ve IBAN paylaşılamaz."
-          : "Telefon, e-posta ve IBAN paylaşılamaz."}
-      </p>
+      {canSendImages ? (
+        <p className="mt-2.5 text-[11px] leading-5 text-[#0f1f1d]/38">
+          Mesaj başına en fazla 3 fotoğraf. Görseller otomatik denetlenir.
+        </p>
+      ) : null}
     </form>
   );
 }

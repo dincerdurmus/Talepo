@@ -11,6 +11,10 @@ import {
   groupConversationMessages,
   parseGroupFileName,
 } from "../src/lib/message/attachment-group";
+import {
+  buildConversationProcessSteps,
+  formatConversationMoney,
+} from "../src/lib/message/conversation-process";
 import { MAX_MESSAGE_IMAGES } from "../src/lib/message/limits";
 
 let pass = 0;
@@ -107,6 +111,113 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
     parsed?.groupId === roundtripId && parsed.index === 2,
   );
 
+  const sendMessage = read("src/server/message/send-message.ts");
+  check(
+    "accepted send uses conversation access gate",
+    sendMessage.includes("getSendableConversation") &&
+      sendMessage.includes("content: trimmed"),
+  );
+  check(
+    "accepted conversation does not block contact info",
+    !sendMessage.includes("containsBlockedContactInfo") &&
+      !sendMessage.includes("sanitizeCommercialText"),
+  );
+
+  check(
+    "image captions do not strip contact after accept",
+    !sendImages.includes("containsBlockedContactInfo") &&
+      !sendImages.includes("sanitizeCommercialText") &&
+      sendImages.includes("getSendableConversation"),
+  );
+
+  check(
+    "composer omits contact warning in accepted send",
+    !composer.includes("Telefon, e-posta ve IBAN paylaşılamaz") &&
+      !composer.includes("telefon ve IBAN paylaşılamaz"),
+  );
+
+  const offerService = read("src/server/offer/offer-service.ts");
+  check(
+    "pre-accept offer form still blocks contact",
+    offerService.includes("containsBlockedContactInfo") &&
+      offerService.includes("Teklif metninde telefon, IBAN"),
+  );
+
+  const offerAmount = formatConversationMoney(48000, "TRY");
+  const counterAmount = formatConversationMoney(44000, "TRY");
+  const processSteps = buildConversationProcessSteps({
+    requestTitle: "Yönetici koltuğu",
+    requestAt: "2026-08-16T09:00:00.000Z",
+    hasOffer: true,
+    offerAmountLabel: offerAmount,
+    offerSubmittedAt: "2026-08-18T11:32:00.000Z",
+    hasNegotiation: true,
+    negotiationAmountLabel: counterAmount,
+    negotiationAt: "2026-08-18T12:10:00.000Z",
+    offerAccepted: true,
+    acceptedAmountLabel: counterAmount,
+    offerAcceptedAt: "2026-08-18T12:40:00.000Z",
+    conversationOpened: true,
+    conversationOpenedAt: "2026-08-18T12:41:00.000Z",
+    dealCompleted: true,
+    dealCompletedAt: "2026-08-20T10:00:00.000Z",
+    reviewSubmitted: true,
+    reviewRating: 5,
+    reviewSubmittedAt: "2026-08-20T11:00:00.000Z",
+  });
+  check(
+    "process rail uses real commercial details",
+    processSteps.find((step) => step.id === "request")?.detail ===
+      "Yönetici koltuğu" &&
+      processSteps.find((step) => step.id === "offer")?.detail ===
+        `${offerAmount} teklif verildi` &&
+      processSteps.find((step) => step.id === "negotiation")?.detail ===
+        `${counterAmount} karşı teklif` &&
+      processSteps.find((step) => step.id === "accepted")?.detail ===
+        `${counterAmount} üzerinde anlaşıldı` &&
+      processSteps.find((step) => step.id === "review")?.detail ===
+        "5 yıldız değerlendirme verildi",
+  );
+  check(
+    "process rail does not invent missing stages",
+    buildConversationProcessSteps({
+      requestTitle: "X",
+      requestAt: "2026-08-16T09:00:00.000Z",
+      hasOffer: true,
+      offerAmountLabel: "1.000 TRY",
+      offerSubmittedAt: "2026-08-16T10:00:00.000Z",
+      hasNegotiation: false,
+      negotiationAmountLabel: null,
+      negotiationAt: null,
+      offerAccepted: false,
+      acceptedAmountLabel: null,
+      offerAcceptedAt: null,
+      conversationOpened: false,
+      conversationOpenedAt: null,
+      dealCompleted: false,
+      dealCompletedAt: null,
+      reviewSubmitted: false,
+      reviewRating: null,
+      reviewSubmittedAt: null,
+    }).every((step) => step.id === "request" || step.id === "offer"),
+  );
+
+  const shell = read("src/components/panel/ConversationShell.tsx");
+  check(
+    "thread banner reuses category artwork component",
+    shell.includes("ConversationCategoryArt") &&
+      shell.includes("coverImageUrl") &&
+      shell.includes("categorySlug"),
+  );
+
+  check(
+    "composer remains above transaction status",
+    shell.lastIndexOf("<MessageComposer") <
+      shell.lastIndexOf("<DealOutcomePanel") &&
+      shell.lastIndexOf("<DealOutcomePanel") <
+        shell.lastIndexOf("<DealReviewPanel"),
+  );
+
   const outcome = read("src/components/panel/DealOutcomePanel.tsx");
   check(
     "completion panel compact and collapsed by default",
@@ -119,14 +230,6 @@ console.log("\n=== MESSAGE LIFECYCLE V1 ===\n");
   check(
     "review panel dismissible in compact mode",
     review.includes("dismissKey") && review.includes("compact"),
-  );
-
-  const shell = read("src/components/panel/ConversationShell.tsx");
-  check(
-    "deal panels moved to header not above composer",
-    shell.includes("DealOutcomePanel") &&
-      shell.includes("compact") &&
-      !shell.includes("mt-4 rounded-xl border border-teal-900/10 bg-white px-4 py-4"),
   );
 
   const profileService = read("src/server/profile/public-profile-service.ts");

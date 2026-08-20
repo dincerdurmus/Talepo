@@ -30,7 +30,7 @@ export function ConversationMessageList({
 
   if (grouped.length === 0) {
     return (
-      <p className="text-center text-sm text-slate-400">
+      <p className="px-2 py-8 text-center text-sm text-[#0f1f1d]/42">
         Henüz mesaj yok. İlk mesajı siz gönderebilirsiniz.
       </p>
     );
@@ -42,9 +42,7 @@ export function ConversationMessageList({
         if (item.kind === "system") {
           return (
             <div key={item.id} className="flex justify-center">
-              <p className="max-w-[90%] rounded-xl border border-teal-900/8 bg-white/80 px-3 py-2 text-center text-xs leading-5 text-slate-500">
-                {item.content}
-              </p>
+              <p className="talepo-conversation-system">{item.content}</p>
             </div>
           );
         }
@@ -57,72 +55,85 @@ export function ConversationMessageList({
             className={`flex ${item.isMine ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] overflow-hidden rounded-2xl text-sm leading-6 shadow-sm sm:max-w-[80%] ${
+              className={`talepo-conversation-msg ${
                 item.isMine
-                  ? "bg-teal-800 text-white shadow-teal-900/10"
-                  : "border border-slate-200/70 bg-white text-slate-700"
+                  ? "talepo-conversation-msg--mine"
+                  : "talepo-conversation-msg--theirs"
               }`}
             >
-              {!item.isMine && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    onOpenProfile?.(item.senderUserId, senderLabel)
-                  }
-                  className={`px-4 pt-3 text-xs font-semibold underline-offset-2 hover:underline ${
-                    item.isMine ? "text-white/55" : "text-slate-500"
-                  }`}
-                  aria-label={`${senderLabel} profilini görüntüle`}
-                >
-                  {senderLabel}
-                </button>
-              )}
-
-              {item.kind === "image-group" ? (
-                <div className={item.caption || !item.isMine ? "pt-2" : ""}>
-                  <div
-                    className={`grid gap-0.5 ${
-                      item.images.length === 1
-                        ? "grid-cols-1"
-                        : item.images.length === 2
-                          ? "grid-cols-2"
-                          : "grid-cols-3"
-                    }`}
+              <div
+                className={`talepo-conversation-bubble ${
+                  item.isMine
+                    ? "talepo-conversation-bubble--mine"
+                    : "talepo-conversation-bubble--theirs"
+                } ${item.kind === "image-group" ? "talepo-conversation-bubble--media" : ""}`}
+              >
+                {!item.isMine && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onOpenProfile?.(item.senderUserId, senderLabel)
+                    }
+                    className="talepo-conversation-bubble-sender px-5 pt-3.5 text-xs font-semibold text-[#0f1f1d]/48 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/30"
+                    aria-label={`${senderLabel} profilini görüntüle`}
                   >
-                    {item.images.map((image, imageIndex) => (
-                      <button
-                        key={image.id}
-                        type="button"
-                        onClick={() =>
-                          setLightbox({
-                            images: item.images.map((row) => ({
-                              src: row.fileUrl,
-                              alt: row.fileName,
-                            })),
-                            startIndex: imageIndex,
-                          })
-                        }
-                        className="block overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-                        aria-label={`${image.fileName} fotoğrafını büyüt`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={image.fileUrl}
-                          alt={image.fileName}
-                          className="aspect-square w-full object-cover sm:max-h-48 sm:aspect-auto sm:object-cover"
-                        />
-                      </button>
-                    ))}
+                    {senderLabel}
+                  </button>
+                )}
+
+                {item.kind === "image-group" ? (
+                  <div className={item.caption || !item.isMine ? "pt-2" : ""}>
+                    <div
+                      className={`grid gap-0.5 ${
+                        item.images.length === 1
+                          ? "grid-cols-1"
+                          : item.images.length === 2
+                            ? "grid-cols-2"
+                            : "grid-cols-3"
+                      }`}
+                    >
+                      {item.images.map((image, imageIndex) => (
+                        <button
+                          key={image.id}
+                          type="button"
+                          onClick={() =>
+                            setLightbox({
+                              images: item.images.map((row) => ({
+                                src: row.fileUrl,
+                                alt: row.fileName,
+                              })),
+                              startIndex: imageIndex,
+                            })
+                          }
+                          className="block overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+                          aria-label={`${image.fileName} fotoğrafını büyüt`}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={image.fileUrl}
+                            alt={image.fileName}
+                            className="aspect-square w-full object-cover sm:max-h-48 sm:aspect-auto sm:object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    {item.caption ? (
+                      <p className="talepo-conversation-bubble-copy">{item.caption}</p>
+                    ) : (
+                      <div className="h-1" />
+                    )}
                   </div>
-                  {item.caption ? (
-                    <p className="px-4 py-3">{item.caption}</p>
-                  ) : (
-                    <div className="h-1" />
-                  )}
-                </div>
-              ) : (
-                <p className="px-4 py-3">{item.content}</p>
-              )}
+                ) : (
+                  <p className="talepo-conversation-bubble-copy">{item.content}</p>
+                )}
+              </div>
+              <p
+                className={`mt-1 px-1 text-[10px] tabular-nums text-[#0f1f1d]/34 ${
+                  item.isMine ? "text-right" : "text-left"
+                }`}
+              >
+                {formatMessageTime(item.createdAt)}
+              </p>
             </div>
           </div>
         );
@@ -136,4 +147,16 @@ export function ConversationMessageList({
       />
     </>
   );
+}
+
+function formatMessageTime(iso: string) {
+  const date = new Date(iso);
+  const sameDay =
+    date.toDateString() === new Date().toDateString();
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: sameDay ? undefined : "numeric",
+    month: sameDay ? undefined : "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 }

@@ -2767,3 +2767,868 @@ section.mt-6 svg > text:last-of-type {
     transform: none;
   }
 }
+
+.talepo-activity {
+  overflow-x: hidden;
+}
+
+.talepo-activity-banner {
+  --activity-eyebrow: #c8f4eb;
+  --activity-title: #f4fbf9;
+  --activity-copy: #d7ece7;
+  --activity-summary: #e7f3f0;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(244, 251, 249, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 251, 249, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.talepo-activity-banner--activity {
+  --activity-eyebrow: #f3e2c0;
+  --activity-title: #fff8eb;
+  --activity-copy: #ead7b4;
+  --activity-summary: #f4e6c8;
+  border-bottom-color: rgba(255, 248, 235, 0.12);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 235, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(
+      ellipse 68% 90% at 100% 0%,
+      rgba(201, 162, 74, 0.2),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #5c4010 0%, #7a5816 48%, #a07a28 100%);
+}
+
+.talepo-activity-banner--activity .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 248, 235, 0.16),
+    transparent 68%
+  );
+}
+
+.talepo-activity-banner--communication {
+  --activity-eyebrow: #c8f0e4;
+  --activity-title: #f2fbf7;
+  --activity-copy: #cfe8dc;
+  --activity-summary: #dff3ea;
+  background:
+    radial-gradient(
+      ellipse 64% 88% at 100% 0%,
+      rgba(46, 148, 112, 0.22),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #124a3d 0%, #14614d 48%, #1b755b 100%);
+}
+
+.talepo-activity-banner--communication .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(220, 245, 235, 0.16),
+    transparent 68%
+  );
+}
+
+.talepo-activity-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.85rem;
+}
+
+.talepo-activity-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.talepo-activity-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 1.05rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #fff;
+  padding: 0.9rem 1rem;
+  text-align: left;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.talepo-activity-row--with-art {
+  padding-right: 6.75rem;
+}
+
+.talepo-activity-row time {
+  position: relative;
+  z-index: 1;
+}
+
+.talepo-activity-row--with-art time {
+  margin-right: -0.15rem;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 0.94) 55%,
+    rgba(255, 255, 255, 0.55) 82%,
+    transparent
+  );
+  padding-left: 0.7rem;
+}
+
+.talepo-activity-row--unread {
+  border-color: rgba(15, 118, 110, 0.16);
+  background: linear-gradient(
+    90deg,
+    rgba(231, 247, 242, 0.72) 0%,
+    #fff 46%
+  );
+  box-shadow: inset 3px 0 0 #0f766e;
+}
+
+.talepo-activity-row--clickable:hover,
+.talepo-activity-row--clickable:focus-visible {
+  border-color: rgba(15, 118, 110, 0.18);
+  background: #f7fbfa;
+  outline: none;
+}
+
+.talepo-activity-row--unread.talepo-activity-row--clickable:hover,
+.talepo-activity-row--unread.talepo-activity-row--clickable:focus-visible {
+  background: linear-gradient(
+    90deg,
+    rgba(231, 247, 242, 0.88) 0%,
+    #f7fbfa 46%
+  );
+}
+
+.talepo-activity-icon {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(15, 31, 29, 0.06);
+  background: #f4fbf9;
+  color: #0f4a43;
+}
+
+.talepo-activity-icon--message {
+  background: #e7f7f2;
+  color: #0f766e;
+}
+
+.talepo-activity-icon--offer,
+.talepo-activity-icon--update,
+.talepo-activity-icon--negotiate,
+.talepo-activity-icon--request,
+.talepo-activity-icon--viewed {
+  background: #eef4f2;
+  color: #0f4a43;
+}
+
+.talepo-activity-icon--complete {
+  background: #e7f4ee;
+  color: #14614d;
+}
+
+.talepo-activity-icon--declined {
+  background: #f6eeed;
+  color: #8b4a45;
+}
+
+.talepo-activity-icon--invite,
+.talepo-activity-icon--joined {
+  background: #eef0f7;
+  color: #3d4a7a;
+}
+
+.talepo-activity-icon--review {
+  background: #f4f1e8;
+  color: #6a5418;
+}
+
+.talepo-activity-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.7rem;
+  border-radius: 1.15rem;
+  border: 1px dashed rgba(15, 31, 29, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 1.75rem 1.15rem;
+  text-align: center;
+}
+
+.talepo-activity-empty-steps {
+  display: grid;
+  gap: 0.45rem;
+  width: min(100%, 26rem);
+  margin-top: 0.35rem;
+  text-align: left;
+}
+
+.talepo-activity-empty-step {
+  border-radius: 0.85rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #fff;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(15, 31, 29, 0.62);
+}
+
+.talepo-activity-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.talepo-activity-cta {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  padding: 0 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.talepo-activity-cta--primary {
+  background: #0f1f1d;
+  color: #f4fbf9;
+}
+
+.talepo-activity-cta--primary:hover {
+  background: #16302c;
+}
+
+.talepo-activity-cta--secondary {
+  border: 1px solid rgba(15, 31, 29, 0.1);
+  background: #fff;
+  color: #0f1f1d;
+}
+
+.talepo-activity-cta--secondary:hover {
+  background: #f7fbfa;
+}
+
+.talepo-activity-alert {
+  margin-bottom: 0.9rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(180, 130, 40, 0.22);
+  background: #fbf6ec;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: rgba(92, 64, 18, 0.86);
+}
+
+.talepo-activity-invite {
+  margin-bottom: 0.9rem;
+}
+
+.talepo-conversation {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 84rem;
+  overflow-x: hidden;
+  padding-bottom: 1.25rem;
+}
+
+.talepo-conversation-header {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(15, 31, 29, 0.12);
+  background:
+    radial-gradient(
+      ellipse 70% 90% at 0% 0%,
+      rgba(70, 118, 148, 0.16),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #172a3a 0%, #1b3346 48%, #203b50 100%);
+  color: #f4fbf9;
+  min-height: 8.25rem;
+}
+
+.talepo-conversation-header-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 48%;
+  z-index: 0;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to left, #000 32%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 32%, transparent 100%);
+}
+
+.talepo-conversation-header-art img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+}
+
+.talepo-conversation-header-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    #1b3346 0%,
+    rgba(27, 51, 70, 0.42) 24%,
+    rgba(27, 51, 70, 0.08) 52%,
+    transparent 76%
+  );
+}
+
+.talepo-conversation-header-body {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "nav status"
+    "identity .";
+  align-items: start;
+  width: 100%;
+  min-height: 8.25rem;
+  column-gap: 1rem;
+  row-gap: 0.7rem;
+  padding: 0.7rem 1rem 1rem;
+}
+
+.talepo-conversation-header-back {
+  grid-area: nav;
+  display: inline-flex;
+  min-height: 2.5rem;
+  width: fit-content;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(214, 227, 237, 0.7);
+  transition: color 0.16s ease;
+}
+
+.talepo-conversation-header-back:hover,
+.talepo-conversation-header-back:focus-visible {
+  color: #f4fbf9;
+  outline: none;
+}
+
+.talepo-conversation-header-back:focus-visible {
+  box-shadow: 0 0 0 2px rgba(244, 251, 249, 0.45);
+  border-radius: 0.4rem;
+}
+
+.talepo-conversation-header-status {
+  grid-area: status;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: start;
+  justify-self: end;
+  margin-top: 0.2rem;
+  border-radius: 999px;
+  background: rgba(244, 251, 249, 0.94);
+  box-shadow: 0 1px 8px rgba(23, 42, 58, 0.22);
+  padding: 0.22rem 0.7rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #172a3a;
+}
+
+.talepo-conversation-header-identity {
+  grid-area: identity;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 48%;
+}
+
+.talepo-conversation-header-mark {
+  display: flex;
+  height: 2.35rem;
+  width: 2.35rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #f4fbf9;
+}
+
+.talepo-conversation-header-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.18rem;
+}
+
+.talepo-conversation-header-name {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.talepo-conversation-header-person {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f4fbf9;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.talepo-conversation-header-person:hover,
+.talepo-conversation-header-person:focus-visible {
+  text-decoration-line: underline;
+  outline: none;
+}
+
+.talepo-conversation-header-person:focus-visible {
+  box-shadow: 0 0 0 2px rgba(244, 251, 249, 0.45);
+  border-radius: 0.25rem;
+}
+
+.talepo-conversation-header-trust {
+  display: inline-flex;
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.talepo-conversation-header-trust > span > span {
+  padding: 0.12rem 0.42rem;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.2;
+  background: rgba(244, 251, 249, 0.82);
+  color: rgba(23, 42, 58, 0.78);
+  box-shadow: none;
+}
+
+.talepo-conversation-request {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(214, 227, 237, 0.82);
+  text-underline-offset: 3px;
+}
+
+.talepo-conversation-request:hover,
+.talepo-conversation-request:focus-visible {
+  color: #f4fbf9;
+  text-decoration-line: underline;
+  outline: none;
+}
+
+.talepo-conversation-request:focus-visible {
+  box-shadow: 0 0 0 2px rgba(244, 251, 249, 0.45);
+  border-radius: 0.25rem;
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .talepo-conversation-header-art {
+    width: 40%;
+  }
+
+  .talepo-conversation-header-identity {
+    max-width: 58%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .talepo-conversation-header-art {
+    width: 50%;
+  }
+
+  .talepo-conversation-header-body {
+    padding: 0.75rem 1.15rem 1.05rem 1.1rem;
+  }
+
+  .talepo-conversation-header-identity {
+    max-width: 46%;
+  }
+}
+
+.talepo-conversation-layout {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.7rem;
+}
+
+.talepo-conversation-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.talepo-conversation-thread {
+  display: flex;
+  min-height: 20rem;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1.2rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #f7faf9;
+}
+
+.talepo-conversation-feed {
+  flex: 1 1 auto;
+  min-height: 8.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1rem 1.15rem 0.7rem;
+}
+
+.talepo-conversation-msg {
+  display: flex;
+  min-width: 0;
+  width: fit-content;
+  max-width: 64%;
+  flex-direction: column;
+}
+
+.talepo-conversation-msg--mine {
+  align-items: flex-end;
+}
+
+.talepo-conversation-msg--theirs {
+  align-items: flex-start;
+}
+
+.talepo-conversation-bubble {
+  width: fit-content;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 1.05rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.talepo-conversation-bubble--media {
+  width: min(16.5rem, 100%);
+}
+
+.talepo-conversation-bubble-copy {
+  padding: 0.85rem 1.2rem;
+}
+
+.talepo-conversation-bubble--mine {
+  background: #1b6a57;
+  color: #f7fbf9;
+}
+
+.talepo-conversation-bubble--theirs {
+  border: 1px solid rgba(15, 31, 29, 0.08);
+  background: #fff;
+  color: #0f1f1d;
+}
+
+.talepo-conversation-system {
+  max-width: 90%;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: rgba(255, 255, 255, 0.78);
+  padding: 0.45rem 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgba(15, 31, 29, 0.48);
+}
+
+.talepo-conversation-composer {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+  border-top: 1px solid rgba(15, 31, 29, 0.07);
+  background: #fff;
+  padding: 0.95rem 1.1rem calc(0.95rem + env(safe-area-inset-bottom, 0px));
+}
+
+.talepo-conversation-lifecycle {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #fbfcfb;
+  padding: 0.7rem 0.85rem;
+}
+
+.talepo-conversation-lifecycle > :first-child {
+  margin-top: 0;
+}
+
+.talepo-conversation-art {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 10.5rem;
+  pointer-events: none;
+  opacity: 0.42;
+  -webkit-mask-image: linear-gradient(to left, #000 26%, transparent 100%);
+  mask-image: linear-gradient(to left, #000 26%, transparent 100%);
+}
+
+.talepo-conversation-art img {
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.talepo-conversation-process {
+  border-radius: 1.2rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #f7faf9;
+  padding: 0.9rem 0.85rem 1rem;
+}
+
+.talepo-conversation-process-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.talepo-conversation-process-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.talepo-conversation-process-mark {
+  display: inline-flex;
+  height: 1.35rem;
+  width: 1.35rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.1rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.talepo-conversation-process-detail {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: rgba(15, 31, 29, 0.62);
+}
+
+.talepo-conversation-process-step--done {
+  color: #115e59;
+}
+
+.talepo-conversation-process-step--done .talepo-conversation-process-mark {
+  background: rgba(15, 118, 110, 0.12);
+  color: #0f4a43;
+}
+
+.talepo-conversation-process-step--current {
+  color: #0f1f1d;
+}
+
+.talepo-conversation-process-step--current .talepo-conversation-process-mark {
+  background: #0f1f1d;
+  color: #f4fbf9;
+}
+
+.talepo-conversation-process--desktop {
+  display: none;
+}
+
+.talepo-conversation-process--mobile {
+  display: block;
+  margin-top: 0.55rem;
+}
+
+.talepo-conversation-process--mobile > summary {
+  display: flex;
+  min-height: 2.75rem;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(15, 31, 29, 0.07);
+  background: #f7faf9;
+  padding: 0 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f1f1d;
+}
+
+.talepo-conversation-process--mobile > summary::-webkit-details-marker {
+  display: none;
+}
+
+.talepo-conversation-process--mobile[open] .talepo-conversation-process {
+  margin-top: 0.45rem;
+}
+
+@media (min-width: 1200px) {
+  .talepo-conversation-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(12.5rem, 16rem);
+    align-items: start;
+    gap: 0.85rem;
+  }
+
+  .talepo-conversation-thread {
+    min-height: clamp(28rem, calc(100dvh - 20rem), 46rem);
+  }
+
+  .talepo-conversation-feed {
+    min-height: 0;
+  }
+
+  .talepo-conversation-process--desktop {
+    display: block;
+  }
+
+  .talepo-conversation-process--mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .talepo-conversation-thread {
+    min-height: clamp(22rem, calc(100dvh - 24rem), 34rem);
+  }
+
+  .talepo-conversation-feed {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1199px) {
+  .talepo-conversation {
+    padding-bottom: calc(5.15rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .talepo-conversation-process--desktop {
+    display: none;
+  }
+
+  .talepo-conversation-process--mobile {
+    display: block;
+    margin-top: 0.55rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .talepo-conversation-header {
+    min-height: 0;
+  }
+
+  .talepo-conversation-header-art {
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: 5.35rem;
+    -webkit-mask-image: linear-gradient(to bottom, #000 28%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 28%, transparent 100%);
+  }
+
+  .talepo-conversation-header-art::after {
+    background: linear-gradient(
+      to bottom,
+      transparent 8%,
+      rgba(23, 42, 58, 0.28) 42%,
+      #172a3a 100%
+    );
+  }
+
+  .talepo-conversation-header-body {
+    min-height: 0;
+    padding: 2.55rem 0.9rem 0.95rem;
+    row-gap: 0.55rem;
+  }
+
+  .talepo-conversation-header-identity {
+    max-width: none;
+  }
+
+  .talepo-conversation-thread {
+    min-height: 0;
+  }
+
+  .talepo-conversation-feed {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 639px) {
+  .talepo-activity-row--with-art {
+    padding-right: 3.35rem;
+  }
+
+  .talepo-activity-row--with-art time {
+    background: none;
+    padding-left: 0;
+  }
+
+  .talepo-conversation-art {
+    width: 4.35rem;
+    opacity: 0.22;
+  }
+
+  .talepo-conversation-msg {
+    max-width: 84%;
+  }
+
+  .talepo-conversation-bubble-copy {
+    padding: 0.7rem 0.95rem;
+  }
+
+  .talepo-conversation-feed {
+    padding: 0.85rem 0.85rem 0.55rem;
+  }
+
+  .talepo-conversation-composer {
+    padding: 0.85rem 0.85rem calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .talepo-activity-row,
+  .talepo-activity-banner,
+  .talepo-activity-cta,
+  .talepo-conversation-header,
+  .talepo-conversation-composer,
+  .talepo-activity button,
+  .talepo-activity a,
+  .talepo-conversation button,
+  .talepo-conversation a {
+    transition: none;
+    animation: none;
+  }
+}

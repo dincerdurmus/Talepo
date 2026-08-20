@@ -1,6 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { ConversationShell } from "@/components/panel/ConversationShell";
+import {
+  buildConversationProcessSteps,
+  formatConversationMoney,
+} from "@/lib/message/conversation-process";
+import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import { isBilateralDealCompleted } from "@/lib/offer/deal-completion";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
@@ -42,10 +47,24 @@ export default async function ConversationDetailPage({
                   id: true,
                   city: true,
                   createdById: true,
+                  createdAt: true,
+                  publishedAt: true,
+                  coverImageUrl: true,
+                  category: { select: { slug: true } },
                 },
               },
               company: { select: { name: true, id: true } },
               submittedBy: { select: { name: true, id: true } },
+              negotiations: {
+                orderBy: { createdAt: "desc" },
+                take: 5,
+                select: {
+                  createdAt: true,
+                  status: true,
+                  amount: true,
+                  currency: true,
+                },
+              },
             },
           },
           messages: {
@@ -114,6 +133,51 @@ export default async function ConversationDetailPage({
           reviewDeadlineLabel: null,
         };
 
+  const latestNegotiation = conversation.offer.negotiations[0] ?? null;
+  const acceptedNegotiation =
+    conversation.offer.negotiations.find((item) => item.status === "ACCEPTED") ??
+    null;
+  const offerAmountLabel = formatConversationMoney(
+    conversation.offer.amount.toNumber(),
+    conversation.offer.currency,
+  );
+  const negotiationAmountLabel = latestNegotiation
+    ? formatConversationMoney(
+        latestNegotiation.amount.toNumber(),
+        latestNegotiation.currency,
+      )
+    : null;
+  const commercialAmount = resolveOfferCommercialAmount({
+    offerAmount: conversation.offer.amount.toNumber(),
+    acceptedNegotiationAmount: acceptedNegotiation?.amount.toNumber() ?? null,
+  });
+  const agreedAmountLabel = offerAccepted
+    ? formatConversationMoney(
+        dealOutcome?.agreedPrice?.toNumber() ?? commercialAmount,
+        dealOutcome?.currency ?? conversation.offer.currency,
+      )
+    : null;
+  const processSteps = buildConversationProcessSteps({
+    requestTitle: request.title,
+    requestAt: (request.publishedAt ?? request.createdAt).toISOString(),
+    hasOffer: true,
+    offerAmountLabel,
+    offerSubmittedAt: conversation.offer.submittedAt?.toISOString() ?? null,
+    hasNegotiation: Boolean(latestNegotiation),
+    negotiationAmountLabel,
+    negotiationAt: latestNegotiation?.createdAt.toISOString() ?? null,
+    offerAccepted,
+    acceptedAmountLabel: agreedAmountLabel,
+    offerAcceptedAt: conversation.offer.acceptedAt?.toISOString() ?? null,
+    conversationOpened: true,
+    conversationOpenedAt: conversation.createdAt.toISOString(),
+    dealCompleted,
+    dealCompletedAt: dealOutcome?.completedAt?.toISOString() ?? null,
+    reviewSubmitted: Boolean(reviewState.ownReview),
+    reviewRating: reviewState.ownReview?.rating ?? null,
+    reviewSubmittedAt: reviewState.ownReview?.createdAt ?? null,
+  });
+
   return (
     <ConversationShell
       conversationId={conversation.id}
@@ -123,9 +187,13 @@ export default async function ConversationDetailPage({
       requestTitle={request.title}
       requestCity={request.city}
       requestHref={requestHref}
+      coverImageUrl={request.coverImageUrl}
+      categorySlug={request.category?.slug ?? null}
       offerAccepted={offerAccepted}
       isSupplier={isSupplier}
       providerTrust={providerTrust}
+      processSteps={processSteps}
+      amountLabel={null}
       messages={conversation.messages.map((message) => ({
         id: message.id,
         type: message.type,
