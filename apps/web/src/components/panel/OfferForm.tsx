@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Send, WandSparkles } from "lucide-react";
+import { ArrowLeft, Send, X } from "lucide-react";
 
 import { OFFER_DRAFT_STORAGE_KEY } from "@/components/panel/AiAssistantPanel";
 import {
   LetterSendButton,
   waitForLetterSend,
 } from "@/components/panel/LetterSendButton";
+import {
+  OfferDraftComposerLock,
+} from "@/components/panel/OfferDraftSuggestion";
 import { OfferPhotoPicker, type PendingOfferPhoto } from "@/components/panel/OfferPhotoPicker";
 import { OfferMediaThumbStrip } from "@/components/panel/OfferMediaThumbStrip";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
@@ -18,7 +21,11 @@ import {
   OFFER_ATTRIBUTION_TOUCH_PARAM,
   readAttributionTouchFromSearchParams,
 } from "@/lib/offer/offer-attribution";
-import { scoreOfferCompleteness } from "@/lib/offer/offer-completeness";
+import {
+  COMPOSER_COMPLETENESS_EXCLUDE,
+  scoreOfferCompleteness,
+} from "@/lib/offer/offer-completeness";
+import { isOfferDraftAssistantLive } from "@/lib/offer/offer-draft-assistant";
 import type { EntitlementDTO } from "@/lib/membership/serialize";
 import { formatQuotaRemaining } from "@/lib/membership/serialize";
 
@@ -27,6 +34,7 @@ type ExistingOfferValues = {
   description: string;
   amount: number;
   deliveryDays: number | null;
+  title?: string | null;
   media?: { id: string }[];
 };
 
@@ -45,13 +53,19 @@ type StoredDraft = {
   description: string;
   amount: number;
   deliveryDays: number;
+  title?: string;
 };
 
 const fieldClass =
-  "h-12 w-full rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 text-[15px] text-[#0f1f1d] outline-none transition placeholder:text-black/30 focus:border-teal-700/25 focus:bg-white focus:ring-2 focus:ring-teal-700/10";
+  "h-12 w-full rounded-[14px] border border-teal-900/[0.11] bg-[#fcfdfc] px-3.5 text-[15px] text-[#0f1f1d] outline-none transition placeholder:text-[#0f1f1d]/38 focus:border-teal-700/35 focus:bg-white focus:ring-2 focus:ring-teal-700/12";
 
 const areaClass =
-  "min-h-[120px] w-full resize-y rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3 text-[15px] leading-6 text-[#0f1f1d] outline-none transition placeholder:text-black/30 focus:border-teal-700/25 focus:bg-white focus:ring-2 focus:ring-teal-700/10";
+  "min-h-[118px] w-full resize-y rounded-[14px] border border-teal-900/[0.11] bg-[#fcfdfc] px-3.5 py-3 text-[15px] leading-6 text-[#0f1f1d] outline-none transition placeholder:text-[#0f1f1d]/38 focus:border-teal-700/35 focus:bg-white focus:ring-2 focus:ring-teal-700/12";
+
+const labelClass = "mb-1.5 block text-[13px] font-medium text-[#536b68]";
+const eyebrowClass =
+  "text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/90";
+const helperClass = "text-[12px] leading-5 text-[#0f1f1d]/52";
 
 function readPendingDraft(requestId: string): StoredDraft | null {
   if (typeof window === "undefined") return null;
@@ -76,6 +90,7 @@ function getPlaceholders(categorySlug?: string, budgetMin?: number | null) {
       amount: budgetHint,
       delivery: "Örn. 3",
       deliveryLabel: "Yanıt süresi (gün)",
+      title: "Örn. Deniz manzaralı 2+1 kiralık daire",
       description: "Kira, depozito, gösterim ve dahil olanlar…",
     };
   }
@@ -84,7 +99,8 @@ function getPlaceholders(categorySlug?: string, budgetMin?: number | null) {
     amount: budgetHint,
     delivery: "Örn. 7",
     deliveryLabel: "Teslim (gün)",
-    description: "Kapsam, garanti ve teslim koşulları…",
+    title: "Örn. 2 yıl garantili Dyson hava temizleme cihazı",
+    description: "Kapsam, garanti ve teslim koşullarınızı kısaca belirtin.",
   };
 }
 
@@ -103,6 +119,7 @@ function resolveInitialOfferFields(
 ) {
   if (existingOffer) {
     return {
+      title: existingOffer.title?.trim() || "",
       description: existingOffer.description,
       amount: formatTrNumber(existingOffer.amount),
       deliveryDays: existingOffer.deliveryDays
@@ -116,6 +133,7 @@ function resolveInitialOfferFields(
     const draft = readPendingDraft(requestId);
     if (draft) {
       return {
+        title: draft.title?.trim() || "",
         description: draft.description,
         amount: formatTrNumber(draft.amount),
         deliveryDays: draft.deliveryDays ? String(draft.deliveryDays) : "",
@@ -125,6 +143,7 @@ function resolveInitialOfferFields(
   }
 
   return {
+    title: "",
     description: "",
     amount: "",
     deliveryDays: "",
@@ -195,7 +214,8 @@ export function OfferForm({
 }: OfferFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const applyDraftFromQuery = searchParams.get("taslak") === "1";
+  const applyDraftFromQuery =
+    isOfferDraftAssistantLive() && searchParams.get("taslak") === "1";
   const attributionTouch =
     attributionTouchProp ??
     readAttributionTouchFromSearchParams(searchParams);
@@ -207,6 +227,7 @@ export function OfferForm({
   );
 
   const [step, setStep] = useState<"edit" | "preview">("edit");
+  const [title, setTitle] = useState(initialFields.title);
   const [description, setDescription] = useState(initialFields.description);
   const [amount, setAmount] = useState(initialFields.amount);
   const [deliveryDays, setDeliveryDays] = useState(initialFields.deliveryDays);
@@ -216,6 +237,9 @@ export function OfferForm({
   const [draftApplied] = useState(initialFields.draftApplied);
   const [photos, setPhotos] = useState<PendingOfferPhoto[]>([]);
   const [createdOfferId, setCreatedOfferId] = useState<string | null>(null);
+  const [previewPhotoIndex, setPreviewPhotoIndex] = useState<number | null>(
+    null,
+  );
 
   const placeholders = useMemo(
     () => getPlaceholders(categorySlug, budgetMin),
@@ -294,13 +318,18 @@ export function OfferForm({
     setIsSubmitting(true);
     const startedAt = Date.now();
     let submittedOfferId = createdOfferId;
+    const trimmedTitle = title.trim();
 
     try {
       if (isRevise && existingOffer) {
+        const payload = isRevise ? { description } : { description };
+        if (trimmedTitle) {
+          Object.assign(payload, { title: trimmedTitle });
+        }
         const response = await fetch(`/api/offers/${existingOffer.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(isRevise ? { description } : { description }),
+          body: JSON.stringify(payload),
         });
         const result = (await response.json()) as {
           message?: string;
@@ -327,6 +356,7 @@ export function OfferForm({
             description,
             amount: parseTrNumber(amount),
             deliveryDays: deliveryDays ? Number(deliveryDays) : null,
+            title: trimmedTitle || undefined,
             deferMediaFinalize: photos.length > 0,
             attributionTouch: attributionTouch ?? undefined,
           }),
@@ -386,97 +416,162 @@ export function OfferForm({
 
   const parsedAmount = parseTrNumber(amount);
   const deliveryNum = deliveryDays ? Number(deliveryDays) : null;
-  const completeness = scoreOfferCompleteness({
-    amount: Number.isFinite(parsedAmount) ? parsedAmount : null,
-    deliveryDays:
-      deliveryNum != null && Number.isFinite(deliveryNum) && deliveryNum > 0
-        ? deliveryNum
-        : null,
-    description,
-    title: null,
-    validUntil: null,
-  });
+  const completeness = scoreOfferCompleteness(
+    {
+      amount: Number.isFinite(parsedAmount) ? parsedAmount : null,
+      deliveryDays:
+        deliveryNum != null && Number.isFinite(deliveryNum) && deliveryNum > 0
+          ? deliveryNum
+          : null,
+      description,
+      title: title.trim() || null,
+      validUntil: null,
+    },
+    { excludeKeys: COMPOSER_COMPLETENESS_EXCLUDE },
+  );
+
+  const strengthenLabels = [
+    ...completeness.missing,
+    ...(photos.length === 0 && !isRevise ? ["Fotoğraf"] : []),
+  ];
 
   if (step === "preview") {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div>
-          <p className="text-sm text-teal-900/50">Son kontrol</p>
-          <h3 className="mt-0.5 text-lg font-semibold tracking-tight text-[#0f1f1d]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/70">
+            Önizleme
+          </p>
+          <h3 className="mt-1 text-xl font-semibold tracking-tight text-[#0f1f1d]">
             Teklifiniz şöyle görünecek
           </h3>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-teal-900/8 bg-[#f7faf9]">
-          <div className="grid grid-cols-2 divide-x divide-teal-900/8 border-b border-teal-900/8">
-            <div className="px-4 py-3.5">
-              <p className="text-xs text-teal-900/45">Tutar</p>
-              <p className="mt-1 text-base font-semibold text-[#0f1f1d]">
+        <article className="overflow-hidden rounded-[18px] border border-teal-900/[0.08] bg-[#fbfcfc]">
+          {title.trim() ? (
+            <div className="border-b border-teal-900/[0.06] px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
+                Başlık
+              </p>
+              <p className="mt-1 text-[17px] font-semibold tracking-tight text-[#0f1f1d]">
+                {title.trim()}
+              </p>
+            </div>
+          ) : null}
+
+          <div className="grid gap-4 border-b border-teal-900/[0.06] px-5 py-4 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
+                Tutar
+              </p>
+              <p className="mt-1 text-[22px] font-semibold tracking-tight text-[#0f1f1d]">
                 {Number.isFinite(parsedAmount) && parsedAmount > 0
                   ? formatTry(parsedAmount)
                   : "—"}
               </p>
             </div>
-            <div className="px-4 py-3.5">
-              <p className="text-xs text-teal-900/45">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
                 {placeholders.deliveryLabel}
               </p>
-              <p className="mt-1 text-base font-semibold text-[#0f1f1d]">
+              <p className="mt-1 text-[17px] font-semibold text-[#0f1f1d]">
                 {deliveryDays ? `${deliveryDays} gün` : "Belirtilmedi"}
               </p>
             </div>
           </div>
-          <div className="px-4 py-3.5">
-            <p className="text-xs text-teal-900/45">Açıklama</p>
-            <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-[#0f1f1d]/80">
+
+          <div className="px-5 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
+              Açıklama
+            </p>
+            <p className="mt-2 whitespace-pre-line text-[15px] leading-7 text-[#0f1f1d]/78">
               {description}
             </p>
           </div>
+
           {!isRevise && photos.length > 0 ? (
-            <div className="border-t border-teal-900/8 px-4 py-3.5">
-              <p className="text-xs text-teal-900/45">Ürün fotoğrafları</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {photos.map((photo) => (
-                  <span
+            <div className="border-t border-teal-900/[0.06] px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
+                Ürün fotoğrafları
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {photos.map((photo, index) => (
+                  <button
                     key={photo.localId}
-                    className="h-14 w-14 overflow-hidden rounded-xl bg-white ring-1 ring-teal-900/10"
+                    type="button"
+                    onClick={() => setPreviewPhotoIndex(index)}
+                    className="h-16 w-16 overflow-hidden rounded-[12px] bg-[#eef2f1] ring-1 ring-teal-900/10"
+                    aria-label={`${photo.name} önizle`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={photo.previewUrl}
-                      alt={photo.name}
+                      alt=""
                       className="h-full w-full object-cover"
                     />
-                  </span>
+                  </button>
                 ))}
               </div>
             </div>
           ) : null}
-          <div className="border-t border-teal-900/8 px-4 py-3.5">
-            <p className="text-xs text-teal-900/45">Alıcı karşılaştırması</p>
-            <p className="mt-1 text-sm font-semibold text-[#0f1f1d]">
-              Doluluk {completeness.score}% · {completeness.label}
+
+          <div className="border-t border-teal-900/[0.06] px-5 py-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/40">
+              Teklif kalitesi
             </p>
-            {completeness.missing.length > 0 ? (
-              <p className="mt-1 text-xs text-amber-800/80">
-                Eksik: {completeness.missing.join(", ")}
+            <p className="mt-1 text-sm font-semibold text-[#0f1f1d]">
+              %{completeness.score} · {completeness.label}
+            </p>
+            {strengthenLabels.length > 0 ? (
+              <p className="mt-1 text-xs text-[#0f1f1d]/50">
+                Eksik: {strengthenLabels.join(", ")}
               </p>
             ) : (
-              <p className="mt-1 text-xs text-emerald-700">
+              <p className="mt-1 text-xs text-teal-800/80">
                 Temel alanlar dolu — karşılaştırmada güçlüsünüz.
               </p>
             )}
           </div>
-        </div>
+        </article>
+
+        {previewPhotoIndex != null && photos[previewPhotoIndex] ? (
+          <div
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-[#0f1f1d]/72 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Fotoğraf önizleme"
+            onClick={() => setPreviewPhotoIndex(null)}
+          >
+            <div
+              className="relative max-h-[min(88vh,720px)] w-full max-w-3xl overflow-hidden rounded-[18px] bg-[#111716]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setPreviewPhotoIndex(null)}
+                className="absolute right-3 top-3 z-10 rounded-full border border-white/15 bg-black/40 p-2 text-white"
+                aria-label="Önizlemeyi kapat"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photos[previewPhotoIndex].previewUrl}
+                alt={photos[previewPhotoIndex].name}
+                className="max-h-[min(88vh,720px)] w-full object-contain"
+              />
+            </div>
+          </div>
+        ) : null}
 
         {error && (
-          <div className="rounded-xl bg-[#fff1ee] px-3.5 py-2.5 text-sm text-[#8b352b]">
+          <div className="rounded-[14px] bg-[#fff1ee] px-3.5 py-2.5 text-sm text-[#8b352b]">
             {error}
           </div>
         )}
 
         {quotaExceeded && (
-          <div className="rounded-xl bg-[#fffbeb] px-3.5 py-2.5 text-sm text-[#78350f]">
+          <div className="rounded-[14px] bg-[#fffbeb] px-3.5 py-2.5 text-sm text-[#78350f]">
             Teklif hakkınız doldu.{" "}
             <Link href="/panel/plan" className="font-semibold underline">
               Planı yükselt
@@ -515,7 +610,7 @@ export function OfferForm({
             type="button"
             onClick={() => setStep("edit")}
             disabled={isSubmitting}
-            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-medium text-teal-900/60 transition hover:bg-teal-50 hover:text-teal-950"
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-[14px] px-4 py-2.5 text-sm font-medium text-teal-900/60 transition hover:bg-teal-50 hover:text-teal-950"
           >
             <ArrowLeft className="h-4 w-4" />
             Düzenle
@@ -526,9 +621,9 @@ export function OfferForm({
   }
 
   return (
-    <form onSubmit={handlePreview} className="space-y-4">
+    <form onSubmit={handlePreview} className="space-y-8">
       {(isRevise || draftApplied || createdOfferId) && (
-        <p className="rounded-xl bg-teal-50/80 px-3.5 py-2.5 text-sm text-teal-950/80">
+        <p className="rounded-[14px] bg-teal-50/80 px-3.5 py-2.5 text-sm text-teal-950/80">
           {isRevise
             ? "Teklif tutarı gönderimden sonra değiştirilemez. Açıklamanızı güncelleyebilirsiniz."
             : createdOfferId
@@ -537,93 +632,104 @@ export function OfferForm({
         </p>
       )}
 
-      {isRevise ? (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <span className="mb-1.5 block text-sm text-teal-950/55">
-              Tutar (₺)
-            </span>
-            <p
-              className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
-            >
-              {Number.isFinite(parsedAmount) && parsedAmount > 0
-                ? formatTry(parsedAmount)
-                : "—"}
-            </p>
-            <p className="mt-1.5 text-xs leading-5 text-teal-950/45">
-              Teklif tutarı gönderimden sonra değiştirilemez.
-            </p>
-          </div>
-          <div>
-            <span className="mb-1.5 block text-sm text-teal-950/55">
-              {placeholders.deliveryLabel}
-            </span>
-            <p
-              className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
-            >
-              {deliveryDays ? `${deliveryDays} gün` : "Belirtilmedi"}
-            </p>
-            <p className="mt-1.5 text-xs leading-5 text-teal-950/45">
-              Teslim süresi gönderimden sonra değiştirilemez.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block">
-            <span className="mb-1.5 block text-sm text-teal-950/55">
-              Tutar (₺)
-            </span>
-            <TrMoneyInput
-              required
-              value={amount}
-              onValueChange={setAmount}
-              placeholder={placeholders.amount}
-              className={fieldClass}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1.5 block text-sm text-teal-950/55">
-              {placeholders.deliveryLabel}
-            </span>
-            <input
-              inputMode="numeric"
-              value={deliveryDays}
-              onChange={(event) => setDeliveryDays(event.target.value)}
-              placeholder={placeholders.delivery}
-              className={fieldClass}
-            />
-          </label>
-        </div>
-      )}
+      <section className="space-y-4">
+        <p className={eyebrowClass}>Teklif</p>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm text-teal-950/55">
-          Kısa açıklama
-        </span>
-        <textarea
-          required
-          value={description}
-          onChange={(event) => setDescription(event.target.value)}
-          placeholder={placeholders.description}
-          rows={4}
-          className={areaClass}
-        />
-      </label>
+        <label className="block">
+          <span className={labelClass}>Teklif başlığı</span>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={placeholders.title}
+            maxLength={120}
+            className={fieldClass}
+          />
+        </label>
+
+        {isRevise ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <span className={labelClass}>Tutar (₺)</span>
+              <p
+                className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
+              >
+                {Number.isFinite(parsedAmount) && parsedAmount > 0
+                  ? formatTry(parsedAmount)
+                  : "—"}
+              </p>
+              <p className={`mt-1.5 ${helperClass}`}>
+                Teklif tutarı gönderimden sonra değiştirilemez.
+              </p>
+            </div>
+            <div>
+              <span className={labelClass}>{placeholders.deliveryLabel}</span>
+              <p
+                className={`${fieldClass} flex items-center font-semibold text-[#0f1f1d]`}
+              >
+                {deliveryDays ? `${deliveryDays} gün` : "Belirtilmedi"}
+              </p>
+              <p className={`mt-1.5 ${helperClass}`}>
+                Teslim süresi gönderimden sonra değiştirilemez.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="block">
+              <span className={labelClass}>Tutar (₺)</span>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-[#536b68]">
+                  ₺
+                </span>
+                <TrMoneyInput
+                  required
+                  value={amount}
+                  onValueChange={setAmount}
+                  placeholder={placeholders.amount}
+                  className={`${fieldClass} pl-8`}
+                />
+              </div>
+            </label>
+            <label className="block">
+              <span className={labelClass}>{placeholders.deliveryLabel}</span>
+              <input
+                inputMode="numeric"
+                value={deliveryDays}
+                onChange={(event) => setDeliveryDays(event.target.value)}
+                placeholder={placeholders.delivery}
+                className={fieldClass}
+              />
+            </label>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <p className={eyebrowClass}>Detay</p>
+        <label className="block">
+          <span className={labelClass}>Kısa açıklama</span>
+          <textarea
+            required
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder={placeholders.description}
+            rows={4}
+            className={areaClass}
+          />
+        </label>
+      </section>
 
       {isRevise && existingOffer?.media && existingOffer.media.length > 0 ? (
-        <div className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3.5">
-          <p className="text-sm font-medium text-teal-950/70">
-            Ürün fotoğrafları
-          </p>
-          <p className="mt-1 text-xs text-teal-950/45">
+        <section className="space-y-3">
+          <p className={eyebrowClass}>Görseller</p>
+          <p className={helperClass}>
             Fotoğraflar gönderimden sonra değiştirilemez.
           </p>
           <OfferMediaThumbStrip
             offerId={existingOffer.id}
             mediaIds={existingOffer.media.map((item) => item.id)}
           />
-        </div>
+        </section>
       ) : null}
 
       {!isRevise ? (
@@ -634,60 +740,58 @@ export function OfferForm({
         />
       ) : null}
 
-      <div className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3">
-        <div className="flex items-center justify-between gap-2 text-xs">
-          <span className="font-semibold text-teal-950/60">
-            Teklif doluluğu · {completeness.label}
-          </span>
-          <span className="tabular-nums font-semibold text-teal-900">
-            {completeness.score}%
+      <section className="rounded-[12px] border border-teal-900/[0.07] bg-[#f6f9f8]/90 px-3.5 py-2.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className={eyebrowClass}>Teklif kalitesi</span>
+          <span className="text-[13px] font-semibold tabular-nums text-teal-900">
+            %{completeness.score}
           </span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-teal-900/10">
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-teal-900/10">
           <div
             className="h-full rounded-full bg-[#0f766e] transition-all"
             style={{ width: `${completeness.score}%` }}
           />
         </div>
-        <p className="mt-2 text-[11px] leading-5 text-teal-950/45">
-          {completeness.missing.length > 0
-            ? `Daha güçlü görünmek için: ${completeness.missing.join(", ")}. Alıcı birden fazla teklifte doluluğa göre sıralar.`
-            : "Temel alanlar dolu. Alıcı karşılaştırmasında avantajlısınız."}
+        <p className={`mt-2 ${helperClass}`}>
+          {strengthenLabels.length > 0
+            ? `Güçlendirmek için: ${strengthenLabels.join(" · ")}`
+            : "Temel alanlar dolu."}
         </p>
+        <p className="sr-only">
+          {completeness.missing.length > 0
+            ? `Eksik: ${completeness.missing.join(", ")}`
+            : "Eksik alan yok"}
+        </p>
+      </section>
+
+      {!isRevise && !draftApplied ? (
+        <div className="opacity-90">
+          <OfferDraftComposerLock />
+        </div>
+      ) : null}
+
+      <div className={`space-y-1 ${helperClass}`}>
+        <p>
+          {isRevise
+            ? "Güncelleme kotadan düşmez."
+            : entitlements.quota.isUnlimited
+              ? "Profesyonel üyeliğinizle sınırsız teklif verebilirsiniz."
+              : `${entitlements.planLabel} · Kalan: ${remainingLabel}`}
+        </p>
+        {!isRevise ? (
+          <p>İletişim bilgileri teklif aşamasında paylaşılmaz.</p>
+        ) : null}
       </div>
 
-      {!isRevise &&
-        !draftApplied &&
-        entitlements.features.ai_offer_assistant && (
-          <Link
-            href={`/panel/asistan?request=${requestId}`}
-            className="inline-flex items-center gap-1.5 text-sm text-teal-800/70 transition hover:text-teal-900"
-          >
-            <WandSparkles className="h-3.5 w-3.5" />
-            Teklif taslağı oluştur
-          </Link>
-        )}
-
-      <p className="text-xs text-black/35">
-        {isRevise
-          ? "Güncelleme kotadan düşmez."
-          : `${entitlements.planLabel} · ${
-              entitlements.quota.isUnlimited
-                ? "Sınırsız teklif"
-                : `Kalan: ${remainingLabel}`
-            }`}
-        {" · "}
-        Telefon / IBAN yazmayın.
-      </p>
-
       {error && (
-        <div className="rounded-xl bg-[#fff1ee] px-3.5 py-2.5 text-sm text-[#8b352b]">
+        <div className="rounded-[14px] bg-[#fff1ee] px-3.5 py-2.5 text-sm text-[#8b352b]">
           {error}
         </div>
       )}
 
       {quotaExceeded && (
-        <div className="rounded-xl bg-[#fffbeb] px-3.5 py-2.5 text-sm text-[#78350f]">
+        <div className="rounded-[14px] bg-[#fffbeb] px-3.5 py-2.5 text-sm text-[#78350f]">
           Teklif hakkınız doldu.{" "}
           <Link href="/panel/plan" className="font-semibold underline">
             Planı yükselt
@@ -695,13 +799,15 @@ export function OfferForm({
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={!canSubmit}
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-teal-800 text-[15px] font-semibold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Önizle ve devam et
-      </button>
+      <div className="flex justify-stretch pt-2 sm:justify-end">
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="flex h-12 w-full items-center justify-center rounded-[14px] bg-teal-800 text-[15px] font-semibold text-white transition hover:bg-teal-900 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:min-w-[12rem] sm:px-6"
+        >
+          Önizle ve devam et
+        </button>
+      </div>
     </form>
   );
 }

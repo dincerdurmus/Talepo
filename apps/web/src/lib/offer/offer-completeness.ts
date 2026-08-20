@@ -16,9 +16,16 @@ export type OfferCompleteness = {
   missing: string[];
 };
 
+export type OfferCompletenessCheckKey =
+  | "amount"
+  | "delivery"
+  | "description"
+  | "title"
+  | "validUntil";
+
 const CHECKS = [
   {
-    key: "amount",
+    key: "amount" as const,
     label: "Tutar",
     weight: 28,
     ok: (o: OfferCompletenessInput) => {
@@ -27,42 +34,51 @@ const CHECKS = [
     },
   },
   {
-    key: "delivery",
+    key: "delivery" as const,
     label: "Teslim süresi",
     weight: 22,
     ok: (o: OfferCompletenessInput) =>
       typeof o.deliveryDays === "number" && o.deliveryDays > 0,
   },
   {
-    key: "description",
+    key: "description" as const,
     label: "Açıklama",
     weight: 30,
     ok: (o: OfferCompletenessInput) =>
       Boolean(o.description && o.description.trim().length >= 40),
   },
   {
-    key: "title",
+    key: "title" as const,
     label: "Başlık",
     weight: 10,
     ok: (o: OfferCompletenessInput) =>
       Boolean(o.title && o.title.trim().length >= 3),
   },
   {
-    key: "validUntil",
+    key: "validUntil" as const,
     label: "Geçerlilik",
     weight: 10,
     ok: (o: OfferCompletenessInput) => Boolean(o.validUntil),
   },
 ] as const;
 
+/** Composer cannot set validUntil via create/update API — exclude from form guidance. */
+export const COMPOSER_COMPLETENESS_EXCLUDE: OfferCompletenessCheckKey[] = [
+  "validUntil",
+];
+
 export function scoreOfferCompleteness(
   offer: OfferCompletenessInput,
+  options?: { excludeKeys?: readonly OfferCompletenessCheckKey[] },
 ): OfferCompleteness {
+  const exclude = new Set(options?.excludeKeys ?? []);
+  const active = CHECKS.filter((check) => !exclude.has(check.key));
+
   let score = 0;
   let filled = 0;
   const missing: string[] = [];
 
-  for (const check of CHECKS) {
+  for (const check of active) {
     if (check.ok(offer)) {
       score += check.weight;
       filled += 1;
@@ -87,7 +103,7 @@ export function scoreOfferCompleteness(
   return {
     score,
     filled,
-    total: CHECKS.length,
+    total: active.length,
     label,
     missing,
   };
