@@ -170,10 +170,21 @@ console.log("\n=== STANDARD / PROFESSIONAL ===\n");
 check(
   "Standard still locked without fake blur numbers",
   dash.includes("ProfessionalLockedSection") &&
-    dash.includes("Professional ile Ticari Performans Zekâsı") &&
+    dash.includes("ProfessionalChamber") &&
+    dash.includes("Profesyonel ile Ticari Performans Zekâsı") &&
     dash.includes('href="/panel/plan"') &&
     !dash.includes("blur-sm") &&
     !dash.includes("Math.random"),
+);
+check(
+  "Professional chamber presentation restored",
+  dash.includes("talepo-analysis-pro") &&
+    dash.includes("talepo-analysis-pro-banner") &&
+    dash.includes("CommercialIntelligenceMark") &&
+    css.includes(".talepo-analysis-pro-banner") &&
+    css.includes("rgba(251, 191, 36") &&
+    css.includes("rgba(251, 113, 133") &&
+    css.includes("rgba(168, 85, 247"),
 );
 check(
   "Professional advanced remains gated by features not ADMIN",
