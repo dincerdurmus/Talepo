@@ -64,6 +64,9 @@ const incomingCard = read("src/components/panel/IncomingOfferCard.tsx");
 const teklifler = read("src/app/panel/teklifler/page.tsx");
 const outgoingCard = read("src/components/panel/OutgoingOfferCard.tsx");
 const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
+const incomingTransition = read(
+  "src/components/panel/my-requests/IncomingOffersTransitionCard.tsx",
+);
 const intelligence = read("src/server/monetization/offer-intelligence.ts");
 const radar = read("src/server/monetization/talepo-radar.ts");
 const destination = read("src/lib/notifications/destination.ts");
@@ -342,7 +345,15 @@ console.log("\n=== UI SURFACES ===\n");
     teklifler.includes("OutgoingOfferCompareGroup") &&
       outgoingCard.includes("OfferNegotiationPanel"),
   );
-  check("request detail uses panel", taleplerim.includes("OfferNegotiationPanel"));
+  check(
+    "request detail hands off to incoming workspace",
+    taleplerim.includes("buildIncomingRequestWorkspacePath") &&
+      taleplerim.includes("IncomingOffersTransitionCard") &&
+      incomingTransition.includes("Teklifleri incele") &&
+      incomingTransition.includes("buildIncomingRequestWorkspacePath") &&
+      !taleplerim.includes("OfferNegotiationPanel") &&
+      !taleplerim.includes("OfferActions"),
+  );
   check("original amount labelled", panel.includes("İlk teklif"));
   check("agreed amount labelled", panel.includes("Anlaşılan fiyat"));
   check("no personal names in timeline", panel.includes("Alıcının önerisi") && panel.includes("Teklif verenin önerisi"));

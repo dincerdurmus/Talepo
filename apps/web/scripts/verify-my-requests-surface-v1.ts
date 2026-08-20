@@ -187,6 +187,14 @@ check(
 );
 
 check(
+  "detail hands offer decisions to Gelen Teklifler workspace",
+  detail.includes("IncomingOffersTransitionCard") &&
+    detail.includes("buildIncomingRequestWorkspacePath") &&
+    !detail.includes("OfferNegotiationPanel") &&
+    !detail.includes("OfferActions"),
+);
+
+check(
   "legacy /taleplerim still redirects to panel",
   legacy.includes('redirect("/panel/taleplerim")'),
 );
