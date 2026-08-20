@@ -22,17 +22,18 @@ export function IncomingOfferGallery({
   const thumbId = mediaIds[0];
   const photoCountLabel =
     mediaIds.length === 1 ? "1 fotoğraf" : `${mediaIds.length} fotoğraf`;
-  const countLabel = `Fotoğrafları görüntüle (${mediaIds.length})`;
+  const visualLabel =
+    mediaIds.length === 1 ? "1 görsel" : `${mediaIds.length} görsel`;
 
   return (
     <div className="mt-3">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-11 max-w-full items-center gap-2 rounded-xl border border-teal-900/10 bg-white px-2.5 py-1.5 text-left"
+        className="inline-flex min-h-10 max-w-full items-center gap-2.5 text-left"
         aria-label={`${sellerName} teklifine ait fotoğraf, ${photoCountLabel}. Teklif fotoğrafını büyüt`}
       >
-        <span className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-teal-900/5">
+        <span className="h-11 w-11 shrink-0 overflow-hidden rounded-[10px] bg-teal-900/5 ring-1 ring-black/[0.06]">
           {failed ? (
             <span className="flex h-full w-full items-center justify-center text-[10px] text-black/35">
               —
@@ -48,11 +49,15 @@ export function IncomingOfferGallery({
           )}
         </span>
         <span className="min-w-0">
-          <span className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/45">
+          <span className="block text-[12px] font-semibold text-[#0f1f1d]">
             Teklif fotoğrafları
           </span>
-          <span className="block truncate text-sm font-semibold text-[#0f1f1d]">
-            {countLabel}
+          <span className="mt-0.5 block text-[11px] text-black/40">
+            {visualLabel}
+            <span className="text-black/25"> · </span>
+            <span className="font-semibold text-teal-900/75">
+              Fotoğrafları görüntüle
+            </span>
           </span>
         </span>
       </button>

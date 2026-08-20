@@ -113,17 +113,31 @@ console.log("\n=== ROUTES & SURFACES ===\n");
     workspaceClient.includes("compareStripLayout"),
   );
   check(
-    "workspace rail+card without request summary column",
-    workspaceClient.includes("lg:grid-cols-[5.75rem_minmax(0,1fr)]") &&
+    "workspace decision strip without vertical metric rail",
+    workspaceClient.includes("OfferDecisionStrip") &&
+      !workspaceClient.includes("lg:grid-cols-[5.75rem_minmax(0,1fr)]") &&
       !workspaceClient.includes("<IncomingRequestSummary"),
+  );
+  const decisionStrip = read("src/components/panel/OfferDecisionStrip.tsx");
+  check(
+    "decision strip labels budget vs negotiation delta",
+    decisionStrip.includes('"Bütçe farkı"') &&
+      decisionStrip.includes('"Pazarlık farkı"') &&
+      !decisionStrip.includes("Değişim"),
+  );
+  check(
+    "decision strip uses frost surface not KPI tiles",
+    decisionStrip.includes("bg-[#f7faf9]/90") &&
+      decisionStrip.includes("Pazarlık durumu") &&
+      !decisionStrip.includes("shadow-["),
   );
   check(
     "compact request summary row",
-    workspaceClient.includes("h-[4.5rem]") && workspaceClient.includes("sm:h-20"),
+    workspaceClient.includes("h-14") && workspaceClient.includes("sm:h-16"),
   );
   check(
     "offer list column width",
-    workspaceClient.includes("lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]"),
+    workspaceClient.includes("lg:grid-cols-[minmax(260px,30%)_minmax(0,1fr)]"),
   );
   check(
     "mobile bottom scroll padding",
@@ -307,7 +321,7 @@ console.log("\n=== MOBILE & A11Y ===\n");
     workspace.includes('mobileView === "detail"') &&
       workspace.includes("Teklif listesine dön"),
   );
-  check("desktop two columns", workspace.includes("lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)]"));
+  check("desktop two columns", workspace.includes("lg:grid-cols-[minmax(260px,30%)_minmax(0,1fr)]"));
   check("selected aria-current", listItem.includes("aria-current"));
   check(
     "list item budget compare authority",

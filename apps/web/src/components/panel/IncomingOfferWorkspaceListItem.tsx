@@ -3,7 +3,6 @@
 import {
   ArrowLeftRight,
   Camera,
-  ChevronRight,
   Clock,
   Star,
 } from "lucide-react";
@@ -66,10 +65,10 @@ const STATUS_PILL: Record<
   string
 > = {
   action:
-    "border-amber-200/80 bg-amber-50 text-amber-950/90 ring-1 ring-amber-200/60",
+    "border-[#e8dcc8] bg-[#faf6ef] text-[#7a5a2b] ring-1 ring-[#e8dcc8]/80",
   new: "border-teal-200/80 bg-teal-50 text-teal-900 ring-1 ring-teal-200/50",
   waiting:
-    "border-teal-900/8 bg-[#f4faf9] text-teal-950/65 ring-1 ring-teal-900/5",
+    "border-[#e8dcc8]/90 bg-[#faf6ef]/80 text-[#7a5a2b] ring-1 ring-[#e8dcc8]/70",
   accepted:
     "border-emerald-200/80 bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200/50",
   closed:
@@ -170,26 +169,19 @@ export function IncomingOfferWorkspaceListItem({
       type="button"
       onClick={onSelect}
       aria-current={isSelected ? "true" : undefined}
-      className={`group relative flex min-h-11 w-full items-stretch gap-0 rounded-2xl border text-left shadow-[0_1px_2px_rgba(15,31,29,0.04)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2 ${
+      className={`group relative flex min-h-11 w-full items-stretch gap-0 overflow-hidden rounded-[16px] border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/35 focus-visible:ring-offset-2 ${
         isSelected
-          ? "border-teal-700/35 bg-gradient-to-br from-[#eef8f5] to-white ring-2 ring-teal-700/12"
+          ? "border-teal-800/20 bg-[#f5f9f8] shadow-[inset_2px_0_0_0_#0f5149]"
           : isConcluded
             ? "border-teal-900/6 bg-[#fafafa] opacity-90 hover:border-teal-900/12 hover:opacity-100"
-            : "border-teal-900/8 bg-white hover:-translate-y-px hover:border-teal-700/20 hover:shadow-[0_6px_16px_rgba(15,118,110,0.08)]"
+            : "border-teal-900/8 bg-white hover:border-teal-800/15 hover:bg-[#fbfcfc]"
       }`}
     >
-      {isSelected ? (
-        <span
-          className="absolute -right-px top-1/2 hidden h-8 w-1 -translate-y-1/2 rounded-l-full bg-teal-700 lg:block"
-          aria-hidden
-        />
-      ) : null}
-
-      <span className="flex min-w-0 flex-1 items-start gap-3 px-3.5 py-3">
+      <span className="flex min-w-0 flex-1 items-start gap-2.5 px-3 py-2.5">
         <span className="relative shrink-0">
           <span
-            className={`flex h-11 w-11 items-center justify-center rounded-full text-xs font-semibold text-white ${
-              isConcluded ? "bg-black/35" : "bg-[#0f766e]"
+            className={`flex h-10 w-10 items-center justify-center rounded-full text-[11px] font-semibold text-white ${
+              isConcluded ? "bg-black/35" : "bg-[#0f5149]"
             }`}
             aria-hidden
           >
@@ -203,9 +195,9 @@ export function IncomingOfferWorkspaceListItem({
           ) : null}
         </span>
 
-        <span className="min-w-0 flex-1 space-y-1.5">
+        <span className="min-w-0 flex-1 space-y-1">
           <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span className="min-w-0 truncate text-sm font-semibold text-[#0f1f1d]">
+            <span className="min-w-0 truncate text-[13px] font-semibold text-[#0f1f1d]">
               {firmName}
             </span>
             <span
@@ -222,33 +214,25 @@ export function IncomingOfferWorkspaceListItem({
           </span>
 
           <span className="block">
-            <span className="text-lg font-semibold leading-none tracking-tight tabular-nums text-[#0f1f1d]">
+            <span className="text-[1.05rem] font-semibold leading-none tracking-tight tabular-nums text-[#0f1f1d]">
               {displayAmount != null
                 ? formatOfferMoney(displayAmount, currency)
                 : "—"}
             </span>
             {budgetDelta ? (
-              <span
-                className={`mt-1 block text-xs font-medium ${
-                  budgetDelta.includes("üstünde")
-                    ? "text-amber-900/80"
-                    : budgetDelta.includes("altında")
-                      ? "text-teal-800/75"
-                      : "text-black/45"
-                }`}
-              >
+              <span className="mt-1 block text-[11px] font-medium text-black/40">
                 {budgetDelta}
               </span>
             ) : null}
           </span>
 
           {messagePreview ? (
-            <p className="line-clamp-2 text-xs leading-5 text-black/50">
+            <p className="line-clamp-2 text-[11px] leading-4 text-black/45">
               “{messagePreview}”
             </p>
           ) : null}
 
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-black/42">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-black/38">
             {deliveryDays != null ? (
               <span className="inline-flex items-center gap-1">
                 <Clock className="h-3 w-3 shrink-0" aria-hidden />
@@ -276,7 +260,7 @@ export function IncomingOfferWorkspaceListItem({
               </span>
             ) : null}
             {trustLine ? (
-              <span className="inline-flex items-center gap-1 text-black/38">
+              <span className="inline-flex items-center gap-1 text-black/35">
                 <span aria-hidden>·</span>
                 {trustRating ? (
                   <Star className="h-3 w-3 shrink-0 text-amber-600/70" aria-hidden />
@@ -286,15 +270,6 @@ export function IncomingOfferWorkspaceListItem({
             ) : null}
           </span>
         </span>
-
-        <ChevronRight
-          className={`mt-1 h-4 w-4 shrink-0 transition ${
-            isSelected
-              ? "text-teal-800"
-              : "text-black/20 group-hover:text-teal-700/50"
-          }`}
-          aria-hidden
-        />
       </span>
     </button>
   );
