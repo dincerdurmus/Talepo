@@ -2833,6 +2833,318 @@ section.mt-6 svg > text:last-of-type {
   );
 }
 
+.talepo-activity-banner--opportunity {
+  --activity-eyebrow: #d7ece7;
+  --activity-title: #f4fbf9;
+  --activity-copy: #cfe3de;
+  --activity-summary: #e4f0ec;
+  min-height: 8.25rem;
+  border-bottom-color: rgba(244, 251, 249, 0.1);
+  background:
+    radial-gradient(
+      ellipse 58% 88% at 100% 0%,
+      rgba(184, 140, 72, 0.16),
+      transparent 56%
+    ),
+    linear-gradient(135deg, #0f2420 0%, #163832 48%, #1b4f47 100%);
+}
+
+.talepo-activity-banner--opportunity .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(244, 251, 249, 0.14),
+    transparent 68%
+  );
+}
+
+.talepo-activity-banner--radar {
+  --activity-eyebrow: #f3d5d8;
+  --activity-title: #fff8f7;
+  --activity-copy: #edd4d6;
+  --activity-summary: #f6e4e5;
+  min-height: 8.25rem;
+  border-bottom-color: rgba(255, 248, 247, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 247, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background:
+    radial-gradient(
+      ellipse 70% 90% at 100% 0%,
+      rgba(155, 44, 52, 0.28),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #5a1820 0%, #7a2029 48%, #9b2c34 100%);
+}
+
+.talepo-activity-banner--radar .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 232, 232, 0.14),
+    transparent 68%
+  );
+}
+
+.talepo-activity-banner--pool {
+  --activity-eyebrow: #1b6a62;
+  --activity-title: #123b3a;
+  --activity-copy: #3d5f5c;
+  --activity-summary: #1a3d3b;
+  min-height: 8.25rem;
+  border-bottom-color: rgba(123, 184, 176, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(18, 59, 58, 0.04);
+  background:
+    radial-gradient(
+      ellipse 64% 88% at 100% 0%,
+      rgba(255, 255, 255, 0.38),
+      transparent 58%
+    ),
+    linear-gradient(135deg, #ddf5f1 0%, #c8eee8 48%, #aee4dc 100%);
+}
+
+.talepo-activity-banner--pool .talepo-my-requests-banner-grid {
+  background-image:
+    linear-gradient(rgba(18, 59, 58, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 59, 58, 0.055) 1px, transparent 1px);
+}
+
+.talepo-activity-banner--pool .talepo-my-requests-banner-glow {
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 255, 255, 0.42),
+    transparent 68%
+  );
+}
+
+.talepo-activity-banner--pool .talepo-my-requests-summary {
+  border: 1px solid rgba(18, 59, 58, 0.12);
+  background: rgba(255, 255, 255, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.talepo-radar-mark-inline {
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.talepo-radar-mark-inline svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.talepo-radar-mark-field {
+  position: absolute;
+  right: -2.15rem;
+  top: 50%;
+  z-index: 0;
+  width: 11rem;
+  height: 11rem;
+  transform: translateY(-50%);
+  color: rgba(255, 248, 247, 0.075);
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
+}
+
+.talepo-radar-mark-field svg {
+  width: 100%;
+  height: 100%;
+}
+
+.talepo-opportunity-shell--radar .talepo-beacon-body {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(250, 246, 246, 0.78) 0%,
+      rgba(247, 242, 242, 0.96) 100%
+    );
+}
+
+.talepo-opportunity-shell--pool .talepo-beacon-body {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(232, 247, 244, 0.55) 0%,
+      rgba(247, 252, 251, 0.96) 100%
+    );
+}
+
+.talepo-opportunity-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+
+.talepo-opportunity-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+}
+
+.talepo-opportunity-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 47, 40, 0.12);
+  background: #fff;
+  color: rgba(15, 47, 40, 0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.talepo-opportunity-tab:hover {
+  background: #f4f8f7;
+}
+
+.talepo-opportunity-tab:focus-visible {
+  outline: 2px solid #1b4f47;
+  outline-offset: 2px;
+}
+
+.talepo-opportunity-tab[aria-current="page"] {
+  border-color: transparent;
+  background: #163832;
+  color: #f4fbf9;
+}
+
+.talepo-opportunity-shell--radar .talepo-opportunity-tab[aria-current="page"] {
+  background: #7a2029;
+  color: #fff8f7;
+}
+
+.talepo-opportunity-shell--pool .talepo-opportunity-tab[aria-current="page"] {
+  background: #9dded5;
+  color: #123b3a;
+}
+
+.talepo-opportunity-follow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.75rem;
+  padding: 0 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(15, 47, 40, 0.1);
+  background: #fff;
+  color: rgba(15, 47, 40, 0.7);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.talepo-opportunity-card {
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fff;
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 1px 2px rgba(15, 47, 40, 0.04);
+}
+
+.talepo-opportunity-card--radar {
+  background: #f8f5f5;
+  border-color: rgba(90, 24, 32, 0.08);
+}
+
+.talepo-opportunity-reason {
+  margin-top: 0.4rem;
+  color: #1b4f47;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.talepo-opportunity-card--radar .talepo-opportunity-reason {
+  color: #2a2424;
+}
+
+.talepo-opportunity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fff;
+  border-radius: 1rem;
+  padding: 0.75rem;
+}
+
+.talepo-opportunity-empty {
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fff;
+  border-radius: 1.25rem;
+  padding: 1.5rem 1.25rem;
+}
+
+.talepo-opportunity-metric {
+  min-width: 6.5rem;
+  flex: 1;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.talepo-opportunity-locked {
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #f7faf9;
+  border-radius: 1.5rem;
+  padding: 2rem 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .talepo-opportunity-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .talepo-radar-mark-field {
+    right: -3rem;
+    width: 8.25rem;
+    height: 8.25rem;
+    color: rgba(255, 248, 247, 0.055);
+  }
+}
+
+@media (max-width: 639px) {
+  .talepo-opportunity-switch {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-inline: -0.15rem;
+    padding-bottom: 0.15rem;
+  }
+
+  .talepo-opportunity-switch::-webkit-scrollbar {
+    display: none;
+  }
+
+  .talepo-opportunity-tab {
+    flex-shrink: 0;
+  }
+
+  .talepo-opportunity-card .talepo-opportunity-cta {
+    width: 100%;
+  }
+
+  .talepo-radar-mark-field {
+    display: none;
+  }
+}
+
 .talepo-activity-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -3627,7 +3939,12 @@ section.mt-6 svg > text:last-of-type {
   .talepo-activity button,
   .talepo-activity a,
   .talepo-conversation button,
-  .talepo-conversation a {
+  .talepo-conversation a,
+  .talepo-opportunity-tab,
+  .talepo-opportunity-card,
+  .talepo-opportunity-follow,
+  .talepo-radar-mark-field,
+  .talepo-radar-mark-inline {
     transition: none;
     animation: none;
   }
