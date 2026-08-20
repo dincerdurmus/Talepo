@@ -351,12 +351,18 @@ export function PanelShell({
                       ? `Bildirimler, ${unreadNotifications} okunmamış`
                       : "Bildirimler"
                   }
-                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-teal-900/8 bg-[#f7faf9] transition hover:bg-white sm:h-11 sm:w-11"
+                  className="talepo-header-action talepo-header-action--notify"
                 >
-                  {unreadNotifications > 0 ? <BellRing className="h-5 w-5 text-teal-700" aria-hidden="true" /> : <Bell className="h-5 w-5 text-[#0f1f1d]/70" aria-hidden="true" />}
-                  {unreadNotifications > 0 && (
-                    <span className="talepo-plan-dot absolute right-2 top-2 h-2 w-2 rounded-full sm:right-2.5 sm:top-2.5" />
-                  )}
+                  <span className="talepo-header-action-well" aria-hidden="true">
+                    {unreadNotifications > 0 ? (
+                      <BellRing />
+                    ) : (
+                      <Bell />
+                    )}
+                  </span>
+                  {unreadNotifications > 0 ? (
+                    <span className="talepo-header-action-unread" />
+                  ) : null}
                 </Link>
 
                 <PanelAccountMenu

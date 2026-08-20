@@ -501,8 +501,8 @@ check(
 );
 check(
   "company create is above fold in account menu",
-  accountMenu.indexOf("Çalışma alanları") < accountMenu.indexOf("Profili düzenle") &&
-    accountMenu.indexOf("Firma hesabı oluştur") < accountMenu.indexOf("Profili düzenle") &&
+  accountMenu.indexOf("Çalışma alanları") < accountMenu.indexOf("Profilim") &&
+    accountMenu.indexOf("Firma hesabı oluştur") < accountMenu.indexOf("Profilim") &&
     accountMenu.includes("Plan · {planLabel}"),
 );
 check(
@@ -524,7 +524,7 @@ check(
   hoverHook.includes("CLOSE_DELAY_MS") &&
     hoverHook.includes("(hover: hover) and (pointer: fine)") &&
     accountMenu.includes("useHoverDisclosure") &&
-    publicHeader.includes("useHoverDisclosure"),
+    publicHeader.includes("PanelAccountMenu"),
 );
 
 console.log(`\n${pass} passed, ${fail} failed`);
