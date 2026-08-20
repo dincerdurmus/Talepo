@@ -194,9 +194,9 @@ function OpportunitySummaryMetric({
   toneClass: string;
 }) {
   return (
-    <div className="min-w-[6.5rem] flex-1 rounded-xl border border-teal-900/8 bg-white px-3 py-2">
+    <div className="talepo-opportunity-metric">
       <div className="flex items-center gap-1.5">
-        <p className={`text-xl font-bold leading-none ${toneClass}`}>{value}</p>
+        <p className={`text-base font-semibold leading-none ${toneClass}`}>{value}</p>
         {icon}
       </div>
       <p className="mt-1 text-[11px] leading-4 text-teal-950/50">{label}</p>
@@ -255,7 +255,13 @@ function OpportunityCard({
     item.alreadyOffered === true || item.radar?.alreadyOffered === true;
 
   return (
-    <article className="rounded-2xl border border-teal-900/10 bg-white p-3 shadow-[0_1px_2px_rgba(15,47,40,0.04)]">
+    <article
+      className={
+        item.radar
+          ? "talepo-opportunity-card talepo-opportunity-card--radar"
+          : "talepo-opportunity-card"
+      }
+    >
       <div className="flex flex-col gap-3 md:flex-row md:items-start">
         <CategoryVisualThumb
           categorySlug={item.categorySlug}
@@ -268,7 +274,26 @@ function OpportunityCard({
         />
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
+          {detailHref ? (
+            <Link
+              href={detailHref}
+              className="block truncate rounded-sm text-sm font-semibold text-teal-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
+            >
+              {item.title}
+            </Link>
+          ) : (
+            <p className="truncate text-sm font-semibold text-teal-950">
+              {item.title}
+            </p>
+          )}
+
+          {item.radar ? (
+            <p className="talepo-opportunity-reason">{item.radar.reason}</p>
+          ) : primaryReason ? (
+            <p className="talepo-opportunity-reason">{primaryReason}</p>
+          ) : null}
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             {item.radar ? (
               <OpportunityBadge tone="match">{item.radar.label}</OpportunityBadge>
             ) : primaryReason ? (
@@ -288,27 +313,14 @@ function OpportunityCard({
             ) : null}
           </div>
 
-          {detailHref ? (
-            <Link
-              href={detailHref}
-              className="mt-1.5 block truncate rounded-sm text-sm font-semibold text-teal-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2"
-            >
-              {item.title}
-            </Link>
-          ) : (
-            <p className="mt-1.5 truncate text-sm font-semibold text-teal-950">
-              {item.title}
-            </p>
-          )}
-
-          <p className="mt-0.5 truncate text-xs text-teal-950/45">
+          <p className="mt-1 truncate text-xs text-teal-950/45">
             {item.categoryName}
             {item.city ? ` · ${item.city}` : ""}
           </p>
 
           {item.budgetLabel ? (
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <p className="text-sm font-bold text-teal-950">
+              <p className="text-sm font-semibold text-teal-950">
                 {item.budgetLabel}
               </p>
               <span className="rounded-md bg-teal-50 px-1.5 py-0.5 text-[10px] font-semibold text-teal-800">
@@ -321,8 +333,7 @@ function OpportunityCard({
             {item.radar ? (
               <OpportunitySignal
                 icon={<Activity className="h-3.5 w-3.5" aria-hidden />}
-                title={item.radar.reason}
-                detail={
+                title={
                   alreadyOffered
                     ? "Bu talebe teklif verdiniz"
                     : `${item.radar.eligibleOfferCount} teklif`
@@ -381,7 +392,7 @@ function OpportunityCard({
           {detailHref ? (
             <Link
               href={detailHref}
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 md:w-auto"
+              className="talepo-opportunity-cta inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-teal-900 px-3 text-xs font-semibold text-white transition hover:bg-teal-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 md:w-auto"
             >
               Talebi incele →
             </Link>
@@ -473,17 +484,17 @@ function Section({
 
 function OpportunityEmptyState() {
   return (
-    <div className="rounded-[24px] border border-teal-900/10 bg-white p-6 sm:p-8">
+    <div className="talepo-opportunity-empty">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700 ring-1 ring-teal-700/10">
         <Target className="h-6 w-6" aria-hidden />
       </div>
-      <h3 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#172c48]">
+      <h3 className="mt-5 text-xl font-semibold tracking-[-0.03em] text-[#172c48] sm:text-2xl">
         Henüz takip kriterlerinize güçlü şekilde uyan açık bir fırsat yok.
       </h3>
       <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/62">
-        Takiplerim kriterlerinizle eşleşen açık talepler burada görünür. Daha
-        geniş liste için Fırsat Havuzu’na bakabilir veya kriterlerinizi
-        güncelleyebilirsiniz.
+        Takiplerim kriterlerinizle eşleşen açık talepler burada görünür. Filtreler
+        dar olabilir. Radar’da henüz önerilmeyen ama izlenmeye değer hareketler
+        olabilir.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
         <Link
@@ -671,9 +682,12 @@ export function OpportunitiesHub({
           view === "suggested" ? (
             <OpportunityEmptyState />
           ) : view === "radar" ? (
-            <div className="space-y-2">
-              <p>Şu an olağan dışı teklif hareketi olan açık talep yok.</p>
-              <p className="text-xs text-teal-950/50">
+            <div className="talepo-opportunity-empty space-y-2">
+              <p className="text-sm font-semibold text-teal-950">
+                Şu an olağan dışı teklif hareketi olan açık talep yok.
+              </p>
+              <p className="text-sm leading-6 text-teal-950/55">
+                Bu bir öneri listesi değil; pazar hareketini izleme görünümüdür.
                 Radar, 10 ve üzeri gerçek teklif alan açık talepleri gösterir.
               </p>
             </div>

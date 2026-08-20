@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Sparkles } from "lucide-react";
 
 import { CorporateOpportunityCenter } from "@/components/panel/discovery/CorporateOpportunityCenter";
 import { ProfessionalDiscoveryWorkspace } from "@/components/panel/discovery/ProfessionalDiscoveryWorkspace";
@@ -228,41 +227,47 @@ export default async function OpportunitiesPage({
 
   return (
     <>
-      <section className="py-4 sm:py-6">
-        <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
-          {showCorporateOps ? "Workspace" : "Fırsatlar"}
-        </p>
-        <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
-          {showCorporateOps || companyId ? (
-            "Fırsatlar"
-          ) : (
-            <span className="inline-flex items-center gap-2">
-              Sana uygun fırsatlar
-              <Sparkles className="h-5 w-5 text-sky-400" aria-hidden />
-            </span>
-          )}
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
-          {showCorporateOps
-            ? "Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve doğru aksiyona bağlayın."
-            : companyId
-              ? "Talepo size uygun fırsatları değerlendirir ve neden önemli olabileceklerini anlamanıza yardımcı olur."
-              : "Takiplerinize uyan talepleri, Talepo Radar’daki hareketlenen fırsatları ve Fırsat Havuzu’nu tek yerde görün."}
-        </p>
-        {showCorporateOps ? (
+      {showCorporateOps ? (
+        <section className="py-4 sm:py-6">
+          <p className="talepo-page-eyebrow text-xs uppercase tracking-[0.14em]">
+            Workspace
+          </p>
+          <h1 className="talepo-page-title mt-2 text-3xl sm:text-4xl">
+            Fırsatlar
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-teal-950/55">
+            Şirket fırsatlarını keşfedin, neden önemli olduklarını anlayın ve
+            doğru aksiyona bağlayın.
+          </p>
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <Link href="/panel/firsatlar?view=ops" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Operasyon görünümü</Link>
-            <Link href="/panel/firsatlar?view=radar" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Talepo Radar</Link>
-            <Link href="/panel/takiplerim" className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65">Takiplerim</Link>
+            <Link
+              href="/panel/firsatlar?view=ops"
+              className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
+            >
+              Operasyon görünümü
+            </Link>
+            <Link
+              href="/panel/firsatlar?view=radar"
+              className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
+            >
+              Talepo Radar
+            </Link>
+            <Link
+              href="/panel/takiplerim"
+              className="rounded-full border border-teal-900/10 bg-white px-3 py-1.5 font-semibold text-teal-900/65"
+            >
+              Takiplerim
+            </Link>
           </div>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
 
       <FeatureUpgradeGate
         feature="hot_opportunities"
         entitled={entitled}
+        presentation="signal"
         title="Fırsatlar"
-        description="Takiplerinize uyan talepleri, Talepo Radar’daki hareketlenen fırsatları ve ticari fırsat havuzunu tek yerde görün."
+        description="Sana uygun fırsatlar, Talepo Radar’daki hareketlenen talepler ve Fırsat Havuzu tek yerde."
         ctaLabel="Professional ile aç"
       >
         {showCorporateOps && corporateCenter ? (

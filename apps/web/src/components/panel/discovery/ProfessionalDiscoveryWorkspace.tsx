@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
-  Activity,
   Bookmark,
   Compass,
   Lightbulb,
@@ -16,6 +15,7 @@ import {
   type CanonicalDiscoveryFilter,
 } from "@/lib/discovery";
 import { OpportunitiesHub } from "@/components/panel/OpportunitiesHub";
+import { SignalActivityShell } from "@/components/panel/signal/SignalActivityShell";
 import type { OpportunityFeedItem } from "@/server/monetization/opportunities-feed";
 import type { DiscoveryWorkspaceItem } from "@/server/monetization/discovery-workspace-query";
 import {
@@ -75,10 +75,51 @@ const VIEW_TABS: Array<{
   icon: React.ReactNode;
 }> = [
   { id: "suggested", label: "Önerilen", icon: <Lightbulb className="h-3.5 w-3.5" /> },
-  { id: "radar", label: "Talepo Radar", icon: <Activity className="h-3.5 w-3.5" /> },
+  { id: "radar", label: "Talepo Radar", icon: <Radar className="h-3.5 w-3.5" /> },
   { id: "browse", label: "Keşfet", icon: <Compass className="h-3.5 w-3.5" /> },
   { id: "saved", label: "Kaydettiklerim", icon: <Bookmark className="h-3.5 w-3.5" /> },
 ];
+
+function workspaceChrome(
+  view: WorkspaceView,
+  isPersonalSurface: boolean,
+): {
+  title: string;
+  description: string;
+  summary: string;
+} {
+  if (view === "radar") {
+    return {
+      title: RADAR_BRAND_LINE,
+      description: RADAR_BRAND_SUBLINE,
+      summary:
+        "Bu bir öneri listesi değil. Pazarın hareketlenen bölümlerini izlersiniz.",
+    };
+  }
+  if (view === "browse") {
+    return {
+      title: isPersonalSurface ? "Fırsat Havuzu" : "Keşfet",
+      description: isPersonalSurface
+        ? "Önerilen kriterlerinize girmeyen fakat platformda açık olan diğer ticari fırsatlar."
+        : "Kategori, şehir ve aciliyete göre açık talepleri tarayın.",
+      summary: "Keşif görünümü",
+    };
+  }
+  if (view === "saved") {
+    return {
+      title: "Kaydettiklerim",
+      description: "Daha sonra bakmak için kaydettiğiniz talepler.",
+      summary: "Kayıtlı talepler",
+    };
+  }
+  return {
+    title: "Önerilen fırsatlar",
+    description: isPersonalSurface
+      ? "Takiplerim kriterlerinizle gerçekten eşleşen açık talepler."
+      : "Size uygun fırsatlar ve neden önerildikleri.",
+    summary: "Neden uygun olduğu önce görünür.",
+  };
+}
 
 export function ProfessionalDiscoveryWorkspace({
   view,
@@ -231,63 +272,59 @@ export function ProfessionalDiscoveryWorkspace({
       : tab,
   );
 
-  const personalViewHint =
-    isPersonalSurface && view === "suggested"
-      ? "Takiplerim kriterlerinizle gerçekten eşleşen açık talepler."
-      : isPersonalSurface && view === "radar"
-        ? "Takip etmediğiniz kategoriler de dahil, platformda olağan dışı ilgi gören açık talepler."
-        : isPersonalSurface && view === "browse"
-        ? "Önerilen kriterlerinize girmeyen fakat platformda açık olan diğer ticari fırsatlar."
-          : null;
+  const chrome = workspaceChrome(view, isPersonalSurface);
+  const isRadarView = view === "radar";
+  const isPoolView = view === "browse";
+  const shellTone = isRadarView ? "radar" : isPoolView ? "pool" : "opportunity";
+  const shellClass = isRadarView
+    ? "talepo-opportunity-shell talepo-opportunity-shell--radar"
+    : isPoolView
+      ? "talepo-opportunity-shell talepo-opportunity-shell--pool"
+      : "talepo-opportunity-shell";
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {viewTabs.map((tab) => {
-              const active = view === tab.id;
-              return (
-                <Link
-                  key={tab.id}
-                  href={buildHref({
-                    view: tab.id,
-                    taxonomyNode: tab.id === "browse" ? taxonomyNode : null,
-                    taxonomyLeaf: tab.id === "browse" ? taxonomyLeaf : null,
-                    leafExact: tab.id === "browse" ? leafExact : false,
-                    city,
-                  })}
-                  aria-current={active ? "page" : undefined}
-                  className={`inline-flex min-h-11 items-center gap-1.5 rounded-full px-3.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 focus-visible:ring-offset-2 ${
-                    active
-                      ? "bg-teal-900 text-white"
-                      : "border border-teal-900/12 bg-white text-teal-900/70 hover:bg-teal-50"
-                  }`}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </Link>
-              );
-            })}
-          </div>
-          {personalViewHint ? (
-            <p className="max-w-2xl text-xs leading-5 text-teal-950/50">
-              {personalViewHint}
-            </p>
-          ) : null}
-        </div>
+    <SignalActivityShell
+      tone={shellTone}
+      className={shellClass}
+      eyebrow={isRadarView ? "Talepo Radar" : "Fırsatlar"}
+      title={chrome.title}
+      description={chrome.description}
+      summary={chrome.summary}
+    >
+      <div className="talepo-opportunity-toolbar">
+        <nav
+          className="talepo-opportunity-switch"
+          aria-label="Fırsat görünümü"
+        >
+          {viewTabs.map((tab) => {
+            const active = view === tab.id;
+            return (
+              <Link
+                key={tab.id}
+                href={buildHref({
+                  view: tab.id,
+                  taxonomyNode: tab.id === "browse" ? taxonomyNode : null,
+                  taxonomyLeaf: tab.id === "browse" ? taxonomyLeaf : null,
+                  leafExact: tab.id === "browse" ? leafExact : false,
+                  city,
+                })}
+                aria-current={active ? "page" : undefined}
+                className="talepo-opportunity-tab"
+              >
+                {tab.icon}
+                {tab.label}
+              </Link>
+            );
+          })}
+        </nav>
 
-        <div className="flex flex-wrap gap-2 text-xs">
-          <Link
-            href="/panel/takiplerim"
-            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-teal-900/10 bg-white px-3 font-semibold text-teal-900/70"
-          >
-            <Radar className="h-3.5 w-3.5" />
-            Takiplerim{trackedSearchCount > 0 ? ` (${trackedSearchCount})` : ""}
-          </Link>
-        </div>
+        <Link href="/panel/takiplerim" className="talepo-opportunity-follow">
+          <Radar className="h-3.5 w-3.5" />
+          Takiplerim{trackedSearchCount > 0 ? ` (${trackedSearchCount})` : ""}
+        </Link>
       </div>
 
+      <div className="space-y-5">
       {showBrowseChrome ? (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="space-y-3">
@@ -299,7 +336,7 @@ export function ProfessionalDiscoveryWorkspace({
           </div>
           <div className="space-y-3">
             <form
-              className="flex flex-wrap gap-2 rounded-2xl border border-teal-900/8 bg-white p-3"
+              className="talepo-opportunity-filters"
               onSubmit={(e) => {
                 e.preventDefault();
                 navigate({ city: cityDraft.trim() || null, view: "browse" });
@@ -408,7 +445,7 @@ export function ProfessionalDiscoveryWorkspace({
               ))}
             </div>
           ) : (
-            <div className="rounded-[28px] border border-dashed border-teal-900/12 bg-teal-50/30 p-8 text-center">
+            <div className="talepo-opportunity-empty text-center">
               <p className="text-base font-semibold text-teal-950">
                 {selectedNodeId
                   ? "Bu kategoride şu an aktif talep yok."
@@ -450,28 +487,15 @@ export function ProfessionalDiscoveryWorkspace({
           )}
         </section>
       ) : (
-        <div className="space-y-4">
-          {view === "radar" ? (
-            <section className="rounded-[24px] border border-teal-900/10 bg-white px-5 py-4 sm:px-6 sm:py-5">
-              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-teal-800/70">
-                Talepo Radar
-              </p>
-              <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-teal-950 sm:text-2xl">
-                {RADAR_BRAND_LINE}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-teal-950/55">
-                {RADAR_BRAND_SUBLINE}
-              </p>
-            </section>
-          ) : null}
-          <OpportunitiesHub
-            initialFeed={feed}
-            canWatchlist={canWatchlist}
-            view={hubView}
-            opportunityContext={surface}
-          />
-        </div>
+        <OpportunitiesHub
+          initialFeed={feed}
+          canWatchlist={canWatchlist}
+          view={hubView}
+          opportunityContext={surface}
+        />
       )}
-    </div>
+      </div>
+    </SignalActivityShell>
   );
 }
+

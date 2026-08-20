@@ -18,6 +18,8 @@ type FeatureUpgradeGateProps = {
   entitled?: boolean;
   /** Override CTA label (defaults to UPGRADE_COPY or "Planları incele") */
   ctaLabel?: string;
+  /** Quiet Signal locked surface. Default keeps existing plan gates. */
+  presentation?: "default" | "signal";
 };
 
 export function FeatureUpgradeGate({
@@ -27,6 +29,7 @@ export function FeatureUpgradeGate({
   children,
   entitled = false,
   ctaLabel: ctaLabelProp,
+  presentation = "default",
 }: FeatureUpgradeGateProps) {
   if (entitled && children) {
     return <>{children}</>;
@@ -59,8 +62,16 @@ export function FeatureUpgradeGate({
   const requiredTier = minimumPlanForFeature(feature);
   const pricing = getPlanPricing(requiredTier);
 
+  const isSignal = presentation === "signal";
+
   return (
-    <section className="rounded-[28px] border border-teal-900/10 bg-gradient-to-br from-white via-teal-50/30 to-white px-6 py-10 shadow-[0_20px_60px_rgba(15,60,50,0.06)] sm:px-10">
+    <section
+      className={
+        isSignal
+          ? "talepo-opportunity-locked sm:px-10"
+          : "rounded-[28px] border border-teal-900/10 bg-gradient-to-br from-white via-teal-50/30 to-white px-6 py-10 shadow-[0_20px_60px_rgba(15,60,50,0.06)] sm:px-10"
+      }
+    >
       <div className="mx-auto flex max-w-xl flex-col items-center text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-900/8 text-teal-800">
           <Lock className="h-7 w-7" />
@@ -99,7 +110,7 @@ export function FeatureUpgradeGate({
           href={ctaHref}
           className="mt-8 inline-flex items-center gap-2 rounded-full bg-teal-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-teal-950"
         >
-          <Crown className="h-4 w-4" />
+          {isSignal ? null : <Crown className="h-4 w-4" />}
           {ctaLabel}
         </Link>
       </div>
