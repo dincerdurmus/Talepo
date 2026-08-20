@@ -3104,6 +3104,409 @@ section.mt-6 svg > text:last-of-type {
   padding: 2rem 1.5rem;
 }
 
+.talepo-header-action {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  cursor: pointer;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  background: #f7faf9;
+  color: #0f1f1d;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.12s ease;
+}
+
+.talepo-header-action:hover {
+  background: rgba(15, 118, 110, 0.06);
+  border-color: rgba(15, 118, 110, 0.26);
+}
+
+.talepo-header-action:active {
+  transform: translateY(0.5px);
+  background: rgba(15, 118, 110, 0.1);
+}
+
+.talepo-header-action:focus-visible {
+  outline: 2px solid #1b4f47;
+  outline-offset: 2px;
+}
+
+.talepo-header-action--icon {
+  width: 2.75rem;
+  padding: 0;
+}
+
+.talepo-header-action--notify {
+  width: 2.75rem;
+  padding: 0;
+  border-color: rgba(15, 118, 110, 0.18);
+  background: #f7faf9;
+}
+
+.talepo-header-action--notify:hover {
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.3);
+}
+
+.talepo-header-action--notify:active {
+  background: rgba(15, 118, 110, 0.14);
+}
+
+.talepo-header-action-well {
+  display: flex;
+  width: 1.85rem;
+  height: 1.85rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.7rem;
+  background: rgba(15, 118, 110, 0.12);
+}
+
+.talepo-header-action--notify svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  color: #134e4a;
+}
+
+.talepo-header-action-unread {
+  position: absolute;
+  top: 0.38rem;
+  right: 0.38rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #0f766e;
+  box-shadow: 0 0 0 2px #f7faf9;
+}
+
+.talepo-header-action--account {
+  gap: 0.45rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.2rem;
+}
+
+.talepo-header-action-name {
+  color: #0f1f1d;
+}
+
+.talepo-header-action-chevron {
+  color: rgba(15, 31, 29, 0.35);
+}
+
+.talepo-header-action--ink {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.talepo-header-action--ink:hover,
+.talepo-header-action--ink:active {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.talepo-header-action--ink .talepo-header-action-name {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.talepo-header-action--ink .talepo-header-action-chevron {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.talepo-header-action-avatar {
+  height: 1.75rem;
+  width: 1.75rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid rgba(15, 47, 40, 0.1);
+}
+
+.talepo-header-action-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #fff;
+  background: #0f766e;
+}
+
+.talepo-header-action-avatar--company {
+  background: linear-gradient(135deg, #0f1f1d 0%, #1b4f47 100%);
+}
+
+.talepo-account-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 200;
+  width: 19.25rem;
+  max-width: min(19.25rem, calc(100vw - 1.5rem));
+  max-height: min(34rem, calc(100dvh - 4.5rem));
+  margin-top: 0.25rem;
+  overflow-x: visible;
+  overflow-y: auto;
+  padding: 0.35rem;
+  border-radius: 1.05rem;
+  border: 1px solid rgba(15, 47, 40, 0.08);
+  background: #fbfcfc;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 14px 36px rgba(15, 31, 29, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 47, 40, 0.22) transparent;
+}
+
+.talepo-account-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.talepo-account-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.talepo-account-menu::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(15, 47, 40, 0.18);
+}
+
+.talepo-account-menu::before {
+  content: "";
+  position: absolute;
+  top: -0.65rem;
+  right: 0;
+  left: 0;
+  height: 0.65rem;
+}
+
+.talepo-account-menu-identity {
+  padding: 0.55rem 0.75rem 0.5rem;
+}
+
+.talepo-account-menu-name {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f1f1d;
+}
+
+.talepo-account-menu-meta {
+  margin: 0.2rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: rgba(15, 31, 29, 0.48);
+}
+
+.talepo-account-menu-plan {
+  margin: 0.35rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: rgba(15, 31, 29, 0.42);
+}
+
+.talepo-account-menu-context {
+  margin: 0.15rem 0 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  color: rgba(15, 31, 29, 0.38);
+}
+
+.talepo-account-menu-eyebrow {
+  padding: 0.1rem 0.75rem 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(15, 31, 29, 0.38);
+}
+
+.talepo-account-menu-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  margin: 0 0.15rem 0.1rem;
+  padding: 0.12rem;
+  border-radius: 0.85rem;
+  background: rgba(15, 118, 110, 0.04);
+}
+
+.talepo-account-menu-section {
+  padding: 0.1rem 0;
+}
+
+.talepo-account-menu-divider {
+  border-top: 1px solid rgba(15, 47, 40, 0.07);
+  margin-top: 0.15rem;
+  padding-top: 0.15rem;
+}
+
+.talepo-account-menu-item {
+  display: flex;
+  width: 100%;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: rgba(15, 31, 29, 0.72);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+a.talepo-account-menu-item {
+  text-decoration: none;
+}
+
+.talepo-account-menu-item:hover {
+  background: rgba(15, 47, 40, 0.04);
+  color: #0f1f1d;
+}
+
+.talepo-account-menu-item:focus-visible {
+  outline: 2px solid #1b4f47;
+  outline-offset: -2px;
+}
+
+.talepo-account-menu-item:disabled {
+  opacity: 0.6;
+}
+
+.talepo-account-menu-item--stack {
+  align-items: flex-start;
+  min-height: 0;
+  padding-top: 0.55rem;
+  padding-bottom: 0.55rem;
+}
+
+.talepo-account-menu-item--stack svg {
+  margin-top: 0.15rem;
+}
+
+.talepo-account-menu-item svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: rgba(15, 31, 29, 0.38);
+}
+
+.talepo-account-menu-item--active {
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f1f1d;
+  font-weight: 600;
+}
+
+.talepo-account-menu-item--active svg {
+  color: #1b4f47;
+}
+
+.talepo-account-menu-item--admin {
+  width: calc(100% - 0.3rem);
+  margin-inline: 0.15rem;
+  gap: 0.55rem;
+  border: 1px solid #ded3ba;
+  background: #fcfaf5;
+  color: #1a1915;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.talepo-account-menu-admin-well {
+  display: flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  border: 1px solid #e4d8be;
+  background: #f4eee2;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.talepo-account-menu-item--admin svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: #8a6a2b;
+}
+
+.talepo-account-menu-admin-label {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #1a1915;
+}
+
+.talepo-account-menu-admin-mark {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(138, 106, 43, 0.7);
+}
+
+.talepo-account-menu-item--admin:hover {
+  background: #f6f0e4;
+  border-color: #d4c4a0;
+  color: #1a1915;
+}
+
+.talepo-account-menu-item--admin:hover .talepo-account-menu-admin-well {
+  border-color: #d0bf9a;
+  background: #efe6d4;
+}
+
+.talepo-account-menu-item--admin:hover svg {
+  color: #7b5d24;
+}
+
+.talepo-account-menu-item--logout {
+  color: #8a4a4a;
+}
+
+.talepo-account-menu-item--logout svg {
+  color: #8a4a4a;
+}
+
+.talepo-account-menu-item--logout:hover {
+  background: rgba(154, 74, 74, 0.08);
+  color: #6f3535;
+}
+
+.talepo-account-menu-marker {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #1b4f47;
+}
+
 @media (max-width: 1024px) {
   .talepo-opportunity-toolbar {
     flex-direction: column;
@@ -3142,6 +3545,11 @@ section.mt-6 svg > text:last-of-type {
 
   .talepo-radar-mark-field {
     display: none;
+  }
+
+  .talepo-account-menu {
+    right: -0.35rem;
+    width: min(19.25rem, calc(100vw - 1.5rem));
   }
 }
 
@@ -3944,7 +4352,10 @@ section.mt-6 svg > text:last-of-type {
   .talepo-opportunity-card,
   .talepo-opportunity-follow,
   .talepo-radar-mark-field,
-  .talepo-radar-mark-inline {
+  .talepo-radar-mark-inline,
+  .talepo-header-action,
+  .talepo-account-menu-item,
+  .talepo-account-menu-admin-well {
     transition: none;
     animation: none;
   }

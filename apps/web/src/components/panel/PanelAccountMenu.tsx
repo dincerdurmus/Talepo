@@ -11,11 +11,14 @@ import {
 import {
   Building2,
   ChevronDown,
+  ClipboardList,
+  Compass,
   CreditCard,
-  Home,
+  FileText,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  UserPlus,
   UserRound,
   Users,
 } from "lucide-react";
@@ -45,6 +48,10 @@ type PanelAccountMenuProps = {
   companies: PanelCompanyOption[];
   platformRole: "USER" | "SUPPORT" | "MODERATOR" | "ANALYST" | "ADMIN" | "SUPER_ADMIN";
   planLabel: string;
+  surface?: "panel" | "public";
+  triggerTone?: "default" | "ink";
+  navigateToPanelOnCompany?: boolean;
+  onCompanyContextChange?: (companyId: string | null) => void;
 };
 
 function getPlatformRoleLabel(
@@ -75,6 +82,10 @@ export const PanelAccountMenu = forwardRef<
     companies,
     platformRole,
     planLabel,
+    surface = "panel",
+    triggerTone = "default",
+    navigateToPanelOnCompany = false,
+    onCompanyContextChange,
   },
   ref,
 ) {
@@ -84,6 +95,7 @@ export const PanelAccountMenu = forwardRef<
   const inCompanyContext = Boolean(activeCompanyId);
   const hasCompanies = companies.length > 0;
   const platformRoleLabel = getPlatformRoleLabel(platformRole);
+  const isPublic = surface === "public";
 
   useImperativeHandle(
     ref,
@@ -107,6 +119,10 @@ export const PanelAccountMenu = forwardRef<
       const data = (await response.json()) as { ok?: boolean };
       if (response.ok && data.ok) {
         accountMenu.close();
+        onCompanyContextChange?.(companyId);
+        if (navigateToPanelOnCompany && companyId) {
+          router.push("/panel");
+        }
         router.refresh();
       }
     } finally {
@@ -120,222 +136,257 @@ export const PanelAccountMenu = forwardRef<
         type="button"
         {...accountMenu.getTriggerProps()}
         aria-label="Hesap menüsü"
-        className="flex h-11 items-center gap-2 rounded-2xl border border-teal-900/8 bg-[#f7faf9] px-2 pr-3 transition hover:bg-white"
+        className={`talepo-header-action talepo-header-action--account${
+          triggerTone === "ink" ? " talepo-header-action--ink" : ""
+        }`}
       >
         {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image}
             alt={displayName}
-            className="h-8 w-8 rounded-full border border-teal-900/10 object-cover"
+            className="talepo-header-action-avatar"
             referrerPolicy="no-referrer"
           />
         ) : (
           <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white ${
-              isCorporate
-                ? "bg-gradient-to-br from-[#0f1f1d] to-teal-800"
-                : "bg-[#0f766e]"
+            className={`talepo-header-action-avatar talepo-header-action-avatar--fallback${
+              isCorporate ? " talepo-header-action-avatar--company" : ""
             }`}
           >
             {initials}
           </div>
         )}
         {triggerName ? (
-          <span className="hidden max-w-28 truncate text-sm font-medium text-[#0f1f1d] sm:block">
+          <span className="talepo-header-action-name hidden max-w-24 truncate text-[13px] font-medium sm:block">
             {triggerName}
             {platformRoleLabel ? (
-              <span className="ml-1.5 text-xs font-bold text-red-600">
+              <span
+                className={`ml-1.5 text-[11px] font-semibold ${
+                  triggerTone === "ink"
+                    ? "text-amber-200/80"
+                    : "text-amber-800/75"
+                }`}
+              >
                 {platformRoleLabel}
               </span>
             ) : null}
           </span>
         ) : null}
         <ChevronDown
-          className={`hidden h-4 w-4 text-teal-950/35 transition sm:block ${
+          className={`talepo-header-action-chevron hidden h-3.5 w-3.5 transition sm:block ${
             accountMenu.open ? "rotate-180" : ""
           }`}
         />
       </button>
 
       {accountMenu.open && (
-        <div
-          {...accountMenu.getMenuProps()}
-          className="absolute right-0 top-full z-[200] mt-1 max-h-[min(32rem,calc(100dvh-4.5rem))] w-72 overflow-y-auto overflow-x-visible rounded-2xl border border-teal-900/10 bg-white p-1.5 shadow-[0_20px_60px_rgba(15,31,29,0.18)] before:absolute before:-top-2.5 before:right-0 before:left-0 before:h-2.5 before:content-['']"
-        >
-          <div className="border-b border-teal-900/6 px-3 py-2">
-            <p className="truncate text-sm font-semibold text-[#0f1f1d]">
+        <div {...accountMenu.getMenuProps()} className="talepo-account-menu">
+          <div className="talepo-account-menu-identity">
+            <p className="talepo-account-menu-name">
               {displayName}
               {platformRoleLabel ? (
-                <span className="ml-1.5 text-xs font-bold text-red-600">
+                <span className="ml-1.5 text-[11px] font-semibold text-amber-800/75">
                   {platformRoleLabel}
                 </span>
               ) : null}
             </p>
+            {email ? (
+              <p className="talepo-account-menu-meta">{email}</p>
+            ) : null}
             {membershipNumber ? (
               <MembershipNumberLabel membershipNumber={membershipNumber} />
             ) : null}
-            {email ? (
-              <p className="mt-0.5 truncate text-xs text-teal-950/45">{email}</p>
-            ) : null}
-            <p className="mt-1 text-[11px] font-medium text-teal-950/45">
+            <p className="talepo-account-menu-plan">
               Plan · {planLabel}
             </p>
             {inCompanyContext ? (
-              <p className="mt-0.5 truncate text-[11px] text-teal-950/40">
+              <p className="talepo-account-menu-context">
                 {isCorporate ? "Kurumsal" : "Firma"} · {companyName ?? "Firma"}
               </p>
             ) : null}
           </div>
 
-          <div className="py-1">
-            <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/35">
+          <div className="talepo-account-menu-divider talepo-account-menu-section">
+            <p className="talepo-account-menu-eyebrow">
               Çalışma alanları
             </p>
 
-            {inCompanyContext ? (
-              <button
-                type="button"
-                role="menuitem"
-                disabled={busy}
-                onClick={() => void setCompanyContext(null)}
-                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d] disabled:opacity-60"
-              >
-                <UserRound className="h-4 w-4 text-teal-950/35" />
-                Kişisel çalışma alanı
-              </button>
-            ) : (
-              <div className="flex items-center gap-2.5 rounded-xl bg-[#f4faf8] px-3 py-2 text-sm font-medium text-[#0f1f1d]">
-                <UserRound className="h-4 w-4 text-teal-800/70" />
-                <span className="min-w-0 flex-1 truncate">
+            <div className="talepo-account-menu-workspace">
+              {inCompanyContext ? (
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={busy}
+                  onClick={() => void setCompanyContext(null)}
+                  className="talepo-account-menu-item"
+                >
+                  <UserRound />
                   Kişisel çalışma alanı
-                </span>
-                <span className="shrink-0 text-[11px] font-semibold text-teal-800/70">
-                  Aktif
-                </span>
-              </div>
-            )}
+                </button>
+              ) : (
+                <div className="talepo-account-menu-item talepo-account-menu-item--active">
+                  <UserRound />
+                  <span className="min-w-0 flex-1 truncate">
+                    Kişisel çalışma alanı
+                  </span>
+                  <span className="talepo-account-menu-marker">Aktif</span>
+                </div>
+              )}
 
-            {hasCompanies
-              ? companies.map((company) => {
-                  const active = activeCompanyId === company.id;
-                  if (active) {
+              {hasCompanies
+                ? companies.map((company) => {
+                    const active = activeCompanyId === company.id;
+                    if (active) {
+                      return (
+                        <div
+                          key={company.id}
+                          className="talepo-account-menu-item talepo-account-menu-item--active"
+                        >
+                          <Building2 />
+                          <span className="min-w-0 flex-1 truncate">
+                            {company.name}
+                          </span>
+                          <span className="talepo-account-menu-marker">Aktif</span>
+                        </div>
+                      );
+                    }
+
+                    const label =
+                      companies.length === 1
+                        ? "Kurumsal hesaba geç"
+                        : `${company.name} hesabına geç`;
+
                     return (
-                      <div
+                      <button
                         key={company.id}
-                        className="flex items-center gap-2.5 rounded-xl bg-[#f4faf8] px-3 py-2 text-sm font-medium text-[#0f1f1d]"
+                        type="button"
+                        role="menuitem"
+                        disabled={busy}
+                        onClick={() => void setCompanyContext(company.id)}
+                        className="talepo-account-menu-item"
                       >
-                        <Building2 className="h-4 w-4 text-teal-800/70" />
-                        <span className="min-w-0 flex-1 truncate">
-                          {company.name}
-                        </span>
-                        <span className="shrink-0 text-[11px] font-semibold text-teal-800/70">
-                          Aktif
-                        </span>
-                      </div>
+                        <Building2 />
+                        <span className="min-w-0 flex-1 truncate">{label}</span>
+                      </button>
                     );
-                  }
+                  })
+                : (
+                  <Link
+                    href="/panel/firma/yeni"
+                    role="menuitem"
+                    onClick={() => accountMenu.close()}
+                    className="talepo-account-menu-item talepo-account-menu-item--stack"
+                  >
+                    <Building2 />
+                    <span className="min-w-0">
+                      <span className="block font-medium text-[#0f1f1d]">
+                        Firma hesabı oluştur
+                      </span>
+                      <span className="mt-0.5 block text-[11px] font-normal leading-4 text-teal-950/50">
+                        Ekibinizle çalışmak için bir firma alanı açın.
+                      </span>
+                    </span>
+                  </Link>
+                )}
 
-                  const label =
-                    companies.length === 1
-                      ? "Kurumsal hesaba geç"
-                      : `${company.name} hesabına geç`;
+              {isPublic && !hasCompanies ? (
+                <Link
+                  href="/panel/bildirimler"
+                  role="menuitem"
+                  onClick={() => accountMenu.close()}
+                  className="talepo-account-menu-item"
+                >
+                  <UserPlus />
+                  Firmaya bağlan
+                </Link>
+              ) : null}
 
-                  return (
-                    <button
-                      key={company.id}
-                      type="button"
-                      role="menuitem"
-                      disabled={busy}
-                      onClick={() => void setCompanyContext(company.id)}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9] disabled:opacity-60"
-                    >
-                      <Building2 className="h-4 w-4 text-teal-800/70" />
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
-                    </button>
-                  );
-                })
-              : (
+              {isPublic && hasCompanies ? (
                 <Link
                   href="/panel/firma/yeni"
                   role="menuitem"
                   onClick={() => accountMenu.close()}
-                  className="flex items-start gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/80 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                  className="talepo-account-menu-item"
                 >
-                  <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-800/70" />
-                  <span className="min-w-0">
-                    <span className="block font-medium text-[#0f1f1d]">
-                      Firma hesabı oluştur
-                    </span>
-                    <span className="mt-0.5 block text-[11px] leading-4 text-teal-950/50">
-                      Ekibinizle çalışmak için bir firma alanı açın.
-                    </span>
-                  </span>
+                  <Building2 />
+                  Yeni firma oluştur
                 </Link>
-              )}
+              ) : null}
+            </div>
           </div>
 
-          <div className="border-t border-teal-900/6 py-1">
+          <div className="talepo-account-menu-divider talepo-account-menu-section">
             <Link
               href="/panel"
               role="menuitem"
               onClick={() => accountMenu.close()}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
+              className="talepo-account-menu-item"
             >
-              <LayoutDashboard className="h-4 w-4 text-teal-950/35" />
+              <LayoutDashboard />
               Sayfam
             </Link>
 
             <Link
-              href="/"
+              href="/panel/taleplerim"
               role="menuitem"
               onClick={() => accountMenu.close()}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              className="talepo-account-menu-item"
             >
-              <Home className="h-4 w-4 text-teal-950/35" />
-              Ana sayfa
+              <FileText />
+              Taleplerim
             </Link>
 
+            <Link
+              href="/panel/teklifler"
+              role="menuitem"
+              onClick={() => accountMenu.close()}
+              className="talepo-account-menu-item"
+            >
+              <ClipboardList />
+              Tekliflerim
+            </Link>
+
+            <Link
+              href="/panel/talepler"
+              role="menuitem"
+              onClick={() => accountMenu.close()}
+              className="talepo-account-menu-item"
+            >
+              <Compass />
+              Talepleri keşfet
+            </Link>
+          </div>
+
+          <div className="talepo-account-menu-divider talepo-account-menu-section">
             <Link
               href="/panel/profil"
               role="menuitem"
               onClick={() => accountMenu.close()}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              className="talepo-account-menu-item"
             >
-              <UserRound className="h-4 w-4 text-teal-950/35" />
-              Profili düzenle
+              <UserRound />
+              Profilim
             </Link>
 
             <Link
               href="/panel/plan"
               role="menuitem"
               onClick={() => accountMenu.close()}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+              className="talepo-account-menu-item"
             >
-              <CreditCard className="h-4 w-4 text-teal-950/35" />
+              <CreditCard />
               Plan ve üyelik
             </Link>
-
-            {platformRole !== "USER" && (
-              <Link
-                href="/admin"
-                role="menuitem"
-                onClick={() => accountMenu.close()}
-                className="flex items-center gap-2.5 rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-              >
-                <ShieldCheck className="h-4 w-4 text-amber-800/75" />
-                Admin Paneli
-              </Link>
-            )}
 
             {isCorporate && (
               <Link
                 href="/panel/ekip"
                 role="menuitem"
                 onClick={() => accountMenu.close()}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                className="talepo-account-menu-item"
               >
-                <Users className="h-4 w-4 text-teal-950/35" />
+                <Users />
                 Ekip
               </Link>
             )}
@@ -345,22 +396,41 @@ export const PanelAccountMenu = forwardRef<
                 href="/panel/firma"
                 role="menuitem"
                 onClick={() => accountMenu.close()}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-teal-950/70 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
+                className="talepo-account-menu-item"
               >
-                <Building2 className="h-4 w-4 text-teal-950/35" />
+                <Building2 />
                 Firma ayarları
               </Link>
             )}
           </div>
 
-          <div className="border-t border-teal-900/6 pt-1">
+          {platformRole !== "USER" && (
+            <div className="talepo-account-menu-divider talepo-account-menu-section">
+              <Link
+                href="/admin"
+                role="menuitem"
+                onClick={() => accountMenu.close()}
+                className="talepo-account-menu-item talepo-account-menu-item--admin"
+              >
+                <span className="talepo-account-menu-admin-well" aria-hidden="true">
+                  <ShieldCheck />
+                </span>
+                <span className="talepo-account-menu-admin-label">
+                  Admin Paneli
+                </span>
+                <span className="talepo-account-menu-admin-mark">Yönetim</span>
+              </Link>
+            </div>
+          )}
+
+          <div className="talepo-account-menu-divider">
             <button
               type="button"
               role="menuitem"
               onClick={() => signOut({ callbackUrl: "/" })}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+              className="talepo-account-menu-item talepo-account-menu-item--logout"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut />
               Çıkış yap
             </button>
           </div>

@@ -146,6 +146,7 @@ const authz = read("src/lib/observability/authorization-matrix.ts");
 const exploreHome = read("src/components/panel/explore/PanelExploreHome.tsx");
 const rail = read("src/components/panel/CommandPersonalSidebar.tsx");
 const publicHeader = read("src/components/layout/Header.tsx");
+const accountMenu = read("src/components/panel/PanelAccountMenu.tsx");
 
 check(
   "ownership scope uses current user and excludes soft-deleted",
@@ -646,7 +647,9 @@ check(
     rail.includes("TALEP_TEKLIF_NAV_HREFS") &&
     nav.indexOf('href: "/panel/talepler"') <
       nav.indexOf('href: "/panel/taleplerim"') &&
-    publicHeader.includes("Talepleri keşfet") &&
+    (publicHeader.includes("Talepleri keşfet") ||
+      (publicHeader.includes("PanelAccountMenu") &&
+        accountMenu.includes("Talepleri keşfet"))) &&
     shell.includes('return "Talepleri keşfet"'),
 );
 

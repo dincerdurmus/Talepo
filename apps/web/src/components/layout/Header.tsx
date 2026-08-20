@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
-import { MembershipNumberLabel } from "@/components/panel/MembershipNumberLabel";
-import { useHoverDisclosure } from "@/hooks/useHoverDisclosure";
+import { PanelAccountMenu } from "@/components/panel/PanelAccountMenu";
+import { getPlanDefinition } from "@/lib/membership/plans";
 
 type HeaderCompany = {
   id: string;
@@ -20,26 +19,26 @@ type HeaderProps = {
   variant?: "default" | "home1";
 };
 
-function getPlatformRoleLabel(role: string | undefined) {
-  if (role === "SUPPORT") return "Sup";
-  if (role === "MODERATOR") return "Mod";
-  if (role === "ANALYST") return "Analist";
-  if (role === "ADMIN") return "A";
-  if (role === "SUPER_ADMIN") return "SA";
-  return null;
+function getInitials(name: string | null | undefined, email: string | null | undefined) {
+  const source = name?.trim() || email?.trim() || "K";
+  const parts = source.split(/\s+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+  }
+
+  return source.slice(0, 2).toUpperCase();
 }
 
 export function Header({ tone = "default", variant = "default" }: HeaderProps) {
-  const router = useRouter();
   const { data: session, status } = useSession();
-  const [busy, setBusy] = useState(false);
   const [companies, setCompanies] = useState<HeaderCompany[]>([]);
   const [activeCompanyId, setActiveCompanyId] = useState<string | null>(null);
   const [activeCompanyName, setActiveCompanyName] = useState<string | null>(
     null,
   );
   const [membershipNumber, setMembershipNumber] = useState<string | null>(null);
-  const accountMenu = useHoverDisclosure();
+  const [planLabel, setPlanLabel] = useState<string | null>(null);
   const ink = tone === "ink";
   const home1 = variant === "home1";
 
@@ -60,6 +59,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
           membership?: {
             companyId?: string | null;
             companyName?: string | null;
+            planLabel?: string | null;
           };
         };
 
@@ -69,6 +69,7 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
         setMembershipNumber(data.membershipNumber ?? null);
         setActiveCompanyId(data.membership?.companyId ?? null);
         setActiveCompanyName(data.membership?.companyName ?? null);
+        setPlanLabel(data.membership?.planLabel ?? null);
       } catch {
         /* keep previous / empty state */
       }
@@ -81,47 +82,14 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
     };
   }, [status]);
 
-  async function setCompanyContext(companyId: string | null) {
-    setBusy(true);
-    try {
-      const response = await fetch("/api/membership", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "set-company-context",
-          companyId,
-        }),
-      });
-      const data = (await response.json()) as { ok?: boolean };
-      if (response.ok && data.ok) {
-        accountMenu.close();
-        if (companyId) {
-          setActiveCompanyId(companyId);
-          setActiveCompanyName(
-            companies.find((item) => item.id === companyId)?.name ?? null,
-          );
-          router.push("/panel");
-          router.refresh();
-        } else {
-          setActiveCompanyId(null);
-          setActiveCompanyName(null);
-          router.refresh();
-        }
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const userInitial =
-    session?.user?.name?.trim().charAt(0).toUpperCase() ?? "K";
   const showAuthSkeleton = status === "loading";
   const isAuthenticated = status === "authenticated";
   const headerCompanies = isAuthenticated ? companies : [];
   const headerActiveCompanyId = isAuthenticated ? activeCompanyId : null;
   const headerActiveCompanyName = isAuthenticated ? activeCompanyName : null;
   const inCompanyContext = Boolean(headerActiveCompanyId);
-  const platformRoleLabel = getPlatformRoleLabel(session?.user?.platformRole);
+  const displayName = session?.user?.name?.trim() || "Kullanıcı";
+  const triggerName = session?.user?.name?.trim().split(/\s+/)[0] ?? null;
 
   return (
     <header
@@ -225,239 +193,32 @@ export function Header({ tone = "default", variant = "default" }: HeaderProps) {
               }`}
             />
           ) : session?.user ? (
-            <div {...accountMenu.getRootProps()} className="relative z-50">
-              <button
-                type="button"
-                {...accountMenu.getTriggerProps()}
-                aria-label="Hesap menüsü"
-                className={`flex items-center gap-2 rounded-full p-1.5 pr-3 transition ${
-                  ink ? "hover:bg-white/[0.06]" : "hover:bg-teal-900/[0.04]"
-                } ${accountMenu.open ? (ink ? "bg-white/[0.06]" : "bg-teal-900/[0.04]") : ""}`}
-              >
-                {session.user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name ?? "Kullanıcı"}
-                    className={`h-9 w-9 rounded-full border object-cover ${
-                      ink ? "border-white/15" : "border-teal-900/10"
-                    }`}
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0f766e] text-sm font-medium text-white">
-                    {userInitial}
-                  </span>
-                )}
-
-                <span
-                  className={`hidden max-w-36 truncate text-sm font-medium sm:block ${
-                    ink ? "text-white/70" : "text-teal-950/70"
-                  }`}
-                >
-                  {session.user.name ?? "Kullanıcı"}
-                  {platformRoleLabel ? (
-                    <span className="ml-1.5 text-xs font-bold text-red-600">
-                      {platformRoleLabel}
-                    </span>
-                  ) : null}
-                </span>
-
-                <svg
-                  aria-hidden="true"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  className={`hidden h-4 w-4 transition sm:block ${
-                    ink ? "text-white/40" : "text-teal-950/40"
-                  } ${accountMenu.open ? "rotate-180" : ""}`}
-                >
-                  <path
-                    d="m6 8 4 4 4-4"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
-              {accountMenu.open && (
-                <div
-                  {...accountMenu.getMenuProps()}
-                  className="absolute right-0 top-full z-[200] mt-1 max-h-[min(24rem,calc(100dvh-5rem))] w-72 overflow-y-auto overflow-x-visible rounded-2xl border border-teal-900/10 bg-white p-2 shadow-[0_20px_60px_rgba(15,31,29,0.12)] before:absolute before:-top-2 before:right-0 before:left-0 before:h-2 before:content-['']"
-                >
-                  <div className="border-b border-teal-900/6 px-3 py-3">
-                    <p className="truncate text-sm font-semibold text-[#0f1f1d]">
-                      {session.user.name ?? "Kullanıcı"}
-                      {platformRoleLabel ? (
-                        <span className="ml-1.5 text-xs font-bold text-red-600">
-                          {platformRoleLabel}
-                        </span>
-                      ) : null}
-                    </p>
-
-                    <p className="mt-1 truncate text-xs text-teal-950/45">
-                      {session.user.email ?? ""}
-                    </p>
-
-                    {membershipNumber ? (
-                      <MembershipNumberLabel membershipNumber={membershipNumber} />
-                    ) : null}
-
-                    <p className="mt-2 text-[11px] font-medium text-teal-950/40">
-                      {inCompanyContext
-                        ? `Kurumsal · ${headerActiveCompanyName ?? "Firma"}`
-                        : "Kişisel hesap"}
-                    </p>
-                  </div>
-
-                  <div className="py-2">
-                    <Link
-                      href="/panel"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9]"
-                    >
-                      Sayfam
-                    </Link>
-
-                    <Link
-                      href="/panel/taleplerim"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                    >
-                      Taleplerim
-                    </Link>
-
-                    <Link
-                      href="/panel/talepler"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                    >
-                      Talepleri keşfet
-                    </Link>
-
-                    <Link
-                      href="/panel/teklifler"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                    >
-                      Tekliflerim
-                    </Link>
-
-                    <Link
-                      href="/panel/profil"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                    >
-                      Profilim
-                    </Link>
-
-                    {session.user.platformRole !== "USER" && (
-                      <Link
-                        href="/admin"
-                        role="menuitem"
-                        onClick={() => accountMenu.close()}
-                        className="mt-1 flex items-center rounded-xl border border-amber-900/10 bg-amber-50/70 px-3 py-2.5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100"
-                      >
-                        Admin Paneli
-                      </Link>
-                    )}
-                  </div>
-
-                  <div className="border-t border-teal-900/6 py-1.5">
-                    <p className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-950/35">
-                      Firma
-                    </p>
-
-                    <Link
-                      href="/panel/firma/yeni"
-                      role="menuitem"
-                      onClick={() => accountMenu.close()}
-                      className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                    >
-                      {headerCompanies.length === 0
-                        ? "Firma oluştur"
-                        : "Yeni firma oluştur"}
-                    </Link>
-
-                    {headerCompanies.length === 0 && (
-                      <Link
-                        href="/panel/bildirimler"
-                        role="menuitem"
-                        onClick={() => accountMenu.close()}
-                        className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d]"
-                      >
-                        Firmaya bağlan
-                      </Link>
-                    )}
-
-                    {inCompanyContext && (
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled={busy}
-                        onClick={() => void setCompanyContext(null)}
-                        className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm text-teal-950/65 transition hover:bg-[#f7faf9] hover:text-[#0f1f1d] disabled:opacity-60"
-                      >
-                        Kişisel hesaba geç
-                      </button>
-                    )}
-
-                    {headerCompanies.map((company) => {
-                      const active = headerActiveCompanyId === company.id;
-                      if (active) {
-                        return (
-                          <div
-                            key={company.id}
-                            className="flex items-center rounded-xl px-3 py-2.5 text-sm text-teal-950/45"
-                          >
-                            <span className="min-w-0 flex-1 truncate">
-                              {company.name} (aktif)
-                            </span>
-                          </div>
-                        );
-                      }
-
-                      const label =
-                        headerCompanies.length === 1
-                          ? "Kurumsal hesaba geç"
-                          : `${company.name} hesabına geç`;
-
-                      return (
-                        <button
-                          key={company.id}
-                          type="button"
-                          role="menuitem"
-                          disabled={busy}
-                          onClick={() => void setCompanyContext(company.id)}
-                          className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[#0f1f1d] transition hover:bg-[#f7faf9] disabled:opacity-60"
-                        >
-                          <span className="min-w-0 flex-1 truncate">
-                            {label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="border-t border-teal-900/6 pt-2">
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => signOut({ callbackUrl: "/" })}
-                      className="flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
-                    >
-                      Çıkış yap
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <PanelAccountMenu
+              displayName={displayName}
+              triggerName={triggerName}
+              email={session.user.email ?? null}
+              membershipNumber={membershipNumber}
+              image={session.user.image ?? null}
+              initials={getInitials(session.user.name, session.user.email)}
+              isCorporate={inCompanyContext}
+              companyName={headerActiveCompanyName}
+              activeCompanyId={headerActiveCompanyId}
+              companies={headerCompanies}
+              platformRole={session.user.platformRole ?? "USER"}
+              planLabel={planLabel ?? getPlanDefinition("STANDARD").label}
+              surface="public"
+              triggerTone={ink || home1 ? "ink" : "default"}
+              navigateToPanelOnCompany
+              onCompanyContextChange={(companyId) => {
+                setActiveCompanyId(companyId);
+                setActiveCompanyName(
+                  companyId
+                    ? companies.find((item) => item.id === companyId)?.name ??
+                        null
+                    : null,
+                );
+              }}
+            />
           ) : (
             <>
               <Link
