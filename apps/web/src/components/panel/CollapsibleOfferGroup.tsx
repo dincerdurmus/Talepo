@@ -22,6 +22,7 @@ export function CollapsibleOfferGroup({
   header,
   children,
   onExpandedChange,
+  cardClassName = "talepo-card",
 }: {
   offerId: string;
   viewer: OfferInboxRole;
@@ -32,6 +33,7 @@ export function CollapsibleOfferGroup({
   header: ReactNode;
   children: ReactNode;
   onExpandedChange?: (open: boolean) => void;
+  cardClassName?: string;
 }) {
   const panelId = useId();
 
@@ -90,7 +92,7 @@ export function CollapsibleOfferGroup({
       data-offer-unread={isUnread ? "true" : "false"}
       data-offer-action-required={isActionRequired ? "true" : "false"}
     >
-      <div className="talepo-card overflow-hidden">
+      <div className={`${cardClassName} overflow-hidden`}>
         <button
           type="button"
           id={`offer-toggle-${offerId}`}

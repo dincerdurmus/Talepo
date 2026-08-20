@@ -297,6 +297,10 @@ console.log("\n=== WIRING ===\n");
 {
   const page = read("src/app/panel/teklifler/page.tsx");
   const filters = read("src/components/panel/OutgoingOfferInboxFilters.tsx");
+  const filterRail = read("src/components/panel/offer-inbox/OfferInboxFilterRail.tsx");
+  const filterStyles = read(
+    "src/components/panel/offer-inbox/offerInboxFilterStyles.ts",
+  );
   const layout = read("src/app/panel/layout.tsx");
   const shell = read("src/components/panel/PanelShell.tsx");
   const panelData = read("src/lib/panel/get-panel-data.ts");
@@ -340,7 +344,12 @@ console.log("\n=== WIRING ===\n");
     notify.includes("Teklifinize yeni pazarlık teklifi geldi"),
   );
   check("comparison group unchanged", group.includes("Müşterinin talebi"));
-  check("horizontal filter scroll", filters.includes("overflow-x-auto"));
+  check(
+    "horizontal filter scroll",
+    filters.includes("OfferInboxFilterRail") &&
+      filterStyles.includes("overflow-x-auto") &&
+      filterRail.includes("OFFER_INBOX_FILTER_SCROLLER_CLASS"),
+  );
 }
 
 async function liveFixture() {

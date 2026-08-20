@@ -55,6 +55,7 @@ export function OutgoingOfferCompareGroup({
       isUnread={isUnread}
       isActionRequired={isActionRequired}
       isDeepLinked={Boolean(highlight)}
+      cardClassName="talepo-my-requests-card"
       header={
         <OfferCollapsedSummary
           viewer="seller"

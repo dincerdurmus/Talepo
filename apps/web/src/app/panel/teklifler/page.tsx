@@ -1,13 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ArrowRight,
-  CheckCircle2,
-  CircleDot,
-  Handshake,
-  ThumbsDown,
-  ThumbsUp,
-} from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 import type { IncomingRequestSummaryData } from "@/components/panel/IncomingOfferCompareGroup";
 import {
@@ -21,6 +14,8 @@ import {
 import { MarkAllOfferInboxReadButton } from "@/components/panel/MarkAllOfferInboxReadButton";
 import { OutgoingOfferCompareGroup } from "@/components/panel/OutgoingOfferCompareGroup";
 import type { OutgoingOfferCardData } from "@/components/panel/OutgoingOfferCard";
+import { OfferInboxToolbar } from "@/components/panel/offer-inbox/OfferInboxToolbar";
+import { OfferInboxShell } from "@/components/panel/offer-inbox/OfferInboxShell";
 import { EmptyIllustration } from "@/components/visuals/EmptyIllustration";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { hasFeature } from "@/lib/membership/entitlements";
@@ -203,17 +198,6 @@ export default async function OffersPage({
     ),
   );
 
-  const counts = {
-    open: inboxCounts.sent,
-    negotiating: inboxCounts.negotiating,
-    accepted: inboxCounts.accepted,
-    rejected: inboxCounts.rejected,
-  };
-
-  const pageTitle = "Teklif verdiğim talepler";
-  const pageSubtitle =
-    "Teklif gönderdiğiniz talepleri, pazarlıkları ve sonuçlanan süreçleri buradan takip edin.";
-
   const entitlements = await resolveEntitlements(
     user.id,
     await getCompanyContextOptions(),
@@ -265,28 +249,59 @@ export default async function OffersPage({
   }
 
   return (
-    <>
-      <section className="py-4 sm:py-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-950/35">
-          SATICI
-        </p>
-        <h1 className="talepo-page-title mt-3 text-4xl sm:text-5xl">
-          {pageTitle}
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-teal-950/50">
-          {pageSubtitle}
-        </p>
-      </section>
-
+    <OfferInboxShell
+      tone="outgoing"
+      eyebrow="SATICI"
+      title="Tekliflerim"
+      description="Hangi taleplere teklif verdiğinizi ve şimdi ne yapmanız gerektiğini görün."
+      summary={
+        offers.length === 0
+          ? "Açık taleplere teklif verdikçe süreçleriniz burada görünür."
+          : actionRequiredCount > 0
+            ? `${actionRequiredCount} teklifte yanıtınız bekleniyor.`
+            : unreadOfferIds.size > 0
+              ? `${unreadOfferIds.size} okunmamış teklif var.`
+              : `${listed.length} teklif bu görünümde.`
+      }
+      cta={
+        offers.length === 0
+          ? { href: "/panel/talepler", label: "Talepler" }
+          : null
+      }
+      toolbar={
+        offers.length === 0 ? null : (
+          <OfferInboxToolbar
+            filters={
+              <OutgoingOfferInboxFilters
+                active={activeFilter}
+                counts={inboxCounts}
+                teklif={highlightOfferId}
+                tur={highlightNegotiationId}
+                archiveView={archiveView}
+                archiveCount={archivedOfferIds.size}
+              />
+            }
+            action={
+              unreadOfferIds.size > 0 ? (
+                <MarkAllOfferInboxReadButton
+                  unreadCount={unreadOfferIds.size}
+                  role="seller"
+                />
+              ) : null
+            }
+          />
+        )
+      }
+    >
       {(justSubmitted || justUpdated) && (
-        <section className="mb-5 rounded-2xl border border-teal-900/12 bg-[#eef6f4] px-5 py-4">
-          <p className="flex items-center gap-2 text-sm font-semibold text-teal-900">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <section className="mb-5 rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white px-5 py-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-[#0f1f1d]">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0f766e]" />
             {justUpdated
               ? "Teklif notunuz güncellendi"
               : "Teklifiniz alıcıya iletildi"}
           </p>
-          <p className="mt-1.5 text-sm leading-6 text-teal-900/70">
+          <p className="mt-1.5 text-sm leading-6 text-[#0f1f1d]/55">
             {justUpdated
               ? "Alıcı güncel açıklamanızı görür. Tutar ve teslim süresi aynı kalır."
               : "Alıcı teklifi Gelen teklifler’den görür. Kabul veya pazarlık ile süreç ilerler. Ürün fotoğrafları gönderimden sonra değişmez."}
@@ -294,137 +309,27 @@ export default async function OffersPage({
         </section>
       )}
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {(
-          [
-            {
-              filter: "sent" as const,
-              label: "Gönderilen",
-              value: counts.open,
-              hint: "Pazarlık yok, yanıt bekleniyor",
-              icon: CircleDot,
-              wrap: "border-teal-900/10 bg-[linear-gradient(160deg,#f3faf8_0%,#e8f4f1_55%,#f7fbfa_100%)] shadow-[0_10px_24px_rgba(15,118,110,0.08)]",
-              iconWrap: "bg-teal-800/10 text-teal-800",
-              valueClass: "text-teal-950",
-            },
-            {
-              filter: "negotiating" as const,
-              label: "Pazarlık",
-              value: counts.negotiating,
-              hint: "Açık pazarlık turları",
-              icon: Handshake,
-              wrap: "border-amber-200/70 bg-[linear-gradient(160deg,#fffbeb_0%,#fef3c7_55%,#fff8eb_100%)] shadow-[0_10px_24px_rgba(217,119,6,0.1)]",
-              iconWrap: "bg-amber-500/15 text-amber-800",
-              valueClass: "text-amber-950",
-            },
-            {
-              filter: "accepted" as const,
-              label: "Kabul",
-              value: counts.accepted,
-              hint: "Sonuçlanan kazanç",
-              icon: ThumbsUp,
-              wrap: "border-emerald-200/70 bg-[linear-gradient(160deg,#ecfdf5_0%,#d1fae5_55%,#f0fdf7_100%)] shadow-[0_10px_24px_rgba(5,150,105,0.1)]",
-              iconWrap: "bg-emerald-600/12 text-emerald-800",
-              valueClass: "text-emerald-950",
-            },
-            {
-              filter: "rejected" as const,
-              label: "Red",
-              value: counts.rejected,
-              hint: "Alıcı tarafından reddedildi",
-              icon: ThumbsDown,
-              wrap: "border-rose-200/70 bg-[linear-gradient(160deg,#fff1f2_0%,#ffe4e6_55%,#fff7f7_100%)] shadow-[0_10px_24px_rgba(225,29,72,0.08)]",
-              iconWrap: "bg-rose-500/12 text-rose-800",
-              valueClass: "text-rose-950",
-            },
-          ] as const
-        ).map((item) => {
-          const Icon = item.icon;
-          const selected = activeFilter === item.filter;
-          return (
-            <Link
-              key={item.label}
-              href={buildOutgoingOffersPath({
-                filter: item.filter,
-                teklif: highlightOfferId,
-                tur: highlightNegotiationId,
-              })}
-              className={`relative overflow-hidden rounded-[18px] border p-4 text-left transition hover:-translate-y-0.5 ${item.wrap} ${
-                selected ? "ring-2 ring-teal-800/25" : ""
-              }`}
-            >
-              <div
-                aria-hidden
-                className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-white/45 blur-2xl"
-              />
-              <div className="relative flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-black/40">
-                    {item.label}
-                  </p>
-                  <p
-                    className={`mt-1.5 text-3xl font-semibold tracking-tight tabular-nums ${item.valueClass}`}
-                  >
-                    {item.value}
-                  </p>
-                  <p className="mt-1 text-[11px] leading-4 text-black/40">
-                    {item.hint}
-                  </p>
-                </div>
-                <span
-                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] ${item.iconWrap}`}
-                >
-                  <Icon className="h-4 w-4" strokeWidth={2.25} />
-                </span>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <OutgoingOfferInboxFilters
-          active={activeFilter}
-          counts={inboxCounts}
-          teklif={highlightOfferId}
-          tur={highlightNegotiationId}
-          archiveView={archiveView}
-          archiveCount={archivedOfferIds.size}
-        />
-        <MarkAllOfferInboxReadButton
-          unreadCount={unreadOfferIds.size}
-          role="seller"
-        />
-      </div>
-      {actionRequiredCount > 0 ? (
-        <p className="mb-4 text-sm text-black/45">
-          {actionRequiredCount} teklifte yanıtınız bekleniyor
-          {unreadOfferIds.size > 0
-            ? ` · ${unreadOfferIds.size} okunmamış teklif`
-            : ""}
-        </p>
-      ) : unreadOfferIds.size > 0 ? (
-        <p className="mb-4 text-sm text-black/45">
-          {unreadOfferIds.size} okunmamış teklif
-        </p>
-      ) : null}
-
-      <OfferIntelligenceHub
-        mode={intelligenceHubMode}
-        readyItems={readyIntelligence}
-      />
-
       {offers.length === 0 ? (
-        <Gate
-          title={OUTGOING_OFFER_INBOX_EMPTY.all}
-          body="Açık taleplere teklif verin; burada talep ve teklifiniz yan yana görünür."
-          href="/panel/talepler"
-          cta="Talepler"
-        />
+        <section className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white px-6 py-12 text-center sm:px-10 sm:py-14 sm:text-left">
+          <EmptyIllustration variant="offers" className="sm:mx-0" />
+          <h2 className="mt-6 text-xl font-semibold tracking-tight text-[#0f1f1d]">
+            {OUTGOING_OFFER_INBOX_EMPTY.all}
+          </h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-[#0f1f1d]/55">
+            Açık taleplere teklif verin; burada talep ve teklifiniz yan yana
+            görünür.
+          </p>
+          <Link
+            href="/panel/talepler"
+            className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f766e] px-5 text-sm font-semibold text-white transition hover:bg-[#115e59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
+          >
+            Talepler
+          </Link>
+        </section>
       ) : listed.length === 0 ? (
         <OutgoingOfferInboxEmpty filter={activeFilter} archiveView={archiveView} />
       ) : (
-        <section className="grid gap-6">
+        <section className="grid gap-3" aria-label="Tekliflerim listesi">
           {listed.map((offer) => {
             const canRevise = ["SUBMITTED", "VIEWED"].includes(offer.status);
             const completeness = scoreOfferCompleteness({
@@ -492,33 +397,13 @@ export default async function OffersPage({
           })}
         </section>
       )}
-    </>
-  );
-}
 
-function Gate({
-  title,
-  body,
-  href,
-  cta,
-}: {
-  title: string;
-  body: string;
-  href: string;
-  cta: string;
-}) {
-  return (
-    <div className="talepo-card p-8 text-center sm:text-left">
-      <EmptyIllustration variant="offers" className="sm:mx-0" />
-      <h2 className="mt-5 text-xl font-semibold">{title}</h2>
-      <p className="mt-3 max-w-lg text-sm leading-6 text-black/45">{body}</p>
-      <Link
-        href={href}
-        className="mt-6 inline-flex items-center gap-2 rounded-full bg-teal-800 px-5 py-3 text-sm font-semibold text-white"
-      >
-        {cta}
-        <ArrowRight className="h-4 w-4" />
-      </Link>
-    </div>
+      {offers.length > 0 ? (
+        <OfferIntelligenceHub
+          mode={intelligenceHubMode}
+          readyItems={readyIntelligence}
+        />
+      ) : null}
+    </OfferInboxShell>
   );
 }
