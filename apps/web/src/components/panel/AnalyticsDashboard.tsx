@@ -100,6 +100,80 @@ function EmptyAction({
   );
 }
 
+function CommercialIntelligenceMark() {
+  return (
+    <span className="talepo-analysis-pro-mark" aria-hidden>
+      <svg viewBox="0 0 32 32" width="18" height="18" fill="none">
+        <path
+          d="M5 23.5h22"
+          stroke="currentColor"
+          strokeOpacity="0.32"
+          strokeWidth="1.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M7 19.5 13.2 14.2 17.8 17.1 25 10"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle cx="25" cy="10" r="1.85" fill="currentColor" />
+      </svg>
+    </span>
+  );
+}
+
+function ProfessionalChamber({
+  eyebrow,
+  title,
+  description,
+  aside,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  aside?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      className="talepo-analysis-pro"
+      aria-label="Profesyonel Ticari Performans Zekâsı"
+    >
+      <div className="talepo-analysis-pro-banner relative px-5 py-4 sm:px-6">
+        <div className="talepo-my-requests-banner-grid" aria-hidden />
+        <div className="talepo-my-requests-banner-glow" aria-hidden />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+          <div className="flex min-w-0 max-w-2xl gap-3">
+            <CommercialIntelligenceMark />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold tracking-[0.18em] text-amber-100/85">
+                {eyebrow}
+              </p>
+              <h2 className="mt-1.5 text-[1.25rem] font-semibold tracking-[-0.03em] text-[#fffbeb] sm:text-[1.4rem]">
+                {title}
+              </h2>
+              <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-amber-50/70 sm:text-[14px]">
+                {description}
+              </p>
+            </div>
+          </div>
+          {aside ? (
+            <div className="flex w-full min-w-0 flex-col gap-3 lg:w-[16.75rem] lg:shrink-0">
+              {aside}
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <div className="talepo-analysis-pro-body space-y-5 px-5 py-5 sm:px-6">
+        {children}
+      </div>
+    </section>
+  );
+}
+
 function completionRateDisplay(
   advanced: CommercialPerformanceMetrics,
   submitted: number,
@@ -159,52 +233,39 @@ function FlowChart({
 
 function ProfessionalLockedSection() {
   return (
-    <section className="rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white/80 p-6">
-      <div className="flex items-start gap-3">
-        <div className="rounded-2xl bg-[#0f766e]/10 p-2 text-[#0f766e]">
-          <Sparkles className="h-5 w-5" />
-        </div>
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0f766e]/70">
-            Professional
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-[#0f1f1d]">
-            Professional ile Ticari Performans Zekâsı
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#0f1f1d]/60">
-            Temel Analiz tüm planlarda açıktır. Professional, tamamlanan
-            işlemlerinizden ticaret hacmi, pazarlık ve kategori sonuçlarını
-            gösterir. Kilitli alanda sahte sayı yok.
-          </p>
-        </div>
-      </div>
-      <ul className="mt-5 grid gap-2 text-sm text-[#0f1f1d]/70 sm:grid-cols-2">
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
-          Tamamlanan ticaret hacmi
-        </li>
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
-          Pazarlık performansı
-        </li>
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
-          Kategori performansı
-        </li>
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
-          Gerçek veriden içgörüler
-        </li>
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
+    <ProfessionalChamber
+      eyebrow="Profesyonel"
+      title="Profesyonel ile Ticari Performans Zekâsı"
+      description="Temel Analiz tüm planlarda açıktır. Profesyonel, tamamlanan işlemlerinizden ticaret hacmi, pazarlık ve kategori sonuçlarını gösterir. Kilitli alanda sahte sayı yok."
+      aside={
+        <>
+          <div className="talepo-my-requests-summary">
+            <p className="text-[13px] leading-5 text-amber-50/88">
+              Bu oda yalnız Profesyonel planında açılır. Sayı uydurulmaz.
+            </p>
+          </div>
+          <Link
+            href="/panel/plan"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#f4fbf9] px-4 text-sm font-semibold text-[#0c1d1a] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+          >
+            Profesyonel ile aç
+          </Link>
+        </>
+      }
+    >
+      <ul className="grid gap-2 text-sm text-[#0f1f1d]/75 sm:grid-cols-2">
+        <li className="talepo-analysis-pro-tile">Tamamlanan ticaret hacmi</li>
+        <li className="talepo-analysis-pro-tile">Pazarlık performansı</li>
+        <li className="talepo-analysis-pro-tile">Kategori performansı</li>
+        <li className="talepo-analysis-pro-tile">Gerçek veriden içgörüler</li>
+        <li className="talepo-analysis-pro-tile">
           Kaynak performansı (Radar / Takiplerim / Fırsatlar)
         </li>
-        <li className="rounded-xl border border-[#0f1f1d]/6 bg-[#f7faf9] px-3 py-2">
+        <li className="talepo-analysis-pro-tile">
           Teklif Zekâsı görüntüleme özeti
         </li>
       </ul>
-      <Link
-        href="/panel/plan"
-        className="mt-5 inline-flex min-h-11 items-center rounded-full bg-[#0f766e] px-5 text-sm font-semibold text-white hover:bg-[#115e59] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f766e]/40"
-      >
-        Professional ile aç
-      </Link>
-    </section>
+    </ProfessionalChamber>
   );
 }
 
@@ -227,23 +288,27 @@ function ProfessionalCommerceSection({
   const showCategoryTable = eligibleCategories.some(
     (row) => row.rankEligible || row.submitted >= 3,
   );
+  const chamberInsight = !hasOffers
+    ? "İlk teklif bu odayı doldurur."
+    : accepted === 0
+      ? "Kabul edilen teklif henüz yok."
+      : hasCompleted
+        ? `Son ${rangeDays} günde ${advanced.completedDeals} tamamlanan işlem.`
+        : "Tamamlanan işlem bekleniyor.";
 
   return (
-    <section className="space-y-6 rounded-[1.5rem] border border-[#0f1f1d]/8 bg-white/80 p-6">
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#0f766e]/70">
-          Professional · Ticari Performans Zekâsı
-        </p>
-        <h2 className="mt-1 text-xl font-semibold text-[#0f1f1d]">
-          Nerede kazanıyorsunuz, nerede kaybediyorsunuz?
-        </h2>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-[#0f1f1d]/55">
-          Kazanma oranı gönderim tarihine göre; tamamlanan hacim ise işlem
-          tamamlanma tarihine göre hesaplanır (son {rangeDays} gün). Bunlar
-          aynı cohort değildir.
-        </p>
-      </div>
-
+    <ProfessionalChamber
+      eyebrow="Profesyonel · Ticari Performans Zekâsı"
+      title="Nerede kazanıyorsunuz, nerede kaybediyorsunuz?"
+      description={`Kazanma oranı teklifin gönderim tarihine, tamamlanan hacim ise işlemin tamamlanma tarihine göre hesaplanır (son ${rangeDays} gün). Bu nedenle iki değer aynı teklif grubunu temel almaz.`}
+      aside={
+        <div className="talepo-my-requests-summary">
+          <p className="text-[13px] leading-5 text-amber-50/88">
+            {chamberInsight}
+          </p>
+        </div>
+      }
+    >
       {!hasOffers ? (
         <EmptyAction
           title="İlk teklifinizi verin"
@@ -646,7 +711,7 @@ function ProfessionalCommerceSection({
           </div>
         </dl>
       </div>
-    </section>
+    </ProfessionalChamber>
   );
 }
 

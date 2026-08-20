@@ -62,7 +62,8 @@ console.log("\n=== STANDARD / PROFESSIONAL ACCESS ===\n");
   check(
     "2 Standard advanced locked",
     dash.includes("ProfessionalLockedSection") &&
-      dash.includes("Professional ile Ticari Performans Zekâsı") &&
+      dash.includes("ProfessionalChamber") &&
+      dash.includes("Profesyonel ile Ticari Performans Zekâsı") &&
       dash.includes('href="/panel/plan"') &&
       !dash.includes("blur-sm") &&
       !dash.includes("Math.random"),
@@ -74,6 +75,14 @@ console.log("\n=== STANDARD / PROFESSIONAL ACCESS ===\n");
       hasAdvancedAnaliz(featuresForPlan("PROFESSIONAL")) &&
       !hasAdvancedAnaliz(featuresForPlan("STANDARD")) &&
       !hasAdvancedAnaliz(featuresForPlan("PREMIUM")),
+  );
+  check(
+    "Professional chamber presentation restored",
+    dash.includes("ProfessionalChamber") &&
+      dash.includes("talepo-analysis-pro-banner") &&
+      dash.includes("CommercialIntelligenceMark") &&
+      dash.includes("Nerede kazanıyorsunuz, nerede kaybediyorsunuz?") &&
+      dash.includes("aynı teklif grubunu temel almaz"),
   );
   check(
     "38 client owner spoof yok",
@@ -315,7 +324,11 @@ console.log("\n=== WINDOWS / EMPTY / FAKE ===\n");
   );
   check(
     "36 empty no completed deals",
-    dash.includes("Tamamlanan işlemler oluştukça ticaret hacminiz burada görünür"),
+    dash.includes("Tamamlanan işlemler oluştukça ticaret hacminiz burada görünür") &&
+      dash.includes('href="/panel/teklifler"') &&
+      dash.includes('cta="Tekliflerim"') &&
+      !dash.includes("/panel/gelen-teklifler") &&
+      !dash.includes("Tekliflere git"),
   );
   check(
     "39 no hardcoded random metric",
