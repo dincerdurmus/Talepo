@@ -37,6 +37,7 @@ const upsell = read("src/components/panel/ExploreFilterUpsell.tsx");
 const shell = read("src/components/panel/PanelShell.tsx");
 const nav = read("src/components/panel/panel-nav.ts");
 const css = read("src/app/globals.css");
+const rail = read("src/components/panel/CommandPersonalSidebar.tsx");
 const locationSelect = read(
   "src/components/panel/explore/ExploreLocationMultiSelect.tsx",
 );
@@ -180,14 +181,19 @@ check(
     !css.includes("talepo-explore-banner-cards"),
 );
 check(
-  "visible product name is Talepleri keşfet",
+  "explore page copy stays Talepler, chrome is Talepleri keşfet",
   /\r?\n[ \t]+Talepler\r?\n/.test(home) &&
     !home.includes("Keşfet") &&
     shell.includes(
       'if (pathname.startsWith("/panel/talepler")) return "Talepleri keşfet"',
     ) &&
+    shell.includes('label="Keşfet"') &&
+    shell.includes("Talepleri keşfet") &&
     nav.includes('label: "Talepleri keşfet"') &&
-    !nav.includes('label: "Keşfet"'),
+    !nav.includes('label: "Keşfet"') &&
+    !nav.includes('label: "Talepler"') &&
+    rail.includes("TALEP_TEKLIF_NAV_HREFS") &&
+    rail.includes("item.label"),
 );
 
 {

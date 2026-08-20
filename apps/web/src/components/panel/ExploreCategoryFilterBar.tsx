@@ -48,7 +48,16 @@ export function ExploreCategoryFilterBar({
   leafExact?: boolean;
 }) {
   const focus = filters.focus || interestOptions[0]?.slug || "";
-  const defs = focus ? getExploreFilterDefs(focus) : [];
+  const activeContext = Object.fromEntries(
+    filters.fields.map(({ def, value }) => [def.fieldKey, value]),
+  );
+  const defs = focus
+    ? getExploreFilterDefs(focus, {
+        ...activeContext,
+        productType:
+          activeContext.productType ?? activeContext.solutionType,
+      })
+    : [];
   const hasExtra = Boolean(filters.q) || hasActiveAdvancedExploreFilters(filters);
   const showFocusSelect = interestOptions.length > 1;
   const showAdvancedRow = advancedFiltersEnabled;
