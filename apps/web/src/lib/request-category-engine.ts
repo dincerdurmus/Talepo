@@ -110,6 +110,51 @@ function normalizeWhenValue(fieldKey: string, value: string): string {
   return trimmed;
 }
 
+/**
+ * Canonical FormField.key plus legacy spellings that store the same fact.
+ * Explore/alerts query both; do not treat them as two metrics.
+ */
+export function formFieldKeyAliases(fieldKey: string): string[] {
+  if (fieldKey === "brand" || fieldKey === "brandPreference") {
+    return ["brand", "brandPreference"];
+  }
+  return [fieldKey];
+}
+
+/**
+ * Stored text values that should match a user-selected filter.
+ * Canonical spelling comes from normalizeWhenValue; legacy rows stay readable.
+ */
+export function storedFieldValueAliases(
+  fieldKey: string,
+  value: string,
+): string[] {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  const canonical = normalizeWhenValue(fieldKey, trimmed) || trimmed;
+  const aliases = new Set<string>([trimmed, canonical]);
+  if (fieldKey === "propertyType") {
+    const fold = canonical.toLocaleLowerCase("tr-TR");
+    if (fold === "rezidans") {
+      aliases.add("Rezidans");
+      aliases.add("Residans");
+    }
+  }
+  if (fieldKey === "condition") {
+    const fold = canonical.toLocaleLowerCase("tr-TR");
+    if (fold === "ikinci el") {
+      aliases.add("İkinci el");
+      aliases.add("Ikinci el");
+      aliases.add("2. el");
+    }
+    if (fold === "sıfır" || fold === "sifir") {
+      aliases.add("Sıfır");
+      aliases.add("Sifir");
+    }
+  }
+  return [...aliases];
+}
+
 export function withCategoryFieldDefaults(
   categoryId: string,
   values: Record<string, string | undefined>,

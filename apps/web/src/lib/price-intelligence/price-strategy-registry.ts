@@ -129,7 +129,7 @@ export const STRATEGY_ATTRIBUTE_PROFILES: Record<PriceStrategyKey, StrategyAttri
     strategy: "B2B_COMMODITY",
     required: ["quantity"],
     important: ["specs", "dimensions", "material", "furnitureType", "applianceType"],
-    optional: ["city", "delivery", "budget", "brandPreference"],
+    optional: ["city", "delivery", "budget", "brand", "brandPreference"],
     ignoredForExternalQuery: ["needType"],
   },
   MEDICAL_DEVICE: {

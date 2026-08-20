@@ -6,7 +6,13 @@ import {
   parseExploreLocationList,
   pruneExploreDistricts,
 } from "@/lib/explore/location-filter";
-import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+import {
+  REQUEST_CATEGORIES,
+  formFieldKeyAliases,
+  isFieldVisible,
+  storedFieldValueAliases,
+  withCategoryFieldDefaults,
+} from "@/lib/request-category-engine";
 
 export type ExploreFilterInput = "text" | "select" | "number";
 
@@ -102,7 +108,9 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         param: "furnitureType",
         label: "Ürün türü",
         fieldKey: "furnitureType",
-        input: "select",
+        input: "text",
+        placeholder: "ör. Şaraplık, koltuk takımı",
+        alsoMatchTitle: true,
       },
       {
         param: "usageArea",
@@ -177,8 +185,22 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         label: "Çözüm / ürün",
         fieldKey: "solutionType",
         input: "text",
-        placeholder: "ör. web uygulaması",
+        placeholder: "ör. laptop / web uygulaması",
         alsoMatchTitle: true,
+      },
+      {
+        param: "brand",
+        label: "Marka",
+        fieldKey: "brand",
+        input: "text",
+        placeholder: "ör. Apple, Samsung",
+        alsoMatchTitle: true,
+      },
+      {
+        param: "condition",
+        label: "Durum",
+        fieldKey: "condition",
+        input: "select",
       },
       {
         param: "platform",
@@ -192,7 +214,9 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         param: "applianceType",
         label: "Ürün türü",
         fieldKey: "applianceType",
-        input: "select",
+        input: "text",
+        placeholder: "ör. Buzdolabı, Klima, Süpürge",
+        alsoMatchTitle: true,
       },
       {
         param: "usageArea",
@@ -203,7 +227,7 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
       {
         param: "brand",
         label: "Marka",
-        fieldKey: "brandPreference",
+        fieldKey: "brand",
         input: "text",
         placeholder: "ör. Bosch",
         alsoMatchTitle: true,
@@ -212,6 +236,12 @@ export const CATEGORY_EXPLORE_FILTERS: Record<string, ExploreFilterFieldDef[]> =
         param: "condition",
         label: "Durum",
         fieldKey: "condition",
+        input: "select",
+      },
+      {
+        param: "energyClass",
+        label: "Enerji sınıfı",
+        fieldKey: "energyClass",
         input: "select",
       },
     ],
@@ -346,11 +376,57 @@ function parseAdvancedExploreFilters(
   };
 }
 
+function hasExploreVisibilityContext(
+  categorySlug: string,
+  context: Record<string, string | undefined>,
+): boolean {
+  if (categorySlug === "technology") {
+    return Boolean(
+      context.needType?.trim() ||
+        context.solutionType?.trim() ||
+        context.productType?.trim(),
+    );
+  }
+  if (categorySlug === "appliances") {
+    return Boolean(context.applianceType?.trim());
+  }
+  return false;
+}
+
+/** Vacuum / small-appliance types where energy class is not a real demand field. */
+const APPLIANCE_ENERGY_CLASS_IRRELEVANT =
+  /süpürge|supurge|ütü|utu|blender|airfryer|fritöz|fritoz|robot|kahve|tost/i;
+
+/**
+ * Category explore filters, gated by the same FormField.when rules as the
+ * request form. Incomplete context keeps all defs so URL reload does not drop
+ * brand/condition before needType is known.
+ */
 export function getExploreFilterDefs(
   categorySlug: string,
   context: Record<string, string | undefined> = {},
 ): ExploreFilterFieldDef[] {
-  return CATEGORY_EXPLORE_FILTERS[categorySlug] ?? [];
+  const defs = CATEGORY_EXPLORE_FILTERS[categorySlug] ?? [];
+  if (defs.length === 0) return defs;
+
+  const category = REQUEST_CATEGORIES.find((item) => item.id === categorySlug);
+  const resolved = hasExploreVisibilityContext(categorySlug, context)
+    ? withCategoryFieldDefaults(categorySlug, context)
+    : null;
+
+  return defs.filter((def) => {
+    if (
+      categorySlug === "appliances" &&
+      def.fieldKey === "energyClass" &&
+      APPLIANCE_ENERGY_CLASS_IRRELEVANT.test(context.applianceType ?? "")
+    ) {
+      return false;
+    }
+    if (!resolved || !category) return true;
+    const field = category.fields.find((item) => item.key === def.fieldKey);
+    if (!field?.when) return true;
+    return isFieldVisible(field, resolved);
+  });
 }
 
 export function getFilterSelectOptions(
@@ -358,7 +434,10 @@ export function getFilterSelectOptions(
   fieldKey: string,
 ): Array<{ label: string; value: string }> {
   const category = REQUEST_CATEGORIES.find((c) => c.id === categorySlug);
-  const field = category?.fields.find((f) => f.key === fieldKey);
+  const keys = formFieldKeyAliases(fieldKey);
+  const field = category?.fields.find(
+    (item) => keys.includes(item.key) && Boolean(item.options?.length),
+  );
   return field?.options ?? [];
 }
 
@@ -382,7 +461,10 @@ export function parseExploreFilters(
   interestSlugs: string[],
 ): ParsedExploreFilters {
   const focus = resolveFilterFocus(interestSlugs, params.focus);
-  const defs = getExploreFilterDefs(focus);
+  const defs = getExploreFilterDefs(focus, {
+    ...params,
+    productType: params.productType ?? params.solutionType,
+  });
   const q = params.q?.trim() ?? "";
 
   const fields: ParsedExploreFilters["fields"] = [];
@@ -452,38 +534,51 @@ export function stripAdvancedExploreFilters(
   };
 }
 
+function fieldKeyClause(keys: string[]): Prisma.FormFieldWhereInput {
+  return keys.length === 1 ? { key: keys[0]! } : { key: { in: keys } };
+}
+
 function fieldValueWhere(
   def: ExploreFilterFieldDef,
   value: string,
 ): Prisma.RequestWhereInput {
-  const fieldMatch: Prisma.RequestFieldValueWhereInput =
-    def.input === "number"
-      ? {
-          field: { key: def.fieldKey },
-          OR: [
-            ...(Number.isFinite(Number(value))
-              ? [{ numberValue: Number(value) }]
-              : []),
-            {
-              textValue: {
-                contains: value,
-                mode: "insensitive" as const,
-              },
-            },
-          ],
-        }
-      : def.input === "select"
-        ? {
-            field: { key: def.fieldKey },
-            textValue: value,
-          }
-        : {
-            field: { key: def.fieldKey },
-            textValue: {
-              contains: value,
-              mode: "insensitive" as const,
-            },
-          };
+  const keys = formFieldKeyAliases(def.fieldKey);
+
+  let fieldMatch: Prisma.RequestFieldValueWhereInput;
+
+  if (def.input === "number") {
+    fieldMatch = {
+      field: fieldKeyClause(keys),
+      OR: [
+        ...(Number.isFinite(Number(value))
+          ? [{ numberValue: Number(value) }]
+          : []),
+        {
+          textValue: {
+            contains: value,
+            mode: "insensitive" as const,
+          },
+        },
+      ],
+    };
+  } else if (def.input === "select") {
+    const accepted = storedFieldValueAliases(def.fieldKey, value);
+    fieldMatch = {
+      field: fieldKeyClause(keys),
+      OR: accepted.map((v) => ({
+        textValue: { equals: v, mode: "insensitive" as const },
+      })),
+    };
+  } else {
+    // text: contains (case-insensitive) — taxonomy leaves & free-text products
+    fieldMatch = {
+      field: fieldKeyClause(keys),
+      textValue: {
+        contains: value,
+        mode: "insensitive" as const,
+      },
+    };
+  }
 
   const valueClause: Prisma.RequestWhereInput = {
     fieldValues: { some: fieldMatch },
