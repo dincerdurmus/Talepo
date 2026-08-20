@@ -1,8 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import {
-  containsBlockedContactInfo,
-  sanitizeCommercialText,
-} from "@/lib/membership/contact-filter";
 
 import { createNotification } from "../notifications/create-notification";
 import { getSendableConversation } from "./conversation-access";
@@ -21,15 +17,10 @@ export async function sendMessage(
     throw new MessageValidationError("Mesaj boş olamaz.");
   }
 
-  if (containsBlockedContactInfo(trimmed)) {
-    throw new MessageValidationError(
-      "Mesajlarda telefon, IBAN veya platform dışı iletişim bilgisi paylaşılamaz.",
-    );
-  }
-
+  // Sendable conversations are already ACCEPTED. Contact sharing is allowed
+  // after offer acceptance; pre-accept surfaces keep their own blockers.
   const access = await getSendableConversation(userId, conversationId);
   const now = new Date();
-  const sanitized = sanitizeCommercialText(trimmed);
 
   const message = await prisma.$transaction(async (tx) => {
     const created = await tx.message.create({
@@ -37,7 +28,7 @@ export async function sendMessage(
         conversationId,
         senderUserId: userId,
         senderCompanyId: access.senderCompanyId,
-        content: sanitized,
+        content: trimmed,
         type: "TEXT",
       },
     });

@@ -2,10 +2,6 @@ import { randomUUID } from "node:crypto";
 
 import { encodeGroupFileName, sanitizeUserFileName } from "@/lib/message/attachment-group";
 import { prisma } from "@/lib/prisma";
-import {
-  containsBlockedContactInfo,
-  sanitizeCommercialText,
-} from "@/lib/membership/contact-filter";
 
 import { createNotification } from "../notifications/create-notification";
 import { getSendableConversation } from "./conversation-access";
@@ -47,11 +43,6 @@ export async function sendImageMessages(
   }
 
   const captionRaw = input.caption?.trim() || "";
-  if (captionRaw && containsBlockedContactInfo(captionRaw)) {
-    throw new MessageValidationError(
-      "Mesajlarda telefon, IBAN veya platform dışı iletişim bilgisi paylaşılamaz.",
-    );
-  }
 
   const moderated: Array<{
     dataUrl: string;
@@ -91,7 +82,7 @@ export async function sendImageMessages(
   }
 
   const now = new Date();
-  const caption = captionRaw ? sanitizeCommercialText(captionRaw) : null;
+  const caption = captionRaw || null;
   const groupId = moderated.length > 1 ? randomUUID() : null;
 
   const messages = await prisma.$transaction(async (tx) => {

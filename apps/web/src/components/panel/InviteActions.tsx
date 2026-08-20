@@ -69,7 +69,7 @@ export function InviteActions({
           type="button"
           disabled={busy !== null}
           onClick={() => void respond("accept")}
-          className="inline-flex items-center gap-1.5 rounded-full bg-teal-800 px-3.5 py-2 text-xs font-semibold text-white disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-[#0f1f1d] px-3.5 text-xs font-semibold text-[#f4fbf9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f1d]/30 disabled:opacity-60"
         >
           {busy === "accept" ? (
             <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
@@ -82,7 +82,7 @@ export function InviteActions({
           type="button"
           disabled={busy !== null}
           onClick={() => void respond("reject")}
-          className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white px-3.5 py-2 text-xs font-semibold text-black/70 disabled:opacity-60"
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[#0f1f1d]/10 bg-white px-3.5 text-xs font-semibold text-[#0f1f1d]/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f1f1d]/30 disabled:opacity-60"
         >
           {busy === "reject" ? (
             <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
