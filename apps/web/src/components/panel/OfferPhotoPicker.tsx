@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ImagePlus, LoaderCircle, X } from "lucide-react";
+import { ImagePlus, LoaderCircle, Lock, X } from "lucide-react";
 
 import { compressImageToDataUrl } from "@/lib/media/compress-image";
 import {
@@ -12,6 +12,7 @@ import {
   OFFER_MEDIA_MAX_COUNT,
   OFFER_MEDIA_TYPE_MESSAGE,
   isOfferMediaMime,
+  offerMediaSrc,
 } from "@/lib/offer/offer-media";
 
 export type PendingOfferPhoto = {
@@ -29,6 +30,12 @@ type OfferPhotoPickerProps = {
   disabled?: boolean;
   lockedMediaIds?: string[];
   offerId?: string | null;
+};
+
+type PreviewItem = {
+  key: string;
+  src: string;
+  alt: string;
 };
 
 function dataUrlToJpegFile(dataUrl: string, name: string) {
@@ -81,7 +88,10 @@ export function OfferPhotoPicker({
 }: OfferPhotoPickerProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const [pickerError, setPickerError] = useState<string | null>(null);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [brokenKeys, setBrokenKeys] = useState<Record<string, true>>({});
 
   useEffect(() => {
     return () => {
@@ -92,6 +102,49 @@ export function OfferPhotoPicker({
     // Revoke only on unmount; individual removes revoke immediately.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const lockedItems: PreviewItem[] =
+    offerId && lockedMediaIds.length > 0
+      ? lockedMediaIds.map((mediaId, index) => ({
+          key: `locked-${mediaId}`,
+          src: offerMediaSrc(offerId, mediaId),
+          alt: `Gönderilmiş fotoğraf ${index + 1}`,
+        }))
+      : [];
+
+  const pendingItems: PreviewItem[] = photos.map((photo) => ({
+    key: photo.localId,
+    src: photo.previewUrl,
+    alt: photo.name,
+  }));
+
+  const previewItems = [...lockedItems, ...pendingItems];
+
+  useEffect(() => {
+    if (previewIndex == null) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPreviewIndex(null);
+        return;
+      }
+      if (previewItems.length < 2) return;
+      if (event.key === "ArrowRight") {
+        setPreviewIndex((current) =>
+          current == null ? 0 : (current + 1) % previewItems.length,
+        );
+      }
+      if (event.key === "ArrowLeft") {
+        setPreviewIndex((current) =>
+          current == null
+            ? 0
+            : (current - 1 + previewItems.length) % previewItems.length,
+        );
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    closeRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewIndex, previewItems.length]);
 
   async function addFiles(fileList: FileList | null) {
     if (!fileList || disabled) return;
@@ -138,57 +191,134 @@ export function OfferPhotoPicker({
   }
 
   const canAdd = !disabled && photos.length < OFFER_MEDIA_MAX_COUNT;
+  const activePreview =
+    previewIndex != null ? previewItems[previewIndex] : null;
 
   return (
-    <div className="rounded-xl border border-teal-900/8 bg-[#f7faf9] px-3.5 py-3.5">
-      <p className="text-sm font-medium text-teal-950/70">Ürün fotoğrafları</p>
-      <p className="mt-1 text-xs leading-5 text-teal-950/45">
-        {OFFER_MEDIA_COPY}
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/90">
+        Görseller
       </p>
+      <p className="mt-1 text-[13px] font-medium text-[#536b68]">
+        Ürün fotoğrafları
+      </p>
+      <p className="mt-0.5 text-[13px] leading-5 text-[#0f1f1d]/55">
+        Ürününüzü gösteren en fazla {OFFER_MEDIA_MAX_COUNT} görsel ekleyin.
+      </p>
+      <p className="mt-0.5 text-[12px] text-[#0f1f1d]/48">{OFFER_MEDIA_COPY}</p>
 
       {lockedMediaIds.length > 0 && offerId ? (
-        <p className="mt-2 text-xs text-teal-950/50">
+        <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-teal-950/50">
+          <Lock className="h-3 w-3" aria-hidden />
           Gönderilmiş {lockedMediaIds.length} fotoğraf kilitlidir.
         </p>
       ) : null}
 
-      {photos.length > 0 ? (
-        <ul className="mt-3 flex flex-wrap gap-2">
-          {photos.map((photo) => (
-            <li
-              key={photo.localId}
-              className="relative h-20 w-20 overflow-hidden rounded-xl bg-white ring-1 ring-teal-900/10"
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {lockedItems.map((item, index) => (
+          <li key={item.key}>
+            <button
+              type="button"
+              onClick={() => setPreviewIndex(index)}
+              className="relative h-[4.5rem] w-[4.5rem] overflow-hidden rounded-[14px] bg-[#eef2f1] ring-1 ring-teal-900/10 transition hover:ring-teal-700/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/30"
+              aria-label={`${item.alt} önizle`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={photo.previewUrl}
-                alt={photo.name}
-                className="h-full w-full object-cover"
-              />
-              {photo.status === "uploading" ? (
-                <span className="absolute inset-0 flex items-center justify-center bg-[#0f1f1d]/40">
-                  <LoaderCircle className="h-4 w-4 animate-spin text-white" />
+              {brokenKeys[item.key] ? (
+                <span className="flex h-full w-full items-center justify-center text-[10px] text-[#0f1f1d]/35">
+                  Görsel
                 </span>
-              ) : null}
-              {photo.status === "error" ? (
-                <span className="absolute inset-x-0 bottom-0 bg-[#8b352b] px-1 py-0.5 text-[9px] font-semibold leading-3 text-white">
-                  Hata
-                </span>
-              ) : null}
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.src}
+                  alt=""
+                  className="h-full w-full object-cover"
+                  onError={() =>
+                    setBrokenKeys((current) => ({ ...current, [item.key]: true }))
+                  }
+                />
+              )}
+            </button>
+          </li>
+        ))}
+
+        {photos.map((photo, index) => {
+          const previewAt = lockedItems.length + index;
+          return (
+            <li key={photo.localId} className="relative">
+              <button
+                type="button"
+                onClick={() => setPreviewIndex(previewAt)}
+                className="relative h-[4.5rem] w-[4.5rem] overflow-hidden rounded-[14px] bg-[#eef2f1] ring-1 ring-teal-900/10 transition hover:ring-teal-700/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700/30"
+                aria-label={`${photo.name} önizle`}
+              >
+                {brokenKeys[photo.localId] ? (
+                  <span className="flex h-full w-full items-center justify-center text-[10px] text-[#0f1f1d]/35">
+                    Görsel
+                  </span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photo.previewUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    onError={() =>
+                      setBrokenKeys((current) => ({
+                        ...current,
+                        [photo.localId]: true,
+                      }))
+                    }
+                  />
+                )}
+                {photo.status === "uploading" ? (
+                  <span className="absolute inset-0 flex items-center justify-center bg-[#0f1f1d]/40">
+                    <LoaderCircle className="h-4 w-4 animate-spin text-white" />
+                  </span>
+                ) : null}
+                {photo.status === "error" ? (
+                  <span className="absolute inset-x-0 bottom-0 bg-[#8b352b] px-1 py-0.5 text-[9px] font-semibold leading-3 text-white">
+                    Hata
+                  </span>
+                ) : null}
+              </button>
               {!disabled ? (
                 <button
                   type="button"
                   onClick={() => removePhoto(photo.localId)}
-                  className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-[#0f1f1d]"
+                  className="absolute -right-1.5 -top-1.5 z-10 rounded-full border border-black/10 bg-white p-1 text-[#0f1f1d] shadow-sm"
                   aria-label={`${photo.name} dosyasını kaldır`}
                 >
                   <X className="h-3 w-3" />
                 </button>
               ) : null}
             </li>
-          ))}
-        </ul>
-      ) : null}
+          );
+        })}
+
+        {canAdd ? (
+          <li>
+            <input
+              id={inputId}
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              className="sr-only"
+              onChange={(event) => void addFiles(event.target.files)}
+            />
+            <label
+              htmlFor={inputId}
+              className="flex h-[4.5rem] w-[4.5rem] cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] border border-dashed border-teal-800/25 bg-[#fcfdfc] text-teal-900/75 transition hover:border-teal-700/40 hover:bg-white"
+            >
+              <ImagePlus className="h-4 w-4" aria-hidden />
+              <span className="sr-only">Fotoğraf ekle</span>
+              <span className="text-[10px] font-semibold" aria-hidden>
+                Ekle
+              </span>
+            </label>
+          </li>
+        ) : null}
+      </ul>
 
       {photos.some((photo) => photo.status === "error") ? (
         <ul className="mt-2 space-y-1">
@@ -209,30 +339,80 @@ export function OfferPhotoPicker({
         <p className="mt-2 text-xs text-[#8b352b]">{pickerError}</p>
       ) : null}
 
-      <div className="mt-3">
-        <input
-          id={inputId}
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          multiple
-          disabled={!canAdd}
-          className="sr-only"
-          onChange={(event) => void addFiles(event.target.files)}
-        />
-        <label
-          htmlFor={inputId}
-          className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-teal-800/15 bg-white px-3.5 py-2.5 text-sm font-semibold text-teal-950 ${
-            canAdd ? "hover:bg-teal-50" : "cursor-not-allowed opacity-40"
-          }`}
+      <p className="mt-2 text-[11px] text-[#0f1f1d]/40">
+        {photos.length}/{OFFER_MEDIA_MAX_COUNT} · JPEG, PNG, WebP
+      </p>
+
+      {activePreview ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-[#0f1f1d]/72 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Fotoğraf önizleme"
+          onClick={() => setPreviewIndex(null)}
         >
-          <ImagePlus className="h-4 w-4" />
-          Fotoğraf ekle
-        </label>
-        <p className="mt-1.5 text-[11px] text-teal-950/40">
-          {photos.length}/{OFFER_MEDIA_MAX_COUNT} · JPEG, PNG, WebP
-        </p>
-      </div>
+          <div
+            className="relative max-h-[min(88vh,720px)] w-full max-w-3xl overflow-hidden rounded-[18px] bg-[#111716] shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={() => setPreviewIndex(null)}
+              className="absolute right-3 top-3 z-10 rounded-full border border-white/15 bg-black/40 p-2 text-white backdrop-blur-sm"
+              aria-label="Önizlemeyi kapat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            {brokenKeys[activePreview.key] ? (
+              <div className="flex h-[min(70vh,560px)] items-center justify-center text-sm text-white/55">
+                Görsel yüklenemedi
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={activePreview.src}
+                alt={activePreview.alt}
+                className="max-h-[min(88vh,720px)] w-full object-contain"
+                onError={() =>
+                  setBrokenKeys((current) => ({
+                    ...current,
+                    [activePreview.key]: true,
+                  }))
+                }
+              />
+            )}
+            {previewItems.length > 1 && previewIndex != null ? (
+              <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/55 to-transparent px-3 py-3">
+                <button
+                  type="button"
+                  className="rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold text-white"
+                  onClick={() =>
+                    setPreviewIndex(
+                      (previewIndex - 1 + previewItems.length) %
+                        previewItems.length,
+                    )
+                  }
+                >
+                  Önceki
+                </button>
+                <p className="text-[12px] text-white/80">
+                  {previewIndex + 1} / {previewItems.length}
+                </p>
+                <button
+                  type="button"
+                  className="rounded-full bg-white/15 px-3 py-1.5 text-[12px] font-semibold text-white"
+                  onClick={() =>
+                    setPreviewIndex((previewIndex + 1) % previewItems.length)
+                  }
+                >
+                  Sonraki
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

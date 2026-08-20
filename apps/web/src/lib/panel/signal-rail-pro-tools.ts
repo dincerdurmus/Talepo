@@ -1,3 +1,6 @@
+import type { LucideIcon } from "lucide-react";
+import { Binoculars, Flame, PieChart } from "lucide-react";
+
 import { hasFeature, type FeatureKey } from "@/lib/membership/entitlements";
 
 export const SIGNAL_RAIL_LOCKED_HINT =
@@ -7,6 +10,16 @@ export type SignalRailProToolId =
   | "firsatlar"
   | "takip"
   | "teklif-zekasi";
+
+/** Canonical Pro tool icons — Signal Rail + secondary surfaces must reuse these. */
+export const SIGNAL_RAIL_PRO_TOOL_ICONS: Record<
+  SignalRailProToolId,
+  LucideIcon
+> = {
+  firsatlar: Flame,
+  takip: Binoculars,
+  "teklif-zekasi": PieChart,
+};
 
 export type SignalRailProToolTone =
   | "opportunities"

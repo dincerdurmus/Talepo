@@ -13,6 +13,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
+import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
 
@@ -55,6 +56,8 @@ export default async function OfferRequestPage({
       aiSummary: true,
       city: true,
       budgetMin: true,
+      budgetMax: true,
+      currency: true,
       status: true,
       visibleToSuppliersAt: true,
       category: { select: { name: true, slug: true } },
@@ -122,22 +125,54 @@ export default async function OfferRequestPage({
         Talebe dön
       </Link>
 
-      <div className="mt-4 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.1fr)] lg:items-start lg:gap-5">
-        {/* Form first on mobile */}
-        <section className="order-1 rounded-2xl border border-teal-900/8 bg-white p-5 shadow-[0_10px_32px_rgba(15,31,29,0.04)] sm:p-6 lg:order-2 lg:sticky lg:top-6 lg:p-7">
-          <h1 className="text-xl font-semibold tracking-tight text-[#0f1f1d] sm:text-2xl">
+      <div className="mt-4 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,0.35fr)_minmax(0,0.65fr)] lg:items-start lg:gap-5 xl:gap-6">
+        <div className="order-1 lg:order-1">
+          <OfferRequestPreview
+            categoryName={request.category.name}
+            title={request.title}
+            city={request.city}
+            description={description}
+            aiSummary={request.aiSummary}
+            budgetLabel={formatListingBudget(
+              request.budgetMin,
+              request.budgetMax,
+              request.currency,
+            )}
+            fields={request.fieldValues.map((value) => ({
+              id: value.id,
+              label: value.field.label,
+              value: displayRequestFieldValue({
+                ...value,
+                categoryId: categorySlug,
+              }),
+            }))}
+          />
+          <div className="opacity-80">
+            <ComplaintForm
+              subjectType="REQUEST"
+              subjectId={request.id}
+              targetUserId={request.createdById}
+            />
+            {existingOffer ? (
+              <ComplaintForm subjectType="OFFER" subjectId={existingOffer.id} />
+            ) : null}
+          </div>
+        </div>
+
+        <section className="order-2 rounded-[20px] border border-teal-900/[0.08] bg-[linear-gradient(180deg,#fcfdfc_0%,#f6f9f8_100%)] p-5 shadow-[0_12px_36px_rgba(15,31,29,0.04)] sm:p-6 lg:sticky lg:top-6 lg:p-7">
+          <h1 className="text-[1.65rem] font-semibold tracking-[-0.03em] text-[#0f1f1d] sm:text-[1.85rem]">
             {isRevise ? "Teklif notunu güncelle" : "Teklifini yaz"}
           </h1>
-          <p className="mt-1 text-sm text-teal-950/45">
+          <p className="mt-2 max-w-lg text-[14px] leading-6 text-[#536b68]">
             {isRevise
               ? "Açıklamanızı güncelleyebilirsiniz. Tutar gönderimden sonra değişmez."
-              : "Tutar ve kısa not yeterli. Sonra önizleyip gönderirsiniz."}
+              : "Başlık, tutar ve temel bilgileri girin. Teslim süresi, açıklama ve görseller teklifinizi güçlendirir."}
           </p>
 
-          <div className="mt-5">
+          <div className="mt-7">
             <Suspense
               fallback={
-                <div className="rounded-2xl bg-[#f8f9f7] p-6 text-sm text-black/45">
+                <div className="rounded-2xl bg-[#f5f8f7] p-6 text-sm text-black/45">
                   Form yükleniyor…
                 </div>
               }
@@ -157,6 +192,7 @@ export default async function OfferRequestPage({
                         description: existingOffer.description,
                         amount: Number(existingOffer.amount),
                         deliveryDays: existingOffer.deliveryDays,
+                        title: existingOffer.title,
                         media: existingOffer.media,
                       }
                     : null
@@ -165,26 +201,6 @@ export default async function OfferRequestPage({
             </Suspense>
           </div>
         </section>
-
-        <div className="order-2 lg:order-1">
-          <OfferRequestPreview
-            categoryName={request.category.name}
-            title={request.title}
-            city={request.city}
-            description={description}
-            aiSummary={request.aiSummary}
-            fields={request.fieldValues.map((value) => ({
-              id: value.id,
-              label: value.field.label,
-              value: displayRequestFieldValue({
-                ...value,
-                categoryId: categorySlug,
-              }),
-            }))}
-          />
-          <ComplaintForm subjectType="REQUEST" subjectId={request.id} targetUserId={request.createdById} />
-          {existingOffer ? <ComplaintForm subjectType="OFFER" subjectId={existingOffer.id} /> : null}
-        </div>
       </div>
     </div>
   );

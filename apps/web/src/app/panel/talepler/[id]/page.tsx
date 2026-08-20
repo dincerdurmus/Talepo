@@ -26,7 +26,11 @@ import { hasFeature } from "@/lib/membership/entitlements";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { offerFormHref } from "@/lib/panel/offer-form-href";
-import { getCategoryVisual } from "@/lib/visuals/category-visuals";
+import { splitEditorialRequestDescription } from "@/lib/panel/editorial-request-description";
+import {
+  formatListingBudget,
+  getCategoryVisual,
+} from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
@@ -132,7 +136,7 @@ export default async function ExploreRequestDetailPage({
         orderBy: { field: { sortOrder: "asc" } },
         include: { field: true },
       },
-      _count: { select: { offers: true } },
+      _count: { select: { offers: true, matches: true } },
     },
   });
 
@@ -201,60 +205,120 @@ export default async function ExploreRequestDetailPage({
       })
     : null;
 
+  const description =
+    request.professionalDescription || request.description;
+  const matchedCompanyCount = request._count.matches;
+  const editorial = splitEditorialRequestDescription(description);
+  const budgetLabel = formatListingBudget(
+    request.budgetMin,
+    request.budgetMax,
+    request.currency,
+  );
+  const attributeRows: Array<{ id: string; label: string; value: string }> = [];
+  if (request.city) {
+    attributeRows.push({
+      id: "city",
+      label: "Teslimat yeri",
+      value: request.city,
+    });
+  }
+  if (budgetLabel) {
+    attributeRows.push({
+      id: "budget",
+      label: "Bütçe",
+      value: budgetLabel,
+    });
+  }
+  for (const value of request.fieldValues) {
+    attributeRows.push({
+      id: value.id,
+      label: value.field.label,
+      value: displayRequestFieldValue({
+        ...value,
+        categoryId: categorySlug,
+      }),
+    });
+  }
+
   return (
     <>
-      <DetailHeader locked={false} />
+      <header className="flex items-center justify-between gap-2">
+        <Link
+          href="/panel/talepler"
+          className="talepo-cloud-pill px-3.5 py-2 text-sm font-medium text-teal-950/50 transition hover:text-[#0f1f1d]"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Talepler
+        </Link>
+      </header>
 
-      <section className="py-3 sm:py-4">
-        <div className="flex items-start gap-3.5 sm:gap-4">
+      <section className="relative mt-4 overflow-hidden rounded-[26px] border border-black/[0.05] bg-[linear-gradient(135deg,#FAFCFB_0%,#F1F5F7_48%,#E8F1F4_100%)] px-5 py-5 shadow-[0_10px_32px_rgba(15,31,29,0.035)] sm:mt-5 sm:px-6 sm:py-5">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-px rounded-[25px] ring-1 ring-inset ring-white/55"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 top-[-35%] h-[140%] w-[48%] bg-[radial-gradient(ellipse_at_center,rgba(56,98,120,0.07),transparent_70%)]"
+        />
+
+        <div className="relative flex items-start gap-3.5 sm:gap-4">
           <CategoryVisualThumb
             categorySlug={categorySlug}
             categoryName={request.category.name}
             coverImageUrl={request.coverImageUrl}
             size="lg"
+            className="h-[6.5rem] w-[6.5rem] rounded-[1.25rem] shadow-none ring-1 ring-black/[0.06] sm:h-[7rem] sm:w-[7rem]"
           />
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold ${categoryLook.chip}`}
+                className={`inline-flex items-center rounded-full border border-teal-900/8 px-2.5 py-1 text-[11px] font-semibold ${categoryLook.chip}`}
               >
                 {request.category.name}
               </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-900/8 bg-[#e4f4df]/90 px-2.5 py-1 text-[11px] font-semibold text-[#356d3a]">
+                <span
+                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500/85"
+                  aria-hidden
+                />
+                Açık talep
+              </span>
               {request.isUrgent && (
-                <span className="rounded-full bg-[#ffe8cc] px-3 py-1.5 text-xs font-semibold text-[#9a5b00]">
+                <span className="inline-flex items-center rounded-full border border-amber-900/12 bg-amber-50/80 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
                   Acil alıcı
                 </span>
               )}
               {request.isFeatured && (
-                <span className="rounded-full border border-amber-900/10 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900">
+                <span className="inline-flex items-center rounded-full border border-amber-900/10 bg-amber-50/70 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
                   Öne çıkan
                 </span>
               )}
               {request.aiScore !== null && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-sky-900/10 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800">
-                  <Sparkles className="h-3.5 w-3.5 text-sky-600" />
-                  AI kalite puanı {request.aiScore}/100
+                <span className="inline-flex items-center gap-1 rounded-full border border-black/[0.05] bg-white/55 px-2.5 py-1 text-[11px] font-medium text-black/45">
+                  <Sparkles className="h-3 w-3 text-sky-700/70" aria-hidden />
+                  AI kalite {request.aiScore}/100
                 </span>
               )}
             </div>
 
-            <h1 className="mt-3 max-w-4xl text-[28px] font-semibold tracking-[-0.05em] sm:text-[40px]">
+            <h1 className="mt-2.5 max-w-3xl text-[1.7rem] font-semibold tracking-[-0.04em] text-[#0f1f1d] sm:mt-3 sm:text-[2.25rem] sm:leading-[1.08]">
               {request.title}
             </h1>
 
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm text-black/40">
-              {request.city && (
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
+            <div className="mt-2.5 flex flex-wrap gap-1.5 sm:mt-3">
+              {request.city ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.05] bg-white/60 px-2.5 py-1 text-[12px] text-[#0f1f1d]/55">
+                  <MapPin className="h-3.5 w-3.5" />
                   {request.city}
                 </span>
-              )}
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4" />
+              ) : null}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.05] bg-white/60 px-2.5 py-1 text-[12px] text-[#0f1f1d]/55">
+                <CalendarDays className="h-3.5 w-3.5" />
                 {formatDate(request.publishedAt ?? request.createdAt)}
               </span>
-              <span className="flex items-center gap-1.5">
-                <MessageSquareText className="h-4 w-4" />
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.05] bg-white/60 px-2.5 py-1 text-[12px] text-[#0f1f1d]/55">
+                <MessageSquareText className="h-3.5 w-3.5" />
                 {request._count.offers} teklif
               </span>
             </div>
@@ -289,31 +353,112 @@ export default async function ExploreRequestDetailPage({
         />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-stretch lg:gap-5">
-        <section className="flex h-full flex-col rounded-xl border border-black/[0.06] bg-white p-4 sm:p-5">
-          <span className="text-xs font-semibold text-black/40">
+      <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-start lg:gap-5">
+        <section className="relative min-w-0 overflow-hidden rounded-[18px] border border-teal-900/[0.08] bg-[#fbfcfc] px-4 py-4 sm:px-5 sm:py-5">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-3 left-0 w-[3px] rounded-full bg-teal-700/35"
+          />
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#3d5c58]/85">
             Talep açıklaması
-          </span>
-          <p className="mt-2.5 line-clamp-8 whitespace-pre-line text-sm leading-6 text-black/70">
-            {request.professionalDescription || request.description}
           </p>
+          <div className="mt-2 h-px w-11 bg-teal-900/15" aria-hidden />
+
+          {editorial.lead ? (
+            <p className="mt-3 text-[16px] font-semibold leading-7 tracking-[-0.015em] text-[#0f1f1d] sm:text-[17px] sm:leading-[1.55]">
+              {editorial.lead}
+            </p>
+          ) : null}
+
+          {editorial.body ? (
+            <p className="mt-3 whitespace-pre-line text-[14px] leading-7 text-[#0f1f1d]/72 sm:text-[15px]">
+              {editorial.body}
+            </p>
+          ) : null}
+
+          {attributeRows.length > 0 ? (
+            <dl className="mt-4 space-y-2.5 border-t border-teal-900/[0.06] pt-4">
+              {attributeRows.map((row) => (
+                <div
+                  key={row.id}
+                  className="grid grid-cols-1 gap-0.5 sm:grid-cols-[minmax(7.5rem,11rem)_minmax(0,1fr)] sm:items-baseline sm:gap-4"
+                >
+                  <dt className="text-[12px] font-medium text-[#536b68]">
+                    {row.label}
+                  </dt>
+                  <dd className="text-[13px] font-semibold text-[#0f1f1d] sm:text-right">
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+
+          {editorial.textCriteria.length > 0 && attributeRows.length === 0 ? (
+            <ul className="mt-4 space-y-1.5 border-t border-teal-900/[0.06] pt-4 text-[13px] leading-6 text-[#0f1f1d]/72">
+              {editorial.textCriteria.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-teal-800/45" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {editorial.expectations ? (
+            <div className="mt-4 border-t border-teal-900/[0.06] pt-3.5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#3d5c58]/80">
+                Teklifte beklenenler
+              </p>
+              <p className="mt-1.5 text-[13px] leading-6 text-[#0f1f1d]/62">
+                {editorial.expectations}
+              </p>
+            </div>
+          ) : null}
         </section>
 
-        <aside className="flex h-full flex-col rounded-xl border border-teal-900/10 bg-gradient-to-br from-[#0f766e] via-[#0e7490] to-[#1e3a5f] p-4 text-white sm:p-5">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-sky-200" />
-            <span className="text-xs font-semibold text-white/55">AI özeti</span>
+        <aside className="relative overflow-hidden rounded-[18px] border border-teal-950/20 bg-[linear-gradient(155deg,#151d1b_0%,#111716_52%,#19302d_100%)] p-4 text-[#f5f7f6] shadow-[0_16px_40px_rgba(15,31,29,0.14)] sm:p-5">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-teal-400/12 blur-[40px]"
+          />
+          <div className="relative">
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-white/10 bg-white/10">
+                <Sparkles className="h-3.5 w-3.5 text-teal-200/85" />
+              </span>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#aebbb7]">
+                Signal · AI özeti
+              </p>
+            </div>
+            <p className="mt-3 whitespace-pre-line text-[13px] leading-6 text-[#e8eeec]/90">
+              {request.aiSummary ||
+                "Talep AI tarafından analiz edilerek yayınlandı."}
+            </p>
+            <dl className="mt-4 grid grid-cols-2 gap-2">
+              <SignalStat label="Kategori" value={request.category.name} />
+              {request.aiScore !== null ? (
+                <SignalStat
+                  label="AI güven"
+                  value={`${request.aiScore}/100`}
+                />
+              ) : null}
+              <SignalStat
+                label="Eşleşen firma"
+                value={String(matchedCompanyCount)}
+              />
+              <SignalStat
+                label="Teklif"
+                value={String(request._count.offers)}
+              />
+            </dl>
           </div>
-          <p className="mt-2.5 line-clamp-8 whitespace-pre-line text-sm leading-6 text-white/85">
-            {request.aiSummary ||
-              "Talep AI tarafından analiz edilerek yayınlandı."}
-          </p>
         </aside>
       </div>
 
-      <section className="mt-6 sm:mt-8">
+      <section className="mt-5 sm:mt-6">
         {isRequestOwner ? (
-          <p className="rounded-xl border border-teal-900/8 bg-white px-4 py-3 text-sm text-teal-950/65">
+          <p className="rounded-[16px] border border-teal-900/8 bg-white px-4 py-3 text-sm text-teal-950/65">
             Bu sizin talebiniz. Teklif gönderme alıcıya kapalıdır.
           </p>
         ) : existingOffer && !canCreateFreshOffer ? (
@@ -355,47 +500,22 @@ export default async function ExploreRequestDetailPage({
 
       {!isRequestOwner &&
       entitlements.features.ai_offer_assistant &&
-      (request.status === "PUBLISHED" || request.status === "RECEIVING_OFFERS") ? (
+      (request.status === "PUBLISHED" ||
+        request.status === "RECEIVING_OFFERS") ? (
         <OfferDraftSuggestion
           requestTitle={request.title}
-          requestDescription={
-            request.professionalDescription || request.description
-          }
+          requestDescription={description}
           categoryName={request.category.name}
           teklifHref={teklifHref}
         />
       ) : null}
 
-      {request.fieldValues.length > 0 && (
-        <section className="mt-5 sm:mt-6">
-          <div className="rounded-2xl border border-black/[0.06] bg-white p-5 sm:p-6">
-            <h2 className="text-base font-semibold tracking-tight sm:text-lg">
-              Teknik detaylar
-            </h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {request.fieldValues.map((value) => (
-                <div
-                  key={value.id}
-                  className="rounded-xl border border-black/[0.04] bg-[#f8f9f7] px-4 py-3"
-                >
-                  <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-black/35">
-                    {value.field.label}
-                  </p>
-                  <p className="mt-1 text-sm font-semibold text-[#111827]">
-                    {displayRequestFieldValue({
-                      ...value,
-                      categoryId: categorySlug,
-                    })}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      <div className="mt-8">
-        <ComplaintForm subjectType="REQUEST" subjectId={request.id} targetUserId={request.createdById} />
+      <div className="mt-8 opacity-80">
+        <ComplaintForm
+          subjectType="REQUEST"
+          subjectId={request.id}
+          targetUserId={request.createdById}
+        />
       </div>
     </>
   );
@@ -421,6 +541,19 @@ function DetailHeader({ locked }: { locked: boolean }) {
         {locked ? "Kilitli önizleme" : "Açık talep"}
       </span>
     </header>
+  );
+}
+
+function SignalStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[10px] border border-white/10 bg-white/[0.06] px-2.5 py-2">
+      <dt className="text-[10px] font-medium uppercase tracking-wide text-[#aebbb7]/80">
+        {label}
+      </dt>
+      <dd className="mt-0.5 truncate text-[12px] font-semibold text-[#f5f7f6]">
+        {value}
+      </dd>
+    </div>
   );
 }
 
