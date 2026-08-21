@@ -11,6 +11,9 @@ const PART_NOUNS = [
   "kapak",
   "motor",
   "pompa",
+  "pompası",
+  "pompasi",
+  "nemlendirme",
   "merdane",
   "balata",
   "kart",
@@ -68,6 +71,16 @@ export function isKnownPartNoun(token: string | null | undefined): boolean {
   if (!t) return false;
   if (REQUESTED_ITEM_NOUNS.has(t)) return true;
   if (t.endsWith("parça") || t.endsWith("parca")) return true;
+  // Turkish inflection: pompası / filtresi
+  if (
+    t.endsWith("sı") ||
+    t.endsWith("si") ||
+    t.endsWith("su") ||
+    t.endsWith("sü")
+  ) {
+    const stem = t.slice(0, -2);
+    if (REQUESTED_ITEM_NOUNS.has(stem)) return true;
+  }
   return false;
 }
 

@@ -28,6 +28,7 @@ import {
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { stripIncompatibleDomainFields } from "./request-transition";
+import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
   CanonicalFieldState,
   CanonicalRequestState,
@@ -249,7 +250,14 @@ export function mapUnderstandingToFields(
       : result.requestSubject.parentEntity?.model?.value
         ? String(result.requestSubject.parentEntity.model.value)
         : null,
-    { screenSize },
+    {
+      screenSize,
+      productType: result.attributes?.productType?.value
+        ? String(result.attributes.productType.value)
+        : result.attributes?.applianceType?.value
+          ? String(result.attributes.applianceType.value)
+          : null,
+    },
   );
   // Common city shorthand must remain location context, never product model.
   if (
@@ -336,6 +344,29 @@ export function mapUnderstandingToFields(
     );
   } else {
     fields.productType = unknownField();
+  }
+
+  // Final entity-role gate: product span must not leak into brand/model
+  {
+    const productTypeValue =
+      fields.productType?.kind === "VALUE"
+        ? String(fields.productType.value ?? "")
+        : productHint?.productType ?? null;
+    const cleaned = sanitizeFactRoles({
+      brand: fields.brand?.kind === "VALUE" ? String(fields.brand.value) : null,
+      model: fields.model?.kind === "VALUE" ? String(fields.model.value) : null,
+      productType: productTypeValue,
+      rawInput: raw,
+      categoryId: result.category.value,
+    });
+    if (!cleaned.brand) fields.brand = unknownField();
+    else if (fields.brand.kind === "VALUE") {
+      fields.brand = { ...fields.brand, value: cleaned.brand };
+    }
+    if (!cleaned.model) fields.model = unknownField();
+    else if (fields.model.kind === "VALUE") {
+      fields.model = { ...fields.model, value: cleaned.model };
+    }
   }
 
   // Furniture product leaves → furnitureType (browse ↔ text)
@@ -426,20 +457,38 @@ export function mapUnderstandingToFields(
   }
 
   if (isPartSubject) {
-    if (result.requestSubject.displayPhrase?.value) {
-      fields.part = valueField(
-        String(result.requestSubject.displayPhrase.value),
-        mapRuProvenance(
-          result.requestSubject.displayPhrase.provenance,
-          result.requestSubject.displayPhrase.source,
+    const rawPhrase = String(result.rawInput ?? "");
+    const basePart = String(
+      result.requestSubject.displayPhrase?.value ??
+        result.requestSubject.name?.value ??
+        "",
+    ).trim();
+    let partLabel = basePart;
+    if (basePart && rawPhrase) {
+      // Prefer fuller user wording: "nemlendirme pompası" over stem "pompa"
+      const escaped = basePart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const fuller = rawPhrase.match(
+        new RegExp(
+          `([\\p{L}][\\p{L}\\s]{0,40}?${escaped}[\\p{L}]*)`,
+          "iu",
         ),
       );
-    } else if (result.requestSubject.name?.value) {
+      if (fuller?.[1] && fuller[1].trim().length > basePart.length) {
+        partLabel = fuller[1]
+          .trim()
+          .replace(/^\s*için\s+/iu, "")
+          .trim();
+      }
+    }
+    partLabel = partLabel.replace(/^\s*için\s+/iu, "").trim();
+    if (partLabel) {
       fields.part = valueField(
-        String(result.requestSubject.name.value),
+        partLabel,
         mapRuProvenance(
-          result.requestSubject.name.provenance,
-          result.requestSubject.name.source,
+          result.requestSubject.displayPhrase?.provenance ??
+            result.requestSubject.name?.provenance,
+          result.requestSubject.displayPhrase?.source ??
+            result.requestSubject.name?.source,
         ),
       );
     }

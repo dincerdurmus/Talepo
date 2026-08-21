@@ -26,13 +26,17 @@ import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPrev
 import {
   HybridBrowsePath,
   HybridCategoryBrowsePanel,
-  HybridUnderstoodPanel,
 } from "@/components/request/HybridComposerPanels";
 import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
 import {
   TalepoAiPanel,
   type ClarificationOption,
 } from "@/components/request/TalepoAiPanel";
+import { CategoryGuidanceCard } from "@/components/request/v2/CategoryGuidanceCard";
+import { CategoryGuidanceSummary } from "@/components/request/v2/CategoryGuidanceSummary";
+import { FocusedQuestionsPanel } from "@/components/request/v2/FocusedQuestionsPanel";
+import { PublishReviewSummary } from "@/components/request/v2/PublishReviewSummary";
+import { UnderstoodFactsBoard } from "@/components/request/v2/UnderstoodFactsBoard";
 import { shouldConfirmYearCondition } from "@/components/request/YearConditionConfirmation";
 import { isImplausibleFutureModelYear } from "@/components/request/FutureModelYearConfirmation";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
@@ -44,11 +48,17 @@ import {
   isBudgetMeaningfulForStrategy,
   isMarketRangeReliable,
 } from "@/lib/request-brain/budget-actions";
-import { buildCategoryClarification } from "@/lib/request-brain/category-clarification";
 import {
   budgetPromptForStrategy,
   toHumanQuestions,
 } from "@/lib/request-brain/human-question-layer";
+import {
+  buildCategoryGuidance,
+  categoryGuidanceToUserChoice,
+  type CategoryGuidanceSelection,
+} from "@/lib/request-composer/v2/category-guidance";
+import { enrichUnderstoodFacts } from "@/lib/request-composer/v2/understood-facts";
+import { understandingMatchesComposerText } from "@/lib/request-composer/v2/text-match";
 import { computeRequestReadiness } from "@/lib/request-brain/request-readiness";
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 import {
@@ -102,6 +112,20 @@ import {
   buildUnderstoodFacts,
   understoodFactsToSummaryChips,
 } from "@/lib/request-composer";
+import {
+  isSoftEscapeValue,
+  scheduleComposerQuestions,
+  scheduledToFocusedQuestion,
+} from "@/lib/request-composer/v2/focused-questions";
+import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
+import { softStatusFromAnswerValue } from "@/lib/request-composer/v2/question-scheduler";
+import {
+  budgetDisplayLabel,
+  filterReviewPreferences,
+  filterReviewUncertainties,
+  locationDisplayLabel,
+} from "@/lib/request-composer/v2/review-display";
+import { trackComposerEvent } from "@/lib/request-composer/v2/composer-analytics";
 import {
   budgetDisplayFromUnderstanding,
   resolveSchemaCategory,
@@ -266,11 +290,9 @@ const BUDGET_PRESETS = [
 ] as const;
 
 const EXAMPLE_CHIPS = [
-  "2022 üstü C200 AMG arıyorum, 50 bin km altında olsun",
-  "Başakşehir'de 2+1 kiralık ev arıyorum",
-  "Dyson V15 sıfır arıyorum",
-  "5.000 adet baskılı kutu yaptıracağım",
-  "200 m² ofis boya badana yaptıracağım",
+  "İstanbul’da 55 inç Arçelik televizyon arıyorum.",
+  "Heidelberg SM 74 için nemlendirme pompası lazım.",
+  "Ankara Çankaya’da kiralık 3+1 daire arıyorum.",
 ] as const;
 
 /** Rollback switch: false restores the legacy left-side requirement fields. */
@@ -409,6 +431,31 @@ function TalepOlusturForm() {
     validCategoryFromHome,
   );
   const [categoryLockedByUser, setCategoryLockedByUser] = useState(false);
+  const [categoryUserChoice, setCategoryUserChoice] =
+    useState<CategoryUserChoice>(null);
+  const [confirmedFactKeys, setConfirmedFactKeys] = useState<string[]>([]);
+  const [dismissedFactKeys, setDismissedFactKeys] = useState<string[]>([]);
+  const [skippedQuestionKeys, setSkippedQuestionKeys] = useState<string[]>([]);
+  const [answeredQuestionKeys, setAnsweredQuestionKeys] = useState<string[]>(
+    [],
+  );
+  const [focusedDraftByKey, setFocusedDraftByKey] = useState<
+    Record<string, string>
+  >({});
+  const [publishSummaryOpened, setPublishSummaryOpened] = useState(false);
+  /** Progressive UX: compose → clarify → review */
+  const [uxStage, setUxStage] = useState<"compose" | "clarify" | "review">(
+    "compose",
+  );
+  const composerStartedRef = useRef(false);
+  const [otherDomainNote, setOtherDomainNote] = useState("");
+  const [showOtherDomainInput, setShowOtherDomainInput] = useState(false);
+  const [unresolvedExpressions, setUnresolvedExpressions] = useState<
+    string[]
+  >([]);
+  const [guidanceSelectedSlugs, setGuidanceSelectedSlugs] = useState<string[]>(
+    [],
+  );
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [aiPanelScrollOffset, setAiPanelScrollOffset] = useState(0);
   const aiPanelFollowRef = useRef<HTMLDivElement>(null);
@@ -524,6 +571,13 @@ function TalepOlusturForm() {
   function clearCategoryOverridesOnTextEdit() {
     setCategoryLockedByUser(false);
     setCategoryOverride(null);
+    setCategoryUserChoice(null);
+    setConfirmedFactKeys([]);
+    setDismissedFactKeys([]);
+    setOtherDomainNote("");
+    setShowOtherDomainInput(false);
+    setUnresolvedExpressions([]);
+    setGuidanceSelectedSlugs([]);
   }
 
   // Category change: drop stale category-specific answers; keep city/budget comfort.
@@ -1503,28 +1557,414 @@ function TalepOlusturForm() {
     return map;
   }, [humanQuestions]);
 
-  const categoryClarification = useMemo(
-    () =>
-      buildCategoryClarification({
-        rawText: requestText,
-        categoryId: understanding.category.value ?? detectedCategoryId,
-        categoryConfident,
+  const focusedQuestionSchedule = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    if (!live || !requestText.trim()) {
+      return scheduleComposerQuestions({
+        categoryId: activeCategoryId,
+        candidates: [],
+        values: {},
+      });
+    }
+    const needTypeField = hybrid.state?.fields.needType;
+    const needType =
+      needTypeField?.kind === "VALUE"
+        ? String(needTypeField.value ?? "")
+        : null;
+    const locationMode =
+      (manualValues.locationMode ?? "").trim().toLocaleLowerCase("tr-TR") ||
+      (dynamicValues.locationMode ?? "").trim().toLocaleLowerCase("tr-TR") ||
+      (/\buzaktan\b/i.test(requestText) ? "remote" : "");
+    const isRemoteService =
+      locationMode === "remote" ||
+      locationMode === "uzaktan" ||
+      locationMode === "uzaktan uygun";
+
+    return scheduleComposerQuestions({
+      categoryId: activeCategoryId,
+      needType,
+      candidates: enrichmentCandidates,
+      values: {
+        title: mergedCommonDraft.title,
+        quantity: mergedCommonDraft.quantity,
+        city: isRealEstate
+          ? realEstateLocation.il || understandingCity
+          : mergedCommonDraft.city || understandingCity,
+        delivery: mergedCommonDraft.delivery,
+        budget: mergedCommonDraft.budget,
+        ...Object.fromEntries(
+          Object.entries(dynamicValues).map(([k, v]) => [k, String(v ?? "")]),
+        ),
+        // Canonical RE listing must win over empty dynamic bags
+        listingType:
+          (hybrid.state?.fields.listingType?.kind === "VALUE"
+            ? String(hybrid.state.fields.listingType.value ?? "")
+            : "") ||
+          (understanding.attributes?.listingType?.value != null
+            ? String(understanding.attributes.listingType.value)
+            : "") ||
+          (dynamicValues.listingType
+            ? String(dynamicValues.listingType)
+            : ""),
+        roomCount:
+          (hybrid.state?.fields.roomCount?.kind === "VALUE"
+            ? String(hybrid.state.fields.roomCount.value ?? "")
+            : "") ||
+          (understanding.attributes?.roomCount?.value != null
+            ? String(understanding.attributes.roomCount.value)
+            : "") ||
+          (dynamicValues.roomCount ? String(dynamicValues.roomCount) : ""),
+        locationMode:
+          manualValues.locationMode ??
+          dynamicValues.locationMode ??
+          (isRemoteService ? "remote" : undefined),
+      },
+      fieldStates: Object.fromEntries(
+        Object.entries(hybrid.state?.fields ?? {}).map(([key, field]) => [
+          key,
+          {
+            kind: field?.kind,
+            value:
+              field?.kind === "VALUE"
+                ? String(field.value ?? "")
+                : field?.kind === "ANY"
+                  ? "no_preference"
+                  : null,
+          },
+        ]),
+      ),
+      answeredKeys: answeredQuestionKeys,
+      optionalSkippedKeys: skippedQuestionKeys,
+      realEstateLocationComplete: isRealEstate
+        ? !realEstateLocationMissing
+        : undefined,
+      isRemoteService,
+    });
+  }, [
+    activeCategoryId,
+    answeredQuestionKeys,
+    dynamicValues,
+    enrichmentCandidates,
+    hybrid.isSyncing,
+    hybrid.state?.fields,
+    isRealEstate,
+    manualValues.locationMode,
+    mergedCommonDraft.budget,
+    mergedCommonDraft.city,
+    mergedCommonDraft.delivery,
+    mergedCommonDraft.quantity,
+    mergedCommonDraft.title,
+    realEstateLocation.il,
+    realEstateLocationMissing,
+    requestText,
+    skippedQuestionKeys,
+    understanding.rawInput,
+    understandingCity,
+  ]);
+
+  const focusedQuestions = useMemo(() => {
+    const hybridByKey = new Map(
+      enrichmentCandidates.map((c) => [c.fieldKey, c]),
+    );
+    const productType =
+      hybrid.state?.fields.productType?.kind === "VALUE"
+        ? String(hybrid.state.fields.productType.value ?? "")
+        : hybrid.state?.fields.applianceType?.kind === "VALUE"
+          ? String(hybrid.state.fields.applianceType.value ?? "")
+          : null;
+    const needTypeField = hybrid.state?.fields.needType;
+    const needType =
+      needTypeField?.kind === "VALUE"
+        ? String(needTypeField.value ?? "")
+        : null;
+    const listingType =
+      hybrid.state?.fields.listingType?.kind === "VALUE"
+        ? String(hybrid.state.fields.listingType.value ?? "")
+        : null;
+    const isRemote =
+      /\buzaktan\b/i.test(requestText) ||
+      (manualValues.locationMode ?? "").toLocaleLowerCase("tr-TR") ===
+        "remote";
+    return focusedQuestionSchedule.visible.map((q) =>
+      scheduledToFocusedQuestion(q, hybridByKey.get(q.fieldKey), {
+        productType,
+        needType,
+        isRemoteService: isRemote,
+        listingType,
       }),
-    [categoryConfident, detectedCategoryId, requestText, understanding.category.value],
+    );
+  }, [
+    enrichmentCandidates,
+    focusedQuestionSchedule.visible,
+    hybrid.state?.fields,
+    manualValues.locationMode,
+    requestText,
+  ]);
+
+  const composerReadiness = useMemo(
+    () =>
+      computeComposerPublishReadiness({
+        hasUsableText: Boolean(requestText.trim()),
+        schedule: focusedQuestionSchedule,
+        realEstateLocationComplete: isRealEstate
+          ? !realEstateLocationMissing
+          : undefined,
+        categoryId: activeCategoryId,
+        budgetValue: mergedCommonDraft.budget,
+        cityValue: isRealEstate
+          ? realEstateLocation.il
+            ? `${realEstateLocation.il}${realEstateLocation.ilce ? ` / ${realEstateLocation.ilce}` : ""}`
+            : understandingCity
+          : mergedCommonDraft.city || understandingCity,
+        locationMode:
+          manualValues.locationMode ??
+          dynamicValues.locationMode ??
+          (/\buzaktan\b/i.test(requestText) ? "remote" : null),
+      }),
+    [
+      activeCategoryId,
+      dynamicValues.locationMode,
+      focusedQuestionSchedule,
+      isRealEstate,
+      manualValues.locationMode,
+      mergedCommonDraft.budget,
+      mergedCommonDraft.city,
+      realEstateLocation.il,
+      realEstateLocation.ilce,
+      realEstateLocationMissing,
+      requestText,
+      understandingCity,
+    ],
   );
+
+  const categoryGuidance = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    if (!live) return null;
+    return buildCategoryGuidance({
+      understanding,
+      rawText: requestText,
+      categoryConfident,
+      userLocked: categoryLockedByUser,
+    });
+  }, [
+    categoryConfident,
+    categoryLockedByUser,
+    hybrid.isSyncing,
+    requestText,
+    understanding,
+  ]);
+
+  const editableUnderstoodFacts = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    return enrichUnderstoodFacts({
+      facts: live ? hybrid.understoodFacts : [],
+      understanding,
+      confirmedKeys: confirmedFactKeys,
+      dismissedKeys: dismissedFactKeys,
+      categoryId: activeCategoryId,
+    });
+  }, [
+    activeCategoryId,
+    confirmedFactKeys,
+    dismissedFactKeys,
+    hybrid.isSyncing,
+    hybrid.understoodFacts,
+    requestText,
+    understanding,
+  ]);
+
+  const publishReviewModel = useMemo(() => {
+    const reviewLocation = locationDisplayLabel(
+      mergedCommonDraft.city.trim() || null,
+    );
+    const reviewBudget = budgetDisplayLabel(
+      mergedCommonDraft.budget.trim() || null,
+    );
+    const prefs = filterReviewPreferences({
+      preferences: editableUnderstoodFacts
+        .filter((f) => f.key !== "needType")
+        .slice(0, 8)
+        .map((f) => ({
+          key: f.key,
+          label: f.label,
+          value: f.displayValue,
+        })),
+      location: reviewLocation,
+      budget: reviewBudget,
+    });
+    const uncertainItems = filterReviewUncertainties({
+      items: editableUnderstoodFacts
+        .filter((f) => f.tone === "check" || f.tone === "unsure")
+        .map((f) => ({
+          key: f.key,
+          label: f.label,
+          tone: f.tone as "check" | "unsure",
+        })),
+      cityValue: mergedCommonDraft.city,
+      budgetValue: mergedCommonDraft.budget,
+    });
+    const summarySource =
+      appliedProfessionalDescription && professionalText.trim()
+        ? professionalText
+        : requestText;
+    return {
+      summaryText: summarySource,
+      rawInput: requestText,
+      categoryLabel: schemaCategory.displayLabelSafe
+        ? selectedCategory.label
+        : null,
+      categoryUnresolved:
+        !categoryConfident ||
+        categoryUserChoice === "defer_to_talepo" ||
+        categoryUserChoice === "none_of_these" ||
+        categoryUserChoice === "other_domain",
+      preferences: prefs,
+      location: reviewLocation,
+      timing: mergedCommonDraft.delivery.trim() || null,
+      budget: reviewBudget,
+      uncertainItems,
+    };
+  }, [
+    appliedProfessionalDescription,
+    categoryConfident,
+    categoryUserChoice,
+    editableUnderstoodFacts,
+    mergedCommonDraft.budget,
+    mergedCommonDraft.city,
+    mergedCommonDraft.delivery,
+    professionalText,
+    requestText,
+    schemaCategory.displayLabelSafe,
+    selectedCategory.label,
+  ]);
+
+  const isHealthCategory =
+    activeCategoryId === "health" ||
+    activeCategoryId === "healthcare" ||
+    /sağlık|saglik/i.test(selectedCategory.label);
+
+  useEffect(() => {
+    if (composerStartedRef.current) return;
+    if (requestText.trim().length < 3) return;
+    composerStartedRef.current = true;
+    trackComposerEvent("composer_started", {
+      hasQueryParam: Boolean(queryFromHome),
+    });
+  }, [queryFromHome, requestText]);
+
+  useEffect(() => {
+    if (focusedQuestions.length === 0) return;
+    trackComposerEvent("focused_question_shown", {
+      count: focusedQuestions.length,
+      keys: focusedQuestions.map((q) => q.fieldKey).join(","),
+    });
+  }, [focusedQuestions]);
+
+  useEffect(() => {
+    if (!categoryGuidance) return;
+    trackComposerEvent("category_clarification_shown", {
+      candidateCount: categoryGuidance.candidates.length,
+    });
+  }, [categoryGuidance]);
+
+  useEffect(() => {
+    if (!requestText.trim()) {
+      setUxStage("compose");
+      setPublishSummaryOpened(false);
+      return;
+    }
+    if (uxStage === "review") return;
+    if (
+      !hybrid.isSyncing &&
+      (editableUnderstoodFacts.length > 0 ||
+        categoryGuidance ||
+        focusedQuestions.length > 0)
+    ) {
+      setUxStage("clarify");
+    }
+  }, [
+    categoryGuidance,
+    editableUnderstoodFacts.length,
+    focusedQuestions.length,
+    hybrid.isSyncing,
+    requestText,
+    uxStage,
+  ]);
 
   const budgetCopy = budgetPromptForStrategy(brain.strategy?.strategy);
 
+  function applyCategoryGuidance(selection: CategoryGuidanceSelection) {
+    const choice = categoryGuidanceToUserChoice(selection);
+    setCategoryUserChoice(choice);
+
+    if (selection.kind === "candidate") {
+      setCategoryOverride(selection.slug);
+      setCategoryLockedByUser(true);
+      setGuidanceSelectedSlugs([selection.slug]);
+      setShowOtherDomainInput(false);
+      return;
+    }
+
+    if (selection.kind === "multi") {
+      const primary = selection.slugs[0];
+      if (primary) {
+        setCategoryOverride(primary);
+        setCategoryLockedByUser(true);
+      }
+      setGuidanceSelectedSlugs(selection.slugs);
+      setShowOtherDomainInput(false);
+      return;
+    }
+
+    // Actions
+    setGuidanceSelectedSlugs([]);
+    if (selection.action === "defer_to_talepo") {
+      setCategoryOverride(null);
+      setCategoryLockedByUser(false);
+      setShowOtherDomainInput(false);
+      return;
+    }
+    if (selection.action === "none_of_these") {
+      setCategoryOverride(null);
+      setCategoryLockedByUser(false);
+      setShowOtherDomainInput(false);
+      return;
+    }
+    if (selection.action === "other_domain") {
+      setCategoryOverride(null);
+      setCategoryLockedByUser(false);
+      setShowOtherDomainInput(true);
+    }
+  }
+
   function applyClarification(option: ClarificationOption) {
+    // Legacy companion path — keep for field-level clarification only.
     if (option.categoryId) {
       setCategoryOverride(option.categoryId);
       setCategoryLockedByUser(true);
+      setCategoryUserChoice("picked_candidate");
+      setGuidanceSelectedSlugs([option.categoryId]);
     }
     if (option.fieldKey && option.value != null) {
       setManualValues((current) => ({
         ...current,
         [option.fieldKey!]: option.value!,
       }));
+      setConfirmedFactKeys((keys) =>
+        keys.includes(option.fieldKey!) ? keys : [...keys, option.fieldKey!],
+      );
     }
   }
 
@@ -1748,7 +2188,13 @@ function TalepOlusturForm() {
   function applyBrainQuestion(question: QuestionCandidate, rawValue: string) {
     const field =
       question.fieldKey === "deliveryDays" ? "delivery" : question.fieldKey;
-    const typed =
+    const soft = softStatusFromAnswerValue(rawValue);
+    if (soft === "skip_optional" || rawValue.trim() === "skip") {
+      // Optional skip only — caller marks skippedQuestionKeys.
+      return;
+    }
+
+    let typed =
       field === "budget"
         ? formatBudgetAnswer(rawValue)
         : field === "quantity"
@@ -1756,10 +2202,81 @@ function TalepOlusturForm() {
           : rawValue.trim();
     if (!typed) return;
 
-    const isAny =
-      typed.toLocaleLowerCase("tr-TR") === "farketmez" ||
-      typed.toLocaleLowerCase("tr-TR") === "fark etmez" ||
-      typed === "fark-etmez";
+    if (soft === "open_to_offers" && field === "budget") {
+      typed = "Teklifleri görmek istiyorum";
+      hybrid.applyQuickOption(field, typed, false);
+      updateCommonField("budget", typed);
+      return;
+    }
+
+    // Location soft statuses — store canonical labels, never invent districts
+    const locationFold = rawValue.trim().toLocaleLowerCase("tr-TR");
+    if (field === "city") {
+      if (
+        locationFold === "nationwide" ||
+        locationFold === "türkiye geneli" ||
+        locationFold === "turkiye geneli"
+      ) {
+        updateCommonField("city", "Türkiye geneli");
+        return;
+      }
+      if (locationFold === "remote" || locationFold === "uzaktan") {
+        updateCommonField("city", "Uzaktan");
+        updateDynamicField("locationMode", "remote");
+        return;
+      }
+      if (
+        locationFold === "no_location_preference" ||
+        locationFold === "konum fark etmez"
+      ) {
+        updateCommonField("city", "Konum fark etmez");
+        return;
+      }
+    }
+
+    if (soft === "unknown") {
+      const label = "Henüz bilmiyorum";
+      hybrid.applyQuickOption(field, label, false);
+      if (field === "budget" || field === "quantity" || field === "delivery") {
+        updateCommonField(field, label);
+      } else if (field === "city") {
+        updateCommonField("city", label);
+        return;
+      } else {
+        updateDynamicField(field, label);
+      }
+      return;
+    }
+    if (soft === "no_preference" || soft === "flexible") {
+      const label = soft === "flexible" ? "Esnek" : "Fark etmez";
+      // Preference fields (brand/model/…) may use ANY; budget/city/delivery keep VALUE labels
+      const useAny =
+        field !== "budget" &&
+        field !== "city" &&
+        field !== "delivery" &&
+        field !== "quantity";
+      hybrid.applyQuickOption(field, label, useAny);
+      if (field === "delivery") {
+        updateCommonField("delivery", label);
+        return;
+      }
+      if (field === "city") {
+        updateCommonField("city", "Konum fark etmez");
+        return;
+      }
+      if (field === "quantity" || field === "budget" || field === "title") {
+        updateCommonField(field, label);
+        return;
+      }
+      updateDynamicField(field, label);
+      return;
+    }
+
+    if (field === "locationMode") {
+      updateDynamicField("locationMode", typed);
+      hybrid.applyQuickOption("locationMode", typed, false);
+      return;
+    }
 
     if (field === "needDescription") {
       const current = hybrid.text.trim();
@@ -1768,34 +2285,12 @@ function TalepOlusturForm() {
       return;
     }
 
-    const originalText = hybrid.text.trim();
-
     // Canonical hybrid reducer (same path as browse / quick-select).
+    // Preserves rawInput text inside applyQuickOption.
     hybrid.applyQuickOption(
       field,
       field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed,
-      isAny,
-    );
-
-    // Keep the user's original wording and append the answer instead of leaving
-    // the reducer's generated title in the composer.
-    const answerLabel =
-      field === "city"
-        ? "Şehir"
-        : field === "budget"
-          ? "Bütçe"
-          : field === "quantity"
-            ? "Miktar"
-            : field === "delivery"
-              ? "Teslimat"
-              : question.label;
-    const answerValue =
-      field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed;
-    const baseText = originalText.replace(/[.!?]+\s*$/u, "");
-    hybrid.setText(
-      baseText
-        ? `${baseText}. ${answerLabel}: ${answerValue}.`
-        : `${answerLabel}: ${answerValue}.`,
+      false,
     );
 
     if (field === "delivery") {
@@ -1813,7 +2308,7 @@ function TalepOlusturForm() {
       updateCommonField(field, typed);
       return;
     }
-    updateDynamicField(field, isAny ? "Farketmez" : typed);
+    updateDynamicField(field, typed);
   }
 
   const filterCityValue = isRealEstate
@@ -1968,27 +2463,49 @@ function TalepOlusturForm() {
         : requestText.trim();
 
     const rawInputForPublish = sanitizeRawInput(requestText);
-    const persistCategorySlug = selectedCategory.id?.trim()
-      ? selectedCategory.id
-      : UNRESOLVED_CATEGORY_SLUG;
-    const persistCategoryName = selectedCategory.id?.trim()
-      ? selectedCategory.label
-      : "Belirsiz kategori (sistem)";
+    const persistCategorySlug =
+      categoryUserChoice === "defer_to_talepo" ||
+      categoryUserChoice === "none_of_these" ||
+      (categoryUserChoice === "other_domain" && !categoryLockedByUser) ||
+      !selectedCategory.id?.trim()
+        ? UNRESOLVED_CATEGORY_SLUG
+        : selectedCategory.id;
+    const persistCategoryName =
+      persistCategorySlug === UNRESOLVED_CATEGORY_SLUG
+        ? "Belirsiz kategori (sistem)"
+        : selectedCategory.label;
 
     const baseProjection = hybrid.state
       ? buildDiscoveryProjectionFromState(hybrid.state)
       : null;
+    const noteExpressions = [
+      ...unresolvedExpressions,
+      ...(otherDomainNote.trim() ? [otherDomainNote.trim()] : []),
+    ];
     const understandingSnapshot = buildPublishUnderstandingSnapshot({
       understanding,
       userSelected: categoryLockedByUser,
-      userChoice: null as CategoryUserChoice,
-      confirmedFieldKeys: Object.keys(manualValues).filter(
-        (key) => (manualValues[key] ?? "").trim().length > 0,
-      ),
-      primarySlug: persistCategorySlug === UNRESOLVED_CATEGORY_SLUG
-        ? null
-        : persistCategorySlug,
+      userChoice: categoryUserChoice,
+      confirmedFieldKeys: [
+        ...confirmedFactKeys,
+        ...Object.keys(manualValues).filter(
+          (key) => (manualValues[key] ?? "").trim().length > 0,
+        ),
+      ],
+      primarySlug:
+        persistCategorySlug === UNRESOLVED_CATEGORY_SLUG
+          ? null
+          : persistCategorySlug,
     });
+    // Attach other-domain / free-text context into unresolvedExpressions.
+    if (noteExpressions.length > 0) {
+      understandingSnapshot.unresolvedExpressions = [
+        ...new Set([
+          ...understandingSnapshot.unresolvedExpressions,
+          ...noteExpressions.map((s) => s.slice(0, 240)),
+        ]),
+      ].slice(0, 40);
+    }
     const discoveryProjection = withUnderstandingSnapshot(
       baseProjection,
       understandingSnapshot,
@@ -2085,6 +2602,10 @@ function TalepOlusturForm() {
 
       setIsPublishing(false);
       brain.setAnalysisStatus("PUBLISHED");
+      trackComposerEvent("request_published", {
+        version,
+        categoryUnresolved: publishReviewModel.categoryUnresolved,
+      });
       setPublishSuccess({
         title: mergedCommonDraft.title,
         requestId,
@@ -2206,7 +2727,7 @@ function TalepOlusturForm() {
         setEnrichmentFieldKey(null);
         setEnrichmentDraft("");
       }}
-      clarification={hasText ? categoryClarification : null}
+      clarification={null}
       onClarificationSelect={applyClarification}
       showBudgetActions={showBudgetActions}
       onKeepBudget={() => setBudgetTouched(true)}
@@ -2399,6 +2920,13 @@ function TalepOlusturForm() {
               setFeatureBoost("");
               setCategoryOverride(null);
               setCategoryLockedByUser(false);
+              setCategoryUserChoice(null);
+              setConfirmedFactKeys([]);
+              setDismissedFactKeys([]);
+              setOtherDomainNote("");
+              setShowOtherDomainInput(false);
+              setUnresolvedExpressions([]);
+              setGuidanceSelectedSlugs([]);
             }}
           />
         ) : (
@@ -2406,23 +2934,23 @@ function TalepOlusturForm() {
             <section className={`talepo-rise mx-auto max-w-3xl py-4 text-center sm:py-6 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
               <p className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/18 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]">
                 <Sparkles className="h-3.5 w-3.5" />
-                ~20 saniyede hazır
+                Anlat · Netleştir · Yayınla
               </p>
               <h1 className="mt-3 text-[2rem] font-semibold tracking-[-0.05em] text-[#0f1f1d] sm:text-[2.6rem]">
-                Ne arıyorsan{" "}
+                Ne aradığını{" "}
                 <span className="bg-gradient-to-r from-[#0f766e] to-[#0d9488] bg-clip-text text-transparent">
-                  yaz veya seç.
+                  anlat.
                 </span>
               </h1>
               <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-teal-950/55 sm:text-base">
-                Kategoriden tıkla → talep metni otomatik dolsun. Yaz → kategori
-                oraya gitsin. Tek sayfada bitir.
+                Talepo doğru uzmanlara ulaşması için gerisini seninle birlikte
+                tamamlasın. İstersen kategoriden de başlayabilirsin.
               </p>
             </section>
 
             <div className={`mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/40 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
               <span className="rounded-full bg-[#0f766e] px-2.5 py-1 text-white">
-                1 · Anlat / seç
+                1 · Anlat
               </span>
               <span className="text-teal-900/25">→</span>
               <span
@@ -2432,7 +2960,7 @@ function TalepOlusturForm() {
                     : "bg-teal-900/6 text-teal-900/45"
                 }`}
               >
-                2 · Netleştir & yayınla
+                2 · Kontrol et & tamamla
               </span>
             </div>
 
@@ -2455,8 +2983,11 @@ function TalepOlusturForm() {
                     htmlFor="talep-composer"
                     className="block text-sm font-semibold text-[#0f1f1d]"
                   >
-                    Talebin
+                    İhtiyacını anlat
                   </label>
+                  <p className="mt-1 text-xs text-teal-950/45">
+                    Doğal cümlelerle yaz. Kategori ağacı seni sınırlamaz.
+                  </p>
 
                   <textarea
                     id="talep-composer"
@@ -2492,8 +3023,8 @@ function TalepOlusturForm() {
                         setAiCompanionOpen(true);
                       }
                     }}
-                    className="mt-3 min-h-[140px] w-full resize-y bg-transparent text-[16px] leading-7 text-[#0f1f1d] outline-none placeholder:text-[#0f1f1d]/28 sm:min-h-[160px] sm:text-[17px] sm:leading-8"
-                    placeholder="Örn. Buzdolabı arıyorum — veya aşağıdaki kategoriden seç..."
+                    className="mt-3 min-h-[120px] w-full resize-y bg-transparent text-[16px] leading-7 text-[#0f1f1d] outline-none placeholder:text-[#0f1f1d]/28 sm:min-h-[140px] sm:text-[17px] sm:leading-8"
+                    placeholder="Örn. İstanbul’da 55 inç Arçelik televizyon arıyorum."
                   />
 
                   <HybridCategoryBrowsePanel
@@ -2512,25 +3043,233 @@ function TalepOlusturForm() {
                     onReset={hybrid.resetBrowseWalk}
                   />
 
-                  <HybridUnderstoodPanel
-                    hasText={requestText.trim().length > 0}
-                    updating={hybrid.isSyncing}
-                    conditionConfirmationPending={yearConditionConfirmationPending}
-                    modelYearConfirmationPending={futureModelYearConfirmationPending}
-                    facts={hybrid.isSyncing ? [] : hybrid.understoodFacts}
-                    categoryLabel={
-                      hybrid.isSyncing
-                        ? null
-                        : categoryConfident && schemaCategory.displayLabelSafe
-                        ? selectedCategory.label
-                        : hybrid.understoodFacts.find((f) => f.key === "productType")
-                            ?.displayValue ??
-                          hybrid.understoodFacts.find((f) => f.key === "applianceType")
-                            ?.displayValue ??
-                          null
-                    }
-                    degraded={hybrid.browseDegraded}
-                  />
+                  {requestText.trim().length > 0 ? (
+                    <>
+                      <UnderstoodFactsBoard
+                        hasText
+                        updating={hybrid.isSyncing}
+                        degraded={hybrid.browseDegraded}
+                        facts={editableUnderstoodFacts}
+                        collapsed={uxStage === "review"}
+                        onExpand={() => setUxStage("clarify")}
+                        categoryLabel={
+                          hybrid.isSyncing
+                            ? null
+                            : categoryConfident &&
+                                schemaCategory.displayLabelSafe
+                              ? selectedCategory.label
+                              : null
+                        }
+                        onConfirmFact={(key) => {
+                          setConfirmedFactKeys((keys) =>
+                            keys.includes(key) ? keys : [...keys, key],
+                          );
+                        }}
+                        onDismissFact={(key) => {
+                          setDismissedFactKeys((keys) =>
+                            keys.includes(key) ? keys : [...keys, key],
+                          );
+                          setManualValues((current) => {
+                            const next = { ...current };
+                            delete next[key];
+                            return next;
+                          });
+                        }}
+                        onEditFact={(key, value) => {
+                          setManualValues((current) => ({
+                            ...current,
+                            [key]: value,
+                          }));
+                          setConfirmedFactKeys((keys) =>
+                            keys.includes(key) ? keys : [...keys, key],
+                          );
+                          hybrid.applyQuickOption(key, value, false);
+                        }}
+                        onDontCareFact={(key) => {
+                          hybrid.applyQuickOption(key, "Farketmez", true);
+                          setManualValues((current) => ({
+                            ...current,
+                            [key]: "Fark etmez",
+                          }));
+                          setConfirmedFactKeys((keys) =>
+                            keys.includes(key) ? keys : [...keys, key],
+                          );
+                        }}
+                      />
+
+                      {categoryGuidance && !categoryUserChoice ? (
+                        <CategoryGuidanceCard
+                          model={categoryGuidance}
+                          selectedSlugs={guidanceSelectedSlugs}
+                          selectedAction={null}
+                          showOtherDomainInput={showOtherDomainInput}
+                          otherDomainNote={otherDomainNote}
+                          onOtherDomainNoteChange={(value) => {
+                            setOtherDomainNote(value);
+                            setUnresolvedExpressions((prev) => {
+                              const cleaned = prev.filter(
+                                (item) => !item.startsWith("other_domain:"),
+                              );
+                              const trimmed = value.trim();
+                              return trimmed
+                                ? [
+                                    ...cleaned,
+                                    `other_domain:${trimmed.slice(0, 200)}`,
+                                  ]
+                                : cleaned;
+                            });
+                          }}
+                          onSelect={applyCategoryGuidance}
+                        />
+                      ) : null}
+
+                      <CategoryGuidanceSummary
+                        userChoice={categoryUserChoice}
+                        selectedSlugs={guidanceSelectedSlugs}
+                        otherDomainNote={otherDomainNote}
+                        onChange={() => {
+                          setCategoryUserChoice(null);
+                          setGuidanceSelectedSlugs([]);
+                          setCategoryLockedByUser(false);
+                        }}
+                      />
+
+                      {focusedQuestions.length > 0 && uxStage !== "compose" ? (
+                        <FocusedQuestionsPanel
+                          questions={focusedQuestions}
+                          draftByKey={focusedDraftByKey}
+                          healthNotice={isHealthCategory}
+                          collapsed={uxStage === "review"}
+                          remainingCriticalCount={
+                            composerReadiness.remainingCriticalCount
+                          }
+                          onExpand={() => setUxStage("clarify")}
+                          onDraftChange={(fieldKey, value) =>
+                            setFocusedDraftByKey((current) => ({
+                              ...current,
+                              [fieldKey]: value,
+                            }))
+                          }
+                          onAnswer={(fieldKey, value) => {
+                            if (
+                              value === "skip" ||
+                              value === "skip_optional"
+                            ) {
+                              setSkippedQuestionKeys((keys) =>
+                                keys.includes(fieldKey)
+                                  ? keys
+                                  : [...keys, fieldKey],
+                              );
+                              trackComposerEvent("focused_question_skipped", {
+                                fieldKey,
+                              });
+                              return;
+                            }
+                            const question =
+                              enrichmentCandidates.find(
+                                (q) => q.fieldKey === fieldKey,
+                              ) ??
+                              focusedQuestions.find(
+                                (q) => q.fieldKey === fieldKey,
+                              );
+                            if (question) {
+                              applyBrainQuestion(question, value);
+                            }
+                            setAnsweredQuestionKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            setConfirmedFactKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            trackComposerEvent(
+                              isSoftEscapeValue(value)
+                                ? "focused_question_skipped"
+                                : "focused_question_answered",
+                              { fieldKey },
+                            );
+                          }}
+                          onSkip={(fieldKey) => {
+                            const importance = focusedQuestions.find(
+                              (q) => q.fieldKey === fieldKey,
+                            )?.importance;
+                            if (importance && importance !== "optional") {
+                              return;
+                            }
+                            setSkippedQuestionKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            trackComposerEvent("focused_question_skipped", {
+                              fieldKey,
+                            });
+                          }}
+                        />
+                      ) : null}
+
+                      {!hybrid.isSyncing && uxStage === "review" ? (
+                        <PublishReviewSummary
+                          model={publishReviewModel}
+                          publishing={isPublishing}
+                          publishError={publishError}
+                          onEdit={() => {
+                            setUxStage("clarify");
+                            setPublishSummaryOpened(false);
+                          }}
+                          onPublish={() => {
+                            handlePublishAttempt();
+                          }}
+                        />
+                      ) : !hybrid.isSyncing && composerReadiness.canReview ? (
+                        <button
+                          type="button"
+                          data-testid="composer-review-cta"
+                          className="mt-3 min-h-12 w-full rounded-xl border border-teal-900/12 bg-white px-4 text-sm font-medium text-[#0f1f1d] hover:border-[#0f766e]/25"
+                          onClick={() => {
+                            setUxStage("review");
+                            setPublishSummaryOpened(true);
+                            setWizardStep(2);
+                            trackComposerEvent("publish_summary_opened");
+                          }}
+                        >
+                          Talebi gözden geçir
+                        </button>
+                      ) : !hybrid.isSyncing &&
+                        !composerReadiness.canReview &&
+                        focusedQuestions.length > 0 ? (
+                        <p
+                          className="mt-3 text-center text-xs text-teal-950/50"
+                          data-testid="composer-continue-hint"
+                        >
+                          {composerReadiness.remainingCriticalCount === 1
+                            ? "1 kritik soru kaldı"
+                            : `${composerReadiness.remainingCriticalCount} kritik soru kaldı`}
+                          {" · "}
+                          Devam etmek için yanıtlayın
+                        </p>
+                      ) : null}
+                    </>
+                  ) : null}
+
+                  {hybrid.composerError ? (
+                    <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-3 text-sm text-orange-950">
+                      <p>
+                        Talebinizi okurken bir sorun oluştu. Yazınız korunuyor —
+                        kategoriden de devam edebilirsiniz.
+                      </p>
+                      <button
+                        type="button"
+                        className="mt-2 min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                        onClick={() => hybrid.retrySync()}
+                      >
+                        Tekrar dene
+                      </button>
+                    </div>
+                  ) : null}
 
                   <HybridBrowsePath
                     path={hybrid.isSyncing ? [] : hybrid.browsePath}
@@ -2543,16 +3282,16 @@ function TalepOlusturForm() {
 
                   <ul className="mt-3 flex flex-col gap-1.5 border-t border-teal-900/6 pt-3 text-xs text-teal-950/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Kategori seçince
-                      metin dolar
+                      <span className="text-[#0f766e]">✓</span> Önce yaz, gerekirse
+                      düzelt
                     </li>
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Yazınca kategori
-                      oraya gider
+                      <span className="text-[#0f766e]">✓</span> Kategori seni
+                      kilitlemez
                     </li>
                     <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Liste dışı ürün
-                      de kabul
+                      <span className="text-[#0f766e]">✓</span> Liste dışı ürün de
+                      kabul
                     </li>
                   </ul>
                 </div>
@@ -2580,8 +3319,17 @@ function TalepOlusturForm() {
                 id="talep-finish"
                 className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
               >
-                <div className="space-y-4">
-                  <div className="rounded-[1.5rem] border border-[#0f766e]/15 bg-white/95 p-4 shadow-[0_10px_30px_rgba(15,118,110,0.06)] sm:p-5">
+                <details className="group rounded-[1.5rem] border border-[#0f766e]/12 bg-white/90 open:shadow-[0_10px_30px_rgba(15,118,110,0.06)]">
+                  <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
+                    <span className="flex items-center justify-between gap-2">
+                      <span>Bilgileri düzenle</span>
+                      <span className="text-xs font-normal text-teal-950/45 group-open:hidden">
+                        Başlık, kategori ve ek alanlar
+                      </span>
+                    </span>
+                  </summary>
+                <div className="space-y-4 border-t border-teal-900/6 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                  <div className="rounded-[1.25rem] border border-[#0f766e]/10 bg-[#f7fcfa]/80 p-4 sm:p-5">
                     <label className="block">
                       <span className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold text-[#0f1f1d]">
@@ -2865,33 +3613,14 @@ function TalepOlusturForm() {
                     )}
                   </div> : null}
 
-                  {/* Mobile: AI sits above publish so questions are reachable */}
+                  {/* Mobile: AI sits above optional edit */}
                   <div className="lg:hidden">{aiCompanionShell}</div>
 
-                  <button
-                    type="button"
-                    disabled={isPublishing || publishReadyAnimation}
-                    onClick={handlePublishAttempt}
-                    aria-busy={isPublishing}
-                    className={`sticky bottom-3 z-20 flex min-h-[54px] w-full items-center justify-between overflow-hidden rounded-2xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(15,118,110,0.28)] transition hover:bg-[#0d6a63] disabled:cursor-not-allowed sm:static ${isPublishing ? "disabled:bg-teal-900/25 disabled:shadow-none" : ""} ${publishReadyAnimation ? "talepo-publish-ready" : ""} ${publishButtonAttention ? "animate-pulse ring-4 ring-orange-300/40" : ""}`}
-                  >
-                    <span className="flex items-center gap-2">
-                      {isPublishing ? (
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4" />
-                      )}
-                      {isPublishing
-                        ? "Talebiniz yayınlanıyor..."
-                        : publishReadyAnimation
-                          ? "Her şey hazır"
-                          : "Talebi yayınla"}
-                    </span>
-                    {!isPublishing ? (
-                      <ArrowRight className={`h-4 w-4 opacity-80 ${publishReadyAnimation ? "talepo-publish-arrow" : ""}`} />
-                    ) : null}
-                  </button>
+                  <p className="text-center text-xs text-teal-950/45">
+                    Yayınlama, yukarıdaki talep özetinden yapılır.
+                  </p>
                 </div>
+                </details>
               </section>
                 ) : null}
               </div>

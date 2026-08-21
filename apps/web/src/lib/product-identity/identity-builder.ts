@@ -31,7 +31,11 @@ import {
 } from "./semantic-fields";
 import { normalizeModelText } from "./model-normalization";
 import type { ProductCondition, ProductIdentity, ProductIdentifiers, SemanticFieldClass } from "./types";
-import { extractStorageFromText, normalizeStorageValue, stripTrailingCapacitySuffix } from "./unit-normalization";
+import { extractStorageFromText, stripTrailingCapacitySuffix } from "./unit-normalization";
+import {
+  findLongestProductPhrase,
+  tokenOverlapsProductPhrase,
+} from "@/lib/request-composer/v2/product-phrase-lexicon";
 
 export type BuildIdentityInput = {
   categoryId: string;
@@ -84,7 +88,7 @@ function splitEmbeddedProductName(
   const text = stripTrailingCapacitySuffix(raw.trim());
   const split = extractBrandFromText(text);
 
-  let brand = existingBrand ?? split.brand;
+  const brand = existingBrand ?? split.brand;
   let remainder = stripConversationRemainder(split.remainder);
 
   if (brand && remainder.toLocaleLowerCase("tr-TR").startsWith(brand.toLocaleLowerCase("tr-TR"))) {
@@ -123,7 +127,7 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     pickFirstByClass(attributes, semanticFields, "model-like") ??
     null;
 
-  let productType =
+  const productType =
     pickFirstByClass(attributes, semanticFields, "product-type-like") ??
     attributes.applianceType?.trim() ??
     attributes.kitchenProductType?.trim() ??
@@ -184,8 +188,12 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
     if (embedded.series && !series) series = embedded.series;
   }
 
-  // Catalog device family (iPhone 15 → Apple / iPhone 15) beats inferred product-line brand
-  const techProduct = findTechnologyProduct(input.title);
+  // Catalog device family (iPhone 15 → Apple / iPhone 15) beats inferred product-line brand.
+  // Never apply phone/tablet catalog families in television screen contexts (A55 ≠ Galaxy A55).
+  const tvScreenContext = looksLikeTelevisionScreenContext(input.title);
+  const techProduct = tvScreenContext
+    ? null
+    : findTechnologyProduct(input.title);
   const catalogTechBrand =
     techProduct?.brand || findBrand(input.title, TECHNOLOGY_BRANDS);
   if (catalogTechBrand) {
@@ -263,17 +271,55 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   // Title inference only when structured brand absent
   if (!brand && input.title?.trim()) {
     const fromTitle = extractBrandFromText(input.title);
-    if (fromTitle.brand && !isKnownAutomotiveModelName(fromTitle.brand)) {
+    if (
+      fromTitle.brand &&
+      fromTitle.source !== "none" &&
+      !isKnownAutomotiveModelName(fromTitle.brand) &&
+      (fromTitle.source === "catalog" ||
+        fromTitle.source === "memory" ||
+        fromTitle.confidence >= 0.55)
+    ) {
       brand = fromTitle.brand;
       brandConfidence = Math.max(brandConfidence, fromTitle.confidence);
       const remainder = stripConversationRemainder(fromTitle.remainder);
-      if (!model && remainder) model = remainder;
+      // Model only after a verified brand, and never from product-phrase residue
+      if (!model && remainder && brand) {
+        model = remainder;
+      }
     } else if (
       fromTitle.brand &&
       isKnownAutomotiveModelName(fromTitle.brand) &&
       !model
     ) {
       model = fromTitle.brand;
+    }
+  }
+
+  // Product phrase span cannot also be brand/model
+  {
+    const productPhrase =
+      findLongestProductPhrase(input.title)?.phrase ??
+      productType ??
+      attributes.productType ??
+      null;
+    if (productPhrase) {
+      if (tokenOverlapsProductPhrase(brand, productPhrase)) {
+        brand = null;
+        brandConfidence = 0;
+      }
+      if (tokenOverlapsProductPhrase(model, productPhrase)) {
+        model = null;
+      }
+    }
+  }
+
+  // Never invent a model without a verified brand (except alphanumeric codes already tied upstream)
+  if (!brand && model) {
+    if (isProductTypePhrase(model) || model.split(/\s+/).length <= 2) {
+      const looksLikeCode = /^[A-Za-z]{0,4}\d+[A-Za-z0-9-]*$/.test(
+        model.replace(/\s+/g, ""),
+      );
+      if (!looksLikeCode) model = null;
     }
   }
 
@@ -299,6 +345,29 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   ) {
     model = null;
   }
+  // Strip size/unit/product noise from TV remainders; keep real model codes (A55 D).
+  // Avoid \\b after Turkish "inç" — JS word boundaries often fail there.
+  if (model && looksLikeTelevisionScreenContext(input.title)) {
+    let cleaned = model
+      .replace(/\d{2,3}\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)/giu, " ")
+      .replace(/(?:smart\s*)?(?:qled|oled)?\s*(?:tv|televizyon)\b/giu, " ")
+      .replace(/(?:inç|inc|inch|ekran(?:lı|li)?)/giu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    // Trailing bare inch size left after size-phrase strip (e.g. "A55 D 55").
+    cleaned = cleaned.replace(/\s+\d{2,3}$/u, "").trim();
+    const fold = cleaned.toLocaleLowerCase("tr-TR");
+    if (
+      !cleaned ||
+      /^(?:smart\s*)?tv$/.test(fold) ||
+      /^televizyon$/.test(fold) ||
+      /^\d{2,3}$/.test(cleaned)
+    ) {
+      model = null;
+    } else {
+      model = cleaned;
+    }
+  }
 
   if (model) {
     model = stripTrailingCapacitySuffix(stripTrailingProductTypeFromModel(model));
@@ -307,6 +376,18 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
   if (brand && model) {
     model = stripLeadingBrandAliases(model, brand, AUTOMOTIVE_BRANDS) || model;
     model = stripLeadingBrandAliases(model, brand, TECHNOLOGY_BRANDS) || model;
+  }
+  // Model must not restate the brand (or leftover punctuation around brand)
+  if (brand && model) {
+    const brandFold = brand.toLocaleLowerCase("tr-TR");
+    const modelFold = model.toLocaleLowerCase("tr-TR").replace(/["'”]+/g, "").trim();
+    if (
+      !modelFold ||
+      modelFold === brandFold ||
+      modelFold.includes(brandFold)
+    ) {
+      model = null;
+    }
   }
   if (model) {
     model = stripTrailingPartNouns(model) || null;
@@ -321,7 +402,8 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
 
   // Preserve a generic product-family token when the resolver returned only
   // the compact model suffix (for example Galaxy / S24 Ultra).
-  if (catalogTechBrand && model) {
+  // Skip in TV screen contexts — remainder often still holds size/product noise.
+  if (catalogTechBrand && model && !tvScreenContext) {
     const titleModel = stripTrailingCapacitySuffix(
       extractBrandFromText(input.title).remainder,
     ).trim();

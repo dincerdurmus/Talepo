@@ -56,19 +56,27 @@ const PHONE_FAMILY_RE =
 export function looksLikeTelevisionScreenContext(text: string): boolean {
   const n = text.toLocaleLowerCase("tr-TR");
   if (APPLIANCE_NOUN_RE.test(n)) return false;
+
+  // Avoid \\b after Turkish "inç" — it often fails in JS and drops TV context.
+  const hasTvNoun =
+    /(?:inç|inc|inch|ekran(?:lı|li)?|\btv\b|televizyon|smart\s*tv)/i.test(n);
+  const hasExplicitTvProduct = /(?:televizyon|\btv\b|smart\s*tv)/i.test(n);
+
+  // Explicit TV product noun wins over phone-catalog false positives (A55 ≠ Galaxy A55).
   const tech = findTechnologyProduct(n);
-  if (tech && /galaxy|iphone|ipad|macbook|pixel|redmi|poco/i.test(tech.canonical)) {
+  if (
+    tech &&
+    /galaxy|iphone|ipad|macbook|pixel|redmi|poco/i.test(tech.canonical) &&
+    !hasExplicitTvProduct
+  ) {
     return false;
   }
-  const hasTvNoun = /\b(?:inç|inc|inch|ekran|\btv\b|televizyon|smart\s*tv)\b/i.test(
-    n,
-  );
   if (PHONE_FAMILY_RE.test(n) && !hasTvNoun) return false;
   const hasTvBrand = Boolean(findBrand(n, TV_BRAND_ENTRIES));
   const hasTypicalSize = [...TYPICAL_TV_INCHES].some((size) =>
     new RegExp(`(?:^|[^0-9])${size}(?:$|[^0-9])`).test(n),
   );
-  if (hasTvNoun && (hasTvBrand || hasTypicalSize || /\btv\b|televizyon/.test(n))) {
+  if (hasTvNoun && (hasTvBrand || hasTypicalSize || hasExplicitTvProduct)) {
     return true;
   }
   return hasTvBrand && hasTypicalSize;
@@ -291,6 +299,25 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
       index: qm.index,
     });
     claim(qm.index, qm[0].length);
+  }
+
+  // Print / packing: "5000 broşür", "2000 kartvizit" (unit implied by product noun)
+  const productQtyRe =
+    /\b(\d{2,}(?:[.,]\d+)*)\s*(broşür|brosur|kartvizit|etiket|afiş|afis|katalog|poster|flayer|flyer|kutu|ambalaj|davetiye)\b/gi;
+  let pqm: RegExpExecArray | null;
+  while ((pqm = productQtyRe.exec(text)) !== null) {
+    if (isClaimed(pqm.index, pqm[1]!.length)) continue;
+    const value = parseTrInt(pqm[1]!);
+    if (!Number.isFinite(value) || value < 2) continue;
+    results.push({
+      raw: pqm[0],
+      role: "QUANTITY",
+      value,
+      unit: "adet",
+      evidence: [pqm[0], "product-noun quantity"],
+      index: pqm.index,
+    });
+    claim(pqm.index, pqm[0].length);
   }
 
   const yearRe = /\b((?:19|20)\d{2})\b/g;

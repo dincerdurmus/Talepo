@@ -325,18 +325,57 @@ export function stripRequestedItemClause(
   return s || null;
 }
 
-/** Reject year-like or bare screen-size numbers as model. */
+/** Reject year-like, bare screen-size, or size+product residue as model. */
 export function cleanModelToken(
   model: string | null | undefined,
-  opts?: { screenSize?: string | null },
+  opts?: { screenSize?: string | null; productType?: string | null },
 ): string | null {
   if (!model?.trim()) return null;
-  const m = model.trim();
+  let m = model.trim();
   if (/^(19|20)\d{2}$/.test(m)) return null;
   if (opts?.screenSize && m === opts.screenSize) return null;
   if (/^\d{2,3}$/.test(m) && Number(m) >= 32 && Number(m) <= 120) return null;
-  if (isConversationStopword(m)) return null;
+
+  // Strip leading/embedded screen-size phrases: "55 inç …", "65'' …", "55 ekran …"
+  m = m
+    .replace(
+      /^\d{2,3}\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)\b\s*/iu,
+      "",
+    )
+    .replace(
+      /\b\d{2,3}\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)\b/giu,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+
   const fold = m.toLocaleLowerCase("tr-TR");
+  const productNoise = new Set([
+    "televizyon",
+    "tv",
+    "smart",
+    "smart tv",
+    "qled",
+    "oled",
+    "inç",
+    "inc",
+    "inch",
+    "ekran",
+    "ekranlı",
+    "ekranli",
+  ]);
+  if (!m || productNoise.has(fold)) return null;
+  // Residue like "inç televizyon" / "smart tv"
+  const tokens = fold.split(/\s+/).filter(Boolean);
+  if (tokens.length > 0 && tokens.every((t) => productNoise.has(t))) return null;
+  if (opts?.productType) {
+    const pt = opts.productType.toLocaleLowerCase("tr-TR");
+    if (fold === pt || tokens.every((t) => t === pt || productNoise.has(t))) {
+      return null;
+    }
+  }
+
+  if (isConversationStopword(m)) return null;
   if (
     fold.includes("istiyorum") ||
     fold.includes("arıyorum") ||
@@ -351,5 +390,18 @@ export function cleanModelToken(
     const stripped = stripRequestedItemClause(m);
     if (stripped && stripped.length < m.length) return stripped;
   }
+
+  // Strip mid-cut product nouns: "Serie 6 ç" ← "Serie 6 çamaşır…"
+  // Do NOT strip uppercase model suffixes like "A55 D".
+  m = m
+    .replace(
+      /\s+(?:çamaşır|camasir|bulaşık|bulasik|makinesi|makine|buzdolabı|buzdolabi|televizyon|arıyorum|istiyorum).*$/iu,
+      "",
+    )
+    .replace(/\s+ç$/u, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!m) return null;
+
   return m;
 }

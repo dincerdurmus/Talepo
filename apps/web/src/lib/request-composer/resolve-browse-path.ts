@@ -11,8 +11,8 @@ import { getCategoryChildren } from "@/lib/knowledge/browse";
 import {
   ensureTaxonomyLoaded,
   getTaxonomyNode,
-  getSubcategoryTaxonomyNode,
 } from "@/lib/taxonomy";
+import { getCategoryById } from "@/lib/request-category-engine";
 
 import type { BrowsePathStep, CanonicalRequestState } from "./types";
 
@@ -565,13 +565,12 @@ function realEstateBrowsePath(state: CanonicalRequestState): BrowsePathStep[] {
 function genericPath(state: CanonicalRequestState): BrowsePathStep[] {
   const path: BrowsePathStep[] = [];
   if (state.categoryId) {
-    const label =
-      state.categoryId === "real-estate"
-        ? "Emlak"
-        : state.categoryId === "automotive"
-          ? "Otomotiv"
-          : state.categoryId;
-    path.push(step(state.categoryId, "category", label));
+    const cat = getCategoryById(state.categoryId);
+    const label = cat?.label?.trim() || null;
+    // Never show internal slug or empty/unresolved ids in the user breadcrumb.
+    if (label && state.categoryId && state.categoryId !== "unresolved") {
+      path.push(step(state.categoryId, "category", label));
+    }
   }
   if (state.categoryId && state.subcategorySlug) {
     path.push(

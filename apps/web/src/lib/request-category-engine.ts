@@ -240,10 +240,22 @@ export function isFieldVisible(
   });
 }
 
+/** Soft fields: useful for matching, never hard-block publish alone. */
+const SOFT_PUBLISH_KEYS = new Set([
+  "brand",
+  "model",
+  "budget",
+  "dimensions",
+  "material",
+  "printType",
+  "designReady",
+]);
+
 export function isFieldRequired(
   field: DynamicField,
   values: Record<string, string | undefined>,
 ): boolean {
+  if (SOFT_PUBLISH_KEYS.has(field.key)) return false;
   return Boolean(field.required) && isFieldVisible(field, values);
 }
 

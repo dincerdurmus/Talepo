@@ -4,6 +4,10 @@
  */
 
 import {
+  formatScreenSizeDisplay,
+  resolveFieldOptionLabel,
+} from "@/lib/field-display";
+import {
   getBrowseAnyOption,
   getBrowseChildren,
   withBrowseAnyOption,
@@ -24,6 +28,7 @@ import {
 import type { BrowsePathStep, CanonicalRequestState } from "./types";
 import { FIELD_SENTINEL, isAnySentinel } from "./types";
 import { isFieldCompatibleWithCategory } from "./request-transition";
+import { sanitizeFactRoles } from "./v2/entity-roles";
 
 export type UnderstoodFact = {
   key: string;
@@ -52,7 +57,7 @@ const FIELD_LABELS: Record<string, string> = {
   applianceType: "Ürün",
   propertyType: "Konut tipi",
   listingType: "İlan",
-  screenSize: "Ekran",
+  screenSize: "Ekran boyutu",
   resolution: "Çözünürlük",
   condition: "Durum",
   part: "Parça",
@@ -66,6 +71,10 @@ const FIELD_LABELS: Record<string, string> = {
   yearMin: "En düşük yıl",
   yearMax: "En yüksek yıl",
   city: "Şehir",
+  roomCount: "Oda",
+  budget: "Bütçe",
+  quantity: "Adet",
+  delivery: "Zaman",
 };
 
 const NEED_TYPE_DISPLAY: Record<string, string> = {
@@ -74,6 +83,9 @@ const NEED_TYPE_DISPLAY: Record<string, string> = {
   service: "Bakım / servis",
   tire: "Lastik",
   machine: "Makine",
+  hardware: "Donanım",
+  software: "Yazılım",
+  accessory: "Aksesuar",
 };
 
 const KIND_TO_FIELD: Record<string, string> = {
@@ -95,6 +107,7 @@ const DISPLAY_PRIORITY = [
   "applianceType",
   "propertyType",
   "listingType",
+  "roomCount",
   "productType",
   "brand",
   "model",
@@ -221,6 +234,17 @@ export function buildUnderstoodFacts(
     state.understanding.requestSubject.kind.value === "PART" ||
     state.subcategorySlug === "yedek-parca";
 
+  const brandValue =
+    state.fields.brand?.kind === "VALUE"
+      ? String(state.fields.brand.value ?? "").trim()
+      : "";
+  const productValue =
+    state.fields.productType?.kind === "VALUE"
+      ? String(state.fields.productType.value ?? "").trim()
+      : state.fields.applianceType?.kind === "VALUE"
+        ? String(state.fields.applianceType.value ?? "").trim()
+        : "";
+
   for (const key of DISPLAY_PRIORITY) {
     const field = state.fields[key];
     if (!field || seen.has(key)) continue;
@@ -242,20 +266,54 @@ export function buildUnderstoodFacts(
 
     let displayValue: string | null = null;
     if (field.kind === "ANY") {
-      displayValue = "Farketmez";
+      displayValue = "Fark etmez";
     } else if (field.kind === "VALUE" && field.value?.trim()) {
+      const rawValue = field.value.trim();
+      if (key === "brand" || key === "model") {
+        const cleaned = sanitizeFactRoles({
+          brand: key === "brand" ? rawValue : brandValue,
+          model: key === "model" ? rawValue : null,
+          productType: productValue,
+          rawInput: state.understanding.rawInput,
+          categoryId:
+            state.categoryId ?? state.understanding.category.value,
+        });
+        if (key === "brand" && !cleaned.brand) continue;
+        if (key === "model" && !cleaned.model) continue;
+      }
       if (key === "needType") {
         displayValue =
-          NEED_TYPE_DISPLAY[field.value.trim().toLowerCase()] ??
-          field.value.trim();
+          NEED_TYPE_DISPLAY[rawValue.toLowerCase()] ??
+          resolveFieldOptionLabel({
+            value: rawValue,
+            fieldKey: key,
+            categoryId: state.categoryId ?? state.understanding.category.value,
+          });
       } else if (key === "screenSize") {
-        displayValue = `${field.value.trim()} ekran`;
+        displayValue = formatScreenSizeDisplay(
+          rawValue,
+          state.understanding.rawInput,
+        );
       } else if (key === "yearMin") {
-        displayValue = `${field.value.trim()} ve üstü`;
+        displayValue = `${rawValue} ve üstü`;
       } else if (key === "yearMax") {
-        displayValue = `${field.value.trim()} ve altı`;
+        displayValue = `${rawValue} ve altı`;
       } else {
-        displayValue = field.value.trim();
+        displayValue = resolveFieldOptionLabel({
+          value: rawValue,
+          fieldKey: key,
+          categoryId: state.categoryId ?? state.understanding.category.value,
+        });
+        if (
+          (key === "productType" ||
+            key === "applianceType" ||
+            key === "furnitureType") &&
+          displayValue === displayValue.toLocaleLowerCase("tr-TR")
+        ) {
+          displayValue =
+            displayValue.charAt(0).toLocaleUpperCase("tr-TR") +
+            displayValue.slice(1);
+        }
       }
     }
     if (!displayValue && !(field.excludedValues?.length)) continue;
@@ -291,6 +349,37 @@ export function buildUnderstoodFacts(
     }
   }
 
+  // Surface understanding location when city field is empty (common for RE free-text)
+  const locCity = state.understanding.location?.city?.value?.trim();
+  if (locCity && !seen.has("city")) {
+    seen.add("city");
+    facts.push({
+      key: "city",
+      label: "Konum",
+      displayValue: locCity,
+    });
+  }
+
+  // Budget may arrive as range-only (UNKNOWN kind with range evidence)
+  const budgetField = state.fields.budget;
+  if (!seen.has("budget") && budgetField?.range) {
+    const { min, max, unit } = budgetField.range;
+    const unitLabel = unit === "TRY" || !unit ? "TL" : unit;
+    let display: string | null = null;
+    if (min != null && max != null && min !== max) {
+      display = `${new Intl.NumberFormat("tr-TR").format(min)}–${new Intl.NumberFormat("tr-TR").format(max)} ${unitLabel}`;
+    } else {
+      const amount = max ?? min;
+      if (amount != null) {
+        display = `${new Intl.NumberFormat("tr-TR").format(amount)} ${unitLabel}`;
+      }
+    }
+    if (display) {
+      seen.add("budget");
+      facts.push({ key: "budget", label: "Bütçe", displayValue: display });
+    }
+  }
+
   return facts;
 }
 
@@ -315,6 +404,17 @@ export function softFillFromComposerState(
       out[key] = "Farketmez";
     } else if (field.kind === "VALUE" && field.value?.trim()) {
       out[key] = field.value.trim();
+    } else if (key === "budget" && field.range) {
+      const { min, max, unit } = field.range;
+      const unitLabel = unit === "TRY" || !unit ? "TL" : unit;
+      if (min != null && max != null && min !== max) {
+        out[key] = `${new Intl.NumberFormat("tr-TR").format(min)}–${new Intl.NumberFormat("tr-TR").format(max)} ${unitLabel}`;
+      } else {
+        const amount = max ?? min;
+        if (amount != null) {
+          out[key] = `${new Intl.NumberFormat("tr-TR").format(amount)} ${unitLabel}`;
+        }
+      }
     }
   }
   return out;

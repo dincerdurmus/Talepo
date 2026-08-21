@@ -9,6 +9,8 @@ const PRODUCT_TYPE_VOCAB = new Set([
   "matkap", "drill", "telefon", "phone", "sandalyesi", "sandalye",
   "katlanir", "katlanır", "arabasi", "puset",
   "akulu", "akülü", "sarjli", "şarjlı", "cordless",
+  "televizyon", "tv", "smart", "qled", "oled", "inç", "inc", "inch",
+  "ekran", "ekranlı", "ekranli",
 ]);
 
 const DESCRIPTIVE_FIELD_KEYS = [

@@ -557,6 +557,9 @@ export function budgetDisplayFromUnderstanding(
 ): string {
   if (!result.budget?.value) return "";
   const { min, max } = result.budget.value;
+  if (min != null && max != null && min !== max) {
+    return `${new Intl.NumberFormat("tr-TR").format(min)}–${new Intl.NumberFormat("tr-TR").format(max)} TL`;
+  }
   const amount = max ?? min;
   if (amount == null) return "";
   return new Intl.NumberFormat("tr-TR").format(amount) + " TL";

@@ -52,6 +52,8 @@ export type UseHybridRequestComposerResult = {
   composerError: boolean;
   browseDegraded: boolean;
   isSyncing: boolean;
+  /** Re-run understanding for the current text after a composer error. */
+  retrySync: () => void;
   applyBrowseSelection: (selection: BrowseSelectionInput) => void;
   applyQuickOption: (
     fieldKey: string,
@@ -79,6 +81,10 @@ export function useHybridRequestComposer(
 ): UseHybridRequestComposerResult {
   const debounceMs = options.debounceMs ?? DEBOUNCE_MS;
   const [text, setTextState] = useState(options.initialText ?? "");
+  const textRef = useRef(text);
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
   const [state, setState] = useState<CanonicalRequestState | null>(() => {
     const initial = options.initialText?.trim();
     if (!initial) return null;
@@ -108,19 +114,19 @@ export function useHybridRequestComposer(
   const browseWalkRef = useRef(browseWalk);
   browseWalkRef.current = browseWalk;
 
-  const applyState = useCallback((next: CanonicalRequestState) => {
+  const applyState = useCallback((next: CanonicalRequestState | null) => {
     stateRef.current = next;
-    lastComposedRef.current = next.lastComposedText;
+    lastComposedRef.current = next?.lastComposedText;
     setState(next);
   }, []);
 
   const runSyncFromText = useCallback(
-    (raw: string) => {
-      const token = ++seqRef.current;
+    (raw: string, expectedToken: number) => {
+      if (expectedToken !== seqRef.current) return;
       setIsSyncing(true);
       try {
         const result = syncFromText(stateRef.current, raw);
-        if (token !== seqRef.current) return;
+        if (expectedToken !== seqRef.current) return;
         if (result.clearedStaleBrowse) {
           skipPathWalkSyncRef.current = false;
           lastPathSigRef.current = "";
@@ -130,11 +136,13 @@ export function useHybridRequestComposer(
         setBrowseDegraded(false);
       } catch (error) {
         console.error("[hybrid-composer] syncFromText failed", error);
-        if (token !== seqRef.current) return;
+        if (expectedToken !== seqRef.current) return;
+        // Keep the user's text; drop stale structured understanding.
+        applyState(null);
         setComposerError(true);
         setBrowseDegraded(true);
       } finally {
-        if (token === seqRef.current) setIsSyncing(false);
+        if (expectedToken === seqRef.current) setIsSyncing(false);
       }
     },
     [applyState],
@@ -144,15 +152,30 @@ export function useHybridRequestComposer(
     (next: string) => {
       setTextState(next);
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      const currentRaw = (stateRef.current?.understanding.rawInput ?? "").trim();
-      if (next.trim() !== currentRaw) {
-        setIsSyncing(true);
+
+      // Invalidate any in-flight / pending sync (latest keystroke wins).
+      const token = ++seqRef.current;
+      const trimmed = next.trim();
+
+      if (!trimmed) {
+        applyState(null);
+        setBrowseWalk(createBrowseWalkState());
+        lastPathSigRef.current = "";
+        setIsSyncing(false);
+        setComposerError(false);
+        setBrowseDegraded(false);
+        return;
       }
+
+      // Hide previous facts immediately — never show Heidelberg while typing Arçelik.
+      setIsSyncing(true);
+      applyState(null);
+
       debounceTimerRef.current = setTimeout(() => {
-        runSyncFromText(next);
+        runSyncFromText(next, token);
       }, debounceMs);
     },
-    [debounceMs, runSyncFromText],
+    [applyState, debounceMs, runSyncFromText],
   );
 
   const resetWithText = useCallback(
@@ -161,8 +184,17 @@ export function useHybridRequestComposer(
       setTextState(next);
       setBrowseWalk(createBrowseWalkState());
       lastPathSigRef.current = "";
-      seqRef.current += 1;
-      const token = seqRef.current;
+      const token = ++seqRef.current;
+      const trimmed = next.trim();
+      if (!trimmed) {
+        applyState(null);
+        setIsSyncing(false);
+        setComposerError(false);
+        setBrowseDegraded(false);
+        return;
+      }
+      setIsSyncing(true);
+      applyState(null);
       try {
         const result = syncFromText(null, next);
         if (token !== seqRef.current) return;
@@ -171,12 +203,23 @@ export function useHybridRequestComposer(
         setBrowseDegraded(false);
       } catch (error) {
         console.error("[hybrid-composer] resetWithText failed", error);
+        if (token !== seqRef.current) return;
+        applyState(null);
         setComposerError(true);
         setBrowseDegraded(true);
+      } finally {
+        if (token === seqRef.current) setIsSyncing(false);
       }
     },
     [applyState],
   );
+
+  const retrySync = useCallback(() => {
+    const token = ++seqRef.current;
+    setComposerError(false);
+    setIsSyncing(true);
+    runSyncFromText(text, token);
+  }, [runSyncFromText, text]);
 
   const applyBrowseSelection = useCallback(
     (selection: BrowseSelectionInput) => {
@@ -197,13 +240,30 @@ export function useHybridRequestComposer(
 
   const applyQuickOption = useCallback(
     (fieldKey: string, value: string, isAny?: boolean) => {
-      applyBrowseSelection({
-        key: fieldKey,
-        value,
-        isAny: Boolean(isAny),
-      });
+      const preservedRawInput = textRef.current;
+      try {
+        const previous = stateRef.current ?? emptyShell();
+        const result = syncFromBrowse(previous, {
+          key: fieldKey,
+          value,
+          isAny: Boolean(isAny),
+        });
+        applyState(result.state);
+        // Free-text rawInput must stay the user's original wording.
+        // Never replace it with a generated title/composed description.
+        if (preservedRawInput.trim()) {
+          setTextState(preservedRawInput);
+        } else {
+          setTextState(result.composedText);
+        }
+        setComposerError(false);
+        setBrowseDegraded(false);
+      } catch (error) {
+        console.error("[hybrid-composer] applyQuickOption failed", error);
+        setBrowseDegraded(true);
+      }
     },
-    [applyBrowseSelection],
+    [applyState],
   );
 
   const selectBrowseNodeAtColumn = useCallback(
@@ -477,6 +537,7 @@ export function useHybridRequestComposer(
     composerError,
     browseDegraded,
     isSyncing,
+    retrySync,
     applyBrowseSelection,
     applyQuickOption,
     browseWalk,

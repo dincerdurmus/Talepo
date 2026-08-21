@@ -12,6 +12,7 @@ import {
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
   classifyNumbers,
+  looksLikeTelevisionScreenContext,
   looksLikeYearToken,
   modelIdentifierTokens,
   primaryQuantity,
@@ -289,9 +290,21 @@ function extractPreferences(
 
 function extractRoomLayout(
   normalized: string,
+  categoryId?: string | null,
 ): UnderstandingValue<string> | undefined {
+  // Room layouts are real-estate only — never treat "2+1" as quantity elsewhere.
+  if (categoryId && categoryId !== "real-estate") return undefined;
   const m = normalized.match(/\b([1-9]\s*\+\s*[0-9])\b/);
   if (!m) return undefined;
+  // Avoid math-like noise without RE context when category still unknown:
+  // require RE lexical cues in the same text when category not yet resolved.
+  if (!categoryId || categoryId === "real-estate") {
+    const reCue =
+      /\b(ev|daire|konut|villa|müstakil|mustakil|ofis|işyeri|isyeri|satılık|satilik|kiralık|kiralik|oda)\b/i.test(
+        normalized,
+      );
+    if (!categoryId && !reCue) return undefined;
+  }
   return uv(m[1]!.replace(/\s+/g, ""), {
     provenance: "EXPLICIT",
     source: "USER_EXPLICIT",
@@ -457,7 +470,10 @@ export function understandRequest(
 
   const modelTokens = modelIdentifierTokens(numbers);
   const autoModel = findAutomotiveModel(normalizedInput);
-  const techProduct = findTechnologyProduct(normalizedInput);
+  // Phone/tablet catalog must not invent models in television contexts (A55 ≠ Galaxy A55).
+  const techProduct = looksLikeTelevisionScreenContext(normalizedInput)
+    ? null
+    : findTechnologyProduct(normalizedInput);
   const hasVehicleModel = Boolean(autoModel) || modelTokens.some((t) =>
     /^[a-z]?\d{2,3}[a-z]?$/i.test(t.raw.replace(/\s/g, "")) ||
     /^[cesagl]\d{2,3}/i.test(t.raw),
@@ -513,7 +529,7 @@ export function understandRequest(
     evidence: intentResolved.evidence,
   };
 
-  let subjectDecision: UnderstandingDecision<SubjectKind> = {
+  const subjectDecision: UnderstandingDecision<SubjectKind> = {
     value: subjectValue,
     confidence: intentResolved.confidence,
     status: decisionStatus(intentResolved.confidence, {
@@ -703,7 +719,7 @@ export function understandRequest(
     }
   }
 
-  const room = extractRoomLayout(normalizedInput);
+  const room = extractRoomLayout(normalizedInput, null);
   if (room) attributes.roomCount = room;
 
   const listing = extractListingType(normalizedInput, intentResolved.intent);

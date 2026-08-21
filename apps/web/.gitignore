@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.qa-composer-v2*/
 
 # next.js
 /.next/

@@ -52,9 +52,15 @@ const FIELD_ALLOWED_CATEGORIES: Record<string, ReadonlySet<string>> = {
   bodyCondition: new Set(["automotive"]),
   vin: new Set(["automotive"]),
   oemNumber: new Set(["automotive", "appliances"]),
-  partSystem: new Set(["automotive", "appliances"]),
-  partPosition: new Set(["automotive", "appliances"]),
-  part: new Set(["automotive", "appliances", "technology"]),
+  partSystem: new Set(["automotive", "appliances", "machinery", "printing"]),
+  partPosition: new Set(["automotive", "appliances", "machinery", "printing"]),
+  part: new Set([
+    "automotive",
+    "appliances",
+    "technology",
+    "machinery",
+    "printing",
+  ]),
   screenSize: new Set(["technology", "appliances"]),
   resolution: new Set(["technology", "appliances"]),
 };
@@ -62,7 +68,13 @@ const FIELD_ALLOWED_CATEGORIES: Record<string, ReadonlySet<string>> = {
 const NEED_TYPE_CATEGORIES: Record<string, ReadonlySet<string>> = {
   machine: new Set(["machinery", "industrial"]),
   vehicle: new Set(["automotive"]),
-  part: new Set(["automotive", "appliances", "technology"]),
+  part: new Set([
+    "automotive",
+    "appliances",
+    "technology",
+    "machinery",
+    "printing",
+  ]),
   tire: new Set(["automotive"]),
 };
 

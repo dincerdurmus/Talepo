@@ -18,8 +18,16 @@ const FIELD_ENUM_LABELS: Record<string, string> = {
   service: "Bakım / servis",
   tire: "Lastik / jant",
   machine: "Makine (satın alma)",
-  software: "Yazılım / proje",
-  hardware: "Donanım (satın alma)",
+  software: "Yazılım",
+  hardware: "Donanım",
+  accessory: "Aksesuar / parça",
+  television: "Televizyon",
+  televizyon: "Televizyon",
+  tv: "Televizyon",
+  phone: "Telefon",
+  telefon: "Telefon",
+  laptop: "Dizüstü bilgisayar",
+  tablet: "Tablet",
 };
 
 function asOptionList(options: unknown): DynamicFieldOption[] {
@@ -72,7 +80,37 @@ export function resolveFieldOptionLabel(input: {
     }
   }
 
-  return FIELD_ENUM_LABELS[value] || value;
+  return FIELD_ENUM_LABELS[value] || FIELD_ENUM_LABELS[value.toLocaleLowerCase("tr-TR")] || value;
+}
+
+/**
+ * Screen-size display: keep the user's unit when present (inç vs ekran).
+ * Stored value is typically a bare number from extraction.
+ */
+export function formatScreenSizeDisplay(
+  sizeValue: string,
+  rawInput?: string | null,
+): string {
+  const n = sizeValue.trim();
+  if (!n) return n;
+  if (/\s/.test(n) && /(?:inç|inc|inch|ekran)/i.test(n)) return n;
+
+  const raw = (rawInput ?? "").toLocaleLowerCase("tr-TR");
+  const sizeRe = new RegExp(
+    `(?:^|[^0-9])${n}\\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)`,
+    "i",
+  );
+  const hit = raw.match(sizeRe);
+  if (hit?.[0]) {
+    if (/ekran/i.test(hit[0])) return `${n} ekran`;
+    return `${n} inç`;
+  }
+  if (/\b(?:inç|inc|inch|["”'])\b/.test(raw) || /["”']/.test(raw)) {
+    return `${n} inç`;
+  }
+  if (/\bekran\b/.test(raw)) return `${n} ekran`;
+  // TV sizes without explicit unit still read naturally as inches in TR commerce.
+  return `${n} inç`;
 }
 
 export function displayRequestFieldValue(value: {

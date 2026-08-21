@@ -212,13 +212,13 @@ export function HybridCategoryBrowsePanel({
         aria-expanded={open}
         className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition sm:px-5 ${
           open
-            ? "border-[#0f766e]/40 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] shadow-[0_8px_24px_rgba(15,118,110,0.12)]"
-            : "border-[#0f766e]/25 bg-gradient-to-r from-[#f0fdfa] to-white shadow-[0_6px_20px_rgba(15,118,110,0.08)] hover:border-[#0f766e]/40 hover:shadow-[0_10px_28px_rgba(15,118,110,0.14)]"
+            ? "border-[#0f766e]/30 bg-[#f7fdfb]"
+            : "border-teal-900/12 bg-white hover:border-[#0f766e]/25 hover:bg-[#fbfdfe]"
         }`}
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f766e] text-white shadow-[0_0_20px_rgba(20,184,166,0.28)]">
-            <FolderTree className="h-4.5 w-4.5" aria-hidden />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-teal-900/10 bg-[#f0fdfa] text-[#0f766e]">
+            <FolderTree className="h-4 w-4" aria-hidden />
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold tracking-tight text-[#0f1f1d]">
@@ -226,8 +226,8 @@ export function HybridCategoryBrowsePanel({
             </span>
             <span className="mt-0.5 block text-xs text-teal-950/50">
               {open
-                ? "Seçince talep metni otomatik dolar"
-                : "Beyaz eşya, mobilya, teknoloji… tıkla, yazıya dökülsün"}
+                ? "İstersen ağaçtan da ilerleyebilirsin"
+                : "İsteğe bağlı — yazmak seni sınırlamaz"}
             </span>
           </span>
         </span>

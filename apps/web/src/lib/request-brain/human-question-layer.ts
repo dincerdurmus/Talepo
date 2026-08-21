@@ -38,16 +38,16 @@ const OPTIONAL_KEYS = new Set([
 ]);
 
 const HUMAN_PROMPTS: Record<string, string> = {
-  condition: "Tercihiniz var mı?",
+  condition: "Ürün durumu tercihiniz var mı?",
   brand: "Marka tercihiniz var mı?",
-  model: "Model konusunda esnek misiniz?",
+  model: "Model tercihiniz var mı?",
   modelYear: "Hangi model yılı ve üzeri olsun?",
   mileage: "Kilometre üst sınırı var mı?",
   fuel: "Yakıt tercihiniz?",
   transmission: "Vites tercihiniz?",
   city: "Teklifleri hangi şehirden almak istersiniz?",
   budget: "Bütçeniz nedir?",
-  quantity: "Kaç adet gerekiyor?",
+  quantity: "Kaç adet arıyorsunuz?",
   area: "Yaklaşık metrekare?",
   roomCount: "Oda sayısı?",
   listingType: "Kiralık mı, satılık mı?",
@@ -58,6 +58,7 @@ const HUMAN_PROMPTS: Record<string, string> = {
   material: "Malzeme tercihiniz var mı?",
   printType: "Baskı türü tercihiniz?",
   specs: "Önemli bir tercihiniz var mı?",
+  delivery: "Ne zamana kadar gerekli?",
 };
 
 const ESCAPE = [
@@ -116,14 +117,13 @@ function quickChoicesForField(
     return [
       { label: "Sıfır", value: "sıfır" },
       { label: "İkinci el", value: "ikinci el" },
-      { label: "Fark etmez", value: "fark-etmez" },
+      { label: "Yenilenmiş", value: "yenilenmiş" },
     ];
   }
   if (fieldKey === "model") {
     return [
       { label: "Yalnız bu model", value: "exact" },
       { label: "Benzer modeller olabilir", value: "flexible" },
-      { label: "Fark etmez", value: "fark-etmez" },
     ];
   }
   return undefined;
