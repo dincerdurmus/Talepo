@@ -18,6 +18,7 @@ import {
   type ResourceOwnerContext,
 } from "@/lib/membership/resource-owner";
 import { prisma } from "@/lib/prisma";
+import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import type { Prisma } from "@/generated/prisma/client";
 import { Prisma as PrismaRuntime } from "@/generated/prisma/client";
@@ -31,9 +32,27 @@ async function resolveCategorySlug(categoryId: string | null | undefined) {
   return cat?.slug ?? null;
 }
 
+async function assertFollowableCategoryId(
+  categoryId: string | null | undefined,
+): Promise<string | null> {
+  if (!categoryId) return null;
+  const cat = await prisma.category.findUnique({
+    where: { id: categoryId },
+    select: { id: true, slug: true },
+  });
+  if (!cat) return null;
+  if (isSystemCategorySlug(cat.slug)) {
+    throw new Error("Sistem kategorisi takip edilemez.");
+  }
+  return cat.id;
+}
+
 async function resolveCategoryId(slug: string | null | undefined) {
   const raw = slug?.trim();
   if (!raw) return null;
+  if (isSystemCategorySlug(raw.replace(/^tax:/, "").split(":")[0]!)) {
+    return null;
+  }
   const cat = await prisma.category.findUnique({
     where: { slug: raw.replace(/^tax:/, "").split(":")[0]! },
     select: { id: true },
@@ -312,11 +331,28 @@ export async function POST(request: Request) {
       }
 
       const columns = criteriaToAlertRuleColumns(normalized.filters);
+      let followableCategoryId: string | null = null;
+      try {
+        followableCategoryId = await assertFollowableCategoryId(
+          body.categoryId || null,
+        );
+      } catch (error) {
+        return NextResponse.json(
+          {
+            ok: false,
+            message:
+              error instanceof Error
+                ? error.message
+                : "Sistem kategorisi takip edilemez.",
+          },
+          { status: 400 },
+        );
+      }
       const rule = await prisma.alertRule.create({
         data: {
           ...ownerCreateData(ctx),
           name,
-          categoryId: body.categoryId || null,
+          categoryId: followableCategoryId,
           city: columns.city,
           district: columns.district,
           minBudget: columns.minBudget,
@@ -354,7 +390,26 @@ export async function POST(request: Request) {
 
       const categoryId =
         body.categoryId !== undefined ? body.categoryId : existing.categoryId;
-      const categorySlug = await resolveCategorySlug(categoryId);
+      let followableCategoryId = categoryId;
+      if (body.categoryId !== undefined) {
+        try {
+          followableCategoryId = await assertFollowableCategoryId(
+            body.categoryId || null,
+          );
+        } catch (error) {
+          return NextResponse.json(
+            {
+              ok: false,
+              message:
+                error instanceof Error
+                  ? error.message
+                  : "Sistem kategorisi takip edilemez.",
+            },
+            { status: 400 },
+          );
+        }
+      }
+      const categorySlug = await resolveCategorySlug(followableCategoryId);
       const attrCheck =
         body.attributes !== undefined
           ? validateAlertRuleAttributes(categorySlug, body.attributes)
@@ -408,7 +463,7 @@ export async function POST(request: Request) {
       const updateData: Prisma.AlertRuleUncheckedUpdateManyInput = {
         ...(body.name !== undefined ? { name: body.name.trim() } : {}),
         ...(body.categoryId !== undefined
-          ? { categoryId: body.categoryId || null }
+          ? { categoryId: followableCategoryId }
           : {}),
         ...(columns
           ? {

@@ -8,6 +8,7 @@ import type {
   ConstraintMatchContract,
   ConstraintStrength,
 } from "@/lib/request-understanding/constraint-semantics";
+import type { RequestUnderstandingSnapshot } from "@/lib/request/understanding-snapshot";
 
 export const DISCOVERY_PROJECTION_VERSION = 1 as const;
 export const DISCOVERY_FILTER_VERSION = 1 as const;
@@ -47,6 +48,11 @@ export type RequestDiscoveryProjection = {
   /** Reuse Phase 2 filter contract shape. */
   filterContract: ConstraintFilterContract;
   builtAt: string;
+  /**
+   * Phase 1 — publish-time understanding audit snapshot.
+   * Optional; matching/filter evaluators must ignore this block.
+   */
+  understanding?: RequestUnderstandingSnapshot;
 };
 
 /**

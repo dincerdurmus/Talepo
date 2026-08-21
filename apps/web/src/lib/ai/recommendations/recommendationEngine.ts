@@ -1,5 +1,5 @@
 import { isValidRealEstateLocation, parseRealEstateCity } from "@/lib/geo/turkey-districts";
-import { getCategoryById } from "@/lib/request-category-engine";
+import { resolveRequestCategory } from "@/lib/request-category-engine";
 
 import type { ParsedRequest, Recommendation } from "../types";
 
@@ -7,7 +7,7 @@ export function createRecommendations(
   request: ParsedRequest
 ): Recommendation[] {
   const recommendations: Recommendation[] = [];
-  const category = getCategoryById(request.categoryId);
+  const category = resolveRequestCategory(request.categoryId);
   const commonFieldKeys = new Set(category.commonFields.map((field) => field.key));
 
   if (commonFieldKeys.has("city")) {

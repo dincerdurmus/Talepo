@@ -98,7 +98,9 @@ export function summarizeSavedSearchFilters(filters: SavedSearchFilters): string
   if (filters.categorySlug) {
     const category = getCategoryById(filters.categorySlug);
     parts.push(
-      category.id === filters.categorySlug ? category.label : filters.categorySlug,
+      category && category.id === filters.categorySlug
+        ? category.label
+        : filters.categorySlug,
     );
   }
   if (filters.city) parts.push(filters.city);

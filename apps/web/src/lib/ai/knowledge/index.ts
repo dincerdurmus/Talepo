@@ -1,5 +1,5 @@
 import {
-  getCategoryById,
+  resolveRequestCategory,
   getVisibleCategoryFields,
   withCategoryFieldDefaults,
 } from "@/lib/request-category-engine";
@@ -11,7 +11,7 @@ export function runKnowledgeEngine(
 ): KnowledgeResult {
   const notes: string[] = [];
   const suggestions: string[] = [];
-  const category = getCategoryById(request.categoryId);
+  const category = resolveRequestCategory(request.categoryId);
   const commonFieldKeys = new Set(category.commonFields.map((field) => field.key));
 
   if (request.categoryId === "printing") {

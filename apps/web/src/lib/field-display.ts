@@ -56,7 +56,7 @@ export function resolveFieldOptionLabel(input: {
   if (fromStored) return fromStored;
 
   if (input.categoryId && input.fieldKey) {
-    const field = getCategoryById(input.categoryId).fields.find(
+    const field = getCategoryById(input.categoryId)?.fields.find(
       (item) => item.key === input.fieldKey,
     );
     const fromCategory = labelFromOptions(value, field?.options ?? []);

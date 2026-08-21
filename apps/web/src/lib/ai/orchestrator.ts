@@ -1,4 +1,4 @@
-import { getCategoryById } from "@/lib/request-category-engine";
+import { resolveRequestCategory } from "@/lib/request-category-engine";
 
 import type { AiCoreResult } from "./types";
 import { parseRequest } from "./parser/parser";
@@ -16,7 +16,7 @@ import { createRecommendations } from "./recommendations/recommendationEngine";
  */
 export function runTalepoAiCore(text: string): AiCoreResult {
   const parsed = parseRequest(text);
-  const category = getCategoryById(parsed.categoryId);
+  const category = resolveRequestCategory(parsed.categoryId);
   const knowledge = runKnowledgeEngine(parsed);
   const pricing = estimatePrice(parsed);
   const matching = estimateCompanyMatches(parsed);

@@ -29,7 +29,7 @@ import {
 import { parseNeighborhoods } from "@/lib/geo/neighborhoods";
 import { parseRealEstateCity } from "@/lib/geo/turkey-districts";
 import {
-  getCategoryById,
+  resolveRequestCategory,
   getVisibleCategoryFields,
   isFieldRequired,
   resolveCommonField,
@@ -42,11 +42,22 @@ import {
   safeDraftAttributes,
   seedFieldValuesFromUnderstanding,
 } from "@/lib/request-understanding/activation-bridge";
+import {
+  sanitizeRawInput,
+  UNRESOLVED_CATEGORY_SLUG,
+} from "@/lib/request/raw-input";
+import {
+  buildPublishUnderstandingSnapshot,
+  withUnderstandingSnapshot,
+} from "@/lib/request/publish-understanding";
+import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
+import { createTextOnlyState } from "@/lib/request-composer";
 
 export type EditRequestInitial = {
   id: string;
   title: string;
   description: string;
+  rawInput: string | null;
   professionalDescription: string | null;
   city: string | null;
   budget: string | null;
@@ -72,7 +83,10 @@ export function EditRequestForm({
 }) {
   const router = useRouter();
   const [requestText, setRequestText] = useState(
-    initial.description || initial.professionalDescription || "",
+    initial.rawInput ||
+      initial.description ||
+      initial.professionalDescription ||
+      "",
   );
   const [manualValues, setManualValues] = useState<Record<string, string>>(
     initial.fieldValues,
@@ -135,7 +149,7 @@ export function EditRequestForm({
   // Düzenlemede kategori sabit kalır (persisted STRUCTURED_FIELD).
   const activeCategoryId = initial.categorySlug;
   const isRealEstate = activeCategoryId === "real-estate";
-  const selectedCategory = getCategoryById(activeCategoryId);
+  const selectedCategory = resolveRequestCategory(activeCategoryId);
   const visibleCommonFields = selectedCategory.commonFields.map(
     resolveCommonField,
   );
@@ -152,7 +166,7 @@ export function EditRequestForm({
     budgetDisplayFromUnderstanding(understanding);
 
   const dynamicValues = useMemo(() => {
-    const category = getCategoryById(activeCategoryId);
+    const category = resolveRequestCategory(activeCategoryId);
     const values: Record<string, string> = {};
     for (const field of category.fields) {
       const seeded = seededFields[field.key];
@@ -254,10 +268,15 @@ export function EditRequestForm({
         body: JSON.stringify({
           title: mergedCommonDraft.title,
           description: requestText.trim() || professionalText,
+          rawInput: sanitizeRawInput(requestText),
           professionalDescription: professionalText,
           category: {
-            slug: selectedCategory.id,
-            name: selectedCategory.label,
+            slug: selectedCategory.id?.trim()
+              ? selectedCategory.id
+              : UNRESOLVED_CATEGORY_SLUG,
+            name: selectedCategory.id?.trim()
+              ? selectedCategory.label
+              : "Belirsiz kategori (sistem)",
             description: selectedCategory.description,
           },
           city: mergedCommonDraft.city,
@@ -274,6 +293,19 @@ export function EditRequestForm({
           ].join("\n"),
           isUrgent,
           publishVersion: "ai",
+          discoveryProjection: (() => {
+            const state = createTextOnlyState(requestText.trim() || professionalText);
+            const base = buildDiscoveryProjectionFromState(state);
+            const snap = buildPublishUnderstandingSnapshot({
+              understanding,
+              userSelected: false,
+              primarySlug: selectedCategory.id?.trim() || null,
+              confirmedFieldKeys: Object.keys(manualValues).filter(
+                (key) => (manualValues[key] ?? "").trim().length > 0,
+              ),
+            });
+            return withUnderstandingSnapshot(base, snap) ?? undefined;
+          })(),
           fields: [
             ...visibleDynamicFields.map((field) => ({
               ...field,

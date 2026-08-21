@@ -1,5 +1,6 @@
 import { getPlanDefinition } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
+import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
 import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
 
@@ -76,7 +77,12 @@ export async function distributeRequestToCompanies(
     })
   ).map((row) => row.companyId);
 
-  const categoryLinked = await prisma.company.findMany({
+  // Soft system category must not behave like a product category for fanout.
+  const skipCategoryFanout = isSystemCategorySlug(request.category.slug);
+
+  const categoryLinked = skipCategoryFanout
+    ? []
+    : await prisma.company.findMany({
     where: {
       status: "ACTIVE",
       deletedAt: null,

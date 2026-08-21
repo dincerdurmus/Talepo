@@ -38,6 +38,7 @@ import { requireUser } from "@/server/auth/require-user";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
 import { ensureEngineCategories } from "@/server/company/sync-company-categories";
+import { excludeSystemCategories } from "@/lib/request/raw-input";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 
 type ExploreTab = "matched" | "all" | "newest";
@@ -205,11 +206,13 @@ export default async function ExploreRequestsPage({
     await backfillMatchesForCompany(companyMeta.id);
   }
 
-  const categories = await prisma.category.findMany({
-    where: { isActive: true },
-    select: { id: true, name: true, slug: true },
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
+  const categories = excludeSystemCategories(
+    await prisma.category.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+  );
 
   // Interests are URL-only (`?interest=...`) — leaving the page clears them.
   const interestSlugs = parseInterestSlugs(params.interest);

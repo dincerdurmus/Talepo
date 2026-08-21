@@ -74,11 +74,11 @@ import {
   TURKEY_PROVINCES,
 } from "@/lib/geo/turkey-districts";
 import {
-  getCategoryById,
   getVisibleCategoryFields,
   isFieldRequired,
   REQUEST_CATEGORIES,
   resolveCommonField,
+  resolveRequestCategory,
   withCategoryFieldDefaults,
   type DynamicField,
 } from "@/lib/request-category-engine";
@@ -87,6 +87,15 @@ import {
   toCatalogPreviewModel,
 } from "@/lib/catalog/consumer";
 import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
+import {
+  UNRESOLVED_CATEGORY_SLUG,
+  sanitizeRawInput,
+} from "@/lib/request/raw-input";
+import type { CategoryUserChoice } from "@/lib/request/understanding-snapshot";
+import {
+  buildPublishUnderstandingSnapshot,
+  withUnderstandingSnapshot,
+} from "@/lib/request/publish-understanding";
 import {
   composeNaturalRequestText,
   resolveHybridQuestions,
@@ -500,7 +509,7 @@ function TalepOlusturForm() {
     }
     return detectedCategoryId;
   })();
-  const selectedCategory = getCategoryById(activeCategoryId);
+  const selectedCategory = resolveRequestCategory(activeCategoryId);
   const visibleCommonFields = useMemo(
     () => selectedCategory.commonFields.map(resolveCommonField),
     [selectedCategory],
@@ -585,7 +594,7 @@ function TalepOlusturForm() {
     : suggestedRealEstateLocation;
 
   const dynamicValues = useMemo(() => {
-    const category = getCategoryById(activeCategoryId);
+    const category = resolveRequestCategory(activeCategoryId);
     const values: Record<string, string> = {};
     const composerFill = hybrid.softFillFields;
 
@@ -620,7 +629,7 @@ function TalepOlusturForm() {
   );
 
   const autoTitle = useMemo(() => {
-    const category = getCategoryById(activeCategoryId);
+    const category = resolveRequestCategory(activeCategoryId);
     return composeRequestTitle({
       categoryId: activeCategoryId,
       rawText: requestText,
@@ -1958,6 +1967,33 @@ function TalepOlusturForm() {
         ? professionalText
         : requestText.trim();
 
+    const rawInputForPublish = sanitizeRawInput(requestText);
+    const persistCategorySlug = selectedCategory.id?.trim()
+      ? selectedCategory.id
+      : UNRESOLVED_CATEGORY_SLUG;
+    const persistCategoryName = selectedCategory.id?.trim()
+      ? selectedCategory.label
+      : "Belirsiz kategori (sistem)";
+
+    const baseProjection = hybrid.state
+      ? buildDiscoveryProjectionFromState(hybrid.state)
+      : null;
+    const understandingSnapshot = buildPublishUnderstandingSnapshot({
+      understanding,
+      userSelected: categoryLockedByUser,
+      userChoice: null as CategoryUserChoice,
+      confirmedFieldKeys: Object.keys(manualValues).filter(
+        (key) => (manualValues[key] ?? "").trim().length > 0,
+      ),
+      primarySlug: persistCategorySlug === UNRESOLVED_CATEGORY_SLUG
+        ? null
+        : persistCategorySlug,
+    });
+    const discoveryProjection = withUnderstandingSnapshot(
+      baseProjection,
+      understandingSnapshot,
+    );
+
     try {
       const response = await fetch("/api/requests", {
         method: "POST",
@@ -1967,10 +2003,11 @@ function TalepOlusturForm() {
         body: JSON.stringify({
           title: mergedCommonDraft.title,
           description: descriptionForPublish,
+          rawInput: rawInputForPublish,
           professionalDescription: professionalText,
           category: {
-            slug: selectedCategory.id,
-            name: selectedCategory.label,
+            slug: persistCategorySlug,
+            name: persistCategoryName,
             description: selectedCategory.description,
           },
           city: mergedCommonDraft.city,
@@ -1980,7 +2017,7 @@ function TalepOlusturForm() {
           budget: mergedCommonDraft.budget,
           aiScore: completenessPct,
           aiSummary: [
-            `Kategori: ${selectedCategory.label}`,
+            `Kategori: ${persistCategoryName}`,
             `AI güveni: %${Math.round(understanding.understandingConfidence * 100)}`,
             `Tahmini firma: ${matchingDisplay.estimatedCompanyCount}`,
             `Beklenen teklif: ${matchingDisplay.expectedOfferCount}`,
@@ -1988,10 +2025,8 @@ function TalepOlusturForm() {
           isUrgent,
           featureBoost: featureBoost || null,
           publishVersion: version,
-          // Phase 3A — publish-time discovery projection (Single Brain snapshot)
-          discoveryProjection: hybrid.state
-            ? buildDiscoveryProjectionFromState(hybrid.state)
-            : undefined,
+          // Phase 3A + Phase 1 understanding snapshot
+          discoveryProjection: discoveryProjection ?? undefined,
           fields: [
             ...visibleDynamicFields.map((field) => ({
               ...field,

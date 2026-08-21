@@ -98,8 +98,11 @@ export function listRegistryCategorySlugs(): string[] {
   return REQUEST_CATEGORIES.map((c) => c.id);
 }
 
-export function getRegistryCategory(slug: string): RequestCategory {
-  return getCategoryById(slug);
+export function getRegistryCategory(slug: string): RequestCategory | null {
+  const category = getCategoryById(slug);
+  // Engine product categories only — UNKNOWN shell is not a registry entry.
+  if (!category?.id) return null;
+  return category;
 }
 
 export function listCategoryCoverage(): CategoryCoverageEntry[] {
@@ -145,6 +148,7 @@ export function selectFingerprintFieldKeys(
   maxKeys = 8,
 ): string[] {
   const category = getCategoryById(categorySlug);
+  if (!category?.id) return [];
   const filledKeys = new Set(
     Object.entries(attributes)
       .filter(([, v]) => v?.trim())
@@ -248,7 +252,11 @@ export function deriveProviderProfile(category: RequestCategory): CategoryProvid
 }
 
 export function getProviderProfile(categorySlug: string): CategoryProviderProfile {
-  return deriveProviderProfile(getCategoryById(categorySlug));
+  const category = getCategoryById(categorySlug);
+  if (!category?.id) {
+    return { shopping: 0, realEstate: 0, internal: 1, primaryRoute: "internal" };
+  }
+  return deriveProviderProfile(category);
 }
 
 export function supportsExternalProvider(
@@ -319,7 +327,7 @@ export function computeNormalizationConfidence(input: {
 }): number {
   const filledCount = Object.values(input.attributes).filter((v) => v?.trim()).length;
   const category = getCategoryById(input.categorySlug);
-  const maxFields = Math.max(1, category.fields.length);
+  const maxFields = Math.max(1, category?.fields.length ?? 1);
 
   let confidence = 0.15;
   confidence += Math.min(0.35, (filledCount / maxFields) * 0.35);

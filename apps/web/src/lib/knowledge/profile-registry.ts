@@ -68,7 +68,7 @@ export function resolveKnowledgeProfile(
   // Unknown subcategory label on a known category → inherit domain with DISCOVERY_ONLY lean
   const label =
     input.subcategoryLabel?.trim() ||
-    category.subcategories.find((s) => subcategorySlug(s) === slug) ||
+    category?.subcategories.find((s) => subcategorySlug(s) === slug) ||
     slug;
 
   return {

@@ -4,7 +4,7 @@
  */
 
 import {
-  getCategoryById,
+  resolveRequestCategory,
   getVisibleCategoryFields,
   type DynamicField,
 } from "@/lib/request-category-engine";
@@ -919,7 +919,7 @@ export function resolveRequestSchema(
   input: ResolveRequestSchemaInput,
 ): ResolvedRequestSchema {
   const profile = resolveKnowledgeProfile(input);
-  const category = getCategoryById(input.categoryId);
+  const category = resolveRequestCategory(input.categoryId);
   const values = input.values ?? {};
   const engineFields = getVisibleCategoryFields(
     category.fields,

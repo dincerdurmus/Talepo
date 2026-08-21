@@ -900,6 +900,10 @@ model Request {
   title       String
   description String @db.Text
 
+  /// User-authored free text (pre-AI). Never overwritten by professionalDescription.
+  /// Null on legacy rows; best-effort backfill may copy description (may not be true original).
+  rawInput String? @db.Text
+
   status RequestStatus @default(DRAFT)
 
   /// Moderation visibility is independent from the commercial lifecycle.

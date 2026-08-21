@@ -1,4 +1,4 @@
-import { getCategoryById } from "@/lib/request-category-engine";
+import { getCategoryById, UNKNOWN_REQUEST_CATEGORY } from "@/lib/request-category-engine";
 
 export type PreviewCategoryResolution = {
   categoryId: string;
@@ -15,9 +15,20 @@ export function syntheticPreviewCategoryId(slug: string): string {
 
 /**
  * Sync resolver — REQUEST_CATEGORIES source-of-truth, no DB required.
+ * Unknown slugs do not silently map to an unrelated product category.
  */
 export function resolvePreviewCategorySync(categorySlug: string): PreviewCategoryResolution {
-  const category = getCategoryById(categorySlug.trim());
+  const trimmed = categorySlug.trim();
+  const category = getCategoryById(trimmed);
+  if (!category?.id) {
+    const shell = UNKNOWN_REQUEST_CATEGORY;
+    return {
+      categoryId: syntheticPreviewCategoryId(trimmed || "unknown"),
+      categorySlug: trimmed || "unknown",
+      label: shell.label,
+      previewOnly: true,
+    };
+  }
   return {
     categoryId: syntheticPreviewCategoryId(category.id),
     categorySlug: category.id,

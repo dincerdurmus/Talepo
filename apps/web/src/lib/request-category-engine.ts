@@ -1928,12 +1928,26 @@ export const UNKNOWN_REQUEST_CATEGORY: RequestCategory = {
   fields: [],
 };
 
-export function getCategoryById(id: string): RequestCategory {
-  if (!id || id === "unknown") return UNKNOWN_REQUEST_CATEGORY;
-  return (
-    REQUEST_CATEGORIES.find((category) => category.id === id) ??
-    REQUEST_CATEGORIES[REQUEST_CATEGORIES.length - 1]
-  );
+/**
+ * Resolve an engine category by id/slug.
+ * - empty / "unknown" / "unresolved" → explicit UNKNOWN shell (not a product category)
+ * - known id → category
+ * - unknown id → null (never silent-fallback to the last category)
+ */
+export function getCategoryById(id: string): RequestCategory | null {
+  const trimmed = id?.trim() ?? "";
+  if (!trimmed || trimmed === "unknown" || trimmed === "unresolved") {
+    return UNKNOWN_REQUEST_CATEGORY;
+  }
+  return REQUEST_CATEGORIES.find((category) => category.id === trimmed) ?? null;
+}
+
+/** UI-safe resolve: unknown ids become UNKNOWN shell, never an unrelated category. */
+export function resolveRequestCategory(
+  id: string | null | undefined,
+): RequestCategory {
+  if (id == null) return UNKNOWN_REQUEST_CATEGORY;
+  return getCategoryById(id) ?? UNKNOWN_REQUEST_CATEGORY;
 }
 
 /**

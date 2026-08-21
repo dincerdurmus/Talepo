@@ -422,7 +422,11 @@ function realEstatePropertyTypeLeaves(
 
 export function getCategoryChildren(categoryId: string): BrowseNode[] {
   const cat = getCategoryById(categoryId);
-  if (cat.id !== categoryId && !REQUEST_CATEGORIES.some((c) => c.id === categoryId)) {
+  if (
+    !cat ||
+    (cat.id !== categoryId &&
+      !REQUEST_CATEGORIES.some((c) => c.id === categoryId))
+  ) {
     return [];
   }
   const real = REQUEST_CATEGORIES.find((c) => c.id === categoryId);

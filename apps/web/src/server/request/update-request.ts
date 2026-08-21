@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import {
+  isSystemCategorySlug,
+  UNRESOLVED_CATEGORY_NAME,
+} from "@/lib/request/raw-input";
 
 import { recordRequestChanges } from "@/server/monetization/request-changes";
 
@@ -57,16 +61,19 @@ export async function updateRequest(
       ]);
     }
 
+    const categoryName = isSystemCategorySlug(input.category.slug)
+      ? UNRESOLVED_CATEGORY_NAME
+      : input.category.name;
     const category = await tx.category.upsert({
       where: { slug: input.category.slug },
       update: {
-        name: input.category.name,
+        name: categoryName,
         description: input.category.description,
         isActive: true,
       },
       create: {
         slug: input.category.slug,
-        name: input.category.name,
+        name: categoryName,
         description: input.category.description,
         isActive: true,
       },
@@ -81,14 +88,14 @@ export async function updateRequest(
         },
       },
       update: {
-        name: `${input.category.name} Talep Formu`,
-        description: `${input.category.name} kategorisi için dinamik talep formu`,
+        name: `${categoryName} Talep Formu`,
+        description: `${categoryName} kategorisi için dinamik talep formu`,
         isActive: true,
       },
       create: {
         categoryId: category.id,
-        name: `${input.category.name} Talep Formu`,
-        description: `${input.category.name} kategorisi için dinamik talep formu`,
+        name: `${categoryName} Talep Formu`,
+        description: `${categoryName} kategorisi için dinamik talep formu`,
         version: 1,
         isActive: true,
       },
@@ -145,10 +152,16 @@ export async function updateRequest(
         formId: form.id,
         title: input.title,
         description: input.description,
+        ...(input.rawInput !== undefined
+          ? { rawInput: input.rawInput }
+          : {}),
         professionalDescription:
           input.professionalDescription || input.description,
         aiScore: input.aiScore,
         aiSummary: buildAiSummary(input),
+        ...(input.discoveryProjection
+          ? { discoveryProjection: input.discoveryProjection }
+          : {}),
         city: input.city,
         district: input.district,
         budgetMin: budget.min,

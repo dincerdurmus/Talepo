@@ -5,6 +5,12 @@ import {
   parseRealEstateCity,
 } from "@/lib/geo/turkey-districts";
 import { isValidNeighborhoodSelection } from "@/lib/geo/turkey-neighborhoods";
+import { getCategoryById } from "@/lib/request-category-engine";
+import {
+  UNRESOLVED_CATEGORY_NAME,
+  UNRESOLVED_CATEGORY_SLUG,
+  sanitizeRawInput,
+} from "@/lib/request/raw-input";
 
 export type RequestFieldInput = {
   key: string;
@@ -20,6 +26,12 @@ export type RequestFieldInput = {
 export type CreateRequestInput = {
   title: string;
   description: string;
+  /**
+   * User-authored free text.
+   * - create: always resolved (explicit or description fallback)
+   * - update: undefined means "do not overwrite existing rawInput"
+   */
+  rawInput?: string;
   professionalDescription?: string;
   category: {
     slug: string;
@@ -46,6 +58,7 @@ export type CreateRequestInput = {
   /**
    * Phase 3A — validated discovery projection from Single Brain / hybrid state.
    * Optional; server may rebuild from text when missing.
+   * May include Phase 1 `understanding` audit snapshot.
    */
   discoveryProjection?: unknown;
   /** Phase 4B — optional client Idempotency-Key (also accepted via header). */
@@ -83,6 +96,35 @@ export function parseJsonObject(raw: string): unknown {
   }
 }
 
+/**
+ * Normalize category slug for persistence.
+ * Unknown / empty engine ids become soft `unresolved` — never invent a product category.
+ */
+export function resolvePersistCategorySlug(input: {
+  slug: string;
+  name: string;
+}): { slug: string; name: string } {
+  const slug = input.slug.trim();
+  const name = input.name.trim();
+  if (!slug || slug === "unknown") {
+    return {
+      slug: UNRESOLVED_CATEGORY_SLUG,
+      name: UNRESOLVED_CATEGORY_NAME,
+    };
+  }
+  if (slug === UNRESOLVED_CATEGORY_SLUG) {
+    return { slug, name: UNRESOLVED_CATEGORY_NAME };
+  }
+  const known = getCategoryById(slug);
+  if (!known?.id) {
+    return {
+      slug: UNRESOLVED_CATEGORY_SLUG,
+      name: UNRESOLVED_CATEGORY_NAME,
+    };
+  }
+  return { slug: known.id, name: name || known.label };
+}
+
 export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   if (!value || typeof value !== "object") {
     throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
@@ -100,17 +142,38 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
     raw.professionalDescription,
     10_000,
   );
-  const categorySlug = asCleanString(rawCategory.slug, 80)
+  // Explicit non-empty rawInput only. Omitted/empty on update must NOT fall
+  // back to description (which may be AI professional text) and wipe originals.
+  const rawInputExplicit =
+    typeof raw.rawInput === "string" && sanitizeRawInput(raw.rawInput).length > 0
+      ? sanitizeRawInput(raw.rawInput)
+      : undefined;
+
+  let categorySlug = asCleanString(rawCategory.slug, 80)
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-  const categoryName = asCleanString(rawCategory.name, 120);
+  let categoryName = asCleanString(rawCategory.name, 120);
   const publishVersion = raw.publishVersion === "manual" ? "manual" : "ai";
+
+  const persisted = resolvePersistCategorySlug({
+    slug: categorySlug,
+    name: categoryName,
+  });
+  categorySlug = persisted.slug;
+  categoryName = persisted.name;
 
   const issues: string[] = [];
   if (title.length < 3) issues.push("Talep başlığı en az 3 karakter olmalı.");
-  if (description.length < 10) issues.push("Talep açıklaması en az 10 karakter olmalı.");
+  // Allow rawInput to satisfy the body length gate for soft-category publishes.
+  const bodyForGate =
+    description.length >= 10
+      ? description
+      : rawInputExplicit ?? sanitizeRawInput(description);
+  if (bodyForGate.length < 10) {
+    issues.push("Talep açıklaması en az 10 karakter olmalı.");
+  }
   if (!categorySlug) issues.push("Kategori bilgisi eksik.");
   if (!categoryName) issues.push("Kategori adı eksik.");
 
@@ -183,7 +246,8 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
 
   return {
     title,
-    description,
+    description: description || rawInputExplicit || "",
+    rawInput: rawInputExplicit,
     professionalDescription: professionalDescription || undefined,
     category: {
       slug: categorySlug,
@@ -211,6 +275,7 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
     coverImageUrl,
     fields,
     discoveryProjection: parseDiscoveryProjection(raw.discoveryProjection) ?? undefined,
-    idempotencyKey: asCleanString(raw.idempotencyKey, 128) || undefined,
+    idempotencyKey:
+      typeof raw.idempotencyKey === "string" ? raw.idempotencyKey : null,
   };
 }

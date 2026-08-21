@@ -70,9 +70,10 @@
     }
   ],
   "notes": [
-    "Root categories/subcategories mirror REQUEST_CATEGORIES (11/59).",
+    "Root categories/subcategories mirror REQUEST_CATEGORIES (11 roots / 58 subcategories).",
     "Kitchen/bath fixtures live under home-kitchen/Diğer (no dedicated kitchen-bath root).",
     "Automotive brand/model/generation authority remains CatalogRegistry.",
-    "Automotive spare part system ids align with data/catalogs/automotive/automotive-part-taxonomy.json."
+    "Automotive spare part system ids align with data/catalogs/automotive/automotive-part-taxonomy.json.",
+    "Counts are verified by apps/web/scripts/verify-taxonomy-drift-v1.ts — do not hand-edit count claims."
   ]
 }

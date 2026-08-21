@@ -64,7 +64,8 @@ function resolveFollowCategory(filters: SavedSearchFilters): {
   const category = getCategoryById(slug);
   return {
     categorySlug: slug,
-    categoryLabel: category.id === slug ? category.label : null,
+    categoryLabel:
+      category && category.id === slug ? category.label : null,
   };
 }
 

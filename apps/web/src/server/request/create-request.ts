@@ -29,6 +29,10 @@ import {
   parseBudgetRange,
 } from "./mapper";
 import type { CreateRequestInput } from "./request-schema";
+import {
+  isSystemCategorySlug,
+  UNRESOLVED_CATEGORY_NAME,
+} from "@/lib/request/raw-input";
 
 const log = createSubsystemLogger("request");
 
@@ -38,8 +42,9 @@ function resolveDiscoveryProjection(
   const fromClient = parseDiscoveryProjection(input.discoveryProjection);
   if (fromClient) return fromClient;
 
-  // Publish-time rebuild from description — not a matching brain, one-shot projection
+  // Publish-time rebuild prefers durable rawInput, then description
   const text =
+    input.rawInput?.trim() ||
     input.description?.trim() ||
     input.professionalDescription?.trim() ||
     input.title;
@@ -125,16 +130,19 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
   }
 
   return prisma.$transaction(async (tx) => {
+    const categoryName = isSystemCategorySlug(input.category.slug)
+      ? UNRESOLVED_CATEGORY_NAME
+      : input.category.name;
     const category = await tx.category.upsert({
       where: { slug: input.category.slug },
       update: {
-        name: input.category.name,
+        name: categoryName,
         description: input.category.description,
         isActive: true,
       },
       create: {
         slug: input.category.slug,
-        name: input.category.name,
+        name: categoryName,
         description: input.category.description,
         isActive: true,
       },
@@ -149,14 +157,14 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         },
       },
       update: {
-        name: `${input.category.name} Talep Formu`,
-        description: `${input.category.name} kategorisi için dinamik talep formu`,
+        name: `${categoryName} Talep Formu`,
+        description: `${categoryName} kategorisi için dinamik talep formu`,
         isActive: true,
       },
       create: {
         categoryId: category.id,
-        name: `${input.category.name} Talep Formu`,
-        description: `${input.category.name} kategorisi için dinamik talep formu`,
+        name: `${categoryName} Talep Formu`,
+        description: `${categoryName} kategorisi için dinamik talep formu`,
         version: 1,
         isActive: true,
       },
@@ -216,6 +224,12 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
     }
 
     const discoveryProjection = resolveDiscoveryProjection(input);
+    // Create always stores a rawInput: explicit client value, else description fallback
+    // (legacy clients). Never use professionalDescription as rawInput.
+    const rawInputToStore =
+      input.rawInput?.trim() ||
+      input.description?.trim() ||
+      "";
 
     const request = await tx.request.create({
       data: {
@@ -224,6 +238,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         formId: form.id,
         title: input.title,
         description: input.description,
+        rawInput: rawInputToStore || null,
         professionalDescription:
           input.professionalDescription || input.description,
         aiScore: input.aiScore,

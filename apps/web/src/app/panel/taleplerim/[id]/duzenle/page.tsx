@@ -54,6 +54,7 @@ export default async function EditMyRequestPage({
     id: request.id,
     title: request.title,
     description: request.description,
+    rawInput: request.rawInput,
     professionalDescription: request.professionalDescription,
     city: request.city,
     budget: request.budgetMin ? String(Number(request.budgetMin)) : null,
