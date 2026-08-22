@@ -1833,6 +1833,278 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Magnet"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:magnet",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Magnet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ajanda"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:ajanda",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Ajanda",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [
+        "duvar takvimi",
+        "masa takvimi"
+      ],
+      "searchTerms": [
+        "Takvim"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:takvim",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Takvim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anahtarlık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:anahtarlik",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Anahtarlık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kupa Baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:promosyon-urunleri:kupa-baski",
+      "parentId": "tax:printing:promosyon:promosyon-urunleri",
+      "canonicalName": "Kupa Baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Afiş"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:afis",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Afiş",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Branda Baskı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:branda-baski",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Branda Baskı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [
+        "rollup",
+        "roll up"
+      ],
+      "searchTerms": [
+        "Roll-up Banner"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:roll-up-banner",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Roll-up Banner",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fuar Standı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:fuar-standi",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Fuar Standı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sertifika"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:sertifika",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Sertifika",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [
+        "kase baski"
+      ],
+      "searchTerms": [
+        "Kaşe"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:kase",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Kaşe",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bloknot"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:diger-matbaa-isleri:bloknot",
+      "parentId": "tax:printing:diger:diger-matbaa-isleri",
+      "canonicalName": "Bloknot",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Matbaaloji"
+      }
     }
   ]
 }

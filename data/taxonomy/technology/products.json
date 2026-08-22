@@ -1257,6 +1257,788 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Fotoğraf ve Kamera",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotoğraf Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotograf-makinesi",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotoğraf Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "aynasiz makine"
+      ],
+      "searchTerms": [
+        "Aynasız Fotoğraf Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:aynasiz-fotograf-makinesi",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Aynasız Fotoğraf Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "dslr"
+      ],
+      "searchTerms": [
+        "DSLR Fotoğraf Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:dslr-fotograf-makinesi",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "DSLR Fotoğraf Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kompakt Fotoğraf Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:kompakt-fotograf-makinesi",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Kompakt Fotoğraf Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "aksiyon kamera"
+      ],
+      "searchTerms": [
+        "Aksiyon Kamerası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:aksiyon-kamerasi",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Aksiyon Kamerası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Kamera"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:video-kamera",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Video Kamera",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gimbal"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:gimbal",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Gimbal",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Objektif"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:objektif",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Objektif",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tripod"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:tripod",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Tripod",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Ses ve Kulaklık",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "kablosuz kulaklık",
+        "kablosuz kulaklik"
+      ],
+      "searchTerms": [
+        "Bluetooth Kulaklık"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:bluetooth-kulaklik",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Bluetooth Kulaklık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "kulakici kulaklik"
+      ],
+      "searchTerms": [
+        "Kulak İçi Kulaklık"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:kulak-ici-kulaklik",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Kulak İçi Kulaklık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bluetooth Hoparlör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:bluetooth-hoparlor",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Bluetooth Hoparlör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Soundbar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:soundbar",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Soundbar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mikrofon"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:mikrofon",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Mikrofon",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:oyun-ve-eglence",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Oyun ve Eğlence",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "oyun kolu"
+      ],
+      "searchTerms": [
+        "Gamepad"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:oyun-ve-eglence:gamepad",
+      "parentId": "tax:technology:donanim:oyun-ve-eglence",
+      "canonicalName": "Gamepad",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "sanal gerçeklik gözlüğü",
+        "vr gozluk"
+      ],
+      "searchTerms": [
+        "VR Gözlük"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:oyun-ve-eglence:vr-gozluk",
+      "parentId": "tax:technology:donanim:oyun-ve-eglence",
+      "canonicalName": "VR Gözlük",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncu Koltuğu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:oyun-ve-eglence:oyuncu-koltugu",
+      "parentId": "tax:technology:donanim:oyun-ve-eglence",
+      "canonicalName": "Oyuncu Koltuğu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:giyilebilir-teknoloji",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Giyilebilir Teknoloji",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Akıllı Bileklik"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:giyilebilir-teknoloji:akilli-bileklik",
+      "parentId": "tax:technology:donanim:giyilebilir-teknoloji",
+      "canonicalName": "Akıllı Bileklik",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ag-ve-modem",
+      "parentId": "tax:technology:donanim",
+      "canonicalName": "Ağ ve Modem",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 2,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "router"
+      ],
+      "searchTerms": [
+        "Modem"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ag-ve-modem:modem",
+      "parentId": "tax:technology:donanim:ag-ve-modem",
+      "canonicalName": "Modem",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "mesh wifi"
+      ],
+      "searchTerms": [
+        "Mesh Wi-Fi Sistemi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ag-ve-modem:mesh-wi-fi-sistemi",
+      "parentId": "tax:technology:donanim:ag-ve-modem",
+      "canonicalName": "Mesh Wi-Fi Sistemi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Access Point"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ag-ve-modem:access-point",
+      "parentId": "tax:technology:donanim:ag-ve-modem",
+      "canonicalName": "Access Point",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "network switch"
+      ],
+      "searchTerms": [
+        "Ağ Anahtarı (Switch)"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ag-ve-modem:ag-anahtari-switch",
+      "parentId": "tax:technology:donanim:ag-ve-modem",
+      "canonicalName": "Ağ Anahtarı (Switch)",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Klavye"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:klavye",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Klavye",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mouse"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:mouse",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Mouse",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Webcam"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:webcam",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Webcam",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [
+        "ups"
+      ],
+      "searchTerms": [
+        "Kesintisiz Güç Kaynağı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:kesintisiz-guc-kaynagi",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Kesintisiz Güç Kaynağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Media Player"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:media-player",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Media Player",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt"
+      }
     }
   ]
 }

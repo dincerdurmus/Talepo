@@ -992,6 +992,11 @@ export function listProfilesForCategory(input: {
   );
 }
 
+/** Read-only view of every profile — tooling/inspection only, not scheduling. */
+export function listAllProfiles(): readonly QuestionProfileDef[] {
+  return STANDARD;
+}
+
 export function importanceRank(importance: QuestionProfileDef["importance"]): number {
   switch (importance) {
     case "publish_required":

@@ -932,6 +932,340 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [
+        "baston puset"
+      ],
+      "searchTerms": [
+        "Baston Bebek Arabası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:araba-tipleri:baston-bebek-arabasi",
+      "parentId": "tax:baby:bebek-arabasi:araba-tipleri",
+      "canonicalName": "Baston Bebek Arabası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "parentId": "tax:baby:bebek-arabasi",
+      "canonicalName": "Oto koltuğu ve taşıma",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 2,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [
+        "bebek taşıyıcı",
+        "bebek tasiyici"
+      ],
+      "searchTerms": [
+        "Kanguru"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:kanguru",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Kanguru",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Portbebe"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:portbebe",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Portbebe",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mama Isıtıcı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:mama-isitici",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Mama Isıtıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Yatağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:bebek-yatagi",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Bebek Yatağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anne Yanı Beşik"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:anne-yani-besik",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Anne Yanı Beşik",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Küveti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-kuveti",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Küveti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi",
+      "parentId": "tax:baby:diger",
+      "canonicalName": "Oyun ve gezi",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Akülü Araba"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:akulu-araba",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Akülü Araba",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yürüteç"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:yurutec",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Yürüteç",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [
+        "bebek salıncağı",
+        "bebek salincagi"
+      ],
+      "searchTerms": [
+        "Salıncak"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:salincak",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Salıncak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyun Halısı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:oyun-halisi",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Oyun Halısı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Üç Teker Bisiklet"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:uc-teker-bisiklet",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Üç Teker Bisiklet",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Scooter"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:scooter",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Scooter",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
     }
   ]
 }

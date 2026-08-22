@@ -1953,6 +1953,604 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "İnşaat ve iş makineleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mini Ekskavatör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:mini-ekskavator",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Mini Ekskavatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [
+        "beko loder",
+        "loader"
+      ],
+      "searchTerms": [
+        "Yükleyici (Loder)"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:yukleyici-loder",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Yükleyici (Loder)",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beton Santrali"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:beton-santrali",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Beton Santrali",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beton Pompası"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:beton-pompasi",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Beton Pompası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kule Vinç"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:kule-vinc",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Kule Vinç",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mobil Vinç"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:mobil-vinc",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Mobil Vinç",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Silindir (Kompaktör)"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:silindir-kompaktor",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Silindir (Kompaktör)",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:enerji-ve-guc",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Enerji ve güç",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dizel Jeneratör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:enerji-ve-guc:dizel-jenerator",
+      "parentId": "tax:machinery:diger:enerji-ve-guc",
+      "canonicalName": "Dizel Jeneratör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Trafo"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:enerji-ve-guc:trafo",
+      "parentId": "tax:machinery:diger:enerji-ve-guc",
+      "canonicalName": "Trafo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Tarım makineleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Traktör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:traktor",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Traktör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Balya Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:balya-makinesi",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Balya Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mibzer"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:mibzer",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Mibzer",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pulluk"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:pulluk",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Pulluk",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Süt Sağım Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:sut-sagim-makinesi",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Süt Sağım Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yem Karma Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:yem-karma-makinesi",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Yem Karma Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "El aletleri ve hırdavat",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Matkap"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:matkap",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Matkap",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Akülü Vidalama"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:akulu-vidalama",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Akülü Vidalama",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [
+        "spiral taşlama",
+        "spiral taslama"
+      ],
+      "searchTerms": [
+        "Avuç Taşlama"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:avuc-taslama",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Avuç Taşlama",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [
+        "hilti"
+      ],
+      "searchTerms": [
+        "Kırıcı-Delici"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kirici-delici",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kırıcı-Delici",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekupaj Testere"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:dekupaj-testere",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Dekupaj Testere",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gönye Kesme Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:gonye-kesme-makinesi",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Gönye Kesme Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Basınçlı Yıkama Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:basincli-yikama-makinesi",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Basınçlı Yıkama Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Makinecim + Bauhaus"
+      }
     }
   ]
 }

@@ -94,6 +94,340 @@ function leafTypeFor(categoryId: string, subSlug: string): TaxonomyNodeType {
   return "PRODUCT_TYPE";
 }
 
+/**
+ * Hasat katmanı (2026-08-22) — perakende envanterlerinden kürasyonla alınan
+ * ürün tipleri. Kural: depth 0-1 (kök/alt kategori) motorla aynalıdır,
+ * dokunulmaz; overlay yalnız depth-2 GROUP ve depth-3 PRODUCT_TYPE ekler.
+ * Aynı isim/alias (fold bazlı) domain içinde zaten varsa atlanır.
+ */
+type HarvestLeaf = string | { name: string; aliases?: string[] };
+type HarvestAdd = { sub: string; group: string; leaves: HarvestLeaf[] };
+
+const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = {
+  technology: {
+    source: "MediaMarkt",
+    adds: [
+      { sub: "donanim", group: "Fotoğraf ve Kamera", leaves: [
+        "Fotoğraf Makinesi",
+        { name: "Aynasız Fotoğraf Makinesi", aliases: ["aynasiz makine"] },
+        { name: "DSLR Fotoğraf Makinesi", aliases: ["dslr"] },
+        "Kompakt Fotoğraf Makinesi",
+        { name: "Aksiyon Kamerası", aliases: ["aksiyon kamera"] },
+        "Video Kamera",
+        { name: "Drone", aliases: ["dron"] },
+        "Gimbal",
+        "Objektif",
+        "Tripod",
+      ] },
+      { sub: "donanim", group: "Ses ve Kulaklık", leaves: [
+        "Kulaklık",
+        { name: "Bluetooth Kulaklık", aliases: ["kablosuz kulaklık", "kablosuz kulaklik"] },
+        { name: "Kulak İçi Kulaklık", aliases: ["kulakici kulaklik"] },
+        "Bluetooth Hoparlör",
+        "Soundbar",
+        "Mikrofon",
+      ] },
+      { sub: "donanim", group: "Oyun ve Eğlence", leaves: [
+        "Oyun Konsolu",
+        { name: "Gamepad", aliases: ["oyun kolu"] },
+        { name: "VR Gözlük", aliases: ["sanal gerçeklik gözlüğü", "vr gozluk"] },
+        "Oyuncu Koltuğu",
+      ] },
+      { sub: "donanim", group: "Giyilebilir Teknoloji", leaves: [
+        { name: "Akıllı Saat", aliases: ["smartwatch"] },
+        "Akıllı Bileklik",
+      ] },
+      { sub: "donanim", group: "Ağ ve Modem", leaves: [
+        { name: "Modem", aliases: ["router"] },
+        { name: "Mesh Wi-Fi Sistemi", aliases: ["mesh wifi"] },
+        "Access Point",
+        { name: "Ağ Anahtarı (Switch)", aliases: ["network switch"] },
+      ] },
+      { sub: "donanim", group: "Çevre birimleri", leaves: [
+        "Yazıcı", "Tarayıcı", "Monitör", "Klavye", "Mouse", "Webcam",
+        { name: "Kesintisiz Güç Kaynağı", aliases: ["ups"] },
+      ] },
+      { sub: "donanim", group: "TV ve görüntü", leaves: [
+        { name: "Projeksiyon Cihazı", aliases: ["projektör", "projektor"] },
+        "Media Player",
+      ] },
+    ],
+  },
+  appliances: {
+    source: "MediaMarkt + Koçtaş",
+    adds: [
+      { sub: "beyaz-esya", group: "Ankastre ve set", leaves: [
+        "Ankastre Fırın",
+        "Ankastre Ocak",
+        { name: "Ankastre Set", aliases: ["ankastre takım", "ankastre takim"] },
+        "Davlumbaz",
+        "Set Üstü Ocak",
+        "Şarap Dolabı",
+        "Mini Buzdolabı",
+      ] },
+      { sub: "kucuk-ev-aletleri", group: "Temizlik ve kişisel bakım", leaves: [
+        "Robot Süpürge",
+        "Dikey Süpürge",
+        "Islak Kuru Süpürge",
+        "Buharlı Temizleyici",
+        "Halı Yıkama Makinesi",
+        "Ütü İstasyonu",
+        "Nem Alma Cihazı",
+        { name: "Saç Kurutma Makinesi", aliases: ["fön makinesi", "fon makinesi"] },
+        "Saç Düzleştirici",
+        "Tıraş Makinesi",
+        "Epilasyon Aleti",
+        "Dikiş Makinesi",
+      ] },
+      { sub: "isitma-sogutma-ve-havalandirma", group: "Isıtma çözümleri", leaves: [
+        "Isı Pompası",
+        "Elektrikli Şömine",
+        "Elektrikli Isıtıcı",
+        "Yağlı Radyatör",
+        "Havlupan",
+        "Panel Radyatör",
+        { name: "Şofben", aliases: ["ani su ısıtıcı", "ani su isitici"] },
+        "Termosifon",
+      ] },
+    ],
+  },
+  "home-kitchen": {
+    source: "MediaMarkt + Koçtaş",
+    adds: [
+      { sub: "diger", group: "Pişirme gereçleri", leaves: [
+        "Tencere Seti",
+        "Tava",
+        "Döküm Tencere",
+        "Düdüklü Tencere",
+        { name: "Bıçak Seti", aliases: ["mutfak bıçağı", "mutfak bicagi"] },
+        "Saklama Kabı Seti",
+        "Termos",
+      ] },
+      { sub: "diger", group: "Sofra ve sunum", leaves: [
+        "Sunum Tabağı",
+        "Servis Takımı",
+        "Kesme Tahtası",
+      ] },
+    ],
+  },
+  furniture: {
+    source: "Koçtaş",
+    adds: [
+      { sub: "ev-mobilyasi", group: "Oturma Odası & Salon", leaves: [
+        { name: "Çekyat", aliases: ["çekyat kanepe"] },
+        "Berjer",
+        "Puf",
+        "TV Ünitesi",
+        "Kitaplık",
+      ] },
+      { sub: "ev-mobilyasi", group: "Yatak Odası", leaves: [
+        "Şifonyer",
+        "Gardırop",
+        "Komodin",
+        { name: "Baza", aliases: ["baza yatak"] },
+      ] },
+      { sub: "ev-mobilyasi", group: "Tamamlayıcı Ürünler", leaves: [
+        "Ayakkabılık",
+        "Vestiyer",
+        "Dresuar",
+        "Zigon Sehpa",
+      ] },
+      { sub: "diger", group: "Bahçe ve Balkon Mobilyası", leaves: [
+        "Bahçe Oturma Grubu",
+        "Bahçe Masa Sandalye Takımı",
+        "Şezlong",
+        { name: "Bahçe Salıncağı", aliases: ["salıncak sandalye", "salincak sandalye"] },
+        "Kamelya",
+        "Balkon Seti",
+      ] },
+    ],
+  },
+  machinery: {
+    source: "Makinecim + Bauhaus",
+    adds: [
+      { sub: "diger", group: "İnşaat ve iş makineleri", leaves: [
+        { name: "Ekskavatör", aliases: ["kepçe", "kepce"] },
+        "Mini Ekskavatör",
+        { name: "Yükleyici (Loder)", aliases: ["beko loder", "loader"] },
+        "Beton Santrali",
+        "Beton Pompası",
+        "Kule Vinç",
+        "Mobil Vinç",
+        "Silindir (Kompaktör)",
+      ] },
+      { sub: "diger", group: "Enerji ve güç", leaves: [
+        "Jeneratör",
+        "Dizel Jeneratör",
+        "Trafo",
+      ] },
+      { sub: "diger", group: "Tarım makineleri", leaves: [
+        "Traktör",
+        "Balya Makinesi",
+        "Mibzer",
+        "Pulluk",
+        "Süt Sağım Makinesi",
+        "Yem Karma Makinesi",
+      ] },
+      { sub: "diger", group: "El aletleri ve hırdavat", leaves: [
+        "Matkap",
+        "Akülü Vidalama",
+        { name: "Avuç Taşlama", aliases: ["spiral taşlama", "spiral taslama"] },
+        { name: "Kırıcı-Delici", aliases: ["hilti"] },
+        "Dekupaj Testere",
+        "Gönye Kesme Makinesi",
+        "Basınçlı Yıkama Makinesi",
+      ] },
+    ],
+  },
+  printing: {
+    source: "Matbaaloji",
+    adds: [
+      { sub: "promosyon", group: "Promosyon ürünleri", leaves: [
+        "Magnet",
+        "Ajanda",
+        { name: "Takvim", aliases: ["duvar takvimi", "masa takvimi"] },
+        "Anahtarlık",
+        "Kupa Baskı",
+      ] },
+      { sub: "diger", group: "Diğer matbaa işleri", leaves: [
+        "Afiş",
+        "Poster",
+        "Branda Baskı",
+        { name: "Roll-up Banner", aliases: ["rollup", "roll up"] },
+        "Fuar Standı",
+        "Davetiye",
+        "Sertifika",
+        { name: "Kaşe", aliases: ["kase baski"] },
+        "Bloknot",
+      ] },
+    ],
+  },
+  baby: {
+    source: "e-bebek",
+    adds: [
+      { sub: "bebek-arabasi", group: "Araba tipleri", leaves: [
+        "Travel Sistem Bebek Arabası",
+        { name: "Baston Bebek Arabası", aliases: ["baston puset"] },
+        "İkiz Bebek Arabası",
+      ] },
+      { sub: "bebek-arabasi", group: "Oto koltuğu ve taşıma", leaves: [
+        "Oto Koltuğu",
+        "Ana Kucağı",
+        { name: "Kanguru", aliases: ["bebek taşıyıcı", "bebek tasiyici"] },
+        "Portbebe",
+      ] },
+      { sub: "beslenme", group: "Beslenme ürünleri", leaves: [
+        "Mama Sandalyesi",
+        "Biberon",
+        "Göğüs Pompası",
+        "Sterilizatör",
+        "Mama Isıtıcı",
+      ] },
+      { sub: "uyku-besik", group: "Uyku", leaves: [
+        { name: "Park Yatak", aliases: ["oyun parkı", "oyun parki"] },
+        "Bebek Yatağı",
+        "Uyku Tulumu",
+        "Anne Yanı Beşik",
+      ] },
+      { sub: "bakim", group: "Bakım", leaves: [
+        "Bebek Bezi",
+        "Islak Mendil",
+        "Bebek Küveti",
+        "Alt Açma Minderi",
+      ] },
+      { sub: "diger", group: "Oyun ve gezi", leaves: [
+        "Akülü Araba",
+        "Yürüteç",
+        { name: "Salıncak", aliases: ["bebek salıncağı", "bebek salincagi"] },
+        "Oyun Halısı",
+        "Üç Teker Bisiklet",
+        "Scooter",
+      ] },
+    ],
+  },
+};
+
+function applyHarvestOverlay(
+  domains: Array<{ id: string; file: string; nodes: TaxonomyNode[] }>,
+): void {
+  let added = 0;
+  let skipped = 0;
+  for (const domain of domains) {
+    const overlay = HARVEST_OVERLAY[domain.id];
+    if (!overlay) continue;
+    const nodes = domain.nodes;
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const taken = new Set<string>();
+    for (const n of nodes) {
+      taken.add(foldLabel(n.canonicalName));
+      for (const a of n.aliases) taken.add(foldLabel(a));
+    }
+    for (const add of overlay.adds) {
+      const subId = `tax:${domain.id}:${add.sub}`;
+      const subParent = byId.get(subId);
+      if (!subParent) {
+        throw new Error(`Harvest overlay: unknown subcategory ${subId}`);
+      }
+      let group = nodes.find(
+        (n) =>
+          n.parentId === subId &&
+          n.nodeType === "GROUP" &&
+          foldLabel(n.canonicalName) === foldLabel(add.group),
+      );
+      if (!group) {
+        group = nodeOf({
+          id: `${subId}:${slugPart(add.group)}`,
+          parentId: subId,
+          canonicalName: add.group,
+          nodeType: "GROUP",
+          categoryId: domain.id,
+          subcategoryId: add.sub,
+          depth: 2,
+          applicableCapabilities: capsFor(domain.id, "GROUP"),
+          requestSchemaId: subParent.requestSchemaId,
+          provenance: { source: "harvest-2026-08-22", note: overlay.source },
+        });
+        if (byId.has(group.id)) {
+          throw new Error(`Harvest overlay: id collision ${group.id}`);
+        }
+        nodes.push(group);
+        byId.set(group.id, group);
+      }
+      for (const leaf of add.leaves) {
+        const spec = typeof leaf === "string" ? { name: leaf } : leaf;
+        if (taken.has(foldLabel(spec.name))) {
+          skipped += 1;
+          continue;
+        }
+        const id = `${group.id}:${slugPart(spec.name)}`;
+        if (byId.has(id)) {
+          skipped += 1;
+          continue;
+        }
+        const node = nodeOf({
+          id,
+          parentId: group.id,
+          canonicalName: spec.name,
+          aliases: spec.aliases ?? [],
+          nodeType: "PRODUCT_TYPE",
+          categoryId: domain.id,
+          subcategoryId: add.sub,
+          depth: group.depth + 1,
+          applicableCapabilities: capsFor(domain.id, "PRODUCT_TYPE"),
+          requestSchemaId: group.requestSchemaId,
+          provenance: { source: "harvest-2026-08-22", note: overlay.source },
+        });
+        nodes.push(node);
+        byId.set(id, node);
+        taken.add(foldLabel(spec.name));
+        for (const a of spec.aliases ?? []) taken.add(foldLabel(a));
+        added += 1;
+      }
+    }
+  }
+  console.log(`Harvest overlay: +${added} product types (${skipped} already present, skipped)`);
+}
+
 function expandTree(
   nodes: TaxonomyNode[],
   parent: TaxonomyNode,
@@ -1900,6 +2234,8 @@ function main() {
     { id: "automotive", file: "spare-parts.json", nodes: automotiveTree() },
   ];
 
+  applyHarvestOverlay(domains);
+
   // Enrich aliases for common TR market terms (precision-first)
   for (const d of domains) {
     for (const n of d.nodes) {
@@ -1920,10 +2256,11 @@ function main() {
       files: [`${d.id}/${d.file}`],
     })),
     notes: [
-      "Root categories/subcategories mirror REQUEST_CATEGORIES (11/59).",
+      "Root categories/subcategories mirror REQUEST_CATEGORIES (11 roots / 58 subcategories).",
       "Kitchen/bath fixtures live under home-kitchen/Diğer (no dedicated kitchen-bath root).",
       "Automotive brand/model/generation authority remains CatalogRegistry.",
       "Automotive spare part system ids align with data/catalogs/automotive/automotive-part-taxonomy.json.",
+      "Counts are verified by apps/web/scripts/verify-taxonomy-drift-v1.ts — do not hand-edit count claims.",
     ],
   };
   writeFileSync(

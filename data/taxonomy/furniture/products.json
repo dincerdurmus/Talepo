@@ -3494,6 +3494,227 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ayakkabılık"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:ayakkabilik",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Ayakkabılık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dresuar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:dresuar",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Dresuar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zigon Sehpa"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:zigon-sehpa",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Zigon Sehpa",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "parentId": "tax:furniture:diger",
+      "canonicalName": "Bahçe ve Balkon Mobilyası",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Oturma Grubu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-oturma-grubu",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Oturma Grubu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Masa Sandalye Takımı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-masa-sandalye-takimi",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Masa Sandalye Takımı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şezlong"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:sezlong",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Şezlong",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [
+        "salıncak sandalye",
+        "salincak sandalye"
+      ],
+      "searchTerms": [
+        "Bahçe Salıncağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-salincagi",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Salıncağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kamelya"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:kamelya",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Kamelya",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Balkon Seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:balkon-seti",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Balkon Seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "Koçtaş"
+      }
     }
   ]
 }

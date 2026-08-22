@@ -1704,6 +1704,339 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:ankastre-ve-set",
+      "parentId": "tax:appliances:beyaz-esya",
+      "canonicalName": "Ankastre ve set",
+      "nodeType": "GROUP",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 2,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ankastre Ocak"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:ankastre-ve-set:ankastre-ocak",
+      "parentId": "tax:appliances:beyaz-esya:ankastre-ve-set",
+      "canonicalName": "Ankastre Ocak",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 3,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mini Buzdolabı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:beyaz-esya:ankastre-ve-set:mini-buzdolabi",
+      "parentId": "tax:appliances:beyaz-esya:ankastre-ve-set",
+      "canonicalName": "Mini Buzdolabı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "beyaz-esya",
+      "depth": 3,
+      "requestSchemaId": "appliances/beyaz-esya",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Temizlik ve kişisel bakım",
+      "nodeType": "GROUP",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Islak Kuru Süpürge"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:islak-kuru-supurge",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Islak Kuru Süpürge",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buharlı Temizleyici"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:buharli-temizleyici",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Buharlı Temizleyici",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ütü İstasyonu"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:utu-istasyonu",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Ütü İstasyonu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [
+        "fön makinesi",
+        "fon makinesi"
+      ],
+      "searchTerms": [
+        "Saç Kurutma Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:sac-kurutma-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Saç Kurutma Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saç Düzleştirici"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:sac-duzlestirici",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Saç Düzleştirici",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tıraş Makinesi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:tiras-makinesi",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Tıraş Makinesi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Epilasyon Aleti"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim:epilasyon-aleti",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:temizlik-ve-kisisel-bakim",
+      "canonicalName": "Epilasyon Aleti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:isitma-cozumleri",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma",
+      "canonicalName": "Isıtma çözümleri",
+      "nodeType": "GROUP",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 2,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Havlupan"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:isitma-cozumleri:havlupan",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma:isitma-cozumleri",
+      "canonicalName": "Havlupan",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 3,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Panel Radyatör"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:isitma-sogutma-ve-havalandirma:isitma-cozumleri:panel-radyator",
+      "parentId": "tax:appliances:isitma-sogutma-ve-havalandirma:isitma-cozumleri",
+      "canonicalName": "Panel Radyatör",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "isitma-sogutma-ve-havalandirma",
+      "depth": 3,
+      "requestSchemaId": "appliances/isitma-sogutma-ve-havalandirma",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
     }
   ]
 }

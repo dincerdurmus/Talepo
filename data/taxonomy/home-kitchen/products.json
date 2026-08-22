@@ -978,6 +978,178 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:pisirme-gerecleri",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Pişirme gereçleri",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Döküm Tencere"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:pisirme-gerecleri:dokum-tencere",
+      "parentId": "tax:home-kitchen:diger:pisirme-gerecleri",
+      "canonicalName": "Döküm Tencere",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Düdüklü Tencere"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:pisirme-gerecleri:duduklu-tencere",
+      "parentId": "tax:home-kitchen:diger:pisirme-gerecleri",
+      "canonicalName": "Düdüklü Tencere",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saklama Kabı Seti"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:pisirme-gerecleri:saklama-kabi-seti",
+      "parentId": "tax:home-kitchen:diger:pisirme-gerecleri",
+      "canonicalName": "Saklama Kabı Seti",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Termos"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:pisirme-gerecleri:termos",
+      "parentId": "tax:home-kitchen:diger:pisirme-gerecleri",
+      "canonicalName": "Termos",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:sofra-ve-sunum",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Sofra ve sunum",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sunum Tabağı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:sofra-ve-sunum:sunum-tabagi",
+      "parentId": "tax:home-kitchen:diger:sofra-ve-sunum",
+      "canonicalName": "Sunum Tabağı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kesme Tahtası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:sofra-ve-sunum:kesme-tahtasi",
+      "parentId": "tax:home-kitchen:diger:sofra-ve-sunum",
+      "canonicalName": "Kesme Tahtası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
     }
   ]
 }
