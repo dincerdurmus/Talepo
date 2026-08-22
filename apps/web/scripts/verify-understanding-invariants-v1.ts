@@ -104,7 +104,28 @@ const SWEEP: string[] = [
   "saç kurutma makinesi",
   "bulaşık makinesi tamiri",
   "broşür bastırmak istiyorum 5000 adet",
+  // MediaMarkt envanterinden eklenen markalar (2026-08-22)
+  "canon fotoğraf makinesi almak istiyorum",
+  "jbl bluetooth hoparlör arıyorum",
+  "KARCHER HALI YIKAMA MAKİNESİ",
+  "logitech kablosuz mouse",
+  "nespresso kahve makinesi kapsüllü",
 ];
+
+check("I8: MediaMarkt-sourced brands resolve with correct category", () => {
+  for (const [raw, wantCat, wantBrand] of [
+    ["canon fotoğraf makinesi almak istiyorum", "technology", "Canon"],
+    ["jbl bluetooth hoparlör arıyorum", "technology", "JBL"],
+    ["karcher halı yıkama makinesi", "appliances", "Kärcher"],
+    ["KARCHER HALI YIKAMA", "appliances", "Kärcher"],
+    ["braun tıraş makinesi", "appliances", "Braun"],
+    ["nespresso kahve makinesi kapsüllü", "home-kitchen", "Nespresso"],
+  ] as const) {
+    const r = ru(raw);
+    assert.equal(catOf(r), wantCat, raw);
+    assert.equal(identityOf(r).brand?.value, wantBrand, raw);
+  }
+});
 
 /* ================= I1 + I2 + I5 — value hygiene over the sweep ============ */
 

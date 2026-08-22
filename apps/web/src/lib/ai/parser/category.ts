@@ -178,6 +178,18 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     ...brandKeywordList(FURNITURE_BRANDS),
   ],
   technology: [
+    // Foto/kamera dünyası teknolojidir — "fotoğraf makinesi"ndeki "makine"
+    // kelimesi machinery'yi şişiriyordu (Canon → machinery).
+    "fotoğraf makinesi",
+    "fotograf makinesi",
+    "fotoğraf makinası",
+    "fotograf makinasi",
+    "aksiyon kamerası",
+    "aksiyon kamerasi",
+    "video kamera",
+    "drone",
+    "dron",
+    "gimbal",
     "yazılım",
     "yazilim",
     "web sitesi",
