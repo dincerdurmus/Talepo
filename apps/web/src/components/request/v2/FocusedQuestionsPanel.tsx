@@ -61,47 +61,120 @@ function LocationPickerControl(props: {
   onAnswer: (value: string) => void;
   isRealEstate?: boolean;
 }) {
-  const [il, setIl] = useState("");
-  const [ilce, setIlce] = useState("");
+  // Kurucu kararı (2026-08-23): il çoklu seçmeli kutucuk; "Tümü" hem il hem
+  // ilçe düzeyinde vardır. "Türkiye geneli" / "Konum fark etmez" çipleri yok.
+  const [selectedIls, setSelectedIls] = useState<string[]>([]);
+  const [allTurkey, setAllTurkey] = useState(false);
+  const [ilce, setIlce] = useState("__all__");
+  const [filter, setFilter] = useState("");
+
+  const foldTr = (s: string) =>
+    s
+      .toLocaleLowerCase("tr-TR")
+      .replace(/[çğıöşü]/g, (m) => ({ ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u" })[m] ?? m);
+
+  const visibleIls = useMemo(() => {
+    const f = foldTr(filter.trim());
+    if (!f) return TURKEY_IL_NAMES;
+    return TURKEY_IL_NAMES.filter((name) => foldTr(name).includes(f));
+  }, [filter]);
+
+  const singleIl = !allTurkey && selectedIls.length === 1 ? selectedIls[0]! : null;
   const districts = useMemo(
-    () => (il ? getDistrictsForProvince(il) : []),
-    [il],
+    () => (singleIl ? getDistrictsForProvince(singleIl) : []),
+    [singleIl],
   );
+
+  const toggleIl = (name: string) => {
+    setAllTurkey(false);
+    setIlce("__all__");
+    setSelectedIls((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  };
+
+  const canSave = allTurkey || selectedIls.length > 0;
+
+  const commit = () => {
+    if (allTurkey) {
+      props.onAnswer("nationwide");
+      return;
+    }
+    if (singleIl) {
+      props.onAnswer(
+        ilce && ilce !== "__all__" ? `${singleIl} / ${ilce}` : singleIl,
+      );
+      return;
+    }
+    if (selectedIls.length > 0) {
+      props.onAnswer(selectedIls.join(", "));
+    }
+  };
+
+  const checkboxRow =
+    "flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm text-[#0f1f1d]/80 hover:bg-[#f0fdfa]";
+  const checkboxBox =
+    "h-4 w-4 shrink-0 rounded border-[#0f1f1d]/20 text-[#0f766e] focus:ring-[#0f766e]/25";
 
   return (
     <div className="mt-3 space-y-3" data-testid="control-location-picker">
-      <div className="flex flex-wrap gap-2">
-        {props.control.softOptions.map((opt) => (
-          <OptionChip
-            key={opt.value}
-            label={opt.label}
-            soft
-            onClick={() => props.onAnswer(opt.value)}
-          />
-        ))}
-      </div>
-      <div>
-        <label className={signalLabel} htmlFor="composer-il">
-          İl
-        </label>
-        <select
-          id="composer-il"
-          className={signalInput}
-          value={il}
-          onChange={(e) => {
-            setIl(e.target.value);
-            setIlce("");
-          }}
-        >
-          <option value="">İl seçin</option>
-          {TURKEY_IL_NAMES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
+      {props.control.softOptions.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {props.control.softOptions.map((opt) => (
+            <OptionChip
+              key={opt.value}
+              label={opt.label}
+              soft
+              onClick={() => props.onAnswer(opt.value)}
+            />
           ))}
-        </select>
+        </div>
+      ) : null}
+      <div>
+        <label className={signalLabel} htmlFor="composer-il-filter">
+          İl — birden fazla seçebilirsiniz
+        </label>
+        <input
+          id="composer-il-filter"
+          type="search"
+          className={signalInput}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="İl ara…"
+        />
+        <div className="mt-2 max-h-52 space-y-0.5 overflow-y-auto rounded-xl border border-[#0f1f1d]/8 bg-white p-1.5">
+          <label className={`${checkboxRow} font-semibold`}>
+            <input
+              type="checkbox"
+              className={checkboxBox}
+              checked={allTurkey}
+              onChange={() => {
+                setAllTurkey((prev) => !prev);
+                setSelectedIls([]);
+                setIlce("__all__");
+              }}
+            />
+            Tümü (Türkiye geneli)
+          </label>
+          {visibleIls.map((name) => (
+            <label key={name} className={checkboxRow}>
+              <input
+                type="checkbox"
+                className={checkboxBox}
+                checked={selectedIls.includes(name)}
+                onChange={() => toggleIl(name)}
+              />
+              {name}
+            </label>
+          ))}
+          {visibleIls.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-[#0f1f1d]/45">
+              Bu aramayla eşleşen il yok.
+            </p>
+          ) : null}
+        </div>
       </div>
-      {il ? (
+      {singleIl ? (
         <div>
           <label className={signalLabel} htmlFor="composer-ilce">
             İlçe
@@ -110,13 +183,9 @@ function LocationPickerControl(props: {
             id="composer-ilce"
             className={signalInput}
             value={ilce}
-            onChange={(e) => {
-              const next = e.target.value;
-              setIlce(next);
-              if (next) props.onAnswer(`${il} / ${next}`);
-            }}
+            onChange={(e) => setIlce(e.target.value)}
           >
-            <option value="">İlçe seçin</option>
+            <option value="__all__">Tümü</option>
             {districts.map((d) => (
               <option key={d} value={d}>
                 {d}
@@ -125,6 +194,14 @@ function LocationPickerControl(props: {
           </select>
         </div>
       ) : null}
+      <button
+        type="button"
+        disabled={!canSave}
+        className="min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40"
+        onClick={commit}
+      >
+        Kaydet
+      </button>
     </div>
   );
 }
@@ -136,6 +213,11 @@ function MoneyRangeControl(props: {
   const [mode, setMode] = useState<"menu" | "range">("menu");
   const [min, setMin] = useState("");
   const [max, setMax] = useState("");
+  // Yazarken binlik ayracı: 30000 değil 30.000 görünür.
+  const formatLive = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    return digits ? new Intl.NumberFormat("tr-TR").format(Number(digits)) : "";
+  };
   const basisLabel =
     props.control.budgetBasis === "monthly"
       ? "Aylık"
@@ -187,8 +269,8 @@ function MoneyRangeControl(props: {
             inputMode="numeric"
             className={signalInput}
             value={min}
-            onChange={(e) => setMin(e.target.value)}
-            placeholder="Örn. 20000"
+            onChange={(e) => setMin(formatLive(e.target.value))}
+            placeholder="Örn. 20.000"
           />
         </div>
         <div>
@@ -200,8 +282,8 @@ function MoneyRangeControl(props: {
             inputMode="numeric"
             className={signalInput}
             value={max}
-            onChange={(e) => setMax(e.target.value)}
-            placeholder="Örn. 30000"
+            onChange={(e) => setMax(formatLive(e.target.value))}
+            placeholder="Örn. 30.000"
           />
         </div>
       </div>
@@ -497,7 +579,7 @@ export function FocusedQuestionsPanel({
       ) : null}
 
       <div
-        className="mt-3 rounded-[14px] border border-teal-950/[0.08] bg-white/90 px-3.5 py-3"
+        className="mt-3 border-t border-[#0f1f1d]/6 pt-3.5"
         data-testid={`composer-question-${active.fieldKey}`}
         data-field-key={active.fieldKey}
         data-control-type={control?.controlType ?? "text_fallback"}

@@ -142,11 +142,11 @@ function escapesFor(input: {
       }
       return out;
     }
-    out.push({ label: "Türkiye geneli", value: "nationwide" });
+    // Kurucu kararı (2026-08-23): "Türkiye geneli" ve "Konum fark etmez"
+    // çipleri kalktı — il listesindeki "Tümü" seçeneği aynı işi görür.
     if (isServiceLike) {
       out.push({ label: "Uzaktan", value: "remote" });
     }
-    out.push({ label: "Konum fark etmez", value: "no_location_preference" });
     if (input.allowUnknown) {
       out.push({ label: "Henüz bilmiyorum", value: "unknown" });
     }

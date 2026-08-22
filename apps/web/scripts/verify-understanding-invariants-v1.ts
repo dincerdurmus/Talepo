@@ -21,6 +21,10 @@
  */
 import assert from "node:assert/strict";
 
+import {
+  getVisibleCategoryFields,
+  REQUEST_CATEGORIES,
+} from "../src/lib/request-category-engine";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
@@ -482,6 +486,30 @@ check("I9b: product-scoped questions ship one-tap options", () => {
     (btu.quickChoices?.length ?? 0) >= 3,
     "btu question has no quick choices",
   );
+});
+
+check("I10: engine fields are product-scoped — a TV is never asked computer specs", () => {
+  const tech = REQUEST_CATEGORIES.find((c) => c.id === "technology")!;
+  const fieldsFor = (productType: string) =>
+    getVisibleCategoryFields(
+      tech.fields,
+      { needType: "hardware", productType },
+      "technology",
+    ).map((f) => f.key);
+
+  const tv = fieldsFor("Televizyon");
+  for (const key of ["ram", "processor", "storage", "graphics", "quantityDetail"]) {
+    assert.ok(!tv.includes(key), `TV alanlarında '${key}' olmamalı: ${tv.join(",")}`);
+  }
+  const pc = fieldsFor("Oyun Bilgisayarı Laptop");
+  for (const key of ["ram", "processor", "storage", "graphics"]) {
+    assert.ok(pc.includes(key), `Bilgisayar alanlarında '${key}' olmalı: ${pc.join(",")}`);
+  }
+  // Ürün algılanmadıysa bilgisayar soruları görünmez (sıkı varsayılan)
+  const unknown = fieldsFor("");
+  for (const key of ["ram", "processor", "storage", "graphics"]) {
+    assert.ok(!unknown.includes(key), `Ürünsüz akışta '${key}' olmamalı`);
+  }
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

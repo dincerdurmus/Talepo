@@ -107,9 +107,9 @@ export function budgetEntryOptions(): ControlOption[] {
 
 export function locationSoftOptions(ctx: ControlResolveContext): ControlOption[] {
   if (ctx.isRealEstate) return [];
-  const out: ControlOption[] = [
-    { label: "Türkiye geneli", value: "nationwide", soft: true },
-  ];
+  // Kurucu kararı (2026-08-23): "Türkiye geneli" ve "Konum fark etmez"
+  // çipleri kalktı — il listesindeki "Tümü" seçeneği aynı işi görür.
+  const out: ControlOption[] = [];
   if (
     ctx.categoryId === "services" ||
     ctx.categoryId === "health" ||
@@ -117,11 +117,6 @@ export function locationSoftOptions(ctx: ControlResolveContext): ControlOption[]
   ) {
     out.push({ label: "Uzaktan", value: "remote", soft: true });
   }
-  out.push({
-    label: "Konum fark etmez",
-    value: "no_location_preference",
-    soft: true,
-  });
   return out;
 }
 

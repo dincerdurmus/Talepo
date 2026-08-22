@@ -2743,8 +2743,37 @@ function TalepOlusturForm() {
         brain.setProfessionalPreviewOpen(!brain.professionalPreviewOpen)
       }
       onApplyProfessionalDraft={() => {
+        const next = professionalText.trim();
+        if (!next || next === requestText.trim()) {
+          setAppliedProfessionalDescription(true);
+          brain.setProfessionalDraftApplied(true);
+          return;
+        }
+        // Kurucu kararı (2026-08-23): buton kompozer metnini de profesyonel
+        // hâle çevirir; metin otoritedir — alt cevaplar yeniden türetilir,
+        // karşılığı olmayanlar boş kalır (manuel yazımla aynı yol).
         setAppliedProfessionalDescription(true);
         brain.setProfessionalDraftApplied(true);
+        setManualValues({});
+        setCommonDraft({
+          title: "",
+          quantity: "",
+          city: "",
+          delivery: "",
+          budget: "",
+        });
+        setTitleManuallyEdited(false);
+        setCityTouched(false);
+        setBudgetTouched(false);
+        setRealEstateTouched(false);
+        setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+        setConfirmedYearConditionKey(null);
+        setConfirmedFutureModelYearKey(null);
+        setConfirmedBudgetConflictKey(null);
+        hybrid.setText(next);
+        setPublishedVersion(null);
+        setPublishError(null);
+        setWizardStep(2);
       }}
       matchingFirmCount={matchingDisplay.estimatedCompanyCount}
     />

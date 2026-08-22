@@ -34,6 +34,12 @@ export type DynamicField = {
   required?: boolean;
   options?: DynamicFieldOption[];
   when?: FieldWhen;
+  /**
+   * Product-scoped fields: visible only when the detected product type
+   * (diacritic-folded substring match) hits one of these. A TV must never
+   * be asked for RAM; without a detected product the field stays hidden.
+   */
+  whenProductTypes?: string[];
 };
 
 export function getCategoryNeedTypeDefault(categoryId: string): string | null {
@@ -259,6 +265,30 @@ export function isFieldRequired(
   return Boolean(field.required) && isFieldVisible(field, values);
 }
 
+const PRODUCT_FOLD_MAP: Record<string, string> = {
+  ç: "c", Ç: "c", ğ: "g", Ğ: "g", ı: "i", İ: "i",
+  ö: "o", Ö: "o", ş: "s", Ş: "s", ü: "u", Ü: "u",
+};
+
+function foldProductContext(value: string): string {
+  return value
+    .replace(/[çÇğĞıİöÖşŞüÜ]/g, (m) => PRODUCT_FOLD_MAP[m] ?? m)
+    .toLowerCase()
+    .trim();
+}
+
+/** Fields like RAM/graphics belong to computers, never TVs or printers. */
+const COMPUTER_PRODUCT_TYPES = [
+  "bilgisayar",
+  "laptop",
+  "notebook",
+  "macbook",
+  "masaustu",
+  "masaüstü",
+  "all in one",
+  "pc",
+];
+
 export function getVisibleCategoryFields(
   fields: DynamicField[],
   values: Record<string, string | undefined>,
@@ -288,6 +318,21 @@ export function getVisibleCategoryFields(
   }
 
   let visible = fields.filter((field) => isFieldVisible(field, resolved));
+
+  // Product-scoped fields: only when the detected product matches.
+  const productContext = foldProductContext(
+    resolved.productType ||
+      resolved.applianceType ||
+      resolved.kitchenProductType ||
+      "",
+  );
+  visible = visible.filter((field) => {
+    if (!field.whenProductTypes?.length) return true;
+    if (!productContext) return false;
+    return field.whenProductTypes.some((p) =>
+      productContext.includes(foldProductContext(p)),
+    );
+  });
 
   // Explicit browse subject: never re-ask "Araç mı, parça mı?"
   if (browsePinnedNeed) {
@@ -1035,13 +1080,6 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
           { label: "Yenilenmiş", value: "Yenilenmiş" },
           { label: "Fark etmez", value: "Fark etmez" },
         ],
-      },
-      {
-        key: "quantityDetail",
-        label: "Adet / paket",
-        type: "text",
-        placeholder: "Örn. 10 adet laptop",
-        when: { field: "needType", in: ["hardware"] },
       },
       {
         key: "specs",
@@ -1865,10 +1903,10 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
   ],
   technology: [
     { key: "model", label: "Model", type: "text", when: { field: "needType", in: ["hardware"] } },
-    { key: "processor", label: "İşlemci", type: "text", placeholder: "Örn. Core i7 veya Apple M4", when: { field: "needType", in: ["hardware"] } },
-    { key: "ram", label: "RAM", type: "text", placeholder: "Örn. 16 GB ve üzeri", when: { field: "needType", in: ["hardware"] } },
-    { key: "storage", label: "Depolama", type: "text", placeholder: "Örn. 512 GB SSD", when: { field: "needType", in: ["hardware"] } },
-    { key: "graphics", label: "Ekran kartı", type: "text", placeholder: "Örn. RTX 4060 veya fark etmez", when: { field: "needType", in: ["hardware"] } },
+    { key: "processor", label: "İşlemci", type: "text", placeholder: "Örn. Core i7 veya Apple M4", when: { field: "needType", in: ["hardware"] }, whenProductTypes: [...COMPUTER_PRODUCT_TYPES, "tablet"] },
+    { key: "ram", label: "RAM", type: "text", placeholder: "Örn. 16 GB ve üzeri", when: { field: "needType", in: ["hardware"] }, whenProductTypes: [...COMPUTER_PRODUCT_TYPES, "tablet"] },
+    { key: "storage", label: "Depolama", type: "text", placeholder: "Örn. 512 GB SSD", when: { field: "needType", in: ["hardware"] }, whenProductTypes: [...COMPUTER_PRODUCT_TYPES, "tablet", "telefon"] },
+    { key: "graphics", label: "Ekran kartı", type: "text", placeholder: "Örn. RTX 4060 veya fark etmez", when: { field: "needType", in: ["hardware"] }, whenProductTypes: COMPUTER_PRODUCT_TYPES },
     { key: "screenSize", label: "Ekran boyutu", type: "text", placeholder: "Örn. 14–16 inç", when: { field: "needType", in: ["hardware"] } },
     {
       key: "warranty",
