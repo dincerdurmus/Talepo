@@ -614,6 +614,14 @@ export function selectBrowseWalkAtColumn(
           (step.meta?.subcategorySlug as string | undefined) ??
           step.id.split("/")[1] ??
           null;
+      } else if (
+        step.kind === "group" &&
+        typeof step.meta?.subcategorySlug === "string" &&
+        step.meta.subcategorySlug
+      ) {
+        // Donanım hoist: kategori altına alınmış gruplar slug'u kendisi taşır
+        base.categoryId = step.categoryId || base.categoryId;
+        base.subcategorySlug = step.meta.subcategorySlug;
       }
     }
   }

@@ -25,6 +25,11 @@ import {
   getVisibleCategoryFields,
   REQUEST_CATEGORIES,
 } from "../src/lib/request-category-engine";
+import { getBrowseChildren } from "../src/lib/knowledge/browse";
+import {
+  brandsForTechFamily,
+  inferTechBrandFamily,
+} from "../src/lib/knowledge/technology-brands";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
@@ -534,6 +539,31 @@ check("I10: engine fields are product-scoped — a TV is never asked computer sp
   for (const key of ["heating", "roomCount"]) {
     assert.ok(daire.includes(key), `Daire alanlarında '${key}' olmalı: ${daire.join(",")}`);
   }
+});
+
+check("I11: browse — Donanım hoisted out, brand columns product-relevant", () => {
+  const kids = getBrowseChildren("technology", {
+    categoryId: "technology",
+    subcategorySlug: null,
+  });
+  const labels = kids.map((k) => k.label);
+  assert.ok(!labels.includes("Donanım"), `Donanım hâlâ ağaçta: ${labels.join(",")}`);
+  for (const mustHave of ["TV ve görüntü", "Bilgisayar", "Fotoğraf ve Kamera"]) {
+    assert.ok(labels.includes(mustHave), `'${mustHave}' Teknoloji altında olmalı: ${labels.join(",")}`);
+  }
+  // Hoist edilen gruplar şema slug'unu taşır — Donanım sözleşmesi bozulmaz
+  const tvGroup = kids.find((k) => k.label === "TV ve görüntü");
+  assert.equal(tvGroup?.meta?.subcategorySlug, "donanim");
+
+  // Marka aileleri ürünle alakalı — drone kamera markası alır, RAM markası değil
+  const fam = (id: string, name: string) =>
+    inferTechBrandFamily({ id, name, nodeType: "PRODUCT_TYPE", subcategoryId: "donanim" });
+  assert.equal(fam("tax:technology:donanim:diger-teknoloji:drone", "Drone"), "camera");
+  assert.equal(fam("tax:technology:donanim:ses-ve-kulaklik:kulaklik", "Kulaklık"), "audio");
+  assert.equal(fam("tax:technology:donanim:ag-ve-modem:modem", "Modem"), "network");
+  assert.equal(fam("tax:technology:donanim:cevre-birimleri:yazici", "Yazıcı"), "printer");
+  assert.ok(brandsForTechFamily("camera").includes("DJI"));
+  assert.ok(!brandsForTechFamily("camera").includes("HP"));
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

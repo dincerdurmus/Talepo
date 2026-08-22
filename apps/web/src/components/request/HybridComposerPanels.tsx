@@ -107,11 +107,15 @@ export function HybridBrowsePath({
   onEditBrandAny,
   allowBrandEdit,
 }: PathProps) {
-  if (degraded || path.length === 0) return null;
+  // Donanım ara katmanı ağaçtan kaldırıldı — ekmek kırıntısında da görünmez.
+  const visiblePath = path.filter(
+    (step) => !(step.kind === "subcategory" && step.label === "Donanım"),
+  );
+  if (degraded || visiblePath.length === 0) return null;
 
   return (
     <div className="mt-2.5 flex flex-wrap items-center gap-1 text-[12px] text-teal-950/60">
-      {path.map((step, index) => {
+      {visiblePath.map((step, index) => {
         const isBrandAny = step.id === "any:brand" || step.label === "Farketmez";
         const clickable = Boolean(allowBrandEdit && isBrandAny && onEditBrandAny);
         return (
@@ -240,24 +244,43 @@ export function HybridCategoryBrowsePanel({
       </button>
 
       {open ? (
-        <div className="mt-3 overflow-hidden rounded-xl border border-teal-900/10 bg-[#fafcfb] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+        <div className="mt-3 overflow-hidden rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white shadow-[0_18px_50px_rgba(11,37,34,0.07)]">
           {degraded ? (
-            <p className="p-3 text-sm text-teal-950/50">
+            <p className="p-3 text-sm text-[#0f1f1d]/50">
               Kategori paneli geçici olarak sınırlı. Yazmaya devam edebilirsiniz.
             </p>
           ) : (
             <>
-              <div className="flex items-center justify-between gap-2 border-b border-teal-900/6 px-3 py-2">
-                <p className="min-w-0 truncate text-[11px] text-teal-950/45">
-                  {walk.stack.length === 0
-                    ? "Kategori seçin"
-                    : walk.stack.map((n) => n.label).join(" › ")}
-                </p>
+              <div className="flex items-center justify-between gap-2 border-b border-[#0f1f1d]/6 bg-[#fafcfb] px-3.5 py-2.5">
+                {walk.stack.length === 0 ? (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0f766e]/70">
+                    Kategori seçin
+                  </p>
+                ) : (
+                  <div className="flex min-w-0 flex-wrap items-center gap-1">
+                    {walk.stack.map((n, i) => (
+                      <span key={n.id} className="flex items-center gap-1">
+                        {i > 0 ? (
+                          <ChevronRight className="h-3 w-3 text-[#0f1f1d]/25" aria-hidden />
+                        ) : null}
+                        <span
+                          className={`max-w-[10rem] truncate rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                            i === walk.stack.length - 1
+                              ? "bg-[#0f766e] text-white"
+                              : "bg-[#e3f1f2] text-[#0f5f59]"
+                          }`}
+                        >
+                          {n.label}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {walk.stack.length > 0 ? (
                   <button
                     type="button"
                     onClick={onReset}
-                    className="shrink-0 text-[11px] font-medium text-[#0f766e]"
+                    className="shrink-0 rounded-full px-2 py-1 text-[11px] font-medium text-[#0f766e] hover:bg-[#e3f1f2]"
                   >
                     Başa dön
                   </button>
@@ -265,24 +288,24 @@ export function HybridCategoryBrowsePanel({
               </div>
 
               <div
-                className="grid max-h-64 min-w-0 overflow-hidden sm:max-h-72"
+                className="grid max-h-72 min-w-0 overflow-hidden sm:max-h-80"
                 style={{
                   gridTemplateColumns: `repeat(${Math.max(columns.length, 1)}, minmax(0, 1fr))`,
                 }}
               >
                 {columns.length === 0 ? (
-                  <p className="p-3 text-sm text-teal-950/45">Kategori yok.</p>
+                  <p className="p-3 text-sm text-[#0f1f1d]/45">Kategori yok.</p>
                 ) : (
                   columns.map((columnNodes, columnIndex) => {
                     const selectedId = walk.stack[columnIndex]?.id ?? null;
                     return (
                       <div
                         key={`col-${columnIndex}-${walk.stack[columnIndex - 1]?.id ?? "root"}`}
-                        className="flex min-w-0 flex-col border-r border-teal-900/8 last:border-r-0"
+                        className="flex min-w-0 flex-col border-r border-[#0f1f1d]/5 last:border-r-0 odd:bg-[#fcfdfd]"
                       >
-                        <ul className="max-h-64 overflow-y-auto py-1 sm:max-h-72">
+                        <ul className="max-h-72 overflow-y-auto px-1.5 py-1.5 sm:max-h-80 [scrollbar-width:thin] [scrollbar-color:rgba(15,118,110,0.25)_transparent]">
                           {columnNodes.length === 0 ? (
-                            <li className="px-3 py-2 text-xs text-teal-950/40">
+                            <li className="px-3 py-2 text-xs text-[#0f1f1d]/40">
                               Seçenek yok
                             </li>
                           ) : (
@@ -297,12 +320,12 @@ export function HybridCategoryBrowsePanel({
                                     onClick={() =>
                                       onSelectAtColumn(columnIndex, node)
                                     }
-                                    className={`flex w-full min-w-0 items-center justify-between gap-1 px-2 py-2 text-left text-xs transition sm:px-2.5 ${
+                                    className={`flex min-h-9 w-full min-w-0 items-center justify-between gap-1 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition-colors ${
                                       isLeafFocus
-                                        ? "bg-[#0f766e] font-medium text-white"
+                                        ? "bg-[#0f766e] font-semibold text-white shadow-[0_4px_14px_rgba(15,118,110,0.3)]"
                                         : selected
-                                          ? "bg-[#0f766e]/12 font-medium text-[#0f1f1d]"
-                                          : "text-teal-950/75 hover:bg-[#0f766e]/06"
+                                          ? "bg-[#e3f1f2] font-medium text-[#0f5f59]"
+                                          : "text-[#0f1f1d]/75 hover:bg-[#f0fdfa] hover:text-[#0f1f1d]"
                                     }`}
                                   >
                                     <span className="min-w-0 truncate">
@@ -313,7 +336,7 @@ export function HybridCategoryBrowsePanel({
                                         className={`h-3 w-3 shrink-0 ${
                                           isLeafFocus
                                             ? "text-white/70"
-                                            : "text-teal-900/30"
+                                            : "text-[#0f1f1d]/25"
                                         }`}
                                         aria-hidden
                                       />

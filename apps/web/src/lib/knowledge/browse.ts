@@ -140,6 +140,8 @@ function taxonomyToBrowse(n: TaxonomyNode, parentId: string): BrowseNode {
     meta: {
       taxonomyNodeType: n.nodeType,
       subcategoryId: n.subcategoryId ?? "",
+      // Hoist edilen gruplar da (Donanım gizliyken) şema slug'unu taşısın
+      subcategorySlug: n.subcategoryId ?? "",
       catalogSystemId: n.catalogSystemId ?? "",
       catalogSubsystemId: n.catalogSubsystemId ?? "",
       requestSchemaId: n.requestSchemaId ?? "",
@@ -436,17 +438,31 @@ export function getCategoryChildren(categoryId: string): BrowseNode[] {
     return realEstateRootSegments();
   }
 
-  return real.subcategories.map((label) => {
+  return real.subcategories.flatMap((label) => {
     const slug = subcategorySlug(label);
-    return node({
-      id: `${categoryId}/${slug}`,
-      kind: "subcategory",
-      label,
-      categoryId,
-      parentId: categoryId,
-      hasChildren: true,
-      meta: { subcategorySlug: slug },
-    });
+    // Kurucu (2026-08-23): "Donanım" ara katmanı ağaçta görünmez —
+    // içindeki gruplar (TV ve görüntü, Bilgisayar, …) doğrudan Teknoloji
+    // altında, Donanım'ın durduğu yerde listelenir. Şema/slug sözleşmesi
+    // değişmez: grup düğümleri subcategorySlug=donanim taşımaya devam eder.
+    if (categoryId === "technology" && slug === "donanim") {
+      const hoisted = taxonomyChildrenForSubcategory(
+        categoryId,
+        slug,
+        `${categoryId}/${slug}`,
+      );
+      if (hoisted.length > 0) return hoisted;
+    }
+    return [
+      node({
+        id: `${categoryId}/${slug}`,
+        kind: "subcategory",
+        label,
+        categoryId,
+        parentId: categoryId,
+        hasChildren: true,
+        meta: { subcategorySlug: slug },
+      }),
+    ];
   });
 }
 

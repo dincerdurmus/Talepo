@@ -9,7 +9,103 @@ export type TechBrandFamily =
   | "desktop"
   | "phone"
   | "tablet"
+  | "camera"
+  | "audio"
+  | "network"
+  | "wearable"
+  | "gaming"
+  | "printer"
+  | "peripheral"
   | "general";
+
+/** Fotoğraf / kamera / drone (MediaMarkt hasadı, 2026-08-23). */
+export const TECH_CAMERA_BRANDS = [
+  "Canon",
+  "Nikon",
+  "Sony",
+  "Fujifilm",
+  "GoPro",
+  "DJI",
+  "Insta360",
+  "Panasonic",
+  "Olympus",
+  "Polaroid",
+] as const;
+
+/** Kulaklık / hoparlör / ses. */
+export const TECH_AUDIO_BRANDS = [
+  "JBL",
+  "Sony",
+  "Bose",
+  "Sennheiser",
+  "Marshall",
+  "Apple",
+  "Samsung",
+  "Anker",
+  "Huawei",
+  "Edifier",
+  "Logitech",
+] as const;
+
+/** Modem / router / ağ. */
+export const TECH_NETWORK_BRANDS = [
+  "TP-Link",
+  "Asus",
+  "Zyxel",
+  "Keenetic",
+  "Tenda",
+  "Mercusys",
+  "Ubiquiti",
+  "MikroTik",
+  "Huawei",
+  "Cudy",
+] as const;
+
+/** Akıllı saat / bileklik. */
+export const TECH_WEARABLE_BRANDS = [
+  "Apple",
+  "Samsung",
+  "Huawei",
+  "Xiaomi",
+  "Garmin",
+  "Amazfit",
+  "Honor",
+  "Polar",
+] as const;
+
+/** Konsol / oyun ekipmanı. */
+export const TECH_GAMING_BRANDS = [
+  "Sony",
+  "Microsoft",
+  "Nintendo",
+  "Logitech",
+  "Razer",
+  "SteelSeries",
+  "HyperX",
+  "Meta",
+] as const;
+
+/** Yazıcı / tarayıcı. */
+export const TECH_PRINTER_BRANDS = [
+  "HP",
+  "Canon",
+  "Epson",
+  "Brother",
+  "Xerox",
+  "Kyocera",
+] as const;
+
+/** Klavye / mouse / webcam / çevre birimleri. */
+export const TECH_PERIPHERAL_BRANDS = [
+  "Logitech",
+  "Razer",
+  "SteelSeries",
+  "Corsair",
+  "Trust",
+  "A4Tech",
+  "Microsoft",
+  "HyperX",
+] as const;
 
 /** TV / display brands (TR marketplace common set). */
 export const TECH_TV_BRANDS = [
@@ -124,6 +220,20 @@ export function brandsForTechFamily(family: TechBrandFamily): readonly string[] 
       return TECH_PHONE_BRANDS;
     case "tablet":
       return TECH_TABLET_BRANDS;
+    case "camera":
+      return TECH_CAMERA_BRANDS;
+    case "audio":
+      return TECH_AUDIO_BRANDS;
+    case "network":
+      return TECH_NETWORK_BRANDS;
+    case "wearable":
+      return TECH_WEARABLE_BRANDS;
+    case "gaming":
+      return TECH_GAMING_BRANDS;
+    case "printer":
+      return TECH_PRINTER_BRANDS;
+    case "peripheral":
+      return TECH_PERIPHERAL_BRANDS;
     default:
       return TECH_GENERAL_BRANDS;
   }
@@ -205,18 +315,69 @@ export function inferTechBrandFamily(opts: {
   // Explicit tablet leaf id ends with :tablet
   if (id.endsWith(":tablet")) return "tablet";
 
-  // Limited peripherals under Donanım (not every leaf)
+  // Hasat aileleri (2026-08-23): her yaprağa kendi pazarının markaları.
+  if (
+    blob.includes("fotograf") ||
+    blob.includes("fotoğraf") ||
+    blob.includes("kamera") ||
+    blob.includes("drone") ||
+    blob.includes("gimbal") ||
+    blob.includes("objektif") ||
+    blob.includes("tripod")
+  ) {
+    return "camera";
+  }
+  if (
+    blob.includes("kulaklik") ||
+    blob.includes("kulaklık") ||
+    blob.includes("hoparlor") ||
+    blob.includes("hoparlör") ||
+    blob.includes("soundbar") ||
+    blob.includes("mikrofon")
+  ) {
+    return "audio";
+  }
+  if (
+    blob.includes("modem") ||
+    blob.includes("router") ||
+    blob.includes("mesh") ||
+    blob.includes("access-point") ||
+    blob.includes("access point") ||
+    blob.includes("switch")
+  ) {
+    return "network";
+  }
+  if (
+    blob.includes("akilli-saat") ||
+    blob.includes("akıllı saat") ||
+    blob.includes("bileklik")
+  ) {
+    return "wearable";
+  }
+  if (
+    blob.includes("konsol") ||
+    blob.includes("gamepad") ||
+    blob.includes("vr-gozluk") ||
+    blob.includes("vr gözlük") ||
+    blob.includes("oyuncu-koltugu") ||
+    blob.includes("oyuncu koltuğu")
+  ) {
+    return "gaming";
+  }
   if (
     blob.includes("yazici") ||
     blob.includes("yazıcı") ||
     blob.includes("tarayici") ||
-    blob.includes("tarayıcı") ||
-    blob.includes("kulaklik") ||
-    blob.includes("kulaklık") ||
-    blob.includes("akilli-saat") ||
-    blob.includes("akıllı saat")
+    blob.includes("tarayıcı")
   ) {
-    return "general";
+    return "printer";
+  }
+  if (
+    blob.includes("klavye") ||
+    blob.includes("mouse") ||
+    blob.includes("webcam")
+  ) {
+    return "peripheral";
   }
 
   return null;

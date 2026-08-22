@@ -2753,6 +2753,7 @@ function TalepOlusturForm() {
         updateCommonField("budget", formatBudgetFromMedian(median));
       }}
       professionalText={professionalText}
+      professionalDraftApplied={brain.professionalDraftApplied}
       professionalPreviewOpen={brain.professionalPreviewOpen}
       onToggleProfessionalPreview={() =>
         brain.setProfessionalPreviewOpen(!brain.professionalPreviewOpen)
@@ -2789,6 +2790,10 @@ function TalepOlusturForm() {
         setPublishedVersion(null);
         setPublishError(null);
         setWizardStep(2);
+        // Basıldığı belli olsun: metnin değiştiği yere götür (kurucu, 2026-08-23)
+        document
+          .getElementById("talep-composer")
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
       }}
       matchingFirmCount={matchingDisplay.estimatedCompanyCount}
     />
@@ -3019,6 +3024,9 @@ function TalepOlusturForm() {
                       setConfirmedYearConditionKey(null);
                       setConfirmedFutureModelYearKey(null);
                       setConfirmedBudgetConflictKey(null);
+                      // Elle düzenleme profesyonel-uygulandı durumunu düşürür
+                      setAppliedProfessionalDescription(false);
+                      brain.setProfessionalDraftApplied(false);
                       hybrid.setText(nextText);
                       clearCategoryOverridesOnTextEdit();
                       setPublishedVersion(null);

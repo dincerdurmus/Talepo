@@ -85,6 +85,7 @@ export type TalepoAiPanelProps = {
   showBudgetActions?: boolean;
   professionalText: string;
   professionalPreviewOpen: boolean;
+  professionalDraftApplied?: boolean;
   onToggleProfessionalPreview: () => void;
   onApplyProfessionalDraft: () => void;
   matchingFirmCount?: number;
@@ -280,14 +281,26 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
           >
             {props.professionalPreviewOpen ? "Gizle" : "Önizle"}
           </button>
-          <button
-            type="button"
-            onClick={props.onApplyProfessionalDraft}
-            className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-xs font-medium text-white"
-          >
-            Talebimde kullan
-          </button>
+          {props.professionalDraftApplied ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[#0f766e]/30 bg-[#e7f5ee] px-3 py-1.5 text-xs font-semibold text-[#0f5f59]">
+              ✓ Talebinizde kullanılıyor
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={props.onApplyProfessionalDraft}
+              className="rounded-lg bg-[#0f766e] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_4px_14px_rgba(15,118,110,0.35)] transition hover:bg-[#115e59]"
+            >
+              Talebimde kullan
+            </button>
+          )}
         </div>
+        {props.professionalDraftApplied ? (
+          <p className="mt-2 text-[11px] leading-4 text-teal-800/70">
+            Talep metniniz profesyonel hâle getirildi — soldaki yazım alanında
+            görebilirsiniz.
+          </p>
+        ) : null}
       </WorkspaceSection>
 
       <p className="flex items-start gap-2 px-0.5 text-[10px] leading-4 text-teal-100/35">
