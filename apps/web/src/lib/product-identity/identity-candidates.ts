@@ -101,10 +101,25 @@ export function extractModelCandidatesFromAttributes(
   return candidates.sort((a, b) => b.score - a.score);
 }
 
+/**
+ * Turkish instrument-noun suffixes: temizleyici(si), nemlendirici, kurutucu,
+ * karıştırıcı, süpürgesi… Words built this way name WHAT a device is, never
+ * which model it is — without this, "hava temizleyicisi" was stored as
+ * "Model: hava temizleyicisi". Morphology beats hand-extending the vocab list
+ * one product at a time.
+ */
+const INSTRUMENT_SUFFIX =
+  /(?:leyici|layıcı|layici|leyicisi|layıcısı|layicisi|ıcı|ici|ucu|ücü|ucusu|icisi|ıcısı|ücüsü|gesi|gası)$/;
+
+function isProductTypeWord(word: string): boolean {
+  if (PRODUCT_TYPE_VOCAB.has(word)) return true;
+  return word.length >= 5 && INSTRUMENT_SUFFIX.test(word);
+}
+
 export function isProductTypePhrase(value: string): boolean {
   const words = normalizeModelText(value).split(" ").filter(Boolean);
   if (words.length === 0) return false;
-  const hits = words.filter((w) => PRODUCT_TYPE_VOCAB.has(w)).length;
+  const hits = words.filter(isProductTypeWord).length;
   return hits / words.length >= 0.4;
 }
 

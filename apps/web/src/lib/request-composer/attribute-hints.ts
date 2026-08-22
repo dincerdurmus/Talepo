@@ -57,7 +57,8 @@ const PRODUCT_HINTS: Array<{
   },
   {
     keys: /\b(süpürge|supurge|vacuum)\b/i,
-    productType: "supurge",
+    // Display value — keep proper diacritics; the board used to show "Supurge".
+    productType: "süpürge",
     taxonomyQuery: "Elektrikli Süpürge",
   },
   {

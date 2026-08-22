@@ -9,6 +9,7 @@ import {
   resolveIntentFromSignals,
   subjectKindForIntent,
 } from "@/lib/request-understanding/intent-signals";
+import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
   classifyNumbers,
@@ -88,11 +89,35 @@ function decisionStatus(
   return "CONFIDENT";
 }
 
+const TR_DIACRITIC_FOLD: Record<string, string> = {
+  ç: "c",
+  ğ: "g",
+  ı: "i",
+  ö: "o",
+  ş: "s",
+  ü: "u",
+  â: "a",
+  î: "i",
+  û: "u",
+};
+
+/** tr-TR lowercase + diacritic fold, so "arcelik" matches "Arçelik". */
+function foldTr(value: string): string {
+  let out = "";
+  for (const ch of value.toLocaleLowerCase("tr-TR")) {
+    out += TR_DIACRITIC_FOLD[ch] ?? ch;
+  }
+  return out;
+}
+
+/**
+ * Diacritic-insensitive containment. Users routinely type without Turkish
+ * characters ("arcelik 55 inc tv"); a canonical value they clearly wrote must
+ * still count as EXPLICIT, not be downgraded to an inference.
+ */
 function textIncludes(haystack: string, needle: string): boolean {
   if (!needle.trim()) return false;
-  return haystack
-    .toLocaleLowerCase("tr-TR")
-    .includes(needle.toLocaleLowerCase("tr-TR"));
+  return foldTr(haystack).includes(foldTr(needle));
 }
 
 function gateCategory(
@@ -942,7 +967,13 @@ export function understandRequest(
     explicitModelFromText ??
     identity.model ??
     (techProduct ? null : modelTokens[0] ? modelTokens[0].raw : null);
-  if (modelValue && !looksLikeYearToken(String(modelValue))) {
+  if (
+    modelValue &&
+    !looksLikeYearToken(String(modelValue)) &&
+    // A product-type phrase names WHAT the thing is, never which model —
+    // "hava temizleyicisi" must not ship as "Model: hava temizleyicisi".
+    !isProductTypePhrase(String(modelValue))
+  ) {
     const explicitModel = textIncludes(normalizedInput, String(modelValue));
     identityBlock.model = uv(String(modelValue), {
       provenance: explicitModel ? "EXPLICIT" : "INFERRED",

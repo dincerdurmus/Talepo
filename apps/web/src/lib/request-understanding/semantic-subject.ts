@@ -487,7 +487,10 @@ function detectManufactureProduct(text: string): {
 export function resolveSemanticSubject(
   input: SemanticSubjectInput,
 ): SemanticRequestSubject {
-  const text = input.normalizedInput;
+  // tr-TR lowercase up front: the regex `i` flag does NOT fold Turkish İ/I
+  // (/yaptır/iu never matches "YAPTIRMAK"), so all-caps input used to blind
+  // every Turkish pattern in this resolver.
+  const text = input.normalizedInput.toLocaleLowerCase("tr-TR");
   const evidence: string[] = [];
   const alternatives: SemanticRequestSubject["alternatives"] = [];
 
@@ -838,9 +841,15 @@ export function resolveSemanticSubject(
     /(?:^|[^\p{L}\p{N}])(?:\d+[.\d]*\s*)?(?:adet|bin|tane)(?=[^\p{L}\p{N}]|$)/iu.test(
       text,
     );
+  // "yaptırmak" is a commission verb: with a known manufacture product as its
+  // object ("kartvizit yaptırmak") it means production, not a service visit.
+  // Without this, the SERVICE trigger two branches below claims it and the
+  // category gets overridden to services (business cards asked "Sıklık?").
+  const commissionVerb =
+    /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*)(?=[^\p{L}\p{N}]|$)/iu.test(text);
   const manufactureAsk =
     input.intent === "MANUFACTURE" ||
-    (mfgProductEarly && manufactureQuantity) ||
+    (mfgProductEarly && (manufactureQuantity || commissionVerb)) ||
     /(?:^|[^\p{L}\p{N}])(?:bastır\w*|bastir\w*|ürettir\w*|urettir\w*|imalat)(?=[^\p{L}\p{N}]|$)/iu.test(
       text,
     );

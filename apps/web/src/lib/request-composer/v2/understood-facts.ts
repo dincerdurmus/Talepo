@@ -64,6 +64,49 @@ function confidenceForFactKey(
   return undefined;
 }
 
+const FOLD_MAP: Record<string, string> = {
+  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u",
+};
+function foldTr(value: string): string {
+  let out = "";
+  for (const ch of value.toLocaleLowerCase("tr-TR")) out += FOLD_MAP[ch] ?? ch;
+  return out.trim();
+}
+function diacriticCount(value: string): number {
+  let n = 0;
+  for (const ch of value) if (FOLD_MAP[ch.toLocaleLowerCase("tr-TR")]) n += 1;
+  return n;
+}
+
+/**
+ * Different field keys (productType / applianceType / taxonomy echoes) can
+ * carry the same fact under the same label — the board used to render
+ * "Ürün: Supurge" twice, one row diacritic-stripped. Collapse rows whose
+ * label + folded value coincide, preferring the properly-accented spelling
+ * and the higher confidence.
+ */
+function dedupeByLabelAndValue(
+  rows: EditableUnderstoodFact[],
+): EditableUnderstoodFact[] {
+  const byId = new Map<string, EditableUnderstoodFact>();
+  const order: string[] = [];
+  for (const row of rows) {
+    const id = `${row.label}::${foldTr(row.displayValue)}`;
+    const prev = byId.get(id);
+    if (!prev) {
+      byId.set(id, row);
+      order.push(id);
+      continue;
+    }
+    const better =
+      diacriticCount(row.displayValue) > diacriticCount(prev.displayValue) ||
+      (diacriticCount(row.displayValue) === diacriticCount(prev.displayValue) &&
+        (row.confidence ?? 0) > (prev.confidence ?? 0));
+    if (better) byId.set(id, { ...row, key: prev.key });
+  }
+  return order.map((id) => byId.get(id) as EditableUnderstoodFact);
+}
+
 export function enrichUnderstoodFacts(input: {
   facts: UnderstoodFact[];
   understanding: RequestUnderstandingResult;
@@ -85,7 +128,7 @@ export function enrichUnderstoodFacts(input: {
 
   const hideNeedType = shouldHideNeedTypeFact(input.facts.map((f) => f.key));
 
-  return input.facts
+  return dedupeByLabelAndValue(input.facts
     .filter((fact) => !dismissed.has(fact.key))
     .filter((fact) => fact.displayValue.trim().length > 0)
     .filter((fact) => !(hideNeedType && fact.key === "needType"))
@@ -122,5 +165,5 @@ export function enrichUnderstoodFacts(input: {
               : trustLabelForTone(tone),
         userConfirmed: confirmed.has(fact.key),
       };
-    });
+    }));
 }

@@ -256,7 +256,9 @@ const STANDARD: QuestionProfileDef[] = [
     prompt: "Ekran boyutu tercihiniz?",
     summaryLabel: "Ekran",
     importance: "optional",
-    categories: ["technology", "appliances"],
+    // technology only: TVs resolve to technology, and appliances (hava
+    // temizleyicisi, süpürge…) must never be asked a screen size.
+    categories: ["technology"],
     rank: 44,
     allowDontCare: true,
     allowUnknown: true,

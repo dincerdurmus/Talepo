@@ -27,6 +27,7 @@ import {
   extractScreenSize,
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import { stripIncompatibleDomainFields } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
@@ -264,6 +265,12 @@ export function mapUnderstandingToFields(
     modelRaw?.toLocaleLowerCase("tr-TR") === "ist" &&
     /\bist(?:anbul)?(?:['’]?(?:da|de|dan|den))?\b/iu.test(raw)
   ) {
+    modelRaw = null;
+  }
+  // A product-type phrase names WHAT the item is, never which model — this
+  // guards every modelRaw source at once (identity AND subject parentEntity),
+  // so "Model: hava temizleyicisi" cannot reach the board from any of them.
+  if (modelRaw && isProductTypePhrase(modelRaw)) {
     modelRaw = null;
   }
   if (brandRaw && isKnownAutomotiveModelName(brandRaw)) {
@@ -870,10 +877,49 @@ export function canApplyField(
  * Previous EXPLICIT_TEXT / INFERRED / CATALOG come from the new understanding
  * (stale text-inferred values must not survive when the user deletes them).
  */
+const STALE_FOLD: Record<string, string> = {
+  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u",
+};
+function foldForStaleCheck(value: string): string {
+  let out = "";
+  for (const ch of value.toLocaleLowerCase("tr-TR")) out += STALE_FOLD[ch] ?? ch;
+  return out;
+}
+
+/**
+ * A text-extracted value is a NEW statement only if the user's edit introduced
+ * it. If the same wording was already present in the previous raw input, the
+ * user edited something else — re-parsing that untouched phrase must not
+ * overwrite an explicit answer they gave in the question flow.
+ *
+ * Bug this kills: user wrote "…ankara civarı", later picked a different city
+ * in the question flow, then touched the text once more — the stale "ankara"
+ * re-parsed as EXPLICIT_TEXT and clobbered the chosen city.
+ */
+function isStaleTextRestatement(
+  incoming: CanonicalFieldState,
+  previousRawInput: string | undefined,
+  currentRawInput: string | undefined,
+): boolean {
+  if (!previousRawInput || !currentRawInput) return false;
+  const value =
+    incoming.kind === "VALUE" && incoming.value != null
+      ? String(incoming.value).trim()
+      : "";
+  if (!value) return false;
+  const needle = foldForStaleCheck(value);
+  if (!needle) return false;
+  return (
+    foldForStaleCheck(previousRawInput).includes(needle) &&
+    foldForStaleCheck(currentRawInput).includes(needle)
+  );
+}
+
 export function mergePreservedBrowseFields(
   fromUnderstanding: Record<string, CanonicalFieldState>,
   previous: Record<string, CanonicalFieldState> | undefined,
   lastUserAction: LastUserAction,
+  rawInputs?: { previous?: string; current?: string },
 ): Record<string, CanonicalFieldState> {
   if (!previous) return fromUnderstanding;
 
@@ -884,6 +930,16 @@ export function mergePreservedBrowseFields(
 
     const incoming = next[key];
     if (!incoming || incoming.kind === "UNKNOWN") {
+      next[key] = prevField;
+      continue;
+    }
+
+    // An unchanged phrase from the old text is not a fresh user statement —
+    // the explicit answer (browse/question flow) stays authoritative.
+    if (
+      incoming.provenance === "EXPLICIT_TEXT" &&
+      isStaleTextRestatement(incoming, rawInputs?.previous, rawInputs?.current)
+    ) {
       next[key] = prevField;
       continue;
     }
@@ -918,6 +974,10 @@ export function buildCanonicalRequestState(input: {
       fields,
       input.previous.fields,
       lastAction,
+      {
+        previous: input.previous.understanding?.rawInput,
+        current: input.understanding.rawInput,
+      },
     );
   }
 

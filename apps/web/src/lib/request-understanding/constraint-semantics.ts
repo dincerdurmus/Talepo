@@ -114,6 +114,23 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Regex matching a brand by ANY of its catalog aliases (plus the canonical
+ * spelling). The confirm/negation scans below used to re-search the text with
+ * the canonical only, so a brand found via a diacritic-free alias ("arcelik")
+ * was silently dropped before it could become a constraint.
+ */
+function brandMentionRegex(canonical: string): RegExp {
+  const entry = BRAND_CATALOG.find((b) => b.canonical === canonical);
+  const needles = [...new Set([canonical, ...(entry?.aliases ?? [])])]
+    .map((n) => escapeRegex(n.toLocaleLowerCase("tr-TR")))
+    .sort((a, b) => b.length - a.length);
+  return new RegExp(
+    `(?:^|[^a-zçğıöşü0-9])(?:${needles.join("|")})(?=$|[^a-zçğıöşü0-9])`,
+    "gi",
+  );
+}
+
 function brandMatchesInText(text: string): string[] {
   const normalized = text.toLocaleLowerCase("tr-TR");
   const hits: Array<{ canonical: string; aliasLen: number }> = [];
@@ -309,10 +326,7 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
   const multiBrand = extractMultiList(text, brands);
 
   for (const brand of brands) {
-    const re = new RegExp(
-      `(?:^|[^a-zçğıöşü0-9])${escapeRegex(brand)}(?=$|[^a-zçğıöşü0-9])`,
-      "gi",
-    );
+    const re = brandMentionRegex(brand);
     let m: RegExpExecArray | null;
     while ((m = re.exec(text)) !== null) {
       if (isNegatedMention(text, m.index, m[0].length)) {
@@ -350,10 +364,7 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
     for (const brand of brands) {
       if (excludedBrands.has(brand.toLocaleLowerCase("tr-TR"))) {
         // Still record positive mention for contradiction detection
-        const re = new RegExp(
-          `(?:^|[^a-zçğıöşü0-9])${escapeRegex(brand)}(?=$|[^a-zçğıöşü0-9])`,
-          "gi",
-        );
+        const re = brandMentionRegex(brand);
         let m: RegExpExecArray | null;
         let positive = false;
         while ((m = re.exec(text)) !== null) {
@@ -370,10 +381,7 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
         }
         continue;
       }
-      const re = new RegExp(
-        `(?:^|[^a-zçğıöşü0-9])${escapeRegex(brand)}(?=$|[^a-zçğıöşü0-9])`,
-        "gi",
-      );
+      const re = brandMentionRegex(brand);
       let m: RegExpExecArray | null;
       let positive = false;
       let strength: ConstraintStrength | undefined;
