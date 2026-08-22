@@ -248,6 +248,8 @@ export const APPLIANCE_BRANDS: BrandEntry[] = [
   { canonical: "Wahl", aliases: ["wahl"] },
   { canonical: "Revlon", aliases: ["revlon"] },
   { canonical: "Oral-B", aliases: ["oral-b", "oral b", "oralb"] },
+  // —— Bauhaus TR envanterinden (2026-08-22) ——
+  { canonical: "Cadence", aliases: ["cadence"] },
 ];
 
 /** Home & kitchen small appliances / brands used in category scoring */
@@ -272,6 +274,10 @@ export const HOME_KITCHEN_BRANDS: BrandEntry[] = [
   { canonical: "Weber", aliases: ["weber mangal", "weber barbekü", "weber barbeku"] },
   { canonical: "Brita", aliases: ["brita"] },
   { canonical: "Goldmaster", aliases: ["goldmaster", "gold master"] },
+  // —— Bauhaus TR envanterinden (2026-08-22): banyo / aydınlatma ——
+  { canonical: "Primanova", aliases: ["primanova", "prima nova"] },
+  { canonical: "Osram", aliases: ["osram"] },
+  { canonical: "Eglo", aliases: ["eglo"] },
 ];
 
 /** Industrial / print equipment brands */
@@ -282,6 +288,25 @@ export const MACHINERY_BRANDS: BrandEntry[] = [
   { canonical: "Ryobi", aliases: ["ryobi"] },
   // —— MediaMarkt TR envanterinden (2026-08-22): elektrikli el aletleri ——
   { canonical: "Black+Decker", aliases: ["black+decker", "black decker", "black-decker"] },
+  // —— Bauhaus TR envanterinden (2026-08-22): el aletleri / yapı / bahçe ——
+  { canonical: "Makita", aliases: ["makita"] },
+  { canonical: "DeWalt", aliases: ["dewalt", "de walt"] },
+  { canonical: "Einhell", aliases: ["einhell"] },
+  { canonical: "İzeltaş", aliases: ["izeltaş", "izeltas"] },
+  { canonical: "Gardena", aliases: ["gardena"] },
+  { canonical: "Fiskars", aliases: ["fiskars"] },
+  { canonical: "Stanley", aliases: ["stanley matkap", "stanley el aleti", "stanley takım", "stanley takim"] },
+  // Elektrik tesisat / anahtar-priz — usta ve yapı taleplerinde yazılır
+  { canonical: "Viko", aliases: ["viko"] },
+  { canonical: "Schneider Electric", aliases: ["schneider"] },
+  { canonical: "Makel", aliases: ["makel"] },
+  { canonical: "Mutlusan", aliases: ["mutlusan"] },
+  { canonical: "Nilson", aliases: ["nilson"] },
+  // Boya — yapı market dünyası
+  { canonical: "Polisan", aliases: ["polisan"] },
+  { canonical: "DYO", aliases: ["dyo"] },
+  { canonical: "Permolit", aliases: ["permolit"] },
+  { canonical: "Kale", aliases: ["kale boya", "kale kilit"] },
 ];
 
 export const TECHNOLOGY_BRANDS: BrandEntry[] = [
@@ -785,6 +810,8 @@ export const FURNITURE_BRANDS: BrandEntry[] = [
   { canonical: "Çilek", aliases: ["çilek", "cilek"] },
   { canonical: "Tepe Home", aliases: ["tepe home", "tepehome"] },
   { canonical: "Yataş", aliases: ["yataş", "yatas"] },
+  // —— Bauhaus TR envanterinden (2026-08-22) ——
+  { canonical: "Adore", aliases: ["adore mobilya"] },
 ];
 
 export const BABY_BRANDS: BrandEntry[] = [

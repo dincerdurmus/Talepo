@@ -540,6 +540,73 @@ const STANDARD: QuestionProfileDef[] = [
       { label: "Türk kahvesi", value: "Türk kahvesi" },
     ],
   },
+  // —— el aletleri (Bauhaus ağacından) ——
+  {
+    fieldKey: "toolPower",
+    prompt: "Akülü mü, kablolu mu?",
+    summaryLabel: "Güç tipi",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    whenProductTypes: ["matkap", "vidalama", "testere", "taslama", "taşlama", "kirici", "kırıcı"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Akülü / Şarjlı", value: "Akülü" },
+      { label: "Kablolu", value: "Kablolu" },
+    ],
+  },
+  // —— bahçe makineleri ——
+  {
+    fieldKey: "mowerType",
+    prompt: "Nasıl çalışsın?",
+    summaryLabel: "Çalışma tipi",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    whenProductTypes: ["cim bicme", "çim biçme", "budama", "tirpan", "tırpan"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Elektrikli", value: "Elektrikli" },
+      { label: "Benzinli", value: "Benzinli" },
+      { label: "Akülü", value: "Akülü" },
+    ],
+  },
+  // —— boya (yapı market) ——
+  {
+    fieldKey: "paintScope",
+    prompt: "İç cephe mi, dış cephe mi?",
+    summaryLabel: "Kullanım yeri",
+    importance: "quote_critical",
+    categories: ["machinery", "services"],
+    whenProductTypes: ["boya"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "İç cephe", value: "İç cephe" },
+      { label: "Dış cephe", value: "Dış cephe" },
+      { label: "Tavan", value: "Tavan" },
+    ],
+  },
+  // —— mangal / barbekü ——
+  {
+    fieldKey: "grillType",
+    prompt: "Hangi tip mangal?",
+    summaryLabel: "Mangal tipi",
+    importance: "quote_critical",
+    categories: ["home-kitchen"],
+    whenProductTypes: ["mangal", "barbeku", "barbekü"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Kömürlü", value: "Kömürlü" },
+      { label: "Gazlı", value: "Gazlı" },
+      { label: "Elektrikli", value: "Elektrikli" },
+    ],
+  },
   // —— airfryer ——
   {
     fieldKey: "fryerCapacity",

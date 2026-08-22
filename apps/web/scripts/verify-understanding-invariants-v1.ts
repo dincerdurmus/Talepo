@@ -424,6 +424,11 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     { cat: "appliances", product: "Buzdolabı", must: ["fridgeType"], never: ["screenSize", "capacityKg"] },
     { cat: "appliances", product: null, must: [], never: ["screenSize", "btu", "vacuumType"] },
     { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["btu", "screenSize"] },
+    // Bauhaus ailesi (2026-08-22)
+    { cat: "machinery", product: "Akülü Matkap", must: ["toolPower"], never: ["btu", "screenSize", "coffeeType"] },
+    { cat: "machinery", product: "Çim Biçme Makinesi", must: ["mowerType"], never: ["toolPower", "btu"] },
+    { cat: "home-kitchen", product: "Mangal", must: ["grillType"], never: ["coffeeType", "btu"] },
+    { cat: "machinery", product: null, must: [], never: ["toolPower", "mowerType", "paintScope"] },
   ];
   const bad: string[] = [];
   for (const c of cases) {
