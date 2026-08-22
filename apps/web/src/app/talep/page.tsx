@@ -3051,6 +3051,9 @@ function TalepOlusturForm() {
                     degraded={hybrid.browseDegraded}
                     onSelectAtColumn={(columnIndex, node) => {
                       hybrid.selectBrowseNodeAtColumn(columnIndex, node);
+                      // Yeni bir seçim, önceki "Kaldır" kararlarını geçersiz
+                      // kılar — satır tekrar görünür (kurucu, 2026-08-23).
+                      setDismissedFactKeys([]);
                       setWizardStep(2);
                       setAiCompanionOpen(true);
                     }}

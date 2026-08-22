@@ -1,6 +1,21 @@
 "use client";
 
-import { ChevronRight, FolderTree } from "lucide-react";
+import {
+  Armchair,
+  Baby,
+  Building2,
+  Car,
+  ChevronRight,
+  Cog,
+  CookingPot,
+  Cpu,
+  FolderTree,
+  HeartPulse,
+  Printer,
+  Refrigerator,
+  Wrench,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { BrowseNode } from "@/lib/knowledge/types";
 import type { BrowsePathStep } from "@/lib/request-composer";
@@ -199,6 +214,21 @@ type BrowsePanelProps = {
 };
 
 /** Primary “Kategoriden seç” — multi-column cascade (Talepo styling). */
+/** Kök kategori ikonları — kaskadın ilk kolonu kimlikli görünsün. */
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  "real-estate": Building2,
+  automotive: Car,
+  technology: Cpu,
+  appliances: Refrigerator,
+  furniture: Armchair,
+  printing: Printer,
+  machinery: Cog,
+  baby: Baby,
+  "home-kitchen": CookingPot,
+  health: HeartPulse,
+  services: Wrench,
+};
+
 export function HybridCategoryBrowsePanel({
   open,
   onToggle,
@@ -301,11 +331,18 @@ export function HybridCategoryBrowsePanel({
                 ) : (
                   columns.map((columnNodes, columnIndex) => {
                     const selectedId = walk.stack[columnIndex]?.id ?? null;
+                    const columnTitle =
+                      columnIndex === 0
+                        ? "Kategoriler"
+                        : walk.stack[columnIndex - 1]?.label ?? "";
                     return (
                       <div
                         key={`col-${columnIndex}-${walk.stack[columnIndex - 1]?.id ?? "root"}`}
                         className="flex min-w-0 flex-col border-r border-[#0f1f1d]/5 last:border-r-0 odd:bg-[#fcfdfd]"
                       >
+                        <p className="truncate border-b border-[#0f1f1d]/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/35">
+                          {columnTitle}
+                        </p>
                         <ul className="max-h-72 overflow-y-auto px-1.5 py-1.5 sm:max-h-80 [scrollbar-width:thin] [scrollbar-color:rgba(15,118,110,0.25)_transparent]">
                           {columnNodes.length === 0 ? (
                             <li className="px-3 py-2 text-xs text-[#0f1f1d]/40">
@@ -316,6 +353,11 @@ export function HybridCategoryBrowsePanel({
                               const selected = selectedId === node.id;
                               const isLeafFocus =
                                 selected && columnIndex === walk.stack.length - 1;
+                              const CatIcon =
+                                columnIndex === 0 && node.kind === "category"
+                                  ? CATEGORY_ICONS[node.id] ??
+                                    CATEGORY_ICONS[node.categoryId ?? ""]
+                                  : undefined;
                               return (
                                 <li key={node.id}>
                                   <button
@@ -331,8 +373,21 @@ export function HybridCategoryBrowsePanel({
                                           : "text-[#0f1f1d]/75 hover:bg-[#f0fdfa] hover:text-[#0f1f1d]"
                                     }`}
                                   >
-                                    <span className="min-w-0 truncate">
-                                      {node.label}
+                                    <span className="flex min-w-0 items-center gap-2.5">
+                                      {CatIcon ? (
+                                        <span
+                                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                                            selected
+                                              ? "bg-white/60 text-[#0f5f59]"
+                                              : "bg-[#f0f4f3] text-[#0f766e]"
+                                          }`}
+                                        >
+                                          <CatIcon className="h-4 w-4" aria-hidden />
+                                        </span>
+                                      ) : null}
+                                      <span className="min-w-0 truncate">
+                                        {node.label}
+                                      </span>
                                     </span>
                                     {!node.meta?.any && node.hasChildren ? (
                                       <ChevronRight

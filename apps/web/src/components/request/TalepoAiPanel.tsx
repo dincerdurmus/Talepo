@@ -111,21 +111,26 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         props.compact ? "p-0" : ""
       }`}
     >
-      <header className="space-y-1">
-        <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/25 bg-white/[0.05] px-2.5 py-1">
-          <span className="talepo-ai-status-dot" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-100/85">
-            ✦ Talepo AI
+      <header>
+        <div className="talepo-ai-console-bar">
+          <span className="inline-flex items-center gap-2">
+            <span className="talepo-ai-status-dot" />
+            <span className="talepo-ai-index">
+              {props.analysisStatus === "PARSING"
+                ? "Analiz sürüyor"
+                : props.readiness.state === "READY"
+                  ? "Yayına hazır"
+                  : "Canlı analiz"}
+            </span>
           </span>
+          {props.matchingFirmCount != null && props.matchingFirmCount > 0 ? (
+            <span className="talepo-ai-index">
+              ~{props.matchingFirmCount} firma
+            </span>
+          ) : null}
         </div>
-        <p className="text-base font-semibold tracking-tight text-white">
-          Talebinizi birlikte hazırlıyoruz
-        </p>
-        <p className="text-xs leading-5 text-teal-100/45">
+        <p className="mt-2 text-xs leading-5 text-teal-100/45">
           {props.readiness.message}
-          {props.matchingFirmCount != null && props.matchingFirmCount > 0
-            ? ` · ~${props.matchingFirmCount} firma`
-            : ""}
         </p>
       </header>
 
@@ -311,6 +316,14 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
   );
 }
 
+/** Akış sırası — konsol segment numaraları gerçek adım sırasıdır. */
+const SECTION_INDEX: Record<string, string> = {
+  Anladığım: "01",
+  Netleştirelim: "02",
+  "Piyasa görünümü": "03",
+  "Profesyonel talep": "04",
+};
+
 function WorkspaceSection({
   title,
   tone,
@@ -320,21 +333,29 @@ function WorkspaceSection({
   tone: "default" | "accent" | "light";
   children: ReactNode;
 }) {
-  const toneClass =
-    tone === "light"
-      ? "talepo-ai-version rounded-2xl p-3.5"
-      : tone === "accent"
-        ? "rounded-2xl border border-teal-300/20 bg-teal-400/8 px-3.5 py-3"
-        : "talepo-ai-metric rounded-2xl p-3.5";
-
+  const index = SECTION_INDEX[title];
+  if (tone === "light") {
+    return (
+      <section className="talepo-ai-version rounded-2xl p-3.5">
+        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
+          {index ? (
+            <span className="talepo-ai-index !text-teal-800/45">{index}</span>
+          ) : null}
+          <span className="talepo-ai-section-tick" aria-hidden />
+          {title}
+        </p>
+        <div className="mt-2.5">{children}</div>
+      </section>
+    );
+  }
   return (
-    <section className={toneClass}>
-      <p
-        className={`flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] ${
-          tone === "light" ? "text-teal-800/55" : "text-teal-100/55"
-        }`}
-      >
-        <span className="talepo-ai-section-tick" aria-hidden />
+    <section
+      className={
+        tone === "accent" ? "talepo-ai-seg talepo-ai-seg--accent" : "talepo-ai-seg"
+      }
+    >
+      <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-100/55">
+        {index ? <span className="talepo-ai-index">{index}</span> : null}
         {title}
       </p>
       <div className="mt-2.5">{children}</div>
