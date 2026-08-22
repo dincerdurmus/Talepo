@@ -41,7 +41,10 @@ export default async function NotificationRedirectPage({
 
   if (!notification) notFound();
 
-  await markNotificationAsRead(user.id, notification.id);
+  // No revalidation here: this is a render, and Next.js only allows
+  // revalidation outside renders. The redirect below starts a fresh request,
+  // so the destination re-renders with the updated read state anyway.
+  await markNotificationAsRead(user.id, notification.id, { revalidate: false });
 
   const complaintId = complaintIdFromActionUrl(notification.actionUrl);
   if (complaintId) {

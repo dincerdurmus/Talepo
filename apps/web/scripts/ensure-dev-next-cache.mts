@@ -3,9 +3,11 @@
  * Run automatically before `next dev` via package.json.
  */
 import { existsSync, readFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = join(__dirname, "..");
+// `.mts` is an ES module, so `__dirname` does not exist here.
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const routesFile = join(root, ".next", "dev", "types", "routes.d.ts");
 const devCache = join(root, ".next", "dev");
 
