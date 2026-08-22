@@ -288,6 +288,19 @@ export const MACHINERY_BRANDS: BrandEntry[] = [
   { canonical: "Ryobi", aliases: ["ryobi"] },
   // —— MediaMarkt TR envanterinden (2026-08-22): elektrikli el aletleri ——
   { canonical: "Black+Decker", aliases: ["black+decker", "black decker", "black-decker"] },
+  // —— makinecim.com envanterinden (2026-08-22): endüstriyel makine ——
+  { canonical: "Caterpillar", aliases: ["caterpillar"] },
+  { canonical: "JCB", aliases: ["jcb"] },
+  { canonical: "Hidromek", aliases: ["hidromek"] },
+  { canonical: "Bobcat", aliases: ["bobcat"] },
+  { canonical: "Durma", aliases: ["durmazlar", "durma pres", "durma abkant"] },
+  { canonical: "Baykal", aliases: ["baykal makina", "baykal pres", "baykal abkant", "baykal giyotin"] },
+  { canonical: "Ermaksan", aliases: ["ermaksan"] },
+  { canonical: "Aksa", aliases: ["aksa jeneratör", "aksa jenerator"] },
+  { canonical: "Teksan", aliases: ["teksan jeneratör", "teksan jenerator"] },
+  { canonical: "Emsa", aliases: ["emsa jeneratör", "emsa jenerator"] },
+  { canonical: "Dalgakıran", aliases: ["dalgakıran", "dalgakiran"] },
+  { canonical: "Magmaweld", aliases: ["magmaweld"] },
   // —— Bauhaus TR envanterinden (2026-08-22): el aletleri / yapı / bahçe ——
   { canonical: "Makita", aliases: ["makita"] },
   { canonical: "DeWalt", aliases: ["dewalt", "de walt"] },
