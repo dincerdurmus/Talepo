@@ -50,12 +50,14 @@ check("nationwide display + no city uncertain", () => {
   ]);
 });
 
-check("city_district requires il+ilçe", () => {
+// Kurucu kararı (2026-08-23): ilçe "Tümü" = il geneli geçerli cevaptır.
+// Yalın il artık "missing" değil "city_wide" olur ve konum kapısını tatmin eder.
+check("city answers: il+ilçe complete, bare il city_wide (ilçe Tümü)", () => {
   assert.equal(isCityDistrictComplete("İstanbul"), false);
   assert.equal(isCityDistrictComplete("İstanbul / Kadıköy"), true);
   assert.equal(
     resolveLocationStatus({ cityValue: "İstanbul" }),
-    "missing",
+    "city_wide",
   );
   assert.equal(
     resolveLocationStatus({ cityValue: "İstanbul / Kadıköy" }),
@@ -69,7 +71,7 @@ check("city_district requires il+ilçe", () => {
       allowUnknown: true,
       allowDontCare: true,
     }),
-    false,
+    true,
   );
   assert.equal(
     isFieldSatisfied({
@@ -83,12 +85,17 @@ check("city_district requires il+ilçe", () => {
   );
   assert.equal(
     isLocationSatisfiedForPublish({ cityValue: "İstanbul" }),
-    false,
+    true,
+  );
+  assert.equal(
+    isLocationSatisfiedForPublish({ cityValue: "İstanbul, Ankara" }),
+    true,
   );
   assert.equal(
     isLocationSatisfiedForPublish({ cityValue: "İstanbul / Kadıköy" }),
     true,
   );
+  assert.equal(isLocationSatisfiedForPublish({ cityValue: "" }), false);
 });
 
 check("budget soft statuses", () => {

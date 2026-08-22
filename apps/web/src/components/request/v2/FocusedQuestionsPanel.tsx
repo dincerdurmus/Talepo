@@ -210,9 +210,9 @@ function MoneyRangeControl(props: {
   control: QuestionControlDef;
   onAnswer: (value: string) => void;
 }) {
-  const [mode, setMode] = useState<"menu" | "range">("menu");
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
+  // Kurucu kararı (2026-08-23): tek bütçe alanı, tıklamadan açık gelir;
+  // tek alternatif "Teklifleri görmek istiyorum".
+  const [amount, setAmount] = useState("");
   // Yazarken binlik ayracı: 30000 değil 30.000 görünür.
   const formatLive = (raw: string) => {
     const digits = raw.replace(/\D/g, "");
@@ -231,85 +231,52 @@ function MoneyRangeControl(props: {
               ? "Toplam"
               : null;
 
-  if (mode === "menu") {
-    return (
-        <div className="mt-3 flex flex-wrap gap-2" data-testid="control-money-range">
-        {props.control.options.map((opt) => (
-          <OptionChip
-            key={opt.value}
-            label={opt.label}
-            soft={opt.soft}
-            onClick={() => {
-              if (opt.opensCustom || opt.value === "__budget_range__") {
-                setMode("range");
-                return;
-              }
-              props.onAnswer(opt.value);
-            }}
-          />
-        ))}
-      </div>
-    );
-  }
+  const digits = amount.replace(/\D/g, "");
 
   return (
     <div className="mt-3 space-y-3" data-testid="control-money-range-form">
-      <p className="text-xs text-teal-950/55">
-        {basisLabel
-          ? `${basisLabel} bütçe · ${props.control.currency ?? "TRY"}`
-          : props.control.currency ?? "TRY"}
-      </p>
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label className={signalLabel} htmlFor="budget-min">
-            Minimum
-          </label>
-          <input
-            id="budget-min"
-            inputMode="numeric"
-            className={signalInput}
-            value={min}
-            onChange={(e) => setMin(formatLive(e.target.value))}
-            placeholder="Örn. 20.000"
-          />
-        </div>
-        <div>
-          <label className={signalLabel} htmlFor="budget-max">
-            Maksimum
-          </label>
-          <input
-            id="budget-max"
-            inputMode="numeric"
-            className={signalInput}
-            value={max}
-            onChange={(e) => setMax(formatLive(e.target.value))}
-            placeholder="Örn. 30.000"
-          />
-        </div>
+      <div>
+        <label className={signalLabel} htmlFor="budget-amount">
+          {basisLabel ? `${basisLabel} bütçe (TL)` : "Bütçe (TL)"}
+        </label>
+        <input
+          id="budget-amount"
+          inputMode="numeric"
+          autoComplete="off"
+          className={signalInput}
+          value={amount}
+          onChange={(e) => setAmount(formatLive(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && digits) {
+              props.onAnswer(`${formatLive(digits)} TL`);
+            }
+          }}
+          placeholder="Örn. 50.000"
+        />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          className="min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white"
+          disabled={!digits}
+          className="min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40"
           onClick={() => {
-            const a = min.replace(/\D/g, "");
-            const b = max.replace(/\D/g, "");
-            if (!a && !b) return;
-            const fmt = (n: string) =>
-              new Intl.NumberFormat("tr-TR").format(Number(n));
-            if (a && b) props.onAnswer(`${fmt(a)}–${fmt(b)} TL`);
-            else props.onAnswer(`${fmt(a || b)} TL`);
+            if (!digits) return;
+            props.onAnswer(`${formatLive(digits)} TL`);
           }}
         >
           Kaydet
         </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-xl px-3 text-sm text-teal-950/60"
-          onClick={() => setMode("menu")}
-        >
-          Geri
-        </button>
+        <span className="text-xs text-[#0f1f1d]/40">veya</span>
+        {props.control.options
+          .filter((opt) => opt.value === "open_to_offers")
+          .map((opt) => (
+            <OptionChip
+              key={opt.value}
+              label={opt.label}
+              soft
+              onClick={() => props.onAnswer(opt.value)}
+            />
+          ))}
       </div>
     </div>
   );
@@ -585,7 +552,7 @@ export function FocusedQuestionsPanel({
         data-control-type={control?.controlType ?? "text_fallback"}
       >
         <p
-          className="text-sm font-semibold leading-6 text-[#0f1f1d]"
+          className="text-[15px] font-semibold leading-6 tracking-[-0.01em] text-[#0f1f1d]"
           data-testid="composer-question-prompt"
         >
           {active.humanPrompt}

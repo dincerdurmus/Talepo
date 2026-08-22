@@ -89,19 +89,14 @@ export function conditionOptions(): ControlOption[] {
 }
 
 export function budgetEntryOptions(): ControlOption[] {
+  // Kurucu kararı (2026-08-23): tek bütçe alanı her zaman açık gelir;
+  // tek alternatif "Teklifleri görmek istiyorum". Aralık/bilmiyorum/farketmez yok.
   return [
-    {
-      label: "Bütçe aralığı belirt",
-      value: "__budget_range__",
-      opensCustom: true,
-    },
     {
       label: "Teklifleri görmek istiyorum",
       value: "open_to_offers",
       soft: true,
     },
-    { label: "Henüz bilmiyorum", value: "unknown", soft: true },
-    { label: "Fark etmez", value: "no_preference", soft: true },
   ];
 }
 

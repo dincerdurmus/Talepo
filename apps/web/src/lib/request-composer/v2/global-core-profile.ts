@@ -14,6 +14,8 @@ export const GLOBAL_CORE_FIELD_KEYS = ["budget", "city", "delivery"] as const;
 
 export type GlobalLocationStatus =
   | "city_district"
+  /** İl seçildi, ilçe "Tümü" — il geneli geçerli cevaptır (kurucu, 2026-08-23). */
+  | "city_wide"
   | "nationwide"
   | "remote"
   | "no_location_preference"
@@ -171,13 +173,9 @@ export function parseBudgetStatus(
 export function isBudgetSatisfiedForPublish(
   value: string | null | undefined,
 ): boolean {
+  // Kurucu: ya bütçe girilir ya "teklifleri görmek istiyorum" denir.
   const status = parseBudgetStatus(value);
-  return (
-    status === "specified" ||
-    status === "open_to_offers" ||
-    status === "unknown" ||
-    status === "no_preference"
-  );
+  return status === "specified" || status === "open_to_offers";
 }
 
 export function isLocationSatisfiedForPublish(input: {
@@ -198,7 +196,6 @@ export function isLocationSatisfiedForPublish(input: {
   ) {
     return true;
   }
-  // Concrete city requires il + ilçe (slash form or separate district).
   if (fromCity === "city_district") {
     const raw = (input.cityValue ?? "").trim();
     if (raw.includes("/")) {
@@ -206,6 +203,15 @@ export function isLocationSatisfiedForPublish(input: {
       return Boolean(il && ilce);
     }
     return Boolean(raw && input.districtValue?.trim());
+  }
+  // Kurucu (2026-08-23): il seçili + ilçe "Tümü" (yalın il / il listesi)
+  // il geneli anlamına gelir ve yayın kapısını tatmin eder.
+  if (
+    fromCity !== "unknown" &&
+    fromCity !== "missing" &&
+    (input.cityValue ?? "").trim().length > 0
+  ) {
+    return true;
   }
   const mode = parseLocationStatus(input.locationMode);
   if (mode === "remote" || mode === "nationwide" || mode === "no_location_preference") {

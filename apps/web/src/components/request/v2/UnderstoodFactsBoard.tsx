@@ -123,7 +123,8 @@ export function UnderstoodFactsBoard({
         Talepo’nun anladıkları
       </h2>
       {categoryLabel ? (
-        <p className="mt-1.5 text-sm font-semibold text-[#0f1f1d]">
+        <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#e3f1f2] px-3 py-1 text-[13px] font-semibold text-[#0f5f59]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#0f766e]" aria-hidden />
           {categoryLabel}
         </p>
       ) : (
@@ -131,7 +132,7 @@ export function UnderstoodFactsBoard({
       )}
 
       {understood.length > 0 ? (
-        <ul className="mt-2.5 divide-y divide-teal-950/[0.06] rounded-[12px] border border-teal-950/[0.08] bg-white/90">
+        <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
           {understood.map((fact) => (
             <FactRow
               key={fact.key}
@@ -282,7 +283,11 @@ function FactRow({
   }
 
   return (
-    <li className="px-3 py-2.5">
+    <li
+      className={`rounded-xl bg-[#f7faf9] px-3 py-2.5 transition-colors hover:bg-[#f0fdfa] ${
+        isEditing ? "sm:col-span-2" : ""
+      }`}
+    >
       {isEditing ? (
         <EditInline
           id={editId}
@@ -303,8 +308,10 @@ function FactRow({
       ) : (
         <div className="flex items-start gap-2">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] text-teal-950/50">{fact.label}</p>
-            <p className="text-sm font-semibold text-[#0f1f1d] break-words">
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#0f1f1d]/40">
+              {fact.label}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-[#0f1f1d] break-words">
               {fact.displayValue}
             </p>
           </div>

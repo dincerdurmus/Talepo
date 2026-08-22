@@ -3233,7 +3233,7 @@ function TalepOlusturForm() {
                         <button
                           type="button"
                           data-testid="composer-review-cta"
-                          className="mt-3 min-h-12 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-4 text-sm font-medium text-[#0f1f1d] hover:border-[#0f766e]/25"
+                          className="mt-3 min-h-12 w-full rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59]"
                           onClick={() => {
                             setUxStage("review");
                             setPublishSummaryOpened(true);
@@ -3241,21 +3241,26 @@ function TalepOlusturForm() {
                             trackComposerEvent("publish_summary_opened");
                           }}
                         >
-                          Talebi gözden geçir
+                          Önizle ve yayınla
                         </button>
-                      ) : !hybrid.isSyncing &&
-                        !composerReadiness.canReview &&
-                        focusedQuestions.length > 0 ? (
-                        <p
-                          className="mt-3 text-center text-xs text-[#0f1f1d]/50"
+                      ) : !hybrid.isSyncing && !composerReadiness.canReview ? (
+                        /* Ana eylem hep görünür — eksik alanı söyler, tıklayınca
+                           soruya götürür (kurucu, 2026-08-23). */
+                        <button
+                          type="button"
                           data-testid="composer-continue-hint"
+                          className="mt-3 min-h-12 w-full cursor-pointer rounded-xl border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-semibold text-[#0f5f59] transition hover:border-[#0f766e]/45"
+                          onClick={() => {
+                            document
+                              .querySelector('[data-testid="composer-questions"]')
+                              ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          }}
                         >
-                          {composerReadiness.remainingCriticalCount === 1
-                            ? "1 kritik soru kaldı"
-                            : `${composerReadiness.remainingCriticalCount} kritik soru kaldı`}
-                          {" · "}
-                          Devam etmek için yanıtlayın
-                        </p>
+                          Yayın için son adım:{" "}
+                          {composerReadiness.blockingLabels?.length
+                            ? composerReadiness.blockingLabels.join(" + ")
+                            : "kalan soruları yanıtlayın"}
+                        </button>
                       ) : null}
                     </>
                   ) : null}

@@ -89,8 +89,8 @@ export function resolveLocationStatus(input: {
     return "city_district";
   }
   if ((input.cityValue ?? "").trim()) {
-    // Province selected without district — still missing
-    return "missing";
+    // İl (ya da il listesi) seçili, ilçe "Tümü" — il geneli geçerli cevap.
+    return "city_wide";
   }
   return "missing";
 }
@@ -138,7 +138,9 @@ export function filterReviewUncertainties(input: {
   budgetValue?: string | null;
 }): Array<{ key: string; label: string; tone: "check" | "unsure" }> {
   const locSoft = isSoftLocationAnswer(input.cityValue);
-  const locComplete = isCityDistrictComplete(input.cityValue);
+  const locComplete =
+    isCityDistrictComplete(input.cityValue) ||
+    resolveLocationStatus({ cityValue: input.cityValue }) === "city_wide";
   const budSoft = isSoftBudgetAnswer(input.budgetValue);
   const budSpecified = resolveBudgetStatus(input.budgetValue) === "specified";
 

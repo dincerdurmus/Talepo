@@ -125,14 +125,11 @@ function escapesFor(input: {
     input.categoryId === "services" || input.categoryId === "health";
 
   if (input.fieldKey === "budget") {
+    // Tek kaçış: teklifleri görmek — bilmiyorum/farketmez bütçede yok (kurucu).
     out.push({
       label: "Teklifleri görmek istiyorum",
       value: "open_to_offers",
     });
-    out.push({ label: "Henüz bilmiyorum", value: "unknown" });
-    if (input.allowDontCare) {
-      out.push({ label: "Fark etmez", value: "no_preference" });
-    }
     return out;
   }
   if (input.fieldKey === "city") {
