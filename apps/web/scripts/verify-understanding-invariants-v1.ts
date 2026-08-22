@@ -25,6 +25,7 @@ import { understandRequest } from "../src/lib/request-understanding/understand-r
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
+import { scheduleNextQuestions } from "../src/lib/request-composer/v2/question-scheduler";
 import {
   buildUnderstoodFacts,
   syncFromText,
@@ -377,6 +378,79 @@ check("I7b: merge helper honors rawInputs contract directly", () => {
     { previous: "ev arıyorum izmir tarafı", current: "ev arıyorum ankara civarı" },
   );
   assert.equal(fresh.city?.value, "Ankara", "newly typed value must win");
+});
+
+/* ================= I9 — product → question mapping ======================== */
+
+function scheduledKeys(
+  categoryId: string,
+  productType: string | null,
+): Set<string> {
+  const result = scheduleNextQuestions({
+    categoryId,
+    productType,
+    hybridCandidates: [],
+    values: {},
+  });
+  const keys = new Set(result.visible.map((q) => q.fieldKey));
+  // Look past the ≤3 visibility cap: run again marking visible ones answered.
+  const more = scheduleNextQuestions({
+    categoryId,
+    productType,
+    hybridCandidates: [],
+    values: {},
+    answeredKeys: [...keys],
+  });
+  for (const q of more.visible) keys.add(q.fieldKey);
+  return keys;
+}
+
+check("I9: each product family gets its own questions and nobody else's", () => {
+  const cases: Array<{
+    cat: string;
+    product: string | null;
+    must: string[];
+    never: string[];
+  }> = [
+    { cat: "technology", product: "Televizyon", must: ["screenSize"], never: ["btu", "vacuumType", "coffeeType"] },
+    { cat: "technology", product: "Laptop", must: ["usagePurpose"], never: ["screenSize", "btu"] },
+    { cat: "technology", product: "Kulaklık", must: ["headphoneType"], never: ["screenSize"] },
+    { cat: "technology", product: "Fotoğraf Makinesi", must: ["cameraType"], never: ["screenSize", "usagePurpose"] },
+    { cat: "technology", product: null, must: [], never: ["screenSize", "storageCapacity", "usagePurpose"] },
+    { cat: "appliances", product: "Klima", must: ["btu"], never: ["screenSize", "vacuumType", "capacityKg"] },
+    { cat: "appliances", product: "Robot Süpürge", must: ["vacuumType"], never: ["screenSize", "btu"] },
+    { cat: "appliances", product: "Hava Temizleme Cihazı", must: ["usageArea"], never: ["screenSize", "btu"] },
+    { cat: "appliances", product: "Çamaşır Makinesi", must: ["capacityKg"], never: ["btu", "screenSize"] },
+    { cat: "appliances", product: "Buzdolabı", must: ["fridgeType"], never: ["screenSize", "capacityKg"] },
+    { cat: "appliances", product: null, must: [], never: ["screenSize", "btu", "vacuumType"] },
+    { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["btu", "screenSize"] },
+  ];
+  const bad: string[] = [];
+  for (const c of cases) {
+    const keys = scheduledKeys(c.cat, c.product);
+    for (const k of c.must) {
+      if (!keys.has(k)) bad.push(`${c.cat}/${c.product} soru EKSİK: ${k}`);
+    }
+    for (const k of c.never) {
+      if (keys.has(k)) bad.push(`${c.cat}/${c.product} alakasız soru: ${k}`);
+    }
+  }
+  assert.deepEqual(bad, []);
+});
+
+check("I9b: product-scoped questions ship one-tap options", () => {
+  const result = scheduleNextQuestions({
+    categoryId: "appliances",
+    productType: "Klima",
+    hybridCandidates: [],
+    values: {},
+  });
+  const btu = result.visible.find((q) => q.fieldKey === "btu");
+  assert.ok(btu, "btu question missing");
+  assert.ok(
+    (btu.quickChoices?.length ?? 0) >= 3,
+    "btu question has no quick choices",
+  );
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

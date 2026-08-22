@@ -43,6 +43,14 @@ export type QuestionProfileDef = {
   /** Empty = all categories that surface this key via engine/common */
   categories?: string[];
   whenNeedTypes?: string[];
+  /**
+   * Product-scoped questions: only ask when the detected product/appliance
+   * type (diacritic-folded, substring match) hits one of these. A TV gets
+   * screen size; an air purifier gets room size — never the other way around.
+   */
+  whenProductTypes?: string[];
+  /** One-tap options offered when the hybrid candidate has none. */
+  quickChoices?: { label: string; value: string }[];
   allowUnknown?: boolean;
   allowDontCare?: boolean;
   inputHint?: "text" | "select" | "budget" | "location" | "number";

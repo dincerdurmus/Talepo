@@ -251,19 +251,336 @@ const STANDARD: QuestionProfileDef[] = [
     allowDontCare: true,
     allowUnknown: true,
   },
+  // (screenSize artık ürün-kapsamlı tanımda — aşağıda; kategori-geneli sürüm
+  // ürün bilinmeden ekran sorusu sorduğu için kaldırıldı.)
+
+  /* ------------------------------------------------------------------ */
+  /* Product-scoped questions — "hangi ürüne hangi soru?"                */
+  /* Sourced from the MediaMarkt TR category tree (2026-08-22): each     */
+  /* product family gets ONLY the questions a seller actually needs to   */
+  /* quote it. Asked only when the product type is detected.             */
+  /* ------------------------------------------------------------------ */
+
+  // —— TV / monitör ——
   {
     fieldKey: "screenSize",
-    prompt: "Ekran boyutu tercihiniz?",
+    prompt: "Kaç inç olsun?",
     summaryLabel: "Ekran",
-    importance: "optional",
-    // technology only: TVs resolve to technology, and appliances (hava
-    // temizleyicisi, süpürge…) must never be asked a screen size.
+    importance: "quote_critical",
     categories: ["technology"],
-    rank: 44,
+    whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],
+    rank: 70,
     allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "43\"", value: "43" },
+      { label: "50\"", value: "50" },
+      { label: "55\"", value: "55" },
+      { label: "65\" ve üzeri", value: "65+" },
+    ],
+  },
+  {
+    fieldKey: "panelType",
+    prompt: "Panel tercihin var mı?",
+    summaryLabel: "Panel",
+    importance: "optional",
+    categories: ["technology"],
+    whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],
+    rank: 30,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "OLED", value: "OLED" },
+      { label: "QLED", value: "QLED" },
+      { label: "LED", value: "LED" },
+    ],
+  },
+  // —— telefon / tablet ——
+  {
+    fieldKey: "storageCapacity",
+    prompt: "Depolama ne kadar olsun?",
+    summaryLabel: "Depolama",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["telefon", "iphone", "tablet", "ipad"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "128 GB", value: "128 GB" },
+      { label: "256 GB", value: "256 GB" },
+      { label: "512 GB", value: "512 GB" },
+      { label: "1 TB", value: "1 TB" },
+    ],
+  },
+  // —— laptop ——
+  {
+    fieldKey: "usagePurpose",
+    prompt: "Ne için kullanacaksın?",
+    summaryLabel: "Kullanım",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["laptop", "notebook", "bilgisayar", "macbook"],
+    rank: 60,
+    allowDontCare: false,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Oyun", value: "Oyun" },
+      { label: "İş / Ofis", value: "İş" },
+      { label: "Okul", value: "Okul" },
+      { label: "Günlük kullanım", value: "Günlük" },
+    ],
+  },
+  // —— kulaklık ——
+  {
+    fieldKey: "headphoneType",
+    prompt: "Nasıl bir kulaklık?",
+    summaryLabel: "Kulaklık tipi",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["kulaklik", "kulaklık", "airpods"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Kulak içi", value: "Kulak içi" },
+      { label: "Kulak üstü", value: "Kulak üstü" },
+      { label: "Bluetooth", value: "Bluetooth" },
+      { label: "Oyuncu kulaklığı", value: "Oyuncu" },
+    ],
+  },
+  // —— yazıcı ——
+  {
+    fieldKey: "printerType",
+    prompt: "Hangi tip yazıcı?",
+    summaryLabel: "Yazıcı tipi",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["yazici", "yazıcı", "printer"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Lazer", value: "Lazer" },
+      { label: "Mürekkep püskürtmeli", value: "Mürekkep püskürtmeli" },
+      { label: "Tanklı", value: "Tanklı" },
+    ],
+  },
+  // —— fotoğraf makinesi ——
+  {
+    fieldKey: "cameraType",
+    prompt: "Nasıl bir makine arıyorsun?",
+    summaryLabel: "Makine tipi",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["fotograf", "fotoğraf", "kamera"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Aynasız", value: "Aynasız" },
+      { label: "DSLR", value: "DSLR" },
+      { label: "Kompakt", value: "Kompakt" },
+      { label: "Şipşak (Instax)", value: "Şipşak" },
+    ],
+  },
+  // —— klima ——
+  {
+    fieldKey: "btu",
+    prompt: "Kaç BTU olmalı?",
+    summaryLabel: "BTU",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["klima"],
+    rank: 70,
     allowUnknown: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "9.000 BTU", value: "9000 BTU" },
+      { label: "12.000 BTU", value: "12000 BTU" },
+      { label: "18.000 BTU", value: "18000 BTU" },
+      { label: "24.000 BTU", value: "24000 BTU" },
+    ],
+  },
+  {
+    fieldKey: "installation",
+    prompt: "Montaj da dahil olsun mu?",
+    summaryLabel: "Montaj",
+    importance: "optional",
+    categories: ["appliances"],
+    whenProductTypes: ["klima", "kombi", "sofben", "şofben", "termosifon"],
+    rank: 30,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Montaj dahil", value: "Montaj dahil" },
+      { label: "Sadece ürün", value: "Sadece ürün" },
+    ],
+  },
+  // —— buzdolabı ——
+  {
+    fieldKey: "fridgeType",
+    prompt: "Nasıl bir buzdolabı?",
+    summaryLabel: "Buzdolabı tipi",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["buzdolabi", "buzdolabı"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "No-Frost", value: "No-Frost" },
+      { label: "Alttan donduruculu", value: "Alttan donduruculu" },
+      { label: "Gardrop tipi", value: "Gardrop tipi" },
+      { label: "Mini", value: "Mini" },
+    ],
+  },
+  // —— çamaşır / kurutma ——
+  {
+    fieldKey: "capacityKg",
+    prompt: "Kaç kilogram kapasite?",
+    summaryLabel: "Kapasite",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["camasir", "çamaşır", "kurutma"],
+    rank: 60,
+    allowUnknown: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "8 kg", value: "8 kg" },
+      { label: "9 kg", value: "9 kg" },
+      { label: "10 kg", value: "10 kg" },
+      { label: "12 kg", value: "12 kg" },
+    ],
+  },
+  // —— bulaşık makinesi ——
+  {
+    fieldKey: "placeSetting",
+    prompt: "Kaç kişilik olsun?",
+    summaryLabel: "Kapasite",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["bulasik", "bulaşık"],
+    rank: 60,
+    allowUnknown: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "12 kişilik", value: "12 kişilik" },
+      { label: "14 kişilik", value: "14 kişilik" },
+      { label: "16 kişilik", value: "16 kişilik" },
+    ],
+  },
+  // —— süpürge ——
+  {
+    fieldKey: "vacuumType",
+    prompt: "Nasıl bir süpürge?",
+    summaryLabel: "Süpürge tipi",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["supurge", "süpürge", "vacuum"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Robot", value: "Robot" },
+      { label: "Dikey şarjlı", value: "Dikey" },
+      { label: "Toz torbalı", value: "Toz torbalı" },
+      { label: "Islak-kuru", value: "Islak-kuru" },
+    ],
+  },
+  // —— hava temizleyici / nemlendirici ——
+  {
+    fieldKey: "usageArea",
+    prompt: "Kaç metrekarelik alan için?",
+    summaryLabel: "Alan",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["temizleyici", "nemlendirici", "temizleme cihaz", "nemlendirme"],
+    rank: 60,
+    allowUnknown: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "25 m²'ye kadar", value: "25 m²" },
+      { label: "25–50 m²", value: "25-50 m²" },
+      { label: "50 m² üzeri", value: "50+ m²" },
+    ],
+  },
+  // —— fırın ——
+  {
+    fieldKey: "ovenType",
+    prompt: "Ankastre mi, solo mu?",
+    summaryLabel: "Fırın tipi",
+    importance: "quote_critical",
+    categories: ["appliances"],
+    whenProductTypes: ["firin", "fırın", "ocak"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Ankastre", value: "Ankastre" },
+      { label: "Solo / Ocaklı", value: "Solo" },
+      { label: "Mini fırın", value: "Mini" },
+    ],
+  },
+  // —— kahve makinesi ——
+  {
+    fieldKey: "coffeeType",
+    prompt: "Hangi tip kahve makinesi?",
+    summaryLabel: "Kahve tipi",
+    importance: "quote_critical",
+    categories: ["home-kitchen"],
+    whenProductTypes: ["kahve"],
+    rank: 60,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Espresso", value: "Espresso" },
+      { label: "Kapsüllü", value: "Kapsüllü" },
+      { label: "Filtre", value: "Filtre" },
+      { label: "Türk kahvesi", value: "Türk kahvesi" },
+    ],
+  },
+  // —— airfryer ——
+  {
+    fieldKey: "fryerCapacity",
+    prompt: "Kaç litre olsun?",
+    summaryLabel: "Kapasite",
+    importance: "optional",
+    categories: ["home-kitchen"],
+    whenProductTypes: ["airfryer", "fritoz", "fritöz"],
+    rank: 40,
+    allowDontCare: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "4–5 L", value: "4-5 L" },
+      { label: "6–7 L", value: "6-7 L" },
+      { label: "8 L ve üzeri", value: "8+ L" },
+    ],
   },
 ];
+
+const PROFILE_FOLD: Record<string, string> = {
+  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u",
+};
+function foldProductType(value: string): string {
+  let out = "";
+  for (const ch of value.toLocaleLowerCase("tr-TR")) {
+    out += PROFILE_FOLD[ch] ?? ch;
+  }
+  return out;
+}
+
+function matchesProductType(
+  def: QuestionProfileDef,
+  productType: string | null | undefined,
+): boolean {
+  if (!def.whenProductTypes || def.whenProductTypes.length === 0) return true;
+  // Product-scoped questions require a detected product: with no product we
+  // stay silent rather than ask an irrelevant question (Dyson ≠ ekran boyutu).
+  if (!productType?.trim()) return false;
+  const hay = foldProductType(productType);
+  return def.whenProductTypes.some((p) => hay.includes(foldProductType(p)));
+}
 
 function matchesCategory(
   def: QuestionProfileDef,
@@ -286,22 +603,30 @@ function matchesNeedType(
  * Resolve the active profile definition for a field in a category context.
  * More specific (category-scoped) defs win over generic ones.
  */
+/** Specificity: product-scoped > category-scoped > global. */
+function profileSpecificity(def: QuestionProfileDef): number {
+  return (
+    (def.whenProductTypes?.length ? 2 : 0) + (def.categories?.length ? 1 : 0)
+  );
+}
+
 export function resolveProfileForField(input: {
   fieldKey: string;
   categoryId: string;
   needType?: string | null;
+  productType?: string | null;
 }): QuestionProfileDef | null {
   const matches = STANDARD.filter(
     (d) =>
       d.fieldKey === input.fieldKey &&
       matchesCategory(d, input.categoryId) &&
-      matchesNeedType(d, input.needType),
+      matchesNeedType(d, input.needType) &&
+      matchesProductType(d, input.productType),
   );
   if (matches.length === 0) return null;
-  // Prefer category-specific over global
   matches.sort((a, b) => {
-    const as = a.categories?.length ? 1 : 0;
-    const bs = b.categories?.length ? 1 : 0;
+    const as = profileSpecificity(a);
+    const bs = profileSpecificity(b);
     if (as !== bs) return bs - as;
     return (b.rank ?? 0) - (a.rank ?? 0);
   });
@@ -311,19 +636,21 @@ export function resolveProfileForField(input: {
 export function listProfilesForCategory(input: {
   categoryId: string;
   needType?: string | null;
+  productType?: string | null;
 }): QuestionProfileDef[] {
   const byKey = new Map<string, QuestionProfileDef>();
   for (const def of STANDARD) {
     if (!matchesCategory(def, input.categoryId)) continue;
     if (!matchesNeedType(def, input.needType)) continue;
+    if (!matchesProductType(def, input.productType)) continue;
     const existing = byKey.get(def.fieldKey);
     if (!existing) {
       byKey.set(def.fieldKey, def);
       continue;
     }
-    const preferNew =
-      (def.categories?.length ? 1 : 0) > (existing.categories?.length ? 1 : 0);
-    if (preferNew) byKey.set(def.fieldKey, def);
+    if (profileSpecificity(def) > profileSpecificity(existing)) {
+      byKey.set(def.fieldKey, def);
+    }
   }
   return [...byKey.values()].sort(
     (a, b) => (b.rank ?? 0) - (a.rank ?? 0),

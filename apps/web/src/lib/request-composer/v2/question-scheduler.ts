@@ -180,6 +180,11 @@ function defaultPrompt(fieldKey: string, fallback?: string): string {
 export function scheduleNextQuestions(input: {
   categoryId: string;
   needType?: string | null;
+  /**
+   * Detected product/appliance type — activates product-scoped questions
+   * (TV → screen size, klima → BTU) and keeps them silent otherwise.
+   */
+  productType?: string | null;
   hybridCandidates: QuestionCandidate[];
   /** Common + dynamic draft values */
   values: Record<string, string | undefined>;
@@ -209,9 +214,23 @@ export function scheduleNextQuestions(input: {
     (category?.commonFields ?? []).map((f) => f.key),
   );
 
+  // Product context: explicit input wins; otherwise derive from the values /
+  // field states every caller already passes — so TV gets its screen-size
+  // question no matter which wrapper invoked the scheduler.
+  const productTypeContext =
+    input.productType ??
+    input.values.productType ??
+    input.values.applianceType ??
+    input.values.kitchenProductType ??
+    input.fieldStates?.productType?.value ??
+    input.fieldStates?.applianceType?.value ??
+    input.fieldStates?.kitchenProductType?.value ??
+    null;
+
   const categoryProfiles = listProfilesForCategory({
     categoryId: input.categoryId,
     needType: input.needType,
+    productType: productTypeContext,
   });
   // Global core cannot be overwritten/suppressed by category profiles.
   const listingFromValues =
@@ -288,6 +307,7 @@ export function scheduleNextQuestions(input: {
         fieldKey,
         categoryId: input.categoryId,
         needType: input.needType,
+        productType: productTypeContext,
       }) ??
       ({
         fieldKey,
@@ -334,6 +354,10 @@ export function scheduleNextQuestions(input: {
         c.value !== "fark-etmez" &&
         c.value !== "no_preference",
     );
+    // Product-scoped profiles ship their own one-tap options.
+    if (quickChoices.length === 0 && profile.quickChoices?.length) {
+      quickChoices = profile.quickChoices;
+    }
     if (fieldKey === "locationMode" && quickChoices.length === 0) {
       quickChoices = [
         { label: "Uzaktan uygun", value: "remote" },
