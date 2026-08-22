@@ -340,10 +340,10 @@ export default function TalepOlusturPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-[#eef3f2] px-5 py-16 text-[#0f1f1d]">
-          <div className="mx-auto max-w-3xl animate-pulse rounded-2xl bg-white/80 p-8">
-            <div className="h-8 w-48 rounded bg-teal-900/10" />
-            <div className="mt-6 h-40 rounded-2xl bg-teal-900/5" />
+        <main className="min-h-screen bg-[#f4f7f6] px-5 py-16 text-[#0f1f1d]">
+          <div className="mx-auto max-w-3xl animate-pulse rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white p-8">
+            <div className="h-8 w-48 rounded bg-[#0f1f1d]/8" />
+            <div className="mt-6 h-40 rounded-2xl bg-[#0f1f1d]/5" />
           </div>
         </main>
       }
@@ -2811,49 +2811,8 @@ function TalepOlusturForm() {
   );
 
   return (
-    <main className={`relative min-h-screen overflow-x-hidden bg-[#eef3f2] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
-      {/* Atmospheric marketplace backdrop — soft, corporate, non-competing */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(165deg,#d1fae5_0%,#ecfeff_38%,#f0fdfa_68%,#e0f2fe_100%)]" />
-        <div className="absolute -left-[18%] top-[-8%] h-[520px] w-[520px] rounded-full bg-[radial-gradient(circle_at_center,rgba(15,118,110,0.22)_0%,transparent_68%)] blur-2xl" />
-        <div className="absolute -right-[12%] top-[12%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle_at_center,rgba(14,165,233,0.16)_0%,transparent_70%)] blur-2xl" />
-        <div className="absolute bottom-[-10%] left-[30%] h-[420px] w-[620px] rounded-full bg-[radial-gradient(circle_at_center,rgba(45,212,191,0.12)_0%,transparent_72%)] blur-3xl" />
-        <div
-          className="absolute inset-0 opacity-[0.35]"
-          style={{
-            backgroundImage:
-              "radial-gradient(rgba(15,118,110,0.09) 0.8px, transparent 0.8px)",
-            backgroundSize: "22px 22px",
-            maskImage:
-              "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 45%, transparent 78%)",
-            WebkitMaskImage:
-              "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.2) 45%, transparent 78%)",
-          }}
-        />
-        {/* Soft abstract listing shapes — decorative only */}
-        <svg
-          className="absolute right-[-4%] top-[140px] hidden h-[340px] w-[340px] text-[#0f766e] opacity-[0.07] lg:block"
-          viewBox="0 0 320 320"
-          fill="none"
-        >
-          <rect x="48" y="40" width="180" height="220" rx="28" stroke="currentColor" strokeWidth="2" />
-          <rect x="88" y="72" width="160" height="200" rx="24" fill="currentColor" fillOpacity="0.12" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M112 118h112M112 148h88M112 178h96" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity="0.45" />
-          <circle cx="248" cy="248" r="42" stroke="currentColor" strokeWidth="2" />
-          <path d="M232 248h32M248 232v32" stroke="currentColor" strokeWidth="4" strokeLinecap="round" opacity="0.55" />
-        </svg>
-        <svg
-          className="absolute left-[-6%] top-[220px] hidden h-[280px] w-[280px] text-[#0f1f1d] opacity-[0.045] lg:block"
-          viewBox="0 0 280 280"
-          fill="none"
-        >
-          <circle cx="140" cy="140" r="110" stroke="currentColor" strokeWidth="1.5" />
-          <circle cx="140" cy="140" r="72" stroke="currentColor" strokeWidth="1.5" opacity="0.7" />
-          <path d="M140 54v172M54 140h172" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        </svg>
-      </div>
-
-      <header className="sticky top-0 z-40 border-b border-teal-900/[0.07] bg-white/80 backdrop-blur-xl">
+    <main className={`relative min-h-screen overflow-x-hidden bg-[#f4f7f6] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
+      <header className="sticky top-0 z-40 border-b border-[#0f1f1d]/8 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto grid h-14 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
           <div className="justify-self-start">
             <Link
@@ -2877,7 +2836,7 @@ function TalepOlusturForm() {
               className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${
                 hasText
                   ? "border-[#0f766e]/12 bg-[#f0fdfa] text-[#115e59]"
-                  : "border-teal-900/[0.08] bg-teal-50/70 text-teal-900/45"
+                  : "border-[#0f1f1d]/8 bg-white text-[#0f1f1d]/45"
               }`}
             >
               {hasText ? "Hazırlanıyor" : "Yeni talep"}
@@ -2931,38 +2890,40 @@ function TalepOlusturForm() {
           />
         ) : (
           <>
-            <section className={`talepo-rise mx-auto max-w-3xl py-4 text-center sm:py-6 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
-              <p className="inline-flex items-center gap-2 rounded-full border border-[#0f766e]/18 bg-gradient-to-r from-[#ecfdf5] to-[#f0fdfa] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Anlat · Netleştir · Yayınla
-              </p>
-              <h1 className="mt-3 text-[2rem] font-semibold tracking-[-0.05em] text-[#0f1f1d] sm:text-[2.6rem]">
-                Ne aradığını{" "}
-                <span className="bg-gradient-to-r from-[#0f766e] to-[#0d9488] bg-clip-text text-transparent">
-                  anlat.
-                </span>
-              </h1>
-              <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-teal-950/55 sm:text-base">
-                Talepo doğru uzmanlara ulaşması için gerisini seninle birlikte
-                tamamlasın. İstersen kategoriden de başlayabilirsin.
-              </p>
+            <section className={`talepo-rise talepo-beacon-hero relative mx-auto mb-5 max-w-3xl overflow-hidden rounded-[1.75rem] px-6 py-8 text-center sm:rounded-[2rem] sm:px-10 sm:py-10 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
+              <div className="talepo-beacon-hero-glow" aria-hidden />
+              <div className="relative">
+                <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
+                  <Sparkles className="h-3.5 w-3.5 text-teal-200/80" />
+                  Anlat · Netleştir · Yayınla
+                </p>
+                <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em] text-white sm:text-[2.6rem]">
+                  Ne aradığını{" "}
+                  <span className="bg-gradient-to-r from-teal-100 via-teal-200/95 to-teal-300/80 bg-clip-text text-transparent">
+                    anlat.
+                  </span>
+                </h1>
+                <p className="mx-auto mt-2.5 max-w-xl text-sm font-medium leading-6 text-white/50 sm:text-base">
+                  Talepo doğru uzmanlara ulaşması için gerisini seninle birlikte
+                  tamamlasın. İstersen kategoriden de başlayabilirsin.
+                </p>
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em]">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[#0b2522]">
+                    1 · Anlat
+                  </span>
+                  <span className="text-white/25">→</span>
+                  <span
+                    className={`rounded-full px-2.5 py-1 ${
+                      hasText
+                        ? "bg-white text-[#0b2522]"
+                        : "bg-white/10 text-white/50"
+                    }`}
+                  >
+                    2 · Kontrol et & tamamla
+                  </span>
+                </div>
+              </div>
             </section>
-
-            <div className={`mx-auto mb-4 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-teal-900/40 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
-              <span className="rounded-full bg-[#0f766e] px-2.5 py-1 text-white">
-                1 · Anlat
-              </span>
-              <span className="text-teal-900/25">→</span>
-              <span
-                className={`rounded-full px-2.5 py-1 ${
-                  hasText
-                    ? "bg-[#0f766e] text-white"
-                    : "bg-teal-900/6 text-teal-900/45"
-                }`}
-              >
-                2 · Kontrol et & tamamla
-              </span>
-            </div>
 
             <div
               className={`mx-auto grid items-start gap-5 ${
@@ -2973,10 +2934,10 @@ function TalepOlusturForm() {
             >
               <div className={`flex min-w-0 flex-col gap-4 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:h-full lg:overflow-y-auto lg:pr-2" : ""}`}>
                 <div
-                  className={`talepo-rise talepo-rise-delay-1 rounded-[1.75rem] border bg-gradient-to-b from-white to-[#f7fdfb] p-4 shadow-[0_16px_48px_rgba(15,118,110,0.08)] backdrop-blur-xl transition-[border-color,box-shadow] duration-300 sm:p-5 ${
+                  className={`talepo-rise talepo-rise-delay-1 rounded-[1.35rem] border bg-white p-4 shadow-[0_28px_80px_rgba(11,37,34,0.08)] transition-[border-color,box-shadow] duration-300 sm:p-5 ${
                     composerFocused
-                      ? "border-[#0f766e]/35 shadow-[0_20px_56px_rgba(15,118,110,0.14)]"
-                      : "border-teal-900/10"
+                      ? "border-[#0f766e]/35 shadow-[0_28px_80px_rgba(11,37,34,0.12)]"
+                      : "border-[#0f1f1d]/8"
                   }`}
                 >
                   <label
@@ -2985,7 +2946,7 @@ function TalepOlusturForm() {
                   >
                     İhtiyacını anlat
                   </label>
-                  <p className="mt-1 text-xs text-teal-950/45">
+                  <p className="mt-1 text-xs text-[#0f1f1d]/45">
                     Doğal cümlelerle yaz. Kategori ağacı seni sınırlamaz.
                   </p>
 
@@ -3228,7 +3189,7 @@ function TalepOlusturForm() {
                         <button
                           type="button"
                           data-testid="composer-review-cta"
-                          className="mt-3 min-h-12 w-full rounded-xl border border-teal-900/12 bg-white px-4 text-sm font-medium text-[#0f1f1d] hover:border-[#0f766e]/25"
+                          className="mt-3 min-h-12 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-4 text-sm font-medium text-[#0f1f1d] hover:border-[#0f766e]/25"
                           onClick={() => {
                             setUxStage("review");
                             setPublishSummaryOpened(true);
@@ -3242,7 +3203,7 @@ function TalepOlusturForm() {
                         !composerReadiness.canReview &&
                         focusedQuestions.length > 0 ? (
                         <p
-                          className="mt-3 text-center text-xs text-teal-950/50"
+                          className="mt-3 text-center text-xs text-[#0f1f1d]/50"
                           data-testid="composer-continue-hint"
                         >
                           {composerReadiness.remainingCriticalCount === 1
@@ -3280,7 +3241,7 @@ function TalepOlusturForm() {
                     }}
                   />
 
-                  <ul className="mt-3 flex flex-col gap-1.5 border-t border-teal-900/6 pt-3 text-xs text-teal-950/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
+                  <ul className="mt-3 flex flex-col gap-1.5 border-t border-[#0f1f1d]/6 pt-3 text-xs text-[#0f1f1d]/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
                     <li className="inline-flex items-center gap-1.5">
                       <span className="text-[#0f766e]">✓</span> Önce yaz, gerekirse
                       düzelt
@@ -3297,7 +3258,7 @@ function TalepOlusturForm() {
                 </div>
 
                 <div className="talepo-rise talepo-rise-delay-2 px-0.5">
-                  <p className="text-xs font-medium text-teal-950/40">
+                  <p className="text-xs font-medium text-[#0f1f1d]/40">
                     Hızlı örnek
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -3306,7 +3267,7 @@ function TalepOlusturForm() {
                         key={example}
                         type="button"
                         onClick={() => applyExampleChip(example)}
-                        className="rounded-full border border-teal-900/10 bg-white/80 px-3.5 py-2 text-left text-xs font-medium text-teal-950/70 shadow-sm backdrop-blur-sm transition hover:border-[#0f766e]/30 hover:bg-[#ecfdf5] hover:text-[#0f1f1d]"
+                        className="rounded-full border border-[#0f1f1d]/10 bg-white/80 px-3.5 py-2 text-left text-xs font-medium text-[#0f1f1d]/70 shadow-sm backdrop-blur-sm transition hover:border-[#0f766e]/30 hover:bg-[#ecfdf5] hover:text-[#0f1f1d]"
                       >
                         {example}
                       </button>
@@ -3319,16 +3280,16 @@ function TalepOlusturForm() {
                 id="talep-finish"
                 className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
               >
-                <details className="group rounded-[1.5rem] border border-[#0f766e]/12 bg-white/90 open:shadow-[0_10px_30px_rgba(15,118,110,0.06)]">
+                <details className="group rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white open:shadow-[0_10px_30px_rgba(11,37,34,0.06)]">
                   <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
                     <span className="flex items-center justify-between gap-2">
                       <span>Bilgileri düzenle</span>
-                      <span className="text-xs font-normal text-teal-950/45 group-open:hidden">
+                      <span className="text-xs font-normal text-[#0f1f1d]/45 group-open:hidden">
                         Başlık, kategori ve ek alanlar
                       </span>
                     </span>
                   </summary>
-                <div className="space-y-4 border-t border-teal-900/6 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                <div className="space-y-4 border-t border-[#0f1f1d]/6 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
                   <div className="rounded-[1.25rem] border border-[#0f766e]/10 bg-[#f7fcfa]/80 p-4 sm:p-5">
                     <label className="block">
                       <span className="flex flex-wrap items-center gap-2">
@@ -3346,7 +3307,7 @@ function TalepOlusturForm() {
                           </span>
                         )}
                       </span>
-                      <span className="mt-1 block text-xs leading-5 text-teal-950/45">
+                      <span className="mt-1 block text-xs leading-5 text-[#0f1f1d]/45">
                         Önerimizi kullanabilir veya kutuya tıklayıp değiştirebilirsin.
                       </span>
                       <span className="relative mt-3 block">
@@ -3361,11 +3322,11 @@ function TalepOlusturForm() {
                         </span>
                       </span>
                     </label>
-                    <label className="mt-4 block border-t border-teal-900/6 pt-4">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-teal-950/35">
+                    <label className="mt-4 block border-t border-[#0f1f1d]/6 pt-4">
+                      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#0f1f1d]/35">
                         Kategori
                       </span>
-                      <span className="relative mt-1.5 flex h-11 items-center rounded-lg border border-teal-900/8 bg-[#fafcfb] px-3 focus-within:border-[#0f766e]/35">
+                      <span className="relative mt-1.5 flex h-11 items-center rounded-lg border border-[#0f1f1d]/8 bg-[#fafcfb] px-3 focus-within:border-[#0f766e]/35">
                         <select
                           value={activeCategoryId}
                           onChange={(event) => {
@@ -3407,16 +3368,16 @@ function TalepOlusturForm() {
 
                   {/* Budget — required, natural prompt */}
                   {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && budgetRequired ? (
-                    <div className="rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-5 sm:p-6">
+                    <div className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white p-5 sm:p-6">
                       <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
                         {budgetCopy.title}
                       </h3>
                       {marketHint ? (
-                        <p className="mt-1.5 text-sm text-teal-950/48">
+                        <p className="mt-1.5 text-sm text-[#0f1f1d]/50">
                           Piyasa referansı: {marketHint}
                         </p>
                       ) : (
-                        <p className="mt-1.5 text-sm text-teal-950/48">
+                        <p className="mt-1.5 text-sm text-[#0f1f1d]/50">
                           {budgetCopy.helper}
                         </p>
                       )}
@@ -3430,7 +3391,7 @@ function TalepOlusturForm() {
                           placeholder={budgetPlaceholderForStrategy(
                             brain.strategy?.strategy,
                           )}
-                          className="h-12 w-full rounded-xl border border-teal-900/10 bg-[#fafcfb] px-3.5 text-sm outline-none focus:border-[#0f766e]/35 focus:bg-white"
+                          className="h-12 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 text-sm outline-none focus:border-[#0f766e]/35 focus:bg-white"
                         />
                       </div>
                       {showBudgetActions ? (
@@ -3458,7 +3419,7 @@ function TalepOlusturForm() {
 
                   {/* Required dynamic fields still missing — soft blocked prompts */}
                   {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && missingFields.length > 0 ? (
-                    <div className="rounded-[1.5rem] border border-amber-900/10 bg-[#fffbf5] p-5">
+                    <div className="rounded-[1.35rem] border border-amber-900/10 bg-[#fffbf5] p-5">
                       <h3 className="text-sm font-semibold text-[#0f1f1d]">
                         Yayınlamak için bir bilgi daha
                       </h3>
@@ -3485,7 +3446,7 @@ function TalepOlusturForm() {
                       className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
                         optionalOpen
                           ? "border-[#0f766e]/30 bg-[#f0fdfa]"
-                          : "border-teal-900/10 bg-white/80 hover:border-[#0f766e]/20"
+                          : "border-[#0f1f1d]/10 bg-white/80 hover:border-[#0f766e]/20"
                       }`}
                       aria-expanded={optionalOpen}
                     >
@@ -3495,20 +3456,20 @@ function TalepOlusturForm() {
                           <span className="block text-sm font-semibold text-[#0f1f1d]">
                             Verdiğim bilgileri düzenle
                           </span>
-                          <span className="mt-0.5 block text-xs text-teal-950/45">
+                          <span className="mt-0.5 block text-xs text-[#0f1f1d]/45">
                             Bütçe, konum ve diğer cevaplarını kontrol et
                           </span>
                         </span>
                       </span>
                       <ChevronDown
-                        className={`h-4 w-4 text-teal-950/40 transition ${
+                        className={`h-4 w-4 text-[#0f1f1d]/40 transition ${
                           optionalOpen ? "rotate-180" : ""
                         }`}
                       />
                     </button>
 
                     {optionalOpen ? (
-                      <div className="mt-3 space-y-4 rounded-[1.5rem] border border-teal-900/8 bg-white/95 p-4 sm:p-5">
+                      <div className="mt-3 space-y-4 rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white p-4 sm:p-5">
                         <div className="grid gap-3.5 sm:grid-cols-2">
                           {requiredDynamicFields.map((field) => (
                             <DynamicFieldInput
@@ -3539,8 +3500,8 @@ function TalepOlusturForm() {
                             />
                           ))}
                         </div>
-                        <label className="block rounded-2xl border border-teal-900/8 bg-[#f7faf9] px-4 py-3">
-                          <span className="text-xs font-semibold text-teal-900/55">
+                        <label className="block rounded-2xl border border-[#0f1f1d]/8 bg-[#f7faf9] px-4 py-3">
+                          <span className="text-xs font-semibold text-[#0f1f1d]/55">
                             Öne çıkarma (isteğe bağlı)
                           </span>
                           <select
@@ -3550,7 +3511,7 @@ function TalepOlusturForm() {
                                 event.target.value as typeof featureBoost,
                               )
                             }
-                            className="mt-2 h-11 w-full rounded-xl border border-teal-900/10 bg-white px-3 text-sm outline-none"
+                            className="mt-2 h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm outline-none"
                           >
                             <option value="">Öne çıkarma istemiyorum</option>
                             <option value="FEATURE_24H">24 saat · ₺99</option>
@@ -3616,7 +3577,7 @@ function TalepOlusturForm() {
                   {/* Mobile: AI sits above optional edit */}
                   <div className="lg:hidden">{aiCompanionShell}</div>
 
-                  <p className="text-center text-xs text-teal-950/45">
+                  <p className="text-center text-xs text-[#0f1f1d]/45">
                     Yayınlama, yukarıdaki talep özetinden yapılır.
                   </p>
                 </div>
@@ -3651,7 +3612,7 @@ function TalepOlusturForm() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="urgency-prompt-title"
-            className="w-full max-w-md rounded-[28px] border border-teal-900/10 bg-white p-6 shadow-[0_24px_64px_rgba(15,31,29,0.18)] sm:p-7"
+            className="w-full max-w-md rounded-[28px] border border-[#0f1f1d]/10 bg-white p-6 shadow-[0_24px_64px_rgba(15,31,29,0.18)] sm:p-7"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f0fdfa] text-[#0f766e]">
@@ -3663,29 +3624,29 @@ function TalepOlusturForm() {
             >
               Talebinizi yayınlayın
             </h2>
-            <p className="mt-2 text-sm leading-6 text-teal-950/50">
+            <p className="mt-2 text-sm leading-6 text-[#0f1f1d]/50">
               Yayınlamadan önce acil olup olmadığını belirtebilirsiniz.
             </p>
 
-            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-teal-900/10 bg-[#f7faf9] px-4 py-3.5 transition hover:border-teal-900/16 hover:bg-[#eef6f4]">
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-2xl border border-[#0f1f1d]/10 bg-[#f7faf9] px-4 py-3.5 transition hover:border-[#0f1f1d]/15 hover:bg-[#eef6f4]">
               <input
                 type="checkbox"
                 checked={publishAsUrgent}
                 onChange={(event) => setPublishAsUrgent(event.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-teal-900/20 text-[#0f766e] focus:ring-[#0f766e]/25"
+                className="mt-0.5 h-4 w-4 rounded border-[#0f1f1d]/20 text-[#0f766e] focus:ring-[#0f766e]/25"
               />
               <span className="min-w-0">
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-[#0f1f1d]">
                   Bu talep acil
                   <Zap className="h-3.5 w-3.5 text-[#0f766e]" />
                 </span>
-                <span className="mt-0.5 block text-xs leading-5 text-teal-950/45">
+                <span className="mt-0.5 block text-xs leading-5 text-[#0f1f1d]/45">
                   İşaretlerseniz tedarikçilere acil alıcı olarak iletilir.
                 </span>
               </span>
             </label>
 
-            <p className="mt-3 text-xs leading-5 text-teal-950/40">
+            <p className="mt-3 text-xs leading-5 text-[#0f1f1d]/40">
               * Acil işaretlemek ücretsizdir. Talebiniz keşif listesinde öne
               çıkar; uygun üyeliklere sahip tedarikçiler acil talepleri öncelikli
               görür.
@@ -3702,7 +3663,7 @@ function TalepOlusturForm() {
               <button
                 type="button"
                 onClick={closeUrgencyPrompt}
-                className="flex min-h-[44px] w-full items-center justify-center rounded-2xl px-4 text-sm font-medium text-teal-950/45 transition hover:text-[#0f1f1d]"
+                className="flex min-h-[44px] w-full items-center justify-center rounded-2xl px-4 text-sm font-medium text-[#0f1f1d]/45 transition hover:text-[#0f1f1d]"
               >
                 Vazgeç
               </button>
@@ -3733,11 +3694,11 @@ function CommonField({
   hint?: string;
 }) {
   const fieldClassName =
-    "h-11 w-full rounded-xl border border-teal-900/10 bg-[#fafcfb] px-3.5 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]";
+    "h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]";
 
   return (
     <label className={wide ? "sm:col-span-2" : ""}>
-      <span className="mb-1.5 block text-xs font-medium text-teal-950/45">
+      <span className="mb-1.5 block text-xs font-medium text-[#0f1f1d]/45">
         {label}
       </span>
 
@@ -3779,7 +3740,7 @@ function DynamicFieldInput({
   return (
     <label>
       <div className="mb-1.5 flex items-center gap-2">
-        <span className="text-xs font-medium text-teal-950/45">
+        <span className="text-xs font-medium text-[#0f1f1d]/45">
           {field.label}
         </span>
 
@@ -3796,7 +3757,7 @@ function DynamicFieldInput({
             <select
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-teal-900/10 bg-[#fafcfb] px-3.5 pr-10 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
+              className="h-11 w-full appearance-none rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 pr-10 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
             >
               <option value="">Seçiniz</option>
 
@@ -3807,7 +3768,7 @@ function DynamicFieldInput({
               ))}
             </select>
 
-            <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-teal-950/30" />
+            <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0f1f1d]/30" />
           </>
         ) : (
           <input
@@ -3815,12 +3776,12 @@ function DynamicFieldInput({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={field.placeholder}
-            className="h-11 w-full rounded-xl border border-teal-900/10 bg-[#fafcfb] px-3.5 pr-12 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
+            className="h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 pr-12 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
           />
         )}
 
         {field.unit && (
-          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-teal-950/30">
+          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[#0f1f1d]/30">
             {field.unit}
           </span>
         )}
