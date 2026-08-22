@@ -416,7 +416,7 @@ export function resolveCommonField(
   };
 }
 
-export const REQUEST_CATEGORIES: RequestCategory[] = [
+const CATEGORY_DEFINITIONS: RequestCategory[] = [
   {
     id: "printing",
     label: "Matbaa ve Ambalaj",
@@ -1466,12 +1466,16 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
   },
   {
     id: "baby",
-    label: "Bebek ve Çocuk",
-    description: "Bebek arabası, mama ürünleri, çocuk mobilyası ve bakım ihtiyaçları",
+    label: "Anne & Çocuk",
+    description: "Bebek arabası, mama ürünleri, çocuk mobilyası, anne ve bakım ihtiyaçları",
     keywords: [
       "bebek",
       "çocuk",
       "cocuk",
+      "anne",
+      "anne çocuk",
+      "anne cocuk",
+      "anne bebek",
       "bebek arabası",
       "bebek arabasi",
       "puset",
@@ -1728,6 +1732,35 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [
     ],
   },
 ];
+
+/**
+ * Vitrin sırası — kurucu kararı (2026-08-23). Kimlikler ve tanımlar yukarıda
+ * kalır; burası yalnız sunum sırasını belirler. Listede olmayan bir id
+ * eklenirse aşağıdaki kontrol yüksek sesle patlar.
+ */
+const CATEGORY_DISPLAY_ORDER: readonly string[] = [
+  "real-estate",
+  "automotive",
+  "technology",
+  "appliances",
+  "furniture",
+  "printing",
+  "machinery",
+  "baby",
+  "home-kitchen",
+  "health",
+  "services",
+];
+
+for (const def of CATEGORY_DEFINITIONS) {
+  if (!CATEGORY_DISPLAY_ORDER.includes(def.id)) {
+    throw new Error(`CATEGORY_DISPLAY_ORDER eksik id: ${def.id}`);
+  }
+}
+
+export const REQUEST_CATEGORIES: RequestCategory[] = [...CATEGORY_DEFINITIONS].sort(
+  (a, b) => CATEGORY_DISPLAY_ORDER.indexOf(a.id) - CATEGORY_DISPLAY_ORDER.indexOf(b.id),
+);
 
 /**
  * Sahibinden-style marketplace filter parity, adapted for Talepo's reverse

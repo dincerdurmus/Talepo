@@ -168,7 +168,7 @@ const HEALTH = base(
 
 const BABY = base(
   "baby",
-  "Bebek ve Çocuk",
+  "Anne & Çocuk",
   ["ENTITY_CATALOG", "ATTRIBUTE_SCHEMA"],
   "SELECTIVE",
   [
