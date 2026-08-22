@@ -838,6 +838,19 @@ export const BABY_BRANDS: BrandEntry[] = [
   { canonical: "Hipp", aliases: ["hipp"] },
   { canonical: "Aptamil", aliases: ["aptamil"] },
   { canonical: "Philips Avent", aliases: ["avent", "philips avent"] },
+  // —— e-bebek envanterinden (2026-08-22) ——
+  { canonical: "Britax Römer", aliases: ["britax", "britax römer", "britax romer"] },
+  { canonical: "Sleepy", aliases: ["sleepy"] },
+  { canonical: "Uni Baby", aliases: ["uni baby", "unibaby"] },
+  { canonical: "Babyjem", aliases: ["babyjem", "baby jem"] },
+  { canonical: "Fisher-Price", aliases: ["fisher price", "fisher-price", "fisherprice"] },
+  { canonical: "Lansinoh", aliases: ["lansinoh"] },
+  { canonical: "Pilsan", aliases: ["pilsan"] },
+  { canonical: "Kanz", aliases: ["kanz"] },
+  { canonical: "Kraft", aliases: ["kraft bebek", "kraft puset"] },
+  { canonical: "Prego", aliases: ["prego bebek", "prego puset", "prego oto koltuğu", "prego oto koltugu"] },
+  { canonical: "Mamamil", aliases: ["mamamil"] },
+  { canonical: "Hellobaby", aliases: ["hellobaby", "hello baby"] },
 ];
 
 function escapeRegex(value: string) {
