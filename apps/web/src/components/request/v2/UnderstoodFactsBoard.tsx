@@ -340,7 +340,7 @@ function FactRow({
             {menuOpen ? (
               <div
                 role="menu"
-                className="absolute right-0 top-11 z-10 min-w-[9rem] rounded-xl border border-teal-950/10 bg-white py-1 shadow-lg"
+                className="absolute bottom-11 right-0 z-30 min-w-[9rem] rounded-xl border border-[#0f1f1d]/10 bg-white py-1 shadow-[0_14px_40px_rgba(11,37,34,0.18)]"
               >
                 {allowDontCare ? (
                   <button

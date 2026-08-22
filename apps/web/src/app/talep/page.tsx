@@ -2809,7 +2809,7 @@ function TalepOlusturForm() {
         aria-expanded={aiCompanionOpen}
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#0f766e] text-white shadow-[0_0_28px_rgba(20,184,166,0.4)]">
+          <span className="talepo-ai-emblem shrink-0">
             <Sparkles className="h-5 w-5" />
           </span>
           <div className="min-w-0">
@@ -2817,7 +2817,7 @@ function TalepOlusturForm() {
               <span className="talepo-ai-status-dot" />
               Talepo AI
             </p>
-            <p className="mt-1 truncate text-sm font-semibold text-white">
+            <p className="talepo-ai-title mt-1 truncate text-sm font-semibold">
               {readiness.state === "READY"
                 ? "Yayına hazır"
                 : enrichmentCandidates.length > 0
@@ -2834,7 +2834,7 @@ function TalepOlusturForm() {
       </button>
 
       <div className="relative z-[1] hidden items-center gap-3 px-5 pt-6 lg:flex">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0f766e] text-white shadow-[0_0_28px_rgba(20,184,166,0.4)]">
+        <span className="talepo-ai-emblem shrink-0">
           <Sparkles className="h-5 w-5" />
         </span>
         <div className="min-w-0">
@@ -2842,7 +2842,7 @@ function TalepOlusturForm() {
             <span className="talepo-ai-status-dot" />
             Talepo AI
           </p>
-          <p className="mt-1 text-base font-semibold text-white">
+          <p className="talepo-ai-title mt-1 text-base font-semibold">
             Analiz asistanı
           </p>
         </div>

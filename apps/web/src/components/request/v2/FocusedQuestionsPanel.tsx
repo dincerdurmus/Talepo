@@ -492,20 +492,31 @@ export function FocusedQuestionsPanel({
       data-testid="composer-questions"
       className={`mt-3 ${signalSurface} px-3.5 py-3.5 sm:px-4 sm:py-4`}
     >
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <h2
           id={`${baseId}-heading`}
-          className="text-[11px] font-medium uppercase tracking-[0.12em] text-[#0f766e]/70"
+          className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/80"
         >
-          Birkaç netleştirme
+          <span
+            className="inline-block h-[3px] w-3.5 rounded-full bg-gradient-to-r from-[#0f766e] to-[#7cc4ff]"
+            aria-hidden
+          />
+          Son birkaç detay
         </h2>
-        <p className="text-[11px] text-teal-950/45">
-          {typeof remainingCriticalCount === "number" &&
-          remainingCriticalCount > 0
-            ? `${remainingCriticalCount} kritik soru kaldı`
-            : null}
-        </p>
+        {typeof remainingCriticalCount === "number" &&
+        remainingCriticalCount > 0 ? (
+          <p className="rounded-full bg-[#e3f1f2] px-2.5 py-0.5 text-[11px] font-semibold text-[#0f5f59]">
+            Yayına {remainingCriticalCount} soru
+          </p>
+        ) : (
+          <p className="rounded-full bg-[#e7f5ee] px-2.5 py-0.5 text-[11px] font-semibold text-[#1e7f4f]">
+            ✓ Yayına hazır
+          </p>
+        )}
       </div>
+      <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/45">
+        Cevapladıkça teklifler isabetli gelir — istemediğini atlayabilirsin.
+      </p>
 
       {healthNotice ? (
         <p
@@ -531,10 +542,10 @@ export function FocusedQuestionsPanel({
                 role="tab"
                 aria-selected={selected}
                 title={q.summaryLabel ?? q.label}
-                className={`min-h-9 max-w-[9.5rem] truncate rounded-full border px-2.5 text-[11px] font-medium ${
+                className={`min-h-9 max-w-[9.5rem] truncate rounded-full border px-3 text-[12px] font-medium transition-colors ${
                   selected
-                    ? "border-[#0f766e]/35 bg-[#dff6ef] text-[#0f5f59]"
-                    : "border-teal-900/10 bg-white text-teal-950/50"
+                    ? "border-transparent bg-[#0f766e] text-white shadow-[0_4px_14px_rgba(15,118,110,0.3)]"
+                    : "border-[#0f1f1d]/10 bg-white text-[#0f1f1d]/55 hover:border-[#0f766e]/30 hover:text-[#0f1f1d]"
                 }`}
                 onClick={() => setActiveBySet({ key: questionKey, index })}
               >

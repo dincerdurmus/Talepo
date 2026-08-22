@@ -36,6 +36,7 @@ import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
 import { scheduleNextQuestions } from "../src/lib/request-composer/v2/question-scheduler";
 import {
+  applyBrowseSelectionToState,
   buildUnderstoodFacts,
   syncFromText,
   syncFromBrowse,
@@ -564,6 +565,35 @@ check("I11: browse — Donanım hoisted out, brand columns product-relevant", ()
   assert.equal(fam("tax:technology:donanim:cevre-birimleri:yazici", "Yazıcı"), "printer");
   assert.ok(brandsForTechFamily("camera").includes("DJI"));
   assert.ok(!brandsForTechFamily("camera").includes("HP"));
+});
+
+check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {
+  // Ara grup metni ("… & Aksesuar") ACCESSORY kalıntısı bırakır — ürün
+  // yaprağı seçilince telefon ALMAK isteyen yedek parçaya düşmemeli.
+  const { state: contaminated } = syncFromText(
+    null,
+    "Cep Telefonu & Aksesuar arıyorum.",
+  );
+  const after = applyBrowseSelectionToState(contaminated, {
+    key: "productType",
+    value: "Cep Telefonu",
+    entityId: "tax:technology:donanim:cep-telefonu-aksesuar:cep-telefonu",
+  });
+  // Alan düzeyi: parça bağlamı yaprak seçiminde süpürülür (kalıcı hata buydu)
+  const partField = after.fields.part;
+  assert.ok(
+    !partField || partField.kind === "UNKNOWN",
+    `part alanı temizlenmeli: ${JSON.stringify(partField)}`,
+  );
+  const needAfter = after.fields.needType;
+  assert.ok(
+    !(needAfter?.kind === "VALUE" && needAfter.value === "part"),
+    `needType 'part' kalmamalı: ${JSON.stringify(needAfter)}`,
+  );
+  // Temiz yaprak metni asla PART/ACCESSORY üretmez (UI'daki nihai metin)
+  const clean = syncFromText(null, "Cep Telefonu arıyorum.");
+  const subject = clean.state.understanding.requestSubject.kind.value;
+  assert.equal(subject, "PRODUCT", `temiz metin PRODUCT olmalı: ${subject}`);
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

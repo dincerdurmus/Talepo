@@ -163,6 +163,48 @@ export function applyBrowseSelectionToState(
     }
   }
 
+  // Bütün-ürün satın alma yaprağı seçildiğinde eski parça/aksesuar bağlamı
+  // yaşayamaz: "Cep Telefonu & Aksesuar" gibi ara grup metinlerinin ürettiği
+  // PART kalıntısı, telefon ALMAK isteyeni yedek parçaya düşürüyordu
+  // (kurucu, 2026-08-23).
+  const isWholeProductLeafKey =
+    selection.key === "productType" ||
+    selection.key === "applianceType" ||
+    selection.key === "kitchenProductType" ||
+    selection.key === "furnitureType" ||
+    selection.key === "machineType";
+  if (
+    isWholeProductLeafKey &&
+    role.needType !== "part" &&
+    role.needType !== "tire"
+  ) {
+    for (const key of ["part", "partSystem", "partPosition", "oemNumber"]) {
+      const f = fields[key];
+      if (f && f.kind !== "UNKNOWN") {
+        fields[key] = {
+          kind: "UNKNOWN",
+          value: null,
+          provenance: "INFERRED",
+          confidence: 0,
+          evidence: ["cleared-on-whole-product-leaf"],
+        };
+      }
+    }
+    if (
+      fields.needType?.kind === "VALUE" &&
+      (fields.needType.value === "part" || fields.needType.value === "tire") &&
+      fields.needType.provenance !== "EXPLICIT_BROWSE"
+    ) {
+      fields.needType = {
+        kind: "UNKNOWN",
+        value: null,
+        provenance: "INFERRED",
+        confidence: 0,
+        evidence: ["cleared-on-whole-product-leaf"],
+      };
+    }
+  }
+
   const next: CanonicalRequestState = {
     ...state,
     categoryId,
