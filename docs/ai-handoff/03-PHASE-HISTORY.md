@@ -10,9 +10,11 @@ Lineage (aynı branch üzerinde ardışık):
 b0e9a22  Phase 2 — guided request composer v2
    ↓
 27806c3  Phase 3 Dilim 1 — shadow matching engine
+   ↓
+466436b  Phase 3 Dilim 2a — legacy fanout observability
 ```
 
-`git merge-base --is-ancestor` her iki önceki commit için `27806c3` üzerinde doğru. [`GIT-VERIFIED`]
+`git merge-base --is-ancestor` önceki commit’lerin tamamı için doğru. [`GIT-VERIFIED`]
 
 ---
 
@@ -139,7 +141,50 @@ Hepsi 0 FAIL. [`TEST-VERIFIED`]
 
 ### Fanout’a bağlı parçalar
 
-- **Hiçbiri.** `distribute-request.ts` değişmedi / Matching V3 import yok. Durum: `SHADOW` + `TEST-ONLY`.
+- **Hiçbiri.** Matching V3 import yok. Durum: `SHADOW` + `TEST-ONLY`. Dilim 2a bunu **değiştirmedi**.
+
+---
+
+## Phase 3 Dilim 2a — Legacy fanout observability
+
+| | |
+|--|--|
+| **Amaç** | Legacy fanout’u ölçülebilir kılmak: zero-match, kategori-skip, cap doygunluğu, city-only fallback, sessiz backfill ve estimator. **Sıfır davranış değişikliği.** |
+| **Commit** | `466436bb438765cd42fd9031eb6ac35a530bb562` — `feat(observability): instrument legacy request fanout` |
+| **Migration / şema / bağımlılık** | **Yok.** Prisma, migration, `package.json`, lockfile stage bile edilmedi. [`GIT-VERIFIED`] |
+| **Fanout wiring** | Matching V3 hâlâ bağlı **değil**; yalnız telemetri eklendi |
+| **Deploy durumu** | `PRODUCTION-STATUS-NOT-VERIFIED` |
+| **Ölçüm durumu** | **`PRODUCTION-SINK-NOT-VERIFIED`** — olaylar üretiliyor, merkezî olarak sorgulanabildiği doğrulanmadı |
+
+### Değişen dosyalar (5)
+
+| Dosya | Rol |
+|---|---|
+| `src/server/request/fanout-telemetry.ts` | **Yeni.** 14 olaylık canonical sözleşme, fail-open emit sınırı, PII guard, failure stage allowlist’leri |
+| `src/lib/observability/province-allowlist.ts` | **Yeni.** İl adları `TURKEY_IL_NAMES`’ten türetilir; yalnız allowlist edilmiş `TR-NN` kodu üretir |
+| `src/server/request/distribute-request.ts` | Yalnız telemetri eklendi + üç gövde `try/catch` ile sarıldı |
+| `src/lib/observability/logger.ts` | Additive `LogOptions { omitActorCorrelation }`; seçenek verilmezse davranış birebir eskisi |
+| `scripts/verify-fanout-telemetry-v1.ts` | **Yeni.** 69 assert |
+
+### Sözleşme
+
+- **14 canonical olay:** `request.fanout.{started, precondition_skipped, category_skipped, category_scan, city_scan, city_only_fallback, zero_match, notifications_written, completed, failed, estimated}` + `request.backfill.{started, completed, failed}`
+- **Span denklemleri:** fanout `started = precondition_skipped + zero_match + completed + failed`; backfill `started = completed + failed`
+- **Hata yolu:** terminal failure olayı → `reason: "unexpected_error"` + allowlist `failureStage` + `errorName` (yalnız hata sınıfı adı) → **aynı hata yeniden fırlatılır**
+- **`outcome`** ortak `OperationalOutcome` sözleşmesine uyar; hata için `"failure"`
+- **Tarama modeli:** `scanStatus: "executed"` (cap + found + capSaturated) veya `"not_run"` (yalnız cap). Sahte sıfır, NaN, null yok
+- **Konum:** yalnız `locationScope` + allowlist `provinceCode` (`TR-NN`) + `resolutionStatus`. Ham şehir/ilçe/mahalle/adres ve serbest metin **loglanmaz**; güvenilir dönüşüm yoksa kod yazılmaz
+- **Aktör kimliği yok:** `userId` / aktör `companyId` / transport `requestId` correlation mirası alınmaz
+
+### Test
+
+- `npx tsx scripts/verify-fanout-telemetry-v1.ts` → **69 passed, 0 failed** [`TEST-VERIFIED`]
+  8’i gerçek runtime testi: Prisma stub’lanıp `distributeRequestToCompanies` / `backfillMatchesForCompany` / `countMatchingCompanies` çalıştırılır, failure terminali ve **aynı hata nesnesinin** yeniden fırlatıldığı doğrulanır
+- `npx tsx scripts/verify-phase4a-observability-v1.ts` → **23 passed, 0 failed** (logger değiştiği için koşuldu) [`TEST-VERIFIED`]
+- Önceki 10 verifier aynı sayılarla yeşil: 117 · 14 · 20 · 13 · 128 · 28 · 6 · 3 · 9 · 16 [`TEST-VERIFIED`]
+- `tsc --noEmit` ve scoped `eslint` → temiz
+
+**Kanıtlamaz:** Olayların merkezî log sisteminde sorgulanabildiğini; production deploy’u; gerçek zero-match oranını (henüz canlı veri yok).
 
 ---
 

@@ -102,15 +102,24 @@ Sözleşme ihlali değildir; fakat “AI türetilmiş gerçeğe sızabilir” yo
 
 ## Legacy fanout özeti (detay: 06)
 
-- Category-linked companies `take: 200`
-- City-linked scan `take: 300`, city-only ekleme cap `40`
+- Category-linked companies `take: 200` (`:161`)
+- City-linked scan `take: 300` (`:193`), city-only ekleme cap `40` (`:230`)
 - Skor: 100 cat+city, 80 cat, 50 city
-- `unresolved` slug → category fanout skip
-- Zero match → `{0,0}` return — **logsuz / metriksiz** erken dönüş (`:164-165`); sessiz operasyon riski
-- **İkinci RequestMatch yazıcısı:** `backfillMatchesForCompany` (“Silent backfill”, `take: 100`) — aynı dosya `:289+`
-- **Estimator:** `take: 400` (`:442`)
+- `unresolved` slug → category fanout skip (`:128`)
+- Zero match → `{0,0}` return (`:253`) — **artık `request.fanout.zero_match` olayı üretir** (neden enum’u + il kodu); Dilim 2a `466436b`
+- **İkinci RequestMatch yazıcısı:** `backfillMatchesForCompany` (“Silent backfill”, `take: 100` `:522`) — aynı dosya `:431+`; artık `request.backfill.*` span’i üretir, yani adı hâlâ *silent* ama davranışı değil
+- **Estimator:** `take: 400` (`:680`) — `request.fanout.estimated` üretir
 - Opportunity hunter + alert notifications `void ...catch`
-- `requestMatch.createMany` → `skipDuplicates: true`; `notification.createMany` → **dedupe yok** (`:269`)
+- `requestMatch.createMany` → `skipDuplicates: true`; `notification.createMany` (`:375`) → **dedupe yok**
+
+### Telemetri katmanı (Dilim 2a, `466436b`) — `BRANCH-WIRED`
+
+- Üç fonksiyonun gövdesi `try/catch` ile sarılı; hata **terminal failure olayı** üretir (`request.fanout.failed` / `request.backfill.failed`; estimator’da `request.fanout.estimated` + `outcome: "failure"`) ve **aynı hata nesnesi yeniden fırlatılır** — yutma yok, başarıya çevirme yok
+- Canonical sözleşme **14 olay** (`fanout-telemetry.ts` `FANOUT_EVENTS`)
+- `outcome` değeri ortak `OperationalOutcome` sözleşmesine uyar → hata için `"failure"` (ikinci bir `"failed"` değeri **eklenmedi**)
+- Çalışmayan tarama `scanStatus: "not_run"` (yalnız `cap`), gerçekten 0 bulan tarama `scanStatus: "executed"` + `found: 0` + `capSaturated: false` — ikisi karışmaz
+- Fail-open: her emit `try/catch` içinde; konum türetme de `safeResolveLocation` sınırından geçer. Telemetri hiçbir koşulda talep yayınlamayı durduramaz
+- Aktör kimliği yok: `logger.ts`’e eklenen additive `omitActorCorrelation` seçeneği sayesinde bu olaylar correlation store’dan `userId` / aktör `companyId` / transport `requestId` **miras almaz**; yalnız açıkça geçilen operasyonel `requestId` / `companyId` ve opak `correlationId` bulunur. Diğer logger tüketicilerinin varsayılan davranışı değişmedi
 
 ---
 

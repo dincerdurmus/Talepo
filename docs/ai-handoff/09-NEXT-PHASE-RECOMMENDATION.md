@@ -4,26 +4,29 @@
 
 ## Karar özeti
 
-**Onaylanan sonraki tek aşama (2026-08-22):**  
-**Phase 3 Dilim 2a — Legacy fanout gözlemlenebilirliği (yalnız ölçüm; sıfır davranış değişikliği)**
+**Dilim 2a — Legacy fanout gözlemlenebilirliği: UYGULANDI** (`466436bb438765cd42fd9031eb6ac35a530bb562`, branch üzerinde `BRANCH-WIRED`, 2026-08-22).
 
-Ardından, taban ölçüm oluştuğunda:  
-**Phase 3 Dilim 2b — Production-shaped shadow wiring + persist + compare (feature-flagged, no notification cutover)**
+**Sıradaki aşama — Dilim 2b (shadow wiring + persist + compare): BAŞLAMADI.**  
+Başlayamaz da: önkoşulu **canlı legacy taban ölçümüdür** ve o ölçüm için önce üç kapı geçilmelidir — sink kabul kriteri, deploy, ve merkezî sorgulanabilirlik kanıtı. Üçü de bugün açık.
+
+> ⚠️ **Dilim 2a “kod tamamlandı” durumundadır, “ölçüm çalışıyor” durumunda değildir.** Olaylar üretiliyor fakat yalnız stdout’a gidiyor. `PRODUCTION-SINK-NOT-VERIFIED` ve `PRODUCTION-STATUS-NOT-VERIFIED` geçerlidir.
 
 ### Neden 2 ikiye bölündü? (2026-08-22 denetim bulgusu)
 
 Bu belgenin önceki sürümü tek bir “Dilim 2” tanımlıyor ve ölçüm hedefini *“entityRescued vs legacy miss; zero-match rate”* olarak yazıyordu. **Bu hedefin önkoşulu eksikti:**
 
-Her iki metrik de **legacy tarafında telemetri** gerektirir — ve legacy’de telemetri **yoktur**:
+Her iki metrik de **legacy tarafında telemetri** gerektirir — ve o tarihte legacy’de telemetri **yoktu**:
 
-- `distribute-request.ts:164-165` zero-match logsuz erken dönüş [`CODE-VERIFIED`]
+- `distribute-request.ts` zero-match logsuz erken dönüş [`CODE-VERIFIED`, o tarihte]
 - cap doygunluğu (200/300/40/100/400) kayıtsız
-- `unresolved` kategori skip’i kayıtsız (`:81`)
+- `unresolved` kategori skip’i kayıtsız
 - ikinci yazıcı `backfillMatchesForCompany` (“Silent backfill”) tamamen kayıtsız
+
+**Bu boşluk `466436b` ile kapatıldı** — dördü de artık olay üretiyor. Kalan boşluk ölçüm altyapısının **ikinci yarısıdır**: olayların bir yere ulaşıp sorgulanabilmesi.
 
 Shadow’u bugün persist etsek elimizde *shadow sayıları* olur ama **karşılaştıracak legacy taban çizgisi olmaz**; `compareSyntheticLegacyAndShadow` sentetiktir ve `productionShadowComparison: "not_wired"` tip seviyesinde sabittir. Yani 2b’nin kabul kriteri kendi önkoşulunu içermiyordu.
 
-2a bu boşluğu kapatır. 2b reddedilmiş değildir — **uygulanabilir hâle getirilmiştir**.
+2a bu boşluğun **kod tarafını** kapattı. 2b reddedilmiş değildir; fakat hâlâ **başlatılamaz**: taban çizgisi ancak olaylar sorgulanabilir bir sink’e ulaştıktan ve canlıda 1–2 hafta biriktikten sonra oluşur.
 
 Diğer sıralama gerekçeleri değişmedi:
 
@@ -34,20 +37,23 @@ Diğer sıralama gerekçeleri değişmedi:
 
 ## Dilim planı (additive, reversible, measurable)
 
-### Dilim 2a (ONAYLANDI — şimdi bu) — Legacy fanout gözlemlenebilirliği
+### Dilim 2a (UYGULANDI — `466436b`) — Legacy fanout gözlemlenebilirliği
 
 | | |
 |--|--|
+| **Durum** | **Kod tamamlandı, `BRANCH-WIRED`.** Ölçüm altyapısı **tamamlanmadı** (sink kapısı açık) |
 | **Neden** | 2b’nin ölçüm hedeflerinin matematiksel önkoşulu; ayrıca `08` #2’yi tek başına ölçülebilir kılar |
-| **Değişir** | **Yalnız yapısal, PII’siz olay ve sayım logu.** Kapsam: (a) zero-match olayı + nedeni, (b) `isSystemCategorySlug` kategori-skip, (c) cap doygunluğu (200/300/40/100/400), (d) city-only fallback sayısı, (e) `backfillMatchesForCompany` çağrıları, (f) erken dönüş (`:67`) |
-| **Değişmez** | **Hiçbir davranış.** Bildirim içeriği ve alıcıları, eşleşen firma kümesi, query limitleri, skorlar, return değerleri, `RequestMatch` yazımları — hepsi aynı. Yeni tablo yok, migration yok, UI yok, flag yok, `matching-v3`’e dokunulmaz |
-| **Gizlilik (zorunlu)** | `rawInput`, `professionalDescription`, `title`, `description`, `matchReason`, iletişim bilgisi veya herhangi bir serbest metin **loglanmaz**. Yalnız PII içermeyen yapısal alanlar: opak id, sabit slug, enum, sayım, boolean, süre |
-| **Konum telemetrisi (zorunlu sözleşme)** | Aşağıdaki “Konum sözleşmesi” bölümü. Ham şehir/ilçe/mahalle/adres metni **hiçbir koşulda** loglanmaz |
-| **Kabul** | Diff **yalnız** log çağrısı ekler; tek bir karar / `return` / skor / query satırı değişmez (diff review ile kanıtlanır). Mevcut 10 verifier yeşil kalır |
-| **Ölçüm** | 1–2 hafta sonra: gerçek zero-match oranı, cap doygunluk oranı, unresolved skip oranı, backfill hacmi, **il bazında tedarikçi boşluğu** |
+| **Ne değişti** | Yalnız yapısal, PII’siz olay ve sayım logu — **14 canonical olay**. Kapsanan: zero-match + nedeni, kategori-skip, cap doygunluğu (200/300/40/100/400), city-only fallback, backfill span’i, estimator span’i, bildirim yazımı, önkoşul erken dönüşü, ve **hata terminalleri** |
+| **Ne değişmedi** | **Hiçbir davranış.** Bildirim içeriği ve alıcıları, eşleşen firma kümesi, query limitleri, skorlar, sıralama, return değerleri, `RequestMatch` yazımları — hepsi aynı. Migration yok, yeni tablo yok, UI yok, flag yok, bağımlılık yok, `matching-v3` bağlanmadı |
+| **Gizlilik** | `rawInput`, `professionalDescription`, `title`, `description`, `matchReason`, ham şehir/ilçe/mahalle/adres, firma adı, iletişim bilgisi ve her türlü serbest metin **loglanmaz**. Yalnız opak id, sabit slug, enum, sayım, boolean, süre. Ayrıca **aktör kimliği yok**: correlation store’dan `userId` / aktör `companyId` / transport `requestId` mirası alınmaz |
+| **Hata yolu** | Fanout ve backfill istisnaları terminal failure olayı üretir (`request.fanout.failed` / `request.backfill.failed`), estimator ise `request.fanout.estimated` + `outcome: "failure"`. Üçünde de **aynı hata nesnesi yeniden fırlatılır** — davranış yutulmaz. `outcome` ortak `OperationalOutcome` sözleşmesine uyar; `"failed"` adında ikinci bir değer eklenmedi |
+| **Tarama modeli** | Çalışmamış sorgu `scanStatus: "not_run"` (yalnız `cap`); gerçekten 0 bulan sorgu `"executed"` + `found: 0` + `capSaturated: false`. İkisi karışmaz; sahte sıfır/NaN/null kullanılmaz |
+| **Fail-open** | Her emit `try/catch` içinde; konum türetme de `safeResolveLocation` sınırından geçer. Log sistemi bozulursa talep yayınlama etkilenmez |
+| **Kabul — sonuç** | ✅ `git diff -w`: **+309 / −12**, silinenler yalnız imza/biçim ve iki tek satırlık `if` → blok dönüşümü. ✅ Cap’ler, skorlar, sıralama, 18 Prisma çağrısı, `skipDuplicates`, bildirim guard’ı ve dört dönüş şekli değişmedi (verifier ile kanıtlı). ✅ Mevcut 10 verifier aynı sayılarla yeşil. ✅ `verify-phase4a-observability-v1` 23 PASS (logger değiştiği için) |
+| **Ölçüm** | Sink bağlandıktan **1–2 hafta sonra**: gerçek zero-match oranı, cap doygunluk oranı, unresolved skip oranı, backfill hacmi, **il bazında tedarikçi boşluğu**. Bugün hiçbiri hesaplanamaz |
 | **Rollback** | Log satırlarını kaldırmak. Pratikte sıfır risk |
-| **Onay kapıları** | Kod → **commit onayı** → **deploy onayı** → **sink doğrulama kapısı** (aşağıda). Migration yok |
-| **Tamamlanma** | Deploy tek başına yeterli **değildir**; sink doğrulanana kadar dilim `PRODUCTION-SINK-NOT-VERIFIED` sayılır |
+| **Kalan onay kapıları** | ~~commit onayı~~ ✅ → **push** → **deploy onayı** → **sink doğrulama kapısı** (aşağıda) |
+| **Tamamlanma** | Deploy tek başına yeterli **değildir**; sink doğrulanana kadar dilim **`PRODUCTION-SINK-NOT-VERIFIED`** sayılır |
 
 #### Konum sözleşmesi (Dilim 2a — zorunlu)
 
@@ -69,7 +75,7 @@ Kesin yasaklar:
 
 Not: `distribute-request.ts` içindeki `matchReason` alanı `` `Şehir (${company.city})` `` gibi ham şehir adı içerir — bu alan **asla** loglanmaz.
 
-#### Deploy ve sink doğrulama kapısı (Dilim 2a — zorunlu)
+#### Deploy ve sink doğrulama kapısı (Dilim 2a — zorunlu, **AÇIK**)
 
 Ölçüm altyapısı, olaylar yalnız üretildiği için tamamlanmış **sayılmaz**:
 
@@ -77,14 +83,37 @@ Not: `distribute-request.ts` içindeki `matchReason` alanı `` `Şehir (${compan
 2. Dilim 2a’nın başarılı sayılabilmesi için, deploy sonrasında olayların **merkezî log sisteminde sorgulanabildiği ayrıca doğrulanmalıdır** (örnek sorgu + dönen kayıt kanıtı).
 3. **Yalnız uygulama konsoluna yazılan fakat sonradan sorgulanamayan loglar, ölçüm altyapısı tamamlanmış sayılmaz.** Bu durumda dilim “kod tamam, ölçüm eksik” olarak raporlanır ve 2b **başlatılmaz**.
 
+**Bugünkü durum (`466436b` sonrası):** `addLogSink`’in `src/` altında **tek bir çağrısı yoktur**; `instrumentation.ts` sink kaydetmez. Olaylar `defaultSink` üzerinden **stdout**’a gider. Yani madde 3 tam olarak geçerlidir: **kod tamam, ölçüm eksik.**
+
+`verify-fanout-telemetry-v1` bu durumu kalıcı bir dürüstlük kapısı olarak tutar: biri sink kaydederse test **kırmızıya döner** ve bu belgelerin güncellenmesini zorlar. Sessizce “artık ölçüyoruz” denemez.
+
+##### Sink kabul kriteri (zorunlu)
+
+`logOperational` sink döngüsünü **senkron** çalıştırır (`for (const sink of sinks) sink(entry)`), kuyruk veya `void` yoktur. Bu nedenle:
+
+- Production sink **non-blocking olmalıdır.**
+- **Senkron ağ çağrısı yapan sink kabul edilmez.** Böyle bir sink, publish başına yaklaşık on olay × sink gecikmesi kadar süreyi **doğrudan talep yayınlama süresine** ekler.
+- Sink’in **kuyruk / arka planda flush** davranışı deploy kapısında kanıtlanmalıdır.
+- Olayların **merkezî sistemde sorgulanabilirliği** aynı kapıda kanıtlanmalıdır.
+- **Örnek sorgu ve dönen gerçek kayıt görülmeden sink doğrulanmış sayılmaz.** “Sink yapılandırıldı” beyanı yeterli değildir.
+
 Bu kapı geçilmeden Dilim 2b’nin önkoşulu (gerçek legacy taban ölçümü) sağlanmış olmaz.
 
-### Dilim 2b (2a’nın verisi geldikten sonra) — Shadow wire + persist
+#### Backfill hacmi kararı (Dilim 2a)
+
+- `backfillMatchesForCompany`, `apps/web/src/app/panel/talepler/page.tsx:206`’da koşulsuz çağrılır — yani **panel görüntülemesi başına** çalışabilir; span başına 2 olay üretir. Hacim talep sayısıyla değil **görüntüleme sayısıyla** orantılıdır.
+- **Başlangıç ölçümünde sampling uygulanmamıştır.** Bu bilinçli bir karardır: taban ölçüm eksiksiz olmalıdır, aksi hâlde ilk sayılar zaten kısmi olur.
+- **Sink bağlanmadan önce beklenen günlük olay hacmi ölçülmelidir.**
+- İleride sampling yapılırsa **`samplingRate` olayın içinde açıkça kaydedilmeli** ve metrikler bu oranla **ağırlıklandırılmalıdır**.
+- **Sessiz sampling veya oranı bilinmeyen sampling kabul edilmez.** Okuyucunun veriden geri hesaplayamadığı bir azaltma, ölçümü sessizce yanlış yapar.
+
+### Dilim 2b (BAŞLAMADI — 2a’nın verisi geldikten sonra) — Shadow wire + persist
 
 | | |
 |--|--|
+| **Durum** | **Başlamadı.** Kod yazılmadı, flag yok, tablo yok. Aşağıdaki önkoşul sağlanmadan başlatılamaz |
 | **Neden** | Aynı publish olayında legacy sonuç ile V3 shadow’u yan yana yaz; bildirim hâlâ legacy |
-| **Önkoşul** | **2a’nın legacy taban ölçümü canlıda birikmiş olmalı.** Aksi hâlde karşılaştırma yapılamaz |
+| **Önkoşul (bugün AÇIK)** | **2a’nın legacy taban ölçümü canlıda birikmiş olmalı.** Bunun için sırasıyla: push → deploy → non-blocking sink → örnek sorgu + dönen kayıt → 1–2 hafta birikim. Hiçbiri tamamlanmadı |
 | **Değişir** | Flag’li shadow runner çağrısı; shadow result store (yeni tablo veya JSON audit — tasarım onayı gerekir); compare raporu |
 | **Değişmez** | Kullanıcıya giden Notification içeriği; RequestMatch’in mevcut fanout anlamı (veya dual-write açıkça ayrılır); scoring’e plan karışmaz |
 | **Kabul** | Flag off = bugünkü davranış; flag on = shadow persist + bildirim davranışında sıfır değişiklik; verifier + staging shadow diff |
@@ -96,7 +125,7 @@ Bu kapı geçilmeden Dilim 2b’nin önkoşulu (gerçek legacy taban ölçümü)
 
 **rawInput revizyon şeması tasarımı.** Ürün kararı 2026-08-22’de verildi (append-only revizyon, aktör/zaman/kaynak, son revizyondan yeniden kurulan understanding, anlamlı düzenlemede re-match, revizyon × firma idempotent bildirim) fakat **bilinçli olarak koda dönüştürülmedi** → `DECIDED-NOT-IMPLEMENTED`. Ayrı şema + davranış tasarım dilimi gerektirir; 2a/2b’yi beklemesi gerekmez. Bkz. `11-DECISION-LOG.md`.
 
-**Verifier’ları npm script’e bağlama.** `08` #21: handoff’un dayandığı 10 verifier’ın hiçbiri `package.json` scripts’te değil. Küçük, risksiz, davranış değiştirmeyen bir dilim.
+**Verifier’ları npm script’e bağlama.** `08` #21: handoff’un dayandığı **12** verifier’ın hiçbiri `package.json` scripts’te değil — Dilim 2a ile eklenen `verify-fanout-telemetry-v1.ts` de dahil. Küçük, risksiz, davranış değiştirmeyen bir dilim.
 
 ### Dilim 3 — Review / ops queue for unresolved & zero-match
 

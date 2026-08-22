@@ -16,7 +16,8 @@ Yasak kök:
 C:\Users\HP\Documents\Talepo
 
 Beklenen branch: feature/dincer-request-matching-v3
-Beklenen HEAD (handoff anı): 27806c33bf544aa912e6ea2423623e01ffa18310
+Beklenen HEAD (handoff anı): 466436bb438765cd42fd9031eb6ac35a530bb562
+  (Phase 3 Dilim 2a — legacy fanout observability)
 (HEAD ilerlemişse bunu raporla; sessizce başka branch’e geçme.)
 
 ## Adım 1 — Handoff oku (zorunlu sıra)
@@ -50,17 +51,23 @@ Handoff iddialarını kodla karşılaştır. Özellikle doğrula:
 1) rawInput: AI/professionalDescription otomatik ezemez; açık update payload alanı değiştirebilir (update-request.ts) — immutability politikası açık değil
 2) understanding snapshot / unresolved category (Phase 1)
 3) question scheduler MAX_VISIBLE=3 ve publish readiness budget/location (Phase 2)
-4) matching-v3 shadow; distribute-request içinde matching-v3 import YOK (Phase 3 Dilim 1)
+4) matching-v3 shadow; distribute-request içinde matching-v3 import YOK (Phase 3 Dilim 1;
+   Dilim 2a bunu değiştirmedi)
 5) Relevance / delivery policy / notification ayrımı
 6) Missing ≠ excluded; brandModelPairs; plan-independent scoring
 7) BRANCH-WIRED ≠ PRODUCTION-DEPLOYED (deploy kanıtı yoksa PRODUCTION-STATUS-NOT-VERIFIED)
+8) Fanout telemetrisi (Phase 3 Dilim 2a): 14 canonical olay; hata yolları terminal failure
+   üretip AYNI hatayı yeniden fırlatır; olay üretmek ≠ ölçebilmek.
+   addLogSink'in src/ altında çağrısı var mı? Yoksa PRODUCTION-SINK-NOT-VERIFIED korunur.
 
 Her bulguyu etiketle: CODE-VERIFIED | GIT-VERIFIED | TEST-VERIFIED | NOT-VERIFIED | CONFLICT-WITH-HANDOFF
 | BRANCH-WIRED | SHADOW | TEST-ONLY | PRODUCTION-DEPLOYED | PRODUCTION-STATUS-NOT-VERIFIED
 
 ## Adım 5 — Güvenli test (isteğe bağlı)
 Yalnız npx tsx ile mevcut verifier’lar. npm install / prisma generate / dev server / browser / migration YASAK.
-Beklenen yeşil set: matching-v3-shadow, request-authority, taxonomy-drift, request-composer-v2-* 
+Beklenen yeşil set: matching-v3-shadow (117), request-authority (14), taxonomy-drift (20),
+request-composer-v2-* (13/128/28/6/3/9/16), fanout-telemetry-v1 (69), phase4a-observability-v1 (23)
+Hiçbiri package.json script'i değildir; elle koşulur.
 
 ## Adım 6 — Çıktı (kod yok)
 Raporla:

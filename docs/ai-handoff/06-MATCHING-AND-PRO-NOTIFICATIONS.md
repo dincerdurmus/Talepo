@@ -20,22 +20,26 @@
 
 ### Candidate nasıl bulunur?
 
-1. ACTIVE companies with `categories.some.categoryId = request.category.id` (`take: 200`, `:100`), creator companies excluded
-2. If request.city set: city scan (`take: 300`, `:123`), city-only eklemeler max **40** (`:151`), skor 50 (`:156`)
-3. Category+city skor 100; category-only 80 (`:141`)
-4. `unresolved` system slug → **category fanout skip** (`isSystemCategorySlug`, `:81`)
+1. ACTIVE companies with `categories.some.categoryId = request.category.id` (`take: 200`, `:161`), creator companies excluded
+2. If request.city set: city scan (`take: 300`, `:193`), city-only eklemeler max **40** (`:230`), skor 50
+3. Category+city skor 100; category-only 80
+4. `unresolved` system slug → **category fanout skip** (`isSystemCategorySlug`, `:128`)
+
+Bu aday bulma mantığı Dilim 2a’da **değişmedi** — yalnız ölçülür hâle geldi.
 
 ### ⚠️ Bu dosyada üç ayrı DB yolu vardır (2026-08-22 denetim eklemesi)
 
 Önceki sürüm yalnız ana fanout’u anlatıyordu. `distribute-request.ts` içinde **üç** yol var ve ikisi belgelenmemişti:
 
-| # | Fonksiyon | Cap | RequestMatch yazar mı? | Bildirim gönderir mi? | Kanıt |
-|---|---|---|---|---|---|
-| 1 | Ana fanout `distributeRequestToCompanies` | `200` / `300` / `40` | ✅ `:170` `createMany` + `skipDuplicates` | ✅ `:269` | `CODE-VERIFIED` |
-| 2 | **`backfillMatchesForCompany`** — dosya yorumu: *“**Silent backfill:** score open requests against one company and create missing…”* | **`take: 100`** (`:349`) | ✅ `:389` `createMany` + `skipDuplicates` | ❌ (bu yolda bildirim yok) | `CODE-VERIFIED` — `:289+` |
-| 3 | Estimator (tahminleyici) | **`take: 400`** (`:442`) | ❌ | ❌ | `CODE-VERIFIED` — `:418+` |
+| # | Fonksiyon | Cap | RequestMatch yazar mı? | Bildirim gönderir mi? | Telemetri span’i (Dilim 2a) | Kanıt |
+|---|---|---|---|---|---|---|
+| 1 | Ana fanout `distributeRequestToCompanies` (`:76+`) | `200` / `300` / `40` | ✅ `:273` `createMany` + `skipDuplicates` | ✅ `:375` | `request.fanout.*` (11 olay) | `CODE-VERIFIED` |
+| 2 | **`backfillMatchesForCompany`** (`:431+`) — dosya yorumu: *“**Silent backfill:** score open requests against one company and create missing…”* | **`take: 100`** (`:522`) | ✅ `:577` `createMany` + `skipDuplicates` | ❌ (bu yolda bildirim yok) | `request.backfill.{started,completed,failed}` | `CODE-VERIFIED` |
+| 3 | Estimator (tahminleyici) (`:612+`) | **`take: 400`** (`:680`) | ❌ | ❌ | `request.fanout.estimated` | `CODE-VERIFIED` |
 
-**Neden önemli:** “Kaç firma tarandı / kaç eşleşme yazıldı?” sorusunun cevabı 200/300/40 değildir. `RequestMatch` tablosuna **iki farklı yazıcı** vardır ve ikincisinin adı literal olarak *silent*’tır. Zero-match ölçümü, dedupe tasarımı ve ileride shadow karşılaştırması bu yolu hesaba katmazsa sayılar yanlış çıkar. Dilim 2a bu üç yolu da ayrı ayrı etiketlemelidir.
+**Neden önemli:** “Kaç firma tarandı / kaç eşleşme yazıldı?” sorusunun cevabı 200/300/40 değildir. `RequestMatch` tablosuna **iki farklı yazıcı** vardır ve ikincisinin adı literal olarak *silent*’tır.
+
+**Durum (2026-08-22, `466436b`):** Üç yolun da artık **ayrı span’i** vardır — Dilim 2a’nın gereği karşılandı. Ad hâlâ “silent backfill”dir ama davranışı değildir. Yine de bu **ölçülebilirlik**tir, **ölçüm** değil: sink doğrulanmadan hiçbir sayı sorgulanamaz.
 
 ### Marka / model / taxonomy / semantic
 
@@ -60,36 +64,65 @@ Klasik Notification modeli var; V3 tarzı `NotificationDeliveryRecordContract` b
 ### Pro kaçırma yolları (koddan)
 
 - Yanlış/eksik `categoryId` → category set’e girmeme
-- Cap 200/300/40 (+ backfill `100`) → uygun firma tarama dışı
-- Unresolved soft category → category fanout yok; city-only’ye düşebilir veya zero
-- Zero match → `{0,0}` return; ops queue yok → **sessiz zero-match**
+- Cap 200/300/40 (+ backfill `100`) → uygun firma tarama dışı — **artık ölçülebilir** (`cap` / `found` / `capSaturated`)
+- Unresolved soft category → category fanout yok; city-only’ye düşebilir veya zero — **artık `category_skipped` olayı üretir**
+- Zero match → `{0,0}` return; **ops queue hâlâ yok** ama artık sessiz değil (`zero_match` olayı + neden + il). Kaybın *kendisi* duruyor; görünmezliği bitti
 - Brand/model uzmanı kategori dışında kalırsa kaçırma
 - Talep düzenlenirse re-fanout yok (`update-request.ts`’te `distribute` → 0 hit) → eski eşleşme kümesinde kalır
 
-### 🔴 Zero-match: logsuz / metriksiz erken dönüş
+### ✅ Zero-match artık kayıt bırakıyor (Dilim 2a, `466436b`)
+
+**Önceki durum (tarihsel):** `distribute-request.ts` dosyasının tamamında tek bir log çağrısı yoktu; zero-match logsuz/metriksiz erken dönüştü. “Kaç talep sıfır tedarikçiye gitti ve neden?” sorusunun cevabı hiçbir yerde kayıtlı değildi.
+
+**Bugün:**
 
 ```
-:163  const matches = [...scored.values()].sort((a, b) => b.score - a.score);
-:164  if (matches.length === 0) {
-:165    return { matchedCompanyCount: 0, notifiedUserCount: 0 };
-:166  }
+:252    const matches = [...scored.values()].sort((a, b) => b.score - a.score);
+:253    if (matches.length === 0) {
+:254      logFanoutZeroMatch({ … reason, categoryLinkedCount, cityCandidateCount, hasCityInput, durationMs, location });
+:267      return { matchedCompanyCount: 0, notifiedUserCount: 0 };
+:268    }
 ```
 
-Bu bloğun öncesinde ve sonrasında hiçbir log / metrik / kuyruk çağrısı yoktur. Dahası: **`distribute-request.ts` dosyasının tamamında tek bir log çağrısı yoktur** — `log.` / `logger` / logger import’u araması **0 hit** verir. Karşılaştırma için `create-request.ts` aynı subsystem logger’ını kullanır (`:17` `import { createSubsystemLogger } from "@/lib/observability/logger"`, `:37` `const log = createSubsystemLogger("request")`). [`CODE-VERIFIED`]
+`reason` dört değerli kapalı bir enum’dur (`deriveZeroMatchReason`): sistem kategorisi mi engelledi, şehir girdisi var mıydı, kategori bacağı neden boştu. `:107`’deki önkoşul erken dönüşü de `request.fanout.precondition_skipped` üretir. [`CODE-VERIFIED`]
 
-Yani legacy fanout, Talepo’nun **en kritik güven yolu** olmasına rağmen gözlemlenebilirlik açısından tamamen karanlıktır — yalnız zero-match değil, hiçbir kararı iz bırakmaz.
+**Canonical sözleşme — 14 olay:**
 
-Sonuç: bugün **“kaç talep sıfır tedarikçiye gitti ve neden?”** sorusunun cevabı hiçbir yerde kayıtlı değildir. Bu yalnız bir kayıp değil, **ölçülemeyen** bir kayıptır: düzeltip düzeltmediğinizi de doğrulayamazsınız.
+| Olay | Ne ölçer |
+|---|---|
+| `request.fanout.started` | Tüm fanout oranlarının **paydası** |
+| `request.fanout.precondition_skipped` | Dağıtılamayan talep |
+| `request.fanout.category_skipped` | `unresolved` kategori skip oranı |
+| `request.fanout.category_scan` | Kategori aday hacmi + 200 cap doygunluğu |
+| `request.fanout.city_scan` | Şehir aday hacmi + 300 cap doygunluğu |
+| `request.fanout.city_only_fallback` | Fallback kullanımı + 40 cap doygunluğu |
+| `request.fanout.zero_match` | **Sessiz zero-match oranı + nedeni + ili** |
+| `request.fanout.notifications_written` | Bildirim yazımı, dedupe filtresi hacmi |
+| `request.fanout.completed` | Başarılı fanout, süre, il |
+| `request.fanout.failed` | Beklenmeyen hata (terminal) |
+| `request.backfill.started` / `.completed` / `.failed` | İkinci yazıcının gerçek hacmi |
+| `request.fanout.estimated` | AI panel tahmini + 400 cap doygunluğu |
 
-Aynı sessizlik `:67`’deki erken dönüşte de geçerlidir (talep/kategori önkoşulu sağlanmadığında).
+**Gizlilik ve dayanıklılık garantileri** [`CODE-VERIFIED` + `TEST-VERIFIED`]:
 
-**Bu, Dilim 2a’nın birincil hedefidir** (bkz. `09`).
+- `matchReason` ham şehir adı taşır (`` `Şehir (${company.city})` ``) — **hiçbir olayda loglanmaz**. `title`, `description`, `rawInput`, firma adı, iletişim bilgisi de aynı şekilde
+- Konum yalnız `locationScope` + allowlist `provinceCode` (`TR-NN`) + `resolutionStatus`. Güvenilir kanonik dönüşüm yoksa kod **yazılmaz**, `unknown` yazılır. İlçe hiç türetilmez
+- İl adları `TURKEY_IL_NAMES`’ten türetilir — ikinci bir liste tutulmaz; drift verifier ile iki yönlü kilitlidir
+- **Fail-open:** her emit `try/catch` içinde, konum türetme dahil. Log sistemi bozulsa da talep yayınlama etkilenmez
+- **Hata yutulmaz:** failure olayı üretilir, ardından **aynı hata nesnesi yeniden fırlatılır**. `create-request.ts:335` bu hatayı bugüne kadar olduğu gibi yakalamaya devam eder
+- **Aktör kimliği yok:** `userId` / aktör `companyId` / transport `requestId` correlation mirası alınmaz
+
+### 🔴 Ama bu ölçüm değil — henüz
+
+Olaylar **yalnız stdout’a** gidiyor: `addLogSink`’in `src/` altında tek bir çağrısı yok, `instrumentation.ts` sink kaydetmiyor. Durum **`PRODUCTION-SINK-NOT-VERIFIED`**.
+
+“Kod tamamlandı” doğrudur. **“Ölçüm çalışıyor” veya “merkezî olarak sorgulanabiliyor” yanlıştır.** Dilim 2b’nin önkoşulu olan canlı taban ölçümü henüz **oluşmamıştır** (bkz. `09` sink kapısı, `11` Karar D).
 
 ### Çift bildirim riski
 
 - `skipAlreadyNotifiedUsers` opsiyonu var (reminder path)
 - Alert/hunter + primary fanout paralel → potansiyel çoklu kanal gürültüsü (`CODE-VERIFIED` çağrı yapısı; production ölçüm `NOT-VERIFIED`)
-- **Asimetri (`CODE-VERIFIED`):** `requestMatch.createMany` → `skipDuplicates: true` (`:178`, `:391`); ama `notification.createMany({ data: notifications })` (`:269`) → **`skipDuplicates` yok**. Yani eşleşme satırları dedupe edilirken bildirimler edilmiyor.
+- **Asimetri (`CODE-VERIFIED`, Dilim 2a’da değişmedi):** `requestMatch.createMany` → `skipDuplicates: true` (`:273`, `:577`); ama `notification.createMany({ data: notifications })` (`:375`) → **`skipDuplicates` yok**. Yani eşleşme satırları dedupe edilirken bildirimler edilmiyor. Artık `request.fanout.notifications_written` olayı `memberCount` / `recipientCount` / `notificationCount` / `dedupeFiltered` alanlarıyla bu asimetrinin hacmini **ölçülebilir** kılıyor — ama düzeltmiyor.
 - Ürün kararı (2026-08-22): bildirimler **revizyon × firma** bazında idempotent/dedupe olmalıdır → `DECIDED-NOT-IMPLEMENTED` (bkz. `11`)
 
 ---

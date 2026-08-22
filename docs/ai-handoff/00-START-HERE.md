@@ -33,22 +33,24 @@ Phase 1/2’nin branch lineage’de olması **production deploy kanıtı değild
 |------|--------|--------|
 | Worktree | `C:\Users\HP\Documents\Talepo-matching-v3` | `GIT-VERIFIED` |
 | Branch | `feature/dincer-request-matching-v3` | `GIT-VERIFIED` |
-| HEAD | `27806c33bf544aa912e6ea2423623e01ffa18310` | `GIT-VERIFIED` |
+| HEAD | `466436bb438765cd42fd9031eb6ac35a530bb562` | `GIT-VERIFIED` |
 | Upstream | `origin/feature/dincer-request-matching-v3` | `GIT-VERIFIED` |
-| Local == Remote | Evet (handoff hazırlık anında) | `GIT-VERIFIED` |
+| Local == Remote | **Hayır** — HEAD uzaktan 1 commit ileride (Dilim 2a kodu henüz push edilmedi) | `GIT-VERIFIED` |
 
 **Dokunma:** `C:\Users\HP\Documents\Talepo` (günlük kirli klasör; başka branch).
 
 ## Mevcut geliştirme aşaması
 
-- **Tamamlanan son aşama (branch):** Phase 3 Dilim 1 — explainable **shadow** relevance engine (`27806c3`). [`GIT-VERIFIED`]
+- **Tamamlanan son aşama (branch):** Phase 3 **Dilim 2a** — legacy fanout gözlemlenebilirliği (`466436b`). Yalnız ölçüm; eşleşme davranışı değişmedi. Durum: **`BRANCH-WIRED`**. [`GIT-VERIFIED`]
+- **Bir önceki:** Phase 3 Dilim 1 — explainable **shadow** relevance engine (`27806c3`). [`GIT-VERIFIED`]
 - **Branch lineage’de bulunan (deploy ≠ kanıt):** Phase 1 rawInput/authority (`0975ab9`) + Phase 2 guided composer (`b0e9a22`). Bunlar bu branch’te `BRANCH-WIRED`. Production’a çıkıp çıkmadıkları: **`PRODUCTION-STATUS-NOT-VERIFIED`**. [`GIT-VERIFIED` + `NOT-VERIFIED` deploy]
 - **Henüz başlanmayan:** Phase 3 Dilim 2+ (production-shaped shadow wiring, match persistence, review queue, notification delivery log, kalibrasyon). [`PRODUCT-INTENT` / `PROPOSED` — bkz. `09-NEXT-PHASE-RECOMMENDATION.md`]
 - Matching V3 **legacy fanout’a bağlı değil** (`apps/web/src/server/request/distribute-request.ts` içinde `matching-v3` import yok). Durum: `SHADOW` + `TEST-ONLY`. [`CODE-VERIFIED`]
 - **Create = immediate publish** (branch create path); edit path’te otomatik re-fanout yok. [`CODE-VERIFIED`]
 - **Edit path iki kere bayat:** `update-request.ts` ne re-fanout çağırır (`distribute` → 0 hit) ne de understanding snapshot’ı yeniden kurar (`understanding` → 0 hit). Düzenlenen talep hem eski eşleşme kümesinde hem eski anlama kaydında kalır. [`CODE-VERIFIED` — bkz. `02` / `08` #2b]
-- **Legacy zero-match tamamen sessizdir:** `distribute-request.ts:164-165` logsuz/metriksiz erken dönüş. Bugün “kaç talep hiç kimseye ulaşmadı?” sorusunun kaydı **yoktur**. [`CODE-VERIFIED` — bkz. `06`]
-- **Onaylanmış sonraki dilim:** Dilim 2a — legacy fanout gözlemlenebilirliği (yalnız ölçüm, davranış değişmez). Bkz. `09`. [`PROPOSED` → **onaylandı 2026-08-22**]
+- **Legacy zero-match artık sessiz değildir:** `distribute-request.ts:253` zero-match dönüşü `request.fanout.zero_match` olayı üretir (neden + il kodu ile). Fanout, backfill ve estimator yolları PII-safe, fail-open telemetri yayar; hata yolları terminal failure olayı üretip **aynı hatayı yeniden fırlatır**. [`CODE-VERIFIED` — bkz. `06`]
+- **⚠️ Ama “ölçülüyor” demek değildir:** olaylar yalnız stdout’a gidiyor. Merkezî log sisteminde sorgulanabildiği **doğrulanmadı** → **`PRODUCTION-SINK-NOT-VERIFIED`**. “Kod tamamlandı” denebilir; “ölçüm çalışıyor” **denemez**. [`NOT-VERIFIED` — bkz. `09` sink kapısı, `11` Karar D]
+- **Sonraki dilim (Dilim 2b — shadow wiring + persist) BAŞLAMADI** ve başlayamaz: önkoşulu sink + deploy + canlı taban ölçümü kapılarıdır; hiçbiri geçilmedi. Bkz. `09`.
 
 ## İlk yapılacak iş
 
@@ -95,9 +97,10 @@ Phase 1/2’nin branch lineage’de olması **production deploy kanıtı değild
 - [ ] `git status --short` temiz veya yalnız bilinen handoff docs
 - [ ] `package-lock.json` dirty değil
 - [ ] `distribute-request.ts` beklenmedik dirty değil
-- [ ] Phase commit’ler: `0975ab9` → `b0e9a22` → `27806c3` ancestry
-- [ ] Matching V3 import’u `distribute-request.ts` içinde yok
+- [ ] Phase commit’ler: `0975ab9` → `b0e9a22` → `27806c3` → `466436b` ancestry
+- [ ] Matching V3 import’u `distribute-request.ts` içinde yok (Dilim 2a bunu **değiştirmedi**)
 - [ ] İlgili verifier’lar yeşil (bkz. `07-TESTS-AND-EVIDENCE.md`)
+- [ ] Sink varsayımı yok (`PRODUCTION-SINK-NOT-VERIFIED` kabul) — telemetri olayı görmek onu sorgulayabildiğin anlamına gelmez
 - [ ] Deploy varsayımı yok (`PRODUCTION-STATUS-NOT-VERIFIED` kabul)
 
 ---
