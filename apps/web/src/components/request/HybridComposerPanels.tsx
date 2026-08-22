@@ -214,33 +214,36 @@ export function HybridCategoryBrowsePanel({
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition sm:px-5 ${
+        className={`group flex w-full items-center justify-between gap-3 rounded-[1.35rem] border px-4 py-3.5 text-left transition sm:px-5 ${
           open
-            ? "border-[#0f766e]/30 bg-[#f7fdfb]"
-            : "border-teal-900/12 bg-white hover:border-[#0f766e]/25 hover:bg-[#fbfdfe]"
+            ? "border-[#0f766e]/30 bg-[#f7fdfb] shadow-[0_14px_40px_rgba(11,37,34,0.08)]"
+            : "border-[#0f1f1d]/8 bg-white hover:border-[#0f766e]/25 hover:shadow-[0_14px_40px_rgba(11,37,34,0.08)]"
         }`}
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-teal-900/10 bg-[#f0fdfa] text-[#0f766e]">
-            <FolderTree className="h-4 w-4" aria-hidden />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#7cc4ff] via-[#0f766e] to-[#a78bfa] text-white shadow-[0_6px_18px_rgba(15,118,110,0.35)]">
+            <FolderTree className="h-[18px] w-[18px]" aria-hidden />
           </span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold tracking-tight text-[#0f1f1d]">
               {open ? "Kategori seçimini gizle" : "Kategoriden seç"}
             </span>
-            <span className="mt-0.5 block text-xs text-teal-950/50">
+            <span className="mt-0.5 block text-xs text-[#0f1f1d]/50">
               {open
                 ? "İstersen ağaçtan da ilerleyebilirsin"
                 : "İsteğe bağlı — yazmak seni sınırlamaz"}
             </span>
           </span>
         </span>
-        <ChevronRight
-          className={`h-4 w-4 shrink-0 text-[#0f766e] transition ${
-            open ? "rotate-90" : ""
+        <span
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition ${
+            open
+              ? "rotate-90 border-[#0f766e]/30 bg-[#e3f1f2] text-[#0f766e]"
+              : "border-[#0f1f1d]/10 bg-white text-[#0f766e] group-hover:border-[#0f766e]/30 group-hover:bg-[#f0fdfa]"
           }`}
-          aria-hidden
-        />
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden />
+        </span>
       </button>
 
       {open ? (

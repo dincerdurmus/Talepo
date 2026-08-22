@@ -2801,6 +2801,7 @@ function TalepOlusturForm() {
 
   const aiCompanionShell = (
     <div id="talepo-ai-companion" className={`talepo-ai-panel min-h-0 scroll-mt-20 rounded-[2rem] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:flex lg:h-full lg:min-h-0 lg:flex-col" : "lg:min-h-[32rem]"}`}>
+      <span className="talepo-ai-topline" aria-hidden />
       <button
         type="button"
         className="relative z-[1] flex w-full cursor-pointer items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
@@ -2939,33 +2940,33 @@ function TalepOlusturForm() {
           />
         ) : (
           <>
-            <section className={`talepo-rise talepo-beacon-hero relative mx-auto mb-5 max-w-3xl overflow-hidden rounded-[1.75rem] px-6 py-8 text-center sm:rounded-[2rem] sm:px-10 sm:py-10 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
-              <div className="talepo-beacon-hero-glow" aria-hidden />
+            <section className={`talepo-rise talepo-hero-aurora relative mx-auto mb-5 max-w-3xl overflow-hidden rounded-[1.75rem] px-6 py-8 text-center sm:rounded-[2rem] sm:px-10 sm:py-10 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
+              <div className="talepo-hero-aurora-glow" aria-hidden />
               <div className="relative">
-                <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/50">
-                  <Sparkles className="h-3.5 w-3.5 text-teal-200/80" />
+                <p className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
+                  <Sparkles className="h-3.5 w-3.5 text-[#7cc4ff]" />
                   Anlat · Netleştir · Yayınla
                 </p>
                 <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em] text-white sm:text-[2.6rem]">
                   Ne aradığını{" "}
-                  <span className="bg-gradient-to-r from-teal-100 via-teal-200/95 to-teal-300/80 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-[#8fd0ff] via-[#c4b5fd] to-[#ffb280] bg-clip-text text-transparent">
                     anlat.
                   </span>
                 </h1>
-                <p className="mx-auto mt-2.5 max-w-xl text-sm font-medium leading-6 text-white/50 sm:text-base">
-                  Talepo doğru uzmanlara ulaşması için gerisini seninle birlikte
+                <p className="mx-auto mt-2.5 max-w-xl text-sm font-medium leading-6 text-white/55 sm:text-base">
+                  Talepo doğru firmalara ulaşması için gerisini seninle birlikte
                   tamamlasın. İstersen kategoriden de başlayabilirsin.
                 </p>
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[#0b2522]">
+                  <span className="rounded-full bg-white px-2.5 py-1 text-[#221a3f]">
                     1 · Anlat
                   </span>
-                  <span className="text-white/25">→</span>
+                  <span className="text-white/30">→</span>
                   <span
                     className={`rounded-full px-2.5 py-1 ${
                       hasText
-                        ? "bg-white text-[#0b2522]"
-                        : "bg-white/10 text-white/50"
+                        ? "bg-white text-[#221a3f]"
+                        : "bg-white/10 text-white/55"
                     }`}
                   >
                     2 · Kontrol et & tamamla

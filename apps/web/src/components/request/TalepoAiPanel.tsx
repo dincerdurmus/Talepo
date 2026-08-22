@@ -330,10 +330,11 @@ function WorkspaceSection({
   return (
     <section className={toneClass}>
       <p
-        className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${
+        className={`flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] ${
           tone === "light" ? "text-teal-800/55" : "text-teal-100/55"
         }`}
       >
+        <span className="talepo-ai-section-tick" aria-hidden />
         {title}
       </p>
       <div className="mt-2.5">{children}</div>

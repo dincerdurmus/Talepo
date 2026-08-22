@@ -17,6 +17,11 @@ import {
   type TaxonomyNode,
 } from "@/lib/taxonomy";
 
+import {
+  furnitureBrandLabels,
+  inferMachineryBrandFamily,
+  machineryBrandsForFamily,
+} from "./harvest-brands";
 import { resolveKnowledgeProfile } from "./profile-registry";
 import { subcategorySlug } from "./slug";
 import {
@@ -124,6 +129,60 @@ function technologyBrandNodes(
     }),
   );
 
+  return [tumu, ...brands];
+}
+
+/** Makine / mobilya PRODUCT_TYPE yaprağı → hasat marka kolonu (Tümü önde). */
+function harvestBrandNodes(
+  productTypeId: string,
+  parentId: string,
+): BrowseNode[] {
+  ensureTaxonomyLoaded();
+  const tax = getTaxonomyNode(productTypeId);
+  if (!tax || tax.nodeType !== "PRODUCT_TYPE") return [];
+
+  let labels: string[] = [];
+  if (tax.categoryId === "machinery") {
+    const family = inferMachineryBrandFamily({
+      id: tax.id,
+      name: tax.canonicalName,
+    });
+    if (!family) return [];
+    labels = machineryBrandsForFamily(family);
+  } else if (tax.categoryId === "furniture") {
+    labels = furnitureBrandLabels();
+  }
+  if (labels.length === 0) return [];
+
+  const tumu = node({
+    id: "any:brand",
+    kind: "attribute_bucket",
+    label: "Tümü",
+    categoryId: tax.categoryId,
+    parentId,
+    hasChildren: false,
+    meta: {
+      any: true,
+      fieldKey: "brand",
+      sentinel: "__ANY__",
+      productTypeId,
+    },
+  });
+  const brands = labels.map((label) =>
+    node({
+      id: `browse:${tax.categoryId}:brand:${subcategorySlug(label)}`,
+      kind: "brand",
+      label,
+      categoryId: tax.categoryId,
+      parentId,
+      entityId: subcategorySlug(label),
+      hasChildren: false,
+      meta: {
+        productTypeId,
+        subcategorySlug: tax.subcategoryId ?? "",
+      },
+    }),
+  );
   return [tumu, ...brands];
 }
 
@@ -683,6 +742,9 @@ export function getBrowseChildren(
     // Donanım product-type leaf → brand column (TV / laptop / phone…)
     const brandKids = technologyBrandNodes(parentId, parentId);
     if (brandKids.length > 0) return brandKids;
+    // Makine / mobilya yaprakları → hasat markaları (Makinecim, Koçtaş…)
+    const harvestKids = harvestBrandNodes(parentId, parentId);
+    if (harvestKids.length > 0) return harvestKids;
     return [];
   }
 
