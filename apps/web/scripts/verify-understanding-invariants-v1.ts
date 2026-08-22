@@ -386,22 +386,27 @@ function scheduledKeys(
   categoryId: string,
   productType: string | null,
 ): Set<string> {
-  const result = scheduleNextQuestions({
-    categoryId,
-    productType,
-    hybridCandidates: [],
-    values: {},
-  });
-  const keys = new Set(result.visible.map((q) => q.fieldKey));
-  // Look past the ≤3 visibility cap: run again marking visible ones answered.
-  const more = scheduleNextQuestions({
-    categoryId,
-    productType,
-    hybridCandidates: [],
-    values: {},
-    answeredKeys: [...keys],
-  });
-  for (const q of more.visible) keys.add(q.fieldKey);
+  // Drain the whole queue past the ≤3 visibility cap: keep marking visible
+  // questions answered until nothing new appears (optionals surface only
+  // after criticals are satisfied).
+  const keys = new Set<string>();
+  for (let round = 0; round < 6; round += 1) {
+    const result = scheduleNextQuestions({
+      categoryId,
+      productType,
+      hybridCandidates: [],
+      values: {},
+      answeredKeys: [...keys],
+    });
+    let grew = false;
+    for (const q of result.visible) {
+      if (!keys.has(q.fieldKey)) {
+        keys.add(q.fieldKey);
+        grew = true;
+      }
+    }
+    if (!grew) break;
+  }
   return keys;
 }
 
@@ -424,6 +429,12 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     { cat: "appliances", product: "Buzdolabı", must: ["fridgeType"], never: ["screenSize", "capacityKg"] },
     { cat: "appliances", product: null, must: [], never: ["screenSize", "btu", "vacuumType"] },
     { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["btu", "screenSize"] },
+    // Matbaaloji ailesi (2026-08-22)
+    { cat: "printing", product: "Kartvizit", must: ["quantity", "lamination"], never: ["printSize", "pageCount", "btu"] },
+    { cat: "printing", product: "Broşür", must: ["quantity", "printSize", "paperWeight"], never: ["pageCount", "btu"] },
+    { cat: "printing", product: "Afiş", must: ["quantity", "printSize"], never: ["paperWeight", "lamination", "pageCount"] },
+    { cat: "printing", product: "Katalog", must: ["quantity", "pageCount", "lamination"], never: ["printSize", "paperWeight"] },
+    { cat: "printing", product: null, must: [], never: ["lamination", "printSize", "paperWeight", "pageCount"] },
     // Bauhaus ailesi (2026-08-22)
     { cat: "machinery", product: "Akülü Matkap", must: ["toolPower"], never: ["btu", "screenSize", "coffeeType"] },
     { cat: "machinery", product: "Çim Biçme Makinesi", must: ["mowerType"], never: ["toolPower", "btu"] },
