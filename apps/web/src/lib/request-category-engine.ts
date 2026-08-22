@@ -277,6 +277,39 @@ function foldProductContext(value: string): string {
     .trim();
 }
 
+/**
+ * Bina/konut soruları yalnız üzerinde yapı olan emlak tiplerinde anlamlıdır —
+ * arsa/tarla akışına ısıtma, kat, banyo sorusu asla gitmez (kurucu, 2026-08-23).
+ */
+const BUILDING_PROPERTY_TYPES = [
+  "daire",
+  "rezidans",
+  "müstakil",
+  "mustakil",
+  "villa",
+  "çiftlik evi",
+  "ciftlik evi",
+  "köşk",
+  "kosk",
+  "konak",
+  "yalı",
+  "yali",
+  "stüdyo",
+  "studyo",
+  "dubleks",
+  "konut",
+  "ev",
+  "iş yeri",
+  "is yeri",
+  "isyeri",
+  "ofis",
+  "dükkan",
+  "dukkan",
+  "mağaza",
+  "magaza",
+  "depo",
+];
+
 /** Fields like RAM/graphics belong to computers, never TVs or printers. */
 const COMPUTER_PRODUCT_TYPES = [
   "bilgisayar",
@@ -320,10 +353,12 @@ export function getVisibleCategoryFields(
   let visible = fields.filter((field) => isFieldVisible(field, resolved));
 
   // Product-scoped fields: only when the detected product matches.
+  // Real estate: propertyType (Daire / İmarlı arsa / İş yeri) is the context.
   const productContext = foldProductContext(
     resolved.productType ||
       resolved.applianceType ||
       resolved.kitchenProductType ||
+      resolved.propertyType ||
       "",
   );
   visible = visible.filter((field) => {
@@ -1921,11 +1956,12 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
     },
   ],
   "real-estate": [
-    { key: "grossArea", label: "Brüt alan", type: "number", placeholder: "Örn. 140", unit: "m²" },
-    { key: "netArea", label: "Net alan", type: "number", placeholder: "Örn. 120", unit: "m²" },
-    { key: "totalFloors", label: "Bina kat sayısı", type: "number", placeholder: "Örn. 8" },
+    { key: "grossArea", label: "Brüt alan", type: "number", placeholder: "Örn. 140", unit: "m²", whenProductTypes: BUILDING_PROPERTY_TYPES },
+    { key: "netArea", label: "Net alan", type: "number", placeholder: "Örn. 120", unit: "m²", whenProductTypes: BUILDING_PROPERTY_TYPES },
+    { key: "totalFloors", label: "Bina kat sayısı", type: "number", placeholder: "Örn. 8", whenProductTypes: BUILDING_PROPERTY_TYPES },
     {
       key: "heating",
+      whenProductTypes: BUILDING_PROPERTY_TYPES,
       label: "Isıtma",
       type: "select",
       options: [
@@ -1936,9 +1972,10 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
         { label: "Fark etmez", value: "Fark etmez" },
       ],
     },
-    { key: "bathroomCount", label: "Banyo sayısı", type: "number", placeholder: "Örn. 2" },
+    { key: "bathroomCount", label: "Banyo sayısı", type: "number", placeholder: "Örn. 2", whenProductTypes: BUILDING_PROPERTY_TYPES },
     {
       key: "furnished",
+      whenProductTypes: BUILDING_PROPERTY_TYPES,
       label: "Eşyalı",
       type: "select",
       options: [
@@ -1949,6 +1986,7 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
     },
     {
       key: "parking",
+      whenProductTypes: BUILDING_PROPERTY_TYPES,
       label: "Otopark",
       type: "select",
       options: [
@@ -1959,6 +1997,7 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
     },
     {
       key: "elevator",
+      whenProductTypes: BUILDING_PROPERTY_TYPES,
       label: "Asansör",
       type: "select",
       options: [

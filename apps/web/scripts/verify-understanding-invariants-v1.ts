@@ -442,6 +442,10 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     // Emlak/hizmet: marka-model asla sorulmaz (kurucu geri bildirimi, 2026-08-23)
     { cat: "real-estate", product: null, must: [], never: ["brand", "model"] },
     { cat: "services", product: null, must: [], never: ["brand", "model"] },
+    // Emlak tipi matrisi: arsaya konut sorusu asla (kurucu, 2026-08-23)
+    { cat: "real-estate", product: "İmarlı arsa", must: [], never: ["roomCount", "heating", "totalFloors", "bathroomCount", "furnished", "elevator", "brand", "model"] },
+    { cat: "real-estate", product: "Tarla", must: [], never: ["roomCount", "heating", "totalFloors", "bathroomCount"] },
+    { cat: "real-estate", product: "Daire", must: ["roomCount"], never: ["brand", "model"] },
     // e-bebek ailesi (2026-08-22)
     { cat: "baby", product: "Bebek Arabası", must: ["strollerType"], never: ["carSeatGroup", "diaperSize", "bedSize"] },
     { cat: "baby", product: "Oto Koltuğu", must: ["carSeatGroup"], never: ["strollerType", "diaperSize"] },
@@ -512,6 +516,23 @@ check("I10: engine fields are product-scoped — a TV is never asked computer sp
   const unknown = fieldsFor("");
   for (const key of ["ram", "processor", "storage", "graphics"]) {
     assert.ok(!unknown.includes(key), `Ürünsüz akışta '${key}' olmamalı`);
+  }
+
+  // Emlak: bina soruları yalnız yapılı tiplerde — arsada asla
+  const re = REQUEST_CATEGORIES.find((c) => c.id === "real-estate")!;
+  const reFieldsFor = (propertyType: string) =>
+    getVisibleCategoryFields(
+      re.fields,
+      { listingType: "Satılık", propertyType },
+      "real-estate",
+    ).map((f) => f.key);
+  const arsa = reFieldsFor("İmarlı arsa");
+  for (const key of ["heating", "totalFloors", "bathroomCount", "furnished", "elevator", "parking", "grossArea", "netArea", "roomCount"]) {
+    assert.ok(!arsa.includes(key), `Arsa alanlarında '${key}' olmamalı: ${arsa.join(",")}`);
+  }
+  const daire = reFieldsFor("Daire");
+  for (const key of ["heating", "roomCount"]) {
+    assert.ok(daire.includes(key), `Daire alanlarında '${key}' olmalı: ${daire.join(",")}`);
   }
 });
 

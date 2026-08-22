@@ -28,6 +28,7 @@ import {
   HybridCategoryBrowsePanel,
 } from "@/components/request/HybridComposerPanels";
 import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
+import { subcategorySlug } from "@/lib/knowledge/slug";
 import {
   TalepoAiPanel,
   type ClarificationOption,
@@ -1822,8 +1823,20 @@ function TalepOlusturForm() {
     return {
       summaryText: summarySource,
       rawInput: requestText,
+      // Pro filtreleme kategori+alt kategori üzerinden satılır — özet de
+      // "Otomotiv › Yedek Parça" gibi tam yolu göstermeli (kurucu, 2026-08-23).
       categoryLabel: schemaCategory.displayLabelSafe
-        ? selectedCategory.label
+        ? (() => {
+            const slug = hybrid.state?.subcategorySlug ?? null;
+            const subLabel = slug
+              ? selectedCategory.subcategories.find(
+                  (label) => subcategorySlug(label) === slug,
+                ) ?? null
+              : null;
+            return subLabel
+              ? `${selectedCategory.label} › ${subLabel}`
+              : selectedCategory.label;
+          })()
         : null,
       categoryUnresolved:
         !categoryConfident ||
@@ -1848,6 +1861,8 @@ function TalepOlusturForm() {
     requestText,
     schemaCategory.displayLabelSafe,
     selectedCategory.label,
+    selectedCategory.subcategories,
+    hybrid.state?.subcategorySlug,
   ]);
 
   const isHealthCategory =
@@ -3286,7 +3301,7 @@ function TalepOlusturForm() {
                   </ul>
                 </div>
 
-                <div className="talepo-rise talepo-rise-delay-2 px-0.5">
+                <div className={`talepo-rise talepo-rise-delay-2 px-0.5 ${hasText ? "hidden" : ""}`}>
                   <p className="text-xs font-medium text-[#0f1f1d]/40">
                     Hızlı örnek
                   </p>

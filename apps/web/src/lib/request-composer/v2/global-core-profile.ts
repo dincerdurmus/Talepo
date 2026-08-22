@@ -53,7 +53,8 @@ export function globalCoreQuestionProfiles(
       summaryLabel: isRealEstate
         ? budgetSummaryLabelForListing(listingRaw, { isRealEstate: true })
         : "Bütçe",
-      importance: "quote_critical",
+      // Kuzey yıldızı: bütçe + il/ilçe yayın için zorunlu tek iki alandır.
+      importance: "publish_required",
       rank: 92,
       inputHint: "budget",
       allowUnknown: true,
@@ -65,7 +66,7 @@ export function globalCoreQuestionProfiles(
       fieldKey: "city",
       prompt: locationPrompt,
       summaryLabel: "Konum",
-      importance: isRealEstate ? "publish_required" : "quote_critical",
+      importance: "publish_required",
       rank: 90,
       inputHint: "location",
       allowUnknown: true,

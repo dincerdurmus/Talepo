@@ -8,7 +8,6 @@ import { getCategoryById } from "@/lib/request-category-engine";
 
 import {
   importanceRank,
-  isCriticalImportance,
   listProfilesForCategory,
   resolveProfileForField,
 } from "./question-profiles";
@@ -89,11 +88,13 @@ export function isFieldSatisfied(input: {
     ) {
       return true;
     }
-    // Concrete location requires il + ilçe
     if (value.includes("/")) {
       const [il, ilce] = value.split("/").map((p) => p.trim());
       return Boolean(il && ilce);
     }
+    // Çoklu-il seçici yalın il ("Ankara") veya il listesi ("İstanbul, Ankara")
+    // üretebilir — ilçe "Tümü" bilinçli bir cevaptır, tatmin sayılır.
+    if (value.length > 0 && !soft) return true;
     if (soft === "unknown" && input.allowUnknown) return true;
     return false;
   }
@@ -222,9 +223,11 @@ export function scheduleNextQuestions(input: {
     input.values.productType ??
     input.values.applianceType ??
     input.values.kitchenProductType ??
+    input.values.propertyType ??
     input.fieldStates?.productType?.value ??
     input.fieldStates?.applianceType?.value ??
     input.fieldStates?.kitchenProductType?.value ??
+    input.fieldStates?.propertyType?.value ??
     null;
 
   const categoryProfiles = listProfilesForCategory({
@@ -411,8 +414,11 @@ export function scheduleNextQuestions(input: {
 
   pending.sort((a, b) => b.sortScore - a.sortScore);
 
-  const critical = pending.filter((p) => isCriticalImportance(p.importance));
-  const optional = pending.filter((p) => p.importance === "optional");
+  // Kuzey yıldızı (kurucu): yalnız bütçe + il/ilçe zorunludur — başka hiçbir
+  // soru yayını kilitleyemez. quote/routing sorular öne çıkar ama atlanabilir.
+  const blockingCritical = pending.filter(
+    (p) => p.importance === "publish_required",
+  );
 
   const visible = pending.slice(0, MAX_VISIBLE).map((item) => {
     const { sortScore: _score, ...q } = item;
@@ -420,16 +426,16 @@ export function scheduleNextQuestions(input: {
     return q;
   });
 
-  const blocking = critical.map((c) => c.fieldKey);
-  const canEnterReview = critical.length === 0;
+  const blocking = blockingCritical.map((c) => c.fieldKey);
+  const canEnterReview = blockingCritical.length === 0;
 
   return {
     visible,
-    remainingCriticalCount: critical.length,
-    remainingOptionalCount: optional.length,
+    remainingCriticalCount: blockingCritical.length,
+    remainingOptionalCount: pending.length - blockingCritical.length,
     canEnterReview,
     blockingFieldKeys: blocking,
-    blockingLabels: critical.map((c) => c.summaryLabel),
+    blockingLabels: blockingCritical.map((c) => c.summaryLabel),
   };
 }
 

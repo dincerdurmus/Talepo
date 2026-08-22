@@ -143,9 +143,11 @@ export function areaSqmPresets(): ControlOption[] {
 }
 
 export function listingTypeOptions(): ControlOption[] {
+  // Değerler kullanıcıya görünen yerlere sızar — asla ham İngilizce ("sale")
+  // saklama; motor ve rozetler Türkçe etiket değerini bekler.
   return [
-    { label: "Satılık", value: "sale" },
-    { label: "Kiralık", value: "rent" },
+    { label: "Satılık", value: "Satılık" },
+    { label: "Kiralık", value: "Kiralık" },
   ];
 }
 
