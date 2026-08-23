@@ -267,10 +267,10 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         </WorkspaceSection>
       ) : null}
 
-      {/* 3. PİYASA */}
-      {/* Çalışma prensibi #3 (kurucu, 2026-08-23): boş bölüm gösterme —
-          piyasa yalnız gerçekten veri (ya da yükleme) varken görünür. */}
-      {market.state !== "HIDDEN" && market.state !== "INSUFFICIENT" ? (
+      {/* 3. PİYASA — kurucu kararı (2026-08-23): bölüm her zaman görünür.
+          Veri yokken de durur; ne zaman dolacağını söyler, veri uydurmaz
+          (ölçüm dürüstlüğü: "ölçülmedi" ile "sıfır ölçüldü" karıştırılmaz). */}
+      {market.state !== "HIDDEN" ? (
         <MarketSection
           market={market}
           showBudgetActions={props.showBudgetActions}
@@ -538,9 +538,19 @@ function MarketSection({
 
       {market.state === "INSUFFICIENT" ? (
         <div>
-          <p className="text-sm text-teal-50/90">Henüz yeterli piyasa verisi yok.</p>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-300/25 bg-teal-400/10 px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-teal-100/80">
+              <span className="talepo-ai-status-dot" />
+              Veri toplanıyor
+            </span>
+          </div>
+          <p className="mt-2.5 text-sm leading-6 text-teal-50/85">
+            Bu talep için henüz fiyat aralığı çıkarmadık.
+          </p>
           <p className="mt-1.5 text-xs leading-5 text-teal-100/50">
-            {market.explanation}
+            Aralık, yalnız doğrulanmış teklif ve fiyat verisinden hesaplanır —
+            tahmin üretmiyoruz. Bu kategoride yeterli teklif biriktiğinde
+            aralık, tipik değer ve güven seviyesi burada görünecek.
           </p>
         </div>
       ) : null}
