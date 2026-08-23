@@ -35,7 +35,7 @@ function GirisPageFallback() {
   return (
     <main className="min-h-screen bg-[#f4f7f6]">
       <div className="mx-auto flex min-h-screen max-w-lg items-center justify-center px-5">
-        <p className="text-sm text-black/45">Giriş ekranı yükleniyor...</p>
+        <p className="text-sm text-[#0f1f1d]/45">Giriş ekranı yükleniyor...</p>
       </div>
     </main>
   );
@@ -110,12 +110,6 @@ function GirisPageContent() {
       <div className="grid min-h-screen lg:grid-cols-[0.95fr_1.05fr]">
         {/* SOL — giriş */}
         <section className="relative flex min-h-screen flex-col px-5 py-6 sm:px-8 sm:py-8 lg:px-12 xl:px-16">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="absolute -left-32 top-0 h-[380px] w-[380px] animate-[talepo-float_14s_ease-in-out_infinite] rounded-full bg-[#9ae89a]/35 blur-[100px]" />
-            <div className="absolute right-0 top-40 h-72 w-72 animate-[talepo-float-alt_18s_ease-in-out_infinite] rounded-full bg-[#7ec8ff]/30 blur-[90px]" />
-            <div className="absolute bottom-10 left-1/3 h-64 w-64 rounded-full bg-[#ffe08a]/25 blur-[90px]" />
-          </div>
-
           <div className="relative z-10 flex items-center justify-between">
             <Link
               href="/"
@@ -132,7 +126,7 @@ function GirisPageContent() {
 
             <Link
               href="/"
-              className="group flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/80 px-4 py-2 text-sm font-medium text-black/50 shadow-sm backdrop-blur-xl transition hover:bg-white hover:text-black"
+              className="group flex items-center gap-2 rounded-full border border-[#0f1f1d]/8 bg-white/80 px-4 py-2 text-sm font-medium text-[#0f1f1d]/50 shadow-sm backdrop-blur-xl transition hover:bg-white hover:text-[#0f1f1d]"
             >
               <ArrowLeft className="h-4 w-4 transition group-hover:-translate-x-1" />
               Ana sayfa
@@ -140,19 +134,19 @@ function GirisPageContent() {
           </div>
 
           <div className="relative z-10 mx-auto flex w-full max-w-[480px] flex-1 flex-col justify-center py-12 lg:py-14">
-            <div className="flex w-fit items-center gap-2 rounded-full border border-[#c4b5fd]/40 bg-gradient-to-r from-[#f3e8ff] to-[#e0f2fe] px-4 py-2 text-sm font-medium text-[#4c1d95]/80 shadow-sm">
-              <Sparkles className="h-4 w-4 text-[#7c3aed]" />
+            <div className="flex w-fit items-center gap-2 rounded-full bg-[#e3f1f2] px-4 py-2 text-sm font-medium text-[#0f5f59]">
+              <Sparkles className="h-4 w-4 text-[#0f766e]" />
               Tek hesap · alıcı ve firma
             </div>
 
             <h1 className="mt-6 text-4xl font-semibold leading-[1.05] tracking-[-0.055em] sm:text-[2.75rem]">
               Devam etmek için{" "}
-              <span className="bg-gradient-to-r from-teal-700 to-sky-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#0f766e] to-[#0d9488] bg-clip-text text-transparent">
                 giriş yapın
               </span>
             </h1>
 
-            <p className="mt-4 max-w-md text-base leading-7 text-black/50 sm:text-[17px]">
+            <p className="mt-4 max-w-md text-base leading-7 text-[#0f1f1d]/50 sm:text-[17px]">
               Talebinizi oluşturun, teklifleri karşılaştırın veya firmanız için
               iş fırsatlarını görün — hepsi aynı hesapta.
             </p>
@@ -170,7 +164,7 @@ function GirisPageContent() {
             <button
               type="button"
               onClick={() => signIn("google", { callbackUrl })}
-              className="group mt-7 flex min-h-[60px] w-full items-center justify-between rounded-[20px] border border-black/[0.08] bg-white px-4 shadow-[0_14px_45px_rgba(0,0,0,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-teal-600/30 hover:shadow-[0_20px_60px_rgba(13,148,136,0.12)]"
+              className="group mt-7 flex min-h-[60px] w-full items-center justify-between rounded-[20px] border border-[#0f1f1d]/8 bg-white px-4 shadow-[0_14px_45px_rgba(0,0,0,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-teal-600/30 hover:shadow-[0_20px_60px_rgba(13,148,136,0.12)]"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4285F4] via-[#34A853] to-[#FBBC05] p-[2px]">
@@ -182,7 +176,7 @@ function GirisPageContent() {
                   <span className="block font-semibold">
                     Google ile devam et
                   </span>
-                  <span className="block text-xs text-black/40">
+                  <span className="block text-xs text-[#0f1f1d]/40">
                     Tek hesapla paneline devam et
                   </span>
                 </span>
@@ -205,14 +199,14 @@ function GirisPageContent() {
               />
             </div>
             {!social.facebook && !social.twitter && (
-              <p className="mt-2 text-center text-[11px] text-black/35">
+              <p className="mt-2 text-center text-[11px] text-[#0f1f1d]/35">
                 Facebook ve X girişi için uygulama anahtarları eklenince açılır
               </p>
             )}
 
             <div className="my-6 flex items-center gap-4">
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-black/10 to-transparent" />
-              <span className="text-xs font-medium text-black/35">
+              <span className="text-xs font-medium text-[#0f1f1d]/35">
                 veya e-posta ile
               </span>
               <div className="h-px flex-1 bg-gradient-to-r from-transparent via-black/10 to-transparent" />
@@ -222,7 +216,7 @@ function GirisPageContent() {
               <label htmlFor="email" className="sr-only">
                 E-posta adresi
               </label>
-              <div className="rounded-[20px] border border-black/[0.08] bg-white p-2 shadow-[0_12px_35px_rgba(0,0,0,0.035)] transition focus-within:border-teal-600/35 focus-within:shadow-[0_16px_50px_rgba(13,148,136,0.1)]">
+              <div className="rounded-[20px] border border-[#0f1f1d]/8 bg-white p-2 shadow-[0_12px_35px_rgba(0,0,0,0.035)] transition focus-within:border-teal-600/35 focus-within:shadow-[0_16px_50px_rgba(13,148,136,0.1)]">
                 <input
                   id="email"
                   name="email"
@@ -232,13 +226,13 @@ function GirisPageContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="E-posta adresiniz"
-                  className="h-12 w-full rounded-2xl bg-transparent px-3 text-base outline-none placeholder:text-black/25"
+                  className="h-12 w-full rounded-2xl bg-transparent px-3 text-base outline-none placeholder:text-[#0f1f1d]/25"
                 />
               </div>
               <label htmlFor="password" className="sr-only">
                 Şifre
               </label>
-              <div className="rounded-[20px] border border-black/[0.08] bg-white p-2 shadow-[0_12px_35px_rgba(0,0,0,0.035)] transition focus-within:border-teal-600/35 focus-within:shadow-[0_16px_50px_rgba(13,148,136,0.1)]">
+              <div className="rounded-[20px] border border-[#0f1f1d]/8 bg-white p-2 shadow-[0_12px_35px_rgba(0,0,0,0.035)] transition focus-within:border-teal-600/35 focus-within:shadow-[0_16px_50px_rgba(13,148,136,0.1)]">
                 <PasswordInput
                   id="password"
                   name="password"
@@ -249,7 +243,7 @@ function GirisPageContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Şifreniz"
                   wrapClassName="relative"
-                  inputClassName="h-12 w-full rounded-2xl bg-transparent px-3 pr-12 text-base outline-none placeholder:text-black/25"
+                  inputClassName="h-12 w-full rounded-2xl bg-transparent px-3 pr-12 text-base outline-none placeholder:text-[#0f1f1d]/25"
                 />
               </div>
               {(emailError || authError) && (
@@ -260,12 +254,12 @@ function GirisPageContent() {
               <button
                 type="submit"
                 disabled={emailBusy}
-                className="flex min-h-[56px] w-full items-center justify-center gap-3 rounded-[20px] bg-[#151515] font-medium text-white transition hover:bg-black disabled:opacity-60"
+                className="flex min-h-[56px] w-full items-center justify-center gap-3 rounded-[20px] bg-[#0f766e] font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59] disabled:opacity-60"
               >
                 {emailBusy ? "Giriş yapılıyor…" : "E-posta ile giriş yap"}
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <p className="text-center text-[11px] text-black/35">
+              <p className="text-center text-[11px] text-[#0f1f1d]/35">
                 Hesabınız yok mu?{" "}
                 <Link
                   href={`/kayit?callbackUrl=${encodeURIComponent(callbackUrl)}`}
@@ -276,16 +270,16 @@ function GirisPageContent() {
               </p>
             </form>
 
-            <div className="mt-6 rounded-[22px] border border-emerald-200/60 bg-gradient-to-br from-[#ecfdf5] to-white p-4">
+            <div className="mt-6 rounded-[1.35rem] border border-[#0f1f1d]/8 bg-[#f7faf9] p-4">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-[#0f766e] text-white">
                   <ShieldCheck className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-emerald-950">
+                  <p className="text-sm font-semibold text-[#0f1f1d]">
                     Güvenli ve hızlı giriş
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-emerald-900/55">
+                  <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/55">
                     Bilgileriniz paylaşılmaz. Tek oturumla hem alıcı hem firma
                     tarafını yönetebilirsiniz.
                   </p>
@@ -293,7 +287,7 @@ function GirisPageContent() {
               </div>
             </div>
 
-            <p className="mt-6 text-center text-xs leading-5 text-black/35">
+            <p className="mt-6 text-center text-xs leading-5 text-[#0f1f1d]/35">
               Devam ederek Talepo’nun{" "}
               <Link
                 href="/kullanim-kosullari"
@@ -312,17 +306,17 @@ function GirisPageContent() {
             </p>
           </div>
 
-          <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-1 text-xs text-black/35">
+          <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 pb-1 text-xs text-[#0f1f1d]/35">
             <span className="flex items-center gap-2">
               <LockKeyhole className="h-3.5 w-3.5 text-teal-700" />
               Güvenli giriş
             </span>
             <span className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
+              <Check className="h-3.5 w-3.5 text-[#0f766e]" />
               Tek hesap
             </span>
             <span className="flex items-center gap-2">
-              <Check className="h-3.5 w-3.5 text-sky-600" />
+              <Check className="h-3.5 w-3.5 text-[#0f766e]" />
               Alıcı + firma
             </span>
           </div>
@@ -330,15 +324,13 @@ function GirisPageContent() {
 
         {/* SAĞ — nasıl çalışır */}
         <section className="relative hidden min-h-screen overflow-hidden p-5 lg:block xl:p-7">
-          <div className="absolute inset-5 overflow-hidden rounded-[38px] bg-gradient-to-br from-[#0f766e] via-[#0c4a6e] to-[#172554] shadow-[0_35px_110px_rgba(15,118,110,0.28)] xl:inset-7">
-            <div className="pointer-events-none absolute -right-28 -top-28 h-[420px] w-[420px] animate-[talepo-float_16s_ease-in-out_infinite] rounded-full bg-[#5eead4]/25 blur-[100px]" />
-            <div className="pointer-events-none absolute -bottom-36 -left-20 h-[460px] w-[460px] animate-[talepo-float-alt_20s_ease-in-out_infinite] rounded-full bg-[#38bdf8]/20 blur-[110px]" />
-            <div className="pointer-events-none absolute left-[45%] top-[30%] h-72 w-72 rounded-full bg-[#fde68a]/15 blur-[90px]" />
+          <div className="talepo-beacon-hero absolute inset-5 overflow-hidden rounded-[38px] shadow-[0_35px_110px_rgba(11,37,34,0.35)] xl:inset-7">
+            <div className="talepo-beacon-hero-glow" aria-hidden />
 
             <div className="relative z-10 flex h-full flex-col p-8 text-white xl:p-11">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-1.5 text-sm backdrop-blur-md">
-                  <Sparkles className="h-4 w-4 text-amber-200" />
+                  <Sparkles className="h-4 w-4 text-teal-200" />
                   3 adımda netleşir
                 </div>
                 <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-white/55">
@@ -366,21 +358,21 @@ function GirisPageContent() {
                       icon={PackageSearch}
                       title="Talebinizi yazın"
                       description="Ne aradığınızı birkaç cümleyle anlatın."
-                      tone="bg-emerald-300"
+                      tone="bg-teal-200"
                     />
                     <StepCard
                       step="2"
                       icon={WandSparkles}
                       title="AI özetlesin"
                       description="Kategori, adet ve konum otomatik çıkarılır."
-                      tone="bg-sky-300"
+                      tone="bg-teal-200"
                     />
                     <StepCard
                       step="3"
                       icon={Store}
                       title="Teklifleri karşılaştırın"
                       description="Uygun firmalar size ulaşır, siz seçersiniz."
-                      tone="bg-amber-300"
+                      tone="bg-teal-200"
                     />
                   </div>
 
@@ -394,7 +386,7 @@ function GirisPageContent() {
                           Talep özeti hazır
                         </p>
                       </div>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 to-emerald-200 text-teal-950">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-200 text-teal-950">
                         <CircleCheck className="h-5 w-5" />
                       </div>
                     </div>
@@ -411,38 +403,38 @@ function GirisPageContent() {
                       <DetectedItem
                         label="Kategori"
                         value="Matbaa"
-                        color="bg-emerald-100 text-emerald-900"
+                        color="border border-white/10 bg-white/10 text-teal-50"
                       />
                       <DetectedItem
                         label="Ürün"
                         value="Karton kutu"
-                        color="bg-sky-100 text-sky-900"
+                        color="border border-white/10 bg-white/10 text-teal-50"
                       />
                       <DetectedItem
                         label="Adet"
                         value="5.000"
-                        color="bg-amber-100 text-amber-950"
+                        color="border border-white/10 bg-white/10 text-teal-50"
                       />
                       <DetectedItem
                         label="Konum"
                         value="İstanbul"
-                        color="bg-[#eef6f4] text-teal-900"
+                        color="border border-white/10 bg-white/10 text-teal-50"
                       />
                     </div>
 
-                    <div className="mt-4 rounded-[18px] bg-gradient-to-r from-[#ecfdf5] via-[#e0f2fe] to-[#fef3c7] p-4 text-[#0f172a]">
+                    <div className="mt-4 rounded-[18px] border border-teal-300/20 bg-teal-400/10 p-4 text-white">
                       <div className="flex items-start gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                          <BriefcaseBusiness className="h-4 w-4 text-teal-700" />
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/90 shadow-sm">
+                          <BriefcaseBusiness className="h-4 w-4 text-[#0f766e]" />
                         </div>
                         <div>
-                          <p className="text-xs font-semibold text-teal-800">
+                          <p className="text-xs font-semibold text-teal-200">
                             Tahmini aralık
                           </p>
                           <p className="mt-1 text-sm font-semibold">
                             ₺42.000 – ₺58.000
                           </p>
-                          <div className="mt-2 flex items-center gap-2 text-xs text-black/50">
+                          <div className="mt-2 flex items-center gap-2 text-xs text-white/50">
                             <Clock3 className="h-3.5 w-3.5" />
                             Ortalama teslim: 8–12 gün · 12 firma eşleşti
                           </div>
@@ -482,11 +474,11 @@ function SocialButton({
         type="button"
         disabled
         title={`${label} girişi için .env anahtarları gerekli`}
-        className="flex h-12 cursor-not-allowed items-center justify-center gap-2.5 rounded-[17px] border border-black/[0.06] bg-white/60 text-sm font-medium text-black/30"
+        className="flex h-12 cursor-not-allowed items-center justify-center gap-2.5 rounded-[17px] border border-[#0f1f1d]/6 bg-white/60 text-sm font-medium text-[#0f1f1d]/30"
       >
         {icon}
         {label}
-        <span className="rounded-full bg-black/[0.05] px-1.5 py-0.5 text-[10px]">
+        <span className="rounded-full bg-[#0f1f1d]/5 px-1.5 py-0.5 text-[10px]">
           Yakında
         </span>
       </button>
@@ -497,7 +489,7 @@ function SocialButton({
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-12 items-center justify-center gap-2.5 rounded-[17px] border border-black/[0.07] bg-white text-sm font-medium shadow-sm transition hover:-translate-y-0.5 hover:border-black/20 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
+      className="group flex h-12 items-center justify-center gap-2.5 rounded-[17px] border border-[#0f1f1d]/8 bg-white text-sm font-medium shadow-sm transition hover:-translate-y-0.5 hover:border-[#0f766e]/30 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)]"
     >
       {icon}
       {label}
