@@ -449,6 +449,8 @@ function TalepOlusturForm() {
     "compose",
   );
   const composerStartedRef = useRef(false);
+  /** Soru cevaplarının serbest metne yazılan parçaları (kurucu, 2026-08-23). */
+  const appendedAnswersRef = useRef<Record<string, string>>({});
   const [otherDomainNote, setOtherDomainNote] = useState("");
   const [showOtherDomainInput, setShowOtherDomainInput] = useState(false);
   const [unresolvedExpressions, setUnresolvedExpressions] = useState<
@@ -2753,6 +2755,17 @@ function TalepOlusturForm() {
         updateCommonField("budget", formatBudgetFromMedian(median));
       }}
       professionalText={professionalText}
+      nextStepLabel={
+        !composerReadiness.canReview && composerReadiness.blockingLabels.length
+          ? composerReadiness.blockingLabels[0]
+          : null
+      }
+      onNextStep={() => {
+        setAiCompanionOpen(false);
+        document
+          .querySelector('[data-testid="composer-questions"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }}
       professionalDraftApplied={brain.professionalDraftApplied}
       professionalPreviewOpen={brain.professionalPreviewOpen}
       onToggleProfessionalPreview={() =>
@@ -3028,6 +3041,7 @@ function TalepOlusturForm() {
                       // Elle düzenleme profesyonel-uygulandı durumunu düşürür
                       setAppliedProfessionalDescription(false);
                       brain.setProfessionalDraftApplied(false);
+                      appendedAnswersRef.current = {};
                       hybrid.setText(nextText);
                       clearCategoryOverridesOnTextEdit();
                       setPublishedVersion(null);
@@ -3191,6 +3205,53 @@ function TalepOlusturForm() {
                               );
                             if (question) {
                               applyBrainQuestion(question, value);
+                            }
+                            // Kurucu (2026-08-23): verilen cevap serbest metne de
+                            // otomatik işlenir — metin talebin tek gerçek kaydıdır.
+                            {
+                              const SOFT_ANSWER_VALUES = new Set([
+                                "unknown",
+                                "no_preference",
+                                "open_to_offers",
+                                "nationwide",
+                                "remote",
+                                "flexible",
+                              ]);
+                              if (!SOFT_ANSWER_VALUES.has(value)) {
+                                const label =
+                                  (question &&
+                                  "summaryLabel" in question &&
+                                  typeof question.summaryLabel === "string"
+                                    ? question.summaryLabel
+                                    : null) ??
+                                  question?.label ??
+                                  fieldKey;
+                                const fragment =
+                                  fieldKey === "budget"
+                                    ? `Bütçem ${value}.`
+                                    : fieldKey === "city"
+                                      ? `Konum: ${value}.`
+                                      : fieldKey === "quantity"
+                                        ? `Adet: ${value}.`
+                                        : `${label}: ${value}.`;
+                                const prev =
+                                  appendedAnswersRef.current[fieldKey];
+                                let base = requestText;
+                                if (prev && base.includes(prev)) {
+                                  base = base
+                                    .replace(prev, "")
+                                    .replace(/\s{2,}/g, " ")
+                                    .trimEnd();
+                                }
+                                const foldTr = (s: string) =>
+                                  s.toLocaleLowerCase("tr-TR");
+                                if (!foldTr(base).includes(foldTr(value))) {
+                                  const next = `${base.trimEnd()}${base.trim() ? " " : ""}${fragment}`;
+                                  appendedAnswersRef.current[fieldKey] =
+                                    fragment;
+                                  hybrid.setText(next);
+                                }
+                              }
                             }
                             setAnsweredQuestionKeys((keys) =>
                               keys.includes(fieldKey)

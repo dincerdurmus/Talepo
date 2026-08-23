@@ -29,6 +29,11 @@ const PRODUCT_HINTS: Array<{
     taxonomyQuery: "dizüstü bilgisayar",
   },
   {
+    keys: /\boyun\s*(bilgisayarı|bilgisayari|pc)\b|\bgaming\s*(pc|laptop)\b/i,
+    productType: "oyun bilgisayarı",
+    taxonomyQuery: "oyun bilgisayarı",
+  },
+  {
     keys: /\b(masaüstü|masaustu)\s*(bilgisayar|pc)?\b|\bdesktop\b/i,
     productType: "masaüstü bilgisayar",
     taxonomyQuery: "masaüstü bilgisayar",

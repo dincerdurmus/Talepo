@@ -7,6 +7,7 @@ import {
   seedFieldValuesFromUnderstanding,
   resolveSchemaCategory,
 } from "@/lib/request-understanding/activation-bridge";
+import { TECH_HARDWARE_SIGNAL } from "@/lib/request-category-engine";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 import {
   findTaxonomyTypeUnderSubcategory,
@@ -550,11 +551,10 @@ export function mapUnderstandingToFields(
     withAny.productType?.kind === "VALUE"
       ? String(withAny.productType.value)
       : productHint?.productType ?? "";
+  // Tek otorite: motorun donanım sinyali (drone/kamera/kulaklık… dahil).
   const isTechHardware =
     taxId.startsWith("tax:technology:donanim:") ||
-    /televizyon|\btv\b|laptop|dizüstü|dizustu|telefon|iphone|tablet|ipad|monitör|monitor/i.test(
-      `${pt} ${raw}`,
-    );
+    TECH_HARDWARE_SIGNAL.test(`${pt} ${raw}`);
   if (isTechHardware) {
     if (
       !withAny.needType ||

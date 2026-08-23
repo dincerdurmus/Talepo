@@ -125,6 +125,11 @@ export type KnowledgeField = {
   };
   dependsOn?: string[];
   visibleWhen?: { field: string; in: string[] };
+  /**
+   * Ürün-kapsamlı alan: yalnız algılanan ürün/makine/hizmet tipi (fold +
+   * substring) bu listeden birine değince görünür; bağlam boşsa gizli kalır.
+   */
+  whenProductTypes?: string[];
   applicableCategories?: string[];
   source?: KnowledgeSourceType;
   /** Maps to existing request-category-engine DynamicField key when present. */

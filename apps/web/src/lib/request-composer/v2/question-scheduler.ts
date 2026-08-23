@@ -8,6 +8,7 @@ import { getCategoryById } from "@/lib/request-category-engine";
 
 import {
   importanceRank,
+  isRemoteEligibleService,
   listProfilesForCategory,
   resolveProfileForField,
 } from "./question-profiles";
@@ -118,11 +119,13 @@ function escapesFor(input: {
   allowDontCare: boolean;
   importance: QuestionImportance;
   categoryId?: string;
+  remoteEligible?: boolean;
 }): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
   const isRealEstate = input.categoryId === "real-estate";
   const isServiceLike =
-    input.categoryId === "services" || input.categoryId === "health";
+    (input.categoryId === "services" || input.categoryId === "health") &&
+    input.remoteEligible !== false;
 
   if (input.fieldKey === "budget") {
     // Tek kaçış: teklifleri görmek — bilmiyorum/farketmez bütçede yok (kurucu).
@@ -221,10 +224,12 @@ export function scheduleNextQuestions(input: {
     input.values.applianceType ??
     input.values.kitchenProductType ??
     input.values.propertyType ??
+    input.values.serviceType ??
     input.fieldStates?.productType?.value ??
     input.fieldStates?.applianceType?.value ??
     input.fieldStates?.kitchenProductType?.value ??
     input.fieldStates?.propertyType?.value ??
+    input.fieldStates?.serviceType?.value ??
     null;
 
   const categoryProfiles = listProfilesForCategory({
@@ -395,6 +400,7 @@ export function scheduleNextQuestions(input: {
         allowDontCare: Boolean(profile.allowDontCare),
         importance,
         categoryId: input.categoryId,
+        remoteEligible: isRemoteEligibleService(productTypeContext),
       }),
       placeholder:
         fieldKey === "budget"

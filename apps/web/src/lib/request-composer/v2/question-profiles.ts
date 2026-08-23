@@ -6,6 +6,59 @@
 import type { QuestionProfileDef } from "./question-profile-types";
 
 /** Shared Talepo Standard keys — evaluated for every active category when relevant. */
+/**
+ * Uzaktan verilebilen hizmet imzaları — fiziksel hizmetler (temizlik,
+ * nakliye, bakım-onarım, boya…) bu listede DEĞİLDİR ve asla "uzaktan"
+ * sorusu almaz (kurucu, 2026-08-23).
+ */
+export const REMOTE_ELIGIBLE_SERVICE_TOKENS = [
+  "yazılım",
+  "yazilim",
+  "web",
+  "tasarım",
+  "tasarim",
+  "grafik",
+  "logo",
+  "danışman",
+  "danisman",
+  "çeviri",
+  "ceviri",
+  "muhasebe",
+  "hukuk",
+  "eğitim",
+  "egitim",
+  "ders",
+  "koçluk",
+  "kocluk",
+  "seo",
+  "sosyal medya",
+  "dijital",
+  "reklam",
+  "içerik",
+  "icerik",
+  "mimari çizim",
+  "mimari cizim",
+] as const;
+
+const REMOTE_FOLD: Record<string, string> = {
+  ç: "c", Ç: "c", ğ: "g", Ğ: "g", ı: "i", İ: "i",
+  ö: "o", Ö: "o", ş: "s", Ş: "s", ü: "u", Ü: "u",
+};
+
+export function isRemoteEligibleService(
+  context: string | null | undefined,
+): boolean {
+  if (!context) return false;
+  const fold = context
+    .replace(/[çÇğĞıİöÖşŞüÜ]/g, (m) => REMOTE_FOLD[m] ?? m)
+    .toLowerCase();
+  return REMOTE_ELIGIBLE_SERVICE_TOKENS.some((t) =>
+    fold.includes(
+      t.replace(/[çÇğĞıİöÖşŞüÜ]/g, (m) => REMOTE_FOLD[m] ?? m).toLowerCase(),
+    ),
+  );
+}
+
 const STANDARD: QuestionProfileDef[] = [
   {
     fieldKey: "needType",
@@ -71,6 +124,9 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Hizmet şekli",
     importance: "routing_critical",
     categories: ["services"],
+    // Kurucu (2026-08-23): temizlik/nakliye gibi fiziksel hizmetlere
+    // "uzaktan" sorusu saçmadır — yalnız uzaktan verilebilen hizmetlerde sor.
+    whenProductTypes: [...REMOTE_ELIGIBLE_SERVICE_TOKENS],
     rank: 88,
     inputHint: "select",
     allowUnknown: false,

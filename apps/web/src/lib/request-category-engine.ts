@@ -62,8 +62,8 @@ const AUTOMOTIVE_PART_ONLY_KEYS = new Set([
 /** Managed by RealEstateLocationFields (searchable multi-select), not free text. */
 const REAL_ESTATE_STRUCTURED_KEYS = new Set(["neighborhoods"]);
 
-const TECH_HARDWARE_SIGNAL =
-  /televizyon|\btv\b|laptop|dizüstü|dizustu|notebook|telefon|iphone|ipad|tablet|monitör|monitor|bilgisayar|donanım|donanim|hardware|kulaklık|smartwatch|yazıcı|printer/i;
+export const TECH_HARDWARE_SIGNAL =
+  /televizyon|\btv\b|laptop|dizüstü|dizustu|notebook|telefon|iphone|ipad|tablet|monitör|monitor|bilgisayar|donanım|donanim|hardware|kulaklık|kulaklik|smartwatch|yazıcı|yazici|printer|drone|dron\b|kamera|fotoğraf makinesi|fotograf makinesi|gimbal|objektif|tripod|hoparlör|hoparlor|soundbar|mikrofon|modem|router|mesh|access point|konsol|gamepad|vr gözlük|vr gozluk|akıllı saat|akilli saat|bileklik|tarayıcı|tarayici|klavye|\bmouse\b|webcam|projeksiyon|media player/i;
 
 const TECH_SOFTWARE_SIGNAL =
   /yazılım|yazilim|web\s*sitesi|e-?ticaret|erp|crm|uygulama|saas|platform|entegrasyon|software/i;
@@ -359,6 +359,8 @@ export function getVisibleCategoryFields(
       resolved.applianceType ||
       resolved.kitchenProductType ||
       resolved.propertyType ||
+      resolved.serviceType ||
+      resolved.machineType ||
       "",
   );
   visible = visible.filter((field) => {
@@ -372,6 +374,29 @@ export function getVisibleCategoryFields(
   // Explicit browse subject: never re-ask "Araç mı, parça mı?"
   if (browsePinnedNeed) {
     visible = visible.filter((field) => field.key !== "needType");
+  }
+
+  // Servis niyeti (kombi bakımı gibi): ürün-spec soruları (enerji sınıfı,
+  // kullanım alanı…) tamir/bakım talebinde saçmadır — süpür (kurucu, 2026-08-23).
+  if (categoryId === "appliances" || categoryId === "technology") {
+    const needTypes = selectedFieldValues(resolved.needType || "");
+    if (needTypes.includes("service")) {
+      const SERVICE_KEEP = new Set([
+        "title",
+        "city",
+        "budget",
+        "delivery",
+        "quantity",
+        "brand",
+        "model",
+        "applianceType",
+        "productType",
+        "serviceType",
+        "needType",
+        "support",
+      ]);
+      visible = visible.filter((field) => SERVICE_KEEP.has(field.key));
+    }
   }
 
   // Hard safety: never ask for parts when the user wants the whole vehicle.
@@ -1754,6 +1779,12 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "danismanlik",
       "temizlik",
       "nakliye",
+      "nakliyat",
+      "evden eve",
+      "taşımacılık",
+      "tasimacilik",
+      "eşya taşıma",
+      "esya tasima",
       "taşıma",
       "tasima",
       "bakım",
@@ -1783,6 +1814,21 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         key: "frequency",
         label: "Sıklık",
         type: "select",
+        // Sıklık yalnız tekrarlayan hizmetlerde anlamlı — logo/web gibi tek
+        // seferlik işlere sorulmaz (kurucu denetimi, 2026-08-23).
+        whenProductTypes: [
+          "temizlik",
+          "bakım",
+          "bakim",
+          "güvenlik",
+          "guvenlik",
+          "danışman",
+          "danisman",
+          "muhasebe",
+          "ilaçlama",
+          "ilaclama",
+          "peyzaj",
+        ],
         options: [
           { label: "Tek seferlik", value: "Tek seferlik" },
           { label: "Haftalık", value: "Haftalık" },

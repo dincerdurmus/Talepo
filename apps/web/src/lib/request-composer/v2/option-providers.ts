@@ -3,6 +3,7 @@
  */
 
 import type { ControlOption, ControlResolveContext } from "./question-control-types";
+import { isRemoteEligibleService } from "./question-profiles";
 
 export function quantityPresets(ctx: ControlResolveContext): ControlOption[] {
   const cat = ctx.categoryId;
@@ -104,11 +105,12 @@ export function locationSoftOptions(ctx: ControlResolveContext): ControlOption[]
   if (ctx.isRealEstate) return [];
   // Kurucu kararı (2026-08-23): "Türkiye geneli" ve "Konum fark etmez"
   // çipleri kalktı — il listesindeki "Tümü" seçeneği aynı işi görür.
+  // "Uzaktan" yalnız uzaktan verilebilen hizmetlerde görünür (temizliğe asla).
   const out: ControlOption[] = [];
   if (
-    ctx.categoryId === "services" ||
-    ctx.categoryId === "health" ||
-    ctx.isRemoteService
+    ctx.isRemoteService ||
+    ((ctx.categoryId === "services" || ctx.categoryId === "health") &&
+      isRemoteEligibleService(ctx.productType))
   ) {
     out.push({ label: "Uzaktan", value: "remote", soft: true });
   }

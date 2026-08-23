@@ -81,12 +81,26 @@ check("city is location_picker", () => {
   assert.ok(!def.softOptions.some((o) => o.value === "remote"));
 });
 
-check("services city may include remote", () => {
-  const def = resolveQuestionControl({
+// Kurucu (2026-08-23): "Uzaktan" yalnız uzaktan verilebilen hizmetlerde —
+// temizlik gibi fiziksel hizmetlere asla sorulmaz.
+check("services city: remote only for remote-eligible service types", () => {
+  const fiziksel = resolveQuestionControl({
+    categoryId: "services",
+    fieldKey: "city",
+    productType: "Ofis temizliği",
+  });
+  assert.ok(!fiziksel.softOptions.some((o) => o.value === "remote"));
+  const uzaktan = resolveQuestionControl({
+    categoryId: "services",
+    fieldKey: "city",
+    productType: "Logo tasarımı",
+  });
+  assert.ok(uzaktan.softOptions.some((o) => o.value === "remote"));
+  const belirsiz = resolveQuestionControl({
     categoryId: "services",
     fieldKey: "city",
   });
-  assert.ok(def.softOptions.some((o) => o.value === "remote"));
+  assert.ok(!belirsiz.softOptions.some((o) => o.value === "remote"));
 });
 
 check("delivery is date_or_deadline", () => {

@@ -86,6 +86,9 @@ export type TalepoAiPanelProps = {
   professionalText: string;
   professionalPreviewOpen: boolean;
   professionalDraftApplied?: boolean;
+  /** Çalışma prensibi #1: her an tek önerilen aksiyon (yayını açan eksik). */
+  nextStepLabel?: string | null;
+  onNextStep?: () => void;
   onToggleProfessionalPreview: () => void;
   onApplyProfessionalDraft: () => void;
   matchingFirmCount?: number;
@@ -99,6 +102,17 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
     previewError: props.previewError,
   });
 
+  /**
+   * TALEPO AI ÇALIŞMA PRENSİBİ (kurucu tanımı, 2026-08-23)
+   * Alanı: yalnız kendisinin yapabildiği işler —
+   *   01 Anladığım (tek cümle teyit), 02 Netleştirelim (opsiyonel sinyaller),
+   *   03 Piyasa (yalnız veri varken), 04 Profesyonel çıktı.
+   * Kuralları:
+   *   1) Her an TEK önerilen aksiyon (Sıradaki adım).
+   *   2) Solda görüneni tekrarlamaz; aynı değeri iki kez göstermez.
+   *   3) Boş/etkisiz bölüm göstermez.
+   *   4) Çıktı odaklıdır: nihai değer 04'teki profesyonel talep metnidir.
+   */
   const showUnderstood =
     props.understoodChips.length > 0 ||
     (props.understoodHeadline &&
@@ -132,6 +146,18 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         <p className="mt-2 text-xs leading-5 text-teal-100/45">
           {props.readiness.message}
         </p>
+        {props.nextStepLabel && props.onNextStep ? (
+          <button
+            type="button"
+            onClick={props.onNextStep}
+            className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-xl border border-teal-300/25 bg-teal-400/10 px-3 py-2.5 text-left transition hover:bg-teal-400/15"
+          >
+            <span className="text-xs font-semibold text-teal-50">
+              Sıradaki adım: {props.nextStepLabel}
+            </span>
+            <span className="talepo-ai-index">git →</span>
+          </button>
+        ) : null}
       </header>
 
       {/* 1. ANLADIĞIM */}
@@ -166,14 +192,24 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
             )}
             {props.understoodChips.length > 0 ? (
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {props.understoodChips.map((chip) => (
-                  <span
-                    key={chip.fieldKey}
-                    className="rounded-full border border-teal-200/20 bg-white/5 px-2.5 py-1 text-[11px] text-teal-50/85"
-                  >
-                    {chip.displayValue}
-                  </span>
-                ))}
+                {/* Çalışma prensibi #2: aynı bilgiyi iki kez gösterme (fold dedupe) */}
+                {props.understoodChips
+                  .filter((chip, i, arr) => {
+                    const fold = (s: string) => s.toLocaleLowerCase("tr-TR");
+                    return (
+                      arr.findIndex(
+                        (c) => fold(c.displayValue) === fold(chip.displayValue),
+                      ) === i
+                    );
+                  })
+                  .map((chip) => (
+                    <span
+                      key={chip.fieldKey}
+                      className="rounded-full border border-teal-200/20 bg-white/5 px-2.5 py-1 text-[11px] text-teal-50/85"
+                    >
+                      {chip.displayValue}
+                    </span>
+                  ))}
               </div>
             ) : null}
           </div>
@@ -232,7 +268,9 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
       ) : null}
 
       {/* 3. PİYASA */}
-      {market.state !== "HIDDEN" ? (
+      {/* Çalışma prensibi #3 (kurucu, 2026-08-23): boş bölüm gösterme —
+          piyasa yalnız gerçekten veri (ya da yükleme) varken görünür. */}
+      {market.state !== "HIDDEN" && market.state !== "INSUFFICIENT" ? (
         <MarketSection
           market={market}
           showBudgetActions={props.showBudgetActions}

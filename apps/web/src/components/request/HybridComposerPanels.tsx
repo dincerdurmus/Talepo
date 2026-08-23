@@ -321,7 +321,7 @@ export function HybridCategoryBrowsePanel({
               </div>
 
               <div
-                className="grid max-h-72 min-w-0 overflow-hidden sm:max-h-80"
+                className="grid max-h-[26rem] min-w-0 overflow-hidden sm:max-h-[29rem]"
                 style={{
                   gridTemplateColumns: `repeat(${Math.max(columns.length, 1)}, minmax(0, 1fr))`,
                 }}
@@ -343,7 +343,7 @@ export function HybridCategoryBrowsePanel({
                         <p className="truncate border-b border-[#0f1f1d]/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/35">
                           {columnTitle}
                         </p>
-                        <ul className="max-h-72 overflow-y-auto px-1.5 py-1.5 sm:max-h-80 [scrollbar-width:thin] [scrollbar-color:rgba(15,118,110,0.25)_transparent]">
+                        <ul className="max-h-[24rem] overflow-y-auto px-1.5 py-1.5 sm:max-h-[27rem] [scrollbar-width:thin] [scrollbar-color:rgba(15,118,110,0.25)_transparent]">
                           {columnNodes.length === 0 ? (
                             <li className="px-3 py-2 text-xs text-[#0f1f1d]/40">
                               Seçenek yok

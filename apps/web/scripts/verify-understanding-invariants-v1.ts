@@ -26,6 +26,7 @@ import {
   REQUEST_CATEGORIES,
 } from "../src/lib/request-category-engine";
 import { getBrowseChildren } from "../src/lib/knowledge/browse";
+import { resolveRequestSchema } from "../src/lib/knowledge/request-schema";
 import {
   brandsForTechFamily,
   inferTechBrandFamily,
@@ -594,6 +595,39 @@ check("I12: browsing a whole-product leaf clears stale part/accessory context", 
   const clean = syncFromText(null, "Cep Telefonu arıyorum.");
   const subject = clean.state.understanding.requestSubject.kind.value;
   assert.equal(subject, "PRODUCT", `temiz metin PRODUCT olmalı: ${subject}`);
+});
+
+check("I13: audit classes — Faz, servis niyeti, uzaktan, nakliye, donanım sinyali", () => {
+  // Faz yalnız elektrikli sabit makinelerde
+  const schemaFor = (values: Record<string, string>) =>
+    resolveRequestSchema({ categoryId: "machinery", values }).fields.map((f) => f.key);
+  assert.ok(!schemaFor({ machineType: "mini ekskavatör" }).includes("phase"), "ekskavatöre Faz sorulmaz");
+  assert.ok(schemaFor({ machineType: "jeneratör" }).includes("phase"), "jeneratöre Faz sorulur");
+
+  // Servis niyeti ürün-spec sorularını süpürür (kombi bakımı)
+  const appl = REQUEST_CATEGORIES.find((c) => c.id === "appliances")!;
+  const applKeys = getVisibleCategoryFields(
+    appl.fields,
+    { needType: "service", applianceType: "Kombi" },
+    "appliances",
+  ).map((f) => f.key);
+  for (const bad of ["energyClass", "usageArea", "capacity"]) {
+    assert.ok(!applKeys.includes(bad), `servis niyetinde '${bad}' olmamalı: ${applKeys.join(",")}`);
+  }
+
+  // Nakliye artık kategorisiz düşmez
+  const nak = syncFromText(null, "evden eve nakliye arıyorum");
+  assert.equal(nak.state.categoryId, "services", `nakliye services olmalı: ${nak.state.categoryId}`);
+
+  // Donanım sinyali: drone/oyun bilgisayarı hardware'e oturur
+  for (const t of ["drone arıyorum", "oyun bilgisayarı arıyorum"]) {
+    const s = syncFromText(null, t).state;
+    assert.equal(
+      s.fields.needType?.value ?? null,
+      "hardware",
+      `${t} → needType hardware olmalı`,
+    );
+  }
 });
 
 console.log(`\n${passed} passed, ${failed} failed`);

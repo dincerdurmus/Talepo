@@ -315,6 +315,21 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       canonicalLabel: "Faz",
       type: "TEXT",
       priority: "optional",
+      // Faz elektrikli sabit makineler içindir — ekskavatöre/matkaba sorulmaz.
+      whenProductTypes: [
+        "jeneratör",
+        "jenerator",
+        "kompresör",
+        "kompresor",
+        "trafo",
+        "kaynak",
+        "cnc",
+        "torna",
+        "freze",
+        "pres",
+        "abkant",
+        "pano",
+      ],
     },
   ],
   technology: [
@@ -915,6 +930,18 @@ export type ResolvedRequestSchema = {
   engineFields: DynamicField[];
 };
 
+const PRODUCT_CONTEXT_FOLD: Record<string, string> = {
+  ç: "c", Ç: "c", ğ: "g", Ğ: "g", ı: "i", İ: "i",
+  ö: "o", Ö: "o", ş: "s", Ş: "s", ü: "u", Ü: "u",
+};
+
+function foldProductContextTr(value: string | undefined): string {
+  return (value ?? "")
+    .replace(/[çÇğĞıİöÖşŞüÜ]/g, (m) => PRODUCT_CONTEXT_FOLD[m] ?? m)
+    .toLowerCase()
+    .trim();
+}
+
 export function resolveRequestSchema(
   input: ResolveRequestSchemaInput,
 ): ResolvedRequestSchema {
@@ -938,10 +965,42 @@ export function resolveRequestSchema(
       : [profile.id, input.categoryId];
   const seen = new Set(fromEngine.map((f) => f.key));
   const merged = [...fromEngine];
+  const productContext = foldProductContextTr(
+    values.productType ||
+      values.applianceType ||
+      values.machineType ||
+      values.serviceType ||
+      values.kitchenProductType ||
+      "",
+  );
+  // Servis niyeti: ürün-spec ek alanlar (Inverter, Ölçüler, Enerji sınıfı…)
+  // tamir/bakım talebinde sorulmaz (kurucu denetimi, 2026-08-23).
+  const serviceIntent =
+    (input.categoryId === "appliances" || input.categoryId === "technology") &&
+    (values.needType ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .includes("service");
+  const SERVICE_KEEP_EXTRA = new Set([
+    "brand",
+    "model",
+    "applianceType",
+    "productType",
+    "serviceType",
+    "support",
+  ]);
   for (const key of extraKeys) {
     for (const field of EXTRA_FIELDS[key] ?? []) {
       if (seen.has(field.key)) continue;
       if (!isFieldVisible(field, values)) continue;
+      if (serviceIntent && !SERVICE_KEEP_EXTRA.has(field.key)) continue;
+      if (field.whenProductTypes?.length) {
+        if (!productContext) continue;
+        const hit = field.whenProductTypes.some((p) =>
+          productContext.includes(foldProductContextTr(p)),
+        );
+        if (!hit) continue;
+      }
       seen.add(field.key);
       merged.push(field);
     }
