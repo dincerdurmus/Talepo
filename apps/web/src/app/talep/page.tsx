@@ -2453,7 +2453,7 @@ function TalepOlusturForm() {
     }
 
     if (budgetRequired && !hasBudget) {
-      setPublishError("Bütçenizi belirtmeniz yeterli — ardından yayınlayabilirsiniz.");
+      setPublishError("Bütçenizi belirtmeniz yeterli, ardından yayınlayabilirsiniz.");
       return;
     }
 
@@ -2762,7 +2762,7 @@ function TalepOlusturForm() {
           !titleManuallyEdited &&
           Boolean(autoTitle.trim()) &&
           autoTitle !== "Yeni talep"
-            ? "Başlık metninize göre hazırlandı — düzenleyebilirsiniz"
+            ? "Başlık metninize göre hazırlandı, düzenleyebilirsiniz"
             : undefined
         }
       />

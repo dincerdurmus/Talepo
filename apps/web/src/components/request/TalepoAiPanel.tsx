@@ -187,7 +187,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
               </p>
             ) : (
               <p className="mt-1 text-xs text-amber-200/70">
-                Kategori henüz net değil — birlikte netleştirelim
+                Kategori henüz net değil, birlikte netleştirelim
               </p>
             )}
             {props.understoodChips.length > 0 ? (
@@ -215,7 +215,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
           </div>
         ) : (
           <p className="text-xs leading-5 text-teal-100/50">
-            Yazmaya devam edin — anladığımız bilgileri burada göstereceğiz.
+            Yazmaya devam edin, anladığımız bilgileri burada göstereceğiz.
           </p>
         )}
       </WorkspaceSection>
@@ -340,7 +340,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         </div>
         {props.professionalDraftApplied ? (
           <p className="mt-2 text-[11px] leading-4 text-teal-800/70">
-            Talep metniniz profesyonel hâle getirildi — soldaki yazım alanında
+            Talep metniniz profesyonel hâle getirildi, soldaki yazım alanında
             görebilirsiniz.
           </p>
         ) : null}
@@ -354,14 +354,6 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
   );
 }
 
-/** Akış sırası — konsol segment numaraları gerçek adım sırasıdır. */
-const SECTION_INDEX: Record<string, string> = {
-  Anladığım: "01",
-  Netleştirelim: "02",
-  "Piyasa görünümü": "03",
-  "Profesyonel talep": "04",
-};
-
 function WorkspaceSection({
   title,
   tone,
@@ -371,15 +363,10 @@ function WorkspaceSection({
   tone: "default" | "accent" | "light";
   children: ReactNode;
 }) {
-  const index = SECTION_INDEX[title];
   if (tone === "light") {
     return (
       <section className="talepo-ai-version rounded-2xl p-3.5">
-        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
-          {index ? (
-            <span className="talepo-ai-index !text-teal-800/45">{index}</span>
-          ) : null}
-          <span className="talepo-ai-section-tick" aria-hidden />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-800/55">
           {title}
         </p>
         <div className="mt-2.5">{children}</div>
@@ -392,8 +379,7 @@ function WorkspaceSection({
         tone === "accent" ? "talepo-ai-seg talepo-ai-seg--accent" : "talepo-ai-seg"
       }
     >
-      <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-100/55">
-        {index ? <span className="talepo-ai-index">{index}</span> : null}
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-teal-100/55">
         {title}
       </p>
       <div className="mt-2.5">{children}</div>
@@ -548,7 +534,7 @@ function MarketSection({
             Bu talep için henüz fiyat aralığı çıkarmadık.
           </p>
           <p className="mt-1.5 text-xs leading-5 text-teal-100/50">
-            Aralık, yalnız doğrulanmış teklif ve fiyat verisinden hesaplanır —
+            Aralığı yalnız doğrulanmış teklif ve fiyat verisinden hesaplıyoruz,
             tahmin üretmiyoruz. Bu kategoride yeterli teklif biriktiğinde
             aralık, tipik değer ve güven seviyesi burada görünecek.
           </p>

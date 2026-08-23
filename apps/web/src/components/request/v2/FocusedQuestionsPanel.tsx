@@ -132,7 +132,7 @@ function LocationPickerControl(props: {
       ) : null}
       <div>
         <label className={signalLabel} htmlFor="composer-il-filter">
-          İl — birden fazla seçebilirsiniz
+          İl (birden fazla seçebilirsiniz)
         </label>
         <input
           id="composer-il-filter"
@@ -495,12 +495,8 @@ export function FocusedQuestionsPanel({
       <div className="flex items-center justify-between gap-2">
         <h2
           id={`${baseId}-heading`}
-          className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/80"
+          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/80"
         >
-          <span
-            className="inline-block h-[3px] w-3.5 rounded-full bg-gradient-to-r from-[#0f766e] to-[#7cc4ff]"
-            aria-hidden
-          />
           Son birkaç detay
         </h2>
         {typeof remainingCriticalCount === "number" &&
@@ -515,7 +511,7 @@ export function FocusedQuestionsPanel({
         )}
       </div>
       <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/45">
-        Cevapladıkça teklifler isabetli gelir — istemediğini atlayabilirsin.
+        Cevapladıkça teklifler isabetli gelir. İstemediğini atlayabilirsin.
       </p>
 
       {healthNotice ? (

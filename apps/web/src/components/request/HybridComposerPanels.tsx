@@ -66,7 +66,7 @@ export function HybridUnderstoodPanel({
           Talepo ne anladı?
         </p>
         <p className="mt-1 text-sm text-teal-950/50">
-          Yazınız korunuyor — kategori paneli şu an sınırlı.
+          Yazınız korunuyor, kategori paneli şu an sınırlı.
         </p>
       </div>
     );
@@ -261,7 +261,7 @@ export function HybridCategoryBrowsePanel({
             <span className="mt-0.5 block text-xs text-[#0f1f1d]/50">
               {open
                 ? "İstersen ağaçtan da ilerleyebilirsin"
-                : "İsteğe bağlı — yazmak seni sınırlamaz"}
+                : "İsteğe bağlı, yazmak seni sınırlamaz"}
             </span>
           </span>
         </span>

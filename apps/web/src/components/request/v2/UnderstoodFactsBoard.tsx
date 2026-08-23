@@ -71,7 +71,7 @@ export function UnderstoodFactsBoard({
           Talepo’nun anladıkları
         </h2>
         <p className="mt-1 text-sm text-teal-950/50">
-          Yazınız korunuyor — kategori paneli şu an sınırlı.
+          Yazınız korunuyor, kategori paneli şu an sınırlı.
         </p>
       </section>
     );
@@ -128,7 +128,7 @@ export function UnderstoodFactsBoard({
           {categoryLabel}
         </p>
       ) : (
-        <p className={signalHelper}>Kısa kontrol — yalnız bulunan bilgiler.</p>
+        <p className={signalHelper}>Kısa kontrol. Yalnız bulunan bilgiler.</p>
       )}
 
       {understood.length > 0 ? (

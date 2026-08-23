@@ -676,15 +676,6 @@ body {
   );
 }
 
-.talepo-ai-section-tick {
-  display: inline-block;
-  height: 3px;
-  width: 14px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #2dd4bf, #7cc4ff);
-  box-shadow: 0 0 8px rgba(45, 212, 191, 0.5);
-}
-
 /* Konsol düzeni (kurucu, 2026-08-23): üst durum çubuğu + raylı segmentler */
 .talepo-ai-console-bar {
   display: flex;
