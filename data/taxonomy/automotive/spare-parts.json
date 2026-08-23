@@ -13821,6 +13821,278 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "parentId": "tax:automotive:yedek-parca",
+      "canonicalName": "Taşıt aksesuarları",
+      "nodeType": "GROUP",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 2,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Araç Bakımı ve Dekoru"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:arac-bakimi-ve-dekoru",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Araç Bakımı ve Dekoru",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hava Taşıtı Parçaları ve Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:hava-tasiti-parcalari-ve-aksesuarlari",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Hava Taşıtı Parçaları ve Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Motorlu Taşıt Elektronik Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:motorlu-tasit-elektronik-sistemleri",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Motorlu Taşıt Elektronik Sistemleri",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Motorlu Taşıt Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:motorlu-tasit-parcalari",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Motorlu Taşıt Parçaları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Jetli Tekne Parçaları ve Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:su-jetli-tekne-parcalari-ve-aksesuarlari",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Su Jetli Tekne Parçaları ve Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Taşıt Güvenliği ve Emniyeti"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:tasit-guvenligi-ve-emniyeti",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Taşıt Güvenliği ve Emniyeti",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Taşıt Saklama ve Kargo"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:yedek-parca:tasit-aksesuarlari:tasit-saklama-ve-kargo",
+      "parentId": "tax:automotive:yedek-parca:tasit-aksesuarlari",
+      "canonicalName": "Taşıt Saklama ve Kargo",
+      "nodeType": "PART_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "automotive/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:arac-satin-alma:tasit-tipleri",
+      "parentId": "tax:automotive:arac-satin-alma",
+      "canonicalName": "Taşıt tipleri",
+      "nodeType": "GROUP",
+      "categoryId": "automotive",
+      "subcategoryId": "arac-satin-alma",
+      "depth": 2,
+      "requestSchemaId": "automotive/arac-satin-alma",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hava Taşıtları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:arac-satin-alma:tasit-tipleri:hava-tasitlari",
+      "parentId": "tax:automotive:arac-satin-alma:tasit-tipleri",
+      "canonicalName": "Hava Taşıtları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "arac-satin-alma",
+      "depth": 3,
+      "requestSchemaId": "automotive/arac-satin-alma",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Jetski"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:arac-satin-alma:tasit-tipleri:jetski",
+      "parentId": "tax:automotive:arac-satin-alma:tasit-tipleri",
+      "canonicalName": "Jetski",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "arac-satin-alma",
+      "depth": 3,
+      "requestSchemaId": "automotive/arac-satin-alma",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Motorlu Taşıtlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:arac-satin-alma:tasit-tipleri:motorlu-tasitlar",
+      "parentId": "tax:automotive:arac-satin-alma:tasit-tipleri",
+      "canonicalName": "Motorlu Taşıtlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "arac-satin-alma",
+      "depth": 3,
+      "requestSchemaId": "automotive/arac-satin-alma",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

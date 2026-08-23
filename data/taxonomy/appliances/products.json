@@ -2037,6 +2037,602 @@
         "source": "harvest-2026-08-22",
         "note": "MediaMarkt + Koçtaş"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "parentId": "tax:appliances:diger",
+      "canonicalName": "Ev aleti aksesuarları",
+      "nodeType": "GROUP",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Süpürgesi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:elektrik-supurgesi-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Elektrik Süpürgesi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hava Arıtıcı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:hava-aritici-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Hava Arıtıcı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kalorifer Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:kalorifer-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Kalorifer Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Klima Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:klima-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Klima Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Nem Giderici Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:nem-giderici-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Nem Giderici Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Nemlendirici Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:nemlendirici-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Nemlendirici Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ocak ve Kazan Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:ocak-ve-kazan-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Ocak ve Kazan Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Termosifon Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:termosifon-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Termosifon Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vantilatör Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:vantilator-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Vantilatör Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zemin Temizleyici ve Buharlı Temizleyici Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:zemin-temizleyici-ve-buharli-temizleyici-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Zemin Temizleyici ve Buharlı Temizleyici Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çamaşırhane Makinesi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:camasirhane-makinesi-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Çamaşırhane Makinesi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şemsiye Soba Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:diger:ev-aleti-aksesuarlari:semsiye-soba-aksesuarlari",
+      "parentId": "tax:appliances:diger:ev-aleti-aksesuarlari",
+      "canonicalName": "Şemsiye Soba Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "appliances/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "parentId": "tax:appliances:kucuk-ev-aletleri",
+      "canonicalName": "Ev aletleri",
+      "nodeType": "GROUP",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 2,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buharlı Duvar Kağıdı Sökme Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:buharli-duvar-kagidi-sokme-makineleri",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Buharlı Duvar Kağıdı Sökme Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Süpürgeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:elektrik-supurgeleri",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Elektrik Süpürgeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Futon Kurutucular"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:futon-kurutucular",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Futon Kurutucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Garaj Kapısı Açıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:garaj-kapisi-acicilar",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Garaj Kapısı Açıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Garaj Kapısı Tuş Takımları ve Uzaktan Kumandaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:garaj-kapisi-tus-takimlari-ve-uzaktan-kumandalari",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Garaj Kapısı Tuş Takımları ve Uzaktan Kumandaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Halı ve Kilim Kurutucular"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:hali-ve-kilim-kurutucular",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Halı ve Kilim Kurutucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hava Kontrol Aygıtları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:hava-kontrol-aygitlari",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Hava Kontrol Aygıtları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yüksek Frekanslı Temizleyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:yuksek-frekansli-temizleyiciler",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Yüksek Frekanslı Temizleyiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zemin Cilalayıcılar ve Perdahlayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:zemin-cilalayicilar-ve-perdahlayicilar",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Zemin Cilalayıcılar ve Perdahlayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zemin Temizleyiciler ve Buharlı Temizleyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:zemin-temizleyiciler-ve-buharli-temizleyiciler",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Zemin Temizleyiciler ve Buharlı Temizleyiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çamaşırhane Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:appliances:kucuk-ev-aletleri:ev-aletleri:camasirhane-makineleri",
+      "parentId": "tax:appliances:kucuk-ev-aletleri:ev-aletleri",
+      "canonicalName": "Çamaşırhane Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "appliances",
+      "subcategoryId": "kucuk-ev-aletleri",
+      "depth": 3,
+      "requestSchemaId": "appliances/kucuk-ev-aletleri",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

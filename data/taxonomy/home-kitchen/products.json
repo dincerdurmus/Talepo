@@ -1150,6 +1150,2312 @@
         "source": "harvest-2026-08-22",
         "note": "MediaMarkt + Koçtaş"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Ev dekorasyonu",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Adres Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:adres-tabelalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Adres Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alevsiz Mumlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:alevsiz-mumlar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Alevsiz Mumlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Aynalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:aynalar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Aynalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe ve Patika Taşları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:bahce-ve-patika-taslari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Bahçe ve Patika Taşları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bayrak ve Rüzgar Tulumu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:bayrak-ve-ruzgar-tulumu-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Bayrak ve Rüzgar Tulumu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bayraklar ve Rüzgar Yön Ölçerleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:bayraklar-ve-ruzgar-yon-olcerleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Bayraklar ve Rüzgar Yön Ölçerleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buzdolabı Magnetleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:buzdolabi-magnetleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Buzdolabı Magnetleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Camlı Kutular"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:camli-kutular",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Camlı Kutular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Kaplar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-kaplar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Kaplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Kavanozlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-kavanozlar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Kavanozlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Tabaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-tabaklar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Tabaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Tepsiler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-tepsiler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Tepsiler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Ziller"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-ziller",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Ziller",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Şişeler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dekoratif-siseler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Dekoratif Şişeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Kağıdı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:duvar-kagidi",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Duvar Kağıdı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Düş Kapanları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:dus-kapanlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Düş Kapanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ekosferler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ekosferler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Ekosferler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Dekorasyon Çıkartmaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ev-dekorasyon-cikartmalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Ev Dekorasyon Çıkartmaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Parfümleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ev-parfumleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Ev Parfümleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Parfümü Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ev-parfumu-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Ev Parfümü Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fıskiyeler ve Havuzlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:fiskiyeler-ve-havuzlar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Fıskiyeler ve Havuzlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güneş Saatleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:gunes-saatleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Güneş Saatleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Günışığı Yakalayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:gunisigi-yakalayicilar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Günışığı Yakalayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Heykelcikler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:heykelcikler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Heykelcikler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kapı Numaraları ve Harfleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kapi-numaralari-ve-harfleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kapı Numaraları ve Harfleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kapı Önü Paspasları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kapi-onu-paspaslari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kapı Önü Paspasları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kar Küreleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kar-kureleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kar Küreleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karton Figürler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:karton-figurler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Karton Figürler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kilimler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kilimler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kilimler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kitap Destekleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kitap-destekleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kitap Destekleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koltuk Kılıfları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:koltuk-kiliflari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Koltuk Kılıfları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Komik Uyarı İşaretleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:komik-uyari-isaretleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Komik Uyarı İşaretleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kum Saatleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kum-saatleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kum Saatleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kumbaralar ve Para Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kumbaralar-ve-para-kutulari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kumbaralar ve Para Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kurutulmuş Çiçekler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kurutulmus-cicekler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kurutulmuş Çiçekler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuş Banyoları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kus-banyolari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kuş Banyoları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuş Evi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kus-evi-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kuş Evi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuş Yuvaları ve Vahşi Hayvan Yuvaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kus-yuvalari-ve-vahsi-hayvan-yuvalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kuş Yuvaları ve Vahşi Hayvan Yuvaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuş ve Vahşi Hayvan Yemlik Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kus-ve-vahsi-hayvan-yemlik-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kuş ve Vahşi Hayvan Yemlik Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuş ve Vahşi Hayvan Yemlikleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kus-ve-vahsi-hayvan-yemlikleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kuş ve Vahşi Hayvan Yemlikleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Küre Atlaslar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kure-atlaslar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Küre Atlaslar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kırlentler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:kirlentler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Kırlentler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mevsim ve Bayram Dekorasyonları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:mevsim-ve-bayram-dekorasyonlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Mevsim ve Bayram Dekorasyonları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mont ve Şapka Askılıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:mont-ve-sapka-askiliklari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Mont ve Şapka Askılıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Müzik Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:muzik-kutulari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Müzik Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Osmanlı Minderleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:osmanli-minderleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Osmanlı Minderleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pencere Dekorları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:pencere-dekorlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Pencere Dekorları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pencere Dekoru Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:pencere-dekoru-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Pencere Dekoru Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pencere Magnetleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:pencere-magnetleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Pencere Magnetleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Peçete Halkaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:pecete-halkalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Peçete Halkaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Posta Atma Delikleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:posta-atma-delikleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Posta Atma Delikleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Posta Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:posta-kutulari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Posta Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Posta Kutusu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:posta-kutusu-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Posta Kutusu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Resim Çerçeveleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:resim-cerceveleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Resim Çerçeveleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Rüzgar Gülleri ve Fırıldakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ruzgar-gulleri-ve-firildaklari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Rüzgar Gülleri ve Fırıldakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Rüzgar Zilleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:ruzgar-zilleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Rüzgar Zilleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saat Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:saat-parcalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Saat Parçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saatler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:saatler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Saatler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sanatsal Çalışmalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sanatsal-calismalar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Sanatsal Çalışmalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sandalye ve Koltuk Minderleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sandalye-ve-koltuk-minderleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Sandalye ve Koltuk Minderleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sandıklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sandiklar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Sandıklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sepetler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sepetler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Sepetler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Süs Tabakları ve Levhaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sus-tabaklari-ve-levhalari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Süs Tabakları ve Levhaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sırt Yastıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:sirt-yastiklari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Sırt Yastıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vazo Dolguları ve Masaüstü Süsleme Taşları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:vazo-dolgulari-ve-masaustu-susleme-taslari",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Vazo Dolguları ve Masaüstü Süsleme Taşları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vazolar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:vazolar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Vazolar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yapay Floralar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:yapay-floralar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Yapay Floralar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yapay Yiyecekler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:yapay-yiyecekler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Yapay Yiyecekler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağmur Zincirleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:yagmur-zincirleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Yağmur Zincirleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağışölçerler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:yagisolcerler",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Yağışölçerler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yelkovanlar ve Çatı Süsleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:yelkovanlar-ve-cati-susleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Yelkovanlar ve Çatı Süsleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çatı Süsleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:cati-susleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Çatı Süsleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çelenk ve Taçlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:celenk-ve-taclar",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Çelenk ve Taçlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çim Süsleri ve Bahçe Heykelleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:cim-susleri-ve-bahce-heykelleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Çim Süsleri ve Bahçe Heykelleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çocuk Boy Cetvelleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-dekorasyonu:cocuk-boy-cetvelleri",
+      "parentId": "tax:home-kitchen:diger:ev-dekorasyonu",
+      "canonicalName": "Çocuk Boy Cetvelleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Ev sarf malzemesi",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ayakkabı Bakım ve Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:ayakkabi-bakim-ve-aletleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Ayakkabı Bakım ve Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Kağıt Ürünleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:ev-kagit-urunleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Ev Kağıt Ürünleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Temizlik Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:ev-temizlik-malzemeleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Ev Temizlik Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Termometreleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:ev-termometreleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Ev Termometreleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Garaj Zemin Döşemeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:garaj-zemin-dosemeleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Garaj Zemin Döşemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Halı Altlıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:hali-altliklari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Halı Altlıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Haşere Kontrolü"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:hasere-kontrolu",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Haşere Kontrolü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Merdiven Kaydırmazları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:merdiven-kaydirmazlari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Merdiven Kaydırmazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mobilyalar için Zemin Koruyucular"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:mobilyalar-icin-zemin-koruyucular",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Mobilyalar için Zemin Koruyucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Nem Emiciler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:nem-emiciler",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Nem Emiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saklama ve Düzenleme"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:saklama-ve-duzenleme",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Saklama ve Düzenleme",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zemin Koruma Filmleri ve Yollukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:zemin-koruma-filmleri-ve-yolluklari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Zemin Koruma Filmleri ve Yollukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çamaşırhane Sarf Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:camasirhane-sarf-malzemeleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çamaşırhane Sarf Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çekmece ve Raf Kaplamaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:cekmece-ve-raf-kaplamalari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çekmece ve Raf Kaplamaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çöp Muhafazası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:cop-muhafazasi",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çöp Muhafazası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çöp Muhafazası Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:cop-muhafazasi-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çöp Muhafazası Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çöp Poşetleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:cop-posetleri",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çöp Poşetleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çöp Sıkıştırıcı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:ev-sarf-malzemesi:cop-sikistirici-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:ev-sarf-malzemesi",
+      "canonicalName": "Çöp Sıkıştırıcı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Aleti Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:mutfak-aleti-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Mutfak Aleti Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:mutfak-aletleri",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Mutfak Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Gereçleri ve Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:mutfak-gerecleri-ve-aletleri",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Mutfak Gereçleri ve Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ocak ve Fırında Pişirme Gereçleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:ocak-ve-firinda-pisirme-gerecleri",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Ocak ve Fırında Pişirme Gereçleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Prefabrike Mutfaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:prefabrike-mutfaklar",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Prefabrike Mutfaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sofra Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:sofra-takimlari",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Sofra Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yiyecek Saklama"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:yiyecek-saklama",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Yiyecek Saklama",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yiyecek Saklama Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:yiyecek-saklama-aksesuarlari",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Yiyecek Saklama Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yiyecek ve İçecek Taşıma Gereçleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:yiyecek-ve-icecek-tasima-gerecleri",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "Yiyecek ve İçecek Taşıma Gereçleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İçki Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:mutfak-gerecleri:icki-takimlari",
+      "parentId": "tax:home-kitchen:diger:mutfak-gerecleri",
+      "canonicalName": "İçki Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

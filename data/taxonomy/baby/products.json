@@ -1266,6 +1266,2086 @@
         "source": "harvest-2026-08-22",
         "note": "e-bebek"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Alt Alma Matı ve Tepsisi Örtüleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-alt-alma-mati-ve-tepsisi-ortuleri",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Alt Alma Matı ve Tepsisi Örtüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Alt Alma Setleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-alt-alma-setleri",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Alt Alma Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bezi Astarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezi-astarlari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Bezi Astarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bezi Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezi-kutulari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Bezi Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bezi Çöp Kovaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezi-cop-kovalari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Bezi Çöp Kovaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bezi Çöp Kovası Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezi-cop-kovasi-aksesuarlari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Bezi Çöp Kovası Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bezleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-bezleri",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Bezleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Islak Mendilleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebek-islak-mendilleri",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebek Islak Mendilleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebekler için Islak Mendil Dispanserleri ve Mendil Isıtıcıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bebekler-icin-islak-mendil-dispanserleri-ve-mendil-isiticilari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bebekler için Islak Mendil Dispanserleri ve Mendil Isıtıcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bez Değiştirme Matları ve Alanları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:bez-degistirme-matlari-ve-alanlari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Bez Değiştirme Matları ve Alanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kirli Bebek Bezi Çantaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:kirli-bebek-bezi-cantalari",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Kirli Bebek Bezi Çantaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pişik Tedavi Ürünleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bakim:pisik-tedavi-urunleri",
+      "parentId": "tax:baby:bakim:bakim",
+      "canonicalName": "Pişik Tedavi Ürünleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:banyo",
+      "parentId": "tax:baby:bakim",
+      "canonicalName": "Banyo",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 2,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Banyo Şapkaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:banyo:banyo-sapkalari",
+      "parentId": "tax:baby:bakim:banyo",
+      "canonicalName": "Banyo Şapkaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Küvetleri ve Banyo Tabureleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:banyo:bebek-kuvetleri-ve-banyo-tabureleri",
+      "parentId": "tax:baby:bakim:banyo",
+      "canonicalName": "Bebek Küvetleri ve Banyo Tabureleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi",
+      "parentId": "tax:baby:bakim",
+      "canonicalName": "Bebek sağlığı",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 2,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Emziği Mendilleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi:bebek-emzigi-mendilleri",
+      "parentId": "tax:baby:bakim:bebek-sagligi",
+      "canonicalName": "Bebek Emziği Mendilleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Sağlığı ve Bakım Setleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi:bebek-sagligi-ve-bakim-setleri",
+      "parentId": "tax:baby:bakim:bebek-sagligi",
+      "canonicalName": "Bebek Sağlığı ve Bakım Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Burun Aspiratörleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi:burun-aspiratorleri",
+      "parentId": "tax:baby:bakim:bebek-sagligi",
+      "canonicalName": "Burun Aspiratörleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzik Klips ve Tutucuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi:emzik-klips-ve-tutuculari",
+      "parentId": "tax:baby:bakim:bebek-sagligi",
+      "canonicalName": "Emzik Klips ve Tutucuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzikler ve Diş Kaşıyıcılar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:bebek-sagligi:emzikler-ve-dis-kasiyicilar",
+      "parentId": "tax:baby:bakim:bebek-sagligi",
+      "canonicalName": "Emzikler ve Diş Kaşıyıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anne Sütü Depolama Kapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:anne-sutu-depolama-kaplari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Anne Sütü Depolama Kapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Bakım Zamanlayıcıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:bebek-bakim-zamanlayicilari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Bebek Bakım Zamanlayıcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Küçük Çocuk Gıdaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:bebek-ve-kucuk-cocuk-gidalari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Bebek ve Küçük Çocuk Gıdaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Biberon Isıtıcı ve Sterilizatörler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:biberon-isitici-ve-sterilizatorler",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Biberon Isıtıcı ve Sterilizatörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Biberon Uçları ve Eklentileri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:biberon-uclari-ve-eklentileri",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Biberon Uçları ve Eklentileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzirme Yastıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:emzirme-yastiklari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Emzirme Yastıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzirme Yastığı Kılıfları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:emzirme-yastigi-kiliflari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Emzirme Yastığı Kılıfları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emzirme Önlükleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:emzirme-onlukleri",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Emzirme Önlükleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gaz Çıkarma ve Omuz Bezleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:gaz-cikarma-ve-omuz-bezleri",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Gaz Çıkarma ve Omuz Bezleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Göğüs Pedleri ve Koruyucuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:gogus-pedleri-ve-koruyuculari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Göğüs Pedleri ve Koruyucuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Göğüs Pompaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:gogus-pompalari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Göğüs Pompaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Göğüs Pompası Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:gogus-pompasi-aksesuarlari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Göğüs Pompası Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mama Önlükleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:mama-onlukleri",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Mama Önlükleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Suluklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:suluklar",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Suluklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik",
+      "parentId": "tax:baby:diger",
+      "canonicalName": "Güvenlik",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Emniyet Kilitleri ve Muhafazaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-emniyet-kilitleri-ve-muhafazalari",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek Emniyet Kilitleri ve Muhafazaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Güvenlik Kayışları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-guvenlik-kayislari",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek Güvenlik Kayışları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Güvenlik Çitleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-guvenlik-citleri",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek Güvenlik Çitleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Evcil Hayvan Kapıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-ve-evcil-hayvan-kapilari",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek ve Evcil Hayvan Kapıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Evcil Hayvan Kapısı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-ve-evcil-hayvan-kapisi-aksesuarlari",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek ve Evcil Hayvan Kapısı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek İzleme Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:guvenlik:bebek-izleme-cihazlari",
+      "parentId": "tax:baby:diger:guvenlik",
+      "canonicalName": "Bebek İzleme Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alışveriş Arabası ve Mama Sandalyesi Kılıfları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:alisveris-arabasi-ve-mama-sandalyesi-kiliflari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Alışveriş Arabası ve Mama Sandalyesi Kılıfları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Arabası Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-arabasi-aksesuarlari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Bebek Arabası Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Arabası Örtüleri ve Tulumları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-arabasi-ortuleri-ve-tulumlari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Bebek Arabası Örtüleri ve Tulumları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-ve-kucuk-cocuk-oto-koltugu-aksesuarlari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kanguru Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:kanguru-aksesuarlari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Kanguru Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Arabaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-arabalari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Bebek Arabaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Küçük Çocuk Oto Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-ve-kucuk-cocuk-oto-koltuklari",
+      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
+      "canonicalName": "Bebek ve Küçük Çocuk Oto Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bebek-arabasi",
+      "depth": 3,
+      "requestSchemaId": "baby/bebek-arabasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alfabe Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:alfabe-oyuncaklari",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Alfabe Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebekler için Aktivite Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:bebekler-icin-aktivite-oyuncaklari",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Bebekler için Aktivite Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebekler için Hareketli Teçhizatlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:bebekler-icin-hareketli-techizatlar",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Bebekler için Hareketli Teçhizatlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beşikler ve Sallanan Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:besikler-ve-sallanan-oyuncaklar",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Beşikler ve Sallanan Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dönenceler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:donenceler",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Dönenceler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hoppalalar ve Salıncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:hoppalalar-ve-salincaklar",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Hoppalalar ve Salıncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyun Bahçeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:oyun-bahceleri",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Oyun Bahçeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyun Halıları ve Egzersiz Düzenekleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:oyun-halilari-ve-egzersiz-duzenekleri",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Oyun Halıları ve Egzersiz Düzenekleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıralama ve İstifleme Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:siralama-ve-istifleme-oyuncaklari",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Sıralama ve İstifleme Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yürüteçler ve Eğlendiriciler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:yurutecler-ve-eglendiriciler",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Yürüteçler ve Eğlendiriciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çıngıraklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:cingiraklar",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "Çıngıraklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İtmeli ve Çekmeli Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyun-ve-gezi:itmeli-ve-cekmeli-oyuncaklar",
+      "parentId": "tax:baby:diger:oyun-ve-gezi",
+      "canonicalName": "İtmeli ve Çekmeli Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar",
+      "parentId": "tax:baby:diger",
+      "canonicalName": "Oyuncaklar",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Aktivite Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:aktivite-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Aktivite Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Banyo Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:banyo-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Banyo Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebekler, Oyun Setleri ve Oyuncak Figürler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:bebekler-oyun-setleri-ve-oyuncak-figurler",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Bebekler, Oyun Setleri ve Oyuncak Figürler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Binek Oyuncak Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:binek-oyuncak-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Binek Oyuncak Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Binmeli Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:binmeli-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Binmeli Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Eğitici Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:egitici-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Eğitici Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Görsel Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:gorsel-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Görsel Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kurmalı Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:kurmali-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Kurmalı Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Müzikli Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:muzikli-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Müzikli Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ofis Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:ofis-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Ofis Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncak Hediye Sepetleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:oyuncak-hediye-sepetleri",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Oyuncak Hediye Sepetleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncak Silah Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:oyuncak-silah-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Oyuncak Silah Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncak Silahlar ve Aletler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:oyuncak-silahlar-ve-aletler",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Oyuncak Silahlar ve Aletler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncak Taşıt Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:oyuncak-tasit-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Oyuncak Taşıt Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyuncak Taşıtlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:oyuncak-tasitlar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Oyuncak Taşıtlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Plaj ve Kum Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:plaj-ve-kum-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Plaj ve Kum Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Robotik Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:robotik-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Robotik Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sanat ve Çizim Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:sanat-ve-cizim-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Sanat ve Çizim Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Spor Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:spor-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Spor Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Spor Oyuncağı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:spor-oyuncagi-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Spor Oyuncağı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Top Havuzları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:top-havuzlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Top Havuzları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Top Havuzu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:top-havuzu-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Top Havuzu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzaktan Kumandalı Oyuncak Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:uzaktan-kumandali-oyuncak-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Uzaktan Kumandalı Oyuncak Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzaktan Kumandalı Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:uzaktan-kumandali-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Uzaktan Kumandalı Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uçan Oyuncak Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:ucan-oyuncak-aksesuarlari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Uçan Oyuncak Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uçan Oyuncaklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:ucan-oyuncaklar",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Uçan Oyuncaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yap-İnan Oyunu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:yap-inan-oyunu",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Yap-İnan Oyunu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yapı Oyuncakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:diger:oyuncaklar:yapi-oyuncaklari",
+      "parentId": "tax:baby:diger:oyuncaklar",
+      "canonicalName": "Yapı Oyuncakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "baby/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:tuvalet-egitimi",
+      "parentId": "tax:baby:bakim",
+      "canonicalName": "Tuvalet eğitimi",
+      "nodeType": "GROUP",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 2,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Lazımlıklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:tuvalet-egitimi:lazimliklar",
+      "parentId": "tax:baby:bakim:tuvalet-egitimi",
+      "canonicalName": "Lazımlıklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tuvalet Eğitim Setleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:bakim:tuvalet-egitimi:tuvalet-egitim-setleri",
+      "parentId": "tax:baby:bakim:tuvalet-egitimi",
+      "canonicalName": "Tuvalet Eğitim Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "bakim",
+      "depth": 3,
+      "requestSchemaId": "baby/bakim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Battaniyeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:bebek-battaniyeleri",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Bebek Battaniyeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kundak Battaniyeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:uyku-besik:uyku:kundak-battaniyeleri",
+      "parentId": "tax:baby:uyku-besik:uyku",
+      "canonicalName": "Kundak Battaniyeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "uyku-besik",
+      "depth": 3,
+      "requestSchemaId": "baby/uyku-besik",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

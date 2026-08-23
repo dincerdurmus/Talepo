@@ -1127,6 +1127,1453 @@
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani",
+      "parentId": "tax:health:dis-laboratuvar",
+      "canonicalName": "Diş hekimliği ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 2,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Diş Sementi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani:dis-sementi",
+      "parentId": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani",
+      "canonicalName": "Diş Sementi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dişçi Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani:disci-aletleri",
+      "parentId": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani",
+      "canonicalName": "Dişçi Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Polisaj Macunu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani:polisaj-macunu",
+      "parentId": "tax:health:dis-laboratuvar:dis-hekimligi-ekipmani",
+      "canonicalName": "Polisaj Macunu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "dis-laboratuvar",
+      "depth": 3,
+      "requestSchemaId": "health/dis-laboratuvar",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim",
+      "parentId": "tax:health:sarf-malzeme",
+      "canonicalName": "Kişisel bakım",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 2,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:ayak-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Ayak Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:agiz-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Ağız Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:bronzlastirici-sprey-cadirlari",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Bronzlaştırıcı Sprey Çadırları",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:cimbizlar",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Cımbızlar",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:deodorantlar-ve-ter-onleyiciler",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Deodorantlar ve Ter Önleyiciler",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:goz-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Göz Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:kadin-hijyen-urunleri",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Kadın Hijyen Ürünleri",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:kayganlastiricilar",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Kayganlaştırıcılar",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:kozmetik",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Kozmetik",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:kulak-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Kulak Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:kulak-temizleme-cubuklari",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Kulak Temizleme Çubukları",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:lavman-kitleri-ve-malzemeleri",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Lavman Kitleri ve Malzemeleri",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:makyaj-pamuklari",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Makyaj Pamukları",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:masaj-ve-rahatlama",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Masaj ve Rahatlama",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:sac-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Saç Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:solaryum-yataklari",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Solaryum Yatakları",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:sirt-bakimi",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Sırt Bakımı",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:tiras-ve-kisisel-bakim",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Tıraş ve Kişisel Bakım",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "COMMODITY_SCHEMA",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:sarf-malzeme:kisisel-bakim:uyumaya-yardimci-urunler",
+      "parentId": "tax:health:sarf-malzeme:kisisel-bakim",
+      "canonicalName": "Uyumaya Yardımcı Ürünler",
+      "nodeType": "COMMODITY_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "sarf-malzeme",
+      "depth": 3,
+      "requestSchemaId": "health/sarf-malzeme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani",
+      "parentId": "tax:health:klinik-donanim",
+      "canonicalName": "Klinik ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 2,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bandanalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:bandanalar",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Bandanalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boneler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:boneler",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Boneler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Cerrahi Önlükler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:cerrahi-onlukler",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Cerrahi Önlükler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hasta Önlükleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:hasta-onlukleri",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Hasta Önlükleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hastane Perdeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:hastane-perdeleri",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Hastane Perdeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal Ekipmanlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:medikal-ekipmanlar",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Medikal Ekipmanlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal Sarf Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:medikal-sarf-malzemeleri",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Medikal Sarf Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal Yatak Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:medikal-yatak-takimlari",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Medikal Yatak Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tıbbi Aletler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:tibbi-aletler",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Tıbbi Aletler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tıp Eğitimi Ekipmanları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:klinik-donanim:klinik-ekipmani:tip-egitimi-ekipmanlari",
+      "parentId": "tax:health:klinik-donanim:klinik-ekipmani",
+      "canonicalName": "Tıp Eğitimi Ekipmanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "klinik-donanim",
+      "depth": 3,
+      "requestSchemaId": "health/klinik-donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:kuafor-ve-guzellik-ekipmani",
+      "parentId": "tax:health:diger",
+      "canonicalName": "Kuaför ve güzellik ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Berber Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:kuafor-ve-guzellik-ekipmani:berber-koltuklari",
+      "parentId": "tax:health:diger:kuafor-ve-guzellik-ekipmani",
+      "canonicalName": "Berber Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kuaför Önlükleri ve Boyun Örtüleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:kuafor-ve-guzellik-ekipmani:kuafor-onlukleri-ve-boyun-ortuleri",
+      "parentId": "tax:health:diger:kuafor-ve-guzellik-ekipmani",
+      "canonicalName": "Kuaför Önlükleri ve Boyun Örtüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pedikür Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:diger:kuafor-ve-guzellik-ekipmani:pedikur-koltuklari",
+      "parentId": "tax:health:diger:kuafor-ve-guzellik-ekipmani",
+      "canonicalName": "Pedikür Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "health/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri",
+      "parentId": "tax:health:medikal-cihaz",
+      "canonicalName": "Sağlık ürünleri",
+      "nodeType": "GROUP",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 2,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Akupunktur"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:akupunktur",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Akupunktur",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ameliyat Sonrası Bakım Kremleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:ameliyat-sonrasi-bakim-kremleri",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Ameliyat Sonrası Bakım Kremleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Biyometrik Monitör Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:biyometrik-monitor-aksesuarlari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Biyometrik Monitör Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Biyometrik Monitörler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:biyometrik-monitorler",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Biyometrik Monitörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Destek ve Bilezikler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:destek-ve-bilezikler",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Destek ve Bilezikler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Doğum Kontrol Hapı Muhafazaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:dogum-kontrol-hapi-muhafazalari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Doğum Kontrol Hapı Muhafazaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fitness ve Sporcu Besinleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:fitness-ve-sporcu-besinleri",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Fitness ve Sporcu Besinleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Işık Terapisi Lambaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:isik-terapisi-lambalari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Işık Terapisi Lambaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal Alarm Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:medikal-alarm-sistemleri",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Medikal Alarm Sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medikal Kimlik Etiket ve Takıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:medikal-kimlik-etiket-ve-takilari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Medikal Kimlik Etiket ve Takıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mobilite ve Kolay Erişim"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:mobilite-ve-kolay-erisim",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Mobilite ve Kolay Erişim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Numune Kapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:numune-kaplari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Numune Kapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Prezervatifler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:prezervatifler",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Prezervatifler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Protez Çorapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:protez-coraplari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Protez Çorapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Solunum Güçlüğü Tedavisi"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:solunum-guclugu-tedavisi",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Solunum Güçlüğü Tedavisi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Spermisidler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:spermisidler",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Spermisidler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tıbbi Testler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:tibbi-testler",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Tıbbi Testler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yatak Lazımlıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:yatak-lazimliklari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "Yatak Lazımlıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İlaç Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:ilac-kutulari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İlaç Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İlaçlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:ilaclar",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İlaçlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İletkenlik Jelleri ve Losyonları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:iletkenlik-jelleri-ve-losyonlari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İletkenlik Jelleri ve Losyonları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İlk Yardım"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:ilk-yardim",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İlk Yardım",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnkontinans Yardımcıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:inkontinans-yardimcilari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İnkontinans Yardımcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İş Terapisi ve Fiziksel Terapi Ekipmanları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:is-terapisi-ve-fiziksel-terapi-ekipmanlari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İş Terapisi ve Fiziksel Terapi Ekipmanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İşitme Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA",
+        "COMMODITY_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:health:medikal-cihaz:saglik-urunleri:isitme-cihazlari",
+      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
+      "canonicalName": "İşitme Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "health",
+      "subcategoryId": "medikal-cihaz",
+      "depth": 3,
+      "requestSchemaId": "health/medikal-cihaz",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

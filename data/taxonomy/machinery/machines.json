@@ -2551,6 +2551,6190 @@
         "source": "harvest-2026-08-22",
         "note": "Makinecim + Bauhaus"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca",
+      "canonicalName": "Alet aksesuarları",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 2,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Bıçak Ağızları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:alet-bicak-agizlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Alet Bıçak Ağızları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Güvenlik Bağları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:alet-guvenlik-baglari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Alet Güvenlik Bağları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Sapı Kamaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:alet-sapi-kamalari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Alet Sapı Kamaları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Stantları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:alet-stantlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Alet Stantları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Yuvaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:alet-yuvalari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Alet Yuvaları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Balta Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:balta-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Balta Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boya Aleti Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:boya-aleti-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Boya Aleti Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "El Feneri Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:el-feneri-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "El Feneri Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Alet Bataryaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:elektrikli-alet-bataryalari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Elektrikli Alet Bataryaları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Alet Şarj Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:elektrikli-alet-sarj-cihazlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Elektrikli Alet Şarj Cihazları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Endüstriyel Zımba Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:endustriyel-zimba-makineleri",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Endüstriyel Zımba Makineleri",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Freze Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:freze-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Freze Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Havya Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:havya-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Havya Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kamalama Araçları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:kamalama-araclari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Kamalama Araçları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karıştırıcı Uçlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:karistirici-uclar",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Karıştırıcı Uçlar",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaynak Makinesi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:kaynak-makinesi-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Kaynak Makinesi Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kesici Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:kesici-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Kesici Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kumlama Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:kumlama-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Kumlama Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Magnetizörler ve Demagnetizörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:magnetizorler-ve-demagnetizorler",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Magnetizörler ve Demagnetizörler",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Matkap ve Tornavide Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:matkap-ve-tornavide-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Matkap ve Tornavide Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Planya Tezgahı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:planya-tezgahi-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Planya Tezgahı Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sabitleyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:sabitleyiciler",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Sabitleyiciler",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sökme Takma Aleti Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:sokme-takma-aleti-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Sökme Takma Aleti Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Taşlama Makinesi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:taslama-makinesi-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Taşlama Makinesi Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Testere Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:testere-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Testere Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımparalama Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:zimparalama-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Zımparalama Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çapa ve Kazma Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:capa-ve-kazma-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Çapa ve Kazma Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çekiç Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:cekic-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Çekiç Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ölçüm Aleti ve Sensör Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_COMPATIBILITY",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:yedek-parca:alet-aksesuarlari:olcum-aleti-ve-sensor-aksesuarlari",
+      "parentId": "tax:machinery:yedek-parca:alet-aksesuarlari",
+      "canonicalName": "Ölçüm Aleti ve Sensör Aksesuarları",
+      "nodeType": "PART_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "yedek-parca",
+      "depth": 3,
+      "requestSchemaId": "machinery/yedek-parca",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:depolama-ve-raf",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Depolama ve raf",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Endüstriyel Dolaplar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:depolama-ve-raf:endustriyel-dolaplar",
+      "parentId": "tax:machinery:diger:depolama-ve-raf",
+      "canonicalName": "Endüstriyel Dolaplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Endüstriyel Raflar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:depolama-ve-raf:endustriyel-raflar",
+      "parentId": "tax:machinery:diger:depolama-ve-raf",
+      "canonicalName": "Endüstriyel Raflar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Nakliye Konteynırları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:depolama-ve-raf:nakliye-konteynirlari",
+      "parentId": "tax:machinery:diger:depolama-ve-raf",
+      "canonicalName": "Nakliye Konteynırları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tel Bölmeler, Dolaplar ve Kapılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:depolama-ve-raf:tel-bolmeler-dolaplar-ve-kapilar",
+      "parentId": "tax:machinery:diger:depolama-ve-raf",
+      "canonicalName": "Tel Bölmeler, Dolaplar ve Kapılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Anahtarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:alet-anahtarlari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Alet Anahtarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Bıçakları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:alet-bicaklari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Alet Bıçakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Eğeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:alet-egeleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Alet Eğeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Mengeneleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:alet-mengeneleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Alet Mengeneleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Takımları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:alet-takimlari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Alet Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ampul Değiştiriciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:ampul-degistiriciler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Ampul Değiştiriciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Baca Temizlik Fırçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:baca-temizlik-fircalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Baca Temizlik Fırçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Baltalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:baltalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Baltalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beton Süpürgeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:beton-supurgeleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Beton Süpürgeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bileyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:bileyiciler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Bileyiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boru Bükücüler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:boru-bukuculer",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Boru Bükücüler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boru Temizleme Fırçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:boru-temizleme-fircalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Boru Temizleme Fırçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boru Temizleyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:boru-temizleyiciler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Boru Temizleyiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boya Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:boya-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Boya Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Cilalayıcılar ve Perdahlayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:cilalayicilar-ve-perdahlayicilar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Cilalayıcılar ve Perdahlayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dalıcı Pistonlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:dalici-pistonlar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Dalıcı Pistonlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Darbeli Anahtar ve Vidalamalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:darbeli-anahtar-ve-vidalamalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Darbeli Anahtar ve Vidalamalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Delgiler ve Bizler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:delgiler-ve-bizler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Delgiler ve Bizler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Direk Çukuru Kazıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:direk-cukuru-kazicilar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Direk Çukuru Kazıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvarcı Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:duvarci-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Duvarcı Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "El Planyaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:el-planyalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "El Planyaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "El ve Kafa Fenerleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:el-ve-kafa-fenerleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "El ve Kafa Fenerleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikçi Kılavuz Telleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:elektrikci-kilavuz-telleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Elektrikçi Kılavuz Telleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Endüstriyel Vibratörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:endustriyel-vibratorler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Endüstriyel Vibratörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Freze Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:freze-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Freze Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ispatulalar ve Raspalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:ispatulalar-ve-raspalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Ispatulalar ve Raspalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Isı Tabancaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:isi-tabancalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Isı Tabancaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kalafat Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kalafat-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kalafat Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaldırma Mıknatısları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kaldirma-miknatislari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kaldırma Mıknatısları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaydırma Arabaları ve El Arabaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kaydirma-arabalari-ve-el-arabalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kaydırma Arabaları ve El Arabaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaynak Tabancaları ve Plazma Kesme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kaynak-tabancalari-ve-plazma-kesme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kaynak Tabancaları ve Plazma Kesme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kerpetenler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kerpetenler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kerpetenler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kesiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kesiciler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kesiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kompresörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kompresorler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kompresörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kumlama Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kumlama-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kumlama Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kılavuz Pafta Setleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:kilavuz-pafta-setleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Kılavuz Pafta Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Lehim Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:lehim-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Lehim Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Lokma Uçlu Tornavidalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:lokma-uclu-tornavidalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Lokma Uçlu Tornavidalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Manivelalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:manivelalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Manivelalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Merdivenler ve Yapı İskeleleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:merdivenler-ve-yapi-iskeleleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Merdivenler ve Yapı İskeleleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Motorlu El Karıştırıcıları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:motorlu-el-karistiricilari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Motorlu El Karıştırıcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Musluk Göbeği Yenileme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:musluk-gobegi-yenileme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Musluk Göbeği Yenileme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Odun Yarma Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:odun-yarma-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Odun Yarma Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyma Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:oyma-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Oyma Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Perçinleme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:percinleme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Perçinleme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Planyalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:planyalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Planyalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Raybalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:raybalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Raybalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Rendeler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:rendeler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Rendeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saplar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:saplar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Saplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Somun Anahtarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:somun-anahtarlari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Somun Anahtarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıkıştırıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:sikistiricilar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Sıkıştırıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Taşlama Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:taslama-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Taşlama Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tel ve Kablo El Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:tel-ve-kablo-el-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Tel ve Kablo El Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Testere Tezgahları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:testere-tezgahlari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Testere Tezgahları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Testereler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:testereler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Testereler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Torna Tezgahları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:torna-tezgahlari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Torna Tezgahları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tornavidalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:tornavidalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Tornavidalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tutma Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:tutma-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Tutma Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vargeller"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:vargeller",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Vargeller",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağ Filtresi Drenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:yag-filtresi-drenleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Yağ Filtresi Drenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağ Tabancaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:yag-tabancalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Yağ Tabancaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yiv Açma Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:yiv-acma-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Yiv Açma Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yönlendirme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:yonlendirme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Yönlendirme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımpara Blokları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:zimpara-bloklari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Zımpara Blokları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımpara Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:zimpara-makineleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Zımpara Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çakmaklar ve Kibritler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:cakmaklar-ve-kibritler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çakmaklar ve Kibritler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çalışma Lambaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:calisma-lambalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çalışma Lambaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çapak Alıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:capak-alicilar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çapak Alıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çapalar ve Kazmalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:capalar-ve-kazmalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çapalar ve Kazmalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çekiçler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:cekicler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çekiçler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çivi Sökme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:civi-sokme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çivi Sökme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çivi Çakıcılar ve Zımbalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:civi-cakicilar-ve-zimbalar",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çivi Çakıcılar ve Zımbalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çok İşlevli Elektrikli Aletler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:cok-islevli-elektrikli-aletler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Çok İşlevli Elektrikli Aletler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ölçüm Aletleri ve Sensörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:olcum-aletleri-ve-sensorler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Ölçüm Aletleri ve Sensörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Örsler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:orsler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Örsler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Üfleçler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:uflecler",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "Üfleçler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnceleme Aynaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:inceleme-aynalari",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "İnceleme Aynaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İşaretleme Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:isaretleme-aletleri",
+      "parentId": "tax:machinery:diger:el-aletleri-ve-hirdavat",
+      "canonicalName": "İşaretleme Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Elektrik malzemeleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Armatürler, Rotorlar ve Statörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:armaturler-rotorlar-ve-statorler",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Armatürler, Rotorlar ve Statörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ayar Rezistansları ve Starterler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:ayar-rezistanslari-ve-starterler",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Ayar Rezistansları ve Starterler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Devre Kesici Paneller"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:devre-kesici-paneller",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Devre Kesici Paneller",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Plakaları ve Kaplamaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:duvar-plakalari-ve-kaplamalari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Duvar Plakaları ve Kaplamaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Prizleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:duvar-prizleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Duvar Prizleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Anahtarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:elektrik-anahtarlari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Elektrik Anahtarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Girişleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:elektrik-girisleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Elektrik Girişleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Kabloları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:elektrik-kablolari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Elektrik Kabloları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrik Motorları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:elektrik-motorlari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Elektrik Motorları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Montaj Kutuları ve Braketleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:elektrikli-montaj-kutulari-ve-braketleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Elektrikli Montaj Kutuları ve Braketleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ev Otomasyonu Setleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:ev-otomasyonu-setleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Ev Otomasyonu Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gerilim Transformatörleri ve Regülatörleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:gerilim-transformatorleri-ve-regulatorleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Gerilim Transformatörleri ve Regülatörleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güneş Enerjisi Kitleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:gunes-enerjisi-kitleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Güneş Enerjisi Kitleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güneş Enerjisi Panelleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:gunes-enerjisi-panelleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Güneş Enerjisi Panelleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güç Dönüştürücüler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:guc-donusturuculer",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Güç Dönüştürücüler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güç Çeviriciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:guc-ceviriciler",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Güç Çeviriciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Jeneratör Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:jenerator-aksesuarlari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Jeneratör Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kablo Başlıkları ve Somunları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:kablo-basliklari-ve-somunlari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Kablo Başlıkları ve Somunları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kablo Sonlandırıcılar ve Konektörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:kablo-sonlandiricilar-ve-konektorler",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Kablo Sonlandırıcılar ve Konektörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kömür Fırçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:komur-fircalari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Kömür Fırçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oluk ve Muhafazalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:oluk-ve-muhafazalar",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Oluk ve Muhafazalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Priz Kapatıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:priz-kapaticilar",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Priz Kapatıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Priz Kumandaları ve Sensörleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:priz-kumandalari-ve-sensorleri",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Priz Kumandaları ve Sensörleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Telefon ve Veri Jakları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:telefon-ve-veri-jaklari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Telefon ve Veri Jakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzatma Kabloları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:uzatma-kablolari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Uzatma Kabloları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzatma Kablosu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:elektrik-malzemeleri:uzatma-kablosu-aksesuarlari",
+      "parentId": "tax:machinery:diger:elektrik-malzemeleri",
+      "canonicalName": "Uzatma Kablosu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Endüstriyel mutfak",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Aperatif Yiyecek Kapları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:aperatif-yiyecek-kaplari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Aperatif Yiyecek Kapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bulaşık Leğenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:bulasik-legenleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Bulaşık Leğenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Buz Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:buz-kutulari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Buz Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Eğimli Tavalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:egimli-tavalar",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Eğimli Tavalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gıda Hijyeni Maskeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:gida-hijyeni-maskeleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Gıda Hijyeni Maskeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hesap Sümenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:hesap-sumenleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Hesap Sümenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hot Dog Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:hot-dog-makineleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Hot Dog Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Paket Servis Kapları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:paket-servis-kaplari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Paket Servis Kapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Satış Otomatları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:satis-otomatlari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Satış Otomatları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tabak Isıtma Arabaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:tabak-isitma-arabalari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Tabak Isıtma Arabaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tek Kullanımlık Kapaklar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:tek-kullanimlik-kapaklar",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Tek Kullanımlık Kapaklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tek Kullanımlık Servis Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:tek-kullanimlik-servis-malzemeleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Tek Kullanımlık Servis Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tek Kullanımlık Sofra Takımları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:tek-kullanimlik-sofra-takimlari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Tek Kullanımlık Sofra Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Unlu Mamul Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:unlu-mamul-kutulari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Unlu Mamul Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yemek Servis Arabaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:yemek-servis-arabalari",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Yemek Servis Arabaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yemek Servis Sepetleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:yemek-servis-sepetleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Yemek Servis Sepetleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yiyecek Yıkama ve Kurutma Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:endustriyel-mutfak:yiyecek-yikama-ve-kurutma-makineleri",
+      "parentId": "tax:machinery:diger:endustriyel-mutfak",
+      "canonicalName": "Yiyecek Yıkama ve Kurutma Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ağaç Yonga Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:agac-yonga-makineleri",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Ağaç Yonga Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Arazi Ölçümü"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:arazi-olcumu",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Arazi Ölçümü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Trafik Konileri ve Silindirleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:insaat-ve-is-makineleri:trafik-konileri-ve-silindirleri",
+      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
+      "canonicalName": "Trafik Konileri ve Silindirleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "İş güvenliği",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Baretler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:baretler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Baretler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Diz Koruyucular"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:diz-koruyucular",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Diz Koruyucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emniyet İpleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:emniyet-ipleri",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Emniyet İpleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gaz Maskesi ve Solunum Cihazı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:gaz-maskesi-ve-solunum-cihazi-aksesuarlari",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Gaz Maskesi ve Solunum Cihazı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaynak Kaskları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:kaynak-kasklari",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Kaynak Kaskları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koruyucu Eldivenler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:koruyucu-eldivenler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Koruyucu Eldivenler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koruyucu Gözlükler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:koruyucu-gozlukler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Koruyucu Gözlükler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koruyucu Maskeler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:koruyucu-maskeler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Koruyucu Maskeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koruyucu Önlükler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:koruyucu-onlukler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Koruyucu Önlükler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kurşun Geçirmez Yelekler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:kursun-gecirmez-yelekler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Kurşun Geçirmez Yelekler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tehlikeli Maddelere Karşı Koruyucu Elbiseler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:tehlikeli-maddelere-karsi-koruyucu-elbiseler",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "Tehlikeli Maddelere Karşı Koruyucu Elbiseler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İş Güvenliği Koşumları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:is-guvenligi:is-guvenligi-kosumlari",
+      "parentId": "tax:machinery:diger:is-guvenligi",
+      "canonicalName": "İş Güvenliği Koşumları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Laboratuvar ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Biyokimyasallar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:biyokimyasallar",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Biyokimyasallar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Diseksiyon Setleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:diseksiyon-setleri",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Diseksiyon Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Laboratuvar Ekipmanları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:laboratuvar-ekipmanlari",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Laboratuvar Ekipmanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Laboratuvar Kimyasalları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:laboratuvar-kimyasallari",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Laboratuvar Kimyasalları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Laboratuvar Numuneleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:laboratuvar-numuneleri",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Laboratuvar Numuneleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Laboratuvar Sarf Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:laboratuvar-ekipmani:laboratuvar-sarf-malzemeleri",
+      "parentId": "tax:machinery:diger:laboratuvar-ekipmani",
+      "canonicalName": "Laboratuvar Sarf Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Mağaza ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fiyat Etiketleme Makineleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:fiyat-etiketleme-makineleri",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Fiyat Etiketleme Makineleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kağıt ve Plastik Alışveriş Çantaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:kagit-ve-plastik-alisveris-cantalari",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Kağıt ve Plastik Alışveriş Çantaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kıyafet Teşhir Rafları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:kiyafet-teshir-raflari",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Kıyafet Teşhir Rafları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Manken Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:manken-parcalari",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Manken Parçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mankenler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:mankenler",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Mankenler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Para İşlemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:para-islemleri",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Para İşlemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Perakende Vitrin Objeleri ve Mankenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:perakende-vitrin-objeleri-ve-mankenleri",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Perakende Vitrin Objeleri ve Mankenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Perakende Vitrinleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:magaza-ekipmani:perakende-vitrinleri",
+      "parentId": "tax:machinery:diger:magaza-ekipmani",
+      "canonicalName": "Perakende Vitrinleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri",
+      "parentId": "tax:machinery:uretim-makinesi",
+      "canonicalName": "Otomasyon bileşenleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 2,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Değişken Frekans ve Ayarlanabilir Hız Sürücüleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri:degisken-frekans-ve-ayarlanabilir-hiz-suruculeri",
+      "parentId": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri",
+      "canonicalName": "Değişken Frekans ve Ayarlanabilir Hız Sürücüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Programlanabilir Mantık Denetleyicileri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri:programlanabilir-mantik-denetleyicileri",
+      "parentId": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri",
+      "canonicalName": "Programlanabilir Mantık Denetleyicileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "uretim-makinesi",
+      "depth": 3,
+      "requestSchemaId": "machinery/uretim-makinesi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Sıhhi tesisat",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boru Tamir Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:boru-tamir-malzemeleri",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Boru Tamir Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Dağıtım ve Arıtma Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:su-dagitim-ve-aritma-sistemleri",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Su Dağıtım ve Arıtma Sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Kuyusu Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:su-kuyusu-malzemeleri",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Su Kuyusu Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Seviyesi Tespit Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:su-seviyesi-tespit-cihazlari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Su Seviyesi Tespit Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Tahliye Teçhizatı ve Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:su-tahliye-techizati-ve-parcalari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Su Tahliye Teçhizatı ve Parçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Su Zamanlayıcıları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:su-zamanlayicilari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Su Zamanlayıcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıhhi Tesisat Armatürleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:sihhi-tesisat-armaturleri",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Sıhhi Tesisat Armatürleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıhhi Tesisat Bağlantı Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:sihhi-tesisat-baglanti-parcalari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Sıhhi Tesisat Bağlantı Parçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıhhi Tesisat Boruları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:sihhi-tesisat-borulari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Sıhhi Tesisat Boruları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tesisat Hortumları ve İkmal Hatları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:sihhi-tesisat:tesisat-hortumlari-ve-ikmal-hatlari",
+      "parentId": "tax:machinery:diger:sihhi-tesisat",
+      "canonicalName": "Tesisat Hortumları ve İkmal Hatları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hayvancılık"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tarim-makineleri:hayvancilik",
+      "parentId": "tax:machinery:diger:tarim-makineleri",
+      "canonicalName": "Hayvancılık",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tasima-ekipmani",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Taşıma ekipmanı",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Asansörler ve Kaldıraçlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tasima-ekipmani:asansorler-ve-kaldiraclar",
+      "parentId": "tax:machinery:diger:tasima-ekipmani",
+      "canonicalName": "Asansörler ve Kaldıraçlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Konveyörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tasima-ekipmani:konveyorler",
+      "parentId": "tax:machinery:diger:tasima-ekipmani",
+      "canonicalName": "Konveyörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Paletler ve Yükleme Platformları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tasima-ekipmani:paletler-ve-yukleme-platformlari",
+      "parentId": "tax:machinery:diger:tasima-ekipmani",
+      "canonicalName": "Paletler ve Yükleme Platformları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Tesisat aksesuarları",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alet Saklama ve Düzenleme"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:alet-saklama-ve-duzenleme",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Alet Saklama ve Düzenleme",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beton Kalıplar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:beton-kaliplar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Beton Kalıplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bobinler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:bobinler",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Bobinler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Braketler ve Takviye Bağlantıları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:braketler-ve-takviye-baglantilari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Braketler ve Takviye Bağlantıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Brandalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:brandalar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Brandalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Direk Ayağı Tabanları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:direk-ayagi-tabanlari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Direk Ayağı Tabanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dolap Hırdavatları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:dolap-hirdavatlari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Dolap Hırdavatları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Kaldıraçları ve Köşebentleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:duvar-kaldiraclari-ve-kosebentleri",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Duvar Kaldıraçları ve Köşebentleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Filtreler ve Perdeler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:filtreler-ve-perdeler",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Filtreler ve Perdeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Gaz Hortumları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:gaz-hortumlari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Gaz Hortumları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hareketli ve Ses Geçirmez Şilteler ve Kılıflar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:hareketli-ve-ses-gecirmez-silteler-ve-kiliflar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Hareketli ve Ses Geçirmez Şilteler ve Kılıflar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kancalar, Tokalar ve Sabitleyiciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:kancalar-tokalar-ve-sabitleyiciler",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Kancalar, Tokalar ve Sabitleyiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kavilyalar ve Çubuklar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:kavilyalar-ve-cubuklar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Kavilyalar ve Çubuklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kazıklar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:kaziklar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Kazıklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Menteşeler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:menteseler",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Menteşeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Metal Döküm Kalıpları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:metal-dokum-kaliplari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Metal Döküm Kalıpları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mobilya Tekerlekleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:mobilya-tekerlekleri",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Mobilya Tekerlekleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mobilya Örtüleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:mobilya-ortuleri",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Mobilya Örtüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pnömatik Hortumlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:pnomatik-hortumlar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Pnömatik Hortumlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Teçhizat Bağlama Elemanları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:techizat-baglama-elemanlari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Teçhizat Bağlama Elemanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yaylar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:yaylar",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Yaylar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağlama Hortumları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:yaglama-hortumlari",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Yağlama Hortumları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zincir, Kablo ve İp"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:zincir-kablo-ve-ip",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Zincir, Kablo ve İp",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çekmece Sürgüleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:cekmece-surguleri",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "Çekmece Sürgüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İşaretleme ve İkaz Bandı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:tesisat-aksesuarlari:isaretleme-ve-ikaz-bandi",
+      "parentId": "tax:machinery:diger:tesisat-aksesuarlari",
+      "canonicalName": "İşaretleme ve İkaz Bandı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Yapı malzemeleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Alçı Panel"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:alci-panel",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Alçı Panel",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ambar Kapakları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:ambar-kapaklari",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Ambar Kapakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Betonarme Demiri ve Tel Örgü"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:betonarme-demiri-ve-tel-orgu",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Betonarme Demiri ve Tel Örgü",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Cam"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:cam",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Cam",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Kaplamaları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:duvar-kaplamalari",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Duvar Kaplamaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dış Cephe Kaplaması"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:dis-cephe-kaplamasi",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Dış Cephe Kaplaması",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kapı Hırdavatları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:kapi-hirdavatlari",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Kapı Hırdavatları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kapı Pencere Yalıtımı ve Yalıtım Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:kapi-pencere-yalitimi-ve-yalitim-malzemeleri",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Kapı Pencere Yalıtımı ve Yalıtım Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kapılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:kapilar",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Kapılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karo"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:karo",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Karo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kereste"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:kereste",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Kereste",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Küpeşteler ve Küpeşte Sistemler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:kupesteler-ve-kupeste-sistemler",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Küpeşteler ve Küpeşte Sistemler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Merdivenler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:merdivenler",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Merdivenler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Tezgahları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:mutfak-tezgahlari",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Mutfak Tezgahları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Panjurlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:panjurlar",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Panjurlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pencere Hırdavatı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:pencere-hirdavati",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Pencere Hırdavatı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pencereler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:pencereler",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Pencereler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pervaz"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:pervaz",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Pervaz",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ses Geçirmez Malzemeler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:ses-gecirmez-malzemeler",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Ses Geçirmez Malzemeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yalıtım"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:yalitim",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Yalıtım",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yer Döşemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:yer-dosemeleri",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Yer Döşemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çatı Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-malzemeleri:cati-malzemeleri",
+      "parentId": "tax:machinery:diger:yapi-malzemeleri",
+      "canonicalName": "Çatı Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "parentId": "tax:machinery:diger",
+      "canonicalName": "Yapı sarf malzemeleri",
+      "nodeType": "GROUP",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boyama Sarf Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:boyama-sarf-malzemeleri",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Boyama Sarf Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Yamama Bileşikleri ve Plasterler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:duvar-yamama-bilesikleri-ve-plasterler",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Duvar Yamama Bileşikleri ve Plasterler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvarcılık Sarf Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:duvarcilik-sarf-malzemeleri",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Duvarcılık Sarf Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hırdavat Tutkalı ve Yapıştırıcıları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:hirdavat-tutkali-ve-yapistiricilari",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Hırdavat Tutkalı ve Yapıştırıcıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kimyasallar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:kimyasallar",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Kimyasallar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koruyucu Kaplamalar ve Sızdırmazlık Macunları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:koruyucu-kaplamalar-ve-sizdirmazlik-macunlari",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Koruyucu Kaplamalar ve Sızdırmazlık Macunları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Lehim ve Krem Lehim"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:lehim-ve-krem-lehim",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Lehim ve Krem Lehim",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sıhhı Tesisat Astarı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:sihhi-tesisat-astari",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Sıhhı Tesisat Astarı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tesisat Bandı"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:tesisat-bandi",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Tesisat Bandı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yağlayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:yaglayicilar",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Yağlayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çözücüler, Boya Çıkarıcılar ve Seyrelticiler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:machinery:diger:yapi-sarf-malzemeleri:cozuculer-boya-cikaricilar-ve-seyrelticiler",
+      "parentId": "tax:machinery:diger:yapi-sarf-malzemeleri",
+      "canonicalName": "Çözücüler, Boya Çıkarıcılar ve Seyrelticiler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "machinery",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "machinery/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

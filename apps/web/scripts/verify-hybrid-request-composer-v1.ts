@@ -444,9 +444,10 @@ ensureTaxonomyLoaded();
 // --- 29 taxonomy regression smoke ---
 {
   const report = auditTaxonomyCoverage();
-  // Pin updated 2026-08-22: harvest overlay (+100 PRODUCT_TYPE, +17 GROUP)
-  check("29 taxonomy nodes 1356", report.nodeCount === 1356);
-  check("29 taxonomy leaves 1108", report.leafCount === 1108);
+  // Pin updated 2026-08-23: Google TR overlay (+762 leaf, +41 GROUP) —
+  // kurucu kararı, tüm dallar "Al".
+  check("29 taxonomy nodes 2159", report.nodeCount === 2159);
+  check("29 taxonomy leaves 1870", report.leafCount === 1870);
   check("29 taxonomy empty parents 0", report.emptyParents.length === 0);
   check("29 taxonomy orphans 0", report.orphans.length === 0);
   check("29 taxonomy cycles 0", report.cycles.length === 0);

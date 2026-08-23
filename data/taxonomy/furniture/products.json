@@ -3715,6 +3715,2478 @@
         "source": "harvest-2026-08-22",
         "note": "Koçtaş"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Masa Ayakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:masa-ayaklari",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Masa Ayakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Masa Tablaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:masa-tablalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Masa Tablaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Masa Parçaları ve Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:masa-parcalari-ve-aksesuarlari",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Masa Parçaları ve Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ofis Koltuğu Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:ofis-koltugu-aksesuarlari",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Ofis Koltuğu Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çalışma Odası ve Küçük Oda Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:aksesuar:calisma-odasi-ve-kucuk-oda-aksesuarlari",
+      "parentId": "tax:furniture:ofis-mobilyalari:aksesuar",
+      "canonicalName": "Çalışma Odası ve Küçük Oda Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Mobilya Örtüleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-mobilya-ortuleri",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Mobilya Örtüleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Açık Hava Depolama Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:acik-hava-depolama-kutulari",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Açık Hava Depolama Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-koltuklari",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-masalari",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Mobilya Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-mobilya-takimlari",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Mobilya Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Sedirleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-sedirleri",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Sedirleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe Yatakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:diger:bahce-ve-balkon-mobilyasi:bahce-yataklari",
+      "parentId": "tax:furniture:diger:bahce-ve-balkon-mobilyasi",
+      "canonicalName": "Bahçe Yatakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "furniture/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Alt Değiştirme Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:bebek-alt-degistirme-masalari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Bebek Alt Değiştirme Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Karyolaları ve Küçük Çocuk Yatakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:bebek-karyolalari-ve-kucuk-cocuk-yataklari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Bebek Karyolaları ve Küçük Çocuk Yatakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek Karyolası ve Küçük Çocuk Yatağı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:bebek-karyolasi-ve-kucuk-cocuk-yatagi-aksesuarlari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Bebek Karyolası ve Küçük Çocuk Yatağı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bebek ve Küçük Çocuk Mobilya Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:bebek-ve-kucuk-cocuk-mobilya-takimlari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Bebek ve Küçük Çocuk Mobilya Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mama Sandalyeleri ve Yükselen Koltuklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:mama-sandalyeleri-ve-yukselen-koltuklar",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Mama Sandalyeleri ve Yükselen Koltuklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mama Sandalyesi ve Koltuk Yükseltici Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:mama-sandalyesi-ve-koltuk-yukseltici-aksesuarlari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Mama Sandalyesi ve Koltuk Yükseltici Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sepet Beşik ve Beşik Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:sepet-besik-ve-besik-aksesuarlari",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Sepet Beşik ve Beşik Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sepet Beşikler ve Beşikler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi:sepet-besikler-ve-besikler",
+      "parentId": "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+      "canonicalName": "Sepet Beşikler ve Beşikler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Dolap ve saklama",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Büfeler ve Raflı Dolaplar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:bufeler-ve-rafli-dolaplar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Büfeler ve Raflı Dolaplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Dolaplar ve Gardıroplar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:dekoratif-dolaplar-ve-gardiroplar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Dekoratif Dolaplar ve Gardıroplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dosya Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:dosya-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Dosya Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Eşya Saklama Sandıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:esya-saklama-sandiklari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Eşya Saklama Sandıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mecmualıklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:mecmualiklar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Mecmualıklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Medya Saklama Dolapları ve Rafları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:medya-saklama-dolaplari-ve-raflari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Medya Saklama Dolapları ve Rafları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:mutfak-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Mutfak Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Saklama Kabinleri ve Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:saklama-kabinleri-ve-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Saklama Kabinleri ve Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Vitrinler ve Kapkacak Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:vitrinler-ve-kapkacak-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Vitrinler ve Kapkacak Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çekmeceli Dolaplar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:cekmeceli-dolaplar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Çekmeceli Dolaplar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ütü Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:utu-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Ütü Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şarap Rafları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:sarap-raflari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Şarap Rafları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şarap ve Likör Dolapları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:sarap-ve-likor-dolaplari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Şarap ve Likör Dolapları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yedek Raflar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:yedek-raflar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Yedek Raflar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Duvar Raf ve Çıkıntıları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:duvar-raf-ve-cikintilari",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Duvar Raf ve Çıkıntıları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kitaplıklar ve Ayaklı Raflar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:dolap-ve-saklama:kitapliklar-ve-ayakli-raflar",
+      "parentId": "tax:furniture:ev-mobilyasi:dolap-ve-saklama",
+      "canonicalName": "Kitaplıklar ve Ayaklı Raflar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Dosyalama ve organizasyon",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Adres Defterleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:adres-defterleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Adres Defterleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "CD'lik ve DVD'likler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:cd-lik-ve-dvd-likler",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "CD'lik ve DVD'likler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ciltleme Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:ciltleme-malzemeleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Ciltleme Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dosya Klasörleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:dosya-klasorleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Dosya Klasörleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dosya Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:dosya-kutulari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Dosya Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kalem Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:kalem-kutulari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Kalem Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kart Dosyaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:kart-dosyalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Kart Dosyaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kart Zarfları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:kart-zarflari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Kart Zarfları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kartvizit Defterleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:kartvizit-defterleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Kartvizit Defterleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kartvizitlikler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:kartvizitlikler",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Kartvizitlikler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Klasörler ve Sunum Dosyaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:klasorler-ve-sunum-dosyalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Klasörler ve Sunum Dosyaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Masaüstü Düzenleyicileri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:masaustu-duzenleyicileri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Masaüstü Düzenleyicileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Para Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:para-kutulari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Para Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Portfolyo Dosyaları ve Bloknotlu Dosyalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:portfolyo-dosyalari-ve-bloknotlu-dosyalar",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Portfolyo Dosyaları ve Bloknotlu Dosyalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Posta Tasnif Rafları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:posta-tasnif-raflari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Posta Tasnif Rafları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Takvimler, Organizerler ve Planlayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:takvimler-organizerler-ve-planlayicilar",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Takvimler, Organizerler ve Planlayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tebrik Kartı Düzenleyicileri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:tebrik-karti-duzenleyicileri",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Tebrik Kartı Düzenleyicileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yemek Tarif Kartı Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon:yemek-tarif-karti-kutulari",
+      "parentId": "tax:furniture:ofis-mobilyalari:dosyalama-ve-organizasyon",
+      "canonicalName": "Yemek Tarif Kartı Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Masalar",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Aktivite Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:aktivite-masalari",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Aktivite Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Masalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:dekoratif-masalar",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Dekoratif Masalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dikiş Makinesi Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:dikis-makinesi-masalari",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Dikiş Makinesi Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Katlanır Masalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:katlanir-masalar",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Katlanır Masalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kotatsu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:kotatsu",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Kotatsu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak ve Yemek Odası Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:mutfak-ve-yemek-odasi-masalari",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Mutfak ve Yemek Odası Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Poker ve Oyun Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:masalar:poker-ve-oyun-masalari",
+      "parentId": "tax:furniture:ev-mobilyasi:masalar",
+      "canonicalName": "Poker ve Oyun Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Ofis aletleri",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bant Kesiciler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:bant-kesiciler",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Bant Kesiciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Büyüteçler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:buyutecler",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Büyüteçler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kalemtıraşlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:kalemtiraslar",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Kalemtıraşlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Klipsli Kağıt Altlıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:klipsli-kagit-altliklari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Klipsli Kağıt Altlıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mektup Açacakları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:mektup-acacaklari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Mektup Açacakları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ofis Lastik Damgaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:ofis-lastik-damgalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Ofis Lastik Damgaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yazım ve Çizim Aleti Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:yazim-ve-cizim-aleti-aksesuarlari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Yazım ve Çizim Aleti Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yazım ve Çizim Aletleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:yazim-ve-cizim-aletleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Yazım ve Çizim Aletleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımba Teli Sökücüler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:zimba-teli-sokuculer",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Zımba Teli Sökücüler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımbalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:zimbalar",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Zımbalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çağrı Zilleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-aletleri:cagri-zilleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-aletleri",
+      "canonicalName": "Çağrı Zilleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "parentId": "tax:furniture:ofis-mobilyalari",
+      "canonicalName": "Ofis mobilyası",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 2,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Büro Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:buro-masalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "canonicalName": "Büro Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Büro Sandalyeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:buro-sandalyeleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "canonicalName": "Büro Sandalyeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ofis Mobilya Setleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:ofis-mobilya-setleri",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "canonicalName": "Ofis Mobilya Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çalışma Masaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:calisma-masalari",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "canonicalName": "Çalışma Masaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çalışma Odaları ve Küçük Odalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:calisma-odalari-ve-kucuk-odalar",
+      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
+      "canonicalName": "Çalışma Odaları ve Küçük Odalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ofis-mobilyalari",
+      "depth": 3,
+      "requestSchemaId": "furniture/ofis-mobilyalari",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Sandalye ve koltuk",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Armut Koltuklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:armut-koltuklar",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Armut Koltuklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Asılı Koltuklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:asili-koltuklar",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Asılı Koltuklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektrikli Masaj Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:elektrikli-masaj-koltuklari",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Elektrikli Masaj Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Katlanır Sandalye ve Tabureler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:katlanir-sandalye-ve-tabureler",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Katlanır Sandalye ve Tabureler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Masa ve Bar Tabureleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:masa-ve-bar-tabureleri",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Masa ve Bar Tabureleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak ve Yemek Odası Sandalyeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:mutfak-ve-yemek-odasi-sandalyeleri",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Mutfak ve Yemek Odası Sandalyeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oyun Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:oyun-koltuklari",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Oyun Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sallanan Sandalyeler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:sallanan-sandalyeler",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Sallanan Sandalyeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tekli Kolsuz Kanepeler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:tekli-kolsuz-kanepeler",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Tekli Kolsuz Kanepeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tekli Koltuklar, Yatar Koltuklar ve Yatak Olabilen Koltuklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:tekli-koltuklar-yatar-koltuklar-ve-yatak-olabilen-koltuklar",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Tekli Koltuklar, Yatar Koltuklar ve Yatak Olabilen Koltuklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzanma Koltukları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:uzanma-koltuklari",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Uzanma Koltukları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yer Sandalyeleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk:yer-sandalyeleri",
+      "parentId": "tax:furniture:ev-mobilyasi:sandalye-ve-koltuk",
+      "canonicalName": "Yer Sandalyeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:takimlar",
+      "parentId": "tax:furniture:ev-mobilyasi",
+      "canonicalName": "Takımlar",
+      "nodeType": "GROUP",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 2,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Banyo Mobilya Setleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:takimlar:banyo-mobilya-setleri",
+      "parentId": "tax:furniture:ev-mobilyasi:takimlar",
+      "canonicalName": "Banyo Mobilya Setleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak ve Yemek Odası Mobilya Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:takimlar:mutfak-ve-yemek-odasi-mobilya-takimlari",
+      "parentId": "tax:furniture:ev-mobilyasi:takimlar",
+      "canonicalName": "Mutfak ve Yemek Odası Mobilya Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Oturma Odası Mobilya Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:takimlar:oturma-odasi-mobilya-takimlari",
+      "parentId": "tax:furniture:ev-mobilyasi:takimlar",
+      "canonicalName": "Oturma Odası Mobilya Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yatak Odası Mobilya Takımları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:takimlar:yatak-odasi-mobilya-takimlari",
+      "parentId": "tax:furniture:ev-mobilyasi:takimlar",
+      "canonicalName": "Yatak Odası Mobilya Takımları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dekoratif Banklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:dekoratif-banklar",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Dekoratif Banklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak ve Yemek Odası Bankları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:mutfak-ve-yemek-odasi-banklari",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Mutfak ve Yemek Odası Bankları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sandıklı Banklar ve Antre Bankları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:sandikli-banklar-ve-antre-banklari",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Sandıklı Banklar ve Antre Bankları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ayrılabilir Koltuk Birimleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:ayrilabilir-koltuk-birimleri",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Ayrılabilir Koltuk Birimleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Koltuk ve Kanepe Destekleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:koltuk-ve-kanepe-destekleri",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Koltuk ve Kanepe Destekleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Asma Koltuk Yedek Parçaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:asma-koltuk-yedek-parcalari",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Asma Koltuk Yedek Parçaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Mutfak Orta Tezgahları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:mutfak-orta-tezgahlari",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Mutfak Orta Tezgahları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tekerlekli Mutfak ve Yemek Odası Sehpaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:tamamlayici-urunler:tekerlekli-mutfak-ve-yemek-odasi-sehpalari",
+      "parentId": "tax:furniture:ev-mobilyasi:tamamlayici-urunler",
+      "canonicalName": "Tekerlekli Mutfak ve Yemek Odası Sehpaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Döşekler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:dosekler",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Döşekler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karyola Başlıkları ve Ayaklıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:karyola-basliklari-ve-ayakliklari",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Karyola Başlıkları ve Ayaklıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yatak Altlıkları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yatak-altliklari",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Yatak Altlıkları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yatak ve Yatak Çerçevesi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yatak-ve-yatak-cercevesi-aksesuarlari",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Yatak ve Yatak Çerçevesi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yataklar ve Yatak Çerçeveleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:furniture:ev-mobilyasi:yatak-odasi:yataklar-ve-yatak-cerceveleri",
+      "parentId": "tax:furniture:ev-mobilyasi:yatak-odasi",
+      "canonicalName": "Yataklar ve Yatak Çerçeveleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "furniture",
+      "subcategoryId": "ev-mobilyasi",
+      "depth": 3,
+      "requestSchemaId": "furniture/ev-mobilyasi",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

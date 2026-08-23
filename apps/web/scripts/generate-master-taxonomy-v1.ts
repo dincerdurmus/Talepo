@@ -428,6 +428,130 @@ function applyHarvestOverlay(
   console.log(`Harvest overlay: +${added} product types (${skipped} already present, skipped)`);
 }
 
+/**
+ * Google Product Taxonomy TR katmanı (kurucu kararı, 2026-08-23: tüm dallar
+ * "Al"). Kaynak: data/taxonomy-sources/google-tr-overlay.json — o dosya da
+ * scratchpad'deki build-google-overlay.mjs ile üretilir, elle düzenlenmez.
+ * Yalnız 3. seviye ürün adlarını alır; derin detay kırılımı onay dışıdır.
+ */
+type GoogleOverlayFile = {
+  source: string;
+  decision: string;
+  categories: Record<
+    string,
+    Array<{ sub: string; group: string; leaves: string[] }>
+  >;
+};
+
+function applyGoogleOverlay(
+  domains: Array<{ id: string; file: string; nodes: TaxonomyNode[] }>,
+): void {
+  const overlayPath = path.join(
+    REPO_ROOT,
+    "data",
+    "taxonomy-sources",
+    "google-tr-overlay.json",
+  );
+  if (!existsSync(overlayPath)) {
+    console.log("Google overlay: kaynak dosya yok, atlandı");
+    return;
+  }
+  const overlay = JSON.parse(
+    readFileSync(overlayPath, "utf8"),
+  ) as GoogleOverlayFile;
+
+  let added = 0;
+  let skipped = 0;
+  let groupsMade = 0;
+
+  for (const domain of domains) {
+    const spec = overlay.categories[domain.id];
+    if (!spec) continue;
+    const nodes = domain.nodes;
+    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const taken = new Set<string>();
+    for (const n of nodes) {
+      taken.add(foldLabel(n.canonicalName));
+      for (const a of n.aliases) taken.add(foldLabel(a));
+    }
+
+    for (const entry of spec) {
+      const subId = `tax:${domain.id}:${entry.sub}`;
+      const subParent = byId.get(subId);
+      if (!subParent) {
+        throw new Error(`Google overlay: unknown subcategory ${subId}`);
+      }
+      let group = nodes.find(
+        (n) =>
+          n.parentId === subId &&
+          n.nodeType === "GROUP" &&
+          foldLabel(n.canonicalName) === foldLabel(entry.group),
+      );
+      if (!group) {
+        group = nodeOf({
+          id: `${subId}:${slugPart(entry.group)}`,
+          parentId: subId,
+          canonicalName: entry.group,
+          nodeType: "GROUP",
+          categoryId: domain.id,
+          subcategoryId: entry.sub,
+          depth: 2,
+          applicableCapabilities: capsFor(domain.id, "GROUP"),
+          requestSchemaId: subParent.requestSchemaId,
+          provenance: {
+            source: "google-product-taxonomy-tr",
+            note: "kurucu onayı 2026-08-23",
+          },
+        });
+        if (byId.has(group.id)) {
+          throw new Error(`Google overlay: id collision ${group.id}`);
+        }
+        nodes.push(group);
+        byId.set(group.id, group);
+        groupsMade += 1;
+      }
+
+      for (const leaf of entry.leaves) {
+        if (taken.has(foldLabel(leaf))) {
+          skipped += 1;
+          continue;
+        }
+        const id = `${group.id}:${slugPart(leaf)}`;
+        if (byId.has(id)) {
+          skipped += 1;
+          continue;
+        }
+        const node = nodeOf({
+          id,
+          parentId: group.id,
+          canonicalName: leaf,
+          aliases: [],
+          nodeType: leafTypeFor(domain.id, entry.sub),
+          categoryId: domain.id,
+          subcategoryId: entry.sub,
+          depth: group.depth + 1,
+          applicableCapabilities: capsFor(
+            domain.id,
+            leafTypeFor(domain.id, entry.sub),
+          ),
+          requestSchemaId: group.requestSchemaId,
+          provenance: {
+            source: "google-product-taxonomy-tr",
+            note: "kurucu onayı 2026-08-23",
+          },
+        });
+        nodes.push(node);
+        byId.set(id, node);
+        taken.add(foldLabel(leaf));
+        added += 1;
+      }
+    }
+  }
+  console.log(
+    `Google TR overlay: +${added} ürün tipi, +${groupsMade} grup (${skipped} zaten vardı)`,
+  );
+}
+
 function expandTree(
   nodes: TaxonomyNode[],
   parent: TaxonomyNode,
@@ -2235,6 +2359,7 @@ function main() {
   ];
 
   applyHarvestOverlay(domains);
+  applyGoogleOverlay(domains);
 
   // Enrich aliases for common TR market terms (precision-first)
   for (const d of domains) {

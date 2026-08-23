@@ -2105,6 +2105,900 @@
         "source": "harvest-2026-08-22",
         "note": "Matbaaloji"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "parentId": "tax:printing:promosyon",
+      "canonicalName": "Ofis ve kırtasiye",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 2,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ataşlar ve Kıskaçlar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:ataslar-ve-kiskaclar",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Ataşlar ve Kıskaçlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Daksiller, Kalem Silgiler ve Şerit Silgiler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:daksiller-kalem-silgiler-ve-serit-silgiler",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Daksiller, Kalem Silgiler ve Şerit Silgiler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Düğme Raptiyeler ve Raptiyeler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:dugme-raptiyeler-ve-raptiyeler",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Düğme Raptiyeler ve Raptiyeler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Etiketler ve Fişler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:etiketler-ve-fisler",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Etiketler ve Fişler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Hamur Yapıştırıcı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:hamur-yapistirici",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Hamur Yapıştırıcı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaplayıcı Film, Kese ve Kılıflar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:kaplayici-film-kese-ve-kiliflar",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Kaplayıcı Film, Kese ve Kılıflar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kağıt Ürünleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:kagit-urunleri",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Kağıt Ürünleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Paket Lastikleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:paket-lastikleri",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Paket Lastikleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Pirinç Kağıt Tutturucular"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:pirinc-kagit-tutturucular",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Pirinç Kağıt Tutturucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Selobant"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:selobant",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Selobant",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Silgiler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:silgiler",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Silgiler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Zımba Telleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:ofis-ve-kirtasiye:zimba-telleri",
+      "parentId": "tax:printing:promosyon:ofis-ve-kirtasiye",
+      "canonicalName": "Zımba Telleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:reklam-malzemesi",
+      "parentId": "tax:printing:promosyon",
+      "canonicalName": "Reklam malzemesi",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 2,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fuar Stantları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:reklam-malzemesi:fuar-stantlari",
+      "parentId": "tax:printing:promosyon:reklam-malzemesi",
+      "canonicalName": "Fuar Stantları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fuar Tezgahları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:promosyon:reklam-malzemesi:fuar-tezgahlari",
+      "parentId": "tax:printing:promosyon:reklam-malzemesi",
+      "canonicalName": "Fuar Tezgahları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "promosyon",
+      "depth": 3,
+      "requestSchemaId": "printing/promosyon",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim",
+      "parentId": "tax:printing:diger",
+      "canonicalName": "Sunum ve tanıtım",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Beyaz Yazı Tahtası"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:beyaz-yazi-tahtasi",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Beyaz Yazı Tahtası",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Doküman Kameraları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:dokuman-kameralari",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Doküman Kameraları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kablosuz Sunum Kumandaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:kablosuz-sunum-kumandalari",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Kablosuz Sunum Kumandaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kara Tahtalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:kara-tahtalar",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Kara Tahtalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kürsüler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:kursuler",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Kürsüler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Lazer Anahtarlıklar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:lazer-anahtarliklar",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Lazer Anahtarlıklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sergi Panoları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:sergi-panolari",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Sergi Panoları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tepegöz Saydamları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:tepegoz-saydamlari",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Tepegöz Saydamları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şövale Tahtaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:sovale-tahtalari",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Şövale Tahtaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Şövaleler"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:sunum-ve-tanitim:sovaleler",
+      "parentId": "tax:printing:diger:sunum-ve-tanitim",
+      "canonicalName": "Şövaleler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret",
+      "parentId": "tax:printing:diger",
+      "canonicalName": "Tabela ve işaret",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Acil Durum ve Çıkış Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:acil-durum-ve-cikis-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Acil Durum ve Çıkış Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Açık ve Kapalı Levhaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:acik-ve-kapali-levhalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Açık ve Kapalı Levhaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dijital Tabelalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:dijital-tabelalar",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Dijital Tabelalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektronik Tabelalar"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:elektronik-tabelalar",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Elektronik Tabelalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Emniyet ve Uyarı Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:emniyet-ve-uyari-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Emniyet ve Uyarı Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güvenlik Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:guvenlik-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Güvenlik Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kaldırım ve Bahçe Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:kaldirim-ve-bahce-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Kaldırım ve Bahçe Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Park Tabelaları ve İzinleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:park-tabelalari-ve-izinleri",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Park Tabelaları ve İzinleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Perakende ve Satış Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:perakende-ve-satis-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Perakende ve Satış Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Politika Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:politika-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Politika Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tesis Tabelaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:tesis-tabelalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Tesis Tabelaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Yol ve Trafik İşaretleri"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:yol-ve-trafik-isaretleri",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "Yol ve Trafik İşaretleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İş Saati Levhaları"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:diger:tabela-ve-isaret:is-saati-levhalari",
+      "parentId": "tax:printing:diger:tabela-ve-isaret",
+      "canonicalName": "İş Saati Levhaları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "printing/diger",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

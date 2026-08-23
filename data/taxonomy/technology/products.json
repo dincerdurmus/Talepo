@@ -2039,6 +2039,1796 @@
         "source": "harvest-2026-08-22",
         "note": "MediaMarkt"
       }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Akıllı Gözlükler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:akilli-gozlukler",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Akıllı Gözlükler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Sunucuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:bilgisayar-sunuculari",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Bilgisayar Sunucuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Dokunmatik Masa Bilgisayarlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:dokunmatik-masa-bilgisayarlar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Dokunmatik Masa Bilgisayarlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elde Taşınabilir Cihazlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:elde-tasinabilir-cihazlar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Elde Taşınabilir Cihazlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tablet Bilgisayarlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:tablet-bilgisayarlar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Tablet Bilgisayarlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Temel Bilgisayar Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:temel-bilgisayar-sistemleri",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Temel Bilgisayar Sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Thin ve Zero Client'lar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:thin-ve-zero-client-lar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "Thin ve Zero Client'lar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnteraktif Kiosklar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:bilgisayar:interaktif-kiosklar",
+      "parentId": "tax:technology:donanim:bilgisayar",
+      "canonicalName": "İnteraktif Kiosklar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Arayan Numarayı Gösteren Cihazlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:arayan-numarayi-gosteren-cihazlar",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Arayan Numarayı Gösteren Cihazlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Telefon İletişimi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:telefon-iletisimi",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Telefon İletişimi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Telesekreterler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:telesekreterler",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Telesekreterler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Konferans Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:video-konferans-cihazlari",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Video Konferans Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çağrı Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:cagri-cihazlari",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "Çağrı Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İletişim Telsizi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:iletisim-telsizi-aksesuarlari",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "İletişim Telsizi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İletişim Telsizleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:iletisim-telsizleri",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "İletişim Telsizleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnterkom Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:interkom-aksesuarlari",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "İnterkom Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "İnterkomlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cep-telefonu-aksesuar:interkomlar",
+      "parentId": "tax:technology:donanim:cep-telefonu-aksesuar",
+      "canonicalName": "İnterkomlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Adaptörler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:adaptorler",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Adaptörler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anten Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:anten-aksesuarlari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Anten Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Antenler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:antenler",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Antenler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bellek"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:bellek",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Bellek",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bellek Kartı Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:bellek-karti-aksesuarlari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Bellek Kartı Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:bilgisayar-aksesuarlari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Bilgisayar Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Bileşenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:bilgisayar-bilesenleri",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Bilgisayar Bileşenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Boş Ortamlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:bos-ortamlar",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Boş Ortamlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Cep Telefonu ve Tablet Tripodları ve Monopodları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:cep-telefonu-ve-tablet-tripodlari-ve-monopodlari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Cep Telefonu ve Tablet Tripodları ve Monopodları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektronik Eşya Film ve Koruyucuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:elektronik-esya-film-ve-koruyuculari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Elektronik Eşya Film ve Koruyucuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Elektronik Eşya Temizleyicileri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:elektronik-esya-temizleyicileri",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Elektronik Eşya Temizleyicileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Güç"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:guc",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Güç",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kablo Yönetimi"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:kablo-yonetimi",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Kablo Yönetimi",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kablolar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:kablolar",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Kablolar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ses ve Görüntü Ayırıcıları ve Anahtarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:ses-ve-goruntu-ayiricilari-ve-anahtarlari",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Ses ve Görüntü Ayırıcıları ve Anahtarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sinyal Bozucular"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:sinyal-bozucular",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Sinyal Bozucular",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sinyal Güçlendiriciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:sinyal-guclendiriciler",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Sinyal Güçlendiriciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uzaktan Kumandalar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:cevre-birimleri:uzaktan-kumandalar",
+      "parentId": "tax:technology:donanim:cevre-birimleri",
+      "canonicalName": "Uzaktan Kumandalar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotomontaj Malzemeleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotomontaj-malzemeleri",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotomontaj Malzemeleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotoğraf Negatifi ve Slayt Saklama Kutuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotograf-negatifi-ve-slayt-saklama-kutulari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotoğraf Negatifi ve Slayt Saklama Kutuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Işıklandırma ve Stüdyo"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:isiklandirma-ve-studyo",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Işıklandırma ve Stüdyo",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Karanlık Oda"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:karanlik-oda",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Karanlık Oda",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotoğraf Makinesi Lensi Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotograf-makinesi-lensi-aksesuarlari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotoğraf Makinesi Lensi Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotoğraf Makinesi Parçaları ve Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotograf-makinesi-parcalari-ve-aksesuarlari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotoğraf Makinesi Parçaları ve Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Fotoğraf Makinesi ve Kamera Lensleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:fotograf-makinesi-ve-kamera-lensleri",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Fotoğraf Makinesi ve Kamera Lensleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Kamera ve Optik Yedek Kabloları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:kamera-ve-optik-yedek-kablolari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Kamera ve Optik Yedek Kabloları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Optik Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:optik-aksesuarlari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Optik Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tripod ve Monopod Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:tripod-ve-monopod-aksesuarlari",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Tripod ve Monopod Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Tripodlar ve Monopodlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:fotograf-ve-kamera:tripodlar-ve-monopodlar",
+      "parentId": "tax:technology:donanim:fotograf-ve-kamera",
+      "canonicalName": "Tripodlar ve Monopodlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "parentId": "tax:technology:yazilim-gelistirme",
+      "canonicalName": "Hazır yazılım",
+      "nodeType": "GROUP",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 2,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:antivirus-ve-guvenlik-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Antivirüs ve Güvenlik Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:ag-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Ağ Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:bilgisayar-yardimci-araclari-ve-bakim-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Bilgisayar Yardımcı Araçları ve Bakım Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:derleme-ve-programlama-araclari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Derleme ve Programlama Araçları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:egitim-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Eğitim Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:finans-vergi-ve-muhasebe-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Finans, Vergi ve Muhasebe Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:gps-harita-verileri-ve-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "GPS Harita Verileri ve Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:geri-yukleme-diskleri",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Geri Yükleme Diskleri",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:multimedya-ve-tasarim-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Multimedya ve Tasarım Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:ofis-uygulama-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Ofis Uygulama Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:sozluk-ve-ceviri-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Sözlük ve Çeviri Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:tasinabilir-cihaz-ve-pda-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "Taşınabilir Cihaz ve PDA Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:is-ve-verimlilik-yazilimlari",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "İş ve Verimlilik Yazılımları",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:yazilim-gelistirme:hazir-yazilim:isletim-sistemleri",
+      "parentId": "tax:technology:yazilim-gelistirme:hazir-yazilim",
+      "canonicalName": "İşletim Sistemleri",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "yazilim-gelistirme",
+      "depth": 3,
+      "requestSchemaId": "technology/yazilim-gelistirme",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Anons Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:anons-sistemleri",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Anons Sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "DJ ve Uzman Ses Sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:dj-ve-uzman-ses-sistemleri",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "DJ ve Uzman Ses Sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Megafonlar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:megafonlar",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Megafonlar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Sahne Ekipmanları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:sahne-ekipmanlari",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Sahne Ekipmanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ses Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:ses-aksesuarlari",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Ses Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ses Bileşenleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:ses-bilesenleri",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Ses Bileşenleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Ses Çalar ve Kaydediciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:ses-ve-kulaklik:ses-calar-ve-kaydediciler",
+      "parentId": "tax:technology:donanim:ses-ve-kulaklik",
+      "canonicalName": "Ses Çalar ve Kaydediciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bilgisayar Monitörleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:bilgisayar-monitorleri",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Bilgisayar Monitörleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Projeksiyon Cihazları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:projeksiyon-cihazlari",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Projeksiyon Cihazları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Uydu ve Kablo TV"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:uydu-ve-kablo-tv",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Uydu ve Kablo TV",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Aksesuarları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-aksesuarlari",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Aksesuarları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Montaj Donanımı ve Prodüksiyon Ekipmanları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-montaj-donanimi-ve-produksiyon-ekipmanlari",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Montaj Donanımı ve Prodüksiyon Ekipmanları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Oynatıcılar ve Kaydediciler"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-oynaticilar-ve-kaydediciler",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Oynatıcılar ve Kaydediciler",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Sunucuları"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-sunuculari",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Sunucuları",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Vericileri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-vericileri",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Vericileri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Video Çoklayıcılar"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ENTITY_SPEC",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:technology:donanim:tv-ve-goruntu:video-coklayicilar",
+      "parentId": "tax:technology:donanim:tv-ve-goruntu",
+      "canonicalName": "Video Çoklayıcılar",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "technology",
+      "subcategoryId": "donanim",
+      "depth": 3,
+      "requestSchemaId": "technology/donanim",
+      "provenance": {
+        "source": "google-product-taxonomy-tr",
+        "note": "kurucu onayı 2026-08-23"
+      }
     }
   ]
 }

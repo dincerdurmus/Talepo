@@ -1,0 +1,1153 @@
+{
+  "source": "GOOGLE_PRODUCT_TAXONOMY_TR",
+  "decision": "kurucu 2026-08-23: tüm dallar AL",
+  "generatedFrom": "google-taxonomy-tr.txt",
+  "categories": {
+    "baby": [
+      {
+        "sub": "bakim",
+        "group": "Bakım",
+        "leaves": [
+          "Bebek Alt Alma Matı ve Tepsisi Örtüleri",
+          "Bebek Alt Alma Setleri",
+          "Bebek Bezi Astarları",
+          "Bebek Bezi Kutuları",
+          "Bebek Bezi Çöp Kovaları",
+          "Bebek Bezi Çöp Kovası Aksesuarları",
+          "Bebek Bezleri",
+          "Bebek Islak Mendilleri",
+          "Bebekler için Islak Mendil Dispanserleri ve Mendil Isıtıcıları",
+          "Bez Değiştirme Matları ve Alanları",
+          "Kirli Bebek Bezi Çantaları",
+          "Pişik Tedavi Ürünleri"
+        ]
+      },
+      {
+        "sub": "bakim",
+        "group": "Banyo",
+        "leaves": [
+          "Banyo Şapkaları",
+          "Bebek Küvetleri ve Banyo Tabureleri"
+        ]
+      },
+      {
+        "sub": "bakim",
+        "group": "Bebek sağlığı",
+        "leaves": [
+          "Bebek Emziği Mendilleri",
+          "Bebek Sağlığı ve Bakım Setleri",
+          "Burun Aspiratörleri",
+          "Emzik Klips ve Tutucuları",
+          "Emzikler ve Diş Kaşıyıcılar"
+        ]
+      },
+      {
+        "sub": "beslenme",
+        "group": "Beslenme ürünleri",
+        "leaves": [
+          "Anne Sütü Depolama Kapları",
+          "Bebek Bakım Zamanlayıcıları",
+          "Bebek ve Küçük Çocuk Gıdaları",
+          "Biberon Isıtıcı ve Sterilizatörler",
+          "Biberon Uçları ve Eklentileri",
+          "Emzirme Yastıkları",
+          "Emzirme Yastığı Kılıfları",
+          "Emzirme Önlükleri",
+          "Gaz Çıkarma ve Omuz Bezleri",
+          "Göğüs Pedleri ve Koruyucuları",
+          "Göğüs Pompaları",
+          "Göğüs Pompası Aksesuarları",
+          "Mama Önlükleri",
+          "Suluklar"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Güvenlik",
+        "leaves": [
+          "Bebek Emniyet Kilitleri ve Muhafazaları",
+          "Bebek Güvenlik Kayışları",
+          "Bebek Güvenlik Çitleri",
+          "Bebek ve Evcil Hayvan Kapıları",
+          "Bebek ve Evcil Hayvan Kapısı Aksesuarları",
+          "Bebek İzleme Cihazları"
+        ]
+      },
+      {
+        "sub": "bebek-arabasi",
+        "group": "Oto koltuğu ve taşıma",
+        "leaves": [
+          "Alışveriş Arabası ve Mama Sandalyesi Kılıfları",
+          "Bebek Arabası Aksesuarları",
+          "Bebek Arabası Örtüleri ve Tulumları",
+          "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları",
+          "Kanguru Aksesuarları",
+          "Bebek Arabaları",
+          "Bebek ve Küçük Çocuk Oto Koltukları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Oyun ve gezi",
+        "leaves": [
+          "Alfabe Oyuncakları",
+          "Bebekler için Aktivite Oyuncakları",
+          "Bebekler için Hareketli Teçhizatlar",
+          "Beşikler ve Sallanan Oyuncaklar",
+          "Dönenceler",
+          "Hoppalalar ve Salıncaklar",
+          "Oyun Bahçeleri",
+          "Oyun Halıları ve Egzersiz Düzenekleri",
+          "Sıralama ve İstifleme Oyuncakları",
+          "Yürüteçler ve Eğlendiriciler",
+          "Çıngıraklar",
+          "İtmeli ve Çekmeli Oyuncaklar"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Oyuncaklar",
+        "leaves": [
+          "Aktivite Oyuncakları",
+          "Banyo Oyuncakları",
+          "Bebekler, Oyun Setleri ve Oyuncak Figürler",
+          "Binek Oyuncak Aksesuarları",
+          "Binmeli Oyuncaklar",
+          "Eğitici Oyuncaklar",
+          "Görsel Oyuncaklar",
+          "Kurmalı Oyuncaklar",
+          "Müzikli Oyuncaklar",
+          "Ofis Oyuncakları",
+          "Oyuncak Hediye Sepetleri",
+          "Oyuncak Silah Aksesuarları",
+          "Oyuncak Silahlar ve Aletler",
+          "Oyuncak Taşıt Aksesuarları",
+          "Oyuncak Taşıtlar",
+          "Plaj ve Kum Oyuncakları",
+          "Robotik Oyuncaklar",
+          "Sanat ve Çizim Oyuncakları",
+          "Spor Oyuncakları",
+          "Spor Oyuncağı Aksesuarları",
+          "Top Havuzları",
+          "Top Havuzu Aksesuarları",
+          "Uzaktan Kumandalı Oyuncak Aksesuarları",
+          "Uzaktan Kumandalı Oyuncaklar",
+          "Uçan Oyuncak Aksesuarları",
+          "Uçan Oyuncaklar",
+          "Yap-İnan Oyunu",
+          "Yapı Oyuncakları"
+        ]
+      },
+      {
+        "sub": "bakim",
+        "group": "Tuvalet eğitimi",
+        "leaves": [
+          "Lazımlıklar",
+          "Tuvalet Eğitim Setleri"
+        ]
+      },
+      {
+        "sub": "uyku-besik",
+        "group": "Uyku",
+        "leaves": [
+          "Bebek Battaniyeleri",
+          "Kundak Battaniyeleri"
+        ]
+      }
+    ],
+    "furniture": [
+      {
+        "sub": "ofis-mobilyalari",
+        "group": "Aksesuar",
+        "leaves": [
+          "Masa Ayakları",
+          "Masa Tablaları",
+          "Masa Parçaları ve Aksesuarları",
+          "Ofis Koltuğu Aksesuarları",
+          "Çalışma Odası ve Küçük Oda Aksesuarları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Bahçe ve Balkon Mobilyası",
+        "leaves": [
+          "Bahçe Mobilya Örtüleri",
+          "Açık Hava Depolama Kutuları",
+          "Bahçe Koltukları",
+          "Bahçe Masaları",
+          "Bahçe Mobilya Takımları",
+          "Bahçe Sedirleri",
+          "Bahçe Yatakları"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Çocuk & Genç Odası",
+        "leaves": [
+          "Bebek Alt Değiştirme Masaları",
+          "Bebek Karyolaları ve Küçük Çocuk Yatakları",
+          "Bebek Karyolası ve Küçük Çocuk Yatağı Aksesuarları",
+          "Bebek ve Küçük Çocuk Mobilya Takımları",
+          "Mama Sandalyeleri ve Yükselen Koltuklar",
+          "Mama Sandalyesi ve Koltuk Yükseltici Aksesuarları",
+          "Sepet Beşik ve Beşik Aksesuarları",
+          "Sepet Beşikler ve Beşikler"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Dolap ve saklama",
+        "leaves": [
+          "Büfeler ve Raflı Dolaplar",
+          "Dekoratif Dolaplar ve Gardıroplar",
+          "Dosya Dolapları",
+          "Eşya Saklama Sandıkları",
+          "Mecmualıklar",
+          "Medya Saklama Dolapları ve Rafları",
+          "Mutfak Dolapları",
+          "Saklama Kabinleri ve Dolapları",
+          "Vitrinler ve Kapkacak Dolapları",
+          "Çekmeceli Dolaplar",
+          "Ütü Dolapları",
+          "Şarap Rafları",
+          "Şarap ve Likör Dolapları",
+          "Yedek Raflar",
+          "Duvar Raf ve Çıkıntıları",
+          "Kitaplıklar ve Ayaklı Raflar"
+        ]
+      },
+      {
+        "sub": "ofis-mobilyalari",
+        "group": "Dosyalama ve organizasyon",
+        "leaves": [
+          "Adres Defterleri",
+          "CD'lik ve DVD'likler",
+          "Ciltleme Malzemeleri",
+          "Dosya Klasörleri",
+          "Dosya Kutuları",
+          "Kalem Kutuları",
+          "Kart Dosyaları",
+          "Kart Zarfları",
+          "Kartvizit Defterleri",
+          "Kartvizitlikler",
+          "Klasörler ve Sunum Dosyaları",
+          "Masaüstü Düzenleyicileri",
+          "Para Kutuları",
+          "Portfolyo Dosyaları ve Bloknotlu Dosyalar",
+          "Posta Tasnif Rafları",
+          "Takvimler, Organizerler ve Planlayıcılar",
+          "Tebrik Kartı Düzenleyicileri",
+          "Yemek Tarif Kartı Kutuları"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Masalar",
+        "leaves": [
+          "Aktivite Masaları",
+          "Dekoratif Masalar",
+          "Dikiş Makinesi Masaları",
+          "Katlanır Masalar",
+          "Kotatsu",
+          "Mutfak ve Yemek Odası Masaları",
+          "Poker ve Oyun Masaları"
+        ]
+      },
+      {
+        "sub": "ofis-mobilyalari",
+        "group": "Ofis aletleri",
+        "leaves": [
+          "Bant Kesiciler",
+          "Büyüteçler",
+          "Kalemtıraşlar",
+          "Klipsli Kağıt Altlıkları",
+          "Mektup Açacakları",
+          "Ofis Lastik Damgaları",
+          "Yazım ve Çizim Aleti Aksesuarları",
+          "Yazım ve Çizim Aletleri",
+          "Zımba Teli Sökücüler",
+          "Zımbalar",
+          "Çağrı Zilleri"
+        ]
+      },
+      {
+        "sub": "ofis-mobilyalari",
+        "group": "Ofis mobilyası",
+        "leaves": [
+          "Büro Masaları",
+          "Büro Sandalyeleri",
+          "Ofis Mobilya Setleri",
+          "Çalışma Masaları",
+          "Çalışma Odaları ve Küçük Odalar"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Sandalye ve koltuk",
+        "leaves": [
+          "Armut Koltuklar",
+          "Asılı Koltuklar",
+          "Elektrikli Masaj Koltukları",
+          "Katlanır Sandalye ve Tabureler",
+          "Masa ve Bar Tabureleri",
+          "Mutfak ve Yemek Odası Sandalyeleri",
+          "Oyun Koltukları",
+          "Sallanan Sandalyeler",
+          "Tekli Kolsuz Kanepeler",
+          "Tekli Koltuklar, Yatar Koltuklar ve Yatak Olabilen Koltuklar",
+          "Uzanma Koltukları",
+          "Yer Sandalyeleri"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Takımlar",
+        "leaves": [
+          "Banyo Mobilya Setleri",
+          "Mutfak ve Yemek Odası Mobilya Takımları",
+          "Oturma Odası Mobilya Takımları",
+          "Yatak Odası Mobilya Takımları"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Tamamlayıcı Ürünler",
+        "leaves": [
+          "Dekoratif Banklar",
+          "Mutfak ve Yemek Odası Bankları",
+          "Sandıklı Banklar ve Antre Bankları",
+          "Ayrılabilir Koltuk Birimleri",
+          "Koltuk ve Kanepe Destekleri",
+          "Asma Koltuk Yedek Parçaları",
+          "Mutfak Orta Tezgahları",
+          "Tekerlekli Mutfak ve Yemek Odası Sehpaları"
+        ]
+      },
+      {
+        "sub": "ev-mobilyasi",
+        "group": "Yatak Odası",
+        "leaves": [
+          "Döşekler",
+          "Karyola Başlıkları ve Ayaklıkları",
+          "Yatak Altlıkları",
+          "Yatak ve Yatak Çerçevesi Aksesuarları",
+          "Yataklar ve Yatak Çerçeveleri"
+        ]
+      }
+    ],
+    "printing": [
+      {
+        "sub": "promosyon",
+        "group": "Ofis ve kırtasiye",
+        "leaves": [
+          "Ataşlar ve Kıskaçlar",
+          "Daksiller, Kalem Silgiler ve Şerit Silgiler",
+          "Düğme Raptiyeler ve Raptiyeler",
+          "Etiketler ve Fişler",
+          "Hamur Yapıştırıcı",
+          "Kaplayıcı Film, Kese ve Kılıflar",
+          "Kağıt Ürünleri",
+          "Paket Lastikleri",
+          "Pirinç Kağıt Tutturucular",
+          "Selobant",
+          "Silgiler",
+          "Zımba Telleri"
+        ]
+      },
+      {
+        "sub": "promosyon",
+        "group": "Reklam malzemesi",
+        "leaves": [
+          "Fuar Stantları",
+          "Fuar Tezgahları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Sunum ve tanıtım",
+        "leaves": [
+          "Beyaz Yazı Tahtası",
+          "Doküman Kameraları",
+          "Kablosuz Sunum Kumandaları",
+          "Kara Tahtalar",
+          "Kürsüler",
+          "Lazer Anahtarlıklar",
+          "Sergi Panoları",
+          "Tepegöz Saydamları",
+          "Şövale Tahtaları",
+          "Şövaleler"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Tabela ve işaret",
+        "leaves": [
+          "Acil Durum ve Çıkış Tabelaları",
+          "Açık ve Kapalı Levhaları",
+          "Dijital Tabelalar",
+          "Elektronik Tabelalar",
+          "Emniyet ve Uyarı Tabelaları",
+          "Güvenlik Tabelaları",
+          "Kaldırım ve Bahçe Tabelaları",
+          "Park Tabelaları ve İzinleri",
+          "Perakende ve Satış Tabelaları",
+          "Politika Tabelaları",
+          "Tesis Tabelaları",
+          "Yol ve Trafik İşaretleri",
+          "İş Saati Levhaları"
+        ]
+      }
+    ],
+    "technology": [
+      {
+        "sub": "donanim",
+        "group": "Bilgisayar",
+        "leaves": [
+          "Akıllı Gözlükler",
+          "Bilgisayar Sunucuları",
+          "Dokunmatik Masa Bilgisayarlar",
+          "Elde Taşınabilir Cihazlar",
+          "Tablet Bilgisayarlar",
+          "Temel Bilgisayar Sistemleri",
+          "Thin ve Zero Client'lar",
+          "İnteraktif Kiosklar"
+        ]
+      },
+      {
+        "sub": "donanim",
+        "group": "Cep Telefonu & Aksesuar",
+        "leaves": [
+          "Arayan Numarayı Gösteren Cihazlar",
+          "Telefon İletişimi",
+          "Telesekreterler",
+          "Video Konferans Cihazları",
+          "Çağrı Cihazları",
+          "İletişim Telsizi Aksesuarları",
+          "İletişim Telsizleri",
+          "İnterkom Aksesuarları",
+          "İnterkomlar"
+        ]
+      },
+      {
+        "sub": "donanim",
+        "group": "Çevre birimleri",
+        "leaves": [
+          "Adaptörler",
+          "Anten Aksesuarları",
+          "Antenler",
+          "Bellek",
+          "Bellek Kartı Aksesuarları",
+          "Bilgisayar Aksesuarları",
+          "Bilgisayar Bileşenleri",
+          "Boş Ortamlar",
+          "Cep Telefonu ve Tablet Tripodları ve Monopodları",
+          "Elektronik Eşya Film ve Koruyucuları",
+          "Elektronik Eşya Temizleyicileri",
+          "Güç",
+          "Kablo Yönetimi",
+          "Kablolar",
+          "Ses ve Görüntü Ayırıcıları ve Anahtarları",
+          "Sinyal Bozucular",
+          "Sinyal Güçlendiriciler",
+          "Uzaktan Kumandalar"
+        ]
+      },
+      {
+        "sub": "donanim",
+        "group": "Fotoğraf ve Kamera",
+        "leaves": [
+          "Fotomontaj Malzemeleri",
+          "Fotoğraf Negatifi ve Slayt Saklama Kutuları",
+          "Işıklandırma ve Stüdyo",
+          "Karanlık Oda",
+          "Fotoğraf Makinesi Lensi Aksesuarları",
+          "Fotoğraf Makinesi Parçaları ve Aksesuarları",
+          "Fotoğraf Makinesi ve Kamera Lensleri",
+          "Kamera ve Optik Yedek Kabloları",
+          "Optik Aksesuarları",
+          "Tripod ve Monopod Aksesuarları",
+          "Tripodlar ve Monopodlar"
+        ]
+      },
+      {
+        "sub": "yazilim-gelistirme",
+        "group": "Hazır yazılım",
+        "leaves": [
+          "Antivirüs ve Güvenlik Yazılımları",
+          "Ağ Yazılımları",
+          "Bilgisayar Yardımcı Araçları ve Bakım Yazılımları",
+          "Derleme ve Programlama Araçları",
+          "Eğitim Yazılımları",
+          "Finans, Vergi ve Muhasebe Yazılımları",
+          "GPS Harita Verileri ve Yazılımları",
+          "Geri Yükleme Diskleri",
+          "Multimedya ve Tasarım Yazılımları",
+          "Ofis Uygulama Yazılımları",
+          "Sözlük ve Çeviri Yazılımları",
+          "Taşınabilir Cihaz ve PDA Yazılımları",
+          "İş ve Verimlilik Yazılımları",
+          "İşletim Sistemleri"
+        ]
+      },
+      {
+        "sub": "donanim",
+        "group": "Ses ve Kulaklık",
+        "leaves": [
+          "Anons Sistemleri",
+          "DJ ve Uzman Ses Sistemleri",
+          "Megafonlar",
+          "Sahne Ekipmanları",
+          "Ses Aksesuarları",
+          "Ses Bileşenleri",
+          "Ses Çalar ve Kaydediciler"
+        ]
+      },
+      {
+        "sub": "donanim",
+        "group": "TV ve görüntü",
+        "leaves": [
+          "Bilgisayar Monitörleri",
+          "Projeksiyon Cihazları",
+          "Uydu ve Kablo TV",
+          "Video Aksesuarları",
+          "Video Montaj Donanımı ve Prodüksiyon Ekipmanları",
+          "Video Oynatıcılar ve Kaydediciler",
+          "Video Sunucuları",
+          "Video Vericileri",
+          "Video Çoklayıcılar"
+        ]
+      }
+    ],
+    "home-kitchen": [
+      {
+        "sub": "diger",
+        "group": "Ev dekorasyonu",
+        "leaves": [
+          "Adres Tabelaları",
+          "Alevsiz Mumlar",
+          "Aynalar",
+          "Bahçe ve Patika Taşları",
+          "Bayrak ve Rüzgar Tulumu Aksesuarları",
+          "Bayraklar ve Rüzgar Yön Ölçerleri",
+          "Buzdolabı Magnetleri",
+          "Camlı Kutular",
+          "Dekoratif Kaplar",
+          "Dekoratif Kavanozlar",
+          "Dekoratif Tabaklar",
+          "Dekoratif Tepsiler",
+          "Dekoratif Ziller",
+          "Dekoratif Şişeler",
+          "Duvar Kağıdı",
+          "Düş Kapanları",
+          "Ekosferler",
+          "Ev Dekorasyon Çıkartmaları",
+          "Ev Parfümleri",
+          "Ev Parfümü Aksesuarları",
+          "Fıskiyeler ve Havuzlar",
+          "Güneş Saatleri",
+          "Günışığı Yakalayıcılar",
+          "Heykelcikler",
+          "Kapı Numaraları ve Harfleri",
+          "Kapı Önü Paspasları",
+          "Kar Küreleri",
+          "Karton Figürler",
+          "Kilimler",
+          "Kitap Destekleri",
+          "Koltuk Kılıfları",
+          "Komik Uyarı İşaretleri",
+          "Kum Saatleri",
+          "Kumbaralar ve Para Kutuları",
+          "Kurutulmuş Çiçekler",
+          "Kuş Banyoları",
+          "Kuş Evi Aksesuarları",
+          "Kuş Yuvaları ve Vahşi Hayvan Yuvaları",
+          "Kuş ve Vahşi Hayvan Yemlik Aksesuarları",
+          "Kuş ve Vahşi Hayvan Yemlikleri",
+          "Küre Atlaslar",
+          "Kırlentler",
+          "Mevsim ve Bayram Dekorasyonları",
+          "Mont ve Şapka Askılıkları",
+          "Müzik Kutuları",
+          "Osmanlı Minderleri",
+          "Pencere Dekorları",
+          "Pencere Dekoru Aksesuarları",
+          "Pencere Magnetleri",
+          "Peçete Halkaları",
+          "Posta Atma Delikleri",
+          "Posta Kutuları",
+          "Posta Kutusu Aksesuarları",
+          "Resim Çerçeveleri",
+          "Rüzgar Gülleri ve Fırıldakları",
+          "Rüzgar Zilleri",
+          "Saat Parçaları",
+          "Saatler",
+          "Sanatsal Çalışmalar",
+          "Sandalye ve Koltuk Minderleri",
+          "Sandıklar",
+          "Sepetler",
+          "Süs Tabakları ve Levhaları",
+          "Sırt Yastıkları",
+          "Vazo Dolguları ve Masaüstü Süsleme Taşları",
+          "Vazolar",
+          "Yapay Floralar",
+          "Yapay Yiyecekler",
+          "Yağmur Zincirleri",
+          "Yağışölçerler",
+          "Yelkovanlar ve Çatı Süsleri",
+          "Çatı Süsleri",
+          "Çelenk ve Taçlar",
+          "Çim Süsleri ve Bahçe Heykelleri",
+          "Çocuk Boy Cetvelleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Ev sarf malzemesi",
+        "leaves": [
+          "Ayakkabı Bakım ve Aletleri",
+          "Ev Kağıt Ürünleri",
+          "Ev Temizlik Malzemeleri",
+          "Ev Termometreleri",
+          "Garaj Zemin Döşemeleri",
+          "Halı Altlıkları",
+          "Haşere Kontrolü",
+          "Merdiven Kaydırmazları",
+          "Mobilyalar için Zemin Koruyucular",
+          "Nem Emiciler",
+          "Saklama ve Düzenleme",
+          "Zemin Koruma Filmleri ve Yollukları",
+          "Çamaşırhane Sarf Malzemeleri",
+          "Çekmece ve Raf Kaplamaları",
+          "Çöp Muhafazası",
+          "Çöp Muhafazası Aksesuarları",
+          "Çöp Poşetleri",
+          "Çöp Sıkıştırıcı Aksesuarları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Mutfak gereçleri",
+        "leaves": [
+          "Mutfak Aleti Aksesuarları",
+          "Mutfak Aletleri",
+          "Mutfak Gereçleri ve Aletleri",
+          "Ocak ve Fırında Pişirme Gereçleri",
+          "Prefabrike Mutfaklar",
+          "Sofra Takımları",
+          "Yiyecek Saklama",
+          "Yiyecek Saklama Aksesuarları",
+          "Yiyecek ve İçecek Taşıma Gereçleri",
+          "İçki Takımları"
+        ]
+      }
+    ],
+    "appliances": [
+      {
+        "sub": "diger",
+        "group": "Ev aleti aksesuarları",
+        "leaves": [
+          "Elektrik Süpürgesi Aksesuarları",
+          "Hava Arıtıcı Aksesuarları",
+          "Kalorifer Aksesuarları",
+          "Klima Aksesuarları",
+          "Nem Giderici Aksesuarları",
+          "Nemlendirici Aksesuarları",
+          "Ocak ve Kazan Aksesuarları",
+          "Termosifon Aksesuarları",
+          "Vantilatör Aksesuarları",
+          "Zemin Temizleyici ve Buharlı Temizleyici Aksesuarları",
+          "Çamaşırhane Makinesi Aksesuarları",
+          "Şemsiye Soba Aksesuarları"
+        ]
+      },
+      {
+        "sub": "kucuk-ev-aletleri",
+        "group": "Ev aletleri",
+        "leaves": [
+          "Buharlı Duvar Kağıdı Sökme Makineleri",
+          "Elektrik Süpürgeleri",
+          "Futon Kurutucular",
+          "Garaj Kapısı Açıcılar",
+          "Garaj Kapısı Tuş Takımları ve Uzaktan Kumandaları",
+          "Halı ve Kilim Kurutucular",
+          "Hava Kontrol Aygıtları",
+          "Yüksek Frekanslı Temizleyiciler",
+          "Zemin Cilalayıcılar ve Perdahlayıcılar",
+          "Zemin Temizleyiciler ve Buharlı Temizleyiciler",
+          "Çamaşırhane Makineleri"
+        ]
+      }
+    ],
+    "machinery": [
+      {
+        "sub": "yedek-parca",
+        "group": "Alet aksesuarları",
+        "leaves": [
+          "Alet Bıçak Ağızları",
+          "Alet Güvenlik Bağları",
+          "Alet Sapı Kamaları",
+          "Alet Stantları",
+          "Alet Yuvaları",
+          "Balta Aksesuarları",
+          "Boya Aleti Aksesuarları",
+          "El Feneri Aksesuarları",
+          "Elektrikli Alet Bataryaları",
+          "Elektrikli Alet Şarj Cihazları",
+          "Endüstriyel Zımba Makineleri",
+          "Freze Aksesuarları",
+          "Havya Aksesuarları",
+          "Kamalama Araçları",
+          "Karıştırıcı Uçlar",
+          "Kaynak Makinesi Aksesuarları",
+          "Kesici Aksesuarları",
+          "Kumlama Aksesuarları",
+          "Magnetizörler ve Demagnetizörler",
+          "Matkap ve Tornavide Aksesuarları",
+          "Planya Tezgahı Aksesuarları",
+          "Sabitleyiciler",
+          "Sökme Takma Aleti Aksesuarları",
+          "Taşlama Makinesi Aksesuarları",
+          "Testere Aksesuarları",
+          "Zımparalama Aksesuarları",
+          "Çapa ve Kazma Aksesuarları",
+          "Çekiç Aksesuarları",
+          "Ölçüm Aleti ve Sensör Aksesuarları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Depolama ve raf",
+        "leaves": [
+          "Endüstriyel Dolaplar",
+          "Endüstriyel Raflar",
+          "Nakliye Konteynırları",
+          "Tel Bölmeler, Dolaplar ve Kapılar"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "El aletleri ve hırdavat",
+        "leaves": [
+          "Alet Anahtarları",
+          "Alet Bıçakları",
+          "Alet Eğeleri",
+          "Alet Mengeneleri",
+          "Alet Takımları",
+          "Ampul Değiştiriciler",
+          "Baca Temizlik Fırçaları",
+          "Baltalar",
+          "Beton Süpürgeleri",
+          "Bileyiciler",
+          "Boru Bükücüler",
+          "Boru Temizleme Fırçaları",
+          "Boru Temizleyiciler",
+          "Boya Aletleri",
+          "Cilalayıcılar ve Perdahlayıcılar",
+          "Dalıcı Pistonlar",
+          "Darbeli Anahtar ve Vidalamalar",
+          "Delgiler ve Bizler",
+          "Direk Çukuru Kazıcılar",
+          "Duvarcı Aletleri",
+          "El Planyaları",
+          "El ve Kafa Fenerleri",
+          "Elektrikçi Kılavuz Telleri",
+          "Endüstriyel Vibratörler",
+          "Freze Makineleri",
+          "Ispatulalar ve Raspalar",
+          "Isı Tabancaları",
+          "Kalafat Aletleri",
+          "Kaldırma Mıknatısları",
+          "Kaydırma Arabaları ve El Arabaları",
+          "Kaynak Tabancaları ve Plazma Kesme Aletleri",
+          "Kerpetenler",
+          "Kesiciler",
+          "Kompresörler",
+          "Kumlama Makineleri",
+          "Kılavuz Pafta Setleri",
+          "Lehim Aletleri",
+          "Lokma Uçlu Tornavidalar",
+          "Manivelalar",
+          "Merdivenler ve Yapı İskeleleri",
+          "Motorlu El Karıştırıcıları",
+          "Musluk Göbeği Yenileme Aletleri",
+          "Odun Yarma Makineleri",
+          "Oyma Aletleri",
+          "Perçinleme Aletleri",
+          "Planyalar",
+          "Raybalar",
+          "Rendeler",
+          "Saplar",
+          "Somun Anahtarları",
+          "Sıkıştırıcılar",
+          "Taşlama Makineleri",
+          "Tel ve Kablo El Aletleri",
+          "Testere Tezgahları",
+          "Testereler",
+          "Torna Tezgahları",
+          "Tornavidalar",
+          "Tutma Aletleri",
+          "Vargeller",
+          "Yağ Filtresi Drenleri",
+          "Yağ Tabancaları",
+          "Yiv Açma Makineleri",
+          "Yönlendirme Aletleri",
+          "Zımpara Blokları",
+          "Zımpara Makineleri",
+          "Çakmaklar ve Kibritler",
+          "Çalışma Lambaları",
+          "Çapak Alıcılar",
+          "Çapalar ve Kazmalar",
+          "Çekiçler",
+          "Çivi Sökme Aletleri",
+          "Çivi Çakıcılar ve Zımbalar",
+          "Çok İşlevli Elektrikli Aletler",
+          "Ölçüm Aletleri ve Sensörler",
+          "Örsler",
+          "Üfleçler",
+          "İnceleme Aynaları",
+          "İşaretleme Aletleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Elektrik malzemeleri",
+        "leaves": [
+          "Armatürler, Rotorlar ve Statörler",
+          "Ayar Rezistansları ve Starterler",
+          "Devre Kesici Paneller",
+          "Duvar Plakaları ve Kaplamaları",
+          "Duvar Prizleri",
+          "Elektrik Anahtarları",
+          "Elektrik Girişleri",
+          "Elektrik Kabloları",
+          "Elektrik Motorları",
+          "Elektrikli Montaj Kutuları ve Braketleri",
+          "Ev Otomasyonu Setleri",
+          "Gerilim Transformatörleri ve Regülatörleri",
+          "Güneş Enerjisi Kitleri",
+          "Güneş Enerjisi Panelleri",
+          "Güç Dönüştürücüler",
+          "Güç Çeviriciler",
+          "Jeneratör Aksesuarları",
+          "Kablo Başlıkları ve Somunları",
+          "Kablo Sonlandırıcılar ve Konektörler",
+          "Kömür Fırçaları",
+          "Oluk ve Muhafazalar",
+          "Priz Kapatıcılar",
+          "Priz Kumandaları ve Sensörleri",
+          "Telefon ve Veri Jakları",
+          "Uzatma Kabloları",
+          "Uzatma Kablosu Aksesuarları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Endüstriyel mutfak",
+        "leaves": [
+          "Aperatif Yiyecek Kapları",
+          "Bulaşık Leğenleri",
+          "Buz Kutuları",
+          "Eğimli Tavalar",
+          "Gıda Hijyeni Maskeleri",
+          "Hesap Sümenleri",
+          "Hot Dog Makineleri",
+          "Paket Servis Kapları",
+          "Satış Otomatları",
+          "Tabak Isıtma Arabaları",
+          "Tek Kullanımlık Kapaklar",
+          "Tek Kullanımlık Servis Malzemeleri",
+          "Tek Kullanımlık Sofra Takımları",
+          "Unlu Mamul Kutuları",
+          "Yemek Servis Arabaları",
+          "Yemek Servis Sepetleri",
+          "Yiyecek Yıkama ve Kurutma Makineleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "İnşaat ve iş makineleri",
+        "leaves": [
+          "Ağaç Yonga Makineleri",
+          "Arazi Ölçümü",
+          "Trafik Konileri ve Silindirleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "İş güvenliği",
+        "leaves": [
+          "Baretler",
+          "Diz Koruyucular",
+          "Emniyet İpleri",
+          "Gaz Maskesi ve Solunum Cihazı Aksesuarları",
+          "Kaynak Kaskları",
+          "Koruyucu Eldivenler",
+          "Koruyucu Gözlükler",
+          "Koruyucu Maskeler",
+          "Koruyucu Önlükler",
+          "Kurşun Geçirmez Yelekler",
+          "Tehlikeli Maddelere Karşı Koruyucu Elbiseler",
+          "İş Güvenliği Koşumları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Laboratuvar ekipmanı",
+        "leaves": [
+          "Biyokimyasallar",
+          "Diseksiyon Setleri",
+          "Laboratuvar Ekipmanları",
+          "Laboratuvar Kimyasalları",
+          "Laboratuvar Numuneleri",
+          "Laboratuvar Sarf Malzemeleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Mağaza ekipmanı",
+        "leaves": [
+          "Fiyat Etiketleme Makineleri",
+          "Kağıt ve Plastik Alışveriş Çantaları",
+          "Kıyafet Teşhir Rafları",
+          "Manken Parçaları",
+          "Mankenler",
+          "Para İşlemleri",
+          "Perakende Vitrin Objeleri ve Mankenleri",
+          "Perakende Vitrinleri"
+        ]
+      },
+      {
+        "sub": "uretim-makinesi",
+        "group": "Otomasyon bileşenleri",
+        "leaves": [
+          "Değişken Frekans ve Ayarlanabilir Hız Sürücüleri",
+          "Programlanabilir Mantık Denetleyicileri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Sıhhi tesisat",
+        "leaves": [
+          "Boru Tamir Malzemeleri",
+          "Su Dağıtım ve Arıtma Sistemleri",
+          "Su Kuyusu Malzemeleri",
+          "Su Seviyesi Tespit Cihazları",
+          "Su Tahliye Teçhizatı ve Parçaları",
+          "Su Zamanlayıcıları",
+          "Sıhhi Tesisat Armatürleri",
+          "Sıhhi Tesisat Bağlantı Parçaları",
+          "Sıhhi Tesisat Boruları",
+          "Tesisat Hortumları ve İkmal Hatları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Tarım makineleri",
+        "leaves": [
+          "Hayvancılık"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Taşıma ekipmanı",
+        "leaves": [
+          "Asansörler ve Kaldıraçlar",
+          "Konveyörler",
+          "Paletler ve Yükleme Platformları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Tesisat aksesuarları",
+        "leaves": [
+          "Alet Saklama ve Düzenleme",
+          "Beton Kalıplar",
+          "Bobinler",
+          "Braketler ve Takviye Bağlantıları",
+          "Brandalar",
+          "Direk Ayağı Tabanları",
+          "Dolap Hırdavatları",
+          "Duvar Kaldıraçları ve Köşebentleri",
+          "Filtreler ve Perdeler",
+          "Gaz Hortumları",
+          "Hareketli ve Ses Geçirmez Şilteler ve Kılıflar",
+          "Kancalar, Tokalar ve Sabitleyiciler",
+          "Kavilyalar ve Çubuklar",
+          "Kazıklar",
+          "Menteşeler",
+          "Metal Döküm Kalıpları",
+          "Mobilya Tekerlekleri",
+          "Mobilya Örtüleri",
+          "Pnömatik Hortumlar",
+          "Teçhizat Bağlama Elemanları",
+          "Yaylar",
+          "Yağlama Hortumları",
+          "Zincir, Kablo ve İp",
+          "Çekmece Sürgüleri",
+          "İşaretleme ve İkaz Bandı"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Yapı malzemeleri",
+        "leaves": [
+          "Alçı Panel",
+          "Ambar Kapakları",
+          "Betonarme Demiri ve Tel Örgü",
+          "Cam",
+          "Duvar Kaplamaları",
+          "Dış Cephe Kaplaması",
+          "Kapı Hırdavatları",
+          "Kapı Pencere Yalıtımı ve Yalıtım Malzemeleri",
+          "Kapılar",
+          "Karo",
+          "Kereste",
+          "Küpeşteler ve Küpeşte Sistemler",
+          "Merdivenler",
+          "Mutfak Tezgahları",
+          "Panjurlar",
+          "Pencere Hırdavatı",
+          "Pencereler",
+          "Pervaz",
+          "Ses Geçirmez Malzemeler",
+          "Yalıtım",
+          "Yer Döşemeleri",
+          "Çatı Malzemeleri"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Yapı sarf malzemeleri",
+        "leaves": [
+          "Boyama Sarf Malzemeleri",
+          "Duvar Yamama Bileşikleri ve Plasterler",
+          "Duvarcılık Sarf Malzemeleri",
+          "Hırdavat Tutkalı ve Yapıştırıcıları",
+          "Kimyasallar",
+          "Koruyucu Kaplamalar ve Sızdırmazlık Macunları",
+          "Lehim ve Krem Lehim",
+          "Sıhhı Tesisat Astarı",
+          "Tesisat Bandı",
+          "Yağlayıcılar",
+          "Çözücüler, Boya Çıkarıcılar ve Seyrelticiler"
+        ]
+      }
+    ],
+    "health": [
+      {
+        "sub": "dis-laboratuvar",
+        "group": "Diş hekimliği ekipmanı",
+        "leaves": [
+          "Diş Sementi",
+          "Dişçi Aletleri",
+          "Polisaj Macunu"
+        ]
+      },
+      {
+        "sub": "sarf-malzeme",
+        "group": "Kişisel bakım",
+        "leaves": [
+          "Ayak Bakımı",
+          "Ağız Bakımı",
+          "Bronzlaştırıcı Sprey Çadırları",
+          "Cımbızlar",
+          "Deodorantlar ve Ter Önleyiciler",
+          "Göz Bakımı",
+          "Kadın Hijyen Ürünleri",
+          "Kayganlaştırıcılar",
+          "Kozmetik",
+          "Kulak Bakımı",
+          "Kulak Temizleme Çubukları",
+          "Lavman Kitleri ve Malzemeleri",
+          "Makyaj Pamukları",
+          "Masaj ve Rahatlama",
+          "Saç Bakımı",
+          "Solaryum Yatakları",
+          "Sırt Bakımı",
+          "Tıraş ve Kişisel Bakım",
+          "Uyumaya Yardımcı Ürünler"
+        ]
+      },
+      {
+        "sub": "klinik-donanim",
+        "group": "Klinik ekipmanı",
+        "leaves": [
+          "Bandanalar",
+          "Boneler",
+          "Cerrahi Önlükler",
+          "Hasta Önlükleri",
+          "Hastane Perdeleri",
+          "Medikal Ekipmanlar",
+          "Medikal Sarf Malzemeleri",
+          "Medikal Yatak Takımları",
+          "Tıbbi Aletler",
+          "Tıp Eğitimi Ekipmanları"
+        ]
+      },
+      {
+        "sub": "diger",
+        "group": "Kuaför ve güzellik ekipmanı",
+        "leaves": [
+          "Berber Koltukları",
+          "Kuaför Önlükleri ve Boyun Örtüleri",
+          "Pedikür Koltukları"
+        ]
+      },
+      {
+        "sub": "medikal-cihaz",
+        "group": "Sağlık ürünleri",
+        "leaves": [
+          "Akupunktur",
+          "Ameliyat Sonrası Bakım Kremleri",
+          "Biyometrik Monitör Aksesuarları",
+          "Biyometrik Monitörler",
+          "Destek ve Bilezikler",
+          "Doğum Kontrol Hapı Muhafazaları",
+          "Fitness ve Sporcu Besinleri",
+          "Işık Terapisi Lambaları",
+          "Medikal Alarm Sistemleri",
+          "Medikal Kimlik Etiket ve Takıları",
+          "Mobilite ve Kolay Erişim",
+          "Numune Kapları",
+          "Prezervatifler",
+          "Protez Çorapları",
+          "Solunum Güçlüğü Tedavisi",
+          "Spermisidler",
+          "Tıbbi Testler",
+          "Yatak Lazımlıkları",
+          "İlaç Kutuları",
+          "İlaçlar",
+          "İletkenlik Jelleri ve Losyonları",
+          "İlk Yardım",
+          "İnkontinans Yardımcıları",
+          "İş Terapisi ve Fiziksel Terapi Ekipmanları",
+          "İşitme Cihazları"
+        ]
+      }
+    ],
+    "automotive": [
+      {
+        "sub": "yedek-parca",
+        "group": "Taşıt aksesuarları",
+        "leaves": [
+          "Araç Bakımı ve Dekoru",
+          "Hava Taşıtı Parçaları ve Aksesuarları",
+          "Motorlu Taşıt Elektronik Sistemleri",
+          "Motorlu Taşıt Parçaları",
+          "Su Jetli Tekne Parçaları ve Aksesuarları",
+          "Taşıt Güvenliği ve Emniyeti",
+          "Taşıt Saklama ve Kargo"
+        ]
+      },
+      {
+        "sub": "arac-satin-alma",
+        "group": "Taşıt tipleri",
+        "leaves": [
+          "Hava Taşıtları",
+          "Jetski",
+          "Motorlu Taşıtlar"
+        ]
+      }
+    ]
+  }
+}
