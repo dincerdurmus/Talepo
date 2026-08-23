@@ -374,6 +374,62 @@ bağlandığında **ilk kez** oluşacaktır.
 kadar bu beş doğrulayıcının canlı bölümleri ölçülmez — ve bu, ortak veriye
 yazmaktan iyidir.
 
+## KB-10 — Beyaz eşya parçasında cihaz adı cümleden düşüyor
+
+| Alan | Değer |
+| --- | --- |
+| Dosya | `apps/web/src/lib/request-composer/compose-text.ts:533` |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — bayat beklenti değil |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-24, KB-2c düzeltmesi sırasında görünür oldu |
+| Durum | Açık, ayrı dilim |
+
+**Beklenen:** "Bosch çamaşır makinesi için pompa arıyorum" girdisinde üretilen
+metin, parçanın hangi cihaza ait olduğunu taşımalı:
+`Bosch çamaşır makinesi için pompa arıyorum.`
+
+**Gözlenen:** `Bosch için pompa arıyorum.` — **"çamaşır makinesi" düşüyor.**
+
+**Kök neden (doğrulandı).** `compose-text.ts:533`:
+
+```ts
+if (state.categoryId === "automotive" || isAutoPart(state)) {
+  return composeAutoPart(state);
+}
+```
+
+`isAutoPart()` her `needType === "part"` için `true` döner — kategori beyaz
+eşya olsa bile. Böylece beyaz eşya parçası **otomotiv bestecisine**
+(`composeAutoPart`) yönlenir; o besteci `composeCompatibilityPartSentence`'a
+`parentProduct` parametresini **hiç geçmez** (bkz. `compose-text.ts:313-320`,
+otomotivde ebeveyn araçtır ve marka/model üzerinden taşınır). Beyaz eşyada
+ebeveyn `applianceType` alanındadır ve o yol hiç okunmaz.
+
+**Neden bugün fark edildi.** Daha önce "çamaşır makinesi" cümlede görünüyordu,
+ama **yalnızca bozuk parça adının içinde** (`part = "Bosch çamaşır makinesi
+için pompa"` — KB-2c). Bilgi, hatanın kazasıyla oradaydı. KB-2c kapanınca
+parça adı doğru şekilde `"pompa"`ya indi ve ebeveynin hiçbir zaman düzgün
+taşınmadığı ortaya çıktı. Yani bu bir gerileme değil, **maskesi kalkmış eski
+bir eksik**.
+
+**Neden önemli.** Pro tedarikçi, parçanın hangi cihaza ait olduğunu göremez.
+"Bosch için pompa" bir bulaşık makinesi pompası da olabilir, çamaşır makinesi
+pompası da — teklif verecek kişi ayırt edemez. Bu doğrudan ikinci güven
+sözleşmesine dokunur.
+
+**Aday düzeltme (uygulanmadı).** Koşulu `state.categoryId === "automotive"`
+ile sınırlamak; beyaz eşya o zaman `parentProduct` taşıyan genel besteciye
+(`compose-text.ts:536-544`) düşer. **Ayrı dilim olmasının sebebi:** bu bir
+yönlendirme değişikliğidir ve `compositionMode === "compatibility_part"`
+olan **tüm** kategorileri etkiler (beyaz eşya, ev & mutfak, makine, matbaa);
+her birinin çıktısı ayrıca gözden geçirilmelidir. Merge öncesinde incelemesiz
+girmesi doğru değildi (kurucu, 2026-08-24).
+
+**Not:** `I16` bu hatayı yakalamaz ve yakalaması da beklenmez — I16 fazladan
+tekrarı kovalar, eksik bilgiyi değil. Düzeltme diliminde bu sınıf için ayrı
+bir invariant gerekir ("uyumluluk parçasında ebeveyn ürün adı cümlede
+bulunmalı").
+
 ---
 
 > **Paket kalıntıları** (PREMIUM / CORPORATE'ten kalanlar; kasıtlı legacy ile
