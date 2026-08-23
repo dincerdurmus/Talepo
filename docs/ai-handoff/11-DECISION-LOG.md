@@ -108,3 +108,25 @@ Vizyon-only kalanlar: production precision hedefleri, attachment-first UX, tam a
 
 **Bunu ne için yapıyoruz?**  
 “Neden böyle kodlandı?” sorusunun cevabını kaybedip yarın tersine çevirerek alıcı veya Pro’yu incitmemek; özellikle rawInput’u gerçekte olduğundan daha sıkı sanmamak için kararları mühürlüyoruz.
+
+
+---
+
+## 2026-08-23 — Paket yapısı tek katmana indirildi
+
+### Karar D — Yalnız **Profesyonel**; Premium ve Kurumsal kaldırıldı
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — kod karşılığı `d7839b0` (2026-08-16), `BRANCH-WIRED` |
+| **Karar** | Ücretli paket yapısı tek katmana indirildi: kullanıcıya sunulan tek ücretli paket **Profesyonel**'dir. **Premium ve Kurumsal üründen kaldırılmıştır.** `AVAILABLE_PLAN_IDS = ["STANDARD", "PROFESSIONAL"]`. `PREMIUM` / `CORPORATE` yalnız **legacy depolama/enum değeri** olarak yaşar ve `canonicalizePlanTier` ile `PROFESSIONAL` yetkisine eşlenir. Yeni hiçbir yerde yeniden kullanılmazlar. |
+| **Kod karşılığı** | `d7839b0` — `resolvePlanTierFromProviderPriceId` mock dalı `PREMIUM \|\| PROFESSIONAL \|\| CORPORATE`'ten yalnız `PROFESSIONAL`'a daraltıldı. `mock_price_PREMIUM` ve `mock_price_CORPORATE` için `null` dönmesi **doğru davranıştır**. |
+| **Kaydın eksikliği (asıl mesele)** | **Karar 2026-08-16'da hiçbir yere yazılmadı.** Kodda yalnız gerekçesiz bir daraltma kaldı. Sonuç: 2026-08-23'te bu daraltma bisect ile bulundu, "ödeme yolunda gerçek hata" sanıldı, KB-6a olarak kayda geçirildi ve **az kalsın geri alınıyordu** — yani kaldırılan iki paket sessizce ürüne geri dönecekti. Gerekçesiz bir daraltma, altı ay sonra biri tarafından "düzeltilir". |
+| **Dosyalar** | `plans.ts` (`AVAILABLE_PLAN_IDS`, `canonicalizePlanTier`, `isLegacyCorporateAccount`), `plan-mapping.ts:84-89`, `pricing-config.ts` |
+| **Testler** | `verify-phase4c-billing-v1` "2 plan mapping" — 2026-08-23'te tek paketi bekleyecek şekilde güncellendi ve kaldırılan tier'ların `null` dönmesini **açıkça** sınıyor, böylece geri gelmeleri de gerileme sayılır |
+| **Değişirse risk** | Kaldırılmış paketler koda geri sızar; `PLAN_PRICING` iki farklı fiyatı (990 / 2490) aynı "Profesyonel" etiketiyle taşıdığı için yanlış fiyat gösterilebilir |
+
+**Kalıntı denetimi (2026-08-23):** Kararın kod karşılığı tamamlanmamıştır —
+`PLAN_PRICING`, iyzico sandbox kataloğu ve bazı doğrulayıcılar hâlâ üç paketli
+dünyayı taşıyor. Kalıntı listesi çıkarıldı, **bu turda düzeltilmedi**; ayrı iş
+kalemi.

@@ -37,6 +37,11 @@ import {
 import { brandsForProductName } from "../src/lib/knowledge/product-brands";
 import { resolveRequestSchema } from "../src/lib/knowledge/request-schema";
 import {
+  createNotMeasuredTally,
+  isUnreachableDatabase,
+  NOT_MEASURED_EXIT,
+} from "../src/lib/verification/not-measured";
+import {
   ensureTaxonomyLoaded,
   listAllTaxonomyNodes,
 } from "../src/lib/taxonomy";
@@ -933,6 +938,55 @@ check("I11f: kolonun kaynağı işaretli — küratörlü liste pazar verisi gib
   assert.ok(curatedColumn.length > 0, "oto koltuğu marka kolonu açılmalı");
   for (const n of curatedColumn) {
     assert.equal(n.meta?.brandSource, "curated", `${n.label}: küratörlü işareti eksik`);
+  }
+});
+
+check("I14: 'ölçemedim' ile 'ölçtüm, bozuk' aynı renge boyanmaz", () => {
+  /**
+   * Kurucu kuralı (2026-08-23, KB-7): çalışmayan bir ölçüm başarısız bir ölçüm
+   * değildir. verify-request-publish-v1 veritabanı yokken FAIL sayıyordu ve
+   * böylece yayınlama kodu hakkında sahip olmadığımız bir bilgiyi iddia
+   * ediyordu. Kural burada davranış olarak sınanır — kaynak metni değil.
+   */
+  // 1) Üç durum ayrı: NOT-MEASURED'ın kendi çıkış kodu var ve 0/1 değil.
+  assert.notEqual(NOT_MEASURED_EXIT, 0, "ölçülemeyen 'yeşil' sayılamaz");
+  assert.notEqual(NOT_MEASURED_EXIT, 1, "ölçülemeyen 'kırmızı' sayılamaz");
+
+  // 2) Defter boşken çıkış 0, bir kayıt girince ayrı kod.
+  const lines: string[] = [];
+  const tally = createNotMeasuredTally((l) => lines.push(l));
+  assert.equal(tally.exitCode(), 0);
+  tally.record("live publish", "DATABASE_URL yok");
+  assert.equal(tally.count, 1);
+  assert.equal(tally.exitCode(), NOT_MEASURED_EXIT);
+  // Sessiz kalamaz: ölçülemeyen kontrol kendi satırında görünmek zorunda.
+  assert.ok(
+    lines.some((l) => l.startsWith("NOT-MEASURED —")),
+    `ölçülemeyen kontrol raporlanmalı: ${JSON.stringify(lines)}`,
+  );
+
+  // 3) Sınıflandırma: yalnız BAĞLANTI hatası ölçülemez sayılır.
+  const unreachable = [
+    Object.assign(new Error("connect ECONNREFUSED 10.0.0.1:5432"), { code: "ECONNREFUSED" }),
+    Object.assign(new Error("Can't reach database server at aws-0.pooler:5432"), { errorCode: "P1001" }),
+    Object.assign(new Error("timed out"), { errorCode: "P1002" }),
+    Object.assign(new Error("getaddrinfo ENOTFOUND db.example"), { code: "ENOTFOUND" }),
+  ];
+  for (const err of unreachable) {
+    assert.ok(isUnreachableDatabase(err), `ölçülemez sayılmalı: ${err.message}`);
+  }
+
+  // Kaçış deliği OLMAMALI: veritabanının verdiği gerçek cevaplar FAIL kalır.
+  const realDefects = [
+    Object.assign(new Error("Unique constraint failed on the fields: (`email`)"), { errorCode: "P2002" }),
+    Object.assign(new Error("An operation failed because it depends on one or more records that were required but not found"), { errorCode: "P2025" }),
+    Object.assign(new Error("published status expected PUBLISHED, got DRAFT"), {}),
+  ];
+  for (const err of realDefects) {
+    assert.ok(
+      !isUnreachableDatabase(err),
+      `gerçek kusur ölçülemez sayılamaz (kaçış deliği): ${err.message}`,
+    );
   }
 });
 

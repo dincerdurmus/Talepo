@@ -45,6 +45,21 @@ function read(rel: string) {
   return readFileSync(join(root, rel), "utf8");
 }
 
+/**
+ * Kaynak metninde boşluğa duyarsız arama (KB-6b, 2026-08-23).
+ *
+ * `23 duplicate credit event` kontrolü `providerEventId String? @unique`
+ * dizisini birebir arıyordu. Alan ve `@unique` şemada gerçekten var — mükerrer
+ * kredi olayını engelleyen benzersiz indeks yerinde — ama `0db561c`'deki
+ * prisma format hizalaması araya boşluk koyunca kontrol kırmızıya döndü.
+ * Şema doğru; ölçen taraf kırılgandı. Beklenti kodun DAVRANIŞINI ölçmeli,
+ * biçimlendiricinin o gün kaç boşluk bıraktığını değil.
+ */
+function includesLoose(haystack: string, needle: string): boolean {
+  const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
+  return collapse(haystack).includes(collapse(needle));
+}
+
 // 1 provider adapter
 check(
   "1 provider adapter",
@@ -53,11 +68,27 @@ check(
     read("src/lib/billing/provider.ts").includes("createCheckoutSession"),
 );
 
-// 2 plan mapping
+/**
+ * 2 plan mapping — TEK ücretli paket: Profesyonel.
+ *
+ * Bu beklenti 2026-08-23'te güncellendi (bkz. `docs/ai-handoff/11-DECISION-LOG.md`,
+ * "Paket yapısı tek katmana indirildi"). Premium ve Kurumsal üründen
+ * kaldırıldı; `d7839b0` (2026-08-16) mock çözümleyicisini buna göre
+ * daralttı ama karar hiçbir yere yazılmadığı için kontrol eski üç paketli
+ * dünyayı beklemeye devam etti ve kırmızı kaldı.
+ *
+ * `mock_price_PREMIUM` / `mock_price_CORPORATE` için `null` dönmesi DOĞRU
+ * davranıştır ve artık açıkça sınanır — kaldırılan paketlerin sessizce geri
+ * gelmesi de bir gerileme sayılır.
+ */
 check(
   "2 plan mapping",
-  getPlanPriceMapping("PREMIUM").displayPriceTry === 990 &&
-    resolvePlanTierFromProviderPriceId("mock_price_PREMIUM") === "PREMIUM",
+  (getPlanPriceMapping("PROFESSIONAL").displayPriceTry ?? 0) > 0 &&
+    getPlanPriceMapping("PROFESSIONAL").checkoutAllowed &&
+    resolvePlanTierFromProviderPriceId("mock_price_PROFESSIONAL") ===
+      "PROFESSIONAL" &&
+    resolvePlanTierFromProviderPriceId("mock_price_PREMIUM") === null &&
+    resolvePlanTierFromProviderPriceId("mock_price_CORPORATE") === null,
 );
 
 // 3 checkout server plan validation
@@ -199,8 +230,11 @@ check(
 );
 check(
   "23 duplicate credit event",
-  read("prisma/schema.prisma").includes("model CreditLedgerEntry") &&
-    read("prisma/schema.prisma").includes("providerEventId String? @unique") &&
+  includesLoose(read("prisma/schema.prisma"), "model CreditLedgerEntry") &&
+    includesLoose(
+      read("prisma/schema.prisma"),
+      "providerEventId String? @unique",
+    ) &&
     read("src/server/billing/apply-billing-event.ts").includes("creditLedgerEntry"),
 );
 check(

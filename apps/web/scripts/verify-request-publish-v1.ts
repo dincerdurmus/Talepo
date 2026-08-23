@@ -26,6 +26,10 @@ import {
   clearRecentLogs,
   getRecentLogs,
 } from "../src/lib/observability/logger";
+import {
+  createNotMeasuredTally,
+  isUnreachableDatabase,
+} from "../src/lib/verification/not-measured";
 
 let pass = 0;
 let fail = 0;
@@ -41,6 +45,17 @@ function check(name: string, ok: boolean, detail?: string) {
     errors.push(msg);
     console.log(`FAIL — ${msg}`);
   }
+}
+
+/**
+ * ÜÇÜNCÜ DURUM — "ölçemedim" (KB-7, kurucu 2026-08-23). Kural ve eşikler
+ * src/lib/verification/not-measured.ts'te tek yerde tanımlıdır; burada yalnız
+ * kullanılır. Davranışını I14 invariantı sınar.
+ */
+const notMeasuredTally = createNotMeasuredTally();
+
+function notMeasuredCheck(name: string, reason: string) {
+  notMeasuredTally.record(name, reason);
 }
 
 const root = join(__dirname, "..");
@@ -212,7 +227,10 @@ async function livePublishChecks() {
     process.env.DATABASE_URL?.trim() || process.env.DIRECT_URL?.trim(),
   );
   if (!hasDb) {
-    check("live publish skipped (no DATABASE_URL)", false, "env missing");
+    notMeasuredCheck(
+      "live publish",
+      "DATABASE_URL/DIRECT_URL tanımlı değil — birinci sözleşme (alıcı engellenmesin) ÖLÇÜLMEDİ",
+    );
     return;
   }
 
@@ -257,11 +275,19 @@ async function livePublishChecks() {
       replay.id === created.id,
     );
   } catch (error) {
-    check(
-      "live createRequest",
-      false,
-      error instanceof Error ? `${error.name}: ${error.message}` : String(error),
-    );
+    const detail =
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    // Erişilemeyen veritabanı da "ölçemedim"dir, "ölçtüm, bozuk" değil:
+    // yapılandırma var ama sunucu ayakta değil. Bunu FAIL saymak, yayınlama
+    // kodu hakkında sahip olmadığımız bir bilgiyi iddia etmek olur.
+    if (isUnreachableDatabase(error)) {
+      notMeasuredCheck(
+        "live createRequest",
+        `veritabanına bağlanılamadı — birinci sözleşme ÖLÇÜLMEDİ (${detail})`,
+      );
+    } else {
+      check("live createRequest", false, detail);
+    }
   } finally {
     for (const id of createdIds) {
       await prisma.notification.deleteMany({ where: { requestId: id } }).catch(() => undefined);
@@ -278,11 +304,18 @@ async function livePublishChecks() {
 
 async function main() {
   await livePublishChecks();
-  console.log(`\n${pass} passed, ${fail} failed`);
+  console.log(
+    `\n${pass} passed, ${fail} failed, ${notMeasuredTally.count} not-measured`,
+  );
+  if (notMeasuredTally.count) {
+    console.log("Ölçülemeyenler (yeşil DEĞİL, kırmızı da değil):");
+    for (const msg of notMeasuredTally.reasons) console.log(` ? ${msg}`);
+  }
   if (fail) {
     for (const msg of errors) console.error(` - ${msg}`);
     process.exit(1);
   }
+  process.exit(notMeasuredTally.exitCode());
 }
 
 void main();

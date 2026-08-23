@@ -218,39 +218,41 @@ kaçmasın" — bu kırmızıdan **etkilenmiyor**; tıklama akışı sağlam.
 İki hata aynı işlem görmemelidir (KB-2'deki gerekçenin aynısı): biri gerçek bir
 ödeme yolu kusuru, diğeri yalnız boşluk hassasiyeti.
 
-### KB-6a — `mock_price_PREMIUM` ve `mock_price_CORPORATE` plana çözülmüyor (GERÇEK HATA)
+### KB-6a — ~~GERÇEK HATA~~ → **BAYAT BEKLENTİ** (yeniden sınıflandırıldı, ÇÖZÜLDÜ)
 
 | Alan | Değer |
 | --- | --- |
-| Kırık kontrol | `2 plan mapping` (satır 56-61) |
-| Ne zamandan beri | `d7839b0` — *feat(monetization): integrate recovered entitlement foundation*, 2026-08-16. `d7839b0^` (`0db561c`) yeşildi; sınır iki uçta doğrudan doğrulandı. |
-| Sınıf | **Ürün hatası** — ödeme yolu |
+| Kırık kontrol | `2 plan mapping` |
+| Ne zamandan beri | `d7839b0` (2026-08-16); sınır iki uçta doğrudan doğrulandı |
+| İlk sınıflandırma | ~~Ürün hatası — ödeme yolu~~ **YANLIŞTI** |
+| Doğru sınıf | **Bayat beklenti** — kod doğru |
+| Durum | **Kapandı** 2026-08-23: beklenti güncellendi, kontrol yeşil |
 
-**Beklenen:** `resolvePlanTierFromProviderPriceId("mock_price_PREMIUM") === "PREMIUM"`.
-Fiyatın kendisi doğru (`displayPriceTry = 990`), kırılan yalnız çözümleme.
+**Neden yanlış sınıflandırıldı.** `resolvePlanTierFromProviderPriceId` mock
+dalı `d7839b0`'da üç tier'dan yalnız `PROFESSIONAL`'a daraltılmıştı ve
+**yanında gerekçe yoktu**. Bisect bunu "ödeme yolunda gerileme" gibi gösterdi;
+kayda öyle geçti ve düzeltme onayı alındı. Kurucu düzeltmeyi durdurdu:
 
-**Gözlenen:** `null` dönüyor. `src/lib/billing/plan-mapping.ts` satır 84-89:
+> **Premium ve Kurumsal paketler üründen kaldırıldı; tek paket var, o da
+> Profesyonel.** `d7839b0`'daki daraltma kaza değil, bu kararın kod
+> karşılığıydı.
 
-```ts
-if (providerPriceId.startsWith("mock_price_")) {
-  const tier = providerPriceId.replace("mock_price_", "").toUpperCase();
-  if (tier === "PROFESSIONAL") {      // ← önce üç tier de vardı
-    return tier;
-  }
-}
-```
+Yani `mock_price_PREMIUM` için `null` dönmesi **doğru davranıştır**. Kırık olan
+doğrulayıcının beklentisiydi — hâlâ üç paketli dünyayı bekliyordu.
 
-`d7839b0` bu koşulu `tier === "PREMIUM" || tier === "PROFESSIONAL" ||
-tier === "CORPORATE"` hâlinden yalnız `PROFESSIONAL`'a daralttı. Değişikliğin
-yanında gerekçe yok; daraltma kasıtlı görünmüyor.
+**Yapılan:** `plan-mapping.ts`'e **dokunulmadı** (değişiklik geri alındı).
+`verify-phase4c-billing-v1` "2 plan mapping" tek Profesyonel paketi bekleyecek
+şekilde güncellendi ve kaldırılan tier'ların `null` dönmesini açıkça sınıyor —
+böylece paketlerin sessizce geri gelmesi de gerileme sayılır.
 
-**Neden önemli:** Bu dal mock/sandbox ödeme yolunu besliyor. Gerçek sağlayıcı
-fiyat id'leri env üzerinden çözüldüğü için canlı yapılandırmada etkisi yok;
-ama Talepo bugün tam olarak sandbox yolunda. Mock sağlayıcı
-`mock_price_PREMIUM` ile bir webhook döndürürse plan tier'ı çözülmez ve
-**Premium/Kurumsal aboneliği uygulanmaz**.
+**Asıl kusur burada değil, kayıttaydı.** Karar 2026-08-16'da hiçbir yere
+yazılmamıştı; kodda yalnız gerekçesiz bir daraltma kaldı. Bu yüzden altı gün
+sonra hata sanıldı ve kaldırılan iki paket az kalsın ürüne geri döndü. Karar
+şimdi `docs/ai-handoff/11-DECISION-LOG.md` → *Karar D* olarak mühürlendi.
 
-**Yapılacak:** Koşul üç tier'a geri açılır. Ayrı iş kalemi.
+**Ders (genel):** Gerekçesiz bir daraltma, altı ay sonra biri tarafından
+"düzeltilir". Kapsam kaldıran her ürün kararı karar kaydına, kod karşılığı
+(commit) ile birlikte yazılmalıdır.
 
 ### KB-6b — Şema kontrolü boşluk hizalamasına takılıyor (kod doğru)
 

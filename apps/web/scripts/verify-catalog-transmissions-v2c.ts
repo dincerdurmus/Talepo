@@ -494,9 +494,41 @@ check("Golf model scoped for TX", Boolean(modelId));
   );
 }
 
-// --- LIVE acceptance (honest PARTIAL if blocked) ---
+/**
+ * --- LIVE acceptance --- VARSAYILAN OLARAK KAPALI (kurucu, 2026-08-23 — KB-8)
+ *
+ * Bu sonda iki kuralı birden çiğniyordu:
+ *
+ *  1. Doğrulayıcı READ-ONLY olmalı. Canlı EPA çağrısı başarılı olduğunda
+ *     adaptör `markSourceStatus(..., { persist: true })` çağırıyor ve
+ *     data/catalog-ingestion/sources/registry.status.json dosyasını (git
+ *     tarafından İZLENEN bir dosya) yeni zaman damgalarıyla yeniden yazıyordu.
+ *     Bu, "bu kırmızı benden mi geldi" sorusunu cevaplayan taban ölçümünü
+ *     kirletir: iş stash'lenip batarya önceki commit'te koşulduğunda bu yazım
+ *     çalışma ağacına karışır. 2026-08-23'te iki kez oldu.
+ *
+ *  2. Doğrulayıcı DETERMİNİSTİK olmalı. `allowNetwork: true` ile sonuç dış
+ *     servisin o an ayakta olmasına bağlıydı; aynı commit, aynı kod, farklı
+ *     sonuç. Ağ engelliyse dosya yazılmıyor, açıksa yazılıyordu — yani yan
+ *     etki bile rastgeleydi.
+ *
+ * Sonda artık açık bir bayrak ister ve varsayılan koşu tamamen çevrimdışıdır.
+ * Bayrakla çalıştırıldığında bile artefakt yazımı kapalıdır.
+ */
+class SkipLiveProbe extends Error {}
+
+const LIVE_PROBE_ENABLED =
+  process.env.TALEPO_VERIFY_LIVE_NETWORK?.trim() === "1";
+
 console.log("\n--- LIVE probe ---");
+if (!LIVE_PROBE_ENABLED) {
+  skipped(
+    "LIVE probe",
+    "çevrimdışı varsayılan — açmak için TALEPO_VERIFY_LIVE_NETWORK=1 (KB-8: doğrulayıcı read-only ve deterministik olmalı)",
+  );
+}
 try {
+  if (!LIVE_PROBE_ENABLED) throw new SkipLiveProbe();
   const live = await runCatalogIngestion({
     categoryIds: ["automotive"],
     dryRun: true,
@@ -504,7 +536,7 @@ try {
     adapters: REAL_SOURCE_ADAPTERS.filter((a) =>
       a.supportedCategories.includes("automotive"),
     ),
-    writeArtifacts: true,
+    writeArtifacts: false,
     allowNetwork: true,
     limit: 40,
   });
@@ -538,6 +570,8 @@ try {
     );
   }
 } catch (err) {
+  // SkipLiveProbe yukarıda zaten skipped() olarak raporlandı; ikinci kez yazma.
+  if (!(err instanceof SkipLiveProbe))
   skipped(
     "LIVE probe",
     err instanceof Error ? err.message : String(err),
