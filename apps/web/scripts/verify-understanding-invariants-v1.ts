@@ -1137,6 +1137,124 @@ check("I16: üretilen cümlede hedef ifade birden fazla kez geçemez", () => {
   );
 });
 
+check("I17: otomotiv dışı uyumluluk parçasında üst ürün cümleden düşemez", () => {
+  /**
+   * KB-10. I16'nın AKSİ yönü: I16 fazladan tekrarı kovalar, bu invariant EKSİK
+   * BİLGİYİ kovalar. İkisi birlikte çalışır — biri "iki kez yazma" der, diğeri
+   * "hiç yazmamazlık etme" der.
+   *
+   * Sözleşme: otomotiv DIŞI bir uyumluluk parçası talebinde üst ürün
+   * biliniyorsa, oluşturulan cümlede hem üst ürün adı hem gerçek parça adı
+   * bulunmalıdır.
+   *
+   * Somut hata: "Bosch çamaşır makinesi için pompa arıyorum" →
+   * "Bosch için pompa arıyorum." Tedarikçi pompanın hangi cihaz için
+   * istendiğini göremiyor; bulaşık makinesi pompası da olabilir.
+   *
+   * Bu invariant AYNI ZAMANDA naif düzeltmeye karşı bir kapan: otomotiv
+   * rotasını kapatıp beyaz eşya gövdesine düşmek parçayı tamamen kaybettiriyor
+   * (ölçüldü). O yüzden hem üst ürün hem parça aranıyor.
+   */
+  const CASES = [
+    {
+      raw: "Bosch çamaşır makinesi için pompa arıyorum",
+      parent: "çamaşır makinesi",
+      part: "pompa",
+      once: ["bosch"],
+    },
+    {
+      // Üst ürün SABİT KODLANMADIĞININ kanıtı — aynı marka, farklı cihaz.
+      raw: "Bosch bulaşık makinesi için pompa arıyorum",
+      parent: "bulaşık makinesi",
+      part: "pompa",
+      once: ["bosch"],
+    },
+  ];
+
+  for (const c of CASES) {
+    const { state } = syncFromText(null, c.raw);
+    const text = composeNaturalRequestText(state);
+    const norm = fold(text);
+
+    assert.ok(
+      norm.includes(fold(c.parent)),
+      `'${c.raw}' → '${text}' : üst ürün '${c.parent}' cümlede YOK`,
+    );
+    assert.ok(
+      norm.includes(fold(c.part)),
+      `'${c.raw}' → '${text}' : parça '${c.part}' cümlede YOK`,
+    );
+    for (const token of c.once) {
+      const n = (norm.match(new RegExp(`\\b${fold(token)}\\b`, "g")) ?? []).length;
+      assert.equal(
+        n,
+        1,
+        `'${c.raw}' → '${text}' : '${token}' ${n} kez geçiyor, tam 1 olmalı`,
+      );
+    }
+  }
+
+  // Otomotiv kontrolü — sınır yalnız otomotiv DIŞINI değiştirmeli.
+  const auto = syncFromText(null, "Mercedes C180 için su pompası arıyorum");
+  const autoText = composeNaturalRequestText(auto.state);
+  const autoNorm = fold(autoText);
+  for (const must of ["mercedes", "c180", "pompa"]) {
+    assert.ok(
+      autoNorm.includes(must),
+      `otomotiv rotası bozuldu: '${autoText}' içinde '${must}' yok`,
+    );
+  }
+
+  /**
+   * SANAYİ MAKİNESİ — üst ürün `machineType` alanından gelir.
+   *
+   * Kontrollü fixture kullanılıyor çünkü doğal dil çıkarımı bu alanı bugün
+   * güvenilir doldurmuyor ("Heidelberg SM 74 …" için `machineType` null geliyor);
+   * sınanan şey besteci sözleşmesi, çıkarım değil.
+   *
+   * Bu blok ilk denemedeki gerçek kusuru kilitliyor: üst ürün zinciri iki
+   * rotada ayrı ayrı yazılmıştı ve `compatibility_part` dalı `machineType`'ı
+   * OKUMUYORDU; o daldan geçen makine parçası üst makine adını kaybediyordu.
+   * Bu yüzden HER İKİ rota da ayrı ayrı sınanır.
+   */
+  const machineBase = syncFromText(
+    null,
+    "Heidelberg SM 74 nemlendirme pompası",
+  ).state;
+  const withMachineType = (subcategorySlug: string | null) => ({
+    ...machineBase,
+    categoryId: "machinery",
+    subcategorySlug,
+    fields: {
+      ...machineBase.fields,
+      machineType: {
+        kind: "VALUE" as const,
+        value: "Ofset Baskı Makinesi",
+        provenance: "EXPLICIT" as const,
+        confidence: 1,
+      },
+    },
+  });
+
+  for (const [routeName, slug] of [
+    ["genel yol (compositionMode=generic)", null],
+    ["compatibility_part dalı", "yedek-parca"],
+  ] as const) {
+    const text = composeNaturalRequestText(
+      withMachineType(slug) as typeof machineBase,
+    );
+    const norm = fold(text);
+    assert.ok(
+      norm.includes(fold("Ofset Baskı Makinesi")),
+      `${routeName}: üst makine adı cümlede YOK → '${text}'`,
+    );
+    assert.ok(
+      norm.includes("pompa"),
+      `${routeName}: parça adı cümlede YOK → '${text}'`,
+    );
+  }
+});
+
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {
   // Ara grup metni ("… & Aksesuar") ACCESSORY kalıntısı bırakır — ürün
   // yaprağı seçilince telefon ALMAK isteyen yedek parçaya düşmemeli.

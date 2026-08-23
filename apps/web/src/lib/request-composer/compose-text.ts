@@ -354,6 +354,71 @@ function composeDomainId(state: CanonicalRequestState): string | null {
   return state.categoryId ?? state.understanding.category.value ?? null;
 }
 
+/**
+ * Otomotiv rotasının TEK yetkisi (kurucu, KB-10 — 2026-08-24).
+ *
+ * `composeDomainId` bu dosyanın mevcut canonical kategori otoritesidir
+ * (`isFurniture` / `isAppliances` de ona dayanır); yeni bir otorite
+ * uydurulmadı. Tek başına şunlar otomotiv KANITI DEĞİLDİR ve buraya
+ * girmemelidir: `needType === "part"`, `requestSubject.kind === "PART"`,
+ * "parça" kelimesi, ürün adı, ham kullanıcı metni.
+ */
+function isAutomotiveDomain(state: CanonicalRequestState): boolean {
+  return composeDomainId(state) === "automotive";
+}
+
+/**
+ * Uyumluluk parçasının ÜST ÜRÜNÜ — tek çözüm kuralı (KB-10, 2026-08-24).
+ *
+ * Zincir: `applianceType → productType → machineType`.
+ *
+ * Neden tek yardımcı: bu zincir iki ayrı rotada (doğrudan `compatibility_part`
+ * dalı ve otomotiv dışı yol) ayrı ayrı yazıldığında birbirinden kopuyor. İlk
+ * denemede tam olarak bu oldu — `compatibility_part` dalı `machineType`'ı
+ * okumuyordu, dolayısıyla o daldan geçen bir sanayi makinesi parçası talebi
+ * üst makine adını yine kaybediyordu. Kategoriye özel metin yok; kategori
+ * eklendiğinde yalnız bu zincir değişir.
+ */
+function compatibilityParentProduct(
+  state: CanonicalRequestState,
+): string | null {
+  return (
+    fieldValue(state, "applianceType") ??
+    fieldValue(state, "productType") ??
+    fieldValue(state, "machineType")
+  );
+}
+
+/**
+ * Otomotiv DIŞI uyumluluk parçası cümlesi (KB-10).
+ *
+ * Sorun: `isAutoPart()` kategoriye bakmadığı için beyaz eşya/makine parçaları
+ * otomotiv bestecisine düşüyordu; o besteci `parentProduct` taşımaz (otomotivde
+ * ebeveyn araçtır, marka/model üzerinden gider). Sonuç: "Bosch çamaşır makinesi
+ * için pompa arıyorum" → "Bosch için pompa arıyorum." — tedarikçi pompanın
+ * hangi cihaz için istendiğini göremiyordu.
+ *
+ * Yalnız rotayı kapatmak YETMEZ, kötüleştirir: kategori gövdesine düşen talep
+ * `part` alanını hiç okumaz ve pompa tamamen kaybolur (ölçüldü). Bu yüzden
+ * sınır ile bu yol birlikte gider.
+ */
+function composeNonAutomotiveCompatibilityPart(
+  state: CanonicalRequestState,
+  role: ReturnType<typeof resolveBrowseSemanticRole>,
+): string | null {
+  if (isAutomotiveDomain(state)) return null;
+  const part = fieldValue(state, "part");
+  if (!part) return null;
+  return composeCompatibilityPartSentence({
+    brand: fieldValue(state, "brand"),
+    model: fieldValue(state, "model"),
+    generation: fieldValue(state, "generation"),
+    parentProduct: compatibilityParentProduct(state),
+    part,
+    fallbackNoun: role.subjectNounTr ?? "yedek parça",
+  });
+}
+
 function isIntentVerbToken(value: string | null): boolean {
   if (!value) return false;
   const fold = value.toLocaleLowerCase("tr-TR");
@@ -420,8 +485,8 @@ function composeAppliances(state: CanonicalRequestState): string {
       brand: fieldValue(state, "brand"),
       model: fieldValue(state, "model"),
       generation: fieldValue(state, "generation"),
-      parentProduct:
-        fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
+      // Aynı tek zincir — üçüncü bir kopya bırakılmadı.
+      parentProduct: compatibilityParentProduct(state),
       part: fieldValue(state, "part"),
       fallbackNoun: role.subjectNounTr ?? "yedek parça",
     });
@@ -530,15 +595,17 @@ function composeNaturalRequestTextCore(
   });
 
   if (role.compositionMode === "compatibility_part") {
-    if (state.categoryId === "automotive" || isAutoPart(state)) {
+    // Otomotiv bestecisi YALNIZ canonical alan otomotivken yetkilidir (KB-10).
+    if (isAutomotiveDomain(state)) {
       return composeAutoPart(state);
     }
     return composeCompatibilityPartSentence({
       brand: fieldValue(state, "brand"),
       model: fieldValue(state, "model"),
       generation: fieldValue(state, "generation"),
-      parentProduct:
-        fieldValue(state, "applianceType") ?? fieldValue(state, "productType"),
+      // Üst ürün zinciri TEK yerde: machineType da buradan gelir, yoksa bu
+      // daldan geçen sanayi makinesi parçası üst makine adını kaybeder.
+      parentProduct: compatibilityParentProduct(state),
       part: fieldValue(state, "part"),
       fallbackNoun: role.subjectNounTr ?? "yedek parça",
     });
@@ -554,11 +621,19 @@ function composeNaturalRequestTextCore(
     return `${subject} arıyorum.`;
   }
 
-  if (isAutoPart(state)) return composeAutoPart(state);
+  // `isAutoPart` tek başına otomotiv KANITI DEĞİLDİR (KB-10): needType=part her
+  // kategoride true olabilir. Kategori otoritesi olmadan bu rota beyaz eşya ve
+  // makine parçalarını da yutuyordu.
+  if (isAutomotiveDomain(state) && isAutoPart(state)) {
+    return composeAutoPart(state);
+  }
   if (isAutoVehicle(state)) return composeAutoVehicle(state);
   if (composeDomainId(state) === "real-estate") {
     return composeRealEstate(state);
   }
+  // Otomotiv dışı uyumluluk parçası: üst ürün cümlede kalmalı (KB-10).
+  const nonAutomotivePart = composeNonAutomotiveCompatibilityPart(state, role);
+  if (nonAutomotivePart) return nonAutomotivePart;
   if (isFurniture(state)) return composeFurniture(state);
   if (isAppliances(state)) return composeAppliances(state);
   if (
