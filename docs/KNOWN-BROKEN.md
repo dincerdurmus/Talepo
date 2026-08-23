@@ -335,6 +335,51 @@ geldi" sorusunun cevabını üreten yöntemin ta kendisini kirletir.
 **Yapılacak:** Canlı sonda `persist` olmadan çalışmalı (ya da doğrulayıcı
 koşularında persist kapatan bir bayrak). Ayrı iş kalemi.
 
+## KB-9 — Doğrulayıcılar ortak veritabanına yazabiliyordu (KAPATILDI)
+
+| Alan | Değer |
+| --- | --- |
+| Etkilenen | `verify-request-publish-v1`, `verify-my-requests-surface-v1`, `verify-personal-saved-search-alert-ownership-v1`, `verify-offer-inbox-scope-v1`, `verify-phase4b-soft-launch-v1` |
+| Mekanizma | `src/lib/verification/db-guard.ts` |
+| Koruyucu | `I15` |
+| Durum | **Kapandı** 2026-08-23 |
+
+**Neydi.** `apps/web/.env` Tuğrul ile **ortak kullanılan Supabase pooler'ına**
+bakıyor. Yukarıdaki beş doğrulayıcı gerçek prisma istemcisiyle `Request`,
+`User`, `Company`, `SavedSearch` satırları oluşturuyordu. Veritabanı
+2026-08-23 sabahına kadar kapalıydı (`ECONNREFUSED`), bu yüzden yazımlar
+sessizce başarısız oluyordu — **bizi koruyan şey bir kural değil, bir
+arızaydı.** Veritabanı gün içinde açıldı.
+
+**Kapatma biçimi: konvansiyon değil mekanizma.** Üç koşul birden aranır; biri
+eksikse prisma **import bile edilmez**, bağlantı denenmez, sonuç NOT-MEASURED
+olur:
+
+1. `TALEPO_VERIFY_ALLOW_DB=1` açıkça verilmiş,
+2. host bir test kalıbına uyuyor (`localhost`, `127.0.0.1`, `*test*`, `*staging*`),
+3. host yasak listede değil — `pooler.supabase.com`, `supabase.co`, `rds.amazonaws.com`, `neon.tech`, `prod`, `production` **adıyla** listede.
+
+Bayrak verilse bile ortak host reddedilir; red gerekçesi yasak host'u adıyla
+söyler. `verify-fanout-telemetry-v1` taramada çıktı ama **yanlış pozitif**:
+sahte bağlantı dizgisi kurup kaynak metni üzerinde dize kontrolü yapıyor.
+
+**`verify-offer-inbox-scope-v1` hakkında — bu bir gerileme DEĞİLDİR.**
+Sayı `48 passed` → `0 passed, ÖLÇÜLMEDİ` oldu. O 48 kontrol **ortak veriye
+yazarak** yeşil oluyordu; yani meşru kapsam zaten **0**'dı ve 48 sayısı
+gerçekte var olmayan bir güvenceyi temsil ediyordu. Kaybedilen kapsam değil,
+geri alınan sahte güvencedir. Gerçek kapsam ancak bir test veritabanı
+bağlandığında **ilk kez** oluşacaktır.
+
+**Kalan iş:** test veritabanı (ayrı Supabase test projesi/branch). Bağlanana
+kadar bu beş doğrulayıcının canlı bölümleri ölçülmez — ve bu, ortak veriye
+yazmaktan iyidir.
+
+---
+
+> **Paket kalıntıları** (PREMIUM / CORPORATE'ten kalanlar; kasıtlı legacy ile
+> gerçek kalıntı ayrımı dahil): bkz. `docs/ai-handoff/11-DECISION-LOG.md` →
+> **Karar D**.
+
 ---
 
 # TRIAGE — kaydı tamamlanmamış kırmızılar

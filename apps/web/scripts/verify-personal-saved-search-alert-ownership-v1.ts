@@ -215,6 +215,20 @@ async function liveDb() {
     check("42-53 live DB skipped (offline OK)", true);
     return;
   }
+  /**
+   * YAZMA KAPISI (KB-9, kurucu 2026-08-23). Bu blok gerçek User/SavedSearch
+   * satırları oluşturuyor ve `.env` ortak Supabase'e bakıyor. Kapı geçilmezse
+   * prisma import edilmez.
+   */
+  const { canWriteToDatabase } = await import(
+    "../src/lib/verification/db-guard"
+  );
+  const dbGuard = canWriteToDatabase();
+  if (!dbGuard.allowed) {
+    console.log(`NOT-MEASURED — live DB: ${dbGuard.reason}`);
+    check("42-53 live DB skipped (offline OK)", true);
+    return;
+  }
   try {
     const { prisma } = await import("../src/lib/prisma");
     await prisma.$queryRaw`SELECT 1`;

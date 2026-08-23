@@ -398,10 +398,21 @@ check(
   );
 }
 
-// 28 credit duplicate — ledger unique
+/**
+ * 28 credit duplicate — ledger unique.
+ *
+ * Boşluğa duyarsız (KB-6b ikizi, 2026-08-23): alan ve `@unique` şemada
+ * gerçekten var — mükerrer kredi olayını engelleyen benzersiz indeks yerinde —
+ * ama `0db561c`'deki prisma format hizalaması araya boşluk koyunca birebir
+ * dize araması kırmızıya döndü. Beklenti kodun DAVRANIŞINI ölçmeli,
+ * biçimlendiricinin o gün kaç boşluk bıraktığını değil. Şemaya dokunulmadı.
+ */
+const collapseWs = (s: string) => s.replace(/\s+/g, " ").trim();
 check(
   "28 credit duplicate",
-  read("prisma/schema.prisma").includes("providerEventId String? @unique"),
+  collapseWs(read("prisma/schema.prisma")).includes(
+    collapseWs("providerEventId String? @unique"),
+  ),
 );
 
 // 29 failed credit payment

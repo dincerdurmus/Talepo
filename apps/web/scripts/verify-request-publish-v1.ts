@@ -30,6 +30,7 @@ import {
   createNotMeasuredTally,
   isUnreachableDatabase,
 } from "../src/lib/verification/not-measured";
+import { canWriteToDatabase } from "../src/lib/verification/db-guard";
 
 let pass = 0;
 let fail = 0;
@@ -230,6 +231,20 @@ async function livePublishChecks() {
     notMeasuredCheck(
       "live publish",
       "DATABASE_URL/DIRECT_URL tanımlı değil — birinci sözleşme (alıcı engellenmesin) ÖLÇÜLMEDİ",
+    );
+    return;
+  }
+
+  /**
+   * YAZMA KAPISI — bağlanmadan önce (KB-9, kurucu 2026-08-23).
+   * Bu blok gerçek `Request` satırı oluşturuyor; `.env` ise ortak Supabase'e
+   * bakıyor. Kapı üç koşulu birden aramazsa prisma hiç import EDİLMEZ.
+   */
+  const guard = canWriteToDatabase();
+  if (!guard.allowed) {
+    notMeasuredCheck(
+      "live publish",
+      `${guard.reason} — birinci sözleşme ÖLÇÜLMEDİ`,
     );
     return;
   }

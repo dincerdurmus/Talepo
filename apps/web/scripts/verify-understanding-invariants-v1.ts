@@ -42,6 +42,10 @@ import {
   NOT_MEASURED_EXIT,
 } from "../src/lib/verification/not-measured";
 import {
+  canWriteToDatabase,
+  databaseHost,
+} from "../src/lib/verification/db-guard";
+import {
   ensureTaxonomyLoaded,
   listAllTaxonomyNodes,
 } from "../src/lib/taxonomy";
@@ -988,6 +992,79 @@ check("I14: 'ölçemedim' ile 'ölçtüm, bozuk' aynı renge boyanmaz", () => {
       `gerçek kusur ölçülemez sayılamaz (kaçış deliği): ${err.message}`,
     );
   }
+});
+
+check("I15: DB'ye yazan doğrulayıcı allowlist dışı host'a asla yazmaya kalkışmaz", () => {
+  /**
+   * Kurucu kuralı (2026-08-23, KB-9): bu kapı KONVANSİYON değil MEKANİZMA.
+   * `.env` Tuğrul ile ortak Supabase pooler'ına bakıyor ve altı doğrulayıcı
+   * gerçek prisma istemcisiyle yazıyor. Veritabanı bu sabaha kadar kapalıydı;
+   * bizi koruyan şey bir kural değil, bir arızaydı. Artık açık.
+   *
+   * Üç koşul birden aranır. Aşağıdaki her senaryo, bağlantı DENENMEDEN
+   * reddedilmeyi sınar.
+   */
+  const SHARED = "postgresql://u:p@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
+  const LOCAL = "postgresql://u:p@localhost:5432/talepo_test";
+
+  // 1) Bayrak yoksa: hedef ne olursa olsun yazma yok.
+  for (const url of [SHARED, LOCAL]) {
+    const v = canWriteToDatabase({ DATABASE_URL: url });
+    assert.equal(v.allowed, false, `bayraksız yazma reddedilmeli: ${url}`);
+  }
+
+  // 2) Bayrak VAR ama host ortak/üretim: yine reddedilir (negatif kontrol).
+  const shared = canWriteToDatabase({
+    TALEPO_VERIFY_ALLOW_DB: "1",
+    DATABASE_URL: SHARED,
+  });
+  assert.equal(shared.allowed, false, "ortak pooler'a bayrakla bile yazılamaz");
+  assert.match(
+    shared.allowed === false ? shared.reason : "",
+    /pooler\.supabase\.com/,
+    "red gerekçesi yasak host'u ADIYLA söylemeli",
+  );
+  for (const host of [
+    "db.abcdefgh.supabase.co",
+    "talepo-prod.rds.amazonaws.com",
+    "ep-x.neon.tech",
+    "production-db.internal",
+  ]) {
+    const v = canWriteToDatabase({
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      DATABASE_URL: `postgresql://u:p@${host}:5432/db`,
+    });
+    assert.equal(v.allowed, false, `${host}: yazma reddedilmeli`);
+  }
+
+  // 3) Bayrak VAR ama host tanınmıyor: allowlist dar, bilinmeyen test sayılmaz.
+  const unknown = canWriteToDatabase({
+    TALEPO_VERIFY_ALLOW_DB: "1",
+    DATABASE_URL: "postgresql://u:p@some-random-host.example:5432/db",
+  });
+  assert.equal(unknown.allowed, false, "bilinmeyen host test sayılamaz");
+
+  // 4) Üçü de sağlanınca AÇILIR — kapı kilit değil, kapı.
+  for (const url of [
+    LOCAL,
+    "postgresql://u:p@127.0.0.1:5432/db",
+    "postgresql://u:p@talepo-test.internal:5432/db",
+    "postgresql://u:p@staging-db.internal:5432/db",
+  ]) {
+    const v = canWriteToDatabase({ TALEPO_VERIFY_ALLOW_DB: "1", DATABASE_URL: url });
+    assert.equal(v.allowed, true, `test hedefine yazılabilmeli: ${url}`);
+  }
+
+  // 5) URL yok / bozuk: host BİLİNMİYOR demektir, tahmin edilmez.
+  for (const bad of [undefined, "", "not-a-url", "   "]) {
+    const v = canWriteToDatabase({
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      DATABASE_URL: bad,
+    });
+    assert.equal(v.allowed, false, `bozuk URL yazmaya izin veremez: ${bad}`);
+  }
+  assert.equal(databaseHost("not-a-url"), null);
+  assert.equal(databaseHost(SHARED), "aws-0-eu-central-1.pooler.supabase.com");
 });
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {

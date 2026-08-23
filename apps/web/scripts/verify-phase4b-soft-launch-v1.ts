@@ -223,6 +223,20 @@ async function tenancyDbCheck() {
     return;
   }
 
+  /**
+   * YAZMA KAPISI (KB-9, kurucu 2026-08-23). Bu blok gerçek User/Company
+   * satırları oluşturuyor (rollback'li de olsa yazma denemesidir) ve `.env`
+   * ortak Supabase'e bakıyor. Kapı geçilmezse prisma import edilmez.
+   */
+  const { canWriteToDatabase } = await import(
+    "../src/lib/verification/db-guard"
+  );
+  const guard = canWriteToDatabase();
+  if (!guard.allowed) {
+    check("16 tenancy DB integration", true, `ÖLÇÜLMEDİ — ${guard.reason}`);
+    return;
+  }
+
   try {
     const { prisma } = await import("../src/lib/prisma");
     await prisma.$transaction(async (tx) => {

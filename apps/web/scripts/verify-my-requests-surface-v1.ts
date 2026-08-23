@@ -999,6 +999,19 @@ async function liveCloneChecks() {
     return;
   }
 
+  /**
+   * YAZMA KAPISI (KB-9, kurucu 2026-08-23). Gerçek prisma yazması var ve
+   * `.env` ortak Supabase'e bakıyor; kapı geçilmezse prisma import edilmez.
+   */
+  const { canWriteToDatabase } = await import(
+    "../src/lib/verification/db-guard"
+  );
+  const guard = canWriteToDatabase();
+  if (!guard.allowed) {
+    console.log(`NOT-MEASURED — live clone: ${guard.reason}`);
+    return;
+  }
+
   const { prisma } = await import("../src/lib/prisma");
   const { createRequest } = await import(
     "../src/server/request/create-request"

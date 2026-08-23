@@ -34,6 +34,21 @@ async function main() {
   config({ path: join(ROOT, ".env.local") });
   config({ path: join(ROOT, ".env") });
 
+  /**
+   * YAZMA KAPISI (KB-9, kurucu 2026-08-23). Bu script gerçek prisma
+   * istemcisiyle yazıyor; `.env` ortak Supabase'e bakıyor. Kapı geçilmezse
+   * prisma hiç import edilmez — bağlanmayı bile denemeyiz.
+   */
+  const { canWriteToDatabase } = await import(
+    "../src/lib/verification/db-guard"
+  );
+  const guard = canWriteToDatabase();
+  if (!guard.allowed) {
+    console.log(`NOT-MEASURED — offer inbox scope: ${guard.reason}`);
+    console.log("verify-offer-inbox-scope-v1: 0 passed, 0 failed, ÖLÇÜLMEDİ");
+    process.exit(3);
+  }
+
   const { prisma } = await import("../src/lib/prisma");
   const {
     countUnreadIncomingOfferEvents,
