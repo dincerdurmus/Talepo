@@ -18,11 +18,14 @@ import {
 } from "@/lib/taxonomy";
 
 import {
-  furnitureBrandLabels,
+  babyBrandsForProductName,
+  CURATED_BRAND_SOURCE,
+  furnitureBrandsForProduct,
   inferMachineryBrandFamily,
+  kitchenBrandsForProductName,
   machineryBrandsForFamily,
 } from "./harvest-brands";
-import { brandsForProductName } from "./product-brands";
+import { brandsForProductName, MARKET_BRAND_SOURCE } from "./product-brands";
 import { resolveKnowledgeProfile } from "./profile-registry";
 import { subcategorySlug } from "./slug";
 import type { BrowseContext, BrowseNode, BrowseNodeKind } from "./types";
@@ -57,10 +60,35 @@ function technologyDisplayLabel(n: TaxonomyNode): string {
   return n.canonicalName;
 }
 
-function technologyProductTypeHasBrands(n: TaxonomyNode): boolean {
-  if (n.categoryId !== "technology") return false;
+/**
+ * Bu yaprak marka kolonu açacak mı? (Tüm kategoriler — kurucu, 2026-08-23.)
+ * Kaskadın oku ve bir sonraki kolonu buna bakarak açılır.
+ */
+function productTypeHasBrands(n: TaxonomyNode): boolean {
   if (n.nodeType !== "PRODUCT_TYPE") return false;
-  return brandsForProductName(n.canonicalName) != null;
+  if (n.categoryId === "automotive") return false;
+  if (brandsForProductName(n.canonicalName, n.categoryId)) return true;
+  if (n.categoryId === "machinery") {
+    return (
+      inferMachineryBrandFamily({ id: n.id, name: n.canonicalName }) != null
+    );
+  }
+  if (n.categoryId === "furniture") {
+    return (
+      furnitureBrandsForProduct({
+        name: n.canonicalName,
+        parentId: n.parentId,
+        subcategoryId: n.subcategoryId,
+      }) != null
+    );
+  }
+  if (n.categoryId === "home-kitchen") {
+    return kitchenBrandsForProductName(n.canonicalName) != null;
+  }
+  if (n.categoryId === "baby") {
+    return babyBrandsForProductName(n.canonicalName) != null;
+  }
+  return false;
 }
 
 function technologyBrandNodes(
@@ -77,7 +105,7 @@ function technologyBrandNodes(
   // olduğunda açılır. Aile bazlı tahmin listesi megafona da, ses aksesuarına
   // da aynı markaları veriyordu; bilmediğimizde tahmin etmek yerine kolonu
   // hiç açmıyoruz — kullanıcı markasını serbestçe yazar.
-  const marketBrands = brandsForProductName(tax.canonicalName);
+  const marketBrands = brandsForProductName(tax.canonicalName, tax.categoryId);
   if (!marketBrands) return [];
 
   const tumu = node({
@@ -91,7 +119,7 @@ function technologyBrandNodes(
       any: true,
       fieldKey: "brand",
       sentinel: "__ANY__",
-      brandSource: "mediamarkt",
+      brandSource: MARKET_BRAND_SOURCE,
       productTypeId,
     },
   });
@@ -107,7 +135,7 @@ function technologyBrandNodes(
       entityId: subcategorySlug(label),
       hasChildren: false,
       meta: {
-        brandSource: "mediamarkt",
+        brandSource: MARKET_BRAND_SOURCE,
         productTypeId,
         subcategorySlug: tax.subcategoryId ?? "donanim",
       },
@@ -117,7 +145,15 @@ function technologyBrandNodes(
   return [tumu, ...brands];
 }
 
-/** Makine / mobilya PRODUCT_TYPE yaprağı → hasat marka kolonu (Tümü önde). */
+/**
+ * TÜM kategoriler için marka kolonu (kurucu, 2026-08-23: "tüm kategorileri
+ * bağla"). Sıra:
+ *   1) Gerçek pazar verisi — MediaMarkt dağılımı (teknoloji, beyaz eşya,
+ *      ev & mutfak ürünlerini kapsar),
+ *   2) Kategori kürasyonu — makine ürün ailesi, mobilya, anne & çocuk grubu,
+ *   3) Eşleşme yoksa kolon açılmaz; kullanıcı markasını kendi yazar.
+ * Otomotiv kendi CatalogRegistry yolunu kullanır, buraya girmez.
+ */
 function harvestBrandNodes(
   productTypeId: string,
   parentId: string,
@@ -125,17 +161,34 @@ function harvestBrandNodes(
   ensureTaxonomyLoaded();
   const tax = getTaxonomyNode(productTypeId);
   if (!tax || tax.nodeType !== "PRODUCT_TYPE") return [];
+  if (tax.categoryId === "automotive" || tax.categoryId === "technology") {
+    return [];
+  }
 
-  let labels: string[] = [];
-  if (tax.categoryId === "machinery") {
-    const family = inferMachineryBrandFamily({
-      id: tax.id,
-      name: tax.canonicalName,
-    });
-    if (!family) return [];
-    labels = machineryBrandsForFamily(family);
-  } else if (tax.categoryId === "furniture") {
-    labels = furnitureBrandLabels();
+  // Gerçek pazar dağılımı önce denenir; kolonun kaynağı kolonla birlikte
+  // taşınır, çünkü küratörlü liste MediaMarkt verisiyle aynı statüde değildir.
+  let labels: string[] = brandsForProductName(tax.canonicalName, tax.categoryId) ?? [];
+  let brandSource: string = MARKET_BRAND_SOURCE;
+  if (labels.length === 0) {
+    brandSource = CURATED_BRAND_SOURCE;
+    if (tax.categoryId === "machinery") {
+      const family = inferMachineryBrandFamily({
+        id: tax.id,
+        name: tax.canonicalName,
+      });
+      labels = family ? machineryBrandsForFamily(family) : [];
+    } else if (tax.categoryId === "furniture") {
+      labels =
+        furnitureBrandsForProduct({
+          name: tax.canonicalName,
+          parentId: tax.parentId,
+          subcategoryId: tax.subcategoryId,
+        }) ?? [];
+    } else if (tax.categoryId === "home-kitchen") {
+      labels = kitchenBrandsForProductName(tax.canonicalName) ?? [];
+    } else if (tax.categoryId === "baby") {
+      labels = babyBrandsForProductName(tax.canonicalName) ?? [];
+    }
   }
   if (labels.length === 0) return [];
 
@@ -150,6 +203,7 @@ function harvestBrandNodes(
       any: true,
       fieldKey: "brand",
       sentinel: "__ANY__",
+      brandSource,
       productTypeId,
     },
   });
@@ -163,6 +217,7 @@ function harvestBrandNodes(
       entityId: subcategorySlug(label),
       hasChildren: false,
       meta: {
+        brandSource,
         productTypeId,
         subcategorySlug: tax.subcategoryId ?? "",
       },
@@ -172,7 +227,7 @@ function harvestBrandNodes(
 }
 
 function taxonomyToBrowse(n: TaxonomyNode, parentId: string): BrowseNode {
-  const hasBrandKids = technologyProductTypeHasBrands(n);
+  const hasBrandKids = productTypeHasBrands(n);
   return node({
     id: n.id,
     kind: taxonomyKind(n),

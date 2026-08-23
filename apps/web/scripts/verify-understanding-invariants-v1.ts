@@ -26,8 +26,20 @@ import {
   REQUEST_CATEGORIES,
 } from "../src/lib/request-category-engine";
 import { getBrowseChildren } from "../src/lib/knowledge/browse";
+import {
+  babyBrandsForProductName,
+  furnitureBrandsForProduct,
+  furnitureBrandsForSegment,
+  inferFurnitureSegment,
+  kitchenBrandsForProductName,
+  machineryBrandsForFamily,
+} from "../src/lib/knowledge/harvest-brands";
 import { brandsForProductName } from "../src/lib/knowledge/product-brands";
 import { resolveRequestSchema } from "../src/lib/knowledge/request-schema";
+import {
+  ensureTaxonomyLoaded,
+  listAllTaxonomyNodes,
+} from "../src/lib/taxonomy";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
@@ -572,8 +584,356 @@ check("I11: browse — Donanım hoisted out, brand columns product-relevant", ()
     "gerçek veri olmayan üründe marka kolonu açılmaz",
   );
   assert.equal(brandsForProductName("Ses Aksesuarları"), null);
-  const proj = brandsForProductName("Projeksiyon cihazı");
+  const proj = brandsForProductName("Projeksiyon cihazı", "technology");
   assert.ok(proj && !proj.includes("Onvo"), "projeksiyonda TV markası olmamalı");
+
+  // Türkçe baş isim kuralı: tamlamanın SONU ürünü belirler.
+  assert.equal(
+    brandsForProductName("Fırın kabı / borcam", "home-kitchen"),
+    null,
+    "'fırın kabı' fırın değildir",
+  );
+  assert.equal(
+    brandsForProductName("Buzdolabı Magnetleri", "home-kitchen"),
+    null,
+    "'buzdolabı magneti' buzdolabı değildir",
+  );
+  assert.equal(
+    brandsForProductName("Mikro oluklu kutu", "printing"),
+    null,
+    "'oluklu kutu' ütü değildir",
+  );
+  // Kategori kapsamı: hasta monitörü bilgisayar markası almaz
+  assert.equal(brandsForProductName("Hasta monitörü", "health"), null);
+  assert.ok(brandsForProductName("Monitör", "technology"));
+});
+
+check("I11b: her kategori kendi marka kaynağından beslenir", () => {
+  // Makine ürün ailesi
+  const cnc = machineryBrandsForFamily("metal");
+  assert.ok(cnc.includes("Durma") && !cnc.includes("Caterpillar"));
+  // Mobilya: gerçek mobilyaya marka, aksesuara yok
+  assert.ok(furnitureBrandsForProduct({ name: "Çekyat, Kanepe" }));
+  assert.equal(furnitureBrandsForProduct({ name: "Paspas" }), null);
+  // Mutfak: sofra markası, kahve makinesi markası değil
+  const sofra = kitchenBrandsForProductName("Porselen yemek takımı");
+  assert.ok(sofra?.includes("Karaca") && !sofra.includes("Nespresso"));
+  assert.equal(kitchenBrandsForProductName("Buzdolabı Magnetleri"), null);
+  // Anne & çocuk: bez markası ile araba markası ayrı
+  const bez = babyBrandsForProductName("Bebek bezi");
+  const araba = babyBrandsForProductName("Travel sistem bebek arabası");
+  assert.ok(bez?.includes("Prima") && !bez.includes("Britax Römer"));
+  assert.ok(araba?.includes("Britax Römer") && !araba.includes("Prima"));
+});
+
+check("I11c: aksesuar/kılıf/örtü/kutu/çanta yaprağı marka kolonu AÇMAZ", () => {
+  // Ürünün markası ile aksesuarının markası aynı pazar değildir: Prima bebek
+  // bezi üretir, bebek bezi çöp kovası aksesuarı üretmez (kurucu, 2026-08-23).
+  const accessoryLeaves: Array<[string, string]> = [
+    ["baby", "Bebek Bezi Çöp Kovası Aksesuarları"],
+    ["baby", "Bebek Bezi Kutuları"],
+    ["baby", "Kirli Bebek Bezi Çantaları"],
+    ["baby", "Bebek Arabası Aksesuarları"],
+    ["baby", "Bebek Arabası Örtüleri ve Tulumları"],
+    ["baby", "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları"],
+    ["baby", "Kanguru Aksesuarları"],
+    ["furniture", "Masa Parçaları ve Aksesuarları"],
+    ["furniture", "Ofis Koltuğu Aksesuarları"],
+    ["furniture", "Bahçe Mobilya Örtüleri"],
+    ["home-kitchen", "Mutfak Aleti Aksesuarları"],
+    ["home-kitchen", "Yiyecek Saklama Aksesuarları"],
+    ["technology", "Ses Aksesuarları"],
+  ];
+  for (const [categoryId, name] of accessoryLeaves) {
+    assert.equal(
+      brandsForProductName(name, categoryId),
+      null,
+      `${name}: aksesuar yaprağı pazar markası almamalı`,
+    );
+    const curated =
+      categoryId === "baby"
+        ? babyBrandsForProductName(name)
+        : categoryId === "furniture"
+          ? furnitureBrandsForProduct({ name })
+          : categoryId === "home-kitchen"
+            ? kitchenBrandsForProductName(name)
+            : null;
+    assert.equal(curated, null, `${name}: aksesuar yaprağı küratörlü marka da almamalı`);
+  }
+});
+
+check("I11d: ünsüz yumuşaması olan ve olmayan kardeş yapraklar aynı davranır", () => {
+  // "Koltuk" kolon açıp "Yönetici Koltuğu" açmıyordu: k→ğ dönüşümü düz
+  // startsWith ile tutmuyor. Kardeş çiftler artık tek kuraldan geçer.
+  // Çiftler AYNI segmentte seçildi: "Koltuk"/"Yönetici Koltuğu" artık bilerek
+  // farklı davranıyor (biri ev, diğeri ofis-kurumsal), o ayrım I11g'nin işi.
+  // Burada sınanan tek şey yumuşamanın segmentten bağımsız çalıştığı.
+  const furniturePairs = [
+    ["Dolap", "Mutfak Dolabı"],
+    ["Kitaplık", "Kitaplığı"],
+    ["Ayakkabılık", "Ayakkabılığı"],
+  ];
+  for (const [plain, softened] of furniturePairs) {
+    assert.equal(
+      inferFurnitureSegment({ name: plain! }),
+      inferFurnitureSegment({ name: softened! }),
+      `mobilya: '${plain}' ile '${softened}' aynı segmentte olmalı`,
+    );
+    assert.equal(
+      furnitureBrandsForProduct({ name: plain! }) != null,
+      furnitureBrandsForProduct({ name: softened! }) != null,
+      `mobilya: '${plain}' ile '${softened}' aynı davranmalı`,
+    );
+  }
+  const kitchenPairs = [
+    ["Dekoratif Tabaklar", "Sunum Tabağı"],
+    ["Tencere seti", "Döküm Tencere"],
+  ];
+  for (const [plain, softened] of kitchenPairs) {
+    assert.equal(
+      kitchenBrandsForProductName(plain!) != null,
+      kitchenBrandsForProductName(softened!) != null,
+      `mutfak: '${plain}' ile '${softened}' aynı davranmalı`,
+    );
+  }
+  const babyPairs = [
+    ["Oto koltuğu", "Oto Koltukları"],
+    ["Beşik", "Bebek Yatağı"],
+  ];
+  for (const [plain, softened] of babyPairs) {
+    assert.equal(
+      babyBrandsForProductName(plain!) != null,
+      babyBrandsForProductName(softened!) != null,
+      `bebek: '${plain}' ile '${softened}' aynı davranmalı`,
+    );
+  }
+});
+
+check("I11e: marka kolonu açılma oranı ölçülen değerden sapmıyor", () => {
+  /**
+   * DİKKAT — bu sınırlar ONAYLANMIŞ HEDEF DEĞİLDİR. Ölçülen mevcut durumun
+   * etrafına konmuş bir geriye gidiş cırcırıdır (kurucu, 2026-08-23):
+   * sınırlar ölçümden SONRA, o günkü değerin üstüne ve altına yerleştirildi.
+   * "%57 mobilya doğru orandır" gibi bir karar hiçbir zaman verilmedi; test
+   * yalnızca bu oranın SESSİZCE değişmesini yakalar, doğruluğunu onaylamaz.
+   *
+   * Yakaladığı iki yön:
+   *  - tavan: kalıpların sessizce genişlemesi (kolon her yaprakta açılmaya
+   *    başlar),
+   *  - taban: katlamanın/eşleştirmenin bozulup kolonların toptan kapanması.
+   *
+   * Yakalamadığı: bir kolonun DOĞRU açılıp açılmadığı. Oranın kendisi kalite
+   * ölçüsü değildir — mobilyada baş isim listesi kategorinin kendi sözlüğü
+   * olduğu için %57 neredeyse kurgu gereği çıkar, bebekte ise liste belirli
+   * ürün pazarlarını saydığı için %30 gerçek bir seçim yapar. Aynı yüzdeler
+   * aynı şeyi ölçmez.
+   *
+   * Ölçüm 2026-08-23 (mobilya segmentlere ayrıldıktan ve çıplak "tv" kalıbı
+   * kaldırıldıktan SONRA): technology 40/113, appliances 19/97, home-kitchen
+   * 28/141, baby 38/128, machinery 135/305, furniture 80/236.
+   *
+   * Mobilya sınırı bu turda %48–62'den %28–40'a taşındı: tek listeli kolon
+   * segmentlere bölününce oran %56.8'den %33.9'a düştü. Eski sınır kaldırıldı,
+   * çünkü artık ölçtüğü şey mevcut değil — bir cırcır, dayandığı ölçüm
+   * değiştiğinde yeniden yerleştirilir, yoksa geçmişi korumaz.
+   */
+  const BOUNDS: Record<string, { min: number; max: number }> = {
+    technology: { min: 28, max: 40 },
+    appliances: { min: 12, max: 25 },
+    "home-kitchen": { min: 12, max: 26 },
+    baby: { min: 20, max: 35 },
+    machinery: { min: 36, max: 50 },
+    furniture: { min: 28, max: 40 },
+  };
+
+  ensureTaxonomyLoaded();
+  const leaves = listAllTaxonomyNodes().filter(
+    (n) => n.nodeType === "PRODUCT_TYPE",
+  );
+  const counts = new Map<string, { total: number; open: number }>();
+  for (const leaf of leaves) {
+    if (!leaf.parentId) continue;
+    const ctx = {
+      categoryId: leaf.categoryId ?? "",
+      subcategorySlug: leaf.subcategoryId ?? null,
+    };
+    const kids = getBrowseChildren(leaf.id, ctx);
+    const bucket = counts.get(leaf.categoryId ?? "?") ?? { total: 0, open: 0 };
+    bucket.total += 1;
+    if (kids.some((k) => k.kind === "brand")) bucket.open += 1;
+    counts.set(leaf.categoryId ?? "?", bucket);
+  }
+
+  for (const [categoryId, bound] of Object.entries(BOUNDS)) {
+    const bucket = counts.get(categoryId);
+    assert.ok(bucket && bucket.total > 0, `${categoryId}: ürün yaprağı sayılamadı`);
+    const pct = (bucket!.open / bucket!.total) * 100;
+    const seen = `${bucket!.open}/${bucket!.total} = %${pct.toFixed(1)}`;
+    assert.ok(
+      pct <= bound.max,
+      `${categoryId}: marka kolonu ölçülenden fazla açılıyor (${seen}, sınır %${bound.max} — hedef değil, 2026-08-23 ölçümü)`,
+    );
+    assert.ok(
+      pct >= bound.min,
+      `${categoryId}: marka kolonu ölçülenden az açılıyor (${seen}, sınır %${bound.min} — hedef değil, 2026-08-23 ölçümü)`,
+    );
+  }
+
+  // Marka kolonu OLMAYAN kategoriler sessizce kolon açmaya başlamamalı.
+  for (const categoryId of ["automotive", "health", "printing", "real-estate", "services"]) {
+    const bucket = counts.get(categoryId);
+    if (!bucket) continue;
+    assert.equal(
+      bucket.open,
+      0,
+      `${categoryId}: bu kategoride marka kolonu beklenmiyor (${bucket.open}/${bucket.total})`,
+    );
+  }
+});
+
+check("I11g: mobilya kolonu tek liste değil — segmentine göre marka", () => {
+  /**
+   * Kurucunun 2026-08-23'te reddettiği durum: kolon açan 134 mobilya yaprağının
+   * TAMAMI aynı 11 markayı görüyordu. Adını verdiği dört yanlışın her biri
+   * burada kalıcı satır oldu ("ben bunları sürekli arayarak bulamam").
+   */
+  const leaf = (name: string, parentId?: string, subcategoryId?: string) =>
+    furnitureBrandsForProduct({ name, parentId, subcategoryId });
+
+  // 1) Çilek çocuk mobilyası markasıdır: ofis/kurumsalda görünemez.
+  for (const [name, sub] of [
+    ["Makam Oda Takımı", "ofis-mobilyalari"],
+    ["Konferans koltuğu", "ofis-sandalyesi"],
+    ["Yönetici Koltuğu", "ofis-mobilyalari"],
+    ["Toplantı Masası", "ofis-mobilyalari"],
+  ] as const) {
+    assert.equal(
+      leaf(name, undefined, sub),
+      null,
+      `${name}: ofis/kurumsal segmentte marka kolonu açılamaz`,
+    );
+  }
+  // Çocuk & Genç odasında ise Çilek İLK sırada olmalı (uzman marka önce).
+  const cocuk = leaf(
+    "Genç Odası Takımı",
+    "tax:furniture:ev-mobilyasi:cocuk-genc-odasi",
+    "ev-mobilyasi",
+  );
+  assert.ok(cocuk && cocuk[0] === "Çilek", `çocuk & genç: Çilek başta olmalı: ${cocuk}`);
+  // Ev segmenti Çilek'i TAŞIMAZ — yatak odası çocuk odası değildir.
+  const ev = leaf("Gardırop", "tax:furniture:ev-mobilyasi:yatak-odasi", "ev-mobilyasi");
+  assert.ok(ev && !ev.includes("Çilek"), `ev segmenti Çilek almamalı: ${ev}`);
+
+  // 2) Kurumsal donanım (metal dolap) mobilya markası hiç almaz.
+  for (const name of ["Ecza Dolabı", "Anahtar Dolabı", "Emanet Dolabı", "Soyunma Dolabı"]) {
+    assert.equal(
+      leaf(name, "tax:furniture:ofis-mobilyalari:dolaplar", "ofis-mobilyalari"),
+      null,
+      `${name}: kurumsal donanım, ev mobilyası markası alamaz`,
+    );
+  }
+
+  // 3) Bahçe mobilyası ayrı pazar — ev markası almaz.
+  for (const name of ["Bahçe Yatakları", "Bahçe Koltukları", "Bahçe Masaları", "Balkon Seti"]) {
+    assert.equal(
+      leaf(name, "tax:furniture:diger:bahce-ve-balkon-mobilyasi", "diger"),
+      null,
+      `${name}: bahçe segmentinde güvenilir marka listesi yok`,
+    );
+  }
+
+  // 4) Ölçüye özel / proje bazlı üretim tanımı gereği markasızdır.
+  for (const name of ["Ölçüye özel masa", "Proje bazlı ofis mobilyası"]) {
+    assert.equal(
+      leaf(name, "tax:furniture:ozel-uretim:ozel-isler", "ozel-uretim"),
+      null,
+      `${name}: özel üretim markasızdır`,
+    );
+  }
+
+  // Ebeveyn grubu isimden GÜÇLÜDÜR: aynı ad iki segmentte farklı davranır.
+  assert.notEqual(
+    inferFurnitureSegment({ name: "Sandalye", parentId: "tax:furniture:ev-mobilyasi:mutfak" }),
+    inferFurnitureSegment({ name: "Sandalye", subcategoryId: "ofis-mobilyalari" }),
+    "aynı ad, farklı ebeveyn → farklı segment olmalı",
+  );
+  // Mutfak grubu karışıktır: dolap ankastre pazarı, masa/sandalye ev mobilyası.
+  const mutfakDolap = leaf("Mutfak Dolabı", "tax:furniture:ev-mobilyasi:mutfak", "ev-mobilyasi");
+  const mutfakMasa = leaf("Mutfak Masası", "tax:furniture:ev-mobilyasi:mutfak", "ev-mobilyasi");
+  assert.ok(mutfakDolap && mutfakMasa);
+  assert.notEqual(
+    JSON.stringify(mutfakDolap),
+    JSON.stringify(mutfakMasa),
+    "mutfak dolabı ile mutfak masası aynı listeyi alamaz",
+  );
+
+  // Kolon açan segmentler farklı listeler vermeli — "tek liste" geri gelemez.
+  const openLists = (["ev", "cocuk-genc", "mutfak-dolabi"] as const).map((s) =>
+    JSON.stringify(furnitureBrandsForSegment(s)),
+  );
+  assert.equal(
+    new Set(openLists).size,
+    openLists.length,
+    `segmentler ayrı liste vermeli: ${openLists.join(" || ")}`,
+  );
+  // Kapalı segmentler sessizce açılmamalı.
+  for (const s of ["ofis-kurumsal", "bahce", "ozel-uretim"] as const) {
+    assert.equal(furnitureBrandsForSegment(s), null, `${s}: kolon açılmamalı`);
+  }
+});
+
+check("I11h: baş ismi ürün pazarıyla çakışan hizmet yaprağı marka kolonu açmaz", () => {
+  // "Uydu ve Kablo TV" bir abonelik alanıdır, televizyon değil; baş isim kuralı
+  // adın sonunu tuttuğu için televizyonun MediaMarkt listesini alıyordu
+  // (Samsung, LG, TCL…). Samsung uydu aboneliği satmaz (kurucu, 2026-08-23).
+  assert.equal(
+    brandsForProductName("Uydu ve Kablo TV", "technology"),
+    null,
+    "uydu/kablo TV televizyon markası alamaz",
+  );
+  // Gerçek televizyon yaprağı etkilenmedi — kaldırılan kalıbın maliyeti yoktu.
+  const tv = brandsForProductName("Televizyon", "technology");
+  assert.ok(tv && tv[0] === "Samsung", `televizyon kolonu bozulmamalı: ${tv}`);
+
+  const uydu = getBrowseChildren("tax:technology:donanim:tv-ve-goruntu:uydu-ve-kablo-tv", {
+    categoryId: "technology",
+    subcategorySlug: "donanim",
+  });
+  assert.equal(
+    uydu.filter((n) => n.kind === "brand").length,
+    0,
+    `uydu/kablo TV ağaçta marka kolonu açmamalı: ${uydu.map((n) => n.label).join(",")}`,
+  );
+});
+
+check("I11f: kolonun kaynağı işaretli — küratörlü liste pazar verisi gibi durmaz", () => {
+  // Kurucu kararı (2026-08-23): e-bebek/Koçtaş/Makinecim hasatlarında ürün
+  // tipi → marka kırılımı YOK. Küratörlü kolon, MediaMarkt dağılımıyla aynı
+  // statüde görünmesin diye kaynağıyla birlikte taşınır.
+  const marketColumn = getBrowseChildren(
+    "tax:technology:donanim:tv-ve-goruntu:televizyon",
+    { categoryId: "technology", subcategorySlug: "donanim" },
+  );
+  assert.ok(marketColumn.length > 0, "televizyon marka kolonu açılmalı");
+  for (const n of marketColumn) {
+    assert.equal(n.meta?.brandSource, "mediamarkt", `${n.label}: pazar verisi işareti eksik`);
+  }
+
+  const curatedLeaf = listAllTaxonomyNodes().find(
+    (n) =>
+      n.nodeType === "PRODUCT_TYPE" &&
+      n.categoryId === "baby" &&
+      n.canonicalName === "Oto koltuğu",
+  );
+  assert.ok(curatedLeaf, "bebek oto koltuğu yaprağı bulunmalı");
+  const curatedColumn = getBrowseChildren(curatedLeaf!.id, {
+    categoryId: "baby",
+    subcategorySlug: curatedLeaf!.subcategoryId ?? null,
+  });
+  assert.ok(curatedColumn.length > 0, "oto koltuğu marka kolonu açılmalı");
+  for (const n of curatedColumn) {
+    assert.equal(n.meta?.brandSource, "curated", `${n.label}: küratörlü işareti eksik`);
+  }
 });
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {

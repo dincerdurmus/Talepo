@@ -335,6 +335,12 @@ export function HybridCategoryBrowsePanel({
                       columnIndex === 0
                         ? "Kategoriler"
                         : walk.stack[columnIndex - 1]?.label ?? "";
+                    // Küratörlü marka kolonu, MediaMarkt dağılımıyla aynı
+                    // statüde durmaz: kaynağı kullanıcıya da söylenir
+                    // (kurucu, 2026-08-23).
+                    const curatedBrandColumn = columnNodes.some(
+                      (n) => n.meta?.brandSource === "curated",
+                    );
                     return (
                       <div
                         key={`col-${columnIndex}-${walk.stack[columnIndex - 1]?.id ?? "root"}`}
@@ -343,6 +349,12 @@ export function HybridCategoryBrowsePanel({
                         <p className="truncate border-b border-[#0f1f1d]/5 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0f1f1d]/35">
                           {columnTitle}
                         </p>
+                        {curatedBrandColumn ? (
+                          <p className="border-b border-[#0f1f1d]/5 px-3 py-1.5 text-[11px] leading-snug text-[#0f1f1d]/45">
+                            Seçilmiş marka listesi — pazar verisi değil. Markan
+                            listede yoksa kendin yazabilirsin.
+                          </p>
+                        ) : null}
                         <ul className="max-h-[24rem] overflow-y-auto px-1.5 py-1.5 sm:max-h-[27rem] [scrollbar-width:thin] [scrollbar-color:rgba(15,118,110,0.25)_transparent]">
                           {columnNodes.length === 0 ? (
                             <li className="px-3 py-2 text-xs text-[#0f1f1d]/40">
