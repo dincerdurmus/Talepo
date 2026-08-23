@@ -268,7 +268,7 @@ function GirisPageContent() {
               <p className="text-center text-[11px] text-black/35">
                 Hesabınız yok mu?{" "}
                 <Link
-                  href="/kayit"
+                  href={`/kayit?callbackUrl=${encodeURIComponent(callbackUrl)}`}
                   className="font-semibold text-teal-800 hover:text-teal-950"
                 >
                   Ücretsiz kayıt olun

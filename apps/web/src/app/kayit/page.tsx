@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import {
@@ -18,6 +18,10 @@ const inputClass =
 
 export default function KayitPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // Yarım kalan talep akışı buraya callbackUrl ile gelir — kayıt sonrası
+  // kullanıcı kaldığı yere döner (kurucu, 2026-08-23).
+  const callbackUrl = searchParams.get("callbackUrl") || "/panel";
   const [hint, setHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [social, setSocial] = useState({ facebook: false, twitter: false });
@@ -42,7 +46,7 @@ export default function KayitPage() {
   }, []);
 
   function startGoogleSignIn() {
-    void signIn("google", { callbackUrl: "/panel" });
+    void signIn("google", { callbackUrl });
   }
 
   async function onEmailSubmit(event: FormEvent<HTMLFormElement>) {
@@ -83,7 +87,7 @@ export default function KayitPage() {
         email: email.trim(),
         password,
         redirect: false,
-        callbackUrl: "/panel",
+        callbackUrl,
       });
 
       if (!result || result.error) {
@@ -93,7 +97,7 @@ export default function KayitPage() {
         return;
       }
 
-      router.push(result.url || "/panel");
+      router.push(result.url || callbackUrl);
       router.refresh();
     } catch {
       setHint("Bağlantı hatası. Tekrar deneyin.");
@@ -180,7 +184,7 @@ export default function KayitPage() {
                     : "Facebook girişi yakında"
                 }
                 onClick={() =>
-                  social.facebook && signIn("facebook", { callbackUrl: "/panel" })
+                  social.facebook && signIn("facebook", { callbackUrl })
                 }
                 className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-medium ${
                   social.facebook
@@ -195,7 +199,7 @@ export default function KayitPage() {
                 disabled={!social.twitter}
                 title={social.twitter ? "X ile kayıt" : "X girişi yakında"}
                 onClick={() =>
-                  social.twitter && signIn("twitter", { callbackUrl: "/panel" })
+                  social.twitter && signIn("twitter", { callbackUrl })
                 }
                 className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-medium ${
                   social.twitter

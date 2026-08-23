@@ -298,6 +298,10 @@ const EXAMPLE_CHIPS = [
 
 /** Rollback switch: false restores the legacy left-side requirement fields. */
 const ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS = true;
+
+/** Üye olmadan doldurulan talebin giriş/kayıt boyunca saklandığı anahtar. */
+const PENDING_DRAFT_KEY = "talepo:pending-request-draft:v1";
+const PENDING_DRAFT_TTL_MS = 30 * 60 * 1000;
 /** Rollback switch for the fixed-height desktop workspace experiment. */
 const ENABLE_FIXED_DESKTOP_WORKSPACE = false;
 
@@ -451,6 +455,9 @@ function TalepOlusturForm() {
   const composerStartedRef = useRef(false);
   /** Soru cevaplarının serbest metne yazılan parçaları (kurucu, 2026-08-23). */
   const appendedAnswersRef = useRef<Record<string, string>>({});
+  /** Üyelik akışında saklanan taslağın anahtarı ve dönüş durumu. */
+  const resumeAttemptedRef = useRef(false);
+  const [resumePublishPending, setResumePublishPending] = useState(false);
   const [otherDomainNote, setOtherDomainNote] = useState("");
   const [showOtherDomainInput, setShowOtherDomainInput] = useState(false);
   const [unresolvedExpressions, setUnresolvedExpressions] = useState<
@@ -1744,6 +1751,81 @@ function TalepOlusturForm() {
     ],
   );
 
+  // Üyelik dönüşü: saklanan taslağı geri yükle (kurucu, 2026-08-23).
+  useEffect(() => {
+    if (resumeAttemptedRef.current) return;
+    resumeAttemptedRef.current = true;
+    try {
+      const raw = window.localStorage.getItem(PENDING_DRAFT_KEY);
+      if (!raw) return;
+      window.localStorage.removeItem(PENDING_DRAFT_KEY);
+      const draft = JSON.parse(raw) as {
+        v?: number;
+        savedAt?: number;
+        pendingPublish?: boolean;
+        text?: string;
+        manualValues?: Record<string, string>;
+        commonDraft?: Partial<typeof commonDraft>;
+        realEstateDraft?: typeof realEstateDraft;
+        categoryOverride?: string | null;
+        categoryLockedByUser?: boolean;
+        categoryUserChoice?: typeof categoryUserChoice;
+        cityTouched?: boolean;
+        budgetTouched?: boolean;
+      };
+      if (
+        !draft?.text?.trim() ||
+        Date.now() - (draft.savedAt ?? 0) > PENDING_DRAFT_TTL_MS
+      ) {
+        return;
+      }
+      setManualValues(draft.manualValues ?? {});
+      setCommonDraft({
+        title: "",
+        quantity: "",
+        city: "",
+        delivery: "",
+        budget: "",
+        ...(draft.commonDraft ?? {}),
+      });
+      setRealEstateDraft(
+        draft.realEstateDraft ?? { il: "", ilce: "", mahalleler: [] },
+      );
+      if (draft.categoryOverride) setCategoryOverride(draft.categoryOverride);
+      setCategoryLockedByUser(Boolean(draft.categoryLockedByUser));
+      if (draft.categoryUserChoice) {
+        setCategoryUserChoice(draft.categoryUserChoice);
+      }
+      setCityTouched(Boolean(draft.cityTouched));
+      setBudgetTouched(Boolean(draft.budgetTouched));
+      hybrid.setText(draft.text);
+      setWizardStep(2);
+      setAiCompanionOpen(true);
+      if (draft.pendingPublish) setResumePublishPending(true);
+    } catch {
+      /* bozuk taslak sessizce yok sayılır */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Taslak hazır olunca kaldığı yerden otomatik yayınla (tek deneme).
+  useEffect(() => {
+    if (!resumePublishPending) return;
+    if (hybrid.isSyncing) return;
+    if ((understanding.rawInput ?? "").trim() !== requestText.trim()) return;
+    setResumePublishPending(false);
+    if (composerReadiness.canReview) {
+      handlePublishAttempt();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    resumePublishPending,
+    hybrid.isSyncing,
+    requestText,
+    understanding.rawInput,
+    composerReadiness.canReview,
+  ]);
+
   const categoryGuidance = useMemo(() => {
     const live = understandingMatchesComposerText({
       composerText: requestText,
@@ -2604,6 +2686,29 @@ function TalepOlusturForm() {
 
       if (!response.ok) {
         if (response.status === 401) {
+          // Kurucu (2026-08-23): üye olmadan doldurulan talep KAYBOLMAZ —
+          // taslağı sakla; giriş/kayıt sonrası geri yüklenip otomatik yayınlanır.
+          try {
+            window.localStorage.setItem(
+              PENDING_DRAFT_KEY,
+              JSON.stringify({
+                v: 1,
+                savedAt: Date.now(),
+                pendingPublish: true,
+                text: requestText,
+                manualValues,
+                commonDraft,
+                realEstateDraft,
+                categoryOverride,
+                categoryLockedByUser,
+                categoryUserChoice,
+                cityTouched,
+                budgetTouched,
+              }),
+            );
+          } catch {
+            /* depolama kapalıysa akış eskisi gibi devam eder */
+          }
           router.push(`/giris?callbackUrl=${encodeURIComponent("/talep")}`);
           return;
         }
