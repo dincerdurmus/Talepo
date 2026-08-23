@@ -446,8 +446,8 @@ ensureTaxonomyLoaded();
   const report = auditTaxonomyCoverage();
   // Pin updated 2026-08-23: Google TR overlay (+762 leaf, +41 GROUP) —
   // kurucu kararı, tüm dallar "Al".
-  check("29 taxonomy nodes 2159", report.nodeCount === 2159);
-  check("29 taxonomy leaves 1870", report.leafCount === 1870);
+  check("29 taxonomy nodes 2151", report.nodeCount === 2151);
+  check("29 taxonomy leaves 1862", report.leafCount === 1862);
   check("29 taxonomy empty parents 0", report.emptyParents.length === 0);
   check("29 taxonomy orphans 0", report.orphans.length === 0);
   check("29 taxonomy cycles 0", report.cycles.length === 0);

@@ -22,12 +22,9 @@ import {
   inferMachineryBrandFamily,
   machineryBrandsForFamily,
 } from "./harvest-brands";
+import { brandsForProductName } from "./product-brands";
 import { resolveKnowledgeProfile } from "./profile-registry";
 import { subcategorySlug } from "./slug";
-import {
-  brandsForTechFamily,
-  inferTechBrandFamily,
-} from "./technology-brands";
 import type { BrowseContext, BrowseNode, BrowseNodeKind } from "./types";
 
 function taxonomyKind(node: TaxonomyNode): BrowseNodeKind {
@@ -61,18 +58,9 @@ function technologyDisplayLabel(n: TaxonomyNode): string {
 }
 
 function technologyProductTypeHasBrands(n: TaxonomyNode): boolean {
-  if (n.categoryId !== "technology" || n.subcategoryId !== "donanim") {
-    return false;
-  }
+  if (n.categoryId !== "technology") return false;
   if (n.nodeType !== "PRODUCT_TYPE") return false;
-  return (
-    inferTechBrandFamily({
-      id: n.id,
-      name: n.canonicalName,
-      nodeType: n.nodeType,
-      subcategoryId: n.subcategoryId,
-    }) != null
-  );
+  return brandsForProductName(n.canonicalName) != null;
 }
 
 function technologyBrandNodes(
@@ -82,19 +70,15 @@ function technologyBrandNodes(
   ensureTaxonomyLoaded();
   const tax = getTaxonomyNode(productTypeId);
   if (!tax) return [];
-  // Web Sitesi / Yazılım SERVICE_TYPE leaves must never grow a brand column
-  if (tax.categoryId !== "technology" || tax.subcategoryId !== "donanim") {
-    return [];
-  }
+  if (tax.categoryId !== "technology") return [];
   if (tax.nodeType !== "PRODUCT_TYPE") return [];
 
-  const family = inferTechBrandFamily({
-    id: tax.id,
-    name: tax.canonicalName,
-    nodeType: tax.nodeType,
-    subcategoryId: tax.subcategoryId,
-  });
-  if (!family) return [];
+  // Kurucu kararı (2026-08-23): marka kolonu YALNIZ gerçek pazar verisi
+  // olduğunda açılır. Aile bazlı tahmin listesi megafona da, ses aksesuarına
+  // da aynı markaları veriyordu; bilmediğimizde tahmin etmek yerine kolonu
+  // hiç açmıyoruz — kullanıcı markasını serbestçe yazar.
+  const marketBrands = brandsForProductName(tax.canonicalName);
+  if (!marketBrands) return [];
 
   const tumu = node({
     id: "any:brand",
@@ -107,12 +91,13 @@ function technologyBrandNodes(
       any: true,
       fieldKey: "brand",
       sentinel: "__ANY__",
-      brandFamily: family,
+      brandSource: "mediamarkt",
       productTypeId,
     },
   });
 
-  const brands = brandsForTechFamily(family).map((label) =>
+  const labels = marketBrands;
+  const brands = labels.map((label) =>
     node({
       id: `browse:technology:brand:${subcategorySlug(label)}`,
       kind: "brand",
@@ -122,9 +107,9 @@ function technologyBrandNodes(
       entityId: subcategorySlug(label),
       hasChildren: false,
       meta: {
-        brandFamily: family,
+        brandSource: "mediamarkt",
         productTypeId,
-        subcategorySlug: "donanim",
+        subcategorySlug: tax.subcategoryId ?? "donanim",
       },
     }),
   );

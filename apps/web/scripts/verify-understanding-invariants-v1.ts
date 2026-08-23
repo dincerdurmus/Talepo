@@ -26,11 +26,8 @@ import {
   REQUEST_CATEGORIES,
 } from "../src/lib/request-category-engine";
 import { getBrowseChildren } from "../src/lib/knowledge/browse";
+import { brandsForProductName } from "../src/lib/knowledge/product-brands";
 import { resolveRequestSchema } from "../src/lib/knowledge/request-schema";
-import {
-  brandsForTechFamily,
-  inferTechBrandFamily,
-} from "../src/lib/knowledge/technology-brands";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
@@ -557,15 +554,26 @@ check("I11: browse — Donanım hoisted out, brand columns product-relevant", ()
   const tvGroup = kids.find((k) => k.label === "TV ve görüntü");
   assert.equal(tvGroup?.meta?.subcategorySlug, "donanim");
 
-  // Marka aileleri ürünle alakalı — drone kamera markası alır, RAM markası değil
-  const fam = (id: string, name: string) =>
-    inferTechBrandFamily({ id, name, nodeType: "PRODUCT_TYPE", subcategoryId: "donanim" });
-  assert.equal(fam("tax:technology:donanim:diger-teknoloji:drone", "Drone"), "camera");
-  assert.equal(fam("tax:technology:donanim:ses-ve-kulaklik:kulaklik", "Kulaklık"), "audio");
-  assert.equal(fam("tax:technology:donanim:ag-ve-modem:modem", "Modem"), "network");
-  assert.equal(fam("tax:technology:donanim:cevre-birimleri:yazici", "Yazıcı"), "printer");
-  assert.ok(brandsForTechFamily("camera").includes("DJI"));
-  assert.ok(!brandsForTechFamily("camera").includes("HP"));
+  // Marka kolonu ürünün KENDİ pazarından gelir (MediaMarkt dağılımı) ve
+  // veri yoksa hiç açılmaz — megafona kulaklık markası çıkmaz
+  // (kurucu, 2026-08-23).
+  const tv = brandsForProductName("Televizyon");
+  const mic = brandsForProductName("Mikrofon");
+  assert.ok(tv && tv[0] === "Samsung", `TV markaları pazar sıralı olmalı: ${tv}`);
+  assert.ok(mic && mic.includes("Hyperx"), `mikrofon markaları kendi pazarı olmalı: ${mic}`);
+  assert.notEqual(
+    JSON.stringify(tv),
+    JSON.stringify(mic),
+    "televizyon ve mikrofon aynı marka listesini alamaz",
+  );
+  assert.equal(
+    brandsForProductName("Megafonlar"),
+    null,
+    "gerçek veri olmayan üründe marka kolonu açılmaz",
+  );
+  assert.equal(brandsForProductName("Ses Aksesuarları"), null);
+  const proj = brandsForProductName("Projeksiyon cihazı");
+  assert.ok(proj && !proj.includes("Onvo"), "projeksiyonda TV markası olmamalı");
 });
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {

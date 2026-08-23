@@ -31,6 +31,42 @@ const state: RegistryState = {
   loaded: false,
 };
 
+/**
+ * Kategorinin yüzü olan ürünler: bulunduğu kolonun başında görünürler.
+ * Kullanıcı listeyi taramadan aradığını görsün diye (kurucu, 2026-08-23).
+ */
+const FLAGSHIP_PRODUCTS = new Set(
+  [
+    "televizyon",
+    "cep telefonu",
+    "dizüstü bilgisayar",
+    "masaüstü bilgisayar",
+    "tablet",
+    "monitör",
+    "yazıcı",
+    "modem",
+    "akıllı saat",
+    "fotoğraf makinesi",
+    "oyun konsolu",
+    "buzdolabı",
+    "çamaşır makinesi",
+    "bulaşık makinesi",
+    "klima",
+    "kombi",
+    "fırın",
+    "bebek arabası",
+    "oto koltuğu",
+    "koltuk takımı",
+    "yatak odası takımı",
+    "ofis sandalyesi",
+  ].map((s) => s.toLocaleLowerCase("tr-TR")),
+);
+
+function columnRank(n: TaxonomyNode): number {
+  if (FLAGSHIP_PRODUCTS.has(n.canonicalName.toLocaleLowerCase("tr-TR"))) return 0;
+  return n.provenance?.source === "google-product-taxonomy-tr" ? 2 : 1;
+}
+
 function pushChild(parentId: string | null, node: TaxonomyNode) {
   const key = parentId;
   const list = state.byParent.get(key) ?? [];
@@ -70,10 +106,16 @@ export function ensureTaxonomyLoaded(nodes?: TaxonomyNode[]): void {
     for (const t of node.searchTerms) indexAlias(t, node.id);
     for (const a of node.ambiguousAliases ?? []) indexAlias(a, node.id);
   }
-  // Stable child order
+  // Kolon sıralaması (kurucu, 2026-08-23):
+  //  1) grubun amiral ürünü başta ("TV ve görüntü" → Televizyon),
+  //  2) sonra Türk pazarından kürasyonlu ürünler,
+  //  3) en sonda Google'ın uzun kuyruğu.
+  // Her kademe kendi içinde Türkçe alfabetik.
   for (const [k, children] of state.byParent) {
-    children.sort((a, b) =>
-      a.canonicalName.localeCompare(b.canonicalName, "tr"),
+    children.sort(
+      (a, b) =>
+        columnRank(a) - columnRank(b) ||
+        a.canonicalName.localeCompare(b.canonicalName, "tr"),
     );
     state.byParent.set(k, children);
   }

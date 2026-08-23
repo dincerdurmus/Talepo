@@ -149,7 +149,8 @@ const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = 
       ] },
       { sub: "donanim", group: "TV ve görüntü", leaves: [
         { name: "Projeksiyon Cihazı", aliases: ["projektör", "projektor"] },
-        "Media Player",
+        // "Media Player" kaldırıldı: ağaçta zaten "Medya oynatıcı" var,
+        // ikisi aynı üründü (kurucu, 2026-08-23).
       ] },
     ],
   },

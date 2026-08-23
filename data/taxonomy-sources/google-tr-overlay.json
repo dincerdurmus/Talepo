@@ -14,7 +14,6 @@
           "Bebek Bezi Kutuları",
           "Bebek Bezi Çöp Kovaları",
           "Bebek Bezi Çöp Kovası Aksesuarları",
-          "Bebek Bezleri",
           "Bebek Islak Mendilleri",
           "Bebekler için Islak Mendil Dispanserleri ve Mendil Isıtıcıları",
           "Bez Değiştirme Matları ve Alanları",
@@ -55,7 +54,6 @@
           "Emzirme Önlükleri",
           "Gaz Çıkarma ve Omuz Bezleri",
           "Göğüs Pedleri ve Koruyucuları",
-          "Göğüs Pompaları",
           "Göğüs Pompası Aksesuarları",
           "Mama Önlükleri",
           "Suluklar"
@@ -82,7 +80,6 @@
           "Bebek Arabası Örtüleri ve Tulumları",
           "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları",
           "Kanguru Aksesuarları",
-          "Bebek Arabaları",
           "Bebek ve Küçük Çocuk Oto Koltukları"
         ]
       },
@@ -277,7 +274,6 @@
           "Büro Masaları",
           "Büro Sandalyeleri",
           "Ofis Mobilya Setleri",
-          "Çalışma Masaları",
           "Çalışma Odaları ve Küçük Odalar"
         ]
       },
@@ -506,8 +502,6 @@
         "sub": "donanim",
         "group": "TV ve görüntü",
         "leaves": [
-          "Bilgisayar Monitörleri",
-          "Projeksiyon Cihazları",
           "Uydu ve Kablo TV",
           "Video Aksesuarları",
           "Video Montaj Donanımı ve Prodüksiyon Ekipmanları",
@@ -1120,8 +1114,7 @@
           "İletkenlik Jelleri ve Losyonları",
           "İlk Yardım",
           "İnkontinans Yardımcıları",
-          "İş Terapisi ve Fiziksel Terapi Ekipmanları",
-          "İşitme Cihazları"
+          "İş Terapisi ve Fiziksel Terapi Ekipmanları"
         ]
       }
     ],

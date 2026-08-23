@@ -2019,30 +2019,6 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Media Player"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:technology:donanim:tv-ve-goruntu:media-player",
-      "parentId": "tax:technology:donanim:tv-ve-goruntu",
-      "canonicalName": "Media Player",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "technology",
-      "subcategoryId": "donanim",
-      "depth": 3,
-      "requestSchemaId": "technology/donanim",
-      "provenance": {
-        "source": "harvest-2026-08-22",
-        "note": "MediaMarkt"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
         "Akıllı Gözlükler"
       ],
       "applicableCapabilities": [
@@ -3604,54 +3580,6 @@
       "id": "tax:technology:donanim:ses-ve-kulaklik:ses-calar-ve-kaydediciler",
       "parentId": "tax:technology:donanim:ses-ve-kulaklik",
       "canonicalName": "Ses Çalar ve Kaydediciler",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "technology",
-      "subcategoryId": "donanim",
-      "depth": 3,
-      "requestSchemaId": "technology/donanim",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Bilgisayar Monitörleri"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:technology:donanim:tv-ve-goruntu:bilgisayar-monitorleri",
-      "parentId": "tax:technology:donanim:tv-ve-goruntu",
-      "canonicalName": "Bilgisayar Monitörleri",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "technology",
-      "subcategoryId": "donanim",
-      "depth": 3,
-      "requestSchemaId": "technology/donanim",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Projeksiyon Cihazları"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:technology:donanim:tv-ve-goruntu:projeksiyon-cihazlari",
-      "parentId": "tax:technology:donanim:tv-ve-goruntu",
-      "canonicalName": "Projeksiyon Cihazları",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "technology",
       "subcategoryId": "donanim",

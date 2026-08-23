@@ -2551,29 +2551,6 @@
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
       }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "İşitme Cihazları"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA",
-        "COMMODITY_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:health:medikal-cihaz:saglik-urunleri:isitme-cihazlari",
-      "parentId": "tax:health:medikal-cihaz:saglik-urunleri",
-      "canonicalName": "İşitme Cihazları",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "health",
-      "subcategoryId": "medikal-cihaz",
-      "depth": 3,
-      "requestSchemaId": "health/medikal-cihaz",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
     }
   ]
 }

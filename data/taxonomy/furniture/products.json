@@ -5469,28 +5469,6 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Çalışma Masaları"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi:calisma-masalari",
-      "parentId": "tax:furniture:ofis-mobilyalari:ofis-mobilyasi",
-      "canonicalName": "Çalışma Masaları",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "furniture",
-      "subcategoryId": "ofis-mobilyalari",
-      "depth": 3,
-      "requestSchemaId": "furniture/ofis-mobilyalari",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
         "Çalışma Odaları ve Küçük Odalar"
       ],
       "applicableCapabilities": [

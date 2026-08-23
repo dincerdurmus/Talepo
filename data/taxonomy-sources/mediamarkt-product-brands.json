@@ -1,0 +1,517 @@
+{
+  "source": "MediaMarkt envanteri (2026-08-22)",
+  "productTypes": {
+    "hoparlor": {
+      "total": 230,
+      "brands": [
+        "JBL",
+        "Marshall",
+        "Logitech",
+        "Grundig",
+        "Harman Kardon",
+        "Anker",
+        "LG",
+        "Cellularline",
+        "Trust",
+        "Xiaomi",
+        "Samsung",
+        "Onvo",
+        "Peaq",
+        "Philips"
+      ]
+    },
+    "monitor": {
+      "total": 726,
+      "brands": [
+        "Asus",
+        "MSI",
+        "Philips",
+        "Samsung",
+        "LG",
+        "Lenovo",
+        "HP",
+        "Acer",
+        "Apple",
+        "Casper"
+      ]
+    },
+    "dizustu-bilgisayar": {
+      "total": 28644,
+      "brands": [
+        "Lenovo",
+        "HP",
+        "Asus",
+        "MSI",
+        "Casper",
+        "Acer"
+      ]
+    },
+    "masaustu-bilgisayar": {
+      "total": 4698,
+      "brands": [
+        "Lenovo",
+        "HP",
+        "Asus",
+        "Casper",
+        "MSI"
+      ]
+    },
+    "klavye": {
+      "total": 158,
+      "brands": [
+        "Logitech",
+        "Rampage",
+        "Razer",
+        "Steelseries",
+        "Everest",
+        "Hyperx",
+        "Apple",
+        "Asus",
+        "HP",
+        "Lenovo",
+        "Havit",
+        "Huawei",
+        "Kingston",
+        "MSI"
+      ]
+    },
+    "modem": {
+      "total": 107,
+      "brands": [
+        "TP-Link",
+        "Asus",
+        "Huawei",
+        "Rampage",
+        "Everest",
+        "Zyxel"
+      ]
+    },
+    "tablet": {
+      "total": 325,
+      "brands": [
+        "Apple",
+        "Samsung",
+        "Lenovo",
+        "Huawei",
+        "Casper",
+        "TCL",
+        "Xiaomi"
+      ]
+    },
+    "fotograf-makinesi": {
+      "total": 344,
+      "brands": [
+        "Fujifilm",
+        "Canon",
+        "Sony",
+        "Nikon",
+        "Acton",
+        "Bood"
+      ]
+    },
+    "kamera": {
+      "total": 128,
+      "brands": [
+        "Fujifilm",
+        "DJI",
+        "TP-Link",
+        "Zhiyun",
+        "Bood",
+        "Sjcam",
+        "Sony",
+        "Acton",
+        "Canon",
+        "Samsung",
+        "Ttec",
+        "Xiaomi",
+        "HP",
+        "Nikon"
+      ]
+    },
+    "yazici": {
+      "total": 266,
+      "brands": [
+        "Canon",
+        "HP",
+        "Epson",
+        "Fujifilm",
+        "Asus"
+      ]
+    },
+    "camasir-makinesi": {
+      "total": 239,
+      "brands": [
+        "Samsung",
+        "Miele",
+        "Bosch",
+        "Hoover",
+        "Electrolux",
+        "LG",
+        "Siemens",
+        "Profilo",
+        "Vestel",
+        "Altus",
+        "Haier",
+        "Grundig",
+        "Koenic"
+      ]
+    },
+    "buzdolabi": {
+      "total": 323,
+      "brands": [
+        "Altus",
+        "Samsung",
+        "Vestel",
+        "Bosch",
+        "Siemens",
+        "Profilo",
+        "Miele",
+        "Grundig",
+        "Electrolux",
+        "Hoover",
+        "LG",
+        "Haier"
+      ]
+    },
+    "bulasik-makinesi": {
+      "total": 206,
+      "brands": [
+        "Miele",
+        "Bosch",
+        "Samsung",
+        "Siemens",
+        "Vestel",
+        "Haier",
+        "Hoover",
+        "Altus",
+        "Electrolux",
+        "Grundig",
+        "LG",
+        "Profilo"
+      ]
+    },
+    "firin": {
+      "total": 208,
+      "brands": [
+        "Bosch",
+        "Miele",
+        "Altus",
+        "Vestel",
+        "Siemens",
+        "Samsung",
+        "Electrolux",
+        "Profilo",
+        "Grundig",
+        "Koenic",
+        "Ferre",
+        "Haier",
+        "Hoover",
+        "Silverline"
+      ]
+    },
+    "supurge": {
+      "total": 568,
+      "brands": [
+        "Philips",
+        "Bosch",
+        "Roborock",
+        "Electrolux",
+        "Arnica",
+        "Black",
+        "Dreame",
+        "Fakir",
+        "Tefal",
+        "Karcher",
+        "Siemens",
+        "Dyson",
+        "Samsung",
+        "Arzum"
+      ]
+    },
+    "sac-kurutma": {
+      "total": 136,
+      "brands": [
+        "Remington",
+        "Braun",
+        "Grundig",
+        "Philips",
+        "Babyliss",
+        "Dyson",
+        "Revlon",
+        "Rowenta",
+        "Arzum",
+        "Dreame",
+        "Fakir",
+        "Xiaomi",
+        "Goldmaster",
+        "Koenic"
+      ]
+    },
+    "televizyon": {
+      "total": 486,
+      "brands": [
+        "Samsung",
+        "LG",
+        "TCL",
+        "Onvo",
+        "Philips",
+        "Grundig",
+        "Peaq",
+        "Axen",
+        "İsy",
+        "Sony",
+        "Vestel",
+        "Xiaomi",
+        "Havit"
+      ]
+    },
+    "klima": {
+      "total": 163,
+      "brands": [
+        "Samsung",
+        "Daikin",
+        "Bosch",
+        "Vestel",
+        "Baymak",
+        "LG",
+        "Altus",
+        "Grundig",
+        "Gree",
+        "TCL",
+        "Electrolux",
+        "Fakir"
+      ]
+    },
+    "akilli-saat": {
+      "total": 380,
+      "brands": [
+        "Apple",
+        "Huawei",
+        "Samsung",
+        "Amazfit",
+        "Xiaomi",
+        "Ttec",
+        "TCL"
+      ]
+    },
+    "bileklik": {
+      "total": 40,
+      "brands": [
+        "TP-Link",
+        "Asus",
+        "Xiaomi",
+        "Amazfit",
+        "Apple",
+        "Huawei",
+        "Havit",
+        "Samsung"
+      ]
+    },
+    "projeksiyon": {
+      "total": 70,
+      "brands": [
+        "Havit",
+        "Xgimi",
+        "Epson",
+        "Everest",
+        "Philips",
+        "Anker",
+        "Asus",
+        "Samsung",
+        "TCL",
+        "Xiaomi",
+        "TP-Link"
+      ]
+    },
+    "kulaklik": {
+      "total": 691,
+      "brands": [
+        "JBL",
+        "Cellularline",
+        "Baseus",
+        "Sennheiser",
+        "Philips",
+        "Oppo",
+        "Huawei",
+        "Anker",
+        "Jabra",
+        "Razer",
+        "Samsung",
+        "Logitech",
+        "Sony",
+        "Apple"
+      ]
+    },
+    "cep-telefonu": {
+      "total": 1914,
+      "brands": [
+        "Apple",
+        "Samsung",
+        "Xiaomi",
+        "Tecno",
+        "İnfinix",
+        "Oppo",
+        "Vivo",
+        "Huawei",
+        "Baseus"
+      ]
+    },
+    "mouse": {
+      "total": 217,
+      "brands": [
+        "Logitech",
+        "Asus",
+        "Steelseries",
+        "HP",
+        "Razer",
+        "Huawei",
+        "Rampage",
+        "Lenovo",
+        "Havit",
+        "Hyperx",
+        "Microsoft",
+        "MSI",
+        "Wmf",
+        "Apple"
+      ]
+    },
+    "utu": {
+      "total": 181,
+      "brands": [
+        "Philips",
+        "Tefal",
+        "Laurastar",
+        "Braun",
+        "Fakir",
+        "Arzum",
+        "Bosch",
+        "Arnica",
+        "Grundig",
+        "Neutron",
+        "Vestel",
+        "Miele",
+        "Siemens",
+        "Sinbo"
+      ]
+    },
+    "kahve-makinesi": {
+      "total": 299,
+      "brands": [
+        "Nespresso",
+        "Philips",
+        "Delonghi",
+        "Tchibo",
+        "Siemens",
+        "Fakir",
+        "Grundig",
+        "Miele",
+        "Arzum",
+        "Bosch",
+        "Braun",
+        "Korkmaz",
+        "Wmf",
+        "Melitta"
+      ]
+    },
+    "oyun-konsolu": {
+      "total": 257,
+      "brands": [
+        "Sony",
+        "Microsoft",
+        "Nintendo",
+        "Thule",
+        "Logitech",
+        "Rampage"
+      ]
+    },
+    "mikrofon": {
+      "total": 28,
+      "brands": [
+        "DJI",
+        "Hyperx",
+        "JBL",
+        "Rampage",
+        "Philips",
+        "Trust",
+        "Asus",
+        "Sennheiser"
+      ]
+    },
+    "webcam": {
+      "total": 29,
+      "brands": [
+        "Logitech",
+        "HP",
+        "Microsoft",
+        "Asus",
+        "Lenovo"
+      ]
+    },
+    "tiras-makinesi": {
+      "total": 134,
+      "brands": [
+        "Braun",
+        "Philips",
+        "Remington",
+        "Wahl",
+        "Rowenta",
+        "Fakir",
+        "Grundig"
+      ]
+    },
+    "drone": {
+      "total": 69,
+      "brands": [
+        "DJI",
+        "Corby",
+        "Bood"
+      ]
+    },
+    "gamepad": {
+      "total": 19,
+      "brands": [
+        "Sony",
+        "Rampage",
+        "Logitech",
+        "Goldmaster",
+        "Nintendo",
+        "Bood",
+        "MSI",
+        "Samsung"
+      ]
+    },
+    "tarayici": {
+      "total": 23,
+      "brands": [
+        "Canon",
+        "HP",
+        "Epson"
+      ]
+    },
+    "objektif": {
+      "total": 143,
+      "brands": [
+        "Canon",
+        "Sony",
+        "Nikon",
+        "DJI"
+      ]
+    },
+    "soundbar": {
+      "total": 47,
+      "brands": [
+        "LG",
+        "Samsung",
+        "JBL",
+        "TCL",
+        "Grundig",
+        "Marshall",
+        "Sennheiser",
+        "Sony",
+        "Goldmaster",
+        "Philips",
+        "Rampage"
+      ]
+    }
+  }
+}

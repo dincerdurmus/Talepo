@@ -1402,28 +1402,6 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Bebek Bezleri"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:baby:bakim:bakim:bebek-bezleri",
-      "parentId": "tax:baby:bakim:bakim",
-      "canonicalName": "Bebek Bezleri",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "baby",
-      "subcategoryId": "bakim",
-      "depth": 3,
-      "requestSchemaId": "baby/bakim",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
         "Bebek Islak Mendilleri"
       ],
       "applicableCapabilities": [
@@ -1948,28 +1926,6 @@
     {
       "aliases": [],
       "searchTerms": [
-        "Göğüs Pompaları"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:baby:beslenme:beslenme-urunleri:gogus-pompalari",
-      "parentId": "tax:baby:beslenme:beslenme-urunleri",
-      "canonicalName": "Göğüs Pompaları",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "baby",
-      "subcategoryId": "beslenme",
-      "depth": 3,
-      "requestSchemaId": "baby/beslenme",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
         "Göğüs Pompası Aksesuarları"
       ],
       "applicableCapabilities": [
@@ -2285,28 +2241,6 @@
       "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:kanguru-aksesuarlari",
       "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
       "canonicalName": "Kanguru Aksesuarları",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "baby",
-      "subcategoryId": "bebek-arabasi",
-      "depth": 3,
-      "requestSchemaId": "baby/bebek-arabasi",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Bebek Arabaları"
-      ],
-      "applicableCapabilities": [
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima:bebek-arabalari",
-      "parentId": "tax:baby:bebek-arabasi:oto-koltugu-ve-tasima",
-      "canonicalName": "Bebek Arabaları",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "baby",
       "subcategoryId": "bebek-arabasi",
