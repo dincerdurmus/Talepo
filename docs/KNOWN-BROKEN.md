@@ -374,61 +374,197 @@ bağlandığında **ilk kez** oluşacaktır.
 kadar bu beş doğrulayıcının canlı bölümleri ölçülmez — ve bu, ortak veriye
 yazmaktan iyidir.
 
-## KB-10 — Beyaz eşya parçasında cihaz adı cümleden düşüyor
+## KB-10 — Beyaz eşya parçasında cihaz adı cümleden düşüyor — **ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
-| Dosya | `apps/web/src/lib/request-composer/compose-text.ts:533` |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — bayat beklenti değil |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-24, KB-2c düzeltmesi sırasında görünür oldu |
-| Durum | Açık, ayrı dilim |
+| **Durum** | **ÇÖZÜLDÜ** — `bac6d20d56c0f44f1ae80c5509cf185a4df3caf7` |
+| Koruyucu | `I17` (`verify-understanding-invariants-v1`) |
 
 **Beklenen:** "Bosch çamaşır makinesi için pompa arıyorum" girdisinde üretilen
-metin, parçanın hangi cihaza ait olduğunu taşımalı:
-`Bosch çamaşır makinesi için pompa arıyorum.`
+metin, parçanın hangi cihaza ait olduğunu taşımalı.
 
-**Gözlenen:** `Bosch için pompa arıyorum.` — **"çamaşır makinesi" düşüyor.**
+**Gözlenen (düzeltmeden önce):** `Bosch için pompa arıyorum.` — "çamaşır
+makinesi" düşüyordu.
 
-**Kök neden (doğrulandı).** `compose-text.ts:533`:
+### Kök neden — ilk kayıt YANLIŞTI, ölçümle düzeltildi
+
+> ⚠️ Bu kaydın ilk hâli kök nedeni **`compose-text.ts:533`** (o günkü
+> numaralandırmayla `compatibility_part` dalı) diye gösteriyordu. **Bu yanlış ve
+> eksikti** ve kod okunarak yazılmıştı, ölçülerek değil. Ölçüm bunu çürüttü;
+> o kayda dayanan aday düzeltme uygulansaydı **hata düzelmezdi.**
+
+Ölçülen gerçek (2026-08-24):
+
+| Girdi | `composeDomainId` | `compositionMode` | Gerçek rota |
+| --- | --- | --- | --- |
+| `Bosch çamaşır makinesi için pompa arıyorum` | `appliances` | **`generic`** | genel `isAutoPart → composeAutoPart` yolu |
+| `Mercedes C180 için su pompası arıyorum` | `automotive` | `compatibility_part` | `compatibility_part` dalı |
+
+Bosch vakasının `compositionMode`'u `compatibility_part` **değil `generic`**
+olduğu için o dala **hiç girilmiyordu**; bozulma, aşağıdaki genel düşüş
+yolundaydı:
 
 ```ts
-if (state.categoryId === "automotive" || isAutoPart(state)) {
-  return composeAutoPart(state);
-}
+if (isAutoPart(state)) return composeAutoPart(state);   // kategoriye bakmıyor
 ```
 
-`isAutoPart()` her `needType === "part"` için `true` döner — kategori beyaz
-eşya olsa bile. Böylece beyaz eşya parçası **otomotiv bestecisine**
-(`composeAutoPart`) yönlenir; o besteci `composeCompatibilityPartSentence`'a
-`parentProduct` parametresini **hiç geçmez** (bkz. `compose-text.ts:313-320`,
-otomotivde ebeveyn araçtır ve marka/model üzerinden taşınır). Beyaz eşyada
-ebeveyn `applianceType` alanındadır ve o yol hiç okunmaz.
+`isAutoPart()` (bugün `compose-text.ts:64`) her `needType === "part"` için
+`true` döner — kategori beyaz eşya veya makine olsa bile. `composeAutoPart`
+(bugün `:304`) ise `composeCompatibilityPartSentence`'a `parentProduct`
+**geçmez**: otomotivde ebeveyn araçtır ve marka/model üzerinden taşınır.
+Beyaz eşyada ebeveyn `applianceType` alanındadır ve o yol hiç okunmaz.
+
+`compatibility_part` dalı bozulmanın **kaynağı değildi**, ama aynı
+kategori-otoritesi eksikliğini taşıyordu (`state.categoryId === "automotive" ||
+isAutoPart(state)`); bu yüzden ikisi **birlikte** sertleştirildi.
 
 **Neden bugün fark edildi.** Daha önce "çamaşır makinesi" cümlede görünüyordu,
 ama **yalnızca bozuk parça adının içinde** (`part = "Bosch çamaşır makinesi
-için pompa"` — KB-2c). Bilgi, hatanın kazasıyla oradaydı. KB-2c kapanınca
-parça adı doğru şekilde `"pompa"`ya indi ve ebeveynin hiçbir zaman düzgün
-taşınmadığı ortaya çıktı. Yani bu bir gerileme değil, **maskesi kalkmış eski
-bir eksik**.
+için pompa"` — KB-2c). Bilgi, hatanın kazasıyla oradaydı. KB-2c kapanınca parça
+adı doğru şekilde `"pompa"`ya indi ve ebeveynin hiçbir zaman düzgün taşınmadığı
+ortaya çıktı: gerileme değil, **maskesi kalkmış eski bir eksik**.
 
-**Neden önemli.** Pro tedarikçi, parçanın hangi cihaza ait olduğunu göremez.
-"Bosch için pompa" bir bulaşık makinesi pompası da olabilir, çamaşır makinesi
-pompası da — teklif verecek kişi ayırt edemez. Bu doğrudan ikinci güven
-sözleşmesine dokunur.
+### Uygulanan düzeltme — iki parça, birlikte
 
-**Aday düzeltme (uygulanmadı).** Koşulu `state.categoryId === "automotive"`
-ile sınırlamak; beyaz eşya o zaman `parentProduct` taşıyan genel besteciye
-(`compose-text.ts:536-544`) düşer. **Ayrı dilim olmasının sebebi:** bu bir
-yönlendirme değişikliğidir ve `compositionMode === "compatibility_part"`
-olan **tüm** kategorileri etkiler (beyaz eşya, ev & mutfak, makine, matbaa);
-her birinin çıktısı ayrıca gözden geçirilmelidir. Merge öncesinde incelemesiz
-girmesi doğru değildi (kurucu, 2026-08-24).
+Yalnız rotayı kapatmak **yetmez, kötüleştirir**: kategori gövdesine düşen talep
+`part` alanını hiç okumaz ve pompa **tamamen** kaybolur (ölçüldü). Bu yüzden:
 
-**Not:** `I16` bu hatayı yakalamaz ve yakalaması da beklenmez — I16 fazladan
-tekrarı kovalar, eksik bilgiyi değil. Düzeltme diliminde bu sınıf için ayrı
-bir invariant gerekir ("uyumluluk parçasında ebeveyn ürün adı cümlede
-bulunmalı").
+**A — Kategori sınırı.** Otomotiv bestecisi yalnız canonical alan otomotivken
+yetkili: `isAutomotiveDomain(state)` = `composeDomainId(state) === "automotive"`
+(`:366`). `composeDomainId` bu dosyanın **mevcut** kategori otoritesidir
+(`isFurniture`/`isAppliances` de ona dayanır); yeni otorite uydurulmadı. Her iki
+rota da buna bağlandı (`:599` ve `:627`). Tek başına `needType === "part"`,
+`requestSubject.kind === "PART"`, "parça" kelimesi, ürün adı veya ham metin
+otomotiv kanıtı sayılmaz.
+
+**B — Otomotiv dışı uyumluluk yolu.** `composeNonAutomotiveCompatibilityPart`
+(`:405`): alan otomotiv değilse ve gerçek `part` varsa marka, model/family,
+generation, **üst ürün** ve parça birlikte korunur.
+
+**Üst ürün zinciri tek kaynakta.** `compatibilityParentProduct` (`:382`) —
+`applianceType → productType → machineType`. İlk denemede bu zincir iki rotada
+ayrı yazılmıştı ve `compatibility_part` dalı `machineType`'ı okumuyordu; o
+daldan geçen **sanayi makinesi** parçası üst makine adını yine kaybediyordu.
+Zincir artık üç `parentProduct` çağrısının tamamında tek yardımcıdan gelir.
+Kategoriye özel metin yok.
+
+### Çözüm kanıtı
+
+| Girdi | Önce | Sonra |
+| --- | --- | --- |
+| `Bosch çamaşır makinesi için pompa arıyorum` | `Bosch için pompa arıyorum.` | **`Bosch Çamaşır Makinesi için pompa arıyorum.`** |
+| `Mercedes C180 için su pompası arıyorum` | `Mercedes C180 için devirdaim pompası arıyorum.` | değişmedi |
+| `Alfa Romeo 156 için fren balatası arıyorum` | `Alfa Romeo için fren balatası arıyorum.` | değişmedi |
+| `Golf 7 için debriyaj seti arıyorum` | `Volkswagen Golf VII için debriyaj seti arıyorum.` | değişmedi |
+
+`verify-understanding-invariants-v1`: **30 passed, 0 failed**.
+`I16` (fazla tekrar koruması) yeşil kaldı — KB-2c tekrarı geri gelmedi.
+`I17` hem beyaz eşya hem sanayi makinesi senaryosunu, hem de her iki rotayı
+ayrı ayrı tutuyor; makine senaryosu kontrollü canonical state fixture ile
+sınanır (doğal dil `machineType`'ı bugün güvenilir doldurmuyor).
+
+**Not:** `I16` bu sınıfı yakalamaz ve yakalaması beklenmez — I16 fazladan
+tekrarı, `I17` eksik bilgiyi kovalar. İkisi birlikte çalışır.
+
+## KB-11 — "için" içeren cümlede çok kelimeli parça adı kısalıyor
+
+| Alan | Değer |
+| --- | --- |
+| Dosya | `apps/web/src/lib/request-composer/build-state.ts` (parça adı zenginleştirme) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — bilgi kaybı |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-24, KB-10 ölçümü sırasında |
+| Durum | **Açık** — bu turda düzeltilmedi |
+
+**Girdi:** `Heidelberg SM 74 için nemlendirme pompası arıyorum`
+**Gözlenen:** `Heidelberg SM 74 için pompa arıyorum.` — **"nemlendirme" kayıp.**
+**Beklenen:** parça adı `nemlendirme pompası` olarak korunmalı.
+
+**`için` içermeyen biçim bugün DOĞRU çalışıyor:**
+`Heidelberg SM 74 nemlendirme pompası` → `Heidelberg SM 74 için nemlendirme
+pompası arıyorum.` (`part = "nemlendirme pompası"`). Yani hata, cümlede
+uyumluluk bağlacı bulunmasına bağlı.
+
+**Kök neden — ŞÜPHE, kanıtlanmadı.** Parça adını zenginleştiren geri yayılma
+kalıbı ham metinden `"için nemlendirme pompası"` adayını üretiyor olabilir;
+KB-2c kuralı adayda bağlaç görünce **adayın tamamını** reddediyor ve ham
+`"pompa"`ya düşüyor olabilir. Bu okuma kod incelemesine dayanır; **ölçülerek
+doğrulanmadı** ve KB-2c öncesi davranış bu makinede karşılaştırmalı olarak
+çalıştırılmadı. Düzeltme dilimi önce bunu ölçmelidir.
+
+**Olası yön (karar verilmedi):** adaydan **baştaki** bağlacı kırpıp bağlaç /
+ebeveyn-kelime kontrolünü ondan sonra uygulamak. Bu, Heidelberg'i kurtarırken
+Bosch'u reddetmeye devam eder (`"Bosch çamaşır makinesi için pompa"` adayında
+başta bağlaç yok, ebeveyn kelimeleri var). Denenmedi.
+
+**Kapsam notu:** KB-10 düzeltmesi bu davranışı **değiştirmedi** — önce ve sonra
+çıktı aynı ölçüldü, kötüleşme yok.
+
+## KB-12 — Beyaz eşya parçası model/identity alanına düşüyor, cümleden kayboluyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | **Anlama / identity** — besteci değil |
+| Sınıf | **GERÇEK ÜRÜN HATASI** |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** |
+| Tespit | 2026-08-24, KB-10 ölçümü sırasında |
+| Durum | **Açık** — bu turda düzeltilmedi |
+
+İki ayrı ağırlıkta, aynı kök:
+
+**(a) Parça tamamen kayboluyor.**
+`Arçelik bulaşık makinesi için rezistans arıyorum`
+→ `Arçelik Bulaşık Makinesi arıyorum.`
+Ölçülen state: `part = null`, `subject = PRODUCT` (PART değil),
+`model = "rezistans"`. Yani "rezistans" parça olarak hiç tanınmıyor, **model**
+alanına düşüyor ve cümleye hiç girmiyor. Tedarikçi ne istendiğini göremiyor.
+
+**(b) Parça korunuyor ama cümle kusurlu.**
+`Siemens ankastre fırın için termostat lazım`
+→ KB-10 **öncesi**: `Siemens Fırın arıyorum.` (termostat kayıp)
+→ KB-10 **sonrası**: `Siemens Fırın termostat arıyorum.`
+Burada `part = "Termostat"` dolu olduğu için KB-10'un genel kuralı parçayı
+cümlede tutuyor — bu bir iyileşme. Ama `model` alanına da `"termostat"`
+düştüğü için cümle bağlaçsız kalıyor ("Fırın **için** termostat" değil).
+
+**Kök neden.** Besteci değil: her iki vakada da hata, `part` alanının
+doldurulmasında ve "rezistans"/"termostat" gibi parça adlarının `model` alanına
+atanmasındadır. Bu, `request-understanding` / identity katmanının işidir.
+
+**Kapsam notu.** KB-10 bu kaydı **çözmez**. (a) hiç değişmedi; (b) yalnız
+parçanın cümlede kalmasını sağladı, kök nedeni gidermedi. Düzeltme ayrı dilim.
+
+## KB-13 — `verify-semantic-request-subject`: C180 başlığında yasaklı marka
+
+| Alan | Değer |
+| --- | --- |
+| Doğrulayıcı | `apps/web/scripts/verify-semantic-request-subject.ts` |
+| Kırık kontrol | `C180 ön far` — *headline contains forbidden Mercedes* |
+| Bugünkü sonuç | `FAIL: 1` (diğer senaryolar PASS) |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** |
+| Tespit | 2026-08-24 |
+| Durum | **Açık** — bu turda düzeltilmedi |
+
+**Senaryo:** Kullanıcı yalnız `C180 ön far` yazıyor; "Mercedes" yazmıyor.
+Doğrulayıcı, üretilen başlığın **"Mercedes" içermemesini** şart koşuyor
+(`headlineExcludes: ["Mercedes"]`) — marka çıkarımla eklenmiş olsa bile
+kullanıcının yazmadığı bir marka başlıkta görünmemeli. Bugün görünüyor.
+
+**KB-10 ile ilgisi YOK — kanıt.** Bu doğrulayıcı `compose-text.ts`'i
+**hiç import etmiyor**; kullandıkları: `understand-request`,
+`activation-bridge` (başlık buradan gelir), `question-priority`,
+`human-question-layer`, `request-category-engine`, `price-strategy-registry`.
+`bac6d20` yalnız `compose-text.ts` ve invariant dosyasını değiştirdi; bu
+doğrulayıcıya ulaşan bir yol yok. **Mevcut taban kırmızısıdır.**
+
+**Neden bugüne kadar kayıtlı değildi.** Bu script'in özet satırı
+(`VERIFY SEMANTIC REQUEST SUBJECT: FAIL`) önceki batarya taramalarında
+kullanılan `passed|pass=` desenine takılmıyordu, bu yüzden hem KB kayıtlarına
+hem TRIAGE tablosuna girmemişti. Yeni bir hata değil, **yeni görünür oldu**.
 
 ---
 
@@ -450,23 +586,36 @@ edilir, beklenen/gözlenen yazılır, sahibi belirlenir) ya da düzeltilir.
 **Bu bölüm kalıcı bir park yeri değildir.** Satır sayısının turdan tura
 azalması beklenir; artıyorsa bu başlı başına bir sorun işaretidir.
 
-Ölçüm 2026-08-23, commit `2dd488b`. Toplam kırmızı doğrulayıcı: 16 — bunların
-5'i kayıtlı (KB-1, KB-2, KB-5, KB-6, KB-7), 13'ü aşağıda bekliyor.
+Taban ölçümü 2026-08-23, commit `2dd488b`.
+
+**2026-08-24 güncellemesi (commit `bac6d20`).** Aşağıdaki dört satır yeniden
+ölçüldü; kalan satırlar **2026-08-23 ölçümünde kaldı** ve yeniden
+çalıştırılmadı — o değerler bugünün gerçeği olarak okunmamalıdır. Tabloda 14
+satır var: **2'si çözüldü** (`verify-phase4d-iyzico-v1`,
+`verify-request-trust-paid-plan-closure-v1` — kanıtı satırlarında), **12'si
+açık**. Açık olanların 1'i artık kayıtlı (`verify-semantic-request-subject` →
+KB-13), 11'i hâlâ kayıtsız.
+
+`NOT-MEASURED` bir sonuç değildir: ne PASS ne FAIL sayılır, ayrı tutulur
+(bkz. KB-7). `verify-my-requests-surface-v1`'in canlı bölümü, ortak
+veritabanına yazmayı engelleyen kapı (KB-9) nedeniyle **hiç çalıştırılmadı**;
+o kontrolün sonucu bilinmiyor.
 
 | Script | Bugünkü sonuç | Ne zamandan beri |
 | --- | --- | --- |
 | `verify-corporate-workspace-isolation-v1` | 24 passed, 2 failed | ÖLÇÜLMEDİ |
-| `verify-my-requests-surface-v1` | 73 passed, 2 failed | ÖLÇÜLMEDİ |
+| `verify-my-requests-surface-v1` | 69 pass / 1 fail / **1 NOT-MEASURED** (ölçüm 2026-08-24) | ÖLÇÜLMEDİ |
 | `verify-offer-media-v1` | 62 passed, 1 failed | ÖLÇÜLMEDİ |
 | `verify-outgoing-offer-inbox-v1` | 58 passed, 1 failed | ÖLÇÜLMEDİ |
 | `verify-p1-closed-beta-closure-v1` | pass=38 fail=3 | ÖLÇÜLMEDİ |
 | `verify-phase1-single-brain-closure-v1` | 46 passed, 1 failed | ÖLÇÜLMEDİ |
 | `verify-phase3a-discovery-foundation-v1` | 45 passed, 1 failed | ÖLÇÜLMEDİ |
 | `verify-phase3c-corporate-opportunity-center-v1` | 40 passed, 2 failed | ÖLÇÜLMEDİ |
-| `verify-phase4d-iyzico-v1` | 46 passed, 1 failed | ÖLÇÜLMEDİ |
+| `verify-phase4d-iyzico-v1` | **47 passed, 0 failed — ÇÖZÜLDÜ** (ölçüm 2026-08-24) | çözüldü: `1eb8690`, KB-6b ikizi |
 | `verify-provider-routing` | AssertionError: 1 routing fixture failed | ÖLÇÜLMEDİ |
-| `verify-request-trust-paid-plan-closure-v1` | pass=58 fail=1 | ÖLÇÜLMEDİ |
+| `verify-request-trust-paid-plan-closure-v1` | **pass=59 fail=0 — ÇÖZÜLDÜ** (ölçüm 2026-08-24) | çözüldü: `af8ec5c`, KB-2c |
 | `verify-sayfam-home-v1` | 80 passed, 1 failed | ÖLÇÜLMEDİ |
+| `verify-semantic-request-subject` | `FAIL: 1` (ölçüm 2026-08-24) — **kayıtlı: KB-13** | ÖLÇÜLMEDİ — yeni oluşmuş değil, **yeni görünür oldu** |
 | `verify-unified-preference-criteria-v1` | pass=34 fail=1 | ÖLÇÜLMEDİ |
 
 **Bisect yaparken dikkat (2026-08-23'te bu turda yaşandı).** Sondayı bir kabuk
