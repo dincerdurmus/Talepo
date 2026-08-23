@@ -26,8 +26,9 @@ const SCENARIOS: Array<[string, string]> = [
   ["technology", "drone arıyorum"],
   ["technology", "kulaklık arıyorum"],
   ["technology", "modem arıyorum"],
-  ["technology", "web sitesi yaptırmak istiyorum"],
-  ["technology", "muhasebe yazılımı arıyorum"],
+  // Kurucu (2026-08-23): yaptırma/servis niyeti Hizmetler'e gider
+  ["services", "web sitesi yaptırmak istiyorum"],
+  ["services", "muhasebe yazılımı arıyorum"],
   // appliances
   ["appliances", "Arçelik buzdolabı arıyorum Ankara"],
   ["appliances", "robot süpürge arıyorum"],
@@ -57,7 +58,7 @@ const SCENARIOS: Array<[string, string]> = [
   // home-kitchen
   ["home-kitchen", "yemek takımı arıyorum"],
   ["home-kitchen", "tencere seti arıyorum"],
-  ["home-kitchen", "kahve makinesi arıyorum"],
+  ["appliances", "kahve makinesi arıyorum"],
   // health
   ["health", "tekerlekli sandalye arıyorum"],
   ["health", "işitme cihazı arıyorum"],
@@ -67,7 +68,7 @@ const SCENARIOS: Array<[string, string]> = [
   ["services", "evden eve nakliye arıyorum"],
   ["services", "logo tasarımı yaptırmak istiyorum"],
   ["services", "muhasebe danışmanlığı arıyorum"],
-  ["services", "kombi bakımı yaptırmak istiyorum"],
+  ["services", "kombi bakımı yaptırmak istiyorum"], // kurucu: ürün bakımı = hizmet
   ["services", "web sitesi yaptırmak istiyorum uzaktan olabilir"],
 ];
 

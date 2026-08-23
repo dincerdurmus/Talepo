@@ -632,8 +632,19 @@ function taxonomyFromUnderstanding(
   if (taxonomyNodeId) {
     const node = getTaxonomyNode(taxonomyNodeId);
     if (node) {
-      categoryId = node.categoryId;
-      subcategorySlug = node.subcategoryId ?? null;
+      // Kurucu (2026-08-23): servis niyeti Hizmetler'e yönlendiyse ürün
+      // düğümü (kombi → beyaz eşya) kategoriyi geri EZEMEZ.
+      const serviceRouted =
+        result.category.value === "services" &&
+        (result.category.evidence ?? []).includes(
+          "service-intent-routes-to-services",
+        );
+      if (serviceRouted) {
+        taxonomyNodeId = null;
+      } else {
+        categoryId = node.categoryId;
+        subcategorySlug = node.subcategoryId ?? null;
+      }
     }
   } else if (fields.productType?.kind === "VALUE" && fields.productType.value) {
     // leave as-is
@@ -729,9 +740,16 @@ function taxonomyFromUnderstanding(
   }
 
   // Appliances vacuum / appliance leaves → stay on appliances
+  // (servis niyeti Hizmetler'e yönlendiyse bu sabitleme de devre dışıdır)
+  const serviceRoutedToServices =
+    result.category.value === "services" &&
+    (result.category.evidence ?? []).includes(
+      "service-intent-routes-to-services",
+    );
   if (
-    productHint?.taxonomyNodeId?.startsWith("tax:appliances:") ||
-    productHint?.productType === "supurge"
+    !serviceRoutedToServices &&
+    (productHint?.taxonomyNodeId?.startsWith("tax:appliances:") ||
+      productHint?.productType === "supurge")
   ) {
     categoryId = "appliances";
     if (!taxonomyNodeId && productHint.taxonomyNodeId) {

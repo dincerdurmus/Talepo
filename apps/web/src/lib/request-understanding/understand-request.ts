@@ -137,6 +137,47 @@ function gateCategory(
         ]
       : undefined;
 
+  // Kurucu (2026-08-23): ürün kategorisinde SERVİS niyeti (kombi bakımı,
+  // buzdolabı tamiri, web sitesi yaptırmak…) Hizmetler'e yönlenir.
+  // Otomotiv hariç — aracın kendi servis akışı (arac-bakim) vardır.
+  const PRODUCT_TO_SERVICE_CATEGORIES = new Set([
+    "appliances",
+    "technology",
+    "home-kitchen",
+    "furniture",
+    "machinery",
+    "baby",
+  ]);
+  // "yaptırmak" MANUFACTURE niyeti sayılır (kartvizit akışı) — bakım/tamir
+  // bağlamında ise bu bir hizmet talebidir, üretim değil.
+  const SERVICE_CONTEXT_RE =
+    /bak[ıi]m|tamir|onar[ıi]m|montaj|kurulum|servis|ar[ıi]za/i;
+  const serviceIntentDetected =
+    intent === "SERVICE" ||
+    (intent === "MANUFACTURE" && SERVICE_CONTEXT_RE.test(rawInput));
+  if (
+    serviceIntentDetected &&
+    detected.categoryId &&
+    PRODUCT_TO_SERVICE_CATEGORIES.has(detected.categoryId)
+  ) {
+    return {
+      value: "services",
+      confidence: Math.max(scoreConf, 0.75),
+      status: "CONFIDENT",
+      evidence: [
+        `detector=${detected.categoryId}`,
+        "service-intent-routes-to-services",
+      ],
+      alternatives: [
+        {
+          value: detected.categoryId,
+          confidence: scoreConf,
+          evidence: [`productCategory=${detected.categoryId}`],
+        },
+      ],
+    };
+  }
+
   // NO DEFAULT SERVICES: score 0 / unconfident services → UNKNOWN
   if (detected.score <= 0) {
     return {

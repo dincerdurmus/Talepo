@@ -619,6 +619,18 @@ check("I13: audit classes — Faz, servis niyeti, uzaktan, nakliye, donanım sin
   const nak = syncFromText(null, "evden eve nakliye arıyorum");
   assert.equal(nak.state.categoryId, "services", `nakliye services olmalı: ${nak.state.categoryId}`);
 
+  // Kurucu (2026-08-23): ürün-bakım/yaptırma niyeti Hizmetler'e yönlenir
+  for (const t of [
+    "kombi bakımı yaptırmak istiyorum",
+    "web sitesi yaptırmak istiyorum",
+  ]) {
+    const s = syncFromText(null, t).state;
+    assert.equal(s.categoryId, "services", `${t} → services olmalı: ${s.categoryId}`);
+  }
+  // Otomotiv istisnası: araç bakımı kendi kategorisinde kalır
+  const arac = syncFromText(null, "aracıma periyodik bakım yaptırmak istiyorum").state;
+  assert.equal(arac.categoryId, "automotive", `araç bakımı automotive kalmalı: ${arac.categoryId}`);
+
   // Donanım sinyali: drone/oyun bilgisayarı hardware'e oturur
   for (const t of ["drone arıyorum", "oyun bilgisayarı arıyorum"]) {
     const s = syncFromText(null, t).state;
