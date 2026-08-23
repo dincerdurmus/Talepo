@@ -52,10 +52,28 @@ check(
     PLAN_DEFINITIONS.CORPORATE.priceTry === PLAN_PRICING.CORPORATE.priceTry,
 );
 
+/**
+ * 6 — Kurumsal SATILAMAZ, ama fiyatı okunabilir kalır.
+ *
+ * Beklenti 2026-08-24'te tersine çevrildi (11-DECISION-LOG → Karar D: paket
+ * yapısı tek katmana indirildi, Premium ve Kurumsal kaldırıldı). Eski hâli
+ * `checkoutAllowed === true` bekliyordu; yani kaldırılmış bir paketin
+ * satılabilir olmasını *şart koşuyordu*. `checkoutAllowed` artık
+ * `AVAILABLE_PLAN_IDS`'e bağlı olduğu için kaynakta kapalı.
+ *
+ * Fiyatın okunabilir kalması bilinçli: mevcut/legacy abonelik kayıtları
+ * gösterilebilmeli. Satış yolu ile görüntüleme ayrı şeylerdir.
+ */
 const corpMap = getPlanPriceMapping("CORPORATE");
 check(
-  "6 corporate checkoutAllowed with display price",
-  corpMap.checkoutAllowed === true && corpMap.displayPriceTry === 5990,
+  "6 corporate not sellable but price readable",
+  corpMap.checkoutAllowed === false && corpMap.displayPriceTry === 5990,
+);
+check(
+  "6b removed tiers are never checkout-allowed",
+  getPlanPriceMapping("PREMIUM").checkoutAllowed === false &&
+    getPlanPriceMapping("CORPORATE").checkoutAllowed === false &&
+    getPlanPriceMapping("PROFESSIONAL").checkoutAllowed === true,
 );
 
 // --- Seat policy (not entitlements) ---

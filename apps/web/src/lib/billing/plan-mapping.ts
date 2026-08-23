@@ -1,5 +1,9 @@
 import type { PlanTierId } from "@/lib/membership/plans";
-import { isPaidPlan, PLAN_DEFINITIONS } from "@/lib/membership/plans";
+import {
+  AVAILABLE_PLAN_IDS,
+  isPaidPlan,
+  PLAN_DEFINITIONS,
+} from "@/lib/membership/plans";
 import { PLAN_PRICING } from "@/lib/membership/pricing-config";
 
 import { BillingError, BillingErrorCode } from "./errors";
@@ -33,9 +37,25 @@ export function getPlanPriceMapping(planTier: PlanTierId): PlanPriceMapping {
     planTier,
     providerPriceId,
     displayPriceTry: display ?? null,
-    // Self-service paid plans (incl. Corporate 5990) are checkout-eligible.
-    // Actual charge still requires configured provider price/plan reference.
-    checkoutAllowed: isPaidPlan(planTier) && display != null,
+    /**
+     * Checkout YALNIZ satılan bir pakete açılır.
+     *
+     * `AVAILABLE_PLAN_IDS` kataloğun tek otoritesidir (bkz. 11-DECISION-LOG →
+     * Karar D: paket yapısı tek katmana indirildi, Premium ve Kurumsal
+     * kaldırıldı). Buraya bağlanmasının sebebi somut: bu fonksiyon
+     * `PREMIUM` için `checkoutAllowed: true` + `displayPriceTry: 990`
+     * döndürüyordu ve kaldırılmış bir paketin 990 TL'ye satılmasını yalnız
+     * `api/billing/checkout/route.ts`'teki tek satırlık `!== "PROFESSIONAL"`
+     * kontrolü engelliyordu. `createPlanCheckout`'a ikinci bir çağıran
+     * eklendiği gün (admin yolu, server action, retry job) o kontrol devreye
+     * girmez. Savunma artık kaynakta.
+     *
+     * Yeni bir ürün kararı değil — mevcut "tek paket" kararının kodda ifadesi.
+     */
+    checkoutAllowed:
+      isPaidPlan(planTier) &&
+      display != null &&
+      (AVAILABLE_PLAN_IDS as readonly PlanTierId[]).includes(planTier),
   };
 }
 

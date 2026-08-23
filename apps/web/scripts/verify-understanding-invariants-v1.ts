@@ -57,6 +57,7 @@ import { scheduleNextQuestions } from "../src/lib/request-composer/v2/question-s
 import {
   applyBrowseSelectionToState,
   buildUnderstoodFacts,
+  composeNaturalRequestText,
   syncFromText,
   syncFromBrowse,
 } from "../src/lib/request-composer";
@@ -1065,6 +1066,75 @@ check("I15: DB'ye yazan doğrulayıcı allowlist dışı host'a asla yazmaya kal
   }
   assert.equal(databaseHost("not-a-url"), null);
   assert.equal(databaseHost(SHARED), "aws-0-eu-central-1.pooler.supabase.com");
+});
+
+check("I16: üretilen cümlede hedef ifade birden fazla kez geçemez", () => {
+  /**
+   * Kurucu ilkesi: kullanıcının yazdığı ona tekrar sorulmaz/tekrarlanmaz.
+   *
+   * Somut hata (KB-2c): "Bosch çamaşır makinesi için pompa arıyorum" girdisi
+   * "bosch için bosch çamaşır makinesi için pompa arıyorum" üretiyordu — marka
+   * iki kez, bağlaç iki kez. Sebep, parça adının zenginleştirilmesi sırasında
+   * uyumluluk hedefinin parça adına yutulmasıydı; compose-text sonra hedefi
+   * bir kez daha önüne ekliyordu.
+   *
+   * Bu invariant MEKANİZMADAN BAĞIMSIZ yazıldı: hangi katman tekrar üretirse
+   * üretsin yakalar. Kalıcı koruma, düzeltmenin kendisi değil budur.
+   */
+  const STOP = new Set(["arıyorum", "ariyorum", "ve", "ile", "olsun", "model"]);
+
+  for (const raw of [
+    "Bosch çamaşır makinesi için pompa arıyorum", // bugünkü hata
+    "Alfa Romeo 156 için fren balatası", // rakamlı hedef
+    "Heidelberg SM 74 nemlendirme pompası", // belgedeki örnek
+    "bebek arabası", // ürün adı marka sanılmasın
+    "Golf 7 dizel çıkma motor arıyorum",
+    "tahliye pompası arıyorum",
+    "Bosch bulaşık makinesi için rezistans lazım",
+    "Arçelik buzdolabı için termostat arıyorum",
+  ]) {
+    const { state } = syncFromText(null, raw);
+    const text = composeNaturalRequestText(state);
+    const tokens = fold(text)
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim()
+      .split(" ")
+      .filter((t) => t.length >= 3 && !STOP.has(t));
+
+    const seen = new Map<string, number>();
+    for (const t of tokens) seen.set(t, (seen.get(t) ?? 0) + 1);
+    const repeated = [...seen.entries()].filter(([, n]) => n > 1);
+    assert.deepEqual(
+      repeated,
+      [],
+      `'${raw}' → '${text}' : içerik kelimesi tekrarlanıyor ${JSON.stringify(repeated)}`,
+    );
+
+    // Uyumluluk bağlacı da tekrarlanamaz — "X için Y için Z" olamaz.
+    const icinCount = (fold(text).match(/\bicin\b/g) ?? []).length;
+    assert.ok(
+      icinCount <= 1,
+      `'${raw}' → '${text}' : 'için' ${icinCount} kez geçiyor`,
+    );
+  }
+
+  // Parça adı, uyumluluk hedefinin kelimelerini ASLA içermez (kuralın kaynağı).
+  const bosch = syncFromText(null, "Bosch çamaşır makinesi için pompa arıyorum");
+  const partValue = String(bosch.state.fields.part?.value ?? "");
+  for (const forbidden of ["bosch", "camasir", "makinesi", "icin"]) {
+    assert.ok(
+      !fold(partValue).includes(forbidden),
+      `parça adı hedefin kelimesini taşıyamaz: part='${partValue}' içinde '${forbidden}'`,
+    );
+  }
+  // Gerçek zenginleşme korunur — kural fazla geniş olmamalı.
+  assert.equal(
+    String(
+      syncFromText(null, "Heidelberg SM 74 nemlendirme pompası").state.fields.part
+        ?.value ?? "",
+    ),
+    "nemlendirme pompası",
+  );
 });
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {

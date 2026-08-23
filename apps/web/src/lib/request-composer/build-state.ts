@@ -227,6 +227,83 @@ function flattenUnknown(value: unknown): string {
 }
 
 /**
+ * Uyumluluk bağlacı — parça ADI bunları asla içeremez (kurucu, 2026-08-24).
+ * Bunlar parçayı değil, parçanın hangi ürüne ait olduğunu anlatır.
+ */
+const PART_COMPATIBILITY_CONNECTIVES = [
+  "için",
+  "ait",
+  "uyumlu",
+  "markalı",
+  "modeli",
+  "ile",
+];
+
+function foldPartToken(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[üÜ]/g, "u");
+}
+
+function partTokens(value: string): string[] {
+  return foldPartToken(value)
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+}
+
+/**
+ * Zenginleştirilmiş parça adı temiz mi? (kurucu kuralı, 2026-08-24 — KB-2c)
+ *
+ * Kural: aday, `parentEntity`'ye ait HİÇBİR kelimeyi (marka, model, ürün adı)
+ * ve HİÇBİR uyumluluk bağlacını içeremez. İhlal varsa aday reddedilir ve ham
+ * `basePart` kullanılır.
+ *
+ * Neden böyle, "için"de kesmek değil: geri yayılma kalıbı
+ * (`[\p{L}\s]{0,40}?`) parça isminden geriye doğru yutuyor ve "Bosch çamaşır
+ * makinesi için pompa" üretiyordu; compose-text sonra hedefi bir kez daha
+ * önüne ekleyip "Bosch için bosch çamaşır makinesi için pompa arıyorum"
+ * yazıyordu — kullanıcının yazdığı ona iki kez geri okunuyordu. Tek bir
+ * bağlaçta kesmek dizgi yamasıdır, bir sonraki bağlaçta yine patlar; geri
+ * yayılmayı tamamen kapatmak ise "tahliye pompası" gibi gerçek zenginleşmeyi
+ * öldürür. Kural ikisini de çözer.
+ *
+ * Not: rakamlar bilerek kalıba EKLENMEDİ. Bugün "Alfa Romeo 156" ve "Golf 7"
+ * gibi hedeflerin hatayı tetiklememesi, karakter sınıfının rakam içermemesi
+ * sayesindedir — yani tesadüf. Koruma bu tesadüfe dayanamaz.
+ */
+function isCleanEnrichedPartLabel(
+  candidate: string,
+  requestSubject: RequestUnderstandingResult["requestSubject"],
+): boolean {
+  const tokens = partTokens(candidate);
+  if (tokens.length === 0) return false;
+
+  for (const connective of PART_COMPATIBILITY_CONNECTIVES) {
+    if (tokens.includes(foldPartToken(connective))) return false;
+  }
+
+  const parent = requestSubject?.parentEntity as
+    | Record<string, { value?: unknown } | undefined>
+    | undefined;
+  if (!parent) return true;
+
+  const parentWords = new Set<string>();
+  for (const key of ["brand", "model", "generation", "name", "productType"]) {
+    const raw = parent[key]?.value;
+    if (raw == null) continue;
+    for (const token of partTokens(String(raw))) parentWords.add(token);
+  }
+  return !tokens.some((token) => parentWords.has(token));
+}
+
+/**
  * Convert understanding + raw text hints into hybrid field map.
  */
 export function mapUnderstandingToFields(
@@ -481,11 +558,13 @@ export function mapUnderstandingToFields(
           "iu",
         ),
       );
-      if (fuller?.[1] && fuller[1].trim().length > basePart.length) {
-        partLabel = fuller[1]
-          .trim()
-          .replace(/^\s*için\s+/iu, "")
-          .trim();
+      const candidate = fuller?.[1]?.trim();
+      if (
+        candidate &&
+        candidate.length > basePart.length &&
+        isCleanEnrichedPartLabel(candidate, result.requestSubject)
+      ) {
+        partLabel = candidate;
       }
     }
     partLabel = partLabel.replace(/^\s*için\s+/iu, "").trim();
