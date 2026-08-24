@@ -608,24 +608,46 @@ function expandTree(
   }
 }
 
-function writeDomain(domain: string, file: string, nodes: TaxonomyNode[]) {
+/**
+ * ÜRETİLMİŞ DOSYA HİJYENİ (1D).
+ *
+ * Generator her koşuda LF yazıyordu; depo çalışma kopyası ise CRLF. İçerik
+ * hiç değişmemiş olsa bile 5 taksonomi dosyası `git status`'ta modified
+ * görünüyor, gerçek capability diff'i gürültünün içinde kayboluyordu.
+ *
+ * İki kural birlikte çözer:
+ *   1) Mevcut dosyanın satır sonu biçimi KORUNUR (Windows'ta CRLF, CI'da LF)
+ *      — çıktı platforma göre değil, dosyanın kendi biçimine göre yazılır.
+ *   2) İçerik aynıysa dosyaya HİÇ dokunulmaz; mtime bile değişmez.
+ */
+const CRLF = "\r\n";
+const LF = "\n";
+
+function writeGenerated(target: string, content: string): boolean {
+  const existing = existsSync(target) ? readFileSync(target, "utf8") : null;
+  const eol = existing?.includes(CRLF) ? CRLF : LF;
+  const next = content.split(CRLF).join(LF).split(LF).join(eol);
+  if (existing === next) return false;
+  writeFileSync(target, next, "utf8");
+  return true;
+}
+
+function writeDomain(
+  domain: string,
+  file: string,
+  nodes: TaxonomyNode[],
+): boolean {
   const dir = path.join(OUT, domain);
   mkdirSync(dir, { recursive: true });
   const target = path.join(dir, file);
-  writeFileSync(
+  const changed = writeGenerated(
     target,
-    JSON.stringify(
-      {
-        domain,
-        version: "1.0.0",
-        nodes,
-      },
-      null,
-      2,
-    ) + "\n",
-    "utf8",
+    JSON.stringify({ domain, version: "1.0.0", nodes }, null, 2) + "\n",
   );
-  console.log(`Wrote ${target} (${nodes.length} nodes)`);
+  console.log(
+    `${changed ? "Wrote" : "Unchanged"} ${target} (${nodes.length} nodes)`,
+  );
+  return changed;
 }
 
 function catRoot(categoryId: string, label: string): TaxonomyNode {
@@ -2359,6 +2381,7 @@ function main() {
     { id: "automotive", file: "spare-parts.json", nodes: automotiveTree() },
   ];
 
+  let anyDomainChanged = false;
   applyHarvestOverlay(domains);
   applyGoogleOverlay(domains);
 
@@ -2371,12 +2394,11 @@ function main() {
         }
       }
     }
-    writeDomain(d.id, d.file, d.nodes);
+    if (writeDomain(d.id, d.file, d.nodes)) anyDomainChanged = true;
   }
 
-  const manifest = {
+  const manifestBody = {
     version: "1.0.0",
-    generatedAt: new Date().toISOString(),
     domains: domains.map((d) => ({
       id: d.id,
       files: [`${d.id}/${d.file}`],
@@ -2389,12 +2411,41 @@ function main() {
       "Counts are verified by apps/web/scripts/verify-taxonomy-drift-v1.ts — do not hand-edit count claims.",
     ],
   };
-  writeFileSync(
-    path.join(OUT, "manifest.json"),
+  /**
+   * `generatedAt` DETERMİNİSTİK OLMALI (1D).
+   *
+   * Duvar saati damgası her koşuda değişiyordu; hiçbir içerik değişmese bile
+   * manifest kirli görünüyordu. Damga artık yalnız İÇERİK değiştiğinde
+   * yenilenir — böylece alan gerçekten "bu içerik ne zaman üretildi"yi
+   * anlatır ve boş diff üretmez.
+   */
+  const manifestPath = path.join(OUT, "manifest.json");
+  const previous = existsSync(manifestPath)
+    ? (JSON.parse(readFileSync(manifestPath, "utf8")) as Record<
+        string,
+        unknown
+      > & { generatedAt?: string })
+    : null;
+  const previousBody = previous ? { ...previous } : null;
+  if (previousBody) delete previousBody.generatedAt;
+  const bodyUnchanged =
+    !anyDomainChanged &&
+    previousBody != null &&
+    JSON.stringify(previousBody) === JSON.stringify(manifestBody);
+  const manifest = {
+    version: manifestBody.version,
+    generatedAt:
+      bodyUnchanged && previous?.generatedAt
+        ? previous.generatedAt
+        : new Date().toISOString(),
+    domains: manifestBody.domains,
+    notes: manifestBody.notes,
+  };
+  const manifestChanged = writeGenerated(
+    manifestPath,
     JSON.stringify(manifest, null, 2) + "\n",
-    "utf8",
   );
-  console.log("Wrote manifest.json");
+  console.log(`${manifestChanged ? "Wrote" : "Unchanged"} manifest.json`);
   const total = domains.reduce((a, d) => a + d.nodes.length, 0);
   console.log(`Total nodes: ${total}`);
 }
