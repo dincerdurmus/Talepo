@@ -122,6 +122,21 @@ export function buildPublishUnderstandingSnapshot(input: {
     },
     entities,
     attributes,
+    /**
+     * Anlaşılan tipli varlıklar kalıcı olur (1K). `entities` düz string
+     * haritası geriye uyumlu kalır; platform/makine türü oraya marka gibi
+     * sıkıştırılmaz, kendi tipli alanında yaşar.
+     */
+    resolvedEntities: input.understanding.resolvedEntities?.map((e) => ({
+      canonicalId: e.canonicalId,
+      entityType: e.entityType,
+      canonicalLabel: e.canonicalLabel,
+      domainId: e.domainId,
+      ...(e.matchedAlias ? { matchedAlias: e.matchedAlias } : {}),
+      confidence: e.confidence,
+      source: e.source,
+      verificationStatus: e.verificationStatus,
+    })),
     unresolvedExpressions,
     confirmedFieldKeys: input.confirmedFieldKeys,
   });

@@ -8,6 +8,27 @@ export type {
   CatalogCompatibilityLookup,
 } from "./types";
 export { CatalogRegistry, getCatalogRegistry } from "./registry";
+/**
+ * TİPLİ ALAN VARLIĞI OTORİTESİ — tek giriş noktası (1K).
+ * Production tüketicileri `./domain-entities` modülünü DOĞRUDAN import
+ * etmez; yetki bu cepheden geçer.
+ */
+export {
+  DOMAIN_ENTITY_PRECEDENCE,
+  resolveDomainEntity,
+  isNonBrandDomainEntity,
+} from "./domain-entity-resolver";
+export type { DomainEntityResolution } from "./domain-entity-resolver";
+export {
+  DOMAIN_ENTITIES,
+  domainEntityEvidenceStrength,
+  isBrandLikeEntityType,
+} from "./domain-entities";
+export type {
+  DomainEntity,
+  DomainEntityType,
+  DomainEntityEvidenceStrength,
+} from "./domain-entities";
 export {
   normalizeCatalogKey,
   foldCatalogKey,

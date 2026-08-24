@@ -10,6 +10,7 @@ import {
   subjectKindForIntent,
 } from "@/lib/request-understanding/intent-signals";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
+import { isNonBrandDomainEntity, resolveDomainEntity } from "@/lib/catalog";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
   classifyNumbers,
@@ -50,6 +51,9 @@ import {
   canonicalParentProductSpan,
   findUnresolvedCompatibilityTarget,
   isConsumedAsParentProduct,
+  isUsageContextOnlyDesignator,
+  readUsageContextSplit,
+  resolveRelationDomain,
 } from "@/lib/request-understanding/part-relation";
 
 import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
@@ -68,7 +72,10 @@ import {
   resolveSemanticSubject,
 } from "./semantic-subject";
 import { inferConditionFromContext } from "./condition-inference";
-import type { SemanticRequestSubject } from "./types";
+import type {
+  ResolvedDomainEntityFact,
+  SemanticRequestSubject,
+} from "./types";
 
 export type UnderstandRequestInput = {
   rawInput: string;
@@ -638,6 +645,132 @@ export function understandRequest(
   }
 
   /**
+   * KULLANIM BAĞLAMI KATEGORİYİ BELİRLEYEMEZ (1H).
+   *
+   * "X için Y" yapısında sağ taraf bütün bir ÜRÜN ya da HİZMET ise asıl talep
+   * konusu Y'dir; X yalnız kullanım amacı, hedef kitle, yer ya da kurum
+   * bağlamıdır. Kategori dedektörü ham cümlenin TAMAMINI tarıyor ve soldaki
+   * bağlamı asıl ürün sanıyordu:
+   *   "Ev için klima arıyorum"           → real-estate (oysa klima talebi)
+   *   "WordPress için teknik destek"     → machinery   (oysa hizmet talebi)
+   *
+   * Kategori bu durumda SAĞ hedeften yeniden türetilir. Kural yetki sırasını
+   * bozmaz: kullanıcının kilitlediği / formdan seçtiği kategori (structured
+   * override) yukarıda belirlenmiştir ve burada ezilmez. Sağ hedef kategori
+   * üretemiyorsa mevcut karar olduğu gibi kalır — rastgele kategori seçilmez.
+   */
+  const usageContext = structuredCategoryId
+    ? null
+    : readUsageContextSplit(normalizedInput);
+  /**
+   * UZMANLIK ALANI, İHTİYAÇ TÜRÜNDEN AYRI BİR EKSENDİR (1I).
+   *
+   * Doğrulanmış ürün/platform kanıtı (kanonik parça taşıyan düğüm ya da
+   * katalog markası) alanı belirler; hizmet olmak bu alanı silmez.
+   * Kullanıcının kilitlediği kategori burada da dokunulmaz kalır.
+   */
+  const relationDomain = structuredCategoryId
+    ? null
+    : resolveRelationDomain(normalizedInput);
+  /**
+   * Talepte geçen tipli alan varlıkları — kategori kararından BAĞIMSIZ
+   * olarak kaydedilir. Kullanıcı kategoriyi kilitlemiş olsa bile talebin
+   * hangi platform/makine hakkında olduğu bilgisi kaybolmamalıdır (1K).
+   */
+  const domainEntityHit = resolveDomainEntity(normalizedInput);
+  const resolvedDomainEntities: ResolvedDomainEntityFact[] =
+    domainEntityHit.status !== "NONE" && domainEntityHit.entity
+      ? [
+          {
+            canonicalId: domainEntityHit.entity.canonicalId,
+            entityType: domainEntityHit.entity.entityType,
+            canonicalLabel: domainEntityHit.entity.label,
+            domainId: domainEntityHit.entity.domainCategoryId,
+            ...(domainEntityHit.matchedAlias
+              ? { matchedAlias: domainEntityHit.matchedAlias }
+              : {}),
+            confidence:
+              domainEntityHit.evidenceStrength === "VERIFIED" ? 0.8 : 0.5,
+            source: `${domainEntityHit.entity.provenance.sourceType}:${domainEntityHit.entity.provenance.sourceName}`,
+            verificationStatus:
+              domainEntityHit.entity.provenance.verificationStatus,
+          },
+        ]
+      : [];
+  if (usageContext) {
+    const fromTarget = gateCategory(usageContext.target, intentResolved.intent);
+    if (
+      fromTarget.value &&
+      fromTarget.status !== "UNKNOWN" &&
+      fromTarget.value !== category.value
+    ) {
+      category = {
+        ...fromTarget,
+        evidence: [
+          "usage-context-split",
+          `target=${usageContext.target}`,
+          ...(fromTarget.evidence ?? []),
+        ],
+        alternatives: category.value
+          ? [
+              {
+                value: category.value,
+                confidence: category.confidence,
+                evidence: category.evidence,
+              },
+            ]
+          : fromTarget.alternatives,
+      };
+    } else if (!fromTarget.value && !relationDomain && category.value) {
+      /**
+       * Sağ hedef kategori üretemedi ve solda DOĞRULANMIŞ bir ürün/platform
+       * yok: geriye yalnız ham cümlenin bağlam yakasından gelen zayıf
+       * anahtar kelime kalıyor. Ölçülen gürültü: "WordPress için teknik
+       * destek" → machinery (WordPress'in içindeki "press"), "CNC tezgahı
+       * için teknik servis" → furniture ("tezgah"). Böyle bir kanıt alan
+       * kararı taşıyamaz; karar çözülmemiş bırakılır ve aşağıdaki genel
+       * hizmet yedeği devreye girer.
+       */
+      category = {
+        value: null,
+        confidence: 0,
+        status: "UNKNOWN",
+        evidence: [
+          "usage-context-split",
+          `target=${usageContext.target}`,
+          "context-only-category-evidence-rejected",
+        ],
+        alternatives: [
+          {
+            value: category.value,
+            confidence: category.confidence,
+            evidence: category.evidence,
+          },
+        ],
+      };
+    }
+  }
+  if (relationDomain && relationDomain.categoryId !== category.value) {
+    category = {
+      value: relationDomain.categoryId,
+      confidence: relationDomain.verified
+        ? Math.max(category.confidence, 0.8)
+        : Math.max(category.confidence, 0.5),
+      status: relationDomain.verified ? "CONFIDENT" : "TENTATIVE",
+      evidence: [relationDomain.code, `domainSpan=${relationDomain.span}`],
+      alternatives: category.value
+        ? [
+            {
+              value: category.value,
+              confidence: category.confidence,
+              evidence: category.evidence,
+            },
+          ]
+        : category.alternatives,
+    };
+  }
+
+  /**
    * KANONİK ÜST ÜRÜN KATEGORİNİN DE KAYNAĞIDIR (1D).
    *
    * "X için Y" yapısında X kanonik olarak parça taşıyan bir ürün ise
@@ -1176,6 +1309,94 @@ export function understandRequest(
     delete identityBlock.brand;
   }
 
+  /**
+   * KULLANIM BAĞLAMI MARKA YA DA MODEL OLAMAZ (1H).
+   *
+   * `isRequestedItemNotModel` (KB-12) kardeş kuraldır: o "bağlacın SAĞI model
+   * olamaz" der, bu "bağlacın SOLU yalnız bağlamsa marka olamaz" der.
+   *
+   * Kural kelime listesiyle DEĞİL kanıtla çalışır. Üç koşul birlikte aranır:
+   *   1) uyumluluk bağlacı var ve sağdaki hedefin rolü bütün ürün ya da
+   *      hizmet (`readUsageContextSplit`),
+   *   2) aday YALNIZ solda geçiyor — sağdaki hedefte yok,
+   *   3) sol taraf ne kanonik üst ürün kanıtı taşıyor (`resolvePartBearingParent`)
+   *      ne de taksonomi dışı bir özel ad: taksonomide düğümü OLAN bir ifade
+   *      ortak addır, marka değildir. Taksonomi marka adı barındırmaz.
+   *
+   * Ölçülen hata: "Restoran için POS yazılımı arıyorum" → marka "Restoran".
+   * Aynı kural "WordPress için teknik destek" cümlesinde WordPress'i KORUR:
+   * WordPress taksonomide bir düğüm değildir, ortak ad sayılmaz.
+   */
+  /**
+   * PLATFORM VE MAKİNE TÜRÜ MARKA DEĞİLDİR (1J).
+   *
+   * `identity.brand` kullanıcıya "Marka" olarak gösterilir, snapshot'a marka
+   * olarak yazılır ve Matching V3'te `brandHit` üretir. WordPress bir
+   * platform, SAP ve Logo birer yazılım ailesi, CNC tezgâhı bir makine
+   * türüdür; hiçbiri üretici markası değildir. Tipli kanonik varlık kaydı
+   * BRAND değilse aday marka alanından düşürülür — ad kullanıcı metninde
+   * korunmaya devam eder, yalnız yanlış ROL taşımaz.
+   */
+  {
+    const brandIsNonBrandEntity = (value: unknown): boolean => {
+      const token = String(value ?? "").trim();
+      if (!token) return false;
+      return isNonBrandDomainEntity(token);
+    };
+    if (brandIsNonBrandEntity(identityBlock.brand?.value)) {
+      delete identityBlock.brand;
+    }
+    if (brandIsNonBrandEntity(identityBlock.model?.value)) {
+      delete identityBlock.model;
+    }
+    if (brandIsNonBrandEntity(identity.brand)) {
+      identity.brand = null;
+    }
+  }
+
+  {
+    const parentIdentity = {
+      brand: identityBlock.brand?.value ? String(identityBlock.brand.value) : null,
+      model: identityBlock.model?.value ? String(identityBlock.model.value) : null,
+      catalogModel: autoModel,
+    };
+    if (
+      isUsageContextOnlyDesignator(
+        normalizedInput,
+        identityBlock.brand,
+        parentIdentity,
+      )
+    ) {
+      delete identityBlock.brand;
+    }
+    if (
+      isUsageContextOnlyDesignator(
+        normalizedInput,
+        identityBlock.model,
+        parentIdentity,
+      )
+    ) {
+      delete identityBlock.model;
+    }
+    /**
+     * REDDEDİLEN MARKA YAN KAPIDAN GERİ GELEMEZ (1B ile aynı desen).
+     *
+     * Aşağıdaki iki çağrı `identityBlock.brand?.value ?? identity.brand`
+     * yedeğini kullanıyor; blok temizlense bile ham kimlik adayı geri
+     * dönüyordu ("Restoran" markası `parentEntity` üzerinden `fields.brand`'e
+     * ulaşıyordu — ölçüldü). Yedek de aynı kapıdan geçirilir.
+     */
+    if (
+      isUsageContextOnlyDesignator(
+        normalizedInput,
+        { value: identity.brand },
+        parentIdentity,
+      )
+    ) {
+      identity.brand = null;
+    }
+  }
+
   // B3.7 — semantic subject / relationship (after identity, before strategy)
   const structuredNeedType =
     typeof structured?.fieldValues?.needType === "string"
@@ -1381,11 +1602,21 @@ export function understandRequest(
       attributes.serviceTarget = requestSubject.target;
     }
 
-    // A clear service request must not fall back to a generic product
-    // clarification just because its target (e.g. klima) belongs to a
-    // product category. Automotive and machinery retain their dedicated
-    // service flows; every other service routes to the service marketplace.
-    if (category.value !== "automotive" && category.value !== "machinery") {
+    /**
+     * GENEL HİZMET PAZARI YALNIZ BİR YEDEKTİR (1I).
+     *
+     * Önceki sözleşme (2026-08-23) otomotiv ve makine dışındaki BÜTÜN hizmet
+     * taleplerini `services` kategorisine yönlendiriyordu; kategori ekseni
+     * ihtiyaç türü ekseniyle çakışıyordu. Otomotiv istisnası aslında doğru
+     * kuralın kendisiydi: uzmanlık alanı korunur.
+     *
+     * Artık alan kanıtı varsa (doğrulanmış ürün/platform ya da rol sözcük
+     * dağarcığı) talep o alanda kalır — "klima servisi" beyaz eşya,
+     * "Renault Clio bakımı" otomotiv, "Heidelberg SM 74 bakımı" makine.
+     * Kanıt yoksa genel hizmet pazarı devreye girer — "ev temizliği",
+     * "hukuk danışmanlığı".
+     */
+    if (!relationDomain) {
       category = {
         value: "services",
         confidence: Math.max(category.confidence, requestSubject.kind.confidence),
@@ -1687,6 +1918,7 @@ export function understandRequest(
       isCompatibilityKind:
         requestSubject.kind.value === "PART" ||
         requestSubject.kind.value === "ACCESSORY",
+      isServiceSubject: requestSubject.kind.value === "SERVICE",
       representedText: [
         requestSubject.name?.value,
         requestSubject.displayPhrase?.value,
@@ -2042,6 +2274,16 @@ export function understandRequest(
     strategy: reconciled.strategy,
     identity: identityBlock,
     attributes,
+    /**
+     * ÇÖZÜLEN TİPLİ VARLIK KALICI OLUR (1K).
+     *
+     * Ölçülen kusur: varlık kategoriyi CONFIDENT yapacak kadar güçlü
+     * sayılıyor ama saklanacak kadar önemli sayılmıyordu; anlaşıldıktan
+     * sonra yalnız `rawInput` metninde kalıyordu. Buradan çıkan kayıt
+     * publish snapshot'ına taşınır ve ileride routing envelope tarafından
+     * kayıpsız okunabilir.
+     */
+    resolvedEntities: resolvedDomainEntities,
     budget: resolvedBudget,
     location,
     quantity: resolvedQuantity,

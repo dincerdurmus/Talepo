@@ -152,6 +152,22 @@ export type RequestUnderstandingDiagnostics = {
   notes?: string[];
 };
 
+/**
+ * Anlaşılan tipli alan varlığı — kalıcı snapshot'a taşınacak biçim (1K).
+ * Ham kullanıcı cümlesi buraya kopyalanmaz; yalnız kanonik kimlik taşınır.
+ */
+export type ResolvedDomainEntityFact = {
+  canonicalId: string;
+  entityType: string;
+  canonicalLabel: string;
+  domainId: string;
+  matchedAlias?: string;
+  confidence: number;
+  /** Provenance kaynağı — `AI_INFERRED:talepo-1j-seed` gibi. */
+  source: string;
+  verificationStatus: string;
+};
+
 export type RequestUnderstandingResult = {
   version: "v1";
 
@@ -184,6 +200,15 @@ export type RequestUnderstandingResult = {
   };
 
   attributes: Record<string, UnderstandingValue<unknown>>;
+
+  /**
+   * ÇÖZÜLEN TİPLİ ALAN VARLIKLARI — platform, yazılım ailesi, makine türü (1K).
+   *
+   * Bunlar MARKA DEĞİLDİR ve `identity.brand` alanına yazılamaz; ama talebin
+   * hangi varlık hakkında olduğunu anlatan kalıcı kanıttır. Alan additive ve
+   * opsiyoneldir: eski tüketiciler etkilenmez.
+   */
+  resolvedEntities?: ResolvedDomainEntityFact[];
 
   budget?: UnderstandingValue<{
     min?: number;

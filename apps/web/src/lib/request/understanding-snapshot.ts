@@ -32,6 +32,18 @@ export type CategoryCandidateSnapshot = {
   source: "ai" | "user" | "system";
 };
 
+export type ResolvedEntitySnapshot = {
+  canonicalId: string;
+  entityType: string;
+  canonicalLabel: string;
+  domainId: string;
+  matchedAlias?: string;
+  /** 0..1 arası sıkıştırılmış güven. */
+  confidence: number;
+  source: string;
+  verificationStatus: string;
+};
+
 export type UnderstandingFieldSnapshot = {
   value: string;
   confidence?: number;
@@ -54,6 +66,19 @@ export type RequestUnderstandingSnapshot = {
   };
   entities: Record<string, UnderstandingFieldSnapshot>;
   attributes: Record<string, UnderstandingFieldSnapshot>;
+  /**
+   * ÇÖZÜLEN TİPLİ ALAN VARLIKLARI (1K) — additive ve OPSİYONEL.
+   *
+   * `entities` düz bir string haritasıdır ve yalnız marka/model taşır;
+   * platform, yazılım ailesi ve makine türü orada bir rol bulamıyordu ve
+   * anlaşıldıktan sonra kayboluyordu. Bu alan onları kanonik kimlik,
+   * tür, alan ve KÜRASYON DURUMUYLA birlikte kalıcı kılar.
+   *
+   * Sözleşme: alan yoksa eski snapshot geçerli kalır (geriye uyumlu),
+   * en fazla 8 kayıt taşınır, ham kullanıcı cümlesi buraya kopyalanmaz,
+   * `discoveryProjection` bir JSON kolonu olduğu için migration gerekmez.
+   */
+  resolvedEntities?: ResolvedEntitySnapshot[];
   unresolvedExpressions: string[];
   confirmedFieldKeys: string[];
 };
@@ -97,11 +122,60 @@ export function parseUnderstandingSnapshot(
   return isRequestUnderstandingSnapshot(value) ? value : null;
 }
 
+/** En fazla kaç tipli varlık kalıcı olur — sınırsız liste snapshot şişirir. */
+const RESOLVED_ENTITY_MAX = 8;
+
+/**
+ * Tipli varlık listesini snapshot disiplinine sokar (1K).
+ *
+ * Sınırlar mevcut sanitization ilkeleriyle aynı: metinler kırpılır, güven
+ * 0..1'e sıkıştırılır, aynı `canonicalId + entityType` yinelenmez, sıralama
+ * deterministic olur ve liste 8 kayıtla sınırlanır. Liste boşsa alan HİÇ
+ * üretilmez — eski okuyucular ve eski snapshot'lar etkilenmez.
+ */
+function sanitizeResolvedEntities(
+  input: ResolvedEntitySnapshot[] | undefined,
+): { resolvedEntities?: ResolvedEntitySnapshot[] } {
+  if (!input?.length) return {};
+  const seen = new Set<string>();
+  const out: ResolvedEntitySnapshot[] = [];
+  for (const raw of input) {
+    const canonicalId = truncateSnapshotValue(String(raw?.canonicalId ?? ""));
+    const entityType = truncateSnapshotValue(String(raw?.entityType ?? ""));
+    if (!canonicalId || !entityType) continue;
+    const key = `${canonicalId}|${entityType}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      canonicalId,
+      entityType,
+      canonicalLabel: truncateSnapshotValue(String(raw?.canonicalLabel ?? "")),
+      domainId: truncateSnapshotValue(String(raw?.domainId ?? "")),
+      ...(raw?.matchedAlias
+        ? { matchedAlias: truncateSnapshotValue(String(raw.matchedAlias)) }
+        : {}),
+      confidence: clamp01(Number(raw?.confidence ?? 0)),
+      source: truncateSnapshotValue(String(raw?.source ?? "")),
+      verificationStatus: truncateSnapshotValue(
+        String(raw?.verificationStatus ?? ""),
+      ),
+    });
+  }
+  if (!out.length) return {};
+  out.sort((a, b) =>
+    a.canonicalId === b.canonicalId
+      ? a.entityType.localeCompare(b.entityType)
+      : a.canonicalId.localeCompare(b.canonicalId),
+  );
+  return { resolvedEntities: out.slice(0, RESOLVED_ENTITY_MAX) };
+}
+
 export function buildUnderstandingSnapshot(input: {
   builtAt?: string;
   categoryResolution: RequestUnderstandingSnapshot["categoryResolution"];
   entities?: Record<string, UnderstandingFieldSnapshot>;
   attributes?: Record<string, UnderstandingFieldSnapshot>;
+  resolvedEntities?: ResolvedEntitySnapshot[];
   unresolvedExpressions?: string[];
   confirmedFieldKeys?: string[];
   profileVersion?: string;
@@ -154,6 +228,7 @@ export function buildUnderstandingSnapshot(input: {
         },
       ]),
     ),
+    ...sanitizeResolvedEntities(input.resolvedEntities),
     unresolvedExpressions: (input.unresolvedExpressions ?? [])
       .map((s) => truncateSnapshotValue(String(s)))
       .filter(Boolean)

@@ -6,12 +6,19 @@
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isKnownPartNoun, stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
-import { isCanonicalWholeProductPhrase } from "@/lib/taxonomy/phrase-classification";
-import { isRequestedItemNotModel } from "./requested-item-role";
+import {
+  ACCESSORY_LEMMAS,
+  classifyRequestedTargetRole,
+  isRequestedItemNotModel,
+  PART_LEMMAS,
+  SERVICE_LEMMAS,
+  serviceLemmaIsPhraseHead,
+} from "./requested-item-role";
 import {
   containsPhraseToken,
   coversRequestedTokens,
   readRequestedTarget,
+  readUsageContextSplit,
   resolveCompatibilityAuthority,
   resolvePartBearingParent,
   splitCompatibilityPhrase,
@@ -27,66 +34,6 @@ import type {
   UnderstandingDecision,
   UnderstandingValue,
 } from "./types";
-
-/** Component / spare-part lexicon (generic Turkish) */
-const PART_LEMMAS = [
-  "tampon",
-  "far",
-  "ayna",
-  "filtre",
-  "kapak",
-  "motor",
-  "pompa",
-  "merdane",
-  "balata",
-  "kart",
-  "parça",
-  "parca",
-  "yedek parça",
-  "yedek parca",
-  "kablo",
-  "adaptör",
-  "adaptor",
-  "hazne",
-  "batarya",
-  "akü",
-  "aku",
-  "mandren",
-  "radyatör",
-  "radyator",
-  "egzoz",
-  "egzoz",
-  "disk",
-  "kampana",
-  "amortisör",
-  "amortisor",
-  "rot",
-  "şanzıman",
-  "sanziman",
-  "debriyaj",
-  "debriyaj",
-  "fren",
-  "rulman",
-  "şarj adaptörü",
-  "sarj adaptoru",
-  "şarj adaptoru",
-  "sarj adaptörü",
-] as const;
-
-const ACCESSORY_LEMMAS = [
-  "kılıf",
-  "kilif",
-  "stand",
-  "aparat",
-  "çanta",
-  "canta",
-  "aksesuar",
-  "uzatma",
-  "başlık",
-  "baslik",
-  "şarj",
-  "sarj",
-] as const;
 
 /** Categories that must never collapse to VEHICLE via numeric false positives */
 const NON_VEHICLE_CATEGORIES = new Set([
@@ -104,23 +51,6 @@ const NON_VEHICLE_CATEGORIES = new Set([
 
 const MOTOR_PART_CONTEXT_RE =
   /(?:çıkma|cikma|yedek|muadil|uyumlu|kapa|pompa|yağ|yag|\biçin\b|\bicin\b|2\.?\s*el|ikinci\s*el)/i;
-
-const SERVICE_LEMMAS = [
-  "bakım",
-  "bakim",
-  "onarım",
-  "onarim",
-  "tamir",
-  "boyama",
-  "boya",
-  "badana",
-  "montaj",
-  "kurulum",
-  "kaplama",
-  "servis",
-  "revizyon",
-  "temizlik",
-] as const;
 
 const POSITION_TOKENS = [
   "ön",
@@ -257,8 +187,15 @@ function lemmaPattern(lemma: string): RegExp {
   const suffixes =
     "(?:sı|si|su|sü|ı|i|u|ü|yı|yi|yu|yü|ğı|gi|ğu|gü|ği|nın|nin|nun|nün)?";
   let body = `${escapeRe(lemma)}${suffixes}`;
-  if (lemma === "kapak") {
-    body = `(?:kapak${suffixes}|kapağ[ıiuü])`;
+  /**
+   * ÜNSÜZ YUMUŞAMASI — k → ğ (1G). Türkçede sonu k ile biten bir ad iyelik
+   * eki alınca yumuşar: kapak → kapağı, destek → desteği. Kural daha önce
+   * yalnız "kapak" için elle yazılmıştı; artık sonu k ile biten HER lemma
+   * için geçerli, çünkü bu bir dil kuralıdır, kelimeye özel bir istisna değil.
+   */
+  if (!lemma.includes(" ") && lemma.endsWith("k")) {
+    const soft = `${escapeRe(lemma.slice(0, -1))}ğ[ıiuü]`;
+    body = `(?:${escapeRe(lemma)}${suffixes}|${soft})`;
   }
   return new RegExp(`(?:^|[^\\p{L}\\p{N}])(${body})(?=[^\\p{L}\\p{N}]|$)`, "iu");
 }
@@ -274,7 +211,9 @@ function findLemmaHit(
     if (!m || m.index == null || !m[1]) continue;
     const raw = m[1];
     const index = m.index + (m[0].length - raw.length);
-    const normalized = normalizeSubjectLemma(raw.startsWith("kapağ") ? "kapak" : raw);
+    // Yumuşamış biçim lemma'ya geri çevrilir: desteği → destek, kapağı → kapak.
+    const unsoftened = raw.replace(/ğ([ıiuü])$/u, "k");
+    const normalized = normalizeSubjectLemma(unsoftened);
     // Prefer earlier hits; when tied/overlapping, prefer longer/more specific lemma
     const score = normalized.length;
     if (
@@ -600,6 +539,24 @@ function applyCompatibilityAuthority(
         }
       : subject;
 
+  /**
+   * KESİNLİK SEVİYELERİ BİRBİRİYLE TUTARLI OLMALI (1G).
+   *
+   * Authority yalnız `kind`'ı düşürüyordu; `relation` ve `relationship`
+   * CONFIDENT kalıyordu. Sonuç: konu "belki parça" derken ilişki "kesinlikle
+   * PART_OF" diyordu. İlişkinin güveni konunun güvenini aşamaz.
+   */
+  const capped = <T,>(
+    d: UnderstandingDecision<T> | undefined,
+  ): UnderstandingDecision<T> | undefined =>
+    d && d.confidence > UNPROVEN_COMPATIBILITY_CONFIDENCE
+      ? {
+          ...d,
+          confidence: UNPROVEN_COMPATIBILITY_CONFIDENCE,
+          status: "TENTATIVE",
+        }
+      : d;
+
   return {
     ...named,
     kind: {
@@ -615,6 +572,8 @@ function applyCompatibilityAuthority(
         `compat-authority:${authority.reason}`,
       ],
     },
+    relation: capped(named.relation),
+    relationship: capped(named.relationship),
   };
 }
 
@@ -803,7 +762,39 @@ function resolveSemanticSubjectCore(
   const accessoryHit = explicitManufactureIntent
     ? null
     : findLemmaHit(text, ACCESSORY_LEMMAS);
-  const serviceHit = findLemmaHit(text, SERVICE_LEMMAS);
+  /**
+   * HİZMET LEMMASI BAŞ KONUMDA OLMALI (1G).
+   *
+   * Türkçe ad tamlamasında baş sondadır: "destek ayağı" bir ayaktır,
+   * "koltuk destek mekanizması" bir mekanizmadır. Yalnız lemma eşleşmesiyle
+   * bütün talebi hizmete çevirmek ölçülen bir hataydı; karar tek yetkili rol
+   * modülünden okunur.
+   */
+  /**
+   * BAĞLACIN SAĞINDA ADLANDIRILAN BÜTÜN ÜRÜN (1G).
+   *
+   * "Ofis için muhasebe yazılımı arıyorum" cümlesinde istenen şey bir yazılım
+   * ÜRÜNÜdür; "Ofis" yalnız kullanım yeridir. Uyumluluk dalları rol yüzünden
+   * kapandıktan sonra talep genel ürün dalına düşüyor ve adı "ürün" oluyordu —
+   * kullanıcının yazdığı ifade başlıktan siliniyordu. İfade burada tek yerde
+   * yakalanır ve ürün dalında ad olarak kullanılır; kural kategoriye,
+   * markaya ya da kelimeye özel DEĞİLDİR.
+   */
+  const wholeProductTarget = (() => {
+    const split = splitCompatibilityPhrase(text);
+    if (!split) return null;
+    const target = readRequestedTarget(split.requested).value;
+    if (!target) return null;
+    return classifyRequestedTargetRole(target).role === "WHOLE_PRODUCT"
+      ? target
+      : null;
+  })();
+  const serviceLemmaHit = findLemmaHit(text, SERVICE_LEMMAS);
+  const serviceHit =
+    serviceLemmaHit &&
+    serviceLemmaIsPhraseHead(text, serviceLemmaHit.index, serviceLemmaHit.raw)
+      ? serviceLemmaHit
+      : null;
 
   const hasCompatibilityTarget =
     Boolean(input.automotiveModel) ||
@@ -957,7 +948,22 @@ function resolveSemanticSubjectCore(
       /(?:parça|parca|yedek|motor|pompa|rulman|tampon|far|adaptör|adaptor)/i.test(
         requestedLower,
       );
-    if (parentEvidence && looksLikePart && !findLemmaHit(requested, SERVICE_LEMMAS)) {
+    /**
+     * İSTENEN ŞEYİN SEMANTİK ROLÜ — tek kanonik sınıflandırıcı (1G).
+     *
+     * Aynı soru daha önce iki farklı yerde soruluyordu: hizmet tarafı
+     * `SERVICE_LEMMAS` taramasıyla, bütün ürün tarafı
+     * `isCanonicalWholeProductPhrase` ile. İkisi de artık `requested-item-role`
+     * içindeki TEK sınıflandırıcının içindedir; buradaki iki dal da onu
+     * okur. `UNKNOWN` bir RET DEĞİLDİR — talep düşmez, yalnız kesinlik
+     * iddia edilmez.
+     */
+    const requestedRole = classifyRequestedTargetRole(
+      readRequestedTarget(requested).value ?? requested,
+    ).role;
+    const requestedIsCompatible =
+      requestedRole !== "SERVICE" && requestedRole !== "WHOLE_PRODUCT";
+    if (parentEvidence && looksLikePart && requestedIsCompatible) {
       const lemmaHit = findLemmaHit(requested, PART_LEMMAS);
       const name = lemmaHit?.lemma === "parça" || lemmaHit?.lemma === "parca"
         ? "parça"
@@ -1032,13 +1038,10 @@ function resolveSemanticSubjectCore(
     const openTarget = readRequestedTarget(requested).value;
     if (
       openTarget &&
-      !findLemmaHit(requested, SERVICE_LEMMAS) &&
-      // Sağdaki ifade BÜTÜN bir ürünü adlandırıyorsa parça değildir. Kanonik
-      // taksonomiye sorulur: "televizyon"/"tablet"/"klima" PRODUCT_TYPE olarak
-      // döner ve elenir; "termostat" PART_TYPE, "rezistans" ise hiç düğüm
-      // olmadığı için geçer. Bu, "Ofis için televizyon"u kara liste olmadan
-      // eleyen ikinci taraftır.
-      !isCanonicalWholeProductPhrase(openTarget) &&
+      // Sağdaki ifadenin rolü tek kanonik sınıflandırıcıdan okunur: hizmet
+      // ("teknik destek") ve bütün ürün ("televizyon", "muhasebe yazılımı")
+      // bileşen olamaz; modül/eklenti olabilir; bilinmeyen rol reddedilmez.
+      requestedIsCompatible &&
       // Hedef, solun kendisi olamaz.
       !containsPhraseToken(forPart[1] ?? "", openTarget)
     ) {
@@ -1260,31 +1263,53 @@ function resolveSemanticSubjectCore(
       input.listingType) &&
     !hasFurnitureObjectNoun(text)
   ) {
-    const prop =
-      /(?:^|[^\p{L}\p{N}])(?:dükkan|dukkan)(?=[^\p{L}\p{N}]|$)/iu.test(text)
+    /**
+     * EMLAK KANITI KULLANIM BAĞLAMINDAN GELEMEZ (1H).
+     *
+     * `input.categoryId` ham cümlenin tamamından türetiliyor; "Ev için klima
+     * arıyorum" cümlesinde soldaki "Ev" kategoriyi real-estate yapıyor ve bu
+     * dal ateşleniyordu — kullanıcının yazdığı KLİMA tamamen kayboluyordu.
+     *
+     * Sağ tarafta ayrı bir talep hedefi kurulmuşsa emlak belirteci ORADA
+     * aranır. "Ailem için 3+1 daire" hedefinde "daire" bulunur ve dal
+     * çalışmaya devam eder; "Ev için klima" hedefinde bulunmaz ve talep
+     * emlak sayılmaz. Kullanıcının açıkça yazdığı yapısal emlak sinyalleri
+     * (satılık/kiralık, oda sayısı) kuralı her hâlükârda geçersiz kılar.
+     */
+    const usage = readUsageContextSplit(text);
+    const propScope = usage ? usage.target : text;
+    const namedProp =
+      /(?:^|[^\p{L}\p{N}])(?:dükkan|dukkan)(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
         ? "dükkan"
-        : /(?:^|[^\p{L}\p{N}])daire(?=[^\p{L}\p{N}]|$)/iu.test(text)
+        : /(?:^|[^\p{L}\p{N}])daire(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
           ? "daire"
-          : /(?:^|[^\p{L}\p{N}])ev(?=[^\p{L}\p{N}]|$)/iu.test(text)
+          : /(?:^|[^\p{L}\p{N}])ev(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
             ? "ev"
-            : "gayrimenkul";
-    return {
-      kind: decision("REAL_ESTATE", 0.9, [prop]),
-      name: uv(prop, {
-        provenance: "EXPLICIT",
-        source: "USER_EXPLICIT",
-        confidence: 0.85,
-        evidence: [prop],
-      }),
-      displayPhrase: uv(prop, {
-        provenance: "EXPLICIT",
-        source: "NORMALIZED_EXPLICIT",
-        confidence: 0.85,
-        evidence: [prop],
-      }),
-      relationship: decision("PROPERTY_REQUEST", 0.9, ["property-request"]),
-      relation: decision("UNKNOWN", 0.5, []),
-    };
+            : null;
+    const structuralProperty = Boolean(input.roomCount || input.listingType);
+    const prop =
+      namedProp ?? (usage && !structuralProperty ? null : "gayrimenkul");
+    // Kanıt yoksa dal ATEŞLENMEZ; talep aşağıdaki dallarda değerlendirilmeye
+    // devam eder (erken dönüş yok — hiçbir talep sessizce düşmez).
+    if (prop != null) {
+      return {
+        kind: decision("REAL_ESTATE", 0.9, [prop]),
+        name: uv(prop, {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          confidence: 0.85,
+          evidence: [prop],
+        }),
+        displayPhrase: uv(prop, {
+          provenance: "EXPLICIT",
+          source: "NORMALIZED_EXPLICIT",
+          confidence: 0.85,
+          evidence: [prop],
+        }),
+        relationship: decision("PROPERTY_REQUEST", 0.9, ["property-request"]),
+        relation: decision("UNKNOWN", 0.5, []),
+      };
+    }
   }
 
   // --- INDUSTRIAL EQUIPMENT (whole) ---
@@ -1366,10 +1391,16 @@ function resolveSemanticSubjectCore(
     input.categoryId === "furniture" ||
     input.categoryId === "baby" ||
     input.categoryId === "health" ||
-    hasFurnitureObjectNoun(text)
+    hasFurnitureObjectNoun(text) ||
+    // Kullanıcı bağlacın sağında bütün bir ürün adlandırdıysa bu bir ürün
+    // talebidir; soldaki kullanım bağlamının kategorisi onu düşüremez (1H).
+    Boolean(wholeProductTarget)
   ) {
     const parent = buildParentEntity(input.identity, "PRODUCT");
+    // Kullanıcı bağlacın sağında bütün bir ürün adlandırdıysa ad ODUR; soldaki
+    // kullanım yerinden türetilen marka/model adayı onu bastıramaz.
     const label =
+      wholeProductTarget ||
       parentDisplay(parent) ||
       input.identity.model ||
       input.identity.brand ||
@@ -1380,7 +1411,7 @@ function resolveSemanticSubjectCore(
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
         confidence: 0.7,
-        evidence: ["product"],
+        evidence: [wholeProductTarget ? "icin-whole-product-target" : "product"],
       }),
       parentEntity: parent,
       relationship: decision("PRODUCT_REQUEST", 0.75, ["product-request"]),

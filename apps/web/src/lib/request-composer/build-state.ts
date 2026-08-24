@@ -29,10 +29,14 @@ import {
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
-import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
+import {
+  classifyRequestedTargetRole,
+  isRequestedItemNotModel,
+} from "@/lib/request-understanding/requested-item-role";
 import {
   isConsumedAsParentProduct,
   readRequestedTarget,
+  readUsageContextSplit,
   splitCompatibilityPhrase,
 } from "@/lib/request-understanding/part-relation";
 import { stripIncompatibleDomainFields } from "./request-transition";
@@ -341,6 +345,39 @@ function isCleanEnrichedPartLabel(
 }
 
 /**
+ * ÜRÜN İPUCU HANGİ METİNDEN OKUNUR? (1H)
+ *
+ * `extractProductTypeHint` ham cümlenin TAMAMINI tarar. "X için Y" yapısında
+ * sağ taraf bütün bir ürün ya da hizmetse asıl talep konusu Y'dir; soldaki
+ * kullanım bağlamı ürün ipucu üretmemelidir. Ölçülen hata: "Ofis için
+ * muhasebe yazılımı arıyorum" → ipucu "Ofis" (emlak düğümü) → `productType`
+ * alanı "Ofis", kategori real-estate; anlama katmanının doğru cevabı
+ * (technology) sessizce eziliyordu.
+ *
+ * Karar burada verilmez, tek yetkili uyumluluk katmanından okunur. Sağ taraf
+ * bir BİLEŞENSE (ya da rolü bilinmiyorsa) tarama ham cümlede kalır: orada
+ * sol taraf gerçek üst üründür ve ipucu üretmesi DOĞRUdur.
+ */
+function resolveProductHint(
+  raw: string,
+): ReturnType<typeof extractProductTypeHint> {
+  const usage = readUsageContextSplit(raw);
+  if (!usage) return extractProductTypeHint(raw);
+  const hint = extractProductTypeHint(usage.target);
+  if (!hint) return null;
+  /**
+   * İpucu hedefin ROLÜYLE ÇELİŞEMEZ. Tarama n-gram tabanlıdır ve bir
+   * niteleyiciyi tek başına çözebilir: "muhasebe yazılımı" bütün bir üründür
+   * ama içindeki "muhasebe" kanonik ağaçta bir HİZMET düğümüdür ve talebi
+   * hizmete çeviriyordu (ölçüldü). Türkçede baş sondadır; niteleyici parça
+   * talebin türünü belirleyemez.
+   */
+  const hintRole = classifyRequestedTargetRole(hint.productType).role;
+  if (hintRole !== "UNKNOWN" && hintRole !== usage.role) return null;
+  return hint;
+}
+
+/**
  * Convert understanding + raw text hints into hybrid field map.
  */
 export function mapUnderstandingToFields(
@@ -351,7 +388,7 @@ export function mapUnderstandingToFields(
 
   const screenSize = extractScreenSize(raw);
   const resolution = extractResolution(raw);
-  const productHint = extractProductTypeHint(raw);
+  const productHint = resolveProductHint(raw);
 
   let brandRaw = cleanBrandToken(
     result.identity.brand?.value
@@ -784,7 +821,7 @@ function taxonomyFromUnderstanding(
         ? schema.categoryId
         : null;
 
-  const productHint = extractProductTypeHint(result.rawInput);
+  const productHint = resolveProductHint(result.rawInput);
   let taxonomyNodeId = productHint?.taxonomyNodeId ?? null;
   let subcategorySlug: string | null = null;
 

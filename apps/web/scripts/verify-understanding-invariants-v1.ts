@@ -57,6 +57,49 @@ import {
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
+import { isCanonicalWholeProductPhrase } from "../src/lib/taxonomy/phrase-classification";
+import { CATALOG_BRAND_DOMAIN_IDS } from "../src/lib/request-understanding/part-relation";
+import {
+  DOMAIN_ENTITIES,
+  findDomainEntity,
+  isBrandLikeEntityType,
+} from "../src/lib/catalog/domain-entities";
+import {
+  DOMAIN_ENTITY_PRECEDENCE,
+  domainEntityEvidenceStrength,
+  resolveDomainEntity,
+} from "../src/lib/catalog";
+import {
+  APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  BABY_BRANDS,
+  FURNITURE_BRANDS,
+  HOME_KITCHEN_BRANDS,
+  MACHINERY_BRANDS,
+  TECHNOLOGY_BRANDS,
+  findBrand,
+} from "../src/lib/ai/parser/brand-catalog";
+import { listTaxonomyAliasCandidates } from "../src/lib/taxonomy/registry";
+import {
+  buildPublishUnderstandingSnapshot,
+} from "../src/lib/request/publish-understanding";
+import {
+  buildUnderstandingSnapshot,
+  parseUnderstandingSnapshot,
+} from "../src/lib/request/understanding-snapshot";
+
+/** Marka kataloğu listeleri — çapraz çakışma denetimi için (1K). */
+function brandListsForTests() {
+  return [
+    ["automotive", AUTOMOTIVE_BRANDS],
+    ["appliances", APPLIANCE_BRANDS],
+    ["home-kitchen", HOME_KITCHEN_BRANDS],
+    ["machinery", MACHINERY_BRANDS],
+    ["technology", TECHNOLOGY_BRANDS],
+    ["furniture", FURNITURE_BRANDS],
+    ["baby", BABY_BRANDS],
+  ] as const;
+}
 import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
@@ -71,6 +114,30 @@ import {
 
 let passed = 0;
 let failed = 0;
+/**
+ * BİLİNEN AÇIKLAR — PASS sayısına dahil EDİLMEZ (1I).
+ *
+ * Bozuk davranışı doğrulayan ters assertion bir anti-pattern'dir: hata
+ * düzeldiğinde test kırmızıya döner ve düzeltmeyi cezalandırır. Bunun
+ * yerine DOĞRU davranış yazılır; henüz gerçekleşmiyorsa KNOWN_FAIL olarak
+ * ayrı sayılır, bataryayı kırmızıya çevirmez ve gerçekleştiğinde kendi
+ * kendine PASS'e döner.
+ */
+let knownFail = 0;
+const knownFailNotes: string[] = [];
+function knownGap(name: string, fn: () => void) {
+  try {
+    fn();
+    console.log(
+      `PASS  ${name}  (BİLİNEN AÇIK KAPANDI — knownGap yerine check kullanılmalı)`,
+    );
+    passed += 1;
+  } catch (err) {
+    knownFail += 1;
+    knownFailNotes.push(`${name} → ${(err as Error).message}`);
+    console.warn(`KNOWN_FAIL  ${name}`);
+  }
+}
 function check(name: string, fn: () => void) {
   try {
     fn();
@@ -244,7 +311,19 @@ check("I3: printed goods with 'yaptırmak' stay in printing, services stay servi
     ["KARTVİZİT YAPTIRMAK İSTİYORUM", "printing"],
     ["logolu kutu yaptırmak istiyorum", "printing"],
     ["1000 adet kartvizit bastırmak istiyorum", "printing"],
-    ["klima montajı yaptırmak istiyorum", "services"],
+    /**
+     * ÜRÜN KARARI DEĞİŞTİ (1I) — beklenti bayat olduğu için güncellendi.
+     *
+     * 2026-08-23 sözleşmesi otomotiv ve makine dışındaki bütün hizmet
+     * taleplerini `services` kategorisine yönlendiriyordu. 1I bu istisnayı
+     * genel kurala çevirdi: kategori uzmanlık ALANINI, kind ihtiyaç TÜRÜNÜ
+     * anlatır. "klima montajı" bir beyaz eşya işidir ve kind'ı SERVICE
+     * kalır — kategori artık alanı kaybetmiyor.
+     *
+     * "ev boyatmak" doğrulanmış bir ürün/platform kanıtı taşımadığı için
+     * genel hizmet pazarında kalır; yedek yolun hâlâ çalıştığını gösterir.
+     */
+    ["klima montajı yaptırmak istiyorum", "appliances"],
     ["ev boyatmak istiyorum", "services"],
   ] as const) {
     assert.equal(catOf(ru(raw)), want, raw);
@@ -1282,6 +1361,9 @@ function idOf(u: unknown, key: "brand" | "model"): string | null {
  * Tek yüzey okuyucu. `fieldValues` verildiğinde structured/browse akışını
  * temsil eder — kullanıcının DOĞRULADIĞI rol bu yoldan girer.
  */
+/** Uyumluluk niteliği taşıyan konu türleri — production ile aynı küme. */
+const COMPATIBILITY_KINDS = new Set(["PART", "ACCESSORY"]);
+
 function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
   const structured = fieldValues ? { fieldValues } : undefined;
   const understanding = understandRequest({ rawInput: raw, structured }) as never;
@@ -1297,6 +1379,8 @@ function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
   const rs = (understanding as unknown as {
     requestSubject?: {
       kind?: { value?: unknown; status?: unknown; evidence?: unknown };
+      relation?: { value?: unknown; status?: unknown };
+      relationship?: { value?: unknown };
       name?: { value?: unknown };
       parentEntity?: Record<string, { value?: unknown } | undefined>;
     };
@@ -1308,6 +1392,22 @@ function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
     subjectKind: String(rs?.kind?.value ?? ""),
     parentModel: rs?.parentEntity?.model?.value != null
       ? String(rs.parentEntity.model.value)
+      : null,
+    /**
+     * Anlama katmanının KENDİ kategori kararı — besteci `categoryId` ile
+     * karşılaştırmak için (1H). İki otoritenin ayrışması ölçülebilir olmalı.
+     */
+    understandingCategoryStatus: String(
+      (understanding as unknown as { category?: { status?: unknown } }).category
+        ?.status ?? "",
+    ),
+    understandingCategory: (understanding as unknown as {
+      category?: { value?: unknown; status?: unknown };
+    }).category?.status !== "UNKNOWN"
+      ? String(
+          (understanding as unknown as { category?: { value?: unknown } })
+            .category?.value ?? "",
+        ) || null
       : null,
     brand: val("brand"),
     model: val("model"),
@@ -1321,6 +1421,9 @@ function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
     identityBrand: idOf(understanding, "brand"),
     identityModel: idOf(understanding, "model"),
     subjectStatus: String(rs?.kind?.status ?? ""),
+    relationValue: String(rs?.relation?.value ?? ""),
+    relationStatus: String(rs?.relation?.status ?? ""),
+    relationshipValue: String(rs?.relationship?.value ?? ""),
     subjectEvidence: Array.isArray(rs?.kind?.evidence)
       ? (rs.kind.evidence as string[]).map(String)
       : [],
@@ -1611,11 +1714,16 @@ const COMPAT_CASES: CompatCase[] = [
    * uydurulmuyor, kesinlik hâlâ verilmiyor.
    */
   {
+    /**
+     * 1G: "destek" hizmet dilinin parçasıdır (taksonomi de "Bakım / destek
+     * sözleşmesi" diyor). Bu satır TENTATIVE parça adayından SERVICE'e geçti;
+     * kesinlik iddiası artmadı, yanlış sınıf düzeldi ve ifade korunuyor.
+     */
     raw: "Bosch kampanya için destek arıyorum",
-    verdict: "TENTATIVE",
+    verdict: "NOT_PART",
+    subjectKind: "SERVICE",
     keep: "destek",
     model: null,
-    reason: /capability-unknown/i,
   },
   {
     raw: "Bosch için rezistans arıyorum",
@@ -1895,57 +2003,144 @@ check("I23: konum belirteci parça adına iki kez eklenemez", () => {
   );
 });
 
-check("I25: amaç/yer ifadesi üst ürün değildir — 'ev için klima' emlak talebi olamaz", () => {
+/**
+ * KULLANIM BAĞLAMI TALEP KONUSUNU EZEMEZ (I25 ailesi, 1H).
+ *
+ * "X için Y" yapısında X HER ZAMAN üst ürün değildir:
+ *   - Y bir BİLEŞEN ise      → X gerçek üst üründür, marka/model olabilir
+ *   - Y bütün ÜRÜN ya da HİZMET ise → Y asıl talep konusudur, X yalnız
+ *     kullanım amacı / hedef kitle / yer / kurum bağlamıdır
+ *
+ * Ölçülen hata ailesi tek kökten geliyordu: anlama katmanı sağ tarafı doğru
+ * çözdükten SONRA, ham cümlenin tamamını yeniden tarayan ipucu katmanları
+ * soldaki bağlamı asıl ürün ya da marka sanıp doğru kararı eziyordu.
+ *   "Ev için klima arıyorum"            → REAL_ESTATE, metin "konut arıyorum."
+ *   "Ofis için muhasebe yazılımı"       → kategori real-estate, productType "Ofis"
+ *   "Restoran için POS yazılımı"        → marka "Restoran"
+ */
+type ContextCase = {
+  raw: string;
+  /** Sağ taraftaki asıl talep konusu — hiçbir yüzeyde kaybolamaz. */
+  target: string;
+  /** Beklenen konu türü. */
+  kind: "PRODUCT" | "SERVICE";
+  /** Soldaki bağlam — marka, model veya ürün türü olamaz. */
+  context: string;
+};
+
+const USAGE_CONTEXT_FAMILY: ContextCase[] = [
+  { raw: "Ev için klima arıyorum", target: "klima", kind: "PRODUCT", context: "ev" },
+  { raw: "İşyeri için klima arıyorum", target: "klima", kind: "PRODUCT", context: "işyeri" },
+  { raw: "Ofis için televizyon arıyorum", target: "televizyon", kind: "PRODUCT", context: "ofis" },
+  { raw: "Ofis için muhasebe yazılımı arıyorum", target: "muhasebe yazılımı", kind: "PRODUCT", context: "ofis" },
+  { raw: "İşletmem için CRM yazılımı arıyorum", target: "crm yazılımı", kind: "PRODUCT", context: "işletme" },
+  { raw: "Restoran için POS yazılımı arıyorum", target: "pos yazılımı", kind: "PRODUCT", context: "restoran" },
+  { raw: "Çocuk için eğitim uygulaması arıyorum", target: "eğitim uygulaması", kind: "PRODUCT", context: "çocuk" },
+  { raw: "Şirket için ERP sistemi arıyorum", target: "erp sistemi", kind: "PRODUCT", context: "şirket" },
+  { raw: "Ev için klima servisi arıyorum", target: "klima servisi", kind: "SERVICE", context: "ev" },
+  { raw: "WordPress için teknik destek arıyorum", target: "teknik destek", kind: "SERVICE", context: "wordpress" },
+  { raw: "SAP için danışmanlık arıyorum", target: "danışmanlık", kind: "SERVICE", context: "sap" },
+  { raw: "Logo yazılımı için kurulum hizmeti arıyorum", target: "kurulum hizmeti", kind: "SERVICE", context: "logo" },
+  { raw: "Web sitesi için bakım desteği arıyorum", target: "bakım desteği", kind: "SERVICE", context: "web sitesi" },
+];
+
+check("I25: kullanım bağlamı talep konusunu, kategorisini ve markasını ezemez", () => {
+  for (const c of USAGE_CONTEXT_FAMILY) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+
+    // (1) Asıl konu sağ taraftır.
+    assert.equal(s.subjectKind, c.kind, at(`konu türü (${s.subjectKind})`));
+    assert.ok(
+      !COMPATIBILITY_KINDS.has(s.subjectKind),
+      at(`kullanım bağlamı parça ilişkisi kuramaz (${s.subjectKind})`),
+    );
+    assert.notEqual(s.relationValue, "PART_OF", at("PART_OF izi kaldı"));
+    assert.ok(
+      !s.ambiguityMessages.some((m) => /compat_target_unresolved/i.test(m)),
+      at(`gereksiz uyumluluk kaydı → ${JSON.stringify(s.ambiguityMessages)}`),
+    );
+
+    // (2) Kullanıcının yazdığı hedef başlıkta ya da profesyonel metinde durur.
+    assert.ok(
+      fold(s.text).includes(fold(c.target)) || fold(s.headline).includes(fold(c.target)),
+      at(`'${c.target}' kayboldu → başlık='${s.headline}' metin='${s.text}'`),
+    );
+
+    // (3) Yanlış genelleme yok.
+    assert.ok(
+      !fold(s.text).includes("konut"),
+      at(`'konut' kullanıcının talebini eziyor → '${s.text}'`),
+    );
+
+    // (4) Soldaki bağlam marka, model ya da ürün türü olamaz.
+    for (const [label, value] of [
+      ["marka", s.brand],
+      ["model", s.model],
+      ["ürün türü", s.parentProduct],
+    ] as const) {
+      if (!value) continue;
+      assert.ok(
+        !fold(value).includes(fold(c.context)) && !fold(c.context).includes(fold(value)),
+        at(`kullanım bağlamı '${c.context}' ${label} oldu → '${value}'`),
+      );
+    }
+
+    // (5) Kategori sağ taraftan türer; emlak olmayan talep emlak sayılamaz.
+    assert.notEqual(
+      s.categoryId,
+      "real-estate",
+      at(`kategori kullanım bağlamından geldi (${s.categoryId})`),
+    );
+
+    // (6) Anlama kategorisi ile besteci kategorisi ayrışamaz.
+    if (s.understandingCategory && s.categoryId) {
+      assert.equal(
+        s.categoryId,
+        s.understandingCategory,
+        at(
+          `kategori otoriteleri ayrıştı: understanding='${s.understandingCategory}' state='${s.categoryId}'`,
+        ),
+      );
+    }
+  }
+});
+
+check("I25b: gerçek emlak talepleri kullanım bağlamı sanılamaz", () => {
   /**
-   * "X için Y" yapısında X HER ZAMAN üst ürün değildir:
-   *   - X gerçek bir ürün/makine ise  → Y uyumlu parça olabilir
-   *   - X kullanım YERİ / AMAÇ ise     → Y asıl talep konusudur
-   *
-   * Ölçülen hata: "Ev için klima arıyorum" → kategori real-estate, subject
-   * REAL_ESTATE, metin "konut arıyorum." — kullanıcının yazdığı KLİMA
-   * tamamen kayboluyor. Oysa `productType = "Klima"` zaten yakalanmış durumda;
-   * yani ayırt edici sinyal sistemde var, kullanılmıyor.
+   * Kural yalnız bağlacın SAĞINDA ayrı bir talep hedefi kuran cümleler için
+   * çalışır. Aşağıdakilerde ya uyumluluk bağlacı yoktur ya da asıl nesnenin
+   * kendisi emlaktır; "ev/ofis/işyeri/restoran" burada bağlam değil taleptir.
    */
-  const klima = surfacesFor("Ev için klima arıyorum");
-  assert.notEqual(
-    klima.subjectKind,
-    "REAL_ESTATE",
-    `'Ev için klima' emlak talebi olamaz (kind=${klima.subjectKind})`,
-  );
-  assert.ok(
-    fold(klima.text).includes("klima"),
-    `klima metinden düşmemeli → '${klima.text}'`,
-  );
-  assert.ok(
-    !fold(klima.text).includes("konut"),
-    `'konut arıyorum'a düşmemeli → '${klima.text}'`,
-  );
-  assert.ok(
-    fold(klima.headline).includes("klima"),
-    `başlıkta klima olmalı → '${klima.headline}'`,
-  );
-
-  // Ofis/televizyon bugün doğru — kilitle.
-  const tv = surfacesFor("Ofis için televizyon arıyorum");
-  assert.ok(fold(tv.text).includes("televizyon"), `→ '${tv.text}'`);
-  assert.notEqual(tv.subjectKind, "PART", "televizyon parça olamaz");
-
-  // GERÇEK emlak talepleri bozulmamalı.
-  for (const raw of ["Ev arıyorum", "Ankara'da 2+1 ev arıyorum"]) {
+  const REAL_ESTATE = [
+    "Ev arıyorum",
+    "2+1 ev arıyorum",
+    "Ankara Çankaya'da 2+1 ev arıyorum",
+    "Satılık ofis arıyorum",
+    "Kiralık işyeri arıyorum",
+    "Restoran olmaya uygun kiralık dükkan arıyorum",
+    "Satılık arsa arıyorum",
+  ];
+  for (const raw of REAL_ESTATE) {
     const s = surfacesFor(raw);
     assert.equal(
       s.subjectKind,
       "REAL_ESTATE",
       `${raw}: gerçek emlak talebi kalmalı (kind=${s.subjectKind})`,
     );
+    assert.equal(
+      s.categoryId,
+      "real-estate",
+      `${raw}: emlak kategorisi kalmalı (${s.categoryId})`,
+    );
   }
 
-  // Hizmet niyeti korunmalı — bütün ürün talebine zorlanmamalı.
-  const servis = surfacesFor("Ev için klima servisi arıyorum");
+  // Bağlaç VAR ama sağ taraf da emlak: bağlam kuralı devreye girmez.
+  const family = surfacesFor("Ailem için 3+1 daire arıyorum");
   assert.equal(
-    servis.subjectKind,
-    "SERVICE",
-    `hizmet niyeti korunmalı (kind=${servis.subjectKind})`,
+    family.subjectKind,
+    "REAL_ESTATE",
+    `sağ taraf emlaksa emlak kalmalı (kind=${family.subjectKind})`,
   );
 
   // Markasız gerçek parça ilişkisi korunmalı.
@@ -1954,6 +2149,694 @@ check("I25: amaç/yer ifadesi üst ürün değildir — 'ev için klima' emlak t
     fold(rez.text).includes("rezistans"),
     `markasız parça ilişkisi korunmalı → '${rez.text}'`,
   );
+});
+
+check("I25c: bileşen talebinde sol taraf gerçek üst üründür", () => {
+  /**
+   * Bağlam kuralı YALNIZ sağ taraf bütün ürün ya da hizmetken çalışır.
+   * Sağ taraf bir bileşense sol taraf gerçek üst üründür: markası, modeli ve
+   * ürün kimliği KORUNUR, bağlam sanılıp silinmez.
+   */
+  const CASES: Array<{ raw: string; part: string; brand?: string; model?: string }> = [
+    { raw: "Arçelik bulaşık makinesi için rezistans arıyorum", part: "rezistans", brand: "Arçelik" },
+    { raw: "Bosch bulaşık makinesi için su giriş ventili arıyorum", part: "su giriş ventili", brand: "Bosch" },
+    { raw: "Siemens çamaşır makinesi için tahliye pompası arıyorum", part: "tahliye pompası", brand: "Siemens" },
+    { raw: "Heidelberg SM 74 için nemlendirme pompası arıyorum", part: "nemlendirme pompası", brand: "Heidelberg", model: "SM 74" },
+    { raw: "Renault Clio için ön far arıyorum", part: "ön far", brand: "Renault", model: "Clio" },
+    { raw: "MacBook Pro için şarj adaptörü arıyorum", part: "şarj adaptörü", model: "MacBook Pro" },
+    { raw: "WordPress için SEO eklentisi arıyorum", part: "seo eklentisi" },
+    { raw: "Logo yazılımı için e-fatura modülü arıyorum", part: "e-fatura modülü" },
+    { raw: "Blender için bıçak bağlantı aparatı arıyorum", part: "bıçak bağlantı aparatı" },
+    { raw: "Masa için özel bağlantı aparatı arıyorum", part: "özel bağlantı aparatı" },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    assert.ok(
+      COMPATIBILITY_KINDS.has(s.subjectKind),
+      at(`bileşen talebi uyumluluk yolundan düştü (${s.subjectKind})`),
+    );
+    assert.ok(
+      fold(s.text).includes(fold(c.part)) || fold(s.headline).includes(fold(c.part)),
+      at(`'${c.part}' kayboldu → başlık='${s.headline}' metin='${s.text}'`),
+    );
+    if (c.brand) {
+      assert.ok(
+        fold(String(s.brand ?? s.parentBrand ?? "")).includes(fold(c.brand)),
+        at(`üst ürün markası bağlam sanılıp silindi (${s.brand ?? s.parentBrand})`),
+      );
+    }
+    if (c.model) {
+      assert.ok(
+        fold(String(s.model ?? s.parentModel ?? "")).includes(fold(c.model)),
+        at(`üst ürün modeli bağlam sanılıp silindi (${s.model ?? s.parentModel})`),
+      );
+    }
+    /**
+     * Sol taraf kullanım bağlamı SANILAMAZ: bu dalda marka/model ya
+     * kullanıcının yazdığıdır ya da kanonik katalogdan doğrulanmış bir
+     * zenginleştirmedir ("MacBook Pro" → Apple). Uydurma marka yasağı bu
+     * satırda değil, I20 (başlıkta kesin gerçek gibi gösterme) ve I40
+     * (dijital hedefte katalog yok) invariant'larında kilitlidir.
+     */
+    if (s.brand && !fold(c.raw).includes(fold(s.brand))) {
+      assert.ok(
+        s.model != null && fold(c.raw).includes(fold(s.model)),
+        at(`marka ne yazıldı ne de doğrulanmış bir modelden türedi → '${s.brand}'`),
+      );
+    }
+  }
+});
+
+knownGap(
+  "I25d: bağlaçsız serbest metinde kullanıcı ifadesi profesyonel metinde durur",
+  () => {
+    /**
+     * DOĞRU davranış yazılır, bozuk olan değil (1I).
+     *
+     * Uyumluluk bağlacı OLMAYAN cümlelerde profesyonel metin kullanıcının
+     * ifadesini taşımıyor; besteci genel kategori diline düşüyor:
+     *   "destek ayağı arıyorum"              → "arıyorum."
+     *   "koltuk destek mekanizması arıyorum" → "mobilya arıyorum."
+     *
+     * `preserveRequestedTarget` bilerek genişletilmedi: bağlaçsız serbest
+     * metnin tamamını taşımak bütçe/telefon/adres sızıntısı riski taşır
+     * (bkz. I42). Bu satır açığı GÖRÜNÜR tutar ve PASS sayısına girmez;
+     * davranış düzeldiğinde kendi kendine PASS'e döner.
+     */
+    for (const raw of ["destek ayağı arıyorum", "koltuk destek mekanizması arıyorum"]) {
+      const s = surfacesFor(raw);
+      // Konu türü ZATEN doğru olmalı — bu kısım I41'de sert kilitli.
+      assert.notEqual(s.subjectKind, "SERVICE", `${raw}: konu türü (${s.subjectKind})`);
+      const head = fold(raw).split(" ")[0] ?? "";
+      assert.ok(
+        fold(s.text).includes(head),
+        `${raw}: '${head}' profesyonel metinde yok → '${s.text}'`,
+      );
+    }
+  },
+);
+
+/* ------------------------------------------------------------------------ *
+ * UZMANLIK ALANI (KATEGORİ) ile İHTİYAÇ TÜRÜ (KIND) AYRI EKSENLERDİR — I26
+ *
+ * `SERVICE` olmak kategorinin otomatik `services` olması demek DEĞİLDİR.
+ * Kategori "hangi uzmanlık alanı?", kind "ne tür ihtiyaç?" sorusunu yanıtlar.
+ * Otomotiv bu ayrımı zaten uyguluyordu (`arac-bakim` akışı); 1I bu istisnayı
+ * genel kurala çevirir: doğrulanmış bir ürün/platform alanı varsa hizmet
+ * talebi o alanda kalır, yoksa genel hizmet pazarına düşer.
+ * ------------------------------------------------------------------------ */
+type DomainCase = {
+  raw: string;
+  /** Beklenen uzmanlık alanı (kategori). */
+  domain: string;
+  /** Beklenen ihtiyaç türü. */
+  kind: string;
+  /** Kullanıcı yüzünde durması gereken ifadeler. */
+  keep: string[];
+};
+
+const DOMAIN_KIND_CASES: DomainCase[] = [
+  // Teknoloji hizmetleri — alan yazılım/platform kanıtından gelir.
+  { raw: "Logo yazılımı için kurulum hizmeti arıyorum", domain: "technology", kind: "SERVICE", keep: ["logo", "kurulum"] },
+  { raw: "Web sitesi için bakım desteği arıyorum", domain: "technology", kind: "SERVICE", keep: ["web sitesi", "bakım"] },
+  // Beyaz eşya hizmetleri — alan kanonik ürün düğümünden gelir.
+  { raw: "Ev için klima servisi arıyorum", domain: "appliances", kind: "SERVICE", keep: ["klima", "servis"] },
+  { raw: "Arçelik bulaşık makinesi için servis arıyorum", domain: "appliances", kind: "SERVICE", keep: ["arcelik", "servis"] },
+  { raw: "Bosch çamaşır makinesi için bakım arıyorum", domain: "appliances", kind: "SERVICE", keep: ["bosch", "bakim"] },
+  { raw: "Buzdolabı tamiri arıyorum", domain: "appliances", kind: "SERVICE", keep: ["buzdolabi"] },
+  // Otomotiv hizmetleri — alan katalog markasından gelir.
+  { raw: "Renault Clio için bakım arıyorum", domain: "automotive", kind: "SERVICE", keep: ["renault", "clio", "bakim"] },
+  { raw: "Mercedes C180 için servis arıyorum", domain: "automotive", kind: "SERVICE", keep: ["c180", "servis"] },
+  { raw: "BMW için ekspertiz arıyorum", domain: "automotive", kind: "SERVICE", keep: ["bmw", "ekspertiz"] },
+  // Makine hizmetleri.
+  { raw: "Heidelberg SM 74 için bakım arıyorum", domain: "machinery", kind: "SERVICE", keep: ["heidelberg", "sm 74", "bakim"] },
+  // Gerçek genel hizmetler — doğrulanmış ürün alanı YOK.
+  { raw: "Ev temizliği arıyorum", domain: "services", kind: "SERVICE", keep: ["temizlik"] },
+  { raw: "Ofis temizliği arıyorum", domain: "services", kind: "SERVICE", keep: ["temizlik"] },
+  { raw: "Ev için temizlik hizmeti arıyorum", domain: "services", kind: "SERVICE", keep: ["temizlik"] },
+  { raw: "Genel hukuk danışmanlığı arıyorum", domain: "services", kind: "SERVICE", keep: ["danismanlik"] },
+  // Dijital bütün ürünler — kind PRODUCT, alan technology.
+  { raw: "Şirket için ERP sistemi arıyorum", domain: "technology", kind: "PRODUCT", keep: ["erp sistemi"] },
+  { raw: "İşletmem için CRM yazılımı arıyorum", domain: "technology", kind: "PRODUCT", keep: ["crm yazilimi"] },
+  { raw: "Restoran için POS yazılımı arıyorum", domain: "technology", kind: "PRODUCT", keep: ["pos yazilimi"] },
+  { raw: "Ofis için muhasebe yazılımı arıyorum", domain: "technology", kind: "PRODUCT", keep: ["muhasebe yazilimi"] },
+  { raw: "Çocuk için eğitim uygulaması arıyorum", domain: "technology", kind: "PRODUCT", keep: ["egitim uygulamasi"] },
+];
+
+check("I26: uzmanlık alanı ile ihtiyaç türü ayrı eksenlerdir", () => {
+  /**
+   * SAPMA KAPISI: katalog listelerinin adlandırdığı alan kimlikleri kanonik
+   * taksonominin kök kategori kimlikleriyle AYNI olmalıdır. Taksonomi tarafı
+   * yeniden adlandırılırsa bu satır gürültülü biçimde kırılır; eşleme sessizce
+   * ayrışamaz.
+   */
+  ensureTaxonomyLoaded();
+  const canonicalDomains = new Set(
+    listAllTaxonomyNodes().map((n) => n.categoryId).filter(Boolean),
+  );
+  for (const id of CATALOG_BRAND_DOMAIN_IDS) {
+    assert.ok(
+      canonicalDomains.has(id),
+      `katalog alan kimliği '${id}' kanonik taksonomide yok — eşleme sapmış`,
+    );
+  }
+
+  for (const c of DOMAIN_KIND_CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+
+    // (1) İhtiyaç türü.
+    assert.equal(s.subjectKind, c.kind, at(`ihtiyaç türü (${s.subjectKind})`));
+
+    // (2) Uzmanlık alanı — kategori null bırakılamaz, uydurulamaz.
+    assert.equal(s.categoryId, c.domain, at(`uzmanlık alanı (${s.categoryId})`));
+
+    // (3) İki kategori otoritesi ayrışamaz.
+    assert.equal(
+      s.categoryId,
+      s.understandingCategory,
+      at(
+        `kategori otoriteleri ayrıştı: understanding='${s.understandingCategory}' state='${s.categoryId}'`,
+      ),
+    );
+
+    // (4) Hizmetin/ürünün bağlı olduğu varlık kullanıcı yüzünde durur.
+    for (const k of c.keep) {
+      assert.ok(
+        fold(s.text).includes(fold(k)) || fold(s.headline).includes(fold(k)),
+        at(`'${k}' kullanıcı yüzünde yok → başlık='${s.headline}' metin='${s.text}'`),
+      );
+    }
+
+    // (5) Hizmet talebi parça ilişkisi kurmaz.
+    if (c.kind === "SERVICE") {
+      assert.notEqual(s.relationValue, "PART_OF", at("hizmet PART_OF izi bırakamaz"));
+      assert.ok(
+        !COMPATIBILITY_KINDS.has(s.subjectKind),
+        at(`hizmet parça sayılamaz (${s.subjectKind})`),
+      );
+    }
+
+    // (6) Kullanıcının yazmadığı marka/model üretilemez.
+    for (const v of [s.brand, s.model]) {
+      if (!v) continue;
+      assert.ok(
+        fold(c.raw).includes(fold(v)),
+        at(`kullanıcının yazmadığı marka/model üretildi → '${v}'`),
+      );
+    }
+  }
+});
+
+/**
+ * TİPLİ ALAN VARLIĞI — marka / platform / yazılım ailesi / makine türü (1J).
+ *
+ * Bir adın hangi uzmanlık alanına ait olduğu ile NE TÜR bir varlık olduğu
+ * ayrı sorulardır. WordPress bir platform, SAP ve Logo birer yazılım
+ * ailesi, CNC tezgâhı bir makine türüdür — hiçbiri üretici markası değildir
+ * ve hiçbiri kullanıcıya "Marka" olarak gösterilemez.
+ */
+type EntityCase = {
+  raw: string;
+  domain: string;
+  kind: string;
+  /** Kullanıcı yüzünde durması gereken varlık adı. */
+  keep: string;
+};
+
+const TYPED_ENTITY_CASES: EntityCase[] = [
+  { raw: "WordPress için teknik destek arıyorum", domain: "technology", kind: "SERVICE", keep: "wordpress" },
+  { raw: "WordPress için SEO eklentisi arıyorum", domain: "technology", kind: "PART", keep: "wordpress" },
+  { raw: "SAP için danışmanlık arıyorum", domain: "technology", kind: "SERVICE", keep: "sap" },
+  { raw: "SAP için FI modülü arıyorum", domain: "technology", kind: "PART", keep: "sap" },
+  { raw: "Shopify için entegrasyon hizmeti arıyorum", domain: "technology", kind: "SERVICE", keep: "shopify" },
+  { raw: "Logo yazılımı için kurulum hizmeti arıyorum", domain: "technology", kind: "SERVICE", keep: "logo" },
+  { raw: "Logo yazılımı için e-fatura modülü arıyorum", domain: "technology", kind: "PART", keep: "e-fatura" },
+  { raw: "CNC tezgahı için teknik servis arıyorum", domain: "machinery", kind: "SERVICE", keep: "cnc" },
+];
+
+check("I26b: tipli alan varlığı — platform ve makine türü marka değildir", () => {
+  /**
+   * (0) KAYNAK BÜTÜNLÜĞÜ: tipli varlık kaynağı çakışmasız olmalı ve
+   * adlandırdığı alanlar kanonik taksonomide bulunmalı.
+   */
+  ensureTaxonomyLoaded();
+  const canonicalDomains = new Set(
+    listAllTaxonomyNodes().map((n) => n.categoryId).filter(Boolean),
+  );
+  const ids = new Set<string>();
+  const aliasOwner = new Map<string, string>();
+  for (const e of DOMAIN_ENTITIES) {
+    assert.ok(!ids.has(e.canonicalId), `yinelenen canonicalId: ${e.canonicalId}`);
+    ids.add(e.canonicalId);
+    assert.ok(
+      canonicalDomains.has(e.domainCategoryId),
+      `${e.canonicalId}: '${e.domainCategoryId}' kanonik taksonomide yok`,
+    );
+    assert.ok(
+      e.provenance.verificationStatus === "PENDING_CURATION" ||
+        e.provenance.verificationStatus === "CURATOR_APPROVED",
+      `${e.canonicalId}: provenance durumu eksik`,
+    );
+    assert.ok(
+      (e.aliases.length + (e.caseSensitiveAliases?.length ?? 0)) > 0,
+      `${e.canonicalId}: hiç alias yok`,
+    );
+    for (const a of [...e.aliases, ...(e.caseSensitiveAliases ?? [])]) {
+      const key = fold(a);
+      const owner = aliasOwner.get(key);
+      assert.ok(
+        !owner || owner === e.canonicalId,
+        `alias çakışması: '${a}' hem ${owner} hem ${e.canonicalId}`,
+      );
+      aliasOwner.set(key, e.canonicalId);
+    }
+  }
+
+  for (const c of TYPED_ENTITY_CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+
+    // (1) Uzmanlık alanı doğru ve iki otorite ayrışmıyor.
+    assert.equal(s.categoryId, c.domain, at(`uzmanlık alanı (${s.categoryId})`));
+    assert.equal(
+      s.categoryId,
+      s.understandingCategory,
+      at(
+        `kategori otoriteleri ayrıştı: understanding='${s.understandingCategory}' state='${s.categoryId}'`,
+      ),
+    );
+
+    // (2) İhtiyaç türü.
+    assert.equal(s.subjectKind, c.kind, at(`ihtiyaç türü (${s.subjectKind})`));
+
+    // (3) Varlık adı kullanıcı yüzünde duruyor.
+    assert.ok(
+      fold(s.text).includes(c.keep) || fold(s.headline).includes(c.keep),
+      at(`'${c.keep}' kullanıcı yüzünde yok → başlık='${s.headline}' metin='${s.text}'`),
+    );
+
+    // (4) PLATFORM / SOFTWARE_SUITE / MACHINE_TYPE marka alanına SIZAMAZ.
+    const hit = findDomainEntity(c.raw);
+    assert.ok(hit, at("tipli varlık tanınmadı"));
+    if (hit && !isBrandLikeEntityType(hit.entity.entityType)) {
+      assert.ok(
+        !s.brand || !fold(s.brand).includes(fold(hit.label.split(" ")[0] ?? "")),
+        at(
+          `${hit.entity.entityType} varlığı marka alanına sızdı → marka='${s.brand}'`,
+        ),
+      );
+    }
+  }
+});
+
+check("I26d: ad çakışmaları yanlış tipli varlık üretmez", () => {
+  /**
+   * "sap" Türkçede tutamak, "logo" bir grafik tasarım nesnesidir. Yalnız
+   * jeton eşleşmesi varlık kanıtı değildir: büyük harf yazımı ve yazılım
+   * bağlamı koşulları tam da bunun içindir. "CNC" ise hiçbir koşulda marka
+   * olamaz — türü makine türüdür.
+   */
+  const NEGATIVE = [
+    "şirket logosu yaptırmak istiyorum",
+    "logo tasarımı arıyorum",
+    "tavanın sapı kırıldı",
+    "kürek sapı arıyorum",
+  ];
+  for (const raw of NEGATIVE) {
+    assert.equal(
+      findDomainEntity(raw),
+      null,
+      `${raw}: yanlış tipli varlık üretildi → ${JSON.stringify(findDomainEntity(raw)?.id)}`,
+    );
+    const s = surfacesFor(raw);
+    assert.equal(s.brand, null, `${raw}: uydurma marka üretildi → '${s.brand}'`);
+    assert.notEqual(
+      s.categoryId,
+      "technology",
+      `${raw}: yanlış teknoloji alanı üretildi`,
+    );
+  }
+
+  // CNC hiçbir koşulda marka değildir; makine alanı korunur.
+  const cnc = surfacesFor("CNC marka bir ürün arıyorum");
+  assert.equal(cnc.brand, null, `CNC marka alanına yazıldı → '${cnc.brand}'`);
+  assert.equal(cnc.categoryId, "machinery", `CNC makine alanında kalmalı (${cnc.categoryId})`);
+  const cncHit = findDomainEntity("CNC marka bir ürün arıyorum");
+  assert.equal(cncHit?.entity.entityType, "MACHINE_TYPE", "CNC türü makine türüdür");
+
+  // Kullanım yeri tipli varlık DEĞİLDİR: alan bağlamdan gelemez.
+  const office = surfacesFor("ofis için teknik destek arıyorum");
+  assert.equal(office.subjectKind, "SERVICE", `hizmet kalmalı (${office.subjectKind})`);
+  assert.notEqual(
+    office.categoryId,
+    "real-estate",
+    `kullanım yeri alanı ele geçirdi (${office.categoryId})`,
+  );
+});
+
+/* ------------------------------------------------------------------------ *
+ * TİPLİ VARLIK YÖNETİŞİMİ, TEK GİRİŞ NOKTASI VE KALICILIK — I26e-I26h
+ *
+ * Bir katalog kaydının "doğru" olması onu YETKİLİ yapmaz. Kürasyon durumu
+ * çalışma zamanında okunmalı, otorite tek kapıdan geçmeli ve anlaşılan
+ * varlık kalıcı denetlenebilir bir alanda yaşamalıdır.
+ * ------------------------------------------------------------------------ */
+
+check("I26e: kürasyon durumu çalışma zamanında okunur — onaysız kayıt kesinlik üretemez", () => {
+  /**
+   * `PENDING_CURATION` bir kayıt alan ADAYI ve kanıt üretebilir; tek başına
+   * `CONFIDENT` kategori ya da doğrulanmış routing kanıtı ÜRETEMEZ.
+   * `REJECTED`/`DEPRECATED` kayıt hiç kanıt üretemez.
+   *
+   * Ölü metadata yasağı: `verificationStatus` yalnız veride durmamalı,
+   * kararı gerçekten değiştirmelidir. Aşağıdaki fixture bunu kanıtlar —
+   * aynı fonksiyon, yalnız durum değişince sonuç değişiyor.
+   */
+  const base = {
+    canonicalId: "platform:test",
+    label: "TestPlatform",
+    aliases: ["testplatform"],
+    entityType: "PLATFORM" as const,
+    domainCategoryId: "technology" as const,
+    provenance: {
+      sourceType: "AI_INFERRED" as const,
+      sourceName: "invariant-fixture",
+      confidence: "HIGH" as const,
+      verificationStatus: "PENDING_CURATION" as const,
+    },
+  };
+  assert.equal(
+    domainEntityEvidenceStrength(base),
+    "CANDIDATE",
+    "PENDING_CURATION yalnız aday kanıt üretir",
+  );
+  assert.equal(
+    domainEntityEvidenceStrength({
+      ...base,
+      provenance: { ...base.provenance, verificationStatus: "CURATOR_APPROVED" },
+    }),
+    "VERIFIED",
+    "CURATOR_APPROVED güçlü kanıt üretebilir",
+  );
+  for (const dead of ["REJECTED", "DEPRECATED"] as const) {
+    assert.equal(
+      domainEntityEvidenceStrength({
+        ...base,
+        provenance: { ...base.provenance, verificationStatus: dead },
+      }),
+      "NONE",
+      `${dead} kayıt routing kanıtı olamaz`,
+    );
+  }
+
+  // Üretimdeki beş seed'in tamamı kürasyon bekliyor → hepsi TENTATIVE.
+  for (const e of DOMAIN_ENTITIES) {
+    assert.equal(
+      e.provenance.verificationStatus,
+      "PENDING_CURATION",
+      `${e.canonicalId}: seed'ler bu turda onaylanmış sayılamaz`,
+    );
+  }
+  const PENDING: Array<{ raw: string; domain: string }> = [
+    { raw: "WordPress destek arıyorum", domain: "technology" },
+    { raw: "Shopify entegrasyon arıyorum", domain: "technology" },
+    { raw: "SAP danışmanlık arıyorum", domain: "technology" },
+    { raw: "Logo e-fatura kurulumu arıyorum", domain: "technology" },
+    { raw: "CNC tezgâh bakımı arıyorum", domain: "machinery" },
+  ];
+  for (const c of PENDING) {
+    const s = surfacesFor(c.raw);
+    assert.equal(s.categoryId, c.domain, `${c.raw}: alan adayı (${s.categoryId})`);
+    assert.equal(
+      s.understandingCategoryStatus,
+      "TENTATIVE",
+      `${c.raw}: onaysız kayıt CONFIDENT üretemez (${s.understandingCategoryStatus})`,
+    );
+  }
+});
+
+check("I26f: tipli varlık otoritesi tek kapıdan okunur ve çakışma sessizce çözülmez", () => {
+  /**
+   * (1) Production tüketicileri modülü DOĞRUDAN import etmemeli; ortak
+   *     katalog cephesi (`@/lib/catalog`) tek giriş noktasıdır.
+   */
+  const ROOT = repoRootForTests();
+  const CONSUMERS = [
+    "apps/web/src/lib/request-understanding/part-relation.ts",
+    "apps/web/src/lib/request-understanding/understand-request.ts",
+    "apps/web/src/lib/request-composer/compose-text.ts",
+  ];
+  for (const rel of CONSUMERS) {
+    const src = readFileSync(pathJoin(ROOT, rel), "utf8");
+    assert.ok(
+      !/from\s+"@\/lib\/catalog\/domain-entities"/.test(src),
+      `${rel}: tipli varlık kaynağı doğrudan import ediliyor — cephe atlanıyor`,
+    );
+  }
+
+  /**
+   * (2) ÇAPRAZ ÇAKIŞMA: tipli varlık alias'ları marka kataloglarında ve
+   *     kanonik taksonomide karşılık BULMAMALI. Bugün sıfır çakışma var;
+   *     bu satır onu kilitler.
+   */
+  ensureTaxonomyLoaded();
+  const brandLists: Array<[string, ReturnType<typeof brandListsForTests>[number][1]]> =
+    brandListsForTests();
+  for (const e of DOMAIN_ENTITIES) {
+    for (const alias of [...e.aliases, ...(e.caseSensitiveAliases ?? [])]) {
+      for (const [domain, list] of brandLists) {
+        assert.ok(
+          !findBrand(alias, list),
+          `${e.canonicalId}: '${alias}' marka kataloğunda da var (${domain}) — iki kaynak aynı adı sahipleniyor`,
+        );
+      }
+      const taxonomyHit = listTaxonomyAliasCandidates(alias).nodes;
+      assert.equal(
+        taxonomyHit.length,
+        0,
+        `${e.canonicalId}: '${alias}' kanonik taksonomide de var (${taxonomyHit
+          .map((n) => `${n.nodeType}@${n.categoryId}`)
+          .join(",")})`,
+      );
+    }
+  }
+
+  /**
+   * (3) ÖNCELİK SÖZLEŞMESİ açık olmalı ve çakışma sessizce çözülmemeli.
+   *     Cephe, aynı span için başka bir kaynak farklı bir alan iddia
+   *     ediyorsa `AMBIGUOUS` döner; hiçbir taraf sessizce kazanmaz.
+   */
+  const wp = resolveDomainEntity("WordPress");
+  assert.equal(wp.status, "RESOLVED", "WordPress tek kaynakta — çözülmeli");
+  assert.equal(wp.evidenceStrength, "CANDIDATE", "onaysız kayıt aday kalır");
+  assert.equal(
+    resolveDomainEntity("Arçelik").status,
+    "NONE",
+    "katalog markası tipli varlık değildir",
+  );
+  assert.deepEqual(
+    DOMAIN_ENTITY_PRECEDENCE,
+    ["catalog-entity", "taxonomy", "brand-catalog"],
+    "öncelik sırası açıkça yazılı olmalı",
+  );
+});
+
+check("I26g: anlaşılan tipli varlık canonical snapshot'ta yaşar", () => {
+  /**
+   * Varlık kategoriyi etkileyip kaybolamaz. `resolvedEntities` additive ve
+   * optional bir alandır; eski snapshot'lar geçerli kalır, Prisma
+   * migration'ı gerekmez (discoveryProjection bir JSON kolonudur).
+   */
+  const build = (raw: string) => {
+    const understanding = understandRequest({ rawInput: raw }) as never;
+    return buildPublishUnderstandingSnapshot({
+      understanding,
+      userSelected: false,
+      primarySlug: null,
+    });
+  };
+
+  const wp = build("WordPress destek arıyorum");
+  const list = wp.resolvedEntities ?? [];
+  assert.equal(list.length, 1, `WordPress varlığı snapshot'ta yok → ${JSON.stringify(list)}`);
+  const first = list[0]!;
+  assert.equal(first.canonicalId, "platform:wordpress");
+  assert.equal(first.entityType, "PLATFORM");
+  assert.equal(first.canonicalLabel, "WordPress");
+  assert.equal(first.domainId, "technology");
+  assert.equal(first.verificationStatus, "PENDING_CURATION");
+  assert.ok(typeof first.confidence === "number" && first.confidence <= 1);
+  assert.ok(first.source, "provenance kaynağı taşınmalı");
+  assert.ok(
+    !first.canonicalLabel.includes("arıyorum"),
+    "ham kullanıcı cümlesi bu alana kopyalanamaz",
+  );
+
+  const cnc = build("CNC tezgâh bakımı arıyorum");
+  assert.equal(cnc.resolvedEntities?.[0]?.entityType, "MACHINE_TYPE");
+  assert.equal(cnc.resolvedEntities?.[0]?.domainId, "machinery");
+
+  // Varlık yoksa alan üretilmez (geriye uyumluluk: eski okuyucular etkilenmez).
+  const none = build("bıçak sapı arıyorum");
+  assert.ok(
+    !none.resolvedEntities || none.resolvedEntities.length === 0,
+    `varlık yokken alan doldurulmamalı → ${JSON.stringify(none.resolvedEntities)}`,
+  );
+
+  // Sınırlar: en fazla 8, yinelenmez, deterministic sıralı.
+  const many = buildUnderstandingSnapshot({
+    categoryResolution: {
+      status: "unresolved",
+      userSelected: false,
+      userChoice: null,
+      primary: null,
+      candidates: [],
+    },
+    resolvedEntities: Array.from({ length: 20 }, (_, i) => ({
+      canonicalId: `platform:x${i % 3}`,
+      entityType: "PLATFORM" as const,
+      canonicalLabel: "X".repeat(400),
+      domainId: "technology",
+      confidence: 2,
+      source: "fixture",
+      verificationStatus: "PENDING_CURATION",
+    })),
+  });
+  const bounded = many.resolvedEntities ?? [];
+  assert.ok(bounded.length <= 8, `en fazla 8 varlık (${bounded.length})`);
+  assert.equal(
+    new Set(bounded.map((e) => `${e.canonicalId}|${e.entityType}`)).size,
+    bounded.length,
+    "aynı canonicalId+entityType yinelenemez",
+  );
+  assert.ok(
+    bounded.every((e) => e.canonicalLabel.length <= 241),
+    "etiket uzunluğu snapshot sanitization sınırına uymalı",
+  );
+  assert.ok(
+    bounded.every((e) => e.confidence >= 0 && e.confidence <= 1),
+    "güven 0..1 aralığına sıkıştırılmalı",
+  );
+  assert.deepEqual(
+    bounded.map((e) => e.canonicalId),
+    [...bounded.map((e) => e.canonicalId)].sort(),
+    "sıralama deterministic olmalı",
+  );
+
+  // ESKİ SNAPSHOT: alan yokken okuyucu bozulmamalı.
+  const legacy = {
+    version: 1,
+    kind: "understanding_snapshot",
+    categoryResolution: { status: "resolved", userSelected: false, userChoice: null, primary: null, candidates: [] },
+    entities: { brand: { value: "Arçelik" } },
+    attributes: {},
+    unresolvedExpressions: [],
+    confirmedFieldKeys: [],
+  };
+  const parsed = parseUnderstandingSnapshot(legacy);
+  assert.ok(parsed, "eski snapshot hâlâ ayrıştırılabilmeli");
+  assert.equal(parsed?.resolvedEntities, undefined, "eski snapshot'ta alan yok");
+});
+
+check("I26h: tipli varlık profesyonel metinden ve niyetten düşmez", () => {
+  /**
+   * Kullanıcının yazdığı platform/makine adı öznesiz bir "arıyorum."a
+   * indirgenemez. Kural varlık ROLÜNE dayanır: tipli bir varlık çözülmüşse
+   * ve adı üretilen cümlede yoksa, cümle kullanıcının GÜVENLİ ifadesinden
+   * yeniden kurulur — kelimeye özel bir dal yoktur.
+   *
+   * Açık hizmet eylemleri ("destek", "danışmanlık", "entegrasyon",
+   * "kurulum", "bakım", "servis") tipli varlık yüzünden bastırılamaz.
+   */
+  const POSITIVE: Array<{ raw: string; keep: string[] }> = [
+    { raw: "WordPress destek arıyorum", keep: ["wordpress", "destek"] },
+    { raw: "SAP danışmanlık arıyorum", keep: ["sap", "danismanlik"] },
+    { raw: "Shopify entegrasyon arıyorum", keep: ["shopify", "entegrasyon"] },
+    { raw: "Logo e-fatura kurulumu arıyorum", keep: ["logo", "kurulum"] },
+    { raw: "CNC servis arıyorum", keep: ["cnc", "servis"] },
+    { raw: "CNC tezgâh bakımı arıyorum", keep: ["cnc", "bakim"] },
+  ];
+  for (const c of POSITIVE) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    assert.notEqual(s.text.trim(), "arıyorum.", at("öznesiz metin kabul edilmez"));
+    const surface = `${fold(s.text)} || ${fold(s.headline)}`;
+    for (const k of c.keep) {
+      assert.ok(surface.includes(k), at(`'${k}' kullanıcı yüzünde yok → '${s.text}'`));
+    }
+    assert.equal(s.subjectKind, "SERVICE", at(`hizmet niyeti bastırıldı (${s.subjectKind})`));
+    assert.equal(s.brand, null, at(`tipli varlık marka alanına sızdı → '${s.brand}'`));
+    assert.equal(s.model, null, at(`tipli varlık model alanına sızdı → '${s.model}'`));
+    // Fazla tekrar yok: aynı varlık adı iki kez yazılmaz.
+    const label = fold(c.keep[0] ?? "");
+    const hits = fold(s.text).split(label).length - 1;
+    assert.ok(hits <= 1, at(`'${label}' metinde ${hits} kez geçti → '${s.text}'`));
+    // Serbest metin sızıntısı yok.
+    assert.ok(!/\d{7,}/.test(s.text), at(`iletişim bilgisi sızdı → '${s.text}'`));
+  }
+
+  // PII/bütçe yan cümleleri metne taşınmaz.
+  const noisy = surfacesFor(
+    "Merhaba, telefonum 05321234567, WordPress destek arıyorum, bütçem 20 bin TL",
+  );
+  assert.ok(fold(noisy.text).includes("wordpress"), `varlık korunmalı → '${noisy.text}'`);
+  assert.ok(!/\d{5,}/.test(noisy.text), `iletişim bilgisi sızdı → '${noisy.text}'`);
+  assert.ok(
+    !fold(noisy.text).includes("butcem"),
+    `bütçe yan cümlesi sızdı → '${noisy.text}'`,
+  );
+
+  // NEGATİF: ad çakışmaları tipli varlık üretmez, marka üretmez.
+  const NEGATIVE = [
+    "bıçak sapı arıyorum",
+    "logo tasarımı istiyorum",
+    "koltuk destek mekanizması arıyorum",
+    "saplı bıçak arıyorum",
+  ];
+  for (const raw of NEGATIVE) {
+    assert.equal(
+      resolveDomainEntity(raw).status,
+      "NONE",
+      `${raw}: yanlış tipli varlık üretildi`,
+    );
+    const s = surfacesFor(raw);
+    assert.equal(s.brand, null, `${raw}: uydurma marka → '${s.brand}'`);
+  }
+  const cncBrand = surfacesFor("CNC servis arıyorum");
+  assert.equal(cncBrand.brand, null, "CNC marka alanına yazılamaz");
+});
+
+check("I26c: platform/ürün bilgisi hizmet talebinden silinemez", () => {
+  /**
+   * Alan kanıtı katalogda olmasa bile kullanıcının yazdığı platform/ürün
+   * profesyonel metinden çıkarılamaz: "teknik destek arıyorum" cümlesi
+   * hangi ürün için destek arandığını kaybeder ve talep eşleşemez hâle
+   * gelir. Bu satır kullanıcı yüzü sözleşmesini kilitler; kategori
+   * kararından bağımsızdır.
+   */
+  const CASES: Array<{ raw: string; parts: string[] }> = [
+    { raw: "WordPress için teknik destek arıyorum", parts: ["wordpress", "destek"] },
+    { raw: "SAP için danışmanlık arıyorum", parts: ["sap", "danismanlik"] },
+    { raw: "Logo yazılımı için kurulum hizmeti arıyorum", parts: ["logo", "kurulum"] },
+    { raw: "Shopify için entegrasyon hizmeti arıyorum", parts: ["shopify", "entegrasyon"] },
+    { raw: "Renault Clio için bakım arıyorum", parts: ["renault", "clio", "bakim"] },
+    { raw: "Heidelberg SM 74 için bakım arıyorum", parts: ["heidelberg", "sm 74", "bakim"] },
+    { raw: "Arçelik bulaşık makinesi için servis arıyorum", parts: ["arcelik", "servis"] },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    const surface = `${fold(s.text)} || ${fold(s.headline)}`;
+    for (const p of c.parts) {
+      assert.ok(
+        surface.includes(p),
+        `${c.raw}: '${p}' kullanıcı yüzünde yok → başlık='${s.headline}' metin='${s.text}'`,
+      );
+    }
+    // Serbest metin sızıntısı yok: profesyonel metin ham cümleyi kopyalamaz.
+    assert.ok(!/\d{7,}/.test(s.text), `${c.raw}: iletişim bilgisi sızdı → '${s.text}'`);
+  }
 });
 
 /* ------------------------------------------------------------------------ *
@@ -1988,8 +2871,6 @@ type PartBearingEntry = {
  * Sistemde bugün ikisi var; `RequestSubjectKind` genişlerse (COMPONENT,
  * SPARE_PART …) yeni tür buraya eklenir ve aynı kapıdan geçer.
  */
-const COMPATIBILITY_KINDS = new Set(["PART", "ACCESSORY"]);
-
 /** Kanıt kodları — yalnız bunlar CONFIDENT uyumluluk kararını taşıyabilir. */
 const VERIFIED_PARENT_EVIDENCE = /^parent:(taxonomy-part-bearing|catalog-model|branded-designator)$/;
 
@@ -2588,6 +3469,326 @@ check("I38: kullanıcının doğruladığı ROL ile üst ürün GÜVENİ ayrı �
   );
 });
 
+type NegativeCase = {
+  raw: string;
+  /** Kullanıcının istediği ve HİÇBİR yüzeyde kaybolmaması gereken ifade. */
+  keep: string;
+  /** Beklenen talep konusu türü (biliniyorsa). */
+  expectKind?: string;
+  /** Cümlede ASLA görünmemesi gereken, kullanıcıya ait olmayan genelleme. */
+  forbidInText?: string[];
+  /** İfade hem başlıkta HEM profesyonel metinde durmalı. */
+  keepEverywhere?: boolean;
+};
+
+const USAGE_CONTEXT_CASES: NegativeCase[] = [
+  {
+    raw: "Salon için koltuk arıyorum",
+    keep: "koltuk",
+    forbidInText: ["mobilya"],
+  },
+  {
+    raw: "Ofis için yazılım desteği arıyorum",
+    keep: "yazılım desteği",
+    expectKind: "SERVICE",
+    forbidInText: ["konut"],
+  },
+  {
+    raw: "Ev için klima servisi arıyorum",
+    keep: "klima servisi",
+    expectKind: "SERVICE",
+  },
+  {
+    /**
+     * "muhasebe yazılımı" bir yazılım ÜRÜNÜdür, bileşen değil. Ayrım kanonik
+     * rol yetkisinden okunur (requested-item-role): Türkçe baş sözcük
+     * "yazılım" bütün ürün, "modül"/"eklenti" bileşen, "destek"/"hizmet"
+     * hizmet rolündedir. Bu satır artık açık bırakılmaz.
+     */
+    raw: "Ofis için muhasebe yazılımı arıyorum",
+    keep: "muhasebe yazılımı",
+    forbidInText: ["konut"],
+    keepEverywhere: true,
+  },
+  { raw: "Ofis için televizyon arıyorum", keep: "televizyon" },
+  { raw: "Çocuk için tablet arıyorum", keep: "tablet" },
+  { raw: "Ev için buzdolabı arıyorum", keep: "buzdolabı" },
+  { raw: "İşyeri için klima arıyorum", keep: "klima", forbidInText: ["konut"] },
+  { raw: "Salon için televizyon arıyorum", keep: "televizyon" },
+];
+
+check("I39: kullanım yeri ve hizmet cümlesi parça ilişkisi kurmaz", () => {
+  /**
+   * "X için Y" tek başına parça kanıtı değildir; ama hedefin dijital olması da
+   * ilişkiyi otomatik reddetmez. Bu invariant reddedilen tarafı BÜTÜN kullanıcı
+   * yüzeyleriyle kilitler: konu, ilişki, structured alan, başlık, profesyonel
+   * metin ve belirsizlik kaydı.
+   */
+  for (const c of USAGE_CONTEXT_CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+
+    assert.ok(
+      !COMPATIBILITY_KINDS.has(s.subjectKind),
+      at(`kullanım bağlamı parça talebi sayılamaz (${s.subjectKind}/${s.subjectStatus})`),
+    );
+    assert.notEqual(
+      s.relationValue,
+      "PART_OF",
+      at(`parça ilişkisi izi kaldı (relation=${s.relationValue}/${s.relationStatus})`),
+    );
+    assert.notEqual(
+      s.relationshipValue,
+      "PART_FOR_PRODUCT",
+      at(`relationship parça ilişkisi iddia ediyor (${s.relationshipValue})`),
+    );
+    assert.ok(
+      !s.ambiguityMessages.some((m) => /compat_target_unresolved/i.test(m)),
+      at(`gereksiz uyumluluk kaydı → ${JSON.stringify(s.ambiguityMessages)}`),
+    );
+
+    // İstenen ifade profesyonel metinde ya da başlıkta DURMALI — yalnız
+    // audit kaydında yaşaması yeterli sayılmaz.
+    assert.ok(
+      fold(s.text).includes(fold(c.keep)) || fold(s.headline).includes(fold(c.keep)),
+      at(`'${c.keep}' kullanıcı yüzeyinde yok → başlık='${s.headline}' metin='${s.text}'`),
+    );
+    if (c.keepEverywhere) {
+      assert.ok(
+        fold(s.headline).includes(fold(c.keep)),
+        at(`'${c.keep}' başlıkta yok → '${s.headline}'`),
+      );
+      assert.ok(
+        fold(s.text).includes(fold(c.keep)),
+        at(`'${c.keep}' profesyonel metinde yok → '${s.text}'`),
+      );
+    }
+
+    // Kullanıcının yazmadığı daha geniş bir kelime onun ürününü ezemez.
+    for (const banned of c.forbidInText ?? []) {
+      assert.ok(
+        !fold(s.text).includes(fold(banned)),
+        at(`'${banned}' kullanıcının ifadesini eziyor → '${s.text}'`),
+      );
+    }
+
+    if (c.expectKind) {
+      assert.equal(s.subjectKind, c.expectKind, at(`konu türü (${s.subjectKind})`));
+    }
+  }
+
+  /**
+   * ALIAS BELİRSİZLİĞİ: bir ifade herhangi bir kategoride bütün ürün adayı
+   * taşıyorsa, daha derin bir parça alias'ı onu parçaya çeviremez. Kural
+   * mekanizmadan okunur, örnekten değil.
+   */
+  ensureTaxonomyLoaded();
+  const byTerm = new Map<string, Set<string>>();
+  for (const n of listAllTaxonomyNodes()) {
+    for (const term of [n.canonicalName, ...n.aliases]) {
+      const key = fold(term);
+      if (!key) continue;
+      const set = byTerm.get(key) ?? new Set<string>();
+      set.add(n.nodeType);
+      byTerm.set(key, set);
+    }
+  }
+  const ambiguous = [...byTerm.entries()].filter(
+    ([, types]) => types.has("PRODUCT_TYPE") && types.has("PART_TYPE"),
+  );
+  assert.ok(
+    ambiguous.length > 0,
+    "hem ürün hem parça olarak geçen bir ifade bulunamadı — kural sınanamıyor",
+  );
+  for (const [term] of ambiguous) {
+    assert.ok(
+      isCanonicalWholeProductPhrase(term),
+      `'${term}' bir kategoride bütün ürün olarak duruyor; daha derin parça alias'ı bunu bastıramaz`,
+    );
+  }
+});
+
+/**
+ * DİJİTAL HEDEF ROLÜ — ÜRÜN / BİLEŞEN / HİZMET (1G son kapı).
+ *
+ * Yazılımın ürünü de, modülü de, hizmeti de olur. Tek bir kanonik rol yetkisi
+ * bunları ayırır; bu invariant o ayrımı kullanıcıya görünen bütün yüzeylerde
+ * kilitler. Beklenen roller ÖRNEK CÜMLEDEN değil Türkçe baş sözcüğün rolünden
+ * gelir; üretim kodunda bu cümlelerin hiçbiri özel durum olarak yazılı değildir.
+ */
+type DigitalRole = "PRODUCT" | "COMPONENT" | "SERVICE" | "OPEN";
+type DigitalCase = { raw: string; keep: string; role: DigitalRole };
+
+const DIGITAL_ROLE_CASES: DigitalCase[] = [
+  // Bütün dijital ürün: baş sözcük yazılım / uygulama / sistem.
+  { raw: "Ofis için muhasebe yazılımı arıyorum", keep: "muhasebe yazılımı", role: "PRODUCT" },
+  { raw: "İşletmem için CRM yazılımı arıyorum", keep: "crm yazılımı", role: "PRODUCT" },
+  { raw: "Restoran için POS yazılımı arıyorum", keep: "pos yazılımı", role: "PRODUCT" },
+  { raw: "Çocuk için eğitim uygulaması arıyorum", keep: "eğitim uygulaması", role: "PRODUCT" },
+  { raw: "Şirket için ERP sistemi arıyorum", keep: "erp sistemi", role: "PRODUCT" },
+  // Dijital bileşen / aksesuar: baş sözcük eklenti / modül / tema.
+  { raw: "WordPress için SEO eklentisi arıyorum", keep: "seo eklentisi", role: "COMPONENT" },
+  { raw: "Logo yazılımı için e-fatura modülü arıyorum", keep: "e-fatura modülü", role: "COMPONENT" },
+  { raw: "SAP için FI modülü arıyorum", keep: "modülü", role: "COMPONENT" },
+  { raw: "Photoshop için eklenti arıyorum", keep: "eklenti", role: "COMPONENT" },
+  { raw: "WordPress için tema arıyorum", keep: "tema", role: "COMPONENT" },
+  // Hizmet: baş sözcük destek / danışmanlık / hizmet.
+  { raw: "WordPress için teknik destek arıyorum", keep: "teknik destek", role: "SERVICE" },
+  { raw: "SAP için danışmanlık arıyorum", keep: "danışmanlık", role: "SERVICE" },
+  { raw: "Logo yazılımı için kurulum hizmeti arıyorum", keep: "kurulum hizmeti", role: "SERVICE" },
+  { raw: "Shopify için entegrasyon hizmeti arıyorum", keep: "entegrasyon hizmeti", role: "SERVICE" },
+  { raw: "Web sitesi için bakım desteği arıyorum", keep: "bakım desteği", role: "SERVICE" },
+  // Rolü bilinmiyor ama ifade korunmalı; kanıt yokken kesinlik iddia edilemez.
+  { raw: "Shopify için stok entegrasyonu arıyorum", keep: "stok entegrasyonu", role: "OPEN" },
+  { raw: "ERP için özel bağlantı arıyorum", keep: "özel bağlantı", role: "OPEN" },
+];
+
+check("I40: dijital hedefin rolü — ürün, bileşen ve hizmet ayrı ayrı korunur", () => {
+  for (const c of DIGITAL_ROLE_CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+
+    // (1) Kullanıcının ifadesi başlıktan ya da profesyonel metinden düşemez.
+    assert.ok(
+      fold(s.text).includes(fold(c.keep)) || fold(s.headline).includes(fold(c.keep)),
+      at(`'${c.keep}' kullanıcı yüzeyinde yok → başlık='${s.headline}' metin='${s.text}'`),
+    );
+
+    // (2) Kullanıcının yazmadığı marka/model üretilemez.
+    for (const [label, value] of [["marka", s.brand], ["model", s.model]] as const) {
+      if (!value) continue;
+      assert.ok(
+        fold(c.raw).includes(fold(value)),
+        at(`kullanıcının yazmadığı ${label} üretildi → '${value}'`),
+      );
+    }
+
+    if (c.role === "PRODUCT") {
+      // Bütün dijital ürün parça olamaz.
+      assert.ok(
+        !COMPATIBILITY_KINDS.has(s.subjectKind),
+        at(`bütün dijital ürün parça sayılamaz (${s.subjectKind}/${s.subjectStatus})`),
+      );
+      assert.notEqual(s.relationValue, "PART_OF", at("parça ilişkisi izi kaldı"));
+      assert.notEqual(
+        s.relationshipValue,
+        "PART_FOR_PRODUCT",
+        at("relationship parça ilişkisi iddia ediyor"),
+      );
+      assert.ok(
+        !s.ambiguityMessages.some((m) => /compat_target_unresolved/i.test(m)),
+        at(`gereksiz uyumluluk kaydı → ${JSON.stringify(s.ambiguityMessages)}`),
+      );
+    } else if (c.role === "SERVICE") {
+      // Hizmet parça olamaz.
+      assert.equal(s.subjectKind, "SERVICE", at(`hizmet bekleniyordu (${s.subjectKind})`));
+      assert.notEqual(s.relationValue, "PART_OF", at("hizmet PART_OF izi bırakamaz"));
+      assert.ok(
+        !s.ambiguityMessages.some((m) => /compat_target_unresolved/i.test(m)),
+        at(`hizmette uyumluluk kaydı üretilemez → ${JSON.stringify(s.ambiguityMessages)}`),
+      );
+    } else if (c.role === "COMPONENT") {
+      // Modül/eklenti sırf dijital diye reddedilemez...
+      assert.ok(
+        COMPATIBILITY_KINDS.has(s.subjectKind),
+        at(`dijital bileşen uyumluluk yolundan düştü (${s.subjectKind})`),
+      );
+      // ...ama üst ürün kanıtı yokken kesinlik iddia edemez.
+      assert.notEqual(
+        s.subjectStatus,
+        "CONFIDENT",
+        at(`kanıtsız dijital uyumlulukta kesinlik üretilemez (${s.subjectStatus})`),
+      );
+    } else if (COMPATIBILITY_KINDS.has(s.subjectKind)) {
+      assert.notEqual(
+        s.subjectStatus,
+        "CONFIDENT",
+        at(`rolü belirsiz hedefte kesinlik üretilemez (${s.subjectStatus})`),
+      );
+    }
+  }
+});
+
+check("I41: hizmet sözcüğü niteleyici konumdayken talebi hizmete çeviremez", () => {
+  /**
+   * "destek" ve "danışmanlık" hizmet sözlüğündedir; ama Türkçe ad tamlamasında
+   * BAŞ SONDADIR. "destek ayağı" bir ayaktır, "koltuk destek mekanizması" bir
+   * mekanizmadır — ikisi de hizmet değildir. Yalnız lemma eşleşmesi bütün
+   * talebi hizmete çeviremez.
+   *
+   * "danışmanlık firması" istisna DEĞİL, aynı kuralın sonucudur: sağlayıcı adı
+   * ("firma", "şirket", "usta") rolü kendi üstüne almaz, solundakini taşır.
+   */
+  const CASES: Array<{ raw: string; service: boolean }> = [
+    { raw: "destek ayağı arıyorum", service: false },
+    { raw: "koltuk destek mekanizması arıyorum", service: false },
+    { raw: "teknik destek arıyorum", service: true },
+    { raw: "yazılım danışmanlığı arıyorum", service: true },
+    { raw: "danışmanlık firması arıyorum", service: true },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    if (c.service) {
+      assert.equal(s.subjectKind, "SERVICE", at(`hizmet bekleniyordu (${s.subjectKind})`));
+    } else {
+      assert.notEqual(
+        s.subjectKind,
+        "SERVICE",
+        at(`niteleyici hizmet sözcüğü bütün talebi hizmete çevirdi (${s.subjectKind})`),
+      );
+    }
+  }
+});
+
+check("I42: ifade koruma yalnız ayrıştırılmış hedefi taşır, ham cümleyi değil", () => {
+  /**
+   * `preserveRequestedTarget` kullanıcının hedefini profesyonel metne geri
+   * koyar. Bu invariant o kuralın SINIRINI kilitler: yalnız ayrıştırılmış
+   * hedef span'i taşınır — bütçe, telefon ve konum gibi serbest metin
+   * parçaları taşınmaz; parça bestecisi ezilmez; ifade iki kez yazılmaz.
+   */
+  const budget = surfacesFor("Ofis için muhasebe yazılımı arıyorum, bütçem 20 bin TL");
+  assert.ok(
+    fold(budget.text).includes("muhasebe yazilimi"),
+    `hedef korunmalı → '${budget.text}'`,
+  );
+  for (const leak of ["butcem", "20 bin", " tl"]) {
+    assert.ok(
+      !fold(budget.text).includes(leak),
+      `serbest metin parçası profesyonel metne sızdı ('${leak}') → '${budget.text}'`,
+    );
+  }
+
+  const phone = surfacesFor("WordPress için destek arıyorum, telefonum 05321234567");
+  assert.ok(
+    !/\d{7,}/.test(phone.text),
+    `iletişim bilgisi profesyonel metne sızdı → '${phone.text}'`,
+  );
+
+  const place = surfacesFor("Ev için klima servisi, İstanbul Kadıköy");
+  assert.equal(place.subjectKind, "SERVICE", `hizmet kalmalı (${place.subjectKind})`);
+
+  // Parça bestecisi ezilmez: marka ve model cümlede kalır, ifade tekrarlanmaz.
+  const merc = surfacesFor("Mercedes C180 için su pompası arıyorum");
+  assert.ok(
+    fold(merc.text).includes("mercedes") && fold(merc.text).includes("c180"),
+    `parça bestecisi ezildi → '${merc.text}'`,
+  );
+  const heid = surfacesFor("Heidelberg SM 74 için nemlendirme pompası arıyorum");
+  assert.ok(
+    fold(heid.text).includes("heidelberg") && fold(heid.text).includes("sm 74"),
+    `parça bestecisi ezildi → '${heid.text}'`,
+  );
+  for (const s of [merc, heid, budget, place]) {
+    const dup = fold(s.text).match(/pompasi/g)?.length ?? 0;
+    assert.ok(dup <= 1, `aynı ifade iki kez yazıldı → '${s.text}'`);
+    assert.ok(!/\s{2,}/.test(s.text), `bozuk boşluk → '${s.text}'`);
+    assert.ok(/\.$/.test(s.text.trim()), `cümle noktalanmadı → '${s.text}'`);
+  }
+});
+
+
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {
   // Ara grup metni ("… & Aksesuar") ACCESSORY kalıntısı bırakır — ürün
   // yaprağı seçilince telefon ALMAK isteyen yedek parçaya düşmemeli.
@@ -2662,5 +3863,9 @@ check("I13: audit classes — Faz, servis niyeti, uzaktan, nakliye, donanım sin
   }
 });
 
-console.log(`\n${passed} passed, ${failed} failed`);
+if (knownFailNotes.length) {
+  console.log(`\nKNOWN_FAIL (bilinen açık — PASS sayılmaz, bataryayı kırmızıya çevirmez):`);
+  for (const n of knownFailNotes) console.log(`  - ${n}`);
+}
+console.log(`\n${passed} passed, ${failed} failed, ${knownFail} known_fail`);
 if (failed > 0) process.exit(1);

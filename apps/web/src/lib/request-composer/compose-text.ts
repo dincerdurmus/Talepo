@@ -9,6 +9,13 @@ import {
   isGenericCompatibilityNoun,
   stripRequestedItemClause,
 } from "./attribute-hints";
+import { resolveDomainEntity } from "@/lib/catalog";
+import {
+  readRelationContext,
+  readRequestedTarget,
+  readSafePhraseContaining,
+  splitCompatibilityPhrase,
+} from "@/lib/request-understanding/part-relation";
 
 function fieldValue(state: CanonicalRequestState, key: string): string | null {
   const f = state.fields[key];
@@ -610,10 +617,119 @@ function appendCanonicalLocation(
 /**
  * Render short Turkish natural-language request from canonical state.
  */
+/**
+ * KULLANICININ YAZDIĞI HEDEF CÜMLEDEN DÜŞEMEZ (1G).
+ *
+ * "X için Y" yapısında ilişki parça ilişkisi olarak kurulmadığında talep
+ * kategori gövdesine düşüyor ve o gövde kategori-genel bir adla cümle
+ * kuruyordu. Ölçülen kayıplar:
+ *   "Salon için koltuk arıyorum"           → "mobilya arıyorum."
+ *   "Ev için klima servisi arıyorum"       → "Klima arıyorum."
+ *   "Ofis için muhasebe yazılımı arıyorum" → "konut arıyorum."
+ * Üçünde de kullanıcının yazdığı şey profesyonel yüzeyden siliniyor.
+ *
+ * Kural DAR ve YAPISALDIR: yalnız uyumluluk bağlacı bulunan cümlelerde,
+ * yalnız bağlacın sağındaki hedef ifade cümlede hiç geçmiyorsa devreye girer.
+ * Bağlaçsız hiçbir akışa dokunmaz; ürettiği cümle kullanıcının kendi
+ * sözcükleridir, sisteme ait bir genelleme değil.
+ */
+function preserveRequestedTarget(
+  state: CanonicalRequestState,
+  sentence: string,
+): string {
+  /**
+   * Uyumluluk konusuna DOKUNULMAZ: orada cümleyi kuran özel besteci üst ürünü,
+   * markayı ve modeli birlikte taşır; buradan yapılacak bir yeniden yazım o
+   * bağlamı yok eder ("Mercedes C180 için su pompası" → "su pompası", ölçüldü).
+   * Bu kural yalnız kategori gövdesine düşen taleplerin kurtarma ağıdır.
+   */
+  const kind = state.understanding.requestSubject?.kind?.value;
+  const raw = String(state.understanding.rawInput ?? "");
+  const split = splitCompatibilityPhrase(raw);
+  /**
+   * TİPLİ PLATFORM İSTİSNASI (1J).
+   *
+   * Uyumluluk bestecisi üst ürünü MARKA alanı üzerinden taşır. Platform ve
+   * makine türü artık marka sayılmadığı için ("WordPress" bir üretici
+   * markası değildir) o yol kapalı ve ad cümleden düşüyordu — ölçüldü:
+   * "WordPress için SEO eklentisi" → "seo eklentisi arıyorum.". Bu dar
+   * istisna adı geri koyar; katalog markası taşıyan üst ürünlere
+   * (Mercedes, Heidelberg, Arçelik) dokunmaz, çünkü onlar zaten cümlededir.
+   */
+  const typedContext = split ? resolveDomainEntity(split.parent) : null;
+  const typedPlatformContext = Boolean(
+    typedContext && typedContext.status !== "NONE" && typedContext.entityType && typedContext.entityType !== "BRAND",
+  );
+  if ((kind === "PART" || kind === "ACCESSORY") && !typedPlatformContext) {
+    return sentence;
+  }
+  if (!split) return sentence;
+  const target = readRequestedTarget(split.requested).value;
+  if (!target) return sentence;
+  const lower = (v: string) => v.toLocaleLowerCase("tr-TR");
+  const withContext = (body: string): string => {
+    /**
+     * HİZMETİN UYGULANDIĞI ÜRÜN/PLATFORM SİLİNEMEZ (1I).
+     *
+     * "WordPress için teknik destek arıyorum" cümlesi "teknik destek
+     * arıyorum."a indiğinde hangi ürün için destek arandığı kaybolur ve
+     * talep eşleşemez hâle gelir. Sol yaka yalnız HİZMET taleplerinde geri
+     * yazılır: bütün ürün taleplerinde sol taraf kullanım yeridir ve
+     * cümleye ait değildir ("Ofis için televizyon" → "televizyon arıyorum.").
+     *
+     * Taşınan şey ham cümle değil, `readRelationContext` ile ayrıştırılmış
+     * güvenli span'dir; bütçe, telefon ve adres parçaları oraya giremez.
+     */
+    if (kind !== "SERVICE" && !typedPlatformContext) return body;
+    const context = readRelationContext(split.parent);
+    if (!context) return body;
+    if (lower(body).includes(lower(context))) return body;
+    return `${context} için ${body}`;
+  };
+  if (lower(sentence).includes(lower(target))) return withContext(sentence);
+  return withContext(`${target} arıyorum.`);
+}
+
+/**
+ * TİPLİ VARLIK PROFESYONEL METİNDEN DÜŞEMEZ (1K).
+ *
+ * Bağlacı olmayan cümlelerde besteci kullanıcının ifadesini kaybediyordu:
+ * "WordPress destek arıyorum" → "arıyorum.", "CNC tezgâh bakımı arıyorum"
+ * → "arıyorum.". Varlık kategoriyi değiştirip metinden siliniyordu.
+ *
+ * Kural varlık ROLÜNE dayanır, kelimeye değil: talepte kanonik bir tipli
+ * varlık çözülmüşse ve adı üretilen cümlede geçmiyorsa cümle kullanıcının
+ * GÜVENLİ ifadesinden yeniden kurulur. Taşınan şey ham cümle değil, adı
+ * içeren tek yan cümledir (bütçe/telefon/adres girmez).
+ */
+function preserveResolvedEntity(
+  state: CanonicalRequestState,
+  sentence: string,
+): string {
+  const entities = state.understanding.resolvedEntities ?? [];
+  if (!entities.length) return sentence;
+  const raw = String(state.understanding.rawInput ?? "");
+  const lower = (v: string) => v.toLocaleLowerCase("tr-TR");
+  for (const entity of entities) {
+    const alias = entity.matchedAlias ?? entity.canonicalLabel;
+    if (!alias) continue;
+    if (lower(sentence).includes(lower(alias))) return sentence;
+    const safe = readSafePhraseContaining(raw, alias);
+    if (safe) return `${safe} arıyorum.`;
+  }
+  return sentence;
+}
+
 export function composeNaturalRequestText(
   state: CanonicalRequestState,
 ): string {
-  return appendCanonicalLocation(state, composeNaturalRequestTextCore(state));
+  return appendCanonicalLocation(
+    state,
+    preserveResolvedEntity(
+      state,
+      preserveRequestedTarget(state, composeNaturalRequestTextCore(state)),
+    ),
+  );
 }
 
 function composeNaturalRequestTextCore(

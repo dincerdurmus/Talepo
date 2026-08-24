@@ -66,8 +66,35 @@ export function isCanonicalProductTypePhrase(phrase: string): boolean {
  * hizmet adları burada "bütün ürün" sayılmaz.
  */
 export function isCanonicalWholeProductPhrase(phrase: string): boolean {
-  const node = classifyTaxonomyPhrase(phrase);
-  return Boolean(node && WHOLE_PRODUCT_TYPES.has(node.nodeType));
+  /**
+   * BÜTÜN ADAYLAR DEĞERLENDİRİLİR — "en derin düğüm kazanır" YETMEZ (1G).
+   *
+   * `resolveTaxonomyAlias` tek kazanan seçer ve derinliğe göre sıralar. Aynı
+   * ifade bir kategoride bütün ürün, başka kategoride parça olabilir:
+   * "koltuk" mobilyada PRODUCT_TYPE (depth 3), otomotivde PART_TYPE (depth 5).
+   * Derin olan kazandığı için koltuk "bütün ürün değil" sayılıyor ve
+   * "Salon için koltuk arıyorum" parça talebine dönüşüyordu (ölçüldü).
+   *
+   * Herhangi bir kategoride güvenilir bir bütün ürün adayı varsa ifade bütün
+   * ürün sayılır. Kural yön olarak KORUYUCUDUR: belirsizlik parça lehine
+   * değil, bütün ürün lehine çözülür.
+   */
+  const { nodes } = listTaxonomyAliasCandidates(phrase);
+  return nodes.some((n) => WHOLE_PRODUCT_TYPES.has(n.nodeType));
+}
+
+/**
+ * İfadenin BÜTÜN kanonik adaylarının düğüm türleri — ham taksonomi olgusu.
+ *
+ * Burada rol YARGISI yoktur; yargıyı tek yetkili rol sınıflandırıcısı verir
+ * (`request-understanding/requested-item-role.ts`). Bu ayrım bilerek yapıldı:
+ * olgu taksonominin yanında, yargı istenen şeyin rolünü tanımlayan tek
+ * modülde yaşar; ikisi ayrı yerde durunca ikinci bir rol otoritesi doğmaz.
+ */
+export function listCanonicalPhraseNodeTypes(
+  phrase: string,
+): TaxonomyNodeType[] {
+  return listTaxonomyAliasCandidates(phrase).nodes.map((n) => n.nodeType);
 }
 
 /**

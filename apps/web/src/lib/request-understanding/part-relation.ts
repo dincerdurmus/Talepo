@@ -15,17 +15,32 @@
  * kategori, marka veya parça adı listesi yoktur.
  */
 import {
+  APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  BABY_BRANDS,
+  FURNITURE_BRANDS,
+  HOME_KITCHEN_BRANDS,
+  MACHINERY_BRANDS,
+  TECHNOLOGY_BRANDS,
+  findAnyCatalogBrand,
+  findBrand,
   findTechnologyProduct,
   isKnownAutomotiveModelName,
 } from "@/lib/ai/parser/brand-catalog";
+import type { BrandEntry } from "@/lib/ai/parser/brand-catalog";
+import { resolveDomainEntity } from "@/lib/catalog";
 import {
   findPartBearingParentSpan,
-  isCanonicalWholeProductPhrase,
   readParentProductVerdict,
 } from "@/lib/taxonomy/phrase-classification";
+import { listTaxonomyAliasCandidates } from "@/lib/taxonomy/registry";
 import type { TaxonomyNode } from "@/lib/taxonomy";
 
-import { foldRoleToken } from "./requested-item-role";
+import {
+  classifyRequestedTargetRole,
+  foldRoleToken,
+} from "./requested-item-role";
+import type { RequestedTargetRole } from "./requested-item-role";
 
 /** Uyumluluk bağlacı — kelime sınırında. */
 const CONNECTIVE_RE = /(?:^|[^\p{L}\p{N}])(?:için|icin)(?=[^\p{L}\p{N}]|$)/iu;
@@ -98,12 +113,369 @@ export function readRequestedTarget(requested: string): RequestedTarget {
   return { value: t, raw, reason: null };
 }
 
+/**
+ * Bağlacın SOLUNDAKİ güvenli span — hizmetin uygulandığı ürün/platform (1I).
+ *
+ * `readRequestedTarget`'ın aynadaki eşi. Sol yaka da serbest metin taşıyabilir
+ * ("Merhaba, telefonum 0532…, ofis için temizlik"); bu yüzden yalnız SON
+ * yan cümle alınır, talep fiilleri kırpılır, uzunluk sınırlanır ve rakam
+ * dizisi taşıyan span REDDEDİLİR. Böylece bu span profesyonel metne
+ * güvenle yazılabilir.
+ */
+export function readRelationContext(parent: string): string | null {
+  const raw = String(parent ?? "").trim();
+  if (!raw) return null;
+  const clauses = raw.split(/[,;:.!?()/]/u).filter((c) => c.trim());
+  const last = clauses[clauses.length - 1] ?? "";
+  const t = last.replace(REQUEST_TAIL_RE, " ").replace(/\s+/gu, " ").trim();
+  if (!t || !/\p{L}/u.test(t)) return null;
+  if (t.length > MAX_TARGET_CHARS) return null;
+  if (/\d{5,}/u.test(t)) return null;
+  return t;
+}
+
+/**
+ * BİR VARLIK ADINI İÇEREN GÜVENLİ KULLANICI İFADESİ (1K).
+ *
+ * Uyumluluk bağlacı olmayan cümlelerde besteci kullanıcının ifadesini
+ * kaybediyor ve "arıyorum."a iniyordu — "WordPress destek arıyorum",
+ * "CNC servis arıyorum" böyle öznesiz kalıyordu.
+ *
+ * Ham cümlenin tamamı ASLA taşınmaz. Cümle yan cümlelere bölünür, YALNIZ
+ * verilen adı içeren yan cümle seçilir, talep fiilleri kırpılır, uzunluk
+ * sınırlanır ve rakam dizisi taşıyan span reddedilir. Böylece bütçe,
+ * telefon ve adres parçaları profesyonel metne giremez.
+ */
+export function readSafePhraseContaining(
+  rawInput: string,
+  needle: string,
+): string | null {
+  const raw = String(rawInput ?? "").trim();
+  const token = String(needle ?? "").trim();
+  if (!raw || !token) return null;
+  for (const clause of raw.split(/[,;:.!?()/\n]/u)) {
+    const candidate = clause
+      .replace(REQUEST_TAIL_RE, " ")
+      .replace(/\s+/gu, " ")
+      .trim();
+    if (!candidate || !/\p{L}/u.test(candidate)) continue;
+    if (!containsPhraseToken(candidate, token)) continue;
+    if (candidate.length > MAX_TARGET_CHARS) return null;
+    if (/\d{5,}/u.test(candidate)) return null;
+    return candidate;
+  }
+  return null;
+}
+
 export type ParentIdentity = {
   brand?: string | null;
   model?: string | null;
   /** Doğrulanmış otomotiv modeli (varsa). */
   catalogModel?: string | null;
 };
+
+export type UsageContextSplit = {
+  /** Bağlacın SOLU — yalnız kullanım amacı / hedef kitle / yer / kurum. */
+  context: string;
+  /** Bağlacın SAĞI — asıl talep konusu. */
+  target: string;
+  /** Hedefin kanonik rolü — bu yapıda yalnız WHOLE_PRODUCT ya da SERVICE. */
+  role: RequestedTargetRole;
+};
+
+/**
+ * SOL TARAF YALNIZ KULLANIM BAĞLAMI MI? (1H)
+ *
+ * "X için Y" yapısında rolleri belirleyen SAĞ taraftır:
+ *
+ *   Y bir BİLEŞEN ise   → X gerçek üst üründür; markası, modeli ve ürün
+ *                          kimliği KORUNUR ("Renault Clio için ön far").
+ *   Y bütün ÜRÜN ya da  → Y asıl talep konusudur; X yalnız kullanım amacı,
+ *   HİZMET ise            hedef kitle, yer ya da kurum bağlamıdır ve
+ *                          kategori/marka/model olarak Y'yi EZEMEZ
+ *                          ("Ofis için muhasebe yazılımı").
+ *   Y rolü BİLİNMİYORSA → hiçbir şey silinmez, kesinlik de üretilmez.
+ *
+ * Ölçülen hata ailesi tek kökten geliyordu: anlama katmanı sağ tarafı doğru
+ * çözdükten sonra ham cümlenin TAMAMINI yeniden tarayan ipucu katmanları
+ * soldaki bağlamı asıl ürün ya da marka sanıyordu — "Ofis için muhasebe
+ * yazılımı" kategorisi real-estate, "Restoran için POS yazılımı" markası
+ * "Restoran" oluyordu.
+ *
+ * Karar burada verilmez, tek yetkili rol sınıflandırıcısından okunur; bu
+ * fonksiyon yalnız o rolü ilişkinin iki yakasına bağlar. Kelime listesi
+ * yoktur: "Ofis" de "WordPress" de aynı kuraldan geçer, ayrımı sağdaki
+ * hedefin rolü yapar.
+ */
+export function readUsageContextSplit(rawInput: string): UsageContextSplit | null {
+  const split = splitCompatibilityPhrase(String(rawInput ?? ""));
+  if (!split) return null;
+  const target = readRequestedTarget(split.requested).value;
+  if (!target) return null;
+  const role = classifyRequestedTargetRole(target).role;
+  if (role !== "WHOLE_PRODUCT" && role !== "SERVICE") return null;
+  return { context: split.parent, target, role };
+}
+
+/**
+ * BU JETON YALNIZ KULLANIM BAĞLAMINDAN MI GELİYOR? (1H)
+ *
+ * `isRequestedItemNotModel` (KB-12) kardeş kuraldır: o "bağlacın SAĞI model
+ * olamaz" der, bu "bağlacın SOLU yalnız bağlamsa marka/model olamaz" der.
+ *
+ * Kural kelime listesiyle DEĞİL kanıtla çalışır; dört koşul birlikte aranır:
+ *
+ *   1) Uyumluluk bağlacı var ve sağdaki hedefin rolü bütün ürün ya da hizmet
+ *      (`readUsageContextSplit`). Sağ taraf bir BİLEŞENSE kural hiç çalışmaz;
+ *      "Renault Clio için ön far" cümlesinde sol taraf gerçek üst üründür.
+ *   2) Jeton yalnız SOLDA geçiyor, sağdaki hedefte yok.
+ *   3) Sol taraf kanonik üst ürün kanıtı taşımıyor (`resolvePartBearingParent`).
+ *   4) Aday KATALOGDA DOĞRULANMIŞ bir marka/model DEĞİLDİR. Kimlik katmanı
+ *      tanımadığı büyük harfli sözcükleri de marka adayı üretir; büyük harfle
+ *      başlamak tek başına marka kanıtı DEĞİLDİR. Ölçülen ayrım:
+ *      `findAnyCatalogBrand` "Arçelik" ve "Bosch"u tanır, "Restoran",
+ *      "WordPress" ve "SAP"ı tanımaz. Bu yüzden "Arçelik için servis"te marka
+ *      korunur, "Restoran için POS yazılımı"nda düşer.
+ *
+ * Ölçülen hata: "Restoran için POS yazılımı arıyorum" → marka "Restoran".
+ * "WordPress için SEO eklentisi" cümlesinde WordPress KORUNUR: orada sağ taraf
+ * bir BİLEŞENdir, kural hiç çalışmaz.
+ */
+export function isUsageContextOnlyDesignator(
+  rawInput: string,
+  candidate: { value?: unknown } | null | undefined,
+  identity: ParentIdentity,
+): boolean {
+  const value = String(candidate?.value ?? "").trim();
+  if (!value) return false;
+  const usage = readUsageContextSplit(rawInput);
+  if (!usage) return false;
+  /**
+   * SENTEZLENMİŞ ADAY — ilişkinin İKİ YAKASINI birden kapsayabilir (1B ile
+   * aynı desen). Ölçülen: "Restoran için POS yazılımı" → marka adayı
+   * "Restoran POS"; bütün olarak ne solda ne sağda geçer. Bu yüzden aday
+   * SÖZCÜK SÖZCÜK okunur: en az bir sözcüğü yalnız bağlamdan geliyorsa aday
+   * ilişki sınırını ihlal ediyordur.
+   */
+  const words = value.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const fromContext = words.filter(
+    (w) =>
+      containsPhraseToken(usage.context, w) &&
+      !containsPhraseToken(usage.target, w),
+  );
+  if (!fromContext.length) return false;
+  // Katalogda doğrulanmış marka/model asla bağlam sanılmaz.
+  if (findAnyCatalogBrand(value)) return false;
+  if (isKnownAutomotiveModelName(value) || findTechnologyProduct(value)) {
+    return false;
+  }
+  return !resolvePartBearingParent(usage.context, identity);
+}
+
+/* ------------------------------------------------------------------ *
+ *  UZMANLIK ALANI (KATEGORİ) — İHTİYAÇ TÜRÜNDEN AYRI EKSEN (1I)       *
+ * ------------------------------------------------------------------ */
+
+/**
+ * KATALOG MARKASININ ALANI — mevcut kanonik listelerden TÜRETİLİR.
+ *
+ * `brand-catalog.ts` markaları zaten alan alan ayrı listelerde tutuyor;
+ * burada ikinci bir marka listesi KURULMAZ, yalnız o listelerin adlandırdığı
+ * alan tek yerde adlandırılır. Slug'lar kanonik taksonominin kök kategori
+ * kimlikleridir ve `verify-taxonomy-drift-v1` onları zaten izler.
+ *
+ * Birden fazla alanda geçen marka (ölçüldü: "Samsung" hem appliances hem
+ * technology) KANIT ÜRETMEZ — belirsizlik kesinliğe çevrilmez.
+ */
+const CATALOG_BRAND_DOMAINS: ReadonlyArray<readonly [string, BrandEntry[]]> = [
+  ["automotive", AUTOMOTIVE_BRANDS],
+  ["appliances", APPLIANCE_BRANDS],
+  ["home-kitchen", HOME_KITCHEN_BRANDS],
+  ["machinery", MACHINERY_BRANDS],
+  ["technology", TECHNOLOGY_BRANDS],
+  ["furniture", FURNITURE_BRANDS],
+  ["baby", BABY_BRANDS],
+];
+
+/** Kanonik kök kategori kimlikleri — sapma denetimi için dışa verilir. */
+export const CATALOG_BRAND_DOMAIN_IDS: readonly string[] =
+  CATALOG_BRAND_DOMAINS.map(([id]) => id);
+
+function domainForCatalogBrand(span: string): string | null {
+  const hits = CATALOG_BRAND_DOMAINS.filter(([, list]) =>
+    findBrand(span, list),
+  ).map(([id]) => id);
+  return hits.length === 1 ? (hits[0] ?? null) : null;
+}
+
+export type RelationDomainEvidence = {
+  /** Kanonik kök kategori kimliği. */
+  categoryId: string;
+  code:
+    | "domain:taxonomy-part-bearing"
+    | "domain:taxonomy-area"
+    | "domain:catalog-brand"
+    | "domain:catalog-entity"
+    | "domain:role-vocabulary";
+  /** Kanıtı üreten ifade parçası. */
+  span: string;
+  /** Doğrulanmış ürün/platform kanıtı mı, yoksa sözcük dağarcığı mı? */
+  verified: boolean;
+};
+
+function domainFromSpan(span: string): RelationDomainEvidence | null {
+  const trimmed = span.trim();
+  if (!trimmed) return null;
+  /**
+   * 0) TİPLİ KANONİK ALAN VARLIĞI (1J) — platform, yazılım ailesi, makine
+   *    türü. Marka kataloğundan ÖNCE sorulur: bu varlıklar marka değildir ve
+   *    marka olarak aranmaları zaten yanlış olurdu.
+   */
+  const typed = resolveDomainEntity(trimmed);
+  if (typed.status !== "NONE" && typed.domainId) {
+    return {
+      categoryId: typed.domainId,
+      code: "domain:catalog-entity",
+      span: typed.canonicalLabel ?? trimmed,
+      /**
+       * KÜRASYON KAPISI (1K): yalnız kurucu onaylı kayıt doğrulanmış
+       * kanıt sayılır. Onay bekleyen kayıt alan ADAYI üretir, kesinlik
+       * üretmez; çakışmalı (AMBIGUOUS) kayıt da öyle.
+       */
+      verified: typed.status === "RESOLVED" && typed.evidenceStrength === "VERIFIED",
+    };
+  }
+  // 1) Kanonik taksonomide parça taşıyan bir ürün — servis edilebilen şey
+  //    parçası olan şeydir. "klima", "buzdolabı", "bulaşık makinesi" böyle
+  //    bulunur; "ofis", "ev", "düğün" bulunmaz (ölçüldü).
+  const bearing = findPartBearingParentSpan(trimmed);
+  if (bearing?.node.categoryId) {
+    return {
+      categoryId: bearing.node.categoryId,
+      code: "domain:taxonomy-part-bearing",
+      span: bearing.text,
+      verified: true,
+    };
+  }
+  // 2) Doğrulanmış katalog markası — listenin kendisi alanı adlandırır.
+  const brandDomain = domainForCatalogBrand(trimmed);
+  if (brandDomain) {
+    return {
+      categoryId: brandDomain,
+      code: "domain:catalog-brand",
+      span: trimmed,
+      verified: true,
+    };
+  }
+  return null;
+}
+
+/**
+ * TALEBİN UZMANLIK ALANI — hizmet olmak alanı silmez (1I).
+ *
+ * Talepo'da iki ayrı eksen vardır: KATEGORİ "hangi uzmanlık alanı?", KIND
+ * "ne tür ihtiyaç?" sorusunu yanıtlar. `SERVICE` olmak kategorinin otomatik
+ * `services` olması demek DEĞİLDİR — "Renault Clio bakımı" otomotiv,
+ * "klima servisi" beyaz eşya, "ev temizliği" genel hizmettir.
+ *
+ * Alan kanıtı şu sırayla aranır ve hepsi MEVCUT kanonik kaynaklardan gelir:
+ *
+ *   1) Bağlacın SOLUNDA doğrulanmış ürün/platform (kanonik parça taşıyıcı
+ *      düğüm ya da katalog markası) — hizmetin uygulandığı şey.
+ *   2) İstenen hedefin İÇİNDE doğrulanmış ürün ("klima servisi" → klima).
+ *   3) Bağlaç yoksa cümlenin tamamında aynı arama ("buzdolabı tamiri").
+ *   4) Rol sözcük dağarcığının adlandırdığı alan ("ERP sistemi" → technology).
+ *
+ * Doğrulanmış kanıt yoksa `null` döner: alan uydurulmaz, mevcut karar
+ * korunur ve gerekirse genel hizmet alanına düşülür.
+ */
+export function resolveRelationDomain(
+  rawInput: string,
+): RelationDomainEvidence | null {
+  const text = String(rawInput ?? "").trim();
+  if (!text) return null;
+  const split = splitCompatibilityPhrase(text);
+  const target = split ? readRequestedTarget(split.requested).value : null;
+
+  if (split) {
+    // (1) Sol taraf: hizmetin/parçanın uygulandığı ürün ya da platform.
+    const fromContext = domainFromSpan(split.parent);
+    if (fromContext) return fromContext;
+    // (2) İstenen hedefin içindeki ürün.
+    const fromTarget = target ? domainFromSpan(target) : null;
+    if (fromTarget) return fromTarget;
+  } else {
+    // (3) Bağlaç yok — cümlenin tamamı taranır.
+    const fromText = domainFromSpan(text);
+    if (fromText) return fromText;
+  }
+
+  // (4) Rol sözcük dağarcığı — kanonik düğümü olmayan dijital ürün adları.
+  const roleScope = target ?? text;
+  const vocabularyDomain = classifyRequestedTargetRole(roleScope).domain;
+  if (vocabularyDomain) {
+    return {
+      categoryId: vocabularyDomain,
+      code: "domain:role-vocabulary",
+      span: roleScope,
+      verified: false,
+    };
+  }
+
+  /**
+   * (5) HEDEF BİR HİZMETSE alanı SOL taraf taşır.
+   *
+   * "Logo yazılımı için kurulum hizmeti" ve "Web sitesi için bakım desteği"
+   * cümlelerinde istenen şey hizmettir; hangi uzmanlık alanına ait olduğunu
+   * yalnız sol taraftaki ürün/platform söyler. Bu adım BİLEREK en sonda ve
+   * yalnız hizmet hedefleri için çalışır: "Ofis için televizyon" gibi bütün
+   * ürün taleplerinde alan zaten sağdan çözülür ve soldaki kullanım yeri
+   * kategoriyi ele geçiremez.
+   *
+   * Kanıt doğrulanmamıştır (`verified: false`) — kesinlik iddia edilmez.
+   */
+  if (split && target && classifyRequestedTargetRole(target).role === "SERVICE") {
+    const contextVocabulary = classifyRequestedTargetRole(split.parent).domain;
+    if (contextVocabulary) {
+      return {
+        categoryId: contextVocabulary,
+        code: "domain:role-vocabulary",
+        span: split.parent,
+        verified: false,
+      };
+    }
+    /**
+     * Kanonik ağaçta bir UZMANLIK ALANI adlandıran sol taraf.
+     *
+     * Yalnız `CATEGORY` / `SUBCATEGORY` / `GROUP` düğümleri sayılır: bunlar
+     * bir alanı adlandırır ("Web sitesi" → technology). `PRODUCT_TYPE`
+     * SAYILMAZ — o satın alınabilir bir nesnedir ve hizmet bağlamında yer
+     * anlamına gelebilir. Ölçülen hata: "ofis için teknik destek" →
+     * real-estate; "Ofis" emlakta bir PRODUCT_TYPE'tır. Servis edilebilen
+     * ürünler zaten (1) adımında parça taşıyıcılığıyla yakalanır.
+     *
+     * Birden fazla alana çözülen ifade ("ev" → emlak ve otomotiv) kanıt
+     * üretmez.
+     */
+    const AREA_TYPES = new Set(["CATEGORY", "SUBCATEGORY", "GROUP"]);
+    const areaNodes = listTaxonomyAliasCandidates(split.parent.trim()).nodes.filter(
+      (n) => AREA_TYPES.has(n.nodeType),
+    );
+    const domains = new Set(areaNodes.map((n) => n.categoryId).filter(Boolean));
+    if (domains.size === 1) {
+      const only = [...domains][0];
+      if (only) {
+        return {
+          categoryId: only,
+          code: "domain:taxonomy-area",
+          span: split.parent.trim(),
+          verified: false,
+        };
+      }
+    }
+  }
+  return null;
+}
 
 export type ParentEvidence = {
   /** Kanıt türü — karar günlüğüne ve evidence dizisine yazılır. */
@@ -320,15 +692,36 @@ export function findUnresolvedCompatibilityTarget(
     relationConfident: boolean;
     /** Konu türü uyumluluk niteliği taşıyor mu (PART/ACCESSORY)? */
     isCompatibilityKind: boolean;
+    /** Konu bir HİZMET olarak çözüldü mü? */
+    isServiceSubject: boolean;
     representedText: string;
   },
 ): UnresolvedCompatibilityTarget | null {
+  /**
+   * HİZMET KONUSU UYUMLULUK BELİRSİZLİĞİ ÜRETMEZ (1G). Konu hizmet olarak
+   * çözüldüyse "için" bir parça ilişkisi değil, hizmetin hedefini anlatır;
+   * ortada kaydedilecek bir uyumluluk belirsizliği yoktur. Ölçülen gürültü:
+   * "Ev için klima servisi arıyorum" → SERVICE, ama yine de
+   * compat_target_unresolved="klima servisi" kaydı üretiliyordu.
+   */
+  if (subject.isServiceSubject) return null;
   const split = splitCompatibilityPhrase(normalizedInput);
   if (!split) return null;
   const target = readRequestedTarget(split.requested);
   const text = target.value ?? target.raw;
   if (!text || !/\p{L}/u.test(text)) return null;
-  if (target.value && isCanonicalWholeProductPhrase(target.value)) return null;
+  /**
+   * ROLÜ UYUMLULUĞA KAPALI HEDEF, BELİRSİZLİK DE ÜRETMEZ (1G).
+   *
+   * Bütün bir ürün ("televizyon", "muhasebe yazılımı") ya da bir hizmet
+   * ("kurulum hizmeti") istenmişse ortada çözülememiş bir UYUMLULUK yoktur;
+   * kayıt düşmek kullanıcıya olmayan bir eksik gösterirdi. Karar burada
+   * yeniden verilmez, tek yetkili rol sınıflandırıcısından okunur.
+   */
+  if (target.value) {
+    const role = classifyRequestedTargetRole(target.value).role;
+    if (role === "WHOLE_PRODUCT" || role === "SERVICE") return null;
+  }
   const parentEvidence = resolvePartBearingParent(split.parent, identity);
   if (!target.reason) {
     // İlişki DOĞRULANDIYSA kaydedilecek bir kayıp yoktur.
