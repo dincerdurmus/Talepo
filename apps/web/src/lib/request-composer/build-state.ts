@@ -239,6 +239,25 @@ const PART_COMPATIBILITY_CONNECTIVES = [
   "ile",
 ];
 
+/**
+ * Adayın BAŞINDAKİ uyumluluk bağlacını kırpar (KB-11).
+ * Bağlaç adayın BAŞINDAysa ardındaki ifade zaten istenen şeydir; aday
+ * reddedilirse "nemlendirme" bilgisi boşuna kaybolur. Ortada bağlaç varsa
+ * ("Bosch çamaşır makinesi için pompa") aday yine reddedilir — orada bağlacın
+ * solunda uyumluluk hedefi durur, o bilgi parça adına ait değildir.
+ */
+function stripLeadingConnective(value: string): string {
+  let out = value.trim();
+  for (;;) {
+    const first = out.split(/\s+/)[0] ?? "";
+    if (!first) return out;
+    const isConnective = PART_COMPATIBILITY_CONNECTIVES.some(
+      (c) => foldPartToken(c) === foldPartToken(first),
+    );
+    if (!isConnective) return out;
+    out = out.slice(first.length).trim();
+  }
+}
 function foldPartToken(value: string): string {
   return value
     .toLocaleLowerCase("tr-TR")
@@ -558,7 +577,8 @@ export function mapUnderstandingToFields(
           "iu",
         ),
       );
-      const candidate = fuller?.[1]?.trim();
+      // Baştaki bağlaç önce kırpılır, kural ONDAN SONRA uygulanır (KB-11).
+      const candidate = stripLeadingConnective(fuller?.[1]?.trim() ?? "");
       if (
         candidate &&
         candidate.length > basePart.length &&

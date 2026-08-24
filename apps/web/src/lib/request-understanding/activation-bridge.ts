@@ -146,9 +146,54 @@ function capitalizeTr(value: string): string {
   return value.charAt(0).toLocaleUpperCase("tr-TR") + value.slice(1);
 }
 
+/** Kullanıcı yüzeyi için Türkçe katlama. */
+function foldForUserSurface(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[üÜ]/g, "u");
+}
+
+/**
+ * Markayı KULLANICI kendi metninde yazdı mı? (KB-13, 2026-08-24)
+ *
+ * Çıkarımla bulunan marka, kullanıcı yüzeyinde kesin gerçek gibi
+ * gösterilemez: "C180 ön far" yazan biri "Mercedes" yazmamıştır, ama katalog
+ * C180'i Mercedes-Benz ile ilişkilendirir ve başlık "Mercedes-Benz C180 için
+ * ön far" oluyordu.
+ *
+ * `provenance` bu ayrımı YAPMAZ — ölçüldü: kullanıcı "Mercedes" yazdığında da
+ * `provenance` INFERRED geliyor, çünkü değer katalogdan kanonikleştiriliyor
+ * ("Mercedes" → "Mercedes-Benz"). Bu yüzden tek dürüst ölçüt ham metindir.
+ *
+ * Kanonik ad çok parçalı olabildiği için (Mercedes-Benz, Alfa Romeo) jetonların
+ * HERHANGİ biri metinde geçiyorsa kullanıcı yazmış sayılır.
+ *
+ * Kısıtlanan yalnız kullanıcı yüzeyidir: `identity.brand` çıkarımı olduğu gibi
+ * korunur ve matching onu kullanmaya devam eder.
+ */
+function brandWrittenByUser(
+  result: RequestUnderstandingResult,
+  brandValue: string,
+): boolean {
+  const raw = foldForUserSurface(String(result.rawInput ?? ""));
+  if (!raw.trim()) return false;
+  const tokens = foldForUserSurface(brandValue)
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length >= 3);
+  if (tokens.length === 0) return false;
+  return tokens.some((t) =>
+    new RegExp(`(^|[^a-z0-9])${t}([^a-z0-9]|$)`).test(raw),
+  );
+}
+
 function parentLabelFromSubject(result: RequestUnderstandingResult): string {
   const parent = result.requestSubject?.parentEntity;
-  const brand =
+  const brandCandidate =
     parent?.brand && isSafeToShow(parent.brand) && !looksLikeYearToken(String(parent.brand.value))
       ? String(parent.brand.value)
       : result.identity.brand &&
@@ -156,6 +201,11 @@ function parentLabelFromSubject(result: RequestUnderstandingResult): string {
           !looksLikeYearToken(String(result.identity.brand.value))
         ? String(result.identity.brand.value)
         : null;
+  // Kullanıcının yazmadığı marka başlıkta/çiplerde görünmez (KB-13).
+  const brand =
+    brandCandidate && brandWrittenByUser(result, brandCandidate)
+      ? brandCandidate
+      : null;
   const modelRaw =
     parent?.model && isSafeToShow(parent.model)
       ? String(parent.model.value)

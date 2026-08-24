@@ -50,6 +50,8 @@ import {
   listAllTaxonomyNodes,
 } from "../src/lib/taxonomy";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
+import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
+import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
@@ -1254,6 +1256,153 @@ check("I17: otomotiv dışı uyumluluk parçasında üst ürün cümleden düşe
     );
   }
 });
+
+/** Structured identity — kısıtlanan kullanıcı yüzeyinden AYRI okunur. */
+function idOf(u: unknown, key: "brand" | "model"): string | null {
+  const block = ((u as Record<string, unknown>)["identity"] ?? {}) as Record<
+    string,
+    { value?: unknown } | undefined
+  >;
+  const v = block[key]?.value;
+  return v == null ? null : String(v);
+}
+
+/** Test yardımcıları — açık dünya parça sözleşmesi (KB-12 devamı). */
+/**
+ * Tek yüzey okuyucu. `fieldValues` verildiğinde structured/browse akışını
+ * temsil eder — kullanıcının DOĞRULADIĞI rol bu yoldan girer.
+ */
+function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
+  const structured = fieldValues ? { fieldValues } : undefined;
+  const understanding = understandRequest({ rawInput: raw, structured }) as never;
+  const headline = String(
+    (buildUnderstandingSummary(understanding) as unknown as { headline?: string })
+      ?.headline ?? "",
+  );
+  const { state } = syncFromText(null, raw, structured ? { structured } : undefined);
+  const val = (k: string) => {
+    const f = state.fields[k];
+    return f && f.kind === "VALUE" && f.value ? String(f.value) : null;
+  };
+  const rs = (understanding as unknown as {
+    requestSubject?: {
+      kind?: { value?: unknown; status?: unknown; evidence?: unknown };
+      name?: { value?: unknown };
+      parentEntity?: Record<string, { value?: unknown } | undefined>;
+    };
+  }).requestSubject;
+  return {
+    state,
+    headline,
+    text: composeNaturalRequestText(state),
+    subjectKind: String(rs?.kind?.value ?? ""),
+    parentModel: rs?.parentEntity?.model?.value != null
+      ? String(rs.parentEntity.model.value)
+      : null,
+    brand: val("brand"),
+    model: val("model"),
+    part: val("part"),
+    parentProduct: val("applianceType") ?? val("productType") ?? val("machineType"),
+    categoryId: state.categoryId,
+    intent: String(
+      (understanding as unknown as { intent?: { value?: unknown } }).intent
+        ?.value ?? "",
+    ),
+    identityBrand: idOf(understanding, "brand"),
+    identityModel: idOf(understanding, "model"),
+    subjectStatus: String(rs?.kind?.status ?? ""),
+    subjectEvidence: Array.isArray(rs?.kind?.evidence)
+      ? (rs.kind.evidence as string[]).map(String)
+      : [],
+    parentBrand:
+      rs?.parentEntity?.brand?.value != null
+        ? String(rs.parentEntity.brand.value)
+        : null,
+    subjectName: rs?.name?.value != null ? String(rs.name.value) : null,
+    /**
+     * Korunmuş belirsizlik yüzeyi — MEVCUT sözleşme (1C).
+     * `unresolvedExpressions` yayın anında `ambiguities` + `unknownFields`
+     * üzerinden üretilir (publish-understanding.ts); invariant doğrudan o
+     * üretim kaynağını okur, yeni bir telemetri katmanı kurulmaz.
+     */
+    nextQuestionKeys: (
+      (resolveHybridQuestions(state) as unknown as { next?: Array<{ key: string }> })
+        .next ?? []
+    ).map((f) => f.key),
+    ambiguityMessages: (
+      (understanding as unknown as {
+        ambiguities?: Array<{ kind?: string; message?: string }>;
+      }).ambiguities ?? []
+    ).map((a) => `${a.kind ?? ""}:${a.message ?? ""}`),
+  };
+}
+
+check("I18: uyumluluk bağlacı çok kelimeli parça adını kısaltamaz (KB-11)", () => {
+  /**
+   * Ölçülen gerçek: aynı talep, yalnız "için" bağlacı eklenince parça adı
+   * kısalıyor.
+   *   "Heidelberg SM 74 nemlendirme pompası"        → part = "nemlendirme pompası"  ✅
+   *   "Heidelberg SM 74 İÇİN nemlendirme pompası …" → part = "pompa"                ❌
+   * Tek fark bağlaç; ikisi de aynı sonucu vermeli.
+   */
+  for (const raw of [
+    "Heidelberg SM 74 için nemlendirme pompası arıyorum",
+    "Heidelberg SM 74 nemlendirme pompası",
+  ]) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.part,
+      "nemlendirme pompası",
+      `${raw}: parça adı kısalmamalı (${JSON.stringify(s.part)})`,
+    );
+  }
+  const text = surfacesFor("Heidelberg SM 74 için nemlendirme pompası arıyorum").text;
+  for (const must of ["nemlendirme pompası", "heidelberg", "sm 74"]) {
+    assert.ok(fold(text).includes(fold(must)), `'${must}' kayboldu: '${text}'`);
+  }
+});
+
+check("I20: kullanıcının yazmadığı marka başlıkta kesin gerçek gibi görünemez (KB-13)", () => {
+  /**
+   * Ölçülen gerçek: "C180 ön far" girdisinde marka çıkarımla `Mercedes-Benz`
+   * oluyor ve başlık "Mercedes-Benz C180 için ön far" diye üretiliyor —
+   * kullanıcı "Mercedes" yazmadığı hâlde.
+   *
+   * DİKKAT: provenance tek başına ayırt EDİCİ DEĞİL — kullanıcı "Mercedes"
+   * yazdığında da INFERRED geliyor (değer katalogdan kanonikleştiriliyor).
+   * Ayırt edici ölçüt, markanın kullanıcının KENDİ metninde geçmesidir.
+   *
+   * I24 ile birlikte okunur: orada jeton SINIRI sınanır ("benzinli" içindeki
+   * "benz" marka sayılamaz), burada markanın kullanıcı yüzeyine çıkma hakkı.
+   * Structured identity her hâlükârda korunur — matching onu kullanır.
+   */
+  const MATRIX: Array<[string, boolean]> = [
+    ["C180 ön far", false],
+    ["benzinli C180 ön far", false],
+    ["Mercedes C180 ön far", true],
+    ["Mercedes-Benz C180 ön far", true],
+    ["Mercedes C180 için ön far arıyorum", true],
+  ];
+  for (const [raw, shouldShow] of MATRIX) {
+    const s = surfacesFor(raw);
+    const shown = fold(s.headline).includes("mercedes");
+    assert.equal(
+      shown,
+      shouldShow,
+      `${raw}: başlıkta marka ${shown ? "VAR" : "YOK"}, beklenen ${shouldShow ? "VAR" : "YOK"} → '${s.headline}'`,
+    );
+    assert.ok(fold(s.headline).includes("c180"), `${raw}: C180 kayboldu → '${s.headline}'`);
+    assert.ok(
+      s.identityBrand != null,
+      `${raw}: identity.brand çıkarımı korunmalı — kısıtlanan yalnız kullanıcı yüzeyi`,
+    );
+  }
+  assert.ok(
+    fold(surfacesFor("C180 ön far").headline).includes("far"),
+    "talep içeriği (parça) başlıktan düşemez",
+  );
+});
+
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {
   // Ara grup metni ("… & Aksesuar") ACCESSORY kalıntısı bırakır — ürün
