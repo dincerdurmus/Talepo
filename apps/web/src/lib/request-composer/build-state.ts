@@ -30,6 +30,11 @@ import {
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
+import {
+  isConsumedAsParentProduct,
+  readRequestedTarget,
+  splitCompatibilityPhrase,
+} from "@/lib/request-understanding/part-relation";
 import { stripIncompatibleDomainFields } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
@@ -259,6 +264,18 @@ function stripLeadingConnective(value: string): string {
     out = out.slice(first.length).trim();
   }
 }
+
+/**
+ * `whole`, `part`in bütün sözcüklerini taşıyor mu? Türkçe ek toleranslı:
+ * "kart" ⊂ "kartı", "pompa" ⊂ "pompası". Sıra aranmaz; eksik sözcük yeter.
+ */
+function coversAllTokens(whole: string, part: string): boolean {
+  const haystack = foldPartToken(whole).split(/\s+/).filter(Boolean);
+  const needles = foldPartToken(part).split(/\s+/).filter(Boolean);
+  if (!needles.length || !haystack.length) return false;
+  return needles.every((n) => haystack.some((h) => h.startsWith(n)));
+}
+
 function foldPartToken(value: string): string {
   return value
     .toLocaleLowerCase("tr-TR")
@@ -377,6 +394,15 @@ export function mapUnderstandingToFields(
   // çünkü modelRaw identity VE parentEntity'den beslenir.
   if (modelRaw && isRequestedItemNotModel(raw, modelRaw)) {
     modelRaw = null;
+  }
+  // Üst ürün olarak tüketilen span ne marka ne model olabilir (1D). Kural
+  // part-relation.ts'te tek yerde tanımlıdır; burada ikinci kaynağa
+  // (parentEntity) de uygulanır.
+  if (modelRaw && isConsumedAsParentProduct(raw, modelRaw)) {
+    modelRaw = null;
+  }
+  if (brandRaw && isConsumedAsParentProduct(raw, brandRaw)) {
+    brandRaw = null;
   }
   if (brandRaw && isKnownAutomotiveModelName(brandRaw)) {
     if (
@@ -576,7 +602,33 @@ export function mapUnderstandingToFields(
         "",
     ).trim();
     let partLabel = basePart;
-    if (basePart && rawPhrase) {
+
+    /**
+     * KULLANICININ YAZDIĞI HEDEF İFADE ÖNCELİKLİDİR (1C).
+     *
+     * Anlam katmanı parça adını lemma'ya indirger ve konum belirtecini ayrı
+     * saklar; ikisi yeniden birleştirilince kullanıcının ARADAKİ sözcükleri
+     * düşer. Ölçülen kayıplar: "dış ünite fan motoru" → "dış fan motoru",
+     * "güç kartı" → "kart". Kısaltma bir normalizasyon değil KAYIPTIR.
+     *
+     * Aşağıdaki ham-metin taraması bu kaybı telafi edemiyordu, çünkü
+     * indirgenmiş ifade metinde BİTİŞİK geçmiyor. Bunun yerine ilişkinin tek
+     * yetkili çözümüne sorulur: bağlacın sağındaki hedef ifade. Hedef,
+     * indirgenmiş adın bütün sözcüklerini kapsıyorsa kullanıcının yazdığı
+     * hâli kazanır.
+     */
+    const compatSplit = splitCompatibilityPhrase(rawPhrase);
+    const requestedTarget = compatSplit
+      ? readRequestedTarget(compatSplit.requested).value
+      : null;
+    if (basePart && requestedTarget && coversAllTokens(requestedTarget, basePart)) {
+      partLabel = requestedTarget;
+    } else if (basePart && rawPhrase && !compatSplit) {
+      // Bağlaç VARSA ham metin taraması yapılmaz: hedefin nerede başladığını
+      // zaten bağlaç söyler. Tarama bağlaçlı metinde kelime ORTASINDAN
+      // kesebiliyordu ("paslanmaz" → "anmaz", ölçüldü); güvenli olan,
+      // indirgenmiş adı olduğu gibi bırakıp ham hedefi unresolved kaydına
+      // düşürmektir.
       // Prefer fuller user wording: "nemlendirme pompası" over stem "pompa"
       const escaped = basePart.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const fuller = rawPhrase.match(

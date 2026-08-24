@@ -20,6 +20,8 @@
  * Synthetic only: no DB, no network, no notifications.
  */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join as pathJoin, resolve as pathResolve } from "node:path";
 
 import {
   getVisibleCategoryFields,
@@ -47,12 +49,15 @@ import {
 } from "../src/lib/verification/db-guard";
 import {
   ensureTaxonomyLoaded,
+  getTaxonomyAncestorIds,
+  getTaxonomyNode,
   listAllTaxonomyNodes,
+  resolveTaxonomyAlias,
 } from "../src/lib/taxonomy";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
 import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
-import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
+import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
 import { scheduleNextQuestions } from "../src/lib/request-composer/v2/question-scheduler";
@@ -76,6 +81,11 @@ function check(name: string, fn: () => void) {
     console.error(`FAIL  ${name}`);
     console.error(err);
   }
+}
+
+/** apps/web/scripts → repo kökü. Kanonik kaynak dosyaları oradan okunur. */
+function repoRootForTests(): string {
+  return pathResolve(__dirname, "..", "..", "..");
 }
 
 const FOLD: Record<string, string> = {
@@ -1446,6 +1456,1137 @@ check("I20: kullanıcının yazmadığı marka başlıkta kesin gerçek gibi gö
   );
 });
 
+
+/* ------------------------------------------------------------------------ *
+ * UYUMLULUK İLİŞKİSİ — TEK FİXTURE TABLOSU (I21, I27-I33)
+ *
+ * Bu satırların hepsi aynı yapıyı ("X için Y") sınar, bu yüzden beklentiler
+ * TEK yerde bildirilir ve her invariant tablonun BİR BOYUTUNU kontrol eder.
+ * Aynı girdiyi her invariantta yeniden kurmak, aynı alanları elle yeniden
+ * assert etmek yalnız satır sayısını büyütüyordu — kapsamı değil.
+ *
+ * verdict:
+ *   PART      — kanonik üst ürün kanıtlı; kesin parça talebi beklenir.
+ *   NOT_PART  — üst ürün kanonik olarak "parça taşımaz" ya da hedef bütün bir
+ *               üründür; parça ilişkisi kurulamaz.
+ *   TENTATIVE — fiziksel ürün ama yetkinlik kürasyonu YOK. Kesin PART
+ *               üretilmez, talep de kaybolmaz.
+ * ------------------------------------------------------------------------ */
+type CompatCase = {
+  raw: string;
+  verdict: "PART" | "NOT_PART" | "TENTATIVE";
+  /** Kanonik üst ürünün alanı — bildirilmişse birebir eşleşmeli. */
+  categoryId?: string;
+  /** null = alan BOŞ olmalı (uydurma yasak). Bildirilmezse sınanmaz. */
+  brand?: string | null;
+  model?: string | null;
+  /** `part` alanı ve profesyonel metin bu ifadeyi EKSİKSİZ taşımalı. */
+  part?: string;
+  /** üst ürün alanı bu ifadeyi taşımalı. */
+  parent?: string;
+  /** başlıkta da parça adı beklenir mi? (başlık lemma kullanan vakalarda hayır) */
+  headlinePart?: boolean;
+  /** hiçbir yüzeyde kaybolmaması gereken kullanıcı ifadesi. */
+  keep?: string;
+  /** kaydedilmiş belirsizlik gerekçesinin sınıfı. */
+  reason?: RegExp;
+  /** beklenen requestSubject.kind (PART dışı sınıflarda anlamlı). */
+  subjectKind?: string;
+};
+
+const COMPAT_CASES: CompatCase[] = [
+  // --- Kanonik üst ürün kanıtlı: kesin PART ---
+  {
+    raw: "Arçelik bulaşık makinesi için rezistans arıyorum",
+    verdict: "PART",
+    categoryId: "appliances",
+    brand: "Arçelik",
+    model: null,
+    parent: "bulaşık makinesi",
+    part: "rezistans",
+    headlinePart: true,
+  },
+  {
+    raw: "Bosch bulaşık makinesi için su giriş ventili arıyorum",
+    verdict: "PART",
+    categoryId: "appliances",
+    brand: "Bosch",
+    model: null,
+    parent: "bulaşık makinesi",
+    part: "su giriş ventili",
+    headlinePart: true,
+  },
+  {
+    raw: "Siemens fırın için termostat arıyorum",
+    verdict: "PART",
+    categoryId: "appliances",
+    brand: "Siemens",
+    model: null,
+    parent: "fırın",
+    part: "termostat",
+  },
+  {
+    // Uzun parça adı: kelime sayısı bir ret gerekçesi DEĞİLDİR.
+    raw: "Bulaşık makinesi için ön sağ kapı kilit mekanizması arıyorum",
+    verdict: "PART",
+    categoryId: "appliances",
+    brand: null,
+    model: null,
+    parent: "bulaşık makinesi",
+    part: "ön sağ kapı kilit mekanizması",
+  },
+  {
+    // Rol çakışması: "Klima" solda üst ürün olarak tüketildi → marka olamaz.
+    raw: "Klima için dış ünite fan motoru arıyorum",
+    verdict: "PART",
+    categoryId: "appliances",
+    brand: null,
+    model: null,
+    parent: "klima",
+    part: "dış ünite fan motoru",
+  },
+  {
+    raw: "Televizyon için güç kartı arıyorum",
+    verdict: "PART",
+    categoryId: "technology",
+    brand: null,
+    model: null,
+    parent: "televizyon",
+    part: "güç kartı",
+  },
+  {
+    // Kısa alias tekil ve kanonik ise çalışmaya DEVAM eder.
+    raw: "TV için güç kartı arıyorum",
+    verdict: "PART",
+    categoryId: "technology",
+    brand: null,
+    model: null,
+    parent: "televizyon",
+    part: "güç kartı",
+  },
+  {
+    // Katalog dışı makine: marka + alfanümerik belirteç kanıtı.
+    raw: "Heidelberg SM 74 için nemlendirme pompası arıyorum",
+    verdict: "PART",
+    brand: "Heidelberg",
+    model: "SM 74",
+    part: "nemlendirme pompası",
+  },
+
+  // --- Üst ürün kanonik olarak reddedildi ya da hedef bütün bir ürün ---
+  /**
+   * 1F SONUCU — bu üç satır NOT_PART'tan TENTATIVE'e geçti.
+   *
+   * 1E, emlak/hizmet için doğrulanmamış kesin RET kayıtlarını kaldırdı; geriye
+   * "bilmiyorum" kaldı. 1F ise kanıt kapısını tek yere (authority) topladı:
+   * yapı varsa aday üretilir, kanıt yoksa TENTATIVE olur. İkisi birlikte
+   * zorunlu olarak bunu verir — "kesin PART üretilmesin" iddiası aynen durur,
+   * düşen tek şey "bu asla parça olamaz" iddiasıydı ve o iddianın dayanağı
+   * yoktu. İstenen ifade ve gerekçe hâlâ kilitli.
+   */
+  {
+    raw: "Daire için kapı kolu arıyorum",
+    verdict: "TENTATIVE",
+    keep: "kapı kolu",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Ofis için masa ayağı arıyorum",
+    verdict: "TENTATIVE",
+    keep: "masa ayağı",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Ev için rezistans arıyorum",
+    verdict: "TENTATIVE",
+    keep: "rezistans",
+    model: null,
+    reason: /capability-unknown/i,
+  },
+  /**
+   * Marka TEK BAŞINA üst ürün kanıtı değildir (1B/1D). 1F'de bu iki satır
+   * NOT_PART'tan TENTATIVE'e geçti ve ÖLÇÜLEBİLİR biçimde İYİLEŞTİ: önce
+   * "Bosch beyaz eşya arıyorum." üretiliyor, kullanıcının istediği şey
+   * tamamen düşüyordu; şimdi "Bosch için rezistans arıyorum." Model hâlâ
+   * uydurulmuyor, kesinlik hâlâ verilmiyor.
+   */
+  {
+    raw: "Bosch kampanya için destek arıyorum",
+    verdict: "TENTATIVE",
+    keep: "destek",
+    model: null,
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Bosch için rezistans arıyorum",
+    verdict: "TENTATIVE",
+    keep: "rezistans",
+    model: null,
+    reason: /capability-unknown/i,
+  },
+  { raw: "Çocuk için tablet arıyorum", verdict: "NOT_PART" },
+  { raw: "Salon için televizyon arıyorum", verdict: "NOT_PART" },
+  {
+    raw: "Ofis için televizyon arıyorum",
+    verdict: "NOT_PART",
+    keep: "televizyon",
+  },
+  {
+    // Hizmet niyeti marka + amaç ifadesiyle bozulmamalı.
+    raw: "Bosch acil için servis arıyorum",
+    verdict: "NOT_PART",
+    subjectKind: "SERVICE",
+    model: null,
+  },
+
+  // --- Fiziksel ürün, yetkinlik kürasyonu YOK: belirsiz ama kaybolmuyor ---
+  {
+    raw: "Tıbbi cihaz için sensör arıyorum",
+    verdict: "TENTATIVE",
+    keep: "sensör",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Matbaa makinesi için kontrol paneli arıyorum",
+    verdict: "TENTATIVE",
+    keep: "kontrol paneli",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Bebek arabası için ön teker kilidi arıyorum",
+    verdict: "TENTATIVE",
+    keep: "ön teker kilidi",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Blender için bıçak bağlantı aparatı arıyorum",
+    verdict: "TENTATIVE",
+    keep: "bıçak bağlantı aparatı",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Masa için yükseklik ayar mekanizması arıyorum",
+    verdict: "TENTATIVE",
+    keep: "yükseklik ayar mekanizması",
+    reason: /capability-unknown/i,
+  },
+
+  // --- 1E: AYNI PARENT, FARKLI BİLİNİRLİLİK ---
+  // "Matbaa makinesi" kanonik olarak doğrulanmadı; istenen kelimenin eski
+  // sözlükte olup olmaması güveni DEĞİŞTİREMEZ. Üçü de aynı aileye düşmeli.
+  {
+    raw: "Matbaa makinesi için rulman arıyorum",
+    verdict: "TENTATIVE",
+    keep: "rulman",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Matbaa makinesi için kontrol paneli arıyorum",
+    verdict: "TENTATIVE",
+    keep: "kontrol paneli",
+    reason: /capability-unknown/i,
+  },
+  {
+    raw: "Matbaa makinesi için mürekkep besleme valfi arıyorum",
+    verdict: "TENTATIVE",
+    keep: "mürekkep besleme valfi",
+    reason: /capability-unknown/i,
+  },
+
+  // --- 1E: AKSESUAR DALI CAPABILITY KAPISINI BYPASS EDEMEZ ---
+  {
+    raw: "Bebek arabası için bardaklık adaptörü arıyorum",
+    verdict: "TENTATIVE",
+    keep: "bardaklık adaptörü",
+    reason: /capability-unknown/i,
+  },
+  {
+    // Televizyon KANONİK part-bearing → kesinlik üretilebilir.
+    raw: "Televizyon için duvar askı aparatı arıyorum",
+    verdict: "PART",
+    categoryId: "technology",
+    brand: null,
+    model: null,
+    parent: "televizyon",
+    part: "duvar askı aparatı",
+  },
+
+  // --- 1E: DOĞRULANMIŞ KATALOG İLİŞKİSİ (parent claim var, kanıt da var) ---
+  {
+    raw: "Golf 7 dizel çıkma motor arıyorum",
+    verdict: "PART",
+    categoryId: "automotive",
+    brand: "Volkswagen",
+    part: "dizel çıkma motor",
+  },
+  {
+    raw: "MacBook için şarj adaptörü lazım",
+    verdict: "PART",
+    categoryId: "technology",
+    brand: "Apple",
+    model: "MacBook",
+    part: "şarj adaptörü",
+  },
+];
+
+const byVerdict = (v: CompatCase["verdict"]) =>
+  COMPAT_CASES.filter((c) => c.verdict === v);
+
+/** İfade herhangi bir korunmuş yüzeyde duruyor mu? (kayıp = hiçbirinde yok) */
+function preservedSurfaces(s: ReturnType<typeof surfacesFor>): string {
+  return fold(
+    [
+      s.text,
+      s.headline,
+      String(s.part ?? ""),
+      String(s.subjectName ?? ""),
+      s.ambiguityMessages.join(" | "),
+    ].join(" ~ "),
+  );
+}
+
+/**
+ * Tablonun BİLDİRİLMİŞ her alanını tek biçimde sınar. Bildirilmeyen alan
+ * sınanmaz — böylece bir satır yalnız ilgilendiği boyutu iddia eder ve
+ * assertion gücü satır başına açıkça okunur.
+ */
+function assertCompatCase(c: CompatCase): void {
+  const s = surfacesFor(c.raw);
+  const at = (msg: string) => `${c.raw}: ${msg}`;
+
+  if (c.verdict === "PART") {
+    assert.equal(s.subjectKind, "PART", at(`kesin PART olmalı (${s.subjectKind})`));
+  } else if (c.verdict === "NOT_PART") {
+    assert.notEqual(s.subjectKind, "PART", at("parça ilişkisi kurulamaz"));
+  } else {
+    assert.ok(
+      !(s.subjectKind === "PART" && s.subjectStatus === "CONFIDENT"),
+      at(`yetkinlik yokken KESİN PART üretilemez (${s.subjectKind}/${s.subjectStatus})`),
+    );
+  }
+  if (c.subjectKind) {
+    assert.equal(s.subjectKind, c.subjectKind, at(`konu türü (${s.subjectKind})`));
+  }
+  if (c.categoryId) {
+    assert.equal(
+      s.categoryId,
+      c.categoryId,
+      at(`kategori kanonik üst ürünün alanından gelmeli (${s.categoryId})`),
+    );
+  }
+  if (c.brand !== undefined) {
+    assert.equal(
+      c.brand === null ? s.brand : fold(s.brand ?? ""),
+      c.brand === null ? null : fold(c.brand),
+      at(`marka (${JSON.stringify(s.brand)})`),
+    );
+  }
+  if (c.model !== undefined) {
+    assert.equal(
+      c.model === null ? s.model : fold(s.model ?? ""),
+      c.model === null ? null : fold(c.model),
+      at(`model (${JSON.stringify(s.model)})`),
+    );
+  }
+  if (c.parent) {
+    assert.ok(
+      fold(s.parentProduct ?? "").includes(fold(c.parent)),
+      at(`üst ürün '${c.parent}' yok (${s.parentProduct})`),
+    );
+  }
+  if (c.part) {
+    assert.ok(
+      fold(s.part ?? "").includes(fold(c.part)),
+      at(`parça '${c.part}' eksik (${JSON.stringify(s.part)})`),
+    );
+    assert.ok(
+      fold(s.text).includes(fold(c.part)),
+      at(`profesyonel metinde parça eksik → '${s.text}'`),
+    );
+    assert.ok(
+      s.parentModel == null || fold(s.parentModel) !== fold(c.part),
+      at(`parentEntity.model parçayı taşıyor (${s.parentModel})`),
+    );
+  }
+  if (c.headlinePart && c.part) {
+    assert.ok(
+      fold(s.headline).includes(fold(c.part)),
+      at(`başlıkta parça yok → '${s.headline}'`),
+    );
+  }
+  if (c.parent) {
+    assert.ok(
+      fold(s.text).includes(fold(c.parent)),
+      at(`profesyonel metinde üst ürün eksik → '${s.text}'`),
+    );
+  }
+  if (c.keep) {
+    assert.ok(
+      preservedSurfaces(s).includes(fold(c.keep)),
+      at(`'${c.keep}' hiçbir korunmuş yüzeyde yok → ${preservedSurfaces(s)}`),
+    );
+  }
+  if (c.reason) {
+    assert.ok(
+      s.ambiguityMessages.some((m) => c.reason!.test(m)),
+      at(`gerekçe ${c.reason} olarak kaydedilmeli → ${JSON.stringify(s.ambiguityMessages)}`),
+    );
+  }
+}
+
+check("I21: katalog dışı parça da istenen şey olarak korunur (KB-12 açık dünya)", () => {
+  /**
+   * Sözleşme: kanonik bir üst ürün varken kullanıcı "… İÇİN <X>" yazdıysa X
+   * istenen şeydir. X katalogda OLMASA BİLE korunur — katalog allowlist
+   * değildir. X model olamaz, sessizce kaybolamaz.
+   *
+   * Tablo hem katalogda TANINAN ("rezistans") hem TANINMAYAN ("su giriş
+   * ventili") örnekleri, hem de üst ürün kanıtı bulunmayan negatifleri
+   * birlikte taşır; kelimeye özel liste sınanmaz.
+   */
+  for (const c of COMPAT_CASES) assertCompatCase(c);
+
+  // 'ev'/'ofis' üst ürün ALANINA da sızamaz.
+  for (const [raw, token] of [
+    ["Ev için klima arıyorum", "ev"],
+    ["Ofis için televizyon arıyorum", "ofis"],
+  ] as const) {
+    const s = surfacesFor(raw);
+    assert.ok(
+      !fold(s.parentProduct ?? "").includes(token),
+      `${raw}: '${token}' üst ürün olamaz (${s.parentProduct})`,
+    );
+  }
+});
+
+check("I22: başlık zenginleştirilmiş parça adını kaybetmez (KB-11 başlık)", () => {
+  const s = surfacesFor("Heidelberg SM 74 için nemlendirme pompası arıyorum");
+  for (const must of ["heidelberg", "sm 74", "nemlendirme pompasi"]) {
+    assert.ok(
+      fold(s.headline).includes(must),
+      `başlıkta '${must}' yok → '${s.headline}'`,
+    );
+  }
+  // Aynı bilgi iki kez yazılmamalı.
+  const pompaCount = (fold(s.headline).match(/pompa/g) ?? []).length;
+  assert.equal(pompaCount, 1, `başlıkta 'pompa' ${pompaCount} kez → '${s.headline}'`);
+});
+
+check("I23: konum belirteci parça adına iki kez eklenemez", () => {
+  /**
+   * "ön far" + position "ön" → "ön ön far". Genel kural: konum belirteci parça
+   * adının başında ZATEN varsa tekrar eklenmez. Cümleye özel değiştirme yok.
+   */
+  for (const raw of ["Mercedes C180 için ön far arıyorum", "C180 ön far"]) {
+    const s = surfacesFor(raw);
+    for (const surface of [s.text, s.headline, String(s.part ?? "")]) {
+      assert.ok(
+        !/\bon\s+on\b/.test(fold(surface)),
+        `${raw}: bitişik tekrar üretildi → '${surface}'`,
+      );
+    }
+    assert.ok(fold(s.text).includes("on far"), `${raw}: 'ön far' kayboldu → '${s.text}'`);
+    assert.ok(fold(s.headline).includes("c180"), `${raw}: C180 kayboldu → '${s.headline}'`);
+  }
+  const explicit = surfacesFor("Mercedes C180 için ön far arıyorum");
+  assert.ok(
+    fold(explicit.text).includes("mercedes"),
+    `açık marka metinde korunmalı → '${explicit.text}'`,
+  );
+});
+
+check("I25: amaç/yer ifadesi üst ürün değildir — 'ev için klima' emlak talebi olamaz", () => {
+  /**
+   * "X için Y" yapısında X HER ZAMAN üst ürün değildir:
+   *   - X gerçek bir ürün/makine ise  → Y uyumlu parça olabilir
+   *   - X kullanım YERİ / AMAÇ ise     → Y asıl talep konusudur
+   *
+   * Ölçülen hata: "Ev için klima arıyorum" → kategori real-estate, subject
+   * REAL_ESTATE, metin "konut arıyorum." — kullanıcının yazdığı KLİMA
+   * tamamen kayboluyor. Oysa `productType = "Klima"` zaten yakalanmış durumda;
+   * yani ayırt edici sinyal sistemde var, kullanılmıyor.
+   */
+  const klima = surfacesFor("Ev için klima arıyorum");
+  assert.notEqual(
+    klima.subjectKind,
+    "REAL_ESTATE",
+    `'Ev için klima' emlak talebi olamaz (kind=${klima.subjectKind})`,
+  );
+  assert.ok(
+    fold(klima.text).includes("klima"),
+    `klima metinden düşmemeli → '${klima.text}'`,
+  );
+  assert.ok(
+    !fold(klima.text).includes("konut"),
+    `'konut arıyorum'a düşmemeli → '${klima.text}'`,
+  );
+  assert.ok(
+    fold(klima.headline).includes("klima"),
+    `başlıkta klima olmalı → '${klima.headline}'`,
+  );
+
+  // Ofis/televizyon bugün doğru — kilitle.
+  const tv = surfacesFor("Ofis için televizyon arıyorum");
+  assert.ok(fold(tv.text).includes("televizyon"), `→ '${tv.text}'`);
+  assert.notEqual(tv.subjectKind, "PART", "televizyon parça olamaz");
+
+  // GERÇEK emlak talepleri bozulmamalı.
+  for (const raw of ["Ev arıyorum", "Ankara'da 2+1 ev arıyorum"]) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.subjectKind,
+      "REAL_ESTATE",
+      `${raw}: gerçek emlak talebi kalmalı (kind=${s.subjectKind})`,
+    );
+  }
+
+  // Hizmet niyeti korunmalı — bütün ürün talebine zorlanmamalı.
+  const servis = surfacesFor("Ev için klima servisi arıyorum");
+  assert.equal(
+    servis.subjectKind,
+    "SERVICE",
+    `hizmet niyeti korunmalı (kind=${servis.subjectKind})`,
+  );
+
+  // Markasız gerçek parça ilişkisi korunmalı.
+  const rez = surfacesFor("Bulaşık makinesi için rezistans arıyorum");
+  assert.ok(
+    fold(rez.text).includes("rezistans"),
+    `markasız parça ilişkisi korunmalı → '${rez.text}'`,
+  );
+});
+
+/* ------------------------------------------------------------------------ *
+ * KANONİK PARÇA TAŞIYICILIĞI (1C/1D) — I27-I33
+ *
+ * Ortak sözleşme:
+ *   - `PART_BEARING` DÜĞÜM bazında, versiyonlanabilir bir KAYNAK dosyadan
+ *     gelir; alan (domain) toplamasıyla üretilemez.
+ *   - Kayıt YOKLUĞU bir RET değildir: talep kesinleştirilmez ama kaybolmaz.
+ *   - Konu, kanonik alanlar ve profesyonel metin AYNI gerçeği anlatır.
+ *   - Üst ürün olarak tüketilen span aynı anda marka/model olamaz.
+ * ------------------------------------------------------------------------ */
+
+/** Kanonik capability kaynağı — generator'ın GİRDİSİ, çıktısı değil. */
+const PART_BEARING_SOURCE_PATH = pathJoin(
+  repoRootForTests(),
+  "data",
+  "taxonomy-sources",
+  "part-bearing-capability.json",
+);
+
+type PartBearingEntry = {
+  nodeId: string;
+  bearing: boolean;
+  scope: "node" | "subtree";
+  source: string;
+  note?: string;
+};
+
+/**
+ * Uyumluluk niteliği taşıyan talep konusu türleri — TEK authority'ye bağlı.
+ * Sistemde bugün ikisi var; `RequestSubjectKind` genişlerse (COMPONENT,
+ * SPARE_PART …) yeni tür buraya eklenir ve aynı kapıdan geçer.
+ */
+const COMPATIBILITY_KINDS = new Set(["PART", "ACCESSORY"]);
+
+/** Kanıt kodları — yalnız bunlar CONFIDENT uyumluluk kararını taşıyabilir. */
+const VERIFIED_PARENT_EVIDENCE = /^parent:(taxonomy-part-bearing|catalog-model|branded-designator)$/;
+
+check("I27: SPLIT-BRAIN yasağı — konu, kanonik alanlar ve metin aynı gerçeği anlatır", () => {
+  /**
+   * `subject.kind === PART` ise en az şunlar birlikte bulunmalıdır:
+   *   (a) somut istenen parça (kanonik `part` alanı),
+   *   (b) geçerli üst ürün YA DA açıkça kaydedilmiş unresolved parent durumu,
+   *   (c) kullanıcının ifadesini koruyan profesyonel metin.
+   *
+   * Ölçülen HEAD davranışı: "Ev için rezistans" → kind=PART, part=null,
+   * üst ürün=null, metin "konut arıyorum." — üç yüzey üç ayrı şey söylüyor.
+   */
+  for (const c of COMPAT_CASES) {
+    const s = surfacesFor(c.raw);
+    if (!COMPATIBILITY_KINDS.has(s.subjectKind)) continue;
+
+    // (b) Her hâlde: üst ürün ya bilinir ya da belirsizliği KAYDEDİLMİŞtir.
+    const parentKnown = Boolean(s.parentProduct || s.parentModel || s.brand);
+    const parentDeclaredUnresolved = s.ambiguityMessages.some((m) =>
+      /parent|ust_urun|compat/i.test(m),
+    );
+    assert.ok(
+      parentKnown || parentDeclaredUnresolved,
+      `${c.raw}: ${s.subjectKind} ama ne üst ürün var ne de unresolved parent kaydı`,
+    );
+
+    if (s.subjectStatus === "CONFIDENT") {
+      // (a)+(c) KESİN karar tam sözleşmeyi taşır.
+      assert.ok(
+        s.part && s.part.trim().length > 0,
+        `${c.raw}: CONFIDENT ${s.subjectKind} ama kanonik part alanı boş (split-brain)`,
+      );
+      assert.ok(
+        fold(s.text).includes(fold(String(s.part))),
+        `${c.raw}: profesyonel metin parçayı anlatmıyor → '${s.text}' (part=${s.part})`,
+      );
+      continue;
+    }
+
+    /**
+     * TENTATIVE karar da SESSİZ KALAMAZ (1E). Kanonik alan kategori şemasında
+     * bulunmayabilir (ör. baby şemasında `part` yok, alan domain geçişinde
+     * temizleniyor); o zaman bile kullanıcının istediği şey korunmuş bir
+     * yüzeyde durmalıdır. Kaydedilmemiş bir belirsizlik, kayıptır.
+     */
+    assert.ok(
+      c.keep == null || preservedSurfaces(s).includes(fold(c.keep)),
+      `${c.raw}: TENTATIVE ${s.subjectKind} ama istenen şey hiçbir yüzeyde yok → ${preservedSurfaces(s)}`,
+    );
+  }
+});
+
+check("I28: kanıt yetersizken talep kaybolmaz — aday/unresolved korunur", () => {
+  /**
+   * Üst ürün kanıtlanamıyorsa sistem KESİN PART üretmez; ama kullanıcının
+   * yazdığı istenen şey de sessizce düşmez. Ölçülen HEAD davranışı:
+   * "Bosch için rezistans arıyorum" → "Bosch beyaz eşya arıyorum." —
+   * 'rezistans' hiçbir yüzeyde yok, hiçbir kayıt da yok.
+   *
+   * Sınıf başına beklentiler tabloda; burada sınıfın BOŞ OLMADIĞI da
+   * kilitlenir ki tablo sessizce boşalıp invariant no-op'a düşmesin.
+   */
+  const notPart = byVerdict("NOT_PART");
+  const tentative = byVerdict("TENTATIVE");
+  // Sınıf sayıları: tablo sessizce boşalıp invariant no-op'a düşmesin diye.
+  // 1F'de beş satır NOT_PART'tan TENTATIVE'e geçti (bkz. tablo notları).
+  assert.ok(notPart.length >= 4, "NOT_PART sınıfı boşaltılamaz");
+  assert.ok(tentative.length >= 12, "TENTATIVE sınıfı boşaltılamaz");
+  for (const c of [...notPart, ...tentative]) assertCompatCase(c);
+
+  // Yayın hiçbir belirsizlik yüzünden engellenmez — kayıt bir kapı değildir.
+  for (const c of tentative) {
+    const s = surfacesFor(c.raw);
+    assert.ok(
+      s.text.trim().length > 0,
+      `${c.raw}: belirsizlik kaydı profesyonel metni boşaltamaz`,
+    );
+  }
+});
+
+check("I29: kanonik üst üründe parça adı EKSİKSİZ korunur", () => {
+  /**
+   * Ölçülen HEAD kayıpları:
+   *   "Klima için dış ünite fan motoru" → part='dış fan motoru' ('ünite' düştü)
+   *   "Televizyon için güç kartı"       → part='kart', metin 'televizyon
+   *                                        arıyorum.' ('güç' düştü, konu değişti)
+   * Kısaltma bir NORMALİZASYON değil KAYIPTIR.
+   */
+  const parts = byVerdict("PART");
+  assert.ok(parts.length >= 7, "PART sınıfı boşaltılamaz");
+  for (const c of parts) assertCompatCase(c);
+});
+
+check("I30: kısa/çakışabilir alias yüksek güvenli üst ürün kanıtı üretmez", () => {
+  /**
+   * Denetimde EV, SW, PC, TV, UPS, NUC, fan, Cam gibi kısa alias'lar bulundu.
+   * Kural KÖRLEMESİNE YASAK DEĞİLDİR — TV ve PC gerçek ürün türleridir ve
+   * çalışmaya devam etmelidir (tabloda "TV için güç kartı" satırı). Ayırt
+   * edici olan BAĞLAMDIR: alias çözümü belirsizse
+   * (`resolveTaxonomyAlias(...).ambiguous`) yüksek güvenli karar için
+   * kullanılamaz; kanonik etiketle tam ve tekil eşleşme kullanılabilir.
+   */
+  ensureTaxonomyLoaded();
+  assert.ok(
+    resolveTaxonomyAlias("ev")?.ambiguous,
+    "'ev' alias'ı belirsiz olarak işaretlenmeli (emlak ↔ elektrikli araç)",
+  );
+
+  // Kısa alias guard'ı GERÇEK modeli reddetmemeli.
+  for (const [raw, model] of [
+    ["Heidelberg SM 74 için nemlendirme pompası arıyorum", "sm 74"],
+    ["Mercedes C180 için ön far arıyorum", "c180"],
+  ] as const) {
+    assert.equal(
+      fold(surfacesFor(raw).model ?? ""),
+      model,
+      `${raw}: gerçek model reddedilemez`,
+    );
+  }
+});
+
+check("I31: kanonik üst ürün span'i aynı anda marka/model olamaz", () => {
+  /**
+   * Ölçülen hata: "Klima için dış ünite fan motoru arıyorum" →
+   * `categoryId=automotive`, `brand="Klima"`. "Klima" solda KANONİK ÜST ÜRÜN
+   * olarak tüketilmişken aynı jeton marka alanına da yazılıyordu; kategori de
+   * otomotiv yedek parça grubundan geliyordu.
+   *
+   * Kural ada özel DEĞİLDİR, SPAN'e bakar: üst ürün olarak tüketilen span
+   * marka/model adayından güçlüdür ve kategori onun alanından gelir. Tablodaki
+   * `categoryId`/`brand`/`model` alanları hem kuralı hem de regresyon tarafını
+   * (span DIŞINDAKİ gerçek marka silinemez) taşır.
+   */
+  const declared = COMPAT_CASES.filter(
+    (c) => c.categoryId || c.brand !== undefined || c.model !== undefined,
+  );
+  assert.ok(declared.length >= 10, "rol/kategori beklentisi olan satırlar boşaltılamaz");
+  for (const c of declared) assertCompatCase(c);
+
+  // Span DIŞINDA kalan gerçek kullanıcı markası korunur.
+  for (const [raw, brand] of [
+    ["Heidelberg SM 74 için nemlendirme pompası arıyorum", "heidelberg"],
+    ["Mercedes C180 için ön far arıyorum", "mercedes"],
+    ["Arçelik bulaşık makinesi için rezistans arıyorum", "arçelik"],
+  ] as const) {
+    assert.equal(
+      fold(surfacesFor(raw).brand ?? ""),
+      fold(brand),
+      `${raw}: parent span DIŞINDAKİ marka korunmalı`,
+    );
+  }
+});
+
+check("I32: PART_BEARING alan toplamasıyla değil, düğüm bazında bildirilir", () => {
+  /**
+   * Ölçülen hata: yetkinlik generator içinde `PART_BEARING_DOMAINS` ile
+   * veriliyordu — bir alanın İÇİNDEKİ BÜTÜN ürünler aynı yetenekle
+   * işaretleniyordu (appliances 97, technology 113, machinery 305,
+   * automotive 26 = 541 düğüm). Alan üyeliği bir ürünün servis edilebilir
+   * olduğunu KANITLAMAZ.
+   *
+   * Bu invariant dört şeyi birden kilitler:
+   *   1) yetkinliğin kaynağı versiyonlanabilir bir VERİ dosyasıdır,
+   *   2) üretilmiş her PART_BEARING düğüm o kaynağa kadar izlenebilir,
+   *   3) hiçbir alanın ürün düğümlerinin TAMAMI işaretli değildir,
+   *   4) "parça taşımaz" AÇIKÇA bildirilir; sessiz varsayım değildir.
+   */
+  ensureTaxonomyLoaded();
+  const src = JSON.parse(readFileSync(PART_BEARING_SOURCE_PATH, "utf8")) as {
+    capability: string;
+    version: string;
+    entries: PartBearingEntry[];
+  };
+  assert.equal(src.capability, "PART_BEARING", "kaynak dosya yetkinliği bildirmeli");
+  assert.ok(src.version, "kaynak dosya versiyonlanmalı");
+
+  const seen = new Set<string>();
+  for (const e of src.entries) {
+    assert.ok(!seen.has(e.nodeId), `kaynakta yinelenen node id: ${e.nodeId}`);
+    seen.add(e.nodeId);
+    assert.ok(e.source?.trim(), `${e.nodeId}: provenance zorunlu`);
+    assert.ok(
+      e.scope === "node" || e.scope === "subtree",
+      `${e.nodeId}: scope 'node' veya 'subtree' olmalı`,
+    );
+    assert.ok(getTaxonomyNode(e.nodeId), `kaynaktaki node id taksonomide yok: ${e.nodeId}`);
+  }
+
+  const nodes = listAllTaxonomyNodes();
+  const bearing = nodes.filter((n) => n.applicableCapabilities.includes("PART_BEARING"));
+  assert.ok(bearing.length > 0, "hiçbir düğüm PART_BEARING bildirmiyor");
+
+  // (2) Üretilmiş her yetkinlik kaynağa kadar izlenebilir.
+  const positiveIds = new Set(src.entries.filter((e) => e.bearing).map((e) => e.nodeId));
+  for (const n of bearing) {
+    assert.ok(
+      getTaxonomyAncestorIds(n.id).some((id) => positiveIds.has(id)),
+      `${n.id}: PART_BEARING kaynağa kadar izlenemiyor`,
+    );
+  }
+
+  // (3) Hiçbir alanın ürün düğümlerinin TAMAMI işaretli olamaz.
+  const byCategory = new Map<string, { total: number; marked: number }>();
+  for (const n of nodes) {
+    if (n.nodeType !== "PRODUCT_TYPE") continue;
+    const e = byCategory.get(n.categoryId) ?? { total: 0, marked: 0 };
+    e.total += 1;
+    if (n.applicableCapabilities.includes("PART_BEARING")) e.marked += 1;
+    byCategory.set(n.categoryId, e);
+  }
+  for (const [cat, e] of byCategory) {
+    if (e.marked === 0) continue;
+    assert.ok(
+      e.marked < e.total,
+      `${cat}: ürün düğümlerinin TAMAMI (${e.marked}/${e.total}) işaretli — alan toplaması`,
+    );
+  }
+
+  /**
+   * (4) DÜRÜST PROVENANCE (1E). Kurucu düğüm listesini tek tek onaylamadı;
+   * "kurucu kararı"/"founder approved" gibi doğrulanmamış iddia kaynakta
+   * duramaz. Etiket, kaydı gerçekten neyin doğruladığını söylemeli.
+   */
+  for (const e of src.entries) {
+    assert.ok(
+      !/kurucu|founder|approved|onaylad/i.test(e.source),
+      `${e.nodeId}: doğrulanmamış otorite iddiası taşıyan provenance: '${e.source}'`,
+    );
+    assert.ok(
+      /^(seed|verified|derived):/.test(e.source),
+      `${e.nodeId}: provenance tanınan bir sınıfla başlamalı (seed|verified|derived) — '${e.source}'`,
+    );
+    assert.ok(
+      e.note && e.note.trim().length > 0,
+      `${e.nodeId}: kaydın neye dayandığı yazılmalı`,
+    );
+  }
+
+  /**
+   * (5) GENİŞ KESİN NEGATİF YOK (1E). "Daire için kapı kolu" fiziksel bir ürün
+   * talebi olabilir; kurucu emlak/hizmet alanlarının hiçbir zaman uyumluluk
+   * parent'ı olamayacağına dair bir ürün kararı VERMEDİ. Doğrulanmamış geniş
+   * subtree reddi, kürasyon eksiğini kesin bilgi gibi gösterir.
+   */
+  for (const e of src.entries) {
+    assert.ok(
+      !(e.bearing === false && e.scope === "subtree"),
+      `${e.nodeId}: doğrulanmamış geniş subtree EXCLUDED kararı kullanılamaz`,
+    );
+  }
+  const realEstateBearing = bearing.filter((n) => n.categoryId === "real-estate");
+  assert.equal(
+    realEstateBearing.length,
+    0,
+    `emlak düğümü PART_BEARING olamaz: ${realEstateBearing.map((n) => n.id).join(", ")}`,
+  );
+
+  /**
+   * (6) NO-OP KAYIT YOK (1E). Sıfır düğüme uygulanan kayıt, kaynağı gerçekte
+   * olmayan bir kararla şişirir. Her kayıt en az bir mevcut düğüme değmeli.
+   */
+  for (const e of src.entries) {
+    const applied = nodes.filter(
+      (n) =>
+        n.nodeType === "PRODUCT_TYPE" &&
+        getTaxonomyAncestorIds(n.id).includes(e.nodeId),
+    ).length;
+    assert.ok(
+      applied > 0,
+      `${e.nodeId}: hiçbir düğüme uygulanmıyor (no-op kayıt)`,
+    );
+  }
+
+  // Parça düğümünün kendisi parça taşıyıcı değildir (roller karışmaz).
+  assert.equal(
+    bearing.filter((n) => n.nodeType === "PART_TYPE").length,
+    0,
+    "PART_TYPE düğümü PART_BEARING olamaz",
+  );
+
+  // Bu turun kanonik seed'leri bildirilmiş olmalı (ad DEĞİL, yetkinlik sınanır).
+  for (const name of ["Bulaşık Makinesi", "Fırın", "Klima", "Televizyon"]) {
+    assert.ok(
+      bearing.some((n) => fold(n.canonicalName) === fold(name) && n.nodeType === "PRODUCT_TYPE"),
+      `'${name}' kanonik olarak PART_BEARING bildirmeli`,
+    );
+  }
+});
+
+check("I33: kürasyonsuz fiziksel ürün 'parça taşıyamaz' sayılmaz", () => {
+  /**
+   * Yetkinlik kaydı YOKLUĞU bir RET değildir ve bildirilmiş retten AYRI bir
+   * gerekçe alır: birincisinde kürasyon açılır ya da soru sorulur, ikincisinde
+   * sorulmaz. Bu ayrım kaydın SINIFINDA taşınır.
+   */
+  for (const c of byVerdict("TENTATIVE")) {
+    const s = surfacesFor(c.raw);
+    assert.ok(
+      s.ambiguityMessages.some((m) => /capability-unknown/i.test(m)),
+      `${c.raw}: gerekçe 'kürasyon yok' olmalı → ${JSON.stringify(s.ambiguityMessages)}`,
+    );
+    assert.ok(
+      !s.ambiguityMessages.some((m) => /not-part-bearing/i.test(m)),
+      `${c.raw}: kürasyon eksiği 'bildirilmiş ret' gibi kaydedilemez`,
+    );
+  }
+  /**
+   * KARŞI TARAF (1E): "bildirilmiş ret" gerekçesi yalnız kaynakta DOĞRULANMIŞ
+   * bir node-level negatif kaydı varsa üretilebilir. Bugün öyle bir kayıt yok;
+   * dolayısıyla hiçbir talep 'not-part-bearing' iddiası taşıyamaz. Bu, ret
+   * mekanizmasının kaldırıldığı anlamına gelmez — dayanaksız kullanılamayacağı
+   * anlamına gelir.
+   */
+  const src = JSON.parse(readFileSync(PART_BEARING_SOURCE_PATH, "utf8")) as {
+    entries: PartBearingEntry[];
+  };
+  const verifiedNegatives = src.entries.filter((e) => e.bearing === false);
+  for (const raw of [
+    "Ofis için masa ayağı arıyorum",
+    "Daire için kapı kolu arıyorum",
+    "Ev için rezistans arıyorum",
+  ]) {
+    const s = surfacesFor(raw);
+    const claimsRefusal = s.ambiguityMessages.some((m) => /not-part-bearing/i.test(m));
+    assert.equal(
+      claimsRefusal,
+      verifiedNegatives.length > 0,
+      `${raw}: doğrulanmış negatif kaydı ${verifiedNegatives.length} iken 'bildirilmiş ret' iddiası ${claimsRefusal} → ${JSON.stringify(s.ambiguityMessages)}`,
+    );
+  }
+});
+
+
+check("I34: CONFIDENT uyumluluk kararı yalnız doğrulanmış parent kanıtıyla verilir", () => {
+  /**
+   * ANA SORUN (1E): aynı "parent için istenen şey" ilişkisi dört ayrı erken
+   * daldan geçiyordu — kapalı dünya PART_LEMMAS, açık dünya PART, ACCESSORY
+   * ve forcedNeedType. Yalnız ikisi capability kapısından geçiyordu, bu yüzden
+   * güven istenen KELİMENİN sözlükte olup olmamasına göre değişiyordu:
+   *
+   *   "Matbaa makinesi için rulman"          → PART / CONFIDENT   (sözlükte)
+   *   "Matbaa makinesi için kontrol paneli"  → kayıp, MANUFACTURED_ITEM
+   *   "Blender için bıçak bağlantı aparatı"  → ACCESSORY / CONFIDENT
+   *
+   * Sözleşme: bir lemma ya da regex TEK BAŞINA bu invariant'ı geçiremez.
+   * CONFIDENT uyumluluk kararı yalnız doğrulanmış parent kanıtıyla verilir.
+   */
+  for (const c of COMPAT_CASES) {
+    const s = surfacesFor(c.raw);
+    if (!COMPATIBILITY_KINDS.has(s.subjectKind)) continue;
+    if (s.subjectStatus !== "CONFIDENT") continue;
+
+    // (1) Doğrulanmış parent kanıtı.
+    const hasCanonicalEvidence = s.subjectEvidence.some((e) =>
+      VERIFIED_PARENT_EVIDENCE.test(e),
+    );
+    const hasCatalogParent = Boolean(s.parentBrand || s.parentModel || s.model);
+    assert.ok(
+      hasCanonicalEvidence || hasCatalogParent,
+      `${c.raw}: CONFIDENT ${s.subjectKind} ama doğrulanmış parent kanıtı yok (ev=${JSON.stringify(s.subjectEvidence)})`,
+    );
+
+    // (2) Somut istenen şey — kanonik alanda.
+    assert.ok(
+      s.part && s.part.trim().length > 0,
+      `${c.raw}: CONFIDENT ${s.subjectKind} ama kanonik part alanı boş`,
+    );
+
+    // (3) Rol ayrımı: istenen şey üst ürünün modeli/markası olamaz.
+    for (const [role, value] of [
+      ["model", s.model],
+      ["parentEntity.model", s.parentModel],
+      ["brand", s.brand],
+    ] as const) {
+      assert.ok(
+        value == null || fold(value) !== fold(String(s.part)),
+        `${c.raw}: istenen şey '${role}' alanına da yazılmış (${value})`,
+      );
+    }
+
+    // (4) Yüzey metni istenen şeyi taşımalı.
+    assert.ok(
+      fold(s.text).includes(fold(String(s.part))),
+      `${c.raw}: profesyonel metin istenen şeyi düşürüyor → '${s.text}'`,
+    );
+  }
+});
+
+check("I35: aynı parent, farklı bilinirlilik — kesinlik sözlüğe göre değişemez", () => {
+  /**
+   * Ölçülen HEAD davranışı:
+   *   "Matbaa makinesi için rulman"         → PART / CONFIDENT  (kelime sözlükte)
+   *   "Matbaa makinesi için kontrol paneli" → kesinlik yok, ifade cümleden kayıp
+   *
+   * Sözleşme: kesinlik ÜST ÜRÜNDEN gelir, istenen kelimeden değil. Aynı
+   * parent'ın bütün talepleri aynı kesinlik ailesine düşer, istenen şey her
+   * hâlde korunur, gerekçe aynı authority'den gelir ve cümle boşaltılmaz.
+   */
+  const FAMILIES: Array<{ parent: string; bearing: boolean; raws: [string, string][] }> = [
+    {
+      parent: "Matbaa makinesi (kanonik doğrulanmamış)",
+      bearing: false,
+      raws: [
+        ["Matbaa makinesi için rulman arıyorum", "rulman"],
+        ["Matbaa makinesi için kontrol paneli arıyorum", "kontrol paneli"],
+        ["Matbaa makinesi için mürekkep besleme valfi arıyorum", "mürekkep besleme valfi"],
+      ],
+    },
+    {
+      parent: "Bulaşık makinesi (kanonik PART_BEARING)",
+      bearing: true,
+      raws: [
+        ["Bulaşık makinesi için rulman arıyorum", "rulman"],
+        ["Bulaşık makinesi için rezistans arıyorum", "rezistans"],
+        ["Bulaşık makinesi için ön sağ kapı kilit mekanizması arıyorum", "ön sağ kapı kilit mekanizması"],
+      ],
+    },
+  ];
+  for (const family of FAMILIES) {
+    const reasons = new Set<string>();
+    for (const [raw, keep] of family.raws) {
+      const s = surfacesFor(raw);
+      assert.equal(
+        COMPATIBILITY_KINDS.has(s.subjectKind) && s.subjectStatus === "CONFIDENT",
+        family.bearing,
+        `${raw}: kesinlik beklentisi ${family.bearing}, ölçülen ${s.subjectKind}/${s.subjectStatus}`,
+      );
+      assert.ok(
+        preservedSurfaces(s).includes(fold(keep)),
+        `${raw}: '${keep}' hiçbir korunmuş yüzeyde yok → ${preservedSurfaces(s)}`,
+      );
+      assert.ok(s.text.trim().length > 0, `${raw}: profesyonel metin boşaltılamaz`);
+      if (!family.bearing) {
+        const reason = s.ambiguityMessages.find((m) => /compat_target_unresolved/i.test(m));
+        assert.ok(reason, `${raw}: belirsizlik gerekçesi kaydedilmemiş`);
+        // Mesaj biçimi "<kind>:<message>"; gerekçe SINIFI kind içindedir.
+        reasons.add(reason!.split(":").slice(0, 2).join(":"));
+      }
+    }
+    assert.ok(
+      family.bearing || reasons.size === 1,
+      `${family.parent}: gerekçe dala göre değişiyor → ${[...reasons].join(" | ")}`,
+    );
+  }
+});
+
+check("I36: üretim niyeti AÇIK kanıt ister — ilişki yapısı üretim değildir", () => {
+  /**
+   * Ölçülen hata: "Matbaa makinesi için kontrol paneli arıyorum" →
+   * `intent=MANUFACTURE`, `kind=MANUFACTURED_ITEM/CONFIDENT`, profesyonel metin
+   * `"arıyorum."`. Sebep, alanın ADINI taşıyan bir sözcüğün ("matbaa") tek
+   * başına üretim niyeti seçtirmesiydi.
+   *
+   * Kural GENEL ve ada özel DEĞİL: alan adı zayıf sinyaldir, üretim niyetini
+   * ancak AÇIK bir üretim kanıtı (ürettirmek, imal ettirmek, fason, adet +
+   * üretim bağlamı …) taşır. "makine", "matbaa", ürün adı, "için" ve parça adı
+   * birlikte bile MANUFACTURED_ITEM için yeterli değildir.
+   */
+  const NOT_MANUFACTURE: Array<[string, string]> = [
+    ["Matbaa makinesi için kontrol paneli arıyorum", "kontrol paneli"],
+    ["Matbaa makinesi için rulman arıyorum", "rulman"],
+    ["Matbaa makinesi için mürekkep besleme valfi arıyorum", "mürekkep besleme valfi"],
+    ["Tıbbi cihaz için sensör arıyorum", "sensör"],
+    ["Bebek arabası için bardaklık adaptörü arıyorum", "bardaklık adaptörü"],
+    ["Masa için yükseklik ayar mekanizması arıyorum", "yükseklik ayar mekanizması"],
+  ];
+  for (const [raw, item] of NOT_MANUFACTURE) {
+    const s = surfacesFor(raw);
+    assert.notEqual(
+      s.subjectKind,
+      "MANUFACTURED_ITEM",
+      `${raw}: ilişki yapısı üretim talebi sayılamaz (${s.subjectKind})`,
+    );
+    assert.notEqual(
+      s.intent,
+      "MANUFACTURE",
+      `${raw}: açık üretim kanıtı yokken intent MANUFACTURE olamaz`,
+    );
+    // Kullanıcının istediği şey profesyonel metinden düşemez.
+    assert.ok(
+      fold(s.text).includes(fold(item)),
+      `${raw}: profesyonel metin istenen şeyi düşürüyor → '${s.text}'`,
+    );
+  }
+
+  /** AÇIK üretim niyeti — doğru okunmaya devam etmeli. */
+  const MANUFACTURE: string[] = [
+    "Matbaa makinesi ürettirmek istiyorum",
+    "Kontrol paneli imal ettirmek istiyorum",
+    "500 adet metal panel yaptırmak istiyorum",
+    "Fason üretim için plastik parça ürettirmek istiyorum",
+  ];
+  for (const raw of MANUFACTURE) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.intent,
+      "MANUFACTURE",
+      `${raw}: açık üretim niyeti korunmalı (intent=${s.intent}, kind=${s.subjectKind})`,
+    );
+  }
+});
+
+check("I37: istenen şey kategori şemasından BAĞIMSIZ olarak canonical konuda durur", () => {
+  /**
+   * Ölçülen hata: "Bebek arabası için bardaklık adaptörü arıyorum" →
+   * `requestSubject.name = "adaptör"`, `fields.part = null` (baby şemasında
+   * `part` alanı yok, domain geçişinde temizleniyor) ve kullanıcının tam
+   * ifadesi YALNIZ unresolved mesajında yaşıyor.
+   *
+   * Sözleşme: kategori formuna yeni alan EKLENMEZ. Canonical birincil yüzey
+   * `requestSubject.name`dir ve kullanıcının istediği şeyi taşımak zorundadır;
+   * `unresolvedExpressions` yalnız destekleyici audit izidir.
+   */
+  const CASES: Array<[string, string]> = [
+    ["Bebek arabası için bardaklık adaptörü arıyorum", "bardaklık adaptörü"],
+    ["Masa için yükseklik ayar mekanizması arıyorum", "yükseklik ayar mekanizması"],
+    ["Matbaa makinesi için kontrol paneli arıyorum", "kontrol paneli"],
+    ["Blender için bıçak bağlantı aparatı arıyorum", "bıçak bağlantı aparatı"],
+  ];
+  for (const [raw, item] of CASES) {
+    const s = surfacesFor(raw);
+    assert.ok(
+      fold(String(s.subjectName ?? "")).includes(fold(item)),
+      `${raw}: requestSubject.name istenen şeyi taşımıyor (name=${JSON.stringify(s.subjectName)})`,
+    );
+    assert.ok(
+      fold(s.text).includes(fold(item)),
+      `${raw}: profesyonel metin istenen şeyi düşürüyor → '${s.text}'`,
+    );
+    // Audit izi tek başına yeterli SAYILMAZ — yukarısı zaten kanıtlar.
+    assert.ok(
+      s.ambiguityMessages.length === 0 ||
+        s.ambiguityMessages.some((m) => /compat_target_unresolved/i.test(m)),
+      `${raw}: belirsizlik kaydı tanınan sınıfta olmalı`,
+    );
+  }
+});
+
+check("I38: kullanıcının doğruladığı ROL ile üst ürün GÜVENİ ayrı şeylerdir", () => {
+  /**
+   * Kullanıcı browse/structured akışta "Yedek parça" seçtiyse rol
+   * DOĞRULANMIŞTIR ve bir daha sorulmaz. Ama bu seçim hangi ürün için
+   * olduğunu KANITLAMAZ: marka/model uydurulamaz ve ilişki CONFIDENT olamaz.
+   */
+  const rolePinned = (text: string) =>
+    surfacesFor(text, { needType: "part" });
+
+  // (1) Rol seçildi, üst ürün yazılmadı.
+  const bare = rolePinned("yedek parça arıyorum");
+  assert.ok(
+    ["PART", "ACCESSORY"].includes(bare.subjectKind),
+    `rol seçimi korunmalı (${bare.subjectKind})`,
+  );
+  assert.ok(
+    bare.subjectEvidence.some((e) => /user-confirmed-role/i.test(e)),
+    `kullanıcı onayı kanıt olarak kaydedilmeli → ${JSON.stringify(bare.subjectEvidence)}`,
+  );
+  assert.notEqual(
+    bare.subjectStatus,
+    "CONFIDENT",
+    "üst ürün kanıtlanmadan ilişki KESİN sayılamaz",
+  );
+  assert.equal(bare.parentBrand, null, "marka uydurulamaz");
+  assert.equal(bare.parentModel, null, "model uydurulamaz");
+  assert.ok(
+    bare.subjectEvidence.some((e) => /parent-required|parent-capability-unknown/i.test(e)),
+    `üst ürünün gerektiği kaydedilmeli → ${JSON.stringify(bare.subjectEvidence)}`,
+  );
+  // Rol bir daha SORULMAZ, üst ürün sorulur.
+  assert.ok(
+    !bare.nextQuestionKeys.includes("needType"),
+    `rol tekrar sorulamaz → ${bare.nextQuestionKeys.join(",")}`,
+  );
+  assert.ok(
+    bare.nextQuestionKeys.length > 0,
+    "üst ürünü netleştirecek soru sorulmalı",
+  );
+
+  // (2) Rol seçildi VE doğrulanmış üst ürün yazıldı → ilişki kesinleşebilir.
+  const withParent = rolePinned("Bulaşık makinesi için rezistans arıyorum");
+  assert.equal(withParent.subjectKind, "PART", "rol korunmalı");
+  assert.equal(withParent.subjectStatus, "CONFIDENT", "doğrulanmış üst üründe ilişki kesindir");
+  assert.ok(
+    withParent.subjectEvidence.some((e) => /parent:taxonomy-part-bearing/.test(e)),
+    `üst ürün kanıtı kaydedilmeli → ${JSON.stringify(withParent.subjectEvidence)}`,
+  );
+
+  // (3) Seçim yok, üst ürün iddiası yok → authority yanlışlıkla reddetmez.
+  const free = surfacesFor("tahliye pompası arıyorum");
+  assert.equal(free.subjectKind, "PART", `serbest metin bozulmamalı (${free.subjectKind})`);
+  assert.equal(free.subjectStatus, "CONFIDENT", "üst ürün iddiası yokken ceza verilmez");
+  assert.ok(
+    fold(free.text).includes("tahliye pompasi"),
+    `istenen şey korunmalı → '${free.text}'`,
+  );
+});
 
 check("I12: browsing a whole-product leaf clears stale part/accessory context", () => {
   // Ara grup metni ("… & Aksesuar") ACCESSORY kalıntısı bırakır — ürün

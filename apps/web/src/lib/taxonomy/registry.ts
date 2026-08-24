@@ -220,6 +220,34 @@ export function isTaxonomyLeaf(node: TaxonomyNode): boolean {
   return children.length === 0 || LEAF_TYPES.has(node.nodeType);
 }
 
+/**
+ * Bir ifadeye karşılık gelen BÜTÜN düğümler + eşleşmenin gücü.
+ *
+ * `resolveTaxonomyAlias` yalnız en derin adayı döndürür ve geri kalanını
+ * `ambiguous` bayrağına indirger; bir kararın "adaylar aynı şeyi mi
+ * söylüyor?" diye sorabilmesi için ham aday kümesi gerekir. İndeks aynı
+ * indekstir — ikinci bir sözlük kurulmaz.
+ *
+ * `canonical`: ifade en az bir düğümün KANONİK adıyla birebir eşleşiyor.
+ * Kanonik eşleşme alias eşleşmesinden güçlü kanıttır ("Klima" düğüm adıdır,
+ * "EV" yalnız bir kısaltmadır).
+ */
+export function listTaxonomyAliasCandidates(term: string): {
+  nodes: TaxonomyNode[];
+  canonical: boolean;
+} {
+  ensureTaxonomyLoaded();
+  const key = foldLabel(term);
+  if (!key) return { nodes: [], canonical: false };
+  const nodes = (state.aliasIndex.get(key) ?? [])
+    .map((id) => state.byId.get(id))
+    .filter((n): n is TaxonomyNode => Boolean(n));
+  return {
+    nodes,
+    canonical: nodes.some((n) => foldLabel(n.canonicalName) === key),
+  };
+}
+
 export function resolveTaxonomyAlias(
   term: string,
   categoryId?: string,

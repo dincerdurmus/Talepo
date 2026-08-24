@@ -36,6 +36,25 @@ function automotiveNeedType(state: CanonicalRequestState): string | null {
   return null;
 }
 
+/**
+ * BÜTÜN ÜRÜN BESTECİSİ, PARÇA TALEBİNİ SAHİPLENEMEZ (1C).
+ *
+ * `isTv`/`isVacuum` ürüne özel bestecilerdir ve `part` alanını hiç okumazlar.
+ * Ölçülen sonuç: "Televizyon için güç kartı arıyorum" → "televizyon arıyorum."
+ * Konu PARÇA, kanonik alan "güç kartı", cümle ise bütün bir televizyon
+ * talebi — üç yüzey üç ayrı şey söylüyordu.
+ *
+ * Kural ürüne özel değildir: konu parça VE somut bir parça adı varsa bu
+ * talep bütün ürün talebi değildir, ilgili uyumluluk rotasına gider.
+ */
+function hasCompatibilityPartSubject(state: CanonicalRequestState): boolean {
+  if (!fieldValue(state, "part") && !canonicalRequestedItem(state)) return false;
+  return (
+    state.understanding.requestSubject.kind.value === "PART" ||
+    fieldValue(state, "needType") === "part"
+  );
+}
+
 function isTv(state: CanonicalRequestState): boolean {
   const pt = fieldValue(state, "productType")?.toLocaleLowerCase("tr-TR") ?? "";
   const raw = (state.understanding.rawInput ?? "").toLocaleLowerCase("tr-TR");
@@ -402,12 +421,31 @@ function compatibilityParentProduct(
  * `part` alanını hiç okumaz ve pompa tamamen kaybolur (ölçüldü). Bu yüzden
  * sınır ile bu yol birlikte gider.
  */
+/**
+ * İSTENEN ŞEY KATEGORİ ŞEMASINDAN BAĞIMSIZDIR (1F).
+ *
+ * `fields.part` yalnız o kategorinin şemasında `part` alanı varsa dolar;
+ * baby/mobilya/sağlık formlarında yoktur ve domain geçişinde temizlenir.
+ * Kategoriye alan EKLEMEK bir ürün kararıdır — bunun yerine cümle kanonik
+ * gerçeğe düşer: konu bir uyumluluk konusuysa istenen şey konunun kendisidir.
+ * Ölçülen kayıp buydu: "Bebek arabası için bardaklık adaptörü arıyorum" →
+ * "bebek arabası arıyorum."
+ */
+function canonicalRequestedItem(state: CanonicalRequestState): string | null {
+  const subject = state.understanding.requestSubject;
+  const kind = subject?.kind?.value;
+  if (kind !== "PART" && kind !== "ACCESSORY") return null;
+  const value =
+    subject.displayPhrase?.value ?? subject.name?.value ?? null;
+  return value ? String(value).trim() || null : null;
+}
+
 function composeNonAutomotiveCompatibilityPart(
   state: CanonicalRequestState,
   role: ReturnType<typeof resolveBrowseSemanticRole>,
 ): string | null {
   if (isAutomotiveDomain(state)) return null;
-  const part = fieldValue(state, "part");
+  const part = fieldValue(state, "part") ?? canonicalRequestedItem(state);
   if (!part) return null;
   return composeCompatibilityPartSentence({
     brand: fieldValue(state, "brand"),
@@ -581,8 +619,9 @@ export function composeNaturalRequestText(
 function composeNaturalRequestTextCore(
   state: CanonicalRequestState,
 ): string {
-  if (isTv(state)) return composeTv(state);
-  if (isVacuum(state)) return composeVacuum(state);
+  const wholeProductComposerAllowed = !hasCompatibilityPartSubject(state);
+  if (wholeProductComposerAllowed && isTv(state)) return composeTv(state);
+  if (wholeProductComposerAllowed && isVacuum(state)) return composeVacuum(state);
 
   const role = resolveBrowseSemanticRole({
     categoryId: state.categoryId,
@@ -628,7 +667,9 @@ function composeNaturalRequestTextCore(
     return composeAutoPart(state);
   }
   if (isAutoVehicle(state)) return composeAutoVehicle(state);
-  if (composeDomainId(state) === "real-estate") {
+  // Bütün-varlık bestecisi de uyumluluk talebini sahiplenemez (1C kuralının
+  // aynısı): "Daire için kapı kolu arıyorum" → "konut arıyorum." oluyordu.
+  if (wholeProductComposerAllowed && composeDomainId(state) === "real-estate") {
     return composeRealEstate(state);
   }
   // Otomotiv dışı uyumluluk parçası: üst ürün cümlede kalmalı (KB-10).

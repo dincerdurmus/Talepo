@@ -71,7 +71,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:cnc-torna",
@@ -85,6 +86,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -97,7 +101,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:cnc-freze",
@@ -111,6 +116,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -122,7 +130,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:isleme-merkezi",
@@ -136,6 +145,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -145,7 +157,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:universal-torna",
@@ -159,6 +172,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -168,7 +184,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:freze-tezgahi",
@@ -182,6 +199,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -193,7 +213,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:taslama-tezgahi",
@@ -207,6 +228,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -218,7 +242,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:talasli-imalat:edm-dalma-erozyon",
@@ -232,6 +257,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -264,7 +292,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:eksantrik-pres",
@@ -278,6 +307,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -289,7 +321,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:hidrolik-pres",
@@ -303,6 +336,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -314,7 +350,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:abkant-pres",
@@ -328,6 +365,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -339,7 +379,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:giyotin-makas",
@@ -353,6 +394,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -362,7 +406,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:rulo-acici-straightener",
@@ -376,6 +421,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -385,7 +433,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:pres-ve-sekillendirme:punc-punch-press",
@@ -399,6 +448,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -431,7 +483,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:plastik-enjeksiyon-makinesi",
@@ -445,6 +498,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -456,7 +512,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:sisirme-makinesi",
@@ -470,6 +527,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -481,7 +541,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:enjeksiyon-plastik:ekstruder",
@@ -495,6 +556,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -527,7 +591,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:mig-mag-kaynak-makinesi",
@@ -541,6 +606,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -550,7 +618,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:tig-kaynak-makinesi",
@@ -564,6 +633,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -573,7 +645,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:robot-kaynak-hucresi",
@@ -587,6 +660,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -598,7 +674,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:kaynak-ve-birlestirme:spot-kaynak",
@@ -612,6 +689,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -644,7 +724,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:hava-kompresoru",
@@ -658,6 +739,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -669,7 +753,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:vidali-kompresor",
@@ -683,6 +768,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -692,7 +780,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:vakum-pompasi",
@@ -706,6 +795,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -717,7 +809,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:hava-ve-akiskan:endustriyel-chiller",
@@ -731,6 +824,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -763,7 +859,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:tasima:forklift",
@@ -777,6 +874,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -786,7 +886,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:tasima:reach-truck",
@@ -800,6 +901,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -811,7 +915,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:tasima:transpalet",
@@ -825,6 +930,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -836,7 +944,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:tasima:vinc-monoray",
@@ -850,6 +959,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -861,7 +973,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:tasima:konveyor-hatti",
@@ -875,6 +988,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -928,7 +1044,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:lazer-kesim",
@@ -942,6 +1059,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -953,7 +1073,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:plazma-kesim",
@@ -967,6 +1088,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -978,7 +1102,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:oksijen-kesim",
@@ -992,6 +1117,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1003,7 +1131,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:su-jeti-kesim",
@@ -1017,6 +1146,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1026,7 +1158,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:giyotin-kesim",
@@ -1040,6 +1173,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1051,7 +1187,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:serit-testere",
@@ -1065,6 +1202,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1076,7 +1216,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:disk-testere",
@@ -1090,6 +1231,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1099,7 +1243,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:kesim-makinesi:kesim-teknolojileri:cnc-router-ahsap-kesim",
@@ -1113,6 +1258,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1165,7 +1313,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:shrink-paketleme",
@@ -1179,6 +1328,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1190,7 +1342,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:flowpack",
@@ -1204,6 +1357,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1215,7 +1371,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:dikey-form-fill-seal",
@@ -1229,6 +1386,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1240,7 +1400,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:karton-doldurma",
@@ -1254,6 +1415,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1265,7 +1429,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:palet-strec-makinesi",
@@ -1279,6 +1444,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1290,7 +1458,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:etiketleme-makinesi",
@@ -1304,6 +1473,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1315,7 +1487,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:dozaj-dolum-makinesi",
@@ -1329,6 +1502,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1340,7 +1516,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:paketleme-makinesi:paketleme:kapak-kapama",
@@ -1354,6 +1531,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1685,7 +1865,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-cnc",
@@ -1699,6 +1880,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1708,7 +1892,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-pres",
@@ -1722,6 +1907,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1731,7 +1919,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-forklift",
@@ -1745,6 +1934,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1754,7 +1946,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-paketleme-hatti",
@@ -1768,6 +1961,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -1777,7 +1973,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:ikinci-el-makine:ikinci-el-gruplar:2-el-kompresor",
@@ -1791,6 +1988,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -6936,7 +7136,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri:degisken-frekans-ve-ayarlanabilir-hiz-suruculeri",
@@ -6950,6 +7151,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {
@@ -6959,7 +7163,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:uretim-makinesi:otomasyon-bilesenleri:programlanabilir-mantik-denetleyicileri",
@@ -6973,6 +7178,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "derived:machinery-spare-part-taxonomy"
       }
     },
     {

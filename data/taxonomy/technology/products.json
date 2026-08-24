@@ -697,7 +697,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:technology:donanim:tv-ve-goruntu:televizyon",
@@ -711,6 +712,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "seed:quality-gate-1d-verified"
       }
     },
     {

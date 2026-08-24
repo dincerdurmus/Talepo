@@ -72,7 +72,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:binek-otomobil",
@@ -86,6 +87,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -97,7 +101,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:suv-crossover",
@@ -111,6 +116,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -120,7 +128,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:hatchback",
@@ -134,6 +143,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -143,7 +155,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:sedan",
@@ -157,6 +170,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -168,7 +184,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:station-wagon",
@@ -182,6 +199,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -193,7 +213,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:ticari-van",
@@ -207,6 +228,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -216,7 +240,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:pickup",
@@ -230,6 +255,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -239,7 +267,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:minibus-midibus",
@@ -253,6 +282,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -265,7 +297,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:elektrikli-arac",
@@ -279,6 +312,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -291,7 +327,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:arac-segmenti:hibrit-arac",
@@ -305,6 +342,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -14032,7 +14072,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:tasit-tipleri:hava-tasitlari",
@@ -14046,6 +14087,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -14055,7 +14099,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:tasit-tipleri:jetski",
@@ -14069,6 +14114,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     },
     {
@@ -14078,7 +14126,8 @@
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:automotive:arac-satin-alma:tasit-tipleri:motorlu-tasitlar",
@@ -14092,6 +14141,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "derived:automotive-part-catalog"
       }
     }
   ]

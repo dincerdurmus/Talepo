@@ -81,6 +81,150 @@ function capsFor(categoryId: string, nodeType: TaxonomyNodeType): string[] {
   return ["ATTRIBUTE_SCHEMA"];
 }
 
+/**
+ * PARÇA TAŞIYICILIĞI — DÜĞÜM BAZINDA, KANONİK KAYNAKTAN (1D).
+ *
+ * Kaldırılan model: `PART_BEARING_DOMAINS` bir ALAN listesiydi ve o alandaki
+ * BÜTÜN ürün düğümlerini aynı yetenekle işaretliyordu (541 düğüm). Alan
+ * üyeliği bir ürünün servis edilebilir olduğunu KANITLAMAZ: "Cam" makine
+ * alanındadır ama parça taşımaz.
+ *
+ * Yeni model: kaynak `data/taxonomy-sources/part-bearing-capability.json`.
+ * Her kayıt kanonik bir node id'ye ve bir provenance'a bağlıdır. Üç durum
+ * ayrıdır ve bu ayrım tüketiciye kadar taşınır:
+ *   PART_BEARING      — bildirilmiş: parça taşır.
+ *   NOT_PART_BEARING  — bildirilmiş RET (emlak varlığı, hizmet).
+ *   (kayıt yok)       — henüz kürasyon yapılmamış. RET DEĞİLDİR.
+ *
+ * Türetim denendi ve yetmedi: appliances/technology'de hiç PART_TYPE düğüm
+ * yok, automotive/machinery'de ise parça düğümleri ürün düğümlerinin KARDEŞİ
+ * (torunu değil). Bu yüzden otomotiv/makine kayıtları "derived:" provenance
+ * ile o kanıta atıfla, beyaz eşya/teknoloji kayıtları "curated:"/"verified:"
+ * ile kürasyon kararına atıfla girilmiştir.
+ */
+const PART_BEARING_SOURCE = path.join(
+  REPO_ROOT,
+  "data",
+  "taxonomy-sources",
+  "part-bearing-capability.json",
+);
+
+type PartBearingEntry = {
+  nodeId: string;
+  bearing: boolean;
+  scope: "node" | "subtree";
+  source: string;
+  note?: string;
+};
+
+function applyPartBearingCapability(
+  domains: Array<{ id: string; nodes: TaxonomyNode[] }>,
+): void {
+  if (!existsSync(PART_BEARING_SOURCE)) {
+    throw new Error(`PART_BEARING kaynağı yok: ${PART_BEARING_SOURCE}`);
+  }
+  const file = JSON.parse(readFileSync(PART_BEARING_SOURCE, "utf8")) as {
+    capability: string;
+    version: string;
+    entries: PartBearingEntry[];
+  };
+  if (file.capability !== "PART_BEARING") {
+    throw new Error(`Beklenmeyen capability: ${file.capability}`);
+  }
+
+  const byId = new Map<string, TaxonomyNode>();
+  const childrenOf = new Map<string, TaxonomyNode[]>();
+  for (const d of domains) {
+    for (const n of d.nodes) {
+      byId.set(n.id, n);
+      const list = childrenOf.get(n.parentId ?? "") ?? [];
+      list.push(n);
+      childrenOf.set(n.parentId ?? "", list);
+    }
+  }
+
+  const verdict = new Map<string, { bearing: boolean; entry: PartBearingEntry }>();
+  const seen = new Set<string>();
+  for (const entry of file.entries) {
+    if (seen.has(entry.nodeId)) {
+      throw new Error(`PART_BEARING kaynağında yinelenen node id: ${entry.nodeId}`);
+    }
+    seen.add(entry.nodeId);
+    if (!entry.source?.trim()) {
+      throw new Error(`PART_BEARING kaydında provenance yok: ${entry.nodeId}`);
+    }
+    const root = byId.get(entry.nodeId);
+    if (!root) {
+      throw new Error(`PART_BEARING kaynağındaki node id taksonomide yok: ${entry.nodeId}`);
+    }
+    // scope=subtree deterministik BFS ile yalnız PRODUCT_TYPE torunlara iner.
+    const targets: TaxonomyNode[] = [];
+    if (entry.scope === "subtree") {
+      const queue = [root];
+      const walked = new Set<string>();
+      while (queue.length) {
+        const cur = queue.shift()!;
+        if (walked.has(cur.id)) continue;
+        walked.add(cur.id);
+        if (cur.nodeType === "PRODUCT_TYPE") targets.push(cur);
+        for (const child of childrenOf.get(cur.id) ?? []) queue.push(child);
+      }
+    } else {
+      if (root.nodeType !== "PRODUCT_TYPE") {
+        throw new Error(
+          `scope=node yalnız PRODUCT_TYPE düğüme verilebilir: ${entry.nodeId} (${root.nodeType})`,
+        );
+      }
+      targets.push(root);
+    }
+    /**
+     * NO-OP KAYIT YOK (1E). Sıfır düğüme uygulanan bir kayıt, kaynağı
+     * gerçekte var olmayan bir kararla şişirir ve okuyana kapsamı olduğundan
+     * geniş gösterir. Ölçülen örnek: `tax:services` altında hiç PRODUCT_TYPE
+     * düğüm yok, kayıt hiçbir şey yapmıyordu.
+     */
+    if (targets.length === 0) {
+      throw new Error(
+        `PART_BEARING kaydı hiçbir düğüme uygulanmıyor (no-op): ${entry.nodeId}`,
+      );
+    }
+    /**
+     * Doğrulanmamış geniş RET kullanılamaz (1E). Kesin negatif yalnız açık ve
+     * doğrulanmış bir ürün kararına dayanabilir ve düğüm bazında verilir.
+     */
+    if (entry.bearing === false && entry.scope === "subtree") {
+      throw new Error(
+        `Kesin negatif yalnız scope=node olabilir: ${entry.nodeId}`,
+      );
+    }
+    for (const node of targets) {
+      const prev = verdict.get(node.id);
+      if (prev && prev.bearing !== entry.bearing) {
+        throw new Error(
+          `PART_BEARING çelişkisi: ${node.id} hem ${prev.entry.nodeId} hem ${entry.nodeId} kaydından farklı sonuç alıyor`,
+        );
+      }
+      verdict.set(node.id, { bearing: entry.bearing, entry });
+    }
+  }
+
+  let bearing = 0;
+  let excluded = 0;
+  for (const [nodeId, v] of verdict) {
+    const node = byId.get(nodeId)!;
+    const cap = v.bearing ? "PART_BEARING" : "NOT_PART_BEARING";
+    if (!node.applicableCapabilities.includes(cap)) {
+      node.applicableCapabilities = [...node.applicableCapabilities, cap];
+    }
+    node.meta = { ...(node.meta ?? {}), partBearingSource: v.entry.source };
+    if (v.bearing) bearing += 1;
+    else excluded += 1;
+  }
+  console.log(
+    `PART_BEARING: ${bearing} düğüm bildirildi, ${excluded} düğüm açıkça reddedildi (kaynak v${file.version}, ${file.entries.length} kayıt)`,
+  );
+}
+
 function leafTypeFor(categoryId: string, subSlug: string): TaxonomyNodeType {
   if (categoryId === "services") return "SERVICE_TYPE";
   if (categoryId === "automotive" && subSlug === "arac-bakim") return "SERVICE_TYPE";
@@ -2384,6 +2528,8 @@ function main() {
   let anyDomainChanged = false;
   applyHarvestOverlay(domains);
   applyGoogleOverlay(domains);
+  // Yetkinlik EN SON uygulanır: overlay'lerden gelen düğümler de kapsansın.
+  applyPartBearingCapability(domains);
 
   // Enrich aliases for common TR market terms (precision-first)
   for (const d of domains) {

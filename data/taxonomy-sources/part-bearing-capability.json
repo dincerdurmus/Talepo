@@ -1,0 +1,104 @@
+{
+  "capability": "PART_BEARING",
+  "version": "1.1.0",
+  "status": "SEED — ürün kürasyonu yapılmadı",
+  "contract": [
+    "Bu dosya generator'ın GİRDİSİDİR. data/taxonomy/** üretilmiş çıktıdır ve authority değildir.",
+    "Her kayıt kanonik bir taxonomy node id'sine ve bir provenance'a bağlıdır.",
+    "Aynı node id iki kayıtta geçemez; generator bunu hata olarak keser.",
+    "Her kayıt en az bir mevcut düğüme uygulanmalıdır; sıfır eşleşme generator hatasıdır.",
+    "scope=node yalnız o düğümü, scope=subtree o düğümün PRODUCT_TYPE torunlarını kapsar.",
+    "Kaydı OLMAYAN ürün düğümü 'parça taşıyamaz' DEĞİL, 'henüz kürasyon yapılmamış' demektir; talep TENTATIVE/unresolved yoluna düşer.",
+    "bearing=false yalnız AÇIK ve DOĞRULANMIŞ bir ürün kararı varsa ve DÜĞÜM bazında kullanılır. Doğrulanmamış geniş subtree reddi kullanılmaz."
+  ],
+  "provenanceClasses": {
+    "seed:": "Kalite kapısı turunda regresyon örnekleriyle çalıştığı ÖLÇÜLEN başlangıç kaydı. Ürün kürasyonu DEĞİLDİR, pazar verisiyle doğrulanmamıştır ve kürasyon bekler.",
+    "verified:": "Yürürlükteki bir doğrulayıcı fixture'ı bu düğümün parça ilişkisini zaten sözleşme sayıyor.",
+    "derived:": "Depoda hâlihazırda bulunan bir kanıttan (parça kataloğu, PART_TYPE alt ağacı, knowledge profile) türetildi."
+  },
+  "notProductionData": true,
+  "curationPending": [
+    "Buradaki hiçbir kayıt pazar verisiyle ya da tedarikçi envanteriyle doğrulanmadı.",
+    "health, printing, baby, furniture, home-kitchen ve machinery:diger için hiç karar verilmedi — o düğümler UNKNOWN kalır.",
+    "Emlak ve hizmet alanları için kesin negatif karar YOKTUR; 'daire için kapı kolu' gibi bir ifade fiziksel ürün talebi olabilir."
+  ],
+  "entries": [
+    {
+      "nodeId": "tax:appliances:beyaz-esya:bulasik-makinesi",
+      "bearing": true,
+      "scope": "node",
+      "source": "seed:quality-gate-1d-verified",
+      "note": "Regresyon örnekleriyle ölçüldü: 'Arçelik bulaşık makinesi için rezistans', 'Bosch bulaşık makinesi için su giriş ventili'. Ürün kürasyonu değildir; kürasyon bekler."
+    },
+    {
+      "nodeId": "tax:appliances:beyaz-esya:firin",
+      "bearing": true,
+      "scope": "node",
+      "source": "seed:quality-gate-1d-verified",
+      "note": "'Siemens fırın için termostat' ve 'Siemens ankastre fırın için termostat' ile ölçüldü ('ankastre fırın' aynı düğüme çözülür). Ürün kürasyonu değildir; kürasyon bekler."
+    },
+    {
+      "nodeId": "tax:appliances:isitma-sogutma-ve-havalandirma:klima",
+      "bearing": true,
+      "scope": "node",
+      "source": "seed:quality-gate-1d-verified",
+      "note": "'Klima için dış ünite fan motoru' ile ölçüldü; aynı örnek rol çakışması düzeltmesinin de dayanağıdır. Ürün kürasyonu değildir; kürasyon bekler."
+    },
+    {
+      "nodeId": "tax:technology:donanim:tv-ve-goruntu:televizyon",
+      "bearing": true,
+      "scope": "node",
+      "source": "seed:quality-gate-1d-verified",
+      "note": "'Televizyon için güç kartı', 'TV için güç kartı' ve 'Televizyon için duvar askı aparatı' ile ölçüldü. Ürün kürasyonu değildir; kürasyon bekler."
+    },
+    {
+      "nodeId": "tax:appliances:beyaz-esya:buzdolabi",
+      "bearing": true,
+      "scope": "node",
+      "source": "verified:understanding-invariant-I16",
+      "note": "'Arçelik buzdolabı için termostat arıyorum' I16'nın yürürlükteki fixture'ıdır; parça ilişkisi orada zaten sözleşmedir. Pazar verisiyle doğrulanmadı."
+    },
+    {
+      "nodeId": "tax:appliances:beyaz-esya:camasir-makinesi",
+      "bearing": true,
+      "scope": "node",
+      "source": "verified:understanding-invariant-I17",
+      "note": "'Bosch çamaşır makinesi için pompa arıyorum' I17'nin yürürlükteki fixture'ıdır; üst ürünün cümlede kalması orada zaten sözleşmedir. Pazar verisiyle doğrulanmadı."
+    },
+    {
+      "nodeId": "tax:automotive:arac-satin-alma",
+      "bearing": true,
+      "scope": "subtree",
+      "source": "derived:automotive-part-catalog",
+      "note": "Türetim kanıtı: data/catalogs/automotive/automotive-part-taxonomy.json + tax:automotive:yedek-parca altındaki 449 PART_TYPE düğüm + knowledge profile 'automotive/Yedek Parça' (ENTITY_COMPATIBILITY, browse …>part_system>part>position). Kapsam BİLEREK yalnız gerçek araç düğümleri; lastik-ve-jant, arac-bakim ve diger dışarıdadır."
+    },
+    {
+      "nodeId": "tax:machinery:uretim-makinesi",
+      "bearing": true,
+      "scope": "subtree",
+      "source": "derived:machinery-spare-part-taxonomy",
+      "note": "Türetim kanıtı: tax:machinery:yedek-parca altındaki 39 PART_TYPE düğüm + knowledge profile 'machinery/Yedek Parça' (ENTITY_COMPATIBILITY)."
+    },
+    {
+      "nodeId": "tax:machinery:kesim-makinesi",
+      "bearing": true,
+      "scope": "subtree",
+      "source": "derived:machinery-spare-part-taxonomy",
+      "note": "Aynı türetim kanıtı."
+    },
+    {
+      "nodeId": "tax:machinery:paketleme-makinesi",
+      "bearing": true,
+      "scope": "subtree",
+      "source": "derived:machinery-spare-part-taxonomy",
+      "note": "Aynı türetim kanıtı."
+    },
+    {
+      "nodeId": "tax:machinery:ikinci-el-makine",
+      "bearing": true,
+      "scope": "subtree",
+      "source": "derived:machinery-spare-part-taxonomy",
+      "note": "Aynı türetim kanıtı. tax:machinery:diger BİLEREK dışarıdadır — Google uzun kuyruğu yapı malzemesi (Cam) gibi makine olmayan düğümler taşır."
+    }
+  ]
+}

@@ -859,7 +859,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:appliances:beyaz-esya:bulasik-makinesi",
@@ -873,6 +874,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "seed:quality-gate-1d-verified"
       }
     },
     {
@@ -886,7 +890,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:appliances:beyaz-esya:buzdolabi",
@@ -900,6 +905,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "verified:understanding-invariant-I16"
       }
     },
     {
@@ -913,7 +921,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:appliances:beyaz-esya:camasir-makinesi",
@@ -927,6 +936,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "verified:understanding-invariant-I17"
       }
     },
     {
@@ -994,7 +1006,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:appliances:beyaz-esya:firin",
@@ -1008,6 +1021,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "seed:quality-gate-1d-verified"
       }
     },
     {
@@ -1227,7 +1243,8 @@
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ENTITY_SPEC",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:appliances:isitma-sogutma-ve-havalandirma:klima",
@@ -1241,6 +1258,9 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      },
+      "meta": {
+        "partBearingSource": "seed:quality-gate-1d-verified"
       }
     },
     {

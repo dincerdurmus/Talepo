@@ -27,6 +27,7 @@ export {
   getTaxonomyNodesByCategory,
   getSubcategoryTaxonomyNode,
   findTaxonomyTypeUnderSubcategory,
+  listTaxonomyAliasCandidates,
   resolveTaxonomyAlias,
   resolveSchemaIdForNode,
   listAllTaxonomyNodes,

@@ -6,7 +6,17 @@
 export type KnowledgeCapability =
   | "ENTITY_CATALOG"
   | "ENTITY_SPEC"
+  /**
+   * Düğümün kendisi bir PARÇADIR ve bir üst varlıkla uyumluluk taşır.
+   * Yönü parçadan üst ürüne doğrudur — "bu ürün parça taşıyabilir" DEMEZ.
+   */
   | "ENTITY_COMPATIBILITY"
+  /**
+   * Düğüm, servis edilebilir bütün bir üründür: kataloğunda o parça
+   * bulunmasa bile "… için <parça>" talebinin geçerli üst ürünü olabilir.
+   * `ENTITY_COMPATIBILITY`in KARŞI yönüdür ve onun yerine geçmez.
+   */
+  | "PART_BEARING"
   | "ATTRIBUTE_SCHEMA"
   | "SERVICE_SCHEMA"
   | "COMMODITY_SCHEMA";

@@ -4,12 +4,27 @@ export type IntentSignalHit = {
   intent: RequestIntent;
   evidence: string;
   weight: number;
+  /** Alan adı gibi tek başına karar taşıyamayan sinyal (bkz. Lexicon.weak). */
+  weak?: boolean;
 };
 
 type Lexicon = {
   intent: RequestIntent;
   patterns: RegExp[];
   weight: number;
+  /**
+   * ZAYIF SİNYAL (1F): alanın ADINI taşır, NİYETİ değil.
+   *
+   * "matbaa" bir sektör adıdır; "matbaa makinesi için kontrol paneli
+   * arıyorum" bir üretim talebi değil, uyumluluk talebidir. Ölçülen hata tam
+   * olarak buydu: alan adı tek başına MANUFACTURE seçtiriyor, konu
+   * MANUFACTURED_ITEM oluyor ve profesyonel metin "arıyorum."e düşüyordu.
+   *
+   * Zayıf sinyal skora katkı verir ama TEK BAŞINA bir niyet seçtiremez;
+   * yanında en az bir açık kanıt bulunmalıdır. Kural ada özel değildir ve
+   * herhangi bir niyet için kullanılabilir.
+   */
+  weak?: boolean;
 };
 
 const LEXICON: Lexicon[] = [
@@ -52,18 +67,30 @@ const LEXICON: Lexicon[] = [
     ],
   },
   {
+    // AÇIK üretim kanıtı — üretim fiili ya da üretim biçiminin adı.
     intent: "MANUFACTURE",
     weight: 1.2,
     patterns: [
       /\bbastır(?:acağım|acagim|cam)?\b/i,
       /\bbastir(?:acagim|cam)?\b/i,
-      /\bürettir/i,
-      /\burettir/i,
+      // JS \b ASCII-only: Türkçe harften önce sınır olarak kullanılamaz.
+      /(?:^|[^\p{L}\p{N}])ürettir/iu,
+      /(?:^|[^\p{L}\p{N}])urettir/iu,
+      /(?:^|[^\p{L}\p{N}])üret(?:mek|im|ece\w*|iyorum)/iu,
+      /(?:^|[^\p{L}\p{N}])uret(?:mek|im|ece\w*|iyorum)/iu,
       /\bimalat\b/i,
-      /\bbaskı\b/i,
-      /\bbaski\b/i,
-      /\bmatbaa\b/i,
+      /\bimal\s+(?:et\w*|edil\w*)/i,
+      /\bfason\b/i,
+      // "N adet … yaptırmak/ürettirmek" — adet + üretim bağlamı.
+      /(?:\d[\d.]*\s*(?:adet|bin|tane))[\s\S]{0,40}?(?:yaptır|yaptir|ürettir|urettir|imal|üret|uret)/i,
     ],
+  },
+  {
+    // ZAYIF: sektör/alan adı. Tek başına üretim niyeti seçtiremez.
+    intent: "MANUFACTURE",
+    weight: 0.6,
+    weak: true,
+    patterns: [/\bbaskı\b/i, /\bbaski\b/i, /\bmatbaa\b/i],
   },
   {
     intent: "RENT",
@@ -143,6 +170,7 @@ export function collectIntentSignals(normalizedText: string): IntentSignalHit[] 
           intent: entry.intent,
           evidence: m[0],
           weight: entry.weight,
+          weak: entry.weak,
         });
       }
     }
@@ -162,12 +190,28 @@ export function resolveIntentFromSignals(
     return { intent: "UNKNOWN", confidence: 0.2, evidence: [] };
   }
 
-  const scores = new Map<RequestIntent, { score: number; evidence: string[] }>();
+  const scores = new Map<
+    RequestIntent,
+    { score: number; evidence: string[]; strong: number }
+  >();
   for (const hit of hits) {
-    const cur = scores.get(hit.intent) ?? { score: 0, evidence: [] };
+    const cur = scores.get(hit.intent) ?? { score: 0, evidence: [], strong: 0 };
     cur.score += hit.weight;
     cur.evidence.push(hit.evidence);
+    if (!hit.weak) cur.strong += 1;
     scores.set(hit.intent, cur);
+  }
+
+  /**
+   * ZAYIF-SİNYAL KAPISI (1F): bir niyet yalnız alan adı gibi zayıf kanıtlarla
+   * SEÇİLEMEZ. Zayıf sinyal skoru korur (açık kanıt varsa onu güçlendirir)
+   * ama tek başına kararı taşıyamaz.
+   */
+  for (const [intent, row] of [...scores]) {
+    if (row.strong === 0) scores.delete(intent);
+  }
+  if (scores.size === 0) {
+    return { intent: "UNKNOWN", confidence: 0.2, evidence: [] };
   }
 
   // Priority when close: PART/SERVICE/MANUFACTURE/RENT/SELL over generic BUY

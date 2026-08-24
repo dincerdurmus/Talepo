@@ -6,7 +6,16 @@
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isKnownPartNoun, stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
+import { isCanonicalWholeProductPhrase } from "@/lib/taxonomy/phrase-classification";
 import { isRequestedItemNotModel } from "./requested-item-role";
+import {
+  containsPhraseToken,
+  coversRequestedTokens,
+  readRequestedTarget,
+  resolveCompatibilityAuthority,
+  resolvePartBearingParent,
+  splitCompatibilityPhrase,
+} from "./part-relation";
 import { clamp01, uv } from "./provenance";
 import type {
   ParentEntityKind,
@@ -485,7 +494,149 @@ function detectManufactureProduct(text: string): {
 /**
  * Resolve semantic request subject from evidence.
  */
+/**
+ * UYUMLULUK NİTELİĞİ TAŞIYAN TALEP KONULARI (1E).
+ *
+ * Sistemde bugün ikisi var. `RequestSubjectKind` genişlerse (COMPONENT,
+ * SPARE_PART …) yeni tür buraya eklenir ve aynı kapıdan geçer — dal başına
+ * ayrı bir kapı AÇILMAZ, ilk sorunun kaynağı buydu.
+ */
+const COMPATIBILITY_KINDS: ReadonlySet<RequestSubjectKind> = new Set([
+  "PART",
+  "ACCESSORY",
+]);
+
+/** TENTATIVE eşiği `decision()` ile aynı: 0.35 ≤ c < 0.65. */
+const UNPROVEN_COMPATIBILITY_CONFIDENCE = 0.5;
+
+/**
+ * TEK KAPI — hangi daldan gelirse gelsin, uyumluluk kararı buradan geçer.
+ *
+ * Eski sözlükler (PART_LEMMAS, ACCESSORY_LEMMAS) "sağdaki ifade parça/aksesuar
+ * olabilir mi?" sorusunu yanıtlamaya devam eder; ama "bu parent gerçekten bu
+ * parçayı taşır ve sonuç CONFIDENT'tır" kararını veremezler. Kanıt yoksa
+ * KONU TÜRÜ KORUNUR (eski sözleşmeler bozulmaz) ama güven TENTATIVE'e düşer
+ * ve gerekçe karar günlüğüne yazılır.
+ */
+function applyCompatibilityAuthority(
+  subject: SemanticRequestSubject,
+  input: SemanticSubjectInput,
+): SemanticRequestSubject {
+  const kindValue = subject.kind.value;
+  if (!kindValue || !COMPATIBILITY_KINDS.has(kindValue)) return subject;
+
+  const parent = subject.parentEntity;
+  const hasIdentityParent = Boolean(
+    parent?.brand?.value ||
+      parent?.model?.value ||
+      input.identity.brand ||
+      input.identity.model ||
+      input.automotiveModel,
+  );
+  /**
+   * KULLANICININ DOĞRULADIĞI ROL (1F) — çıkarım değil, beyandır.
+   * Browse/structured akışta "Yedek parça"yı kullanıcı seçtiyse rol bir daha
+   * sorulmaz; ama bu seçim üst ürünü KANITLAMAZ.
+   */
+  const roleConfirmedByUser = Boolean(input.forcedNeedType?.trim());
+  const authority = resolveCompatibilityAuthority(
+    input.normalizedInput,
+    {
+      brand: input.identity.brand,
+      model: input.identity.model,
+      catalogModel: input.automotiveModel,
+    },
+    hasIdentityParent,
+    roleConfirmedByUser,
+  );
+  const roleEvidence = roleConfirmedByUser ? ["user-confirmed-role"] : [];
+  if (authority.verdict === "NO_PARENT_CLAIM") {
+    return roleEvidence.length
+      ? withKindEvidence(subject, roleEvidence)
+      : subject;
+  }
+
+  if (authority.verdict === "VERIFIED") {
+    return withKindEvidence(subject, [
+      ...roleEvidence,
+      authority.evidence!.code,
+    ]);
+  }
+
+  /**
+   * KANITSIZ İLİŞKİ — kategori şeması ne olursa olsun istenen şey KAYBOLMAZ.
+   *
+   * Doğrulanmış ilişkide kanonik parça adını alan katmanı taşır
+   * (`fields.part`). Kanıt yokken o katman yok: baby/mobilya şemasında
+   * `part` alanı bulunmadığı için ifade domain geçişinde siliniyor ve
+   * kullanıcının istediği şey yalnız audit kaydında kalıyordu (ölçüldü).
+   * Bu yüzden kanıtsız durumda BİRİNCİL yüzey konunun kendisidir: adı,
+   * kullanıcının bağlacın sağına yazdığı ifade olur.
+   */
+  const requested = splitCompatibilityPhrase(input.normalizedInput);
+  const requestedItem = requested
+    ? readRequestedTarget(requested.requested).value
+    : null;
+  const keepsUserWording =
+    requestedItem &&
+    subject.name?.value &&
+    coversRequestedTokens(requestedItem, String(subject.name.value));
+  const named =
+    requestedItem && keepsUserWording
+      ? {
+          ...subject,
+          name: uv(requestedItem, {
+            provenance: "EXPLICIT",
+            source: "USER_EXPLICIT",
+            confidence: 0.6,
+            evidence: [requestedItem],
+          }),
+          displayPhrase: uv(requestedItem, {
+            provenance: "EXPLICIT",
+            source: "NORMALIZED_EXPLICIT",
+            confidence: 0.6,
+            evidence: [requestedItem],
+          }),
+        }
+      : subject;
+
+  return {
+    ...named,
+    kind: {
+      ...named.kind,
+      confidence: Math.min(
+        named.kind.confidence,
+        UNPROVEN_COMPATIBILITY_CONFIDENCE,
+      ),
+      status: "TENTATIVE",
+      evidence: [
+        ...(named.kind.evidence ?? []),
+        ...roleEvidence,
+        `compat-authority:${authority.reason}`,
+      ],
+    },
+  };
+}
+
+/** Kanıt kodunu yinelemeden ekler. */
+function withKindEvidence(
+  subject: SemanticRequestSubject,
+  codes: string[],
+): SemanticRequestSubject {
+  const evidence = subject.kind.evidence ?? [];
+  const missing = codes.filter((c) => !evidence.includes(c));
+  return missing.length
+    ? { ...subject, kind: { ...subject.kind, evidence: [...evidence, ...missing] } }
+    : subject;
+}
+
 export function resolveSemanticSubject(
+  input: SemanticSubjectInput,
+): SemanticRequestSubject {
+  return applyCompatibilityAuthority(resolveSemanticSubjectCore(input), input);
+}
+
+function resolveSemanticSubjectCore(
   rawInputArg: SemanticSubjectInput,
 ): SemanticRequestSubject {
   /**
@@ -519,7 +670,6 @@ export function resolveSemanticSubject(
           : rawInputArg.identity.model,
     },
   };
-
   // tr-TR lowercase up front: the regex `i` flag does NOT fold Turkish İ/I
   // (/yaptır/iu never matches "YAPTIRMAK"), so all-caps input used to blind
   // every Turkish pattern in this resolver.
@@ -633,8 +783,26 @@ export function resolveSemanticSubject(
   const explicitVehiclePurchase = WHOLE_VEHICLE_SEEK.test(text);
   const wholeVehicle = explicitVehiclePurchase || partNegated;
 
-  const partHit = findLemmaHit(text, PART_LEMMAS);
-  const accessoryHit = findLemmaHit(text, ACCESSORY_LEMMAS);
+  /**
+   * NİYET ÖNCELİĞİ — AÇIK ÜRETİM, PARÇA SÖZLÜĞÜNÜ YENER (1F).
+   *
+   * "Fason üretim için plastik parça ürettirmek istiyorum" bir parça TEDARİK
+   * talebi değil, ÜRETTİRME talebidir; ama "parça" sözlükte olduğu için parça
+   * dalı cümleyi kapıyor ve niyeti PART'a çeviriyordu (ölçüldü).
+   *
+   * Kural ada özel değildir: niyet katmanı AÇIK üretim kanıtı gördüyse (zayıf
+   * alan adları artık niyet seçtiremiyor, bkz. intent-signals) parça ve
+   * aksesuar sözlükleri o cümleyi sahiplenemez. Kullanıcının KENDİ seçtiği rol
+   * (`forcedNeedType`) bunun üstündedir — o bir çıkarım değil, beyandır.
+   */
+  const explicitManufactureIntent =
+    input.intent === "MANUFACTURE" && !forcedNeed;
+  const partHit = explicitManufactureIntent
+    ? null
+    : findLemmaHit(text, PART_LEMMAS);
+  const accessoryHit = explicitManufactureIntent
+    ? null
+    : findLemmaHit(text, ACCESSORY_LEMMAS);
   const serviceHit = findLemmaHit(text, SERVICE_LEMMAS);
 
   const hasCompatibilityTarget =
@@ -761,17 +929,35 @@ export function resolveSemanticSubject(
   );
   if (
     !wholeVehicle &&
+    // Açık üretim niyeti ilişki yapısını da yener (1F): "Fason üretim için
+    // plastik parça ürettirmek" bir tedarik değil, ürettirme talebidir.
+    !explicitManufactureIntent &&
     forPart?.[2] &&
     /(?:arıyorum|ariyorum|lazım|lazim|olmasın)/i.test(text)
   ) {
     const requested = forPart[2].trim();
     const requestedLower = requested.toLocaleLowerCase("tr-TR");
+    /**
+     * ÜST ÜRÜN KANITI HER İKİ DALIN DA ÖN KOŞULUDUR (1C).
+     *
+     * "X için Y" yapısı tek başına parça ilişkisi kurmaz: X kullanım YERİ,
+     * kişi ya da amaç olabilir. Sözlük tuttuğunda bile ("rezistans",
+     * "kapı kolu", "masa ayağı" PART_LEMMAS içindedir) ölçülen sonuç
+     * bölünmüş bir zihindi — "Ev için rezistans" → kind=PART, part=null,
+     * üst ürün=null, cümle "konut arıyorum.". Sözlük hedefin NE olduğunu
+     * bilir, KİMİN İÇİN olduğunu bilmez; onu kanonik yetkinlik bilir.
+     */
+    const parentEvidence = resolvePartBearingParent(forPart[1] ?? "", {
+      brand: input.identity.brand,
+      model: input.identity.model,
+      catalogModel: input.automotiveModel,
+    });
     const looksLikePart =
       findLemmaHit(requested, PART_LEMMAS) ||
       /(?:parça|parca|yedek|motor|pompa|rulman|tampon|far|adaptör|adaptor)/i.test(
         requestedLower,
       );
-    if (looksLikePart && !findLemmaHit(requested, SERVICE_LEMMAS)) {
+    if (parentEvidence && looksLikePart && !findLemmaHit(requested, SERVICE_LEMMAS)) {
       const lemmaHit = findLemmaHit(requested, PART_LEMMAS);
       const name = lemmaHit?.lemma === "parça" || lemmaHit?.lemma === "parca"
         ? "parça"
@@ -789,7 +975,7 @@ export function resolveSemanticSubject(
               ? "PRODUCT"
               : "VEHICLE";
       return {
-        kind: decision("PART", 0.84, ["icin-structure", name]),
+        kind: decision("PART", 0.84, ["icin-structure", name, parentEvidence.code]),
         name: uv(name, {
           provenance: "EXPLICIT",
           source: "USER_EXPLICIT",
@@ -817,6 +1003,82 @@ export function resolveSemanticSubject(
         ),
         relation: decision("PART_OF", 0.82, ["icin-part-of"]),
         relationship: decision("PART_FOR_PRODUCT", 0.82, ["icin-part-for"]),
+      };
+    }
+
+    /**
+     * --- AÇIK DÜNYA PARÇA ---
+     *
+     * Yukarıdaki dal KAPALI DÜNYADIR: hedefi `PART_LEMMAS` sözlüğünde arar.
+     * Sözlük tutmayınca kullanıcının yazdığı parça adı üst ürünün MODELİ
+     * olarak saklanıyordu ("… için rezistans" → `parentEntity.model =
+     * "rezistans"`, `part = null`). Katalog bir allowlist DEĞİLDİR:
+     * tanımadığı ad talebi geçersiz kılmaz.
+     *
+     * ÜST ÜRÜN KANITI ARTIK BU DALIN ÖN KOŞULU DEĞİLDİR (1F). Kanıt kapısı
+     * tek yerde, `applyCompatibilityAuthority` içindedir: bu dal ADAYI üretir,
+     * authority onu VERIFIED ise CONFIDENT, değilse TENTATIVE olarak
+     * derecelendirir. İki yerde kapı tutmak, kanıtsız parent'ta talebi
+     * tamamen düşürüyordu — "Matbaa makinesi için kontrol paneli arıyorum"
+     * INDUSTRIAL_EQUIPMENT'a düşüp cümle "arıyorum."e iniyordu (ölçüldü).
+     *
+     * Geriye iki yapısal koşul kalır: sağda somut bir hedef ifade bulunması ve
+     * o hedefin bütün bir ürünü adlandırmaması.
+     *
+     * Kanıt ve güven KASITLI olarak katalog parçasından ayrıdır: sözcükler
+     * kullanıcının kendi sözcükleridir (`provenance: EXPLICIT`) ama PARÇA
+     * OLMA bilgisi sözdiziminden türetilmiştir, katalogla doğrulanmamıştır.
+     */
+    const openTarget = readRequestedTarget(requested).value;
+    if (
+      openTarget &&
+      !findLemmaHit(requested, SERVICE_LEMMAS) &&
+      // Sağdaki ifade BÜTÜN bir ürünü adlandırıyorsa parça değildir. Kanonik
+      // taksonomiye sorulur: "televizyon"/"tablet"/"klima" PRODUCT_TYPE olarak
+      // döner ve elenir; "termostat" PART_TYPE, "rezistans" ise hiç düğüm
+      // olmadığı için geçer. Bu, "Ofis için televizyon"u kara liste olmadan
+      // eleyen ikinci taraftır.
+      !isCanonicalWholeProductPhrase(openTarget) &&
+      // Hedef, solun kendisi olamaz.
+      !containsPhraseToken(forPart[1] ?? "", openTarget)
+    ) {
+      const evidenceOpen = [
+        "open-world-part",
+        "icin-structure",
+        ...(parentEvidence ? [parentEvidence.code] : []),
+      ];
+      // Sol taraf pozitif olarak ürün/makine diye tanındığı için burada
+      // VEHICLE tahmini yapılmaz — yalnız ölçülebilen tür kullanılır.
+      const openParentKind: ParentEntityKind =
+        input.categoryId === "machinery"
+          ? "MACHINE"
+          : input.categoryId === "automotive" || input.automotiveModel
+            ? "VEHICLE"
+            : "PRODUCT";
+      return {
+        kind: decision("PART", 0.7, evidenceOpen),
+        name: uv(openTarget, {
+          provenance: "EXPLICIT",
+          source: "DETERMINISTIC_INFERENCE",
+          confidence: 0.6,
+          evidence: evidenceOpen,
+        }),
+        displayPhrase: uv(openTarget, {
+          provenance: "EXPLICIT",
+          source: "DETERMINISTIC_INFERENCE",
+          confidence: 0.6,
+          evidence: evidenceOpen,
+        }),
+        parentEntity: buildParentEntity(
+          input.identity,
+          openParentKind,
+          input.automotiveModel,
+        ),
+        relation: decision("PART_OF", 0.65, ["icin-part-of", "open-world-part"]),
+        relationship: decision("PART_FOR_PRODUCT", 0.65, [
+          "icin-part-for",
+          "open-world-part",
+        ]),
       };
     }
   }

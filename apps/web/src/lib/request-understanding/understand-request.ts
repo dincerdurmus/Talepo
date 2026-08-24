@@ -46,6 +46,12 @@ import {
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
 
 import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
+import {
+  canonicalParentProductSpan,
+  findUnresolvedCompatibilityTarget,
+  isConsumedAsParentProduct,
+} from "@/lib/request-understanding/part-relation";
+
 import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
 
 import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
@@ -631,6 +637,44 @@ export function understandRequest(
     };
   }
 
+  /**
+   * KANONİK ÜST ÜRÜN KATEGORİNİN DE KAYNAĞIDIR (1D).
+   *
+   * "X için Y" yapısında X kanonik olarak parça taşıyan bir ürün ise
+   * kategorinin o ürünün ALANI olması gerekir. Ölçülen hata: "Klima için dış
+   * ünite fan motoru arıyorum" → `automotive` (çünkü "klima" aynı zamanda
+   * otomotiv yedek parça grubunun adı) — oysa solda beyaz eşya "Klima"
+   * düğümü kanonik olarak tüketilmişti.
+   *
+   * Yalnız kategori KESİN DEĞİLKEN devreye girer: kullanıcının kilitlediği
+   * ya da yüksek güvenli bir kategori kararı ezilmez.
+   */
+  const canonicalParent = canonicalParentProductSpan(normalizedInput);
+  if (
+    canonicalParent &&
+    category.status !== "CONFIDENT" &&
+    canonicalParent.node.categoryId !== category.value
+  ) {
+    category = {
+      value: canonicalParent.node.categoryId,
+      confidence: 0.8,
+      status: "CONFIDENT",
+      evidence: [
+        "canonical-parent-product",
+        `parentNode=${canonicalParent.node.id}`,
+      ],
+      alternatives: category.value
+        ? [
+            {
+              value: category.value,
+              confidence: category.confidence,
+              evidence: category.evidence,
+            },
+          ]
+        : category.alternatives,
+    };
+  }
+
   // Product identity (reuse V1.1) — use gated category or empty slug
   const categorySlugForIdentity =
     category.status === "CONFIDENT" && category.value
@@ -992,7 +1036,12 @@ export function understandRequest(
       ? autoModel
       : undefined;
 
-  if (identity.brand && !looksLikeYearToken(identity.brand)) {
+  if (
+    identity.brand &&
+    !looksLikeYearToken(identity.brand) &&
+    // Üst ürün olarak tüketilen span marka olamaz (1D).
+    !isConsumedAsParentProduct(normalizedInput, identity.brand)
+  ) {
     const explicitBrand = textIncludes(normalizedInput, identity.brand);
     identityBlock.brand = uv(identity.brand, {
       provenance: explicitBrand ? "EXPLICIT" : "INFERRED",
@@ -1017,7 +1066,9 @@ export function understandRequest(
     // "hava temizleyicisi" must not ship as "Model: hava temizleyicisi".
     !isProductTypePhrase(String(modelValue)) &&
     // Nor may the REQUESTED ITEM be the parent's model (KB-12) — see below.
-    !isRequestedItemNotModel(normalizedInput, String(modelValue))
+    !isRequestedItemNotModel(normalizedInput, String(modelValue)) &&
+    // Nor may the canonical PARENT PRODUCT span double as a model (1D).
+    !isConsumedAsParentProduct(normalizedInput, String(modelValue))
   ) {
     const explicitModel = textIncludes(normalizedInput, String(modelValue));
     identityBlock.model = uv(String(modelValue), {
@@ -1611,6 +1662,55 @@ export function understandRequest(
   const ambiguities: UnderstandingAmbiguity[] = [
     ...yearAmbiguities(numbers, normalizedInput),
   ];
+
+  /**
+   * BELİRSİZLİĞİ KORU — istenen şey sessizce düşemez (1C).
+   *
+   * "X için Y" yazılmış ama kesin parça ilişkisi kurulamadıysa Y kaybolmaz:
+   * kullanıcının kendi sözcükleriyle `ambiguities`e yazılır ve oradan
+   * `unresolvedExpressions`a akar. Yayın ENGELLENMEZ; bu yalnız kaydedilmiş
+   * bir belirsizliktir ve ileride soru motorunun "Hangi ${marka} ürünü için?"
+   * sorusunu sorabilmesi için gereken yapısal kanıttır.
+   */
+  const unresolvedTarget = findUnresolvedCompatibilityTarget(
+    normalizedInput,
+    {
+      brand: identityBlock.brand?.value ?? null,
+      model: identityBlock.model?.value ?? null,
+      catalogModel: automotiveModelForSubject,
+    },
+    {
+      relationConfident:
+        requestSubject.kind.status === "CONFIDENT" &&
+        (requestSubject.kind.value === "PART" ||
+          requestSubject.kind.value === "ACCESSORY"),
+      isCompatibilityKind:
+        requestSubject.kind.value === "PART" ||
+        requestSubject.kind.value === "ACCESSORY",
+      representedText: [
+        requestSubject.name?.value,
+        requestSubject.displayPhrase?.value,
+        requestSubject.serviceType?.value,
+        requestSubject.target?.value,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    },
+  );
+  if (unresolvedTarget) {
+    /**
+     * GEREKÇE BİR SINIFTIR, dipnot değil (1D). "Kanonik olarak parça taşımaz"
+     * ile "henüz kürasyon yapılmadı" farklı işler doğurur: birincisinde soru
+     * sorulmaz, ikincisinde ya soru sorulur ya kürasyon açılır. Bu yüzden
+     * gerekçe `kind` içinde taşınır; `message` kullanıcının kendi
+     * sözcükleri kalır ve `unresolvedExpressions`a o akar.
+     */
+    ambiguities.push({
+      kind: `compat_target_unresolved:${unresolvedTarget.reason}`,
+      message: unresolvedTarget.target,
+      candidates: [unresolvedTarget.parent],
+    });
+  }
   const contradictions: UnderstandingContradiction[] = [
     ...constraintBundle.conflicts,
   ];
