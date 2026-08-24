@@ -29,6 +29,7 @@ import {
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
+import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
 import { stripIncompatibleDomainFields } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
@@ -368,6 +369,13 @@ export function mapUnderstandingToFields(
   // guards every modelRaw source at once (identity AND subject parentEntity),
   // so "Model: hava temizleyicisi" cannot reach the board from any of them.
   if (modelRaw && isProductTypePhrase(modelRaw)) {
+    modelRaw = null;
+  }
+  // Aynı gerekçeyle: uyumluluk bağlacının SAĞINDA duran jeton istenen şeydir,
+  // üst ürünün modeli olamaz (KB-12). Kural understand-request.ts'te tek yerde
+  // tanımlıdır; burada yalnız ikinci kaynağa (parentEntity.model) da uygulanır,
+  // çünkü modelRaw identity VE parentEntity'den beslenir.
+  if (modelRaw && isRequestedItemNotModel(raw, modelRaw)) {
     modelRaw = null;
   }
   if (brandRaw && isKnownAutomotiveModelName(brandRaw)) {

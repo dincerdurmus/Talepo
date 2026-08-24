@@ -1,6 +1,7 @@
 import { extractModelIdentityTokens } from "./model-identity-tokens";
 import { normalizeModelText } from "./model-normalization";
 import { isKnownPartNoun } from "@/lib/ai/parser/part-nouns";
+import { isCanonicalProductTypePhrase } from "@/lib/taxonomy/phrase-classification";
 
 const PRODUCT_TYPE_VOCAB = new Set([
   "bebek", "arabasi", "arabası", "puset", "makinesi", "makine", "machine",
@@ -119,6 +120,21 @@ function isProductTypeWord(word: string): boolean {
 export function isProductTypePhrase(value: string): boolean {
   const words = normalizeModelText(value).split(" ").filter(Boolean);
   if (words.length === 0) return false;
+  /**
+   * KANONİK TAKSONOMİ ÖNCE (1B).
+   *
+   * `PRODUCT_TYPE_VOCAB` elle yazılmış ~40 kelimelik bir listedir ve sistemde
+   * ZATEN tanımlı ürünleri kaçırıyordu: "fırın" `data/taxonomy` içinde
+   * `PRODUCT_TYPE | Fırın` olarak duruyor olmasına rağmen burada tanınmıyor,
+   * bu yüzden "Siemens fırın için termostat" talebinde "fırın" MODEL alanına
+   * düşüyordu. Çözüm listeyi tek tek büyütmek değil, kanonik kaynağa sormaktır.
+   *
+   * Yalnız İFADENİN TAMAMI sorulur; kelime kelime sorulsaydı 1238 ürün
+   * türünün tüm sözcükleri aşağıdaki 0.4 oranını bozardı. Tam ifade eşleşmesi
+   * "156", "SM 74", "C180" gibi gerçek model jetonlarına dokunmaz — onlar
+   * taksonomide düğüm değildir ve aşağıdaki mevcut mantığa düşerler.
+   */
+  if (isCanonicalProductTypePhrase(value)) return true;
   const hits = words.filter(isProductTypeWord).length;
   return hits / words.length >= 0.4;
 }

@@ -1362,6 +1362,49 @@ check("I18: uyumluluk bağlacı çok kelimeli parça adını kısaltamaz (KB-11)
   }
 });
 
+check("I19: istenen parça, üst ürünün MODELİ olarak atanamaz (KB-12)", () => {
+  /**
+   * Ölçülen gerçek — parça adı `model` alanına kaçıyor:
+   *   "Arçelik bulaşık makinesi için rezistans …" → model = "rezistans"
+   *   "Siemens ankastre fırın için termostat …"   → model = "termostat"
+   * Siemens vakasında parça kataloğu "termostat"ı PARÇA olarak tanıyor ama
+   * model çıkarıcısı da aynı kelimeyi sahipleniyor: aynı jetona iki rol.
+   *
+   * Kural GENEL: "<üst ürün> için <X>" kalıbında X istenen şeydir; istenen şey
+   * üst ürünün modeli olamaz. Kelimeye özel istisna yok — jeton rolü sınanır.
+   */
+  const CASES = [
+    { raw: "Arçelik bulaşık makinesi için rezistans arıyorum", part: "rezistans" },
+    { raw: "Siemens ankastre fırın için termostat lazım", part: "termostat" },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    assert.ok(
+      fold(s.model ?? "") !== fold(c.part),
+      `${c.raw}: '${c.part}' model olarak atanmış (model='${s.model}')`,
+    );
+    assert.ok(
+      s.identityModel == null || fold(s.identityModel) !== fold(c.part),
+      `${c.raw}: identity.model hâlâ parçayı taşıyor (${s.identityModel})`,
+    );
+  }
+
+  /**
+   * CÜMLE SÖZLEŞMESİ — parça, uyumluluk bağlacının ARDINDA gelmeli.
+   * Rolü belirsiz "Siemens Fırın termostat" biçimi kabul edilmez.
+   */
+  const s = surfacesFor("Siemens ankastre fırın için termostat lazım");
+  assert.equal(fold(s.part ?? ""), "termostat", "Siemens: parça alanı dolmalı");
+  const norm = fold(s.text);
+  for (const must of ["fırın", "termostat", "siemens"]) {
+    assert.ok(norm.includes(fold(must)), `'${must}' cümlede YOK → '${s.text}'`);
+  }
+  assert.ok(
+    /firin[^a-z0-9]+icin[^a-z0-9]+termostat/.test(norm),
+    `'<üst ürün> için <parça>' yapısı yok → '${s.text}'`,
+  );
+});
+
 check("I20: kullanıcının yazmadığı marka başlıkta kesin gerçek gibi görünemez (KB-13)", () => {
   /**
    * Ölçülen gerçek: "C180 ön far" girdisinde marka çıkarımla `Mercedes-Benz`

@@ -6,6 +6,7 @@
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { isKnownPartNoun, stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
+import { isRequestedItemNotModel } from "./requested-item-role";
 import { clamp01, uv } from "./provenance";
 import type {
   ParentEntityKind,
@@ -485,8 +486,40 @@ function detectManufactureProduct(text: string): {
  * Resolve semantic request subject from evidence.
  */
 export function resolveSemanticSubject(
-  input: SemanticSubjectInput,
+  rawInputArg: SemanticSubjectInput,
 ): SemanticRequestSubject {
+  /**
+   * İSTENEN ŞEY ÜST ÜRÜNÜN MODELİ OLAMAZ — TÜM parentEntity üretimi için (1B).
+   *
+   * Kural `requested-item-role.ts` içinde TEK yerde tanımlıdır; burada
+   * `buildParentEntity`nin 11 çağrı yerinin hepsini birden kapsayacak biçimde
+   * girdi kimliğine bir kez uygulanır.
+   *
+   * Ölçülen uydurmalar bu güvence olmadan şunlardı:
+   *   "Bosch için rezistans arıyorum"        → parentEntity.model = "rezistans"
+   *   "Bosch kampanya için destek arıyorum"  → parentEntity.model = "kampanya destek"
+   *   "Bosch acil için servis arıyorum"      → parentEntity.model = "acil servis"
+   * Üçünde de kullanıcı hiçbir model yazmamıştı. Üst ürün belirtilmemişse
+   * sistem yüksek güvenli bir model uydurmaz; alan boş kalır.
+   *
+   * Bağlacın SOLUNDA da geçen jetonlar korunur ("Heidelberg SM 74 için …",
+   * "Alfa Romeo 156 için yedek parça") — kural konumsaldır, kelimeye özel değil.
+   */
+  const input: SemanticSubjectInput = {
+    ...rawInputArg,
+    identity: {
+      ...rawInputArg.identity,
+      model:
+        rawInputArg.identity.model &&
+        isRequestedItemNotModel(
+          rawInputArg.normalizedInput,
+          rawInputArg.identity.model,
+        )
+          ? null
+          : rawInputArg.identity.model,
+    },
+  };
+
   // tr-TR lowercase up front: the regex `i` flag does NOT fold Turkish İ/I
   // (/yaptır/iu never matches "YAPTIRMAK"), so all-caps input used to blind
   // every Turkish pattern in this resolver.

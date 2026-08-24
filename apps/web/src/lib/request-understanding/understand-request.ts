@@ -44,6 +44,8 @@ import {
   type PriceStrategyContext,
 } from "@/lib/price-intelligence/strategy-resolver";
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
+
+import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
 import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
 
 import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
@@ -1013,7 +1015,9 @@ export function understandRequest(
     !looksLikeYearToken(String(modelValue)) &&
     // A product-type phrase names WHAT the thing is, never which model —
     // "hava temizleyicisi" must not ship as "Model: hava temizleyicisi".
-    !isProductTypePhrase(String(modelValue))
+    !isProductTypePhrase(String(modelValue)) &&
+    // Nor may the REQUESTED ITEM be the parent's model (KB-12) — see below.
+    !isRequestedItemNotModel(normalizedInput, String(modelValue))
   ) {
     const explicitModel = textIncludes(normalizedInput, String(modelValue));
     identityBlock.model = uv(String(modelValue), {
@@ -1145,7 +1149,21 @@ export function understandRequest(
     normalizedInput,
     identity: {
       brand: identityBlock.brand?.value ?? identity.brand,
-      model: identityBlock.model?.value ?? identity.model,
+      /**
+       * REDDEDİLEN MODEL YAN KAPIDAN GERİ GELEMEZ (1B).
+       *
+       * `identityBlock.model` yukarıda üç kez REDDEDİLEBİLİR: yıl jetonu,
+       * ürün TÜRÜ ifadesi (`isProductTypePhrase`) ve istenen parça
+       * (`isRequestedItemNotModel`). Eski `?? identity.model` yedeği tam da
+       * bu reddedilen ham değeri geri getiriyordu: "Siemens fırın için
+       * termostat" talebinde `identityBlock.model` doğru biçimde boşaltılıyor,
+       * ama semantik katmana yine "fırın" gidiyor ve
+       * `parentEntity.model = "fırın"` olarak yazılıyordu — bir ürün TÜRÜ,
+       * model alanında.
+       *
+       * Karar katmanı modeli reddettiyse karar budur; yedek yoktur.
+       */
+      model: identityBlock.model?.value ?? null,
       series: identityBlock.series?.value ?? identity.series,
       variant: identityBlock.variant?.value ?? identity.variant,
     },
