@@ -7,7 +7,68 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
-## ÖLÇÜM TABANI — 2026-08-25, `a44c23d` (talep niyeti / arz ilanı ayrımı)
+## ÖLÇÜM TABANI — 2026-08-25, `47df572` (verilen cevabın soru akışında korunması)
+
+Commit: `47df572` — *fix(requests): preserve resolved answers across question
+flow* (parent `757508a`). Bu bölüm, aşağıdaki `a44c23d` tabanının **yerine
+geçer**; o bölüm tarihli kanıt olarak silinmeden duruyor.
+
+**Kategori kapsama corpus'u (108 gerçek talep senaryosu):**
+`TOTAL=108 · PASS=99 · KNOWN_FAIL=9 · FAIL=0 · XPASS=0` (iki deterministik
+koşu, aynı sonuç). Sayılar `a44c23d` ölçümüyle **aynı**: bu dilim soru
+kalitesini düzeltti, corpus senaryo sonucunu değiştirmedi.
+
+**Anlama invariant bataryası:** `121 passed · 2 failed · 1 known_fail` —
+kırmızılar YALNIZ **I22** (KB-11'in kalan başlık yarısı) ve **I23** (KB-14);
+known_fail YALNIZ **I25d**. Batarya 102 passed ölçümünden 121 passed ölçümüne
+çıktı: **I49** (yazılan değerin alana bağlanması), **I50** (tüm soru kuyruğu
+ve kompozit ölçü sözleşmesi) ve **I51** (kanonik ürün kimliğinin yayın
+zincirinde yaşaması, sunum tekilliği) satırları eklendi.
+
+### Tekrar sorulan soru ölçümü — İKİ AYRI ÖLÇÜM
+
+Bu iki sayı **birbirinin yerine kullanılamaz**. İlk ekran ölçümü iyimserdir:
+"kullanıcı ölçüyü yazdı ama iki dalga sonra en/boy soruldu" sınıfını
+göremez. Bu yüzden ikisi ayrı isimle tutulur.
+
+| | `FIRST_SCREEN` | `FULL_QUEUE` |
+| --- | --- | --- |
+| measured | 240 | 406 |
+| correctly_suppressed | 106 | 106 |
+| correctly_asked | 89 | 255 |
+| **wrongly_repeated** | **0** | **0** |
+| wrongly_suppressed | 45 | 45 |
+| not_measured | 986 | 861 |
+| accuracy | ≈ %81 | ≈ %89 |
+
+`wrongly_repeated = 0` iddiası metriğe değil **invariant'a** bağlıdır
+(`I50g`: açık provenance ile dolan hiçbir alan hiçbir dalgada tekrar
+sorulamaz). Metrik yarın daralırsa iddia sessizce doğru görünmez.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** (formül: 100 × 99/108) — bu sayı
+YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
+**Bütün Talepo'nun %92 hazır olduğu anlamına GELMEZ.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi.** Bu, **ölçülen** Pro
+uçtan uca hattıdır; beş bileşen: envelope kategori erişimi (104/108),
+güvenilir marka (15/108), ürün türü erişimi (0/108), matching'in
+`resolvedEntities` okuması (0), tedarikçi yeteneği (0,
+`CAPABILITY_NOT_MEASURED`). **Ürünün genel olarak %22 hazır olduğu anlamına
+GELMEZ.** Sınırlar aynen duruyor: **Matching V3 canlı fanout'a bağlı
+değildir**, **tedarikçi yetkinliği tamamlanmış ve ölçülmüş değildir**, **canlı
+bildirim teslimatı ölçülmemiştir**, **production deploy yoktur**.
+
+### Bu tabanda kapanan ölçülmüş davranışlar
+
+Ayrıntı ve kapanmayan yarısı için bkz. **KB-15 — KISMEN ÇÖZÜLDÜ**.
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `a44c23d` (talep niyeti / arz ilanı ayrımı) — **YERİNE GEÇTİ**
+
+> **Yerine geçti:** bu bölümün corpus, invariant ve hazırlık sayıları
+> 2026-08-25 tarihli `47df572` ölçümüyle güncellendi (yukarı bakın). Tarihli
+> kanıt olarak korunuyor; bugünün gerçeği olarak okunmamalıdır.
 
 Commit: `a44c23d` — *fix(requests): separate demand intent from supply
 listings* (parent `2facc3c`). Bu bölüm, aşağıdaki `3eed002` tabanının
@@ -296,8 +357,9 @@ hiçbir iddia taşımaz — buradaki her sayı yerel doğrulayıcı ölçümüd�
 | --- | --- |
 | Doğrulayıcı | `apps/web/scripts/verify-browse-semantic-closure-v1.ts` |
 | Kırık kontroller | `B facts uyumlu marka/model` (satır 240), `B parent entity VEHICLE (compatibility)` (satır 246) |
-| Bugünkü sonuç | `pass=37 fail=2` |
+| Bugünkü sonuç | `pass=37 fail=2` — **yeniden ölçüm 2026-08-25, HEAD `7bbe0c9`: değişmedi**, aynı iki kontrol kırmızı |
 | Ne zamandan beri | `b0e9a22` — *feat(requests): add guided request composer v2*, 2026-08-21. Bir önceki commit `0975ab9`'da doğrulayıcı `pass=39 fail=0` idi (2026-08-23'te bisect ile ölçüldü: 192 commit'lik aralık ikili aramayla daraltıldı). |
+| Kapanış ölçüsü | `verify-browse-semantic-closure-v1` → **`pass=39 fail=0`** (regresyon öncesi `0975ab9`'da ölçülen değer). Ayrıca browse yolunda `requestSubject.parentEntity.kind = VEHICLE`, uyumluluk **markası ve modeli** görünür, istenen parça ile üst araç rolleri karışmaz. |
 | Kapsam | Yalnız otomotiv "yedek parça" akışı. Marka kolonları, taksonomi ve talep yayınlama yollarıyla ilgisi yok. |
 
 **Beklenen:** Alfa Romeo 156 için yedek parça talebinde, tekrar okunan durumda
@@ -900,16 +962,49 @@ doğrulayıcıya ulaşan bir yol yok. **Mevcut taban kırmızısıdır.**
 kullanılan `passed|pass=` desenine takılmıyordu, bu yüzden hem KB kayıtlarına
 hem TRIAGE tablosuna girmemişti. Yeni bir hata değil, **yeni görünür oldu**.
 
-## KB-15 — Kullanıcının yazdığı değer alana bağlanmadığı için soru tekrar soruluyor
+## KB-15 — Kullanıcının yazdığı değer alana bağlanmadığı için soru tekrar soruluyor — **KISMEN ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
 | Katman | Anlama → besteci alan eşlemesi (`build-state` / soru otoritesi girdisi) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — kullanıcı deneyimi; bilgi ekranda kayboluyor |
-| Kırık kontrol | Kalıcı bir doğrulayıcı satırı **YOK** (bu kayıt açıldığında yalnız elle ölçüldü) |
+| Kırık kontrol | Artık kalıcı: `verify-understanding-invariants-v1` → **I49**, **I50**, **I51** satırları |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, S2A ölçümü sırasında (HEAD `3eed002`) |
-| Durum | **Açık** |
+| **Durum** | **KISMEN ÇÖZÜLDÜ** — `47df572` (2026-08-25, parent `757508a`): **ölçülen** tekrar vakaları kapandı; **sistemin tamamı ölçülmedi** |
+
+### Kapanan ölçülmüş davranışlar (`47df572`)
+
+- Yazılmış toplu ölçü, **sonraki dalgalarda da** en/boy/derinlik sorularını
+  sözleşmeye göre kapatır. İlk ekranı ölçen bir kontrol bunu göremiyordu.
+- **İki bileşenli** ölçü (`20x15`) en ve boy kapsamı sağlar.
+- **Üç bileşenli** ölçü (`20x15x10`) ayrıca derinlik kapsamı da sağlar.
+- **Eksen sırası uydurulmaz:** hangi sayının en olduğu şemada tanımlı
+  olmadığı için eksen alanlarına değer yazılmaz; karşılama tipli bir kapsama
+  kararıyla (`coveredByAggregate`) kurulur.
+- **Yazılmamış birim uydurulmaz.** Yazılmış birim korunur (`20x15x10 cm`).
+- `Karton kutu` kullanıcıya **etiket** olarak görünür; kanonik değer
+  `karton-kutu` ayrı tipli rolde taşınır ve koşullu alanlar onu okur.
+- `Toplantı Masası` soruyu kapatırken değer **hem** kanonik `productType`
+  **hem de** legacy `furnitureType` alanında kalıcılıkta taşınır.
+- **Legacy furniture filtre round-trip eşleşir** (`RequestFieldValue.textValue
+  = "Toplantı Masası"`, filtre `input=text` → `contains`).
+- **Matching V3 üretim çağrı yolu `discoveryProjection`'ı okur**; envelope
+  ürün kimliği `Toplantı Masası` olur. (Önceki bir raporda `product=null`
+  yazılmıştı; o **ölçüm hatasıydı** — probe projeksiyonu geçirmiyordu.)
+- **Aynı Signal fact iki kez gösterilmez**; çakışmada kanonik alan görünür,
+  uyumluluk alanı kalıcılıkta kalır.
+- Beş ölçülmüş full-queue senaryosunda **`wrongly_repeated = 0`**.
+
+### Neden TAM kapanmadı
+
+`FULL_QUEUE` ölçümünde **`NOT_MEASURED = 861`** alan-senaryo çifti var. Bu
+yüzden **bütün kategori/alan birleşimleri için "tekrar yok" iddiası
+üretilemez**; kapanan şey ölçülebilen kısımdır.
+
+Ayrıca **KB-17 ters yöndeki ayrı risktir**: bu kayıt "gereken soru tekrar
+soruluyor" kusurudur; KB-17 ise "gereken soru sessiz çıkarımla kapatılıyor"
+kusurudur. KB-15'in kapanması KB-17'yi kapatmaz.
 
 **Ölçülen üç vaka (aynı kök, `resolveHybridQuestions` gerçek `/talep` soru
 otoritesinden okundu):**
@@ -1023,6 +1118,170 @@ birlikte ele almalıdır") `a44c23d` ile karşılandı: dördü tek dilimde ele
 alındı ve dördü birden PASS oldu.
 
 ---
+
+## KB-17 — Çıkarılan değer kullanıcıya gösterilmeden soruyu kapatıyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
+| Kırık kontrol | Tekrar sorma süpürmesi (108 senaryoluk corpus) → `wrongly_suppressed` |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
+| Durum | **AÇIK — bu turda düzeltilmedi** |
+
+**KB-15'in TERSİ yönü.** KB-15 "gereken soru tekrar soruluyor" der; bu kayıt
+"gereken soru sessiz çıkarımla kapatılıyor" der. İkisi ayrı risklerdir ve
+biri kapanınca diğeri kapanmaz.
+
+### Kırık kontrol — ölçülen değerler (`47df572`)
+
+```
+wrongly_suppressed = 45
+  A1 EXACT_TEXT                    = 9
+  A2 AUTHORITY_VERIFIED_EQUIVALENT = 2
+  B  HIGH_RISK_SILENT_INFERENCE    = 34
+  U  NOT_MEASURED / AMBIGUOUS      = 0
+  A1 + A2 + B + U = 45 == wrongly_suppressed
+```
+
+`FIRST_SCREEN` ve `FULL_QUEUE` ölçümlerinde aynı 45 kayıt görülür.
+
+**Dağılımlar (toplam 45 ile tutar):**
+
+| Provenance | | Kategori | | Alan | |
+| --- | --- | --- | --- | --- | --- |
+| `INFERRED` | 36 | automotive | 23 | `needType` | 26 |
+| `CATALOG_ENRICHED` | 9 | technology | 12 | `model` | 6 |
+| | | machinery | 6 | `solutionType` | 4 |
+| | | furniture | 3 | `usageArea` | 4 |
+| | | health | 1 | `condition` | 2 |
+| | | | | `part` | 2 |
+| | | | | `brand` | 1 |
+
+### Sınıf sözleşmesi
+
+- **A1 — EXACT_TEXT:** normalize edilmiş tam değer kullanıcı metninde açıkça
+  bulunur. Tek ortak sözcük ya da substring **yeterli değildir**.
+- **A2 — AUTHORITY_VERIFIED_EQUIVALENT:** değer metinde birebir yoktur, ancak
+  **çağrılabilir** bir katalog / taksonomi / alias otoritesi dönüşümü açıkça
+  doğrular. Kayıt, kullanılan otoritenin adını ve varsa varlık kimliğini
+  taşımak zorundadır. Anlam benzerliği veya gündelik çıkarım kanıt sayılmaz.
+- **B — HIGH_RISK_SILENT_INFERENCE:** değer metinde yoktur ve doğrulanmış bir
+  otorite yoktur; buna rağmen soru kapanır.
+- **U — NOT_MEASURED / AMBIGUOUS:** A1/A2/B için yeterli kanıt yoktur. Zorla
+  sınıflandırma yapılmaz.
+
+### A2 kanıt örnekleri (ikisi de gerçek otoriteyle doğrulandı)
+
+| Kayıt | Dönüşüm | Otorite |
+| --- | --- | --- |
+| `auto-04/part` | `su pompası` → `devirdaim pompası` | `resolveTaxonomyAlias("su pompası")` → `tax:automotive:yedek-parca:cooling:cooling:devirdaim-pompasi` (`PART_TYPE`); ayrıca `data/catalogs/automotive/automotive-part-aliases-tr.json` → `"devirdaim pompası": ["su pompası", "water pump"]` |
+| `auto-10/brand` | `C200` → `Mercedes-Benz` | `findModelInText("C200 …")` → `model_mercedes-benz_c-serisi` (`brand_id = brand_mercedes-benz`) → `data/catalogs/automotive/automotive-brands.json` → `"name": "Mercedes-Benz"` |
+
+> **Uyarı — yorum satırı veri değildir.** `AUTOMOTIVE_MODEL_TOKENS` içindeki
+> `// Mercedes` başlığı markayı **veri olarak taşımaz**; C200 → Mercedes-Benz
+> bağı yalnız katalogdaki `brand_id` alanıdır. İlk ölçümde bu otorite
+> çağrılmadığı için kayıt **yanlışlıkla B** sayılmıştı. Yanlış B, yanlış A2
+> kadar zararlıdır: kapanmış bir açığı açık gösterir.
+
+### B örnekleri
+
+- `iPhone 15 Pro` → `solutionType = "cep telefonu"` — teknoloji ürün kataloğu
+  yalnız `canonical / brand / aliases` taşır, **ürün türü alanı yoktur**.
+- `MacBook Pro` → `solutionType = "dizüstü bilgisayar"` — aynı gerekçe.
+- `Tekerlekli sandalye arıyorum` → `usageArea = "Ev"`.
+- `BMW için ekspertiz arıyorum` → `condition = "İkinci el"`.
+- Kullanıcının yazmadığı **`needType`** değerleri (26 kayıtla listenin başı).
+
+### Kapanış ölçüsü
+
+1. **B = 0** — kullanıcının yazmadığı ve hiçbir otoritenin doğrulamadığı
+   hiçbir değer soruyu sessizce kapatamaz; böyle bir değer ya doğrulama
+   kulvarına ("Bunu doğru anladık mı? · Onayla · Düzenle") düşer ya da soru
+   sorulmaya devam eder.
+2. **U = 0** — her kayıt kanıtla sınıflandırılabilir olmalıdır.
+3. **A1 kayıtlarının provenance'ı kullanıcı metnine uygun olmalıdır**
+   (kullanıcı yazdıysa `EXPLICIT_TEXT`). Bugün 9 A1 kaydının tamamı
+   `CATALOG_ENRICHED` / `INFERRED` etiketi taşıyor; bu bir davranış değil
+   **etiket** hatasıdır.
+4. **A2 kayıtlarının her biri typed authority kanıtı taşımalı ve Signal facts
+   içinde kullanıcıya görünmelidir** — "su pompası yazdınız, devirdaim
+   pompası olarak anladık" görünmeden kapatılamaz.
+5. Kapanış raporunda `A1 + A2 + B + U = wrongly_suppressed` eşitliği
+   gösterilmeli ve kapanan kayıtlar **`scenarioId/fieldKey`** kimliğiyle
+   listelenmelidir.
+
+---
+
+## KB-18 — **GEÇERSİZ: KB-1'in kopyası olarak açıldı, geri çekildi**
+
+| Alan | Değer |
+| --- | --- |
+| Durum | **GEÇERSİZ — yeni bir kusur değil.** Aynı doğrulayıcı, aynı iki kırık kontrol ve aynı sonuç **KB-1** olarak 2026-08-23'ten beri kayıtlı |
+| Doğru kayıt | **KB-1 — Yedek parça talebinde uyumlu araç kimliği kayboluyor** |
+| Geri çekilme | 2026-08-25, HEAD `7bbe0c9` üzerinde yeniden ölçüm sırasında |
+
+**Nasıl oluştu ve neden burada duruyor.** 2026-08-25'te
+`verify-browse-semantic-closure-v1` kırmızı ölçüldü (`pass=37 fail=2`) ve
+belgede kayıtlı olup olmadığı kontrol edilirken **grep çıktısı yanlış
+okundu**: sayaç `2` döndüğü hâlde "kayıtlı değil" diye yorumlandı. Bunun
+üzerine kayıt hem KB-18 olarak açıldı hem de TRIAGE tablosuna "kayıtsız
+kırmızı" satırı eklendi. **İkisi de yanlıştı.** KB-1 zaten aynı iki kontrolü
+(`B facts uyumlu marka/model`, `B parent entity VEHICLE (compatibility)`),
+aynı beklenen/gözlenen ayrıntısını ve **bisect ile bulunmuş regresyon
+noktasını** (`b0e9a22`; öncesi `0975ab9` = `pass=39 fail=0`) taşıyordu.
+
+Kayıt **silinmiyor**: numaranın bir kez kullanıldığı ve neden geri çekildiği
+görünür kalsın diye duruyor. Yeni bir KB-18 açılmamalıdır.
+
+**`39/0` ile `37/2` çelişkisinin çözümü.** İkisi de doğrudur ve farklı şeyleri
+söyler: **`pass=37 fail=2` bugünkü ölçümdür** (2026-08-25, HEAD `7bbe0c9` —
+yeniden ölçüldü, değişmedi); **`pass=39 fail=0` ise regresyon öncesi
+`0975ab9`'da ölçülen değerdir** ve bu yüzden aynı zamanda KB-1'in kapanış
+ölçüsüdür. Doğrulayıcıda toplam 39 kontrol vardır (37 + 2), dolayısıyla iki
+sayı aritmetik olarak da tutarlıdır.
+
+---
+
+## KB-19 — Select filtrelerinde kullanıcı etiketi ile kanonik seçenek değeri eşleşmiyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Besteci alan değeri → yayınlanan `RequestFieldValue` → Pro explore filtresi |
+| Sınıf | **ÖLÇÜLMÜŞ SINIR** — Pro tarafında talep kaçabilir |
+| Kırık kontrol | **NOT-MEASURED** — bu kayda özel bir doğrulayıcı **henüz yok** |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-25, KB-15 dilimi sırasında filtre round-trip ölçülürken |
+| Durum | **AÇIK — ölçülmüş sınır; bu turda düzeltilmedi** |
+
+**Kanıt (elle ölçüldü, sayı üretilmedi).** Kullanıcı `ahşap` yazar; talep
+`material = "ahşap"` değerini **kullanıcının kendi sözcüğüyle** korur — bu
+doğru sözleşmedir. Ancak Pro explore filtresinde `material` alanı
+`input = select` olduğu için karşılaştırma **eşitliktir**; Pro kanonik
+seçenekten (`Masif ahşap`) filtrelediğinde `"ahşap" !== "Masif ahşap"` olur ve
+ilgili talep **filtre sonucunda kaçar**.
+
+Kullanıcının metnini değiştirmek doğru değildir; eksik olan, **kanonik filtre
+değerinin ayrı bir rolde taşınmamasıdır**. (`text` girdili filtreler
+`contains` karşılaştırdığı için etkilenmez; ölçülen `furnitureType` ve
+`material` round-trip'lerinden yalnız select olan bu sınıra takılır.)
+
+**Bu kayıt için sahte pass/fail sayısı üretilmedi.** Doğrulayıcı yazılana
+kadar durumu **NOT-MEASURED**'dır; NOT-MEASURED bir sonuç değildir, ne PASS ne
+FAIL sayılır (bkz. KB-7).
+
+**Önerilen kapanış ölçüsü:**
+
+- Görünen etiket / profesyonel metin **kullanıcının ifadesini korur**.
+- Kanonik filtre değeri mevcut registry / taksonomi otoritesinden gelir
+  (yeni bir liste kurulmaz).
+- **Select filtre round-trip testi eşleşir** ve kalıcı bir doğrulayıcı satırı
+  olarak kaydedilir.
+- Kayıt dışı bir değer görünürlük (`visibleWhen`) veya filtre koşullarını
+  **sessizce bozmaz**.
+- Kullanıcının yazmadığı bir `material` değeri **uydurulmaz**.
+
 
 > **Paket kalıntıları** (PREMIUM / CORPORATE'ten kalanlar; kasıtlı legacy ile
 > gerçek kalıntı ayrımı dahil): bkz. `docs/ai-handoff/11-DECISION-LOG.md` →
