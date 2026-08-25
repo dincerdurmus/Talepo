@@ -14,7 +14,10 @@ import {
   getTaxonomyNode,
 } from "@/lib/taxonomy";
 
-import type { ConstraintBundle } from "@/lib/request-understanding/constraint-semantics";
+import {
+  isHedgedExpression,
+  type ConstraintBundle,
+} from "@/lib/request-understanding/constraint-semantics";
 
 import {
   applyAnyBindingsToFields,
@@ -28,6 +31,10 @@ import {
   extractScreenSize,
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
+// Kategori alanlarının kanonik değer kaydı — KB-15 seçenek bağlayıcısı bunu okur.
+import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+// Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
+import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import {
   classifyRequestedTargetRole,
@@ -278,6 +285,161 @@ function coversAllTokens(whole: string, part: string): boolean {
   const needles = foldPartToken(part).split(/\s+/).filter(Boolean);
   if (!needles.length || !haystack.length) return false;
   return needles.every((n) => haystack.some((h) => h.startsWith(n)));
+}
+
+/**
+ * Kaçamak seçenekler kanıt sayılmaz: "Fark etmez" yazmak bir tercih beyanı
+ * değildir, tercih YOKLUĞUDUR.
+ */
+const OPTION_ESCAPE_RE =
+  /fark\s*etmez|karisik|bilmiyorum|diger|belirtmek\s*istemiyorum|onemli\s*degil/;
+
+/** Kelime sınırıyla eşleşme (ASCII-fold sonrası). */
+function foldedHasWord(foldedText: string, foldedNeedle: string): boolean {
+  if (!foldedNeedle) return false;
+  const esc = foldedNeedle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${esc}([^a-z0-9]|$)`).test(foldedText);
+}
+
+/**
+ * Kullanıcının KENDİ yazdığı biçimi geri verir (diyakritikleriyle).
+ * Kanonik seçeneği değil kullanıcının ifadesini korumak içindir: "ahşap"
+ * yazan kişiye "Masif ahşap" atfetmek uydurma olur.
+ */
+function originalSpelling(raw: string, foldedToken: string): string | null {
+  for (const word of String(raw).split(/[^\p{L}\p{N}]+/u)) {
+    if (word && foldPartToken(word) === foldedToken) return word;
+  }
+  return null;
+}
+
+/**
+ * Değerin yakınında çekince var mı? Karar burada verilmez — çekince
+ * kalıplarının tek yetkilisi `constraint-semantics` modülüdür.
+ */
+function qualifierNear(raw: string, writtenSpan: string): boolean {
+  return isHedgedExpression(raw, writtenSpan);
+}
+
+/**
+ * Kategorinin `select` alanlarında, kullanıcının metninde açıkça geçen
+ * değerleri alana bağlar (KB-15). Dolu alanlara dokunmaz.
+ */
+function bindWrittenOptionValues(
+  fields: Record<string, CanonicalFieldState>,
+  categoryId: string,
+  raw: string,
+): void {
+  const text = foldPartToken(String(raw ?? ""));
+  if (!text.trim()) return;
+
+  /**
+   * KANONİK DEĞER KAYDI İKİ YERDE YAŞIYOR (KB-15).
+   *
+   * Kategori motoru `select` alanları, bilgi şeması ise `ENUM` alanları
+   * taşır — matbaanın `productType` seçenekleri (Karton kutu / Etiket /
+   * Broşür / Diğer) YALNIZ ikincisindedir. Yalnız birincisini okumak,
+   * "karton kutu" yazan kullanıcının kayıtta tam karşılığı olmasına rağmen
+   * bağlanmamasına yol açıyordu. İki kayıt da okunur; yeni bir liste
+   * kurulmaz.
+   */
+  const optionDefs: Array<{
+    key: string;
+    options: Array<{ label?: string; value?: string }>;
+  }> = [];
+  const category = REQUEST_CATEGORIES.find((c) => c.id === categoryId);
+  for (const def of category?.fields ?? []) {
+    if (def.type === "select" && def.options?.length) {
+      optionDefs.push({ key: def.key, options: def.options });
+    }
+  }
+  try {
+    for (const def of resolveRequestSchema({ categoryId }).fields) {
+      if (def.type !== "ENUM" || !def.options?.length) continue;
+      if (optionDefs.some((d) => d.key === def.key)) continue;
+      optionDefs.push({ key: def.key, options: def.options });
+    }
+  } catch {
+    // Bilgi şeması çözülemiyorsa kategori motoru kaydıyla devam edilir.
+  }
+
+  /**
+   * KAPI ALANLARI: başka alanların görünürlüğü/bağımlılığı bunlara bağlıdır
+   * ve bu yüzden yalnız kanonik değer taşıyabilirler.
+   */
+  const gatingKeys = new Set<string>();
+  for (const def of category?.fields ?? []) {
+    if (def.when?.field) gatingKeys.add(def.when.field);
+  }
+  try {
+    for (const def of resolveRequestSchema({ categoryId }).fields) {
+      if (def.visibleWhen?.field) gatingKeys.add(def.visibleWhen.field);
+      for (const dep of def.dependsOn ?? []) gatingKeys.add(dep);
+    }
+  } catch {
+    // yoksayılır — kapı listesi eksik kalırsa yalnız daha muhafazakâr oluruz
+  }
+
+  for (const def of optionDefs) {
+    const current = fields[def.key];
+    if (current && current.kind !== "UNKNOWN") continue;
+
+    let value: string | null = null;
+    let canonicalSlug: string | null = null;
+    let evidence: string | null = null;
+
+    for (const opt of def.options) {
+      const canonicalValue = String(opt.value ?? opt.label ?? "").trim();
+      const canonicalLabel = String(opt.label ?? opt.value ?? "").trim();
+      if (!canonicalValue) continue;
+      // Kayıt değeri bir slug ("karton-kutu"), kullanıcı ise etiketi yazar
+      // ("karton kutu"). İkisi de aynı ayraç normalizasyonuyla aranır.
+      const forms = [canonicalLabel, canonicalValue]
+        .map((s) => foldPartToken(s).replace(/[^a-z0-9]+/g, " ").trim())
+        .filter(Boolean);
+      if (forms.some((f) => OPTION_ESCAPE_RE.test(f))) continue;
+
+      // 1) Seçeneğin tamamı yazılmışsa kayıt eşleşmesi kurulur: kullanıcıya
+      //    ETİKET gösterilir, koşullu alanlara KAYIT DEĞERİ verilir.
+      const whole = forms.find((f) => f.length >= 3 && foldedHasWord(text, f));
+      if (whole) {
+        value = canonicalLabel || canonicalValue;
+        canonicalSlug = canonicalValue;
+        evidence = whole;
+        break;
+      }
+      /**
+       * 2) Yalnız ayırt edici bir sözcüğü yazılmışsa KULLANICININ sözcüğü
+       *    bağlanır ("ahşap", "Masif ahşap" değil).
+       *
+       * KAPI ALANLARINDA BU YOL KAPALIDIR: başka alanların görünürlüğü bu
+       * alanın değerine bağlıysa (`visibleWhen` / `dependsOn`) kayıt dışı bir
+       * değer, bağlı soruları SESSİZCE gizler. Ölçülen vaka: matbaa
+       * `productType` alanına "kutu" yazılınca `depth` ve `lamination`
+       * koşulları (`in: ["karton-kutu"]`) hiç eşleşmiyordu.
+       */
+      if (gatingKeys.has(def.key)) continue;
+      for (const token of forms[0]!.split(" ")) {
+        if (token.length < 4 || OPTION_ESCAPE_RE.test(token)) continue;
+        if (!foldedHasWord(text, token)) continue;
+        value = originalSpelling(raw, token) ?? token;
+        evidence = token;
+        break;
+      }
+      if (value) break;
+    }
+
+    if (!value || !evidence) continue;
+    // Benzetme/olumsuzlama varsa değer kullanıcının beyanı sayılmaz: alan boş
+    // kalır ve soru sorulmaya devam eder.
+    if (qualifierNear(raw, value)) continue;
+    fields[def.key] = {
+      ...valueField(value, "EXPLICIT_TEXT", 0.85, [evidence]),
+      ...(canonicalSlug && canonicalSlug !== value
+        ? { canonicalValue: canonicalSlug }
+        : {}),
+    };
+  }
 }
 
 function foldPartToken(value: string): string {
@@ -544,8 +706,21 @@ export function mapUnderstandingToFields(
     }
   }
 
-  // Furniture product leaves → furnitureType (browse ↔ text)
-  if (productHint?.taxonomyNodeId?.startsWith("tax:furniture:")) {
+  /**
+   * Furniture product leaves → furnitureType (browse ↔ text)
+   *
+   * KB-15 KÖPRÜSÜ: düğüm kimliği belirsiz olduğunda ("Toplantı Masası"
+   * taksonomide iki kez tanımlı) ön ek kontrolü boşa düşüyor ve bu alan
+   * doldurulmuyordu. `furnitureType` yalnız bir UI alanı DEĞİLDİR — explore
+   * filtresi (`category-filters.ts`) ve profesyonel metin bestecisi onu
+   * okur; boş kalması Pro tarafında sessiz kayıptır. Alan kimliği
+   * belirsizlikten etkilenmediği için köprü ona bağlanır. Bu ikinci bir
+   * otorite değildir: değer aynı kanonik ipucundan TÜRETİLİR.
+   */
+  const hintIsFurniture =
+    productHint?.taxonomyNodeId?.startsWith("tax:furniture:") ||
+    (productHint?.categoryId === "furniture" && !productHint?.taxonomyNodeId);
+  if (productHint && hintIsFurniture) {
     fields.furnitureType = valueField(
       productHint.productType,
       "EXPLICIT_TEXT",
@@ -607,6 +782,23 @@ export function mapUnderstandingToFields(
     );
   }
 
+  /**
+   * KANONİK SEÇENEK KAYDINDAN BAĞLAMA (KB-15).
+   *
+   * `REQUEST_CATEGORIES` her kategori için `select` alanların İZİN VERİLEN
+   * değerlerini zaten taşıyor; bu, alanın kanonik değer kaydıdır. Kullanıcı o
+   * kayıttaki bir değeri yazdıysa alan doldurulur. Kural kelimeye ya da tek
+   * kategoriye özel DEĞİLDİR: aynı satır emlakta "Arsa", mobilyada "Ahşap",
+   * bebekte "Mama sandalyesi", mutfakta "Çelik" vakalarını birlikte kapatır.
+   * Yeni bir çıkarıcı kurulmaz — var olan kayıt okunur.
+   */
+  const optionCategoryId = result.category.value
+    ? String(result.category.value)
+    : null;
+  if (optionCategoryId) {
+    bindWrittenOptionValues(fields, optionCategoryId, raw);
+  }
+
   // part / position only for spare-part subjects — never dump vehicle name into part
   const subjectKind = result.requestSubject.kind.value;
   const isPartSubject = subjectKind === "PART" || subjectKind === "ACCESSORY";
@@ -622,6 +814,49 @@ export function mapUnderstandingToFields(
     if (!generic) {
       fields.propertyType = valueField(
         propName,
+        mapRuProvenance(
+          result.requestSubject.name.provenance,
+          result.requestSubject.name.source,
+        ),
+        result.requestSubject.name.confidence,
+      );
+    }
+  }
+
+  /**
+   * ÜRÜN KONUSUNUN ADI → productType (KB-15).
+   *
+   * Yukarıdaki REAL_ESTATE kuralının aynısı, ürün tarafında. Konu otoritesi
+   * "karton kutu ürettirmek" cümlesinde istenen şeyi zaten "kutu" olarak
+   * çözüyordu; alan boş kaldığı için soru motoru `productType`ı eksik sayıp
+   * kullanıcıya tekrar soruyordu.
+   *
+   * Jenerik yedek adlar bağlanmaz: konu otoritesi bir ad bulamadığında
+   * "ürün" / "servis" / "cihaz" gibi yer tutucular üretir ve bunlar
+   * kullanıcının yazdığı bir şey DEĞİLDİR. Yer tutucu bağlanırsa soru
+   * yanlışlıkla bastırılır — bu, tekrar sormak kadar ciddi bir kusurdur.
+   */
+  const PRODUCT_SUBJECT_KINDS = new Set([
+    "PRODUCT",
+    "MANUFACTURED_ITEM",
+    "INDUSTRIAL_EQUIPMENT",
+    "MEDICAL_DEVICE",
+  ]);
+  if (
+    PRODUCT_SUBJECT_KINDS.has(String(subjectKind)) &&
+    result.requestSubject.name?.value &&
+    fields.productType?.kind !== "VALUE"
+  ) {
+    const prodName = String(result.requestSubject.name.value).trim();
+    const placeholder = /^(ürün|urun|servis|hizmet|cihaz|makine|eşya|esya)$/i.test(
+      prodName,
+    );
+    const writtenByUser = foldPartToken(String(result.rawInput ?? "")).includes(
+      foldPartToken(prodName),
+    );
+    if (!placeholder && prodName.length >= 3 && writtenByUser) {
+      fields.productType = valueField(
+        prodName,
         mapRuProvenance(
           result.requestSubject.name.provenance,
           result.requestSubject.name.source,
@@ -709,10 +944,21 @@ export function mapUnderstandingToFields(
   }
 
   if (result.quantity?.value?.value != null) {
+    const qtyText = String(result.quantity.value.value);
     fields.quantity = valueField(
-      String(result.quantity.value.value),
+      qtyText,
       mapRuProvenance(result.quantity.provenance, result.quantity.source),
     );
+    /**
+     * ÇEKİNCELİ SAYI KESİN SAYI DEĞİLDİR (KB-15).
+     *
+     * "Yaklaşık 1000 adet" ile "1000 adet" aynı statüyü taşıyamaz: değer
+     * korunur (kullanıcı bir büyüklük söyledi) ama kesin cevap sayılmaz.
+     * Çekince kalıpları burada tanımlanmaz, tek yetkiliden sorulur.
+     */
+    if (isHedgedExpression(raw, qtyText)) {
+      fields.quantity = { ...fields.quantity, strength: "PREFERRED" };
+    }
   } else {
     fields.quantity = fields.quantity ?? unknownField();
   }
@@ -1214,6 +1460,24 @@ export function buildCanonicalRequestState(input: {
     categoryId = categoryId ?? input.previous.categoryId;
   }
 
+  /**
+   * SEÇENEK BAĞLAMASI ÇÖZÜLMÜŞ KATEGORİYLE TEKRARLANIR (KB-15).
+   *
+   * `mapUnderstandingToFields` bağlamayı anlama katmanının kendi kategori
+   * kararıyla yapar; o karar `UNKNOWN` olabilir ("Klinik için steril eldiven
+   * arıyorum" ölçüldü: `understanding.category = null`, besteci `health`).
+   * O durumda kanonik seçenek kaydı hiç okunmuyor ve kullanıcının yazdığı
+   * değer alana bağlanmıyordu. Bağlayıcı yalnız BOŞ alanları doldurduğu için
+   * ikinci çağrı güvenlidir; dolu ya da tarayarak seçilmiş alanlara dokunmaz.
+   */
+  if (categoryId) {
+    bindWrittenOptionValues(
+      fields,
+      categoryId,
+      String(input.understanding.rawInput ?? ""),
+    );
+  }
+
   fields = stripIncompatibleDomainFields(fields, categoryId);
 
   return {
@@ -1245,7 +1509,15 @@ export function toResolverFieldBag(
       out[key] = FIELD_SENTINEL.NOT_APPLICABLE;
       out[`__explicit__${key}`] = "text";
     } else if (field.kind === "VALUE" && field.value) {
-      out[key] = field.value;
+      /**
+       * KAPI DEĞERİ KAYIT DEĞERİDİR, ETİKET DEĞİL (KB-15).
+       *
+       * Soru çözücüsü `visibleWhen` / `dependsOn` koşullarını bu torbadan
+       * okur ve koşullar kayıt değerine ("karton-kutu") bakar. Kullanıcının
+       * gördüğü etiket ("Karton kutu") `state.fields` içinde kalır; burada
+       * kayıt değeri varsa o geçirilir.
+       */
+      out[key] = field.canonicalValue ?? field.value;
       if (
         field.provenance === "EXPLICIT_TEXT" ||
         field.provenance === "EXPLICIT_BROWSE"

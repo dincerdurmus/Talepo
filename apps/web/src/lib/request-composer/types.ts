@@ -21,6 +21,18 @@ export type CanonicalFieldState = {
   kind: FieldValueKind;
   /** Concrete value when kind === VALUE; optional label for ANY/NA. */
   value?: string | null;
+  /**
+   * ETİKET İLE KAYIT DEĞERİ AYRI ROLLERDİR (KB-15).
+   *
+   * Bazı alanların kanonik kaydı insan etiketi değil bir slug taşır
+   * ("Karton kutu" → `karton-kutu`). Kullanıcıya slug gösterilmez ve
+   * profesyonel metne slug yazılmaz; ama koşullu alanlar (`visibleWhen`,
+   * `dependsOn`) kayıt değerine bakar. Bu yüzden `value` insanın gördüğü
+   * ETİKETİ, `canonicalValue` ise kaydın beklediği değeri taşır.
+   *
+   * Alan yoksa `value` zaten kanonik kabul edilir (geriye uyumlu).
+   */
+  canonicalValue?: string;
   provenance: FieldProvenance;
   confidence?: number;
   evidence?: string[];

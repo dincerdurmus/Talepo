@@ -1042,6 +1042,49 @@ export function understandRequest(
         evidence: n.evidence,
       });
     }
+    /**
+     * ÖLÇÜ SPAN'İ ALANA BAĞLANIR (KB-15).
+     *
+     * Sayı otoritesi "20x15x10" span'ini ZATEN `DIMENSION` diye işaretliyordu;
+     * eksik olan çıkarım değil, BAĞLAMAYDI. Buradaki her dal `n.value != null`
+     * istiyor, ölçü ise skaler değil bileşik bir span olduğu için `value`
+     * taşımıyor ve hiçbir dala giremiyordu. Sonuç: kullanıcı ölçüyü yazıyor,
+     * `dimensions` alanı boş kalıyor ve soru tekrar soruluyordu.
+     *
+     * Kanıt yetmiyorsa bağlanmaz: iki bileşenli "20x15" tek başına ölçü
+     * sayılmaz (logo, fotoğraf, etiket boyu da olabilir); üç bileşen ya da
+     * açık bir ölçü işareti ("ölçü", "ebat", "boyut", "cm", "mm") gerekir.
+     * Kural kelimeye değil, span'in yapısına bakar.
+     */
+    if (n.role === "DIMENSION" && n.raw) {
+      const span = String(n.raw);
+      const threePart = /\d+\s*[x×]\s*\d+\s*[x×]\s*\d+/i.test(span);
+      const dimensionCue =
+        /(?:^|[^\p{L}])(?:ölçü|olcu|ebat|boyut|en\s*x|cm|mm|santim)/iu.test(
+          normalizedInput,
+        );
+      if (threePart || dimensionCue) {
+        /**
+         * YAZILMIŞ BİRİM KORUNUR, YAZILMAYAN UYDURULMAZ.
+         *
+         * Span'in hemen ardından bir birim geliyorsa ("20x15x10 cm") o birim
+         * kullanıcının ifadesinin parçasıdır ve saklanır. Birim yazılmamışsa
+         * varsayılan bir birim EKLENMEZ — "20x15x10" olduğu gibi kalır.
+         */
+        const compact = span.replace(/\s+/g, "");
+        const trailingUnit = normalizedInput
+          .slice(normalizedInput.indexOf(span) + span.length)
+          .match(/^\s*(cm|mm|m|inç|inc)\b/i);
+        attributes.dimensions = uv(
+          trailingUnit ? `${compact} ${trailingUnit[1].toLowerCase()}` : compact,
+          {
+            provenance: "EXPLICIT",
+            source: "USER_EXPLICIT",
+            evidence: n.evidence,
+          },
+        );
+      }
+    }
     if (n.role === "MILEAGE" && n.value != null) {
       attributes.mileage = uv(
         { value: n.value, unit: "km" },

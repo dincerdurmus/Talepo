@@ -281,7 +281,22 @@ export function resolveTaxonomyAlias(
       (a) => foldLabel(a) === key,
     ) ?? term;
 
-  return { node, matchedAlias, ambiguous };
+  /**
+   * Adaylar farklı düğümler olsa bile HEPSİ aynı kanonik adı taşıyorsa ürün
+   * türü adı belirsiz değildir (bkz. AliasHit.canonicalNameUnambiguous).
+   * Alias'ın kendisi `ambiguousAliases` ile açıkça belirsiz işaretlenmişse bu
+   * kapı çalışmaz — o işaret kürasyon kararıdır ve ezilmez.
+   */
+  const explicitlyAmbiguousAlias = (node.ambiguousAliases ?? []).some(
+    (a) => foldLabel(a) === key,
+  );
+  const canonicalNameUnambiguous =
+    !explicitlyAmbiguousAlias &&
+    candidates.every(
+      (c) => foldLabel(c.canonicalName) === foldLabel(node.canonicalName),
+    );
+
+  return { node, matchedAlias, ambiguous, canonicalNameUnambiguous };
 }
 
 /** Nearest requestSchemaId for a node (walks ancestors). */

@@ -75,6 +75,17 @@ const FIELD_LABELS: Record<string, string> = {
   budget: "Bütçe",
   quantity: "Adet",
   delivery: "Zaman",
+  /**
+   * KB-15: soruyu bastıran her değer kullanıcıya GÖRÜNMEK zorundadır.
+   * Görünmeyen bir değer düzeltilemez; görünmeden soruyu kapatmak, tekrar
+   * sormaktan daha kötüdür çünkü kullanıcı yanlışı fark edemez.
+   */
+  dimensions: "Ölçü",
+  material: "Malzeme",
+  usageArea: "Kullanım alanı",
+  seatingCapacity: "Kişi sayısı",
+  capacityBtu: "Kapasite (BTU)",
+  babyProductType: "Ürün",
 };
 
 const NEED_TYPE_DISPLAY: Record<string, string> = {
@@ -122,6 +133,15 @@ const DISPLAY_PRIORITY = [
   "modelYear",
   "yearMin",
   "yearMax",
+  // KB-15: kullanıcının yazdığı ve soruyu bastıran değerler burada görünür,
+  // böylece Signal facts alanından düzeltilebilirler.
+  "dimensions",
+  "material",
+  "usageArea",
+  "seatingCapacity",
+  "capacityBtu",
+  "babyProductType",
+  "quantity",
   "city",
 ] as const;
 
@@ -380,7 +400,53 @@ export function buildUnderstoodFacts(
     }
   }
 
-  return facts;
+  return collapseEquivalentFacts(facts, state);
+}
+
+/**
+ * UYUMLULUK ALANI İKİNCİ BİR SATIR ÜRETEMEZ (KB-15).
+ *
+ * `furnitureType` / `applianceType` gibi alanlar kalıcılık ve Pro filtresi
+ * için doldurulur; ama kanonik `productType` ile AYNI değeri taşıdıklarında
+ * kullanıcı aynı bilgiyi iki kez görür ("Ürün: Toplantı Masası" ×2).
+ *
+ * Birleştirme YALNIZ sunumdadır — `state.fields` ve yayınlanan veri
+ * dokunulmaz. Ve yalnız aynı kaynak kanıtı varken yapılır: etiket ve
+ * NORMALİZE EDİLMİŞ DEĞER birebir aynı olmalıdır. Etiketleri tesadüfen aynı
+ * olan iki farklı bilgi (farklı değerler) birleştirilmez; marka/model gibi
+ * ayrı etiketli alanlar zaten etkilenmez.
+ */
+function collapseEquivalentFacts(
+  facts: UnderstoodFact[],
+  state: CanonicalRequestState,
+): UnderstoodFact[] {
+  /** Aynı bilgiyi taşıyan alanlarda kanonik olan gösterilir. */
+  const CANONICAL_PREFERENCE = ["productType", "furnitureType", "applianceType"];
+  const rank = (key: string) => {
+    const i = CANONICAL_PREFERENCE.indexOf(key);
+    return i < 0 ? CANONICAL_PREFERENCE.length : i;
+  };
+  const norm = (v: unknown) =>
+    String(v ?? "")
+      .trim()
+      .toLocaleLowerCase("tr-TR")
+      .replace(/\s+/g, " ");
+
+  const byIdentity = new Map<string, UnderstoodFact>();
+  const order: string[] = [];
+  for (const f of facts) {
+    const identity = `${norm(f.label)}|${norm(f.displayValue)}`;
+    const existing = byIdentity.get(identity);
+    if (!existing) {
+      byIdentity.set(identity, f);
+      order.push(identity);
+      continue;
+    }
+    // Aynı bilgi: kanonik alanı tut, uyumluluk alanını sunumdan düşür.
+    if (rank(f.key) < rank(existing.key)) byIdentity.set(identity, f);
+  }
+  void state;
+  return order.map((id) => byIdentity.get(id)!);
 }
 
 export function understoodFactsToSummaryChips(

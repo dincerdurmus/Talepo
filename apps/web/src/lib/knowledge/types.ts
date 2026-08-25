@@ -136,6 +136,24 @@ export type KnowledgeField = {
   dependsOn?: string[];
   visibleWhen?: { field: string; in: string[] };
   /**
+   * KOMPOZİT ÖLÇÜ KAPSAMASI (KB-15).
+   *
+   * Kullanıcı "20x15x10" yazdığında bu tek ifade birden çok eksen sorusunu
+   * karşılar. Hangi sayının en, hangisinin boy olduğu şemada TANIMLI
+   * DEĞİLDİR; bu yüzden eksen alanlarına tek tek değer yazmak uydurma olur.
+   * Karşılama bunun yerine burada TİPLİ bir kapsama kararı olarak durur:
+   * "şu toplu alan, en az şu kadar bileşen taşıyorsa bu alanı karşılar".
+   *
+   * Böylece iki bileşenli "20x15" en ve boy'u karşılar ama derinliği
+   * KARŞILAMAZ — gerçekten eksik olan eksen sorulmaya devam eder.
+   */
+  coveredByAggregate?: {
+    /** Toplu ölçüyü taşıyan alan (ör. `dimensions`). */
+    key: string;
+    /** Bu alanı karşılaması için toplu değerin taşıması gereken bileşen sayısı. */
+    minComponents: number;
+  };
+  /**
    * Ürün-kapsamlı alan: yalnız algılanan ürün/makine/hizmet tipi (fold +
    * substring) bu listeden birine değince görünür; bağlam boşsa gizli kalır.
    */

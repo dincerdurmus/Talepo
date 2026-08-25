@@ -168,6 +168,8 @@ function taxonomyHintFromKnownTechProduct(raw: string): {
 export function extractProductTypeHint(raw: string): {
   productType: string;
   taxonomyNodeId: string | null;
+  /** Düğüm belirsiz olsa da bilinen alan (bkz. aşağıdaki köprü gerekçesi). */
+  categoryId?: string | null;
 } | null {
   ensureTaxonomyLoaded();
   for (const hint of PRODUCT_HINTS) {
@@ -211,26 +213,41 @@ export function extractProductTypeHint(raw: string): {
 
   const tryAlias = (phrase: string) => {
     const hit = resolveTaxonomyAlias(phrase);
+    if (!hit) return null;
+    const typeOk =
+      hit.node.nodeType === "PRODUCT_TYPE" ||
+      hit.node.nodeType === "SERVICE_TYPE" ||
+      hit.node.nodeType === "COMMODITY_TYPE" ||
+      hit.node.nodeType === "PART_TYPE";
+    if (!typeOk) return null;
+    /**
+     * BELİRSİZ DÜĞÜM ≠ BELİRSİZ AD (KB-15).
+     *
+     * "Toplantı masası" taksonomide iki kez tanımlı olduğu için `ambiguous`
+     * geliyor ve ifade tamamen atılıyordu; kullanıcı yazdığı hâlde "ne tür
+     * mobilya?" diye tekrar soruluyordu. İki adayın da kanonik adı aynıysa
+     * ÜRÜN TÜRÜ belirsiz değildir: ad kullanılır, düğüm kimliği ise
+     * UYDURULMAZ ve boş bırakılır.
+     */
+    if (hit.ambiguous && !hit.canonicalNameUnambiguous) return null;
     if (
-      hit &&
-      !hit.ambiguous &&
-      (hit.node.nodeType === "PRODUCT_TYPE" ||
-        hit.node.nodeType === "SERVICE_TYPE" ||
-        hit.node.nodeType === "COMMODITY_TYPE" ||
-        hit.node.nodeType === "PART_TYPE")
+      LOCATION_USE_CONTEXT.has(phrase.toLocaleLowerCase("tr-TR")) &&
+      hasFurnitureObjectNoun(raw)
     ) {
-      if (
-        LOCATION_USE_CONTEXT.has(phrase.toLocaleLowerCase("tr-TR")) &&
-        hasFurnitureObjectNoun(raw)
-      ) {
-        return null;
-      }
-      return {
-        productType: hit.node.canonicalName,
-        taxonomyNodeId: hit.node.id,
-      };
+      return null;
     }
-    return null;
+    return {
+      productType: hit.node.canonicalName,
+      taxonomyNodeId: hit.ambiguous ? null : hit.node.id,
+      /**
+       * Düğüm kimliği belirsiz olsa bile ALANI bilinir. Aşağı akıştaki
+       * kategori-özel köprüler (mobilya/beyaz eşya tür alanları) düğüm
+       * kimliğinin ön ekine bakıyordu; belirsizlikte o ön ek yok olunca
+       * "Toplantı Masası" mobilya tür alanına hiç geçmiyor ve Pro tarafının
+       * filtrelediği alan boş kalıyordu.
+       */
+      categoryId: hit.node.categoryId ?? null,
+    };
   };
 
   for (let n = Math.min(3, tokens.length); n >= 1; n--) {

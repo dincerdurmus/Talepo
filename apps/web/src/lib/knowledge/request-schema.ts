@@ -112,6 +112,8 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       unit: "mm",
       priority: "conditional",
       dependsOn: ["productType"],
+      // "20x15" iki eksen taşır: en ve boy karşılanır.
+      coveredByAggregate: { key: "dimensions", minComponents: 2 },
     },
     {
       key: "height",
@@ -120,6 +122,7 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       unit: "mm",
       priority: "conditional",
       dependsOn: ["productType"],
+      coveredByAggregate: { key: "dimensions", minComponents: 2 },
     },
     {
       key: "depth",
@@ -127,6 +130,9 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       type: "MEASUREMENT",
       unit: "mm",
       priority: "optional",
+      // Derinlik ancak ÜÇ bileşenli ölçü yazıldıysa karşılanır; iki
+      // bileşenli ölçüden derinlik türetmek uydurma olur.
+      coveredByAggregate: { key: "dimensions", minComponents: 3 },
       visibleWhen: { field: "productType", in: ["karton-kutu"] },
     },
     {
@@ -1085,4 +1091,33 @@ export function getNextMissingFields(
     if (missing.length >= limit) break;
   }
   return missing;
+}
+
+/**
+ * KOMPOZİT ÖLÇÜNÜN BİLEŞEN SAYISI (KB-15).
+ *
+ * "20x15x10" üç, "20x15" iki bileşen taşır. Ayraç olarak x/×/* kabul edilir;
+ * birim ("cm") sayılmaz. Değer okunamıyorsa 0 döner — kapsama kurulmaz,
+ * yani şüphede soru sorulmaya devam eder.
+ */
+export function measureComponentCount(value: unknown): number {
+  const text = String(value ?? "").trim();
+  if (!text) return 0;
+  const m = text.match(/\d+(?:[.,]\d+)?(?:\s*[x×*]\s*\d+(?:[.,]\d+)?)+/i);
+  if (!m) return 0;
+  return m[0].split(/\s*[x×*]\s*/i).filter((p) => /\d/.test(p)).length;
+}
+
+/**
+ * Bir alan, toplu bir ölçü tarafından karşılanıyor mu? Karar alanın KENDİ
+ * şema tanımından okunur (`coveredByAggregate`); burada yeni bir eşleştirme
+ * tablosu kurulmaz.
+ */
+export function isCoveredByAggregate(
+  field: Pick<KnowledgeField, "key" | "coveredByAggregate">,
+  readValue: (key: string) => unknown,
+): boolean {
+  const rule = field.coveredByAggregate;
+  if (!rule) return false;
+  return measureComponentCount(readValue(rule.key)) >= rule.minComponents;
 }

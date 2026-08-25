@@ -5,6 +5,8 @@
 
 import type { DynamicField } from "@/lib/request-category-engine";
 import { resolveNextQuestions } from "@/lib/knowledge/question-resolver";
+// Kompozit ölçü kapsaması alanın kendi şema tanımından okunur (KB-15).
+import { isCoveredByAggregate } from "@/lib/knowledge/request-schema";
 import type { KnowledgeField } from "@/lib/knowledge/types";
 import type { CompletenessBreakdown } from "@/lib/price-intelligence/strategy-completeness";
 import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-registry";
@@ -316,6 +318,25 @@ export function resolveHybridQuestions(
         return false;
       }
       if (kind === "VALUE") return false;
+      /**
+       * KOMPOZİT ÖLÇÜ KAPSAMASI (KB-15).
+       *
+       * Kullanıcı "20x15x10" yazdığında en/boy/derinlik ayrı ayrı boş kalır
+       * ve soru motoru bunları eksik sayıp sonraki dalgalarda tekrar
+       * soruyordu. Karar burada üretilmez: alanın KENDİ şema tanımındaki
+       * `coveredByAggregate` kuralı okunur. Eksen alanlarına değer
+       * YAZILMAZ — hangi sayının en olduğu şemada tanımlı değildir ve
+       * uydurulamaz.
+       */
+      if (
+        isCoveredByAggregate(f, (key) => {
+          const src = state.fields[key];
+          return src?.kind === "VALUE" ? src.value : null;
+        })
+      ) {
+        suppressed.push(f.key);
+        return false;
+      }
       // Preferred / allowed multi-value satisfies the field for ask purposes
       if (
         (field?.preferredValues?.length ?? 0) >= 1 ||

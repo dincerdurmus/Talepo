@@ -499,7 +499,16 @@ const STANDARD: QuestionProfileDef[] = [
   },
   // —— klima ——
   {
-    fieldKey: "btu",
+    /**
+     * KB-15: alan adı kanonik şemayla aynı olmalı.
+     *
+     * Anlama katmanı bu bilgiyi `capacityBtu` olarak yazıyor
+     * (`knowledge/request-schema.ts` → `capacityBtu`, alias `btu`); soru
+     * profili ise `btu` diyordu. Aynı bilgi için iki ad, soru motorunun
+     * dolu alanı görememesine ve "12000 BTU klima arıyorum" yazan kullanıcıya
+     * BTU'yu tekrar sormasına yol açıyordu. Ad tek kaynağa çekildi.
+     */
+    fieldKey: "capacityBtu",
     prompt: "Kaç BTU olmalı?",
     summaryLabel: "BTU",
     importance: "quote_critical",

@@ -64,6 +64,18 @@ export type AliasHit = {
   node: TaxonomyNode;
   matchedAlias: string;
   ambiguous: boolean;
+  /**
+   * DÜĞÜM BELİRSİZ AMA AD BELİRSİZ DEĞİL (KB-15).
+   *
+   * Bir ifade birden çok düğüme çözülebilir ve o düğümlerin HEPSİ aynı
+   * kanonik adı taşıyabilir. Ölçülen vaka: "Toplantı Masası" taksonomide iki
+   * kez tanımlı; `ambiguous` doğru olduğu için ipucu çözücüsü ifadeyi
+   * tamamen atıyor ve kullanıcıya "ne tür mobilya?" diye tekrar soruluyordu.
+   *
+   * Hangi DÜĞÜM olduğu gerçekten belirsizdir ve uydurulmaz (`taxonomyNodeId`
+   * boş kalır); ama ÜRÜN TÜRÜ adı belirsiz değildir ve alana yazılabilir.
+   */
+  canonicalNameUnambiguous: boolean;
 };
 
 export type TaxonomyCoverageReport = {

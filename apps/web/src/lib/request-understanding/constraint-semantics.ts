@@ -69,6 +69,57 @@ const MUST_MARKERS =
 const PREFERRED_MARKERS =
   /\b(tercihen|tercihim|önceliğim|onceligim|olursa\s+iyi\s+olur|olsa\s+iyi\s+olur|mümkünse|mumkunse|daha\s+iyi\s+olur|olabilir)\b/i;
 
+/**
+ * ÇEKİNCE OTORİTESİ (KB-15) — TEK YER.
+ *
+ * Kullanıcı bir değeri kesin beyan etmek yerine yaklaşıklık ("yaklaşık 1000
+ * adet"), benzetme ("Clio gibi", "ahşap görünümlü") ya da isteğe bağlılık
+ * ("Arçelik olmasa da olur") ile söyleyebilir. Böyle bir değer, kesin
+ * yazılmış bir değerle AYNI statüyü taşıyamaz: alanda durur ama soruyu
+ * kesin cevap gibi kapatmaz.
+ *
+ * Bu kalıplar tek yerde tutulur; besteci katmanı kendi paralel listesini
+ * kurmaz, buradan sorar.
+ */
+const APPROXIMATION_MARKERS =
+  /(yaklaşık|yaklasik|civar|aşağı\s*yukarı|asagi\s*yukari|takriben|kadar\s*olsun|en\s*az|en\s*fazla)/i;
+
+const SIMILARITY_MARKERS =
+  /(görünüm|gorunum|görünt|gorunt|tarzı|tarzi|tarzında|tarzinda|imitasyon|benzeri|benzer|gibi)/i;
+
+const OPTIONAL_MARKERS =
+  /(olmasa\s*da\s*olur|şart\s*değil|sart\s*degil|olmak\s*zorunda\s*değil|olmak\s*zorunda\s*degil|istemiyorum|önemli\s*değil|onemli\s*degil)/i;
+
+/**
+ * Metinde (isteğe bağlı olarak belirli bir span'in yakınında) bir çekince
+ * işareti var mı? `span` verilirse yalnız onun çevresindeki pencere okunur —
+ * cümlenin başka bir yerindeki çekince ilgisiz bir alanı zayıflatmasın.
+ * Açık bir MUST işareti çekinceyi geçersiz kılar.
+ */
+export function isHedgedExpression(text: string, span?: string): boolean {
+  const full = String(text ?? "");
+  if (!full) return false;
+  let scope = full;
+  if (span) {
+    const idx = full.toLocaleLowerCase("tr-TR").indexOf(
+      String(span).toLocaleLowerCase("tr-TR"),
+    );
+    if (idx >= 0) {
+      scope = full.slice(
+        Math.max(0, idx - 28),
+        idx + String(span).length + 28,
+      );
+    }
+  }
+  if (MUST_MARKERS.test(scope)) return false;
+  return (
+    APPROXIMATION_MARKERS.test(scope) ||
+    SIMILARITY_MARKERS.test(scope) ||
+    OPTIONAL_MARKERS.test(scope) ||
+    PREFERRED_MARKERS.test(scope)
+  );
+}
+
 const BRAND_CATALOG: BrandEntry[] = [
   ...TECHNOLOGY_BRANDS,
   ...APPLIANCE_BRANDS,

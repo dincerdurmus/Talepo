@@ -67,6 +67,8 @@ import { isCanonicalWholeProductPhrase } from "../src/lib/taxonomy/phrase-classi
 import { CATALOG_BRAND_DOMAIN_IDS } from "../src/lib/request-understanding/part-relation";
 import { classifyBrandEvidence } from "../src/lib/product-identity/brand-extraction";
 import { buildRequestRoutingEnvelope } from "../src/lib/matching-v3/routing-envelope";
+// KB-15 I51: yayın zinciri kanıtı için kanonik projeksiyon kurucusu.
+import { buildDiscoveryProjectionFromState } from "../src/lib/discovery/build-projection";
 import {
   DOMAIN_ENTITIES,
   findDomainEntity,
@@ -546,21 +548,21 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     must: string[];
     never: string[];
   }> = [
-    { cat: "technology", product: "Televizyon", must: ["screenSize"], never: ["btu", "vacuumType", "coffeeType"] },
-    { cat: "technology", product: "Laptop", must: ["usagePurpose"], never: ["screenSize", "btu"] },
+    { cat: "technology", product: "Televizyon", must: ["screenSize"], never: ["capacityBtu", "vacuumType", "coffeeType"] },
+    { cat: "technology", product: "Laptop", must: ["usagePurpose"], never: ["screenSize", "capacityBtu"] },
     { cat: "technology", product: "Kulaklık", must: ["headphoneType"], never: ["screenSize"] },
     { cat: "technology", product: "Fotoğraf Makinesi", must: ["cameraType"], never: ["screenSize", "usagePurpose"] },
     { cat: "technology", product: null, must: [], never: ["screenSize", "storageCapacity", "usagePurpose"] },
-    { cat: "appliances", product: "Klima", must: ["btu"], never: ["screenSize", "vacuumType", "capacityKg"] },
-    { cat: "appliances", product: "Robot Süpürge", must: ["vacuumType"], never: ["screenSize", "btu"] },
-    { cat: "appliances", product: "Hava Temizleme Cihazı", must: ["usageArea"], never: ["screenSize", "btu"] },
-    { cat: "appliances", product: "Çamaşır Makinesi", must: ["capacityKg"], never: ["btu", "screenSize"] },
+    { cat: "appliances", product: "Klima", must: ["capacityBtu"], never: ["screenSize", "vacuumType", "capacityKg"] },
+    { cat: "appliances", product: "Robot Süpürge", must: ["vacuumType"], never: ["screenSize", "capacityBtu"] },
+    { cat: "appliances", product: "Hava Temizleme Cihazı", must: ["usageArea"], never: ["screenSize", "capacityBtu"] },
+    { cat: "appliances", product: "Çamaşır Makinesi", must: ["capacityKg"], never: ["capacityBtu", "screenSize"] },
     { cat: "appliances", product: "Buzdolabı", must: ["fridgeType"], never: ["screenSize", "capacityKg"] },
-    { cat: "appliances", product: null, must: [], never: ["screenSize", "btu", "vacuumType"] },
-    { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["btu", "screenSize"] },
+    { cat: "appliances", product: null, must: [], never: ["screenSize", "capacityBtu", "vacuumType"] },
+    { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["capacityBtu", "screenSize"] },
     // Matbaaloji ailesi (2026-08-22)
-    { cat: "printing", product: "Kartvizit", must: ["quantity", "lamination"], never: ["printSize", "pageCount", "btu"] },
-    { cat: "printing", product: "Broşür", must: ["quantity", "printSize", "paperWeight"], never: ["pageCount", "btu"] },
+    { cat: "printing", product: "Kartvizit", must: ["quantity", "lamination"], never: ["printSize", "pageCount", "capacityBtu"] },
+    { cat: "printing", product: "Broşür", must: ["quantity", "printSize", "paperWeight"], never: ["pageCount", "capacityBtu"] },
     { cat: "printing", product: "Afiş", must: ["quantity", "printSize"], never: ["paperWeight", "lamination", "pageCount"] },
     { cat: "printing", product: "Katalog", must: ["quantity", "pageCount", "lamination"], never: ["printSize", "paperWeight"] },
     { cat: "printing", product: null, must: [], never: ["lamination", "printSize", "paperWeight", "pageCount"] },
@@ -577,19 +579,19 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     { cat: "baby", product: "Bebek Bezi", must: ["diaperSize"], never: ["strollerType", "carSeatGroup"] },
     { cat: "baby", product: null, must: [], never: ["strollerType", "carSeatGroup", "diaperSize"] },
     // Koçtaş mobilya ailesi (2026-08-22)
-    { cat: "furniture", product: "Çift Kişilik Yatak", must: ["bedSize"], never: ["wardrobeType", "seatingType", "btu"] },
+    { cat: "furniture", product: "Çift Kişilik Yatak", must: ["bedSize"], never: ["wardrobeType", "seatingType", "capacityBtu"] },
     { cat: "furniture", product: "Sürgülü Gardırop", must: ["wardrobeType"], never: ["bedSize", "seatingType"] },
     { cat: "furniture", product: "Köşe Koltuk", must: ["seatingType"], never: ["bedSize", "wardrobeType"] },
     { cat: "furniture", product: "Yemek Masası", must: ["diningSeats"], never: ["bedSize", "seatingType"] },
     { cat: "furniture", product: "Ofis Sandalyesi", must: [], never: ["bedSize", "wardrobeType", "seatingType", "diningSeats"] },
     // Makinecim ailesi (2026-08-22)
-    { cat: "machinery", product: "Jeneratör", must: ["generatorPower", "condition"], never: ["liftCapacity", "compressorType", "btu"] },
+    { cat: "machinery", product: "Jeneratör", must: ["generatorPower", "condition"], never: ["liftCapacity", "compressorType", "capacityBtu"] },
     { cat: "machinery", product: "Forklift", must: ["liftCapacity", "condition"], never: ["generatorPower", "toolPower"] },
     { cat: "machinery", product: "Kompresör", must: ["compressorType", "condition"], never: ["generatorPower", "liftCapacity"] },
     // Bauhaus ailesi (2026-08-22)
-    { cat: "machinery", product: "Akülü Matkap", must: ["toolPower"], never: ["btu", "screenSize", "coffeeType"] },
-    { cat: "machinery", product: "Çim Biçme Makinesi", must: ["mowerType"], never: ["toolPower", "btu"] },
-    { cat: "home-kitchen", product: "Mangal", must: ["grillType"], never: ["coffeeType", "btu"] },
+    { cat: "machinery", product: "Akülü Matkap", must: ["toolPower"], never: ["capacityBtu", "screenSize", "coffeeType"] },
+    { cat: "machinery", product: "Çim Biçme Makinesi", must: ["mowerType"], never: ["toolPower", "capacityBtu"] },
+    { cat: "home-kitchen", product: "Mangal", must: ["grillType"], never: ["coffeeType", "capacityBtu"] },
     { cat: "machinery", product: null, must: [], never: ["toolPower", "mowerType", "paintScope"] },
   ];
   const bad: string[] = [];
@@ -612,7 +614,7 @@ check("I9b: product-scoped questions ship one-tap options", () => {
     hybridCandidates: [],
     values: {},
   });
-  const btu = result.visible.find((q) => q.fieldKey === "btu");
+  const btu = result.visible.find((q) => q.fieldKey === "capacityBtu");
   assert.ok(btu, "btu question missing");
   assert.ok(
     (btu.quickChoices?.length ?? 0) >= 3,
@@ -2269,14 +2271,27 @@ knownGap(
      * (bkz. I42). Bu satır açığı GÖRÜNÜR tutar ve PASS sayısına girmez;
      * davranış düzeldiğinde kendi kendine PASS'e döner.
      */
-    for (const raw of ["destek ayağı arıyorum", "koltuk destek mekanizması arıyorum"]) {
-      const s = surfacesFor(raw);
+    /**
+     * DÜRÜSTLÜK DÜZELTMESİ (2026-08-25).
+     *
+     * Bu satır önce yalnız BAŞ SÖZCÜĞÜ arıyordu. KB-15 dilimi `productType`
+     * bağlamasını eklediğinde "koltuk destek mekanizması arıyorum" cümlesi
+     * "koltuk arıyorum."a düştüğü hâlde baş sözcük ("koltuk") bulunduğu için
+     * satır PASS'e döndü — yani açık kapanmadan yeşile döndü. Sözleşme baş
+     * sözcük değil, istenen şeyin ANLAMLI TAM ifadesidir; beklenti ona
+     * çekildi ve satır KNOWN_FAIL olarak kalmaya devam ediyor.
+     */
+    const CASES: Array<{ raw: string; phrase: string }> = [
+      { raw: "destek ayağı arıyorum", phrase: "destek ayagi" },
+      { raw: "koltuk destek mekanizması arıyorum", phrase: "destek mekanizmasi" },
+    ];
+    for (const c of CASES) {
+      const s = surfacesFor(c.raw);
       // Konu türü ZATEN doğru olmalı — bu kısım I41'de sert kilitli.
-      assert.notEqual(s.subjectKind, "SERVICE", `${raw}: konu türü (${s.subjectKind})`);
-      const head = fold(raw).split(" ")[0] ?? "";
+      assert.notEqual(s.subjectKind, "SERVICE", `${c.raw}: konu türü (${s.subjectKind})`);
       assert.ok(
-        fold(s.text).includes(head),
-        `${raw}: '${head}' profesyonel metinde yok → '${s.text}'`,
+        fold(s.text).includes(c.phrase),
+        `${c.raw}: '${c.phrase}' profesyonel metinde yok → '${s.text}'`,
       );
     }
   },
@@ -5203,6 +5218,675 @@ check("I48j: /talep sayfası kapsam dışı açıklamayı gerçekten render eder
   assert.ok(
     scheduleGated,
     "küresel çekirdek soru zamanlayıcısı da kapsam kararıyla kapatılmalı",
+  );
+});
+
+/* ------------------------------------------------------------------------ *
+ * I49 — KULLANICININ YAZDIĞINI TEKRAR SORMA (KB-15)
+ *
+ * Sözleşme iki yarımdır ve ikisi de aynı soruya bakar: "bu değer için
+ * kullanıcı ne kadar kesin konuştu?"
+ *
+ *   BAĞLAMA  Kanonik otoritelerin ZATEN tanıdığı bir değer alana bağlanır.
+ *            Sayı motoru span'i DIMENSION diye işaretlemişse, konu otoritesi
+ *            ürünü adlandırmışsa, kategori kaydı o değeri geçerli seçenek
+ *            olarak tanıyorsa — değer alanda görünür. Yeni bir çıkarıcı
+ *            kurulmaz; kaybolan şey çıkarım değil, BAĞLAMADIR.
+ *
+ *   DÜRÜSTLÜK  Kullanıcı çekinceyle konuştuysa ("yaklaşık", "gibi",
+ *            "olmasa da olur") bu değer kesin yazılmış bir değerle AYNI
+ *            statüyü alamaz. Yalnız çekincesiz kullanıcı ifadesi soruyu
+ *            tamamen bastırabilir.
+ *
+ * Kaybolan soru da, tekrar sorulan soru da kusurdur. Bu blok ikisini birden
+ * ölçer.
+ * ------------------------------------------------------------------------ */
+
+/** Bir alanın besteci durumunu okur. */
+function fieldOf(
+  s: ReturnType<typeof surfacesFor>,
+  key: string,
+): { kind: string; value: string | null; provenance: string; strength: string } {
+  const f = (s.state.fields as Record<string, {
+    kind?: string; value?: unknown; provenance?: unknown; strength?: unknown;
+  }>)[key];
+  return {
+    kind: String(f?.kind ?? "yok"),
+    value: f?.value != null ? String(f.value) : null,
+    provenance: String(f?.provenance ?? "-"),
+    strength: String(f?.strength ?? "-"),
+  };
+}
+
+check("I49a: KB-15 — kullanıcının yazdığı değer alana bağlanır ve tekrar sorulmaz", () => {
+  const CASES: Array<{ raw: string; field: string; expect: RegExp }> = [
+    {
+      raw: "Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10",
+      field: "dimensions",
+      expect: /20\s*x\s*15\s*x\s*10/i,
+    },
+    {
+      raw: "20x15x10 cm özel kesim kutu istiyorum",
+      field: "dimensions",
+      expect: /20\s*x\s*15\s*x\s*10/i,
+    },
+    {
+      raw: "E-ticaret için karton kutu ürettirmek istiyorum",
+      field: "productType",
+      expect: /kutu/i,
+    },
+    {
+      raw: "Karton kutu yaptırmak istiyorum",
+      field: "productType",
+      expect: /kutu/i,
+    },
+    {
+      raw: "Yemek masası arıyorum 6 kişilik ahşap",
+      field: "material",
+      expect: /ah[şs]ap/i,
+    },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    const f = fieldOf(s, c.field);
+    assert.equal(
+      f.kind,
+      "VALUE",
+      `${c.raw}: '${c.field}' alanı kullanıcının yazdığıyla dolmalı → kind='${f.kind}'`,
+    );
+    assert.ok(
+      c.expect.test(String(f.value ?? "")),
+      `${c.raw}: '${c.field}' değeri kullanıcının ifadesini taşımalı → '${f.value}'`,
+    );
+    assert.ok(
+      !s.nextQuestionKeys.includes(c.field),
+      `${c.raw}: '${c.field}' yazılmışken tekrar sorulamaz → [${s.nextQuestionKeys.join(", ")}]`,
+    );
+  }
+});
+
+check("I49b: kategori kaydındaki seçeneği yazan kullanıcıya o alan sorulmaz", () => {
+  /**
+   * Kural kelimeye değil, KANONİK SEÇENEK KAYDINA bağlıdır: kullanıcı bir
+   * kategorinin `select` alanının tanımlı seçeneğini yazdıysa o alan
+   * doldurulur. Aşağıdaki beş vaka beş ayrı kategoriden ve tek kuralla
+   * kapanır.
+   */
+  const CASES: Array<{ raw: string; field: string; expect: RegExp }> = [
+    { raw: "İzmir'de satılık arsa arıyorum", field: "propertyType", expect: /arsa/i },
+    { raw: "Ofis için ergonomik çalışma sandalyesi arıyorum", field: "usageArea", expect: /ofis/i },
+    { raw: "Mama sandalyesi arıyorum katlanabilir", field: "babyProductType", expect: /mama sandalyesi/i },
+    { raw: "Çelik tencere seti arıyorum 12 parça", field: "material", expect: /[çc]elik/i },
+    { raw: "Ahşap toplantı masası arıyorum", field: "material", expect: /ah[şs]ap/i },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    const f = fieldOf(s, c.field);
+    assert.equal(
+      f.kind,
+      "VALUE",
+      `${c.raw}: '${c.field}' seçenek kaydından dolmalı → kind='${f.kind}'`,
+    );
+    assert.ok(
+      c.expect.test(String(f.value ?? "")),
+      `${c.raw}: '${c.field}' değeri yazılanı taşımalı → '${f.value}'`,
+    );
+    assert.ok(
+      !s.nextQuestionKeys.includes(c.field),
+      `${c.raw}: '${c.field}' tekrar sorulamaz → [${s.nextQuestionKeys.join(", ")}]`,
+    );
+  }
+});
+
+check("I49c: mevcut doğru bastırmalar korunur (koruma)", () => {
+  const CASES: Array<{ raw: string; fields: string[] }> = [
+    { raw: "Arçelik 55 inç televizyon arıyorum", fields: ["brand", "screenSize", "productType"] },
+    { raw: "2019 Renault Clio arıyorum", fields: ["brand", "model", "modelYear"] },
+    { raw: "2+1 satılık daire arıyorum", fields: ["roomCount", "listingType", "propertyType"] },
+    { raw: "12.000 BTU klima arıyorum", fields: ["capacityBtu"] },
+    { raw: "1000 adet kartvizit bastırmak istiyorum", fields: ["quantity", "productType"] },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    for (const key of c.fields) {
+      const f = fieldOf(s, key);
+      assert.equal(f.kind, "VALUE", `${c.raw}: '${key}' dolu kalmalı → '${f.kind}'`);
+      assert.ok(
+        !s.nextQuestionKeys.includes(key),
+        `${c.raw}: '${key}' tekrar sorulamaz → [${s.nextQuestionKeys.join(", ")}]`,
+      );
+    }
+  }
+});
+
+check("I49d: çekinceli ifade kesin yazılmış değerle aynı statüyü alamaz (KB-15)", () => {
+  /**
+   * "Yaklaşık 1000 adet" ile "1000 adet" aynı provenance/strength'i taşıyamaz;
+   * "Clio gibi" bir model kilidi değildir; "Arçelik olmasa da olur" zorunlu
+   * marka tercihi değildir. Bu, değeri SİLMEK anlamına gelmez — kesin
+   * sayılmaması anlamına gelir.
+   */
+  const exact = surfacesFor("1000 adet kartvizit bastırmak istiyorum");
+  const hedged = surfacesFor("Yaklaşık 1000 adet kartvizit bastırmak istiyorum");
+  const exactQ = fieldOf(exact, "quantity");
+  const hedgedQ = fieldOf(hedged, "quantity");
+  assert.equal(exactQ.kind, "VALUE", `kesin sayı dolu kalmalı → '${exactQ.kind}'`);
+  assert.notEqual(
+    `${hedgedQ.provenance}/${hedgedQ.strength}`,
+    `${exactQ.provenance}/${exactQ.strength}`,
+    `"yaklaşık 1000" ile "1000" aynı statüyü taşıyamaz → hedged=${hedgedQ.provenance}/${hedgedQ.strength} exact=${exactQ.provenance}/${exactQ.strength}`,
+  );
+
+  const likeModel = surfacesFor("Clio gibi bir araç arıyorum");
+  const lm = fieldOf(likeModel, "model");
+  assert.notEqual(
+    lm.strength,
+    "MUST",
+    `"Clio gibi" kesin model tercihi olamaz → strength='${lm.strength}'`,
+  );
+
+  const softBrand = surfacesFor("Arçelik olmasa da olur, buzdolabı arıyorum");
+  const sb = fieldOf(softBrand, "brand");
+  assert.notEqual(
+    sb.strength,
+    "MUST",
+    `"olmasa da olur" zorunlu marka tercihi olamaz → strength='${sb.strength}'`,
+  );
+});
+
+check("I49e: kanıtsız değer uydurulmaz — soru kaybolmaz (koruma)", () => {
+  // "Ahşap GÖRÜNÜMLÜ" masif ahşap değildir; malzeme kesinleştirilemez.
+  const look = surfacesFor("Ahşap görünümlü masa arıyorum");
+  const lm = fieldOf(look, "material");
+  assert.notEqual(
+    lm.strength,
+    "MUST",
+    `'ahşap görünümlü' masif ahşap gibi kesinleşemez → strength='${lm.strength}' value='${lm.value}'`,
+  );
+  if (lm.kind === "VALUE") {
+    assert.ok(
+      !/masif/i.test(String(lm.value ?? "")),
+      `'görünümlü' nitelemesi masif ahşaba çevrilemez → '${lm.value}'`,
+    );
+  }
+
+  // Bağlamsız "20x15" bir kutu ölçüsü değildir.
+  const logo = surfacesFor("20x15 logo arıyorum");
+  const ld = fieldOf(logo, "dimensions");
+  assert.notEqual(
+    ld.kind,
+    "VALUE",
+    `bağlamsız '20x15' kutu ölçüsü sayılamaz → '${ld.value}'`,
+  );
+});
+
+check("I49f: küresel bütçe ve konum kapısı bozulmaz (koruma)", () => {
+  /**
+   * Kullanıcı yalnız ürün adını yazdığında bütçe ve konum SESSİZCE
+   * kaybolamaz. Bu iki alan kategori sorusu değil, yayın kapısıdır; kapıyı
+   * `computeComposerPublishReadiness` tutar.
+   */
+  const s = surfacesFor("Kartvizit bastırmak istiyorum");
+  const readiness = computeComposerPublishReadiness({
+    hasUsableText: true,
+    schedule: {
+      visible: [],
+      blockingLabels: [],
+      canEnterReview: true,
+      remainingCriticalCount: 0,
+    } as never,
+    categoryId: s.categoryId,
+    budgetValue: null,
+    cityValue: null,
+  });
+  assert.equal(readiness.canReview, false, "bütçe ve konum yokken review açılamaz");
+  const labels = readiness.blockingLabels.join(" | ");
+  assert.ok(/bütçe/i.test(labels), `bütçe kapısı görünmeli → ${labels}`);
+  assert.ok(/konum|il/i.test(labels), `konum kapısı görünmeli → ${labels}`);
+});
+
+check("I49g: kapsam dışı talepte hiçbir soru yeniden açılmaz (koruma)", () => {
+  for (const raw of ["Aracımı satmak istiyorum", "Evimi kiraya vermek istiyorum"]) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.nextQuestionKeys.length,
+      0,
+      `${raw}: kapsam dışında soru açılamaz → [${s.nextQuestionKeys.join(", ")}]`,
+    );
+  }
+});
+
+check("I49h: bağlama rawInput'u değiştirmez (koruma)", () => {
+  for (const raw of [
+    "Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10",
+    "Yemek masası arıyorum 6 kişilik ahşap",
+    "E-ticaret için karton kutu ürettirmek istiyorum",
+  ]) {
+    const u = understandRequest({ rawInput: raw }) as unknown as { rawInput?: string };
+    assert.equal(u.rawInput, raw, `rawInput korunmalı → '${u.rawInput}'`);
+  }
+});
+
+/* ------------------------------------------------------------------------ *
+ * I50 — TÜM SORU KUYRUĞU VE KOMPOZİT ÖLÇÜ SÖZLEŞMESİ (KB-15, ikinci yarı)
+ *
+ * İlk ekranı ölçmek yetmez. Scheduler dalga dalga ilerler; "20x15x10" yazan
+ * kullanıcıya ölçü ilk ekranda sorulmasa bile İKİ DALGA SONRA en/boy
+ * sorulabiliyordu. Bu blok review'a kadar görülebilecek BÜTÜN soru
+ * anahtarlarını çıkarır.
+ *
+ * KOMPOZİT ÖLÇÜ SÖZLEŞMESİ:
+ *   - Üç bileşenli açık ölçü (20x15x10) en/boy/derinlik sorularını karşılar.
+ *   - İki bileşenli ölçü (20x15) en/boy'u karşılar; DERİNLİĞİ KARŞILAMAZ.
+ *   - Eksen sırası şemada tanımlı olmadığı için 20'nin "en", 15'in "boy"
+ *     olduğu VARSAYILMAZ: alanlara ayrı ayrı değer YAZILMAZ. Karşılama,
+ *     tipli bir kapsama kararıyla (`coveredByAggregate`) kurulur.
+ *   - Yazılmış birim korunur; yazılmamış birim UYDURULMAZ.
+ * ------------------------------------------------------------------------ */
+
+/** Bir girdinin review'a kadar görülebilecek tüm hibrit soru anahtarları. */
+function hybridFullQueue(raw: string): {
+  asked: string[];
+  prefilled: Record<string, string>;
+} {
+  const { state } = syncFromText(null, raw);
+  const fields = state.fields as Record<
+    string,
+    { kind?: string; value?: unknown }
+  >;
+  const prefilled: Record<string, string> = {};
+  for (const [k, f] of Object.entries(fields)) {
+    if (f?.kind === "VALUE" && f.value != null && String(f.value) !== "") {
+      prefilled[k] = String(f.value);
+    }
+  }
+  const seen = new Set<string>();
+  const working = { ...state, fields: { ...state.fields } } as typeof state;
+  for (let i = 0; i < 25; i += 1) {
+    const qr = resolveHybridQuestions(working) as unknown as {
+      next?: Array<{ key: string }>;
+    };
+    const wave = (qr.next ?? []).map((q) => q.key).filter((k) => !seen.has(k));
+    if (wave.length === 0) break;
+    for (const k of wave) {
+      seen.add(k);
+      (working.fields as Record<string, unknown>)[k] = {
+        kind: "VALUE",
+        value: "__ANSWERED__",
+        provenance: "EXPLICIT_BROWSE",
+      };
+    }
+  }
+  return { asked: [...seen], prefilled };
+}
+
+check("I50a: yazılan ölçü SONRAKİ dalgalarda da eksen sorusu açtırmaz (KB-15)", () => {
+  const CASES = [
+    "20x15x10 cm özel kesim kutu istiyorum",
+    "Ölçüler 20x15x10 karton kutu yaptırmak istiyorum",
+    "Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10",
+  ];
+  for (const raw of CASES) {
+    const q = hybridFullQueue(raw);
+    assert.ok(
+      q.prefilled.dimensions,
+      `${raw}: ölçü alana bağlanmalı → ${JSON.stringify(q.prefilled)}`,
+    );
+    for (const axis of ["dimensions", "width", "height", "depth", "length"]) {
+      assert.ok(
+        !q.asked.includes(axis),
+        `${raw}: üç bileşenli ölçü yazılmışken '${axis}' hiçbir dalgada sorulamaz → [${q.asked.join(", ")}]`,
+      );
+    }
+  }
+});
+
+check("I50b: iki bileşenli ölçü en/boy'u karşılar, derinliği uydurmaz", () => {
+  const q = hybridFullQueue("20x15 cm kartvizit bastırmak istiyorum");
+  assert.ok(q.prefilled.dimensions, `ölçü bağlanmalı → ${JSON.stringify(q.prefilled)}`);
+  for (const axis of ["width", "height"]) {
+    assert.ok(
+      !q.asked.includes(axis),
+      `düz baskı ürününde '${axis}' sorulamaz → [${q.asked.join(", ")}]`,
+    );
+  }
+  // Derinlik: iki bileşenli ölçü onu KARŞILAMAZ. Uydurulmadığı için alan boş
+  // kalır; gerçekten gerekliyse sorulması DOĞRUDUR.
+  assert.ok(
+    !("depth" in q.prefilled),
+    `iki bileşenli ölçüden derinlik uydurulamaz → '${q.prefilled.depth}'`,
+  );
+});
+
+check("I50c: eksen değerleri sessizce uydurulmaz (koruma)", () => {
+  /**
+   * "20x15x10" içinde hangi sayının en, hangisinin boy olduğu şemada
+   * tanımlı DEĞİLDİR. Bu yüzden alanlara tek tek değer yazmak uydurmadır;
+   * karşılama tipli kapsama kararıyla kurulur, veri üretilerek değil.
+   */
+  const { state } = syncFromText(null, "20x15x10 cm özel kesim kutu istiyorum");
+  const f = state.fields as Record<string, { kind?: string; value?: unknown }>;
+  for (const axis of ["width", "height", "depth"]) {
+    assert.notEqual(
+      f[axis]?.kind,
+      "VALUE",
+      `'${axis}' alanına uydurma değer yazılamaz → '${String(f[axis]?.value)}'`,
+    );
+  }
+});
+
+check("I50d: yazılmış birim korunur, yazılmamış birim uydurulmaz", () => {
+  const withUnit = syncFromText(null, "20x15x10 cm özel kesim kutu istiyorum").state;
+  const wu = (withUnit.fields as Record<string, { value?: unknown }>).dimensions;
+  assert.ok(
+    /cm/i.test(String(wu?.value ?? "")),
+    `yazılan birim korunmalı → '${String(wu?.value)}'`,
+  );
+  const noUnit = syncFromText(null, "Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10").state;
+  const nu = (noUnit.fields as Record<string, { value?: unknown }>).dimensions;
+  assert.ok(
+    !/\b(cm|mm|m)\b/i.test(String(nu?.value ?? "")),
+    `yazılmayan birim uydurulamaz → '${String(nu?.value)}'`,
+  );
+});
+
+check("I50e: malzeme kanonik karşılığı varsa tekrar sorulmaz, yoksa uydurulmaz", () => {
+  /**
+   * "6 kişilik ahşap toplantı masası" — mobilyada 'ahşap' kanonik malzeme
+   * kaydında karşılığı olan bir sözcüktür ve tekrar sorulmaz.
+   */
+  const furn = hybridFullQueue("6 kişilik ahşap toplantı masası arıyorum");
+  assert.ok(furn.prefilled.material, `mobilyada malzeme bağlanmalı → ${JSON.stringify(furn.prefilled)}`);
+  assert.ok(
+    !furn.asked.includes("material"),
+    `mobilyada malzeme tekrar sorulamaz → [${furn.asked.join(", ")}]`,
+  );
+  /**
+   * "Karton kutu" — matbaa malzeme kaydı Bristol / Kraft / Kuşe / Oluklu
+   * Mukavva taşır; "karton" bunların hiçbiri DEĞİLDİR. Uydurma yapılmaz:
+   * alan boş kalır ve malzeme sorulmaya devam eder. Bu bir kusur değil,
+   * ölçülmüş bir kayıt boşluğudur (rapor: NOT_MEASURED).
+   */
+  const box = syncFromText(null, "Karton kutu ürettirmek istiyorum").state;
+  const mat = (box.fields as Record<string, { kind?: string; value?: unknown }>).material;
+  assert.notEqual(
+    mat?.kind,
+    "VALUE",
+    `matbaa malzeme kaydında 'karton' yok — uydurulamaz → '${String(mat?.value)}'`,
+  );
+  const pt = (box.fields as Record<string, { kind?: string; value?: unknown }>).productType;
+  assert.equal(pt?.kind, "VALUE", `ürün türü bağlanmalı → '${pt?.kind}'`);
+});
+
+/**
+ * İstenen parçanın TAM ifadesinin korunması sözleşmesi bilerek burada
+ * TEKRARLANMAZ: tek yeri güçlendirilmiş **I25d** (`knownGap`) satırıdır.
+ * Aynı sözleşme için ikinci bir satır açmak, açığın bir yerde yeşil
+ * görünmesine yol açar.
+ */
+
+check("I50g: açık provenance ile dolan HİÇBİR alan hiçbir dalgada tekrar sorulamaz", () => {
+  /**
+   * GENEL SÖZLEŞME (KB-15 metrik güvenliği).
+   *
+   * Bu satır tek tek alan adı saymaz. Kural şudur: bir alan kullanıcının
+   * metninden AÇIK provenance ile dolduysa, review'a kadarki hiçbir dalgada
+   * yeniden sorulamaz. Böylece ölçüm "yalnız önceden işaretlenmiş alanları
+   * kontrol edip diğer görünür tekrarları kaçırma" körlüğüne düşemez.
+   */
+  const INPUTS = [
+    "20x15x10 cm özel kesim kutu istiyorum",
+    "Ölçüler 20x15x10 karton kutu yaptırmak istiyorum",
+    "Karton kutu ürettirmek istiyorum",
+    "20x15 cm kartvizit bastırmak istiyorum",
+    "6 kişilik ahşap toplantı masası arıyorum",
+    "Yemek masası arıyorum 6 kişilik ahşap",
+    "Arçelik 55 inç televizyon arıyorum",
+    "2019 Renault Clio arıyorum",
+    "2+1 satılık daire arıyorum",
+    "12.000 BTU klima arıyorum",
+    "1000 adet kartvizit bastırmak istiyorum",
+    "İzmir'de satılık arsa arıyorum",
+    "Klinik için steril eldiven arıyorum, 100 kutu",
+    "Çelik tencere seti arıyorum 12 parça",
+    "Mama sandalyesi arıyorum katlanabilir",
+  ];
+  for (const raw of INPUTS) {
+    const q = hybridFullQueue(raw);
+    for (const [key, value] of Object.entries(q.prefilled)) {
+      assert.ok(
+        !q.asked.includes(key),
+        `${raw}: '${key}' metinden '${value}' ile doldu ama yine soruluyor → [${q.asked.join(", ")}]`,
+      );
+    }
+  }
+});
+
+check("I50h: iki çelişkili vaka — kanonik karşılık varsa bağlanır, yoksa sorulur", () => {
+  /**
+   * Bu iki vaka commit öncesi tek tek denetlendi ve sözleşmenin iki yüzünü
+   * gösteriyor:
+   *
+   *   - "toplantı masası" kanonik bir taksonomi düğümüdür (iki kez tanımlı
+   *     olduğu için düğüm kimliği belirsiz, ADI değil) → ürün türü bağlanır
+   *     ve mobilya türü SORULMAZ.
+   *   - "özel kesim kutu" matbaa kaydında karşılığı OLMAYAN bir ifadedir
+   *     (kayıt: Karton kutu / Etiket / Broşür / Diğer) → uydurulmaz ve ürün
+   *     türü SORULUR. Bu bir kusur değil, doğru davranıştır.
+   */
+  const table = surfacesFor("6 kişilik ahşap toplantı masası arıyorum");
+  const tProduct = fieldOf(table, "productType");
+  assert.equal(tProduct.kind, "VALUE", `toplantı masası ürün türü bağlanmalı → '${tProduct.kind}'`);
+  assert.ok(
+    /toplant/i.test(String(tProduct.value ?? "")),
+    `kullanıcının ifadesi korunmalı → '${tProduct.value}'`,
+  );
+  const tQueue = hybridFullQueue("6 kişilik ahşap toplantı masası arıyorum");
+  assert.ok(
+    !tQueue.asked.includes("furnitureType"),
+    `mobilya türü tekrar sorulamaz → [${tQueue.asked.join(", ")}]`,
+  );
+
+  /**
+   * Kanonik seçenek yazılmışsa ETİKET ile KAYIT DEĞERİ ayrı rollerde durur:
+   * kullanıcı "Karton kutu" görür, koşullu alanlar `karton-kutu` okur.
+   * Slug asla kullanıcıya gösterilmez.
+   */
+  const box = surfacesFor("Karton kutu ürettirmek istiyorum");
+  const boxField = (box.state.fields as Record<string, {
+    value?: unknown; canonicalValue?: unknown;
+  }>).productType;
+  assert.equal(
+    String(boxField?.value),
+    "Karton kutu",
+    `kullanıcıya etiket gösterilmeli → '${String(boxField?.value)}'`,
+  );
+  assert.equal(
+    String(boxField?.canonicalValue),
+    "karton-kutu",
+    `koşullu alanlar için kayıt değeri taşınmalı → '${String(boxField?.canonicalValue)}'`,
+  );
+  assert.ok(
+    !/karton-kutu/i.test(box.text),
+    `profesyonel metinde slug görünemez → '${box.text}'`,
+  );
+
+  // Kanonik karşılığı OLMAYAN ifade uydurulmaz; soru sorulur.
+  const custom = surfacesFor("20x15x10 cm özel kesim kutu istiyorum");
+  const cProduct = fieldOf(custom, "productType");
+  assert.notEqual(
+    cProduct.kind,
+    "VALUE",
+    `kayıtta karşılığı olmayan ifade uydurulamaz → '${cProduct.value}'`,
+  );
+  const cQueue = hybridFullQueue("20x15x10 cm özel kesim kutu istiyorum");
+  assert.ok(
+    cQueue.asked.includes("productType"),
+    `karşılığı yoksa ürün türü SORULMALI → [${cQueue.asked.join(", ")}]`,
+  );
+});
+
+/* ------------------------------------------------------------------------ *
+ * I51 — KANONİK ÜRÜN KİMLİĞİ VE SUNUM TEKİLLİĞİ (KB-15 kapanışı)
+ *
+ * İki ayrı sözleşme, tek gerekçe: kullanıcının verdiği tek bilgi UI, yayın,
+ * filtre ve matching boyunca AYNI anlamla yaşamalı — ne kaybolmalı ne de
+ * ikiye bölünmeli.
+ *
+ *   A) Soru gizlendiğinde ürün kimliği yayın zincirinde YAŞAR:
+ *      rawInput → besteci alanı → discoveryProjection → routing envelope.
+ *   B) Aynı bilgi kullanıcıya İKİ KEZ gösterilemez; uyumluluk alanı
+ *      kalıcılıkta kalır ama ikinci bir Signal satırı üretmez.
+ * ------------------------------------------------------------------------ */
+
+check("I51a: gizlenen soru sonrası ürün kimliği routing envelope'a ulaşır", () => {
+  /**
+   * Envelope besteci alanlarına DOĞRUDAN bağlanmaz; mevcut sözleşmeyi
+   * (snapshot + discoveryProjection) okumaya devam eder. Bu satır zincirin
+   * kopmadığını uçtan uca kanıtlar.
+   */
+  const CASES: Array<{ raw: string; product: string | null; brand?: string | null }> = [
+    { raw: "6 kişilik ahşap toplantı masası arıyorum", product: "Toplantı Masası" },
+    { raw: "Karton kutu ürettirmek istiyorum", product: "Karton kutu" },
+    { raw: "Arçelik 55 inç televizyon arıyorum", product: "televizyon", brand: "Arçelik" },
+    { raw: "Koltuk takımı arıyorum", product: "koltuk takımı" },
+  ];
+  for (const c of CASES) {
+    const understanding = understandRequest({ rawInput: c.raw }) as never;
+    const { state } = syncFromText(null, c.raw);
+    const projection = buildDiscoveryProjectionFromState(state);
+    const snapshot = buildPublishUnderstandingSnapshot({
+      understanding,
+      userSelected: false,
+      primarySlug: state.categoryId ?? null,
+    });
+    const env = buildRequestRoutingEnvelope({
+      requestId: "inv",
+      rawInput: c.raw,
+      categorySlug: state.categoryId ?? undefined,
+      understandingSnapshot: snapshot,
+      discoveryProjection: projection,
+    } as never) as never as { product?: string | null; brand?: string | null };
+
+    assert.equal(
+      env.product ?? null,
+      c.product,
+      `${c.raw}: envelope ürün kimliği → '${env.product}'`,
+    );
+    if (c.brand !== undefined) {
+      assert.equal(env.brand ?? null, c.brand, `${c.raw}: marka rolü ayrı kalmalı → '${env.brand}'`);
+    }
+    // rawInput hiçbir adımda değişmez.
+    assert.equal(
+      (understanding as unknown as { rawInput?: string }).rawInput,
+      c.raw,
+      "rawInput korunmalı",
+    );
+  }
+});
+
+check("I51b: parça talebinde ürün/marka/model/parça rolleri karışmaz (koruma)", () => {
+  const raw = "Heidelberg SM 74 için nemlendirme pompası arıyorum";
+  const understanding = understandRequest({ rawInput: raw }) as never;
+  const { state } = syncFromText(null, raw);
+  const projection = buildDiscoveryProjectionFromState(state) as never as {
+    attributes?: Record<string, string>;
+  };
+  const env = buildRequestRoutingEnvelope({
+    requestId: "inv",
+    rawInput: raw,
+    categorySlug: state.categoryId ?? undefined,
+    understandingSnapshot: buildPublishUnderstandingSnapshot({
+      understanding,
+      userSelected: false,
+      primarySlug: state.categoryId ?? null,
+    }),
+    discoveryProjection: projection,
+  } as never) as never as { product?: string | null; brand?: string | null; model?: string | null };
+
+  assert.equal(env.brand ?? null, "Heidelberg", `marka → '${env.brand}'`);
+  assert.equal(env.model ?? null, "SM 74", `model → '${env.model}'`);
+  assert.equal(
+    env.product ?? null,
+    null,
+    `parça talebinde ürün kimliği uydurulamaz → '${env.product}'`,
+  );
+  assert.ok(
+    /pompa/i.test(String(projection.attributes?.part ?? "")),
+    `istenen parça korunmalı → '${projection.attributes?.part}'`,
+  );
+});
+
+check("I51c: aynı bilgi kullanıcıya iki kez gösterilemez (sunum tekilliği)", () => {
+  const countLabel = (raw: string, label: string) => {
+    const { state } = syncFromText(null, raw);
+    const facts = buildUnderstoodFacts(state) as unknown as Array<{
+      key: string;
+      label: string;
+      displayValue?: string;
+    }>;
+    return facts.filter((f) => f.label === label).length;
+  };
+  for (const raw of [
+    "6 kişilik ahşap toplantı masası arıyorum",
+    "Yemek masası arıyorum 6 kişilik ahşap",
+    "Karton kutu ürettirmek istiyorum",
+  ]) {
+    assert.equal(countLabel(raw, "Ürün"), 1, `${raw}: tek 'Ürün' satırı olmalı`);
+  }
+
+  /**
+   * Birleştirme YALNIZ aynı bilgi içindir. Gerçekten farklı iki bilgi
+   * (ürün ve istenen parça) ayrı satır olarak durmalıdır; marka ve model de
+   * ayrı kalmalıdır.
+   */
+  const { state: partState } = syncFromText(
+    null,
+    "Bosch çamaşır makinesi için pompa arıyorum",
+  );
+  const partFacts = buildUnderstoodFacts(partState) as unknown as Array<{
+    key: string;
+    label: string;
+  }>;
+  assert.ok(
+    partFacts.some((f) => f.key === "productType") &&
+      partFacts.some((f) => f.key === "part"),
+    `ürün ve parça ayrı görünmeli → ${partFacts.map((f) => f.key).join(", ")}`,
+  );
+
+  const { state: carState } = syncFromText(null, "2019 Renault Clio arıyorum");
+  const carFacts = buildUnderstoodFacts(carState) as unknown as Array<{ key: string }>;
+  assert.ok(
+    carFacts.some((f) => f.key === "brand") && carFacts.some((f) => f.key === "model"),
+    `marka ve model ayrı görünmeli → ${carFacts.map((f) => f.key).join(", ")}`,
+  );
+});
+
+check("I51d: uyumluluk alanı kalıcılıkta ve Pro filtresinde yaşamaya devam eder", () => {
+  /**
+   * Sunumdan düşürmek, veriyi silmek DEĞİLDİR. `furnitureType` legacy explore
+   * filtresinin okuduğu alandır (`explore/category-filters.ts`); yayınlanan
+   * alan değerlerinde ve projeksiyonda kalmalıdır.
+   */
+  const { state } = syncFromText(null, "6 kişilik ahşap toplantı masası arıyorum");
+  const fields = state.fields as Record<string, { kind?: string; value?: unknown }>;
+  assert.equal(
+    fields.furnitureType?.kind,
+    "VALUE",
+    `uyumluluk alanı kalıcılıkta durmalı → '${fields.furnitureType?.kind}'`,
+  );
+  assert.equal(
+    String(fields.furnitureType?.value),
+    "Toplantı Masası",
+    `filtre etiketi beklediği biçimde olmalı → '${fields.furnitureType?.value}'`,
+  );
+  const projection = buildDiscoveryProjectionFromState(state) as never as {
+    attributes?: Record<string, string>;
+  };
+  assert.equal(
+    projection.attributes?.furnitureType,
+    "Toplantı Masası",
+    `projeksiyon uyumluluk alanını taşımalı → '${projection.attributes?.furnitureType}'`,
   );
 });
 
