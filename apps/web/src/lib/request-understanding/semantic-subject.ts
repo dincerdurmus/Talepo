@@ -1036,9 +1036,22 @@ function resolveSemanticSubjectCore(
      * kullanıcının kendi sözcükleridir (`provenance: EXPLICIT`) ama PARÇA
      * OLMA bilgisi sözdiziminden türetilmiştir, katalogla doğrulanmamıştır.
      */
+    /**
+     * KULLANIM BAĞLAMI PARÇA İLİŞKİSİ KURAMAZ (S2A).
+     *
+     * Açık dünya dalı, sağdaki ifadenin rolü bilinmediğinde ilişkiyi PARÇA
+     * adayı sayar. Sol taraf hiçbir ürün kanıtı taşımıyorsa ("Ambalaj için
+     * özel kesim kutu", "E-ticaret için karton kutu") ortada bir üst ürün
+     * yoktur; kullanıcının istediği şey SAĞDAKİ nesnedir. Karar burada
+     * verilmez, ilişkinin tek yetkilisi olan `readUsageContextSplit`ten
+     * okunur — bileşen rolündeki hedefler (ön far, SEO eklentisi) o kuraldan
+     * hiç geçmediği için parça ilişkileri korunur.
+     */
+    const usageContextOnly = readUsageContextSplit(text) != null;
     const openTarget = readRequestedTarget(requested).value;
     if (
       openTarget &&
+      !usageContextOnly &&
       // Sağdaki ifadenin rolü tek kanonik sınıflandırıcıdan okunur: hizmet
       // ("teknik destek") ve bütün ürün ("televizyon", "muhasebe yazılımı")
       // bileşen olamaz; modül/eklenti olabilir; bilinmeyen rol reddedilmez.

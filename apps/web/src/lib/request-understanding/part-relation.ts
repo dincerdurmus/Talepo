@@ -31,6 +31,8 @@ import type { BrandEntry } from "@/lib/ai/parser/brand-catalog";
 import { resolveDomainEntity } from "@/lib/catalog";
 import {
   findPartBearingParentSpan,
+  isCanonicalProductTypePhrase,
+  isCanonicalWholeProductPhrase,
   readParentProductVerdict,
 } from "@/lib/taxonomy/phrase-classification";
 import { listTaxonomyAliasCandidates } from "@/lib/taxonomy/registry";
@@ -235,14 +237,63 @@ export type UsageContextSplit = {
  * yoktur: "Ofis" de "WordPress" de aynı kuraldan geçer, ayrımı sağdaki
  * hedefin rolü yapar.
  */
+/**
+ * SOL TARAF SOMUT BİR ÜRÜNÜ ADLANDIRIYOR MU? (S2A)
+ *
+ * "X için Y" ilişkisinin PARÇA okuması ancak X gerçekten bir ürün/makine/
+ * araç/platform ise anlamlıdır. Bu fonksiyon YENİ bir çözümleyici kurmaz;
+ * halihazırda tek yetkili olan kanıt kaynaklarını sırayla sorar:
+ *   1) Kanonik rol sınıflandırıcısı bütün ürün diyor mu (`requested-item-role`),
+ *   2) Kanonik ağaç bütün ürün ifadesi ya da parça taşıyan düğüm olarak
+ *      tanıyor mu (`phrase-classification`),
+ *   3) Katalog markası / otomotiv modeli / teknoloji ürünü mü,
+ *   4) Tipli alan varlığı mı (WordPress, SAP, CNC — `domain-entity-resolver`).
+ *
+ * KANIT YOKLUĞU BİR RET DEĞİLDİR (1F ile aynı ilke): burada "hayır" demek
+ * talebi düşürmez, yalnız "bu ilişkiyi PARÇA olarak KESİNLEŞTİREMEYİZ" der.
+ * "Matbaa makinesi" gibi kataloğa kayıtlı olmayan ürünler 1. ve 2. adımdan
+ * geçtiği için ilişkiyi korur; "Ambalaj", "E-ticaret", "Restoran" gibi iş
+ * kolu / yer bağlamları hiçbir adımdan geçemez.
+ */
+function contextNamesConcreteProduct(phrase: string): boolean {
+  const value = String(phrase ?? "").trim();
+  if (!value) return false;
+  if (classifyRequestedTargetRole(value).role === "WHOLE_PRODUCT") return true;
+  if (isCanonicalWholeProductPhrase(value)) return true;
+  if (isCanonicalProductTypePhrase(value)) return true;
+  if (findPartBearingParentSpan(value)) return true;
+  if (findAnyCatalogBrand(value)) return true;
+  if (isKnownAutomotiveModelName(value)) return true;
+  if (findTechnologyProduct(value)) return true;
+  if (resolveDomainEntity(value).status !== "NONE") return true;
+  return false;
+}
+
 export function readUsageContextSplit(rawInput: string): UsageContextSplit | null {
   const split = splitCompatibilityPhrase(String(rawInput ?? ""));
   if (!split) return null;
   const target = readRequestedTarget(split.requested).value;
   if (!target) return null;
   const role = classifyRequestedTargetRole(target).role;
-  if (role !== "WHOLE_PRODUCT" && role !== "SERVICE") return null;
-  return { context: split.parent, target, role };
+  if (role === "WHOLE_PRODUCT" || role === "SERVICE") {
+    return { context: split.parent, target, role };
+  }
+  /**
+   * ROLÜ BİLİNMEYEN HEDEF + ÜRÜN OLMAYAN SOL TARAF (S2A).
+   *
+   * "Ambalaj için özel kesim kutu" ve "E-ticaret için karton kutu" yapılarında
+   * sağdaki ifade kanonik sözlükte yoktur (rol UNKNOWN) ama soldaki ifade de
+   * hiçbir ürün kanıtı taşımaz. Böyle bir cümlede kullanıcının istediği şey
+   * SAĞDAKİ nesnedir; sol taraf kullanım alanı / iş kolu bağlamıdır.
+   *
+   * BİLEŞEN rolündeki hedefler (`ön far`, `SEO eklentisi`) bu daldan HİÇ
+   * geçmez: onlarda ilişki gerçekten parça ilişkisidir ve sol taraf kanıtsız
+   * olsa bile korunur.
+   */
+  if (role === "UNKNOWN" && !contextNamesConcreteProduct(split.parent)) {
+    return { context: split.parent, target, role };
+  }
+  return null;
 }
 
 /**

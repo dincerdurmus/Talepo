@@ -88,11 +88,13 @@ type Measured = {
   envSlug: string | null;
   envBrand: string | null;
   envProduct: string | null;
+  intent: string | null;
 };
 
 function measure(sc: CoverageScenario): Measured {
   const u = understandRequest(buildEngineInput(sc)) as never as {
     category?: { value?: unknown; status?: unknown };
+    intent?: { value?: unknown };
     requestSubject?: { kind?: { value?: unknown } };
     resolvedEntities?: Array<{ entityType: string; canonicalId: string }>;
   };
@@ -142,6 +144,7 @@ function measure(sc: CoverageScenario): Measured {
     envSlug: env.categoryResolution?.primaryCategorySlug ?? null,
     envBrand: env.brand ?? null,
     envProduct: env.product ?? null,
+    intent: u.intent?.value != null ? String(u.intent.value) : null,
   };
 }
 
@@ -174,6 +177,9 @@ function evaluate(exp: CoverageExpectation, m: Measured): Failure[] {
   }
   if (exp.forbiddenKinds?.includes(String(m.kind))) {
     out.push({ dim: "catIntent", msg: `forbiddenKind:${m.kind}` });
+  }
+  if (exp.expectedIntent && String(m.intent) !== exp.expectedIntent) {
+    out.push({ dim: "catIntent", msg: `intent:${m.intent}` });
   }
   if (exp.requiredBrand && !fold(m.brand).includes(fold(exp.requiredBrand))) {
     out.push({ dim: "entity", msg: `brand:${m.brand}` });
@@ -246,6 +252,7 @@ function sigMatches(sig: CoverageSignature, m: Measured): boolean {
   ) {
     return false;
   }
+  if (sig.intentEquals !== undefined && String(m.intent) !== sig.intentEquals) return false;
   if (sig.partFieldEmpty && m.part) return false;
   return true;
 }

@@ -727,7 +727,23 @@ export function understandRequest(
             ]
           : fromTarget.alternatives,
       };
-    } else if (!fromTarget.value && !relationDomain && category.value) {
+    } else if (
+      !fromTarget.value &&
+      !relationDomain &&
+      category.value &&
+      /**
+       * BU RET YALNIZ ROLÜ ÇÖZÜLMÜŞ HEDEFLER İÇİNDİR (S2A kapsam koruması).
+       *
+       * Kural, sağdaki hedefin bütün ürün ya da hizmet olduğu — yani kendi
+       * kategorisini taşıyabildiği — cümleler için yazıldı. S2A ile bölme
+       * rolü BİLİNMEYEN hedefleri de kapsıyor; orada hedefin kategori
+       * üretmemesi olağandır ve elde kalan tek kanıtı da atmak talebi
+       * yönlendirilemez hâle getirir (ölçüldü: "Matbaa için mürekkep"
+       * printing → null). Zayıf bağlam kanıtı, hiç kategori olmamasından
+       * iyidir; kesinlik iddiası zaten `status` ile taşınır.
+       */
+      usageContext.role !== "UNKNOWN"
+    ) {
       /**
        * Sağ hedef kategori üretemedi ve solda DOĞRULANMIŞ bir ürün/platform
        * yok: geriye yalnız ham cümlenin bağlam yakasından gelen zayıf

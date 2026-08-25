@@ -30,6 +30,8 @@ export type CoverageSignature = {
   missingSurfaceTerm?: string;
   snapshotAttrIncludes?: string;
   partFieldEmpty?: boolean;
+  /** Ölçülen (yanlış) talep niyeti — RC_RENT ailesinin imzası. */
+  intentEquals?: string;
 };
 
 export type CoverageExpectation = {
@@ -55,6 +57,12 @@ export type CoverageExpectation = {
   forbidAnyQuestions?: boolean;
   requiredResolvedEntities?: Array<{ entityType: string; canonicalId?: string }>;
   forbiddenSnapshotAttrs?: string[];
+  /**
+   * Beklenen talep niyeti (understanding.intent). Kiralama/satın alma gibi
+   * İŞLEM TÜRÜ kategori ve konu türünden ayrı bir eksendir; kategori doğru
+   * olsa bile yanlış niyet talebi yanlış teklif havuzuna gönderir.
+   */
+  expectedIntent?: string;
 };
 
 export type CoverageRootCause =
@@ -85,8 +93,8 @@ export type CoverageScenario = {
 /** Taban çizgisi — doğrulayıcı bu sayılardan sapmayı kırmızı sayar. */
 export const COVERAGE_BASELINE = {
   total: 108,
-  pass: 93,
-  knownFail: 15,
+  pass: 95,
+  knownFail: 13,
   fail: 0,
   adversarialMin: 33,
 } as const;
@@ -531,14 +539,15 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "allowedKinds": [
         "VEHICLE"
-      ]
+      ],
+      "expectedIntent": "RENT"
     },
     "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
+      "rootCause": "RC_RENT",
       "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Filo ailesi modellenmemiş; 'Şirketim için' bölünmesi sağ tarafı parça sanıyor, adet sorulmuyor.",
+      "explanation": "S2A sonrası kategori automotive ve konu türü VEHICLE doğru çözülüyor; ancak işlem türü hâlâ yanlış: cümledeki 'kiralama' adı niyeti belirlemiyor, sondaki 'arıyorum' fiili BUY kazanıyor. Talep doğru kategoriye gider ama satın alma teklifi havuzuna düşer.",
       "signature": {
-        "kindEquals": "PART"
+        "intentEquals": "BUY"
       }
     },
     "notMeasured": [
@@ -1092,14 +1101,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "MANUFACTURED_ITEM"
       ]
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "RC_BRAND kısmı kapandı: 'E-ticaret' artık marka değil. Kalan açık: 'e-ticaret' anahtar kelimesi kategoriyi technology'ye çekiyor; ambalaj üretimi ailesi bu bağlamda printing'e bağlanamıyor.",
-      "signature": {
-        "understandingCategoryEquals": "technology"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1274,14 +1275,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "MANUFACTURED_ITEM",
         "PRODUCT"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Ambalaj için özel kesim kutu' bölünmesi kutuyu ambalajın parçası sanıyor.",
-      "signature": {
-        "kindEquals": "PART"
-      }
     },
     "notMeasured": [
       "supplier_capability",

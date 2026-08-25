@@ -4482,6 +4482,115 @@ check("I44f: miktar birimi üretim nesnesi sayılamaz (100 kutu sınıfı)", () 
   assert.equal(filo.quantity, 10, `10 araçlık → quantity 10 olmalı → ${filo.quantity}`);
 });
 
+/* ------------------------------------------------------------------------ *
+ * I45 — İSTENEN HEDEF, KULLANIM BAĞLAMI VE UYUMLULUK ÜST ÜRÜNÜ (S2A)
+ *
+ * Sözleşme: "X için Y" yapısı tek başına PART demek DEĞİLDİR. Rolleri iki
+ * yakanın KANITI belirler:
+ *   - X somut bir ürün/makine/araç/platform olarak çözülüyorsa (kanonik bütün
+ *     ürün ifadesi, parça taşıyan düğüm, katalog markası/modeli ya da tipli
+ *     alan varlığı) ilişki korunur: Y onun bileşenidir.
+ *   - X yalnız kullanım alanı, iş kolu, yer veya kurum bağlamıysa istenen şey
+ *     Y'dir; X kategoriyi, markayı ya da konuyu EZEMEZ.
+ * Bu dilim kiralama, machinery taksonomisi, hizmet sözlüğü, sayı-birim motoru
+ * ve soru sistemlerini yeniden tasarlamaz.
+ * ------------------------------------------------------------------------ */
+
+check("I45a: kullanım bağlamı üretilen nesnenin kategorisini ezemez (print-04)", () => {
+  const s = surfacesFor("E-ticaret için karton kutu ürettirmek istiyorum");
+  assert.equal(
+    s.understandingCategory,
+    "printing",
+    `'E-ticaret' bağlamı kategoriyi ele geçiremez → '${s.understandingCategory}'`,
+  );
+  assert.notEqual(s.categoryId, "technology", `besteci kategorisi technology olamaz → '${s.categoryId}'`);
+  assert.equal(
+    s.subjectKind,
+    "MANUFACTURED_ITEM",
+    `üretim talebi korunmalı → '${s.subjectKind}'`,
+  );
+  const surface = `${fold(s.text)} || ${fold(s.headline)}`;
+  assert.ok(surface.includes("kutu"), `istenen ürün yüzeyden düşemez → '${s.text}' / '${s.headline}'`);
+});
+
+check("I45b: bağlam bölünmesi istenen nesneyi parça sanamaz (print-12)", () => {
+  const s = surfacesFor("Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10");
+  assert.notEqual(s.subjectKind, "PART", `'Ambalaj için kutu' parça ilişkisi değildir → '${s.subjectKind}'`);
+  assert.equal(s.understandingCategory, "printing", `kategori printing kalmalı → '${s.understandingCategory}'`);
+  assert.equal(s.categoryId, "printing", `besteci kategorisi printing kalmalı → '${s.categoryId}'`);
+  assert.ok(
+    fold(s.text).includes("kesim kutu"),
+    `ürün ifadesi profesyonel metinde kalmalı → '${s.text}'`,
+  );
+  assert.ok(
+    !/\bmodelYear\b|\bgeneration\b/.test(s.nextQuestionKeys.join(",")),
+    `ilgisiz araç soruları görünemez → ${s.nextQuestionKeys.join(",")}`,
+  );
+});
+
+check("I45c: gerçek uyumluluk/parça ilişkileri PART kalır (koruma)", () => {
+  const CASES: Array<{ raw: string; part: string }> = [
+    { raw: "Heidelberg SM 74 için nemlendirme pompası arıyorum", part: "pompa" },
+    { raw: "Bosch çamaşır makinesi için pompa arıyorum", part: "pompa" },
+    { raw: "Bebek arabası için tekerlek arıyorum", part: "tekerlek" },
+    { raw: "Renault Clio için ön far arıyorum", part: "far" },
+    { raw: "Mercedes C180 için su pompası arıyorum", part: "pompa" },
+    { raw: "Klima için dış ünite fan motoru arıyorum", part: "motor" },
+    { raw: "MacBook Pro için şarj adaptörü arıyorum", part: "adaptör" },
+    { raw: "Matbaa makinesi için kontrol paneli arıyorum", part: "panel" },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    assert.equal(s.subjectKind, "PART", `${c.raw}: PART kalmalı → '${s.subjectKind}'`);
+    assert.ok(
+      fold(`${s.part ?? ""} ${s.text}`).includes(fold(c.part)),
+      `${c.raw}: parça adı '${c.part}' korunmalı → part='${s.part}' metin='${s.text}'`,
+    );
+  }
+});
+
+check("I45e: bağlam bölünmesi mevcut kategoriyi yönlendirilemez hâle getiremez", () => {
+  /**
+   * Rolü bilinmeyen bir hedef kendi kategorisini üretemeyebilir. Böyle bir
+   * durumda elde kalan tek (zayıf) kanıtı da atmak talebi hiçbir profesyonele
+   * ulaşamaz hâle getirir. Ölçülen sınıf: "Matbaa için mürekkep" — hedef
+   * kategori üretmez, bağlam printing der; sonuç null OLAMAZ.
+   */
+  for (const raw of [
+    "Matbaa için mürekkep arıyorum",
+    "Restoran için ambalaj kutusu arıyorum",
+  ]) {
+    const s = surfacesFor(raw);
+    assert.ok(
+      s.categoryId != null,
+      `${raw}: kategori kaybolamaz → '${s.categoryId}'`,
+    );
+  }
+  // Rolü çözülmüş hedeflerde eski ret kuralı yürürlükte kalır (gürültü kapısı).
+  const wp = surfacesFor("WordPress için teknik destek arıyorum");
+  assert.notEqual(wp.categoryId, "machinery", `bağlam gürültüsü geri gelemez → '${wp.categoryId}'`);
+});
+
+check("I45d: gerçek teknoloji/hizmet hedefleri kendi alanında kalır (koruma)", () => {
+  // "E-ticaret" tamamen teknoloji sinyali olmaktan ÇIKARILMAZ; yalnız kullanım
+  // bağlamı olarak geçtiğinde istenen nesneyi ezemez.
+  const tech = surfacesFor("E-ticaret yazılımı arıyorum");
+  assert.equal(tech.categoryId, "technology", `e-ticaret yazılımı technology kalmalı → '${tech.categoryId}'`);
+  const site = surfacesFor("E-ticaret sitesi yaptırmak istiyorum");
+  assert.ok(
+    site.categoryId === "technology" || site.categoryId === "services",
+    `e-ticaret sitesi technology/services kalmalı → '${site.categoryId}'`,
+  );
+  const shop = surfacesFor("Online mağaza yazılımı arıyorum");
+  assert.equal(shop.categoryId, "technology", `online mağaza yazılımı technology kalmalı → '${shop.categoryId}'`);
+  // Platform bağlamı da korunur: sağ taraf BİLEŞEN olduğu için kural çalışmaz.
+  const wp = surfacesFor("WordPress için teknik destek arıyorum");
+  assert.ok(
+    fold(`${wp.text} ${wp.headline}`).includes("wordpress"),
+    `platform bağlamı silinemez → '${wp.text}'`,
+  );
+});
+
 if (knownFailNotes.length) {
   console.log(`\nKNOWN_FAIL (bilinen açık — PASS sayılmaz, bataryayı kırmızıya çevirmez):`);
   for (const n of knownFailNotes) console.log(`  - ${n}`);
