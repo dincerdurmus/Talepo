@@ -7,7 +7,81 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
-## ÖLÇÜM TABANI — 2026-08-25, `80f2bcf` (tipli sayı-birim otoritesi)
+## ÖLÇÜM TABANI — 2026-08-25, `3eed002` (istenen hedef / kullanım bağlamı ayrımı)
+
+Commit: `3eed002` — *fix(requests): distinguish requested target from usage
+context* (parent `658dea2`). Bu bölüm, aşağıdaki `80f2bcf` tabanının
+**yerine geçer**; o bölüm tarihli kanıt olarak silinmeden duruyor.
+
+**Kategori kapsama corpus'u (108 gerçek talep senaryosu):**
+`TOTAL=108 · PASS=95 · KNOWN_FAIL=13 · FAIL=0 · XPASS=0` (iki deterministik
+koşu, aynı sonuç). Önceki `PASS=93 · KNOWN_FAIL=15` ölçümü (2026-08-25,
+`80f2bcf`) bu ölçümle **yer değiştirdi**; silinmedi.
+
+**Kalan 13 KNOWN_FAIL'in dağılımı:** `RC_RENT=4 · CATEGORY_SPECIFIC=5 ·
+RC_SPLIT=3 · RC_NUMBER=1`. `RC_RENT` üçten dörde çıktı: bu bir gerileme
+değil, `auto-06`'nın gerçek kusurunun **ilk kez ölçülür hâle gelmesidir**
+(aşağıya bakın).
+
+**Anlama invariant bataryası:** `79 passed · 2 failed · 1 known_fail` —
+kırmızılar YALNIZ **I22** (KB-11'in kalan başlık yarısı) ve **I23** (KB-14);
+known_fail YALNIZ **I25d**. Üçü de bu turda yeniden ölçüldü, **açık kaldı**.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %88`** (formül: 100 × 95/108) — bu sayı
+YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
+**Bütün Talepo'nun %88 hazır olduğu anlamına GELMEZ.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi.** Beş bileşen:
+envelope kategori erişimi (104/108), güvenilir marka (15/108), ürün türü
+erişimi (0/108), matching'in `resolvedEntities` okuması (0), tedarikçi
+yeteneği (0, `CAPABILITY_NOT_MEASURED`). **Ürünün genel olarak %22 hazır
+olduğu anlamına GELMEZ.** Sınırlar bu turda da aynen duruyor: **Matching V3
+üretime bağlı değil** (`buildRequestRoutingEnvelope`'un `matching-v3/` dışında
+üretim çağrısı yok), **tedarikçi yetkinliği ölçülmedi**, **canlı bildirim
+teslimatı ölçülmedi**, **ürün/varlık sinyalleri canlı matching tarafından
+okunmuyor**.
+
+### `auto-06` — kategori doğru, işlem türü hâlâ yanlış (RC_RENT KNOWN_FAIL)
+
+Girdi: *"Şirketim için 10 araçlık filo kiralama arıyorum"* (aynı sınıf:
+*"10 Clio kiralamak istiyorum"*). Yeniden ölçüm (`3eed002`):
+`category = automotive` ✅, `kind = VEHICLE` ✅, **`intent = BUY`** ❌ —
+beklenen `RENT`. Cümledeki "kiralama" adı işlem türünü belirlemiyor, sondaki
+"arıyorum" fiili kazanıyor.
+
+Bu senaryo S2A ile geçici olarak XPASS verdi, çünkü corpus **niyet eksenini
+hiç ölçmüyordu**. Sözleşmeye en dar biçimde `expectedIntent` beklentisi ve
+`intentEquals` imzası eklendi; senaryo artık **PASS ya da XPASS DEĞİL**,
+`RC_RENT` kök nedeniyle **KNOWN_FAIL**. **Kiralama davranışı üretim kodunda
+düzeltilmedi** — bkz. **KB-16**.
+
+Bu satır, `80f2bcf` tabanındaki "auto-06 … `kind` hâlâ PART" satırının
+yerine geçer: `kind` düzeldi, kusur işlem türüne kaydı.
+
+### `print-04` ve `print-12` — yalnız kategori/rol tarafı kapandı
+
+| Senaryo | Kapanan | AÇIK kalan |
+| --- | --- | --- |
+| `print-04` *E-ticaret için karton kutu ürettirmek* | Yanlış `technology` yönlendirmesi düzeldi: `category = printing`, `kind = MANUFACTURED_ITEM`. Legacy kategori fanout'u talebi artık matbaa/ambalaj firmalarına tarıyor — **gerçek kazanım** | `productType` alanı boş kaldığı için kullanıcının yazdığı "karton kutu" bilgisi **tekrar sorulabiliyor** |
+| `print-12` *Ambalaj için özel kesim kutu, ölçüler 20x15x10* | `kind` PART → **PRODUCT**, `category = printing`, ürün ifadesi profesyonel metinde korunuyor | `dimensions` alanı boş kaldığı için **"20x15x10" kullanıcıya yeniden soruluyor** |
+
+İkisinde de kapanan şey **kategori/rol kararıdır**; **uçtan uca kullanıcı
+deneyimi kapanmadı**. Yazılan değerin alana bağlanmaması ayrı bir kusurdur ve
+**KB-15** olarak kayıtlıdır.
+
+**Bu turda kapatılan KB kaydı yok.** İki yeni kayıt açıldı: **KB-15** (yazılı
+değer alana bağlanmadığı için soru tekrar soruluyor) ve **KB-16** (kiralama
+işlem türü modellenmemiş). Buradaki her sayı **yerel doğrulayıcı ölçümüdür**;
+bu bölüm production, deploy ya da gerçek Pro bildirim başarısı hakkında
+hiçbir iddia taşımaz.
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `80f2bcf` (tipli sayı-birim otoritesi) — **YERİNE GEÇTİ**
+
+> **Yerine geçti:** bu bölümün corpus ve invariant sayıları 2026-08-25
+> tarihli `3eed002` ölçümüyle güncellendi (yukarı bakın). Tarihli kanıt
+> olarak korunuyor; bugünün gerçeği olarak okunmamalıdır.
 
 Commit: `80f2bcf` — *fix(requests): classify numeric roles before model
 identity* (parent `1042721`). Bu bölüm, aşağıdaki `3f66adb` tabanının
@@ -752,6 +826,72 @@ doğrulayıcıya ulaşan bir yol yok. **Mevcut taban kırmızısıdır.**
 (`VERIFY SEMANTIC REQUEST SUBJECT: FAIL`) önceki batarya taramalarında
 kullanılan `passed|pass=` desenine takılmıyordu, bu yüzden hem KB kayıtlarına
 hem TRIAGE tablosuna girmemişti. Yeni bir hata değil, **yeni görünür oldu**.
+
+## KB-15 — Kullanıcının yazdığı değer alana bağlanmadığı için soru tekrar soruluyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Anlama → besteci alan eşlemesi (`build-state` / soru otoritesi girdisi) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — kullanıcı deneyimi; bilgi ekranda kayboluyor |
+| Kırık kontrol | Kalıcı bir doğrulayıcı satırı **YOK** (bu kayıt açıldığında yalnız elle ölçüldü) |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-25, S2A ölçümü sırasında (HEAD `3eed002`) |
+| Durum | **Açık** |
+
+**Ölçülen üç vaka (aynı kök, `resolveHybridQuestions` gerçek `/talep` soru
+otoritesinden okundu):**
+
+| Girdi | Kullanıcının yazdığı | Alan | Yine de sorulan |
+| --- | --- | --- | --- |
+| `Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10` | `20x15x10` | `dimensions = null` | `dimensions` |
+| `E-ticaret için karton kutu ürettirmek istiyorum` | `karton kutu` | `productType = null` | `productType` |
+| `Yemek masası arıyorum 6 kişilik ahşap` | `ahşap` | `material = null` | `material` |
+
+**Beklenen:** yazılı değer ilgili alana bağlanmalı ve o soru sorulmamalı.
+**Gözlenen:** değer serbest metinde duruyor ama alan boş; soru motoru alanı
+"eksik zorunlu" sayıp tekrar soruyor. Kurucunun kuralı gereği bu bir soru
+kalitesi kusurudur: kullanıcı yazdığı şeyi ikinci kez yazmak zorunda kalıyor.
+
+**Kapsam notu — S2A ile KARIŞTIRILMAMALI.** `print-04` ve `print-12`de
+kategori ve rol kararı `3eed002` ile düzeldi; bu kayıt onların **açık kalan
+uçtan uca UX yarısıdır**. Kategori düzelmesi bu kaydı kapatmaz.
+
+**Bu kayıt kapanmadan önce gerekenler:** düzeltme dilimi, sayı/ölçü ve nitelik
+span'lerini kanonik alanlara bağlayan tek otoriteyi kullanmalı (ayrı bir
+çıkarıcı kurulmamalı) ve kapanış kalıcı bir invariant satırıyla kilitlenmeli.
+
+## KB-16 — Kiralama işlem türü modellenmemiş; arama fiili niyeti ele geçiriyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Anlama / niyet (`intent-signals`) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — yanlış teklif havuzu |
+| Kırık kontrol | `verify-category-coverage-v1` → `auto-06` (`RC_RENT`, imza `intentEquals: "BUY"`) |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
+| Tespit | 2026-08-25, S2A ölçümü sırasında (HEAD `3eed002`) |
+| Durum | **Açık** — corpus'ta `RC_RENT` KNOWN_FAIL olarak izleniyor |
+
+**Girdi:** `Şirketim için 10 araçlık filo kiralama arıyorum` (aynı sınıf:
+`10 Clio kiralamak istiyorum`).
+**Ölçülen:** `category = automotive` ✅, `kind = VEHICLE` ✅, `intent = BUY` ❌.
+**Beklenen:** `intent = RENT`.
+
+**Kök — ŞÜPHE, kanıtlanmadı.** Kiralama sinyali fiil kalıplarına bağlı
+(`kiralık`, `kiralamak`, `kiraya`); cümlede kiralama bir AD olarak geçiyor
+("filo kiralama") ve sondaki `arıyorum` BUY desenini tetikliyor. Bu okuma
+kod incelemesine dayanır, ölçülerek doğrulanmadı.
+
+**Neden bugüne kadar görünmüyordu.** Corpus **niyet eksenini hiç ölçmüyordu**;
+`auto-06` yalnız kategori ve konu türüyle değerlendiriliyordu ve S2A'dan sonra
+bu iki eksen düzelince senaryo XPASS verdi. `3eed002` ile sözleşmeye
+`expectedIntent` beklentisi ve `intentEquals` imzası eklendi; senaryo artık
+**PASS veya XPASS sayılmıyor**. Yeni bir hata değil, **yeni ölçülür oldu**.
+
+**Aynı ailedeki diğer kayıtlar:** `auto-05` (*Araç kiralamak istiyorum
+İstanbul'da*), `mach-04` (*Forklift kiralamak istiyorum*), `health-02`
+(*Hasta yatağı arıyorum kiralık*) — üçünde `intent = RENT` doğru çözülüyor
+ama konu türü `REAL_ESTATE`'e düşüyor. Toplam `RC_RENT = 4`. Düzeltme dilimi
+bu dördünü birlikte ele almalıdır.
 
 ---
 
