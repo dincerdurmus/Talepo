@@ -5,6 +5,59 @@ kırmızıysa ya düzeltilir ya buraya yazılır — sessizce geçilmez. Her sat
 "hangi kontrol / ne bekleniyordu / ne oluyor / ne zamandan beri / sahibi"
 sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `3f66adb` (kanıta dayalı marka otoritesi)
+
+Commit: `3f66adb` — *fix(requests): govern brand evidence without losing
+intent* (parent `c440f69` = 108 senaryoluk kategori kapsama tabanı,
+`verify-category-coverage-v1`).
+
+**Kategori kapsama corpus'u (108 gerçek talep senaryosu):**
+`TOTAL=108 · PASS=91 · KNOWN_FAIL=17 · FAIL=0 · XPASS=0`
+
+**Kapanan kök neden aileleri:** `RC_BRAND = 0` (sahte marka üretimi — RAM,
+Ticari, Torna, Kompresör, Tekerlekli, Toptan, Kürek, Çelik, Logolu,
+E-ticaret artık kesin marka olamıyor) ve `RC_COMPOSER = 0` (bağlaçsız
+cümlede öznesiz profesyonel metin). **Kalan 17 KNOWN_FAIL'in dağılımı:**
+`CATEGORY_SPECIFIC=9 · RC_RENT=3 · RC_SPLIT=3 · RC_NUMBER=2` — her biri
+fixture'da kök neden + makine-doğrulanabilir imzayla kayıtlı.
+
+**Marka güven metrikleri:** `BRAND_PRESENT = 15/108` ve
+`BRAND_ROUTABLE_TRUSTED = 15/108` — routing envelope'a ulaşan HER marka
+denetlenebilir kanıt etiketi taşıyor (`VERIFIED_CATALOG` ya da
+`USER_ASSERTED`). Katalog markası kaybı: **0**. Kullanıcı beyanlı marka
+kaybı: **0** ("eufy marka bebek arabası" küçük harfe rağmen USER_ASSERTED
+çözülüyor; sözdizimsiz "Nordex klima" tasarım gereği yalnız CANDIDATE
+kalır ve metinden silinmez).
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %84`** — bu, YALNIZ 108 senaryoluk
+talep-beyni corpus'unun ölçümüdür (formül: 100 × 91/108; KNOWN_FAIL paya
+girmez). **Bütün Talepo'nun hazırlık yüzdesi DEĞİLDİR.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22`** — beş bileşenli ölçülen Pro
+hattı metriğidir: envelope kategori erişimi (104/108), güvenilir marka
+(15/108), ürün türü erişimi (0/108), matching'in `resolvedEntities`
+okuması (0) ve tedarikçi yeteneği (0, `CAPABILITY_NOT_MEASURED`). Düşük
+olması marka düzeltmesinin başarısızlığı değildir; product routing,
+matching entegrasyonu, tedarikçi yeteneği ve canlı bildirim bileşenlerinin
+henüz ölçülmemiş/0 olmasındandır. **Ürünün genel olarak %22 hazır olduğu
+anlamına gelmez.**
+
+**Anlama invariant bataryası:** `67 passed · 2 failed · 1 known_fail` —
+kırmızılar YALNIZ **I22** (KB-11'in kalan başlık yarısı) ve **I23**
+(KB-14, "ön ön far" bitişik tekrarı); known_fail YALNIZ **I25d**'nin
+"koltuk destek mekanizması" yarısı ("destek ayağı" yarısı bu commit'le
+kapandı).
+
+**Yerine geçme notu:** 2026-08-24 tarihli KB-11/KB-12/KB-13 durum satırları
+ve TRIAGE'daki `verify-semantic-request-subject` satırı bu ölçümle
+**güncellendi** (aşağıda kayıt içlerinde); o günkü ölçümler silinmedi,
+tarihli kanıt olarak duruyor. Production/deploy durumu hakkında bu bölüm
+hiçbir iddia taşımaz — buradaki her sayı yerel doğrulayıcı ölçümüdür.
+
+---
+
 ## KB-1 — Yedek parça talebinde uyumlu araç kimliği kayboluyor
 
 | Alan | Değer |
@@ -470,7 +523,7 @@ sınanır (doğal dil `machineType`'ı bugün güvenilir doldurmuyor).
 **Not:** `I16` bu sınıfı yakalamaz ve yakalaması beklenmez — I16 fazladan
 tekrarı, `I17` eksik bilgiyi kovalar. İkisi birlikte çalışır.
 
-## KB-11 — "için" içeren cümlede çok kelimeli parça adı kısalıyor
+## KB-11 — "için" içeren cümlede çok kelimeli parça adı kısalıyor — **KISMEN ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
@@ -478,7 +531,17 @@ tekrarı, `I17` eksik bilgiyi kovalar. İkisi birlikte çalışır.
 | Sınıf | **GERÇEK ÜRÜN HATASI** — bilgi kaybı |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-24, KB-10 ölçümü sırasında |
-| Durum | **Açık** — bu turda düzeltilmedi |
+| Durum | **Kısmen çözüldü** (ölçüm 2026-08-25, HEAD `3f66adb`) — cümle ve `part` alanı çözüldü (`e564b7d`, baştaki bağlacı kırpan kural); **başlık kısmı AÇIK** |
+
+**2026-08-25 yeniden ölçümü (aynı girdi):**
+`Heidelberg SM 74 için nemlendirme pompası arıyorum`
+→ `part = "nemlendirme pompası"`, cümle `Heidelberg SM 74 için nemlendirme
+pompası arıyorum.` — kayıt açıldığındaki cümle kaybı **kapandı** ve
+`verify-understanding-invariants-v1` I17/I25c ile kilitli.
+→ **Başlık hâlâ** `Heidelberg SM 74 için pompa` — "nemlendirme" başlıkta
+kayıp. Bu kalan yarı, bataryada **I22 kırmızısı** olarak izleniyor
+("başlık zenginleştirilmiş parça adını kaybetmez (KB-11 başlık)") ve bu
+kayıt kapatılmadan yeşil sayılamaz.
 
 **Girdi:** `Heidelberg SM 74 için nemlendirme pompası arıyorum`
 **Gözlenen:** `Heidelberg SM 74 için pompa arıyorum.` — **"nemlendirme" kayıp.**
@@ -504,7 +567,7 @@ başta bağlaç yok, ebeveyn kelimeleri var). Denenmedi.
 **Kapsam notu:** KB-10 düzeltmesi bu davranışı **değiştirmedi** — önce ve sonra
 çıktı aynı ölçüldü, kötüleşme yok.
 
-## KB-12 — Beyaz eşya parçası model/identity alanına düşüyor, cümleden kayboluyor
+## KB-12 — Beyaz eşya parçası model/identity alanına düşüyor, cümleden kayboluyor — **ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
@@ -512,7 +575,20 @@ başta bağlaç yok, ebeveyn kelimeleri var). Denenmedi.
 | Sınıf | **GERÇEK ÜRÜN HATASI** |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** |
 | Tespit | 2026-08-24, KB-10 ölçümü sırasında |
-| Durum | **Açık** — bu turda düzeltilmedi |
+| Durum | **ÇÖZÜLDÜ** (`1186070` — istenen şey üst ürünün modeli olamaz kuralı; yeniden ölçüm 2026-08-25, HEAD `3f66adb`) |
+
+**2026-08-25 yeniden ölçümü — iki vaka da aynı girdilerle:**
+(a) `Arçelik bulaşık makinesi için rezistans arıyorum`
+→ `part = "rezistans"`, `model = null`, `subject = PART`, cümle
+`Arçelik Bulaşık Makinesi için rezistans arıyorum.` — parça artık modele
+düşmüyor ve cümlede.
+(b) `Siemens ankastre fırın için termostat lazım`
+→ `part = "termostat"`, `model = null`, cümle `Siemens Fırın için termostat
+arıyorum.` — bağlaç da geri geldi.
+**Kilit:** `verify-understanding-invariants-v1` I19/I25c (rol kuralı +
+uyumluluk yüzeyleri) ve kategori kapsama corpus'u `appl-06`
+(`requiredBrand: Arçelik`, `requiredSurfaceTerms: rezistans`). Hata geri
+gelirse bu iki doğrulayıcı kırmızıya düşer.
 
 İki ayrı ağırlıkta, aynı kök:
 
@@ -538,16 +614,33 @@ atanmasındadır. Bu, `request-understanding` / identity katmanının işidir.
 **Kapsam notu.** KB-10 bu kaydı **çözmez**. (a) hiç değişmedi; (b) yalnız
 parçanın cümlede kalmasını sağladı, kök nedeni gidermedi. Düzeltme ayrı dilim.
 
-## KB-13 — `verify-semantic-request-subject`: C180 başlığında yasaklı marka
+## KB-13 — `verify-semantic-request-subject`: C180 başlığında yasaklı marka — **ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
 | Doğrulayıcı | `apps/web/scripts/verify-semantic-request-subject.ts` |
 | Kırık kontrol | `C180 ön far` — *headline contains forbidden Mercedes* |
-| Bugünkü sonuç | `FAIL: 1` (diğer senaryolar PASS) |
+| 2026-08-25 sonucu | **`VERIFY SEMANTIC REQUEST SUBJECT: PASS`** (HEAD `3f66adb`) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** |
 | Tespit | 2026-08-24 |
-| Durum | **Açık** — bu turda düzeltilmedi |
+| Durum | **ÇÖZÜLDÜ** (`1186070` — çıkarımla eklenen marka başlıkta kesin gerçek gibi görünemez; yeniden ölçüm 2026-08-25: başlık `C180 için ön far`, "Mercedes" yok) |
+
+**Aynı senaryoda yeni görünür olan AYRI açık:** cümle `Mercedes-Benz C180
+için ön ön far arıyorum.` — konum belirteci **"ön" bitişik iki kez**
+üretiliyor. Bu, KB-13'ün konusu (başlıkta yasaklı marka) değil; ayrı kayıt:
+**KB-14**.
+
+## KB-14 — Konum belirteci parça adına bitişik iki kez ekleniyor
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Besteci / parça adı birleştirme |
+| Kırık kontrol | `verify-understanding-invariants-v1` → **I23** |
+| Gözlenen | `C180 ön far` → cümle `Mercedes-Benz C180 için ön ön far arıyorum.` |
+| Beklenen | `… için ön far arıyorum.` — belirteç tek kez |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (KB-13 ölçümü sırasında görünür oldu) |
+| Tespit | 2026-08-25 |
+| Durum | **Açık** — bataryada I23 kırmızısı olarak izleniyor |
 
 **Senaryo:** Kullanıcı yalnız `C180 ön far` yazıyor; "Mercedes" yazmıyor.
 Doğrulayıcı, üretilen başlığın **"Mercedes" içermemesini** şart koşuyor
@@ -615,7 +708,7 @@ o kontrolün sonucu bilinmiyor.
 | `verify-provider-routing` | AssertionError: 1 routing fixture failed | ÖLÇÜLMEDİ |
 | `verify-request-trust-paid-plan-closure-v1` | **pass=59 fail=0 — ÇÖZÜLDÜ** (ölçüm 2026-08-24) | çözüldü: `af8ec5c`, KB-2c |
 | `verify-sayfam-home-v1` | 80 passed, 1 failed | ÖLÇÜLMEDİ |
-| `verify-semantic-request-subject` | `FAIL: 1` (ölçüm 2026-08-24) — **kayıtlı: KB-13** | ÖLÇÜLMEDİ — yeni oluşmuş değil, **yeni görünür oldu** |
+| `verify-semantic-request-subject` | **PASS — ÇÖZÜLDÜ** (ölçüm 2026-08-25) | çözüldü: `1186070`, KB-13 |
 | `verify-unified-preference-criteria-v1` | pass=34 fail=1 | ÖLÇÜLMEDİ |
 
 **Bisect yaparken dikkat (2026-08-23'te bu turda yaşandı).** Sondayı bir kabuk
