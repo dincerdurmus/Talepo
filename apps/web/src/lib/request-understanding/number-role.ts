@@ -17,6 +17,8 @@ export type NumberRole =
   | "PRICE"
   | "STORAGE"
   | "SCREEN_SIZE"
+  | "TIRE_SIZE"
+  | "SEATING"
   | "OTHER";
 
 export type ClassifiedNumber = {
@@ -145,6 +147,58 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
       index: sm.index,
     });
     claim(sm.index, sm[0].length);
+  }
+
+  // Lastik ebadı: "205/55 R16" — genişlik/oran(+jant çapı). Bir ölçü
+  // span'idir; içindeki hiçbir sayı model, ekran ya da adet olamaz.
+  const tireRe = /\b(\d{3})\s*\/\s*(\d{2})(?:\s*z?r\s*?(\d{2}))?\b/gi;
+  let tm: RegExpExecArray | null;
+  while ((tm = tireRe.exec(text)) !== null) {
+    if (isClaimed(tm.index, tm[0].length)) continue;
+    results.push({
+      raw: tm[0],
+      role: "TIRE_SIZE",
+      value: Number(tm[1]),
+      unit: "tire",
+      evidence: [tm[0], "tire-size"],
+      index: tm.index,
+    });
+    claim(tm.index, tm[0].length);
+  }
+
+  // Soğutma kapasitesi: "12000 BTU" — birim rolü belirler.
+  const btuRe = /(\d+(?:[.,]\d+)*)\s*btu\b/gi;
+  let cm: RegExpExecArray | null;
+  while ((cm = btuRe.exec(text)) !== null) {
+    if (isClaimed(cm.index, cm[0].length)) continue;
+    const value = parseTrInt(cm[1]!);
+    if (!Number.isFinite(value)) continue;
+    results.push({
+      raw: cm[0],
+      role: "CAPACITY",
+      value,
+      unit: "btu",
+      evidence: [cm[0], "unit-backed-btu"],
+      index: cm.index,
+    });
+    claim(cm.index, cm[0].length);
+  }
+
+  // Kişi kapasitesi: "6 kişilik" — oturma/kullanım kapasitesi. Model veya
+  // körlemesine adet değildir.
+  const seatRe = /(\d+)\s*(kişilik|kisilik)/gi;
+  let stm: RegExpExecArray | null;
+  while ((stm = seatRe.exec(text)) !== null) {
+    if (isClaimed(stm.index, stm[0].length)) continue;
+    results.push({
+      raw: stm[0],
+      role: "SEATING",
+      value: Number(stm[1]),
+      unit: "kişilik",
+      evidence: [stm[0], "unit-backed-seating"],
+      index: stm.index,
+    });
+    claim(stm.index, stm[0].length);
   }
 
   const areaRe = /(\d+(?:[.,]\d+)?)\s*(m2|m²|metre\s*kare|metrekare)\b/gi;
@@ -282,7 +336,7 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
   }
 
   const qtyRe =
-    /\b(bir|iki|üç|uc|1|2|3|\d+(?:[.,]\d+)*)\s*(adet|tane|kutu|paket|takım|takim)\b/gi;
+    /\b(bir|iki|üç|uc|1|2|3|\d+(?:[.,]\d+)*)\s*(adet|tane|kutu|paket|takım|takim|araçlık|araclik)\b/gi;
   let qm: RegExpExecArray | null;
   while ((qm = qtyRe.exec(text)) !== null) {
     if (isClaimed(qm.index, qm[0].length)) continue;
@@ -408,6 +462,15 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     ) {
       continue;
     }
+    // Talep fiili/bağlacından sonra gelen yalın sayı model olamaz — modeller
+    // marka/ürün jetonunu izler ("Arçelik 55"), fiili değil ("arıyorum 6").
+    if (
+      /^(?:ariyorum|araniyor|arayis\w*|lazim|istiyorum|bakiyorum|bakiyom|gerekiyor|olsun|icin)$/.test(
+        foldedHead,
+      )
+    ) {
+      continue;
+    }
     results.push({
       raw: bam[2]!,
       role: "MODEL_IDENTIFIER",
@@ -456,4 +519,101 @@ export function modelIdentifierTokens(
   numbers: ClassifiedNumber[],
 ): ClassifiedNumber[] {
   return numbers.filter((n) => n.role === "MODEL_IDENTIFIER");
+}
+
+/**
+ * MODEL KANIT KAPISI — marka kanıt sisteminin (RC_BRAND) model ikizi.
+ *
+ * Exact model yalnız güvenilir kanıttan geçer:
+ *   1. Katalog doğrulaması (otomotiv/teknoloji katalog modeli) — çağıran
+ *      `catalogVerified` ile bildirir; "Clio", "Passat", "MacBook Pro" gibi
+ *      sayısız katalog modelleri yalnız bu yoldan geçer.
+ *   2. Sayı içeren jetonlar: jetonun kapladığı span, sayı otoritesinin
+ *      model-dışı bir rolüyle (QUANTITY, WEIGHT, TIRE_SIZE, SEATING,
+ *      SCREEN_SIZE, CAPACITY, …) çakışıyorsa model DEĞİLDİR
+ *      ("lastiği 205/55 R16", "6 kişilik").
+ *   3. Yalın sayı jetonu ("6", "100", "55") yalnız sayı otoritesi onu
+ *      MODEL_IDENTIFIER saydıysa model olabilir ("Arçelik 55" değil ama
+ *      "iPhone 15" evet).
+ *   4. Sayısız ve katalogsuz jeton ("tezgahı") model olamaz — bir ürün
+ *      türü ekidir, model kimliği değildir.
+ *
+ * Girdide GEÇMEYEN türetilmiş katalog modelleri (ör. zenginleştirmeden gelen
+ * "Galaxy A55") 2. kuralın kapsamına girmez: span çakışması ancak jeton
+ * metinde bulunduğunda ölçülebilir.
+ */
+export type ModelTokenEvidence = "VERIFIED_MODEL" | "REJECTED";
+
+const NON_MODEL_CLAIM_ROLES: ReadonlySet<string> = new Set([
+  "MODEL_YEAR",
+  "QUANTITY",
+  "WEIGHT",
+  "DIMENSION",
+  "MILEAGE",
+  "CAPACITY",
+  "AREA",
+  "PRICE",
+  "STORAGE",
+  "SCREEN_SIZE",
+  "TIRE_SIZE",
+  "SEATING",
+]);
+
+export function classifyModelTokenEvidence(
+  normalizedText: string,
+  candidate: unknown,
+  opts?: { catalogVerified?: boolean },
+): ModelTokenEvidence {
+  const token = String(candidate ?? "").trim();
+  if (!token) return "REJECTED";
+  if (opts?.catalogVerified) return "VERIFIED_MODEL";
+  if (!/\d/.test(token)) return "REJECTED";
+
+  const numbers = classifyNumbers(normalizedText);
+  const lowerText = normalizedText.toLocaleLowerCase("tr-TR");
+
+  if (/^\d+(?:[.,]\d+)*$/.test(token)) {
+    return numbers.some(
+      (n) => n.role === "MODEL_IDENTIFIER" && n.raw === token,
+    )
+      ? "VERIFIED_MODEL"
+      : "REJECTED";
+  }
+
+  /**
+   * Jeton bitişik geçmeyebilir ("lastiği 205/55 R16" araya fiil girer);
+   * bu yüzden çakışma denetimi KELİME bazında yapılır: sayı taşıyan her
+   * kelimenin metindeki hiçbir serbest (model-dışı role kapılmamış)
+   * geçişi yoksa jeton model olamaz.
+   */
+  const overlapsNonModelClaim = (start: number, end: number): boolean =>
+    numbers.some(
+      (n) =>
+        NON_MODEL_CLAIM_ROLES.has(String(n.role)) &&
+        n.index < end &&
+        start < n.index + n.raw.length,
+    );
+  const isBoundary = (i: number): boolean => {
+    if (i < 0 || i >= lowerText.length) return true;
+    return !/[\p{L}\p{N}]/u.test(lowerText[i]!);
+  };
+  for (const word of token.toLocaleLowerCase("tr-TR").split(/\s+/)) {
+    if (!/\d/.test(word)) continue;
+    let hasFreeOccurrence = false;
+    let seen = false;
+    let at = lowerText.indexOf(word);
+    while (at >= 0) {
+      const end = at + word.length;
+      if (isBoundary(at - 1) && isBoundary(end)) {
+        seen = true;
+        if (!overlapsNonModelClaim(at, end)) {
+          hasFreeOccurrence = true;
+          break;
+        }
+      }
+      at = lowerText.indexOf(word, end);
+    }
+    if (seen && !hasFreeOccurrence) return "REJECTED";
+  }
+  return "VERIFIED_MODEL";
 }

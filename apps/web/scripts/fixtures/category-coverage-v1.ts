@@ -85,8 +85,8 @@ export type CoverageScenario = {
 /** Taban çizgisi — doğrulayıcı bu sayılardan sapmayı kırmızı sayar. */
 export const COVERAGE_BASELINE = {
   total: 108,
-  pass: 91,
-  knownFail: 17,
+  pass: 93,
+  knownFail: 15,
   fail: 0,
   adversarialMin: 33,
 } as const;
@@ -2011,14 +2011,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "PRODUCT"
       ]
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Toplu sarf talebi üretim talebi sanılıyor; kategori de çözülmüyor.",
-      "signature": {
-        "kindEquals": "MANUFACTURED_ITEM"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2157,14 +2149,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "forbiddenSnapshotAttrs": [
         "screenSize"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_NUMBER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'9-36 kg' ekran boyutu sanılıyor (screenSize attr); başlık '9'a bozuluyor.",
-      "signature": {
-        "snapshotAttrIncludes": "screenSize"
-      }
     },
     "notMeasured": [
       "supplier_capability",

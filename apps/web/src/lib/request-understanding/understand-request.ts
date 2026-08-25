@@ -18,6 +18,7 @@ import {
 import { isNonBrandDomainEntity, resolveDomainEntity } from "@/lib/catalog";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
+  classifyModelTokenEvidence,
   classifyNumbers,
   looksLikeTelevisionScreenContext,
   looksLikeYearToken,
@@ -940,6 +941,37 @@ export function understandRequest(
         },
       );
     }
+    if (n.role === "TIRE_SIZE") {
+      // Kanonik yazım: "205/55 R16" — schema anahtarı automotive/lastik-ve-jant.tireSize
+      const canonical = n.raw
+        .toLocaleUpperCase("tr-TR")
+        .replace(/\s*\/\s*/, "/")
+        .replace(/(\d)\s*Z?R\s*(\d)/, "$1 R$2");
+      attributes.tireSize = uv(canonical, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: n.evidence,
+      });
+    }
+    if (n.role === "CAPACITY" && n.unit === "btu" && n.value != null) {
+      // Schema anahtarı: appliances.capacityBtu (birim BTU)
+      attributes.capacityBtu = uv(n.value, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: n.evidence,
+      });
+    }
+    if (n.role === "SEATING" && n.value != null) {
+      // Additive tipli attribute: kişi/oturma kapasitesi ("6 kişilik").
+      attributes.seatingCapacity = uv(
+        { value: n.value, unit: "kişilik" },
+        {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          evidence: n.evidence,
+        },
+      );
+    }
     if (n.role === "STORAGE" && n.value != null) {
       attributes.storage = uv(
         { value: n.value, unit: n.unit },
@@ -1268,12 +1300,62 @@ export function understandRequest(
     }
   }
 
+  /**
+   * MODEL KANIT KAPISI (I44) — marka kanıt sisteminin model ikizi. Katalog
+   * doğrulaması sayısız modelleri ("Clio", "Passat", "MacBook Pro") geçirir;
+   * geri kalan her aday tek sayı-birim otoritesinden geçer: miktar/ölçü
+   * span'iyle çakışan ya da yalın-sayı olup MODEL_IDENTIFIER kararı olmayan
+   * jeton exact model olamaz.
+   */
+  const modelHasCatalogEvidence = (value: string): boolean => {
+    const lc = value.toLocaleLowerCase("tr-TR");
+    if (autoModel && autoModel.toLocaleLowerCase("tr-TR") === lc) return true;
+    if (
+      techProduct &&
+      techProduct.canonical.toLocaleLowerCase("tr-TR").includes(lc)
+    ) {
+      return true;
+    }
+    /**
+     * KATALOG MARKASINI İZLEYEN YAZIM (marka kanıt sisteminin devamı):
+     * VERIFIED_CATALOG bir markanın hemen ardından gelen span model
+     * kanıtıdır ("Chicco Goody Plus"). CANDIDATE marka bu kanıtı VEREMEZ —
+     * "Torna tezgahı" bu yüzden geçemez.
+     */
+    if (
+      identityBlock.brand?.value &&
+      brandEvidenceStatus === "VERIFIED_CATALOG"
+    ) {
+      const lt = normalizedInput.toLocaleLowerCase("tr-TR");
+      const bi = lt.indexOf(
+        String(identityBlock.brand.value).toLocaleLowerCase("tr-TR"),
+      );
+      if (bi >= 0) {
+        const after = lt
+          .slice(bi + String(identityBlock.brand.value).length)
+          .replace(/^[\s,:–-]+/, "");
+        if (lc && after.startsWith(lc)) return true;
+      }
+    }
+    return false;
+  };
+  const modelPassesEvidenceGate = (value: unknown): boolean => {
+    const token = String(value ?? "").trim();
+    if (!token) return false;
+    return (
+      classifyModelTokenEvidence(normalizedInput, token, {
+        catalogVerified: modelHasCatalogEvidence(token),
+      }) === "VERIFIED_MODEL"
+    );
+  };
+
   const modelValue =
     explicitModelFromText ??
     identity.model ??
     (techProduct ? null : modelTokens[0] ? modelTokens[0].raw : null);
   if (
     modelValue &&
+    modelPassesEvidenceGate(modelValue) &&
     !looksLikeYearToken(String(modelValue)) &&
     // A product-type phrase names WHAT the thing is, never which model —
     // "hava temizleyicisi" must not ship as "Model: hava temizleyicisi".
@@ -1614,7 +1696,7 @@ export function understandRequest(
       });
     }
   }
-  if (parentTokens.model) {
+  if (parentTokens.model && modelPassesEvidenceGate(parentTokens.model)) {
     identityBlock.model = uv(parentTokens.model, {
       provenance: textIncludes(normalizedInput, parentTokens.model)
         ? "EXPLICIT"
@@ -1680,7 +1762,10 @@ export function understandRequest(
     if (requestSubject.parentEntity?.brand) {
       identityBlock.brand = requestSubject.parentEntity.brand;
     }
-    if (requestSubject.parentEntity?.model) {
+    if (
+      requestSubject.parentEntity?.model &&
+      modelPassesEvidenceGate(requestSubject.parentEntity.model.value)
+    ) {
       identityBlock.model = requestSubject.parentEntity.model;
     }
 
@@ -1825,6 +1910,23 @@ export function understandRequest(
       if (identityBlock.brand) requestSubject.parentEntity.brand = identityBlock.brand;
       if (identityBlock.model) requestSubject.parentEntity.model = identityBlock.model;
     }
+  }
+
+  /**
+   * NİHAİ MODEL SÜPÜRMESİ (I44): model hangi yoldan yazılmış olursa olsun
+   * (kimlik, parent jetonları, semantik parent) publish yüzeylerine inmeden
+   * önce aynı kanıt kapısından geçer. Kapı yukarıdaki yazım noktalarında da
+   * uygulanır; bu süpürme, gelecekte açılabilecek yeni bir yazım yolunun
+   * sessizce kanıtsız model sızdırmasını engelleyen kemerdir.
+   */
+  if (identityBlock.model?.value && !modelPassesEvidenceGate(identityBlock.model.value)) {
+    delete identityBlock.model;
+  }
+  if (
+    requestSubject.parentEntity?.model?.value &&
+    !modelPassesEvidenceGate(requestSubject.parentEntity.model.value)
+  ) {
+    requestSubject.parentEntity.model = undefined;
   }
 
   // Strategy context — low-confidence category must not dominate

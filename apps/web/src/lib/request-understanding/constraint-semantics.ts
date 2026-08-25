@@ -16,6 +16,7 @@ import {
   isNegatedMention,
   isNegatedWindow,
 } from "@/lib/ai/parser/negation";
+import { classifyNumbers } from "./number-role";
 import type {
   UnderstandingContradiction,
   UnderstandingProvenance,
@@ -279,18 +280,16 @@ function extractModelAlternatives(text: string): string[] {
 }
 
 function extractScreenSize(text: string): string | null {
-  const m = text.match(/\b(\d{2,3})\s*(?:['']?\s*)?(?:inç|inc|ekran|"|”)?\b/i);
-  if (!m) return null;
-  // Avoid years / quantities
-  const n = Number(m[1]);
-  if (n < 32 || n > 120) {
-    // still allow common TV sizes like 140 (Turkish inch-ish marketing)
-    if (n !== 140 && n !== 100 && n !== 105 && n !== 120) return null;
-  }
-  if (/\b(?:ton|adet|bin|tl|gb|tb|km)\b/i.test(windowAround(text, m.index ?? 0, m[0].length))) {
-    return null;
-  }
-  return String(n);
+  /**
+   * Tek sayı otoritesinden türetilir (I44): screenSize yalnız birim destekli
+   * ("55 inç", "55 ekran") ya da TV bağlamı kanıtlı bir SCREEN_SIZE
+   * kararından doğar. Eski yerel regex birimi opsiyonel bıraktığı için
+   * "100 kutu", "9-36 kg" ve "SM 74" gibi span'leri ekran boyutu sanıyordu.
+   */
+  const hit = classifyNumbers(text).find(
+    (n) => n.role === "SCREEN_SIZE" && n.value != null,
+  );
+  return hit ? String(hit.value) : null;
 }
 
 /**

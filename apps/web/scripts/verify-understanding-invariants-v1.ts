@@ -55,6 +55,7 @@ import {
   resolveTaxonomyAlias,
 } from "../src/lib/taxonomy";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
+import { classifyNumbers } from "../src/lib/request-understanding/number-role";
 import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { isCanonicalWholeProductPhrase } from "../src/lib/taxonomy/phrase-classification";
@@ -4143,6 +4144,342 @@ check("I13: audit classes — Faz, servis niyeti, uzaktan, nakliye, donanım sin
       `${t} → needType hardware olmalı`,
     );
   }
+});
+
+/* ------------------------------------------------------------------------ *
+ * I44 — TİPLİ SAYI-BİRİM OTORİTESİ + MODEL KANIT KAPISI (S1A dilimi)
+ *
+ * Sözleşme: bir sayının görevini BAĞLAMI ve BİRİMİ belirler; aynı span iki
+ * çelişen exact role yazılamaz. Exact model yalnız güvenilir model
+ * kanıtından geçer (katalog modeli ya da sayı otoritesinin MODEL_IDENTIFIER
+ * kararı); miktar/ağırlık/kapasite/ebat span'i model, screenSize veya
+ * üretim nesnesi ÜRETEMEZ.
+ *
+ * Bilinçli kapsam dışı (bu dilimde ÇÖZÜLMEDİ, burada test edilmez):
+ *   - "ahşap" malzeme çıkarımı (furn-07'nin ayrı kök nedeni)
+ *   - "kiralama" işlem türü (auto-06) ve filo/lastik ailelerinin kind kararı
+ *   - taxonomy alias ("lastiği" → Lastik düğümü) ve kategori dedektörü
+ * ------------------------------------------------------------------------ */
+
+/** I44 yüzey okuyucu — publishSurfaces'ın model odaklı ikizi. */
+function i44Surfaces(raw: string) {
+  const understanding = understandRequest({ rawInput: raw }) as never as {
+    quantity?: { value?: { value?: number } };
+    requestSubject?: { kind?: { value?: string } };
+    attributes?: Record<string, { value?: unknown }>;
+  };
+  const { state } = syncFromText(null, raw);
+  const f = (k: string) => {
+    const x = (state.fields as Record<string, { kind?: string; value?: unknown }>)[k];
+    return x && x.kind === "VALUE" && x.value ? String(x.value) : null;
+  };
+  const snap = buildPublishUnderstandingSnapshot({
+    understanding: understanding as never,
+    userSelected: false,
+    primarySlug: null,
+  });
+  const env = buildRequestRoutingEnvelope({
+    understandingSnapshot: snap,
+    categorySlug: state.categoryId ?? undefined,
+  } as never) as never as { model?: string | null };
+  const attrs = understanding.attributes ?? {};
+  return {
+    kind: understanding.requestSubject?.kind?.value ?? null,
+    quantity: understanding.quantity?.value?.value ?? null,
+    fieldsBrand: f("brand"),
+    fieldsModel: f("model"),
+    snapModel:
+      (snap.entities as Record<string, { value?: unknown }> | undefined)?.model
+        ?.value != null
+        ? String(
+            (snap.entities as Record<string, { value?: unknown }>).model.value,
+          )
+        : null,
+    envModel: env.model ?? null,
+    attr: (k: string) => (attrs[k]?.value != null ? String(attrs[k].value) : null),
+    headline: String(
+      (buildUnderstandingSummary(understanding as never) as unknown as {
+        headline?: string;
+      })?.headline ?? "",
+    ),
+    text: composeNaturalRequestText(state),
+  };
+}
+
+check("I44a: sayı-birim truth table — rol bağlam ve birimden gelir", () => {
+  const roleOf = (raw: string, span: string): string[] =>
+    classifyNumbers(raw)
+      .filter((n) => n.raw.toLocaleLowerCase("tr-TR").includes(span.toLocaleLowerCase("tr-TR")) ||
+        span.toLocaleLowerCase("tr-TR").includes(n.raw.toLocaleLowerCase("tr-TR")))
+      .map((n) => String(n.role));
+
+  // 1. Lastik ebadı — model/screen/quantity değil
+  {
+    const roles = roleOf("Araba lastiği arıyorum 205/55 R16", "205/55");
+    assert.ok(roles.includes("TIRE_SIZE"), `205/55 → TIRE_SIZE olmalı: ${roles.join(",")}`);
+    for (const all of classifyNumbers("Araba lastiği arıyorum 205/55 R16")) {
+      assert.notEqual(String(all.role), "MODEL_IDENTIFIER",
+        `lastik ebadı içinden model üretilemez: ${all.raw}:${all.role}`);
+      assert.notEqual(String(all.role), "SCREEN_SIZE", `${all.raw} screen olamaz`);
+      assert.notEqual(String(all.role), "QUANTITY", `${all.raw} quantity olamaz`);
+    }
+  }
+  // 2. Kişi kapasitesi — model/screen değil, körlemesine quantity değil
+  {
+    const roles = roleOf("6 kişilik ahşap yemek masası arıyorum", "6");
+    assert.ok(roles.includes("SEATING"), `6 kişilik → SEATING olmalı: ${roles.join(",")}`);
+    assert.ok(!roles.includes("MODEL_IDENTIFIER"), "6 model olamaz");
+    assert.ok(!roles.includes("SCREEN_SIZE"), "6 screen olamaz");
+    assert.ok(!roles.includes("QUANTITY"), "6 kişilik körlemesine quantity olamaz");
+  }
+  // 3. Miktar + birim (kutu)
+  {
+    const q = classifyNumbers("Klinik için steril eldiven arıyorum, 100 kutu").find(
+      (n) => String(n.role) === "QUANTITY",
+    );
+    assert.ok(q && q.value === 100 && /kutu/.test(String(q.unit)),
+      `100 kutu → QUANTITY(100, kutu) olmalı: ${JSON.stringify(q)}`);
+    assert.ok(
+      classifyNumbers("Klinik için steril eldiven arıyorum, 100 kutu").every(
+        (n) => String(n.role) !== "SCREEN_SIZE" && String(n.role) !== "MODEL_IDENTIFIER",
+      ),
+      "100 screen/model olamaz",
+    );
+  }
+  // 4. Filo miktarı ("araçlık" birimi) — model/screen değil
+  {
+    const q = classifyNumbers("Şirketim için 10 araçlık filo kiralama arıyorum").find(
+      (n) => String(n.role) === "QUANTITY",
+    );
+    assert.ok(q && q.value === 10, `10 araçlık → QUANTITY(10) olmalı: ${JSON.stringify(q)}`);
+    assert.ok(
+      classifyNumbers("Şirketim için 10 araçlık filo kiralama arıyorum").every(
+        (n) => String(n.role) !== "MODEL_IDENTIFIER" && String(n.role) !== "SCREEN_SIZE",
+      ),
+      "10 model/screen olamaz",
+    );
+  }
+  // 5. BTU — kapasite
+  {
+    const c = classifyNumbers("12000 BTU klima arıyorum").find(
+      (n) => String(n.role) === "CAPACITY",
+    );
+    assert.ok(c && c.value === 12000 && /btu/i.test(String(c.unit)),
+      `12000 BTU → CAPACITY(btu) olmalı: ${JSON.stringify(c)}`);
+    assert.ok(
+      classifyNumbers("12000 BTU klima arıyorum").every(
+        (n) =>
+          String(n.role) !== "MODEL_IDENTIFIER" &&
+          String(n.role) !== "SCREEN_SIZE" &&
+          String(n.role) !== "QUANTITY",
+      ),
+      "12000 model/screen/quantity olamaz",
+    );
+  }
+  // 6. Ağırlık
+  {
+    const w = classifyNumbers("15 kg bebek maması arıyorum").find(
+      (n) => String(n.role) === "WEIGHT",
+    );
+    assert.ok(w && w.value === 15 && w.unit === "kg", `15 kg → WEIGHT: ${JSON.stringify(w)}`);
+  }
+  // 7. Ekran — birim destekli mevcut doğru davranış korunur
+  {
+    const s = classifyNumbers("Arçelik 55 inç televizyon arıyorum").find(
+      (n) => String(n.role) === "SCREEN_SIZE",
+    );
+    assert.ok(s && s.value === 55, `55 inç → SCREEN_SIZE: ${JSON.stringify(s)}`);
+  }
+  // 8. Model yılı korunur
+  {
+    const y = classifyNumbers("2019 Renault Clio arıyorum").find(
+      (n) => String(n.role) === "MODEL_YEAR",
+    );
+    assert.ok(y && y.value === 2019, `2019 → MODEL_YEAR: ${JSON.stringify(y)}`);
+  }
+});
+
+check("I44b: aynı sayı span'i iki çelişen exact role yazılamaz", () => {
+  const INPUTS = [
+    "Araba lastiği arıyorum 205/55 R16",
+    "6 kişilik ahşap yemek masası arıyorum",
+    "Klinik için steril eldiven arıyorum, 100 kutu",
+    "Şirketim için 10 araçlık filo kiralama arıyorum",
+    "12000 BTU klima arıyorum",
+    "15 kg bebek maması arıyorum",
+    "Arçelik 55 inç televizyon arıyorum",
+    "2019 Renault Clio arıyorum",
+    "Mercedes C180 için ön far arıyorum",
+    "Heidelberg SM 74 için nemlendirme pompası arıyorum",
+  ];
+  for (const raw of INPUTS) {
+    const claimed = classifyNumbers(raw).filter((n) => String(n.role) !== "OTHER");
+    for (let i = 0; i < claimed.length; i++) {
+      for (let j = i + 1; j < claimed.length; j++) {
+        const a = claimed[i]!;
+        const b = claimed[j]!;
+        const overlap =
+          a.index < b.index + b.raw.length && b.index < a.index + a.raw.length;
+        assert.ok(
+          !overlap,
+          `${raw}: '${a.raw}':${a.role} ile '${b.raw}':${b.role} çakışıyor`,
+        );
+      }
+    }
+  }
+});
+
+check("I44c: miktar/ölçü span'i model olamaz — publish yüzeyleri temiz", () => {
+  const CASES: Array<{ raw: string; keepInText: string }> = [
+    // "ahşap" bu dilimin DIŞINDA — yalnız model temizliği ve ürünün metinde kalması denetlenir.
+    { raw: "Yemek masası arıyorum 6 kişilik ahşap", keepInText: "masa" },
+    { raw: "Torna tezgahı için yedek parça arıyorum", keepInText: "torna" },
+    { raw: "Araba lastiği arıyorum 205/55 R16", keepInText: "lasti" },
+    { raw: "Oto koltuğu arıyorum 9-36 kg", keepInText: "koltu" },
+  ];
+  for (const c of CASES) {
+    const s = i44Surfaces(c.raw);
+    for (const [surface, v] of [
+      ["fields.model", s.fieldsModel],
+      ["snapshot.model", s.snapModel],
+      ["envelope.model", s.envModel],
+    ] as const) {
+      assert.equal(
+        v,
+        null,
+        `${c.raw}: ${surface} kanıtsız model taşıyamaz → '${v}'`,
+      );
+    }
+    assert.ok(
+      !/^\d+$/.test(s.headline.trim()),
+      `${c.raw}: başlık çıplak sayıya bozulamaz → '${s.headline}'`,
+    );
+    assert.ok(
+      fold(s.text).includes(c.keepInText),
+      `${c.raw}: ürün ifadesi metinden düşemez → '${s.text}'`,
+    );
+  }
+  // Lastik ebadı canonical attribute'a taşınır (kaybolmaz)
+  const tire = i44Surfaces("Araba lastiği arıyorum 205/55 R16");
+  assert.ok(
+    (tire.attr("tireSize") ?? "").includes("205/55"),
+    `lastik ebadı tireSize attribute'unda tutulmalı → '${tire.attr("tireSize")}'`,
+  );
+});
+
+check("I44d: gerçek modeller model kanıt kapısından geçer (koruma)", () => {
+  const CASES: Array<{ raw: string; model: string }> = [
+    { raw: "Mercedes C180 için ön far arıyorum", model: "C180" },
+    { raw: "Heidelberg SM 74 için nemlendirme pompası arıyorum", model: "SM 74" },
+    { raw: "2019 Renault Clio arıyorum", model: "Clio" },
+    { raw: "Volkswagen Passat arıyorum", model: "Passat" },
+    { raw: "iPhone 15 Pro arıyorum", model: "iPhone 15 Pro" },
+  ];
+  for (const c of CASES) {
+    const s = i44Surfaces(c.raw);
+    assert.equal(s.envModel, c.model, `${c.raw}: envelope.model '${c.model}' kalmalı → '${s.envModel}'`);
+    assert.equal(s.snapModel, c.model, `${c.raw}: snapshot.model '${c.model}' kalmalı → '${s.snapModel}'`);
+  }
+  // Katalog kimliği sayı kapısına takılmaz (bugünkü ölçülen davranış korunur;
+  // "Galaxy" öneki ayrı bir katalog sorunudur, bu dilimin konusu değildir).
+  const a55 = i44Surfaces("Arçelik A55 D çamaşır makinesi arıyorum");
+  assert.ok(
+    (a55.envModel ?? "").includes("A55"),
+    `A55 D model kimliği korunmalı → '${a55.envModel}'`,
+  );
+  // Marka-ardılı sayısız katalog modeli korunur; ekran ölçüsü modelden ayrışır.
+  const chicco = i44Surfaces("Chicco Goody Plus bebek arabası arıyorum");
+  assert.equal(chicco.envModel, "Goody Plus",
+    `Goody Plus modeli korunmalı → '${chicco.envModel}'`);
+  const a55tv = i44Surfaces("Arçelik A55 D 55 inç televizyon arıyorum");
+  assert.ok((a55tv.envModel ?? "").includes("A55"),
+    `A55 D korunmalı → '${a55tv.envModel}'`);
+  assert.equal(a55tv.attr("screenSize"), "55",
+    `55 yalnız screenSize olmalı → '${a55tv.attr("screenSize")}'`);
+  const clio19 = i44Surfaces("Renault Clio 2019 arıyorum");
+  assert.equal(clio19.envModel, "Clio", `Clio korunmalı → '${clio19.envModel}'`);
+});
+
+check("I44g: katalog markasını izleyen ürün/parça adı model olamaz", () => {
+  /**
+   * Model kanıt kapısının "markayı izleyen yazım" kuralı yalnız POZİTİF
+   * kanıt üretir; markadan sonra gelen ürün türü ya da parça adı bu kuralla
+   * model OLAMAZ ("Bosch pompa" → model null). Ürün/parça kimliği (marka,
+   * part alanı) bu sırada kaybolmaz.
+   */
+  const CASES: Array<{ raw: string; brand: string; part: string | null }> = [
+    { raw: "Bosch pompa arıyorum", brand: "Bosch", part: "pompa" },
+    { raw: "Bosch çamaşır makinesi için pompa arıyorum", brand: "Bosch", part: "pompa" },
+    { raw: "Siemens fırın için termostat arıyorum", brand: "Siemens", part: "termostat" },
+    { raw: "Arçelik televizyon arıyorum", brand: "Arçelik", part: null },
+  ];
+  for (const c of CASES) {
+    const s = i44Surfaces(c.raw);
+    for (const [surface, v] of [
+      ["fields.model", s.fieldsModel],
+      ["snapshot.model", s.snapModel],
+      ["envelope.model", s.envModel],
+    ] as const) {
+      assert.equal(v, null, `${c.raw}: ${surface} model üretemez → '${v}'`);
+    }
+    assert.equal(s.fieldsBrand, c.brand, `${c.raw}: marka kaybolamaz → '${s.fieldsBrand}'`);
+    if (c.part) {
+      assert.ok(
+        fold(String(s.attr("part") ?? "")).includes(fold(c.part)),
+        `${c.raw}: parça alanı '${c.part}' kalmalı → '${s.attr("part")}'`,
+      );
+    }
+  }
+});
+
+check("I44e: negatif kanaryalar — çıplak sayı model/screen üretemez", () => {
+  const CASES = [
+    "Masa arıyorum 6",
+    "Ofis koltuğu arıyorum 100",
+    "Sandalye arıyorum 12",
+  ];
+  for (const raw of CASES) {
+    const s = i44Surfaces(raw);
+    for (const v of [s.fieldsModel, s.snapModel, s.envModel]) {
+      assert.equal(v, null, `${raw}: çıplak sayı exact model olamaz → '${v}'`);
+    }
+    assert.equal(
+      s.attr("screenSize"),
+      null,
+      `${raw}: birim/bağlam yokken screenSize oluşamaz → '${s.attr("screenSize")}'`,
+    );
+    assert.ok(!/^\d+$/.test(s.headline.trim()), `${raw}: başlık '${s.headline}' çıplak sayı olamaz`);
+  }
+  // Ağırlık aralığı ekran boyutu değildir (baby-02 sınıfı)
+  const kg = i44Surfaces("Oto koltuğu arıyorum 9-36 kg");
+  assert.equal(kg.attr("screenSize"), null, `9-36 kg screenSize üretemez → '${kg.attr("screenSize")}'`);
+  // Birim destekli gerçek ekran korunur
+  const tv = i44Surfaces("Arçelik 55 inç televizyon arıyorum");
+  assert.equal(tv.attr("screenSize"), "55", `55 inç screenSize kalmalı → '${tv.attr("screenSize")}'`);
+});
+
+check("I44f: miktar birimi üretim nesnesi sayılamaz (100 kutu sınıfı)", () => {
+  /**
+   * "Klinik için steril eldiven arıyorum, 100 kutu" — '100 kutu' bir miktar
+   * span'idir; sayının birimi olan 'kutu' üretilecek nesne sinyali olamaz.
+   * Kategori kararı bu dilimin dışında; burada yalnız sayı-birim sözleşmesi
+   * denetlenir. Açık üretim fiili ("kutu ürettirmek") DAVRANIŞI KORUR.
+   */
+  const s = i44Surfaces("Klinik için steril eldiven arıyorum, 100 kutu");
+  assert.notEqual(s.kind, "MANUFACTURED_ITEM",
+    `miktar birimi üretim talebi kuramaz → kind='${s.kind}'`);
+  assert.equal(s.quantity, 100, `adet bilgisi kaybolamaz → ${s.quantity}`);
+  assert.ok(!fold(s.headline).includes("uretim"),
+    `başlık üretim talebine dönüşemez → '${s.headline}'`);
+  assert.ok(fold(s.text).includes("eldiven"),
+    `ürün ifadesi metinde kalmalı → '${s.text}'`);
+  // Açık üretim fiili korunur — bastırma yalnız birim bağlamındadır.
+  const mfg = i44Surfaces("Logolu karton kutu ürettirmek istiyorum");
+  assert.equal(mfg.kind, "MANUFACTURED_ITEM",
+    `açık üretim fiili MANUFACTURED_ITEM kalmalı → '${mfg.kind}'`);
+  // Filo miktarı: adet yakalanır; 'kiralama' işlem türü bu dilimde AÇIK bırakıldı.
+  const filo = i44Surfaces("Şirketim için 10 araçlık filo kiralama arıyorum");
+  assert.equal(filo.quantity, 10, `10 araçlık → quantity 10 olmalı → ${filo.quantity}`);
 });
 
 if (knownFailNotes.length) {

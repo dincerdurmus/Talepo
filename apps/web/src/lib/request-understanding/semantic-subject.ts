@@ -23,6 +23,7 @@ import {
   resolvePartBearingParent,
   splitCompatibilityPhrase,
 } from "./part-relation";
+import { classifyNumbers } from "./number-role";
 import { clamp01, uv } from "./provenance";
 import type {
   ParentEntityKind,
@@ -1134,6 +1135,32 @@ function resolveSemanticSubjectCore(
 
   // Manufacture signals before SERVICE — "50.000 adet kutu yaptırmak" is not a service job.
   const mfgProductEarly = detectManufactureProduct(text);
+  /**
+   * MİKTAR BİRİMİ ÜRETİM NESNESİ DEĞİLDİR (I44f). "steril eldiven arıyorum,
+   * 100 kutu" cümlesinde 'kutu', sayı otoritesinin QUANTITY kararının
+   * birimidir; ürün adı yalnız bu birim rolünde geçiyorsa üretim niyeti
+   * kuramaz. Açık üretim fiili ("kutu ürettirmek") aşağıdaki üçüncü
+   * disjunkttan geçmeye devam eder.
+   */
+  const mfgProductOnlyQuantityUnit = (() => {
+    if (!mfgProductEarly) return false;
+    const lower = text.toLocaleLowerCase("tr-TR");
+    const noun = mfgProductEarly.product.toLocaleLowerCase("tr-TR");
+    const quantitySpans = classifyNumbers(text)
+      .filter((n) => n.role === "QUANTITY")
+      .map((n) => [n.index, n.index + n.raw.length] as const);
+    let at = lower.indexOf(noun);
+    if (at < 0) return false;
+    while (at >= 0) {
+      const end = at + noun.length;
+      const insideQuantity = quantitySpans.some(
+        ([qs, qe]) => at >= qs && end <= qe,
+      );
+      if (!insideQuantity) return false;
+      at = lower.indexOf(noun, end);
+    }
+    return true;
+  })();
   const manufactureQuantity =
     input.quantity != null ||
     /(?:^|[^\p{L}\p{N}])(?:\d+[.\d]*\s*)?(?:adet|bin|tane)(?=[^\p{L}\p{N}]|$)/iu.test(
@@ -1147,7 +1174,9 @@ function resolveSemanticSubjectCore(
     /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*)(?=[^\p{L}\p{N}]|$)/iu.test(text);
   const manufactureAsk =
     input.intent === "MANUFACTURE" ||
-    (mfgProductEarly && (manufactureQuantity || commissionVerb)) ||
+    (mfgProductEarly &&
+      !mfgProductOnlyQuantityUnit &&
+      (manufactureQuantity || commissionVerb)) ||
     /(?:^|[^\p{L}\p{N}])(?:bastır\w*|bastir\w*|ürettir\w*|urettir\w*|imalat)(?=[^\p{L}\p{N}]|$)/iu.test(
       text,
     );
