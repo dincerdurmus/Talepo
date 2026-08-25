@@ -7,7 +7,92 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
-## ÖLÇÜM TABANI — 2026-08-25, `3f66adb` (kanıta dayalı marka otoritesi)
+## ÖLÇÜM TABANI — 2026-08-25, `80f2bcf` (tipli sayı-birim otoritesi)
+
+Commit: `80f2bcf` — *fix(requests): classify numeric roles before model
+identity* (parent `1042721`). Bu bölüm, aşağıdaki `3f66adb` tabanının
+**yerine geçer**; o bölüm tarihli kanıt olarak silinmeden duruyor.
+
+**Kategori kapsama corpus'u (108 gerçek talep senaryosu):**
+`TOTAL=108 · PASS=93 · KNOWN_FAIL=15 · FAIL=0 · XPASS=0` (iki deterministik
+koşu, aynı sonuç). Önceki `PASS=91 · KNOWN_FAIL=17` ölçümü (2026-08-25,
+`3f66adb`) bu ölçümle **yer değiştirdi**; silinmedi.
+
+**Kalan 15 KNOWN_FAIL'in dağılımı:** `CATEGORY_SPECIFIC=8 · RC_RENT=3 ·
+RC_SPLIT=3 · RC_NUMBER=1` — her biri fixture'da kök neden + makine
+doğrulanabilir imzayla kayıtlı.
+
+**Tam kapanan iki senaryo:** `baby-02` (*Oto koltuğu arıyorum 9-36 kg* —
+ağırlık aralığı artık ekran boyutu üretmiyor, başlık "9"a bozulmuyor) ve
+`health-04` (*Klinik için steril eldiven arıyorum, 100 kutu* — miktar birimi
+üretim talebi kurmuyor; `kind=PRODUCT`, `quantity=100`). İkisi de XPASS
+olarak ölçüldü, ardından fixture'daki `knownIssue` kayıtları kaldırıldı.
+**Bu iki senaryo bir KB kaydına karşılık gelmiyor:** belge KB-1…KB-14
+kayıtlarında `screenSize`, "9-36 kg", "100 kutu" ve MANUFACTURED_ITEM
+sınıfları arandı, eşleşen kayıt bulunamadı. Bu turda **hiçbir KB kaydı
+kapatılmadı** — isim benzerliğiyle kapatma yapılmadı.
+
+**Kısmen iyileşen ama AÇIK kalan beş senaryo** (yüzdenin arkasına
+saklanmamalıdır; hiçbiri ÇÖZÜLDÜ değildir):
+
+| Senaryo | Bu commit'te düzelen | AÇIK kalan gerçek kök |
+| --- | --- | --- |
+| `auto-11` *Araba lastiği arıyorum 205/55 R16* | `envelope.model` sızıntısı temizlendi, `tireSize = "205/55 R16"` doldu | Taksonomi alias'ı ("lastiği" → Lastik düğümü) ve lastik ailesinin `kind` kararı — hâlâ VEHICLE |
+| `furn-07` *Yemek masası arıyorum 6 kişilik ahşap* | Yanlış `model="6"` ve "6" başlığı temizlendi, `seatingCapacity` tutuluyor | "ahşap" malzeme çıkarımı yok; malzeme kullanıcıya yeniden soruluyor |
+| `auto-06` *Şirketim için 10 araçlık filo kiralama* | `quantity = 10` yakalanıyor | Kiralama işlem türü modellenmemiş; `kind` hâlâ PART |
+| `appl-02` *İnverter klima arıyorum 12000 BTU* | `capacityBtu = 12000` tutuluyor | "İnverter" hâlâ parça alanına yazılıyor |
+| `mach-05` *Torna tezgahı için yedek parça* | `model="tezgahı"` sızıntısı temizlendi | Machinery taksonomi boşluğu + kategori yönlendirmesi (automotive'e gidiyor) |
+
+**Marka güven metrikleri (değişmedi):** `BRAND_PRESENT = 15/108` ve
+`BRAND_ROUTABLE_TRUSTED = 15/108`. Yeni model sızıntısı: **0**. Katalog
+modeli kaybı: **0**. `USER_ASSERTED` marka kaybı: **0**.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %86`** (formül: 100 × 93/108) — bu
+sayı YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
+**Bütün Talepo'nun hazırlık yüzdesi DEĞİLDİR.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi.** Beş bileşenli
+ölçülen Pro hattı metriği: envelope kategori erişimi (104/108), güvenilir
+marka (15/108), ürün türü erişimi (0/108), matching'in `resolvedEntities`
+okuması (0) ve tedarikçi yeteneği (0, `CAPABILITY_NOT_MEASURED`). Sayı-birim
+dilimi bu bileşenlerin hiçbirine dokunmadı; bu yüzden sabit kalması
+beklenen sonuçtur. **Ürünün genel olarak %22 hazır olduğu anlamına
+gelmez.** Matching entegrasyonu, tedarikçi yetkinliği ve bildirim teslimatı
+hâlâ **ölçülmemiş / bağlanmamış** durumdadır.
+
+**Anlama invariant bataryası:** `74 passed · 2 failed · 1 known_fail` —
+kırmızılar YALNIZ **I22** (KB-11'in kalan başlık yarısı) ve **I23** (KB-14,
+"ön ön far" bitişik tekrarı); known_fail YALNIZ **I25d**. Üçü de bu turda
+yeniden ölçüldü ve **açık kaldı**; bu dilimin kapsamına girmediler.
+
+**Bu turda testlerle kilitlenen kalıcı sözleşmeler:**
+
+- **I44a — sayı-birim truth table:** bir sayının görevini bağlamı ve birimi
+  belirler. Ayrışan roller: `tireSize`, oturma/kişi kapasitesi (`seating`),
+  `quantity`, BTU kapasitesi, ağırlık, `screenSize`, `modelYear` ve
+  doğrulanmış model jetonu.
+- **I44b:** aynı sayı span'i çelişen iki exact role yazılamaz.
+- **I44c/I44e:** miktar, ağırlık, kapasite veya ölçü span'i `envelope.model`
+  olamaz; birim/bağlam yokken `screenSize` oluşamaz; çıplak sayı exact model
+  olamaz.
+- **I44d:** gerçek modeller korunur — `C180`, `SM 74`, `Goody Plus`,
+  `A55 D`, `Clio` (ve `Passat`, `iPhone 15 Pro`).
+- **I44f:** miktar biriminin ürün adı ("100 kutu" içindeki *kutu*) üretim
+  niyeti kuramaz; açık üretim fiili davranışı korunur.
+- **I44g:** doğrulanmış bir markayı izleyen ürün veya parça kelimesi, sırf
+  markadan sonra geldiği için model olamaz ("Bosch pompa" → `model = null`,
+  marka ve parça alanları korunur).
+
+Buradaki her sayı **yerel doğrulayıcı ölçümüdür**; bu bölüm production,
+deploy ya da gerçek Pro bildirim başarısı hakkında hiçbir iddia taşımaz.
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `3f66adb` (kanıta dayalı marka otoritesi) — **YERİNE GEÇTİ**
+
+> **Yerine geçti:** bu bölümün corpus ve invariant sayıları 2026-08-25
+> tarihli `80f2bcf` ölçümüyle güncellendi (yukarı bakın). Tarihli kanıt
+> olarak korunuyor; bugünün gerçeği olarak okunmamalıdır.
 
 Commit: `3f66adb` — *fix(requests): govern brand evidence without losing
 intent* (parent `c440f69` = 108 senaryoluk kategori kapsama tabanı,
@@ -532,6 +617,7 @@ tekrarı, `I17` eksik bilgiyi kovalar. İkisi birlikte çalışır.
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-24, KB-10 ölçümü sırasında |
 | Durum | **Kısmen çözüldü** (ölçüm 2026-08-25, HEAD `3f66adb`) — cümle ve `part` alanı çözüldü (`e564b7d`, baştaki bağlacı kırpan kural); **başlık kısmı AÇIK** |
+| Son doğrulama | 2026-08-25, HEAD `80f2bcf` — I22 **hâlâ kırmızı**; sayı-birim dilimi bu kaydın kapsamına girmedi |
 
 **2026-08-25 yeniden ölçümü (aynı girdi):**
 `Heidelberg SM 74 için nemlendirme pompası arıyorum`
@@ -590,6 +676,13 @@ uyumluluk yüzeyleri) ve kategori kapsama corpus'u `appl-06`
 (`requiredBrand: Arçelik`, `requiredSurfaceTerms: rezistans`). Hata geri
 gelirse bu iki doğrulayıcı kırmızıya düşer.
 
+**2026-08-25 ek kilit (`80f2bcf`).** Aynı sınıfın "istenen şey model olamaz"
+kuralı artık tipli model kanıt kapısıyla da korunuyor: **I44g** doğrulanmış
+markayı izleyen ürün/parça kelimesinin (`Bosch pompa`, `Siemens fırın için
+termostat`) model alanına düşemeyeceğini ölçerek kilitler. Bu, KB-12'nin
+durumunu değiştirmez — kayıt zaten ÇÖZÜLDÜ; yalnız geri dönüş yolu bir
+doğrulayıcı daha ile kapatıldı.
+
 İki ayrı ağırlıkta, aynı kök:
 
 **(a) Parça tamamen kayboluyor.**
@@ -641,6 +734,7 @@ için ön ön far arıyorum.` — konum belirteci **"ön" bitişik iki kez**
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (KB-13 ölçümü sırasında görünür oldu) |
 | Tespit | 2026-08-25 |
 | Durum | **Açık** — bataryada I23 kırmızısı olarak izleniyor |
+| Son doğrulama | 2026-08-25, HEAD `80f2bcf` — I23 **hâlâ kırmızı**; sayı-birim dilimi bu kaydın kapsamına girmedi |
 
 **Senaryo:** Kullanıcı yalnız `C180 ön far` yazıyor; "Mercedes" yazmıyor.
 Doğrulayıcı, üretilen başlığın **"Mercedes" içermemesini** şart koşuyor
