@@ -113,6 +113,8 @@ function brandListsForTests() {
 import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { enrichUnderstoodFacts } from "../src/lib/request-composer/v2/understood-facts";
 import { mergePreservedBrowseFields } from "../src/lib/request-composer/build-state";
+// D1: dalga yürüyüşünün TEK otoritesi — private `hybridFullQueue` kopyası kaldırıldı.
+import { walkQuestionWavesFromText } from "./lib/question-wave-walk-v1";
 import { scheduleNextQuestions } from "../src/lib/request-composer/v2/question-scheduler";
 import {
   applyBrowseSelectionToState,
@@ -5484,41 +5486,6 @@ check("I49h: bağlama rawInput'u değiştirmez (koruma)", () => {
  *   - Yazılmış birim korunur; yazılmamış birim UYDURULMAZ.
  * ------------------------------------------------------------------------ */
 
-/** Bir girdinin review'a kadar görülebilecek tüm hibrit soru anahtarları. */
-function hybridFullQueue(raw: string): {
-  asked: string[];
-  prefilled: Record<string, string>;
-} {
-  const { state } = syncFromText(null, raw);
-  const fields = state.fields as Record<
-    string,
-    { kind?: string; value?: unknown }
-  >;
-  const prefilled: Record<string, string> = {};
-  for (const [k, f] of Object.entries(fields)) {
-    if (f?.kind === "VALUE" && f.value != null && String(f.value) !== "") {
-      prefilled[k] = String(f.value);
-    }
-  }
-  const seen = new Set<string>();
-  const working = { ...state, fields: { ...state.fields } } as typeof state;
-  for (let i = 0; i < 25; i += 1) {
-    const qr = resolveHybridQuestions(working) as unknown as {
-      next?: Array<{ key: string }>;
-    };
-    const wave = (qr.next ?? []).map((q) => q.key).filter((k) => !seen.has(k));
-    if (wave.length === 0) break;
-    for (const k of wave) {
-      seen.add(k);
-      (working.fields as Record<string, unknown>)[k] = {
-        kind: "VALUE",
-        value: "__ANSWERED__",
-        provenance: "EXPLICIT_BROWSE",
-      };
-    }
-  }
-  return { asked: [...seen], prefilled };
-}
 
 check("I50a: yazılan ölçü SONRAKİ dalgalarda da eksen sorusu açtırmaz (KB-15)", () => {
   const CASES = [
@@ -5527,7 +5494,7 @@ check("I50a: yazılan ölçü SONRAKİ dalgalarda da eksen sorusu açtırmaz (KB
     "Ambalaj için özel kesim kutu arıyorum, ölçüler 20x15x10",
   ];
   for (const raw of CASES) {
-    const q = hybridFullQueue(raw);
+    const q = walkQuestionWavesFromText(raw);
     assert.ok(
       q.prefilled.dimensions,
       `${raw}: ölçü alana bağlanmalı → ${JSON.stringify(q.prefilled)}`,
@@ -5542,7 +5509,7 @@ check("I50a: yazılan ölçü SONRAKİ dalgalarda da eksen sorusu açtırmaz (KB
 });
 
 check("I50b: iki bileşenli ölçü en/boy'u karşılar, derinliği uydurmaz", () => {
-  const q = hybridFullQueue("20x15 cm kartvizit bastırmak istiyorum");
+  const q = walkQuestionWavesFromText("20x15 cm kartvizit bastırmak istiyorum");
   assert.ok(q.prefilled.dimensions, `ölçü bağlanmalı → ${JSON.stringify(q.prefilled)}`);
   for (const axis of ["width", "height"]) {
     assert.ok(
@@ -5595,7 +5562,7 @@ check("I50e: malzeme kanonik karşılığı varsa tekrar sorulmaz, yoksa uydurul
    * "6 kişilik ahşap toplantı masası" — mobilyada 'ahşap' kanonik malzeme
    * kaydında karşılığı olan bir sözcüktür ve tekrar sorulmaz.
    */
-  const furn = hybridFullQueue("6 kişilik ahşap toplantı masası arıyorum");
+  const furn = walkQuestionWavesFromText("6 kişilik ahşap toplantı masası arıyorum");
   assert.ok(furn.prefilled.material, `mobilyada malzeme bağlanmalı → ${JSON.stringify(furn.prefilled)}`);
   assert.ok(
     !furn.asked.includes("material"),
@@ -5652,7 +5619,7 @@ check("I50g: açık provenance ile dolan HİÇBİR alan hiçbir dalgada tekrar s
     "Mama sandalyesi arıyorum katlanabilir",
   ];
   for (const raw of INPUTS) {
-    const q = hybridFullQueue(raw);
+    const q = walkQuestionWavesFromText(raw);
     for (const [key, value] of Object.entries(q.prefilled)) {
       assert.ok(
         !q.asked.includes(key),
@@ -5681,7 +5648,7 @@ check("I50h: iki çelişkili vaka — kanonik karşılık varsa bağlanır, yoks
     /toplant/i.test(String(tProduct.value ?? "")),
     `kullanıcının ifadesi korunmalı → '${tProduct.value}'`,
   );
-  const tQueue = hybridFullQueue("6 kişilik ahşap toplantı masası arıyorum");
+  const tQueue = walkQuestionWavesFromText("6 kişilik ahşap toplantı masası arıyorum");
   assert.ok(
     !tQueue.asked.includes("furnitureType"),
     `mobilya türü tekrar sorulamaz → [${tQueue.asked.join(", ")}]`,
@@ -5719,7 +5686,7 @@ check("I50h: iki çelişkili vaka — kanonik karşılık varsa bağlanır, yoks
     "VALUE",
     `kayıtta karşılığı olmayan ifade uydurulamaz → '${cProduct.value}'`,
   );
-  const cQueue = hybridFullQueue("20x15x10 cm özel kesim kutu istiyorum");
+  const cQueue = walkQuestionWavesFromText("20x15x10 cm özel kesim kutu istiyorum");
   assert.ok(
     cQueue.asked.includes("productType"),
     `karşılığı yoksa ürün türü SORULMALI → [${cQueue.asked.join(", ")}]`,

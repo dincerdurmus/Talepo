@@ -31,6 +31,14 @@ Bu iki sayı **birbirinin yerine kullanılamaz**. İlk ekran ölçümü iyimserd
 "kullanıcı ölçüyü yazdı ama iki dalga sonra en/boy soruldu" sınıfını
 göremez. Bu yüzden ikisi ayrı isimle tutulur.
 
+> **YERİNE GEÇTİ — bkz. "SORU BASTIRMA ÖLÇÜM OTORİTESİ V1" (aşağıda).**
+> Aşağıdaki tablo **2026-08-25 tarihli, ölçüm aracı repoya kaydedilmemiş,
+> tek eksenli tarihsel sonuçtur; yeni sınıflarla karşılaştırılamaz.**
+> Bu adları (`wrongly_suppressed`, `FIRST_SCREEN`, `FULL_QUEUE`,
+> `correctly_suppressed`) üreten hiçbir script, fixture veya kaynak dosya
+> repoda yoktu; sayılar komutla yeniden üretilemiyordu. Tarihli kanıt olarak
+> silinmeden duruyor, **bugünün gerçeği olarak okunmamalıdır.**
+
 | | `FIRST_SCREEN` | `FULL_QUEUE` |
 | --- | --- | --- |
 | measured | 240 | 406 |
@@ -44,6 +52,88 @@ göremez. Bu yüzden ikisi ayrı isimle tutulur.
 `wrongly_repeated = 0` iddiası metriğe değil **invariant'a** bağlıdır
 (`I50g`: açık provenance ile dolan hiçbir alan hiçbir dalgada tekrar
 sorulamaz). Metrik yarın daralırsa iddia sessizce doğru görünmez.
+
+### SORU BASTIRMA ÖLÇÜM OTORİTESİ V1 — yeniden üretilebilir ölçüm (D1)
+
+```
+npx --yes tsx scripts/verify-question-suppression-authority-v1.ts
+```
+
+**Ölçüm anı:** 2026-08-26, **D1 soru bastırma ölçüm otoritesi commit'i (bu
+commit)**. Bir commit kendi nihai SHA'sını içeriğinde taşıyamayacağı için
+burada SHA yazılmaz; kayıt kalıcı olarak commit'in kendisine işaret eder.
+
+**Çıkış kodu 3 — YEŞİL KAPANIŞ DEĞİLDİR.** Sözleşme: `0` = ölçüm tamamlandı ve
+sözleşme sağlam · `1` = doğrulayıcının sözleşmesi/determinizmi bozuk · `3` =
+**ölçüm sözleşmesi sağlam FAKAT kapanış tamamlanmadı** (gerçek `not_measured`
+kayıtları var). Bu taban `3` verir: **8 kayıt** (4 `scenarioId/fieldKey` × 2
+ufuk) `category_unresolved` nedeniyle ölçülemedi. `3`'ü "başarılı" ya da
+"yeşil" diye okumak, ölçülemeyeni ölçülmüş saymaktır — kaydın var oluş
+nedeninin tam tersi.
+
+**Ölçüm birimi:** `scenarioId/fieldKey@horizon`. 108 senaryo → **1890 kayıt**
+(her `scenarioId/fieldKey` için iki ufuk). İki ardışık koşu **byte-birebir
+aynı**; doğrulayıcı ölçümü kendi içinde de iki kez üretip karşılaştırır.
+
+**İKİ AYRI EKSEN.** Ham kanıt (`provenance` etiketinden KOPYALANMAZ; kanıtın
+kendisi aranır) ve soru kararı ayrı ölçülür. Bu yüzden aynı kayıt hem
+`correctly_suppressed` hem `provenance_mismatch` olabilir.
+
+| Sonuç | `FIRST_SCREEN` | `FULL_QUEUE` |
+| --- | --- | --- |
+| `correctly_suppressed` | 49 | 49 |
+| **`wrongly_repeated`** | **0** | **0** |
+| `high_risk_silent_suppression` | 20 | 20 |
+| `missing_required_question` | 373 | 368 |
+| `authority_suppressed` | 3 | 3 |
+| `not_measured` | 4 | 4 |
+| *(bilgi)* `correctly_asked` | 67 | 142 |
+| *(bilgi)* `optional_not_asked` | 211 | 141 |
+| *(bilgi)* `OUT_OF_SCOPE` | 218 | 218 |
+| *ayrı eksen:* `provenance_mismatch` | 69 | 69 |
+
+**`FIRST_SCREEN` KAPANIŞ ÖLÇÜSÜ DEĞİLDİR.** Scheduler aynı anda en çok üç soru
+gösterdiği için ilk ekrandaki "sorulmadı", *bastırıldı* ile *sıraya girdi*'yi
+karıştırır. Kapanış ölçüsü **yalnız `FULL_QUEUE`**'dur ve doğrulayıcıda
+fonksiyon düzeyinde kapatılmıştır (başka ufuk istenirse fırlatır).
+
+**`missing_required_question` bir BASTIRMA hatası DEĞİLDİR.** Alan evreni
+(`question-profiles` + `global-core`) ile soru kararı otoritesi
+(`resolveHybridQuestions`) **ayrı otoritelerdir**; bu sayı, karar otoritesinin
+alan evrenini ne kadar kapsadığını gösteren bir **kapsama** göstergesidir.
+Kırılım (`FULL_QUEUE`): `publish_required` 208 · `quote_critical` 157 ·
+`routing_critical` 3. Gerçek bastırma ölçüsü YALNIZ değer taşıyan alanlardır:
+`correctly_suppressed` 49 · `high_risk_silent_suppression` 20 ·
+`authority_suppressed` 3 · `wrongly_repeated` 0.
+
+**`high_risk_silent_suppression = 20` (FULL_QUEUE)** — kullanıcının yazmadığı
+ve hiçbir çağrılabilir otoritenin doğrulamadığı bir değer soruyu sessizce
+kapatıyor. Alan dağılımı: **`needType` 18**, `condition` 2. Bu, KB-17'nin
+ölçülebilir çekirdeğidir.
+
+**`authority_suppressed = 3`** — tarafsız sınıf; her kayıt çağrılan otoriteyi
+ve döndürdüğü kanonik kimliği taşır:
+
+| Kayıt | Otorite | Kanonik kimlik |
+| --- | --- | --- |
+| `auto-10/brand@FULL_QUEUE` | `findModelInText(text).record.brand_id -> brandById` | `brand_mercedes-benz` |
+| `tech-02/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
+| `tech-10/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
+
+**`not_measured = 4` (ufuk başına; iki ufukta toplam 8 kayıt)** — hepsi
+`category_unresolved`:
+`health-07/__scenario__`, `health-08/__scenario__`, `tech-12/__scenario__`,
+`home-06/brandCandidate`.
+
+**`provenance_mismatch = 69`** — soru kararından bağımsız **etiket** ekseni.
+En görünür sınıf: kullanıcının metninde birebir bulunan `model` değerleri
+(`auto-01`, `auto-02`, `auto-03`, `auto-04`, `auto-07` …) `CATALOG_ENRICHED`
+etiketi taşıyor. Bu bir davranış değil etiket hatasıdır ve KB-17 kapanış
+ölçüsü #3 ile aynı bulgudur — bu ölçüm onu **bağımsız olarak** yeniden üretti.
+
+> **ESKİ 45 İLE MATEMATİKSEL KARŞILAŞTIRMA YAPILMAZ.** Eski sayı tek eksenli
+> bir sayımdı; buradaki yedi sonuç iki ayrı eksenden türer. Aradaki fark bir
+> "iyileşme" ya da "kötüleşme" **değildir** — farklı şeyler ölçülmektedir.
 
 **`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** (formül: 100 × 99/108) — bu sayı
 YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
@@ -1125,16 +1215,50 @@ alındı ve dördü birden PASS oldu.
 | --- | --- |
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
-| Kırık kontrol | Tekrar sorma süpürmesi (108 senaryoluk corpus) → `wrongly_suppressed` |
+| Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
-| Durum | **AÇIK — bu turda düzeltilmedi** |
+| Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
+| Durum | **AÇIK — D1 yalnız ÖLÇÜMÜ kurdu; production düzeltmesi D2'dedir** |
 
 **KB-15'in TERSİ yönü.** KB-15 "gereken soru tekrar soruluyor" der; bu kayıt
 "gereken soru sessiz çıkarımla kapatılıyor" der. İkisi ayrı risklerdir ve
 biri kapanınca diğeri kapanmaz.
 
-### Kırık kontrol — ölçülen değerler (`47df572`)
+### Kırık kontrol — YENİ, YENİDEN ÜRETİLEBİLİR ÖLÇÜM (D1)
+
+```
+npx --yes tsx scripts/verify-question-suppression-authority-v1.ts
+```
+
+2026-08-26, **D1 soru bastırma ölçüm otoritesi commit'i (bu commit)**. Kapanış
+ufku `FULL_QUEUE`; iki ardışık koşu byte-birebir aynı. Çıkış kodu **3** —
+ölçüm sözleşmesi sağlam, **kapanış tamamlanmadı** (8 kayıt = 4
+scenarioId/fieldKey × 2 ufuk, hepsi `category_unresolved`);
+yeşil kapanış değildir.
+
+```
+high_risk_silent_suppression = 20      (KB-17'nin ölçülebilir çekirdeği)
+  needType                   = 18
+  condition                  =  2
+authority_suppressed         =  3      (tarafsız; otorite + kanonik kimlik taşır)
+correctly_suppressed         = 49
+wrongly_repeated             =  0
+not_measured                 =  4      (hepsi category_unresolved)
+provenance_mismatch          = 69      (AYRI eksen — soru kararından bağımsız)
+```
+
+Ayrıntı, kayıt kimlikleri ve otorite tablosu için bu belgenin başındaki
+**"SORU BASTIRMA ÖLÇÜM OTORİTESİ V1"** bölümüne bakın.
+
+### Kırık kontrol — ESKİ ölçüm (`47df572`) — **TARİHSEL, YENİDEN ÜRETİLEMEZ**
+
+> **2026-08-25 tarihli, ölçüm aracı repoya kaydedilmemiş, tek eksenli tarihsel
+> sonuç; yukarıdaki yeni sınıflarla karşılaştırılamaz.** Bu sayıları üreten
+> script repoda mevcut değildir; `A1 / A2 / B / U` sınıflandırması komutla
+> yeniden üretilemez. Silinmiyor — tarihli kanıt olarak duruyor; **bugünün
+> gerçeği olarak okunmamalıdır** ve yeni sonuçlarla aritmetik olarak
+> karşılaştırılmamalıdır.
 
 ```
 wrongly_suppressed = 45
