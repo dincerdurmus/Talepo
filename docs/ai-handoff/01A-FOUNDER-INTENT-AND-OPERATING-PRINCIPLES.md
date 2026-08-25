@@ -22,6 +22,31 @@ bir deneyim sunmalıdır.
 
 [`PRODUCT-INTENT`]
 
+### 1.1 Talepo neyi kabul eder, neyi etmez (kurucu kararı, 2026-08-25)
+
+Talepo **talep tarafının** platformudur. Kabul ettiği şey, ihtiyacı olan kişinin talebidir:
+
+- ürün satın almak
+- ürün, araç veya makine kiralamak
+- hizmet almak
+- üretim veya baskı yaptırmak
+
+Talepo bir **arz/ilan platformu değildir**. Kullanıcının kendi ürününü satacağı, kendi aracını veya makinesini satacağı, kendi taşınmazını ya da ürününü kiraya vereceği bir yer olarak kurulmamıştır. “Aracımı satmak istiyorum”, “Evimi kiraya vermek istiyorum”, “Makinemizi satmak istiyoruz” gibi cümleler **kapsam dışıdır**: yayınlanmaz, eşleştirilmez, bildirim üretmez.
+
+**Ayrım satılan nesnede değil, kullanıcının talep ettiği hedeftedir.** Bu üçü **geçerli taleptir** ve engellenmez:
+
+- “Aracımı satmak için ekspertiz hizmeti arıyorum” — istenen hedef bir hizmettir
+- “Evimi kiraya vermek için emlakçı arıyorum” — istenen hedef bir hizmet sağlayıcıdır
+- “Ürünlerimi satmak için e-ticaret yazılımı arıyorum” — istenen hedef bir yazılım tedarikidir
+
+Aynı biçimde, ilan sıfatı arayan kişiyi **talep tarafına** koyar: “satılık araç arıyorum” bir alıcıdır, “kiralık daire arıyorum” bir kiracıdır. Bunları arz sanmak gerçek müşteriyi engeller.
+
+Kapsam dışı bir metin yazan kullanıcı **cezalandırılmaz**: ne kabul edildiği kısa ve suçlayıcı olmayan bir dille söylenir ve kullanıcı metnini düzenlemeye yönlendirilir (bkz. madde 1, “hata yaptığında kullanıcıyı cezalandırmayan”).
+
+**Neden:** Talepo’nun geliri, karşılayabileceği talepleri görmek için ödeme yapan profesyonellerden gelir. Bir arz ilanının yönlendirilecek bir muhatabı yoktur; kabul edilmesi ücretli akışı kirletir ve profesyonelin dikkatini harcar — Pro paketin sattığı şeyin tam tersi.
+
+[`PRODUCT-INTENT`] — kod karşılığı ve uygulama durumu için: `docs/ai-handoff/11-DECISION-LOG.md` → **Karar F**.
+
 ---
 
 ## 2. Kurucunun iki temel korkusu

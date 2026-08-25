@@ -130,3 +130,45 @@ Vizyon-only kalanlar: production precision hedefleri, attachment-first UX, tam a
 `PLAN_PRICING`, iyzico sandbox kataloğu ve bazı doğrulayıcılar hâlâ üç paketli
 dünyayı taşıyor. Kalıntı listesi çıkarıldı, **bu turda düzeltilmedi**; ayrı iş
 kalemi.
+---
+
+## 2026-08-25 — Talepo kapsamı: yalnız talep tarafı
+
+### Karar F — Talepo demand-only bir talep platformudur; arz ilanı kabul edilmez
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — kod karşılığı `a44c23d` (2026-08-25, parent `2facc3c`), `BRANCH-WIRED`. **`PRODUCTION-DEPLOYED` DEĞİL.** |
+| **Karar** | Talepo, ihtiyacı olan tarafın talebini kabul eder: ürün satın alma, ürün/araç/makine kiralama, hizmet alma, üretim/baskı yaptırma. Kullanıcının **kendi** ürününü satacağı, **kendi** aracını/makinesini satacağı, **kendi** taşınmazını/ürününü kiraya vereceği bir arz/ilan platformu **değildir**. Kapsam dışı metin yayınlanmaz, eşleştirilmez, bildirim üretmez. |
+| **Ayrımın kuralı** | Esas alınan **satılan nesne değil, kullanıcının talep ettiği hedeftir**. “Aracımı satmak için ekspertiz hizmeti arıyorum”, “Evimi kiraya vermek için emlakçı arıyorum”, “Ürünlerimi satmak için e-ticaret yazılımı arıyorum” **geçerli taleplerdir**. İlan sıfatı da arayanı talep tarafına koyar: “satılık araç arıyorum” alıcıdır, “kiralık daire arıyorum” kiracıdır. |
+| **Kod karşılığı** | Tipli `RequestScope = "DEMAND" \| "UNSUPPORTED_SUPPLY"` (`request-understanding/types.ts`). Karar tek yerde, uzlaştırılmış işlem türünden okunur: `SELL` kapsam dışıdır. `SELL` bu commit'ten sonra **yalnız** açık elden çıkarma ifadesiyle üretilir (ilan sıfatları artık `SELL` üretmez), ve kullanım bağlamındaki elden çıkarma ifadesi karar veremez — bu ayrım yeni bir çözümleyiciyle değil, mevcut `readUsageContextSplit` otoritesinin sonucuyla yapılır. Kapsam dışında kategori ve konu **UNKNOWN** bırakılır, gerekçe kanıt olarak yazılır. |
+| **Snapshot** | `RequestUnderstandingSnapshot.requestScope?` — **additive ve opsiyonel**. Alan yoksa eski snapshot `DEMAND` gibi okunur. Snapshot `discoveryProjection` JSON kolonunun altında yaşadığı için **Prisma kolonu açılmadı, migration gerekmedi**. Snapshot **denetim bilgisidir; karar yetkisi değildir.** |
+| **Yayın kapısı** | `parseCreateRequestInput` içinde, `createRequest` çağrılmadan **önce**. Kapsam metni `rawInput`, yoksa `description` üzerinden okunur; böylece `rawInput` göndermemek bir kaçış yolu değildir. Aynı fonksiyon PATCH yolunda da çalıştığı için **create, legacy create ve update** birlikte korunur. Karar istemciden gelen snapshot'a güvenilerek verilmez, sunucuda metinden **yeniden türetilir**; `DEMAND` diyen bir istemci snapshot'ı kapıyı açamaz. `rawInput` gönderilmediğinde mevcut değer ezilmez. |
+| **Fanout/bildirim** | **Yapısal olarak erişilemez.** Kapı Request satırı oluşmadan fırlar; fanout'un tek girişi `distributeRequestToCompanies` ve bildirim `tx.notification.create`, ikisi de var olan bir Request satırı üzerinden çalışır. **Matching V3, fanout ve bildirim kodu bu kararla değiştirilmedi.** |
+| **Kullanıcı deneyimi** | Kapsam dışında soru motoru başlamaz, review ve publish açılmaz. Kullanıcı boş ekranda bırakılmaz: ne kabul edildiğini söyleyen kısa, suçlayıcı olmayan bir açıklama ve metne dönmek için tek bir eylem (“Metnimi düzenle”) gösterilir. `/talep` akışında **tarayıcıda DOM ile doğrulandı**. |
+| **Dosyalar** | `request-understanding/types.ts`, `intent-signals.ts`, `semantic-subject.ts`, `understand-request.ts`, `requested-item-role.ts`, `ai/parser/category.ts`, `request/understanding-snapshot.ts`, `request/publish-understanding.ts`, `request-composer/questions.ts`, `request-composer/v2/publish-readiness.ts`, `request-composer/v2/composer-flow.ts`, `server/request/request-schema.ts`, `app/talep/page.tsx` |
+| **Testler** | `verify-understanding-invariants-v1` → **I46** (işlem türü kanıt önceliği), **I47** (kapsam kararı ve kapıları), **I48** (geçerli hizmet taleplerinin yönlenmesi, create/legacy create/update truth table, kullanıcı deneyimi). Batarya: `102 passed · 2 failed · 1 known_fail`; kırmızılar yalnız önceden açık **I22** ve **I23**. `verify-category-coverage-v1`: `TOTAL=108 · PASS=99 · KNOWN_FAIL=9 · FAIL=0 · XPASS=0`. |
+| **Değişirse risk** | Kapsam kapısı gevşerse arz ilanları ücretli Pro akışına girer ve profesyonelin karşılayamayacağı taleplerle dikkati harcanır. Ayrım “satılan nesne”ye kaydırılırsa **gerçek hizmet talepleri engellenir** — “aracımı satmak için ekspertiz arıyorum” yayınlanamaz hâle gelir. İlan sıfatı yeniden arz sayılırsa “satılık araç arıyorum” diyen **alıcı** engellenir. |
+
+**Bu kararla birlikte iki doğrulayıcı beklentisi güncellendi.**
+`verify-request-understanding-brain` ve `verify-single-brain-closure`,
+*“kiracılı satılık dükkan arıyorum”* senaryosu için `intent = SELL`
+bekliyordu. Bu beklenti, ilan sıfatının niyeti belirlediği **eski modelden**
+geliyordu ve korunsaydı gerçek bir **alıcı** arz ilanı sayılıp
+engellenecekti. Senaryo artık `BUY` ve `DEMAND` bekliyor; testin asıl
+koruduğu kural (“kiracı” sözcüğü bunu kiralama talebi yapmasın) aynen
+duruyor.
+
+**Kapsam dışı bırakılanlar.** Birinci sınıf bir `LET` (kiraya verme) niyeti
+eklenmedi; arz yönü mevcut `SELL` üzerinden temsil ediliyor ve hangi ilanın
+verildiği `listingType` alanında korunuyor. Ayrı bir `LET` niyeti eklemek
+`RequestIntent` enum'ını genişletir ve soru/strateji sistemlerine yayılır;
+ayrı bir karardır. `SELL` talebinde konu türü çözülmüyor — önceki **yanlış**
+`REAL_ESTATE` değeri yerine **iddiasız** kalıyor.
+
+**Yeni bir KB kaydı açılmadı.** “Aracımı satmak istiyorum” girdisinin
+kategori ve konu çözmemesi bir hata değil, ürün politikası gereği ölçülmüş
+`UNSUPPORTED_SUPPLY` sonucudur. Bu turda **KB-16 kapandı**; KB-11/I22,
+KB-14/I23, I25d known_fail, KB-15 ve kalan 9 kapsama `KNOWN_FAIL`'i
+**açık kalmaya devam ediyor**. Matching V3 hâlâ üretime bağlı değil,
+tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.

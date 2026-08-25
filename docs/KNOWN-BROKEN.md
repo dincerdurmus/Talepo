@@ -7,7 +7,80 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
-## ÖLÇÜM TABANI — 2026-08-25, `3eed002` (istenen hedef / kullanım bağlamı ayrımı)
+## ÖLÇÜM TABANI — 2026-08-25, `a44c23d` (talep niyeti / arz ilanı ayrımı)
+
+Commit: `a44c23d` — *fix(requests): separate demand intent from supply
+listings* (parent `2facc3c`). Bu bölüm, aşağıdaki `3eed002` tabanının
+**yerine geçer**; o bölüm tarihli kanıt olarak silinmeden duruyor.
+
+**Kategori kapsama corpus'u (108 gerçek talep senaryosu):**
+`TOTAL=108 · PASS=99 · KNOWN_FAIL=9 · FAIL=0 · XPASS=0` (iki deterministik
+koşu, aynı sonuç). Önceki `PASS=95 · KNOWN_FAIL=13` ölçümü (2026-08-25,
+`3eed002`) bu ölçümle **yer değiştirdi**; silinmedi.
+
+**Kalan 9 KNOWN_FAIL'in dağılımı:** `CATEGORY_SPECIFIC=5 · RC_SPLIT=3 ·
+RC_NUMBER=1`. **`RC_RENT` satırı artık yok** — ailenin dört senaryosu
+(`auto-05`, `auto-06`, `mach-04`, `health-02`) XPASS olarak ölçüldü, ardından
+fixture'daki `knownIssue` kayıtları kaldırıldı ve üçüne `expectedIntent`
+beklentisi eklendi. Bkz. **KB-16 — ÇÖZÜLDÜ**.
+
+**Anlama invariant bataryası:** `102 passed · 2 failed · 1 known_fail` —
+kırmızılar YALNIZ **I22** (KB-11'in kalan başlık yarısı) ve **I23** (KB-14);
+known_fail YALNIZ **I25d**. Üçü de bu turda yeniden ölçüldü, **açık kaldı**.
+Batarya 79 passed ölçümünden 102 passed ölçümüne çıktı: **I46** (işlem türü
+kanıt önceliği), **I47** (Talepo kapsamı) ve **I48** (kapsam kapılarının
+kapanışı) satırları eklendi.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** (formül: 100 × 99/108) — bu sayı
+YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
+**Bütün Talepo'nun %92 hazır olduğu anlamına GELMEZ.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi.** Beş bileşen:
+envelope kategori erişimi (104/108), güvenilir marka (15/108), ürün türü
+erişimi (0/108), matching'in `resolvedEntities` okuması (0), tedarikçi
+yeteneği (0, `CAPABILITY_NOT_MEASURED`). **Ürünün genel olarak %22 hazır
+olduğu anlamına GELMEZ.** Sınırlar bu turda da aynen duruyor: **Matching V3
+üretime bağlı değil**, **tedarikçi yetkinliği ölçülmedi**, **canlı bildirim
+teslimatı ölçülmedi**, **ürün/varlık sinyalleri canlı matching tarafından
+okunmuyor**, **production deploy yok**.
+
+### Kapsam kararının uygulama durumu (`a44c23d`, `BRANCH-WIRED`)
+
+Talepo'nun yalnız talep tarafını kabul ettiği kurucu kararı (bkz.
+`docs/ai-handoff/11-DECISION-LOG.md` → **Karar F**) bu commit'te tipli bir
+`RequestScope` kararıyla temsil edildi: `DEMAND | UNSUPPORTED_SUPPLY`.
+Ölçülen kod gerçeği:
+
+| Sözleşme | Durum |
+| --- | --- |
+| Karar tek yerde, uzlaştırılmış işlem türünden okunur (`SELL` → kapsam dışı) | Uygulanmış |
+| Publish snapshot alanı **additive ve opsiyonel** (`requestScope?`) | Uygulanmış — alan yoksa eski snapshot `DEMAND` gibi okunur, **Prisma kolonu ve migration gerekmedi** |
+| Snapshot **denetim bilgisidir, karar yetkisi değildir** | Uygulanmış — sunucu kararı `rawInput`, yoksa `description` üzerinden **yeniden türetir**; istemcinin `DEMAND` diyen snapshot'ı kapıyı açamaz |
+| Create, rawInput taşımayan legacy create ve update yolları korunur | Uygulanmış — kapı `parseCreateRequestInput` içinde, `createRequest` çağrılmadan önce |
+| Kapsam dışında soru / review / publish kapalı | Uygulanmış |
+| Kullanıcı metnini düzenlemeye yönlendirilir | Uygulanmış — açıklama metni ve "Metnimi düzenle" eylemi; tarayıcıda DOM ile doğrulandı |
+| Fanout ve bildirime erişilemez | **Yapısal** — Request satırı hiç oluşmaz; `distributeRequestToCompanies` ve `tx.notification.create` yalnız var olan bir Request satırı üzerinden çalışır |
+
+**Bu bölüm hiçbir production iddiası taşımaz.** Yukarıdaki satırlar
+`BRANCH-WIRED` kod gerçeğidir; **deploy edilmedi**, **canlı Pro teslim
+başarısı ölçülmedi**.
+
+### Yeni bir KB kaydı AÇILMADI
+
+*"Aracımı satmak istiyorum"* girdisinin kategori ve konu türü çözmemesi bir
+hata **değildir**: ürün politikası gereği ölçülmüş `UNSUPPORTED_SUPPLY`
+sonucudur. Kapsam dışı bir girdinin yönlendirilecek bir talebi yoktur; bu
+yüzden kategori ve konu bilerek `UNKNOWN` bırakılır ve gerekçe kanıt olarak
+yazılır. Bu turda **hiçbir yeni KB kaydı açılmadı**, **bir KB kaydı kapandı**
+(KB-16).
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `3eed002` (istenen hedef / kullanım bağlamı ayrımı) — **YERİNE GEÇTİ**
+
+> **Yerine geçti:** bu bölümün corpus ve invariant sayıları 2026-08-25
+> tarihli `a44c23d` ölçümüyle güncellendi (yukarı bakın). Tarihli kanıt
+> olarak korunuyor; bugünün gerçeği olarak okunmamalıdır.
 
 Commit: `3eed002` — *fix(requests): distinguish requested target from usage
 context* (parent `658dea2`). Bu bölüm, aşağıdaki `80f2bcf` tabanının
@@ -860,7 +933,7 @@ uçtan uca UX yarısıdır**. Kategori düzelmesi bu kaydı kapatmaz.
 span'lerini kanonik alanlara bağlayan tek otoriteyi kullanmalı (ayrı bir
 çıkarıcı kurulmamalı) ve kapanış kalıcı bir invariant satırıyla kilitlenmeli.
 
-## KB-16 — Kiralama işlem türü modellenmemiş; arama fiili niyeti ele geçiriyor
+## KB-16 — Kiralama işlem türü modellenmemiş; arama fiili niyeti ele geçiriyor — **ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
@@ -869,29 +942,85 @@ span'lerini kanonik alanlara bağlayan tek otoriteyi kullanmalı (ayrı bir
 | Kırık kontrol | `verify-category-coverage-v1` → `auto-06` (`RC_RENT`, imza `intentEquals: "BUY"`) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, S2A ölçümü sırasında (HEAD `3eed002`) |
-| Durum | **Açık** — corpus'ta `RC_RENT` KNOWN_FAIL olarak izleniyor |
+| **Durum** | **ÇÖZÜLDÜ** — `a44c23d` (2026-08-25, parent `2facc3c`) |
+| Koruyucu | `I46a`–`I46f` (`verify-understanding-invariants-v1`) + corpus'ta dört senaryonun `expectedIntent` beklentisi |
+
+### Kapanış kanıtı (yeniden ölçüm, `a44c23d`)
+
+`RC_RENT` ailesinin **dört senaryosu da PASS**; ölçüm sırası: dördü önce XPASS
+verdi, ardından fixture'daki `knownIssue` kayıtları kaldırıldı.
+
+| Senaryo | Düzeltme öncesi | Düzeltme sonrası |
+| --- | --- | --- |
+| `auto-05` *Araç kiralamak istiyorum İstanbul'da* | `RENT` / **`REAL_ESTATE`** / automotive | `RENT` / **`VEHICLE`** / automotive |
+| `auto-06` *Şirketim için 10 araçlık filo kiralama arıyorum* | **`BUY`** / `VEHICLE` / automotive | **`RENT`** / `VEHICLE` / automotive |
+| `mach-04` *Forklift kiralamak istiyorum* | `RENT` / **`REAL_ESTATE`** / machinery | `RENT` / **`INDUSTRIAL_EQUIPMENT`** / machinery |
+| `health-02` *Hasta yatağı arıyorum kiralık* | `RENT` / **`REAL_ESTATE`** / **real-estate** | `RENT` / **`PRODUCT`** / **health** |
+
+Corpus: `TOTAL=108 · PASS=99 · KNOWN_FAIL=9 · FAIL=0 · XPASS=0`; kök neden
+dağılımında **`RC_RENT` satırı kalmadı** ve fixture'da hiçbir `RC_RENT`
+`knownIssue` kaydı yok. Invariant bataryası: `102 passed · 2 failed ·
+1 known_fail`; kırmızılar **yalnız önceden açık olan I22 ve I23**.
+
+### Kök neden — ilk kayıttaki ŞÜPHE doğrulandı, ama EKSİKTİ
+
+Kaydın ilk hâli kökü "kiralama bir AD olarak geçiyor, sondaki `arıyorum` BUY
+desenini tetikliyor" diye gösteriyor ve bunun **kod incelemesine dayandığını,
+ölçülmediğini** açıkça yazıyordu. Ölçüm bu okumayı **doğruladı** fakat kusurun
+yalnız bir parçası olduğunu gösterdi. Ölçülen dört kök:
+
+1. Sözlük düz eşleşmeydi: `kiralama` (ad biçimi) hiç tanınmıyordu.
+2. `intent === "RENT"` konu türünü doğrudan gayrimenkul yapıyordu
+   (`semantic-subject`), nesne kanıtı yokken `"gayrimenkul"` uyduruluyordu.
+3. `extractListingType` kullanıcının yazmadığı sözü `USER_EXPLICIT` kanıt
+   gibi kaydediyor, bu uydurma kanıt 2. maddeyi besliyordu.
+4. `kiralık` / `satılık` real-estate **kategori anahtar kelimesiydi**.
+
+Düzeltme kelimeye özel yama değildir: işlem ekseninde kanıt sınıfı önceliği
+kuruldu (açık işlem ifadesi > ilan sıfatı > genel arama fiili) ve kullanım
+bağlamındaki işlem belirtecinin karar verememesi mevcut
+`readUsageContextSplit` otoritesinden okundu, ayrı bir çözümleyici
+kurulmadı.
+
+### Ölçümde çıkan, kayıtta OLMAYAN iki kusur da kapandı
+
+Ailenin dışında, corpus'ta hiç bulunmayan iki vaka ölçümde görüldü:
+*"Satılık araç arıyorum"* `SELL` / `REAL_ESTATE` / real-estate veriyordu (araç
+alıcısı emlak havuzuna gidiyordu) ve *"Aracımı satmak istiyorum"* konu türünü
+`REAL_ESTATE` yapıyordu. İkisi de aynı kökün ürünüydü ve aynı düzeltmeyle
+kapandı.
+
+### Kapsam dışı bırakılanlar
+
+Birinci sınıf bir `LET` niyeti eklenmedi; arz yönü mevcut `SELL` üzerinden
+temsil ediliyor ve hangi ilanın verildiği `listingType` alanında korunuyor.
+`SELL` talebinde konu türü çözülmüyor — önceki **yanlış** `REAL_ESTATE`
+değeri yerine **iddiasız** kalıyor.
+
+### Kaydın açıkken taşıdığı ölçüm (tarihli kanıt — `3eed002`)
+
+Aşağıdaki satırlar kayıt **açıkken** ölçülmüştü; silinmiyor, kapanışın neyi
+düzelttiğini gösterdiği için duruyor.
 
 **Girdi:** `Şirketim için 10 araçlık filo kiralama arıyorum` (aynı sınıf:
 `10 Clio kiralamak istiyorum`).
-**Ölçülen:** `category = automotive` ✅, `kind = VEHICLE` ✅, `intent = BUY` ❌.
-**Beklenen:** `intent = RENT`.
-
-**Kök — ŞÜPHE, kanıtlanmadı.** Kiralama sinyali fiil kalıplarına bağlı
-(`kiralık`, `kiralamak`, `kiraya`); cümlede kiralama bir AD olarak geçiyor
-("filo kiralama") ve sondaki `arıyorum` BUY desenini tetikliyor. Bu okuma
-kod incelemesine dayanır, ölçülerek doğrulanmadı.
+**Ölçülen (`3eed002`):** `category = automotive` ✅, `kind = VEHICLE` ✅,
+`intent = BUY` ❌. **Beklenen:** `intent = RENT`.
 
 **Neden bugüne kadar görünmüyordu.** Corpus **niyet eksenini hiç ölçmüyordu**;
 `auto-06` yalnız kategori ve konu türüyle değerlendiriliyordu ve S2A'dan sonra
 bu iki eksen düzelince senaryo XPASS verdi. `3eed002` ile sözleşmeye
-`expectedIntent` beklentisi ve `intentEquals` imzası eklendi; senaryo artık
-**PASS veya XPASS sayılmıyor**. Yeni bir hata değil, **yeni ölçülür oldu**.
+`expectedIntent` beklentisi ve `intentEquals` imzası eklendi; senaryo o
+noktada **PASS veya XPASS sayılmıyordu**. Yeni bir hata değildi, **yeni
+ölçülür olmuştu**.
 
-**Aynı ailedeki diğer kayıtlar:** `auto-05` (*Araç kiralamak istiyorum
-İstanbul'da*), `mach-04` (*Forklift kiralamak istiyorum*), `health-02`
-(*Hasta yatağı arıyorum kiralık*) — üçünde `intent = RENT` doğru çözülüyor
-ama konu türü `REAL_ESTATE`'e düşüyor. Toplam `RC_RENT = 4`. Düzeltme dilimi
-bu dördünü birlikte ele almalıdır.
+**Aynı ailedeki diğer kayıtlar (`3eed002` ölçümü):** `auto-05` (*Araç
+kiralamak istiyorum İstanbul'da*), `mach-04` (*Forklift kiralamak
+istiyorum*), `health-02` (*Hasta yatağı arıyorum kiralık*) — üçünde
+`intent = RENT` doğru çözülüyor ama konu türü `REAL_ESTATE`'e düşüyordu.
+Toplam `RC_RENT = 4` idi. Kaydın o günkü talebi ("düzeltme dilimi bu dördünü
+birlikte ele almalıdır") `a44c23d` ile karşılandı: dördü tek dilimde ele
+alındı ve dördü birden PASS oldu.
 
 ---
 
