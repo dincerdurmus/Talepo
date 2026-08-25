@@ -13,6 +13,7 @@ import { resolveDomainEntity } from "@/lib/catalog";
 import {
   readRelationContext,
   readRequestedTarget,
+  readSafeLeadingPhrase,
   readSafePhraseContaining,
   splitCompatibilityPhrase,
 } from "@/lib/request-understanding/part-relation";
@@ -706,16 +707,39 @@ function preserveResolvedEntity(
   state: CanonicalRequestState,
   sentence: string,
 ): string {
-  const entities = state.understanding.resolvedEntities ?? [];
-  if (!entities.length) return sentence;
   const raw = String(state.understanding.rawInput ?? "");
   const lower = (v: string) => v.toLocaleLowerCase("tr-TR");
-  for (const entity of entities) {
-    const alias = entity.matchedAlias ?? entity.canonicalLabel;
-    if (!alias) continue;
-    if (lower(sentence).includes(lower(alias))) return sentence;
+  /**
+   * ÇAPA LİSTESİ (RC_BRAND takip dilimi): tipli varlıklar + marka ADAYI.
+   *
+   * Aday marka kesinleşmez ama kullanıcının yazdığı ifadedir; kanonik
+   * markadan düştüğü için besteci onu kaybediyordu — "Nordex klima" →
+   * "Klima arıyorum.", "Torna tezgahı" → "mobilya arıyorum." (ölçüldü).
+   * Çapa metinde yoksa cümle, çapayı içeren GÜVENLİ öbekten yeniden
+   * kurulur; ham cümlenin tamamı asla taşınmaz.
+   */
+  const candidate = (state.understanding.attributes as
+    | Record<string, { value?: unknown } | undefined>
+    | undefined)?.brandCandidate?.value;
+  const anchors: string[] = [
+    ...(state.understanding.resolvedEntities ?? []).map(
+      (e) => e.matchedAlias ?? e.canonicalLabel,
+    ),
+    ...(candidate ? [String(candidate)] : []),
+  ].filter(Boolean);
+  for (const alias of anchors) {
+    if (lower(sentence).includes(lower(alias))) continue;
     const safe = readSafePhraseContaining(raw, alias);
     if (safe) return `${safe} arıyorum.`;
+  }
+  /**
+   * ÖZNESİZ METİN YASAĞI: cümle hiçbir bilgi taşımıyorsa ham cümlenin ilk
+   * güvenli öbeği kullanılır. Yalnız tam öznesiz ("arıyorum.") durumda
+   * devreye girer; dolu cümleler ezilmez, PII noktalama sınırında kalır.
+   */
+  if (sentence.trim() === "arıyorum.") {
+    const lead = readSafeLeadingPhrase(raw);
+    if (lead) return `${lead} arıyorum.`;
   }
   return sentence;
 }

@@ -4,6 +4,8 @@ import {
 } from "@/lib/ai/parser/negation";
 import { findBrand, TECHNOLOGY_BRANDS, AUTOMOTIVE_BRANDS, APPLIANCE_BRANDS, BABY_BRANDS, FURNITURE_BRANDS, HOME_KITCHEN_BRANDS, MACHINERY_BRANDS } from "@/lib/ai/parser/brand-catalog";
 
+import { classifyRequestedTargetRole } from "@/lib/request-understanding/requested-item-role";
+
 import { defaultBrandMemory } from "./brand-memory";
 import { extractModelIdentityTokens } from "./model-identity-tokens";
 import { stripTrailingCapacitySuffix } from "./unit-normalization";
@@ -94,6 +96,162 @@ function isBrandCandidateToken(token: string): boolean {
   if (GENERIC_LEADING_NOUNS.has(lower)) return false;
   // Inferred path: require proper-name shape (not pure lowercase)
   return isTitleCaseBrandToken(trimmed);
+}
+
+/* ------------------------------------------------------------------ *
+ *  MARKA KANIT SÖZLEŞMESİ (RC_BRAND dilimi, 2026-08-25)               *
+ * ------------------------------------------------------------------ */
+
+/**
+ * Bir marka ADAYININ kanıt durumu. Ölçülen kusur: metinde geçen her büyük
+ * harfli jeton `EXPLICIT / USER_EXPLICIT / 0.95` markaya dönüşüyor ve
+ * routing envelope üzerinden kesin marka kanıtı üretiyordu — "RAM",
+ * "Ticari", "Torna", "Kompresör", "Tekerlekli", "Toptan", "Kürek",
+ * "Çelik", "Logolu", "E-ticaret" (108 senaryoluk corpus, 10 RC_BRAND).
+ *
+ *   VERIFIED_CATALOG  kanonik marka kataloğunda doğrulandı — kesin marka
+ *                     olabilir, exact eşleşme kanıtı taşıyabilir.
+ *   USER_ASSERTED     kullanıcı açık marka sözdizimi kullandı ("X marka",
+ *                     "X markası", "X markalı", "marka olarak X"). Katalog
+ *                     dışı olsa bile kullanıcı beyanı olarak saklanır; kanıt
+ *                     etiketi USER_ASSERTED'dır, katalog doğrulaması gibi
+ *                     GÖSTERİLMEZ.
+ *   CANDIDATE         marka OLABİLİR ama ne katalog ne sözdizimi kanıtı var
+ *                     ("Nordex klima"). Kesin marka alanına yazılamaz, exact
+ *                     eşleşmeye gidemez; aday olarak korunur, silinmez.
+ *   NONE              jeton marka değil: sayı/birim bağlamı, istek başındaki
+ *                     ürünün kendisi, ürün önündeki morfolojik sıfat ya da
+ *                     kanonik ürün/parça/hizmet sözcüğü.
+ *
+ * NONE kuralları GENELDİR, kelime listesi değildir:
+ *   (a) SAYI KOMŞULUĞU — jetonun hemen önündeki iki jetonda rakam varsa bu
+ *       bir teknik özellik bağlamıdır ("16 GB RAM").
+ *   (b) İSTENEN ŞEYİN KENDİSİ — jetonu doğrudan bir talep fiili izliyorsa
+ *       jeton aranan şeydir, markası değil ("Kompresör arıyorum").
+ *   (c) MORFOLOJİK SIFAT — jeton -li/-lı/-lu/-lü ile bitiyor VE hemen
+ *       ardından kanonik bir bütün ürün geliyorsa ürün öbeğinin
+ *       niteleyicisidir ("Tekerlekli sandalye", "Logolu promosyon").
+ *       Bu bir Türkçe dil kuralıdır; k→ğ yumuşaması gibi.
+ *   (d) KANONİK ROL — jetonun kendisi taksonomi/rol yetkisinde ürün, parça
+ *       ya da hizmet olarak tanınıyorsa marka olamaz.
+ *
+ * Yalnız büyük harfle başlamak marka kanıtı DEĞİLDİR: cümle başındaki her
+ * Türkçe kelime büyük yazılır. Bu yüzden kanıtsız jeton silinmez ama
+ * CANDIDATE'ten öteye de geçemez — "Nordex" ile "Toptan" arasındaki farkı
+ * bugün hiçbir kanonik kaynak bilmiyor; ikisi de adaydır, ikisi de yanlış
+ * kesinlik üretmez.
+ */
+export type BrandEvidenceStatus =
+  | "VERIFIED_CATALOG"
+  | "USER_ASSERTED"
+  | "CANDIDATE"
+  | "NONE";
+
+export type BrandEvidence = { status: BrandEvidenceStatus; reason: string };
+
+const REQUEST_VERB_RE =
+  /^(?:arıyorum|ariyorum|arıyoruz|ariyoruz|lazım|lazim|istiyorum|istiyoruz|gerekiyor|gerek)$/iu;
+
+function foldTr(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[ç]/g, "c")
+    .replace(/[ğ]/g, "g")
+    .replace(/[ı]/g, "i")
+    .replace(/[ö]/g, "o")
+    .replace(/[ş]/g, "s")
+    .replace(/[ü]/g, "u");
+}
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Açık marka beyanının JETONUNU çıkarır (RC_BRAND takip dilimi).
+ *
+ * Ölçülen açık: kimlik katmanı küçük harfli jetonları hiç marka adayı
+ * yapmıyor; "eufy marka bebek arabası" beyanı kanıt kapısına ulaşamıyordu.
+ * Beyan dilbilgisi yazım biçiminden bağımsızdır: "X marka", "X markası",
+ * "X markalı", "marka olarak X". Jeton ORİJİNAL yazımıyla döner; kanıt
+ * sınıflandırması yine `classifyBrandEvidence`e aittir.
+ */
+export function extractAssertedBrand(rawInput: string): string | null {
+  const words = String(rawInput ?? "")
+    .split(/[^\p{L}\p{N}&.+-]+/u)
+    .filter(Boolean);
+  const isMarka = (w: string) => /^marka(?:s[ıi]|l[ıi])?$/u.test(foldTr(w));
+  for (let i = 0; i < words.length; i++) {
+    if (!isMarka(words[i]!)) continue;
+    // "marka olarak X"
+    if (foldTr(words[i]!) === "marka" && foldTr(words[i + 1] ?? "") === "olarak") {
+      const cand = words[i + 2];
+      if (cand && cand.length >= 2 && !isMarka(cand)) return cand;
+    }
+    // "X marka(sı/lı)"
+    const cand = words[i - 1];
+    if (cand && cand.length >= 2 && !isMarka(cand) && !/^\d+$/.test(cand)) {
+      return cand;
+    }
+  }
+  return null;
+}
+
+export function classifyBrandEvidence(
+  rawInput: string,
+  token: unknown,
+): BrandEvidence {
+  const value = String(token ?? "").trim();
+  if (!value) return { status: "NONE", reason: "empty" };
+  const raw = String(rawInput ?? "");
+
+  // 1) Kanonik katalog doğrulaması.
+  if (catalogBrandInText(value)) {
+    return { status: "VERIFIED_CATALOG", reason: "catalog" };
+  }
+
+  // 2) Açık kullanıcı sözdizimi — Türkçe ek ve büyük/küçük harf katlanır.
+  const fr = foldTr(raw);
+  const ft = escapeRe(foldTr(value));
+  if (
+    new RegExp(`(?:^|[^a-z0-9])${ft}\\s+marka(?:s[ıi]|l[ıi])?(?:[^a-z0-9]|$)`).test(fr) ||
+    new RegExp(`marka(?:s[ıi])?\\s+olarak\\s+${ft}(?:[^a-z0-9]|$)`).test(fr) ||
+    new RegExp(`(?:^|[^a-z0-9])${ft}\\s+markal[ıi]`).test(fr)
+  ) {
+    return { status: "USER_ASSERTED", reason: "brand-syntax" };
+  }
+
+  const words = raw.split(/[^\p{L}\p{N}+.-]+/u).filter(Boolean);
+  const idx = words.findIndex((w) => foldTr(w) === foldTr(value));
+  const next = idx >= 0 ? words[idx + 1] : undefined;
+  const prev1 = idx >= 1 ? words[idx - 1] : undefined;
+  const prev2 = idx >= 2 ? words[idx - 2] : undefined;
+
+  // NONE (a): sayı komşuluğu — teknik özellik bağlamı.
+  if ([prev1, prev2].some((w) => w && /\d/.test(w))) {
+    return { status: "NONE", reason: "spec-context" };
+  }
+
+  // NONE (b): jetonu talep fiili izliyor — aranan şeyin kendisi.
+  if (next && REQUEST_VERB_RE.test(next)) {
+    return { status: "NONE", reason: "requested-head" };
+  }
+
+  // NONE (c): morfolojik sıfat + ardından kanonik bütün ürün.
+  if (
+    /l[ıiuü]$/u.test(value.toLocaleLowerCase("tr-TR")) &&
+    next &&
+    classifyRequestedTargetRole(next).role === "WHOLE_PRODUCT"
+  ) {
+    return { status: "NONE", reason: "adjective-of-product" };
+  }
+
+  // NONE (d): jetonun kendisi kanonik ürün/parça/hizmet.
+  if (classifyRequestedTargetRole(value).role !== "UNKNOWN") {
+    return { status: "NONE", reason: "canonical-role" };
+  }
+
+  return { status: "CANDIDATE", reason: "no-evidence" };
 }
 
 function catalogBrandInText(text: string): string | null {

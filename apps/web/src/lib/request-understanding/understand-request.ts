@@ -10,6 +10,11 @@ import {
   subjectKindForIntent,
 } from "@/lib/request-understanding/intent-signals";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
+import {
+  classifyBrandEvidence,
+  extractAssertedBrand,
+  type BrandEvidenceStatus,
+} from "@/lib/product-identity/brand-extraction";
 import { isNonBrandDomainEntity, resolveDomainEntity } from "@/lib/catalog";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
@@ -1169,23 +1174,98 @@ export function understandRequest(
       ? autoModel
       : undefined;
 
+  /**
+   * MARKA KANIT KAPISI (RC_BRAND dilimi, 2026-08-25).
+   *
+   * Ölçülen kusur: metinde geçen her jeton `EXPLICIT / 0.95` markaya
+   * dönüşüyordu — "RAM", "Ticari", "Torna", "Kompresör", "Tekerlekli",
+   * "Toptan", "Kürek", "Çelik", "Logolu", "E-ticaret" kesin marka olarak
+   * snapshot ve routing envelope'a giriyordu. Metinde geçmek kanıt değildir.
+   *
+   * Kesin marka yalnız iki kanıtla yazılır:
+   *   VERIFIED_CATALOG — kanonik katalog doğrulaması,
+   *   USER_ASSERTED    — açık marka sözdizimi ("X marka/markası/markalı").
+   * Kanıtsız aday CANDIDATE olarak `attributes.brandCandidate`ta korunur;
+   * marka DEĞİL sınıfları (özellik, ürün başı, sıfat, kanonik rol) düşer.
+   * Karar tek yetkiliden okunur: `classifyBrandEvidence`.
+   */
+  let brandEvidenceStatus: BrandEvidenceStatus | null = null;
   if (
     identity.brand &&
     !looksLikeYearToken(identity.brand) &&
     // Üst ürün olarak tüketilen span marka olamaz (1D).
     !isConsumedAsParentProduct(normalizedInput, identity.brand)
   ) {
-    const explicitBrand = textIncludes(normalizedInput, identity.brand);
-    identityBlock.brand = uv(identity.brand, {
-      provenance: explicitBrand ? "EXPLICIT" : "INFERRED",
-      source: explicitBrand ? "USER_EXPLICIT" : "PRODUCT_IDENTITY",
-      confidence: explicitBrand
-        ? 0.95
-        : Math.min(0.75, identity.confidence ?? 0.5),
-      evidence: explicitBrand
-        ? [identity.brand]
-        : ["product-identity-inference"],
-    });
+    const evidence = classifyBrandEvidence(normalizedInput, identity.brand);
+    brandEvidenceStatus = evidence.status;
+    if (evidence.status === "VERIFIED_CATALOG" || evidence.status === "USER_ASSERTED") {
+      const explicitBrand = textIncludes(normalizedInput, identity.brand);
+      identityBlock.brand = uv(identity.brand, {
+        provenance: explicitBrand ? "EXPLICIT" : "INFERRED",
+        source: explicitBrand ? "USER_EXPLICIT" : "PRODUCT_IDENTITY",
+        confidence:
+          evidence.status === "USER_ASSERTED"
+            ? 0.85
+            : explicitBrand
+              ? 0.95
+              : Math.min(0.75, identity.confidence ?? 0.5),
+        evidence: [
+          evidence.status,
+          ...(explicitBrand ? [identity.brand] : ["product-identity-inference"]),
+        ],
+      });
+    } else {
+      if (evidence.status === "CANDIDATE") {
+        // Aday korunur ama kesinleşmez; soru motoru/kürasyon için kalıcıdır.
+        attributes.brandCandidate = uv(identity.brand, {
+          provenance: "INFERRED",
+          source: "DETERMINISTIC_INFERENCE",
+          confidence: 0.3,
+          evidence: ["brand-candidate", evidence.reason],
+        });
+      }
+      // Reddedilen aday yan kapıdan dönemez (1B/1H deseni).
+      identity.brand = null;
+    }
+  } else if (
+    identity.brand &&
+    isConsumedAsParentProduct(normalizedInput, identity.brand)
+  ) {
+    /**
+     * Üst ürün olarak tüketilen span (1D) yalnız `identityBlock`tan değil,
+     * publish'teki `?? identity.brand` yedeğinden de düşmelidir — ölçülen
+     * yan kapı: "Klima için dış ünite fan motoru" → envelope.brand="Klima".
+     */
+    identity.brand = null;
+  }
+
+  /**
+   * AÇIK MARKA BEYANI, YAZIM BİÇİMİNDEN BAĞIMSIZDIR (RC_BRAND takip dilimi).
+   *
+   * Kimlik katmanı küçük harfli jetonları hiç marka adayı yapmıyor; "eufy
+   * marka bebek arabası" beyanı bu yüzden kanıt kapısına ulaşamıyordu
+   * (ölçüldü: marka null). Kullanıcı "X marka" dilbilgisi kullandıysa jeton
+   * doğrudan beyandan çıkarılır ve AYNI kanıt otoritesinden geçirilir.
+   */
+  if (!identityBlock.brand) {
+    const asserted = extractAssertedBrand(normalizedInput);
+    if (asserted && !looksLikeYearToken(asserted)) {
+      const evidence = classifyBrandEvidence(normalizedInput, asserted);
+      if (
+        evidence.status === "USER_ASSERTED" ||
+        evidence.status === "VERIFIED_CATALOG"
+      ) {
+        brandEvidenceStatus = evidence.status;
+        identity.brand = asserted;
+        delete attributes.brandCandidate;
+        identityBlock.brand = uv(asserted, {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          confidence: evidence.status === "USER_ASSERTED" ? 0.85 : 0.95,
+          evidence: [evidence.status, "brand-syntax"],
+        });
+      }
+    }
   }
 
   const modelValue =
@@ -1277,21 +1357,41 @@ export function understandRequest(
     !exclusionOnlyBrands.has(constraintBrand) &&
     !constraintBundle.conflicts.some((c) => c.fields?.includes("brand"))
   ) {
+    // Kısıt yolundan gelen aday da aynı kanıt kapısından geçer (RC_BRAND).
+    const evidence = classifyBrandEvidence(normalizedInput, constraintBrand);
     const current = identityBlock.brand?.value
       ? String(identityBlock.brand.value)
       : "";
     if (
-      !current ||
-      current.toLocaleLowerCase("tr-TR") !==
-        constraintBrand.toLocaleLowerCase("tr-TR")
+      (evidence.status === "VERIFIED_CATALOG" ||
+        evidence.status === "USER_ASSERTED") &&
+      (!current ||
+        current.toLocaleLowerCase("tr-TR") !==
+          constraintBrand.toLocaleLowerCase("tr-TR"))
     ) {
+      brandEvidenceStatus = evidence.status;
       identityBlock.brand = uv(constraintBrand, {
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
-        confidence: 0.95,
-        evidence: ["constraint-brand"],
+        confidence: evidence.status === "USER_ASSERTED" ? 0.85 : 0.95,
+        evidence: [evidence.status, "constraint-brand"],
       });
     }
+  }
+
+  /**
+   * KANIT ETİKETİ KALICI OLUR (RC_BRAND): kesinleşen her markanın NEDENİ
+   * denetlenebilir. `attributes` publish snapshot'ına ve oradan routing
+   * envelope'a akar — USER_ASSERTED bir marka katalog doğrulaması gibi
+   * görünemez.
+   */
+  if (identityBlock.brand?.value && brandEvidenceStatus) {
+    attributes.brandEvidence = uv(brandEvidenceStatus, {
+      provenance: "INFERRED",
+      source: "DETERMINISTIC_INFERENCE",
+      confidence: 1,
+      evidence: ["brand-evidence"],
+    });
   }
 
   // Multi model preference — avoid collapsing to first token only
@@ -1473,13 +1573,46 @@ export function understandRequest(
       ...identityBlock.brand,
       value: parentTokens.brand,
     };
-  } else if (parentTokens.brand && !identityBlock.brand) {
+  } else if (
+    parentTokens.brand &&
+    !identityBlock.brand &&
+    /**
+     * KAÇIŞ YOLU KAPALI (RC_BRAND takip dilimi): parent-token yolu ayrı bir
+     * güven kapısı DEĞİLDİR. Girdisi bugün kapıdan geçmiş kimlikten türese
+     * de, bu yazım noktası da aynı kanıt otoritesinden geçer — kanıtsız
+     * jeton buradan da EXPLICIT marka olamaz.
+     */
+    (() => {
+      const ev = classifyBrandEvidence(normalizedInput, parentTokens.brand);
+      if (ev.status === "VERIFIED_CATALOG" || ev.status === "USER_ASSERTED") {
+        brandEvidenceStatus = ev.status;
+        return true;
+      }
+      if (ev.status === "CANDIDATE" && !attributes.brandCandidate) {
+        attributes.brandCandidate = uv(parentTokens.brand, {
+          provenance: "INFERRED",
+          source: "DETERMINISTIC_INFERENCE",
+          confidence: 0.3,
+          evidence: ["brand-candidate", ev.reason],
+        });
+      }
+      return false;
+    })()
+  ) {
     identityBlock.brand = uv(parentTokens.brand, {
       provenance: "EXPLICIT",
       source: "USER_EXPLICIT",
       confidence: 0.9,
-      evidence: [parentTokens.brand],
+      evidence: [brandEvidenceStatus ?? "VERIFIED_CATALOG", parentTokens.brand],
     });
+    if (!attributes.brandEvidence && brandEvidenceStatus) {
+      attributes.brandEvidence = uv(brandEvidenceStatus, {
+        provenance: "INFERRED",
+        source: "DETERMINISTIC_INFERENCE",
+        confidence: 1,
+        evidence: ["brand-evidence"],
+      });
+    }
   }
   if (parentTokens.model) {
     identityBlock.model = uv(parentTokens.model, {

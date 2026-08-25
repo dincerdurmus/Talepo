@@ -59,6 +59,8 @@ import { buildUnderstandingSummary } from "../src/lib/request-understanding/acti
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
 import { isCanonicalWholeProductPhrase } from "../src/lib/taxonomy/phrase-classification";
 import { CATALOG_BRAND_DOMAIN_IDS } from "../src/lib/request-understanding/part-relation";
+import { classifyBrandEvidence } from "../src/lib/product-identity/brand-extraction";
+import { buildRequestRoutingEnvelope } from "../src/lib/matching-v3/routing-envelope";
 import {
   DOMAIN_ENTITIES,
   findDomainEntity,
@@ -1450,6 +1452,43 @@ function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
   };
 }
 
+/** Publish + routing yüzeyleri — marka kanıt denetimi için (I43). */
+function publishSurfaces(raw: string) {
+  const understanding = understandRequest({ rawInput: raw }) as never;
+  const { state } = syncFromText(null, raw);
+  const f = (k: string) => {
+    const x = (state.fields as Record<string, { kind?: string; value?: unknown }>)[k];
+    return x && x.kind === "VALUE" && x.value ? String(x.value) : null;
+  };
+  const snap = buildPublishUnderstandingSnapshot({
+    understanding,
+    userSelected: false,
+    primarySlug: null,
+  });
+  const env = buildRequestRoutingEnvelope({
+    understandingSnapshot: snap,
+    categorySlug: state.categoryId ?? undefined,
+  } as never) as never as { brand?: string | null };
+  const attrs = (understanding as never as {
+    attributes?: Record<string, { value?: unknown }>;
+  }).attributes ?? {};
+  return {
+    rawInput: raw,
+    stateCat: state.categoryId ?? null,
+    fieldsBrand: f("brand"),
+    snapBrand: snap.entities?.brand?.value ?? null,
+    envBrand: env.brand ?? null,
+    brandEvidence: attrs.brandEvidence?.value != null ? String(attrs.brandEvidence.value) : null,
+    brandCandidate: attrs.brandCandidate?.value != null ? String(attrs.brandCandidate.value) : null,
+    text: composeNaturalRequestText(state),
+    headline: String(
+      (buildUnderstandingSummary(understanding) as unknown as { headline?: string })
+        ?.headline ?? "",
+    ),
+  };
+}
+
+
 check("I18: uyumluluk bağlacı çok kelimeli parça adını kısaltamaz (KB-11)", () => {
   /**
    * Ölçülen gerçek: aynı talep, yalnız "için" bağlacı eklenince parça adı
@@ -2806,6 +2845,249 @@ check("I26h: tipli varlık profesyonel metinden ve niyetten düşmez", () => {
   }
   const cncBrand = surfacesFor("CNC servis arıyorum");
   assert.equal(cncBrand.brand, null, "CNC marka alanına yazılamaz");
+});
+
+/* ------------------------------------------------------------------------ *
+ * MARKA KANIT SÖZLEŞMESİ — I43 (RC_BRAND dilimi)
+ *
+ * Yalnız kanıtı olan marka kesinleşir: kanonik katalog doğrulaması
+ * (VERIFIED_CATALOG) ya da açık kullanıcı sözdizimi (USER_ASSERTED).
+ * Kanıtsız aday CANDIDATE olarak korunur ama kesin `brand` alanına,
+ * snapshot `entities.brand`e ve routing envelope'a giremez. Ürün, özellik,
+ * malzeme, sıfat ve ticaret sözcükleri hiç marka olamaz (NONE).
+ * ------------------------------------------------------------------------ */
+
+check("I43: marka kanıt sınıflandırıcısı — truth table", () => {
+  const T: Array<[string, string, string]> = [
+    // VERIFIED_CATALOG — kanonik katalog.
+    ["Arçelik bulaşık makinesi arıyorum", "Arçelik", "VERIFIED_CATALOG"],
+    ["Bosch Serie 6 arıyorum", "Bosch", "VERIFIED_CATALOG"],
+    ["Mercedes C180 satın almak istiyorum", "Mercedes", "VERIFIED_CATALOG"],
+    ["Heidelberg SM 74 için bakım arıyorum", "Heidelberg", "VERIFIED_CATALOG"],
+    // USER_ASSERTED — açık sözdizimi; katalog dışı ad + Türkçe ek/harf çeşitleri.
+    ["Nordex marka klima arıyorum", "Nordex", "USER_ASSERTED"],
+    ["nordex marka klima arıyorum", "nordex", "USER_ASSERTED"],
+    ["NORDEX MARKA KLİMA ARIYORUM", "NORDEX", "USER_ASSERTED"],
+    ["Nordex markalı klima arıyorum", "Nordex", "USER_ASSERTED"],
+    ["eufy marka bebek arabası arıyorum", "eufy", "USER_ASSERTED"],
+    ["Marka olarak Nordex istiyorum", "Nordex", "USER_ASSERTED"],
+    // CANDIDATE — kanıtsız bilinmeyen; SİLİNMEZ ama kesinleşmez.
+    ["Nordex klima arıyorum", "Nordex", "CANDIDATE"],
+    ["North Star klima arıyorum", "North Star", "CANDIDATE"],
+    // NONE — genel kanıt kuralları (kelime listesi DEĞİL).
+    ["Dizüstü bilgisayar arıyorum, 16 GB RAM olsun", "RAM", "NONE"], // sayı komşuluğu
+    ["Kompresör arıyorum atölye için", "Kompresör", "NONE"], // istenen şeyin kendisi
+    ["Tekerlekli sandalye arıyorum", "Tekerlekli", "NONE"], // sıfat + kanonik ürün
+    ["Logolu promosyon kalem bastırmak istiyorum", "Logolu", "NONE"], // sıfat + ürün
+    ["Klima arıyorum", "Klima", "NONE"], // kanonik ürünün kendisi
+  ];
+  for (const [raw, token, want] of T) {
+    const got = classifyBrandEvidence(raw, token);
+    assert.equal(
+      got.status,
+      want,
+      `'${raw}' / '${token}': ${got.status} (${got.reason}), beklenen ${want}`,
+    );
+  }
+});
+
+check("I43b: kanıtsız jeton kesin markaya, snapshot'a ve envelope'a giremez", () => {
+  /**
+   * 108'lik corpus'un 10 RC_BRAND girdisi — fixture'daki gerçek cümleler.
+   * Hepsinde ölçülen kusur: sahte marka `fields.brand` + `entities.brand` +
+   * `envelope.brand` zincirinden geçip exact brandHit riski üretiyordu.
+   */
+  const RC_BRAND: Array<{ raw: string; fake: string; keep: string }> = [
+    { raw: "Dizüstü bilgisayar arıyorum, 16 GB RAM olsun", fake: "RAM", keep: "dizüstü" },
+    { raw: "Ticari araç arıyorum, panelvan olabilir", fake: "Ticari", keep: "araç" },
+    { raw: "Torna tezgahı için yedek parça arıyorum", fake: "Torna", keep: "torna" },
+    { raw: "Kompresör arıyorum atölye için", fake: "Kompresör", keep: "kompresör" },
+    { raw: "Tekerlekli sandalye arıyorum", fake: "Tekerlekli", keep: "tekerlekli" },
+    { raw: "Toptan bardak arıyorum, 500 adet", fake: "Toptan", keep: "bardak" },
+    { raw: "Kürek sapı arıyorum", fake: "Kürek", keep: "kürek" },
+    { raw: "Çelik tencere kapağı arıyorum 24 cm", fake: "Çelik", keep: "kapa" },
+    { raw: "Logolu promosyon kalem bastırmak istiyorum", fake: "Logolu", keep: "kalem" },
+    { raw: "E-ticaret için karton kutu ürettirmek istiyorum", fake: "E-ticaret", keep: "kutu" },
+  ];
+  for (const c of RC_BRAND) {
+    const p = publishSurfaces(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    assert.ok(
+      !p.fieldsBrand || fold(p.fieldsBrand) !== fold(c.fake),
+      at(`sahte marka canonical alanda → '${p.fieldsBrand}'`),
+    );
+    assert.ok(
+      !p.snapBrand || fold(p.snapBrand) !== fold(c.fake),
+      at(`sahte marka snapshot entities.brand içinde → '${p.snapBrand}'`),
+    );
+    assert.ok(
+      !p.envBrand || fold(p.envBrand) !== fold(c.fake),
+      at(`sahte marka routing envelope'a ulaştı → '${p.envBrand}'`),
+    );
+    // Ham kullanıcı bilgisi kaybolmaz: ifade en az bir kullanıcı yüzeyinde.
+    assert.ok(
+      `${fold(p.text)} || ${fold(p.headline)} || ${fold(p.rawInput)}`.includes(fold(c.keep)),
+      at(`'${c.keep}' hiçbir yüzeyde kalmadı → metin='${p.text}'`),
+    );
+  }
+});
+
+check("I43c: doğrulanmış ve beyan edilmiş marka korunur; aday kalıcı ama kesin değil", () => {
+  /**
+   * POZİTİF KORUMA — gerçek katalog kayıtları kesin marka olarak kalır ve
+   * envelope'a ulaşır; kanıt etiketi denetlenebilir.
+   */
+  const VERIFIED: Array<{ raw: string; brand: string }> = [
+    { raw: "Arçelik televizyon arıyorum", brand: "Arçelik" },
+    { raw: "Bosch Serie 6 bulaşık makinesi arıyorum", brand: "Bosch" },
+    { raw: "Siemens çamaşır makinesi için tahliye pompası arıyorum", brand: "Siemens" },
+    { raw: "Mercedes C180 satın almak istiyorum", brand: "Mercedes" },
+    { raw: "Renault Clio için ön far arıyorum", brand: "Renault" },
+    { raw: "Heidelberg SM 74 için nemlendirme pompası arıyorum", brand: "Heidelberg" },
+  ];
+  for (const c of VERIFIED) {
+    const p = publishSurfaces(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    assert.ok(
+      fold(p.envBrand ?? "").includes(fold(c.brand)),
+      at(`katalog markası envelope'tan düştü → '${p.envBrand}'`),
+    );
+    assert.equal(p.brandEvidence, "VERIFIED_CATALOG", at(`kanıt etiketi (${p.brandEvidence})`));
+  }
+
+  /**
+   * USER_ASSERTED — katalog dışı ama açık beyan: marka korunur, kanıt
+   * etiketi USER_ASSERTED olur (katalog doğrulaması gibi görünmez).
+   */
+  const asserted = publishSurfaces("Nordex marka klima arıyorum");
+  assert.equal(String(asserted.fieldsBrand), "Nordex", "beyan edilen marka canonical kalmalı");
+  assert.equal(asserted.brandEvidence, "USER_ASSERTED", `kanıt etiketi (${asserted.brandEvidence})`);
+  assert.ok(asserted.envBrand === "Nordex", "beyan edilen marka routing sinyali olabilir");
+
+  /**
+   * CANDIDATE — sözdizimi yok: kesinleşmez, silinmez, kalıcılaşır.
+   * Talep oluşturma engellenmez (publish snapshot üretilebilir kalır).
+   */
+  for (const raw of ["Nordex klima arıyorum", "North Star klima arıyorum"]) {
+    const p = publishSurfaces(raw);
+    const at = (m: string) => `${raw}: ${m}`;
+    assert.ok(!p.envBrand, at(`aday exact marka sinyaline dönüştü → '${p.envBrand}'`));
+    assert.ok(!p.snapBrand, at(`aday snapshot'ta kesin marka → '${p.snapBrand}'`));
+    assert.ok(
+      p.brandCandidate != null && p.brandCandidate.length > 0,
+      at("aday kalıcılaşmadı (attributes.brandCandidate boş)"),
+    );
+    assert.ok(
+      fold(p.rawInput).includes("nordex") || fold(p.rawInput).includes("north"),
+      at("ham ifade kayboldu"),
+    );
+    // Kategori bozulmamalı: klima talebi beyaz eşyada kalır.
+    assert.equal(p.stateCat, "appliances", at(`kategori (${p.stateCat})`));
+  }
+});
+
+check("I43d: marka temizliği kullanıcının ürün ifadesini profesyonel metinden silemez", () => {
+  /**
+   * Blast-radius denetiminin bulgusu (2026-08-25): sahte marka kaldırılınca
+   * besteci cümleyi kuracak alan bulamıyor ve metin "arıyorum."a iniyordu —
+   * "Kürek sapı arıyorum" HEAD'de tam cümleyken kapıdan sonra öznesiz kaldı.
+   * Kural geneldir: marka kesinleşmese de kullanıcının GÜVENLİ ifadesi
+   * metinde durur; kaynak ham cümlenin ayrıştırılmış ilk güvenli öbeğidir,
+   * kelime listesi değildir.
+   */
+  const CASES: Array<{ raw: string; keep: string[] }> = [
+    { raw: "Torna tezgahı arıyorum", keep: ["torna tezgah"] },
+    { raw: "Kürek sapı arıyorum", keep: ["kürek sapı"] },
+    { raw: "Kompresör atölye için arıyorum", keep: ["kompresör"] },
+    { raw: "Nordex pompa arıyorum", keep: ["nordex", "pompa"] },
+    { raw: "North Star pompa arıyorum", keep: ["north star", "pompa"] },
+  ];
+  for (const c of CASES) {
+    const p = publishSurfaces(c.raw);
+    const at = (m: string) => `${c.raw}: ${m}`;
+    assert.notEqual(p.text.trim(), "arıyorum.", at("öznesiz metin kabul edilmez"));
+    for (const k of c.keep) {
+      assert.ok(
+        fold(p.text).includes(fold(k)),
+        at(`'${k}' profesyonel metinde yok → '${p.text}'`),
+      );
+      // Aynı ifade iki kez yazılamaz.
+      const hits = fold(p.text).split(fold(k)).length - 1;
+      assert.ok(hits <= 1, at(`'${k}' metinde ${hits} kez → '${p.text}'`));
+    }
+    // Aday marka doğrulanmış marka gibi davranamaz.
+    assert.ok(!p.envBrand || p.brandEvidence, at(`kanıtsız marka envelope'ta → '${p.envBrand}'`));
+  }
+
+  // PII güvenlik ağı: koruma ham cümleyi değil güvenli öbeği taşır.
+  const noisy = publishSurfaces("Kürek sapı arıyorum, telefonum 05321234567, bütçem 20 bin TL");
+  assert.ok(fold(noisy.text).includes(fold("kürek sapı")), `ifade korunmalı → '${noisy.text}'`);
+  assert.ok(!/\d{5,}/.test(noisy.text), `telefon sızdı → '${noisy.text}'`);
+  assert.ok(!fold(noisy.text).includes("bütçem") && !fold(noisy.text).includes("butcem"), `bütçe sızdı → '${noisy.text}'`);
+});
+
+check("I43e: küçük harfli açık marka beyanı da USER_ASSERTED markadır", () => {
+  /**
+   * Ölçülen açık: kimlik katmanı küçük harfli jetonları hiç marka adayı
+   * yapmıyor; "eufy marka bebek arabası" beyanı bu yüzden kanıt kapısına
+   * hiç ulaşmıyordu. Açık "X marka" dilbilgisi, yazım biçiminden bağımsız
+   * kullanıcı beyanıdır.
+   */
+  const p = publishSurfaces("eufy marka bebek arabası arıyorum");
+  assert.equal(String(p.fieldsBrand ?? p.snapBrand), "eufy", `marka çözülmedi → '${p.fieldsBrand}'`);
+  assert.equal(p.brandEvidence, "USER_ASSERTED", `kanıt etiketi (${p.brandEvidence})`);
+  assert.equal(p.snapBrand, "eufy", `snapshot entities.brand (${p.snapBrand})`);
+  assert.equal(p.envBrand, "eufy", `envelope.brand (${p.envBrand})`);
+  assert.equal(p.stateCat, "baby", `kategori (${p.stateCat})`);
+  assert.ok(
+    fold(`${p.text} || ${p.headline}`).includes(fold("bebek arabası")),
+    `ürün ifadesi kayboldu → '${p.text}'`,
+  );
+  // eufy model ya da yalnız aday olamaz.
+  const u = understandRequest({ rawInput: "eufy marka bebek arabası arıyorum" }) as never as {
+    identity?: { model?: { value?: unknown } };
+    attributes?: Record<string, { value?: unknown }>;
+  };
+  assert.notEqual(String(u.identity?.model?.value ?? ""), "eufy", "eufy model olamaz");
+  assert.ok(!u.attributes?.brandCandidate?.value, "beyan edilen marka yalnız aday bırakılamaz");
+});
+
+check("I43f: envelope'a kanıtsız marka çıkaran hiçbir yol kalmadı", () => {
+  /**
+   * `parentTokens.brand` dahil bütün yazım noktaları tek kanıt otoritesine
+   * bağlıdır. Kara-kutu kapanış kanıtı: HANGİ yoldan gelirse gelsin,
+   * envelope'a ulaşan her marka denetlenebilir kanıt etiketi taşımak
+   * ZORUNDADIR (BRAND_PRESENT ⇒ BRAND_ROUTABLE_TRUSTED).
+   */
+  const MIXED = [
+    // eski sahte marka üreticileri
+    "Dizüstü bilgisayar arıyorum, 16 GB RAM olsun",
+    "Ticari araç arıyorum, panelvan olabilir",
+    "Torna tezgahı için yedek parça arıyorum",
+    "Kompresör arıyorum atölye için",
+    "Toptan bardak arıyorum, 500 adet",
+    "Kürek sapı arıyorum",
+    "Çelik tencere kapağı arıyorum 24 cm",
+    "E-ticaret için karton kutu ürettirmek istiyorum",
+    // parent-token bölme adayları
+    "North Star pompa arıyorum",
+    "Falanca X200 için filtre arıyorum",
+    // doğrulanmış ve beyan edilmiş markalar
+    "Mercedes C180 için su pompası arıyorum",
+    "Heidelberg SM 74 için nemlendirme pompası arıyorum",
+    "Arçelik bulaşık makinesi arıyorum",
+    "Nordex marka klima arıyorum",
+    "eufy marka bebek arabası arıyorum",
+  ];
+  for (const raw of MIXED) {
+    const p = publishSurfaces(raw);
+    if (p.envBrand) {
+      assert.ok(
+        p.brandEvidence === "VERIFIED_CATALOG" || p.brandEvidence === "USER_ASSERTED",
+        `${raw}: envelope markası kanıtsız → brand='${p.envBrand}' evidence='${p.brandEvidence}'`,
+      );
+    }
+  }
 });
 
 check("I26c: platform/ürün bilgisi hizmet talebinden silinemez", () => {

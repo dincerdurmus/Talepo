@@ -4,6 +4,7 @@ import {
   findBrand,
   isKnownAutomotiveModelName,
 } from "@/lib/ai/parser/brand-catalog";
+import { classifyBrandEvidence } from "@/lib/product-identity/brand-extraction";
 import { stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
@@ -132,13 +133,28 @@ export function applyCatalogEnrichment(
     if (
       enrichment.brand &&
       FILLABLE.includes(enrichment.brand.confidence) &&
-      mayOverwrite(identity.brand, enrichment.brand.name, "brand", next.rawInput)
+      mayOverwrite(identity.brand, enrichment.brand.name, "brand", next.rawInput) &&
+      /**
+       * KANIT KAPISI (RC_BRAND): katalog eşleşmesi alan-körüdür — "16 GB RAM"
+       * cümlesindeki RAM jetonu otomotiv kataloğundaki RAM markasıyla "exact"
+       * eşleşip dizüstü talebine kamyon markası yazıyordu (ölçüldü). Jeton bu
+       * cümlede marka OLAMAZ sınıfındaysa (sayı komşuluğu, istenen şeyin
+       * kendisi, sıfat, kanonik rol) zenginleştirme markayı dolduramaz.
+       */
+      classifyBrandEvidence(next.rawInput, enrichment.brand.name).status !== "NONE"
     ) {
       identity.brand = uv(enrichment.brand.name, {
         provenance: "INFERRED",
         source: "FUTURE_KNOWLEDGE",
         confidence: catalogNumericConfidence(enrichment.brand.confidence),
         evidence: [`catalog:${enrichment.brand.id}`, enrichment.brand.matchMode],
+      });
+      // Zenginleştirme kendi katalog doğrulamasını taşır — kanıt etiketi kalıcı.
+      attributes.brandEvidence = uv("VERIFIED_CATALOG", {
+        provenance: "INFERRED",
+        source: "FUTURE_KNOWLEDGE",
+        confidence: 1,
+        evidence: [`catalog:${enrichment.brand.id}`],
       });
     }
 

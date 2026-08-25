@@ -441,14 +441,27 @@ function main() {
   const measurable = scenarios.length - notMeasured;
   const brainPct = measurable ? Math.round((100 * pass) / measurable) : 0;
   const allSlug = [...verdicts.values()].filter((x) => x.m.envSlug).length;
-  const allBrand = [...verdicts.values()].filter((x) => x.m.envBrand).length;
+  /**
+   * İKİ AYRI MARKA METRİĞİ (RC_BRAND düzeltmesi, 2026-08-25):
+   *
+   *   BRAND_PRESENT          envelope'ta HERHANGİ bir marka var — sahte
+   *                          markaları da sayar, hazırlık ölçüsü DEĞİLDİR.
+   *   BRAND_ROUTABLE_TRUSTED marka + denetlenebilir kanıt etiketi
+   *                          (attributes.brandEvidence: VERIFIED_CATALOG ya
+   *                          da USER_ASSERTED). Pro formülüne YALNIZ bu girer.
+   */
+  const allBrandPresent = [...verdicts.values()].filter((x) => x.m.envBrand).length;
+  const allBrandTrusted = [...verdicts.values()].filter(
+    (x) => x.m.envBrand && x.m.snapAttrs.includes("brandEvidence"),
+  ).length;
   const allProduct = [...verdicts.values()].filter((x) => x.m.envProduct).length;
-  /* Pro hazırlığı: 5 bileşenin ortalaması — envelope slug/brand/product erişimi,
-     matching'in resolvedEntities okuması (statik), tedarikçi ölçümü (0, NOT_MEASURED). */
+  /* Pro hazırlığı: 5 bileşenin ortalaması — envelope slug/GÜVENİLİR marka/
+     product erişimi, matching'in resolvedEntities okuması (statik),
+     tedarikçi ölçümü (0, CAPABILITY_NOT_MEASURED). */
   const proPct = Math.round(
     (100 *
       (allSlug / scenarios.length +
-        allBrand / scenarios.length +
+        allBrandTrusted / scenarios.length +
         allProduct / scenarios.length +
         (matchingReadsEntities ? 1 : 0) +
         0)) /
@@ -470,6 +483,7 @@ function main() {
    *                            ölçülemeyen yetenekler — PASS'e sayılmaz ve
    *                            Pro hazırlık formülünde 0 katkı verir.
    */
+  console.log(`BRAND_PRESENT=${allBrandPresent}/${scenarios.length}  BRAND_ROUTABLE_TRUSTED=${allBrandTrusted}/${scenarios.length}`);
   console.log(`SCENARIO_NOT_MEASURED=${notMeasured}`);
   const capabilityNotMeasured = [
     "supplier_capability",
@@ -485,7 +499,7 @@ function main() {
   );
   console.log(
     `PRO_END_TO_END_MEASURED_READINESS≈${proPct}  ` +
-      `(formül: 100 × ortalama[slug ${allSlug}/${scenarios.length}, brand ${allBrand}/${scenarios.length}, ` +
+      `(formül: 100 × ortalama[slug ${allSlug}/${scenarios.length}, GÜVENİLİR marka ${allBrandTrusted}/${scenarios.length}, ` +
       `product ${allProduct}/${scenarios.length}, matching entity okuması ${matchingReadsEntities ? 1 : 0}, ` +
       `tedarikçi 0 (CAPABILITY_NOT_MEASURED)]; payda: 5 bileşen)`,
   );

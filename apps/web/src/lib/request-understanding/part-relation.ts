@@ -167,6 +167,34 @@ export function readSafePhraseContaining(
   return null;
 }
 
+/**
+ * HAM CÜMLENİN İLK GÜVENLİ ÖBEĞİ (RC_BRAND takip dilimi).
+ *
+ * Marka temizliği öznesiz metin bırakabiliyor ("Kürek sapı arıyorum" →
+ * "arıyorum."). Bu yardımcı ham cümlenin İLK noktalama öbeğini alır, talep
+ * ve yaptırma fiillerini kırpar, sondaki bağlacı atar; rakam dizisi taşıyan
+ * ya da anlamlı sözcük içermeyen öbeği REDDEDER. Ham cümlenin tamamı asla
+ * taşınmaz — bütçe/telefon/adres yan cümleleri noktalama sınırında kalır.
+ */
+const MAKE_VERB_RE =
+  /(?:^|[^\p{L}\p{N}])(?:yaptırmak|yaptirmak|bastırmak|bastirmak|ürettirmek|urettirmek|boyatmak)(?=[^\p{L}\p{N}]|$)/giu;
+
+export function readSafeLeadingPhrase(rawInput: string): string | null {
+  const raw = String(rawInput ?? "").trim();
+  if (!raw) return null;
+  const first = raw.split(/[,;:.!?()/\n]/u)[0] ?? "";
+  let t = first
+    .replace(REQUEST_TAIL_RE, " ")
+    .replace(MAKE_VERB_RE, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+  t = t.replace(/\s+(?:için|icin)$/iu, "").trim();
+  if (!t || !/\p{L}{3,}/u.test(t)) return null;
+  if (t.length > MAX_TARGET_CHARS) return null;
+  if (/\d{5,}/u.test(t)) return null;
+  return t;
+}
+
 export type ParentIdentity = {
   brand?: string | null;
   model?: string | null;

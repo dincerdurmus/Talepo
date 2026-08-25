@@ -2,7 +2,13 @@
  * CATEGORY COVERAGE EVAL V1 — 108 senaryoluk kalıcı ölçüm tabanı.
  *
  * Kaynak: 2026-08-25 bağımsız kapsam denetimi (11 kategori, gerçek engine
- * çıktısından ölçüldü). Taban çizgisi: 76 PASS / 32 KNOWN_FAIL / 0 FAIL.
+ * çıktısından ölçüldü). İlk taban: 76 PASS / 32 KNOWN_FAIL / 0 FAIL.
+ * RC_BRAND dilimi (2026-08-25) 10 sahte marka vakasının 8'ini tamamen
+ * kapattı; mach-05 ve print-04'te marka kısmı kapandı, kalan kategori
+ * açığı CATEGORY_SPECIFIC olarak yeniden imzalandı. Taban: 84/24/0.
+ * RC_BRAND takip dilimi (aynı gün) öznesiz besteci düzeltmesiyle RC_COMPOSER
+ * ailesinin 7 kaydını kapattı ve metin korumalarını zorunlu beklentiye
+ * çevirdi. Taban: 91/17/0.
  *
  * SELF-FULFILLING YASAĞI: Bu dosyadaki beklenen değerler HİÇBİR ZAMAN
  * engine'e girdi olarak verilmez. Engine yalnız `input` metnini görür;
@@ -79,8 +85,8 @@ export type CoverageScenario = {
 /** Taban çizgisi — doğrulayıcı bu sayılardan sapmayı kırmızı sayar. */
 export const COVERAGE_BASELINE = {
   total: 108,
-  pass: 76,
-  knownFail: 32,
+  pass: 91,
+  knownFail: 17,
   fail: 0,
   adversarialMin: 33,
 } as const;
@@ -601,14 +607,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "ticari"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Ticari' sözcüğü katalog doğrulaması olmadan marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Ticari"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -706,14 +704,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "forbiddenBrands": [
         "ram"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'16 GB RAM' içindeki RAM jetonu marka alanına yazılıyor ve envelope.brand üzerinden yanlış marka kanıtı üretir.",
-      "signature": {
-        "brandEquals": "RAM"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -1000,6 +990,9 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "allowedKinds": [
         "SERVICE"
+      ],
+      "requiredSurfaceTerms": [
+        "logo tasarımı"
       ]
     },
     "knownIssue": {
@@ -1079,14 +1072,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "etiket"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Bağlaçsız besteci: 'etiket' hiçbir kullanıcı yüzeyinde kalmıyor (başlık '5.000 adet üretim üretimi').",
-      "signature": {
-        "missingSurfaceTerm": "etiket"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1108,11 +1093,11 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ]
     },
     "knownIssue": {
-      "rootCause": "RC_BRAND",
+      "rootCause": "CATEGORY_SPECIFIC",
       "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'E-ticaret' marka sanılıyor ve teknoloji sinyaliyle kategori printing yerine technology'ye kayıyor.",
+      "explanation": "RC_BRAND kısmı kapandı: 'E-ticaret' artık marka değil. Kalan açık: 'e-ticaret' anahtar kelimesi kategoriyi technology'ye çekiyor; ambalaj üretimi ailesi bu bağlamda printing'e bağlanamıyor.",
       "signature": {
-        "brandEquals": "E-ticaret"
+        "understandingCategoryEquals": "technology"
       }
     },
     "notMeasured": [
@@ -1137,14 +1122,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "forbiddenBrands": [
         "logolu"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Logolu' sıfatı marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Logolu"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -1235,14 +1212,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "requiredSurfaceTerms": [
         "davetiye"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Bağlaçsız besteci: 'davetiye' kayboluyor, başlık 'üretim üretimi' biçiminde bozuk.",
-      "signature": {
-        "missingSurfaceTerm": "davetiye"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -1683,14 +1652,17 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "allowedKinds": [
         "PART"
+      ],
+      "requiredSurfaceTerms": [
+        "torna"
       ]
     },
     "knownIssue": {
-      "rootCause": "RC_BRAND",
+      "rootCause": "CATEGORY_SPECIFIC",
       "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Torna' marka, 'tezgahı' model sanılıyor; kategori automotive'e kayıyor.",
+      "explanation": "RC_BRAND kısmı kapandı: 'Torna' artık marka değil. Kalan açık: 'yedek parça' anahtar kelimesi kategoriyi automotive'e çekiyor; makine parçası ailesi kategori dedektöründe yok.",
       "signature": {
-        "brandEquals": "Torna"
+        "understandingCategoryEquals": "automotive"
       }
     },
     "notMeasured": [
@@ -1758,15 +1730,10 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "forbiddenBrands": [
         "kompresör"
+      ],
+      "requiredSurfaceTerms": [
+        "kompresör"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Kompresör' ürün adı marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Kompresör"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -1833,14 +1800,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "dolap"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Bağlaçsız hizmet bestecisi: 'dolap' kaybolup başlık 'Özel ölçü için servis' kalıyor.",
-      "signature": {
-        "missingSurfaceTerm": "dolap"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1884,14 +1843,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "requiredSurfaceTerms": [
         "koltuk"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Döşeme hizmetinde 'koltuk' hiçbir yüzeyde kalmıyor (başlık 'hizmet').",
-      "signature": {
-        "missingSurfaceTerm": "koltuk"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -2035,15 +1986,10 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "forbiddenBrands": [
         "tekerlekli"
+      ],
+      "requiredSurfaceTerms": [
+        "sandalye"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Tekerlekli' sıfatı marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Tekerlekli"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -2284,14 +2230,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "bebek odası"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Bağlaçsız besteci: 'bebek odası takımı' kaybolup başlık 'ürün' kalıyor.",
-      "signature": {
-        "missingSurfaceTerm": "bebek odası"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2404,14 +2342,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "yemek takımı"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'6 kişilik yemek takımı' kaybolup başlık 'ürün' kalıyor.",
-      "signature": {
-        "missingSurfaceTerm": "yemek takımı"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2454,15 +2384,10 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "forbiddenBrands": [
         "toptan"
+      ],
+      "requiredSurfaceTerms": [
+        "bardak"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Toptan' sözcüğü marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Toptan"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -2488,14 +2413,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "tava"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_COMPOSER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'tava' hiçbir yüzeyde kalmıyor; talep konusu belirsizleşiyor.",
-      "signature": {
-        "missingSurfaceTerm": "tava"
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2519,15 +2436,10 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "forbiddenBrands": [
         "kürek"
+      ],
+      "requiredSurfaceTerms": [
+        "kürek sapı"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Kürek' marka, 'sapı' model sanılıyor (SAP olmaması doğru; sahte marka yanlış).",
-      "signature": {
-        "brandEquals": "Kürek"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -2552,14 +2464,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "forbiddenBrands": [
         "çelik"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_BRAND",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Çelik' malzeme adı marka alanına yazılıyor.",
-      "signature": {
-        "brandEquals": "Çelik"
-      }
     },
     "notMeasured": [
       "supplier_capability",
