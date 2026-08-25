@@ -93,8 +93,10 @@ export type CoverageScenario = {
 /** Taban çizgisi — doğrulayıcı bu sayılardan sapmayı kırmızı sayar. */
 export const COVERAGE_BASELINE = {
   total: 108,
-  pass: 95,
-  knownFail: 13,
+  // KB-16 kapandıktan sonra ölçülen taban (RC_RENT ailesi: 4 senaryo
+  // KNOWN_FAIL → PASS). Önceki kayıt: pass 95 / knownFail 13.
+  pass: 99,
+  knownFail: 9,
   fail: 0,
   adversarialMin: 33,
 } as const;
@@ -511,15 +513,8 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "allowedKinds": [
         "VEHICLE"
-      ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_RENT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "RENT niyeti nesne kanıtı olmadan emlak dalını ateşliyor; kiralanan şey araç.",
-      "signature": {
-        "kindEquals": "REAL_ESTATE"
-      }
+      ],
+      "expectedIntent": "RENT"
     },
     "notMeasured": [
       "supplier_capability",
@@ -541,14 +536,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "VEHICLE"
       ],
       "expectedIntent": "RENT"
-    },
-    "knownIssue": {
-      "rootCause": "RC_RENT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "S2A sonrası kategori automotive ve konu türü VEHICLE doğru çözülüyor; ancak işlem türü hâlâ yanlış: cümledeki 'kiralama' adı niyeti belirlemiyor, sondaki 'arıyorum' fiili BUY kazanıyor. Talep doğru kategoriye gider ama satın alma teklifi havuzuna düşer.",
-      "signature": {
-        "intentEquals": "BUY"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -1617,15 +1604,8 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       "allowedKinds": [
         "INDUSTRIAL_EQUIPMENT",
         "PRODUCT"
-      ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_RENT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "RENT niyeti forklift kiralamayı emlak konusu yapıyor.",
-      "signature": {
-        "kindEquals": "REAL_ESTATE"
-      }
+      ],
+      "expectedIntent": "RENT"
     },
     "notMeasured": [
       "supplier_capability",
@@ -1948,15 +1928,8 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "allowedKinds": [
         "PRODUCT"
-      ]
-    },
-    "knownIssue": {
-      "rootCause": "RC_RENT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'kiralık' hasta yatağını emlak konusu yapıyor.",
-      "signature": {
-        "kindEquals": "REAL_ESTATE"
-      }
+      ],
+      "expectedIntent": "RENT"
     },
     "notMeasured": [
       "supplier_capability",

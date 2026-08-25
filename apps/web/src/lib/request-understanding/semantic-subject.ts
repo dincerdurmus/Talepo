@@ -88,6 +88,21 @@ const POSITION_CANON: Record<string, string> = {
 const PART_NEGATION =
   /(?:parça|parca|tampon|far|ayna|filtre|balata|yedek)\s*(?:istemiyorum|istemiyoz|değil|degil)|(?:araç|arac|kendisini|komple\s+(?:cihaz|makine|araç|arac))\s*(?:arıyorum|ariyorum|lazım|lazim)/i;
 
+/**
+ * BÜTÜN NESNEYİ EDİNME NİYETİ (KB-16).
+ *
+ * Satın almak ve kiralamak farklı İŞLEMLERDİR ama ikisi de BÜTÜN nesnenin
+ * edinilmesidir: "Forklift kiralamak istiyorum" da "Forklift arıyorum" da
+ * forkliftin kendisini ister, parçasını değil. Aşağıdaki bütün-nesne dalları
+ * eskiden yalnız `BUY` kapısından geçiyordu; çünkü RENT bu kod tabanında
+ * emlak anlamına geliyordu (bkz. kaldırılan emlak tetikleyicisi). O bağ
+ * koptuğu için kiralama da bu kapıdan geçmelidir — aksi hâlde talep konusuz
+ * kalır. Elden çıkarma (SELL) bilerek dışarıdadır: arz yönü ayrı bir karardır.
+ */
+function acquiresWholeObject(intent: SemanticSubjectInput["intent"]): boolean {
+  return intent === "BUY" || intent === "RENT";
+}
+
 const WHOLE_VEHICLE_SEEK =
   /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)|(?:satın\s*almak|satin\s*almak|satın\s*alıyorum|satin\s*aliyorum|almak\s*istiyorum)/i;
 
@@ -1298,14 +1313,21 @@ function resolveSemanticSubjectCore(
 
   // --- REAL ESTATE ---
   if (
-    (input.intent === "RENT" ||
-      input.intent === "SELL" ||
-      input.categoryId === "real-estate" ||
-      input.roomCount ||
-      input.listingType) &&
+    (input.categoryId === "real-estate" || input.roomCount) &&
     !hasFurnitureObjectNoun(text)
   ) {
     /**
+     * EMLAK KANITI İŞLEM TÜRÜNDEN DE GELEMEZ (KB-16).
+     *
+     * Dalın tetikleyicisinde `intent === "RENT" || intent === "SELL"` ve
+     * `listingType` vardı. Üçü de İŞLEM hakkındadır, NESNE hakkında değil:
+     * "Araç kiralamak istiyorum", "Forklift kiralamak istiyorum" ve "Hasta
+     * yatağı arıyorum kiralık" bu yüzden emlak konusuna düşüyor, talep yanlış
+     * teklif havuzuna gidiyordu. Kiralamak ve satmak her kategoride yapılır;
+     * emlak kanıtı emlak NESNESİNDEN gelir. Kalan iki tetikleyici nesne
+     * kanıtıdır: kategori otoritesinin real-estate kararı ve oda düzeni
+     * (2+1) — ikincisi yalnız konutta anlamlıdır.
+     *
      * EMLAK KANITI KULLANIM BAĞLAMINDAN GELEMEZ (1H).
      *
      * `input.categoryId` ham cümlenin tamamından türetiliyor; "Ev için klima
@@ -1361,7 +1383,7 @@ function resolveSemanticSubjectCore(
       /(?:^|[^\p{L}\p{N}])(?:makine|pres|ofset)(?=[^\p{L}\p{N}]|$)/iu.test(text)) &&
     !partHit &&
     !accessoryHit &&
-    (input.intent === "BUY" ||
+    (acquiresWholeObject(input.intent) ||
       /ikinci\s*el|makine\s*(?:arıyorum|lazım|ariyorum|lazim)/i.test(text))
   ) {
     return {
@@ -1398,7 +1420,7 @@ function resolveSemanticSubjectCore(
     (wholeVehicle ||
       autoModelCredible ||
       (input.categoryId === "automotive" &&
-        (input.intent === "BUY" || input.intent === "UNKNOWN") &&
+        (acquiresWholeObject(input.intent) || input.intent === "UNKNOWN") &&
         !partHit &&
         !accessoryHit))
   ) {

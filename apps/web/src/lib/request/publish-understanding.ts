@@ -137,6 +137,12 @@ export function buildPublishUnderstandingSnapshot(input: {
       source: e.source,
       verificationStatus: e.verificationStatus,
     })),
+    /**
+     * Kapsam kararı snapshot'a taşınır (kurucu kararı, 2026-08-25).
+     * Yayın kapısı sunucuda metinden YENİDEN türetir; buradaki kayıt denetim
+     * ve operasyon içindir, yetkinin kendisi değildir.
+     */
+    requestScope: input.understanding.requestScope?.value ?? undefined,
     unresolvedExpressions,
     confirmedFieldKeys: input.confirmedFieldKeys,
   });

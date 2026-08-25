@@ -260,12 +260,25 @@ const fixtures: Fixture[] = [
   {
     id: 13,
     text: "kiracılı satılık dükkan arıyorum",
+    /**
+     * BEKLENTİ GÜNCELLENDİ — kurucu kapsam kararı (2026-08-25).
+     *
+     * Eski beklenti `intent === "SELL"` idi; bu, "satılık" ilan sıfatının
+     * niyeti belirlediği eski modelden geliyordu. Bu cümleyi yazan kişi
+     * dükkanı SATMIYOR, kiracılı bir dükkan ARIYOR — yani alıcıdır.
+     * Talepo yalnız talep tarafını kabul ettiği için eski beklenti korunsaydı
+     * bu talep artık "arz ilanı" sayılıp ENGELLENİRDİ. Testin asıl koruduğu
+     * şey ("kiracı" sözcüğü bunu kiralama talebi yapmasın) aynen duruyor.
+     */
     check: (r) => {
       const errors: string[] = [];
-      if (r.intent.value !== "SELL") errors.push(`intent=${r.intent.value}`);
+      if (r.intent.value !== "BUY") errors.push(`intent=${r.intent.value}`);
       if (r.intent.value === "RENT") errors.push("rent from kiracı");
       if (r.strategy.value === "REAL_ESTATE_RENT") {
         errors.push("RENT strategy");
+      }
+      if (r.requestScope.value !== "DEMAND") {
+        errors.push(`scope=${r.requestScope.value}`);
       }
       if (r.preferences.tenantOccupied?.value !== true) {
         errors.push("tenantOccupied missing");

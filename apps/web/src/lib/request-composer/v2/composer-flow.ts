@@ -37,6 +37,8 @@ export type ComposerV2FlowInput = {
   budgetValue?: string | null;
   cityValue?: string | null;
   locationMode?: string | null;
+  /** Anlama katmanının kapsam kararı (bkz. RequestScope). */
+  requestScope?: string | null;
 };
 
 export type ComposerV2Flow = {
@@ -89,6 +91,7 @@ export function computeComposerV2Flow(
     budgetValue: input.budgetValue ?? input.values.budget,
     cityValue: input.cityValue ?? input.values.city,
     locationMode: input.locationMode ?? input.values.locationMode,
+    requestScope: input.requestScope ?? null,
   });
 
   return {
@@ -122,6 +125,7 @@ export function useComposerV2Flow(input: ComposerV2FlowInput): ComposerV2Flow {
       input.budgetValue,
       input.cityValue,
       input.locationMode,
+      input.requestScope,
     ],
   );
 }

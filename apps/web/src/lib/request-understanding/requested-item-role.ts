@@ -192,6 +192,17 @@ export const SERVICE_LEMMAS = [
   "öğretmen",
   "ogretmen",
   "ders",
+  /**
+   * "emlakçı" AYNI SINIFTIR ama ölçülünce eksikti (kapsam kapanışı,
+   * 2026-08-25). "Evimi kiraya vermek için emlakçı arıyorum" cümlesinde
+   * hedefin rolü UNKNOWN kalıyor, bu yüzden hedef kendi kategorisini
+   * üretemiyor ve I45e gereği SOLDAKİ kullanım bağlamının kategorisi
+   * (real-estate) ayakta kalıyordu: talep, aracı arayan kişiyi ev satın
+   * almak isteyenlerin havuzuna gönderiyor ve ona ilan türü / oda sayısı
+   * soruyordu. "emlakçı" bir MÜLK değil, bir hizmet sağlayıcı adıdır.
+   */
+  "emlakçı",
+  "emlakci",
 ] as const;
 
 /* ------------------------------------------------------------------ *

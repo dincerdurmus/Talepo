@@ -1567,7 +1567,27 @@ function TalepOlusturForm() {
     return map;
   }, [humanQuestions]);
 
+  /**
+   * Kapsam dışı (arz ilanı) talepte hiçbir soru zamanlanmaz — kurucu kararı,
+   * 2026-08-25. `resolveHybridQuestions` zaten susuyor; buradaki KÜRESEL
+   * ÇEKİRDEK zamanlayıcısı (bütçe/konum/zaman) ayrı bir yoldan geldiği için
+   * ölçümde hâlâ soru üretiyor ve panel "Yayına hazır" diyordu. İki otorite
+   * de aynı kapsam kararını okur.
+   */
+  const composerOutOfScope =
+    hybrid.state?.understanding?.requestScope?.value === "UNSUPPORTED_SUPPLY";
+
   const focusedQuestionSchedule = useMemo(() => {
+    if (composerOutOfScope) {
+      return {
+        visible: [],
+        remainingCriticalCount: 0,
+        remainingOptionalCount: 0,
+        canEnterReview: false,
+        blockingFieldKeys: [],
+        blockingLabels: [],
+      };
+    }
     const live = understandingMatchesComposerText({
       composerText: requestText,
       understandingRawInput: understanding.rawInput,
@@ -1657,6 +1677,7 @@ function TalepOlusturForm() {
   }, [
     activeCategoryId,
     answeredQuestionKeys,
+    composerOutOfScope,
     dynamicValues,
     enrichmentCandidates,
     hybrid.isSyncing,
@@ -1734,6 +1755,10 @@ function TalepOlusturForm() {
           manualValues.locationMode ??
           dynamicValues.locationMode ??
           (/\buzaktan\b/i.test(requestText) ? "remote" : null),
+        // Kapsam kararı anlama katmanından gelir (kurucu kararı, 2026-08-25):
+        // arz ilanında review/publish açılmaz.
+        requestScope:
+          hybrid.state?.understanding?.requestScope?.value ?? null,
       }),
     [
       activeCategoryId,
@@ -1748,6 +1773,7 @@ function TalepOlusturForm() {
       realEstateLocationMissing,
       requestText,
       understandingCity,
+      hybrid.state?.understanding?.requestScope?.value,
     ],
   );
 
@@ -2936,7 +2962,10 @@ function TalepOlusturForm() {
               Talepo AI
             </p>
             <p className="talepo-ai-title mt-1 truncate text-sm font-semibold">
-              {readiness.state === "READY"
+              {/* Kapsam dışı talep "yayına hazır" diyemez — uyarıyla çelişir. */}
+              {composerOutOfScope
+                ? "Talepo kapsamı dışında"
+                : readiness.state === "READY"
                 ? "Yayına hazır"
                 : enrichmentCandidates.length > 0
                   ? `${enrichmentCandidates.length} öneri · netleştir`
@@ -3394,7 +3423,37 @@ function TalepOlusturForm() {
                         />
                       ) : null}
 
-                      {!hybrid.isSyncing && uxStage === "review" ? (
+                      {/*
+                        KAPSAM DIŞI (arz ilanı) — kurucu kararı, 2026-08-25.
+                        Kullanıcı boş ekranda bırakılmaz: ne olduğunu söyleyen
+                        kısa bir açıklama ve metnine dönmesi için tek bir eylem
+                        gösterilir. Bu dal review/publish dallarının ÖNÜNDEDİR;
+                        kapsam dışında hiçbir yayın yolu render edilmez.
+                      */}
+                      {!hybrid.isSyncing && composerReadiness.outOfScopeNotice ? (
+                        <div
+                          data-testid="composer-out-of-scope"
+                          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
+                        >
+                          <p>{composerReadiness.outOfScopeNotice}</p>
+                          <button
+                            type="button"
+                            data-testid="composer-out-of-scope-edit"
+                            className="mt-2 min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                            onClick={() => {
+                              const el =
+                                document.getElementById("talep-composer");
+                              el?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
+                              (el as HTMLTextAreaElement | null)?.focus();
+                            }}
+                          >
+                            {composerReadiness.editActionLabel}
+                          </button>
+                        </div>
+                      ) : !hybrid.isSyncing && uxStage === "review" ? (
                         <PublishReviewSummary
                           model={publishReviewModel}
                           publishing={isPublishing}

@@ -15,7 +15,32 @@ export type PublishReadiness = {
   remainingCriticalCount: number;
   primaryCta: "continue" | "review" | "publish";
   primaryCtaLabel: string;
+  /**
+   * Kapsam dışı (arz ilanı) talepte kullanıcıya gösterilecek yönlendirme.
+   * `null` ise talep kapsam içindedir. Metnini değiştirmesi için ne
+   * yazabileceğini SÖYLER — yalnız reddetmez.
+   */
+  outOfScopeNotice: string | null;
+  /**
+   * Kapsam dışı talepte kullanıcıya sunulan eylem. Kullanıcı çıkmaza
+   * sokulmaz: metnini düzenleyip geçerli bir talebe çevirebilir.
+   */
+  editActionLabel: string | null;
 };
+
+/**
+ * Kapsam dışı talepte gösterilen tek metin (kurucu dili, 2026-08-25).
+ *
+ * Kısa, suçlayıcı değil ve yol gösterir: ne olduğunu söyler, ne
+ * yapılamayacağını söyler, sonra kullanıcıya bir çıkış verir. "Yasak",
+ * "ihlal", "uygunsuz" gibi sözcükler bilerek kullanılmaz — kullanıcı hata
+ * yapmadı, yalnız platformun konusu dışında bir şey yazdı.
+ */
+export const OUT_OF_SCOPE_SUPPLY_NOTICE =
+  "Talepo, ürün veya hizmet arayanların talep oluşturduğu bir platformdur. Satış ilanı yayınlayamazsınız. Satış için bir hizmet arıyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"aracımı satmak için ekspertiz hizmeti arıyorum\".";
+
+/** Kapsam dışı talepte tek eylem: metne dön ve düzenle. */
+export const OUT_OF_SCOPE_EDIT_ACTION = "Metnimi düzenle";
 
 export function computeComposerPublishReadiness(input: {
   hasUsableText: boolean;
@@ -25,7 +50,30 @@ export function computeComposerPublishReadiness(input: {
   budgetValue?: string | null;
   cityValue?: string | null;
   locationMode?: string | null;
+  /** Anlama katmanının kapsam kararı (bkz. RequestScope). */
+  requestScope?: string | null;
 }): PublishReadiness {
+  /**
+   * KAPSAM KAPISI HER ŞEYDEN ÖNCE GELİR (kurucu kararı, 2026-08-25).
+   *
+   * Arz ilanında review de publish de AÇILMAZ ve bunu eksik bütçe/konum
+   * gibi tesadüfi bir engele bırakmayız: kural açıkça yazılır. Sunucudaki
+   * kapı bundan bağımsız olarak ayrıca çalışır — bu yalnız kullanıcıyı
+   * yayınlanamayacak bir yolda yürütmemek içindir.
+   */
+  if (input.requestScope === "UNSUPPORTED_SUPPLY") {
+    return {
+      canReview: false,
+      canPublish: false,
+      blockingLabels: ["Talepo kapsamı dışında"],
+      remainingCriticalCount: 0,
+      primaryCta: "continue",
+      primaryCtaLabel: "Talebini düzenle",
+      outOfScopeNotice: OUT_OF_SCOPE_SUPPLY_NOTICE,
+      editActionLabel: OUT_OF_SCOPE_EDIT_ACTION,
+    };
+  }
+
   const blocking = [...input.schedule.blockingLabels];
 
   const budgetOk = isBudgetSatisfiedForPublish(input.budgetValue);
@@ -79,5 +127,7 @@ export function computeComposerPublishReadiness(input: {
     remainingCriticalCount,
     primaryCta,
     primaryCtaLabel,
+    outOfScopeNotice: null,
+    editActionLabel: null,
   };
 }

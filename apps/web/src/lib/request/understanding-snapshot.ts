@@ -3,6 +3,9 @@
  * Matching/filter code must ignore this block; it is audit + operations authority.
  */
 
+// Kapsam türü tek yerde tanımlıdır; burada kopyalanmaz, tip olarak okunur.
+import type { RequestScope } from "@/lib/request-understanding/types";
+
 export const UNDERSTANDING_SNAPSHOT_VERSION = 1 as const;
 export const UNDERSTANDING_PROFILE_VERSION = "understand-request/v1" as const;
 
@@ -79,6 +82,15 @@ export type RequestUnderstandingSnapshot = {
    * `discoveryProjection` bir JSON kolonu olduğu için migration gerekmez.
    */
   resolvedEntities?: ResolvedEntitySnapshot[];
+  /**
+   * TALEPO KAPSAMI (kurucu kararı, 2026-08-25) — additive ve OPSİYONEL.
+   *
+   * `"UNSUPPORTED_SUPPLY"` bir arz ilanıdır: yayınlanamaz, eşleştirilmez,
+   * bildirim üretmez. Alan yoksa eski snapshot'lar `"DEMAND"` gibi okunur
+   * (geriye uyumlu). `discoveryProjection` bir JSON kolonu olduğu için
+   * migration GEREKMEZ — yeni Prisma kolonu açılmadı.
+   */
+  requestScope?: RequestScope;
   unresolvedExpressions: string[];
   confirmedFieldKeys: string[];
 };
@@ -176,6 +188,7 @@ export function buildUnderstandingSnapshot(input: {
   entities?: Record<string, UnderstandingFieldSnapshot>;
   attributes?: Record<string, UnderstandingFieldSnapshot>;
   resolvedEntities?: ResolvedEntitySnapshot[];
+  requestScope?: RequestScope;
   unresolvedExpressions?: string[];
   confirmedFieldKeys?: string[];
   profileVersion?: string;
@@ -229,6 +242,8 @@ export function buildUnderstandingSnapshot(input: {
       ]),
     ),
     ...sanitizeResolvedEntities(input.resolvedEntities),
+    // Additive: alan yoksa eski snapshot'lar DEMAND gibi okunur.
+    ...(input.requestScope ? { requestScope: input.requestScope } : {}),
     unresolvedExpressions: (input.unresolvedExpressions ?? [])
       .map((s) => truncateSnapshotValue(String(s)))
       .filter(Boolean)

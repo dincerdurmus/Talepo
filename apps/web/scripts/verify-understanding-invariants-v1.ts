@@ -55,6 +55,11 @@ import {
   resolveTaxonomyAlias,
 } from "../src/lib/taxonomy";
 import { understandRequest } from "../src/lib/request-understanding/understand-request";
+import { computeComposerPublishReadiness } from "../src/lib/request-composer/v2/publish-readiness";
+import {
+  parseCreateRequestInput,
+  RequestValidationError,
+} from "../src/server/request/request-schema";
 import { classifyNumbers } from "../src/lib/request-understanding/number-role";
 import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
 import { isProductTypePhrase } from "../src/lib/product-identity/identity-candidates";
@@ -4588,6 +4593,616 @@ check("I45d: gerçek teknoloji/hizmet hedefleri kendi alanında kalır (koruma)"
   assert.ok(
     fold(`${wp.text} ${wp.headline}`).includes("wordpress"),
     `platform bağlamı silinemez → '${wp.text}'`,
+  );
+});
+
+/* ------------------------------------------------------------------------ *
+ * I46 — İSTENEN İŞLEM (KB-16)
+ *
+ * Sözleşme: bir talepte İŞLEM TÜRÜ ile TALEP KONUSU ayrı eksenlerdir ve
+ * işlem türü dört ayrı kanıttan okunur:
+ *
+ *   1) AÇIK İŞLEM İFADESİ — "kiralamak", "kiralama", "kiraya vermek",
+ *      "satmak". Fiil de ad da olabilir; ikisi de aynı kanıttır. Genel
+ *      arama fiilinden ("arıyorum", "lazım", "istiyorum") DAHA GÜÇLÜDÜR.
+ *   2) İLAN SIFATI — "kiralık", "satılık". Nesnenin ilan durumunu betimler,
+ *      kullanıcının işlemini DEĞİL. Arayan kullanıcı TALEP tarafındadır:
+ *      "kiralık X arıyorum" → RENT, "satılık X arıyorum" → BUY.
+ *   3) YÖN — "kiraya vermek", "satmak" arz tarafıdır; talep tarafı gibi
+ *      okunamaz.
+ *   4) KAPSAM — kullanım bağlamındaki ("X için Y") işlem belirteci kararı
+ *      veremez; işlem, İSTENEN HEDEFİN işlemidir.
+ *
+ * İşlem türü KONU TÜRÜNÜ ÜRETEMEZ: kiralamak emlak demek değildir. Emlak
+ * kanıtı emlak nesnesinden gelir (I25b ile aynı ilke, bu kez işlem ekseninde).
+ * Kanıt yetersizse yüksek güvenli bir işlem türü UYDURULMAZ.
+ *
+ * Bu dilim taksonomiyi, soru sistemini, matching V3'ü ve fanout'u
+ * yeniden tasarlamaz.
+ * ------------------------------------------------------------------------ */
+
+check("I46a: açık kiralama ifadesi genel arama fiiline yenilemez (KB-16)", () => {
+  const CASES = [
+    "Araç kiralamak istiyorum",
+    "Araç kiralamak istiyorum İstanbul'da",
+    "Şirketim için 10 araçlık filo kiralama arıyorum",
+    "Forklift kiralamak istiyorum",
+    "Forklift kiralama ihtiyacım var",
+    "Kiralık araç arıyorum",
+    "Hasta yatağı arıyorum kiralık",
+  ];
+  /**
+   * "Vinç kiralama HİZMETİ arıyorum" bilerek bu listede DEĞİLDİR: orada
+   * istenen hedef hizmettir ve SERVICE doğru yanıttır (aynı ilke: "kiralık
+   * makine için bakım" → SERVICE). İstenen hedef otoritesi işlem sözlüğünü
+   * yener; bu invariant o önceliği bozmaz.
+   */
+  for (const raw of CASES) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.intent,
+      "RENT",
+      `${raw}: açık kiralama kanıtı var → işlem RENT olmalı, '${s.intent}' ölçüldü`,
+    );
+  }
+});
+
+check("I46b: işlem türü konu türünü üretemez — kiralamak emlak değildir (KB-16)", () => {
+  const CASES: Array<{ raw: string; cat: string }> = [
+    { raw: "Araç kiralamak istiyorum İstanbul'da", cat: "automotive" },
+    { raw: "Kiralık araç arıyorum", cat: "automotive" },
+    { raw: "Satılık araç arıyorum", cat: "automotive" },
+    { raw: "Forklift kiralamak istiyorum", cat: "machinery" },
+    { raw: "Hasta yatağı arıyorum kiralık", cat: "health" },
+  ];
+  for (const c of CASES) {
+    const s = surfacesFor(c.raw);
+    assert.notEqual(
+      s.subjectKind,
+      "REAL_ESTATE",
+      `${c.raw}: emlak nesnesi yok → konu REAL_ESTATE olamaz`,
+    );
+    assert.equal(
+      s.understandingCategory,
+      c.cat,
+      `${c.raw}: kategori '${c.cat}' olmalı → '${s.understandingCategory}'`,
+    );
+  }
+});
+
+check("I46c: ilan sıfatı arayan kullanıcıyı TALEP tarafına koyar (KB-16)", () => {
+  // "satılık X arıyorum" diyen kişi SATICI değildir; satın almak ister.
+  for (const raw of ["Satılık araç arıyorum", "Ankara Çankaya'da satılık 3+1 daire arıyorum"]) {
+    const s = surfacesFor(raw);
+    assert.equal(s.intent, "BUY", `${raw}: arayan taraf alıcıdır → '${s.intent}'`);
+  }
+  for (const raw of ["Kiralık araç arıyorum", "Kadıköy'de kiralık 2+1 daire arıyorum, bütçem aylık 25 bin TL"]) {
+    const s = surfacesFor(raw);
+    assert.equal(s.intent, "RENT", `${raw}: arayan taraf kiracıdır → '${s.intent}'`);
+  }
+});
+
+check("I46d: çelişkili ve arz yönlü ifadeler yanlışlıkla RENT olmaz (KB-16)", () => {
+  // Açık hedef SATMAKTIR; "kiralık" yalnız aracı niteler.
+  const sell = surfacesFor("Kiralık aracımı satmak istiyorum");
+  assert.notEqual(sell.intent, "RENT", `açık hedef satmak → RENT olamaz, '${sell.intent}'`);
+  assert.equal(sell.intent, "SELL", `açık hedef satmak → SELL, '${sell.intent}'`);
+
+  // İstenen hedef BAKIM hizmetidir; "kiralık makine" kullanım bağlamıdır.
+  const svc = surfacesFor("Kiralık makine için bakım arıyorum");
+  assert.notEqual(svc.intent, "RENT", `istenen hedef bakım → RENT olamaz, '${svc.intent}'`);
+  assert.equal(svc.intent, "SERVICE", `istenen hedef bakım → SERVICE, '${svc.intent}'`);
+
+  // Arz tarafı: kiraya VEREN kişi, kiralamak İSTEYEN talep gibi okunamaz.
+  const supply = surfacesFor("Ev kiraya vermek istiyorum");
+  assert.notEqual(
+    supply.intent,
+    "RENT",
+    `kiraya vermek arz tarafıdır → kiracı talebi gibi okunamaz, '${supply.intent}'`,
+  );
+});
+
+check("I46e: kanıt yokken RENT uydurulmaz (koruma)", () => {
+  const CASES = [
+    "Araba arıyorum",
+    "Forklift arıyorum",
+    "Hasta yatağı arıyorum",
+    "Klima arıyorum",
+    "Bosch çamaşır makinesi için pompa arıyorum",
+  ];
+  for (const raw of CASES) {
+    const s = surfacesFor(raw);
+    assert.notEqual(s.intent, "RENT", `${raw}: kiralama kanıtı yok → RENT olamaz, '${s.intent}'`);
+  }
+});
+
+check("I46f: gerçek emlak kiralama/satış davranışı korunur (koruma)", () => {
+  const CASES = [
+    "Kadıköy'de kiralık 2+1 daire arıyorum, bütçem aylık 25 bin TL",
+    "Ankara Çankaya'da satılık 3+1 daire arıyorum",
+    "Günlük kiralık daire arıyorum Antalya'da",
+    "Restoran olmaya uygun kiralık dükkan arıyorum",
+    "İzmir'de satılık arsa arıyorum",
+  ];
+  for (const raw of CASES) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.subjectKind,
+      "REAL_ESTATE",
+      `${raw}: gerçek emlak talebi REAL_ESTATE kalmalı → '${s.subjectKind}'`,
+    );
+    assert.equal(
+      s.understandingCategory,
+      "real-estate",
+      `${raw}: kategori real-estate kalmalı → '${s.understandingCategory}'`,
+    );
+  }
+});
+
+/* ------------------------------------------------------------------------ *
+ * I47 — TALEPO KAPSAMI: ARZ İLANI TALEP DEĞİLDİR (kurucu kararı, 2026-08-25)
+ *
+ * Talepo, ürününü satmak ya da kiraya vermek isteyenlerin ilan platformu
+ * DEĞİLDİR. Yalnız ihtiyacı olan tarafın talebini kabul eder: ürün satın
+ * alma, ürün/araç/makine kiralama, hizmet alma, üretim/baskı yaptırma.
+ *
+ * Sözleşme:
+ *   1) Kendi nesnesini elden çıkarma ifadesi → UNSUPPORTED_SUPPLY.
+ *   2) Kapsam dışında kategori ve konu UYDURULMAZ.
+ *   3) Kapsam dışında soru motoru başlamaz, review/publish açılmaz.
+ *   4) AYRIM İSTENEN HEDEFTEDİR: "satmak/kiraya vermek İÇİN ... arıyorum"
+ *      geçerli bir TALEPTİR ve asla engellenmez.
+ *   5) Alıcı/kiracı tarafı ("satılık X arıyorum") kapsam İÇİNDEDİR.
+ * ------------------------------------------------------------------------ */
+
+/** Kapsam kararını anlama katmanından okur. */
+function scopeOf(raw: string): string {
+  const u = understandRequest({ rawInput: raw }) as unknown as {
+    requestScope?: { value?: unknown };
+  };
+  return String(u.requestScope?.value ?? "");
+}
+
+check("I47a: kendi nesnesini elden çıkarma talebi kapsam dışıdır", () => {
+  const CASES = [
+    "Aracımı satmak istiyorum",
+    "Evimi kiraya vermek istiyorum",
+    "Makinemizi satmak istiyoruz",
+    "Ev kiraya vermek istiyorum",
+    "Kiralık aracımı satmak istiyorum",
+    "Dairemi satılığa çıkarmak istiyorum",
+    "Forkliftimizi satıyoruz",
+  ];
+  for (const raw of CASES) {
+    assert.equal(
+      scopeOf(raw),
+      "UNSUPPORTED_SUPPLY",
+      `${raw}: arz ilanı kapsam dışı olmalı → '${scopeOf(raw)}'`,
+    );
+  }
+});
+
+check("I47b: kapsam dışında kategori ve konu uydurulmaz", () => {
+  for (const raw of ["Aracımı satmak istiyorum", "Evimi kiraya vermek istiyorum"]) {
+    const s = surfacesFor(raw);
+    assert.equal(
+      s.understandingCategory,
+      null,
+      `${raw}: kategori uydurulamaz → '${s.understandingCategory}'`,
+    );
+    assert.ok(
+      s.subjectKind === "UNKNOWN" || s.subjectKind === "null" || s.subjectKind === "",
+      `${raw}: konu türü uydurulamaz → '${s.subjectKind}'`,
+    );
+  }
+});
+
+check("I47c: kapsam dışında soru motoru başlamaz", () => {
+  for (const raw of ["Aracımı satmak istiyorum", "Evimi kiraya vermek istiyorum"]) {
+    const { state } = syncFromText(null, raw);
+    const qr = resolveHybridQuestions(state) as unknown as {
+      next?: Array<{ key: string }>;
+      candidates?: unknown[];
+      suppressed?: string[];
+    };
+    assert.equal(
+      (qr.next ?? []).length,
+      0,
+      `${raw}: soru sorulamaz → ${(qr.next ?? []).map((q) => q.key).join(",")}`,
+    );
+    assert.equal(
+      (qr.candidates ?? []).length,
+      0,
+      `${raw}: soru adayı üretilemez`,
+    );
+    assert.ok(
+      (qr.suppressed ?? []).includes("unsupported-supply"),
+      `${raw}: bastırma gerekçesi kayıtlı olmalı → ${(qr.suppressed ?? []).join(",")}`,
+    );
+  }
+});
+
+check("I47d: kapsam dışında review/publish açılmaz ve yönlendirme gösterilir", () => {
+  const readiness = computeComposerPublishReadiness({
+    hasUsableText: true,
+    schedule: {
+      visible: [],
+      blockingLabels: [],
+      canEnterReview: true,
+      remainingCriticalCount: 0,
+    } as never,
+    budgetValue: "50000",
+    cityValue: "İstanbul",
+    requestScope: "UNSUPPORTED_SUPPLY",
+  });
+  assert.equal(readiness.canReview, false, "arz ilanında review açılamaz");
+  assert.equal(readiness.canPublish, false, "arz ilanında publish açılamaz");
+  assert.ok(
+    (readiness.outOfScopeNotice ?? "").length > 20,
+    "kullanıcıya ne yazabileceğini söyleyen bir yönlendirme olmalı",
+  );
+  // Bütçe ve konum DOLU olmasına rağmen kapalı: engel tesadüfi değil, kural.
+});
+
+check("I47e: sunucu yayın kapısı arz ilanını Request oluşmadan reddeder", () => {
+  const body = {
+    title: "Aracımı satmak istiyorum",
+    description: "Aracımı satmak istiyorum, temiz kullanılmış bir araç.",
+    rawInput: "Aracımı satmak istiyorum",
+    category: { slug: "automotive", name: "Otomotiv" },
+  };
+  let threw: unknown = null;
+  try {
+    parseCreateRequestInput(body);
+  } catch (err) {
+    threw = err;
+  }
+  assert.ok(
+    threw instanceof RequestValidationError,
+    "arz ilanı doğrulama aşamasında reddedilmeli (createRequest'e ULAŞMADAN)",
+  );
+  const issues = (threw as InstanceType<typeof RequestValidationError>).issues;
+  assert.ok(
+    issues.some((i) => /ihtiya|satın alma|kiralama/i.test(i)),
+    `red gerekçesi kullanıcıya ne yapabileceğini söylemeli → ${issues.join(" | ")}`,
+  );
+});
+
+check("I47f: hizmet talebi içeren 'satmak için ... arıyorum' ASLA engellenmez", () => {
+  const CASES = [
+    "Aracımı satmak için ekspertiz hizmeti arıyorum",
+    "Evimi kiraya vermek için emlakçı arıyorum",
+    "Ürünlerimi satmak için e-ticaret yazılımı arıyorum",
+    "Aracımı satmak için detaylı temizlik hizmeti arıyorum",
+    "Evimi satmak için fotoğraf çekimi yaptırmak istiyorum",
+  ];
+  for (const raw of CASES) {
+    assert.equal(
+      scopeOf(raw),
+      "DEMAND",
+      `${raw}: istenen hedef bir HİZMETTİR, engellenemez → '${scopeOf(raw)}'`,
+    );
+    const { state } = syncFromText(null, raw);
+    const qr = resolveHybridQuestions(state) as unknown as {
+      suppressed?: string[];
+    };
+    assert.ok(
+      !(qr.suppressed ?? []).includes("unsupported-supply"),
+      `${raw}: soru motoru kapatılamaz`,
+    );
+    // Sunucu kapısı da geçirmeli.
+    assert.doesNotThrow(
+      () =>
+        parseCreateRequestInput({
+          title: raw,
+          description: `${raw} — ayrıntıları konuşalım.`,
+          rawInput: raw,
+          category: { slug: "services", name: "Hizmetler" },
+        }),
+      `${raw}: sunucu kapısı geçerli hizmet talebini reddedemez`,
+    );
+  }
+});
+
+check("I47g: alıcı/kiracı tarafı kapsam içindedir (koruma)", () => {
+  const CASES = [
+    "Satılık araç arıyorum",
+    "Araç kiralamak istiyorum",
+    "Kiralık araç arıyorum",
+    "Forklift kiralamak istiyorum",
+    "Hasta yatağı arıyorum kiralık",
+    "Ankara Çankaya'da satılık 3+1 daire arıyorum",
+    "Kadıköy'de kiralık 2+1 daire arıyorum, bütçem aylık 25 bin TL",
+    "Bosch çamaşır makinesi için pompa arıyorum",
+    "Kombi bakımı yaptırmak istiyorum",
+    "Kartvizit bastırmak istiyorum 1000 adet",
+  ];
+  for (const raw of CASES) {
+    assert.equal(
+      scopeOf(raw),
+      "DEMAND",
+      `${raw}: geçerli talep kapsam içinde kalmalı → '${scopeOf(raw)}'`,
+    );
+  }
+});
+
+/* ------------------------------------------------------------------------ *
+ * I48 — KAPSAM KAPISININ KAPANIŞI (kurucu, commit öncesi)
+ *
+ * I47 "engellenmedi"yi kanıtlıyordu; bu blok "DOĞRU YERE gitti"yi kanıtlar.
+ * Üç boşluk:
+ *   1) Geçerli hizmet talebi, SATILAN NESNENİN kategorisine ve sorularına
+ *      yönelemez. Tedarikçi eşleşmesi istenen hizmete göre yapılır.
+ *   2) Sunucu kapısı BÜTÜN yazma yollarını korur: create, rawInput taşımayan
+ *      legacy create ve update. İstemcinin gönderdiği snapshot yetkili
+ *      değildir.
+ *   3) Kapsam dışı kullanıcı boş ekranda bırakılmaz.
+ * ------------------------------------------------------------------------ */
+
+/** Beş geçerli hizmet talebinin tam yönlenme tablosu. */
+const SERVICE_ROUTING: Array<{
+  raw: string;
+  kind: string;
+  /** Alan kategorisi bağlama göre değişebilir — körlemesine "services" DEĞİL. */
+  categories: string[];
+  /** Satılan nesnenin soruları burada GÖRÜNEMEZ. */
+  forbiddenQuestions: string[];
+}> = [
+  {
+    raw: "Aracımı satmak için ekspertiz hizmeti arıyorum",
+    kind: "SERVICE",
+    categories: ["services", "automotive"],
+    forbiddenQuestions: ["listingType", "propertyType", "area", "modelYear", "mileage"],
+  },
+  {
+    raw: "Aracımı satmak için detaylı temizlik hizmeti arıyorum",
+    kind: "SERVICE",
+    categories: ["services", "automotive"],
+    forbiddenQuestions: ["listingType", "propertyType", "area", "modelYear", "mileage"],
+  },
+  {
+    raw: "Evimi kiraya vermek için emlakçı arıyorum",
+    kind: "SERVICE",
+    categories: ["services", "real-estate"],
+    forbiddenQuestions: ["listingType", "propertyType", "area", "roomCount"],
+  },
+  {
+    raw: "Evimi satmak için fotoğraf çekimi yaptırmak istiyorum",
+    kind: "SERVICE",
+    categories: ["services", "real-estate"],
+    forbiddenQuestions: ["listingType", "propertyType", "area", "roomCount"],
+  },
+  {
+    // Yazılım TEDARİKİDİR; BUY/PRODUCT kalması doğrudur (I45d korunur).
+    raw: "Ürünlerimi satmak için e-ticaret yazılımı arıyorum",
+    kind: "PRODUCT",
+    categories: ["technology"],
+    forbiddenQuestions: ["listingType", "propertyType", "area", "modelYear"],
+  },
+];
+
+check("I48a: geçerli hizmet talebi satılan nesnenin kategorisine yönelmez", () => {
+  for (const c of SERVICE_ROUTING) {
+    const s = surfacesFor(c.raw);
+    assert.equal(
+      s.subjectKind,
+      c.kind,
+      `${c.raw}: istenen hedefin türü '${c.kind}' olmalı → '${s.subjectKind}'`,
+    );
+    assert.ok(
+      c.categories.includes(String(s.understandingCategory)),
+      `${c.raw}: kategori ${c.categories.join("/")} olmalı → '${s.understandingCategory}'`,
+    );
+    assert.ok(
+      c.categories.includes(String(s.categoryId)),
+      `${c.raw}: besteci kategorisi ${c.categories.join("/")} olmalı → '${s.categoryId}'`,
+    );
+    const asked = s.nextQuestionKeys;
+    for (const q of c.forbiddenQuestions) {
+      assert.ok(
+        !asked.includes(q),
+        `${c.raw}: satılan nesnenin sorusu '${q}' sorulamaz → [${asked.join(", ")}]`,
+      );
+    }
+  }
+});
+
+check("I48b: hizmet talebinde tedarikçi zarfı istenen hizmeti taşır", () => {
+  for (const c of SERVICE_ROUTING) {
+    const s = surfacesFor(c.raw);
+    const snap = buildPublishUnderstandingSnapshot({
+      understanding: understandRequest({ rawInput: c.raw }) as never,
+      userSelected: false,
+      primarySlug: null,
+    });
+    const env = buildRequestRoutingEnvelope({
+      understandingSnapshot: snap,
+      categorySlug: s.categoryId ?? undefined,
+    } as never) as never as {
+      categoryResolution?: { primaryCategorySlug?: string | null };
+    };
+    const slug = String(env.categoryResolution?.primaryCategorySlug ?? "");
+    assert.ok(
+      c.categories.includes(slug),
+      `${c.raw}: tedarikçi zarfı ${c.categories.join("/")} olmalı → '${slug}'`,
+    );
+  }
+});
+
+/* --- 2) SUNUCU KAPISI: BÜTÜN YAZMA YOLLARI --- */
+
+const SUPPLY_TEXT = "Aracımı satmak istiyorum";
+
+function parseOrError(body: Record<string, unknown>): unknown {
+  try {
+    return parseCreateRequestInput(body);
+  } catch (err) {
+    return err;
+  }
+}
+
+check("I48c: create — açık rawInput arz metniyse reddedilir", () => {
+  const r = parseOrError({
+    title: SUPPLY_TEXT,
+    description: `${SUPPLY_TEXT} temiz kullanılmış.`,
+    rawInput: SUPPLY_TEXT,
+    category: { slug: "automotive", name: "Otomotiv" },
+  });
+  assert.ok(r instanceof RequestValidationError, "arz metni reddedilmeli");
+});
+
+check("I48d: legacy create — arz metni yalnız description'da olsa da kapı aşılamaz", () => {
+  const r = parseOrError({
+    title: SUPPLY_TEXT,
+    description: `${SUPPLY_TEXT} temiz kullanılmış, ilgilenen olursa haber versin.`,
+    category: { slug: "automotive", name: "Otomotiv" },
+  });
+  assert.ok(
+    r instanceof RequestValidationError,
+    "rawInput göndermemek kapıyı aşmanın yolu olamaz",
+  );
+});
+
+check("I48e: istemcinin DEMAND diyen snapshot verisi kapıyı açamaz", () => {
+  const r = parseOrError({
+    title: SUPPLY_TEXT,
+    description: `${SUPPLY_TEXT} temiz kullanılmış.`,
+    rawInput: SUPPLY_TEXT,
+    category: { slug: "automotive", name: "Otomotiv" },
+    discoveryProjection: {
+      understanding: { kind: "understanding_snapshot", requestScope: "DEMAND" },
+    },
+  });
+  assert.ok(
+    r instanceof RequestValidationError,
+    "karar istemciden okunamaz; sunucu metinden yeniden türetir",
+  );
+});
+
+check("I48f: update — rawInput arz metnine çevrilmek istenirse reddedilir", () => {
+  const r = parseOrError({
+    title: "Güncellenen talep",
+    description: "Önceki geçerli açıklama burada duruyor, yeterince uzun.",
+    rawInput: SUPPLY_TEXT,
+    category: { slug: "automotive", name: "Otomotiv" },
+  });
+  assert.ok(
+    r instanceof RequestValidationError,
+    "update yolu da korunmalı — yoksa arz ilanı düzenlemeyle yayınlanır",
+  );
+});
+
+check("I48g: update — rawInput gönderilmediyse mevcut değer değişmez", () => {
+  const parsed = parseCreateRequestInput({
+    title: "Ekspertiz hizmeti arıyorum",
+    description: "Aracım için ekspertiz hizmeti arıyorum, İstanbul içinde.",
+    category: { slug: "services", name: "Hizmetler" },
+  }) as { rawInput?: string };
+  assert.equal(
+    parsed.rawInput,
+    undefined,
+    `rawInput gönderilmediyse undefined kalmalı (üzerine yazılmaz) → '${parsed.rawInput}'`,
+  );
+});
+
+check("I48h: geçerli hizmet talebi create ve update yollarında reddedilmez", () => {
+  for (const c of SERVICE_ROUTING) {
+    assert.doesNotThrow(
+      () =>
+        parseCreateRequestInput({
+          title: c.raw,
+          description: `${c.raw} — ayrıntıları konuşalım, bütçem esnek.`,
+          rawInput: c.raw,
+          category: { slug: "services", name: "Hizmetler" },
+        }),
+      `${c.raw}: create yolunda reddedilemez`,
+    );
+    assert.doesNotThrow(
+      () =>
+        parseCreateRequestInput({
+          title: c.raw,
+          description: `${c.raw} — güncellenmiş açıklama, ayrıntılar burada.`,
+          category: { slug: "services", name: "Hizmetler" },
+        }),
+      `${c.raw}: rawInput taşımayan update yolunda reddedilemez`,
+    );
+  }
+});
+
+/* --- 3) KULLANICI DENEYİMİ --- */
+
+check("I48i: kapsam dışında kullanıcı boş ekranda kalmaz", () => {
+  const readiness = computeComposerPublishReadiness({
+    hasUsableText: true,
+    schedule: {
+      visible: [],
+      blockingLabels: [],
+      canEnterReview: true,
+      remainingCriticalCount: 0,
+    } as never,
+    budgetValue: "50000",
+    cityValue: "İstanbul",
+    requestScope: "UNSUPPORTED_SUPPLY",
+  });
+  assert.equal(readiness.canReview, false, "review açılamaz");
+  assert.equal(readiness.canPublish, false, "publish açılamaz");
+  const notice = readiness.outOfScopeNotice ?? "";
+  assert.ok(notice.length > 40, "açıklama gösterilmeli");
+  assert.ok(
+    /talep/i.test(notice) && /ilan/i.test(notice),
+    `açıklama ne kabul edildiğini ve edilmediğini söylemeli → '${notice}'`,
+  );
+  assert.ok(
+    !/(yasak|ihlal|uygunsuz|hata yaptınız)/i.test(notice),
+    `dil suçlayıcı olamaz → '${notice}'`,
+  );
+  assert.ok(
+    (readiness.editActionLabel ?? "").length > 0,
+    "kullanıcı metnini düzenleyebilmeli — bir eylem sunulmalı",
+  );
+});
+
+check("I48j: /talep sayfası kapsam dışı açıklamayı gerçekten render eder", () => {
+  /**
+   * Bu bir DOM testi DEĞİLDİR (tarayıcı bu bataryada çalışmaz). Yalnız
+   * sayfanın açıklamayı bir yere BAĞLADIĞINI kanıtlar: bağlanmamış bir
+   * sözleşme "gösteriliyor" sayılamaz.
+   */
+  const page = readFileSync(
+    pathJoin(repoRootForTests(), "apps", "web", "src", "app", "talep", "page.tsx"),
+    "utf8",
+  );
+  assert.ok(
+    page.includes("composer-out-of-scope"),
+    "kapsam dışı bloğu data-testid ile render edilmeli",
+  );
+  assert.ok(
+    page.includes("outOfScopeNotice"),
+    "açıklama metni readiness sözleşmesinden okunmalı, sayfada ikinci kez yazılmamalı",
+  );
+  assert.ok(
+    page.includes("editActionLabel"),
+    "düzenleme eylemi readiness sözleşmesinden okunmalı",
+  );
+  /**
+   * TARAYICIDA ÖLÇÜLEN BOŞLUK (2026-08-25) — kalıcı satır.
+   *
+   * `resolveHybridQuestions` sussa bile KÜRESEL ÇEKİRDEK zamanlayıcısı ayrı
+   * yoldan geliyordu: kapsam dışı ekranda "Son birkaç detay / Yayına hazır"
+   * ve bütçe sorusu render ediliyordu — uyarıyla doğrudan çelişiyordu.
+   * Sayfa iki otoriteyi de aynı kapsam kararına bağlamalıdır.
+   */
+  assert.ok(
+    page.includes("composerOutOfScope"),
+    "sayfa kapsam kararını tek bir değişkende okumalı",
+  );
+  const scheduleGated =
+    /focusedQuestionSchedule = useMemo\(\(\) => \{\s*if \(composerOutOfScope\)/.test(
+      page,
+    );
+  assert.ok(
+    scheduleGated,
+    "küresel çekirdek soru zamanlayıcısı da kapsam kararıyla kapatılmalı",
   );
 });
 

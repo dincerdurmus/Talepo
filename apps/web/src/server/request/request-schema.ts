@@ -11,6 +11,7 @@ import {
   UNRESOLVED_CATEGORY_SLUG,
   sanitizeRawInput,
 } from "@/lib/request/raw-input";
+import { understandRequest } from "@/lib/request-understanding/understand-request";
 
 export type RequestFieldInput = {
   key: string;
@@ -176,6 +177,32 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   }
   if (!categorySlug) issues.push("Kategori bilgisi eksik.");
   if (!categoryName) issues.push("Kategori adı eksik.");
+
+  /**
+   * KAPSAM KAPISI — TEK YETKİLİ SUNUCU KARARI (kurucu kararı, 2026-08-25).
+   *
+   * Talepo arz ilanı kabul etmez. Karar istemciden GELEN snapshot'a
+   * güvenilerek verilmez; kullanıcının kendi metninden burada YENİDEN
+   * türetilir. Bu kapı `createRequest`ten ÖNCEDİR: hiçbir Request satırı
+   * oluşmaz, dolayısıyla eşleştirme, fanout ve bildirim yollarına
+   * ULAŞILAMAZ — engelleme yapısaldır, bir bayrak kontrolü değildir.
+   *
+   * KAPI BÜTÜN YAZMA YOLLARINI KAPSAR. `rawInput` göndermemek bir kaçış
+   * yolu OLAMAZ: eski istemciler ve doğrudan API çağrıları talebin metnini
+   * yalnız `description` alanında taşıyabiliyor. Bu yüzden kapsam metni
+   * `rawInput ?? description` olarak okunur — kullanıcının kendi cümlesi
+   * varsa o tercih edilir, yoksa gövde metni okunur. Aynı fonksiyon PATCH
+   * yolunda da çalıştığı için güncelleme ile arz ilanı yayınlanamaz.
+   */
+  const scopeText = rawInputExplicit ?? description;
+  if (scopeText.length >= 3) {
+    const scope = understandRequest({ rawInput: scopeText }).requestScope;
+    if (scope.value === "UNSUPPORTED_SUPPLY") {
+      issues.push(
+        "Talepo yalnız ihtiyaç taleplerini yayınlar: ürün satın alma, kiralama, hizmet alma veya üretim yaptırma. Kendi ürününüzü satmak ya da kiraya vermek için ilan veremezsiniz. Aradığınız hizmeti yazarsanız yayınlayabilirsiniz — örneğin \"aracımı satmak için ekspertiz hizmeti arıyorum\".",
+      );
+    }
+  }
 
   const fields: RequestFieldInput[] = Array.isArray(raw.fields)
     ? raw.fields

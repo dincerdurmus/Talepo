@@ -156,7 +156,10 @@ const fixtures: Array<{
   { id: "F", text: "350gr kuşe 5bin kutu", expectStrategy: "CUSTOM_MANUFACTURING" },
   { id: "G", text: "200m2 ofis boyatacam", expectStrategy: "SERVICE_SCOPE", expectIntent: "SERVICE" },
   { id: "H", text: "başakşehir 2+1 kiralık ev", expectStrategy: "REAL_ESTATE_RENT", expectIntent: "RENT" },
-  { id: "I", text: "kiracılı satılık dükkan arıyorum", expectIntent: "SELL" },
+  // Kurucu kapsam kararı (2026-08-25): "satılık X arıyorum" diyen kişi
+  // ALICIDIR. Eski "SELL" beklentisi ilan sıfatının niyeti belirlediği
+  // modelden kalmıştı; korunsaydı bu talep arz ilanı sayılıp engellenirdi.
+  { id: "I", text: "kiracılı satılık dükkan arıyorum", expectIntent: "BUY" },
   { id: "J", text: "heidelberg sm74 ikinci el" },
 ];
 

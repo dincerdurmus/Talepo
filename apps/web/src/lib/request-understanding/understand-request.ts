@@ -31,6 +31,7 @@ import { clamp01, partitionFacts, uv } from "@/lib/request-understanding/provena
 import type {
   DecisionStatus,
   RequestIntent,
+  RequestScope,
   RequestUnderstandingResult,
   SubjectKind,
   UnderstandingAmbiguity,
@@ -399,27 +400,53 @@ function extractRoomLayout(
   });
 }
 
+/**
+ * İLAN TÜRÜ — KULLANICININ YAZDIĞI SÖZ İLE ÇIKARIM AYRI İŞARETLENİR (KB-16).
+ *
+ * Eski sürüm, niyet RENT/SELL olduğunda kullanıcı "kiralık"/"satılık"
+ * yazmamış olsa bile alanı EXPLICIT / USER_EXPLICIT provenance ve
+ * `evidence: ["kiralık"]` ile dolduruyordu. Bu iki ayrı kusurdu: kullanıcının
+ * yazmadığı bir söz kanıt gibi kaydediliyor, ve üretilen bu "kanıt"
+ * `semantic-subject` içindeki emlak dalını besleyerek "Araç kiralamak
+ * istiyorum" talebini gayrimenkul yapıyordu.
+ *
+ * Alan korunur — yalnız hak ettiği statüyle: yazılmışsa EXPLICIT, işlemden
+ * türetilmişse INFERRED.
+ */
 function extractListingType(
   normalized: string,
   intent: RequestIntent,
 ): UnderstandingValue<string> | undefined {
-  if (/\bkiralık\b|\bkiralik\b/.test(normalized) || intent === "RENT") {
-    if (/\bsatılık\b|\bsatilik\b/.test(normalized)) {
-      // satılık wins over incidental kira mentions when both? "kiracılı satılık" has no kiralık
-    }
-  }
-  if (/\bsatılık\b|\bsatilik\b/.test(normalized) || intent === "SELL") {
+  const saleWord = normalized.match(/\bsatılık\b|\bsatilik\b/i);
+  const rentWord = normalized.match(/\bkiralık\b|\bkiralik\b/i);
+  // Yazılmış söz her hâlükârda çıkarımı yener; "satılık" ikisi birden
+  // geçtiğinde önceliklidir (kiracılı satılık ilanları).
+  if (saleWord) {
     return uv("Satılık", {
       provenance: "EXPLICIT",
       source: "USER_EXPLICIT",
-      evidence: ["satılık"],
+      evidence: [saleWord[0]],
     });
   }
-  if (/\bkiralık\b|\bkiralik\b/.test(normalized) || intent === "RENT") {
+  if (rentWord) {
     return uv("Kiralık", {
       provenance: "EXPLICIT",
       source: "USER_EXPLICIT",
-      evidence: ["kiralık"],
+      evidence: [rentWord[0]],
+    });
+  }
+  if (intent === "SELL") {
+    return uv("Satılık", {
+      provenance: "INFERRED",
+      source: "DETERMINISTIC_INFERENCE",
+      evidence: [`intent=${intent}`],
+    });
+  }
+  if (intent === "RENT") {
+    return uv("Kiralık", {
+      provenance: "INFERRED",
+      source: "DETERMINISTIC_INFERENCE",
+      evidence: [`intent=${intent}`],
     });
   }
   return undefined;
@@ -552,7 +579,17 @@ export function understandRequest(
   const normalizedInput = normalizeUnderstandingInput(rawInput);
 
   const numbers = classifyNumbers(normalizedInput);
-  const intentHits = collectIntentSignals(normalizedInput);
+  /**
+   * İŞLEM KAPSAMI (KB-16): "Kiralık makine için bakım arıyorum" cümlesinde
+   * işlem belirteci soldaki KULLANIM BAĞLAMINDADIR; istenen şey bakımdır.
+   * İlişkinin iki yakası burada yeniden çözülmez — tek yetkili
+   * `readUsageContextSplit` sonucu olduğu gibi işlem otoritesine geçirilir.
+   */
+  const intentUsageSplit = readUsageContextSplit(normalizedInput);
+  const intentHits = collectIntentSignals(normalizedInput, {
+    usageContext: intentUsageSplit?.context ?? null,
+    requestedTarget: intentUsageSplit?.target ?? null,
+  });
   let intentResolved = resolveIntentFromSignals(intentHits);
 
   const modelTokens = modelIdentifierTokens(numbers);
@@ -2377,6 +2414,70 @@ export function understandRequest(
     subject: subjectDecision,
   });
 
+  /**
+   * KAPSAM KARARI — TEK KAPI (kurucu kararı, 2026-08-25).
+   *
+   * Karar burada YENİDEN çözümlenmez; nihai (uzlaştırılmış) işlem türünden
+   * okunur. KB-16'dan sonra `SELL` tam olarak şu anlama gelir: kullanıcının
+   * AÇIKÇA adlandırdığı işlem, kendi nesnesini elden çıkarmaktır
+   * ("satmak istiyorum", "kiraya vermek"). İlan sıfatları ("satılık",
+   * "kiralık") artık SELL üretmez — onlar arayan tarafı TALEP tarafına koyar.
+   * Kullanım bağlamındaki elden çıkarma ifadeleri de karar veremez, bu yüzden
+   * "Aracımı satmak için ekspertiz hizmeti arıyorum" burada SERVICE olarak
+   * gelir ve DEMAND kalır.
+   *
+   * Bu yüzden kapsam kuralı tek satırdır ve kelimeye özel değildir.
+   */
+  const isUnsupportedSupply = reconciled.intent.value === "SELL";
+  const requestScope: UnderstandingDecision<RequestScope> = {
+    value: isUnsupportedSupply ? "UNSUPPORTED_SUPPLY" : "DEMAND",
+    confidence: isUnsupportedSupply ? reconciled.intent.confidence : 0.9,
+    status: "CONFIDENT",
+    evidence: isUnsupportedSupply
+      ? [
+          "supply-side-disposal",
+          `intent=${String(reconciled.intent.value)}`,
+          ...(reconciled.intent.evidence ?? []),
+        ]
+      : ["demand"],
+  };
+
+  /**
+   * KAPSAM DIŞI TALEPTE KATEGORİ VE KONU UYDURULMAZ.
+   *
+   * Bir arz ilanının kategorisi Talepo için anlamsızdır: onu yönlendirecek
+   * bir talep yoktur. Kararı sessizce silmek yerine UNKNOWN'a çekip kanıtı
+   * kaydediyoruz — "ölçemedim" ile "ölçtüm, yok" ayrımı korunur (I14).
+   */
+  if (isUnsupportedSupply) {
+    reconciled.category = {
+      value: null,
+      confidence: 0,
+      status: "UNKNOWN",
+      evidence: ["unsupported-supply-no-category"],
+    };
+    reconciled.subject = {
+      value: null,
+      confidence: 0,
+      status: "UNKNOWN",
+      evidence: ["unsupported-supply-no-subject"],
+    };
+    // Semantik konu da susar: "Evimi kiraya vermek istiyorum" cümlesinde ev
+    // gerçekten bir gayrimenkuldür, ama Talepo için yönlendirilecek bir TALEP
+    // yoktur; konuyu kesin gibi taşımak kazanılmamış bir statü olur.
+    requestSubject = {
+      ...requestSubject,
+      kind: {
+        value: null,
+        confidence: 0,
+        status: "UNKNOWN",
+        evidence: ["unsupported-supply-no-subject"],
+      },
+      name: undefined,
+      displayPhrase: undefined,
+    };
+  }
+
   const resolvedKeys = new Set<string>();
   if (identityBlock.brand) resolvedKeys.add("brand");
   if (identityBlock.model) resolvedKeys.add("model");
@@ -2515,6 +2616,7 @@ export function understandRequest(
     rawInput,
     normalizedInput,
     intent: reconciled.intent,
+    requestScope,
     subject: {
       kind: reconciled.subject,
       productType,

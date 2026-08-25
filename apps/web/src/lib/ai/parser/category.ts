@@ -245,15 +245,17 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     ...brandKeywordList(TECHNOLOGY_BRANDS),
     ...TECHNOLOGY_PRODUCT_KEYWORDS,
   ],
+  /**
+   * KB-16: "kiralık"/"satılık" bu listeden ÇIKARILDI. İkisi de bir İŞLEM
+   * belirtecidir, kategori belirteci değil — araç da makine de hasta yatağı
+   * da kiralık olabilir. Liste yalnız emlak NESNELERİNİ taşır; ilan sıfatının
+   * emlağa katkısı aşağıdaki puanlamada emlak çıpasına bağlanmıştır.
+   */
   "real-estate": [
     "ev",
     "daire",
     "villa",
     "konut",
-    "kiralık",
-    "kirilik",
-    "satılık",
-    "satilik",
     "emlak",
     "rezidans",
     "residans",
@@ -710,17 +712,23 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       if (/\b[1-9]\s*\+\s*[0-9]\b/.test(normalized)) {
         score += 3;
       }
-      if (
-        normalized.includes("kiralık") ||
-        normalized.includes("satılık")
-      ) {
-        score += 2;
-      }
       // Short lexicon anchors — enough for TENTATIVE/CONFIDENT gate
-      if (
+      const hasPropertyAnchor =
         /\b(emlak|daire|villa|konut|gayrimenkul|arsa|rezidans|residans)\b/i.test(
           normalized,
-        )
+        );
+      if (hasPropertyAnchor) {
+        score += 2;
+      }
+      /**
+       * KB-16: ilan sıfatı emlağa YALNIZ bir emlak nesnesi varken puan verir.
+       * "kiralık daire" emlaktır; "kiralık araç", "satılık araç" ve "hasta
+       * yatağı … kiralık" değildir. Eski sürümde sıfat tek başına +2 (ve
+       * anahtar kelime olarak +2 daha) üretiyor, aracı emlağa taşıyordu.
+       */
+      if (
+        hasPropertyAnchor &&
+        (normalized.includes("kiralık") || normalized.includes("satılık"))
       ) {
         score += 2;
       }

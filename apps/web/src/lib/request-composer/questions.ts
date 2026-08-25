@@ -166,6 +166,26 @@ export function resolveHybridQuestions(
   opts?: ResolveHybridQuestionsOptions,
 ): HybridQuestionResult {
   const values = toResolverFieldBag(state);
+
+  /**
+   * KAPSAM DIŞI TALEPTE SORU MOTORU BAŞLAMAZ (kurucu kararı, 2026-08-25).
+   *
+   * Arz ilanı Talepo'nun konusu değildir; ona bütçe, konum ya da marka
+   * sormak kullanıcıyı yayınlanamayacak bir formda yürütmek olur. Karar
+   * burada verilmez — anlama katmanının tek kapsam kararı okunur.
+   */
+  if (state.understanding.requestScope?.value === "UNSUPPORTED_SUPPLY") {
+    return {
+      known: [],
+      missingRequired: [],
+      optionalUseful: [],
+      next: [],
+      suppressed: ["unsupported-supply"],
+      candidates: [],
+      questionSource: "canonical-hybrid",
+    };
+  }
+
   const categoryId =
     state.categoryId ?? state.understanding.category.value ?? null;
   const categoryUnknown = !categoryId || categoryId === "unknown";

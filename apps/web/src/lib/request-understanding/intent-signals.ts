@@ -1,11 +1,56 @@
 import type { RequestIntent, SubjectKind } from "./types";
 
+/**
+ * İŞLEM KANIT SINIFI (KB-16).
+ *
+ * Bir cümlede işlem türünü ele veren ifadeler eşit ağırlıkta değildir. Üç
+ * ayrı kanıt sınıfı vardır ve güçlü olan zayıf olanı yener:
+ *
+ *   EXPLICIT_TRANSACTION  Kullanıcının YAPMAK İSTEDİĞİ işlemi adlandırır:
+ *                         "kiralamak", "kiralama", "kiraya vermek", "satmak",
+ *                         "satın almak". Fiil de ad da olabilir; ikisi de
+ *                         aynı kanıttır.
+ *   LISTING_ADJECTIVE     Nesnenin İLAN DURUMUNU betimler: "kiralık",
+ *                         "satılık". Kullanıcının işlemini DEĞİL, aradığı
+ *                         nesnenin ne olarak sunulduğunu söyler.
+ *   GENERIC_SEEK          Yalnız arama eylemi: "arıyorum", "lazım",
+ *                         "bakıyorum". Hangi işlem olduğunu SÖYLEMEZ.
+ *
+ * Ölçülen hata (KB-16) tam olarak bu ayrımın yokluğuydu: "filo kiralama
+ * arıyorum" cümlesinde sondaki GENERIC_SEEK fiili, açık kiralama ifadesini
+ * yenip talebi satın alma havuzuna düşürüyordu.
+ */
+export type IntentEvidenceClass =
+  | "EXPLICIT_TRANSACTION"
+  | "LISTING_ADJECTIVE"
+  | "GENERIC_SEEK";
+
+const EVIDENCE_TIER: Record<IntentEvidenceClass, number> = {
+  EXPLICIT_TRANSACTION: 3,
+  LISTING_ADJECTIVE: 2,
+  GENERIC_SEEK: 1,
+};
+
+/**
+ * İŞLEM EKSENİ. Bu üç niyet aynı sorunun ("hangi işlem?") yanıtıdır ve
+ * aralarında kanıt sınıfı yarışır. PART/SERVICE/MANUFACTURE ayrı eksenlerdir
+ * (talebin NESNESİ hakkındadır) ve bu yarışa girmezler — davranışları
+ * değişmez.
+ */
+const TRANSACTION_AXIS: ReadonlySet<RequestIntent> = new Set<RequestIntent>([
+  "BUY",
+  "RENT",
+  "SELL",
+]);
+
 export type IntentSignalHit = {
   intent: RequestIntent;
   evidence: string;
   weight: number;
   /** Alan adı gibi tek başına karar taşıyamayan sinyal (bkz. Lexicon.weak). */
   weak?: boolean;
+  /** İşlem ekseni sinyallerinde kanıt sınıfı (bkz. IntentEvidenceClass). */
+  evidenceClass?: IntentEvidenceClass;
 };
 
 type Lexicon = {
@@ -25,6 +70,7 @@ type Lexicon = {
    * herhangi bir niyet için kullanılabilir.
    */
   weak?: boolean;
+  evidenceClass?: IntentEvidenceClass;
 };
 
 const LEXICON: Lexicon[] = [
@@ -92,25 +138,89 @@ const LEXICON: Lexicon[] = [
     weak: true,
     patterns: [/\bbaskı\b/i, /\bbaski\b/i, /\bmatbaa\b/i],
   },
+
+  /* --------------------- İŞLEM EKSENİ (KB-16) --------------------- */
+
   {
+    /**
+     * AÇIK KİRALAMA İFADESİ — TALEP tarafı.
+     *
+     * Fiil ("kiralamak") ve ad ("kiralama") aynı kanıttır: KB-16'da ölçülen
+     * hata, adın hiç tanınmaması ve cümlenin sonundaki arama fiiline
+     * yenilmesiydi. "kiralık" burada YOKTUR; o bir ilan sıfatıdır ve aşağıda
+     * ayrı sınıfta ele alınır.
+     */
     intent: "RENT",
-    weight: 1.25,
+    weight: 1.4,
+    evidenceClass: "EXPLICIT_TRANSACTION",
     patterns: [
-      /\bkiralık\b/i,
-      /\bkiralik\b/i,
-      /\bkiralamak\b/i,
-      /\bkiraya\b/i,
+      /(?:^|[^\p{L}\p{N}])kirala(?:ma|mak|yacağım|yacagim|yacağız|yacagiz|rım|rim)/iu,
+      /(?:^|[^\p{L}\p{N}])kiralaya(?:cak|bilece)/iu,
       /\baylık\s*kira\b/i,
+      /\baylik\s*kira\b/i,
     ],
   },
   {
+    /**
+     * AÇIK ELDEN ÇIKARMA — ARZ tarafı.
+     *
+     * "kiraya vermek" kiralamak DEĞİLDİR: kullanıcı kiracı değil, mülk
+     * sahibidir. Talepo'da arz yönünü taşıyan mevcut niyet SELL'dir; bu
+     * yüzden yön SELL olarak yazılır ve hangi ilanın verildiği `listingType`
+     * alanında ("Kiralık"/"Satılık") ayrıca korunur. Birinci sınıf bir LET
+     * niyeti eklemek ayrı bir karardır; bu dilimde enum genişletilmedi.
+     */
     intent: "SELL",
+    weight: 1.4,
+    evidenceClass: "EXPLICIT_TRANSACTION",
+    patterns: [
+      /(?:^|[^\p{L}\p{N}])kiraya\s+ver/iu,
+      // Kişi/sayı çekimleri tek kalıpta: istiyorum / istiyoruz / istiyor.
+      // ("Makinemizi satmak istiyoruz" yalnız tekil kalıp yüzünden hiçbir
+      //  sinyal üretmiyordu — ölçüldü.)
+      /\bsatmak\s+isti(?:yorum|yoruz|yor)\b/i,
+      /\bsat(?:ıyorum|iyorum|ıyoruz|iyoruz)\b/i,
+      /\bsat(?:acağım|acagim|acağız|acagiz)\b/i,
+      /\bsatışa\s*çıkar/i,
+      /\bsatisa\s*cikar/i,
+      /\bsatılığa\s*çıkar/i,
+      /\bsatiliga\s*cikar/i,
+      /\belden\s*çıkar/i,
+      /\belden\s*cikar/i,
+    ],
+  },
+  {
+    // AÇIK EDİNME — talep tarafı, işlem adlandırılmış.
+    intent: "BUY",
+    weight: 1.3,
+    evidenceClass: "EXPLICIT_TRANSACTION",
+    patterns: [/\bsatın\s*al/i, /\bsatin\s*al/i, /\balmak\s*istiyorum\b/i],
+  },
+  {
+    /**
+     * İLAN SIFATI — nesnenin sunuluş biçimi, kullanıcının işlemi değil.
+     *
+     * Talepo bir TALEP platformudur: "kiralık X" arayan kişi kiracıdır
+     * (RENT), "satılık X" arayan kişi alıcıdır (BUY). Sıfat, açık bir işlem
+     * ifadesi varsa ona yenilir — "kiralık aracımı satmak istiyorum"
+     * cümlesinde istenen işlem SATMAKTIR.
+     */
+    intent: "RENT",
     weight: 1.1,
-    patterns: [/\bsatılık\b/i, /\bsatilik\b/i, /\bsatmak\s*istiyorum\b/i],
+    evidenceClass: "LISTING_ADJECTIVE",
+    patterns: [/\bkiralık\b/i, /\bkiralik\b/i],
   },
   {
     intent: "BUY",
+    weight: 1.1,
+    evidenceClass: "LISTING_ADJECTIVE",
+    patterns: [/\bsatılık\b/i, /\bsatilik\b/i],
+  },
+  {
+    // GENEL ARAMA — işlem türünü SÖYLEMEZ; yalnız talep yönünü ima eder.
+    intent: "BUY",
     weight: 0.9,
+    evidenceClass: "GENERIC_SEEK",
     patterns: [
       /\barıyorum\b/i,
       /\bariyorum\b/i,
@@ -120,10 +230,7 @@ const LEXICON: Lexicon[] = [
       /\bbakiyom\b/i,
       /\blazım\b/i,
       /\blazim\b/i,
-      /\bsatın\s*al/i,
-      /\bsatin\s*al/i,
       /\bteklif\s*istiyorum\b/i,
-      /\balmak\s*istiyorum\b/i,
     ],
   },
 ];
@@ -151,7 +258,29 @@ const NEGATIONS: Array<{ intent: RequestIntent; patterns: RegExp[] }> = [
   },
 ];
 
-export function collectIntentSignals(normalizedText: string): IntentSignalHit[] {
+/**
+ * KULLANIM BAĞLAMI İŞLEMİ BELİRLEYEMEZ (KB-16; I25/I45 ile aynı ilke).
+ *
+ * "Kiralık makine için bakım arıyorum" cümlesinde "kiralık" SOLDAKİ kullanım
+ * bağlamını niteler; istenen şey bakımdır. Bu yüzden yalnız bağlamda geçip
+ * istenen hedefte geçmeyen işlem belirteçleri karar veremez.
+ *
+ * Kural muhafazakârdır: bir belirteç hedefte bulunamıyor AMA bağlamda da
+ * bulunamıyorsa (ayrıştırma kırpması) sinyal KORUNUR — kanıt yokluğu bir ret
+ * değildir. İlişkinin iki yakası burada YENİDEN çözülmez; tek yetkili
+ * `readUsageContextSplit` sonucundan çağıran tarafından geçirilir.
+ */
+export type IntentScope = {
+  /** `readUsageContextSplit` sonucunun sol yakası (kullanım bağlamı). */
+  usageContext?: string | null;
+  /** `readUsageContextSplit` sonucunun sağ yakası (istenen hedef). */
+  requestedTarget?: string | null;
+};
+
+export function collectIntentSignals(
+  normalizedText: string,
+  scope?: IntentScope,
+): IntentSignalHit[] {
   const hits: IntentSignalHit[] = [];
   const negated = new Set<RequestIntent>();
 
@@ -161,18 +290,31 @@ export function collectIntentSignals(normalizedText: string): IntentSignalHit[] 
     }
   }
 
+  const context = scope?.usageContext ?? null;
+  const target = scope?.requestedTarget ?? null;
+  const scoped = context != null && target != null;
+
   for (const entry of LEXICON) {
     if (negated.has(entry.intent)) continue;
     for (const p of entry.patterns) {
       const m = normalizedText.match(p);
-      if (m) {
-        hits.push({
-          intent: entry.intent,
-          evidence: m[0],
-          weight: entry.weight,
-          weak: entry.weak,
-        });
+      if (!m) continue;
+      if (
+        scoped &&
+        TRANSACTION_AXIS.has(entry.intent) &&
+        p.test(context as string) &&
+        !p.test(target as string)
+      ) {
+        // Yalnız kullanım bağlamında geçen işlem belirteci karar veremez.
+        continue;
       }
+      hits.push({
+        intent: entry.intent,
+        evidence: m[0],
+        weight: entry.weight,
+        weak: entry.weak,
+        evidenceClass: entry.evidenceClass,
+      });
     }
   }
 
@@ -190,11 +332,29 @@ export function resolveIntentFromSignals(
     return { intent: "UNKNOWN", confidence: 0.2, evidence: [] };
   }
 
+  /**
+   * KANIT SINIFI ÖNCELİĞİ (KB-16): işlem ekseninde en güçlü kanıt sınıfı
+   * kazanır. Açık işlem ifadesi varsa ilan sıfatı ve genel arama fiili işlem
+   * türünü belirleyemez; ilan sıfatı varsa genel arama fiili belirleyemez.
+   * Skor yalnız AYNI sınıf içinde yarışır. PART/SERVICE/MANUFACTURE bu
+   * elemeden etkilenmez.
+   */
+  let topTier = 0;
+  for (const hit of hits) {
+    if (!TRANSACTION_AXIS.has(hit.intent)) continue;
+    const tier = EVIDENCE_TIER[hit.evidenceClass ?? "GENERIC_SEEK"];
+    if (tier > topTier) topTier = tier;
+  }
+  const effective = hits.filter((hit) => {
+    if (!TRANSACTION_AXIS.has(hit.intent)) return true;
+    return EVIDENCE_TIER[hit.evidenceClass ?? "GENERIC_SEEK"] >= topTier;
+  });
+
   const scores = new Map<
     RequestIntent,
     { score: number; evidence: string[]; strong: number }
   >();
-  for (const hit of hits) {
+  for (const hit of effective) {
     const cur = scores.get(hit.intent) ?? { score: 0, evidence: [], strong: 0 };
     cur.score += hit.weight;
     cur.evidence.push(hit.evidence);
@@ -253,7 +413,15 @@ export function subjectKindForIntent(
   if (intent === "PART") return "PART";
   if (intent === "SERVICE") return "SERVICE";
   if (intent === "MANUFACTURE") return "MANUFACTURED_GOOD";
-  if (intent === "RENT" || hints.hasPropertySignals) return "PROPERTY";
+  /**
+   * İŞLEM TÜRÜ KONU TÜRÜNÜ ÜRETEMEZ (KB-16).
+   *
+   * Eski kural `intent === "RENT"` gördüğünde konuyu PROPERTY yapıyordu;
+   * "Araç kiralamak istiyorum" ve "Forklift kiralamak istiyorum" talepleri bu
+   * yüzden emlak konusuna düşüyordu. Kiralamak bir İŞLEMDİR, nesne değildir:
+   * emlak kanıtı emlak nesnesinden gelir.
+   */
+  if (hints.hasPropertySignals) return "PROPERTY";
   if (hints.hasVehicleModel && (intent === "BUY" || intent === "UNKNOWN")) {
     return "VEHICLE";
   }

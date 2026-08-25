@@ -65,6 +65,27 @@ export type RequestIntent =
   | "PART"
   | "UNKNOWN";
 
+/**
+ * TALEPO KAPSAMI — KURUCU ÜRÜN KARARI (2026-08-25).
+ *
+ * Talepo, ürününü satmak ya da kiraya vermek isteyenlerin İLAN platformu
+ * DEĞİLDİR. Yalnız ihtiyacı olan tarafın talebini kabul eder: ürün satın
+ * alma, ürün/araç/makine kiralama, hizmet alma, üretim/baskı yaptırma.
+ *
+ *   DEMAND               Kullanıcı bir şey İSTİYOR. Platformun konusu budur.
+ *   UNSUPPORTED_SUPPLY   Kullanıcı kendi nesnesini elden çıkarmak istiyor
+ *                        ("Aracımı satmak istiyorum", "Evimi kiraya vermek
+ *                        istiyorum"). Bu bir arz ilanıdır; yayınlanamaz,
+ *                        eşleştirilmez, bildirim üretmez.
+ *
+ * AYRIM İSTENEN HEDEFTEDİR, SATILAN NESNEDE DEĞİL. "Aracımı satmak için
+ * ekspertiz hizmeti arıyorum" GEÇERLİ bir hizmet talebidir: elden çıkarma
+ * ifadesi kullanım bağlamındadır, istenen hedef hizmettir. Bu ayrımı yapan
+ * kural KB-16'da kurulan kapsam kuralıdır (bkz. intent-signals IntentScope);
+ * burada yeni bir ayrıştırıcı kurulmaz, o kararın sonucu okunur.
+ */
+export type RequestScope = "DEMAND" | "UNSUPPORTED_SUPPLY";
+
 export type SubjectKind =
   | "VEHICLE"
   | "PRODUCT"
@@ -175,6 +196,12 @@ export type RequestUnderstandingResult = {
   normalizedInput: string;
 
   intent: UnderstandingDecision<RequestIntent>;
+
+  /**
+   * Talebin Talepo kapsamına girip girmediği (bkz. RequestScope). Yayın
+   * kapısı, soru motoru ve snapshot bu tek kararı okur.
+   */
+  requestScope: UnderstandingDecision<RequestScope>;
 
   subject: {
     kind: UnderstandingDecision<SubjectKind>;
