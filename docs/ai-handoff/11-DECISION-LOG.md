@@ -278,3 +278,47 @@ canlı bildirim teslimatı ölçülmemiştir; production deploy yoktur.
 **Bunu ne için yapıyoruz?**
 Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı
 sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin.
+
+## 2026-08-26 — Üyelik dönüşünde yayın niyeti sözleşmesi
+
+### Karar I — Üyelik dönüşü yayın niyeti `canReview` önkoşuluyla düşürülemez
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — `afc23a3`, `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL**, tarayıcıda **NOT-MEASURED** |
+| **Dosyalar** | `request-composer/resume-publish.ts` (yeni), `talep/page.tsx`, `scripts/verify-publish-resume-v1.ts` (yeni) |
+| **Testler** | `verify-publish-resume-v1` — 15 passed, exit 0 (9 saf davranış + 6 production wiring AST iddiası) |
+| **Kayıt** | **KB-21** |
+| **Değişirse risk** | Kullanıcı yayınlama niyetiyle üye olur, geri döner ve ekranda hiçbir şey olmaz: ne yayın ne eksik alan rehberliği. Niyet, hiçbir sayaca girmeden kaybolur |
+
+Kararın üç maddesi:
+
+**I1 — Üyelik dönüşündeki yayın niyeti, talebin yayına uygunluğuna bakılarak
+sessizce düşürülemez.** Hazır olma kararı YALNIZ anlama senkronizasyonunun
+tamamlanmış olmasına bakar: niyet var mı, motor sindirmeyi bitirdi mi,
+`rawInput` kullanıcının o anki metnine eşit mi. Bütçe, konum ve kritik soru
+durumu bu kararın **girdisi değildir**. Önceki davranışta `canReview = false`
+iken latch söndürülüyor ve hiçbir deneme başlatılmıyordu; bu, kullanıcının
+açık beyanını sistemin sessizce iptal etmesiydi.
+
+**I2 — Readiness eksikse yayın yapılmaz, ama mevcut eksik alan rehberliği
+açılır.** Eksik alan denemeyi iptal etme sebebi değil, denemenin kullanıcıya
+göstereceği şeyin ta kendisidir. `handlePublishAttempt` eksik etiketleri
+companion üzerinden zaten gösteriyordu; sözleşme, ona her hazır durumda
+ulaşılmasını garanti eder. Hiçbir talep bu yolla otomatik olarak yayına
+gitmez: kapı hâlâ `handlePublishAttempt` ve sunucudaki yayın kapısıdır.
+
+**I3 — Latch yalnız gerçek deneme başlatıldığında kapanır.** Beklerken açık
+kalır, böylece niyet bir sonraki turda hâlâ oradadır; denemeden sonra kapanır,
+böylece aynı niyet ikinci bir yayın denemesi üretmez. Sönme noktası tek
+yerdedir: karar uygulayıcısına verilen `closeLatch` handler'ı.
+
+> **Uygulama durumu — `BRANCH-WIRED` · `CODE-VERIFIED` · dayanak commit
+> `afc23a3`.** Karar mantığı sayfanın effect gövdesinden saf bir yardımcıya
+> alındı; doğrulayıcı hem o yardımcıyı hem de `talep/page.tsx`'teki gerçek
+> bağlantıyı TypeScript AST'i üzerinden sınar — helper effect'in ilk çalışan
+> ifadesi olmalı ve effect gövdesinde `canReview`/`canPublish` geçmemelidir.
+> Kırmızı kanıtı iki eksende ayrı ayrı alındı (saf katman 4 ihlal, wiring
+> katmanı 2 ihlal) ve geçici değişiklikler tamamen kaldırıldı. **Tarayıcıda
+> ölçülmedi**; üyelik dönüşü + eksik bütçe/konum rehberliği akışı gerçek
+> kimlik doğrulama ve veritabanı istiyor. `NOT-MEASURED` bir başarı değildir.

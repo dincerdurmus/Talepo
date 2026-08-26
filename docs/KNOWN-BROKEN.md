@@ -1671,6 +1671,107 @@ kayıtla kapanmadı.
 
 ---
 
+## KB-21 — Üyelik dönüşünde yayın niyeti sessizce düşüyor — **ÇÖZÜLDÜ**
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Talep sayfası üyelik dönüşü / yayın niyeti latch'i (`talep/page.tsx`) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — kullanıcının açık yayınlama niyeti hiçbir geri bildirim üretmeden kayboluyordu |
+| Kırık kontrol | `scripts/verify-publish-resume-v1.ts` (bu kayıtla birlikte açıldı) |
+| Ne zamandan beri | `8c9a036` (2026-08-23, *anonymous drafts survive sign-up and auto-resume publishing*) — kusurlu koşul bu commit ile geldi; blame ile doğrulandı, `f7aca7a` tabanının atası |
+| Tespit | 2026-08-26, `talep/page.tsx` içindeki üç miras `set-state-in-effect` lint hatası denetlenirken |
+| Durum | **ÇÖZÜLDÜ — `afc23a3`, `BRANCH-WIRED`, `CODE-VERIFIED`** |
+| Tarayıcı doğrulaması | **NOT-MEASURED** |
+
+**Neden yeni bir numara aldı.** Belgede bu senaryoyu taşıyan bir kayıt yoktu;
+`üyelik`, `sign-in`, `sign-up`, `resume publish`, `resumePublishPending`,
+`pendingPublish`, `PENDING_DRAFT` ve `niyet` aramalarının hiçbiri bu davranışa
+ait bir kayıt döndürmedi. Ad benzerliğiyle mevcut bir kayıt kapatılmadı.
+
+**Ölçülen kusur.** Anonim kullanıcı talebini yazıp "yayınla" dediğinde üyelik
+adımına yönlendirilir; taslağı ve yayınlama niyeti `localStorage`'a bırakılır.
+Dönüşte niyet bir latch (`resumePublishPending`) olarak geri yüklenir ve
+anlama motoru metni sindirir sindirmez tek bir yayın denemesi başlaması
+gerekir. Eski davranışta deneme **yalnız talep zaten yayına uygunsa**
+başlıyordu:
+
+```
+if ((understanding.rawInput ?? "").trim() !== requestText.trim()) return;
+setResumePublishPending(false);          // latch her hâlükârda sönüyor
+if (composerReadiness.canReview) {       // ← kusurlu önkoşul
+  handlePublishAttempt();
+}
+```
+
+Bütçe ya da konum eksikse (`publish-readiness.ts` → `canReview = false`) latch
+söndürülüyor ama `handlePublishAttempt` hiç çağrılmıyordu. Kullanıcı yayınlama
+niyetiyle üye olup geri dönüyor ve **ne yayın ne de eksik alan rehberliği**
+görüyordu. Latch de söndüğü için ikinci şans kalmıyordu. Oysa
+`handlePublishAttempt` tam bu durumda companion'ı açıp eksik etiketleri
+gösterecek şekilde yazılmıştı; yani rehberlik zaten vardı, ona hiç
+ulaşılmıyordu.
+
+Bu, KB-17 ve KB-20 ile aynı aileden değildir — orada sistemin kendi çıkarımı
+kullanıcı beyanı sayılıyordu; burada kullanıcının **açık** beyanı sessizce
+düşürülüyordu.
+
+**Düzeltme.** Karar sayfanın effect gövdesinden saf bir yardımcıya alındı
+(`src/lib/request-composer/resume-publish.ts`). Hazır olma yalnız metnin
+sindirilmiş olmasına bakar; yayına uygunluk **kararın girdisi değildir**,
+çünkü eksik alan denemeyi iptal etme sebebi değil denemenin göstereceği
+rehberliğin ta kendisidir. Latch yalnız gerçek deneme başlatılırken kapanır:
+beklerken açık kalır (niyet kaybolmaz), denemeden sonra erken dönüş tekrarı
+engeller. Hiçbir talep otomatik olarak yayına gitmez; `rawInput`, kullanıcı
+cevapları, projection ve snapshot sözleşmelerine dokunulmadı.
+
+**Kapanış ölçümü (`afc23a3`, exit 0) — 15 passed.** Doğrulayıcı kaynak metni
+grep'lemez ve sayaç fixture'ı kullanmaz; iki katmanda ölçer:
+
+1. **Saf davranış (9 iddia).** Karar fonksiyonu ve uygulayıcısı doğrudan
+   çağrılır, hangi çağrının yapıldığı gerçek çağrı kaydıyla okunur: bekleme
+   hâlleri latch'i söndürmez, sindirilmiş metinde `closeLatch → attemptPublish`
+   sırası üretilir, deneme sonrası ikinci tur yeni deneme üretmez, baş/son
+   boşluk farkı denemeyi engellemez, kullanıcı metni değiştirdiyse eski
+   analizle yayın denenmez.
+2. **Production wiring sözleşmesi (6 iddia, TypeScript AST).** `page.tsx`
+   AST olarak okunur — satır numarası ya da kırılgan substring araması yoktur.
+   Sınanan: helper sayfada tam bir kez çağrılıyor; çağrı bir `useEffect`
+   gövdesinde; çağrı effect'in **ilk çalışan ifadesi** (önünde duran her
+   `if`/`return` bir önkoşuldur); effect gövdesinde `canReview`/`canPublish`
+   identifier'ı hiç geçmiyor; `closeLatch` ve `attemptPublish` handler'ları
+   veriliyor; `setResumePublishPending(false)` yalnız `closeLatch` handler'ının
+   alt ağacında bulunuyor.
+
+Kırmızı kanıtı iki eksende ayrı ayrı alındı. Eski `canReview` önkoşulu
+yardımcıya geçici olarak geri konduğunda saf katman **4 ihlalle** kırmızıya
+döndü ("eksik alan durumunda deneme başlamadı — niyet sessizce kayboluyor");
+aynı önkoşul `page.tsx`'e geri konduğunda wiring katmanı **2 ihlalle** kırmızıya
+döndü ("effect'in ilk ifadesi helper çağrısı değil: IfStatement" ve "readiness
+referansları geri gelmiş: canReview"). Her iki geçici değişiklik de tamamen
+kaldırıldı; fixture, beklenen değer veya sayaç yeşile boyamak için
+değiştirilmedi.
+
+**Bu kaydın kapsamadığı — dürüstçe açık kalan.** Senaryo **tarayıcıda
+ölçülmedi**. Üyelik dönüşü + eksik bütçe/konum rehberliği akışı gerçek kimlik
+doğrulama ve veritabanı gerektiriyor; çalışılan dalda bu ortam kurulmadı.
+`NOT-MEASURED` bir başarı değildir ve "rehberlik ekranda göründü" diye
+okunamaz — kanıt kod düzeyindedir. Ayrıca wiring sözleşmesi effect'in
+**içindeki** önkoşulu yakalar; helper'ın kendisi bir gün readiness alacak
+biçimde değiştirilirse bunu saf katman yakalar, ama çağrının tamamen başka bir
+dosyaya taşınması hâlinde her iki katman da yeniden kurulmak zorundadır.
+
+**Eşlik eden lint temizliği (`341e775`) — kaydın kapsamı dışında ama aynı
+dosyada.** `talep/page.tsx` içindeki üç miras `react-hooks/set-state-in-effect`
+hatası kapatıldı: ölü `publishSummaryOpened` state'i ve üç yazıcısı kaldırıldı
+(üç yerde yazılıyor, hiçbir yerde okunmuyordu; özet açılma telemetrisi zaten
+ayrı `trackComposerEvent` ile gidiyor), kalan iki yer satır seviyesinde
+gerekçeli istisna aldı — dosya ya da kural geneli kapatma yapılmadı. Bu
+**yalnız bu dosyanın** bu kuralına ilişkindir: deponun genel lint durumu temiz
+değildir, aynı kapsamda 26 uyarı ölçülmeye devam ediyor ve bu kayıt onları
+kapatmaz.
+
+---
+
 # TRIAGE — kaydı tamamlanmamış kırmızılar
 
 **Bu bölüm KB kaydı DEĞİLDİR.** Buradaki satırlar yalnız "böyle bir kırmızı
