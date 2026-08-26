@@ -58,6 +58,22 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 - `build-state`, field answer `kind` / `value` / `softStatus`
 - UI phase, focused questions, locationMode
 - Entity role düzeltmeleri (`entity-roles.ts`)
+- **Çıkarım önerisi — `QuestionCandidate.inferredSuggestion`** (`request-brain/types.ts`).
+  Talepo tahmini, sorunun CEVABINDAN ayrı bir alanda ve **sorunun kendi
+  sözleşmesinde** taşınır; arayüz kabuğunun prop zincirinde değil. Alanlar:
+  `value` (gösterilecek tahmin), `authority` — tip düzeyinde yalnız `INFERRED`
+  (`Extract<Authority, "INFERRED">`) — ve `confirmed` — tip düzeyinde yalnız
+  `false`. Öneri bir kullanıcı cevabı, bir seçim ya da kalıcı bir otorite
+  DEĞİLDİR: seçili durum yalnız taslaktan türetilir, öneri soruyu kapatmaz ve
+  hiçbir kontrolü `aria-checked="true"` yapmaz. Kullanıcı açıkça seçip
+  onayladığında değer normal cevap zincirinden `USER_EXPLICIT` olarak yazılır;
+  bu alan güncellenmez, ilgisiz hâle gelir. Sunum kararı tek saf yardımcıda
+  (`request-composer/ui-helpers.ts` → `resolveQuestionDraftPresentation`);
+  nihai render süzgeci de aynı dosyada (`filterRenderableCandidates`) ve
+  `/talep` sayfası onu çağırır. Bugünkü `TalepoAiPanel` ile onun yerini alacak
+  arayüz aynı kanonik adayı tüketebilir — **Maira uygulanmış değildir**, bu
+  yalnız arayüz değiştirilebilirliğini sağlayan sözleşmedir.
+  [`CODE-VERIFIED` · `BROWSER-MEASURED-LOCAL` — `b12ce53`, 2026-08-26]
 
 ### Hesaplanan / geçici
 
@@ -93,6 +109,7 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 | userChoice | CategoryUserChoice enum |
 | profile/model version | `UNDERSTANDING_PROFILE_VERSION` |
 | provenance | source ai/user/system on candidates |
+| inference suggestion | `QuestionCandidate.inferredSuggestion` — onaysız öneri; `authority` yalnız `INFERRED`, `confirmed` yalnız `false`. Kullanıcı cevabı/seçimi değildir ve soruyu kapatmaz [`CODE-VERIFIED` — `b12ce53`] |
 
 ## Knowledge Engine haritası
 

@@ -7,6 +7,178 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-26, `b12ce53` (çıkarım onaysız öneridir; üç yüzeyde ölçüldü)
+
+Commit: `b12ce53` — *fix(requests): require confirmation for inferred answers*
+(parent `d3a64c7`). Bu bölüm aşağıdaki `3d5b2a5` tabanını **silmez**; yalnız
+iki noktasının **yerine geçer** ve bir yüzeyi ilk kez ölçer. Bütün sayılar bu
+commit üzerinde yeniden koşularak yazıldı.
+
+```
+npx --yes tsx scripts/verify-inference-confirmation-priority-v1.ts   # D3b — üç yüzey
+npx --yes tsx scripts/verify-question-suppression-authority-v1.ts    # D1 ölçüm
+npx --yes tsx scripts/verify-inference-question-authority-v2.ts      # D2 kabul
+```
+
+### `3d5b2a5` tabanının yerine geçen iki nokta
+
+| Nokta | `3d5b2a5` | `b12ce53` |
+| --- | --- | --- |
+| `FIRST_SCREEN` · `high_risk_silent_suppression` | **1** (`auto-02/condition@FIRST_SCREEN`) | **0** — aynı kayıt `inference_re_asked` sınıfına geçti |
+| `FIRST_SCREEN` · `inference_re_asked` | 19 | **20** |
+
+`3d5b2a5` bölümündeki "ilk ekranda bir kaydın hâlâ bu sınıfta görünmesi üç
+görünür soru sınırının bir sonucudur" cümlesi **artık geçerli değildir**: kayıt
+sınıra değil, **öncelik kaybına** takılıyordu. Doğrulama soruları artık kuyruğun
+önüne alınıyor. `FULL_QUEUE` ekseninde hiçbir sayı değişmedi.
+
+### D3b — üç yüzey ilk kez ayrı ölçüldü
+
+Motor kuyruğunun doğru olması, kullanıcının o soruyu gördüğü anlamına gelmiyordu.
+Doğrulayıcı bu yüzden üç yüzeyi ayrı ölçer:
+
+| Yüzey | Kaynak |
+| --- | --- |
+| `next` | `resolveHybridQuestions(state).next` — motorun iç kuyruğu |
+| `candidates` | `resolveHybridQuestions(state, üretimSeçenekleri).candidates` — sıralanmış, görünür sınıra kesilmiş liste |
+| `renderableCandidates` | `filterRenderableCandidates(...)` — `/talep` ekranının GERÇEKTEN render ettiği liste |
+
+`auto-02/condition@FIRST_SCREEN` — girdi
+`2020 model dizel otomatik Volkswagen Passat arıyorum`:
+
+| | değer |
+| --- | --- |
+| `condition` | `İkinci el` |
+| provenance / authority | `INFERRED` / `INFERRED` |
+| `mayCloseQuestion` | **false** — kullanıcı cevabı değildir, soruyu kapatamaz |
+| Önce | ilk ekranda **yok**; motor kuyruğunda 2. dalgaya düşüyordu, nihai render süzgecinden ise **tamamen** siliniyordu |
+| Şimdi | `next` = `["condition","needType","generation"]` · `candidates` = aynı · `renderable` ilk üçü = `["budget","city","condition"]` |
+
+### Nihai UI süzgeci — bu dilimde ilk kez ölçülen sessiz kayıp
+
+`/talep` ekranı, aday listesini render etmeden önce kendi içinde bir kez daha
+süzüyordu ve bu süzgeç hiçbir doğrulayıcı tarafından ölçülmüyordu. Ölçüldüğünde:
+
+| Ölçüm | Düzeltme öncesi | `b12ce53` |
+| --- | --- | --- |
+| Nihai render yüzeyinden sessizce düşen çıkarım kimliği | **35** | **0** |
+| Nihai render yüzeyinde duran çıkarım doğrulaması | 0 | **35** |
+| Etkilenen benzersiz senaryo | **30** | — |
+| Senaryo başına dağılım | 25 senaryoda 1 · 5 senaryoda 2 (25×1 + 5×2 = 35) | — |
+| `USER_EXPLICIT` / kapatmaya yetkili `VERIFIED` yanlış tekrar | 0 | **0** |
+
+Kök neden bir alan hatası değildi: süzgeç, kullanıcı metninden **ikinci kez**
+"bu zaten cevaplanmış" kararı üretiyordu. O karar tek yerde verilir — anlama
+katmanının alana yazdığı `provenance`. Süzgeç `page.tsx` içinden
+`ui-helpers.ts` → `filterRenderableCandidates` altına taşındı; taşıma davranışı
+değiştirmedi (108 senaryoda tek fark istenen düzeltmedir) ve bağlantı
+`page.tsx`in AST'si üzerinden kanıtlanır.
+
+### Kanonik öneri sözleşmesi — `QuestionCandidate.inferredSuggestion`
+
+Öneri, arayüz kabuğunun prop zincirinde değil **sorunun kendi sözleşmesinde**
+taşınır:
+
+| Alan | Değer | Zorlayan |
+| --- | --- | --- |
+| `value` | gösterilecek tahmin metni | — |
+| `authority` | yalnız `INFERRED` | `Extract<Authority, "INFERRED">` (tip) |
+| `confirmed` | yalnız `false` | literal `false` (tip) |
+
+Öneri bir kullanıcı cevabı, bir seçim ya da kalıcı bir otorite **değildir**;
+seçili durum yalnız taslaktan türetilir. `TalepoAiPanel.tsx`'e özel bir prop
+zinciri **kurulmadı** ve o dosya bu commit'te **değişmedi** — bugünkü panel ile
+onun yerini alacak arayüz aynı kanonik soru adayını tüketebilir.
+
+> **Maira uygulanmış değildir.** Bu yalnız arayüzün gelecekte
+> değiştirilebilmesini sağlayan bir sözleşmedir; Maira ne uygulanmıştır ne de
+> `BRANCH-WIRED` sayılır.
+
+### Tarayıcı kanıtı — `BROWSER-MEASURED-LOCAL · PASS`
+
+2026-08-26, yerel çalışma kopyası, boş portta ayrı sunucu. **Publish/create
+POST'u ve veritabanı yazımı yok.** Production ya da canlı başarı iddiası
+**yoktur**.
+
+**`auto-02`** — `2020 model dizel otomatik Volkswagen Passat arıyorum`:
+
+- `Talepo önerisi · İkinci el · Henüz seçmedik` görünür; `aria-describedby`
+  ile seçenek grubuna bağlı (kimlik React `useId` üretimi).
+- Başlangıçta üç seçenek de `aria-checked="false"`, seçili stil yok.
+- Seçeneğe tıklamak **yalnız taslağı** seçer; soru açık kalır, listede durur.
+- `Ekle`/onay **öncesi** authority `INFERRED`; **sonrası** `USER_EXPLICIT`.
+- `rawInput` her aşamada birebir aynı kaldı.
+- Onaydan sonra soru kapandı, çoğalmadı; `Renk tercihi` ve
+  `Kasa / hasar durumu` sonraki dalgada durmaya devam etti.
+
+**`furn-01`** — `Koltuk takımı arıyorum`:
+
+- `Talepo önerisi · Ev · Henüz seçmedik`; hiçbir seçenek seçili değil.
+- `Ekle` başlangıçta **disabled** — taslak boş, yani cevap yok.
+- Açık seçim ve onaydan sonra değer cevap olur ve soru kapanır.
+
+> **Düzeltme öncesi ölçülen kırmızı.** Aynı iki senaryoda tahmin
+> `aria-checked="true"` ve seçili mavi stille geliyordu: `auto-02` → `İkinci el`,
+> `furn-01` → `Ev`. Yani kullanıcı hiçbir şeye dokunmadan onaylamış görünüyordu.
+
+### B1 — commit öncesi kapatılan regresyon
+
+Bu dilimin **ilk** uygulaması yeni bir hata üretmişti: `updateDynamicField`
+kanonik duruma yazmadığı için, kullanıcının "Bilgileri düzenle" panelinden
+girdiği değer (`manualValues`) chip yeniden açıldığında taslaktan **siliniyor**
+ve kullanıcının reddettiği tahmin ona **yeniden öneriliyordu**.
+
+Kural genelleştirildi: ekrandaki değer tahminden **farklıysa** o değer
+kullanıcıya aittir — taslakta korunur ve öneri üretilmez. İki kalıcı test
+vakasıyla kilitlendi:
+
+| Vaka | Beklenen |
+| --- | --- |
+| `INFERRED` + ekranda farklı değer (`Sıfır`) | taslak `Sıfır`, öneri yok |
+| `INFERRED` + ekranda değer yok | taslak boş, öneri `İkinci el` |
+
+Regresyon commit'e **girmedi**.
+
+### Korunan ölçümler (`b12ce53`)
+
+```
+D1 FIRST_SCREEN : high_risk_silent_suppression 0 · inference_re_asked 20
+D2              : 0 / 20 / 49 / 3 / 0 / 4 · kaybolan 0
+FULL_QUEUE      : 942 kimlik — değişmedi
+authority ladder: 11/11
+invariants      : 121 passed · 2 failed · 1 known_fail
+coverage        : 99 pass · 9 known_fail · 0 fail
+talep beyni     : %92   (yalnız 108 senaryoluk corpus)
+Pro hattı       : %22   (yalnız ölçülen uçtan uca hat)
+```
+
+### Bu dilimde KAPANMAYANLAR — gizlenmiyor
+
+- **`budget` / `engine` / `specs` / `technicalSpecs` sabit elemesi.** Nihai
+  süzgeçte alan adına özel, `b12ce53`'ten **önce de var olan** bir eleme,
+  doğrulama kontrolünden ÖNCE çalışır: bu dört alan yalnız çıkarımdan gelen bir
+  değer taşırsa doğrulama sorusu üretilmez. Ölçüldü: 108 senaryoluk tabanda
+  tetiklenen kimlik **0**. Kural bu dört alan için evrensel **değildir** ve
+  belgede öyle gösterilmiyor.
+- **`hybrid.isSyncing` sırasında `canonicalFields = null`.** O render turunda
+  doğrulama önceliği kapanır; geçicidir, senkron bitince düzelir, **ölçülmedi**.
+- **AST doğrulayıcısının binding/alias sınırı.** Kapılar isim eşleştirmelidir;
+  tip denetleyici tabanlı binding çözümlemesi yoktur. Gölgeleme ya da alias'lı
+  import yanlış negatif/pozitif üretebilir.
+- **Profil tanımı olmayan 50 çıkarım değeri.** 108 senaryoda hiçbir dalgada
+  sorulmayan, yalnız çıkarımdan gelen 50 alan değeri duruyor (ör.
+  `re-01/brandCandidate`). Bu dilimde ne düzeltildi ne çözülmüş gösterildi.
+- **Kapasite kanaryası `NOT-MEASURED`.** Public üretim API'siyle üçten fazla
+  eşzamanlı çıkarım doğrulaması üretilemedi (15 girdi denendi, tavan 2).
+  Sonuç zorlanmadı.
+- **Matching V3 canlı fanout'a bağlı değildir**; tedarikçi yetkinliği ve canlı
+  bildirim teslimatı **ölçülmemiştir**; **production deploy yoktur**.
+
+Bu değişiklik `BRANCH-WIRED` · `CODE-VERIFIED` · `BROWSER-MEASURED-LOCAL`'dır.
+**`PRODUCTION-DEPLOYED` DEĞİLDİR.**
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-26, `3d5b2a5` (çıkarım öneridir, kullanıcı cevabı değildir)
 
 Commit: `3d5b2a5` — *fix(requests): treat inference as suggestion, never as
@@ -1356,11 +1528,11 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — ölçülen 20 kayıt `3d5b2a5` ile kapandı; kaydın etiket ekseni ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53` ile kapandı; kaydın etiket ekseni ve ölçülemeyenler AÇIK** |
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 
@@ -1392,6 +1564,54 @@ kapanış sayılmadı; kimlikler tek tek eşleştirildi:
 | 20 | `print-07/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
 
 Alan dağılımı: `needType` 18 · `condition` 2 — D1'deki dağılımla birebir aynı.
+
+### İlk ekran ve nihai render yüzeyi de KAPANDI (`b12ce53`, 2026-08-26)
+
+**Yeni KB açılmadı.** Bu bulgu KB-17'nin kök nedeninin aynısıdır — Talepo'nun
+kendi çıkarımı kullanıcı cevabı gibi davranıyor — yalnız iki yeni yüzeyde
+görülmüştür. İsim benzerliğiyle değil kök nedenle eşleştiği için kayıt
+genişletildi.
+
+`3d5b2a5` kapanışı yalnız `FULL_QUEUE` ufkunu kanıtlıyordu. İki yüzey
+ölçülmemişti ve ikisi de kırıktı:
+
+| Yüzey | `3d5b2a5` | `b12ce53` |
+| --- | --- | --- |
+| `FIRST_SCREEN` (motor kuyruğu) | `auto-02/condition@FIRST_SCREEN` → `high_risk_silent_suppression` = **1** | **0** — aynı kayıt `inference_re_asked` |
+| Nihai render (`/talep` ekranı) | **ölçülmüyordu**; 30 senaryoda 35 çıkarım kimliği sessizce düşüyordu | düşen **0**, duran **35** |
+
+`auto-02/condition@FIRST_SCREEN` — girdi
+`2020 model dizel otomatik Volkswagen Passat arıyorum`; `condition = İkinci el`,
+provenance ve authority `INFERRED`, `mayCloseQuestion = false`. Kullanıcı cevabı
+değildir ve soruyu kapatamaz. Artık `next`, `candidates` ve nihai
+`renderableCandidates` yüzeylerinin **üçünde de** ilk üç görünür soru içinde,
+doğrulama olarak duruyor.
+
+Nihai süzgeçteki kök neden bir alan hatası değildi: süzgeç kullanıcı metninden
+**ikinci kez** "bu zaten cevaplanmış" kararı üretiyordu. Karar artık tek yerde
+verilir — kanonik cevap otoritesi. Ayrıntı ve tarayıcı kanıtı için bu belgenin
+başındaki **`b12ce53` ölçüm tabanı** bölümüne bakın.
+
+**Kapanış ölçüsündeki maddeler yeniden değerlendirildi:**
+
+| Kapanış ölçüsü | `3d5b2a5` | `b12ce53` |
+| --- | --- | --- |
+| 1. Otoritesiz değer soruyu sessizce kapatamaz | KARŞILANDI (`FULL_QUEUE`) | **KARŞILANDI — üç yüzeyde birden** |
+| 2. `U = 0` | AÇIK (`not_measured = 4`) | **AÇIK** — değişmedi |
+| 3. A1 provenance etiketi | AÇIK (`provenance_mismatch = 69`) | **AÇIK** — değişmedi |
+| 4. A2 kayıtları Signal facts'te görünmeli | ÖLÇÜLMEDİ | **ÖLÇÜLMEDİ** — değişmedi |
+| 5. Kapanan kayıtlar kimliğiyle listelensin | KARŞILANDI | **KARŞILANDI** — 35 kimlik doğrulayıcı çıktısında tek tek basılır |
+
+Kayıt bir bütün olarak hâlâ **KISMEN ÇÖZÜLDÜ**: 2, 3 ve 4 numaralı maddeler bu
+dilimde ele alınmadı ve olduğundan iyi gösterilmiyor.
+
+**Bu dilimde kapanmayan, aynı aileye ait açık kalemler:** nihai süzgeçteki
+`budget` / `engine` / `specs` / `technicalSpecs` sabit elemesi (corpus'ta
+tetiklenen kimlik **0**, parent `d3a64c7`'te de mevcut), `hybrid.isSyncing`
+sırasındaki geçici `canonicalFields = null` render, AST doğrulayıcısının
+binding/alias sınırı, profil tanımı olmayan **50** çıkarım değeri ve
+`NOT-MEASURED` kapasite kanaryası.
+
 
 **Kayıt bir bütün olarak ÇÖZÜLDÜ sayılmıyor.** Kapanış ölçüsündeki beş
 maddeden yalnız birincisi kanıtlandı:

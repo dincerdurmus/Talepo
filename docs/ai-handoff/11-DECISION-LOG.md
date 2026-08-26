@@ -196,9 +196,9 @@ tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `3d5b2a5`, `BRANCH-WIRED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
-| **Dosyalar** | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
-| **Testler** | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
+| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar**. **`b12ce53` eki:** `ui-helpers.ts`, `request-brain/types.ts`, `request-composer/index.ts`, `EnrichmentChips.tsx`, `talep/page.tsx`, `scripts/verify-inference-confirmation-priority-v1.ts` (yeni) | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
+| **Testler**. **`b12ce53` eki:** `verify-inference-confirmation-priority-v1` (exit 0, iki koşuda byte-birebir) | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
 | **Değişirse risk** | Talepo kendi tahminini kullanıcı cevabı sanar; talep, kullanıcının hiç görmediği bir değerin belirlediği havuza gider |
 
 Kararın beş maddesi:
@@ -266,6 +266,76 @@ kalan cevap başarı sayılmaz. Veritabanına yazmadan, gerçek yayın çağrıs
 kullandığı kurucularla ölçüldü: `discoveryProjection.attributes.needType =
 "vehicle"`, `discoveryProjection.constraints.needType = {mode: "VALUE", value:
 "vehicle"}`, understanding snapshot `attributes.needType = "vehicle"`.
+
+**H6 — Çıkarım, kanonik soru adayında taşınan ONAYSIZ ÖNERİDİR; kullanıcı
+açıkça seçip onaylamadan cevap ya da `USER_EXPLICIT` otorite olamaz.**
+(`b12ce53`, 2026-08-26 — H4'ün ölçülmüş ve tamamlanmış hâli.)
+
+> **H4'ün bir cümlesi ölçüldüğünde YANLIŞ çıktı ve burada düzeltiliyor.**
+> H4, `3d5b2a5` tarihinde "rozet seçilmiş cevap görünümü almaz
+> (`aria-pressed=false`, tik yok, dolu zemin yok)" diyordu. Tarayıcıda
+> ölçüldüğünde gerçek bunun tersiydi: `/talep` ekranında çıkarım
+> `aria-checked="true"` ve seçili mavi zeminle geliyordu — `auto-02` →
+> `İkinci el`, `furn-01` → `Ev`. Yani kullanıcı hiçbir şeye dokunmadan
+> onaylamış görünüyordu. H4'ün geri kalanı (çıkarım soruyu kapatmaz, cevabı
+> yalnız kullanıcının dokunuşu oluşturur) geçerlidir; yalnız bu görünüm
+> iddiası `b12ce53` ile **yerine geçmiştir** ve artık ölçülmektedir.
+
+Kararın üç maddesi:
+
+1. **Öneri, sorunun kendi sözleşmesinde taşınır.** Kanonik taşıyıcı
+   `QuestionCandidate.inferredSuggestion` = `{ value, authority, confirmed }`.
+   `authority` tip düzeyinde yalnız `INFERRED`
+   (`Extract<Authority, "INFERRED">`), `confirmed` tip düzeyinde yalnız
+   `false`. Bir öneri tip düzeyinde cevaba dönüşemez.
+
+2. **Öneri seçim durumu üretmez.** Seçili seçenekler yalnız taslaktan
+   türetilir; öneri hiçbir kontrolü `aria-checked="true"` yapmaz, seçili stil
+   almaz ve soruyu kapatmaz. Öneriye dokunmak en fazla taslağı seçer; otorite
+   yükselmesini yalnız mevcut Ekle/Onay eylemi oluşturur ve `rawInput`'a hiçbir
+   metin eklenmez. Ekranda duran değer tahminden **farklıysa** o değer
+   kullanıcıya aittir: taslakta korunur ve reddedilen tahmin geri önerilmez.
+
+3. **Arayüz kabuğuna özel prop zinciri kurulmaz.** `TalepoAiPanel` geçici bir
+   kabuktur; ona özel bir öneri prop'u eklenmedi ve dosya `b12ce53`'te
+   **değişmedi**. Bugünkü panel ile onun yerini alacak arayüz aynı kanonik soru
+   adayını tüketir, böylece kabuk değişince bu bilgi sessizce düşmez.
+   **Maira uygulanmış değildir**; bu madde yalnız gelecekte arayüzün
+   değiştirilebilmesini sağlayan sözleşmedir, ne `BRANCH-WIRED` ne
+   `PRODUCTION-DEPLOYED` bir Maira iddiası taşır.
+
+**Nasıl ölçüldü.** Doğrulayıcı üç yüzeyi ayrı ölçer: motor kuyruğu (`next`),
+sıralanmış aday listesi (`candidates`) ve `/talep` ekranının gerçekten render
+ettiği liste (`renderableCandidates`). Nihai süzgeç bu dilimde `page.tsx`ten
+`ui-helpers.ts` → `filterRenderableCandidates` altına taşındı; taşıma davranışı
+değiştirmedi ve bağlantı `page.tsx`in AST'si üzerinden kanıtlanır.
+`auto-02/condition@FIRST_SCREEN` üç yüzeyde de ilk üç görünür soru içindedir.
+Nihai render yüzeyinden sessizce düşen çıkarım kimliği 35 → **0**; etkilenen 30
+benzersiz senaryo (25 senaryoda 1, 5 senaryoda 2). `USER_EXPLICIT` ya da
+kapatmaya yetkili `VERIFIED` hiçbir değer yanlışlıkla yeniden sorulmadı (0).
+
+**Commit öncesi kapatılan regresyon (B1).** İlk uygulama, `updateDynamicField`
+kanonik duruma yazmadığı için kullanıcının `manualValues` değerini taslaktan
+siliyor ve reddettiği tahmini yeniden öneriyordu. Kural genelleştirildi ve iki
+kalıcı test vakasıyla kilitlendi; regresyon commit'e girmedi.
+
+**Korunan ölçümler.** D1 `FIRST_SCREEN` high_risk **0** / inference_re_asked
+**20**; D2 `0 / 20 / 49 / 3 / 0 / 4`, kaybolan `0`; `FULL_QUEUE` 942 kimlik
+değişmedi; authority ladder 11/11; invariants `121 passed · 2 failed ·
+1 known_fail`; kategori kapsaması `99 pass · 9 known_fail · 0 fail`. Talep
+beyni **%92** (yalnız 108 senaryoluk corpus), Pro hattı **%22** (yalnız ölçülen
+uçtan uca hat).
+
+**Kapsam dışı bırakılanlar — gizlenmiyor.** Nihai süzgeçteki
+`budget` / `engine` / `specs` / `technicalSpecs` sabit elemesi doğrulama
+kontrolünden önce çalışmaya devam ediyor (corpus'ta tetiklenen kimlik **0**;
+parent `d3a64c7`'te de mevcut). `hybrid.isSyncing` sırasındaki geçici
+`canonicalFields = null` render ölçülmedi. AST kapıları isim eşleştirmelidir;
+binding/alias çözümlemesi yoktur. Profil tanımı olmayan **50** çıkarım değeri
+hâlâ hiçbir dalgada sorulmuyor. Kapasite kanaryası `NOT-MEASURED`. Matching V3
+canlı fanout'a bağlı değildir; tedarikçi yetkinliği ve canlı bildirim
+teslimatı ölçülmemiştir; **production deploy yoktur**.
+
 
 **Kapsam dışı bırakılanlar.** `provenance_mismatch = 69` etiket ekseni bu
 dilimde düzeltilmedi ve olduğundan iyi gösterilmiyor. Soru bastırma ölçümünde
