@@ -569,7 +569,17 @@ async function main(): Promise<void> {
               node.arguments[0]!.getText(source) === "publishError"
             );
           }
-          if (ts.isIdentifier(node)) return node.text === "publishError";
+          /*
+           * Turetilmis karar da kabul edilir. Bu bir kacis deligi DEGILDIR:
+           * `publishSignalDemandsAttention` turevinin `publishError` dahil
+           * dort sinyali de kapsadigi (h) bolumunde ayrica sinaniyor.
+           */
+          if (ts.isIdentifier(node)) {
+            return (
+              node.text === "publishError" ||
+              node.text === "publishSignalDemandsAttention"
+            );
+          }
           /* open={publishError ? true : undefined} */
           if (ts.isConditionalExpression(node)) {
             return (
@@ -823,6 +833,274 @@ async function main(): Promise<void> {
       "hata kutusundaki tekrar denemesi kanonik handlePublishAttempt'ten geciyor",
       retryViaCanonical,
       "retry `requestPublish`'i dogrudan cagiriyor ya da kanonik kapiyi atliyor",
+    );
+
+    /*
+     * (h) MOBIL GORUNURLUK: IKI KAPI, TEK KARAR.
+     *
+     * Mobilde companion iki kapinin arkasindadir: onu tasiyan dis <details>
+     * ve `aiCompanionOpen` ile yonetilen ic panel. Tarayici olcumu eksik alan
+     * rehberliginin her iki kapinin arkasinda kaldigini gosterdi: metin
+     * DOM'da uretiliyor ama kullaniciya hic gorunmuyordu, cunku
+     * `publishGuidanceAttempted` bir `publishError` uretmez.
+     *
+     * Kural: companion'in GERCEKTEN tasidigi bir sinyal varsa mobil panel
+     * gorunur olmali ve HER IKI kapi da AYNI turetilmis karari kullanmali.
+     * Iki kapi ayri ifadeler tasirsa biri acilip digeri kapali kalabilir —
+     * olculen kusur tam olarak buydu.
+     */
+    const SIGNALS = ["publishError", "publishGuidanceAttempted", "aiCompanionOpen"];
+
+    /** Zorunlu gorunurluk turevi: kullanici tercihinden BAGIMSIZ sinyaller. */
+    const derivedDecl = (name: string): ts.Expression | null => {
+      let found: ts.Expression | null = null;
+      walk(source, (n) => {
+        if (found) return;
+        if (!ts.isVariableDeclaration(n)) return;
+        if (!ts.isIdentifier(n.name) || n.name.text !== name) return;
+        found = n.initializer ?? null;
+      });
+      return found;
+    };
+    const attentionExpr = derivedDecl("publishSignalDemandsAttention");
+    const effectiveExpr = derivedDecl("effectiveAiCompanionOpen");
+    const exprText = (e: ts.Expression | null) => (e ? e.getText(source) : "");
+    const attentionText = exprText(attentionExpr);
+    const effectiveText = exprText(effectiveExpr);
+    const combined = attentionText + " " + effectiveText;
+    const missingSignals = SIGNALS.filter((s) => !combined.includes(s));
+
+    check(
+      "tek gorunurluk karari companion'in tasidigi sinyalleri kapsiyor",
+      attentionExpr !== null && effectiveExpr !== null && missingSignals.length === 0,
+      attentionExpr === null || effectiveExpr === null
+        ? "publishSignalDemandsAttention / effectiveAiCompanionOpen turevleri tanimlanmamis"
+        : "turevde eksik sinyal: " + missingSignals.join(", "),
+    );
+
+    /*
+     * (h-scope) KAPSAM DISI BILDIRIMI COMPANION'I ZORLA ACMAZ.
+     *
+     * Onceki turda "kapsam disi aciklamasi mobilde gorunmuyor" diye olculen
+     * sey bir YANLIS POZITIFTI: `checkVisibility()` bu sayfada guvenilmez
+     * sonuc veriyor. Yapisal gercek asagidaki kontrolle sabitlenir —
+     * bildirim zaten `<details>` agacinin DISINDA, ana composer kartinda
+     * ciziliyor ve her iki kapidan da bagimsiz olarak gorunur.
+     *
+     * Bu yuzden `outOfScopeNotice` companion'i zorla acan bir sinyal
+     * OLMAMALIDIR: yanlis bir olcumden dogan gereksiz panel acilmasi
+     * kaliciasmasin. Kapsam guvenligi ayri eksende (2C) korunuyor: kapsam
+     * disi talep publish yoluna hic girmiyor.
+     */
+    /*
+     * Kontrol yalnizca iki turev adinin initializer'ina bakmaz. Regresyon,
+     * ismi koruyup KULLANIM NOKTASINA ucuncu bir disjunct eklenerek de geri
+     * gelebilir — ornegin `open={editDetailsOpen || publishSignalDemandsAttention
+     * || Boolean(composerReadiness.outOfScopeNotice)}`. Bu yuzden companion
+     * gorunurlugunu belirleyen HER ifade taranir: iki turev ve iki kapinin
+     * attribute metinleri.
+     */
+    const companionVisibilityExprs: string[] = [attentionText, effectiveText];
+    walk(source, (n) => {
+      if (!ts.isJsxAttribute(n)) return;
+      const attrName = n.name.getText(source);
+      if (attrName !== "open" && attrName !== "className" && attrName !== "aria-expanded") {
+        return;
+      }
+      const text = n.getText(source);
+      if (!/publishSignalDemandsAttention|effectiveAiCompanionOpen/.test(text)) {
+        return;
+      }
+      companionVisibilityExprs.push(text);
+    });
+    const scopeLeak = companionVisibilityExprs.filter((t) =>
+      t.includes("outOfScopeNotice"),
+    );
+    check(
+      "kapsam disi bildirimi companion-acma kararina karistirilmamis",
+      scopeLeak.length === 0,
+      "outOfScopeNotice companion gorunurluk ifadesinde geciyor (" +
+        scopeLeak.length +
+        " yerde) — bildirim zaten <details> disinda gorunur, bu zorlama yanlis pozitif bir olcumden gelir",
+    );
+
+    /*
+     * (h0) ZORLA ACMA GECICI OLMALI — KALICI MANDAL DEGIL.
+     *
+     * `publishGuidanceAttempted` bir kez `true` olduktan sonra hicbir yerde
+     * `false`'a donmuyor. Turevde CIPLAK kullanilirsa, kullanicinin ilk
+     * yayin denemesinden sonra panel kalici olarak zorla acik kalir ve
+     * kapatma dugmesi sessizce etkisizlesir. Sinyal, ancak KARSILIK GELEN
+     * REHBERLIK GERCEKTEN GORUNURKEN gorunurluk talep etmelidir; bu da
+     * panelin kendi render kosuluyla ayni otoriteye baglanmak demektir
+     * (`attempted && missingLabels.length > 0`).
+     */
+    const guidanceLatchGuarded = (() => {
+      if (!attentionText.includes("publishGuidanceAttempted")) return true;
+      return /missingPublishLabels/.test(attentionText);
+    })();
+    check(
+      "zorla acma gecici: rehberlik sinyali kalici mandal degil",
+      guidanceLatchGuarded,
+      "publishGuidanceAttempted turevde ciplak kullaniliyor — hic false'a donmedigi icin panel ilk denemeden sonra kalici acik kalir",
+    );
+
+    /*
+     * (h-scope2) KAPSAM DISI BILDIRIMI IKI KAPININ DA DISINDA CIZILMELI.
+     *
+     * Yukaridaki karar (`outOfScopeNotice` companion'i acmaz) ancak bildirim
+     * gercekten kapilarin disindaysa guvenlidir. Bunu YAPISAL olarak
+     * sabitliyoruz: bildirimi tasiyan JSX, hicbir <details> alt agacinda
+     * olmamali. Biri onu ileride akordeonun icine tasirsa bu satir kirmiziya
+     * doner ve kapsam disi kullanicisi yine sessizce bilgisiz kalmaz.
+     */
+    let scopeNoticeNode: ts.Node | null = null;
+    walk(source, (n) => {
+      if (scopeNoticeNode) return;
+      if (!ts.isJsxAttribute(n)) return;
+      if (n.name.getText(source) !== "data-testid") return;
+      const init = n.initializer;
+      if (!init || !ts.isStringLiteral(init)) return;
+      if (init.text !== "composer-out-of-scope") return;
+      scopeNoticeNode = n;
+    });
+
+    /*
+     * MUAFIYETSIZ ARALIK. Yukaridaki `insideDetails`, hata varken kendiligindern
+     * acilan akordeonu bilerek muaf tutar — cunku `publishError` yolunda kutu
+     * zaten gorunur olur. Kapsam disi bildiriminde bu muafiyet GECERSIZDIR:
+     * bildirim hicbir hata olmadan da gorunmek zorundadir. Bu yuzden burada
+     * dosyadaki HER <details> agaci sayilir.
+     */
+    const allDetailsRanges: Array<[number, number]> = [];
+    walk(source, (n) => {
+      if (
+        (ts.isJsxElement(n) &&
+          n.openingElement.tagName.getText(source) === "details") ||
+        (ts.isJsxSelfClosingElement(n) && n.tagName.getText(source) === "details")
+      ) {
+        allDetailsRanges.push([n.getStart(source), n.getEnd()]);
+      }
+    });
+    const insideAnyDetails = (n: ts.Node) =>
+      allDetailsRanges.some(
+        ([start, end]) => n.getStart(source) >= start && n.getEnd() <= end,
+      );
+
+    check(
+      "kapsam disi bildirimi <details> agacinin disinda ciziliyor",
+      scopeNoticeNode !== null && !insideAnyDetails(scopeNoticeNode),
+      scopeNoticeNode === null
+        ? "composer-out-of-scope isaretcisi bulunamadi — bildirimin yeri dogrulanamadi"
+        : "kapsam disi bildirimi bir <details> icine tasinmis — akordeon kapaliyken kullanici kapsam disi oldugunu goremez",
+    );
+
+    /* (h1) Dis kapi: <details open> zorunlu gorunurluk turevini kullanmali. */
+    let outerGateUsesDerived = false;
+    walk(source, (n) => {
+      let opening: ts.JsxOpeningLikeElement | null = null;
+      if (ts.isJsxElement(n) && n.openingElement.tagName.getText(source) === "details") {
+        opening = n.openingElement;
+      } else if (
+        ts.isJsxSelfClosingElement(n) &&
+        n.tagName.getText(source) === "details"
+      ) {
+        opening = n;
+      }
+      if (!opening) return;
+      for (const attr of opening.attributes.properties) {
+        if (!ts.isJsxAttribute(attr)) continue;
+        if (attr.name.getText(source) !== "open") continue;
+        if (/publishSignalDemandsAttention/.test(attr.getText(source))) {
+          outerGateUsesDerived = true;
+        }
+      }
+    });
+    check(
+      "dis <details> kapisi tek gorunurluk kararini kullaniyor",
+      outerGateUsesDerived,
+      "details `open` yalnizca publishError'a bakiyor — rehberlik ve kapsam disi sinyalleri akordeonu acmaz",
+    );
+
+    /*
+     * (h2) Ic kapi: companion icerigini saran className kararinda CIPLAK
+     * `aiCompanionOpen` kalmamali; turetilmis karar kullanilmali.
+     */
+    let innerGateUsesDerived: boolean | null = null;
+    walk(source, (n) => {
+      if (innerGateUsesDerived !== null) return;
+      if (!ts.isJsxExpression(n) || !n.expression) return;
+      if (!ts.isIdentifier(n.expression) || n.expression.text !== "aiPanelContent") {
+        return;
+      }
+      /* Bu ifadeyi tasiyan JSX elemaninin className'i ic kapidir. */
+      let host: ts.JsxElement | null = null;
+      for (let c: ts.Node | undefined = n.parent; c; c = c.parent) {
+        if (ts.isJsxElement(c)) {
+          host = c;
+          break;
+        }
+      }
+      if (!host) return;
+      for (const attr of host.openingElement.attributes.properties) {
+        if (!ts.isJsxAttribute(attr)) continue;
+        if (attr.name.getText(source) !== "className") continue;
+        const text = attr.getText(source);
+        innerGateUsesDerived = /effectiveAiCompanionOpen/.test(text);
+      }
+    });
+    check(
+      "ic companion kapisi tek gorunurluk kararini kullaniyor",
+      innerGateUsesDerived === true,
+      innerGateUsesDerived === null
+        ? "aiPanelContent'i saran className bulunamadi"
+        : "ic panel hala ciplak aiCompanionOpen'a bagli — dis akordeon acilsa bile panel gizli kalir",
+    );
+
+    /* (h3) Mobil baslik aria-expanded ayni karari bildirmeli. */
+    let ariaUsesDerived: boolean | null = null;
+    walk(source, (n) => {
+      if (ariaUsesDerived !== null) return;
+      if (!ts.isJsxAttribute(n)) return;
+      if (n.name.getText(source) !== "aria-expanded") return;
+      ariaUsesDerived = /effectiveAiCompanionOpen/.test(n.getText(source));
+    });
+    check(
+      "mobil baslik aria-expanded ayni karari bildiriyor",
+      ariaUsesDerived === true,
+      ariaUsesDerived === null
+        ? "aria-expanded bulunamadi"
+        : "aria-expanded gercek gorunurlukle uyusmuyor — ekran okuyucu yanlis durum duyurur",
+    );
+
+    /*
+     * (h4) Gorunurluk TURETILMELI, effect ile senkronize EDILMEMELI.
+     *
+     * Olculen sey dar: bir effect'in bagimlilik dizisinde gorunurluk
+     * sinyallerinden biri varsa ve o effect `setAiCompanionOpen` cagiriyorsa,
+     * turetme yerine state senkronizasyonu kurulmus demektir — kullanici
+     * tercihi ile zorunlu gorunurluk birbirini sessizce ezer. Kullanici
+     * eylemine karsilik gelen mevcut effect'ler (ornegin `deps: []` ile
+     * calisan taslak geri yukleme) bu kuralin disindadir; onlar bir sinyali
+     * izlemez, bir olayi uygular.
+     */
+    const VISIBILITY_SIGNALS = /(publishError|publishGuidanceAttempted|outOfScopeNotice)/;
+    let syncEffect = false;
+    walk(source, (n) => {
+      if (!ts.isCallExpression(n)) return;
+      if (calleeName(n) !== "useEffect") return;
+      const deps = n.arguments[1];
+      if (!deps || !ts.isArrayLiteralExpression(deps)) return;
+      if (!VISIBILITY_SIGNALS.test(deps.getText(source))) return;
+      walk(n, (inner) => {
+        if (!ts.isCallExpression(inner)) return;
+        if (calleeName(inner) === "setAiCompanionOpen") syncEffect = true;
+      });
+    });
+    check(
+      "gorunurluk effect ile senkronize edilmiyor",
+      !syncEffect,
+      "gorunurluk sinyalini izleyen bir useEffect setAiCompanionOpen cagiriyor — turetme yerine state senkronizasyonu kurulmus",
     );
   }
 

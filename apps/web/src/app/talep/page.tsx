@@ -1788,6 +1788,49 @@ function TalepOlusturForm() {
     ],
   );
 
+  /**
+   * MOBİL GÖRÜNÜRLÜK — İKİ KAPI, TEK KARAR (2026-08-26).
+   *
+   * Mobilde AI companion iki kapının arkasındadır: onu taşıyan dış
+   * `<details>` ("Bilgileri düzenle") ve `aiCompanionOpen` ile yönetilen iç
+   * panel. Tarayıcı ölçümü ikisinin ayrı ayrı kapalı kalabildiğini gösterdi:
+   * eksik alan rehberliği ve kapsam dışı açıklaması DOM'da üretiliyor ama
+   * kullanıcıya hiç görünmüyordu, çünkü bu iki sinyal `publishError`
+   * üretmez ve akordeon yalnız ona bakıyordu.
+   *
+   * Karar TEK yerde verilir ve her iki kapı da aynı değeri kullanır. İki
+   * kapı ayrı ifadeler taşırsa biri açılıp diğeri kapalı kalabilir —
+   * ölçülen kusur tam olarak buydu.
+   *
+   * Görünürlük TÜRETİLİR, effect ile senkronize edilmez: kullanıcının kendi
+   * açma/kapama tercihi (`aiCompanionOpen`) korunur, zorunlu sinyaller ise
+   * onu GEÇİCİ olarak geçersiz kılar. İkisi birbirini state üzerinden
+   * sessizce ezmez.
+   *
+   * ZORLA AÇMA GEÇİCİDİR. Her sinyal, panelin o sinyali gerçekten çizdiği
+   * koşulun aynısına bağlanır; aksi hâlde panel kapanamaz hâle gelir.
+   * `publishGuidanceAttempted` hiçbir yerde `false`'a dönmez — çıplak
+   * kullanılsaydı kullanıcının ilk yayın denemesinden sonra akordeon ve
+   * companion kalıcı olarak açık kalır, kapatma düğmesi sessizce
+   * etkisizleşirdi. Bu yüzden rehberlik sinyali rehberliğin kendi render
+   * koşuluyla (`attempted && missingLabels.length > 0`) eşleşir ve eksik
+   * alan doldurulunca zorlama kendiliğinden kalkar.
+   *
+   * KAPSAM DIŞI BİLDİRİMİ BU KARARA GİRMEZ. "Kapsam dışı açıklaması mobilde
+   * görünmüyor" ölçümü bir YANLIŞ POZİTİFTİ (`checkVisibility()` bu sayfada
+   * güvenilmez sonuç veriyor). Bildirim `<details>` ağacının dışında, ana
+   * composer kartında çizilir ve her iki kapıdan bağımsız olarak zaten
+   * görünürdür; doğrulayıcı bunu yapısal olarak sabitler. Kapsam güvenliği
+   * ayrı eksende durur: `UNSUPPORTED_SUPPLY` talep publish/create yoluna hiç
+   * girmez. Companion'ı bunun için zorla açmak, yanlış bir ölçümden doğan
+   * gereksiz bir davranışı kalıcılaştırmak olurdu.
+   */
+  const publishSignalDemandsAttention =
+    Boolean(publishError) ||
+    (publishGuidanceAttempted && missingPublishLabels.length > 0);
+  const effectiveAiCompanionOpen =
+    aiCompanionOpen || publishSignalDemandsAttention;
+
   // Üyelik dönüşü: saklanan taslağı geri yükle (kurucu, 2026-08-23).
   useEffect(() => {
     if (resumeAttemptedRef.current) return;
@@ -3038,7 +3081,7 @@ function TalepOlusturForm() {
         type="button"
         className="relative z-[1] flex w-full cursor-pointer items-center justify-between gap-3 px-5 py-4 text-left lg:hidden"
         onClick={() => setAiCompanionOpen((open) => !open)}
-        aria-expanded={aiCompanionOpen}
+        aria-expanded={effectiveAiCompanionOpen}
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className="talepo-ai-emblem shrink-0">
@@ -3063,7 +3106,7 @@ function TalepOlusturForm() {
         </div>
         <ChevronDown
           className={`h-4 w-4 text-teal-100/45 transition ${
-            aiCompanionOpen ? "rotate-180" : ""
+            effectiveAiCompanionOpen ? "rotate-180" : ""
           }`}
         />
       </button>
@@ -3085,7 +3128,7 @@ function TalepOlusturForm() {
 
       <div
         className={`relative z-[1] min-w-0 px-4 pb-5 sm:px-6 sm:pb-7 lg:block lg:pt-4 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:min-h-0 lg:flex-1 lg:overflow-y-auto" : ""} ${
-          aiCompanionOpen
+          effectiveAiCompanionOpen
             ? "block border-t border-white/10 pt-4 lg:border-t-0"
             : "hidden lg:block"
         }`}
@@ -3641,7 +3684,7 @@ function TalepOlusturForm() {
                   panel kullanicinin biraktigi durumda kalir.
                 */}
                 <details
-                  open={editDetailsOpen || Boolean(publishError)}
+                  open={editDetailsOpen || publishSignalDemandsAttention}
                   onToggle={(event) =>
                     setEditDetailsOpen(event.currentTarget.open)
                   }
