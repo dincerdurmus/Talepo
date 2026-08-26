@@ -7,7 +7,114 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
-## ÖLÇÜM TABANI — 2026-08-25, `47df572` (verilen cevabın soru akışında korunması)
+## ÖLÇÜM TABANI — 2026-08-26, `3d5b2a5` (çıkarım öneridir, kullanıcı cevabı değildir)
+
+Commit: `3d5b2a5` — *fix(requests): treat inference as suggestion, never as
+user answer* (parent `2a5b587`). Bu bölüm, aşağıdaki `47df572` tabanının
+**yerine geçer**; o bölüm tarihli kanıt olarak silinmeden duruyor. Ölçümler bu
+commit üzerinde yeniden koşularak yazıldı; hiçbiri önceki rapordan
+kopyalanmadı.
+
+```
+npx --yes tsx scripts/verify-question-suppression-authority-v1.ts   # D1 ölçüm
+npx --yes tsx scripts/verify-inference-question-authority-v2.ts     # D2 kabul
+npx --yes tsx scripts/verify-geo-evidence-authority-v1.ts           # coğrafi kanıt
+npx --yes tsx scripts/verify-user-choice-authority-v1.ts            # seçim otoritesi
+```
+
+### Soru bastırma ölçümü — `3d5b2a5`
+
+| Sonuç | `FIRST_SCREEN` | `FULL_QUEUE` (kapanış ufku) |
+| --- | --- | --- |
+| `correctly_suppressed` | 49 | **49** |
+| **`wrongly_repeated`** | **0** | **0** |
+| `high_risk_silent_suppression` | 1 | **0** |
+| `missing_required_question` | 377 | 366 |
+| `authority_suppressed` | 3 | **3** |
+| `not_measured` | 4 | **4** |
+| *(bilgi)* `inference_re_asked` | 19 | **20** |
+| *(bilgi)* `correctly_asked` | 61 | 148 |
+| *(bilgi)* `optional_not_asked` | 213 | 137 |
+| *(bilgi)* `OUT_OF_SCOPE` | 218 | 218 |
+| *ayrı eksen:* `provenance_mismatch` | 69 | **69** |
+
+**`FIRST_SCREEN`'de `high_risk_silent_suppression = 1` kaldı ve bu sayı
+gizlenmiyor.** Kapanış ölçüsü yalnız `FULL_QUEUE`'dur (doğrulayıcı başka ufku
+fonksiyon düzeyinde reddeder); ilk ekran ölçümü "bastırıldı" ile "sıraya
+girdi"yi ayıramadığı için kapanış iddiası oradan kurulamaz. İlk ekranda bir
+kaydın hâlâ bu sınıfta görünmesi, üç görünür soru sınırının bir sonucudur;
+`FULL_QUEUE`'da aynı kayıt `inference_re_asked`'a düşer.
+
+**Çıkış kodu hâlâ `3` ve bu YEŞİL DEĞİLDİR.** `0` = ölçüm tamamlandı · `1` =
+doğrulayıcı sözleşmesi bozuk · `3` = sözleşme sağlam **fakat kapanış
+tamamlanmadı**. Bu tabanda 8 kayıt (4 `scenarioId/fieldKey` × 2 ufuk)
+`category_unresolved` nedeniyle ölçülemedi: `health-07/__scenario__`,
+`health-08/__scenario__`, `tech-12/__scenario__`, `home-06/brandCandidate`.
+`3`'ü "başarılı" diye okumak ölçülemeyeni ölçülmüş saymaktır.
+
+### D2 kabul ölçümü — kayıt kimliği düzeyinde
+
+`verify-inference-question-authority-v2` çıkışı (exit 0):
+
+```
+ASKED denkligi: D1 sorulan 142 + D1 sessiz bastirilan 20 = 162
+                D2 sorulan 168 · aciklanamayan yeni 6 · kaybolan 0
+```
+
+D1'de sorulan 142 kaydın **hiçbiri** düşmedi. Fazladan sorulan 6 kayıt tek tek
+listelenir ve `needType` cevaplandıktan sonra görünür hâle gelen alanlardır:
+`mach-06/{brand,condition,model}` ve `print-06/{brand,condition,model}`.
+
+### `authority_suppressed = 3` — değişmedi
+
+| Kayıt | Otorite | Kanonik kimlik |
+| --- | --- | --- |
+| `auto-10/brand@FULL_QUEUE` | `findModelInText(text).record.brand_id -> brandById` | `brand_mercedes-benz` |
+| `tech-02/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
+| `tech-10/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
+
+### Bu tabanda AÇIK kalanlar (KNOWN-OPEN)
+
+- **`provenance_mismatch = 69`** — soru kararından bağımsız etiket ekseni. Bu
+  dilimde **düzeltilmedi** ve olduğundan iyi gösterilmiyor.
+- **`not_measured = 4`** (ufuk başına; iki ufukta 8 kayıt) — gerçek
+  ölçülemezlik, yeşile boyanmadı.
+- **`MoneyRangeControl` sabit `id="budget-amount"` kullanıyor.** Aynı anda iki
+  bütçe kontrolü render edilirse DOM kimliği çakışır. Ölçülmedi, düzeltilmedi.
+- **Sekme kapanınca cevap ve taslak kalıcı değildir.** Açık seçim oturum
+  state'inde yaşar; kalıcılık bu dilimin kapsamı dışındaydı.
+- **Matching V3 canlı fanout'a bağlı değildir.**
+- **Tedarikçi yetkinliği ve canlı bildirim teslimatı ölçülmemiştir.**
+- **Production deploy yoktur.**
+
+### Diğer bataryalar — `3d5b2a5`
+
+- **Anlama invariant bataryası:** `121 passed · 2 failed · 1 known_fail`.
+  Kırmızılar YALNIZ **I22** (KB-11) ve **I23** (KB-14); known_fail YALNIZ
+  **I25d**. Üçü de bu tabanda açık kaldı.
+- **Kategori kapsama corpus'u:** `TOTAL=108 · PASS=99 · KNOWN_FAIL=9 · FAIL=0 ·
+  XPASS=0`.
+- **`verify-geo-evidence-authority-v1`:** 9 vaka × 2 katman, exit 0.
+- **`verify-user-choice-authority-v1`:** exit 0.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** (formül: 100 × 99/108) — bu sayı
+YALNIZ 108 senaryoluk **talep-beyni corpus'unun** ölçümüdür.
+**Bütün Talepo'nun %92 hazır olduğu anlamına GELMEZ.**
+
+**`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi.** Bu, YALNIZ
+**ölçülen** Pro uçtan uca hattıdır; beş bileşen: envelope kategori erişimi
+(104/108), güvenilir marka (15/108), ürün türü erişimi (0/108), matching'in
+`resolvedEntities` okuması (0), tedarikçi yeteneği (0,
+`CAPABILITY_NOT_MEASURED`). **Ürünün genel olarak %22 hazır olduğu anlamına
+GELMEZ.**
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-25, `47df572` (verilen cevabın soru akışında korunması) — **YERİNE GEÇTİ**
+
+> **Yerine geçti:** bu bölümün sayıları 2026-08-26 tarihli `3d5b2a5` ölçümüyle
+> güncellendi (yukarı bakın). Tarihli kanıt olarak korunuyor; bugünün gerçeği
+> olarak okunmamalıdır.
 
 Commit: `47df572` — *fix(requests): preserve resolved answers across question
 flow* (parent `757508a`). Bu bölüm, aşağıdaki `a44c23d` tabanının **yerine
@@ -1209,17 +1316,66 @@ alındı ve dördü birden PASS oldu.
 
 ---
 
-## KB-17 — Çıkarılan değer kullanıcıya gösterilmeden soruyu kapatıyor
+## KB-17 — Çıkarılan değer kullanıcıya gösterilmeden soruyu kapatıyor — **KISMEN ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **AÇIK — D1 yalnız ÖLÇÜMÜ kurdu; production düzeltmesi D2'dedir** |
+| Durum | **KISMEN ÇÖZÜLDÜ — ölçülen 20 kayıt `3d5b2a5` ile kapandı; kaydın etiket ekseni ve ölçülemeyenler AÇIK** |
+
+### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
+
+D1 tabanında `high_risk_silent_suppression` sınıfındaki 20 `FULL_QUEUE` kaydının
+**her biri** ayrı ayrı `inference_re_asked` sınıfına taşındı. Toplamın tutması
+kapanış sayılmadı; kimlikler tek tek eşleştirildi:
+
+| # | Kayıt kimliği | Alan | D1 sınıfı | `3d5b2a5` sınıfı |
+| --- | --- | --- | --- | --- |
+| 1 | `auto-01/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 2 | `auto-02/condition@FULL_QUEUE` | `condition` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 3 | `auto-02/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 4 | `auto-03/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 5 | `auto-04/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 6 | `auto-05/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 7 | `auto-06/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 8 | `auto-07/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 9 | `auto-08/condition@FULL_QUEUE` | `condition` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 10 | `auto-08/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 11 | `auto-09/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 12 | `auto-10/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 13 | `auto-11/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 14 | `mach-01/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 15 | `mach-02/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 16 | `mach-03/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 17 | `mach-05/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 18 | `mach-07/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 19 | `mach-08/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+| 20 | `print-07/needType@FULL_QUEUE` | `needType` | `high_risk_silent_suppression` | `inference_re_asked` |
+
+Alan dağılımı: `needType` 18 · `condition` 2 — D1'deki dağılımla birebir aynı.
+
+**Kayıt bir bütün olarak ÇÖZÜLDÜ sayılmıyor.** Kapanış ölçüsündeki beş
+maddeden yalnız birincisi kanıtlandı:
+
+| Kapanış ölçüsü | Durum |
+| --- | --- |
+| 1. Otoritesiz değer soruyu sessizce kapatamaz | **KARŞILANDI** — `high_risk_silent_suppression` (`FULL_QUEUE`) 20 → **0** |
+| 2. `U = 0` — her kayıt kanıtla sınıflandırılabilir | **AÇIK** — `not_measured = 4` (ufuk başına), hepsi `category_unresolved` |
+| 3. A1 kayıtlarının provenance'ı kullanıcı metnine uygun olmalı | **AÇIK** — `provenance_mismatch = 69`, bu dilimde düzeltilmedi |
+| 4. A2 kayıtları Signal facts içinde kullanıcıya görünmeli | **ÖLÇÜLMEDİ** — bu dilimde ele alınmadı |
+| 5. Kapanan kayıtlar kimliğiyle listelenmeli | **KARŞILANDI** — yukarıdaki tablo |
+
+**Düzeltmenin kökü.** Serbest metinden ÇIKARILAN alt kategori, gezinme seçimi
+gibi davranıp "Araç mı, parça mı?" sorusunu siliyordu. İğne artık soruyu ancak
+kullanıcı koyduysa kapatır. Değeri yalnız çıkarımdan gelen alanlar için
+doğrulama sorusu üretilir ve kuyruğun başına konur. Ayrıntı için ürün kararı:
+`docs/ai-handoff/11-DECISION-LOG.md` → **Karar H**.
 
 **KB-15'in TERSİ yönü.** KB-15 "gereken soru tekrar soruluyor" der; bu kayıt
 "gereken soru sessiz çıkarımla kapatılıyor" der. İkisi ayrı risklerdir ve
@@ -1410,6 +1566,75 @@ FAIL sayılır (bkz. KB-7).
 > **Paket kalıntıları** (PREMIUM / CORPORATE'ten kalanlar; kasıtlı legacy ile
 > gerçek kalıntı ayrımı dahil): bkz. `docs/ai-handoff/11-DECISION-LOG.md` →
 > **Karar D**.
+
+---
+
+## KB-20 — Çıplak ilçe adı kullanıcı konumu sayılıyor — **ÇÖZÜLDÜ**
+
+| Alan | Değer |
+| --- | --- |
+| Katman | Coğrafi eşleştirme → anlama konum otoritesi (`turkey-districts` / `understand-request`) |
+| Sınıf | **GERÇEK ÜRÜN HATASI** — kullanıcının yazmadığı bir şehir EXPLICIT kanıtla dolduruluyordu |
+| Kırık kontrol | `scripts/verify-geo-evidence-authority-v1.ts` (bu kayıtla birlikte açıldı) |
+| Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı); `2a5b587` üzerinde ölçülerek doğrulandı |
+| Tespit | 2026-08-26, D2 dilimi sırasında tarayıcı doğrulaması yapılırken |
+| Durum | **ÇÖZÜLDÜ — `3d5b2a5`, `BRANCH-WIRED`** |
+
+**Neden yeni bir numara aldı.** Belgede bu davranışı taşıyan bir kayıt yoktu;
+`Kastamonu`, `ilçe adı`, `coğraf`, `findProvinceAndDistrict` ve
+`textMentionsPlace` aramalarının hiçbiri eşleşmedi. Ad benzerliğiyle mevcut bir
+kayıt kapatılmadı.
+
+**Ölçülen kusur (D2'den BAĞIMSIZ; `2a5b587` üzerinde de üretiliyordu).**
+Türkiye'de bazı ilçe adları gündelik Türkçe sözcüklerdir. `Araç`, Kastamonu'nun
+ilçesidir. Eşleştirici bir ilçe adını metnin herhangi bir yerinde görünce, il
+adı hiç geçmese ve cümlede hiçbir yer ifadesi olmasa bile konumu çözülmüş
+sayıyordu:
+
+```
+"Araç kiralamak istiyorum"          → Kastamonu / Araç   (provenance EXPLICIT, source USER_EXPLICIT)
+"Aracın bakımı için servis arıyorum" → Kastamonu / Araç
+```
+
+İkinci satırın ayrı bir nedeni vardı: `normalizeUnderstandingInput` eksik
+Türkçe harfleri tamamlarken `aracın` ifadesini `araçın` yapıyor, böylece ilçe
+adı bulunma ekiyle geçmiş gibi görünüyordu. Yani sistemin kendi normalizasyonu
+olmayan bir kanıt üretiyordu — KB-17 ile aynı kusur sınıfı: sistemin ürettiği
+şey kullanıcının beyanı sayılıyor.
+
+**Düzeltme (anahtara özel değil).** `Araç` sözcüğü için yama yazılmadı. İki
+genel kural kondu:
+
+1. İl adı geçmiyorsa, bir ilçe adı ancak **açık bir yer ifadesi** taşıyorsa
+   kullanıcı kanıtı sayılır: hâl eki (`Kadıköy'de`) ya da komşu idari birim
+   sözcüğü (`Araç ilçesinde`). Çıplak ilçe adı tek başına kanıt değildir.
+2. Yer kanıtı **ham metinden** okunur, normalize edilmiş metinden değil.
+   Normalizasyon marka/ürün eşleştirmesi için doğrudur ama yer adında olmayan
+   bir kanıt üretebilir.
+
+**Kapanış ölçümü (`3d5b2a5`, exit 0).** 9 vaka, iki katmanda ayrı ayrı
+(`findProvinceAndDistrictInText` ve `understanding.location.city`):
+
+| Girdi | Beklenen | Sonuç |
+| --- | --- | --- |
+| `Araç kiralamak istiyorum` | konum yok | PASS |
+| `Aracın bakımı için servis arıyorum` | konum yok | PASS |
+| `Kastamonu Araç ilçesinde araç kiralamak istiyorum` | `Kastamonu / Araç` | PASS |
+| `Kastamonu/Araç'ta araç arıyorum` | `Kastamonu / Araç` | PASS |
+| `Kadıköy'de 2+1 daire arıyorum` | `İstanbul / Kadıköy` | PASS |
+| `Çankaya ilçesinde ofis arıyorum` | `Ankara / Çankaya` | PASS |
+| `Ankara Çankaya'da kiralık 3+1 daire arıyorum` | `Ankara / Çankaya` | PASS |
+| `İstanbul / Kadıköy'de fotokopi makinesi arıyorum` | `İstanbul / Kadıköy` | PASS |
+| `İzmir'de satılık arsa arıyorum` | `İzmir` | PASS |
+
+Doğrulayıcı ayrıca eşleştirici mantığında herhangi bir il/ilçe adının **sabit
+olarak** geçmediğini sınar; kurala özel bir yama eklenirse satır kırmızıya
+döner. Kategori kapsama corpus'unda (108 senaryo) ham metin ile normalize
+edilmiş metin okumaları arasında **tek bir fark ölçülmedi**.
+
+**Bu kaydın kapsamadığı.** Diyakritiksiz yazılan ilçe adları (`cankayada`)
+hiçbir okumada çözülmüyordu ve hâlâ çözülmüyor; bu ayrı bir eksiktir, bu
+kayıtla kapanmadı.
 
 ---
 

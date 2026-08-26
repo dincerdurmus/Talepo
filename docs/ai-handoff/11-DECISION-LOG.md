@@ -11,7 +11,10 @@ Durum etiketleri: `BRANCH-WIRED` ≠ `PRODUCTION-DEPLOYED` (`00-START-HERE.md`).
 | Kategori güçlü ama soft sinyal | **Kısmen** — UI guidance soft; DB `categoryId` fanout’ta hard | guidance + distribute | phase2 + fanout code | Soft sanılıp hard fanout |
 | Product span marka/model olamaz | **Kısmen** — entity-roles / identity | `entity-roles.ts`, product-identity | entity-global-core | Yanlış soru/match |
 | Marka/model kanıt gerektirir | **V3’te uygulanmış**; legacy fanout’ta yok | matching-v3 identity/scoring | matching-v3 verifier | Sahte EXACT / cartesian |
-| Bütçe+konum olmadan review açılmaz | **Uygulanmış** (`BRANCH-WIRED`) | `publish-readiness.ts`, global-core | phase2 / scheduler | Eksik teklif kalitesi |
+| Bütçe+konum olmadan review açılmaz | **Uygulanmış** (`BRANCH-WIRED`) — 2026-08-26'da DAR bir ek geldi: cevaplanmamış **çıkarım doğrulaması** olan `routing_critical` alan da kilitler (bkz. Karar H4); önerisi olmayan routing sorusu kilitlemez | `publish-readiness.ts`, global-core, `question-scheduler.ts` | phase2 / scheduler, `verify-inference-question-authority-v2` | Eksik teklif kalitesi |
+| Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. Karar H | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx` | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
+| `rawInput` soru cevaplarıyla değiştirilmez | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, 2026-08-23 kararının yerine geçer (Karar G) | `talep/page.tsx`, `sync.ts` | `verify-user-choice-authority-v1` | Bestecinin yazdığı sözcük başka alanın kullanıcı kanıtı sayılır (KB-20) |
+| Çıplak ilçe adı konum kanıtı değildir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. KB-20 | `turkey-districts.ts`, `understand-request.ts` | `verify-geo-evidence-authority-v1` | Kullanıcının yazmadığı şehir talebe yazılır |
 | Sorular kategori/ürüne göre | **Uygulanmış** (`BRANCH-WIRED`) | question-profiles, scheduler | controls/scheduler | Generic form geri dönüş |
 | Missing catalog ≠ hard exclusion | **V3’te uygulanmış**; legacy category miss farklı sorun | score-candidate coverage | matching-v3 | Doğru Pro silinir |
 | Explicit exclusion hard conflict | **V3’te uygulanmış** | excluded + scoring | matching-v3 | Yanlış negatif |
@@ -172,3 +175,72 @@ kategori ve konu çözmemesi bir hata değil, ürün politikası gereği ölçü
 KB-14/I23, I25d known_fail, KB-15 ve kalan 9 kapsama `KNOWN_FAIL`'i
 **açık kalmaya devam ediyor**. Matching V3 hâlâ üretime bağlı değil,
 tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.
+
+---
+
+## 2026-08-26 — Kullanıcı metni otoritesi ve çıkarımın rolü
+
+### Karar G — “Verilen cevap serbest metne de işlenir” — **YERİNE GEÇTİ / SUPERSEDED**
+
+| | |
+|--|--|
+| **Alınma tarihi** | 2026-08-23 |
+| **Nerede yaşıyordu** | Bu günlükte **kayıtlı değildi**; yalnız `apps/web/src/app/talep/page.tsx` içinde bir kod yorumu olarak duruyordu (“Kurucu (2026-08-23): verilen cevap serbest metne de otomatik işlenir — metin talebin tek gerçek kaydıdır”) |
+| **Durum** | **YERİNE GEÇTİ — 2026-08-26, `3d5b2a5`.** Silinmiyor; neden alındığı ve neden geri alındığı görünür kalsın diye duruyor |
+| **Özgün gerekçe** | Metnin talebin tek gerçek kaydı olması; soru panelinde verilen cevabın metinde de görünmesi |
+| **Geri alma gerekçesi (ölçülmüş)** | Bestecinin kullanıcının cümlesine yazdığı sözcük, bir sonraki okumada **başka bir alanın** kullanıcı kanıtı sayılabiliyordu. `needType = vehicle` cevabı `“Talep türü: Araç.”` diye yazıldığında konum otoritesi `Araç`ı Kastamonu'nun ilçesi olarak okuyup kullanıcının hiç yazmadığı bir konumu `EXPLICIT` kanıtla dolduruyordu (bkz. **KB-20**). Etiket yerine kayıt değeri yazıldığında ise kullanıcı kendi cümlesinde makine slug'ı (`“Talep türü: vehicle.”`) görüyordu |
+| **Değişirse risk** | Cevap metne geri yazılırsa iki kusur birlikte döner: kullanıcıya slug gösterilir ve besteci kendi yazdığını kullanıcı beyanı sayar |
+
+### Karar H — Kullanıcı metni otoritesi · cevap otoritesi sırası
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — `3d5b2a5`, `BRANCH-WIRED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
+| **Testler** | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
+| **Değişirse risk** | Talepo kendi tahminini kullanıcı cevabı sanar; talep, kullanıcının hiç görmediği bir değerin belirlediği havuza gider |
+
+Kararın beş maddesi:
+
+**H1 — `rawInput` kullanıcının orijinal metnidir ve soru cevaplarıyla
+değiştirilmez.** Ne makine değeri (`vehicle`) ne arayüz etiketi (`Araç`) o
+metne eklenir. Tarayıcıda ölçüldü: seçim öncesi ve sonrası `rawInput` birebir
+`“Mercedes C180 satın almak istiyorum”`.
+
+**H2 — Açık cevaplar yapılandırılmış alan değerlerinde ve besteci durumunda
+tutulur.** Soru panelindeki cevap `applyQuickOption` üzerinden kanonik duruma
+`EXPLICIT_BROWSE` kaynağıyla yazılır; o yol `rawInput`'u bilerek korur.
+
+**H3 — Yalnız açık kullanıcı seçimi `USER_EXPLICIT` / `USER_CONFIRMED`
+otoritesi kazanır.** Otorite sırası tek yerde tanımlıdır ve aşağı doğru yazım
+reddedilir: `USER_CONFIRMED / USER_EXPLICIT > VERIFIED > INFERRED > UNKNOWN`.
+`understand-request` içindeki PART ve SERVICE dalları artık kullanıcının
+seçtiği `needType` değerini `INFERRED` seviyesine düşüremez.
+
+**H4 — Talepo'nun çıkarımı yalnız öneridir, kullanıcı cevabı değildir.** Değeri
+yalnız çıkarımdan gelen alan soruyu kapatmaz; soru sorulur ve çıkarım ayrı bir
+öneri rozetiyle gösterilir. Rozet seçilmiş cevap görünümü almaz
+(`aria-pressed=false`, tik yok, dolu zemin yok) ve kontrole `aria-describedby`
+ile bağlanır. Cevabı ve provenance yükselmesini yalnız kullanıcının dokunuşu
+oluşturur. Cevaplanmamış bir çıkarım doğrulaması `routing_critical` bir
+alandaysa review ve publish kapısını kilitler; **önerisi olmayan** routing
+sorusu eskisi gibi atlanabilir kalır, çünkü yayını yalnız bütçe ve konum
+kilitler (bkz. üstteki “Bütçe+konum olmadan review açılmaz” satırı).
+
+**H5 — Yapılandırılmış cevap yayın verisine taşınır.** Yalnız React state'inde
+kalan cevap başarı sayılmaz. Veritabanına yazmadan, gerçek yayın çağrısının
+kullandığı kurucularla ölçüldü: `discoveryProjection.attributes.needType =
+"vehicle"`, `discoveryProjection.constraints.needType = {mode: "VALUE", value:
+"vehicle"}`, understanding snapshot `attributes.needType = "vehicle"`.
+
+**Kapsam dışı bırakılanlar.** `provenance_mismatch = 69` etiket ekseni bu
+dilimde düzeltilmedi ve olduğundan iyi gösterilmiyor. Soru bastırma ölçümünde
+gerçek `not_measured = 4` kaydı ölçülemez olarak duruyor ve D1'in `exit 3`
+durumu yeşil kapanış değildir. `MoneyRangeControl` sabit `budget-amount`
+kimliğini kullanmaya devam ediyor. Sekme kapanınca cevap ve taslak kalıcı
+değildir. Matching V3 canlı fanout'a bağlı değildir; tedarikçi yetkinliği ve
+canlı bildirim teslimatı ölçülmemiştir; production deploy yoktur.
+
+**Bunu ne için yapıyoruz?**
+Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı
+sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin.
