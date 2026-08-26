@@ -61,6 +61,21 @@ export type TalepoAiPanelProps = {
     missingLabels: string[];
     missingFieldKeys: string[];
   };
+  /**
+   * Yayın denemesi başarısız olduğunda gösterilecek hata (2026-08-26).
+   *
+   * NEDEN BURADA. `publishError` daha önce yalnız iki yerde render
+   * ediliyordu: review özeti (`uxStage === "review"`) ve varsayılan KAPALI
+   * bir `<details>` içindeki kutu. Üyelik dönüşünde otomatik deneme
+   * başarısız olduğunda kullanıcı hâlâ clarify aşamasındadır ve companion
+   * açıktır — hata DOM'da vardı ama keşfedilemiyordu. Bu köprü, hatayı
+   * kullanıcının o an baktığı panele taşır.
+   *
+   * `onRetry` KANONİK kapıdan geçmek zorundadır (`handlePublishAttempt`);
+   * `requestPublish` doğrudan çağrılırsa kapsam kapısı ve eksik alan
+   * rehberliği atlanır.
+   */
+  publishFailure?: { message: string; onRetry: () => void } | null;
   budgetConflict?: { textBudget: string; enteredBudget: string } | null;
   onChooseBudget?: (value: string) => void;
   /** Ranked next questions — single ask surface (chips + draft) */
@@ -125,6 +140,32 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         props.compact ? "p-0" : ""
       }`}
     >
+      {props.publishFailure ? (
+        <section
+          role="alert"
+          data-testid="companion-publish-error"
+          className="rounded-2xl border border-[#f0c7c0] bg-[#fff5f3] p-4 text-left"
+        >
+          <p className="text-sm font-semibold text-[#8b352b]">
+            Talebiniz henüz yayınlanamadı.
+          </p>
+          <p className="mt-1 text-sm text-[#8b352b]/80">
+            Bilgileriniz korunuyor. Tekrar deneyebilirsiniz.
+          </p>
+          <p className="mt-2 text-xs text-[#8b352b]/65">
+            {props.publishFailure.message}
+          </p>
+          <button
+            type="button"
+            data-testid="companion-publish-retry"
+            onClick={props.publishFailure.onRetry}
+            className="mt-3 min-h-10 rounded-xl bg-[#8b352b] px-3.5 py-2 text-xs font-semibold text-white"
+          >
+            Tekrar dene
+          </button>
+        </section>
+      ) : null}
+
       <header>
         <div className="talepo-ai-console-bar">
           <span className="inline-flex items-center gap-2">

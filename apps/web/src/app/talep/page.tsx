@@ -394,6 +394,13 @@ function TalepOlusturForm() {
     viewHref: string;
   } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  /**
+   * "Bilgileri düzenle" akordeonunun kullanıcı tarafındaki durumu. Yayın
+   * hatası akordeonu zorla açar; hata temizlendiğinde panel bu değere geri
+   * döner, böylece kullanıcının açtığı düzenleme alanları kendiliğinden
+   * kapanmaz (2026-08-26).
+   */
+  const [editDetailsOpen, setEditDetailsOpen] = useState(false);
   const [featureBoost, setFeatureBoost] = useState<
     "" | "FEATURE_24H" | "FEATURE_3D" | "FEATURE_7D"
   >("");
@@ -1858,9 +1865,14 @@ function TalepOlusturForm() {
         isSyncing: hybrid.isSyncing,
         understandingRawInput: understanding.rawInput,
         composerText: requestText,
+        // KAPSAM KAPISI, kanonik otoriteden okunur. Arz ilani yayin yoluna
+        // HIC girmez: karar `blocked` doner, latch soner ama publish
+        // denenmez. Bestecinin kapsam disi rehberligi zaten kosulsuz
+        // gorunur oldugu icin kullanici cikmaza sokulmaz.
+        requestScope: understanding.requestScope?.value ?? null,
       }),
       {
-        // Latch YALNIZ gercek deneme baslatilirken kapanir; beklerken acik
+        // Latch YALNIZ karar bunu istediginde kapanir; beklerken acik
         // kalir, boylece niyet kaybolmaz ve denemeden sonra tekrarlanmaz.
         closeLatch: () => setResumePublishPending(false),
         // Yayina uygunluk denemeyi IPTAL ETMEZ: butce ya da konum eksikse
@@ -1868,6 +1880,18 @@ function TalepOlusturForm() {
         // davranista latch sonuyor ama hicbir sey yapilmiyordu; kullanici
         // yayinlama niyetiyle uye olup donuyor ve hicbir sey gormuyordu.
         attemptPublish: handlePublishAttempt,
+        // Basarisiz deneme SESSIZCE YUTULMAZ. Latch bilerek geri acilmaz
+        // (otomatik tekrar sonsuz donguye doner); bunun yerine kullaniciya
+        // gorunur bir hata gosterilir ve companion acilir, boylece kendi
+        // yeniden deneme yolu acik kalir.
+        onAttemptFailed: (error) => {
+          console.error("[resume-publish] yayin denemesi basarisiz", error);
+          surfacePublishFailure(
+            error instanceof Error && error.message
+              ? error.message
+              : "Talebiniz yayınlanamadı. Lütfen tekrar deneyin.",
+          );
+        },
       },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1876,6 +1900,7 @@ function TalepOlusturForm() {
     hybrid.isSyncing,
     requestText,
     understanding.rawInput,
+    understanding.requestScope?.value,
   ]);
 
   const categoryGuidance = useMemo(() => {
@@ -2502,16 +2527,35 @@ function TalepOlusturForm() {
     BUDGET_PRESETS.find((preset) => preset.value === filterBudgetValue)?.id ??
     null;
 
+  /**
+   * YAYIN HATASI İÇİN TEK YÜZEY OTORİTESİ (2026-08-26).
+   *
+   * Bir yayın önkoşulu hatası iki şeyi BİRLİKTE yapmak zorundadır: mesajı
+   * kaydetmek ve mesajı taşıyan yüzeyi açmak. Bunlar dallarda ayrı ayrı elle
+   * yazıldığında ayrıştılar: `requestPublish` içindeki dört erken dönüş ile
+   * `publishRequest`'in emlak dalı mesajı yazıyor ama companion'ı açmıyordu.
+   * Mobilde iç panel `aiCompanionOpen=false` ile gizli kaldığı için kullanıcı
+   * hatayı hiç görmüyordu. Tek giriş noktası bu ikilinin gelecekte yeniden
+   * ayrışmasını engeller; hata temizligi (`setPublishError(null)`) bu
+   * otoritenin kapsamı dışındadır çünkü bir yüzey açmaz.
+   */
+  function surfacePublishFailure(message: string) {
+    setPublishError(message);
+    setAiCompanionOpen(true);
+  }
+
   function requestPublish(version: "manual" | "ai") {
     if (isPublishing) return;
 
     if (!mergedCommonDraft.title.trim()) {
-      setPublishError("Talebinizi yayınlamak için bir başlık gerekli.");
+      surfacePublishFailure("Talebinizi yayınlamak için bir başlık gerekli.");
       return;
     }
 
     if (budgetRequired && !hasBudget) {
-      setPublishError("Bütçenizi belirtmeniz yeterli, ardından yayınlayabilirsiniz.");
+      surfacePublishFailure(
+        "Bütçenizi belirtmeniz yeterli, ardından yayınlayabilirsiniz.",
+      );
       return;
     }
 
@@ -2519,13 +2563,13 @@ function TalepOlusturForm() {
       const locationError = realEstateLocationError(realEstateLocation);
       if (locationError) {
         setPublishedVersion(version);
-        setPublishError(locationError);
+        surfacePublishFailure(locationError);
         return;
       }
     }
 
     if (missingFields.length > 0) {
-      setPublishError(
+      surfacePublishFailure(
         `Yayın için şu bilgiye ihtiyacımız var: ${missingFields[0]!.label}`,
       );
       setOptionalOpen(true);
@@ -2542,8 +2586,7 @@ function TalepOlusturForm() {
     // deletes text. The composer is the authority for every category.
     if (hybrid.isSyncing) {
       setPublishGuidanceAttempted(true);
-      setPublishError("Talebinizdeki son değişiklikler kontrol ediliyor.");
-      setAiCompanionOpen(true);
+      surfacePublishFailure("Talebinizdeki son değişiklikler kontrol ediliyor.");
       return;
     }
     if (
@@ -2604,7 +2647,7 @@ function TalepOlusturForm() {
       const locationError = realEstateLocationError(realEstateLocation);
       if (locationError) {
         setPublishedVersion(version);
-        setPublishError(locationError);
+        surfacePublishFailure(locationError);
         return;
       }
     }
@@ -2793,7 +2836,7 @@ function TalepOlusturForm() {
       });
       router.refresh();
     } catch (error) {
-      setPublishError(
+      surfacePublishFailure(
         error instanceof Error
           ? error.message
           : "Talep yayınlanırken bir hata oluştu.",
@@ -2883,6 +2926,19 @@ function TalepOlusturForm() {
         missingLabels: missingPublishLabels,
         missingFieldKeys: missingPublishFieldKeys,
       }}
+      /*
+       * HATA GORUNURLUGU. Review asamasinda ozet kendi hatasini gosterir;
+       * onun disinda (ozellikle uyelik donusu sonrasi clarify asamasinda)
+       * hata BURADA gorunur. Ikisi ayni anda cizilmez, boylece ayni hata
+       * ayni ekranda iki kez gosterilmez. Tekrar denemesi kanonik
+       * handlePublishAttempt kapisindan gecer: kapsam ve eksik alan
+       * kontrolleri atlanmaz.
+       */
+      publishFailure={
+        publishError && uxStage !== "review"
+          ? { message: publishError, onRetry: handlePublishAttempt }
+          : null
+      }
       enrichmentCandidates={enrichmentCandidates}
       enrichmentFieldKey={enrichmentFieldKey}
       enrichmentDraft={enrichmentDraft}
@@ -3566,7 +3622,31 @@ function TalepOlusturForm() {
                 id="talep-finish"
                 className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
               >
-                <details className="group rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white open:shadow-[0_10px_30px_rgba(11,37,34,0.06)]">
+                {/*
+                  YAYIN HATASI BU AKORDEONU ACAR (2026-08-26). Mobilde AI
+                  companion bu <details> icinde ciziliyor (asagida,
+                  `lg:hidden` sarmalayici). Akordeon varsayilan kapali
+                  oldugu icin, hata kutusu companion'a tasindiginda mobil
+                  kullanici onu yine goremiyordu: setAiCompanionOpen yalniz
+                  ic sarmalayicinin hidden/block sinifini degistiriyor,
+                  kapali bir <details>'i acmiyor. Masaustunde companion bu
+                  agacin disindaki <aside> icinde oldugu icin etkilenmez.
+
+                  ACILMA TEK YONLUDUR. Hata varken akordeon zorla acilir,
+                  ama hata TEMIZLENDIGINDE zorla KAPANMAZ: kullanicinin o an
+                  duzenledigi butce/konum alanlari, "Tekrar dene" basar
+                  basmaz (requestPublish ilk isi olarak publishError'i
+                  sifirlar) gozunun onunde kaybolmamalidir. Native toggle
+                  `editDetailsOpen`'a yazildigi icin, hata gectikten sonra
+                  panel kullanicinin biraktigi durumda kalir.
+                */}
+                <details
+                  open={editDetailsOpen || Boolean(publishError)}
+                  onToggle={(event) =>
+                    setEditDetailsOpen(event.currentTarget.open)
+                  }
+                  className="group rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white open:shadow-[0_10px_30px_rgba(11,37,34,0.06)]"
+                >
                   <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
                     <span className="flex items-center justify-between gap-2">
                       <span>Bilgileri düzenle</span>
@@ -3809,26 +3889,16 @@ function TalepOlusturForm() {
                     ) : null}
                   </div>
 
-                  {publishError ? (
-                    <div className="rounded-2xl border border-[#f0c7c0] bg-[#fff5f3] p-4 text-left">
-                      <p className="text-sm font-semibold text-[#8b352b]">
-                        Talebiniz henüz yayınlanamadı.
-                      </p>
-                      <p className="mt-1 text-sm text-[#8b352b]/80">
-                        Bilgileriniz korunuyor. Tekrar deneyebilirsiniz.
-                      </p>
-                      <p className="mt-2 text-xs text-[#8b352b]/65">
-                        {publishError}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => requestPublish("ai")}
-                        className="mt-3 rounded-xl bg-[#8b352b] px-3.5 py-2 text-xs font-semibold text-white"
-                      >
-                        Tekrar dene
-                      </button>
-                    </div>
-                  ) : null}
+                  {/*
+                    Yayin hatasi KUTUSU BURADAN KALDIRILDI (2026-08-26).
+                    Bu blok varsayilan kapali bir <details> icindeydi:
+                    kullanici akordeonu kendisi acmadan hatayi goremiyordu ve
+                    "Tekrar dene" requestPublish'i dogrudan cagirarak kapsam
+                    kapisini ve eksik alan rehberligini atliyordu. Hata artik
+                    review asamasinda ozette, diger asamalarda AI companion
+                    icinde role="alert" ile gosteriliyor ve tekrar denemesi
+                    kanonik handlePublishAttempt kapisindan geciyor.
+                  */}
 
                   {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS ? <div
                     className={`rounded-[1.25rem] border px-4 py-3 ${
