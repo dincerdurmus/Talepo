@@ -8,7 +8,11 @@ import {
   resolveSchemaCategory,
 } from "@/lib/request-understanding/activation-bridge";
 import { TECH_HARDWARE_SIGNAL } from "@/lib/request-category-engine";
-import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
+import type {
+  RequestUnderstandingResult,
+  UnderstandingSource,
+} from "@/lib/request-understanding/types";
+import { isVerifiedSource } from "@/lib/request-understanding/provenance";
 import {
   findTaxonomyTypeUnderSubcategory,
   getTaxonomyNode,
@@ -200,14 +204,21 @@ function uniqueStrings(values: string[]): string[] {
   return out;
 }
 
+/**
+ * Anlama katmanının kanıt otoritesini bestecinin alan etiketine çevirir.
+ *
+ * Doğrulanmış kaynak listesi burada TEKRARLANMAZ (D3a): eskiden bu satırda
+ * `FUTURE_KNOWLEDGE || PRODUCT_IDENTITY` çifti elle yazılıydı ve kanonik
+ * listeden bağımsız yaşıyordu. Artık tek otorite okunur.
+ */
 function mapRuProvenance(
   provenance: "EXPLICIT" | "INFERRED" | undefined,
   source?: string,
 ): FieldProvenance {
-  if (source === "FUTURE_KNOWLEDGE" || source === "PRODUCT_IDENTITY") {
-    if (provenance === "INFERRED") return "CATALOG_ENRICHED";
-  }
   if (provenance === "EXPLICIT") return "EXPLICIT_TEXT";
+  if (isVerifiedSource(source as UnderstandingSource | undefined)) {
+    return "CATALOG_ENRICHED";
+  }
   return "INFERRED";
 }
 

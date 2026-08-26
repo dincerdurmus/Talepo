@@ -31,49 +31,73 @@ export function uv<T>(
 }
 
 /**
- * KANIT OTORİTESİ SIRASI (kurucu, 2026-08-26).
+ * KANONİK KANIT OTORİTESİ MERDİVENİ — TEK OTORİTE (D3a, 2026-08-26).
  *
- * USER_CONFIRMED / USER_EXPLICIT > VERIFIED > INFERRED > UNKNOWN.
+ *   UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT
  *
  * Sıra bir tercih değil, bir güvenlik kuralıdır: aynı alan analiz boyunca
  * birden çok kez yazılır ve sonradan çalışan bir çıkarım, kullanıcının açık
- * seçimini sessizce ezebiliyordu. Örneğin kullanıcı "Yedek parça" seçtikten
- * sonra semantik özne dalı `needType`i yeniden `INFERRED` olarak yazıyor,
- * böylece açık seçim çıkarıma dönüşüyor ve soru yeniden açılıyordu.
+ * seçimini sessizce ezebiliyordu.
  *
- * `VERIFIED` katmanı, değeri çağrılabilir bir katalog / bilgi otoritesinin
- * doğruladığı durumdur (`PRODUCT_IDENTITY`, `FUTURE_KNOWLEDGE`,
- * `CATALOG`/`TAXONOMY` kaynakları). Gündelik çıkarımdan üstündür ama
- * kullanıcının kendi beyanının altındadır.
+ * NEDEN TEK YER. Bu sıra depoda dört ayrı biçimde yaşıyordu: burada bir rank
+ * tablosu, besteci tarafında `AnswerAuthority` adıyla ikinci bir merdiven,
+ * `mapRuProvenance` içinde elle yazılmış bir "verified kaynak" çifti ve
+ * `preferExplicit`'in ikili EXPLICIT/değil kuralı. Dördü aynı yönde karar
+ * veriyordu ama hiçbiri diğerinden türemiyordu; biri değişince ötekiler
+ * sessizce ayrışırdı. Artık rank YALNIZ burada tanımlıdır ve diğer katmanlar
+ * bu merdivenin dar görünümleridir.
+ *
+ * `VERIFIED`, değeri çağrılabilir bir katalog / bilgi otoritesinin doğruladığı
+ * durumdur. Gündelik çıkarımdan üstündür, kullanıcının kendi beyanının
+ * altındadır ve **kullanıcı beyanı gibi etiketlenemez**.
  */
-export type AttributeAuthority =
+export type Authority =
   | "UNKNOWN"
   | "INFERRED"
   | "VERIFIED"
   | "USER_EXPLICIT";
 
-const VERIFIED_SOURCES = new Set<string>([
+/**
+ * Doğrulanmış kaynaklar. `satisfies` sayesinde liste TypeScript tarafından
+ * denetlenir: `UnderstandingSource` birleşiminde olmayan bir değer buraya
+ * yazılamaz. Daha önce burada enum'da hiç bulunmayan `CATALOG` ve `TAXONOMY`
+ * girdileri vardı; ölü oldukları için kaldırıldı.
+ */
+const VERIFIED_SOURCES = [
   "PRODUCT_IDENTITY",
   "FUTURE_KNOWLEDGE",
-  "CATALOG",
-  "TAXONOMY",
-]);
+] as const satisfies readonly UnderstandingSource[];
 
-const AUTHORITY_RANK: Record<AttributeAuthority, number> = {
+export function isVerifiedSource(
+  source: UnderstandingSource | null | undefined,
+): boolean {
+  if (!source) return false;
+  return (VERIFIED_SOURCES as readonly string[]).includes(source);
+}
+
+/** Merdivenin TEK rank tablosu. Başka hiçbir yerde ikinci bir kopyası olamaz. */
+const AUTHORITY_RANK: Record<Authority, number> = {
   UNKNOWN: 0,
   INFERRED: 1,
   VERIFIED: 2,
   USER_EXPLICIT: 3,
 };
 
+export function authorityRank(authority: Authority): number {
+  return AUTHORITY_RANK[authority];
+}
+
+/** Sıralı karşılaştırma — çağıranlar kendi eşiklerini kurmaz. */
+export function isAtLeastAuthority(a: Authority, b: Authority): boolean {
+  return AUTHORITY_RANK[a] >= AUTHORITY_RANK[b];
+}
+
 export function attributeAuthorityOf(
   value: UnderstandingValue<unknown> | null | undefined,
-): AttributeAuthority {
+): Authority {
   if (!value) return "UNKNOWN";
   if (value.provenance === "EXPLICIT") return "USER_EXPLICIT";
-  if (value.source && VERIFIED_SOURCES.has(String(value.source))) {
-    return "VERIFIED";
-  }
+  if (isVerifiedSource(value.source)) return "VERIFIED";
   return "INFERRED";
 }
 
@@ -89,9 +113,14 @@ export function assignAttributeIfNotWeaker(
   key: string,
   next: UnderstandingValue<unknown>,
 ): boolean {
-  const currentRank = AUTHORITY_RANK[attributeAuthorityOf(attributes[key])];
-  const nextRank = AUTHORITY_RANK[attributeAuthorityOf(next)];
-  if (nextRank < currentRank) return false;
+  if (
+    !isAtLeastAuthority(
+      attributeAuthorityOf(next),
+      attributeAuthorityOf(attributes[key]),
+    )
+  ) {
+    return false;
+  }
   attributes[key] = next;
   return true;
 }
@@ -131,14 +160,22 @@ export function clamp01(n: number): number {
   return Math.max(0, Math.min(1, n));
 }
 
-/** Prefer explicit over inferred when merging same key. */
+/**
+ * Aynı anahtar için iki değeri birleştirir.
+ *
+ * Eskiden ikili bir kuraldı (EXPLICIT mi, değil mi) ve `VERIFIED` katmanını
+ * göremiyordu: katalogla doğrulanmış bir değer, gündelik bir çıkarımla eşit
+ * sayılıp güven puanına bırakılıyordu. Artık kanonik merdiveni okur; güven
+ * puanı yalnız AYNI otorite seviyesinde belirleyicidir.
+ */
 export function preferExplicit<T>(
   a?: UnderstandingValue<T>,
   b?: UnderstandingValue<T>,
 ): UnderstandingValue<T> | undefined {
   if (!a) return b;
   if (!b) return a;
-  if (a.provenance === "EXPLICIT" && b.provenance !== "EXPLICIT") return a;
-  if (b.provenance === "EXPLICIT" && a.provenance !== "EXPLICIT") return b;
+  const rankA = authorityRank(attributeAuthorityOf(a));
+  const rankB = authorityRank(attributeAuthorityOf(b));
+  if (rankA !== rankB) return rankA > rankB ? a : b;
   return a.confidence >= b.confidence ? a : b;
 }
