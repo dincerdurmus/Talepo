@@ -1681,7 +1681,7 @@ kayıtla kapanmadı.
 | Ne zamandan beri | `8c9a036` (2026-08-23, *anonymous drafts survive sign-up and auto-resume publishing*) — kusurlu koşul bu commit ile geldi; blame ile doğrulandı, `f7aca7a` tabanının atası |
 | Tespit | 2026-08-26, `talep/page.tsx` içindeki üç miras `set-state-in-effect` lint hatası denetlenirken |
 | Durum | **ÇÖZÜLDÜ — `afc23a3`, `BRANCH-WIRED`, `CODE-VERIFIED`** |
-| Tarayıcı doğrulaması | **NOT-MEASURED** |
+| Tarayıcı doğrulaması | **BROWSER-MEASURED-LOCAL · PASS** — 2026-08-26, ölçülen HEAD `3a90eb4` (yerel integration çalışma kopyası). **`PRODUCTION-DEPLOYED` DEĞİL** |
 
 **Neden yeni bir numara aldı.** Belgede bu senaryoyu taşıyan bir kayıt yoktu;
 `üyelik`, `sign-in`, `sign-up`, `resume publish`, `resumePublishPending`,
@@ -1751,14 +1751,53 @@ referansları geri gelmiş: canReview"). Her iki geçici değişiklik de tamamen
 kaldırıldı; fixture, beklenen değer veya sayaç yeşile boyamak için
 değiştirilmedi.
 
-**Bu kaydın kapsamadığı — dürüstçe açık kalan.** Senaryo **tarayıcıda
-ölçülmedi**. Üyelik dönüşü + eksik bütçe/konum rehberliği akışı gerçek kimlik
-doğrulama ve veritabanı gerektiriyor; çalışılan dalda bu ortam kurulmadı.
+**Tarayıcı ölçümü — 2026-08-26, `3a90eb4`, `BROWSER-MEASURED-LOCAL · PASS`.**
+Senaryo, `3a90eb4` ileri alınmış **yerel integration çalışma kopyası** üzerinde
+çalıştırılan geliştirme sunucusunda ölçüldü. `PENDING_DRAFT_KEY`
+(`talepo:pending-request-draft:v1`) sözleşmesi ve payload biçimi koddan
+okundu; **bütçe ve konum alanları boş** bırakılmış gerçek bir üyelik dönüşü
+payload'ı yerleştirilip sayfa yenilendi.
+
+| Şart | Sonuç |
+| --- | --- |
+| Talep metni eksiksiz geri yüklendi | PASS |
+| Anlama senkronizasyonu tamamlandı | PASS — kategori, ürün ve adet çözüldü |
+| `handlePublishAttempt` yolu gerçekten çalıştı | PASS |
+| Bütçe · Şehir/bölge · Ürün türü rehberliği açıldı | PASS — üç eksik alan adlandırılarak |
+| Gerçek talep yayınlanmadı | PASS |
+| Create / publish / notification DB yazımı | PASS — hiçbiri yok |
+| `rawInput` değişmedi | PASS |
+| `localStorage` anahtarı tek sefer tüketildi | PASS |
+| İkinci yenilemede taslak tekrar çalışmadı | PASS |
+| Console / hydration hatası | PASS — 0 |
+
+**Negatif kontrol (panelin kaynağını ayrıştırır).** Aynı metin **pending draft
+olmadan** girildiğinde anlama yine çalıştı ve bütçe sorusu yine göründü, ancak
+yayın rehberliği paneli **açılmadı**. Panel yalnız `publishGuidance.attempted`
+doğruyken render edilir ve o bayrak yalnız `handlePublishAttempt` içinde
+kurulur; dolayısıyla açılan rehberlik, sayfanın olağan durumundan değil
+**üyelik dönüşü publish-attempt yolundan** gelmiştir.
+
+**Bu ölçümün sınırı.** Doğrulama **DOM ve ağ kayıtları** üzerinden yapıldı;
+görsel ekran görüntüsü alınamadı. Ölçüm **yerel bir çalışma kopyasındadır**:
+`PRODUCTION-DEPLOYED` değildir, canlı bir başarı iddiası taşımaz ve gerçek
+kimlik doğrulama sağlayıcısı ile uçtan uca üyelik akışı ölçülmemiştir —
+üyelik dönüşü, sözleşmesi koddan okunan payload ile kontrollü olarak
+canlandırılmıştır. Kaydın `BRANCH-WIRED` ve `CODE-VERIFIED` dayanakları
+(`afc23a3`, doğrulayıcı 15/15) bu ölçümden bağımsız olarak geçerlidir.
+
+**Bu kaydın kapsamadığı — dürüstçe açık kalan.** *(Aşağıdaki tarayıcı
+değerlendirmesi 2026-08-26 tarihli yerel ölçümle **YERİNE GEÇTİ**; tarihli
+kanıt olarak silinmeden duruyor.)* Senaryo o gün **tarayıcıda ölçülmemişti**:
+üyelik dönüşü + eksik bütçe/konum rehberliği akışı gerçek kimlik doğrulama ve
+veritabanı gerektiriyordu ve çalışılan dalda bu ortam kurulmamıştı.
 `NOT-MEASURED` bir başarı değildir ve "rehberlik ekranda göründü" diye
-okunamaz — kanıt kod düzeyindedir. Ayrıca wiring sözleşmesi effect'in
-**içindeki** önkoşulu yakalar; helper'ın kendisi bir gün readiness alacak
-biçimde değiştirilirse bunu saf katman yakalar, ama çağrının tamamen başka bir
-dosyaya taşınması hâlinde her iki katman da yeniden kurulmak zorundadır.
+okunamaz — o aşamada kanıt yalnız kod düzeyindeydi. **Hâlâ açık olan:** wiring
+sözleşmesi effect'in **içindeki** önkoşulu yakalar; helper'ın kendisi bir gün
+readiness alacak biçimde değiştirilirse bunu saf katman yakalar, ama çağrının
+tamamen başka bir dosyaya taşınması hâlinde her iki katman da yeniden
+kurulmak zorundadır. Gerçek kimlik doğrulama sağlayıcısıyla uçtan uca üyelik
+akışı da ölçülmemiş durumdadır.
 
 **Eşlik eden lint temizliği (`341e775`) — kaydın kapsamı dışında ama aynı
 dosyada.** `talep/page.tsx` içindeki üç miras `react-hooks/set-state-in-effect`

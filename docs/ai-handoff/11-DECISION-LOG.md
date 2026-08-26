@@ -285,7 +285,7 @@ sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `afc23a3`, `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL**, tarayıcıda **NOT-MEASURED** |
+| **Durum** | **UYGULANMIŞ** — `afc23a3`, `BRANCH-WIRED` · `CODE-VERIFIED` · `BROWSER-MEASURED-LOCAL · PASS` (2026-08-26, ölçülen HEAD `3a90eb4`). **`PRODUCTION-DEPLOYED` DEĞİL** |
 | **Dosyalar** | `request-composer/resume-publish.ts` (yeni), `talep/page.tsx`, `scripts/verify-publish-resume-v1.ts` (yeni) |
 | **Testler** | `verify-publish-resume-v1` — 15 passed, exit 0 (9 saf davranış + 6 production wiring AST iddiası) |
 | **Kayıt** | **KB-21** |
@@ -319,6 +319,17 @@ yerdedir: karar uygulayıcısına verilen `closeLatch` handler'ı.
 > bağlantıyı TypeScript AST'i üzerinden sınar — helper effect'in ilk çalışan
 > ifadesi olmalı ve effect gövdesinde `canReview`/`canPublish` geçmemelidir.
 > Kırmızı kanıtı iki eksende ayrı ayrı alındı (saf katman 4 ihlal, wiring
-> katmanı 2 ihlal) ve geçici değişiklikler tamamen kaldırıldı. **Tarayıcıda
-> ölçülmedi**; üyelik dönüşü + eksik bütçe/konum rehberliği akışı gerçek
-> kimlik doğrulama ve veritabanı istiyor. `NOT-MEASURED` bir başarı değildir.
+> katmanı 2 ihlal) ve geçici değişiklikler tamamen kaldırıldı.
+>
+> **Tarayıcı ölçümü — 2026-08-26, `3a90eb4`, `BROWSER-MEASURED-LOCAL · PASS`.**
+> Yerel integration çalışma kopyasında, bütçe ve konumu boş bırakılmış gerçek
+> bir üyelik dönüşü payload'ı ile ölçüldü: metin eksiksiz geri yüklendi,
+> anlama tamamlandı, `handlePublishAttempt` yolu çalıştı ve Bütçe · Şehir/bölge
+> · Ürün türü rehberliği açıldı; gerçek talep yayınlanmadı, create/publish/
+> notification DB yazımı olmadı, `rawInput` değişmedi, latch tek sefer tüketildi
+> ve ikinci yenilemede tekrarlanmadı, console/hydration hatası 0. Negatif
+> kontrolde aynı metin pending draft olmadan girildiğinde rehberlik paneli
+> açılmadı — panel böylece publish-attempt yoluna ayrıştırıldı. Doğrulama DOM
+> ve ağ kayıtlarıyla yapıldı; ekran görüntüsü alınamadı. Bu ölçüm **yerel bir
+> çalışma kopyasındadır**: canlı başarı iddiası taşımaz ve gerçek kimlik
+> doğrulama sağlayıcısıyla uçtan uca üyelik akışı ölçülmemiştir. Bkz. **KB-21**.
