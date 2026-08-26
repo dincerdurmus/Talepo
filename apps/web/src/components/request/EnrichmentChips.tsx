@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { Plus } from "lucide-react";
 
 import type { QuestionCandidate } from "@/lib/request-brain/types";
@@ -31,13 +32,35 @@ export function EnrichmentChips({
   humanPrompts,
   highlightFieldKeys = [],
 }: Props) {
+  /**
+   * Kimlik React tarafından üretilir; sabit global id iki soru aynı anda
+   * açıldığında `aria-describedby` bağını sessizce yanlış yere bağlardı.
+   */
+  const suggestionId = useId();
   if (candidates.length === 0) return null;
 
   const active = candidates.find((c) => c.fieldKey === activeFieldKey) ?? null;
   const dark = variant === "dark";
+  /**
+   * SEÇİM YALNIZ TASLAKTAN TÜRER. `suggestedValue` bilerek bu hesaba
+   * KATILMAZ — öneri hiçbir seçeneği seçili yapamaz.
+   */
   const activeSelectedValues = active?.multiSelect
     ? draftValue.split(",").map((value) => value.trim()).filter(Boolean)
     : [];
+  /**
+   * ÖNERİ ADAYIN KENDİ SÖZLEŞMESİNDEN OKUNUR (D3b, 2026-08-26).
+   *
+   * Bu bileşen öneriyi bir prop zincirinden değil sorunun kendisinden alır;
+   * arayüz kabuğu değiştiğinde bilgi düşmez. Tahmin kullanıcı cevabı
+   * DEĞİLDİR: onaylanana kadar `confirmed` false kalır, seçili seçenekler
+   * yalnız `draftValue`dan türetilir ve öneri hiçbir seçeneği seçili yapmaz.
+   */
+  const inferred = active?.inferredSuggestion ?? null;
+  const suggestion =
+    inferred && !inferred.confirmed && inferred.value.trim() !== ""
+      ? inferred.value.trim()
+      : null;
 
   return (
     <section
@@ -114,6 +137,21 @@ export function EnrichmentChips({
             <p className="mt-1 text-xs text-teal-950/45">{active.reason}</p>
           ) : null}
 
+          {suggestion ? (
+            <button
+              type="button"
+              id={suggestionId}
+              onClick={() => onDraftChange(suggestion)}
+              className={
+                dark
+                  ? "mt-2 w-full rounded-lg border border-dashed border-teal-200/35 bg-transparent px-2.5 py-1.5 text-left text-[11px] font-medium text-teal-50/80 hover:bg-white/5"
+                  : "mt-2 w-full rounded-lg border border-dashed border-teal-900/20 bg-transparent px-3 py-2 text-left text-xs font-medium text-teal-950/65 hover:bg-[#f0fdfa]"
+              }
+            >
+              {`Talepo önerisi · ${suggestion} · Henüz seçmedik`}
+            </button>
+          ) : null}
+
           {active.quickChoices && active.quickChoices.length > 0 ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {active.quickChoices.map((choice) => (
@@ -134,7 +172,12 @@ export function EnrichmentChips({
           ) : active.inputType === "select" ? (
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
               {active.multiSelect ? (
-                <div className="max-h-64 flex-1 overflow-y-auto rounded-lg border border-teal-200/25 bg-[#071b18] py-1 shadow-inner [scrollbar-color:#7f8f8c_#e5e7eb] [scrollbar-width:thin]">
+                <div
+                  role="group"
+                  aria-label={active.label}
+                  aria-describedby={suggestion ? suggestionId : undefined}
+                  className="max-h-64 flex-1 overflow-y-auto rounded-lg border border-teal-200/25 bg-[#071b18] py-1 shadow-inner [scrollbar-color:#7f8f8c_#e5e7eb] [scrollbar-width:thin]"
+                >
                   {active.options?.map((opt) => {
                     const selected = activeSelectedValues.includes(opt.value);
                     return (
@@ -180,6 +223,7 @@ export function EnrichmentChips({
               ) : (
                 <select
                   value={draftValue}
+                  aria-describedby={suggestion ? suggestionId : undefined}
                   onChange={(e) => onDraftChange(e.target.value)}
                   className={
                     dark

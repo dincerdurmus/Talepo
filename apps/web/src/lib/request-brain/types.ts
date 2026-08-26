@@ -1,4 +1,5 @@
 import type { CompletenessBreakdown } from "@/lib/price-intelligence/strategy-completeness";
+import type { Authority } from "@/lib/request-understanding/provenance";
 import type { PriceStrategyResolution } from "@/lib/price-intelligence/strategy-resolver";
 import type {
   BudgetEvaluation,
@@ -30,10 +31,49 @@ export type RequestDraft = {
   fieldValues: Record<string, string>;
 };
 
+/**
+ * TALEPO'NUN TAHMİNİ — CEVAP DEĞİL (D3b, 2026-08-26).
+ *
+ * Sorunun yanında gösterilecek öneri, sorunun CEVABINDAN ayrı bir alandır ve
+ * kendi otoritesini taşır. Cevap alanına yazılan bir tahmin, arayüzde seçili
+ * bir kullanıcı cevabı gibi görünür (`aria-checked="true"`) ve kullanıcı
+ * hiçbir şeye dokunmadan onaylamış sayılır — tarayıcıda ölçülen hata buydu.
+ *
+ * Öneri adayın KENDİ sözleşmesinde durur, arayüz kabuğunun prop zincirinde
+ * değil: bugünkü panel ile onun yerini alacak arayüz aynı adayı tüketir ve
+ * kabuk değişince bu bilgi sessizce düşmez.
+ *
+ * `authority` her zaman kanonik merdivenin `INFERRED` basamağıdır; öneri
+ * onaylanana kadar `confirmed` false kalır. Kullanıcı açıkça seçip
+ * onayladığında sonuç bir öneri olmaktan çıkar ve normal cevap zincirinden
+ * `USER_EXPLICIT` olarak yazılır — bu alan güncellenmez, ilgisiz hâle gelir.
+ */
+export type InferredQuestionSuggestion = {
+  /** Gösterilecek tahmin metni. */
+  value: string;
+  /**
+   * Kanonik merdivenin `INFERRED` basamağı — daraltılmış literal. Tip
+   * düzeyinde başka bir basamak yazılamaz: bir öneri, tanımı gereği soruyu
+   * kapatmaya yetkili bir cevap olamaz.
+   */
+  authority: Extract<Authority, "INFERRED">;
+  /**
+   * Daraltılmış literal: bu alan bir ÖNERİdir, kalıcı bir kullanıcı seçimi
+   * değildir. Onay geldiğinde sonuç normal cevap zincirinden yazılır; burada
+   * `true` yazılabilecek bir yol tip düzeyinde bırakılmaz.
+   */
+  confirmed: false;
+};
+
 export type QuestionCandidate = {
   fieldKey: string;
   label: string;
   reason: string;
+  /**
+   * Talepo'nun bu alan için tahmini. Varsa arayüz onu ÖNERİ olarak gösterir;
+   * seçim durumu üretmez, soruyu kapatmaz.
+   */
+  inferredSuggestion?: InferredQuestionSuggestion;
   publishImpact: number;
   matchingImpact: number;
   priceImpact: number;

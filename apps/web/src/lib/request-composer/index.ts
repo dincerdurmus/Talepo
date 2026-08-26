@@ -111,4 +111,6 @@ export {
   browseWalkFromPath,
   runHybridUiAcceptancePath,
   applyTextThenBrowse,
+  filterRenderableCandidates,
+  resolveQuestionDraftPresentation,
 } from "./ui-helpers";

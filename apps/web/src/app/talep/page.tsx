@@ -113,7 +113,9 @@ import {
 } from "@/lib/request/publish-understanding";
 import {
   composeNaturalRequestText,
+  filterRenderableCandidates,
   resolveHybridQuestions,
+  resolveQuestionDraftPresentation,
   buildUnderstoodFacts,
   understoodFactsToSummaryChips,
 } from "@/lib/request-composer";
@@ -258,35 +260,6 @@ function rawTitleFallback(rawText: string): string {
 
 const ESSENTIAL_COMMON_KEYS = new Set(["title", "city"]);
 
-const TURKEY_CITY_OPTIONS = [
-  { label: "Tüm Türkiye", value: "Tüm Türkiye" },
-  ...TURKEY_IL_NAMES.map((city) => ({ label: city, value: city })),
-];
-
-const TURKEY_REAL_ESTATE_LOCATION_OPTIONS = TURKEY_PROVINCES.flatMap(
-  (province) =>
-    province.ilceler.map((district) => ({
-      label: `${province.il} / ${district}`,
-      value: `${province.il} / ${district}`,
-    })),
-);
-
-const COLOR_PREFERENCE_OPTIONS = [
-  { label: "Fark Etmez", value: "Fark Etmez" },
-  { label: "Siyah", value: "Siyah" },
-  { label: "Beyaz", value: "Beyaz" },
-  { label: "Gri", value: "Gri" },
-  { label: "Kırmızı", value: "Kırmızı" },
-  { label: "Mavi", value: "Mavi" },
-  { label: "Lacivert", value: "Lacivert" },
-  { label: "Yeşil", value: "Yeşil" },
-  { label: "Sarı", value: "Sarı" },
-  { label: "Turuncu", value: "Turuncu" },
-  { label: "Kahverengi", value: "Kahverengi" },
-  { label: "Bej", value: "Bej" },
-  { label: "Bordo", value: "Bordo" },
-];
-
 const BUDGET_PRESETS = [
   { id: "under-10", label: "10 bin altı", value: "10.000 TL'ye kadar" },
   { id: "10-50", label: "10–50 bin", value: "10.000 – 50.000 TL" },
@@ -308,38 +281,6 @@ const PENDING_DRAFT_KEY = "talepo:pending-request-draft:v1";
 const PENDING_DRAFT_TTL_MS = 30 * 60 * 1000;
 /** Rollback switch for the fixed-height desktop workspace experiment. */
 const ENABLE_FIXED_DESKTOP_WORKSPACE = false;
-
-function featureExamplePlaceholder(
-  strategy: string | null | undefined,
-  requestText: string,
-  fallback?: string,
-): string {
-  const text = requestText.toLocaleLowerCase("tr-TR");
-
-  if (/dyson|süpürge|supurge/.test(text)) {
-    return "Örn. aparatları tam, garantili, kutulu, yedek bataryalı";
-  }
-  if (strategy === "VEHICLE" || /araç|araba|otomobil/.test(text)) {
-    return "Örn. hasarsız, belirli renk, servis bakımlı, donanım paketi";
-  }
-  if (strategy === "REAL_ESTATE_RENT" || strategy === "REAL_ESTATE_SALE") {
-    return "Örn. balkonlu, otoparklı, eşyalı, site içinde";
-  }
-  if (strategy === "SERVICE_SCOPE") {
-    return "Örn. kullanılacak malzeme, teslim tarihi, garanti, özel istekler";
-  }
-  if (strategy === "CUSTOM_MANUFACTURING") {
-    return "Örn. renk, yüzey, baskı, paketleme, kalite standardı";
-  }
-  if (/makine|cnc|pres|ekipman/.test(text)) {
-    return "Örn. kapasite, güç, çalışma saati, garanti, ekipmanlar";
-  }
-  if (/mobilya|koltuk|masa|sandalye|dolap/.test(text)) {
-    return "Örn. renk, malzeme, ölçü, kurulum, özel tasarım";
-  }
-
-  return fallback ?? "Örn. renk, ölçü, garanti, aksesuar veya diğer tercihler";
-}
 
 function comparableMoney(value: string): string {
   return value.replace(/\D/g, "").replace(/^0+/, "");
@@ -1312,218 +1253,48 @@ function TalepOlusturForm() {
     visibleDynamicFields,
   ]);
 
-  const enrichmentCandidates = useMemo(() => {
-    const visibleKeys = new Set(visibleDynamicFields.map((f) => f.key));
-    const foldedRequestText = requestText
-      .toLocaleLowerCase("tr-TR")
-      .replace(/\u0131/g, "i")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    const textAlreadyAnswers = (fieldKey: string, label = "") => {
-      if (fieldKey === "condition" || /araç durumu/iu.test(label)) {
-        const statedYear = requestText.match(/\b((?:19|20)\d{2})\b/u)?.[1];
-        return (
-          /\b(sıfır|sifir|ikinci\s*el|2\.?\s*el|kullanılmış|kullanilmis)\b/iu.test(requestText) ||
-          (activeCategoryId === "automotive" &&
-            statedYear != null &&
-            Number(statedYear) < new Date().getFullYear())
-        );
-      }
-      if (fieldKey.toLowerCase().includes("color") || /renk/iu.test(label)) {
-        return /\b(kirmizi|siyah|beyaz|gri|mavi|lacivert|yesil|sari|turuncu|kahverengi|bej|bordo)\b/u.test(foldedRequestText);
-      }
-      if (fieldKey === "bodyCondition" || /hasar|kasa/iu.test(label)) {
-        return /\b(hasarsiz|hatasiz|boyasiz|degisensiz|kazali)\b/u.test(foldedRequestText);
-      }
-      return false;
-    };
-    const list = hybridQuestionResult?.candidates ?? [];
-    const filtered = list.filter((q) => {
-      if (dynamicValues[q.fieldKey]?.trim() || textAlreadyAnswers(q.fieldKey, q.label)) return false;
-      if (
-        q.fieldKey === "budget" ||
-        q.fieldKey === "engine" ||
-        q.fieldKey === "specs" ||
-        q.fieldKey === "technicalSpecs"
-      ) {
-        return false;
-      }
-      if (
-        q.fieldKey === "brand" ||
-        q.fieldKey === "city" ||
-        q.fieldKey === "condition" ||
-        q.fieldKey === "screenSize" ||
-        q.fieldKey === "resolution" ||
-        q.fieldKey === "model"
-      ) {
-        return true;
-      }
-      return visibleKeys.size === 0 || visibleKeys.has(q.fieldKey);
-    }).map((q) =>
-      q.fieldKey === "city"
-        ? {
-            ...q,
-            inputType: "select" as const,
-            options: isRealEstate
-              ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
-              : TURKEY_CITY_OPTIONS,
-            quickChoices: undefined,
-            multiSelect: true,
-            label: isRealEstate ? "İl ve ilçe" : q.label,
-            placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
-          }
-        : q.fieldKey === "location"
-          ? {
-              ...q,
-              placeholder: "Mahalle, cadde veya sokak bilgisi girin",
-            }
-        : q.fieldKey === "color"
-          ? {
-              ...q,
-              inputType: "select" as const,
-              options: COLOR_PREFERENCE_OPTIONS,
-              quickChoices: undefined,
-              multiSelect: true,
-              placeholder: "Renk seçin",
-            }
-        : q.fieldKey === "features"
-        ? {
-            ...q,
-            placeholder: featureExamplePlaceholder(
-              brain.strategy?.strategy,
-              requestText,
-              q.placeholder,
-            ),
-          }
-        : q.inputType === "select"
-          ? {
-              ...q,
-              quickChoices: undefined,
-              multiSelect: true,
-            }
-          : q,
-    );
-
-    // Show every still-empty field that is relevant to the active category,
-    // including optional preferences that did not enter the ranked shortlist.
-    for (const field of visibleDynamicFields) {
-      if (
-        field.key === "engine" ||
-        field.key === "specs" ||
-        field.key === "technicalSpecs" ||
-        dynamicValues[field.key]?.trim() ||
-        textAlreadyAnswers(field.key, field.label) ||
-        filtered.some((candidate) => candidate.fieldKey === field.key)
-      ) {
-        continue;
-      }
-      filtered.push({
-        fieldKey: field.key,
-        label: field.label,
-        reason: field.required
-          ? "Talebi yayınlamak için gerekli"
-          : "İsteğe bağlı tercih",
-        publishImpact: field.required ? 1 : 0.2,
-        matchingImpact: field.required ? 0.7 : 0.45,
-        priceImpact: 0.25,
-        confidenceImpact: 0.25,
-        priorityScore: field.required ? 1 : 0.3,
-        inputType:
-          field.key === "color" || field.type === "select"
-            ? "select"
-            : field.type === "number"
-              ? "number"
-              : "text",
-        options:
-          field.key === "color" ? COLOR_PREFERENCE_OPTIONS : field.options,
-        quickChoices:
-          field.key === "color" || field.type === "select"
-            ? undefined
-            : field.options,
-        multiSelect: field.key === "color" || field.type === "select",
-        placeholder: field.key === "color" ? "Renk seçin" : field.placeholder,
-      });
-    }
-
-    for (const field of [...missingFields].reverse()) {
-      if (filtered.some((candidate) => candidate.fieldKey === field.key)) continue;
-      filtered.unshift({
-        fieldKey: field.key,
-        label: field.label,
-        reason: "Talebi yayınlamak için gerekli",
-        publishImpact: 1,
-        matchingImpact: 0.7,
-        priceImpact: 0.5,
-        confidenceImpact: 0.5,
-        priorityScore: 1,
-        inputType:
-          field.type === "select"
-            ? "select"
-            : field.type === "number"
-              ? "number"
-              : "text",
-        options: field.options,
-        quickChoices: field.type === "select" ? undefined : field.options,
-        multiSelect: field.type === "select",
-        placeholder: field.placeholder,
-      });
-    }
-
-    if (
-      visibleCommonFieldKeys.has("city") &&
-      ((!mergedCommonDraft.city.trim() && !understandingCity.trim()) ||
-        (isRealEstate && realEstateLocationMissing))
-    ) {
-      filtered.unshift({
-        fieldKey: "city",
-        label: isRealEstate ? "İl ve ilçe" : "Şehir",
-        reason: isRealEstate
-          ? "Talebi yayınlamak için geçerli il ve ilçe gerekli"
-          : "Tekliflerin doğru bölgeden gelmesine yardımcı olur",
-        publishImpact: 0.8,
-        matchingImpact: 0.95,
-        priceImpact: 0.4,
-        confidenceImpact: 0.3,
-        priorityScore: 0.9,
-        inputType: "select",
-        options: isRealEstate
-          ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
-          : TURKEY_CITY_OPTIONS,
-        multiSelect: true,
-        placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
-      });
-    }
-
-    if (budgetRequired && !hasBudget) {
-      filtered.unshift({
-        fieldKey: "budget",
-        label: "Bütçe",
-        reason: "Talebi yayınlamak için gerekli",
-        publishImpact: 1,
-        matchingImpact: 0.5,
-        priceImpact: 0.9,
-        confidenceImpact: 0.5,
-        priorityScore: 1,
-        inputType: "text",
-        placeholder: budgetPlaceholderForStrategy(brain.strategy?.strategy),
-      });
-    }
-
-    return filtered;
-  }, [
-    brain.strategy?.strategy,
-    budgetRequired,
-    hasBudget,
-    hybridQuestionResult?.candidates,
-    isRealEstate,
-    mergedCommonDraft.city,
-    missingFields,
-    realEstateLocationMissing,
-    requestText,
-    understandingCity,
-    visibleCommonFieldKeys,
-    visibleDynamicFields,
-  ]);
+  /**
+   * NİHAİ RENDER YÜZEYİ tek otoritede: `filterRenderableCandidates`.
+   * Süzgeç mantığı burada YENİDEN yazılmaz; doğrulayıcı da aynı
+   * fonksiyonu çağırarak kullanıcının gördüğü listeyi ölçer.
+   */
+  const enrichmentCandidates = useMemo(
+    () =>
+      filterRenderableCandidates({
+        hybridQuestionResult,
+        visibleDynamicFields,
+        missingFields,
+        dynamicValues,
+        requestText,
+        activeCategoryId,
+        isRealEstate,
+        realEstateLocationMissing,
+        visibleCommonFieldKeys,
+        mergedCommonDraft,
+        understandingCity,
+        budgetRequired,
+        hasBudget,
+        strategy: brain.strategy?.strategy,
+        canonicalFields: hybrid.state?.fields ?? null,
+      }),
+    [
+      activeCategoryId,
+      brain.strategy?.strategy,
+      budgetRequired,
+      hybrid.state?.fields,
+      dynamicValues,
+      hasBudget,
+      hybridQuestionResult,
+      isRealEstate,
+      mergedCommonDraft,
+      missingFields,
+      realEstateLocationMissing,
+      requestText,
+      understandingCity,
+      visibleCommonFieldKeys,
+      visibleDynamicFields,
+    ],
+  );
 
   const readiness = useMemo(
     () =>
@@ -2993,7 +2764,21 @@ function TalepOlusturForm() {
           return;
         }
         setEnrichmentFieldKey(q.fieldKey);
-        setEnrichmentDraft(dynamicValues[q.fieldKey] ?? "");
+        /**
+         * TASLAK ÇIKARIMLA DOLDURULMAZ (D3b, 2026-08-26).
+         *
+         * Buraya doğrudan mevcut değer yazıldığında Talepo'nun tahmini
+         * seçili bir kullanıcı cevabı gibi görünüyordu. Hangi değerin
+         * taslağa gideceğine bu dosya karar VERMEZ; kanonik cevap
+         * otoritesini okuyan ortak yardımcı karar verir. Tahmin ise
+         * sorunun kendi sözleşmesinde ÖNERİ olarak taşınır.
+         */
+        setEnrichmentDraft(
+          resolveQuestionDraftPresentation(
+            hybrid.state?.fields?.[q.fieldKey] ?? null,
+            dynamicValues[q.fieldKey] ?? "",
+          ).draftValue,
+        );
         setAiCompanionOpen(true);
       }}
       onEnrichmentDraftChange={setEnrichmentDraft}

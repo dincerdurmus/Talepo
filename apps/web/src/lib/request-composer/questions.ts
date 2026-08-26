@@ -178,13 +178,20 @@ function rankWithinAllowlist(
  *      uydurma değer, sorulmayan sorunun en tehlikeli hâlidir.
  * İkisinde de tanım yoksa soru üretilemez; bu durumda değer sessizce
  * doğrulanmış SAYILMAZ — sadece bu katman onu ele alamaz.
+ *
+ * KUYRUKTA OLMAK ÖNCELİK DEĞİLDİR (D3b, 2026-08-26).
+ * Bu katman eskiden "alan zaten kuyrukta" diye doğrulamayı ÜRETMİYORDU.
+ * Oysa kuyruk üçten uzundur ve kullanıcı yalnız ilk üçünü görür: kuyruğun
+ * beşinci sırasındaki bir çıkarım, pratikte hiç sorulmamış gibi davranır.
+ * Bu yüzden burada kuyruk durumu OKUNMAZ; üretilen doğrulamalar çağıranda
+ * kuyruğun ÖNÜNE alınır ve tekilleştirme orada yapılır. Aynı alanın ikinci
+ * kez sorulmaması bir tekilleştirme sorunudur, bir üretim sorunu değil.
  */
 function buildInferenceConfirmations(input: {
   state: CanonicalRequestState;
   categoryId: string;
   values: Record<string, string>;
   subjectPinIsUserAuthored: boolean;
-  alreadyQueued: Set<string>;
 }): KnowledgeField[] {
   const schema = resolveRequestSchema({
     categoryId: input.categoryId,
@@ -202,7 +209,6 @@ function buildInferenceConfirmations(input: {
   const out: KnowledgeField[] = [];
   for (const [key, field] of Object.entries(input.state.fields)) {
     if (!isInferenceOnlyAnswer(field)) continue;
-    if (input.alreadyQueued.has(key)) continue;
     const known =
       schemaByKey.get(key) ??
       (engineByKey.has(key)
@@ -497,14 +503,19 @@ export function resolveHybridQuestions(
    * hiç görmez. `missingRequired` bilerek dokunulmaz — yayını yalnız bütçe ve
    * konum kilitler (kurucu kararı); doğrulama sorusu yayını kilitlemez.
    */
-  const queuedKeys = new Set(base.next.map((f) => f.engineFieldKey ?? f.key));
   const confirmations = buildInferenceConfirmations({
     state,
     categoryId,
     values,
     subjectPinIsUserAuthored,
-    alreadyQueued: queuedKeys,
   });
+  /**
+   * Doğrulamalar kuyruğun ÖNÜNE konur — kuyrukta zaten bulunanlar dahil.
+   * Alan iki listede birden geçebilir; aşağıdaki tekilleştirme İLK görülen
+   * konumu korur, yani doğrulama sırasını. Sıra deterministiktir: çıkarım
+   * doğrulamaları kanonik alan durumunun kendi sırasını, kalanlar da
+   * `base.next` sırasını aynen izler.
+   */
   const nextPool = [...confirmations, ...base.next];
   const seenNextKeys = new Set<string>();
   const next = filterAnyAware(filterSpare(nextPool))

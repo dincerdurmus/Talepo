@@ -13,11 +13,20 @@ import {
   withBrowseAnyOption,
 } from "@/lib/knowledge/browse";
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
+import { TURKEY_IL_NAMES, TURKEY_PROVINCES } from "@/lib/geo/turkey-districts";
+import { budgetPlaceholderForStrategy } from "@/lib/request-brain/budget-actions";
+import type { QuestionCandidate } from "@/lib/request-brain/types";
+import type { DynamicField } from "@/lib/request-category-engine";
+import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-registry";
 import type { BrowseNode, KnowledgeField } from "@/lib/knowledge/types";
 
+import { isInferenceOnlyAnswer } from "./answer-authority";
 import type { BrowseSelectionInput } from "./apply-browse";
 import { toResolverFieldBag } from "./build-state";
-import { resolveHybridQuestions } from "./questions";
+import {
+  resolveHybridQuestions,
+  type HybridQuestionResult,
+} from "./questions";
 import { resolveBrowsePath } from "./resolve-browse-path";
 import {
   createBrowseOnlyState,
@@ -25,7 +34,11 @@ import {
   syncFromBrowse,
   syncFromText,
 } from "./sync";
-import type { BrowsePathStep, CanonicalRequestState } from "./types";
+import type {
+  BrowsePathStep,
+  CanonicalFieldState,
+  CanonicalRequestState,
+} from "./types";
 import { FIELD_SENTINEL, isAnySentinel } from "./types";
 import { isFieldCompatibleWithCategory } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
@@ -810,4 +823,451 @@ export function applyTextThenBrowse(
     composedText = r.composedText;
   }
   return { state, composedText };
+}
+
+/* ---- NİHAİ RENDER YÜZEYİNİN SEÇENEK LİSTELERİ (D3b taşıması) ---- */
+
+const TURKEY_CITY_OPTIONS = [
+  { label: "Tüm Türkiye", value: "Tüm Türkiye" },
+  ...TURKEY_IL_NAMES.map((city) => ({ label: city, value: city })),
+];
+
+const TURKEY_REAL_ESTATE_LOCATION_OPTIONS = TURKEY_PROVINCES.flatMap(
+  (province) =>
+    province.ilceler.map((district) => ({
+      label: `${province.il} / ${district}`,
+      value: `${province.il} / ${district}`,
+    })),
+);
+
+const COLOR_PREFERENCE_OPTIONS = [
+  { label: "Fark Etmez", value: "Fark Etmez" },
+  { label: "Siyah", value: "Siyah" },
+  { label: "Beyaz", value: "Beyaz" },
+  { label: "Gri", value: "Gri" },
+  { label: "Kırmızı", value: "Kırmızı" },
+  { label: "Mavi", value: "Mavi" },
+  { label: "Lacivert", value: "Lacivert" },
+  { label: "Yeşil", value: "Yeşil" },
+  { label: "Sarı", value: "Sarı" },
+  { label: "Turuncu", value: "Turuncu" },
+  { label: "Kahverengi", value: "Kahverengi" },
+  { label: "Bej", value: "Bej" },
+  { label: "Bordo", value: "Bordo" },
+];
+
+/**
+ * SORU AÇILDIĞINDA NE TASLAK, NE ÖNERİ (D3b, 2026-08-26).
+ *
+ * `/talep` ekranı aktif soruyu açarken taslağı doğrudan mevcut değerle
+ * dolduruyordu. Bu, Talepo'nun KENDİ tahminini seçili bir kullanıcı cevabı
+ * gibi gösteriyordu: seçenek `aria-checked="true"` geliyor, mavi seçili
+ * stille boyanıyor ve kullanıcı hiçbir şeye dokunmadan "onaylamış" görünüyordu.
+ * Tarayıcıda ölçüldü — "İkinci el" ve "Ev" ikisi de böyleydi.
+ *
+ * Öneri ile cevap ayrı rollerdir. Tahmin faydalıdır ve GÖSTERİLMELİDİR; ama
+ * seçim durumunu kullanıcı üretir. Bu yüzden karar tek ölçüte bağlanır:
+ * kanonik cevap otoritesi. Alan, kategori ya da senaryo dalı YOKTUR.
+ *
+ *   INFERRED (yalnız çıkarım) → taslak BOŞ, değer ayrı bir ÖNERİ olarak taşınır
+ *   USER_EXPLICIT / kapatmaya yetkili VERIFIED → mevcut davranış aynen korunur
+ *   ANY / NOT_APPLICABLE → bilinçli kullanıcı cevaplarıdır, taslakta kalır
+ *   UNKNOWN → kanonik değer yoktur; taslak yalnız kullanıcının kendi form
+ *             girdisini taşır (varsa), öneri üretilmez
+ *
+ * Öneri asla seçili durum hesabına girmez: seçim yalnız taslaktan türetilir.
+ */
+export type QuestionDraftPresentation = {
+  /** Seçim durumunu üreten tek kaynak. Çıkarım buraya YAZILMAZ. */
+  draftValue: string;
+  /** Gösterilecek Talepo tahmini — cevap değildir, seçim üretmez. */
+  suggestedValue: string | null;
+};
+
+export function resolveQuestionDraftPresentation(
+  field: CanonicalFieldState | null | undefined,
+  currentValue: string,
+): QuestionDraftPresentation {
+  if (!isInferenceOnlyAnswer(field)) {
+    return { draftValue: currentValue, suggestedValue: null };
+  }
+  const inferred =
+    field?.kind === "VALUE" && field.value != null ? String(field.value) : "";
+  /**
+   * KULLANICININ KENDİ DEĞERİ SİLİNMEZ.
+   *
+   * Kanonik alan hâlâ `INFERRED` etiketli olsa bile, o an ekranda duran değer
+   * tahminden FARKLIYSA o değer tahminden gelmiş olamaz — kullanıcı bir başka
+   * yoldan (ör. "Bilgileri düzenle" paneli) yazmıştır. Taslağı boşaltmak onun
+   * girdisini gözden kaybettirir ve reddettiği tahmini geri önerir. Bu yüzden
+   * boşaltma YALNIZ ekrandaki değer tahminin kendisi (ya da boş) olduğunda
+   * yapılır. Kural yine alan/kategori bağımsızdır: karşılaştırılan tek şey
+   * kanonik tahmin ile o anki değerdir.
+   */
+  const current = currentValue.trim();
+  const userOverrode = current !== "" && current !== inferred.trim();
+  if (userOverrode) {
+    return { draftValue: currentValue, suggestedValue: null };
+  }
+  return {
+    draftValue: "",
+    suggestedValue: inferred.trim() === "" ? null : inferred,
+  };
+}
+
+/**
+ * NİHAİ RENDER YÜZEYİ — TEK OTORİTE (D3b, 2026-08-26).
+ *
+ * Bu liste, /talep ekranında kullanıcının GERÇEKTEN gördüğü soru listesidir.
+ * Daha önce `app/talep/page.tsx` içinde `enrichmentCandidates` adlı bir
+ * `useMemo` gövdesi olarak duruyordu ve hiçbir doğrulayıcı tarafından
+ * ölçülemiyordu: motor kuyruğu (`next`) ve aday listesi (`candidates`)
+ * doğruyken bu son süzgeç bir soruyu sessizce kaldırabiliyordu.
+ *
+ * Buraya taşınmasının tek amacı ölçülebilirlik ve tek sahiplik: aynı süzgeç
+ * mantığı sayfada ve testte İKİNCİ KEZ yazılmaz. Taşıma sırasında davranış
+ * değiştirilmemiştir; sonraki düzeltmeler bu dosyada, ölçülerek yapılır.
+ *
+ * KAPSAM DÜRÜSTLÜĞÜ — SABİT ELEME BLOĞU (D3b, 2026-08-26).
+ * Aşağıdaki süzgeçte `budget` / `engine` / `specs` / `technicalSpecs` için
+ * ALAN ADINA ÖZEL, taşımadan önce de var olan bir eleme durur ve bu eleme
+ * doğrulama kontrolünden ÖNCE çalışır. Yani bu dört alandan biri yalnız
+ * çıkarımdan gelen bir değer taşırsa doğrulama sorusu üretilmez. Ölçüldü:
+ * 108 senaryoluk kapsam tabanında bu durum HİÇ oluşmuyor (0 kayıt), ama
+ * kural evrensel DEĞİLDİR ve burada öyle gösterilmez — kapatılması ayrı bir
+ * karar ve ayrı bir dilimdir.
+ */
+export type RenderableCandidateInput = {
+  /** `resolveHybridQuestions(...).candidates` — sıralanmış aday listesi. */
+  hybridQuestionResult: HybridQuestionResult | null;
+  /** Kategorinin o anki görünür dinamik alanları. */
+  visibleDynamicFields: DynamicField[];
+  /** Yayın için zorunlu olup hâlâ boş olan dinamik alanlar. */
+  missingFields: DynamicField[];
+  dynamicValues: Record<string, string>;
+  requestText: string;
+  activeCategoryId: string;
+  isRealEstate: boolean;
+  realEstateLocationMissing: boolean;
+  visibleCommonFieldKeys: Set<string>;
+  mergedCommonDraft: { city: string };
+  understandingCity: string;
+  budgetRequired: boolean;
+  hasBudget: boolean;
+  /** Fiyat stratejisi — yalnız yer tutucu metinlerini seçmek için. */
+  strategy: PriceStrategyKey | null | undefined;
+  /**
+   * Kanonik alan durumu — "değer var" ile "kullanıcı cevapladı" ayrımının
+   * TEK kaynağı. Burada ikinci bir cevap sınıflandırması kurulmaz;
+   * `answer-authority` okunur.
+   */
+  canonicalFields: CanonicalRequestState["fields"] | null;
+};
+
+function featureExamplePlaceholder(
+  strategy: string | null | undefined,
+  requestText: string,
+  fallback?: string,
+): string {
+  const text = requestText.toLocaleLowerCase("tr-TR");
+
+  if (/dyson|süpürge|supurge/.test(text)) {
+    return "Örn. aparatları tam, garantili, kutulu, yedek bataryalı";
+  }
+  if (strategy === "VEHICLE" || /araç|araba|otomobil/.test(text)) {
+    return "Örn. hasarsız, belirli renk, servis bakımlı, donanım paketi";
+  }
+  if (strategy === "REAL_ESTATE_RENT" || strategy === "REAL_ESTATE_SALE") {
+    return "Örn. balkonlu, otoparklı, eşyalı, site içinde";
+  }
+  if (strategy === "SERVICE_SCOPE") {
+    return "Örn. kullanılacak malzeme, teslim tarihi, garanti, özel istekler";
+  }
+  if (strategy === "CUSTOM_MANUFACTURING") {
+    return "Örn. renk, yüzey, baskı, paketleme, kalite standardı";
+  }
+  if (/makine|cnc|pres|ekipman/.test(text)) {
+    return "Örn. kapasite, güç, çalışma saati, garanti, ekipmanlar";
+  }
+  if (/mobilya|koltuk|masa|sandalye|dolap/.test(text)) {
+    return "Örn. renk, malzeme, ölçü, kurulum, özel tasarım";
+  }
+
+  return fallback ?? "Örn. renk, ölçü, garanti, aksesuar veya diğer tercihler";
+}
+
+export function filterRenderableCandidates(
+  input: RenderableCandidateInput,
+): QuestionCandidate[] {
+  const {
+    hybridQuestionResult,
+    visibleDynamicFields,
+    missingFields,
+    dynamicValues,
+    requestText,
+    activeCategoryId,
+    isRealEstate,
+    realEstateLocationMissing,
+    visibleCommonFieldKeys,
+    mergedCommonDraft,
+    understandingCity,
+    budgetRequired,
+    hasBudget,
+    strategy,
+    canonicalFields,
+  } = input;
+  const visibleKeys = new Set(visibleDynamicFields.map((f) => f.key));
+  const foldedRequestText = requestText
+    .toLocaleLowerCase("tr-TR")
+    .replace(/\u0131/g, "i")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const textAlreadyAnswers = (fieldKey: string, label = "") => {
+    if (fieldKey === "condition" || /araç durumu/iu.test(label)) {
+      const statedYear = requestText.match(/\b((?:19|20)\d{2})\b/u)?.[1];
+      return (
+        /\b(sıfır|sifir|ikinci\s*el|2\.?\s*el|kullanılmış|kullanilmis)\b/iu.test(requestText) ||
+        (activeCategoryId === "automotive" &&
+          statedYear != null &&
+          Number(statedYear) < new Date().getFullYear())
+      );
+    }
+    if (fieldKey.toLowerCase().includes("color") || /renk/iu.test(label)) {
+      return /\b(kirmizi|siyah|beyaz|gri|mavi|lacivert|yesil|sari|turuncu|kahverengi|bej|bordo)\b/u.test(foldedRequestText);
+    }
+    if (fieldKey === "bodyCondition" || /hasar|kasa/iu.test(label)) {
+      return /\b(hasarsiz|hatasiz|boyasiz|degisensiz|kazali)\b/u.test(foldedRequestText);
+    }
+    return false;
+  };
+  const list = hybridQuestionResult?.candidates ?? [];
+  /**
+   * DEĞER VAR ≠ KULLANICI CEVAPLADI — SON EKRANDA DA (D3b, 2026-08-26).
+   *
+   * Bu süzgeç, değeri dolu görünen alanı eliyordu ve `textAlreadyAnswers`
+   * ile metinden İKİNCİ KEZ "bu zaten cevaplanmış" kararı üretiyordu. Oysa o
+   * karar tek yerde verilir: anlama katmanı alana bir değer ve bir kaynak
+   * (`provenance`) yazar. Kaynak YALNIZ çıkarımsa değer bir cevap değil, bir
+   * öneridir — kullanıcı onaylayana kadar soru açık kalmalıdır.
+   *
+   * Sonuç, tam olarak kaçırdığımız hataydı: "2020 model ... Passat" metninde
+   * Talepo `condition = İkinci el` diye TAHMİN ediyor, soru motoru bunu ilk
+   * ekrana koyuyor, sonra bu süzgeç aynı metinden aynı tahmini yeniden
+   * üretip soruyu kaldırıyordu. Kullanıcı sıfır kilometre arıyor olsa bile
+   * bunu hiç göremiyordu.
+   *
+   * Kural kategoriye, alana ya da senaryoya özel DEĞİLDİR: tek ölçüt kanonik
+   * cevap otoritesidir. `USER_EXPLICIT` ya da soruyu kapatmaya yetkili
+   * `VERIFIED` cevaplar eskisi gibi elenmeye devam eder.
+   */
+  const needsUserConfirmation = (fieldKey: string): boolean =>
+    isInferenceOnlyAnswer(canonicalFields?.[fieldKey]);
+  const filtered = list.filter((q) => {
+    const awaitingConfirmation = needsUserConfirmation(q.fieldKey);
+    if (
+      !awaitingConfirmation &&
+      (dynamicValues[q.fieldKey]?.trim() ||
+        textAlreadyAnswers(q.fieldKey, q.label))
+    ) {
+      return false;
+    }
+    if (
+      q.fieldKey === "budget" ||
+      q.fieldKey === "engine" ||
+      q.fieldKey === "specs" ||
+      q.fieldKey === "technicalSpecs"
+    ) {
+      return false;
+    }
+    /**
+     * Görünür alan kesişimi bir DOĞRULAMAYI eleyemez. Soru motoru o alanı
+     * ilk ekrana koyduysa, kategori form şeması onu göstermiyor olsa bile
+     * uydurulmuş değerin kullanıcıya sorulması gerekir.
+     */
+    if (awaitingConfirmation) return true;
+    if (
+      q.fieldKey === "brand" ||
+      q.fieldKey === "city" ||
+      q.fieldKey === "condition" ||
+      q.fieldKey === "screenSize" ||
+      q.fieldKey === "resolution" ||
+      q.fieldKey === "model"
+    ) {
+      return true;
+    }
+    return visibleKeys.size === 0 || visibleKeys.has(q.fieldKey);
+  }).map((q) =>
+    q.fieldKey === "city"
+      ? {
+          ...q,
+          inputType: "select" as const,
+          options: isRealEstate
+            ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
+            : TURKEY_CITY_OPTIONS,
+          quickChoices: undefined,
+          multiSelect: true,
+          label: isRealEstate ? "İl ve ilçe" : q.label,
+          placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
+        }
+      : q.fieldKey === "location"
+        ? {
+            ...q,
+            placeholder: "Mahalle, cadde veya sokak bilgisi girin",
+          }
+      : q.fieldKey === "color"
+        ? {
+            ...q,
+            inputType: "select" as const,
+            options: COLOR_PREFERENCE_OPTIONS,
+            quickChoices: undefined,
+            multiSelect: true,
+            placeholder: "Renk seçin",
+          }
+      : q.fieldKey === "features"
+      ? {
+          ...q,
+          placeholder: featureExamplePlaceholder(
+            strategy,
+            requestText,
+            q.placeholder,
+          ),
+        }
+      : q.inputType === "select"
+        ? {
+            ...q,
+            quickChoices: undefined,
+            multiSelect: true,
+          }
+        : q,
+  );
+
+  // Show every still-empty field that is relevant to the active category,
+  // including optional preferences that did not enter the ranked shortlist.
+  for (const field of visibleDynamicFields) {
+    if (
+      field.key === "engine" ||
+      field.key === "specs" ||
+      field.key === "technicalSpecs" ||
+      dynamicValues[field.key]?.trim() ||
+      textAlreadyAnswers(field.key, field.label) ||
+      filtered.some((candidate) => candidate.fieldKey === field.key)
+    ) {
+      continue;
+    }
+    filtered.push({
+      fieldKey: field.key,
+      label: field.label,
+      reason: field.required
+        ? "Talebi yayınlamak için gerekli"
+        : "İsteğe bağlı tercih",
+      publishImpact: field.required ? 1 : 0.2,
+      matchingImpact: field.required ? 0.7 : 0.45,
+      priceImpact: 0.25,
+      confidenceImpact: 0.25,
+      priorityScore: field.required ? 1 : 0.3,
+      inputType:
+        field.key === "color" || field.type === "select"
+          ? "select"
+          : field.type === "number"
+            ? "number"
+            : "text",
+      options:
+        field.key === "color" ? COLOR_PREFERENCE_OPTIONS : field.options,
+      quickChoices:
+        field.key === "color" || field.type === "select"
+          ? undefined
+          : field.options,
+      multiSelect: field.key === "color" || field.type === "select",
+      placeholder: field.key === "color" ? "Renk seçin" : field.placeholder,
+    });
+  }
+
+  for (const field of [...missingFields].reverse()) {
+    if (filtered.some((candidate) => candidate.fieldKey === field.key)) continue;
+    filtered.unshift({
+      fieldKey: field.key,
+      label: field.label,
+      reason: "Talebi yayınlamak için gerekli",
+      publishImpact: 1,
+      matchingImpact: 0.7,
+      priceImpact: 0.5,
+      confidenceImpact: 0.5,
+      priorityScore: 1,
+      inputType:
+        field.type === "select"
+          ? "select"
+          : field.type === "number"
+            ? "number"
+            : "text",
+      options: field.options,
+      quickChoices: field.type === "select" ? undefined : field.options,
+      multiSelect: field.type === "select",
+      placeholder: field.placeholder,
+    });
+  }
+
+  if (
+    visibleCommonFieldKeys.has("city") &&
+    ((!mergedCommonDraft.city.trim() && !understandingCity.trim()) ||
+      (isRealEstate && realEstateLocationMissing))
+  ) {
+    filtered.unshift({
+      fieldKey: "city",
+      label: isRealEstate ? "İl ve ilçe" : "Şehir",
+      reason: isRealEstate
+        ? "Talebi yayınlamak için geçerli il ve ilçe gerekli"
+        : "Tekliflerin doğru bölgeden gelmesine yardımcı olur",
+      publishImpact: 0.8,
+      matchingImpact: 0.95,
+      priceImpact: 0.4,
+      confidenceImpact: 0.3,
+      priorityScore: 0.9,
+      inputType: "select",
+      options: isRealEstate
+        ? TURKEY_REAL_ESTATE_LOCATION_OPTIONS
+        : TURKEY_CITY_OPTIONS,
+      multiSelect: true,
+      placeholder: isRealEstate ? "İl ve ilçe seçin" : "Şehir seçin",
+    });
+  }
+
+  if (budgetRequired && !hasBudget) {
+    filtered.unshift({
+      fieldKey: "budget",
+      label: "Bütçe",
+      reason: "Talebi yayınlamak için gerekli",
+      publishImpact: 1,
+      matchingImpact: 0.5,
+      priceImpact: 0.9,
+      confidenceImpact: 0.5,
+      priorityScore: 1,
+      inputType: "text",
+      placeholder: budgetPlaceholderForStrategy(strategy),
+    });
+  }
+
+  /**
+   * ÖNERİ ADAYIN ÜZERİNDE TAŞINIR (D3b, 2026-08-26).
+   *
+   * Tahmin, arayüz kabuğunun prop zincirinden değil sorunun KENDİ
+   * sözleşmesinden gider: bugünkü panel ile onun yerini alacak arayüz aynı
+   * adayı tüketir. Cevap alanı (`draftValue`) bilerek boş bırakılır —
+   * öneri seçim durumu üretmez ve soruyu kapatmaz.
+   */
+  return filtered.map((candidate): QuestionCandidate => {
+    const presentation = resolveQuestionDraftPresentation(
+      canonicalFields?.[candidate.fieldKey],
+      dynamicValues[candidate.fieldKey] ?? "",
+    );
+    if (presentation.suggestedValue == null) return candidate;
+    return {
+      ...candidate,
+      inferredSuggestion: {
+        value: presentation.suggestedValue,
+        // Öneri üretildiyse sınıflandırma zaten INFERRED'dir; tip bunu zorlar.
+        authority: "INFERRED",
+        confirmed: false,
+      },
+    };
+  });
 }
