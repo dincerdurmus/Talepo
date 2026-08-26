@@ -13,6 +13,7 @@ Durum etiketleri: `BRANCH-WIRED` ≠ `PRODUCTION-DEPLOYED` (`00-START-HERE.md`).
 | Marka/model kanıt gerektirir | **V3’te uygulanmış**; legacy fanout’ta yok | matching-v3 identity/scoring | matching-v3 verifier | Sahte EXACT / cartesian |
 | Bütçe+konum olmadan review açılmaz | **Uygulanmış** (`BRANCH-WIRED`) — 2026-08-26'da DAR bir ek geldi: cevaplanmamış **çıkarım doğrulaması** olan `routing_critical` alan da kilitler (bkz. Karar H4); önerisi olmayan routing sorusu kilitlemez | `publish-readiness.ts`, global-core, `question-scheduler.ts` | phase2 / scheduler, `verify-inference-question-authority-v2` | Eksik teklif kalitesi |
 | Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. Karar H | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx` | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
+| Otorite sırası TEK kanonik merdivendir | **Uygulanmış** (`BRANCH-WIRED`, `CODE-VERIFIED`) — `ce464eb`; tek `AUTHORITY_RANK`, answer katmanı dar görünüm, verified kaynak listesi tipli | `provenance.ts`, `answer-authority.ts`, `build-state.ts` | `verify-authority-ladder-v1` (11/11) | Dört kopyadan biri değişip ötekilerle sessizce ayrışır; kullanıcı beyanı bir katmanda çıkarıma düşer |
 | `rawInput` soru cevaplarıyla değiştirilmez | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, 2026-08-23 kararının yerine geçer (Karar G) | `talep/page.tsx`, `sync.ts` | `verify-user-choice-authority-v1` | Bestecinin yazdığı sözcük başka alanın kullanıcı kanıtı sayılır (KB-20) |
 | Çıplak ilçe adı konum kanıtı değildir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. KB-20 | `turkey-districts.ts`, `understand-request.ts` | `verify-geo-evidence-authority-v1` | Kullanıcının yazmadığı şehir talebe yazılır |
 | Sorular kategori/ürüne göre | **Uygulanmış** (`BRANCH-WIRED`) | question-profiles, scheduler | controls/scheduler | Generic form geri dönüş |
@@ -216,6 +217,39 @@ otoritesi kazanır.** Otorite sırası tek yerde tanımlıdır ve aşağı doğr
 reddedilir: `USER_CONFIRMED / USER_EXPLICIT > VERIFIED > INFERRED > UNKNOWN`.
 `understand-request` içindeki PART ve SERVICE dalları artık kullanıcının
 seçtiği `needType` değerini `INFERRED` seviyesine düşüremez.
+
+> **H3 uygulama durumu — `BRANCH-WIRED` · `CODE-VERIFIED` · dayanak commit
+> `ce464eb` (D3a).** `3d5b2a5`'te sıra doğru uygulanmıştı ama **tek yerde
+> değildi**: aynı merdiven `provenance.ts` içinde `AttributeAuthority`,
+> besteci tarafında `AnswerAuthority`, `mapRuProvenance` içinde elle yazılmış
+> bir doğrulanmış-kaynak çifti ve `preferExplicit`'in ikili kuralı olarak dört
+> ayrı biçimde yaşıyordu. `ce464eb` bunları tek kanonik merdivene indirdi ve
+> kod gerçeği şudur:
+>
+> - Tek `Authority` tipi ve **tek** `AUTHORITY_RANK` tablosu
+>   `request-understanding/provenance.ts` içindedir; depoda ikinci bir rank
+>   tanımı yoktur.
+> - Sıra: `UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT`. Karşılaştırma
+>   `authorityRank` / `isAtLeastAuthority` üzerinden yapılır; çağıranlar kendi
+>   eşiklerini kurmaz.
+> - Answer katmanı (`answer-authority.ts`) **bağımsız bir merdiven değildir**;
+>   kanonik otoriteden türeyen dar bir görünümdür ve kendi rank tablosu
+>   yoktur. Soru kapatma eşiği `isAtLeastAuthority(authority, "VERIFIED")`.
+> - Doğrulanmış kaynak listesi TypeScript denetimindedir
+>   (`as const satisfies readonly UnderstandingSource[]`); enum'da bulunmayan
+>   `CATALOG` ve `TAXONOMY` ölü girdileri kaldırıldı. `mapRuProvenance` ve
+>   `preferExplicit` aynı kanonik kaynağı okur.
+> - Daha zayıf bir kaynak daha güçlü bir değeri veya provenance'ı düşüremez.
+>
+> Kontrol: `verify-authority-ladder-v1` — **11/11 PASS**. Refactor öncesi bu
+> satırlardan altısı kırmızıydı.
+>
+> **Bu bir davranış değişikliği değildir ve production iddiası taşımaz.**
+> Ölçüm `3d5b2a5` ile birebir aynı kaldı: D2 `0 / 20 / 49 / 3 / 0 / 4`,
+> kaybolan `0`, D1 `exit 3`, invariant bataryası `121 passed · 2 failed ·
+> 1 known_fail`, kategori kapsaması `99 pass`. Değişiklik
+> **integration'a taşınmadı, deploy edilmedi; production durumu yoktur ve
+> doğrulanmamıştır.**
 
 **H4 — Talepo'nun çıkarımı yalnız öneridir, kullanıcı cevabı değildir.** Değeri
 yalnız çıkarımdan gelen alan soruyu kapatmaz; soru sorulur ve çıkarım ayrı bir

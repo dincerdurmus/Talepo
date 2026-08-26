@@ -42,6 +42,17 @@ Nested: `discoveryProjection.understanding` via `withUnderstandingSnapshot`.
 
 Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput bozulmaz, ama **“bu projection hangi metinden kuruldu?” bilgisi hiçbir yerde saklanmaz**. Provenance alanı yoktur. [`CODE-VERIFIED`]
 
+> **Bu boşluk `ce464eb` sonrasında da AÇIKTIR** (D3c). O commit besteci
+> tarafındaki **alan otoritesini** tek kanonik merdivene indirdi
+> (`UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT`,
+> `request-understanding/provenance.ts`), ama **yayın tarafı bu bilgiyi hâlâ
+> taşımıyor**: `build-projection.ts` içinde `provenance` hiç geçmez ve
+> understanding snapshot yalnız `confidence` taşır. Sonuç: bir alanın değerinin
+> kullanıcı beyanı mı, katalog doğrulaması mı, yoksa çıkarım mı olduğu yayın
+> verisinde okunamaz. Bu yüzden `provenance_mismatch = 69` ölçümünün bugün
+> **davranışsal etkisi ölçülmemiştir** — etiket ekseni yayına hiç ulaşmıyor.
+> [`CODE-VERIFIED` — 2026-08-26]
+
 ### Client / composer state
 
 - `build-state`, field answer `kind` / `value` / `softStatus`

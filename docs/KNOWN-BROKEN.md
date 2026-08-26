@@ -73,10 +73,43 @@ listelenir ve `needType` cevaplandıktan sonra görünür hâle gelen alanlardı
 | `tech-02/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
 | `tech-10/brand@FULL_QUEUE` | `findBrand(text, TECHNOLOGY_BRANDS)` | `brand:Apple` |
 
+### `ce464eb` — otorite merdiveni tekilleştirildi (davranış değişmedi)
+
+Bu taban `3d5b2a5` üzerine kurulmuştur. `ce464eb` (D3a) yalnız **yapıyı**
+değiştirdi: aynı otorite sırası dört ayrı biçimde yaşıyordu
+(`provenance.ts` rank tablosu + `AttributeAuthority`, besteci tarafında
+`AnswerAuthority`, `mapRuProvenance` içinde elle yazılmış doğrulanmış-kaynak
+çifti, `preferExplicit`'in ikili kuralı) ve hiçbiri diğerinden türemiyordu.
+Artık tek `Authority` tipi ve tek `AUTHORITY_RANK` tablosu
+`request-understanding/provenance.ts` içindedir; answer katmanı bağımsız bir
+merdiven değil, ondan türeyen dar bir görünümdür. Doğrulanmış kaynak listesi
+TypeScript denetimindedir ve enum'da bulunmayan ölü `CATALOG` / `TAXONOMY`
+girdileri kaldırıldı.
+
+**Bu turda hiçbir sayı değişmedi.** D2 `0 / 20 / 49 / 3 / 0 / 4`, kaybolan `0`,
+D1 `exit 3`, invariant `121/2/1`, kapsama `99 pass` aynen ölçüldü.
+`provenance_mismatch` 69'da kaldı ve 69 kaydın **kimlik listesi refactor
+öncesiyle birebir aynı** (`diff` ile doğrulandı) — sayı zorla düşürülmedi,
+hiçbir fixture beklentisi değiştirilmedi. Kontrol:
+`verify-authority-ladder-v1` (11/11). Ayrıntı ve kod gerçeği:
+`docs/ai-handoff/11-DECISION-LOG.md` → **Karar H3 uygulama durumu**.
+
 ### Bu tabanda AÇIK kalanlar (KNOWN-OPEN)
 
 - **`provenance_mismatch = 69`** — soru kararından bağımsız etiket ekseni. Bu
-  dilimde **düzeltilmedi** ve olduğundan iyi gösterilmiyor.
+  dilimde **düzeltilmedi** ve olduğundan iyi gösterilmiyor. `ce464eb` sonrası
+  da kapanmadı: kimlikler değişmedi ve **bugünkü davranışsal etkisi
+  ölçülmemiştir**, çünkü yayın hattı provenance okumuyor (aşağıdaki D3c
+  satırı). Açık ölçüm/etiket farkı olarak duruyor.
+- **D3c — yayın projection ve snapshot provenance taşımıyor.**
+  `build-projection.ts` içinde `provenance` hiç geçmez; snapshot yalnız
+  `confidence` taşır. Bir değerin kullanıcı beyanı mı, katalog doğrulaması mı,
+  çıkarım mı olduğu yayın verisinde okunamaz. **AÇIK.**
+- **D3b — `auto-02/condition@FIRST_SCREEN` riski.** Çıkarımla dolan
+  `condition` (`İkinci el`, importance `optional`) ilk ekranda görünmüyor;
+  kullanıcı bu soruyu hiç görmeden review/publish'e ulaşabiliyor, çünkü kapıyı
+  yalnız bütçe, konum ve çıkarım taşıyan `routing_critical` alanlar kilitler.
+  `FULL_QUEUE`'da `inference_re_asked`. **AÇIK.**
 - **`not_measured = 4`** (ufuk başına; iki ufukta 8 kayıt) — gerçek
   ölçülemezlik, yeşile boyanmadı.
 - **`MoneyRangeControl` sabit `id="budget-amount"` kullanıyor.** Aynı anda iki
