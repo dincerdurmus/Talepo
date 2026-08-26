@@ -116,6 +116,7 @@ import {
   filterRenderableCandidates,
   resolveHybridQuestions,
   resolveQuestionDraftPresentation,
+  buildPublishFieldValues,
   buildUnderstoodFacts,
   understoodFactsToSummaryChips,
 } from "@/lib/request-composer";
@@ -2496,16 +2497,23 @@ function TalepOlusturForm() {
       ...unresolvedExpressions,
       ...(otherDomainNote.trim() ? [otherDomainNote.trim()] : []),
     ];
+    /**
+     * KULLANICI DOKUNUŞUNUN TEK LİSTESİ. Understanding snapshot'ının
+     * `confirmedFieldKeys` girdisi ile yayın torbasının `userTouchedKeys`
+     * girdisi AYNI diziden okunur — iki ayrı dokunuş kaydı tutulursa
+     * "onaylandı" ile "yayınlanabilir" sessizce ayrışır.
+     */
+    const userConfirmedFieldKeys = [
+      ...confirmedFactKeys,
+      ...Object.keys(manualValues).filter(
+        (key) => (manualValues[key] ?? "").trim().length > 0,
+      ),
+    ];
     const understandingSnapshot = buildPublishUnderstandingSnapshot({
       understanding,
       userSelected: categoryLockedByUser,
       userChoice: categoryUserChoice,
-      confirmedFieldKeys: [
-        ...confirmedFactKeys,
-        ...Object.keys(manualValues).filter(
-          (key) => (manualValues[key] ?? "").trim().length > 0,
-        ),
-      ],
+      confirmedFieldKeys: userConfirmedFieldKeys,
       primarySlug:
         persistCategorySlug === UNRESOLVED_CATEGORY_SLUG
           ? null
@@ -2524,6 +2532,17 @@ function TalepOlusturForm() {
       baseProjection,
       understandingSnapshot,
     );
+
+    /**
+     * Yayın payload'ının `fields[]` değerleri ham `dynamicValues`tan değil
+     * kanonik yayın torbasından okunur (D3c-a): onaysız çıkarım kullanıcı
+     * cevabı kanalına yazılamaz, kullanıcının dokunduğu her değer aynen gider.
+     */
+    const publishFieldValues = buildPublishFieldValues({
+      canonicalFields: hybrid.state?.fields ?? null,
+      values: dynamicValues,
+      userTouchedKeys: userConfirmedFieldKeys,
+    });
 
     try {
       const response = await fetch("/api/requests", {
@@ -2562,18 +2581,18 @@ function TalepOlusturForm() {
             ...visibleDynamicFields.map((field) => ({
               ...field,
               required: isFieldRequired(field, dynamicValues),
-              value: dynamicValues[field.key] ?? "",
+              value: publishFieldValues[field.key] ?? "",
             })),
             // Legacy dual-write: older alerts/explore rows used brandPreference
             ...(activeCategoryId === "appliances" &&
-            (dynamicValues.brand ?? "").trim()
+            (publishFieldValues.brand ?? "").trim()
               ? [
                   {
                     key: "brandPreference",
                     label: "Marka tercihi",
                     type: "text" as const,
                     required: false,
-                    value: dynamicValues.brand.trim(),
+                    value: publishFieldValues.brand.trim(),
                   },
                 ]
               : []),

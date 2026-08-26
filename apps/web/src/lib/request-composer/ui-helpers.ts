@@ -905,7 +905,8 @@ export function resolveQuestionDraftPresentation(
    * kanonik tahmin ile o anki değerdir.
    */
   const current = currentValue.trim();
-  const userOverrode = current !== "" && current !== inferred.trim();
+  const userOverrode =
+    current !== "" && !isUnconfirmedInferredValue(field, currentValue);
   if (userOverrode) {
     return { draftValue: currentValue, suggestedValue: null };
   }
@@ -913,6 +914,81 @@ export function resolveQuestionDraftPresentation(
     draftValue: "",
     suggestedValue: inferred.trim() === "" ? null : inferred,
   };
+}
+
+/**
+ * "BU DEĞER HÂLÂ ONAYSIZ TAHMİN Mİ?" — TEK KARŞILAŞTIRMA KURALI.
+ *
+ * İki tüketici aynı soruyu sorar: soru açılırken taslak boşaltılacak mı
+ * (`resolveQuestionDraftPresentation`) ve yayın torbasından değer düşülecek mi
+ * (`buildPublishFieldValues`). Karşılaştırma kuralı ikisinde ayrı yazılırsa
+ * zamanla sessizce ayrışırlar; bu yüzden tek yerde durur.
+ *
+ * Kural alan/kategori bağımsızdır: değerin kaynağı kanonik cevap
+ * otoritesinden okunur; ekrandaki değer tahminin KENDİSİYSE tahmindir,
+ * FARKLIYSA kullanıcıya aittir (kullanıcının girdisi tahmine indirgenemez).
+ */
+export function isUnconfirmedInferredValue(
+  field: CanonicalFieldState | null | undefined,
+  currentValue: string,
+): boolean {
+  if (!isInferenceOnlyAnswer(field)) return false;
+  const inferred =
+    field?.kind === "VALUE" && field.value != null
+      ? String(field.value).trim()
+      : "";
+  const current = currentValue.trim();
+  return current !== "" && current === inferred;
+}
+
+/**
+ * YAYIN DEĞER TORBASI — KULLANICI CEVABI KANALININ TEK KURUCUSU (D3c-a).
+ *
+ * `/talep` sayfası yayın payload'ının `fields[]` değerlerini bu torbadan
+ * okur; sunucu bu değerleri `fieldValues` olarak kalıcılaştırır ve firmalar
+ * onları TALEBİN CEVAPLARI olarak görür. Bu yüzden buraya giren her değer
+ * "kullanıcının cevabı" iddiasını taşır.
+ *
+ * `userTouchedKeys`, kullanıcının bu oturumda gerçekten dokunduğu alanların
+ * kanonik listesidir — sayfa bunu understanding snapshot'ının
+ * `confirmedFieldKeys` girdisiyle AYNI kaynaktan kurar; ikinci bir dokunuş
+ * kaydı tutulmaz.
+ */
+export type PublishFieldValuesInput = {
+  /** Kanonik alan durumu — cevap otoritesinin tek kaynağı. */
+  canonicalFields: CanonicalRequestState["fields"] | null | undefined;
+  /** Form/soft-fill birleşimi değer torbası (`dynamicValues`). */
+  values: Record<string, string>;
+  /** Kullanıcının dokunduğu anahtarlar (form paneli + onaylanan öneriler). */
+  userTouchedKeys: Iterable<string>;
+};
+
+export function buildPublishFieldValues(
+  input: PublishFieldValuesInput,
+): Record<string, string> {
+  const touched = new Set<string>();
+  for (const key of input.userTouchedKeys) touched.add(key);
+
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(input.values)) {
+    /**
+     * Tek süzme ölçütü kanonik cevap otoritesidir: değer YALNIZ çıkarımdan
+     * geliyorsa ve kullanıcı o alana dokunmadıysa kanala yazılmaz — tahmin
+     * kanonik durumda ve `inferredSuggestion` önerisinde yaşamaya devam eder.
+     * Kullanıcının dokunduğu alan (tahminle AYNI değeri yazmış olsa bile)
+     * ve tahminden farklı her değer aynen gider; `VERIFIED` / `USER_EXPLICIT`
+     * değerlerin yayın yetkisi `answer-authority` merdiveninden gelir ve
+     * burada ikinci bir merdiven kurulmaz.
+     */
+    if (
+      !touched.has(key) &&
+      isUnconfirmedInferredValue(input.canonicalFields?.[key], value)
+    ) {
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
 }
 
 /**

@@ -113,4 +113,7 @@ export {
   applyTextThenBrowse,
   filterRenderableCandidates,
   resolveQuestionDraftPresentation,
+  isUnconfirmedInferredValue,
+  buildPublishFieldValues,
+  type PublishFieldValuesInput,
 } from "./ui-helpers";

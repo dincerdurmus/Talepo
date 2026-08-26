@@ -57,17 +57,12 @@ import path from "node:path";
 import ts from "typescript";
 
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import { productionInputs } from "./lib/talep-production-inputs-v1";
 import { walkQuestionWavesFromText } from "./lib/question-wave-walk-v1";
-import {
-  resolveHybridQuestions,
-  type HybridQuestionResult,
-  type ResolveHybridQuestionsOptions,
-} from "../src/lib/request-composer/questions";
+import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import {
   filterRenderableCandidates,
   resolveQuestionDraftPresentation,
-  softFillFromComposerState,
-  type RenderableCandidateInput,
 } from "../src/lib/request-composer/ui-helpers";
 import {
   classifyAnswerAuthority,
@@ -79,16 +74,6 @@ import type {
   CanonicalFieldState,
   CanonicalRequestState,
 } from "../src/lib/request-composer/types";
-import {
-  getVisibleCategoryFields,
-  isFieldRequired,
-  resolveRequestCategory,
-  withCategoryFieldDefaults,
-} from "../src/lib/request-category-engine";
-import {
-  completenessFromUnderstanding,
-  strategyResolutionFromUnderstanding,
-} from "../src/lib/request-understanding/activation-bridge";
 
 /** Scheduler'ın aynı anda gösterdiği en çok soru sayısı — ilk ekran ufku. */
 const FIRST_SCREEN_SLOTS = 3;
@@ -168,92 +153,10 @@ function valueOf(field: CanonicalFieldState | undefined): string {
 }
 
 /**
- * `/talep` SAYFASININ GEÇTİĞİ SEÇENEKLERİ ÜRETİM YARDIMCILARIYLA KURAR.
- *
- * Burada hiçbir seçim, sıralama ya da görünürlük kararı ÜRETİLMEZ; her satır
- * `page.tsx`in çağırdığı üretim fonksiyonunun aynısını çağırır:
- *
- *   strategy            ← `strategyResolutionFromUnderstanding(...).strategy`
- *                         (page: `brain.strategy?.strategy`, useRequestBrain
- *                          aynı fonksiyonu çağırır)
- *   completeness        ← `completenessFromUnderstanding(...)`
- *                         (page: `brain.completeness`, aynı kaynak)
- *   dynamicFields       ← `getVisibleCategoryFields(...)`
- *                         (page: `visibleDynamicFields`)
- *   requiredDynamicKeys ← `isFieldRequired(...)` süzgeci
- *                         (page: `requiredDynamicKeys`)
- *
- * Değer torbası da elle kurulmaz: besteci durumundan `softFillFromComposerState`
- * ile okunur ve `withCategoryFieldDefaults` ile tamamlanır — ikisi de üretim
- * fonksiyonudur. Bu ölçüm SERBEST METİNden gelen talebi modeller: kullanıcının
- * elle yazdığı form değerleri, gezinme seçimi ve kategori kilidi yoktur, bu
- * yüzden `page.tsx`in bu üç kaynağı birleştiren React katmanı devrede değildir.
+ * `/talep` SAYFASININ GEÇTİĞİ SEÇENEKLER ORTAK ÜRETİM KURUCUSUNDAN GELİR.
+ * Kurulum `./lib/talep-production-inputs-v1` içindedir (D3c-a'da taşındı);
+ * yayın kanalı doğrulayıcısıyla İKİNCİ bir kopya paylaşılmaz.
  */
-function productionInputs(
-  state: CanonicalRequestState,
-  requestText: string,
-): {
-  options: ResolveHybridQuestionsOptions;
-  renderInputWithout: (
-    result: HybridQuestionResult,
-  ) => RenderableCandidateInput;
-} {
-  const understanding = state.understanding;
-  const categoryId =
-    state.categoryId ?? understanding.category.value ?? null;
-  const category = resolveRequestCategory(categoryId);
-  const values = withCategoryFieldDefaults(
-    categoryId ?? "",
-    softFillFromComposerState(state),
-  );
-  const dynamicFields = getVisibleCategoryFields(
-    category.fields,
-    values,
-    categoryId ?? undefined,
-    {
-      subcategorySlug: state.subcategorySlug,
-      taxonomyNodeId: state.taxonomyNodeId,
-    },
-  );
-  const strategy = strategyResolutionFromUnderstanding(understanding).strategy;
-  const visibleCommonFieldKeys = new Set(
-    category.commonFields.map((field) =>
-      typeof field === "string" ? field : (field as { key: string }).key,
-    ),
-  );
-  const understandingCity = understanding.location?.city?.value ?? "";
-  const isRealEstate = categoryId === "real-estate";
-  return {
-    options: {
-      strategy,
-      completeness: completenessFromUnderstanding(understanding, values),
-      dynamicFields,
-      requiredDynamicKeys: dynamicFields
-        .filter((field) => isFieldRequired(field, values))
-        .map((field) => field.key),
-    },
-    renderInputWithout: (result) => ({
-      hybridQuestionResult: result,
-      visibleDynamicFields: dynamicFields,
-      missingFields: dynamicFields.filter(
-        (field) =>
-          isFieldRequired(field, values) && !values[field.key]?.trim(),
-      ),
-      dynamicValues: values,
-      requestText,
-      activeCategoryId: categoryId ?? "",
-      isRealEstate,
-      realEstateLocationMissing: false,
-      visibleCommonFieldKeys,
-      mergedCommonDraft: { city: understandingCity },
-      understandingCity,
-      budgetRequired: visibleCommonFieldKeys.has("budget"),
-      hasBudget: false,
-      strategy,
-      canonicalFields: state.fields,
-    }),
-  };
-}
 
 /** Üç yüzeyi TEK üretim zincirinden okur. */
 function firstScreenSurfaces(
