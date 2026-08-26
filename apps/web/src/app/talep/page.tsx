@@ -60,6 +60,10 @@ import {
 } from "@/lib/request-composer/v2/category-guidance";
 import { enrichUnderstoodFacts } from "@/lib/request-composer/v2/understood-facts";
 import { understandingMatchesComposerText } from "@/lib/request-composer/v2/text-match";
+import {
+  applyResumePublishAction,
+  decideResumePublishAction,
+} from "@/lib/request-composer/resume-publish";
 import { computeRequestReadiness } from "@/lib/request-brain/request-readiness";
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 import {
@@ -1844,28 +1848,34 @@ function TalepOlusturForm() {
 
   // Taslak hazır olunca kaldığı yerden otomatik yayınla (tek deneme).
   useEffect(() => {
-    if (!resumePublishPending) return;
-    if (hybrid.isSyncing) return;
-    if ((understanding.rawInput ?? "").trim() !== requestText.trim()) return;
     // DIS SISTEM SENKRONIZASYONU + TEK-ATIS LATCH. Beklenen olay React
     // icinden gelmiyor: anlama motorunun asenkron sindirimi bitip rawInput
-    // metinle esitlendiginde tetikleniyor. Bayragin sondurulmesi, ayni
-    // niyetin ikinci kez yayin denemesi uretmesini engelleyen kilidin ta
-    // kendisidir; deps sayesinde bir kez calisir, sonra ust satirdaki erken
-    // donus effect'i kapatir. Kaldirilirsa ya otomatik yayin hic tetiklenmez
-    // ya da her senkronizasyonda tekrarlanir.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setResumePublishPending(false);
-    if (composerReadiness.canReview) {
-      handlePublishAttempt();
-    }
+    // metinle esitlendiginde tetikleniyor. Karar decideResumePublishAction
+    // icinde saf olarak verilir; burasi yalnizca uygulayicidir.
+    applyResumePublishAction(
+      decideResumePublishAction({
+        pending: resumePublishPending,
+        isSyncing: hybrid.isSyncing,
+        understandingRawInput: understanding.rawInput,
+        composerText: requestText,
+      }),
+      {
+        // Latch YALNIZ gercek deneme baslatilirken kapanir; beklerken acik
+        // kalir, boylece niyet kaybolmaz ve denemeden sonra tekrarlanmaz.
+        closeLatch: () => setResumePublishPending(false),
+        // Yayina uygunluk denemeyi IPTAL ETMEZ: butce ya da konum eksikse
+        // handlePublishAttempt bunu eksik alan rehberligine cevirir. Eski
+        // davranista latch sonuyor ama hicbir sey yapilmiyordu; kullanici
+        // yayinlama niyetiyle uye olup donuyor ve hicbir sey gormuyordu.
+        attemptPublish: handlePublishAttempt,
+      },
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     resumePublishPending,
     hybrid.isSyncing,
     requestText,
     understanding.rawInput,
-    composerReadiness.canReview,
   ]);
 
   const categoryGuidance = useMemo(() => {
