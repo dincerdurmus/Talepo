@@ -447,7 +447,6 @@ function TalepOlusturForm() {
   const [focusedDraftByKey, setFocusedDraftByKey] = useState<
     Record<string, string>
   >({});
-  const [publishSummaryOpened, setPublishSummaryOpened] = useState(false);
   /** Progressive UX: compose → clarify → review */
   const [uxStage, setUxStage] = useState<"compose" | "clarify" | "review">(
     "compose",
@@ -1806,6 +1805,14 @@ function TalepOlusturForm() {
       ) {
         return;
       }
+      // DIS SISTEM SENKRONIZASYONU. Kaynak React degil, tarayicinin
+      // localStorage'idir: kullanici uye olmak icin sayfadan ayrildiginda
+      // yazdigi metin ve verdigi cevaplar oraya birakilir. Bu effect onlari
+      // React state'ine geri tasir. Deps [] ve resumeAttemptedRef ciftli
+      // kilit oldugu icin tek turda bir kez calisir; anahtar okunur okunmaz
+      // silindiginden tekrar veya yaris uretemez. Kaldirilirsa uyelikten
+      // donen kullanicinin butun cevaplari sessizce kaybolur.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setManualValues(draft.manualValues ?? {});
       setCommonDraft({
         title: "",
@@ -1840,6 +1847,14 @@ function TalepOlusturForm() {
     if (!resumePublishPending) return;
     if (hybrid.isSyncing) return;
     if ((understanding.rawInput ?? "").trim() !== requestText.trim()) return;
+    // DIS SISTEM SENKRONIZASYONU + TEK-ATIS LATCH. Beklenen olay React
+    // icinden gelmiyor: anlama motorunun asenkron sindirimi bitip rawInput
+    // metinle esitlendiginde tetikleniyor. Bayragin sondurulmesi, ayni
+    // niyetin ikinci kez yayin denemesi uretmesini engelleyen kilidin ta
+    // kendisidir; deps sayesinde bir kez calisir, sonra ust satirdaki erken
+    // donus effect'i kapatir. Kaldirilirsa ya otomatik yayin hic tetiklenmez
+    // ya da her senkronizasyonda tekrarlanir.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setResumePublishPending(false);
     if (composerReadiness.canReview) {
       handlePublishAttempt();
@@ -2007,8 +2022,14 @@ function TalepOlusturForm() {
 
   useEffect(() => {
     if (!requestText.trim()) {
+      // GEREKLI ASAMA SIFIRLAMASI. Kullanici metni tamamen sildiginde asama
+      // compose'a donmek ZORUNDA: aksi halde bos bir talep uzerinde review
+      // ya da clarify ekraninda sikisir ve cikis yolu kalmaz. Bu bir
+      // turetilmis deger degil, kullanici eylemine karsilik gelen tek yonlu
+      // sifirlamadir; React ayni degerde bail-out yaptigi icin kaskad tek
+      // render turuyla sinirlidir.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUxStage("compose");
-      setPublishSummaryOpened(false);
       return;
     }
     if (uxStage === "review") return;
@@ -3431,7 +3452,6 @@ function TalepOlusturForm() {
                           publishError={publishError}
                           onEdit={() => {
                             setUxStage("clarify");
-                            setPublishSummaryOpened(false);
                           }}
                           onPublish={() => {
                             handlePublishAttempt();
@@ -3444,7 +3464,6 @@ function TalepOlusturForm() {
                           className="mt-3 min-h-12 w-full rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59]"
                           onClick={() => {
                             setUxStage("review");
-                            setPublishSummaryOpened(true);
                             setWizardStep(2);
                             trackComposerEvent("publish_summary_opened");
                           }}
