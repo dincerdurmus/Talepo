@@ -285,9 +285,9 @@ sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `afc23a3`, `BRANCH-WIRED` · `CODE-VERIFIED` · `BROWSER-MEASURED-LOCAL · PASS` (2026-08-26, ölçülen HEAD `3a90eb4`). **`PRODUCTION-DEPLOYED` DEĞİL** |
-| **Dosyalar** | `request-composer/resume-publish.ts` (yeni), `talep/page.tsx`, `scripts/verify-publish-resume-v1.ts` (yeni) |
-| **Testler** | `verify-publish-resume-v1` — 15 passed, exit 0 (9 saf davranış + 6 production wiring AST iddiası) |
+| **Durum** | **UYGULANMIŞ** — `afc23a3` + `3279dc7` + `e02179c`, `BRANCH-WIRED` · `CODE-VERIFIED` · `BROWSER-MEASURED-LOCAL · PASS` (2026-08-26, ölçülen HEAD `e02179c`, mobil 375×812; önceki ölçüm aynı gün `3a90eb4`). **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `request-composer/resume-publish.ts` (yeni), `talep/page.tsx`, `components/request/TalepoAiPanel.tsx`, `scripts/verify-publish-resume-v1.ts` (yeni) |
+| **Testler** | `verify-publish-resume-v1` — `afc23a3`'te 15 passed (9 saf davranış + 6 production wiring AST iddiası); `3279dc7` ile 34 bağımsız üretim wiring iddiası; `e02179c` ile **42 passed, exit 0** |
 | **Kayıt** | **KB-21** |
 | **Değişirse risk** | Kullanıcı yayınlama niyetiyle üye olur, geri döner ve ekranda hiçbir şey olmaz: ne yayın ne eksik alan rehberliği. Niyet, hiçbir sayaca girmeden kaybolur |
 
@@ -333,3 +333,60 @@ yerdedir: karar uygulayıcısına verilen `closeLatch` handler'ı.
 > ve ağ kayıtlarıyla yapıldı; ekran görüntüsü alınamadı. Bu ölçüm **yerel bir
 > çalışma kopyasındadır**: canlı başarı iddiası taşımaz ve gerçek kimlik
 > doğrulama sağlayıcısıyla uçtan uca üyelik akışı ölçülmemiştir. Bkz. **KB-21**.
+
+**I4 — Kapsam kapısı ve tek yayınlama hata otoritesi bu sözleşmenin
+parçasıdır (dayanak `3279dc7`, 2026-08-26).** Niyet korunurken iki koruma
+birlikte gerekir. Karar kanonik `RequestScope` otoritesini **girdi** alır:
+`UNSUPPORTED_SUPPLY` bir `blocked` sonucu üretir, latch söner ve yayın denemesi
+hiç başlamaz — kapsam dışı istek istemciden sunucuya bilerek gönderilmez,
+sunucudaki kapı bağımsız ikinci savunma olarak durur. Ayrıca her yayınlama
+hatası tek görünür otoriteden (`surfacePublishFailure`) geçer, `role="alert"`
+taşıyan görünür bir yüzeye yazılır ve tekrar denemesi kanonik
+`handlePublishAttempt` kapısından döner; doğrudan `requestPublish` çağrısıyla
+kapsam ve eksik alan kapılarını atlayan yol kaldırılmıştır.
+
+**I5 — Rehberliğin üretilmiş olması yetmez; görünmesi gerekir (dayanak
+`e02179c`, 2026-08-26).** Mobilde companion iki kapının arkasındadır: onu
+taşıyan dış `<details>` ve `aiCompanionOpen` ile yönetilen iç panel. Eksik alan
+ya da gerçek `publishError` varken iki kapı da **aynı türetilmiş** kararı
+(`publishSignalDemandsAttention`) kullanır. Zorlama kalıcı mandala dönmez:
+sinyal, rehberliğin kendi render koşuluyla (`attempted && missingLabels > 0`)
+eşleşir, eksik alan doldurulunca kendiliğinden kalkar ve kullanıcının kendi
+tercihi korunur. **`outOfScopeNotice` bu hesaba bilinçli olarak dahil
+değildir**; bildirim `<details>` ağacının dışında, ana composer kartında
+çizilir ve her iki kapıdan bağımsız olarak zaten görünürdür.
+
+> **Mobil tarayıcı kabulü — 2026-08-26, `e02179c`, 375×812,
+> `BROWSER-MEASURED-LOCAL · PASS`.** Yerel integration çalışma kopyasında dört
+> senaryo ölçüldü. **A — eksik alanlı üyelik dönüşü:** `rawInput` değişmedi,
+> rehberlik `innerText` içinde ve görünür, dış `details` açık, iç companion
+> görünür, latch bir kez tüketildi, ikinci yenilemede tekrar açılmadı.
+> **B — kapsam dışı arz ilanı:** `UNSUPPORTED_SUPPLY`, publish/create çağrısı
+> yok, kapsam dışı bildirim `details` dışında zaten görünür, companion
+> gereksiz yere zorla açılmadı. **C — kontrollü 500:** `POST /api/requests`
+> tarayıcıda kesilerek 500 döndürüldü (gerçek backend'e ve veritabanına
+> ulaşmadı), mobilde tek görünür `role="alert"`, çift hata kopyası yok,
+> otomatik retry yok, manuel retry kanonik `handlePublishAttempt` yoluna
+> döndü. **D — negatif kontrol:** companion zorla açılmadı; rehberlik, latch ve
+> publish isteği oluşmadı. Konsolda uygulama/hydration hatası 0.
+>
+> **Üretilmeyen iddia.** "Kapsam dışı bildirim mobilde görünmüyordu ve
+> `e02179c` ile düzeldi" **denmemektedir**; bu, önceki ölçümün yanlış
+> pozitifiydi ve bildirim zaten `<details>` dışında görünürdü. `e02179c` yalnız
+> gerçek eksik-alan ve `publishError` sinyallerinin mobil görünürlüğünü
+> düzeltir. Tarayıcı sekmesi arka plandayken `talepo-rise` animasyonunun
+> `opacity: 0`'da durması bir ölçüm ortamı etkisidir; ürün hatası ya da
+> `e02179c` kazanımı olarak yazılamaz.
+>
+> **Önceki kanıtla ilişki.** Yukarıdaki `3a90eb4` ölçümü silinmedi. Yeni ölçüm
+> onu **genişletir** (aynı A senaryosu mobil 375×812'de tekrarlandı; B, C ve D
+> eklendi) ve yalnız tek bir noktada **yerine geçer**: `3a90eb4`'ün "rehberlik
+> açıldı" satırı bir mobil görünürlük iddiası olarak okunamaz — o tarihte
+> rehberlik DOM'da üretiliyor ama iki kapının arkasında kalabiliyordu.
+> `afc23a3` dayanaklı `BRANCH-WIRED` / `CODE-VERIFIED` iddiaları ve negatif
+> kontrolün ayrıştırması aynen geçerlidir.
+>
+> **Sınır.** Ölçüm yerel bir çalışma kopyasındadır: `PRODUCTION-DEPLOYED`
+> değildir. Gerçek kimlik sağlayıcısıyla canlı uçtan uca üyelik akışı ve
+> production başarısı ölçülmüş sayılmaz; C'deki 500 tarayıcıda kesilerek
+> üretilmiştir. Bkz. **KB-21**.

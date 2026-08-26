@@ -1680,8 +1680,8 @@ kayıtla kapanmadı.
 | Kırık kontrol | `scripts/verify-publish-resume-v1.ts` (bu kayıtla birlikte açıldı) |
 | Ne zamandan beri | `8c9a036` (2026-08-23, *anonymous drafts survive sign-up and auto-resume publishing*) — kusurlu koşul bu commit ile geldi; blame ile doğrulandı, `f7aca7a` tabanının atası |
 | Tespit | 2026-08-26, `talep/page.tsx` içindeki üç miras `set-state-in-effect` lint hatası denetlenirken |
-| Durum | **ÇÖZÜLDÜ — `afc23a3`, `BRANCH-WIRED`, `CODE-VERIFIED`** |
-| Tarayıcı doğrulaması | **BROWSER-MEASURED-LOCAL · PASS** — 2026-08-26, ölçülen HEAD `3a90eb4` (yerel integration çalışma kopyası). **`PRODUCTION-DEPLOYED` DEĞİL** |
+| Durum | **ÇÖZÜLDÜ — `afc23a3` + `3279dc7` + `e02179c`, `BRANCH-WIRED`, `CODE-VERIFIED`** |
+| Tarayıcı doğrulaması | **BROWSER-MEASURED-LOCAL · PASS** — en güncel ölçüm 2026-08-26, ölçülen HEAD `e02179c`, mobil 375×812; önceki ölçüm aynı gün `3a90eb4` (yerel integration çalışma kopyası). **`PRODUCTION-DEPLOYED` DEĞİL** |
 
 **Neden yeni bir numara aldı.** Belgede bu senaryoyu taşıyan bir kayıt yoktu;
 `üyelik`, `sign-in`, `sign-up`, `resume publish`, `resumePublishPending`,
@@ -1798,6 +1798,66 @@ readiness alacak biçimde değiştirilirse bunu saf katman yakalar, ama çağrı
 tamamen başka bir dosyaya taşınması hâlinde her iki katman da yeniden
 kurulmak zorundadır. Gerçek kimlik doğrulama sağlayıcısıyla uçtan uca üyelik
 akışı da ölçülmemiş durumdadır.
+
+**Kod dayanağı genişledi — `3279dc7` ve `e02179c` (2026-08-26).** Kayıt
+açıldığında tek dayanak `afc23a3` idi. Aynı gün iki commit daha aynı üretim
+sözleşmesine eklendi; bu kayıt artık üçünü birden kapsar ve önceki dayanak
+silinmedi.
+
+| Commit | Bu kayda kattığı | Doğrulayıcı |
+| --- | --- | --- |
+| `afc23a3` | Yayın niyeti latch'i yayına uygunluk önkoşuluyla düşürülmez; karar saf yardımcıya alındı | `verify-publish-resume-v1` 15 passed |
+| `3279dc7` | Kapsam kapısı (`UNSUPPORTED_SUPPLY` → `blocked`; publish/create hiç çağrılmaz), tek yayınlama hata otoritesi (`surfacePublishFailure`), `role="alert"` ile görünür hata yüzeyi, kanonik retry yolu (`handlePublishAttempt`) | 34 bağımsız üretim wiring iddiası |
+| `e02179c` | Eksik alan **veya** gerçek `publishError` varken mobil companion görünürlüğü: dış `<details>` ve iç panel tek türetilmiş kararı (`publishSignalDemandsAttention`) kullanır | 42 passed, exit 0 |
+
+**Mobil tarayıcı kabulü — 2026-08-26, ölçülen HEAD `e02179c`, 375×812,
+`BROWSER-MEASURED-LOCAL · PASS`.** Ölçüm yerel integration çalışma kopyasında
+alındı.
+
+| # | Senaryo | Sonuç | Ölçülen |
+| --- | --- | --- | --- |
+| A | Eksik alanlı üyelik dönüşü | **PASS** | `rawInput` değişmedi; rehberlik `innerText` içinde ve görünür; dış `details` açık; iç companion görünür; latch bir kez tüketildi; ikinci yenilemede tekrar açılmadı |
+| B | Kapsam dışı arz ilanı | **PASS** | `UNSUPPORTED_SUPPLY`; publish/create çağrısı yok; kapsam dışı bildirim `details` **dışında zaten görünür**; companion gereksiz yere zorla açılmadı |
+| C | Kontrollü 500 | **PASS** | `POST /api/requests` tarayıcıda kesilerek 500 döndürüldü — gerçek backend'e ve veritabanına ulaşmadı; mobilde tek görünür `role="alert"`; çift hata kopyası yok; otomatik retry yok; manuel retry kanonik `handlePublishAttempt` yoluna döndü |
+| D | Negatif kontrol | **PASS** | Companion zorla açılmadı; rehberlik, latch ve publish isteği oluşmadı |
+
+Konsolda uygulama/hydration hatası **0**.
+
+**ÖNEMLİ DÜZELTME — kapsam dışı bildirimi hakkında üretilmeyen iddia.** "Kapsam
+dışı bildirim mobilde görünmüyordu ve `e02179c` ile düzeldi" **denemez; bu kayıt
+böyle bir iddia taşımaz.** O tespit, önceki ölçümün **yanlış pozitifiydi**:
+bildirim `<details>` ağacının dışında, ana composer kartında çizilir ve her iki
+kapıdan bağımsız olarak zaten görünürdü. `e02179c` yalnız **gerçek eksik-alan ve
+`publishError` sinyallerinin** mobil görünürlüğünü düzeltir. `outOfScopeNotice`,
+`publishSignalDemandsAttention` hesabına **bilinçli olarak dahil edilmemiştir**
+— gerekçesi `talep/page.tsx` içinde kod yorumu olarak durur ve doğrulayıcı
+bildirimin yapısal konumunu ayrı bir aralıkla sabitler. Kapsam güvenliği ayrı
+eksendedir: kapsam dışı talep publish/create yoluna hiç girmez (B senaryosu).
+
+**Ölçüm ortamı etkisi — ürün hatası değildir.** Tarayıcı sekmesi arka plandayken
+`talepo-rise` animasyonunun `opacity: 0`'da durması bir ölçüm ortamı etkisidir.
+Ne ürün hatası ne de `e02179c` kazanımı olarak yazılmamalıdır.
+
+**Önceki tarayıcı kanıtıyla ilişki — neyi genişletti, neyin yerine geçti.**
+2026-08-26 tarihli `3a90eb4` ölçümü (yukarıdaki tablo ve negatif kontrol
+paragrafı) **silinmedi**, tarihli kanıt olarak duruyor.
+
+* **Genişletti.** O ölçüm yalnız A senaryosunu ve yalnız DOM/ağ kayıtlarını
+  kapsıyordu. Yeni ölçüm aynı senaryoyu **mobil 375×812** görüntü alanında
+  tekrarlar ve B (kapsam dışı arz), C (kontrollü 500) ile D (negatif kontrol)
+  senaryolarını ekler.
+* **Yerine geçti.** `3a90eb4` ölçümünün "rehberlik açıldı" satırı bir **mobil
+  görünürlük** iddiası olarak okunamaz: o tarihte rehberlik DOM'da üretiliyor
+  ama mobilde iki kapının arkasında kalabiliyordu. Bu kusur `e02179c` ile
+  kapandı; görünürlük ilk kez bu yeni ölçümle ölçülmüştür.
+* **Yerine geçmedi.** `afc23a3` dayanaklı `BRANCH-WIRED` / `CODE-VERIFIED`
+  iddiaları ve negatif kontrolün "panel yalnız publish-attempt yolundan açılır"
+  ayrıştırması aynen geçerlidir.
+
+**Durum.** `BROWSER-MEASURED-LOCAL · PASS` · `BRANCH-WIRED` · `CODE-VERIFIED` —
+**`PRODUCTION-DEPLOYED` DEĞİL.** Gerçek kimlik sağlayıcısıyla canlı uçtan uca
+üyelik akışı ve production başarısı **ölçülmüş sayılmaz**. C senaryosundaki 500
+tarayıcıda kesilerek üretilmiştir; gerçek bir sunucu arızası ölçülmemiştir.
 
 **Eşlik eden lint temizliği (`341e775`) — kaydın kapsamı dışında ama aynı
 dosyada.** `talep/page.tsx` içindeki üç miras `react-hooks/set-state-in-effect`
