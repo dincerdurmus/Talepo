@@ -9,6 +9,7 @@ import {
   type DynamicField,
 } from "@/lib/request-category-engine";
 
+import { isInferenceOnlyInBag } from "./inference-marker";
 import { resolveKnowledgeProfile } from "./profile-registry";
 import type { KnowledgeField, KnowledgeFieldType } from "./types";
 
@@ -43,6 +44,16 @@ function defaultAllowAny(key: string): boolean | undefined {
   if (DISALLOW_ANY_KEYS.has(key)) return false;
   if (ALLOW_ANY_KEYS.has(key)) return true;
   return undefined;
+}
+
+/**
+ * Kategori motorunun alan tanımını bilgi alanına çevirir. Dışa açıktır çünkü
+ * çıkarım doğrulama soruları (KB-17) bazen şemada GÖRÜNMEYEN ama kategoride
+ * TANIMLI bir alana ihtiyaç duyar; ikinci bir çevirici yazmak iki tanımın
+ * sessizce ayrışması demek olurdu.
+ */
+export function knowledgeFieldFromDynamic(field: DynamicField): KnowledgeField {
+  return fromDynamic(field);
 }
 
 function fromDynamic(field: DynamicField): KnowledgeField {
@@ -909,6 +920,14 @@ function isFilled(values: Record<string, string | undefined>, key: string): bool
   if (v == null) return false;
   const s = String(v).trim();
   if (!s) return false;
+  /**
+   * ÇIKARIMLA DOLMUŞ ALAN CEVAPLANMIŞ DEĞİLDİR (KB-17).
+   *
+   * Değer torbada durur — `isFieldVisible` koşulları onu okumaya devam eder —
+   * ama "eksik mi?" sorusuna DOLU cevabını veremez. Aksi hâlde Talepo'nun
+   * kendi tahmini, kullanıcının hiç görmediği bir soruyu kapatır.
+   */
+  if (isInferenceOnlyInBag(values, key)) return false;
   // ANY / NOT_APPLICABLE count as answered (not missing)
   if (
     s === "__ANY__" ||
@@ -927,6 +946,16 @@ export type ResolveRequestSchemaInput = {
   subcategoryLabel?: string | null;
   subcategorySlug?: string | null;
   values?: Record<string, string | undefined>;
+  /**
+   * Konu iğnesini (araç mı / parça mı) KULLANICI mı koydu? (KB-17)
+   *
+   * Alt kategori bir gezinme seçimiyle de gelebilir, serbest metinden
+   * çıkarımla da. `getVisibleCategoryFields` iğnelenmiş konuda "Araç mı,
+   * parça mı?" sorusunu siler; bu doğru davranış YALNIZ kullanıcının kendi
+   * seçtiği iğne için geçerlidir. Çağıran bunu bilmiyorsa alan boş bırakılır
+   * ve eski davranış (kullanıcı koymuş varsayımı) korunur.
+   */
+  subjectPinIsUserAuthored?: boolean;
 };
 
 export type ResolvedRequestSchema = {
@@ -960,6 +989,7 @@ export function resolveRequestSchema(
     input.categoryId,
     {
       subcategorySlug: input.subcategorySlug ?? null,
+      subjectPinIsUserAuthored: input.subjectPinIsUserAuthored,
     },
   );
 

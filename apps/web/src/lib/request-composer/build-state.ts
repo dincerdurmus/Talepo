@@ -35,6 +35,7 @@ import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
+import { inferenceOnlyMarkerKey } from "@/lib/knowledge/inference-marker";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import {
   classifyRequestedTargetRole,
@@ -46,6 +47,7 @@ import {
   readUsageContextSplit,
   splitCompatibilityPhrase,
 } from "@/lib/request-understanding/part-relation";
+import { isInferenceOnlyAnswer } from "./answer-authority";
 import { stripIncompatibleDomainFields } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
@@ -1524,6 +1526,14 @@ export function toResolverFieldBag(
       ) {
         out[`__explicit__${key}`] =
           field.provenance === "EXPLICIT_BROWSE" ? "browse" : "text";
+      }
+      /**
+       * ÇIKARIM CEVAP DEĞİLDİR (KB-17). Değer torbada kalır — koşullu
+       * görünürlük onu okur — ama alan cevaplanmış sayılmasın diye ayrıca
+       * işaretlenir. Karar burada verilmez: tek otorite `classifyAnswerAuthority`.
+       */
+      if (isInferenceOnlyAnswer(field)) {
+        out[inferenceOnlyMarkerKey(key)] = "1";
       }
     }
   }

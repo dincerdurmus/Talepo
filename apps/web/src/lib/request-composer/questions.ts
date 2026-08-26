@@ -3,8 +3,15 @@
  * Sole question authority for Hybrid Composer / /talep ask surface.
  */
 
-import type { DynamicField } from "@/lib/request-category-engine";
+import {
+  getCategoryById,
+  type DynamicField,
+} from "@/lib/request-category-engine";
 import { resolveNextQuestions } from "@/lib/knowledge/question-resolver";
+import {
+  knowledgeFieldFromDynamic,
+  resolveRequestSchema,
+} from "@/lib/knowledge/request-schema";
 // Kompozit ölçü kapsaması alanın kendi şema tanımından okunur (KB-15).
 import { isCoveredByAggregate } from "@/lib/knowledge/request-schema";
 import type { KnowledgeField } from "@/lib/knowledge/types";
@@ -13,6 +20,11 @@ import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-r
 import { rankNextBestQuestions } from "@/lib/request-brain/question-priority";
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 
+import {
+  classifyAnswerAuthority,
+  isInferenceOnlyAnswer,
+  mayCloseQuestion,
+} from "./answer-authority";
 import { toResolverFieldBag } from "./build-state";
 import type { CanonicalRequestState } from "./types";
 
@@ -152,6 +164,56 @@ function rankWithinAllowlist(
   return merged.slice(0, 3);
 }
 
+/**
+ * ÇIKARIM DOĞRULAMA SORULARI (KB-17).
+ *
+ * Değeri YALNIZ Talepo'nun tahmininden gelen alanlar için soru üretir. Kural
+ * anahtar ya da kategori özel değildir; tek ölçüt cevap otoritesidir.
+ *
+ * Alan TANIMI iki otoriteden okunur, sırayla:
+ *   1. Çözülmüş bilgi şeması — alan zaten sorulabilir durumdaysa oradan.
+ *   2. Kategorinin kendi alan tanımı — şemanın o anki koşulları alanı
+ *      gizlemiş olabilir (ör. servis niyetinde "Araç durumu"), ama değer
+ *      state'te DURUYOR ve yayına gidiyor. Görünmeyen bir alana yazılmış
+ *      uydurma değer, sorulmayan sorunun en tehlikeli hâlidir.
+ * İkisinde de tanım yoksa soru üretilemez; bu durumda değer sessizce
+ * doğrulanmış SAYILMAZ — sadece bu katman onu ele alamaz.
+ */
+function buildInferenceConfirmations(input: {
+  state: CanonicalRequestState;
+  categoryId: string;
+  values: Record<string, string>;
+  subjectPinIsUserAuthored: boolean;
+  alreadyQueued: Set<string>;
+}): KnowledgeField[] {
+  const schema = resolveRequestSchema({
+    categoryId: input.categoryId,
+    subcategorySlug: input.state.subcategorySlug,
+    values: input.values,
+    subjectPinIsUserAuthored: input.subjectPinIsUserAuthored,
+  });
+  const schemaByKey = new Map(
+    schema.fields.map((f) => [f.engineFieldKey ?? f.key, f]),
+  );
+  const engineByKey = new Map(
+    (getCategoryById(input.categoryId)?.fields ?? []).map((f) => [f.key, f]),
+  );
+
+  const out: KnowledgeField[] = [];
+  for (const [key, field] of Object.entries(input.state.fields)) {
+    if (!isInferenceOnlyAnswer(field)) continue;
+    if (input.alreadyQueued.has(key)) continue;
+    const known =
+      schemaByKey.get(key) ??
+      (engineByKey.has(key)
+        ? knowledgeFieldFromDynamic(engineByKey.get(key)!)
+        : null);
+    if (!known) continue;
+    out.push(known);
+  }
+  return out;
+}
+
 export type ResolveHybridQuestionsOptions = {
   strategy?: PriceStrategyKey | null;
   completeness?: CompletenessBreakdown | null;
@@ -218,22 +280,43 @@ export function resolveHybridQuestions(
     };
   }
 
+  /**
+   * TEK CEVAP OTORİTESİ (D2 blokeri B6).
+   *
+   * Burada eskiden ikinci bir "hangi provenance cevap sayılır" listesi vardı
+   * (`EXPLICIT_TEXT || EXPLICIT_BROWSE`). `answer-authority` modülü tek otorite
+   * olarak tanıtılmışken bu liste sessizce ondan ayrışabilirdi: örneğin
+   * `CATALOG_ENRICHED` orada soruyu kapatmaya yetkiliyken burada değildi.
+   * Karar artık türetilir; ikinci doğru listesi bırakılmaz.
+   *
+   * `ANY` / `NOT_APPLICABLE` bilinçli kullanıcı cevaplarıdır ve değer
+   * taşımadıkları için cevap otoritesi onları `NONE` sayar — o yüzden ayrıca
+   * eklenmeye devam ederler.
+   */
   const explicitKeys = Object.entries(state.fields)
     .filter(
       ([, f]) =>
         f.kind === "ANY" ||
         f.kind === "NOT_APPLICABLE" ||
-        (f.kind === "VALUE" &&
-          (f.provenance === "EXPLICIT_TEXT" ||
-            f.provenance === "EXPLICIT_BROWSE")),
+        mayCloseQuestion(classifyAnswerAuthority(f)),
     )
     .map(([k]) => k);
+
+  /**
+   * KONU İĞNESİ KİMİN? (KB-17)
+   *
+   * Alt kategori bir gezinme seçiminden de gelebilir, serbest metinden
+   * çıkarımdan da. Yalnız İKİNCİSİNİ ölçebildiğimizde iğneyi "kullanıcı
+   * koymadı" sayarız; `needType` hiç yoksa eski davranış korunur.
+   */
+  const subjectPinIsUserAuthored = !isInferenceOnlyAnswer(state.fields.needType);
 
   const base = resolveNextQuestions({
     categoryId,
     subcategorySlug: state.subcategorySlug,
     values,
     explicitKeys,
+    subjectPinIsUserAuthored,
   });
 
   const isPartSubject =
@@ -317,7 +400,15 @@ export function resolveHybridQuestions(
         suppressed.push(f.key);
         return false;
       }
-      if (kind === "VALUE") return false;
+      /**
+       * DEĞER VAR ≠ KULLANICI CEVAPLADI (KB-17).
+       *
+       * Kullanıcının yazdığı ya da çağrılabilir bir katalog otoritesinin
+       * doğruladığı değer soruyu kapatır. Yalnız Talepo'nun tahmininden
+       * gelen değer kapatamaz: soru sorulmaya devam eder, tahmin de en fazla
+       * ön-seçili cevap olarak taşınır.
+       */
+      if (kind === "VALUE" && !isInferenceOnlyAnswer(field)) return false;
       /**
        * KOMPOZİT ÖLÇÜ KAPSAMASI (KB-15).
        *
@@ -396,7 +487,34 @@ export function resolveHybridQuestions(
 
   const missingRequired = filterAnyAware(filterSpare(base.missingRequired));
   const optionalUseful = filterAnyAware(filterSpare(base.optionalUseful));
-  const next = filterAnyAware(filterSpare(base.next)).slice(0, 3);
+
+  /**
+   * DOĞRULAMA ÖNCE GELİR (KB-17).
+   *
+   * Kuyruğun başında, hiç bilmediğimiz alanlar değil, UYDURDUĞUMUZ alanlar
+   * durur. Gerekçe simetrik değildir: eksik bir alan talebi eksik bırakır,
+   * yanlış bir çıkarım ise talebi YANLIŞ havuza gönderir ve kullanıcı bunu
+   * hiç görmez. `missingRequired` bilerek dokunulmaz — yayını yalnız bütçe ve
+   * konum kilitler (kurucu kararı); doğrulama sorusu yayını kilitlemez.
+   */
+  const queuedKeys = new Set(base.next.map((f) => f.engineFieldKey ?? f.key));
+  const confirmations = buildInferenceConfirmations({
+    state,
+    categoryId,
+    values,
+    subjectPinIsUserAuthored,
+    alreadyQueued: queuedKeys,
+  });
+  const nextPool = [...confirmations, ...base.next];
+  const seenNextKeys = new Set<string>();
+  const next = filterAnyAware(filterSpare(nextPool))
+    .filter((f) => {
+      const key = f.engineFieldKey ?? f.key;
+      if (seenNextKeys.has(key)) return false;
+      seenNextKeys.add(key);
+      return true;
+    })
+    .slice(0, 3);
 
   let candidates = rankWithinAllowlist(next, {
     strategy: opts?.strategy,

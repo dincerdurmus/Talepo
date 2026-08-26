@@ -6,6 +6,9 @@
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 import { getCategoryById } from "@/lib/request-category-engine";
 
+import { isInferenceOnlyAnswer } from "../answer-authority";
+import type { FieldProvenance } from "../types";
+
 import {
   importanceRank,
   isRemoteEligibleService,
@@ -31,6 +34,11 @@ export type FieldAnswerState = {
   kind?: "VALUE" | "ANY" | "NOT_APPLICABLE" | "UNKNOWN" | string;
   value?: string | null;
   softStatus?: SoftAnswerStatus | null;
+  /**
+   * Değerin kaynağı (KB-17). Taşınmazsa eski davranış korunur; taşındığında
+   * yalnız `INFERRED` olan değer soruyu kapatamaz.
+   */
+  provenance?: FieldProvenance | string | null;
 };
 
 function parseSoftStatus(raw: string | null | undefined): SoftAnswerStatus | null {
@@ -76,6 +84,15 @@ export function isFieldSatisfied(input: {
   const soft = input.state?.softStatus ?? parseSoftStatus(input.state?.value);
   const kind = input.state?.kind;
   const value = input.state?.value?.trim() ?? "";
+
+  /**
+   * ÇIKARIM CEVAP DEĞİLDİR (KB-17).
+   *
+   * Kullanıcının yazmadığı ve doğrulanmış bir otoritenin kanıtlamadığı değer
+   * soruyu tatmin edemez — bütçe ve konum dâhil. Değer kaybolmaz; soruda
+   * ön-seçili öneri olarak kullanıcıya gösterilir ve kararı o verir.
+   */
+  if (isInferenceOnlyAnswer(input.state)) return false;
 
   if (input.fieldKey === "budget") {
     return isBudgetSatisfiedForPublish(value);
@@ -380,8 +397,17 @@ export function scheduleNextQuestions(input: {
       ];
     }
 
+    // Tahmin cevabı kapatamaz ama boşa da gitmez: ön-seçili öneri olur.
+    const inferenceSuggestion = isInferenceOnlyAnswer(state)
+      ? (state.value ?? "").trim()
+      : "";
+
     pending.push({
       fieldKey,
+      suggestedValue: inferenceSuggestion || undefined,
+      suggestedValueAuthority: inferenceSuggestion
+        ? ("INFERENCE_ONLY" as const)
+        : undefined,
       prompt: profile.prompt,
       summaryLabel: profile.summaryLabel,
       importance,
@@ -419,9 +445,35 @@ export function scheduleNextQuestions(input: {
 
   // Kuzey yıldızı (kurucu): yalnız bütçe + il/ilçe zorunludur — başka hiçbir
   // soru yayını kilitleyemez. quote/routing sorular öne çıkar ama atlanabilir.
-  const blockingCritical = pending.filter(
+  const publishRequired = pending.filter(
     (p) => p.importance === "publish_required",
   );
+
+  /**
+   * ÇIKARIM DOĞRULAMASI YAYINI KİLİTLER (kurucu eki, 2026-08-26).
+   *
+   * Kural DAR tutulur ve iki koşulun BİRLİKTE sağlanmasını ister:
+   *   1. Alanın değeri YALNIZ Talepo'nun çıkarımından geliyor (öneri var), ve
+   *   2. Alan yönlendirme açısından kritik (`routing_critical`).
+   *
+   * Gerekçe asimetriktir: boş bırakılmış bir routing sorusu talebi eksik
+   * bırakır — kullanıcı ne olduğunu bilir. Doğrulanmamış bir çıkarım ise
+   * talebi YANLIŞ havuza gönderir ve kullanıcı bunu hiç görmez. Bu yüzden
+   * kural bütün routing alanlarına YAYILMAZ: önerisi olmayan routing sorusu
+   * eskisi gibi atlanabilir kalır.
+   */
+  const unconfirmedInference = pending.filter(
+    (p) =>
+      p.suggestedValueAuthority === "INFERENCE_ONLY" &&
+      p.importance === "routing_critical",
+  );
+
+  const blockingCritical = [
+    ...publishRequired,
+    ...unconfirmedInference.filter(
+      (p) => !publishRequired.some((b) => b.fieldKey === p.fieldKey),
+    ),
+  ];
 
   const visible = pending.slice(0, MAX_VISIBLE).map((item) => {
     const { sortScore: _score, ...q } = item;

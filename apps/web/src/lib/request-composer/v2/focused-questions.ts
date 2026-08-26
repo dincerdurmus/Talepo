@@ -29,7 +29,51 @@ export type FocusedQuestion = HumanizedQuestion & {
   allowUnknown?: boolean;
   allowDontCare?: boolean;
   budgetBasis?: ScheduledQuestion["budgetBasis"];
+  /** Çıkarımdan gelen öneri — cevap DEĞİL, öneri (KB-17). Ham kayıt değeri. */
+  suggestedValue?: string;
+  /**
+   * Önerinin KULLANICIYA GÖSTERİLECEK kanonik Türkçe etiketi.
+   *
+   * Kayıt değeri ("vehicle") ile insan etiketi ("Araç") ayrı rollerdir;
+   * kullanıcıya slug gösterilmez. Etiket burada, tek yerde çözülür — arayüz
+   * kendi eşleştirmesini yapmaz.
+   */
+  suggestedLabel?: string;
+  suggestedValueAuthority?: ScheduledQuestion["suggestedValueAuthority"];
 };
+
+/**
+ * Bir cevap değerinin kullanıcıya gösterilecek kanonik etiketini çözer.
+ *
+ * NEDEN AYRI VE SAF. Kayıt değeri ("vehicle") ile insan etiketi ("Araç") ayrı
+ * rollerdir ve kullanıcıya YALNIZ etiket gösterilir. Çözümleme tek yerde
+ * durur; arayüz kendi eşleştirmesini kurmaz. Seçenek kaydında karşılık yoksa
+ * değer AYNEN döner — serbest metin alanlarında uydurma etiket üretilmez.
+ */
+export function resolveChoiceLabel(
+  question:
+    | {
+        quickChoices?: { label: string; value: string }[];
+        options?: { label: string; value: string }[];
+        escapeChoices?: { label: string; value: string }[];
+      }
+    | null
+    | undefined,
+  value: string,
+): string {
+  const raw = (value ?? "").trim();
+  if (!raw || !question) return raw;
+  const pools = [
+    question.quickChoices ?? [],
+    question.options ?? [],
+    question.escapeChoices ?? [],
+  ];
+  for (const pool of pools) {
+    const hit = pool.find((o) => o.value === raw);
+    if (hit?.label) return hit.label;
+  }
+  return raw;
+}
 
 export function scheduledToFocusedQuestion(
   q: ScheduledQuestion,
@@ -104,6 +148,14 @@ export function scheduledToFocusedQuestion(
     allowUnknown: q.allowUnknown,
     allowDontCare: q.allowDontCare,
     budgetBasis: q.budgetBasis ?? control.budgetBasis,
+    suggestedValue: q.suggestedValue,
+    suggestedLabel: q.suggestedValue
+      ? resolveChoiceLabel(
+          { quickChoices: registryChoices, options: hybrid?.options },
+          q.suggestedValue,
+        )
+      : undefined,
+    suggestedValueAuthority: q.suggestedValueAuthority,
   };
 }
 

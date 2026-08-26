@@ -74,6 +74,15 @@ export type ScheduledQuestion = {
   escapeChoices: { label: string; value: string }[];
   placeholder?: string;
   categoryId?: string;
+  /**
+   * ÇIKARIMIN TEK MEŞRU ROLÜ (KB-17): önerilen / ön-seçili cevap.
+   *
+   * Alan yalnız Talepo'nun tahmininden dolduğunda soru kapanmaz; tahmin
+   * buraya taşınır ve kullanıcıya ön-seçili olarak gösterilir. Onaylamak tek
+   * dokunuş, değiştirmek de tek dokunuştur — ama karar kullanıcınındır.
+   */
+  suggestedValue?: string;
+  suggestedValueAuthority?: "INFERENCE_ONLY";
 };
 
 export type ScheduleResult = {

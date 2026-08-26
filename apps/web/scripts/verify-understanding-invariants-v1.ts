@@ -5600,6 +5600,16 @@ check("I50g: açık provenance ile dolan HİÇBİR alan hiçbir dalgada tekrar s
    * metninden AÇIK provenance ile dolduysa, review'a kadarki hiçbir dalgada
    * yeniden sorulamaz. Böylece ölçüm "yalnız önceden işaretlenmiş alanları
    * kontrol edip diğer görünür tekrarları kaçırma" körlüğüne düşemez.
+   *
+   * KAPSAM DÜZELTMESİ (KB-17 / D2, 2026-08-26). Satır önce `prefilled`
+   * üzerinde dönüyordu; o küme DEĞERİ olan HER alanı taşır, kaynağına
+   * bakmaksızın. Böylece Talepo'nun kendi çıkarımı da "dolmuş alan" sayılıyor
+   * ve tekrar sorulması ihlal görünüyordu. Oysa kurucu kararı bunun tam
+   * tersidir: kullanıcının yazmadığı ve hiçbir otoritenin doğrulamadığı değer
+   * soruyu kapatamaz. Satır artık kendi BAŞLIĞININ söylediği kümede döner —
+   * `prefilledUserAnswered` — ve sözleşme zayıflamaz, keskinleşir: çıkarımın
+   * tekrar sorulması ihlal değil, GEREKLİ davranıştır (bkz. D2 kabul testi
+   * `verify-inference-question-authority-v2.ts`).
    */
   const INPUTS = [
     "20x15x10 cm özel kesim kutu istiyorum",
@@ -5620,7 +5630,7 @@ check("I50g: açık provenance ile dolan HİÇBİR alan hiçbir dalgada tekrar s
   ];
   for (const raw of INPUTS) {
     const q = walkQuestionWavesFromText(raw);
-    for (const [key, value] of Object.entries(q.prefilled)) {
+    for (const [key, value] of Object.entries(q.prefilledUserAnswered)) {
       assert.ok(
         !q.asked.includes(key),
         `${raw}: '${key}' metinden '${value}' ile doldu ama yine soruluyor → [${q.asked.join(", ")}]`,

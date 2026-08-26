@@ -326,7 +326,15 @@ export function getVisibleCategoryFields(
   fields: DynamicField[],
   values: Record<string, string | undefined>,
   categoryId?: string,
-  opts?: { subcategorySlug?: string | null; taxonomyNodeId?: string | null },
+  opts?: {
+    subcategorySlug?: string | null;
+    taxonomyNodeId?: string | null;
+    /**
+     * Konu iğnesini kullanıcı mı koydu? (KB-17) Belirtilmezse `true` —
+     * yani bu alanı taşımayan çağıranların davranışı DEĞİŞMEZ.
+     */
+    subjectPinIsUserAuthored?: boolean;
+  },
 ): DynamicField[] {
   const resolved: Record<string, string> = categoryId
     ? withCategoryFieldDefaults(categoryId, values)
@@ -371,8 +379,17 @@ export function getVisibleCategoryFields(
     );
   });
 
-  // Explicit browse subject: never re-ask "Araç mı, parça mı?"
-  if (browsePinnedNeed) {
+  /**
+   * Kullanıcının SEÇTİĞİ konu: "Araç mı, parça mı?" bir daha sorulmaz.
+   *
+   * KB-17 düzeltmesi: iğne serbest metinden ÇIKARILDIYSA bu silme yapılamaz.
+   * Alt kategori ("arac-satin-alma") kullanıcının seçimi değil Talepo'nun
+   * tahminiyse, o tahmini doğrulayacak tek soruyu silmek tahmini cevap yerine
+   * koymaktır — talep yanlış havuza gider ve kullanıcı bunu hiç görmez.
+   * İğne yine `resolved.needType` olarak DURUR: alakasız alanlar (parça
+   * soruları) açılmaz; kapanan tek şey sorunun kendisidir.
+   */
+  if (browsePinnedNeed && opts?.subjectPinIsUserAuthored !== false) {
     visible = visible.filter((field) => field.key !== "needType");
   }
 

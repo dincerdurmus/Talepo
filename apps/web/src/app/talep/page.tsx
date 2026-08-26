@@ -454,7 +454,6 @@ function TalepOlusturForm() {
   );
   const composerStartedRef = useRef(false);
   /** Soru cevaplarının serbest metne yazılan parçaları (kurucu, 2026-08-23). */
-  const appendedAnswersRef = useRef<Record<string, string>>({});
   /** Üyelik akışında saklanan taslağın anahtarı ve dönüş durumu. */
   const resumeAttemptedRef = useRef(false);
   const [resumePublishPending, setResumePublishPending] = useState(false);
@@ -1664,6 +1663,8 @@ function TalepOlusturForm() {
                 : field?.kind === "ANY"
                   ? "no_preference"
                   : null,
+            // KB-17: kaynak taşınmazsa scheduler çıkarımı cevap sanar.
+            provenance: field?.provenance ?? null,
           },
         ]),
       ),
@@ -3175,7 +3176,6 @@ function TalepOlusturForm() {
                       // Elle düzenleme profesyonel-uygulandı durumunu düşürür
                       setAppliedProfessionalDescription(false);
                       brain.setProfessionalDraftApplied(false);
-                      appendedAnswersRef.current = {};
                       hybrid.setText(nextText);
                       clearCategoryOverridesOnTextEdit();
                       setPublishedVersion(null);
@@ -3340,53 +3340,24 @@ function TalepOlusturForm() {
                             if (question) {
                               applyBrainQuestion(question, value);
                             }
-                            // Kurucu (2026-08-23): verilen cevap serbest metne de
-                            // otomatik işlenir — metin talebin tek gerçek kaydıdır.
-                            {
-                              const SOFT_ANSWER_VALUES = new Set([
-                                "unknown",
-                                "no_preference",
-                                "open_to_offers",
-                                "nationwide",
-                                "remote",
-                                "flexible",
-                              ]);
-                              if (!SOFT_ANSWER_VALUES.has(value)) {
-                                const label =
-                                  (question &&
-                                  "summaryLabel" in question &&
-                                  typeof question.summaryLabel === "string"
-                                    ? question.summaryLabel
-                                    : null) ??
-                                  question?.label ??
-                                  fieldKey;
-                                const fragment =
-                                  fieldKey === "budget"
-                                    ? `Bütçem ${value}.`
-                                    : fieldKey === "city"
-                                      ? `Konum: ${value}.`
-                                      : fieldKey === "quantity"
-                                        ? `Adet: ${value}.`
-                                        : `${label}: ${value}.`;
-                                const prev =
-                                  appendedAnswersRef.current[fieldKey];
-                                let base = requestText;
-                                if (prev && base.includes(prev)) {
-                                  base = base
-                                    .replace(prev, "")
-                                    .replace(/\s{2,}/g, " ")
-                                    .trimEnd();
-                                }
-                                const foldTr = (s: string) =>
-                                  s.toLocaleLowerCase("tr-TR");
-                                if (!foldTr(base).includes(foldTr(value))) {
-                                  const next = `${base.trimEnd()}${base.trim() ? " " : ""}${fragment}`;
-                                  appendedAnswersRef.current[fieldKey] =
-                                    fragment;
-                                  hybrid.setText(next);
-                                }
-                              }
-                            }
+                            /**
+                             * KULLANICI METNİ OTORİTESİ (kurucu, 2026-08-26).
+                             *
+                             * Verilen cevap ARTIK serbest metne yazılmaz. Bu,
+                             * 2026-08-23 tarihli "cevap metne de işlenir"
+                             * kararının YERİNE GEÇER. Gerekçe ölçülmüş bir
+                             * zarardır: bestecinin metne yazdığı sözcük bir
+                             * sonraki okumada BAŞKA bir alanın kullanıcı kanıtı
+                             * sayılabiliyordu ve kullanıcı kendi cümlesinde
+                             * makine slug'ı ("Talep türü: vehicle.") görüyordu.
+                             *
+                             * Cevap kaybolmaz: `applyBrainQuestion` zaten her
+                             * cevabı `hybrid.applyQuickOption` üzerinden
+                             * kanonik duruma EXPLICIT_BROWSE kaynağıyla yazar
+                             * ve o yol rawInput'u bilerek korur. `rawInput`
+                             * kullanıcının yazdığı metin olarak değişmeden
+                             * kalır.
+                             */
                             setAnsweredQuestionKeys((keys) =>
                               keys.includes(fieldKey)
                                 ? keys

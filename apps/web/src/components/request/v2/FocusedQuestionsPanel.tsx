@@ -27,16 +27,55 @@ type Props = {
   remainingCriticalCount?: number;
 };
 
+/**
+ * ÖNERİ ROZETİ — TEK GÖRÜNÜM (D2 blokeri B4/B2, 2026-08-26).
+ *
+ * Öneri hiçbir kontrol tipinde "seçilmiş cevap" görünümü almaz; kendi
+ * rozetiyle, seçim dilinin dışında durur. `id` verilmesinin nedeni
+ * erişilebilirlik: kontrolün kendisi `aria-describedby` ile bu açıklamaya
+ * bağlanır, böylece doğrudan düğmeye atlayan klavye kullanıcısı da "bu bir
+ * öneri, henüz kaydedilmedi" bilgisini duyar.
+ */
+function SuggestionBadge(props: {
+  id: string;
+  fieldKey: string;
+  value?: string;
+  label?: string;
+}) {
+  const label = (props.label ?? "").trim();
+  if (!label) return null;
+  return (
+    <div
+      id={props.id}
+      className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-teal-900/20 bg-[#f7faf9] px-3 py-2"
+      data-testid={`suggestion-badge-${props.fieldKey}`}
+      data-suggested-value={props.value}
+      data-suggested-label={label}
+    >
+      <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-medium text-[#0f766e] ring-1 ring-[#0f766e]/25">
+        Talepo önerisi
+      </span>
+      <span className="text-sm font-medium text-[#0f1f1d]">{label}</span>
+      <span className="w-full text-xs leading-5 text-[#0f1f1d]/55">
+        Henüz kaydetmedik — doğruysa aşağıdan seçin, değilse başka bir seçenek
+        işaretleyin.
+      </span>
+    </div>
+  );
+}
+
 function OptionChip(props: {
   label: string;
   selected?: boolean;
   onClick: () => void;
   soft?: boolean;
+  describedBy?: string;
 }) {
   return (
     <button
       type="button"
       aria-pressed={props.selected ?? false}
+      aria-describedby={props.describedBy}
       className={`inline-flex min-h-11 max-w-full items-center justify-center rounded-xl border px-3.5 py-2 text-left text-sm font-medium leading-snug transition-colors sm:min-h-10 ${
         props.selected
           ? "border-[#0f766e] bg-[#dff6ef] text-[#0f5f59] ring-1 ring-[#0f766e]/35"
@@ -56,17 +95,69 @@ function OptionChip(props: {
   );
 }
 
+/**
+ * YARIM KALAN GİRDİ SORU DEĞİŞİMİNDE KAYBOLMAZ (D2 blokeri B3, 2026-08-26).
+ *
+ * Kontroller her soru değişiminde `key={active.fieldKey}` ile yeniden kurulur
+ * — bu, eski sorunun state'inin yeni soruya sızmasını engelleyen korumadır ve
+ * kaldırılmaz. Bedeli, bileşen içi `useState`'in remount'ta sıfırlanmasıydı:
+ * kullanıcı bütçenin yarısını yazıp başka soruya geçince yazdığı kayboluyordu.
+ *
+ * Çözüm state'i bileşenden ÇIKARMAK: taslak, fieldKey'e bağlı olarak EBEVEYN
+ * tarafında (`draftByKey`) tutulur. Böylece hem sızıntı korunur hem de geri
+ * dönen kullanıcı yazdığını bulur.
+ */
+type LocationDraft = {
+  ils: string[];
+  all: boolean;
+  ilce: string;
+  filter: string;
+};
+
+const EMPTY_LOCATION_DRAFT: LocationDraft = {
+  ils: [],
+  all: false,
+  ilce: "__all__",
+  filter: "",
+};
+
+function parseLocationDraft(raw: string): LocationDraft {
+  if (!raw?.trim()) return EMPTY_LOCATION_DRAFT;
+  try {
+    const parsed = JSON.parse(raw) as Partial<LocationDraft>;
+    return {
+      ils: Array.isArray(parsed.ils) ? parsed.ils.map(String) : [],
+      all: Boolean(parsed.all),
+      ilce: typeof parsed.ilce === "string" ? parsed.ilce : "__all__",
+      filter: typeof parsed.filter === "string" ? parsed.filter : "",
+    };
+  } catch {
+    // Taslak bozuksa kullanıcı yazısı kaybolmasın diye filtreye düşürülür.
+    return { ...EMPTY_LOCATION_DRAFT, filter: raw };
+  }
+}
+
 function LocationPickerControl(props: {
   control: QuestionControlDef;
   onAnswer: (value: string) => void;
   isRealEstate?: boolean;
+  draft: string;
+  onDraftChange: (value: string) => void;
+  suggestionId?: string;
 }) {
   // Kurucu kararı (2026-08-23): il çoklu seçmeli kutucuk; "Tümü" hem il hem
   // ilçe düzeyinde vardır. "Türkiye geneli" / "Konum fark etmez" çipleri yok.
-  const [selectedIls, setSelectedIls] = useState<string[]>([]);
-  const [allTurkey, setAllTurkey] = useState(false);
-  const [ilce, setIlce] = useState("__all__");
-  const [filter, setFilter] = useState("");
+  const parsed = parseLocationDraft(props.draft);
+  const { onDraftChange } = props;
+  const patchDraft = (patch: Partial<LocationDraft>) => {
+    onDraftChange(JSON.stringify({ ...parsed, ...patch }));
+  };
+  const selectedIls = parsed.ils;
+  const allTurkey = parsed.all;
+  const ilce = parsed.ilce;
+  const filter = parsed.filter;
+  const setIlce = (value: string) => patchDraft({ ilce: value });
+  const setFilter = (value: string) => patchDraft({ filter: value });
 
   const foldTr = (s: string) =>
     s
@@ -80,17 +171,20 @@ function LocationPickerControl(props: {
   }, [filter]);
 
   const singleIl = !allTurkey && selectedIls.length === 1 ? selectedIls[0]! : null;
-  const districts = useMemo(
-    () => (singleIl ? getDistrictsForProvince(singleIl) : []),
-    [singleIl],
-  );
+  // Taslak her render'da çözüldüğü için manuel memo korunamıyor; arama zaten
+  // hazır bir haritadan okunuyor, doğrudan çağrılır.
+  const districts = singleIl ? getDistrictsForProvince(singleIl) : [];
 
   const toggleIl = (name: string) => {
-    setAllTurkey(false);
-    setIlce("__all__");
-    setSelectedIls((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    );
+    // Taslak tek yazımla güncellenir: üç ayrı setter aynı anlık görüntüyü
+    // okuduğu için yalnız sonuncusu kalırdı.
+    patchDraft({
+      all: false,
+      ilce: "__all__",
+      ils: selectedIls.includes(name)
+        ? selectedIls.filter((n) => n !== name)
+        : [...selectedIls, name],
+    });
   };
 
   const canSave = allTurkey || selectedIls.length > 0;
@@ -117,7 +211,7 @@ function LocationPickerControl(props: {
     "h-4 w-4 shrink-0 rounded border-[#0f1f1d]/20 text-[#0f766e] focus:ring-[#0f766e]/25";
 
   return (
-    <div className="mt-3 space-y-3" data-testid="control-location-picker">
+    <div className="mt-3 space-y-3" data-testid="control-location-picker" aria-describedby={props.suggestionId}>
       {props.control.softOptions.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {props.control.softOptions.map((opt) => (
@@ -148,11 +242,9 @@ function LocationPickerControl(props: {
               type="checkbox"
               className={checkboxBox}
               checked={allTurkey}
-              onChange={() => {
-                setAllTurkey((prev) => !prev);
-                setSelectedIls([]);
-                setIlce("__all__");
-              }}
+              onChange={() =>
+                patchDraft({ all: !allTurkey, ils: [], ilce: "__all__" })
+              }
             />
             Tümü (Türkiye geneli)
           </label>
@@ -209,10 +301,15 @@ function LocationPickerControl(props: {
 function MoneyRangeControl(props: {
   control: QuestionControlDef;
   onAnswer: (value: string) => void;
+  draft: string;
+  onDraftChange: (value: string) => void;
+  suggestionId?: string;
 }) {
   // Kurucu kararı (2026-08-23): tek bütçe alanı, tıklamadan açık gelir;
   // tek alternatif "Teklifleri görmek istiyorum".
-  const [amount, setAmount] = useState("");
+  // Yarım kalan tutar ebeveyn taslağında durur (B3) — remount silmez.
+  const amount = props.draft ?? "";
+  const setAmount = props.onDraftChange;
   // Yazarken binlik ayracı: 30000 değil 30.000 görünür.
   const formatLive = (raw: string) => {
     const digits = raw.replace(/\D/g, "");
@@ -241,6 +338,7 @@ function MoneyRangeControl(props: {
         </label>
         <input
           id="budget-amount"
+          aria-describedby={props.suggestionId}
           inputMode="numeric"
           autoComplete="off"
           className={signalInput}
@@ -282,6 +380,16 @@ function MoneyRangeControl(props: {
   );
 }
 
+/**
+ * ÖNERİ, SEÇİM GİBİ GÖRÜNEMEZ (KB-17 / D2 blokeri B2).
+ *
+ * İlk sürümde öneri, eşleşen seçeneği `OptionChip.selected` ile işaretliyordu.
+ * O yol `aria-pressed="true"`, ✓ ikonu ve dolu zemin üretir — üçü de "bu cevap
+ * KAYDEDİLDİ" der. Oysa hiçbir şey kaydedilmemiştir: ekran okuyucu kullanıcıya
+ * olmayan bir onayı bildirir, gören kullanıcı da soruyu cevaplanmış sanıp
+ * geçebilir. Öneri artık kendi rozetiyle, seçim dilinin DIŞINDA gösterilir;
+ * seçili görünüm yalnız gerçek bir dokunuştan sonra oluşur.
+ */
 function ChoiceControl(props: {
   control: QuestionControlDef;
   fieldKey: string;
@@ -289,22 +397,36 @@ function ChoiceControl(props: {
   onDraftChange: (v: string) => void;
   onAnswer: (value: string) => void;
   baseId: string;
+  suggestedValue?: string;
+  suggestedLabel?: string;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
   const primary = props.control.options;
   const soft = props.control.softOptions;
+  // Kullanıcıya ETİKET gösterilir; slug ("vehicle") asla ekrana çıkmaz.
+  const suggestionLabel = (props.suggestedLabel ?? "").trim();
+  // Seçenek düğmeleri öneri açıklamasına bağlanır (erişilebilirlik).
+  const suggestionId = `${props.baseId}-suggestion`;
+  const describedBy = suggestionLabel ? suggestionId : undefined;
 
   const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="mt-3 space-y-3" data-testid={`control-${props.control.controlType}`}>
+      <SuggestionBadge
+        id={suggestionId}
+        fieldKey={props.fieldKey}
+        value={props.suggestedValue}
+        label={suggestionLabel}
+      />
       {primary.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {primary.map((opt) => (
             <OptionChip
               key={opt.value}
               label={opt.label}
+              describedBy={describedBy}
               onClick={() => {
                 if (opt.opensCustom || opt.value === "__custom__") {
                   setCustomOpen(true);
@@ -566,25 +688,68 @@ export function FocusedQuestionsPanel({
         </p>
         {active.helper ? <p className={signalHelper}>{active.helper}</p> : null}
 
+        {/*
+          KONTROL BİLEŞENLERİ SORU BAŞINA YENİDEN KURULUR (D2 blokeri B4).
+          `key` olmadan React aynı ağaç konumundaki aynı bileşeni yeniden
+          kullanır: bir soruda açılan "özel değer" / tarih paneli ya da yarım
+          kalan konum seçimi bir SONRAKİ soruya taşınır ve kullanıcı yanlış
+          alana cevap verebilir. `key={active.fieldKey}` her soru değişiminde
+          tam remount yaptırır ve iç state'i sıfırlar.
+        */}
         {control?.controlType === "location_picker" ? (
-          <LocationPickerControl
-            control={control}
-            isRealEstate={active.categoryId === "real-estate"}
-            onAnswer={commit}
-          />
+          <>
+            <SuggestionBadge
+              id={`${baseId}-suggestion`}
+              fieldKey={active.fieldKey}
+              value={active.suggestedValue}
+              label={active.suggestedLabel}
+            />
+            <LocationPickerControl
+              key={active.fieldKey}
+              control={control}
+              isRealEstate={active.categoryId === "real-estate"}
+              onAnswer={commit}
+              draft={draftByKey[active.fieldKey] ?? ""}
+              onDraftChange={(v) => onDraftChange(active.fieldKey, v)}
+              suggestionId={
+                active.suggestedLabel ? `${baseId}-suggestion` : undefined
+              }
+            />
+          </>
         ) : control?.controlType === "money_range" ? (
-          <MoneyRangeControl control={control} onAnswer={commit} />
+          <>
+            <SuggestionBadge
+              id={`${baseId}-suggestion`}
+              fieldKey={active.fieldKey}
+              value={active.suggestedValue}
+              label={active.suggestedLabel}
+            />
+            <MoneyRangeControl
+              key={active.fieldKey}
+              control={control}
+              onAnswer={commit}
+              draft={draftByKey[active.fieldKey] ?? ""}
+              onDraftChange={(v) => onDraftChange(active.fieldKey, v)}
+              suggestionId={
+                active.suggestedLabel ? `${baseId}-suggestion` : undefined
+              }
+            />
+          </>
         ) : control ? (
           <ChoiceControl
+            key={active.fieldKey}
             control={control}
             fieldKey={active.fieldKey}
             draft={draftByKey[active.fieldKey] ?? ""}
             onDraftChange={(v) => onDraftChange(active.fieldKey, v)}
             onAnswer={commit}
             baseId={baseId}
+            suggestedValue={active.suggestedValue}
+            suggestedLabel={active.suggestedLabel}
           />
         ) : (
           <ChoiceControl
+            key={active.fieldKey}
             control={{
               controlType: "text_fallback",
               options: [],
@@ -602,6 +767,8 @@ export function FocusedQuestionsPanel({
             onDraftChange={(v) => onDraftChange(active.fieldKey, v)}
             onAnswer={commit}
             baseId={baseId}
+            suggestedValue={active.suggestedValue}
+            suggestedLabel={active.suggestedLabel}
           />
         )}
       </div>

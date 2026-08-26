@@ -27,7 +27,12 @@ import {
   primaryYear,
   type ClassifiedNumber,
 } from "@/lib/request-understanding/number-role";
-import { clamp01, partitionFacts, uv } from "@/lib/request-understanding/provenance";
+import {
+  assignAttributeIfNotWeaker,
+  clamp01,
+  partitionFacts,
+  uv,
+} from "@/lib/request-understanding/provenance";
 import type {
   DecisionStatus,
   RequestIntent,
@@ -1232,19 +1237,36 @@ export function understandRequest(
       )
     : undefined;
 
+  /**
+   * COĞRAFİ KANIT KULLANICININ YAZDIĞINDAN OKUNUR (2026-08-26).
+   *
+   * `normalizeUnderstandingInput` eksik Türkçe harfleri tamamlar ("arcelik" →
+   * "arçelik"). Bu, marka/ürün eşleştirmesi için doğrudur ama yer adlarında
+   * OLMAYAN bir kanıt üretebiliyor: "aracın bakımı" ifadesindeki ünsüz
+   * yumuşamasını "araçın" diye geri çevirince, Kastamonu'nun Araç ilçesi
+   * bulunma ekiyle geçmiş gibi görünüyor ve kullanıcının hiç yazmadığı bir
+   * konum EXPLICIT kanıtla doluyordu.
+   *
+   * Kural: yer kanıtı yalnız HAM metinden okunur. Ölçüldü — 108 senaryoluk
+   * corpus'ta iki okuma arasında tek bir fark yok; eksik diyakritikle yazılan
+   * il adları (`istanbulda`, `izmirde`) zaten ham metinde de çözülüyor,
+   * çözülemeyenler (`cankayada`) normalize edilmiş metinde de çözülmüyordu.
+   */
+  const geoEvidenceInput = rawInput;
+
   const cityRaw =
     structured?.city?.trim() ||
     (typeof structured?.fieldValues?.city === "string"
       ? structured.fieldValues.city.trim()
       : "") ||
-    detectCity(normalizedInput);
+    detectCity(geoEvidenceInput);
   const cityFromStructured =
     Boolean(structured?.city?.trim()) ||
     Boolean(
       typeof structured?.fieldValues?.city === "string" &&
         structured.fieldValues.city.trim(),
     );
-  const geo = findProvinceAndDistrictInText(normalizedInput);
+  const geo = findProvinceAndDistrictInText(geoEvidenceInput);
   const location =
     cityRaw || geo?.il
       ? {
@@ -1833,12 +1855,24 @@ export function understandRequest(
       "semantic-subject",
     ];
 
-    attributes.needType = uv("part", {
-      provenance: "INFERRED",
-      source: "DETERMINISTIC_INFERENCE",
-      confidence: requestSubject.kind.confidence,
-      evidence: requestSubject.kind.evidence,
-    });
+    /**
+     * AÇIK KULLANICI SEÇİMİ ÇIKARIMLA EZİLEMEZ (kurucu, 2026-08-26).
+     *
+     * Bu dal semantik özneden PART çıkardığında `needType`i koşulsuz olarak
+     * yeniden yazıyordu; kullanıcı o alanı yapısal olarak seçmiş olsa bile
+     * değer `INFERRED` seviyesine düşüyor, soru yeniden açılıyor ve seçim
+     * kayboluyordu. Karar burada verilmez: otorite sırası tek yerde tanımlı.
+     */
+    assignAttributeIfNotWeaker(
+      attributes,
+      "needType",
+      uv("part", {
+        provenance: "INFERRED",
+        source: "DETERMINISTIC_INFERENCE",
+        confidence: requestSubject.kind.confidence,
+        evidence: requestSubject.kind.evidence,
+      }),
+    );
 
     const partPhrase =
       requestSubject.displayPhrase?.value ??
@@ -1903,12 +1937,17 @@ export function understandRequest(
     subjectDecision.confidence = requestSubject.kind.confidence;
     subjectDecision.status = requestSubject.kind.status;
 
-    attributes.needType = uv("service", {
-      provenance: "INFERRED",
-      source: "DETERMINISTIC_INFERENCE",
-      confidence: requestSubject.kind.confidence,
-      evidence: requestSubject.kind.evidence,
-    });
+    // Açık kullanıcı seçimi çıkarımla ezilemez — bkz. PART dalındaki gerekçe.
+    assignAttributeIfNotWeaker(
+      attributes,
+      "needType",
+      uv("service", {
+        provenance: "INFERRED",
+        source: "DETERMINISTIC_INFERENCE",
+        confidence: requestSubject.kind.confidence,
+        evidence: requestSubject.kind.evidence,
+      }),
+    );
     if (requestSubject.serviceType) {
       attributes.serviceType = requestSubject.serviceType;
     }

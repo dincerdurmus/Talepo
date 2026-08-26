@@ -5,6 +5,7 @@
  */
 
 import { isExplicitBrowseField } from "./browse";
+import { isInferenceOnlyInBag } from "./inference-marker";
 import {
   getConditionalFields,
   getMissingRequiredFields,
@@ -51,6 +52,9 @@ function isKnown(
   if (isExplicitBrowseField(values, key)) return true;
   const v = values[key];
   if (isAnyOrNa(v)) return true;
+  // Çıkarımla dolmuş alan BİLİNİYOR sayılmaz (KB-17): değer koşullar için
+  // torbada kalır, ama soruyu kapatacak cevap yerine geçemez.
+  if (isInferenceOnlyInBag(values, key)) return false;
   return v != null && String(v).trim().length > 0;
 }
 

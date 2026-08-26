@@ -10,6 +10,7 @@ import {
   applyBrowseSelectionToState,
   type BrowseSelectionInput,
 } from "./apply-browse";
+import { isInferenceOnlyAnswer } from "./answer-authority";
 import { buildCanonicalRequestState } from "./build-state";
 import { composeNaturalRequestText } from "./compose-text";
 import {
@@ -41,6 +42,42 @@ function normalizeComparable(text: string): string {
     .replace(/\s+/g, " ")
     .replace(/[.!?]+$/g, "")
     .toLocaleLowerCase("tr-TR");
+}
+
+/** tr-TR duyarsız karşılaştırma — etiket/slug farkı yükseltmeyi engellemesin. */
+function foldSelection(value: string): string {
+  return value.trim().toLocaleLowerCase("tr-TR").replace(/[\s_-]+/g, " ");
+}
+
+function withUserSelectedProvenance(
+  state: CanonicalRequestState,
+  fieldValues: Record<string, string | null | undefined> | undefined,
+): CanonicalRequestState {
+  if (!fieldValues) return state;
+  let changed = false;
+  const fields = { ...state.fields };
+  for (const [key, selected] of Object.entries(fieldValues)) {
+    const picked = (selected ?? "").trim();
+    if (!picked) continue;
+    const field = fields[key];
+    if (!field || field.kind !== "VALUE") continue;
+    if (!isInferenceOnlyAnswer(field)) continue;
+    const current = String(field.value ?? "");
+    const canonical = String(field.canonicalValue ?? "");
+    if (
+      foldSelection(current) !== foldSelection(picked) &&
+      foldSelection(canonical) !== foldSelection(picked)
+    ) {
+      continue;
+    }
+    fields[key] = {
+      ...field,
+      provenance: "EXPLICIT_BROWSE",
+      evidence: [...(field.evidence ?? []), "user-selected:structured"],
+    };
+    changed = true;
+  }
+  return changed ? { ...state, fields } : state;
 }
 
 /**
@@ -161,6 +198,22 @@ export function syncFromText(
       ),
     };
   }
+
+  /**
+   * KULLANICININ KENDİ SEÇİMİ ÇIKARIM DEĞİLDİR (KB-17).
+   *
+   * `structured.fieldValues` çağıranın taşıdığı KULLANICI seçimidir (yapısal
+   * form / rol seçimi). Anlama katmanı bu değeri bir attribute olarak geri
+   * verirken `INFERRED` etiketliyor; etiket, değerin nereden geldiğini
+   * kaybediyor. Cevap otoritesi artık soruyu kapatıp kapatmayacağına bu
+   * etikete bakarak karar verdiği için, kullanıcının seçtiği rol ona yeniden
+   * sorulur hâle geliyordu.
+   *
+   * Yükseltme YALNIZ değer birebir çakıştığında yapılır: anlama katmanı
+   * seçimi başka bir değere dönüştürdüyse ortada kullanıcının onayladığı bir
+   * değer yoktur ve uydurulmaz.
+   */
+  state = withUserSelectedProvenance(state, opts?.structured?.fieldValues);
 
   const composed = composeNaturalRequestText(state);
   return {

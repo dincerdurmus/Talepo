@@ -1452,18 +1452,88 @@ function escapeRegExp(value: string): string {
  * word). Allows common Turkish locative/possessive endings: "İstanbul'da",
  * "Of'ta". Prevents "Of" matching inside "ofis".
  */
+/** Yer adına eklenebilen bulunma / ayrılma / yönelme ekleri. */
+const PLACE_CASE_SUFFIX =
+  "(?:['’]?(?:da|de|ta|te|dan|den|tan|ten|ya|ye|nun|nin|un|ün|in|ın))";
+
+/**
+ * Bir yer adının HEMEN yanında durunca o adı yer olarak niteleyen sözcükler.
+ * Liste idari birim adlarıdır; belirli bir ilçeye ya da ile bağlı değildir.
+ */
+const PLACE_QUALIFIER_WORDS = [
+  "il",
+  "ili",
+  "ilçe",
+  "ilçesi",
+  "ilçesinde",
+  "ilçesinden",
+  "mahalle",
+  "mahallesi",
+  "mahallesinde",
+  "semt",
+  "semti",
+  "semtinde",
+  "köy",
+  "köyü",
+  "köyünde",
+  "belde",
+  "beldesi",
+  "bölge",
+  "bölgesi",
+  "bölgesinde",
+  "civarı",
+  "civarında",
+  "yakınında",
+] as const;
+
 export function textMentionsPlace(text: string, place: string): boolean {
+  return placeMentionEvidence(text, place).mentioned;
+}
+
+/**
+ * BİR YER ADININ METİNDE GEÇMESİ, KULLANICININ ORAYI KASTETTİĞİ ANLAMINA
+ * GELMEZ (2026-08-26).
+ *
+ * Türkiye'de bazı ilçe adları gündelik Türkçe sözcüklerdir; Kastamonu'nun
+ * **Araç** ilçesi en görünür örnektir. "Araç kiralamak istiyorum" cümlesinde
+ * o sözcük bir yer değil, talebin konusudur. Eşleşmenin kendisi ile
+ * eşleşmenin YER OLDUĞUNA dair kanıt ayrı şeylerdir; bu fonksiyon ikisini
+ * ayrı döndürür ve kararı çağırana bırakır.
+ *
+ * `explicit` iki biçimden biriyle doğar ve ikisi de dilbilgiseldir, veriye
+ * özel değildir:
+ *   - ad bir hâl eki taşıyor ("Kadıköy'de", "İzmir'den"),
+ *   - adın hemen yanında bir idari birim sözcüğü var ("Araç ilçesinde").
+ */
+export function placeMentionEvidence(
+  text: string,
+  place: string,
+): { mentioned: boolean; explicit: boolean } {
   const needle = place.trim().toLocaleLowerCase("tr-TR");
-  if (!needle) return false;
+  if (!needle) return { mentioned: false, explicit: false };
   const haystack = text.toLocaleLowerCase("tr-TR");
   const escaped = escapeRegExp(needle);
-  const suffix =
-    "(?:['’]?(?:da|de|ta|te|dan|den|tan|ten|ya|ye|nun|nin|un|ün|in|ın))?";
-  const re = new RegExp(
-    `(?<![\\p{L}\\p{N}])${escaped}${suffix}(?![\\p{L}\\p{N}])`,
+
+  const bare = new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}${PLACE_CASE_SUFFIX}?(?![\\p{L}\\p{N}])`,
     "iu",
   );
-  return re.test(haystack);
+  if (!bare.test(haystack)) return { mentioned: false, explicit: false };
+
+  const withSuffix = new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}${PLACE_CASE_SUFFIX}(?![\\p{L}\\p{N}])`,
+    "iu",
+  );
+  const qualifier = PLACE_QUALIFIER_WORDS.map(escapeRegExp).join("|");
+  const withQualifier = new RegExp(
+    `(?<![\\p{L}\\p{N}])(?:(?:${qualifier})\\s+${escaped}|${escaped}${PLACE_CASE_SUFFIX}?\\s+(?:${qualifier}))(?![\\p{L}\\p{N}])`,
+    "iu",
+  );
+
+  return {
+    mentioned: true,
+    explicit: withSuffix.test(haystack) || withQualifier.test(haystack),
+  };
 }
 
 export function findProvinceAndDistrictInText(
@@ -1475,7 +1545,17 @@ export function findProvinceAndDistrictInText(
   for (const prov of TURKEY_PROVINCES) {
     const ilMentioned = textMentionsPlace(text, prov.il);
     for (const ilce of prov.ilceler) {
-      if (!textMentionsPlace(text, ilce)) continue;
+      const evidence = placeMentionEvidence(text, ilce);
+      if (!evidence.mentioned) continue;
+      /**
+       * ÇIPLAK İLÇE ADI KANIT DEĞİLDİR (2026-08-26).
+       *
+       * İl adı geçmiyorsa, ilçe adının yer olarak kullanıldığına dair açık
+       * bir işaret aranır: hâl eki ya da komşu idari birim sözcüğü. Aksi
+       * hâlde gündelik bir Türkçe sözcük ("araç") kullanıcının hiç yazmadığı
+       * bir konuma dönüşür ve talep yanlış şehre yayınlanır.
+       */
+      if (!ilMentioned && !evidence.explicit) continue;
       hits.push({
         il: prov.il,
         ilce,
