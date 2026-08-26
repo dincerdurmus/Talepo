@@ -22,6 +22,8 @@
  */
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import {
   findProvinceAndDistrictInText,
@@ -152,17 +154,10 @@ function main(): void {
    * değil, kanıt biçimine bakar. "Araç" sözcüğüne özel bir dal yazılırsa
    * bu satır kırmızıya döner.
    */
-  const geoSrc = require("node:fs").readFileSync(
-    require("node:path").join(
-      __dirname,
-      "..",
-      "src",
-      "lib",
-      "geo",
-      "turkey-districts.ts",
-    ),
+  const geoSrc = readFileSync(
+    join(__dirname, "..", "src", "lib", "geo", "turkey-districts.ts"),
     "utf8",
-  ) as string;
+  );
   const matcherRegion = geoSrc
     .slice(geoSrc.indexOf("export function textMentionsPlace"))
     // Yorumlar kuralı UYGULAMAZ; vakayı anlatan yorum yama sayılmaz.
