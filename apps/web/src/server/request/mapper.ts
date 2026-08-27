@@ -226,6 +226,30 @@ export function mapFieldType(field: RequestFieldInput) {
 }
 
 export function mapFieldValue(field: RequestFieldInput) {
+  /**
+   * DEĞER TAŞIMAYAN CEVAP DA BİR CEVAPTIR (D3f Dilim 3b, 2026-08-28).
+   *
+   * Burası yalnız `field.value` doluysa satır üretiyordu. Dilim 1'den beri
+   * bilinçli "Bilmiyorum" / "Uygulanamaz" cevabı DEĞER TAŞIMADAN gelir
+   * (`value: ""` + kanonik `mode`), bu yüzden kullanıcının cevabı yayın anında
+   * doğru ölçülüp veritabanında KAYBOLUYORDU. `ANY` ise yalnız görünür
+   * etiketiyle ("Fark etmez") `textValue` olarak yaşıyordu — kaçındığımız
+   * etiket-değer kanalının ta kendisi.
+   *
+   * Mevcut `jsonValue Json?` kolonu kullanılır; MIGRATION GEREKMEZ. Ölçüldü:
+   * bu kolonu bugün hiçbir yazma yolu doldurmuyor, dolayısıyla `{ mode }`
+   * biçimi hiçbir sözleşmeyle çakışmaz. `mode` kanonik `FieldValueKind`tir —
+   * yeni bir enum tanımlanmaz ve tanınmayan bir mod cevap sayılmaz.
+   *
+   * GÖRÜNÜR ETİKET SAKLANMAZ: mod değer taşımıyorsa `textValue` bilinçli
+   * olarak `null` yazılır. `VALUE` için gereksiz `{mode:"VALUE"}` yazılmaz;
+   * mevcut sözleşme yeterlidir ve eski istemcilerin davranışı birebir kalır.
+   */
+  const mode = isFieldValueKind(field.mode) ? field.mode : undefined;
+  if (mode !== undefined && mode !== "VALUE") {
+    return { textValue: null, jsonValue: { mode } };
+  }
+
   if (!field.value) return null;
 
   if (field.type === "number") {
@@ -236,6 +260,25 @@ export function mapFieldValue(field: RequestFieldInput) {
   }
 
   return { textValue: field.value };
+}
+
+/**
+ * KALICI CEVAP MODUNU OKUYAN TEK YARDIMCI (D3f Dilim 3b).
+ *
+ * `jsonValue` güvenilmez bir JSON kolonudur: eski kayıtta alan hiç yoktur,
+ * bozuk kayıtta dizi, metin ya da tanınmayan bir mod olabilir. Hiçbiri THROW
+ * ETMEZ ve hiçbiri güvenilir cevap SAYILMAZ. Değer taşıyan `VALUE` modu da
+ * bu kanaldan okunmaz — onun kendi kolonları vardır.
+ */
+export function persistedAnswerModeOf(
+  jsonValue: unknown,
+): Exclude<FieldValueKind, "VALUE"> | null {
+  if (!jsonValue || typeof jsonValue !== "object" || Array.isArray(jsonValue)) {
+    return null;
+  }
+  const mode = (jsonValue as { mode?: unknown }).mode;
+  if (!isFieldValueKind(mode) || mode === "VALUE") return null;
+  return mode;
 }
 
 export function buildAiSummary(input: CreateRequestInput) {

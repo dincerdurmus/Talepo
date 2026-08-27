@@ -7,6 +7,8 @@ import {
   getCategoryById,
   type DynamicFieldOption,
 } from "@/lib/request-category-engine";
+import type { FieldValueKind } from "@/lib/request-composer";
+import { persistedAnswerModeOf } from "@/server/request/mapper";
 
 /**
  * Fallback Turkish labels for stored English select enums (e.g. needType).
@@ -152,6 +154,27 @@ export function displayRequestFieldValue(value: {
       year: "numeric",
     }).format(value.dateValue);
   }
-  if (value.jsonValue) return JSON.stringify(value.jsonValue);
+  /**
+   * KALICI CEVAP MODU İNSAN DİLİNDE GÖSTERİLİR (D3f Dilim 3b, 2026-08-28).
+   *
+   * Dilim 3b'den beri bilinçli "Bilmiyorum" / "Uygulanamaz" / "Fark etmez"
+   * cevabı `jsonValue = { mode }` olarak kalıcılaşıyor. Bu satır ham JSON'u
+   * ekrana basıyordu; kullanıcıya ve firmaya `{"mode":"UNKNOWN"}` göstermek
+   * kabul edilemez. Etiket YALNIZ burada, gösterim sınırında üretilir — kayıt
+   * tarafında hâlâ hiçbir yerelleştirilmiş metin saklanmaz.
+   */
+  const answerMode = persistedAnswerModeOf(value.jsonValue);
+  if (answerMode) return ANSWER_MODE_LABEL[answerMode];
+  /* Tanınmayan/bozuk JSON ham gösterilmez; ölçülemeyen kayıt boş kalır. */
   return "—";
 }
+
+/** Değer taşımayan cevabın kullanıcıya gösterilen karşılığı. */
+const ANSWER_MODE_LABEL: Record<
+  Exclude<FieldValueKind, "VALUE">,
+  string
+> = {
+  UNKNOWN: "Bilmiyorum",
+  NOT_APPLICABLE: "Uygulanamaz",
+  ANY: "Fark etmez",
+};
