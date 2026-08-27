@@ -13,6 +13,7 @@ import type {
   RequestUnderstandingSnapshot,
 } from "@/lib/request/understanding-snapshot";
 import type { Authority } from "@/lib/request-understanding/provenance";
+import type { FieldValueKind } from "@/lib/request-composer/types";
 
 export const DISCOVERY_PROJECTION_VERSION = 1 as const;
 export const DISCOVERY_FILTER_VERSION = 1 as const;
@@ -56,6 +57,36 @@ export type ProjectionAuthoritySurface = "attributes" | "constraints";
 export type ProjectionFieldAuthority = {
   attributes?: Authority;
   constraints?: Authority;
+};
+
+/**
+ * BİR ALANIN CEVAP DİSPOZİSYONU — DEĞER DEĞİL, CEVAP (D3f Dilim 2, 2026-08-27).
+ *
+ * Kullanıcının bilinçli "Bilmiyorum" / "Uygulanamaz" cevabının kalıcı bir
+ * yüzeyi yoktu: `attributes`'a girmesi yanlış olurdu (ürün özelliği değildir),
+ * `constraints`'e girmesi de yanlış olurdu (matching kısıtı değildir). Bu
+ * yüzden sunucu güven sınırında damgalanabileceği bir iddia hiç oluşmuyor ve
+ * kalıcı projection'da "kullanıcı bilmiyorum dedi" ile "hiç sorulmadı" aynı
+ * kovada kalıyordu.
+ *
+ * TİP KANONİK KAYNAKLARDAN TÜRER. `kind` besteci merdiveninin
+ * (`FieldValueKind`) değer taşımayan iki modudur; `authority` kanonik otorite
+ * merdiveninin (`Authority`) tek geçerli seviyesidir. Burada YENİ bir enum,
+ * yeni bir rank tablosu ya da yeni bir "doğrulanmış kaynak" listesi
+ * TANIMLANMAZ — üstteki listeler değişirse bu tip derleme zamanında kırılır.
+ *
+ * `ANY` BU YÜZEYE GİRMEZ: onun kendi kanalı vardır (`constraints` →
+ * `mode:"ANY"`) ve o kanal filtre sözleşmesini besler. Buraya taşımak çalışan
+ * bir davranışı ikinci bir yere kopyalamak olurdu.
+ *
+ * `USER_EXPLICIT` TEK SEVİYEDİR çünkü bu yüzeye YALNIZ kullanıcının kendi
+ * bilinçli seçimi yazılır. Çıkarım ya da katalog bir alanı "bilmiyorum" diye
+ * cevaplayamaz; öyle bir kayıt üretilseydi Talepo'nun bilgisizliği kullanıcı
+ * beyanı gibi görünürdü.
+ */
+export type ProjectionFieldResponse = {
+  kind: Extract<FieldValueKind, "UNKNOWN" | "NOT_APPLICABLE">;
+  authority: Extract<Authority, "USER_EXPLICIT">;
 };
 
 /**
@@ -114,6 +145,25 @@ export type RequestDiscoveryProjection = {
    * da "bu değeri kullanıcı gerçekten söyledi" ispatı olarak KULLANILAMAZ.
    */
   fieldAuthority?: Record<string, ProjectionFieldAuthority>;
+  /**
+   * AÇIK "BİLMİYORUM" / "UYGULANAMAZ" CEVAPLARI (D3f Dilim 2) — additive ve
+   * OPSİYONEL. Alanı olmayan eski kayıtlar aynen geçerlidir; `discoveryProjection`
+   * bir JSON kolonudur, migration GEREKMEZ.
+   *
+   * Bu yüzey MATCHING KISITI DEĞİLDİR ve bu dilimde routing, filtreleme,
+   * Matching V3 ya da skorlama kararına BAĞLANMAMIŞTIR. Yalnız "kullanıcı bu
+   * soruyu bilinçli olarak değer vermeden kapattı" bilgisini taşır; firmaya
+   * dönük bir ürün özelliği üretmez.
+   *
+   * Yalnız `isDeliberateNonValueAnswer` true olan kayıtlar girer. Varsayılan /
+   * çıkarımdan gelen `UNKNOWN` — 108 senaryoluk kapsam tabanında 988 alan —
+   * buraya TEK BİR kayıt bile yazmaz.
+   *
+   * SUNUCU GÜVEN SINIRI `fieldAuthority` ile AYNIDIR: istemcinin gönderdiği
+   * kopya tamamen atılır ve yalnız sunucunun doğrulanmış cevap kanalından
+   * (`fields[]` → kanonik `mode`) yeniden türetilir.
+   */
+  fieldResponses?: Record<string, ProjectionFieldResponse>;
   /** Reuse Phase 2 match contract shape. */
   matchContract: ConstraintMatchContract;
   /** Reuse Phase 2 filter contract shape. */

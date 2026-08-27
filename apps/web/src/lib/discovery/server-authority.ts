@@ -64,6 +64,7 @@ import { buildDiscoveryProjectionFromState } from "./build-projection";
 import type {
   ProjectionAuthoritySurface,
   ProjectionFieldAuthority,
+  ProjectionFieldResponse,
   RequestDiscoveryProjection,
 } from "./types";
 import {
@@ -306,10 +307,45 @@ export function resolveServerFieldAuthority(
     if (entry.attributes || entry.constraints) fieldAuthority[key] = entry;
   }
 
+  /**
+   * CEVAP DİSPOZİSYONU YÜZEYİ — İSTEMCİ KOPYASI ATILIR (D3f Dilim 2).
+   *
+   * `fieldAuthority` ile AYNI muamele: istemcinin gönderdiği `fieldResponses`
+   * hiçbir koşulda kabul edilmez, çünkü "kullanıcı bu soruyu bilinçli olarak
+   * kapattı" iddiası da bir kullanıcı beyanıdır ve uydurulabilir.
+   *
+   * TEK KAYNAK SÜZÜLMÜŞ CEVAP KANALIDIR. Metin türetimi burada kullanılamaz:
+   * "bilmiyorum" cevabının `rawInput` içinde bir karşılığı YOKTUR ve olması da
+   * beklenmez — bu yüzden `fields[]` kanalı (`mode`) tek geçerli girdidir.
+   * Kanal yoksa (clone) yüzey de yoktur: fail-closed.
+   */
+  const fieldResponses: Record<string, ProjectionFieldResponse> = {};
+  for (const [key, answer] of answers) {
+    if (answer.mode !== "UNKNOWN" && answer.mode !== "NOT_APPLICABLE") continue;
+    /**
+     * TEK YÜZEY KURALI. Aynı anahtar `attributes` ya da `constraints`
+     * torbasında da duruyorsa cevap dispozisyonu YAZILMAZ: değer taşıyan bir
+     * iddia ile "değer vermedim" cevabı aynı anda doğru olamaz ve ikisini
+     * birden yazmak okuyucuya çelişkili bir kayıt bırakırdı.
+     */
+    if (projection.attributes?.[key] !== undefined) continue;
+    if (projection.constraints?.[key] !== undefined) continue;
+    /**
+     * SÜZÜLMÜŞ CEVAP KANALI BİR KULLANICI BEYANIDIR (D3d sözleşmesi). Bu
+     * yüzden tek geçerli seviye `USER_EXPLICIT`tir. `satisfies` ile kanonik
+     * merdivene bağlanır: `Authority` listesinden bu seviye kalkarsa burası
+     * derleme zamanında kırılır, sessizce ayrışmaz.
+     */
+    const responseAuthority = "USER_EXPLICIT" as const satisfies Authority;
+    fieldResponses[key] = { kind: answer.mode, authority: responseAuthority };
+  }
+
   const next: RequestDiscoveryProjection = { ...projection };
   /* Harita boşsa alan HİÇ üretilmez — metadata'sız legacy şekil korunur. */
   delete next.fieldAuthority;
+  delete next.fieldResponses;
   if (Object.keys(fieldAuthority).length) next.fieldAuthority = fieldAuthority;
+  if (Object.keys(fieldResponses).length) next.fieldResponses = fieldResponses;
   return next;
 }
 
@@ -324,7 +360,17 @@ export type ProjectionWriteInput = {
   description?: string | null;
   professionalDescription?: string | null;
   title?: string | null;
-  fields?: ReadonlyArray<{ key?: unknown; value?: unknown }> | null;
+  /**
+   * `mode` TİPTE DE TAŞINIR (D3f Dilim 2). Çalışma anında zaten okunuyordu
+   * (`projectionAnswerChannel`) ama sözleşmede yoktu; tip ile davranış
+   * sessizce ayrışıyordu. Değer taşımayan cevabın TEK kaynağı bu alan
+   * olduğu için ayrışma artık kabul edilemez.
+   */
+  fields?: ReadonlyArray<{
+    key?: unknown;
+    value?: unknown;
+    mode?: unknown;
+  }> | null;
 };
 
 /**

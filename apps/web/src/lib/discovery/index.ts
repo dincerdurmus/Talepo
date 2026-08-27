@@ -6,6 +6,7 @@
 export type {
   DiscoveryFieldMode,
   DiscoveryFieldConstraint,
+  ProjectionFieldResponse,
   RequestDiscoveryProjection,
   CanonicalDiscoveryFilter,
   DiscoveryMatchPath,

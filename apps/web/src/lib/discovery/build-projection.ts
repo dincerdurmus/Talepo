@@ -6,6 +6,7 @@
 import {
   answerAuthorityOfProvenance,
   classifyAnswerAuthority,
+  isDeliberateNonValueAnswer,
 } from "@/lib/request-composer/answer-authority";
 import type { CanonicalRequestState } from "@/lib/request-composer/types";
 import {
@@ -29,6 +30,7 @@ import {
   DISCOVERY_PROJECTION_VERSION,
   type DiscoveryFieldConstraint,
   type ProjectionFieldAuthority,
+  type ProjectionFieldResponse,
   type RequestDiscoveryProjection,
 } from "./types";
 
@@ -206,6 +208,15 @@ export function buildDiscoveryProjectionFromState(
    * haritaya da GİREMEZ.
    */
   const fieldAuthority: Record<string, ProjectionFieldAuthority> = {};
+  /**
+   * CEVAP DİSPOZİSYONU — DEĞER TORBALARINDAN AYRI (D3f Dilim 2).
+   *
+   * Bilinçli "Bilmiyorum" / "Uygulanamaz" ne bir ürün özelliğidir ne de bir
+   * matching kısıtı; bu yüzden `attributes` ve `constraints` torbalarına
+   * girmez. Aynı döngüde türetilir ki bir alan bir torbaya girip ötekine
+   * girmesin.
+   */
+  const fieldResponses: Record<string, ProjectionFieldResponse> = {};
 
   for (const [key, field] of Object.entries(state.fields)) {
     /**
@@ -215,6 +226,34 @@ export function buildDiscoveryProjectionFromState(
      * atlamak silmek değildir.
      */
     if (isInternalEvidenceAttributeKey(key)) continue;
+
+    /**
+     * BİLİNÇLİ DEĞER TAŞIMAYAN CEVAP — KENDİ YÜZEYİ, TEK YÜZEY (D3f Dilim 2).
+     *
+     * `ANY` buraya GİRMEZ: onun kanalı aşağıdaki `constraints` kaydıdır ve
+     * filtre sözleşmesini besler. `UNKNOWN` / `NOT_APPLICABLE` ise ne bir
+     * ürün özelliği ne de bir kısıttır — döngü burada biter, böylece aynı
+     * anahtar ikinci bir yüzeye YAZILAMAZ.
+     */
+    if (field.kind === "UNKNOWN" || field.kind === "NOT_APPLICABLE") {
+      /**
+       * Otorite KANONİK MERDİVENDEN türetilir, elle yazılmaz. Yüzey yalnız
+       * türetim `USER_EXPLICIT` verdiğinde oluşur; çıkarım ya da katalog
+       * kaynaklı bir kayıt buraya giremez ve bu daralma tip düzeyinde de
+       * gerçektir.
+       */
+      const responseAuthority = answerAuthorityOfProvenance(field.provenance);
+      if (
+        isDeliberateNonValueAnswer(field) &&
+        responseAuthority === "USER_EXPLICIT"
+      ) {
+        fieldResponses[key] = {
+          kind: field.kind,
+          authority: responseAuthority,
+        };
+        continue;
+      }
+    }
 
     const authority: ProjectionFieldAuthority = {};
 
@@ -363,6 +402,7 @@ export function buildDiscoveryProjectionFromState(
     /* Additive: harita boşsa alan HİÇ üretilmez — eski okuyucular ve eski
      * kayıtlar için şekil aynen korunur. */
     ...(Object.keys(fieldAuthority).length ? { fieldAuthority } : {}),
+    ...(Object.keys(fieldResponses).length ? { fieldResponses } : {}),
     matchContract,
     filterContract,
     builtAt: new Date().toISOString(),
