@@ -116,6 +116,7 @@ import {
   filterRenderableCandidates,
   resolveHybridQuestions,
   resolveQuestionDraftPresentation,
+  buildPublishAnswerFields,
   buildPublishFieldValues,
   buildUnderstoodFacts,
   understoodFactsToSummaryChips,
@@ -2566,6 +2567,24 @@ function TalepOlusturForm() {
       values: dynamicValues,
       userTouchedKeys: userConfirmedFieldKeys,
     });
+    /**
+     * ORTAK ALAN CEVAPLARI DA AYNI KANALDAN GİDER (D3f Dilim 2b).
+     *
+     * `fields[]` yalnız görünür dinamik alanlardan kuruluyordu; ortak alanlar
+     * (`budget` / `city` / `delivery` / `quantity` / `title`) hiçbir
+     * kategoride bu listede olmadığı için kullanıcının bilinçli
+     * "Bilmiyorum" / "Fark etmez" cevabı sunucuya HİÇ ulaşmıyordu. Liste tek
+     * kurucudan çıkar; alan adına özel dal yoktur ve anahtarlar tekildir.
+     */
+    const publishAnswerFields = buildPublishAnswerFields({
+      canonicalFields: hybrid.state?.fields ?? null,
+      values: dynamicValues,
+      userTouchedKeys: userConfirmedFieldKeys,
+      dynamicFieldKeys: visibleDynamicFields.map((field) => field.key),
+    });
+    const commonAnswerFields = publishAnswerFields.filter(
+      (row) => !visibleDynamicFields.some((field) => field.key === row.key),
+    );
 
     try {
       const response = await fetch("/api/requests", {
@@ -2608,6 +2627,15 @@ function TalepOlusturForm() {
                * "Fark etmez" cevabı yalnız etiketle ifade edilemez. */
               value: publishFieldValues[field.key]?.value ?? "",
               mode: publishFieldValues[field.key]?.mode,
+            })),
+            /* Ortak alanların bilinçli değer taşımayan cevapları (D3f 2b). */
+            ...commonAnswerFields.map((row) => ({
+              key: row.key,
+              label: row.label ?? row.key,
+              type: "text" as const,
+              required: false,
+              value: row.value,
+              mode: row.mode,
             })),
             // Legacy dual-write: older alerts/explore rows used brandPreference
             ...(activeCategoryId === "appliances" &&

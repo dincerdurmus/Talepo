@@ -54,6 +54,10 @@
  */
 
 import {
+  COMMON_FIELD_DEFAULTS,
+  getCategoryById,
+} from "@/lib/request-category-engine";
+import {
   createTextOnlyState,
   isFieldValueKind,
   type FieldValueKind,
@@ -127,6 +131,29 @@ const AUTHORITY_SURFACES: readonly ProjectionAuthoritySurface[] = [
   "attributes",
   "constraints",
 ];
+
+/**
+ * CEVAP KANALINDAN GELEN ANAHTARIN ALAN EVRENİ (D3f Dilim 2b).
+ *
+ * `fields[]` şeması bilinçli olarak açıktır: `FormField` her anahtar için
+ * upsert edilir ve kategori alanları zamanla büyür. Bu esneklik DEĞER
+ * kanalı için doğrudur, ama değer TAŞIMAYAN cevap için bir çıpa bırakmaz.
+ * Bu yüzden yalnız cevap-disposition yüzeyi bir alan evrenine bağlanır:
+ * kategorinin kendi tanımlı alanları ve kanonik ortak alan registry'si.
+ * Elle yazılmış bir anahtar listesi TUTULMAZ; iki kaynak da zaten vardır.
+ *
+ * Kategori çözülemezse yalnız ortak alanlar kalır — uydurma anahtar hiçbir
+ * koşulda yüzey üretemez (fail-closed).
+ */
+function canonicalAnswerKeyGuard(
+  categoryId: string | null | undefined,
+): (key: string) => boolean {
+  const allowed = new Set<string>(Object.keys(COMMON_FIELD_DEFAULTS));
+  const category = categoryId ? getCategoryById(categoryId) : null;
+  for (const field of category?.fields ?? []) allowed.add(field.key);
+  return (key: string) =>
+    isProjectionAuthorityKeyAllowed(key) && allowed.has(key);
+}
 
 /**
  * SUNUCUNUN GÖRDÜĞÜ BİR CEVAP — DEĞER VE MOD (D3e, 2026-08-27).
@@ -320,8 +347,23 @@ export function resolveServerFieldAuthority(
    * Kanal yoksa (clone) yüzey de yoktur: fail-closed.
    */
   const fieldResponses: Record<string, ProjectionFieldResponse> = {};
+  const answerKeyIsCanonical = canonicalAnswerKeyGuard(projection.categoryId);
   for (const [key, answer] of answers) {
     if (answer.mode !== "UNKNOWN" && answer.mode !== "NOT_APPLICABLE") continue;
+    /**
+     * ANAHTAR KANONİK OLMAK ZORUNDA (D3f Dilim 2b).
+     *
+     * Değer taşıyan bir iddianın doğal bir çıpası vardır: `attributes` ya da
+     * `constraints` torbasında GERÇEKTEN bulunmalıdır. Değer taşımayan cevabın
+     * tasarımı gereği böyle bir çıpası YOKTUR — bu yüzden uydurma bir alan adı
+     * (`__hack__`) cevap kanalından geçip kalıcı bir yüzey üretebiliyordu
+     * (ölçüldü, 2026-08-27).
+     *
+     * Çıpa artık ALAN EVRENİDİR: kategorinin kendi alanları ve kanonik ortak
+     * alan registry'si. İkisi de var olan kaynaklardan okunur; burada elle
+     * yazılmış bir anahtar listesi tutulmaz.
+     */
+    if (!answerKeyIsCanonical(key)) continue;
     /**
      * TEK YÜZEY KURALI. Aynı anahtar `attributes` ya da `constraints`
      * torbasında da duruyorsa cevap dispozisyonu YAZILMAZ: değer taşıyan bir

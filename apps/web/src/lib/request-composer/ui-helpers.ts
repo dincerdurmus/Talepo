@@ -16,7 +16,10 @@ import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { TURKEY_IL_NAMES, TURKEY_PROVINCES } from "@/lib/geo/turkey-districts";
 import { budgetPlaceholderForStrategy } from "@/lib/request-brain/budget-actions";
 import type { QuestionCandidate } from "@/lib/request-brain/types";
-import type { DynamicField } from "@/lib/request-category-engine";
+import {
+  COMMON_FIELD_DEFAULTS,
+  type DynamicField,
+} from "@/lib/request-category-engine";
 import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-registry";
 import type { BrowseNode, KnowledgeField } from "@/lib/knowledge/types";
 
@@ -1057,6 +1060,90 @@ export function buildPublishFieldValues(
     out[key] = carriedAnswer(field, "");
   }
   return out;
+}
+
+/** Yayın payload'ının `fields[]` listesindeki bir satırın cevap kısmı. */
+export type PublishAnswerField = {
+  key: string;
+  value: string;
+  mode: FieldValueKind;
+  /**
+   * Kanonik registry'den gelen insan etiketi. Yalnız bu kurucunun KENDİ
+   * eklediği ortak alan satırlarında bulunur; görünür dinamik alanların
+   * etiketi çağıranın kendi alan tanımından gelir ve burada tekrarlanmaz.
+   */
+  label?: string;
+};
+
+export type PublishAnswerFieldsInput = PublishFieldValuesInput & {
+  /**
+   * O anda görünür olan dinamik alan anahtarları. Mevcut davranış birebir
+   * korunur: bu alanlar cevapları boş olsa da listeye girer.
+   */
+  dynamicFieldKeys: Iterable<string>;
+};
+
+/**
+ * YAYIN CEVAP SATIRLARININ TEK KURUCUSU (D3f Dilim 2b, 2026-08-27).
+ *
+ * SORUN. Sunucunun değer taşımayan cevaplar için tek güvenilir girdisi
+ * süzülmüş cevap kanalıdır (`fields[]` → kanonik `mode`). `/talep` o listeyi
+ * YALNIZ görünür dinamik alanlardan kuruyordu; ölçüldü (2026-08-27):
+ * `commonFields` ile `category.fields` kesişimi 11 kategorinin HEPSİNDE 0.
+ * Sonuç: kullanıcı bütçe, şehir, teslim, adet ya da başlık sorusuna bilinçli
+ * olarak "Bilmiyorum" / "Fark etmez" dediğinde cevap istemci projection'ında
+ * doğru kuruluyor ama sunucuya HİÇ ulaşmıyor ve güven sınırında fail-closed
+ * düşüyordu.
+ *
+ * ELLE BEŞLİ LİSTE YOKTUR. Ortak alan evreni kanonik registry'den türer
+ * (`COMMON_FIELD_DEFAULTS`); registry büyürse bu kurucu kendiliğinden büyür
+ * ve `if (key === "budget" || ...)` gibi bir zincir hiçbir yerde yazılmaz.
+ *
+ * YENİ KANAL YOKTUR. Aynı `fields[] + mode` sözleşmesi kullanılır; sunucu
+ * tarafı değişmeden ortak alanları da kabul eder.
+ *
+ * NE EKLENMEZ. Dokunulmamış ya da çıkarımdan gelen ortak alan eklenmez —
+ * kanonik modelde `UNKNOWN` cevaplanmamış her alanın varsayılan durumudur ve
+ * onu göndermek "ölçülmemişi ölçülmüş göstermek" olurdu. Değer TAŞIYAN ortak
+ * alan da eklenmez: onun kendi kalıcı kolonu vardır ve mevcut davranışı bu
+ * dilimde değişmez.
+ *
+ * TEKİLLİK. Bir anahtar iki kez girmez; görünür dinamik alanlar önce yazılır
+ * ve ortak alan turu yalnız BOŞTA kalan anahtarları doldurur.
+ */
+export function buildPublishAnswerFields(
+  input: PublishAnswerFieldsInput,
+): PublishAnswerField[] {
+  const answers = buildPublishFieldValues(input);
+  const rows: PublishAnswerField[] = [];
+  const seen = new Set<string>();
+
+  for (const key of input.dynamicFieldKeys) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    rows.push({
+      key,
+      value: answers[key]?.value ?? "",
+      mode: answers[key]?.mode ?? "VALUE",
+    });
+  }
+
+  for (const [key, defaults] of Object.entries(COMMON_FIELD_DEFAULTS)) {
+    if (seen.has(key)) continue;
+    const field = input.canonicalFields?.[key];
+    if (!isDeliberateNonValueAnswer(field)) continue;
+    const answer = answers[key];
+    if (!answer) continue;
+    seen.add(key);
+    rows.push({
+      key,
+      value: answer.value,
+      mode: answer.mode,
+      label: defaults.label,
+    });
+  }
+
+  return rows;
 }
 
 /**

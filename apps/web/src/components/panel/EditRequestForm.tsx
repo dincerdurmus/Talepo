@@ -53,6 +53,7 @@ import {
 import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
 import {
   applyPublishAnswersToState,
+  buildPublishAnswerFields,
   buildPublishFieldValues,
   createTextOnlyState,
 } from "@/lib/request-composer";
@@ -315,6 +316,19 @@ export function EditRequestForm({
       values: dynamicValues,
       userTouchedKeys: userConfirmedFieldKeys,
     });
+    /**
+     * Ortak alan cevapları da AYNI kurucudan geçer (D3f Dilim 2b) — `/talep`
+     * ile düzenleme yolu tek kaynak kullanır, ikinci bir liste yazılmaz.
+     * Geri YÜKLEME hâlâ yok: bu dilim yalnız kaydetme yönünü kapatır.
+     */
+    const commonAnswerFields = buildPublishAnswerFields({
+      canonicalFields: editCanonicalState.fields,
+      values: dynamicValues,
+      userTouchedKeys: userConfirmedFieldKeys,
+      dynamicFieldKeys: visibleDynamicFields.map((field) => field.key),
+    }).filter(
+      (row) => !visibleDynamicFields.some((field) => field.key === row.key),
+    );
 
     try {
       const response = await fetch(`/api/requests/${initial.id}`, {
@@ -365,6 +379,15 @@ export function EditRequestForm({
               /* Değer VE mod birlikte gider (D3e). */
               value: publishFieldValues[field.key]?.value ?? "",
               mode: publishFieldValues[field.key]?.mode,
+            })),
+            /* Ortak alanların bilinçli değer taşımayan cevapları (D3f 2b). */
+            ...commonAnswerFields.map((row) => ({
+              key: row.key,
+              label: row.label ?? row.key,
+              type: "text" as const,
+              required: false,
+              value: row.value,
+              mode: row.mode,
             })),
             ...(isRealEstate
               ? [

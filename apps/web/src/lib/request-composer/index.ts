@@ -117,7 +117,10 @@ export {
   resolveQuestionDraftPresentation,
   isUnconfirmedInferredValue,
   buildPublishFieldValues,
+  buildPublishAnswerFields,
   applyPublishAnswersToState,
   type PublishFieldValuesInput,
   type PublishFieldAnswer,
+  type PublishAnswerField,
+  type PublishAnswerFieldsInput,
 } from "./ui-helpers";
