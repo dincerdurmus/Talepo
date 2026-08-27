@@ -51,7 +51,10 @@ import {
   readUsageContextSplit,
   splitCompatibilityPhrase,
 } from "@/lib/request-understanding/part-relation";
-import { isInferenceOnlyAnswer } from "./answer-authority";
+import {
+  isDeliberateNonValueAnswer,
+  isInferenceOnlyAnswer,
+} from "./answer-authority";
 import { stripIncompatibleDomainFields } from "./request-transition";
 import { sanitizeFactRoles } from "./v2/entity-roles";
 import type {
@@ -1297,7 +1300,18 @@ export function canApplyField(
   incoming: CanonicalFieldState,
   lastUserAction: LastUserAction,
 ): boolean {
-  if (!existing || existing.kind === "UNKNOWN") return true;
+  if (!existing) return true;
+  /**
+   * BOŞ UNKNOWN İLE BİLİNÇLİ "BİLMİYORUM" AYNI ŞEY DEĞİLDİR (D3f Dilim 1).
+   *
+   * Cevaplanmamış alanların varsayılan durumu da `UNKNOWN`tur ve serbestçe
+   * doldurulabilir. Ama kullanıcı o soruyu açıkça "Bilmiyorum" diye
+   * kapattıysa, Talepo'nun kendi tahmini o cevabın üstüne yazamaz — yazarsa
+   * kullanıcı reddettiği tahmini geri almış olur.
+   */
+  if (existing.kind === "UNKNOWN" && !isDeliberateNonValueAnswer(existing)) {
+    return true;
+  }
 
   if (
     incoming.provenance === "INFERRED" ||
@@ -1316,9 +1330,18 @@ export function canApplyField(
   }
 
   // Incoming is EXPLICIT_*
-  if (existing.kind === "ANY" || existing.kind === "NOT_APPLICABLE") {
-    // Explicit concrete value may replace ANY
-    return incoming.kind === "VALUE" || incoming.kind === "ANY";
+  if (isDeliberateNonValueAnswer(existing)) {
+    /**
+     * Bilinçli bir "değer taşımayan" cevabın üstüne YALNIZ yeni bir bilinçli
+     * kullanıcı cevabı yazabilir: somut bir değer ya da başka bir değer
+     * taşımayan mod. Çıkarım bu kapıya zaten giremez (yukarıda elenir).
+     */
+    return (
+      incoming.kind === "VALUE" ||
+      incoming.kind === "ANY" ||
+      incoming.kind === "UNKNOWN" ||
+      incoming.kind === "NOT_APPLICABLE"
+    );
   }
 
   if (
@@ -1515,12 +1538,31 @@ export function toResolverFieldBag(
   const out: Record<string, string> = { ...seeded };
 
   for (const [key, field] of Object.entries(state.fields)) {
-    if (field.kind === "ANY") {
-      out[key] = FIELD_SENTINEL.ANY;
-      out[`__explicit__${key}`] = state.lastUserAction === "browse" ? "browse" : "text";
-    } else if (field.kind === "NOT_APPLICABLE") {
-      out[key] = FIELD_SENTINEL.NOT_APPLICABLE;
-      out[`__explicit__${key}`] = "text";
+    if (isDeliberateNonValueAnswer(field)) {
+      /**
+       * DEĞER TAŞIMAYAN BİLİNÇLİ CEVAP — TEK KAPI, TEK ÖLÇÜT (B1, 2026-08-27).
+       *
+       * Burada eskiden `kind === "ANY" || kind === "NOT_APPLICABLE"` diye
+       * ELLE yazılmış bir dal vardı ve açık-cevap işaretini PROVENANCE'A
+       * BAKMADAN yazıyordu. Soru çözücüsü kapanışı o işaretten okuduğu için
+       * `kind` tek başına yetki üretiyordu: kanonik yardımcı "bu bilinçli bir
+       * cevap değil" derken soru yine de kapanıyordu. Ölçüldü — çıkarımdan
+       * gelen bir `ANY` kaydı soruyu kapatabiliyordu.
+       *
+       * Kapanış yetkisi artık YALNIZ kanonik yardımcıdan doğar. `ANY` ve
+       * `NOT_APPLICABLE` kendi sentinel'lerini korur (koşullu görünürlük ve
+       * filtre sözleşmesi onları okur); `UNKNOWN` için YENİ BİR SENTINEL
+       * DİZESİ UYDURULMAZ — `__UNKNOWN__` diye bir kayıt, kaçındığımız
+       * etiket/dize kanalını bir kez daha kurmak olurdu ve `visibleWhen` onu
+       * bir değer sanabilirdi. Üçünde de yazılan tek ortak şey, zaten var
+       * olan açık-cevap işaretidir.
+       */
+      if (field.kind === "ANY") out[key] = FIELD_SENTINEL.ANY;
+      else if (field.kind === "NOT_APPLICABLE") {
+        out[key] = FIELD_SENTINEL.NOT_APPLICABLE;
+      }
+      out[`__explicit__${key}`] =
+        field.provenance === "EXPLICIT_BROWSE" ? "browse" : "text";
     } else if (field.kind === "VALUE" && field.value) {
       /**
        * KAPI DEĞERİ KAYIT DEĞERİDİR, ETİKET DEĞİL (KB-15).

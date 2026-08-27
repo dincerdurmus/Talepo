@@ -1971,10 +1971,20 @@ function TalepOlusturForm() {
   ) {
     if (value === "bilmiyorum" || value === "fark-etmez") {
       const isAny = value === "fark-etmez";
+      /**
+       * "BİLMİYORUM" BİR DEĞER DEĞİLDİR (D3f Dilim 1, 2026-08-27).
+       *
+       * Buradan eskiden yerelleştirilmiş etiket (`"Belirtilmedi"`) kanonik
+       * kayda DEĞER olarak yazılıyordu: alan `kind: "VALUE"` oluyor,
+       * projection'ın `attributes` torbasına giriyor ve matching onu bir ürün
+       * özelliği / marka sanıyordu. Kanonik mod taşınır; etiket yalnız
+       * kullanıcının ekranda gördüğü metindir.
+       */
       hybrid.applyQuickOption(
         question.fieldKey,
         isAny ? "Farketmez" : "Belirtilmedi",
         isAny,
+        isAny ? "ANY" : "UNKNOWN",
       );
       setManualValues((current) => ({
         ...current,
@@ -2233,7 +2243,12 @@ function TalepOlusturForm() {
 
     if (soft === "unknown") {
       const label = "Henüz bilmiyorum";
-      hybrid.applyQuickOption(field, label, false);
+      /**
+       * Kanonik mod taşınır, etiket taşınmaz (D3f Dilim 1). Ortak alanların
+       * (`budget` / `city` / `delivery` / `quantity`) taslak metni AYNEN
+       * korunur: yayın kapıları o dizeyi okur ve bu dilimde gevşetilmez.
+       */
+      hybrid.applyQuickOption(field, label, false, "UNKNOWN");
       if (field === "budget" || field === "quantity" || field === "delivery") {
         updateCommonField(field, label);
       } else if (field === "city") {
@@ -2246,13 +2261,21 @@ function TalepOlusturForm() {
     }
     if (soft === "no_preference" || soft === "flexible") {
       const label = soft === "flexible" ? "Esnek" : "Fark etmez";
-      // Preference fields (brand/model/…) may use ANY; budget/city/delivery keep VALUE labels
-      const useAny =
-        field !== "budget" &&
-        field !== "city" &&
-        field !== "delivery" &&
-        field !== "quantity";
-      hybrid.applyQuickOption(field, label, useAny);
+      /**
+       * "FARK ETMEZ" VE "ESNEK" DEĞER DEĞİLDİR (B2, 2026-08-27).
+       *
+       * Burada eskiden alan adına bakan bir `useAny` ayrımı vardı ve
+       * `budget` / `city` / `delivery` / `quantity` için kaçış cevabı
+       * yerelleştirilmiş bir VALUE ETİKETİ olarak kanonik duruma yazılıyordu.
+       * O beş alanda soruyu kapatan tek şey, v2 zamanlayıcısının o etiketi
+       * geri okumasıydı — yani ekranda yazan metin bir cevap otoritesiydi.
+       *
+       * İki kaçış da aynı kanonik anlamı taşır: bu eksende kullanıcının
+       * bağlayıcı bir tercihi YOKTUR → `kind: "ANY"`. Görünen etiket ("Esnek"
+       * / "Fark etmez") yalnız arayüz sunumudur ve taslak metninde kalır;
+       * yayın kapılarının okuduğu ortak alan taslakları AYNEN korunur.
+       */
+      hybrid.applyQuickOption(field, label, true, "ANY");
       if (field === "delivery") {
         updateCommonField("delivery", label);
         return;

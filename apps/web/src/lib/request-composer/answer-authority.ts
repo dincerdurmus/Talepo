@@ -99,3 +99,49 @@ export function isInferenceOnlyAnswer(
 ): boolean {
   return classifyAnswerAuthority(field) === "INFERRED";
 }
+
+/**
+ * BİLİNÇLİ AMA DEĞER TAŞIMAYAN CEVAP — KAPANIŞIN TEK KANONİK ÖLÇÜTÜ
+ * (D3f Dilim 1, 2026-08-27).
+ *
+ * SORUN. "Kullanıcı bu soruyu cevapladı mı?" sorusuna dört ayrı yerde ayrı
+ * ayrı cevap veriliyordu: burada cevap merdiveni, `questions.ts` içinde elle
+ * yazılmış bir `kind` listesi, `question-resolver.ts` içinde sentinel DİZE
+ * karşılaştırması ve v2 zamanlayıcısında yerelleştirilmiş ETİKET ayrıştırması
+ * (`"bilmiyorum"`, `"henüz bilmiyorum"`). Dört liste sessizce ayrışabilir —
+ * ve ayrışmıştı: aynı cevap bir katmanda kapanıyor, ötekinde açık kalıyordu.
+ *
+ * KARAR. Kapanış ölçütü TEK yerde durur ve iki soruyu birbirinden ayırır:
+ *
+ *   `classifyAnswerAuthority` → "bu DEĞER soruyu kapatabilir mi?"
+ *   `isDeliberateNonValueAnswer` → "kullanıcı DEĞER VERMEYEN bir cevabı
+ *                                   bilinçli olarak seçti mi?"
+ *
+ * İkincisi merdiveni DEĞİŞTİRMEZ ve yükseltmez: değer taşımayan bir cevap
+ * hiçbir koşulda `VALUE` olmaz, `attributes` yüzeyi üretmez ve `USER_EXPLICIT`
+ * bir ürün özelliği hâline gelmez. Yalnız "bu soru tekrar sorulmasın" der.
+ *
+ * KAYNAK ŞARTI. Yalnız AÇIK KULLANICI kaynağı (`EXPLICIT_TEXT` /
+ * `EXPLICIT_BROWSE`) sayılır. Kanonik modelde `UNKNOWN` aynı zamanda
+ * cevaplanmamış her alanın VARSAYILAN durumudur — 108 senaryoluk kapsam
+ * tabanında 988 alan böyledir ve hepsinin provenance'ı `INFERRED`'dır.
+ * Kaynağa bakmadan `UNKNOWN`u kapanış saymak, hiç sorulmamış soruyu
+ * cevaplanmış göstermek olurdu.
+ *
+ * POLİTİKA BURADA VERİLMEZ. Hangi sorunun "Bilmiyorum" ile geçilebileceğine
+ * soru profili karar verir (`allowUnknown` / `allowDontCare`). Bu yardımcı
+ * yalnız kararın GİRDİSİNİ yerelleştirilmiş etiketten kanonik moda taşır.
+ */
+export function isDeliberateNonValueAnswer(
+  field: AnswerLikeField | CanonicalFieldState | null | undefined,
+): boolean {
+  if (!field) return false;
+  const kind = (field as AnswerLikeField).kind;
+  if (kind !== "ANY" && kind !== "UNKNOWN" && kind !== "NOT_APPLICABLE") {
+    return false;
+  }
+  const provenance = ((field as AnswerLikeField).provenance ?? null) as
+    | FieldProvenance
+    | null;
+  return answerAuthorityOfProvenance(provenance) === "USER_EXPLICIT";
+}

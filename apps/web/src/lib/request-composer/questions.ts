@@ -22,6 +22,7 @@ import type { QuestionCandidate } from "@/lib/request-brain/types";
 
 import {
   classifyAnswerAuthority,
+  isDeliberateNonValueAnswer,
   isInferenceOnlyAnswer,
   mayCloseQuestion,
 } from "./answer-authority";
@@ -295,15 +296,15 @@ export function resolveHybridQuestions(
    * `CATALOG_ENRICHED` orada soruyu kapatmaya yetkiliyken burada değildi.
    * Karar artık türetilir; ikinci doğru listesi bırakılmaz.
    *
-   * `ANY` / `NOT_APPLICABLE` bilinçli kullanıcı cevaplarıdır ve değer
-   * taşımadıkları için cevap otoritesi onları `NONE` sayar — o yüzden ayrıca
-   * eklenmeye devam ederler.
+   * DEĞER TAŞIMAYAN CEVAPLAR (D3f Dilim 1). Burada eskiden ikinci bir elle
+   * yazılmış `kind` listesi (`ANY || NOT_APPLICABLE`) duruyordu ve açık
+   * kullanıcı kaynaklı `UNKNOWN`u — yani "Bilmiyorum" cevabını — tanımıyordu.
+   * Karar tek kanonik yardımcıdan okunur; ikinci liste bırakılmaz.
    */
   const explicitKeys = Object.entries(state.fields)
     .filter(
       ([, f]) =>
-        f.kind === "ANY" ||
-        f.kind === "NOT_APPLICABLE" ||
+        isDeliberateNonValueAnswer(f) ||
         mayCloseQuestion(classifyAnswerAuthority(f)),
     )
     .map(([k]) => k);
@@ -402,7 +403,8 @@ export function resolveHybridQuestions(
       }
       const field = state.fields[f.key];
       const kind = field?.kind;
-      if (kind === "ANY" || kind === "NOT_APPLICABLE") {
+      /* Bilinçli değer taşımayan cevap soruyu kapatır — tek kanonik ölçüt. */
+      if (isDeliberateNonValueAnswer(field)) {
         suppressed.push(f.key);
         return false;
       }

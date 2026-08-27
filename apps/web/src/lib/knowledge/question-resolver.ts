@@ -30,19 +30,20 @@ export type QuestionResolverResult = {
   next: KnowledgeField[];
 };
 
-function isAnyOrNa(value: string | undefined): boolean {
-  if (!value) return false;
-  const v = value.trim();
-  return (
-    v === "__ANY__" ||
-    v === "ANY" ||
-    v === "__NOT_APPLICABLE__" ||
-    v === "NOT_APPLICABLE" ||
-    v.toLocaleLowerCase("tr-TR") === "farketmez" ||
-    v.toLocaleLowerCase("tr-TR") === "fark etmez"
-  );
-}
-
+/**
+ * DEĞER TAŞIMAYAN CEVAP BURADA YENİDEN TANIMLANMAZ (D3f Dilim 1).
+ *
+ * Burada eskiden `isAnyOrNa` adlı üçüncü bir "cevap sayılır mı" listesi
+ * vardı ve kararı SENTINEL DİZESİNDEN ("__ANY__", "farketmez") veriyordu.
+ * O liste kanonik durumdan bağımsızdı: açık kullanıcı kaynaklı `UNKNOWN` —
+ * yani "Bilmiyorum" — hiçbir dizeye karşılık gelmediği için burada asla
+ * cevap sayılamıyordu.
+ *
+ * Karar artık tek kanonik yardımcıda (`isDeliberateNonValueAnswer`) verilir
+ * ve buraya İKİ mevcut kanaldan ulaşır: çağıran `explicitKeys` listesiyle,
+ * ya da torbadaki açık-cevap işaretiyle (`__explicit__<key>`). Bu modül
+ * kanonik alan durumunu görmez, bu yüzden kendi kopyasını kurmaz.
+ */
 function isKnown(
   values: Record<string, string | undefined>,
   key: string,
@@ -51,7 +52,6 @@ function isKnown(
   if (explicitKeys.has(key)) return true;
   if (isExplicitBrowseField(values, key)) return true;
   const v = values[key];
-  if (isAnyOrNa(v)) return true;
   // Çıkarımla dolmuş alan BİLİNİYOR sayılmaz (KB-17): değer koşullar için
   // torbada kalır, ama soruyu kapatacak cevap yerine geçemez.
   if (isInferenceOnlyInBag(values, key)) return false;
@@ -89,10 +89,10 @@ export function resolveNextQuestions(
   // Return a small ranking pool; the UI authority performs the final top-3
   // selection. Limiting here hid useful category fields such as automotive
   // fuel and transmission before they could be prioritized.
-  const next = getNextMissingFields(input, 8).filter((f) => {
-    if (isAnyOrNa(values[f.key])) return false;
-    return true;
-  });
+  /* Değer taşımayan cevaplar `known` üzerinden zaten `__KNOWN__` işaretiyle
+   * doldurulmuş torbaya girer; `getNextMissingFields` onları eksik saymaz.
+   * Burada ikinci bir sentinel süzgeci tutulmaz. */
+  const next = getNextMissingFields(input, 8);
 
   return {
     known,

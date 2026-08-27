@@ -6,7 +6,10 @@
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 import { getCategoryById } from "@/lib/request-category-engine";
 
-import { isInferenceOnlyAnswer } from "../answer-authority";
+import {
+  isDeliberateNonValueAnswer,
+  isInferenceOnlyAnswer,
+} from "../answer-authority";
 import type { FieldProvenance } from "../types";
 
 import {
@@ -41,6 +44,21 @@ export type FieldAnswerState = {
   provenance?: FieldProvenance | string | null;
 };
 
+/**
+ * ARAYÜZ SEÇENEK DEĞERİNİ YAPISAL DURUMA ÇEVİRİR — KAPANIŞ KARARI DEĞİLDİR
+ * (B2, 2026-08-27).
+ *
+ * Bu ayrıştırıcı `/talep` ekranında kullanıcının TIKLADIĞI kaçış seçeneğinin
+ * değerini (`unknown`, `no_preference`, `open_to_offers`, `flexible`) ve o
+ * seçeneğin görünen metnini yapısal bir duruma çevirir. Tek görevi, arayüz
+ * sınırında hangi kanonik modun yazılacağını seçmektir.
+ *
+ * `isFieldSatisfied` bu fonksiyonu ARTIK ÇAĞIRMAZ. Kapanış kararını
+ * yerelleştirilmiş metinden vermek, ekranda yazan sözcüğü bir sözleşme hâline
+ * getiriyordu: ölçüldü, profil izin verdiğinde `"Henüz bilmiyorum"` /
+ * `"Fark etmez"` / `"Esnek"` metinleri kanonik durum "bu bilinçli bir cevap
+ * değil" derken bile soruyu kapatıyordu.
+ */
 function parseSoftStatus(raw: string | null | undefined): SoftAnswerStatus | null {
   if (!raw?.trim()) return null;
   const fold = raw.trim().toLocaleLowerCase("tr-TR");
@@ -55,6 +73,8 @@ function parseSoftStatus(raw: string | null | undefined): SoftAnswerStatus | nul
   if (
     fold === "bilmiyorum" ||
     fold === "henüz bilmiyorum" ||
+    /* `/talep` "Bilmiyorum" eyleminin taslakta bıraktığı görünen metin. */
+    fold === "belirtilmedi" ||
     fold === "unknown"
   ) {
     return "unknown";
@@ -81,9 +101,28 @@ export function isFieldSatisfied(input: {
   /** Explicit optional skip — does NOT satisfy publish_required */
   optionallySkipped?: boolean;
 }): boolean {
-  const soft = input.state?.softStatus ?? parseSoftStatus(input.state?.value);
+  /**
+   * YAPISAL DURUM — ETİKETTEN TÜRETİLMEZ (B2).
+   *
+   * `softStatus` çağıranın taşıdığı YAPISAL alandır. Taslak dizesinden
+   * ayrıştırma kaldırıldı: ekranda yazan metin bir cevap otoritesi değildir.
+   */
+  const soft = input.state?.softStatus ?? null;
   const kind = input.state?.kind;
   const value = input.state?.value?.trim() ?? "";
+  /**
+   * FAIL-CLOSED: KANONİK MODU OLMAYAN KAÇIŞ ETİKETİ CEVAP DEĞİLDİR.
+   *
+   * Eski bir taslak (ya da kanonik modu kaybolmuş bir yol) yalnız
+   * `"Henüz bilmiyorum"` / `"Fark etmez"` / `"Esnek"` metnini taşıyabilir.
+   * Bu metin ne soruyu kapatır ne de gerçek bir değer yerine geçer — soru
+   * AÇIK kalır. Etiket burada yalnız REDDETMEK için tanınır; hiçbir koşulda
+   * yetki üretmez. Yetki tek yerden gelir: `isDeliberateNonValueAnswer`.
+   */
+  const isEscapeLabelOnly =
+    !isDeliberateNonValueAnswer(input.state) &&
+    parseSoftStatus(input.state?.value) !== null;
+  const hasRealValue = value.length > 0 && !isEscapeLabelOnly;
 
   /**
    * ÇIKARIM CEVAP DEĞİLDİR (KB-17).
@@ -93,6 +132,24 @@ export function isFieldSatisfied(input: {
    * ön-seçili öneri olarak kullanıcıya gösterilir ve kararı o verir.
    */
   if (isInferenceOnlyAnswer(input.state)) return false;
+
+  /**
+   * BİLİNÇLİ DEĞER TAŞIMAYAN CEVAP — TEK KANONİK ÖLÇÜT (D3f Dilim 1).
+   *
+   * Burada eskiden karar İKİ ayrı yerden veriliyordu: elle yazılmış bir
+   * `kind` listesi (`ANY || NOT_APPLICABLE`) ve `parseSoftStatus` ile
+   * YERELLEŞTİRİLMİŞ ETİKETİN ayrıştırılması ("bilmiyorum", "henüz
+   * bilmiyorum"). Etiketten karar vermek, kullanıcının gördüğü metni bir
+   * sözleşme hâline getiriyordu; metin değişince cevap sessizce kayboluyordu.
+   *
+   * Karar artık kanonik moddan ve açık kullanıcı kaynağından okunur. PROFİL
+   * POLİTİKASI DEĞİŞMEZ: hangi sorunun "Bilmiyorum" ya da "Fark etmez" ile
+   * geçilebileceğine profil karar vermeye devam eder.
+   */
+  if (isDeliberateNonValueAnswer(input.state)) {
+    if (input.importance === "optional") return true;
+    return kind === "UNKNOWN" ? input.allowUnknown : input.allowDontCare;
+  }
 
   if (input.fieldKey === "budget") {
     return isBudgetSatisfiedForPublish(value);
@@ -112,21 +169,18 @@ export function isFieldSatisfied(input: {
     }
     // Çoklu-il seçici yalın il ("Ankara") veya il listesi ("İstanbul, Ankara")
     // üretebilir — ilçe "Tümü" bilinçli bir cevaptır, tatmin sayılır.
-    if (value.length > 0 && !soft) return true;
+    if (hasRealValue) return true;
     if (soft === "unknown" && input.allowUnknown) return true;
     return false;
   }
 
-  if (kind === "VALUE" && value.length > 0 && !soft) return true;
-  if (kind === "ANY" || kind === "NOT_APPLICABLE") {
-    return input.allowDontCare || input.importance === "optional";
-  }
+  if (kind === "VALUE" && hasRealValue) return true;
   if (soft === "open_to_offers" && input.fieldKey === "budget") return true;
   if (soft === "unknown" && input.allowUnknown) return true;
   if (soft === "no_preference" && input.allowDontCare) return true;
   if (soft === "flexible" && input.allowDontCare) return true;
   if (input.optionallySkipped && input.importance === "optional") return true;
-  if (value.length > 0 && !soft) return true;
+  if (hasRealValue) return true;
   return false;
 }
 

@@ -7,6 +7,7 @@ import {
   type BrowseSelectionInput,
   type BrowsePathStep,
   type CanonicalRequestState,
+  type FieldValueKind,
   type HybridQuestionResult,
   composeTextFromBrowseStack,
   createBrowseOnlyState,
@@ -55,10 +56,16 @@ export type UseHybridRequestComposerResult = {
   /** Re-run understanding for the current text after a composer error. */
   retrySync: () => void;
   applyBrowseSelection: (selection: BrowseSelectionInput) => void;
+  /**
+   * `kind` verildiğinde `value` YALNIZ kullanıcıya gösterilen etikettir ve
+   * kanonik kayda yazılmaz (D3f Dilim 1). "Bilmiyorum" gibi değer taşımayan
+   * cevaplar böyle taşınır; `isAny` geriye uyumluluk için korunur.
+   */
   applyQuickOption: (
     fieldKey: string,
     value: string,
     isAny?: boolean,
+    kind?: FieldValueKind,
   ) => void;
   browseWalk: BrowseWalkState;
   browseColumns: BrowseNode[][];
@@ -239,7 +246,7 @@ export function useHybridRequestComposer(
   );
 
   const applyQuickOption = useCallback(
-    (fieldKey: string, value: string, isAny?: boolean) => {
+    (fieldKey: string, value: string, isAny?: boolean, kind?: FieldValueKind) => {
       const preservedRawInput = textRef.current;
       try {
         const previous = stateRef.current ?? emptyShell();
@@ -247,6 +254,7 @@ export function useHybridRequestComposer(
           key: fieldKey,
           value,
           isAny: Boolean(isAny),
+          kind,
         });
         applyState(result.state);
         // Free-text rawInput must stay the user's original wording.

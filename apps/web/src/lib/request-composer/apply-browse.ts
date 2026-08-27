@@ -11,6 +11,7 @@ import { stripIncompatibleDomainFields } from "./request-transition";
 import type {
   CanonicalFieldState,
   CanonicalRequestState,
+  FieldValueKind,
 } from "./types";
 import { FIELD_SENTINEL, isAnySentinel } from "./types";
 
@@ -20,6 +21,20 @@ export type BrowseSelectionInput = {
   entityId?: string;
   /** When true, value is the ANY sentinel / Farketmez option */
   isAny?: boolean;
+  /**
+   * DEĞER TAŞIMAYAN CEVABIN KANONİK MODU (D3f Dilim 1, 2026-08-27).
+   *
+   * `isAny` yalnız TEK bir değer taşımayan cevabı ifade edebiliyordu. Bu
+   * yüzden "Bilmiyorum" seçimi kanonik bir mod bulamıyor ve üretimde
+   * yerelleştirilmiş ETİKET (`"Belirtilmedi"` / `"Henüz bilmiyorum"`) bir
+   * DEĞER olarak yazılıyordu: alan `kind: "VALUE"` oluyor, `attributes`
+   * torbasına giriyor ve matching onu ürün özelliği sayıyordu.
+   *
+   * `kind` verildiğinde `value` YALNIZ kullanıcıya gösterilen etikettir ve
+   * kanonik kayda YAZILMAZ. `isAny` geriye uyumluluk için korunur ve
+   * `kind: "ANY"` ile aynı şeyi söyler.
+   */
+  kind?: FieldValueKind;
 };
 
 /**
@@ -31,27 +46,49 @@ export function applyBrowseSelectionToState(
   selection: BrowseSelectionInput,
 ): CanonicalRequestState {
   const isAny =
+    selection.kind === "ANY" ||
     selection.isAny ||
     isAnySentinel(selection.value) ||
     selection.value === FIELD_SENTINEL.ANY;
 
-  const incoming: CanonicalFieldState = isAny
+  /**
+   * DEĞER TAŞIMAYAN MOD ETİKETİ KAYDA YAZMAZ (D3f Dilim 1).
+   *
+   * Kullanıcı "Bilmiyorum" ya da "Uygulanamaz" seçtiğinde ekranda bir metin
+   * görür, ama o metin bir ürün özelliği DEĞİLDİR. Kanonik kayda mod yazılır,
+   * etiket yazılmaz — böylece etiket `attributes` torbasına ve oradan
+   * matching'e sızamaz.
+   */
+  const nonValueKind =
+    selection.kind === "UNKNOWN" || selection.kind === "NOT_APPLICABLE"
+      ? selection.kind
+      : null;
+
+  const incoming: CanonicalFieldState = nonValueKind
     ? {
-        kind: "ANY",
+        kind: nonValueKind,
         value: null,
         provenance: "EXPLICIT_BROWSE",
         confidence: 1,
-        evidence: ["browse:ANY"],
+        evidence: [`browse:${nonValueKind}`],
       }
-    : {
-        kind: "VALUE",
-        value: selection.value,
-        provenance: "EXPLICIT_BROWSE",
-        confidence: 1,
-        evidence: selection.entityId
-          ? [`entity:${selection.entityId}`]
-          : ["browse"],
-      };
+    : isAny
+      ? {
+          kind: "ANY",
+          value: null,
+          provenance: "EXPLICIT_BROWSE",
+          confidence: 1,
+          evidence: ["browse:ANY"],
+        }
+      : {
+          kind: "VALUE",
+          value: selection.value,
+          provenance: "EXPLICIT_BROWSE",
+          confidence: 1,
+          evidence: selection.entityId
+            ? [`entity:${selection.entityId}`]
+            : ["browse"],
+        };
 
   const existing = state.fields[selection.key];
   if (!canApplyField(existing, incoming, "browse")) {
@@ -64,7 +101,7 @@ export function applyBrowseSelectionToState(
   };
 
   // Furniture leaf: drop bogus category brands like "Ev"
-  if (selection.key === "furnitureType" && !isAny) {
+  if (selection.key === "furnitureType" && !isAny && !nonValueKind) {
     const brand = fields.brand;
     if (
       brand?.kind === "VALUE" &&
@@ -80,7 +117,7 @@ export function applyBrowseSelectionToState(
   }
 
   // Appliances leaf: drop bogus category brands like "Beyaz"
-  if (selection.key === "applianceType" && !isAny) {
+  if (selection.key === "applianceType" && !isAny && !nonValueKind) {
     const brand = fields.brand;
     if (
       brand?.kind === "VALUE" &&
@@ -100,7 +137,14 @@ export function applyBrowseSelectionToState(
     {},
     {
       key: selection.key,
-      value: isAny ? FIELD_SENTINEL.ANY : selection.value,
+      /* Etiket bu torbaya da girmez — mod kendi sentinel'iyle taşınır. */
+      value: nonValueKind
+        ? nonValueKind === "NOT_APPLICABLE"
+          ? FIELD_SENTINEL.NOT_APPLICABLE
+          : ""
+        : isAny
+          ? FIELD_SENTINEL.ANY
+          : selection.value,
       entityId: selection.entityId,
     },
   );

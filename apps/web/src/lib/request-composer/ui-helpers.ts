@@ -20,7 +20,10 @@ import type { DynamicField } from "@/lib/request-category-engine";
 import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-registry";
 import type { BrowseNode, KnowledgeField } from "@/lib/knowledge/types";
 
-import { isInferenceOnlyAnswer } from "./answer-authority";
+import {
+  isDeliberateNonValueAnswer,
+  isInferenceOnlyAnswer,
+} from "./answer-authority";
 import type { BrowseSelectionInput } from "./apply-browse";
 import { toResolverFieldBag } from "./build-state";
 import {
@@ -986,17 +989,31 @@ export type PublishFieldAnswer = {
  * Cevabın modu KANONİK ALAN DURUMUNDAN okunur — çağıranın taşıdığı ikinci bir
  * mod listesinden değil.
  *
- * `UNKNOWN` bilinçli olarak DIŞARIDA bırakılır: kanonik modelde `UNKNOWN`
- * cevaplanmamış her alanın VARSAYILAN durumudur (108 senaryoluk kapsam
- * tabanında 988 alan `UNKNOWN`), yani "kullanıcı bilmiyorum dedi" ile
- * "hiç sorulmadı" aynı kovadadır. İkisini ayırt edemeden `UNKNOWN`u bir
- * kullanıcı beyanı saymak, ölçülmemişi ölçülmüş göstermek olurdu.
+ * `UNKNOWN` ARTIK TANINIR, AMA YALNIZ BİLİNÇLİYSE (D3f Dilim 1, 2026-08-27).
+ * Kanonik modelde `UNKNOWN` aynı zamanda cevaplanmamış her alanın VARSAYILAN
+ * durumudur — 108 senaryoluk kapsam tabanında 988 alan böyledir. O yüzden
+ * ayrım kaynağa bağlanır: yalnız açık kullanıcı kaynaklı `UNKNOWN` bir mod
+ * üretir, varsayılan `UNKNOWN` hiçbir yeni kayıt üretmez ve eskisi gibi
+ * `VALUE` davranışını korur (kullanıcının kendi yazdığı metin kaybolmasın).
+ *
+ * SENTINEL HİÇBİR ZAMAN DEĞER DEĞİLDİR. Değer torbasına kanonik sentinel
+ * dizesi düştüğünde (`__ANY__` / `__NOT_APPLICABLE__`) mod o sentinel'den
+ * okunur. Eskiden bu durum `VALUE` sayılıyor ve `"__NOT_APPLICABLE__"`
+ * metni kullanıcının cevabı olarak kalıcılaşıyordu. Karşılaştırma TAM
+ * SABİTLEDİR — yerelleştirilmiş etiket ayrıştırması değildir.
  */
 function publishModeOf(
   field: CanonicalFieldState | null | undefined,
+  rawValue: string,
 ): FieldValueKind {
+  const value = rawValue.trim();
+  if (value === FIELD_SENTINEL.NOT_APPLICABLE) return "NOT_APPLICABLE";
+  if (value === FIELD_SENTINEL.ANY) return "ANY";
   if (field?.kind === "ANY") return "ANY";
   if (field?.kind === "NOT_APPLICABLE") return "NOT_APPLICABLE";
+  if (field?.kind === "UNKNOWN" && isDeliberateNonValueAnswer(field)) {
+    return "UNKNOWN";
+  }
   return "VALUE";
 }
 
@@ -1023,9 +1040,51 @@ export function buildPublishFieldValues(
     ) {
       continue;
     }
-    out[key] = { mode: publishModeOf(input.canonicalFields?.[key]), value };
+    out[key] = carriedAnswer(input.canonicalFields?.[key], value);
+  }
+
+  /**
+   * BİLİNÇLİ CEVAP DEĞER TORBASINA BAĞLI DEĞİLDİR (D3f Dilim 1).
+   *
+   * Değer taşımayan bir cevabın kanaldaki varlığı, arayüzün o alana bir
+   * ETİKET yazmış olmasına bağlı olamazdı: taslak torbası boşsa kullanıcının
+   * "Bilmiyorum" cevabı sessizce kaybolurdu. Cevabın kaynağı kanonik
+   * durumdur; torba yalnız gösterilen metni taşır.
+   */
+  for (const [key, field] of Object.entries(input.canonicalFields ?? {})) {
+    if (out[key]) continue;
+    if (!isDeliberateNonValueAnswer(field)) continue;
+    out[key] = carriedAnswer(field, "");
   }
   return out;
+}
+
+/**
+ * DEĞER TAŞIMAYAN CEVABIN ETİKETİ DEĞER OLARAK TAŞINMAZ (D3f Dilim 1).
+ *
+ * `UNKNOWN` / `NOT_APPLICABLE` bir ürün özelliği DEĞİLDİR; kullanıcının
+ * ekranda gördüğü metin ("Henüz bilmiyorum") bu kanalda bir cevap değeri
+ * olamaz — sunucu kararını zaten yalnız `mode` üzerinden verir.
+ *
+ * Kanonik SENTINEL dizesi de hiçbir modda değer olarak taşınmaz: `__ANY__`
+ * ve `__NOT_APPLICABLE__` iç kayıt işaretleridir, kullanıcının cevabı
+ * değildir. `ANY`nin İNSAN ETİKETİ ("Fark etmez") bilinçli olarak korunur —
+ * düzenleme ekranının bugünkü geri yükleme kanalı odur ve kalıcılık ayrı
+ * bir dilimin konusudur.
+ */
+function carriedAnswer(
+  field: CanonicalFieldState | null | undefined,
+  value: string,
+): PublishFieldAnswer {
+  const mode = publishModeOf(field, value);
+  const trimmed = value.trim();
+  const isSentinel =
+    trimmed === FIELD_SENTINEL.ANY ||
+    trimmed === FIELD_SENTINEL.NOT_APPLICABLE;
+  if (mode === "UNKNOWN" || mode === "NOT_APPLICABLE" || isSentinel) {
+    return { mode, value: "" };
+  }
+  return { mode, value };
 }
 
 /**
