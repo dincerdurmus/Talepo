@@ -41,9 +41,12 @@ import type {
   RequestDiscoveryProjection,
 } from "../src/lib/discovery/types";
 import {
+  applyPublishAnswersToState,
   buildPublishFieldValues,
   createTextOnlyState,
+  syncFromBrowse,
   syncFromText,
+  type FieldValueKind,
 } from "../src/lib/request-composer";
 import {
   resolveCloneProjection,
@@ -61,8 +64,10 @@ const SURFACES: readonly ProjectionAuthoritySurface[] = [
 const TEXT_DESK = "Ikinci el bir masa ariyorum";
 const TEXT_FRIDGE = "Buzdolabi ariyorum";
 const TEXT_PART = "Mercedes C200 icin sag on far ariyorum";
+const TEXT_TV = "55 inc televizyon ariyorum";
+const TEXT_TV_ANY = "55 inc televizyon ariyorum, marka fark etmez";
 
-type FieldInput = { key: string; value: string };
+type FieldInput = { key: string; value: string; mode?: FieldValueKind };
 
 /** Ölçüm sırasında değiştirilebilsin diye derin kopya. */
 function clone<T>(value: T): T {
@@ -357,6 +362,146 @@ function measureIdentities(problems: string[]): Map<string, Authority> {
     );
   }
 
+  /* ---------------------------------------------------------------- *
+   * D3e — DEĞER TAŞIMAYAN CEVAP MODLARI
+   * ---------------------------------------------------------------- */
+
+  /** UI'den "Fark etmez" seçimi — `rawInput`a HİÇ yazılmaz. */
+  const anyState = () =>
+    syncFromBrowse(syncFromText(null, TEXT_TV).state, {
+      key: "brand",
+      value: "Farketmez",
+      isAny: true,
+    }).state;
+
+  /** Süzülmüş cevap kanalı üretim süzgecinden kurulur; ikinci liste yok. */
+  const answerFields = (
+    state: ReturnType<typeof anyState>,
+    values: Record<string, string>,
+    touched: string[],
+  ): FieldInput[] =>
+    Object.entries(
+      buildPublishFieldValues({
+        canonicalFields: state.fields,
+        values,
+        userTouchedKeys: touched,
+      }),
+    ).map(([key, answer]) => ({
+      key,
+      value: answer.value,
+      mode: answer.mode,
+    }));
+
+  /* S20 — create: gerçek ANY seçimi typed cevap olarak taşınır. */
+  {
+    const state = anyState();
+    const projection = forgeAll(
+      clone(buildDiscoveryProjectionFromState(state)),
+      "UNKNOWN",
+    );
+    const fields = answerFields(state, { brand: "Fark etmez" }, ["brand"]);
+    if (fields[0]?.mode !== "ANY") {
+      problems.push(
+        `S20: cevap kanalı ANY modunu taşımadı → ${JSON.stringify(fields[0])}`,
+      );
+    }
+    const out = createProjection(
+      writeInput({ rawInput: TEXT_TV, projection, fields }),
+    );
+    add(identitiesOf("S20", out));
+    if (out?.constraints.brand?.mode !== "ANY") {
+      problems.push("S20: `constraints.brand.mode` ANY olarak korunmadı");
+    }
+    if (out?.attributes.brand !== undefined) {
+      problems.push(
+        `S20: "Fark etmez" bir attribute DEĞERİ olarak yazıldı → ` +
+          `${JSON.stringify(out?.attributes.brand)}`,
+      );
+    }
+  }
+
+  /* S21 — create: constraint ANY var ama cevap kanalında karşılığı YOK. */
+  {
+    const projection = forgeAll(
+      clone(buildDiscoveryProjectionFromState(anyState())),
+      "USER_EXPLICIT",
+    );
+    add(
+      identitiesOf(
+        "S21",
+        createProjection(
+          writeInput({ rawInput: TEXT_TV, projection, fields: [] }),
+        ),
+      ),
+    );
+  }
+
+  /* S22 — update/edit: ekranın kanonik durumu cevaplarla zenginleşir, ANY
+   * constraint'in KENDİSİ artık kaybolmaz. */
+  {
+    const editState = applyPublishAnswersToState(
+      createTextOnlyState(TEXT_TV),
+      { brand: { mode: "VALUE", value: "Fark etmez" } },
+    );
+    const editProjection = clone(buildDiscoveryProjectionFromState(editState));
+    if (editProjection.constraints.brand?.mode !== "ANY") {
+      problems.push(
+        "S22: düzenleme projection'ı ANY constraint'in KENDİSİNİ kaybetti",
+      );
+    }
+    const fields = answerFields(editState, { brand: "Fark etmez" }, ["brand"]);
+    add(
+      identitiesOf(
+        "S22",
+        resolveUpdateProjection(
+          writeInput({
+            description: "Guncelleme",
+            projection: forgeAll(editProjection, "UNKNOWN"),
+            fields,
+          }),
+          TEXT_TV,
+        ),
+      ),
+    );
+  }
+
+  /* S27a — clone: kaynak browse-ANY taşıyor, metninde karşılığı yok. */
+  {
+    const projection = forgeAll(
+      clone(buildDiscoveryProjectionFromState(anyState())),
+      "USER_EXPLICIT",
+    );
+    const out = resolveCloneProjection({
+      discoveryProjection: projection,
+      rawInput: TEXT_TV,
+    });
+    add(identitiesOf("S27a", out));
+    if (out?.constraints.brand?.mode !== "ANY") {
+      problems.push("S27a: clone constraint DEĞERİNİ bozdu");
+    }
+  }
+
+  /* S27b — clone: kaynağın metninde "marka fark etmez" yazılı. */
+  {
+    const projection = forgeAll(
+      clone(
+        buildDiscoveryProjectionFromState(
+          syncFromText(null, TEXT_TV_ANY).state,
+        ),
+      ),
+      "UNKNOWN",
+    );
+    add(
+      identitiesOf(
+        "S27b",
+        resolveCloneProjection({
+          discoveryProjection: projection,
+          rawInput: TEXT_TV_ANY,
+        }),
+      ),
+    );
+  }
+
   return measured;
 }
 
@@ -470,6 +615,142 @@ function checkContracts(): string[] {
 }
 
 /* ------------------------------------------------------------------ *
+ * D3e — MOD SÖZLEŞMESİNİN KENAR KURALLARI (kimlik üretmez)
+ * ------------------------------------------------------------------ */
+
+function checkModeContract(): string[] {
+  const problems: string[] = [];
+
+  const anyState = syncFromBrowse(syncFromText(null, TEXT_TV).state, {
+    key: "brand",
+    value: "Farketmez",
+    isAny: true,
+  }).state;
+  const anyProjection = clone(buildDiscoveryProjectionFromState(anyState));
+
+  const authorityWith = (fields: FieldInput[], projection = anyProjection) =>
+    projectionAuthorityOf(
+      createProjection(
+        writeInput({
+          rawInput: TEXT_TV,
+          projection: forgeAll(clone(projection), "UNKNOWN"),
+          fields,
+        }),
+      ),
+      "brand",
+      "constraints",
+    );
+
+  /* M1 — mod YOKSA legacy `VALUE` davranışı: ANY iddiasını onaylayamaz. */
+  if (authorityWith([{ key: "brand", value: "Fark etmez" }]) !== "UNKNOWN") {
+    problems.push(
+      "M1: `mode` taşımayan legacy cevap ANY iddiasını onayladı — eski " +
+        "istemcinin etiketi kanıt sayıldı",
+    );
+  }
+
+  /* M2 — TANINMAYAN mod güvenilir otorite üretemez. */
+  if (
+    authorityWith([
+      { key: "brand", value: "Fark etmez", mode: "SUPER_ANY" as never },
+    ]) !== "UNKNOWN"
+  ) {
+    problems.push("M2: sözleşme dışı `mode` güvenilir otorite üretti");
+  }
+
+  /* M3 — mod ile projection iddiası uyuşmuyorsa fail-closed. */
+  {
+    const valueState = syncFromBrowse(syncFromText(null, TEXT_TV).state, {
+      key: "brand",
+      value: "Samsung",
+    }).state;
+    const valueProjection = clone(
+      buildDiscoveryProjectionFromState(valueState),
+    );
+    const out = createProjection(
+      writeInput({
+        rawInput: TEXT_TV,
+        projection: forgeAll(valueProjection, "USER_EXPLICIT"),
+        fields: [{ key: "brand", value: "Fark etmez", mode: "ANY" }],
+      }),
+    );
+    if (projectionAuthorityOf(out, "brand", "constraints") !== "UNKNOWN") {
+      problems.push(
+        "M3: cevabın modu ile projection iddiası uyuşmuyorken otorite üretildi",
+      );
+    }
+    /* M4 — değer taşımayan cevap `attributes` yüzeyini ASLA onaylayamaz. */
+    if (projectionAuthorityOf(out, "brand", "attributes") !== "UNKNOWN") {
+      problems.push(
+        "M4: `mode:\"ANY\"` cevabı bir attribute DEĞERİNİ onayladı — " +
+          "yerelleştirilmiş etiket kanonik modun yerine geçti",
+      );
+    }
+  }
+
+  /* M5 — `rawInput` DEĞİŞMEZ: cevaplar kanonik duruma uygulanınca bile
+   * kullanıcının metni olduğu gibi kalır ve sentetik ifade eklenmez. */
+  {
+    const before = TEXT_TV;
+    const enriched = applyPublishAnswersToState(createTextOnlyState(before), {
+      brand: { mode: "VALUE", value: "Fark etmez" },
+    });
+    const projection = buildDiscoveryProjectionFromState(enriched);
+    if (enriched.fields.brand?.kind !== "ANY") {
+      problems.push(
+        "M5: kanonik tanıyıcı 'Fark etmez' cevabını ANY'ye çevirmedi",
+      );
+    }
+    if (projection.attributes.brand !== undefined) {
+      problems.push(
+        "M5: değer taşımayan cevap attribute torbasına sızdı → " +
+          JSON.stringify(projection.attributes.brand),
+      );
+    }
+    if (before !== TEXT_TV) {
+      problems.push("M5: rawInput değişti");
+    }
+  }
+
+  /**
+   * M6 — ÖLÇÜLEN SINIR: `UNKNOWN` ve `NOT_APPLICABLE` PROJECTION YÜZEYİ
+   * ÜRETMEZ, bu yüzden otorite taşıyamazlar.
+   *
+   * Bu bir başarı DEĞİL, kayıtlı bir eksiktir. `buildDiscoveryProjectionFromState`
+   * yalnız `ANY` ve değer taşıyan `VALUE` için constraint yazar; sözleşme bu
+   * iki modu taşıyabilse de sunucunun damgalayabileceği bir yüzey yoktur.
+   * Kapatmak `build-projection` + `DiscoveryFieldMode` değişikliği ister ve
+   * ayrı bir karardır — burada YALNIZ ölçülür ki sessizce kapanmış sayılmasın.
+   */
+  {
+    for (const kind of ["UNKNOWN", "NOT_APPLICABLE"] as const) {
+      const state = syncFromText(null, TEXT_TV).state;
+      const probe = {
+        ...state,
+        fields: {
+          ...state.fields,
+          brand: {
+            kind,
+            value: null,
+            provenance: "EXPLICIT_BROWSE" as const,
+            confidence: 1,
+          },
+        },
+      };
+      const projection = buildDiscoveryProjectionFromState(probe);
+      if (projection.constraints.brand !== undefined) {
+        problems.push(
+          `M6: ${kind} artık constraint yüzeyi üretiyor — bu ölçülmüş sınır ` +
+            `değişti, taban ve payload drift yeniden gözden geçirilmeli`,
+        );
+      }
+    }
+  }
+
+  return problems;
+}
+
+/* ------------------------------------------------------------------ *
  * EDİT EKRANI CEVAP KANALI
  * ------------------------------------------------------------------ */
 
@@ -521,7 +802,11 @@ function measureEditChannel(problems: string[]): {
     writeInput({
       description: "Guncelleme",
       projection,
-      fields: Object.entries(filtered).map(([key, value]) => ({ key, value })),
+      fields: Object.entries(filtered).map(([key, answer]) => ({
+      key,
+      value: answer.value,
+      mode: answer.mode,
+    })),
     }),
     TEXT_DESK,
   );
@@ -614,6 +899,7 @@ function main(): void {
 
   const measured = measureIdentities(problems);
   problems.push(...checkContracts());
+  problems.push(...checkModeContract());
   const edit = measureEditChannel(problems);
   problems.push(...checkIntegrity());
 
@@ -731,7 +1017,19 @@ function main(): void {
       "türetilemeyen alanlar UNKNOWN kaldı; uydurma, iç kanıt ve nesne modeli\n" +
       "anahtarları haritadan silindi; clone yeni kullanıcı beyanı üretmedi;\n" +
       "edit ekranının onaysız tahminleri cevap kanalına girmedi; değer\n" +
-      "payload'ı değişmedi ve güven sınırı girdiyi mutate etmedi.",
+      "payload'ı değişmedi ve güven sınırı girdiyi mutate etmedi.\n" +
+      "\n" +
+      "D3e: kullanıcının UI'den seçtiği 'Fark etmez' kanonik `mode` ile\n" +
+      "taşındı ve rawInput'a hiçbir sentetik metin yazılmadan create/update\n" +
+      "yollarında USER_EXPLICIT olarak yeniden türetildi; düzenleme ekranı ANY\n" +
+      "constraint'in kendisini artık kaybetmiyor; yerelleştirilmiş etiket\n" +
+      "kanonik modun yerine geçmedi; mod yokken legacy VALUE davranışı,\n" +
+      "tanınmayan modda ve mod/iddia uyuşmazlığında fail-closed UNKNOWN korundu.\n" +
+      "\n" +
+      "KAPSAM DIŞI (ölçülmüş, kapanmamış): `UNKNOWN` ve `NOT_APPLICABLE`\n" +
+      "projection'da hiçbir constraint yüzeyi üretmiyor, bu yüzden sözleşme\n" +
+      "onları taşısa da damgalanabilecekleri bir yüzey YOK. Bu YEŞİL o iki modu\n" +
+      "kapsamaz.",
   );
 }
 

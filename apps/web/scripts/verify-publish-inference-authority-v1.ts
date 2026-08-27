@@ -147,9 +147,13 @@ function measureScenario(scenarioId: string, input: string): Measurement {
 
   /** Sayfanın kanala yazdığı değer: yalnız görünür alanlar torbadan okunur. */
   const payloadValueOf = (key: string): string =>
-    visibleKeys.has(key) ? (publishBag[key] ?? "").trim() : "";
+    visibleKeys.has(key) ? (publishBag[key]?.value ?? "").trim() : "";
+  /* Legacy dual-write üretimde YALNIZ değer cevabı için yazılır (D3e):
+   * değer taşımayan bir "Fark etmez" tercihi `brandPreference` DEĞERİ olamaz. */
   const brandPreferenceValue =
-    categoryId === "appliances" ? (publishBag.brand ?? "").trim() : "";
+    categoryId === "appliances" && publishBag.brand?.mode === "VALUE"
+      ? publishBag.brand.value.trim()
+      : "";
 
   const production = resolveHybridQuestions(state, inputs.options);
   const renderable = filterRenderableCandidates(
@@ -220,7 +224,7 @@ function measureScenario(scenarioId: string, input: string): Measurement {
         values,
         userTouchedKeys: [key],
       });
-      if ((touchedBag[key] ?? "").trim() !== (values[key] ?? "").trim()) {
+      if ((touchedBag[key]?.value ?? "").trim() !== (values[key] ?? "").trim()) {
         violations.push(
           `${id}: kullanıcı dokunuşuna rağmen değer yayın torbasından düştü`,
         );
@@ -244,7 +248,7 @@ function measureScenario(scenarioId: string, input: string): Measurement {
           values: confirmedInputs.values,
           userTouchedKeys: [],
         });
-        if ((confirmedBag[key] ?? "").trim() === "") {
+        if ((confirmedBag[key]?.value ?? "").trim() === "") {
           confirmPathDropped.push(id);
           violations.push(
             `${id}: kullanıcı onayladı ama değer yayın torbasına ulaşmadı`,
@@ -255,7 +259,7 @@ function measureScenario(scenarioId: string, input: string): Measurement {
       /* (6) Yetki merdivenden OKUNUR: kapatmaya yetkili değer düşürülemez. */
       const stripped =
         (values[key] ?? "").trim() !== "" &&
-        (publishBag[key] ?? "").trim() !== (values[key] ?? "").trim();
+        (publishBag[key]?.value ?? "").trim() !== (values[key] ?? "").trim();
       rows.push({
         id,
         authority,

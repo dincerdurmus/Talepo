@@ -141,6 +141,78 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
   "S09/applianceType/constraints = USER_EXPLICIT",
   "S09/color/attributes = UNKNOWN",
   "S09/color/constraints = UNKNOWN",
+
+  /* ---------------------------------------------------------------- *
+   * D3e — DEĞER TAŞIMAYAN CEVAP MODLARI (2026-08-27)
+   *
+   * Kullanıcının UI'den seçtiği "Fark etmez" kanonik durumda
+   * `kind:"ANY", value:null` üretir ve `rawInput`ta HİÇ GEÇMEZ (yayın akışı
+   * kullanıcının özgün metnini bilerek korur). Cevap kanalı yalnız `string`
+   * taşıdığı sürece bu tercih sunucuya ulaşamıyordu; artık kanonik `mode`
+   * ile taşınır. `brand` bu senaryolarda YALNIZ `constraints` yüzeyinde
+   * yaşar — `"Fark etmez"` etiketi hiçbir koşulda bir attribute DEĞERİ
+   * değildir, bu yüzden `S20/brand/attributes` diye bir kimlik YOKTUR.
+   * ---------------------------------------------------------------- */
+
+  /* S20 — create: kullanıcı UI'den ANY seçti, cevap kanalı `mode:"ANY"`
+   * taşıyor. İstemcinin otorite haritası yine tamamen yok sayılıyor. */
+  "S20/productType/attributes = USER_EXPLICIT",
+  "S20/screenSize/attributes = USER_EXPLICIT",
+  "S20/needType/attributes = INFERRED",
+  "S20/solutionType/attributes = INFERRED",
+  "S20/brand/constraints = USER_EXPLICIT",
+  "S20/productType/constraints = USER_EXPLICIT",
+  "S20/screenSize/constraints = USER_EXPLICIT",
+  "S20/needType/constraints = INFERRED",
+  "S20/solutionType/constraints = INFERRED",
+
+  /* S21 — create: constraint ANY duruyor ama cevap kanalında karşılığı YOK;
+   * istemci yalnız `fieldAuthority` etiketi eklemiş. Etiket kanıt değildir. */
+  "S21/productType/attributes = USER_EXPLICIT",
+  "S21/screenSize/attributes = USER_EXPLICIT",
+  "S21/needType/attributes = INFERRED",
+  "S21/solutionType/attributes = INFERRED",
+  "S21/brand/constraints = UNKNOWN",
+  "S21/productType/constraints = USER_EXPLICIT",
+  "S21/screenSize/constraints = USER_EXPLICIT",
+  "S21/needType/constraints = INFERRED",
+  "S21/solutionType/constraints = INFERRED",
+
+  /* S22 — update/edit: düzenleme ekranı ANY constraint'in KENDİSİNİ artık
+   * kaybetmiyor ve tercih typed cevap olarak sunucuya ulaşıyor. */
+  "S22/productType/attributes = USER_EXPLICIT",
+  "S22/screenSize/attributes = USER_EXPLICIT",
+  "S22/needType/attributes = INFERRED",
+  "S22/solutionType/attributes = INFERRED",
+  "S22/brand/constraints = USER_EXPLICIT",
+  "S22/productType/constraints = USER_EXPLICIT",
+  "S22/screenSize/constraints = USER_EXPLICIT",
+  "S22/needType/constraints = INFERRED",
+  "S22/solutionType/constraints = INFERRED",
+
+  /* S27a — clone: kaynak browse-ANY taşıyor ama kaynağın `rawInput`unda
+   * karşılığı yok. Clone yeni bir kullanıcı beyanı ÜRETMEZ. */
+  "S27a/productType/attributes = USER_EXPLICIT",
+  "S27a/screenSize/attributes = USER_EXPLICIT",
+  "S27a/needType/attributes = INFERRED",
+  "S27a/solutionType/attributes = INFERRED",
+  "S27a/brand/constraints = UNKNOWN",
+  "S27a/productType/constraints = USER_EXPLICIT",
+  "S27a/screenSize/constraints = USER_EXPLICIT",
+  "S27a/needType/constraints = INFERRED",
+  "S27a/solutionType/constraints = INFERRED",
+
+  /* S27b — clone: kaynağın metninde "marka fark etmez" YAZILI; otorite
+   * kaynağın kendi metninden yeniden türetilir, uydurulmaz. */
+  "S27b/productType/attributes = USER_EXPLICIT",
+  "S27b/screenSize/attributes = USER_EXPLICIT",
+  "S27b/needType/attributes = INFERRED",
+  "S27b/solutionType/attributes = INFERRED",
+  "S27b/brand/constraints = USER_EXPLICIT",
+  "S27b/productType/constraints = USER_EXPLICIT",
+  "S27b/screenSize/constraints = USER_EXPLICIT",
+  "S27b/needType/constraints = INFERRED",
+  "S27b/solutionType/constraints = INFERRED",
 ];
 
 /**
@@ -149,11 +221,11 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
  * görünür ama dağılım tek bakışta okunabilir bir güvenlik göstergesidir.
  */
 export const SERVER_AUTHORITY_BASELINE = {
-  identities: 78,
-  UNKNOWN: 7,
-  INFERRED: 8,
+  identities: 123,
+  UNKNOWN: 9,
+  INFERRED: 28,
   VERIFIED: 18,
-  USER_EXPLICIT: 45,
+  USER_EXPLICIT: 68,
 } as const;
 
 /**

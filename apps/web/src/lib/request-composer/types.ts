@@ -6,8 +6,31 @@
 import type { ConstraintStrength } from "@/lib/request-understanding/constraint-semantics";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 
-/** Field value semantics — UNKNOWN ≠ ANY. */
-export type FieldValueKind = "VALUE" | "UNKNOWN" | "ANY" | "NOT_APPLICABLE";
+/**
+ * Field value semantics — UNKNOWN ≠ ANY.
+ *
+ * TİP LİSTEDEN TÜRER (D3e, 2026-08-27). Sözleşme sunucu sınırında da
+ * doğrulanmak zorunda: istemciden gelen `mode` alanı çalışma anında
+ * tanınmalıdır. Liste ile tip iki ayrı yerde yazılsaydı biri diğerinden
+ * sessizce ayrışabilirdi — bu yüzden tip `FIELD_VALUE_KINDS` üzerinden
+ * TÜRETİLİR ve ikinci bir "geçerli mode" listesi hiçbir yerde tutulmaz.
+ */
+export const FIELD_VALUE_KINDS = [
+  "VALUE",
+  "UNKNOWN",
+  "ANY",
+  "NOT_APPLICABLE",
+] as const;
+
+export type FieldValueKind = (typeof FIELD_VALUE_KINDS)[number];
+
+/** Güvenilmez girdiden gelen bir `mode` kanonik merdivende var mı? */
+export function isFieldValueKind(value: unknown): value is FieldValueKind {
+  return (
+    typeof value === "string" &&
+    (FIELD_VALUE_KINDS as readonly string[]).includes(value)
+  );
+}
 
 export type FieldProvenance =
   | "EXPLICIT_TEXT"

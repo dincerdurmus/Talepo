@@ -53,7 +53,11 @@
  * tiplerini içeri almaz.
  */
 
-import { createTextOnlyState } from "@/lib/request-composer";
+import {
+  createTextOnlyState,
+  isFieldValueKind,
+  type FieldValueKind,
+} from "@/lib/request-composer";
 import type { Authority } from "@/lib/request-understanding/provenance";
 
 import { buildDiscoveryProjectionFromState } from "./build-projection";
@@ -124,22 +128,55 @@ const AUTHORITY_SURFACES: readonly ProjectionAuthoritySurface[] = [
 ];
 
 /**
+ * SUNUCUNUN GÖRDÜĞÜ BİR CEVAP — DEĞER VE MOD (D3e, 2026-08-27).
+ *
+ * `mode` kanonik `FieldValueKind`tir. `mode !== "VALUE"` olduğunda `value`
+ * yalnız kullanıcıya gösterilen ETİKETTİR ve otorite kararında KULLANILMAZ:
+ * yerelleştirilmiş `"Fark etmez"` metni bir kanıt değildir, karar `mode`
+ * üzerinden verilir.
+ */
+export type ProjectionAnswer = {
+  mode: FieldValueKind;
+  value: string;
+};
+
+/**
  * SÜZÜLMÜŞ CEVAP KANALINI TEK YERDE KURAR.
  *
  * `create` ve `update` aynı `fields[]` listesini gönderir ve sunucu ikisini de
  * `RequestFieldValue` olarak kalıcılaştırır. Kanalı iki yolda ayrı ayrı
  * kurmak, birinde eklenen bir süzgecin ötekinde sessizce eksik kalmasına yol
  * açardı.
+ *
+ * `mode` YOKSA `VALUE` kabul edilir — bu, alanı hiç göndermeyen eski
+ * istemcilerin davranışını birebir korur. TANINMAYAN bir `mode` de `VALUE`
+ * sayılmaz ve kabul edilmez: geçersiz mod, güvenilir bir otorite üretemez.
  */
 export function projectionAnswerChannel(
-  fields: ReadonlyArray<{ key?: unknown; value?: unknown }> | null | undefined,
-): Record<string, string> {
-  const out: Record<string, string> = {};
+  fields:
+    | ReadonlyArray<{ key?: unknown; value?: unknown; mode?: unknown }>
+    | null
+    | undefined,
+): Record<string, ProjectionAnswer> {
+  const out: Record<string, ProjectionAnswer> = {};
   for (const field of fields ?? []) {
     const key = typeof field?.key === "string" ? field.key : "";
     if (!isProjectionAuthorityKeyAllowed(key)) continue;
+
     const value = typeof field?.value === "string" ? field.value.trim() : "";
-    if (value) out[key] = value;
+
+    if (field?.mode === undefined || field?.mode === null) {
+      /* Legacy istemci: mod yok → değer cevabı. */
+      if (value) out[key] = { mode: "VALUE", value };
+      continue;
+    }
+    if (!isFieldValueKind(field.mode)) {
+      /* Tanınmayan mod — sözleşme dışı. Cevap kanalına hiç girmez. */
+      continue;
+    }
+    /* Değer taşımayan modun boş etiketi geçerlidir; VALUE'nun boş değeri değil. */
+    if (field.mode === "VALUE" && !value) continue;
+    out[key] = { mode: field.mode, value };
   }
   return out;
 }
@@ -153,7 +190,7 @@ export type ServerFieldAuthorityInput = {
    * Süzülmüş kullanıcı cevap kanalı (`fields[]` → `RequestFieldValue`).
    * Yoksa (clone) yalnız metin türetimi kullanılır.
    */
-  answers?: Record<string, string> | null | undefined;
+  answers?: Record<string, ProjectionAnswer> | null | undefined;
 };
 
 /**
@@ -183,13 +220,15 @@ export function resolveServerFieldAuthority(
     }
   }
 
-  /* Cevap kanalı: yalnız boş olmayan, izinli anahtarlar. */
-  const answers = new Map<string, string>();
-  for (const [key, value] of Object.entries(input.answers ?? {})) {
+  /* Cevap kanalı: yalnız izinli anahtarlar ve tanınan modlar. */
+  const answers = new Map<string, ProjectionAnswer>();
+  for (const [key, answer] of Object.entries(input.answers ?? {})) {
     if (!isProjectionAuthorityKeyAllowed(key)) continue;
-    if (typeof value !== "string") continue;
-    const trimmed = value.trim();
-    if (trimmed) answers.set(key, trimmed);
+    if (!answer || typeof answer !== "object") continue;
+    if (!isFieldValueKind(answer.mode)) continue;
+    const value = typeof answer.value === "string" ? answer.value.trim() : "";
+    if (answer.mode === "VALUE" && !value) continue;
+    answers.set(key, { mode: answer.mode, value });
   }
 
   const fieldAuthority: Record<string, ProjectionFieldAuthority> = {};
@@ -226,17 +265,25 @@ export function resolveServerFieldAuthority(
           : undefined;
 
       /**
-       * Cevap kanalı yalnız projection'daki İDDİANIN AYNISINI onaylıyorsa
-       * kullanılır: kullanıcı bir değer gönderdi diye BAŞKA bir değere
-       * otorite yazılamaz. Değer taşımayan bir constraint (`mode:"ANY"`) bu
-       * kanaldan onaylanamaz — cevabın kendisi bir değerdir.
+       * CEVAP KANALI YALNIZ PROJECTION'DAKİ İDDİANIN AYNISINI ONAYLAR.
+       *
+       * Kullanıcı bir cevap gönderdi diye BAŞKA bir iddiaya otorite
+       * yazılamaz; iddia ile cevap uyuşmuyorsa fail-closed `UNKNOWN` kalır.
+       *
+       * DEĞER TAŞIMAYAN CEVAPLAR YALNIZ `constraints` YÜZEYİNDE ONAYLANIR
+       * (D3e). `mode:"ANY"` bir attribute değeri DEĞİLDİR: kullanıcının
+       * gördüğü `"Fark etmez"` etiketi hiçbir koşulda `attributes` yüzeyine
+       * bir değer olarak yazılamaz ve o yüzeyi onaylayamaz. Karar etikete
+       * değil, kanonik `mode`a bakar — yerelleştirilmiş metin kanıt değildir.
        */
       const answer = answers.get(key);
       const answerConfirms =
         answer !== undefined &&
-        (surface === "attributes"
-          ? answer === claim
-          : claim === `VALUE|${answer}`);
+        (answer.mode === "VALUE"
+          ? surface === "attributes"
+            ? answer.value === claim
+            : claim === `VALUE|${answer.value}`
+          : surface === "constraints" && claim === `${answer.mode}|`);
 
       let authority: Authority | undefined = fromText;
 

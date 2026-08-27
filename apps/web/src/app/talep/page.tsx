@@ -2581,18 +2581,22 @@ function TalepOlusturForm() {
             ...visibleDynamicFields.map((field) => ({
               ...field,
               required: isFieldRequired(field, dynamicValues),
-              value: publishFieldValues[field.key] ?? "",
+              /* Değer VE mod birlikte gider (D3e): değer taşımayan bir
+               * "Fark etmez" cevabı yalnız etiketle ifade edilemez. */
+              value: publishFieldValues[field.key]?.value ?? "",
+              mode: publishFieldValues[field.key]?.mode,
             })),
             // Legacy dual-write: older alerts/explore rows used brandPreference
             ...(activeCategoryId === "appliances" &&
-            (publishFieldValues.brand ?? "").trim()
+            publishFieldValues.brand?.mode === "VALUE" &&
+            publishFieldValues.brand.value.trim()
               ? [
                   {
                     key: "brandPreference",
                     label: "Marka tercihi",
                     type: "text" as const,
                     required: false,
-                    value: publishFieldValues.brand.trim(),
+                    value: publishFieldValues.brand.value.trim(),
                   },
                 ]
               : []),

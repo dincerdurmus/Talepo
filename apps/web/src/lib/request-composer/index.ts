@@ -16,7 +16,9 @@ export type {
 
 export {
   FIELD_SENTINEL,
+  FIELD_VALUE_KINDS,
   isAnySentinel,
+  isFieldValueKind,
   isNotApplicableSentinel,
 } from "./types";
 
@@ -115,5 +117,7 @@ export {
   resolveQuestionDraftPresentation,
   isUnconfirmedInferredValue,
   buildPublishFieldValues,
+  applyPublishAnswersToState,
   type PublishFieldValuesInput,
+  type PublishFieldAnswer,
 } from "./ui-helpers";

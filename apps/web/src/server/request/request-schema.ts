@@ -7,6 +7,10 @@ import {
 import { isValidNeighborhoodSelection } from "@/lib/geo/turkey-neighborhoods";
 import { getCategoryById } from "@/lib/request-category-engine";
 import {
+  isFieldValueKind,
+  type FieldValueKind,
+} from "@/lib/request-composer";
+import {
   UNRESOLVED_CATEGORY_NAME,
   UNRESOLVED_CATEGORY_SLUG,
   sanitizeRawInput,
@@ -18,6 +22,19 @@ export type RequestFieldInput = {
   label: string;
   type: "text" | "number" | "select";
   value: string;
+  /**
+   * CEVABIN MODU (D3e, 2026-08-27) — ADDITIVE ve OPSİYONEL.
+   *
+   * `value` tek başına DEĞER TAŞIMAYAN bir cevabı ifade edemez: kullanıcı
+   * "Fark etmez" seçtiğinde kanonik durumda `kind:"ANY", value:null` oluşur,
+   * ama kanala yalnız yerelleştirilmiş etiket girerdi ve sunucuda bu bir
+   * DEĞER gibi görünürdü. `mode` kanonik `FieldValueKind`tir — yeni bir enum
+   * değildir.
+   *
+   * ALAN YOKSA `VALUE` KABUL EDİLİR: eski istemcilerin davranışı birebir
+   * korunur ve mevcut payload'ların JSON şekli değişmez.
+   */
+  mode?: FieldValueKind;
   required?: boolean;
   placeholder?: string;
   unit?: string;
@@ -216,6 +233,9 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
               : "text"
           ) as RequestFieldInput["type"],
           value: asCleanString(item.value, 4_000),
+          /* Tanınmayan mod SESSİZCE DÜŞÜRÜLÜR (alan `undefined` kalır) ve
+           * aşağıda `VALUE` gibi davranır; istek bu yüzden reddedilmez. */
+          mode: isFieldValueKind(item.mode) ? item.mode : undefined,
           required: item.required === true,
           placeholder: asCleanString(item.placeholder, 240) || undefined,
           unit: asCleanString(item.unit, 40) || undefined,

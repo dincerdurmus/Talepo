@@ -38,6 +38,7 @@ import type {
   BrowsePathStep,
   CanonicalFieldState,
   CanonicalRequestState,
+  FieldValueKind,
 } from "./types";
 import { FIELD_SENTINEL, isAnySentinel } from "./types";
 import { isFieldCompatibleWithCategory } from "./request-transition";
@@ -963,13 +964,49 @@ export type PublishFieldValuesInput = {
   userTouchedKeys: Iterable<string>;
 };
 
+/**
+ * BİR YAYIN CEVABI — DEĞER VE MOD BİRLİKTE (D3e, 2026-08-27).
+ *
+ * Torba eskiden yalnız `string` taşıyordu ve bu, DEĞER TAŞIMAYAN cevapları
+ * ifade edemiyordu: kullanıcı "Fark etmez" seçtiğinde kanonik durumda
+ * `kind:"ANY", value:null` oluşuyor, ama kanala yalnız yerelleştirilmiş
+ * `"Fark etmez"` ETİKETİ giriyordu. Sunucu tarafında bu etiket bir DEĞER gibi
+ * görünüyor, kullanıcının gerçek tercihi ise ölçülemiyordu.
+ *
+ * `mode` kanonik `FieldValueKind`tir — yeni bir enum DEĞİL. `value` insanın
+ * gördüğü etikettir ve `mode !== "VALUE"` olduğunda otorite kararında
+ * KULLANILMAZ; sunucu kararını yalnız `mode` üzerinden verir.
+ */
+export type PublishFieldAnswer = {
+  mode: FieldValueKind;
+  value: string;
+};
+
+/**
+ * Cevabın modu KANONİK ALAN DURUMUNDAN okunur — çağıranın taşıdığı ikinci bir
+ * mod listesinden değil.
+ *
+ * `UNKNOWN` bilinçli olarak DIŞARIDA bırakılır: kanonik modelde `UNKNOWN`
+ * cevaplanmamış her alanın VARSAYILAN durumudur (108 senaryoluk kapsam
+ * tabanında 988 alan `UNKNOWN`), yani "kullanıcı bilmiyorum dedi" ile
+ * "hiç sorulmadı" aynı kovadadır. İkisini ayırt edemeden `UNKNOWN`u bir
+ * kullanıcı beyanı saymak, ölçülmemişi ölçülmüş göstermek olurdu.
+ */
+function publishModeOf(
+  field: CanonicalFieldState | null | undefined,
+): FieldValueKind {
+  if (field?.kind === "ANY") return "ANY";
+  if (field?.kind === "NOT_APPLICABLE") return "NOT_APPLICABLE";
+  return "VALUE";
+}
+
 export function buildPublishFieldValues(
   input: PublishFieldValuesInput,
-): Record<string, string> {
+): Record<string, PublishFieldAnswer> {
   const touched = new Set<string>();
   for (const key of input.userTouchedKeys) touched.add(key);
 
-  const out: Record<string, string> = {};
+  const out: Record<string, PublishFieldAnswer> = {};
   for (const [key, value] of Object.entries(input.values)) {
     /**
      * Tek süzme ölçütü kanonik cevap otoritesidir: değer YALNIZ çıkarımdan
@@ -986,9 +1023,39 @@ export function buildPublishFieldValues(
     ) {
       continue;
     }
-    out[key] = value;
+    out[key] = { mode: publishModeOf(input.canonicalFields?.[key]), value };
   }
   return out;
+}
+
+/**
+ * SÜZÜLMÜŞ CEVAPLARI KANONİK DURUMA UYGULAR (D3e).
+ *
+ * Düzenleme ekranının projection'ı bugüne kadar YALNIZ metinden kuruluyordu
+ * (`createTextOnlyState`), bu yüzden kullanıcının form/seçim cevapları — ve
+ * onlarla birlikte `mode:"ANY"` constraint'in KENDİSİ — kaydedildiği anda
+ * projection'dan düşüyordu. Burada aynı süzülmüş torba kanonik duruma
+ * uygulanır; uygulama üretimin kendi yolundan (`syncFromBrowse`) geçer,
+ * kategoriye ya da alana özel hiçbir dal eklenmez.
+ *
+ * `rawInput` DEĞİŞMEZ: bu fonksiyon yalnız kanonik durumu zenginleştirir,
+ * metne hiçbir sentetik ifade yazmaz.
+ */
+export function applyPublishAnswersToState(
+  state: CanonicalRequestState,
+  answers: Record<string, PublishFieldAnswer>,
+): CanonicalRequestState {
+  let next = state;
+  for (const [key, answer] of Object.entries(answers)) {
+    const isAny = answer.mode === "ANY";
+    if (!isAny && !answer.value.trim()) continue;
+    next = syncFromBrowse(next, {
+      key,
+      value: answer.value,
+      isAny,
+    }).state;
+  }
+  return next;
 }
 
 /**

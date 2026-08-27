@@ -52,6 +52,7 @@ import {
 } from "@/lib/request/publish-understanding";
 import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
 import {
+  applyPublishAnswersToState,
   buildPublishFieldValues,
   createTextOnlyState,
 } from "@/lib/request-composer";
@@ -275,8 +276,27 @@ export function EditRequestForm({
     const userConfirmedFieldKeys = Object.keys(manualValues).filter(
       (key) => (manualValues[key] ?? "").trim().length > 0,
     );
-    const editCanonicalState = createTextOnlyState(
-      requestText.trim() || professionalText,
+    /**
+     * DÜZENLEME KANONİK DURUMU — METİN + KULLANICININ KENDİ CEVAPLARI (D3e).
+     *
+     * Bu durum eskiden YALNIZ metinden kuruluyordu; kullanıcının form
+     * cevapları projection'a hiç ulaşmıyor ve değer taşımayan bir
+     * "Fark etmez" tercihi kaydedildiği anda `mode:"ANY"` constraint'iyle
+     * birlikte tamamen kayboluyordu. Cevaplar üretimin kendi yolundan
+     * (`syncFromBrowse`) uygulanır; kanonik tanıyıcı yerelleştirilmiş
+     * "Fark etmez" etiketini `kind:"ANY"`ye burada çevirir, kategoriye ya da
+     * alana özel hiçbir dal eklenmez.
+     *
+     * `rawInput` DEĞİŞMEZ: metne hiçbir sentetik ifade yazılmaz.
+     */
+    const editCanonicalState = applyPublishAnswersToState(
+      createTextOnlyState(requestText.trim() || professionalText),
+      Object.fromEntries(
+        userConfirmedFieldKeys.map((key) => [
+          key,
+          { mode: "VALUE" as const, value: manualValues[key] ?? "" },
+        ]),
+      ),
     );
     /**
      * ONAYSIZ TAHMİN CEVAP KANALINA GİREMEZ (D3d).
@@ -342,7 +362,9 @@ export function EditRequestForm({
             ...visibleDynamicFields.map((field) => ({
               ...field,
               required: isFieldRequired(field, dynamicValues),
-              value: publishFieldValues[field.key] ?? "",
+              /* Değer VE mod birlikte gider (D3e). */
+              value: publishFieldValues[field.key]?.value ?? "",
+              mode: publishFieldValues[field.key]?.mode,
             })),
             ...(isRealEstate
               ? [

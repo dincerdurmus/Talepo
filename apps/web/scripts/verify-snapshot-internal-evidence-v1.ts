@@ -269,7 +269,7 @@ function measureScenario(scenarioId: string, input: string): Measurement {
       projectionConstraintLeak: Boolean(projection.constraints[key]),
       envelopeAttributeLeak: Boolean(envelope.attributes[key]),
       payloadFieldLeak:
-        visibleKeys.has(key) && Boolean((publishBag[key] ?? "").trim()),
+        visibleKeys.has(key) && Boolean((publishBag[key]?.value ?? "").trim()),
       questionCandidateLeak: renderableKeys.has(key),
       snapshotEvidencePresent: Boolean(
         snapEntry && (snapEntry.value ?? "").trim() === uvValue,
