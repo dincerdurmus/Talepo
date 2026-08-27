@@ -163,6 +163,14 @@ Ancak labeling + shadow metrics sonrası.
 > Dilim 2a sink kapısı / 2b. Aşağıdaki başlık o sıradan SONRA ele alınacak bir
 > backlog'dur; **hiçbir maddesi uygulanmadı ve hiçbiri ölçülmedi.** Durum:
 > `PROPOSED` · `DECIDED-NOT-IMPLEMENTED` değil, henüz **karar da alınmadı**.
+>
+> > **SIRA GÜNCELLENDİ (`008a4ac`, 2026-08-27).** Generic projection otoritesi
+> > **tamamlandı**: 56 / 17 / 182 değerin tamamı, iki yüzeyde 510 kimlik
+> > olarak, additive `fieldAuthority` haritasında kaynağıyla duruyor (Karar H,
+> > H10). Bugünkü sıra: D3c-b (`111b412`) → generic projection otoritesi
+> > (`008a4ac`) → **`fieldAuthority` için sunucu güven sınırı** (ön koşul;
+> > istemci metadata'sı doğrulanmadan skorlamaya giremez) → Dilim 2a sink
+> > kapısı / 2b. Yukarıdaki cümle tarihsel kayıt olarak silinmedi.
 
 Sıra (bu sıra bir öneridir; her adım kendi onayını gerektirir):
 

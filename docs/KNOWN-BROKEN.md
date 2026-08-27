@@ -7,6 +7,201 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-27, `008a4ac` (projection değerinin KAYNAĞI artık kaydediliyor)
+
+Commit: `008a4ac` — *feat(requests): preserve authority in discovery projection*
+(parent `50ab671`). Bu bölüm aşağıdaki `7aa6990` tabanını **silmez ve yerine
+geçmez**; o taban marka güven eksenini ölçer, bu taban generic projection
+otorite eksenini kapatır. İki ayrı yüzeydir ve sayıları birbirinin yerine
+kullanılamaz.
+
+```
+npx --yes tsx scripts/verify-projection-authority-v1.ts        # yeni
+npx --yes tsx scripts/verify-matching-v3-shadow.ts
+npx --yes tsx scripts/verify-snapshot-internal-evidence-v1.ts
+npx --yes tsx scripts/verify-publish-inference-authority-v1.ts
+npx --yes tsx scripts/verify-inference-confirmation-priority-v1.ts
+npx --yes tsx scripts/verify-inference-question-authority-v2.ts
+npx --yes tsx scripts/verify-readiness-brand-authority-v1.ts
+npx --yes tsx scripts/verify-category-coverage-v1.ts
+```
+
+### Kapatılan kusur
+
+`discoveryProjection.attributes` ve `constraints` torbaları çıplak değer
+taşıyordu. Bir değerin kullanıcının kendi beyanı mı, çağrılabilir bir katalog
+otoritesinin doğruladığı bilgi mi, yoksa Talepo'nun kendi tahmini mi olduğu
+yayın anında kayboluyordu. Otorite kaynakta VARDI
+(`CanonicalFieldState.provenance`) ve kurucu ile projection arasındaki tek
+adımda düşüyordu.
+
+Kaybın somut bedeli: Matching V3'ün `attributeHit` hesabı tahmini kullanıcı
+beyanıyla aynı ağırlıkta okuyor, panel ve admin yüzeyleri "kullanıcı söyledi"
+diye gösterebiliyor, soru katmanı ise değeri zaten cevaplanmış sayabiliyordu.
+
+### Ölçülen evren — 510 kimlik, `senaryo/alan/yüzey`
+
+Kimlik biçimi yüzeyi İÇERİR. Yüzey kimliğin parçasıdır çünkü aynı alan iki
+yüzeyde birden yaşayabilir ve ayrışabilir: değer taşımayan `mode:"ANY"` bir
+constraint YALNIZ `constraints` yüzeyinde vardır.
+
+| Yüzey | UNKNOWN | INFERRED | VERIFIED | USER_EXPLICIT | Kimlik |
+| --- | --- | --- | --- | --- | --- |
+| `attributes` | **0** | **56** | **17** | **182** | **255** |
+| `constraints` | **0** | **56** | **17** | **182** | **255** |
+| **Toplam** | **0** | **112** | **34** | **364** | **510** |
+
+```
+SCENARIOS=108
+FROZEN_IDENTITIES=510        MEASURED_IDENTITIES=510
+IDENTITY_MISSING=0           IDENTITY_UNEXPECTED=0      IDENTITY_DUPLICATE=0
+AUTHORITY_MISMATCH=0         CROSS_SURFACE_DISAGREEMENT=0
+PAYLOAD_SIGNATURE_DRIFT=0    INTERNAL_EVIDENCE_LEAK=0
+```
+
+`56 / 17 / 182` dağılımı `111b412` tabanında ölçülen dağılımın AYNISIDIR;
+değişen sayı değil, o değerlerin artık otorite işareti taşımasıdır. Kalan
+`INFERRED` alan dağılımı da değişmedi: `needType` 45 · `solutionType` 5 ·
+`usageArea` 4 · `condition` 2.
+
+Taban `scripts/fixtures/projection-authority-v1.ts` içinde import içermeyen
+bağımsız veri otoritesi olarak donduruldu. Karşılaştırma iki yönlüdür: kaybolan
+kimlik de, açıklanamayan yeni kimlik de, otoritesi sessizce değişen kimlik de
+kırmızıdır. Toplam sayı tek başına başarı sayılmaz.
+
+### Test-first — kırmızı kanıt üretim düzeltmesinden ÖNCE alındı
+
+Kırmızı test commit'i oluşturulmadı; kırmızı, oturumda kanıt olarak ölçüldü ve
+test ile üretim düzeltmesi tek atomik commit oldu.
+
+| Kırmızı kanıt | Düzeltme öncesi | Düzeltme sonrası |
+| --- | --- | --- |
+| `fieldAuthority` taşıyan projection | **0/108** | 108/108 |
+| Otoritesi okunamayan kimlik | **510** | **0** |
+| Browse `condition` / `mode:"ANY"` | **UNKNOWN** | **USER_EXPLICIT** |
+| TypeScript `projectionAuthorityOf` ihracı | **yok (TS2305)** | var |
+| TypeScript `ProjectionAuthoritySurface` ihracı | **yok (TS2305)** | var |
+
+Kapının canlı olduğu üç mutasyonla ayrıca gösterildi; mutasyonlar geçiciydi ve
+commit'e girmedi: `INFERRED → VERIFIED` **112** uyuşmazlık, `VERIFIED →
+INFERRED` **34**, `USER_EXPLICIT → INFERRED` **364**. Üçünde de
+`PAYLOAD_SIGNATURE_DRIFT` **0** kaldı — otorite ekseni değer ekseninden
+gerçekten ayrıktır.
+
+### Belgeye geçen sözleşme
+
+1. `RequestDiscoveryProjection.fieldAuthority` **additive ve OPSİYONELDİR**.
+2. Mevcut `attributes` / `constraints` değer şekli **DEĞİŞMEZ**.
+3. Her GERÇEK yüzey kendi otorite değerini taşır; var olmayan yüzeye otorite
+   yazılmaz.
+4. Otorite YALNIZ mevcut kanonik merdivenden gelir:
+   `UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT`.
+5. Yeni enum, yeni rank tablosu ve yeni "doğrulanmış kaynak" listesi
+   **YOKTUR**.
+6. Değer taşımayan fakat kullanıcının gezinmeden AÇIKÇA seçtiği `ANY`
+   constraint'i **`USER_EXPLICIT`**'tir.
+7. Metadata'sı olmayan ya da bozuk legacy kayıt **`UNKNOWN`** okunur; güvenilir
+   otorite **uydurulmaz**.
+8. `brandCandidate` / `brandEvidence` `internalEvidence` sınırında kalır;
+   generic `fieldAuthority` haritasına **geri girmez**.
+9. `fieldAuthority` **AÇIKLAYICI provenance metadata'sıdır**; tek başına
+   güvenlik ya da izin kanıtı **DEĞİLDİR**.
+10. Bu commit Matching V3 skorunu, filtrelemeyi, routing'i ve mevcut projection
+    değerlerini **DEĞİŞTİRMEDİ**.
+11. Migration ve backfill **YAPILMADI**; JSON şekli additive olduğu için eski
+    kayıtlar okunmaya devam eder.
+12. **Production deploy YOKTUR**; canlı davranış iddiası yoktur.
+13. **Tarayıcı testi YAPILMADI.** Bu bir serialization / tip / doğrulayıcı
+    sözleşmesidir; kanıt sınıfı `CODE-VERIFIED`.
+
+### Browse-ANY kararı — neden `UNKNOWN` değil
+
+`classifyAnswerAuthority` yalnız `kind === "VALUE"` alanlara bakar ve tasarımı
+gereği ötekilere `UNKNOWN` der; onun cevapladığı soru "bu değer soruyu
+kapatabilir mi" sorusudur. Projection'ın sorduğu soru BAŞKADIR: bu kaydı kim
+koydu. Kullanıcının gezinmeden seçtiği "Fark etmez" `kind: "ANY"` ve
+`provenance: "EXPLICIT_BROWSE"` taşır; bilinçli bir cevaptır ve Talepo'nun
+bilgisizliğiyle aynı kovaya düşemez. Bu yüzden değer yokken merdivenin AYNI
+modülündeki dar görünüm (`answerAuthorityOfProvenance`) okunur — yeni bir
+merdiven değil, aynı sözleşmenin ikinci kapısı.
+
+Bu aynı zamanda serbest metin corpusunda HİÇ görünmeyen gerçek
+constraints-only vakadır ve `CROSS_SURFACE_DISAGREEMENT = 0` tabanının neden
+yalnız o corpus için geçerli olduğunu gösterir. Doğrulayıcı bu vakayı ayrı bir
+kanarya olarak ölçer ve corpus sayısına karıştırmaz.
+
+### Legacy okuma — eksik metadata güvenilir sayılmaz
+
+Okuma tek sınırdan yapılır: `projectionAuthorityOf(projection, key, surface)`.
+Tüketiciler kendi varsayılanını, kendi tip kontrolünü ve kendi güvenilirlik
+eşiğini kurmaz. `discoveryProjection` bir JSON kolonudur ve içine her şey
+yazılmış olabilir; ölçülen dokuz bozuk şekil (tanınmayan otorite adı, küçük
+harfli ad, sayı, `null`, harita yerine metin, harita yerine dizi, girdi yerine
+metin, girdi yerine dizi, `fieldAuthority` yerine `null`) **throw etmedi** ve
+hiçbiri güvenilir sayılmadı; hepsi `UNKNOWN` döndü. Otorite adının geçerliliği
+kanonik `authorityRank` tablosuna sorulur; ikinci bir string allowlist
+tutulmaz. Eksik metadata hiçbir koşulda `USER_EXPLICIT` ya da `VERIFIED`
+sayılamaz. Metadata'sı olmayan eski kayıt parse'tan **byte-birebir** geçer ve
+parse idempotent kalır.
+
+### Korunan ölçümler (`008a4ac` — hepsi yeniden koşuldu, kopyalanmadı)
+
+```
+projection authority : 510 kimlik · missing 0 · unexpected 0 · duplicate 0
+                       mismatch 0 · capraz 0 · drift 0 · sizinti 0
+matching golden      : 117 passed · 0 failed
+ic kanit (D3c-b)     : 36/36 · sizinti 0
+publish-inference    : 85 / 0 / 0 · 23 / 23 / 0
+D3b                  : duran 35 · dusen 0
+D2                   : 0 / 20 / 49 / 3 / 0 / 4 · kaybolan 0
+readiness brand      : present 16 · unknown 0 · inferred 9 · verified 7 ·
+                       user_explicit 0 · trusted 7 · missing 0 · unexpected 0
+coverage             : 99 pass · 9 known_fail · 0 fail · 0 xpass
+talep beyni          : %92   (DEGISMEDI — yalniz 108 senaryoluk corpus)
+Pro hatti            : %21   (DEGISMEDI — yalniz olculen bes bilesenli hat)
+tsc / scoped eslint  : exit 0 / 0 hata
+iki verifier kosusu  : byte-birebir
+```
+
+### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
+
+- **İSTEMCİ KAYNAKLI METADATA İÇİN SUNUCU GÜVEN SINIRI YOKTUR.**
+  `fieldAuthority` bugün yalnız açıklayıcıdır ve hiçbir skor, filtre ya da
+  yetki kararına girmez; bu yüzden bugün zarar üretmez. Fakat
+  `update-request.ts` istemciden gelen projection'ı parse etmeden yazar ve
+  `create-request.ts` istemci projection'ını kabul eder. `fieldAuthority`
+  skorlamada ya da yönlendirmede kullanılmadan ÖNCE sunucu tarafında yeniden
+  türetilmesi veya doğrulanması gerekir; aksi hâlde istemci sahte `VERIFIED` /
+  `USER_EXPLICIT` yazabilir. Bu bir ön koşuldur, öneri değildir.
+- **9 brand evidence provenance tutarsızlığı AÇIK** (`tech-02` · `tech-03` ·
+  `tech-10` · `print-07` · `appl-04` · `appl-06` · `appl-07` · `mach-03` ·
+  `mach-07`) — kanıt DEĞERİ `VERIFIED_CATALOG` / `USER_ASSERTED` anlamı
+  taşırken kaydın `source`'u `DETERMINISTIC_INFERENCE`. Ayrı eksendir, bu turda
+  ele alınmadı ve bu 9 kayıt güvenilir ilan edilmedi.
+- **Düzenleme/güncelleme yolu sunucuda doğrulanmıyor ve yenilenmiyor** —
+  `update-request.ts` istemci projection'ını parse etmeden persist eder;
+  snapshot yenilenmez.
+- **Forma elle yazılan `dynamicValues` projection'a girmiyor** —
+  `EditRequestForm` projection'ı `createTextOnlyState(metin)` ile yeniden kurar,
+  bu yüzden kullanıcının forma elle yazdığı değer projection'da hiç temsil
+  edilmez ve orada `USER_EXPLICIT` olarak işaretlenemez.
+- **`clone-request-as-draft` ham JSON'u parse etmeden kopyalar** — legacy şekil
+  kopyalarda yaşamaya devam eder; okuma `UNKNOWN` olduğu için güvenlidir.
+- **Legacy constraint metadata'sı taşınmıyor** — iç kanıt ayrımında `mode` /
+  `strength` / `include` / `preferred` düşer; bilinçli indirgemedir.
+- **`NOT_MEASURED` payda politikası** — `REQUEST_BRAIN` ile Pro metriğinin
+  yaklaşımı farklıdır; ayrı bir ölçüm-politikası kararıdır ve bu turda
+  değiştirilmedi.
+- **Matching V3 `SHADOW`'dur** ve canlı fanout'a bağlı değildir; tedarikçi
+  yetkinliği ve canlı bildirim teslimatı **ölçülmemiştir**.
+- **Bağımsız inceleme kapısı koşulamadı** — `ecc:typescript-reviewer` ve
+  `ecc:security-reviewer` bu worktree'de kayıtlı ajan türleri değildir. Yerine
+  başka bir ajan ECC diye adlandırılmadı; yapılan kendi gözden geçirmesidir ve
+  bağımsız ECC incelemesi olarak anlatılamaz.
+- **Production deploy yoktur.**
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-27, `7aa6990` (güvenilir marka kanonik otorite merdiveninden ölçülüyor)
 
 Commit: `7aa6990` — *test(eval): measure trusted brand through typed evidence*
@@ -324,11 +519,22 @@ kanıt ailesini ayırdı; kalan 56 `INFERRED` kimlik generic okuma modelinde
 otorite işareti olmadan durmaya devam ediyor ve **D3c'nin bütünü kapanmış
 değildir**.
 
+> **YERİNE GEÇİLDİ (`008a4ac`, 2026-08-27).** Cümle `111b412` tabanında
+> doğruydu. Generic projection otorite ekseni `008a4ac` ile kapandı; ölçülen
+> 56 / 17 / 182 dağılımı DEĞİŞMEDİ, o değerler artık `fieldAuthority`
+> haritasında kaynağıyla duruyor. D3c'nin bütünü yine de kapanmış sayılmaz:
+> istemci kaynaklı metadata için sunucu güven sınırı ve düzenleme yolunun
+> sunucu doğrulaması AÇIKTIR. Tarihsel cümle silinmedi.
+
 ### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
 
 - **Generic projection'da provenance/otorite boşluğu AÇIK** — yukarıdaki 56
   `INFERRED` kimlik (ve 199 diğer otoriteli değer) hâlâ işaretsiz. Ayrı karar
   dilimi; bkz. `04-CANONICAL` provenance boşluğu.
+  > **KAPANDI (`008a4ac`, 2026-08-27).** Bu madde `111b412` tabanında doğruydu;
+  > `008a4ac` ile kapandı. 56 `INFERRED` + 17 `VERIFIED` + 182 `USER_EXPLICIT`,
+  > iki yüzeyde toplam 510 kimlik olarak `fieldAuthority` haritasında otorite
+  > işareti taşıyor. Tarihsel madde silinmedi.
 - **Düzenleme yolu snapshot'ı yenilemiyor** (`update-request.ts`) — düzenlenen
   talep eski anlamda kalır; bu dilimde ele alınmadı.
 - **`clone-request-as-draft` ham JSON'u parse etmeden kopyalar** — normalizer
@@ -440,6 +646,9 @@ yapıldı; bu düzeltme için ayrıca tarayıcı ölçümü YAPILMADI, yeni
   provenance/otorite işareti olmadan taşıyor.** Kullanıcı-cevabı kanalı
   kapandı; firmaların/Matching V3'ün okuma modeli olan projection ekseni ayrı
   bir karar dilimidir (bkz. `04-CANONICAL` provenance boşluğu).
+  > **KAPANDI (`008a4ac`, 2026-08-27).** Madde `83be90b` tabanında doğruydu.
+  > Ayrı karar dilimi olarak ele alındı ve kapandı; ayrıntı için bu belgenin
+  > başındaki `008a4ac` ölçüm tabanı. Tarihsel madde silinmedi.
 - **`brandCandidate` / `brandEvidence` snapshot ana `attributes` ad alanında
   duruyor** — D3c-b henüz yapılmadı. Ölçülmüş iç kanıt kimliği **28**'dir
   (19 `brandCandidate` + 9 `brandEvidence`); `home-06/brandCandidate` ayrıca
@@ -2000,11 +2209,11 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) · `scripts/verify-readiness-brand-authority-v1.ts` (ölçüm otoritesi: güvenilir marka) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) · `scripts/verify-readiness-brand-authority-v1.ts` (ölçüm otoritesi: güvenilir marka) · `scripts/verify-projection-authority-v1.ts` (generic projection otoritesi: 510 kimlik) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412`, ölçüm otoritesi yüzeyi `7aa6990` ile kapandı; etiket ekseni, generic projection ekseni ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412`, ölçüm otoritesi yüzeyi `7aa6990`, generic projection otorite yüzeyi `008a4ac` ile kapandı; etiket ekseni (`provenance_mismatch = 69`), istemci metadata'sı için sunucu güven sınırı ve ölçülemeyenler AÇIK** |
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 
@@ -2153,6 +2362,53 @@ provenance'sız legacy kayıtlar trusted sayılmaz. Ayrıntı, kimlik listesi ve
 **`7aa6990` ölçüm tabanı** bölümüne bakın. Ürün kararı:
 `11-DECISION-LOG.md` → **Karar H, H9**.
 
+### Generic projection otorite yüzeyi de KAPANDI (`008a4ac`, 2026-08-27)
+
+**Yeni KB açılmadı.** Bu bulgu da KB-17'nin kök nedeninin aynısıdır —
+Talepo'nun kendi çıkarımı kullanıcı beyanı gibi davranıyor — yalnız SEKİZİNCİ
+bir yüzeyde görülmüştür: `discoveryProjection.attributes` ve `constraints`
+torbaları çıplak değer taşıdığı için, o torbaları okuyan hiçbir katman değerin
+kaynağını göremiyordu. Bu yüzey kaydın kendisinde zaten adı geçen açık
+eksendi (`7aa6990` bölümündeki "generic projection'da kalan 56 `INFERRED`
+kimlik de otorite işareti taşımıyor" cümlesi). İsim benzerliğiyle değil kök
+nedenle eşleştiği için kayıt yine genişletildi; ayrı bir KB açılmadı.
+
+Otorite kaynakta VARDI (`CanonicalFieldState.provenance`) ve kurucu ile
+projection arasındaki tek adımda düşüyordu. Somut bedeli: Matching V3'ün
+`attributeHit` hesabı tahmini kullanıcı beyanıyla aynı ağırlıkta okuyor, panel
+ve admin yüzeyleri "kullanıcı söyledi" diye gösterebiliyordu.
+
+Ölçüm ve kapanış: 108 senaryoda `senaryo/alan/yüzey` biçiminde **510** kimlik
+donduruldu ve iki yönlü karşılaştırıldı. `attributes` yüzeyinde `UNKNOWN 0 ·
+INFERRED 56 · VERIFIED 17 · USER_EXPLICIT 182`, `constraints` yüzeyinde aynı
+dağılım; missing 0, unexpected 0, duplicate 0, otorite uyuşmazlığı 0, çapraz
+yüzey uyuşmazlığı 0, iç kanıt sızması 0. Düzeltme öncesi aynı 510 kimliğin
+otoritesi okunamıyordu (`fieldAuthority` 0/108). Değer payload'ları
+değişmedi: düzeltme öncesi 108 imza donduruldu ve drift **0** ölçüldü.
+
+Sayı dağılımı `111b412` tabanındakiyle AYNIDIR; kapanan şey sayı değil, o
+değerlerin artık otorite işareti taşımasıdır.
+
+Kullanıcının gezinmeden açıkça seçtiği "Fark etmez" (`mode:"ANY"`,
+`provenance: "EXPLICIT_BROWSE"`) `constraints` yüzeyinde `USER_EXPLICIT`
+sayılır; değer taşımadığı için `attributes` yüzeyinde hiç görünmez. Metadata'sı
+olmayan ve bozuk legacy kayıtlar `UNKNOWN` okunur ve hiçbir koşulda
+`USER_EXPLICIT` / `VERIFIED` sayılmaz. Ayrıntı, mutasyon kanıtları ve
+doğrulayıcı için bu belgenin başındaki **`008a4ac` ölçüm tabanı** bölümüne
+bakın. Ürün kararı: `11-DECISION-LOG.md` → **Karar H, H10**.
+
+**Kaydın durumu DEĞİŞMEDİ.** Bu yüzey kapandı ama kapanış ölçüsündeki 2, 3 ve
+4 numaralı maddeler bu dilimde de ele alınmadı; `provenance_mismatch = 69`
+etiket ekseni duruyor. Kayıt bir bütün olarak **KISMEN ÇÖZÜLDÜ** kalmaya devam
+eder.
+
+**AYRI KÖK NEDEN — bu kayda yazılmaz.** `fieldAuthority` istemciden gelen bir
+payload'da da bulunabilir ve `update-request.ts` istemci projection'ını parse
+etmeden persist eder. Bu bir güven sınırı boşluğudur, çıkarım otoritesi sorunu
+değildir. Bugün zarar üretmez çünkü `fieldAuthority` hiçbir skor, filtre ya da
+yetki kararına girmez; fakat girmeden ÖNCE sunucu tarafında yeniden türetilmesi
+ya da doğrulanması gerekir. `008a4ac` tabanında KNOWN-OPEN olarak kayıtlıdır.
+
 **AYRI KÖK NEDEN — karıştırılmasın.** Aynı düzeltmede ortaya çıkan iki başka
 bulgu KB-17'nin kök nedeni DEĞİLDİR ve bu kayda yazılmaz:
 (a) doğrulayıcının D3c-b sonrası eski generic `attributes` yolunu okumaya devam
@@ -2167,10 +2423,22 @@ bu dilimde ele alınmadı; generic projection'da kalan **56** `INFERRED` kimlik
 de otorite işareti taşımıyor. Kayıt bir bütün olarak **KISMEN ÇÖZÜLDÜ**
 kalmaya devam eder.
 
+> **KISMEN YERİNE GEÇİLDİ (`008a4ac`, 2026-08-27).** Yukarıdaki iki cümleden
+> generic projection kısmı artık geçerli DEĞİLDİR: 56 `INFERRED` kimlik (ve
+> aynı torbadaki 17 `VERIFIED` ile 182 `USER_EXPLICIT`) `fieldAuthority`
+> haritasıyla otorite işareti taşıyor. Bkz. bu belgenin başındaki `008a4ac`
+> ölçüm tabanı ve yukarıdaki sekizinci yüzey bölümü. **`provenance_mismatch =
+> 69` etiket ekseni AYRI bir eksendir ve DEĞİŞMEDİ; hâlâ AÇIKTIR.** Tarihsel
+> cümle silinmedi.
+
 **Bu dilimde de kapanmayan eksen:** `discoveryProjection.attributes/constraints`
 85 `INFERRED` değeri otorite işareti olmadan taşımaya devam ediyor; snapshot
 `attributes` içindeki `brandCandidate` / `brandEvidence` ad alanı (ölçülmüş 28
 kimlik; `home-06/brandCandidate` ayrıca `NOT-MEASURED = 1`) D3c-b'ye kaldı.
+
+> **YERİNE GEÇİLDİ.** Marka ad alanı kısmı `111b412` ile, projection otorite
+> işareti kısmı `008a4ac` ile kapandı. Cümle o tarihlerdeki gerçek ölçümdür ve
+> tarihsel kayıt olarak korunur.
 
 
 **Kayıt bir bütün olarak ÇÖZÜLDÜ sayılmıyor.** Kapanış ölçüsündeki beş

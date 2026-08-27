@@ -83,7 +83,7 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 > 36/36; provenance kaybı 0. Kontrol:
 > `verify-snapshot-internal-evidence-v1`.
 >
-> **BUGÜNKÜ AÇIK KALAN — sayı yeniden ölçüldü, kopyalanmadı.** Yukarıdaki 85,
+> **`111b412` TARİHİNDEKİ AÇIK KALAN — sayı yeniden ölçüldü, kopyalanmadı.** Yukarıdaki 85,
 > `83be90b` tarihindeki gerçek ölçümdür ve tarihsel kanıt olarak duruyor;
 > `111b412` ile daralmıştır. İki deterministik koşuda yeniden ölçüm: kanonik
 > `INFERRED` **85** kimlikten **56**'sı generic
@@ -94,6 +94,38 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 > provenance boşluğu yalnız `INFERRED`e özgü değildir ve **projection otoritesi
 > sorunu ÇÖZÜLMÜŞ DEĞİLDİR**. [`CODE-VERIFIED` — `111b412`; tarayıcı ölçümü
 > yapılmadı, production deploy yoktur]
+>
+> **`008a4ac` (D3c, 2026-08-27) PROJECTION EKSENİNİ KAPATTI.** Yukarıdaki
+> paragraf `111b412` tarihindeki gerçek ölçümdür ve tarihsel kanıt olarak
+> duruyor; **bugün geçerli olan aşağıdakidir.** Projection artık additive ve
+> opsiyonel bir `fieldAuthority` haritası taşır: alan başına, YÜZEY başına
+> (`attributes` / `constraints`), kanonik `Authority` değeriyle. Ölçülen 56 /
+> 17 / 182 dağılımı DEĞİŞMEDİ — değişen, o değerlerin artık kaynağını
+> taşımasıdır. 108 senaryoda `senaryo/alan/yüzey` biçiminde **510** kimlik
+> donduruldu; missing 0, unexpected 0, duplicate 0, otorite uyuşmazlığı 0,
+> çapraz yüzey uyuşmazlığı 0, iç kanıt sızması 0, değer payload'ı drift 0.
+> Kontrol: `verify-projection-authority-v1`. Ürün kararı: `11-DECISION-LOG.md`
+> → **Karar H, H10**.
+>
+> Sözleşmenin üç sınırı burada da yazılıdır. (a) Otorite YALNIZ mevcut kanonik
+> merdivenden gelir; yeni enum, rank tablosu ya da "doğrulanmış kaynak"
+> listesi kurulmadı ve okuma tek yardımcıdan yapılır
+> (`projectionAuthorityOf`). (b) Metadata'sı olmayan veya bozuk legacy kayıt
+> `UNKNOWN` okunur, throw etmez ve hiçbir koşulda `USER_EXPLICIT` / `VERIFIED`
+> sayılmaz; migration yapılmadı, JSON şekli additive olduğu için gerekmez.
+> (c) Kullanıcının gezinmeden açıkça seçtiği "Fark etmez" (`mode:"ANY"`,
+> `provenance: "EXPLICIT_BROWSE"`) `constraints` yüzeyinde `USER_EXPLICIT`
+> sayılır; değer taşımadığı için `attributes` yüzeyinde hiç görünmez.
+>
+> **HÂLÂ AÇIK — kapanmış gösterilmez.** `fieldAuthority` AÇIKLAYICI provenance
+> metadata'sıdır ve bir yetki kanıtı değildir; istemciden gelen bir payload'da
+> da bulunabilir. Bugün hiçbir skor, filtre ya da yetki kararına girmediği
+> için zarar üretmez, fakat skorlamada veya yönlendirmede kullanılmadan ÖNCE
+> sunucu tarafında yeniden türetilmesi ya da doğrulanması gerekir
+> (`update-request.ts` istemci projection'ını parse etmeden persist eder).
+> `provenance_mismatch = 69` etiket ekseni AYRI bir eksendir ve DEĞİŞMEDİ.
+> [`CODE-VERIFIED` — `008a4ac`; tarayıcı ölçümü yapılmadı, production deploy
+> yoktur]
 
 ### Client / composer state
 

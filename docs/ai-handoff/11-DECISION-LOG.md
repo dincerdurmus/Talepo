@@ -12,7 +12,7 @@ Durum etiketleri: `BRANCH-WIRED` ≠ `PRODUCTION-DEPLOYED` (`00-START-HERE.md`).
 | Product span marka/model olamaz | **Kısmen** — entity-roles / identity | `entity-roles.ts`, product-identity | entity-global-core | Yanlış soru/match |
 | Marka/model kanıt gerektirir | **V3’te uygulanmış**; legacy fanout’ta yok | matching-v3 identity/scoring | matching-v3 verifier | Sahte EXACT / cartesian |
 | Bütçe+konum olmadan review açılmaz | **Uygulanmış** (`BRANCH-WIRED`) — 2026-08-26'da DAR bir ek geldi: cevaplanmamış **çıkarım doğrulaması** olan `routing_critical` alan da kilitler (bkz. Karar H4); önerisi olmayan routing sorusu kilitlemez | `publish-readiness.ts`, global-core, `question-scheduler.ts` | phase2 / scheduler, `verify-inference-question-authority-v2` | Eksik teklif kalitesi |
-| Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`; yayın kanalı `83be90b`, bkz. Karar H (H7) | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx`, `ui-helpers.ts` (`buildPublishFieldValues`) | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1`, `verify-publish-inference-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
+| Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`; yayın kanalı `83be90b`, bkz. Karar H (H7); projection okuma modeli `008a4ac`, bkz. Karar H (H10) | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx`, `ui-helpers.ts` (`buildPublishFieldValues`), `discovery/types.ts`, `discovery/build-projection.ts`, `discovery/validate-filter.ts` | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1`, `verify-publish-inference-authority-v1`, `verify-projection-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
 | Otorite sırası TEK kanonik merdivendir | **Uygulanmış** (`BRANCH-WIRED`, `CODE-VERIFIED`) — `ce464eb`; tek `AUTHORITY_RANK`, answer katmanı dar görünüm, verified kaynak listesi tipli | `provenance.ts`, `answer-authority.ts`, `build-state.ts` | `verify-authority-ladder-v1` (11/11) | Dört kopyadan biri değişip ötekilerle sessizce ayrışır; kullanıcı beyanı bir katmanda çıkarıma düşer |
 | `rawInput` soru cevaplarıyla değiştirilmez | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, 2026-08-23 kararının yerine geçer (Karar G) | `talep/page.tsx`, `sync.ts` | `verify-user-choice-authority-v1` | Bestecinin yazdığı sözcük başka alanın kullanıcı kanıtı sayılır (KB-20) |
 | Çıplak ilçe adı konum kanıtı değildir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. KB-20 | `turkey-districts.ts`, `understand-request.ts` | `verify-geo-evidence-authority-v1` | Kullanıcının yazmadığı şehir talebe yazılır |
@@ -196,7 +196,7 @@ tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26) + `83be90b` (H7 · `CODE-VERIFIED`, 2026-08-27) + `111b412` (H8 · `CODE-VERIFIED`, 2026-08-27), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26) + `83be90b` (H7 · `CODE-VERIFIED`, 2026-08-27) + `111b412` (H8 · `CODE-VERIFIED`, 2026-08-27) + `7aa6990` (H9 · `CODE-VERIFIED`, 2026-08-27) + `008a4ac` (H10 · `CODE-VERIFIED`, 2026-08-27), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
 | **Dosyalar**. **`b12ce53` eki:** `ui-helpers.ts`, `request-brain/types.ts`, `request-composer/index.ts`, `EnrichmentChips.tsx`, `talep/page.tsx`, `scripts/verify-inference-confirmation-priority-v1.ts` (yeni) | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
 | **Testler**. **`b12ce53` eki:** `verify-inference-confirmation-priority-v1` (exit 0, iki koşuda byte-birebir) | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
 | **Değişirse risk** | Talepo kendi tahminini kullanıcı cevabı sanar; talep, kullanıcının hiç görmediği bir değerin belirlediği havuza gider |
@@ -384,7 +384,9 @@ taşınmaz" der.)
 > **Kapsam dışı — gizlenmiyor:** `discoveryProjection.attributes/constraints`
 > 85 `INFERRED` değeri hâlâ otorite işareti olmadan taşır (04 belgesindeki
 > provenance boşluğu açık); snapshot `attributes` içindeki
-> `brandCandidate`/`brandEvidence` ad alanı D3c-b'dedir. Bu düzeltme için
+> `brandCandidate`/`brandEvidence` ad alanı D3c-b'dedir.
+> *(Bu iki kapsam-dışı madde sonradan kapandı: ad alanı `111b412` / H8,
+> projection otorite işareti `008a4ac` / H10. Tarihsel cümle silinmedi.)* Bu düzeltme için
 > tarayıcı ölçümü yapılmadı — kanıt sınıfı `CODE-VERIFIED`; production deploy
 > yoktur. Talep beyni **%92**, Pro hattı **%22** — aynı formüllü resmî
 > doğrulayıcı `%23` üretmediği için yüzde değişmedi; kazanım "kullanıcı-cevabı
@@ -472,6 +474,14 @@ ad alanında durmasını yasaklar.)
 > kanala ayrıldı (kalan dağılımı `needType` 45 · `solutionType` 5 ·
 > `usageArea` 4 · `condition` 2; aynı torbada 182 `USER_EXPLICIT` ve 17
 > `VERIFIED` değer de işaretsiz). **D3c bir bütün olarak kapanmış değildir.**
+>
+> > **KISMEN YERİNE GEÇİLDİ (`008a4ac`, 2026-08-27 — bkz. H10).** Bu paragrafın
+> > "otorite işareti taşımamaya devam ediyor" kısmı artık geçerli DEĞİLDİR:
+> > 56 / 17 / 182 değerin tamamı `fieldAuthority` haritasında kaynağıyla durur.
+> > Ölçülen dağılım DEĞİŞMEDİ. D3c yine de bütün olarak kapanmış sayılmaz:
+> > istemci metadata'sı için sunucu güven sınırı ve düzenleme yolunun sunucu
+> > doğrulaması AÇIKTIR. Tarihsel paragraf silinmedi.
+>
 > Düzenleme yolu snapshot'ı yenilemez; `clone-request-as-draft` legacy şekli
 > kopyalar (okuma güvenli, şekil yaşar); legacy constraint metadata'sı
 > taşınmaz. Bu düzeltme için **tarayıcı ölçümü yapılmadı** — kanıt sınıfı
@@ -536,6 +546,95 @@ belirler.)
 > Kanıt sınıfı `CODE-VERIFIED`; **tarayıcı ölçümü yapılmadı**; **production
 > deploy yoktur**. Kayıt: `KNOWN-BROKEN.md` → `7aa6990` ölçüm tabanı ve KB-17
 > yedinci yüzey.
+
+**H10 — Projection'a giren her değer KAYNAĞINI da taşır; kaynak generic
+torbada kaybolamaz.**
+(`008a4ac`, 2026-08-27 — H7/H8/H9'un PROJECTION tarafındaki tamamlayıcısı. H7
+bir DEĞERİN yayın kanalına yazılmasını yasaklar, H8 bir ANAHTARIN kullanıcı
+beyanı ad alanında durmasını yasaklar, H9 o anahtarın hangi düzeyde güven
+ürettiğini belirler; H10 firmaların ve Matching V3'ün okuduğu OKUMA MODELİNDE
+kaynağın kaydedilmesini zorunlu kılar.)
+
+> **Kurucu kararı.** `discoveryProjection.attributes` ve `constraints`
+> içindeki bir değerin kullanıcı beyanı mı, doğrulanmış bilgi mi, yoksa
+> Talepo tahmini mi olduğu projection boyunca kaybolamaz. Kaynak, değerin
+> yanında ve alan başına, kanonik merdivenin diliyle kaydedilir.
+>
+> **Sözleşme.** `RequestDiscoveryProjection.fieldAuthority` additive ve
+> opsiyoneldir; mevcut `attributes` / `constraints` değer şekli değişmez. Her
+> GERÇEK yüzey kendi otorite değerini taşır ve var olmayan yüzeye otorite
+> yazılmaz. Otorite YALNIZ mevcut kanonik merdivenden gelir
+> (`UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT`); yeni enum, yeni rank
+> tablosu ve yeni "doğrulanmış kaynak" listesi KURULMAZ. Okuma tek yardımcıdan
+> yapılır (`projectionAuthorityOf`); tüketiciler kendi varsayılanını, kendi tip
+> kontrolünü ve kendi eşiğini kurmaz.
+>
+> **Facet başına otorite üretilmez.** Upstream (`CanonicalFieldState.provenance`)
+> provenance'ı ALAN seviyesinde taşır; `strength` / `preferred` / `excluded` /
+> `range` facet'lerinin kendi kaynağı yoktur. Her facet'e ayrı otorite yazmak
+> var olmayan bir ayrımı uydurmak olurdu.
+>
+> **Değer taşımayan `ANY` kullanıcı cevabıdır.** `classifyAnswerAuthority`
+> yalnız `kind === "VALUE"` alanlara bakar ve ötekilere `UNKNOWN` der; onun
+> cevapladığı soru "bu değer soruyu kapatabilir mi" sorusudur. Projection'ın
+> sorduğu soru başkadır: bu kaydı kim koydu. Kullanıcının gezinmeden açıkça
+> seçtiği "Fark etmez" `kind: "ANY"` ve `provenance: "EXPLICIT_BROWSE"` taşır;
+> bilinçli bir cevaptır ve `USER_EXPLICIT` sayılır. Değer yokken merdivenin
+> AYNI modülündeki dar görünüm (`answerAuthorityOfProvenance`) okunur.
+>
+> **Eksik metadata güvenilir sayılmaz.** Metadata'sı olmayan veya bozuk legacy
+> kayıt `UNKNOWN` okunur ve hiçbir koşulda `USER_EXPLICIT` ya da `VERIFIED`
+> sayılamaz. Bozuk runtime değeri throw etmez. Otorite adının geçerliliği
+> kanonik `authorityRank` tablosuna sorulur; ikinci bir string allowlist
+> tutulmaz. Migration ve backfill yapılmadı; JSON şekli additive olduğu için
+> eski kayıtlar okunmaya devam eder.
+>
+> **İç kanıt geri girmez.** `brandCandidate` / `brandEvidence` `internalEvidence`
+> sınırında kalır (H8) ve generic `fieldAuthority` haritasına yazılmaz;
+> doğrulayıcı bunu ayrıca ölçer.
+>
+> **`fieldAuthority` bir YETKİ KANITI DEĞİLDİR.** Açıklayıcı provenance
+> metadata'sıdır ve istemciden gelen bir payload'da da bulunabilir. Bugün
+> hiçbir skor, filtre ya da yetki kararına girmediği için zarar üretmez; fakat
+> skorlamada veya yönlendirmede kullanılmadan ÖNCE sunucu tarafında yeniden
+> türetilmesi ya da doğrulanması gerekir. `update-request.ts` istemci
+> projection'ını parse etmeden persist eder ve `create-request.ts` istemci
+> projection'ını kabul eder; bu güven sınırı kurulmadan `fieldAuthority`
+> güvenilir sayılamaz. Bu bir ön koşuldur, öneri değildir.
+>
+> **Ölçülen sonuç.** Kimlik biçimi `senaryo/alan/yüzey`; yüzey kimliğin
+> parçasıdır. 108 senaryoda **510** kimlik donduruldu ve iki yönlü
+> karşılaştırıldı: `attributes` yüzeyinde `UNKNOWN 0 · INFERRED 56 ·
+> VERIFIED 17 · USER_EXPLICIT 182`, `constraints` yüzeyinde aynı dağılım;
+> missing 0, unexpected 0, duplicate 0, otorite uyuşmazlığı 0, çapraz yüzey
+> uyuşmazlığı 0, iç kanıt sızması 0, değer payload'ı drift 0. Dağılım
+> `111b412` tabanındakiyle AYNIDIR; kapanan şey sayı değil, o değerlerin artık
+> kaynağını taşımasıdır.
+>
+> **Test-first.** Kırmızı test commit'i oluşturulmadı; kırmızı oturumda kanıt
+> olarak ölçüldü ve test ile üretim düzeltmesi tek atomik commit oldu. Düzeltme
+> öncesi: `fieldAuthority` 0/108, otoritesi okunamayan kimlik 510, browse-`ANY`
+> `UNKNOWN`, TypeScript `projectionAuthorityOf` ve `ProjectionAuthoritySurface`
+> ihraçlarını bulamıyor. Kapının canlı olduğu üç geçici mutasyonla gösterildi:
+> `INFERRED → VERIFIED` 112, `VERIFIED → INFERRED` 34, `USER_EXPLICIT →
+> INFERRED` 364 uyuşmazlık.
+>
+> **Kapsam dışı — gizlenmiyor.** Bu commit Matching V3 skorunu, filtrelemeyi,
+> routing davranışını ve mevcut projection değerlerini DEĞİŞTİRMEDİ; golden
+> 117/0, iç kanıt 36/36, publish-inference 85/0/0 ve 23/23/0, D3b 35/0, D2
+> 0/20/49/3/0/4, coverage 99/9/0, readiness present 16 / trusted 7 / Pro
+> **≈%21**, talep beyni **%92** — hepsi yeniden koşuldu ve değişmedi. KNOWN-OPEN:
+> istemci metadata'sı için sunucu güven sınırı, 9 brand evidence provenance
+> tutarsızlığı, düzenleme/güncelleme yolunun sunucu doğrulaması ve snapshot
+> yenilemesi, forma elle yazılan `dynamicValues`ın projection'a girmemesi,
+> `clone-request-as-draft`ın legacy şekli yaşatması, legacy constraint
+> metadata kaybı, `NOT_MEASURED` payda politikası, Matching V3'ün `SHADOW`
+> olması. Bağımsız inceleme kapısı koşulamadı: `ecc:typescript-reviewer` ve
+> `ecc:security-reviewer` bu worktree'de kayıtlı ajan türleri değildir ve
+> yerlerine başka bir ajan ECC diye adlandırılmadı. Kanıt sınıfı
+> `CODE-VERIFIED`; **tarayıcı ölçümü yapılmadı** — bu bir serialization / tip /
+> doğrulayıcı sözleşmesidir; **production deploy yoktur**. Kayıt:
+> `KNOWN-BROKEN.md` → `008a4ac` ölçüm tabanı ve KB-17 sekizinci yüzey.
 
 **Bunu ne için yapıyoruz?**
 Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı
