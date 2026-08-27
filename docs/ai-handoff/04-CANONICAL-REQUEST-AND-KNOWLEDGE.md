@@ -126,6 +126,51 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 > `provenance_mismatch = 69` etiket ekseni AYRI bir eksendir ve DEĞİŞMEDİ.
 > [`CODE-VERIFIED` — `008a4ac`; tarayıcı ölçümü yapılmadı, production deploy
 > yoktur]
+>
+> **`83f3b3e` + `aa2f2e1` (D3d/D3e, 2026-08-27) SUNUCU GÜVEN SINIRINI KAPATTI.**
+> Yukarıdaki "HÂLÂ AÇIK" paragrafı `008a4ac` tarihindeki gerçek durumdur ve
+> tarihsel kanıt olarak duruyor; **bugün geçerli olan aşağıdakidir.** Yeni
+> create ve update yazımlarında istemcinin gönderdiği `fieldAuthority` TAMAMEN
+> yok sayılır. Otorite sunucuda sıfırdan yeniden türetilir: kalıcılaştırılan
+> `rawInput` üzerinde YENİDEN koşturulan üretim anlama beyni, ve
+> `RequestFieldValue` olarak saklanan süzülmüş structured cevap kanalı
+> (`fields[]`). `VERIFIED` yalnız sunucunun katalog / kanonik çözümünden gelir
+> ve cevap kanalıyla ezilmez; `INFERRED` yalnız sunucu çıkarımından;
+> `USER_EXPLICIT` yalnız açık metinden ya da geçerli structured cevaptan.
+> Türetilemeyen alan `UNKNOWN`'a düşer ve istek ENGELLENMEZ. Clone kaynağın
+> etiketine güvenmez, otoriteyi kaynağın kendi `rawInput`'undan yeniden
+> türetir ve yeni bir kullanıcı beyanı üretmez. Düzenleme ekranı artık `/talep`
+> ile AYNI kanonik yayın süzgecini kullanır; dokunulmamış çıkarım kullanıcı
+> cevabına yükselmez. Kontrol: `verify-projection-server-authority-v1`. Ürün
+> kararı: `11-DECISION-LOG.md` → **Karar H, H11**.
+>
+> **Değer taşımayan cevap kanonik `mode` ile taşınır.** `RequestFieldInput`
+> additive ve opsiyonel bir `mode` alanı taşır; kanonik `FieldValueKind`tir ve
+> yeni bir enum DEĞİLDİR. `mode` yoksa legacy `VALUE` davranışı birebir
+> korunur. Karar yerelleştirilmiş `"Fark etmez"` etiketine değil `mode`a bakar:
+> değer taşımayan cevap YALNIZ `constraints` yüzeyini onaylar, `attributes`
+> yüzeyini asla onaylamaz. `rawInput`'a sentetik cevap yazılmaz — cevaplar
+> yalnız kanonik duruma uygulanır, bu yüzden düzenleme projection'ı artık
+> `mode:"ANY"` constraint'in kendisini de kaybetmez.
+>
+> **Ölçüm.** `83f3b3e` tabanı 78 kimlikti; `aa2f2e1` structured cevap modu
+> senaryolarını eklerken 5 senaryo × 9 kimlik = 45 kimlik ekledi. Bugün geçerli
+> taban **123 kimlik**: `UNKNOWN 9 · INFERRED 28 · VERIFIED 18 ·
+> USER_EXPLICIT 68`; missing 0, unexpected 0, mismatch 0, edit drift 0.
+> **78 → 123 artışı regresyon ya da otorite değişimi DEĞİLDİR — ölçüm
+> kapsamının genişlemesidir.**
+>
+> **HÂLÂ AÇIK — kapanmış gösterilmez.** Bu kapanış YALNIZ yeni server-write
+> yolları içindir; eski veritabanı kayıtlarına **backfill yapılmadı** ve sınır
+> öncesinde yazılmış iyi biçimli sahte otorite metadata'sı kayıtlarda kalabilir.
+> Explicit `UNKNOWN` otoritesi KAPATILMADI: kanonik modelde `kind:"UNKNOWN"`
+> cevaplanmamış her alanın varsayılanıdır (108 senaryoda 988 alan), bu yüzden
+> "kullanıcı bilmiyorum dedi" ile "hiç sorulmadı" ayrılamıyor.
+> `NOT_APPLICABLE` için projection yüzeyi YOKTUR, dolayısıyla authority
+> üretilemiyor. Üretimde `fieldAuthority` tüketicisi hâlâ yok ve Matching V3
+> `SHADOW`. `provenance_mismatch = 69` etiket ekseni DEĞİŞMEDİ.
+> [`CODE-VERIFIED` — `83f3b3e` + `aa2f2e1`; tarayıcı ölçümü yapılmadı,
+> production deploy yoktur]
 
 ### Client / composer state
 

@@ -202,6 +202,187 @@ iki verifier kosusu  : byte-birebir
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-27, `83f3b3e` + `aa2f2e1` (projection otoritesi artık SUNUCUDA yeniden türetiliyor)
+
+Bu taban `008a4ac`'nin bıraktığı ÖN KOŞULU kapatır. `008a4ac` bir değerin
+kaynağını projection'a YAZDI; kaynağın kim tarafından yazıldığını
+doğrulamadı. Aynı belgede açıkça yazılıydı: *"skorlamada veya yönlendirmede
+kullanılmadan ÖNCE sunucu tarafında yeniden türetilmesi ya da doğrulanması
+gerekir"*. İki commit bunu kapatır.
+
+### Kapatılan kusur
+
+Salt-okunur saldırı probu (2026-08-27, `db1f91a` üzerinde, DB yazımı yok)
+istemciden gelen `discoveryProjection.fieldAuthority` haritasının create,
+update ve clone sınırlarından **değişmeden** geçtiğini ölçtü:
+
+| Saldırı | `db1f91a` davranışı |
+| --- | --- |
+| Metinde hiç geçmeyen `condition` için `VERIFIED` gönder | `VERIFIED` aynen kaydedildi |
+| Çıkarımdan gelen değere `USER_EXPLICIT` damgası vur | `USER_EXPLICIT` aynen kaydedildi |
+| Projection'da hiçbir yüzeyi olmayan uydurma alan anahtarı ekle | Haritada kaldı, okuma sınırından okundu |
+| Değeri değiştir, eski otorite metadata'sını bırak | Öksüz otorite `USER_EXPLICIT` okundu |
+| `constructor` / `prototype` anahtarı yaz | İstemcinin yazdığı seviye döndü |
+| İç kanıt (`brandCandidate`/`brandEvidence`) için otorite yaz | Değer generic torbadan ayrıldı ama **otorite haritasında kaldı** |
+
+Bozuk şekiller (dizi, metin, sayı, tanınmayan seviye, küçük harf) ve
+metadata'sız legacy kayıt zaten `UNKNOWN` okunuyordu; kusur iyi biçimli
+YALANA karşıydı.
+
+### Test-first — kırmızı kanıt üretim düzeltmesinden ÖNCE alındı
+
+Kırmızı test commit'i oluşturulmadı. Kırmızı, üretim davranışı geçici olarak
+düzeltme öncesine çevrilerek oturumda ölçüldü:
+
+| Dilim | Kırmızı ölçüm |
+| --- | --- |
+| `83f3b3e` | **63 ihlal · 47 otorite uyuşmazlığı** · `EDIT_END_TO_END_DRIFT=1` |
+| `aa2f2e1` | **7 ihlal** · `S22/brand/constraints` kimliği tamamen KAYBOLDU · `S20/brand/constraints` `USER_EXPLICIT` yerine `UNKNOWN` |
+
+### Ölçülen evren — 78 → 123 kimlik (KAPSAM genişledi, otorite DEĞİŞMEDİ)
+
+`83f3b3e` tabanı **78 kimlik** taşıyordu. `aa2f2e1` structured cevap modu
+sözleşmesini eklerken **5 yeni senaryo × 9 kimlik = 45** kimlik ekledi
+(`S20`, `S21`, `S22`, `S27a`, `S27b`). 78 + 45 = **123**.
+
+> **Bu artış bir regresyon ya da otorite değişimi DEĞİLDİR.** Hiçbir mevcut
+> kimliğin seviyesi değişmedi; ölçüm kapsamı büyüdü. 78 sayısı `83f3b3e`'nin
+> tarihsel tabanı olarak burada korunuyor ki iki sayı arasındaki fark yarın
+> gerileme sanılmasın.
+
+| Taban | Kimlik | UNKNOWN | INFERRED | VERIFIED | USER_EXPLICIT |
+| --- | --- | --- | --- | --- | --- |
+| `83f3b3e` (tarihsel) | 78 | 7 | 8 | 18 | 45 |
+| `aa2f2e1` (bugün geçerli) | **123** | **9** | **28** | **18** | **68** |
+
+`aa2f2e1`: missing 0 · unexpected 0 · mismatch 0 · edit kanalı drift 0 ·
+edit uçtan uca drift 0 · exit 0, iki deterministik koşuda aynı.
+Kontrol: `scripts/verify-projection-server-authority-v1.ts`.
+
+### Belgeye geçen sözleşme
+
+1. **Yeni create ve update yazımlarında istemcinin `fieldAuthority` etiketi
+   güvenilmezdir ve TAMAMEN yok sayılır.** Hiçbir seviye doğrudan kabul
+   edilmez, hiçbir seviye istemci etiketine bakılarak korunmaz.
+2. Sunucu otoriteyi SIFIRDAN, yalnız kendi sahip olduğu iki girdiden yeniden
+   türetir: kalıcılaştırdığı `rawInput` üzerinde YENİDEN koşturulan üretim
+   anlama beyni, ve `RequestFieldValue` olarak sakladığı süzülmüş structured
+   cevap kanalı (`fields[]`).
+3. **`VERIFIED` yalnız sunucunun katalog / kanonik çözümünden gelir.** Cevap
+   kanalıyla ezilmez: metinden `VERIFIED` türeyen bir değer (C200 →
+   Mercedes-Benz) yalnız `fields[]` listesinde göründüğü için kullanıcı
+   beyanına dönüşmez.
+4. **`INFERRED` yalnız sunucunun kendi çıkarımından gelir.**
+5. **`USER_EXPLICIT` yalnız açık metinden ya da geçerli structured kullanıcı
+   cevabından gelir.**
+6. **Türetilemeyen değer `UNKNOWN`'a düşer; istek ENGELLENMEZ.** Sahte etiket
+   yayını durdurmaz, yalnız güvenilirliğini kaybeder — bu bir kullanıcı hatası
+   değil istemci artefaktı olabilir ve talebin kaybolması yanlış etiketten
+   pahalıdır.
+7. **Düzenleme ekranının `fields[]` listesi artık kanonik yayın süzgecinden
+   geçer** (`buildPublishFieldValues`). Kullanıcının dokunmadığı çıkarım
+   kullanıcı cevabına yükselmez. Bu süzgeç `/talep` yayın yolunun kullandığı
+   süzgecin AYNISIDIR; ikinci bir süzgeç yazılmadı.
+8. **Clone kaynak kaydın otorite etiketine güvenmez;** otoriteyi kaynağın
+   kendi `rawInput`'undan yeniden türetir ve cevap kanalı BİLİNÇLİ olarak
+   verilmez — klonlama kendi başına yeni bir kullanıcı beyanı üretmez.
+9. **`RequestFieldInput.mode` additive ve opsiyoneldir**; kanonik
+   `FieldValueKind`tir, yeni enum değildir. `mode` yoksa legacy `VALUE`
+   davranışı birebir korunur; tanınmayan `mode` cevap kanalına hiç girmez.
+10. **Gerçek `ANY` seçimi `constraints` yüzeyinde `USER_EXPLICIT`tir.** Karar
+    yerelleştirilmiş `"Fark etmez"` etiketine değil kanonik `mode`a bakar;
+    değer taşımayan cevap `attributes` yüzeyini ASLA onaylayamaz.
+11. **`rawInput`'a sentetik cevap yazılmaz.** Cevaplar yalnız kanonik duruma
+    uygulanır (`applyPublishAnswersToState`, üretimin kendi `syncFromBrowse`
+    yolundan); metne hiçbir ifade eklenmez.
+12. **Mevcut `attributes` / `constraints` değer payload'ları değişmedi;**
+    Matching, filtreleme, routing ve skor davranışı değişmedi.
+13. **İç kanıt anahtarları generic otorite haritasına giremez** — yazma
+    sınırında elenir, okuma sınırında (`projectionAuthorityOf`) her koşulda
+    `UNKNOWN` döner. Aynı eleme `__proto__` / `constructor` / `prototype` için
+    de geçerlidir.
+14. **Bu kapanış YALNIZ yeni server-write yolları içindir.** Eski veritabanı
+    kayıtlarına **backfill YAPILMADI**.
+15. **Production deploy ya da canlı başarı iddiası YOKTUR.**
+
+### `ANY` nerede kayboluyordu — ölçülen kök neden
+
+`UnderstoodFactsBoard` → `onDontCareFact` → `applyQuickOption(key, …, isAny)`
+kanonik durumda `kind:"ANY", value:null, provenance:"EXPLICIT_BROWSE"` üretir
+ve `useHybridRequestComposer` `rawInput`'u BİLEREK korur ("Free-text rawInput
+must stay the user's original wording"). Cevap kanalı `fields[]` yalnız
+`{ key, value: string }` taşıdığı için sunucuya YALNIZ yerelleştirilmiş
+`"Fark etmez"` etiketi ulaşıyordu; kanonik mod ulaşmıyordu. Sunucu sınırında
+constraint iddiası `ANY|`, cevabın aradığı imza `VALUE|Fark etmez` olduğu için
+hiçbir zaman eşleşemiyor ve gerçek kullanıcı tercihi `UNKNOWN`'a düşüyordu.
+
+Düzenleme yolunda kayıp daha derindi: `EditRequestForm` projection'ı yalnız
+`createTextOnlyState(metin)` ile kuruyordu, bu yüzden **ANY constraint'in
+KENDİSİ** de kaydedildiği anda projection'dan düşüyordu. Bu kusur `83f3b3e`
+öncesinden beri vardı ve `aa2f2e1` ile kapandı.
+
+### Korunan ölçümler (`aa2f2e1` — hepsi yeniden koşuldu, kopyalanmadı)
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| Projection authority (`verify-projection-authority-v1`) | 510/510 · `attributes` ve `constraints` `UNKNOWN 0 · INFERRED 56 · VERIFIED 17 · USER_EXPLICIT 182` · payload drift 0 · iç kanıt sızması 0 · exit 0 |
+| Matching golden (`verify-matching-v3-shadow`) | 117 passed, 0 failed |
+| İç kanıt (`verify-snapshot-internal-evidence-v1`) | 36/36 · exit 0 |
+| Publish inference (`verify-publish-inference-authority-v1`) | 85/0/0 + 23/23/0 · `USER_EXPLICIT_DROPPED 0` · `VERIFIED_DROPPED 0` · exit 0 |
+| D3b (`verify-inference-confirmation-priority-v1`) | 35 / yanlış tekrar 0 · exit 0 |
+| **D2 kabul testi** (`verify-inference-question-authority-v2`) | `0 / 20 / 49 / 3 / 0 / 4` · kaybolan 0 · **exit 0** |
+| **D1 taban ölçümü** (`verify-question-suppression-authority-v1`) | `not_measured = 8` · **exit 3 — PASS DEĞİLDİR** |
+| Kapsam (`verify-category-coverage-v1`) | 99 / 9 / 0 · talep beyni ≈%92 |
+| Ölçüm otoritesi (`verify-readiness-brand-authority-v1`) | present 16 / trusted 7 · Pro ≈%21 |
+| TypeScript | `tsc --noEmit -p tsconfig.json` **exit 0**; yeni ve değişen dört script **exit 0** |
+| Lint | Değişen dosyalarda **0 hata** |
+
+> **D1 ve D2 AYNI ŞEY DEĞİLDİR — isim düzeltmesi.** `0/20/49/3/0/4` sayaçları
+> **D2 kabul testine** (`verify-inference-question-authority-v2`,
+> `not_measured 4`, exit 0) aittir. `not_measured = 8` ve `exit 3` ise **D1
+> taban ölçümüne** (`verify-question-suppression-authority-v1`) aittir. İki
+> doğrulayıcı farklı eksen ve farklı payda ölçer; D1'in `exit 3`'ü yeşil ya da
+> PASS diye okunamaz. Bu belgedeki tarihsel satırlar bu ayrımı zaten doğru
+> yapıyordu ve DEĞİŞTİRİLMEDİ; yanlış atıf yalnız 2026-08-27 oturum raporunda
+> geçmişti ve burada **DÜZELTİLDİ / YERİNE GEÇTİ**.
+
+### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
+
+- **`UNKNOWN` bugün iki ayrı anlamı ayıramıyor.** Kanonik modelde
+  `kind:"UNKNOWN"` cevaplanmamış HER alanın varsayılanıdır — 108 senaryoluk
+  kapsam tabanında **988 alan** `UNKNOWN`. Bu yüzden "kullanıcı bilmiyorum
+  dedi" ile "hiç sorulmadı" aynı kovadadır ve **explicit `UNKNOWN` authority
+  KAPATILMADI**. Damgalamak, ölçülmemişi ölçülmüş göstermek olurdu.
+- **`NOT_APPLICABLE` için projection yüzeyi YOK.**
+  `buildDiscoveryProjectionFromState` yalnız `ANY` ve değer taşıyan `VALUE`
+  için constraint yazar; sözleşme bu modu taşısa da damgalanabileceği bir
+  yüzey yoktur, **authority üretilemiyor**. Doğrulayıcı bu sınırı `M6`
+  kanaryasıyla kilitler: yüzey davranışı değişirse taban ve payload drift
+  yeniden gözden geçirilmelidir.
+- **`applyBrowseSelectionToState` içindeki `__NOT_APPLICABLE__` sentineli
+  `kind:"VALUE"`ya dönüşüyor** (ölçüldü). `isAny` kontrolü var,
+  `isNotApplicableSentinel` kontrolü yok. AYRI bir kusurdur ve bu dilimde
+  çözülmedi.
+- **`"Fark etmez"` etiketi `RequestFieldValue` içinde display değeri gibi
+  persist edilmeye devam ediyor;** kanonik `mode` ayrı taşınır. Kalıcılaştırma
+  davranışı bu dilimde bilinçli olarak değiştirilmedi.
+- **Legacy kayıtlar backfill'siz.** Güven sınırından ÖNCE yazılmış iyi biçimli
+  sahte otorite metadata'sı veritabanında kalabilir. Okuma sınırı yalnız iç
+  kanıt ve nesne modeli anahtarlarını `UNKNOWN`'a çevirir; eski sahte
+  `VERIFIED` etiketleri yerinde durur.
+- **Şu an üretimde `fieldAuthority` tüketicisi YOK;** Matching V3 `SHADOW`.
+  `projectionAuthorityOf`'un tek çağıranı doğrulayıcılardır.
+- **D1 `exit 3` / `not_measured = 8` AÇIK.**
+- **Bağımsız inceleme kapısı koşulamadı** — `ecc:typescript-reviewer` ve
+  `ecc:security-reviewer` bu worktree'de kayıtlı ajan türleri değildir. Yerine
+  başka bir ajan ECC diye adlandırılmadı.
+- **Snapshot yenilemesi ve önceki tabanların diğer açıkları çözülmüş
+  GÖSTERİLMEZ:** `provenance_mismatch = 69` etiket ekseni, 9 brand evidence
+  provenance tutarsızlığı, `NOT_MEASURED` payda politikası — hepsi AÇIK.
+- **Production deploy yoktur.**
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-27, `7aa6990` (güvenilir marka kanonik otorite merdiveninden ölçülüyor)
 
 Commit: `7aa6990` — *test(eval): measure trusted brand through typed evidence*
@@ -2209,11 +2390,26 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) · `scripts/verify-readiness-brand-authority-v1.ts` (ölçüm otoritesi: güvenilir marka) · `scripts/verify-projection-authority-v1.ts` (generic projection otoritesi: 510 kimlik) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) · `scripts/verify-readiness-brand-authority-v1.ts` (ölçüm otoritesi: güvenilir marka) · `scripts/verify-projection-authority-v1.ts` (generic projection otoritesi: 510 kimlik) · `scripts/verify-projection-server-authority-v1.ts` (**sunucu güven sınırı + structured cevap modu: 123 kimlik**) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412`, ölçüm otoritesi yüzeyi `7aa6990`, generic projection otorite yüzeyi `008a4ac` ile kapandı; etiket ekseni (`provenance_mismatch = 69`), istemci metadata'sı için sunucu güven sınırı ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412`, ölçüm otoritesi yüzeyi `7aa6990`, generic projection otorite yüzeyi `008a4ac`, sunucu güven sınırı `83f3b3e` ve structured cevap modu `aa2f2e1` ile kapandı; etiket ekseni (`provenance_mismatch = 69`), explicit `UNKNOWN` / `NOT_APPLICABLE` otoritesi, legacy kayıt backfill'i ve ölçülemeyenler AÇIK** |
+
+> **DOKUZUNCU YÜZEY — sunucu güven sınırı (`83f3b3e`) ve structured cevap modu
+> (`aa2f2e1`), 2026-08-27.** Sekizinci yüzey (`008a4ac`) bir değerin kaynağını
+> projection'a YAZDI ama o kaydın kim tarafından yazıldığını doğrulamadı;
+> istemci kendi payload'ına `VERIFIED` yazıp Talepo'nun tahminini kullanıcı
+> beyanı gibi gösterebiliyordu. Artık istemcinin `fieldAuthority` etiketi yeni
+> create/update yazımlarında TAMAMEN yok sayılıyor ve otorite sunucunun kendi
+> `rawInput` çözümünden ve süzülmüş structured cevap kanalından yeniden
+> türetiliyor. Aynı dilim düzenleme ekranını kanonik yayın süzgecine bağladı
+> (dokunulmamış çıkarım artık kullanıcı cevabına yükselmiyor) ve kullanıcının
+> UI'den seçtiği "Fark etmez" tercihini kanonik `mode` ile sunucuya taşıdı.
+> Ölçüm: 123 kimlik, `missing 0 · unexpected 0 · mismatch 0`. **Bu kapanış
+> yalnız YENİ server-write yolları içindir; eski kayıtlara backfill
+> yapılmadı.** Ayrıntı ve açık kalanlar: bu belgedeki `83f3b3e` + `aa2f2e1`
+> ölçüm tabanı. Ürün kararı: `11-DECISION-LOG.md` → **Karar H, H11**.
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 

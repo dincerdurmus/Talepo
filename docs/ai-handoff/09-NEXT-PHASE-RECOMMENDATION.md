@@ -171,6 +171,23 @@ Ancak labeling + shadow metrics sonrası.
 > > (`008a4ac`) → **`fieldAuthority` için sunucu güven sınırı** (ön koşul;
 > > istemci metadata'sı doğrulanmadan skorlamaya giremez) → Dilim 2a sink
 > > kapısı / 2b. Yukarıdaki cümle tarihsel kayıt olarak silinmedi.
+>
+> > **SIRA GÜNCELLENDİ (`83f3b3e` + `aa2f2e1`, 2026-08-27).** Yukarıda ÖN KOŞUL
+> > olarak duran **`fieldAuthority` için sunucu güven sınırı tamamlandı**:
+> > istemcinin otorite etiketi yeni create/update yazımlarında tamamen yok
+> > sayılıyor, otorite sunucunun `rawInput` çözümünden ve süzülmüş structured
+> > cevap kanalından yeniden türetiliyor; clone kaynağın etiketine güvenmiyor
+> > (Karar H, H11). Aynı dilim düzenleme ekranını kanonik yayın süzgecine
+> > bağladı ve kullanıcının "Fark etmez" tercihini kanonik `mode` ile taşıdı.
+> > Taban `83f3b3e`'de 78 kimlik, `aa2f2e1` ile ölçüm kapsamı genişleyerek
+> > **123 kimlik** (regresyon değil).
+> >
+> > Bugünkü sıra: sunucu güven sınırı (`83f3b3e` + `aa2f2e1`) → **explicit
+> > `UNKNOWN` / `NOT_APPLICABLE` cevap yüzeyi kararı** (bugün projection'da
+> > yüzeyleri yok; `UNKNOWN` ayrıca cevaplanmamış alanın varsayılanı olduğu
+> > için "bilmiyorum dedi" ile "hiç sorulmadı" ayrılamıyor) → legacy kayıt
+> > backfill kararı (bu dilimde YAPILMADI) → Dilim 2a sink kapısı / 2b.
+> > Yukarıdaki cümleler tarihsel kayıt olarak silinmedi.
 
 Sıra (bu sıra bir öneridir; her adım kendi onayını gerektirir):
 
