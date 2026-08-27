@@ -3,6 +3,10 @@
  * Does not re-interpret intent — maps already-understood state.
  */
 
+import {
+  answerAuthorityOfProvenance,
+  classifyAnswerAuthority,
+} from "@/lib/request-composer/answer-authority";
 import type { CanonicalRequestState } from "@/lib/request-composer/types";
 import {
   INTERNAL_EVIDENCE_ATTRIBUTE_KEYS,
@@ -24,6 +28,7 @@ import {
 import {
   DISCOVERY_PROJECTION_VERSION,
   type DiscoveryFieldConstraint,
+  type ProjectionFieldAuthority,
   type RequestDiscoveryProjection,
 } from "./types";
 
@@ -193,6 +198,14 @@ export function buildDiscoveryProjectionFromState(
 
   const attributes: Record<string, string> = {};
   const constraints: Record<string, DiscoveryFieldConstraint> = {};
+  /**
+   * DEĞERİN KAYNAĞI (D3c). Otorite, değerin kendisiyle AYNI döngüde ve AYNI
+   * kanonik alan kaydından türetilir. Ayrı bir geçişte türetilseydi iki liste
+   * sessizce ayrışabilirdi: bir alan torbaya girip haritaya girmeyebilir ya da
+   * tersi olabilirdi. İç kanıt anahtarları döngünün başında elendiği için bu
+   * haritaya da GİREMEZ.
+   */
+  const fieldAuthority: Record<string, ProjectionFieldAuthority> = {};
 
   for (const [key, field] of Object.entries(state.fields)) {
     /**
@@ -202,8 +215,14 @@ export function buildDiscoveryProjectionFromState(
      * atlamak silmek değildir.
      */
     if (isInternalEvidenceAttributeKey(key)) continue;
+
+    const authority: ProjectionFieldAuthority = {};
+
     if (field.kind === "VALUE" && field.value?.trim()) {
       attributes[key] = field.value.trim();
+      /* Değer taşıyan alan: kanonik cevap otoritesi (`kind === "VALUE"` +
+       * provenance). Burada ikinci bir sınıflandırma kurulmaz. */
+      authority.attributes = classifyAnswerAuthority(field);
     }
 
     const c: DiscoveryFieldConstraint = {};
@@ -228,6 +247,24 @@ export function buildDiscoveryProjectionFromState(
       (c.mode === "VALUE" && c.value)
     ) {
       constraints[key] = c;
+      /**
+       * DEĞER TAŞIMAYAN CONSTRAINT'İN OTORİTESİ. `classifyAnswerAuthority`
+       * yalnız `kind === "VALUE"` alanlara bakar ve tasarımı gereği ötekilere
+       * `UNKNOWN` der — çünkü onun cevapladığı soru "bu değer soruyu
+       * kapatabilir mi?"dir. Burada sorulan soru BAŞKADIR: "bu kaydı kim
+       * koydu?". Kullanıcının gezinmeden açıkça seçtiği "Fark etmez"
+       * (`kind: "ANY"`, `provenance: "EXPLICIT_BROWSE"`) bilinçli bir
+       * cevaptır; `UNKNOWN` yazmak onu Talepo'nun bilgisizliğiyle aynı kovaya
+       * atardı. Bu yüzden değer yokken merdivenin AYNI modülündeki dar
+       * görünüm (`answerAuthorityOfProvenance`) okunur — yeni bir merdiven
+       * değil, aynı sözleşmenin ikinci kapısı.
+       */
+      authority.constraints =
+        authority.attributes ?? answerAuthorityOfProvenance(field.provenance);
+    }
+
+    if (authority.attributes || authority.constraints) {
+      fieldAuthority[key] = authority;
     }
   }
 
@@ -323,6 +360,9 @@ export function buildDiscoveryProjectionFromState(
     attributes,
     ...(Object.keys(internalEvidence).length ? { internalEvidence } : {}),
     constraints,
+    /* Additive: harita boşsa alan HİÇ üretilmez — eski okuyucular ve eski
+     * kayıtlar için şekil aynen korunur. */
+    ...(Object.keys(fieldAuthority).length ? { fieldAuthority } : {}),
     matchContract,
     filterContract,
     builtAt: new Date().toISOString(),

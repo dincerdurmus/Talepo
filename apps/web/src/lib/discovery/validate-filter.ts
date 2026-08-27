@@ -11,9 +11,15 @@ import {
 } from "@/lib/request/understanding-snapshot";
 
 import {
+  authorityRank,
+  type Authority,
+} from "@/lib/request-understanding/provenance";
+
+import {
   DISCOVERY_FILTER_VERSION,
   DISCOVERY_PROJECTION_VERSION,
   type CanonicalDiscoveryFilter,
+  type ProjectionAuthoritySurface,
   type RequestDiscoveryProjection,
 } from "./types";
 
@@ -275,6 +281,49 @@ export function parseDiscoveryProjection(
   }
   if (!Array.isArray(obj.taxonomyNodeIds)) return null;
   return normalizeProjectionInternalEvidence(raw as RequestDiscoveryProjection);
+}
+
+/**
+ * BİR PROJECTION DEĞERİNİN KAYNAĞINI OKUYAN TEK YARDIMCI (D3c).
+ *
+ * Tüketiciler kendi varsayılanını, kendi tip kontrolünü ya da kendi
+ * "güvenilir mi" eşiğini kurmaz — hepsi buradan okur. Eşik gerektiğinde
+ * kanonik `isAtLeastAuthority` kullanılır; burada ikinci bir merdiven yoktur.
+ *
+ * GÜVENLİ TARAF. `discoveryProjection` bir JSON kolonudur ve içine her şey
+ * yazılmış olabilir: eski kayıtta alan hiç yoktur, bozuk kayıtta harita bir
+ * dizi, bir metin ya da tanınmayan bir otorite adı olabilir. Hiçbiri THROW
+ * ETMEZ ve hiçbiri güvenilir SAYILMAZ — hepsi `UNKNOWN` döner. Eksik ya da
+ * doğrulanamayan metadata hiçbir koşulda `USER_EXPLICIT` veya `VERIFIED`
+ * sayılamaz: o iki seviye firmalara yönlendirme sinyalidir.
+ *
+ * Otorite adının geçerliliği KANONİK rank tablosundan sorulur
+ * (`authorityRank`); burada ikinci bir string allowlist'i tutulmaz.
+ *
+ * BU BİR YETKİ KAPISI DEĞİLDİR. Dönen değer AÇIKLAYICI provenance
+ * metadata'sıdır; istemciden gelen bir projection'da da bulunabilir. Update
+ * yolunun sunucu doğrulaması yapılmadan güvenlik kararı, izin kontrolü ya da
+ * "bu değeri kullanıcı gerçekten söyledi" ispatı olarak kullanılamaz.
+ */
+export function projectionAuthorityOf(
+  projection: RequestDiscoveryProjection | null | undefined,
+  key: string,
+  surface: ProjectionAuthoritySurface,
+): Authority {
+  const bag: unknown = projection?.fieldAuthority;
+  if (!bag || typeof bag !== "object" || Array.isArray(bag)) return "UNKNOWN";
+
+  const entry: unknown = (bag as Record<string, unknown>)[key];
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    return "UNKNOWN";
+  }
+
+  const raw: unknown = (entry as Record<string, unknown>)[surface];
+  if (typeof raw !== "string") return "UNKNOWN";
+  /* Kanonik tabloda karşılığı olmayan metin doğrulanamaz — güvenilir sayılmaz.
+   * `authorityRank` bilinmeyen ad için çalışma anında `undefined` üretir. */
+  if (!Number.isFinite(authorityRank(raw as Authority))) return "UNKNOWN";
+  return raw as Authority;
 }
 
 /** True when filter carries any canonical (non-legacy-only) signal. */
