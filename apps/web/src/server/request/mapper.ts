@@ -281,6 +281,68 @@ export function persistedAnswerModeOf(
   return mode;
 }
 
+/** Veritabanından okunan bir `RequestFieldValue` satırının okunabilir şekli. */
+export type StoredFieldValueRow = {
+  key: string;
+  textValue?: string | null;
+  numberValue?: unknown;
+  booleanValue?: boolean | null;
+  jsonValue?: unknown;
+};
+
+/**
+ * KALICI CEVAPLARI DÜZENLEME EKRANI İÇİN GERİ OKUR (D3f Dilim 3c, 2026-08-28).
+ *
+ * SORUN. Düzenleme sayfası satırlardan yalnız `textValue` okuyordu. Değer
+ * taşımayan bilinçli cevapta `textValue` tasarım gereği `null`dır, bu yüzden
+ * kullanıcının "Bilmiyorum" cevabı ekrana hiç dönmüyor, soru YENİDEN AÇILIYOR
+ * ve hiçbir şey değiştirmeden kaydedildiğinde cevap sessizce KAYBOLUYORDU.
+ *
+ * ÇIKTI KANONİK CEVAP ŞEKLİDİR (`{ mode, value }`) — yayın kanalının kullandığı
+ * şeklin aynısı. Böylece düzenleme ekranı ikinci bir cevap tipi, ikinci bir
+ * mod listesi ya da kendi etiket tablosunu kurmaz.
+ *
+ * ÇELİŞKİ KURALI. Yeni yazımlar çelişki üretmez (`mapFieldValue` değer
+ * taşımayan modda `textValue`'yu `null` yazar). Yine de eski ya da bozuk bir
+ * kayıtta ikisi birden bulunabilir; o durumda STRUCTURED MOD KAZANIR, çünkü
+ * `textValue` orada olsa olsa görünür bir ETİKETTİR ve etiket hiçbir zaman
+ * cevabın kendisi değildir.
+ *
+ * FAIL-CLOSED. Tanınmayan mod, dizi, metin, sayı ve eksik alan güvenilir cevap
+ * SAYILMAZ ve THROW ETMEZ; kayıt eski `textValue` davranışına düşer. Legacy
+ * `textValue = "Fark etmez"` kayıtları BACKFILL EDİLMEZ: `VALUE` olarak
+ * okunur ve onlara uydurma bir structured otorite atanmaz.
+ */
+export function restoredFieldAnswers(
+  rows: ReadonlyArray<StoredFieldValueRow>,
+): Record<string, { mode: FieldValueKind; value: string }> {
+  const out: Record<string, { mode: FieldValueKind; value: string }> = {};
+  for (const row of rows ?? []) {
+    const key = typeof row?.key === "string" ? row.key : "";
+    if (!key) continue;
+
+    const mode = persistedAnswerModeOf(row.jsonValue);
+    if (mode) {
+      /* Değer taşımayan cevap: etiket taşınmaz, mod taşınır. */
+      out[key] = { mode, value: "" };
+      continue;
+    }
+
+    if (typeof row.textValue === "string" && row.textValue) {
+      out[key] = { mode: "VALUE", value: row.textValue };
+      continue;
+    }
+    if (row.numberValue !== null && row.numberValue !== undefined) {
+      out[key] = { mode: "VALUE", value: String(row.numberValue) };
+      continue;
+    }
+    if (row.booleanValue !== null && row.booleanValue !== undefined) {
+      out[key] = { mode: "VALUE", value: row.booleanValue ? "Evet" : "Hayır" };
+    }
+  }
+  return out;
+}
+
 export function buildAiSummary(input: CreateRequestInput) {
   if (input.aiSummary) return input.aiSummary;
 

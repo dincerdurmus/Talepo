@@ -1193,12 +1193,22 @@ export function applyPublishAnswersToState(
 ): CanonicalRequestState {
   let next = state;
   for (const [key, answer] of Object.entries(answers)) {
-    const isAny = answer.mode === "ANY";
-    if (!isAny && !answer.value.trim()) continue;
+    /**
+     * DEĞER TAŞIMAYAN CEVAP DA UYGULANIR (D3f Dilim 3c, 2026-08-28).
+     *
+     * Burası yalnız `ANY`yi ve dolu bir değeri tanıyordu; `UNKNOWN` ve
+     * `NOT_APPLICABLE` boş değerle geldiği için sessizce atlanıyordu. Bu,
+     * düzenleme ekranında geri yüklenen "Bilmiyorum" cevabının kanonik
+     * duruma hiç ulaşmaması demekti. Mod, üretimin kendi yazıcısına
+     * (`syncFromBrowse`) taşınır; etiket kanonik kayda yazılmaz.
+     */
+    const isNonValue = answer.mode !== "VALUE";
+    if (!isNonValue && !answer.value.trim()) continue;
     next = syncFromBrowse(next, {
       key,
       value: answer.value,
-      isAny,
+      isAny: answer.mode === "ANY",
+      ...(isNonValue ? { kind: answer.mode } : {}),
     }).state;
   }
   return next;

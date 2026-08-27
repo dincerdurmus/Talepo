@@ -55,6 +55,7 @@ import {
   applyPublishAnswersToState,
   buildPublishAnswerFields,
   buildPublishFieldValues,
+  type PublishFieldAnswer,
   createTextOnlyState,
 } from "@/lib/request-composer";
 
@@ -69,6 +70,15 @@ export type EditRequestInitial = {
   isUrgent: boolean;
   categorySlug: string;
   fieldValues: Record<string, string>;
+  /**
+   * KALICI CEVAPLARIN TİPLİ HÂLİ (D3f Dilim 3c, 2026-08-28).
+   *
+   * `fieldValues` yalnız METİN taşır ve değer taşımayan bilinçli cevabı
+   * ifade edemez. Bu harita sunucunun veritabanından okuduğu kanonik
+   * cevap şeklidir (`{ mode, value }`) ve düzenleme ekranının kanonik
+   * durumunu kurmakta TEK kaynaktır. İstemci bunu üretemez.
+   */
+  fieldAnswers?: Record<string, PublishFieldAnswer>;
 };
 
 type CommonDraft = {
@@ -290,14 +300,26 @@ export function EditRequestForm({
      *
      * `rawInput` DEĞİŞMEZ: metne hiçbir sentetik ifade yazılmaz.
      */
+    /**
+     * KALICI CEVAPLAR ÖNCE, OTURUM DEĞİŞİKLİKLERİ SONRA (D3f Dilim 3c).
+     *
+     * Veritabanından geri yüklenen bilinçli "Bilmiyorum" / "Uygulanamaz" /
+     * "Fark etmez" cevapları kanonik duruma önce uygulanır; kullanıcının bu
+     * oturumda gerçekten dokunduğu alanlar üstüne yazar. Böylece hiçbir şey
+     * değiştirmeden kaydetmek cevabı KAYBETMEZ. Etiket taşınmaz — mod taşınır
+     * ve karar `answer-authority` merdiveninden gelir.
+     */
     const editCanonicalState = applyPublishAnswersToState(
       createTextOnlyState(requestText.trim() || professionalText),
-      Object.fromEntries(
-        userConfirmedFieldKeys.map((key) => [
-          key,
-          { mode: "VALUE" as const, value: manualValues[key] ?? "" },
-        ]),
-      ),
+      {
+        ...(initial.fieldAnswers ?? {}),
+        ...Object.fromEntries(
+          userConfirmedFieldKeys.map((key) => [
+            key,
+            { mode: "VALUE" as const, value: manualValues[key] ?? "" },
+          ]),
+        ),
+      },
     );
     /**
      * ONAYSIZ TAHMİN CEVAP KANALINA GİREMEZ (D3d).

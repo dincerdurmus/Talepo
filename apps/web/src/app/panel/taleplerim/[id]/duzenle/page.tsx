@@ -6,6 +6,7 @@ import {
 } from "@/components/panel/EditRequestForm";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { restoredFieldAnswers } from "@/server/request/mapper";
 import { canEditRequestStatus } from "@/server/request/update-request";
 
 export default async function EditMyRequestPage({
@@ -39,15 +40,28 @@ export default async function EditMyRequestPage({
     redirect(`/panel/taleplerim/${request.id}`);
   }
 
+  /**
+   * KALICI CEVAPLAR TEK KANONİK OKUYUCUDAN GELİR (D3f Dilim 3c, 2026-08-28).
+   *
+   * Burada eskiden yalnız `textValue` okunuyordu. Değer taşımayan bilinçli
+   * cevapta (`{ mode }` → `jsonValue`) `textValue` tasarım gereği `null`dır,
+   * bu yüzden kullanıcının "Bilmiyorum" cevabı düzenleme ekranına hiç
+   * dönmüyor ve kaydedildiğinde kayboluyordu. Okuma, yazma tarafıyla AYNI
+   * modülün fail-closed okuyucusuna bağlanır; ikinci bir ayrıştırma yazılmaz.
+   */
+  const fieldAnswers = restoredFieldAnswers(
+    request.fieldValues.map((value) => ({
+      key: value.field.key,
+      textValue: value.textValue,
+      numberValue: value.numberValue,
+      booleanValue: value.booleanValue,
+      jsonValue: value.jsonValue,
+    })),
+  );
+  /* Değer taşıyan cevapların metin görünümü — mevcut sözleşme korunur. */
   const fieldValues: Record<string, string> = {};
-  for (const value of request.fieldValues) {
-    if (value.textValue) {
-      fieldValues[value.field.key] = value.textValue;
-    } else if (value.numberValue !== null && value.numberValue !== undefined) {
-      fieldValues[value.field.key] = String(value.numberValue);
-    } else if (value.booleanValue !== null) {
-      fieldValues[value.field.key] = value.booleanValue ? "Evet" : "Hayır";
-    }
+  for (const [key, answer] of Object.entries(fieldAnswers)) {
+    if (answer.mode === "VALUE") fieldValues[key] = answer.value;
   }
 
   const initial: EditRequestInitial = {
@@ -61,6 +75,7 @@ export default async function EditMyRequestPage({
     isUrgent: request.isUrgent,
     categorySlug: request.category.slug,
     fieldValues,
+    fieldAnswers,
   };
 
   return (
