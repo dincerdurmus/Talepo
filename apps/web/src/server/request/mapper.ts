@@ -343,6 +343,39 @@ export function restoredFieldAnswers(
   return out;
 }
 
+/**
+ * KLONA TAŞINAN CEVAP KANALI (D3f Dilim 3d, 2026-08-28).
+ *
+ * ÜRÜN KARARI (kurucu). Kullanıcı kendi talebini "kopyala / yeniden taslak
+ * oluştur" ile çoğalttığında ÖNCEKİ AÇIK SEÇİMLERİ korunur. Bu, D3d'nin
+ * "clone yeni kullanıcı beyanı üretmez" kuralının bilinçli daraltmasıdır:
+ * klonlamayı kullanıcının KENDİSİ başlatır, dolayısıyla kendi önceki
+ * cevabının yeni TASLAĞA taşınması kabul edilir. Yeni kayıt DRAFT kalır.
+ *
+ * YALNIZ DEĞER TAŞIMAYAN MOD TAŞINIR. Kurucu kararı `UNKNOWN`,
+ * `NOT_APPLICABLE` ve `ANY` modlarını adlandırır. `VALUE` cevaplarının
+ * otoritesi eskisi gibi kaynağın KENDİ metninden yeniden türetilir — clone
+ * onlara kullanıcı beyanı damgası basmaz, çünkü bir değerin NEREDEN geldiği
+ * sorusunun cevabı kopyalamakla değişmez.
+ *
+ * GÜVENİLİR KAYNAK YALNIZ VERİTABANIDIR. Girdi kaynağın `RequestFieldValue`
+ * satırlarıdır; kaynağın `discoveryProjection` metadata'sı (`fieldResponses`,
+ * `fieldAuthority`) burada HİÇ okunmaz. O metadata bu güven sınırından önce
+ * yazılmış ya da uydurulmuş olabilir ve klonlamak onu aklamaz. Bozuk mod,
+ * tanınmayan mod ve legacy etiket fail-closed düşer; anahtar izni yazma
+ * sınırında ayrıca uygulanır.
+ */
+export function cloneAnswerChannel(
+  rows: ReadonlyArray<StoredFieldValueRow>,
+): Record<string, { mode: FieldValueKind; value: string }> {
+  const out: Record<string, { mode: FieldValueKind; value: string }> = {};
+  for (const [key, answer] of Object.entries(restoredFieldAnswers(rows))) {
+    if (answer.mode === "VALUE") continue;
+    out[key] = answer;
+  }
+  return out;
+}
+
 export function buildAiSummary(input: CreateRequestInput) {
   if (input.aiSummary) return input.aiSummary;
 

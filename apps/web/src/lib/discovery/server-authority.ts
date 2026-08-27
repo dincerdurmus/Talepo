@@ -519,10 +519,22 @@ export function resolveUpdateProjection(
  * kendi payload'ından gelmiş olabilir ve klonlamak onu aklamaz. Bu yüzden
  * otorite kaynağın KENDİ `rawInput`'undan sıfırdan yeniden türetilir.
  *
- * CLONE YENİ BİR KULLANICI BEYANI ÜRETMEZ: cevap kanalı BİLİNÇLİ olarak
- * verilmez. Kopyalanan `fieldValues` kayıtları eski talebin cevaplarıdır;
- * onları yeni taslağın cevap kanalı saymak, kullanıcının bu taslak için hiç
- * vermediği bir beyanı üretmek olurdu. Metinden türetilemeyen her alan
+ * CEVAP KANALI — KURUCU KARARIYLA DARALTILDI (D3f Dilim 3d, 2026-08-28).
+ *
+ * D3d'de burada "clone HİÇBİR cevap kanalı almaz" yazıyordu: kopyalanan
+ * `fieldValues` kayıtları eski talebin cevaplarıydı ve onları yeni taslağın
+ * beyanı saymak, kullanıcının bu taslak için hiç vermediği bir beyanı
+ * üretmek olurdu.
+ *
+ * Kurucu bu kuralı BİLİNÇLİ olarak daralttı: klonlamayı kullanıcının KENDİSİ
+ * başlatır ve kendi önceki açık seçiminin yeni TASLAĞA taşınmasını ister.
+ * Yeni kayıt DRAFT kalır — bu bir otomatik yayın değildir. Bu yüzden çağıran,
+ * kaynağın VERİTABANINDA DOĞRULANMIŞ değer taşımayan cevaplarını
+ * (`cloneAnswerChannel`) geçirebilir.
+ *
+ * DEĞİŞMEYEN KISIM: kaynak kaydın `fieldAuthority` / `fieldResponses`
+ * metadata'sı HÂLÂ GÜVENİLİR SAYILMAZ ve hiçbir koşulda kopyalanmaz. Kanal
+ * verilmezse eski davranış birebir korunur ve metinden türetilemeyen her alan
  * `UNKNOWN` kalır.
  *
  * Legacy normalizasyon korunur: kopya `parseDiscoveryProjection`'dan geçer,
@@ -532,6 +544,11 @@ export function resolveUpdateProjection(
 export function resolveCloneProjection(source: {
   discoveryProjection?: unknown;
   rawInput?: string | null;
+  /**
+   * Kaynağın DB'de doğrulanmış DEĞER TAŞIMAYAN cevapları. Kaynağın projection
+   * metadata'sından DEĞİL, `RequestFieldValue` satırlarından türetilir.
+   */
+  fieldAnswers?: Record<string, ProjectionAnswer> | null;
 }): RequestDiscoveryProjection | undefined {
   const parsed = parseDiscoveryProjection(source.discoveryProjection);
   if (!parsed) return undefined;
@@ -539,7 +556,7 @@ export function resolveCloneProjection(source: {
     resolveServerFieldAuthority({
       projection: parsed,
       rawInput: source.rawInput ?? "",
-      answers: null,
+      answers: source.fieldAnswers ?? null,
     }) ?? undefined
   );
 }

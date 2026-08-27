@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 
 import { resolveCloneProjection } from "@/lib/discovery";
+import { cloneAnswerChannel } from "./mapper";
 import { canMutateCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import {
@@ -90,6 +91,8 @@ const SOURCE_SELECT = {
       booleanValue: true,
       dateValue: true,
       jsonValue: true,
+      /* Alan anahtarı: klonun cevap kanalı DB satırından türer (D3f 3d). */
+      field: { select: { key: true } },
     },
   },
 } satisfies Prisma.RequestSelect;
@@ -277,7 +280,20 @@ export async function cloneRequestAsDraft(
             /* Kaynağın `fieldAuthority`'si güvenilir sayılmaz: otorite
              * kaynağın kendi `rawInput`'undan yeniden türetilir ve clone yeni
              * bir kullanıcı beyanı üretmez. */
-            discoveryProjection: resolveCloneProjection(source),
+            discoveryProjection: resolveCloneProjection({
+              ...source,
+              /* Güvenilir kaynak YALNIZ kaynağın DB satırlarıdır; kaynağın
+               * projection metadata'sı burada okunmaz (D3f Dilim 3d). */
+              fieldAnswers: cloneAnswerChannel(
+                source.fieldValues.map((value) => ({
+                  key: value.field.key,
+                  textValue: value.textValue,
+                  numberValue: value.numberValue,
+                  booleanValue: value.booleanValue,
+                  jsonValue: value.jsonValue,
+                })),
+              ),
+            }),
             status: "DRAFT",
             country: source.country,
             city: source.city,
