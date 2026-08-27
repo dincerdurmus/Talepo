@@ -7,7 +7,9 @@
 import { parseDiscoveryProjection } from "@/lib/discovery/validate-filter";
 import type { RequestDiscoveryProjection } from "@/lib/discovery/types";
 import {
+  INTERNAL_EVIDENCE_ATTRIBUTE_KEYS,
   parseUnderstandingSnapshot,
+  type InternalEvidenceSnapshot,
   type RequestUnderstandingSnapshot,
 } from "@/lib/request/understanding-snapshot";
 import type {
@@ -259,6 +261,23 @@ export function buildRequestRoutingEnvelope(
     attrValue(snap, projection, "variant") ||
     null;
 
+  /**
+   * İÇ KANIT (D3c-b). Legacy ayrımı TEK kanonik normalizer'da yapılır
+   * (`parseUnderstandingSnapshot` / `parseDiscoveryProjection` okuma
+   * sınırları) — bu kurucu alan adına özel mantık kopyalamaz, yalnız tipli
+   * kanalları BİRLEŞTİRİR: snapshot'ın kanalı (provenance'lı) önce, legacy
+   * projection'dan ayrılan sonra. Parser çıktısında genel attributes
+   * torbası zaten temizdir ve attributeHit tahminle beslenmez.
+   */
+  const internalEvidence: Record<string, InternalEvidenceSnapshot> = {};
+  for (const key of INTERNAL_EVIDENCE_ATTRIBUTE_KEYS) {
+    const typed =
+      snap?.internalEvidence?.[key] ?? projection?.internalEvidence?.[key];
+    if (typed?.value?.trim()) {
+      internalEvidence[key] = { ...typed, value: typed.value.trim() };
+    }
+  }
+
   const attributes: Record<string, string> = {
     ...(projection?.attributes ?? {}),
   };
@@ -299,6 +318,7 @@ export function buildRequestRoutingEnvelope(
     model,
     variant,
     attributes,
+    ...(Object.keys(internalEvidence).length ? { internalEvidence } : {}),
     unresolvedExpressions: snap?.unresolvedExpressions ?? [],
     location: resolveLocation(input),
     budget: resolveBudget(input),

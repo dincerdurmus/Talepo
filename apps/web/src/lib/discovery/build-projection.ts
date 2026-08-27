@@ -5,6 +5,11 @@
 
 import type { CanonicalRequestState } from "@/lib/request-composer/types";
 import {
+  INTERNAL_EVIDENCE_ATTRIBUTE_KEYS,
+  isInternalEvidenceAttributeKey,
+  type InternalEvidenceSnapshot,
+} from "@/lib/request/understanding-snapshot";
+import {
   toConstraintFilterContract,
   toConstraintMatchContract,
 } from "@/lib/request-understanding/constraint-semantics";
@@ -190,6 +195,13 @@ export function buildDiscoveryProjectionFromState(
   const constraints: Record<string, DiscoveryFieldConstraint> = {};
 
   for (const [key, field] of Object.entries(state.fields)) {
+    /**
+     * İÇ KANIT AYRIMI (D3c-b): `brandCandidate`/`brandEvidence` kullanıcı
+     * beyanı değildir — firma tarafına dönük attribute/constraint torbasına
+     * girmez. Değer AŞAĞIDA tipli `internalEvidence` kanalına yazılır;
+     * atlamak silmek değildir.
+     */
+    if (isInternalEvidenceAttributeKey(key)) continue;
     if (field.kind === "VALUE" && field.value?.trim()) {
       attributes[key] = field.value.trim();
     }
@@ -219,8 +231,43 @@ export function buildDiscoveryProjectionFromState(
     }
   }
 
-  const entityRefs: Record<string, string> = {};
   const u = state.understanding;
+
+  /**
+   * İÇ KANIT TİPLİ KANALI (D3c-b). Snapshot HER ZAMAN eklenmez: sunucu
+   * yeniden kurulumu ve `hybrid.state == null` dalı çıplak projection
+   * persist eder. Bu yüzden değer, kanonik anlama kaydından provenance'ıyla
+   * birlikte burada da tipli kanala yazılır — böylece "taşı, silme"
+   * sözleşmesi snapshot'ın eklenmesine bağlı kalmaz. Snapshot sonradan
+   * eklendiğinde daha zengin nested kanal kazanır ve bu kopya
+   * `withUnderstandingSnapshot` tarafından düşürülür (çift yazım yok).
+   */
+  const internalEvidence: Record<string, InternalEvidenceSnapshot> = {};
+  for (const key of INTERNAL_EVIDENCE_ATTRIBUTE_KEYS) {
+    const fact = (u.attributes as Record<string, unknown> | undefined)?.[key] as
+      | {
+          value?: unknown;
+          confidence?: number;
+          provenance?: InternalEvidenceSnapshot["provenance"];
+          source?: InternalEvidenceSnapshot["source"];
+          evidence?: string[];
+        }
+      | undefined;
+    const value =
+      fact?.value == null ? "" : String(fact.value).trim();
+    if (!value) continue;
+    internalEvidence[key] = {
+      value,
+      ...(fact?.confidence === undefined ? {} : { confidence: fact.confidence }),
+      ...(fact?.provenance ? { provenance: fact.provenance } : {}),
+      ...(fact?.source ? { source: fact.source } : {}),
+      ...(fact?.evidence?.length
+        ? { evidence: fact.evidence.map((e) => String(e)) }
+        : {}),
+    };
+  }
+
+  const entityRefs: Record<string, string> = {};
   if (u.identity.brand?.value) {
     entityRefs.brand = String(u.identity.brand.value);
   }
@@ -274,6 +321,7 @@ export function buildDiscoveryProjectionFromState(
     subcategorySlug: state.subcategorySlug,
     entityRefs: Object.keys(entityRefs).length ? entityRefs : undefined,
     attributes,
+    ...(Object.keys(internalEvidence).length ? { internalEvidence } : {}),
     constraints,
     matchContract,
     filterContract,

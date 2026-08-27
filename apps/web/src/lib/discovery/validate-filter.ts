@@ -3,6 +3,12 @@
  */
 
 import { getTaxonomyNode } from "@/lib/taxonomy";
+import {
+  INTERNAL_EVIDENCE_ATTRIBUTE_KEYS,
+  isRequestUnderstandingSnapshot,
+  normalizeSnapshotInternalEvidence,
+  type InternalEvidenceSnapshot,
+} from "@/lib/request/understanding-snapshot";
 
 import {
   DISCOVERY_FILTER_VERSION,
@@ -196,6 +202,68 @@ export function validateCanonicalDiscoveryFilter(
   return { ok: true, filter };
 }
 
+/**
+ * TEK KANONİK LEGACY NORMALIZER — projection tarafı (D3c-b).
+ *
+ * D3c-b öncesi kayıtlarda iç kanıt anahtarları `attributes`/`constraints`
+ * içinde durur ve bu parse sınırından geçen HER okuyucuya (workspace facts,
+ * evaluateDiscoveryFilter, feed/personal/alert eşleşmeleri, routing
+ * envelope) kullanıcı beyanı gibi görünürdü. Burada anahtarlar generic
+ * torbalardan çıkarılır; değer, nested snapshot'ın tipli kanalı zaten
+ * taşımıyorsa projection'ın tipli `internalEvidence` alanına taşınır (çift
+ * veri yok). Girdi mutate edilmez; yeni şekil AYNI referansla geri döner.
+ */
+function normalizeProjectionInternalEvidence(
+  projection: RequestDiscoveryProjection,
+): RequestDiscoveryProjection {
+  const understanding =
+    projection.understanding &&
+    isRequestUnderstandingSnapshot(projection.understanding)
+      ? normalizeSnapshotInternalEvidence(projection.understanding)
+      : projection.understanding;
+
+  const legacyKeys = INTERNAL_EVIDENCE_ATTRIBUTE_KEYS.filter(
+    (key) =>
+      Boolean(projection.attributes?.[key]) ||
+      Boolean(projection.constraints?.[key]),
+  );
+  if (legacyKeys.length === 0 && understanding === projection.understanding) {
+    return projection;
+  }
+
+  const attributes = { ...projection.attributes };
+  const constraints = { ...projection.constraints };
+  const internalEvidence: Record<string, InternalEvidenceSnapshot> = {
+    ...(projection.internalEvidence ?? {}),
+  };
+  for (const key of legacyKeys) {
+    /* Parse güvenilmez istemci JSON'ına da uygulanır (request-schema,
+     * create-request) — non-string değer throw ETMEMELİ, parse total kalır. */
+    const rawAttr = attributes[key];
+    const value =
+      (typeof rawAttr === "string" ? rawAttr.trim() : "") ||
+      (typeof constraints[key]?.value === "string"
+        ? constraints[key]!.value!.trim()
+        : "");
+    delete attributes[key];
+    delete constraints[key];
+    const alreadyTyped =
+      Boolean(internalEvidence[key]?.value) ||
+      Boolean(understanding?.internalEvidence?.[key]?.value);
+    if (value && !alreadyTyped) {
+      internalEvidence[key] = { value };
+    }
+  }
+
+  return {
+    ...projection,
+    attributes,
+    constraints,
+    ...(Object.keys(internalEvidence).length ? { internalEvidence } : {}),
+    ...(understanding !== undefined ? { understanding } : {}),
+  };
+}
+
 export function parseDiscoveryProjection(
   raw: unknown,
 ): RequestDiscoveryProjection | null {
@@ -206,7 +274,7 @@ export function parseDiscoveryProjection(
     return null;
   }
   if (!Array.isArray(obj.taxonomyNodeIds)) return null;
-  return raw as RequestDiscoveryProjection;
+  return normalizeProjectionInternalEvidence(raw as RequestDiscoveryProjection);
 }
 
 /** True when filter carries any canonical (non-legacy-only) signal. */

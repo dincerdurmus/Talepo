@@ -8,7 +8,10 @@ import type {
   ConstraintMatchContract,
   ConstraintStrength,
 } from "@/lib/request-understanding/constraint-semantics";
-import type { RequestUnderstandingSnapshot } from "@/lib/request/understanding-snapshot";
+import type {
+  InternalEvidenceSnapshot,
+  RequestUnderstandingSnapshot,
+} from "@/lib/request/understanding-snapshot";
 
 export const DISCOVERY_PROJECTION_VERSION = 1 as const;
 export const DISCOVERY_FILTER_VERSION = 1 as const;
@@ -41,6 +44,19 @@ export type RequestDiscoveryProjection = {
   entityRefs?: Record<string, string>;
   /** Normalized attribute bag for filtering. */
   attributes: Record<string, string>;
+  /**
+   * İÇ KANIT (D3c-b) — additive ve OPSİYONEL. Yeni yazımda iç kanıt nested
+   * `understanding.internalEvidence` içinde yaşar; kurucu
+   * (`buildDiscoveryProjectionFromState`) bu alanı ÜRETMEZ. Alanı yalnız
+   * OKUMA SINIRI (`parseDiscoveryProjection`) doldurur: D3c-b öncesi
+   * kayıtların `attributes`/`constraints` içinde bıraktığı iç kanıt buraya
+   * ayrılır ki değer kaybolmadan tipli kalsın. Create/update yolları parse
+   * çıktısını persist ettiği için normalize edilmiş şekil (bu alan dahil)
+   * legacy bir istemci payload'ında DB'ye YAZILABİLİR — bu bilinçli bir
+   * write-through'dur, idempotenttir ve ikinci parse'ta değişmeden geçer.
+   * Filtre/facts okuyucuları bu alanı kullanıcı beyanı gibi OKUYAMAZ.
+   */
+  internalEvidence?: Record<string, InternalEvidenceSnapshot>;
   /** Field-scoped constraint semantics (Phase 2). */
   constraints: Record<string, DiscoveryFieldConstraint>;
   /** Reuse Phase 2 match contract shape. */

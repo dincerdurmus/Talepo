@@ -3,8 +3,13 @@
  * Matching/filter code must ignore this block; it is audit + operations authority.
  */
 
-// Kapsam türü tek yerde tanımlıdır; burada kopyalanmaz, tip olarak okunur.
-import type { RequestScope } from "@/lib/request-understanding/types";
+// Kapsam ve provenance türleri tek yerde tanımlıdır; burada kopyalanmaz,
+// tip olarak okunur — paralel provenance enum'u kurulmaz.
+import type {
+  RequestScope,
+  UnderstandingProvenance,
+  UnderstandingSource,
+} from "@/lib/request-understanding/types";
 
 export const UNDERSTANDING_SNAPSHOT_VERSION = 1 as const;
 export const UNDERSTANDING_PROFILE_VERSION = "understand-request/v1" as const;
@@ -52,6 +57,42 @@ export type UnderstandingFieldSnapshot = {
   confidence?: number;
 };
 
+/**
+ * İÇ KANIT ANAHTARLARI (D3c-b) — anlama katmanının kendi muhasebesi.
+ *
+ * Bu anahtarlar kullanıcı beyanı DEĞİLDİR: `snapshot.attributes`,
+ * `projection.attributes/constraints`, routing envelope'un genel
+ * `attributes` torbası, yayın payload'ı ve soru adayları bunları taşıyamaz.
+ * Değerler `understanding.attributes` içinde (compose-text çapası) ve
+ * snapshot'ın tipli `internalEvidence` alanında yaşar.
+ */
+export const INTERNAL_EVIDENCE_ATTRIBUTE_KEYS = [
+  "brandCandidate",
+  "brandEvidence",
+] as const;
+
+export type InternalEvidenceAttributeKey =
+  (typeof INTERNAL_EVIDENCE_ATTRIBUTE_KEYS)[number];
+
+export function isInternalEvidenceAttributeKey(
+  key: string,
+): key is InternalEvidenceAttributeKey {
+  return (INTERNAL_EVIDENCE_ATTRIBUTE_KEYS as readonly string[]).includes(key);
+}
+
+/**
+ * Tipli iç kanıt girdisi. Provenance/source kanonik anlama türlerinden
+ * OKUNUR (yeni merdiven yok); eski kayıtlardan ayrılan girdilerde bu
+ * bilgiler hiç yoktu, o yüzden opsiyoneldir ve UYDURULMAZ.
+ */
+export type InternalEvidenceSnapshot = {
+  value: string;
+  confidence?: number;
+  provenance?: UnderstandingProvenance;
+  source?: UnderstandingSource;
+  evidence?: string[];
+};
+
 export type RequestUnderstandingSnapshot = {
   version: typeof UNDERSTANDING_SNAPSHOT_VERSION;
   kind: "understanding_snapshot";
@@ -69,6 +110,17 @@ export type RequestUnderstandingSnapshot = {
   };
   entities: Record<string, UnderstandingFieldSnapshot>;
   attributes: Record<string, UnderstandingFieldSnapshot>;
+  /**
+   * İÇ KANIT (D3c-b) — additive ve OPSİYONEL.
+   *
+   * `brandCandidate`/`brandEvidence` gibi, Talepo'nun KENDİ çıkardığı ve
+   * kullanıcı beyanı olmayan iç muhasebe değerleri burada tipli olarak
+   * durur; `attributes` içine yazılmaz (kurucu bunu zorlar). Alan yoksa
+   * eski snapshot geçerli kalır — eski kayıtlarda bu değerler `attributes`
+   * içindedir ve OKUYUCU (routing envelope) onları tipli kanala ayırır.
+   * `discoveryProjection` bir JSON kolonudur; migration GEREKMEZ.
+   */
+  internalEvidence?: Record<string, InternalEvidenceSnapshot>;
   /**
    * ÇÖZÜLEN TİPLİ ALAN VARLIKLARI (1K) — additive ve OPSİYONEL.
    *
@@ -128,10 +180,47 @@ export function isRequestUnderstandingSnapshot(
   return true;
 }
 
+/**
+ * TEK KANONİK LEGACY NORMALIZER (D3c-b). D3c-b öncesi yazılmış snapshot'lar
+ * iç kanıt anahtarlarını `attributes` içinde taşır. Okuma sınırı bu şekli
+ * yeni şekle çevirir: anahtarlar attributes'tan çıkar, değer
+ * value+confidence ile tipli kanala taşınır (provenance eski kayıtta hiç
+ * yoktu — UYDURULMAZ), mevcut tipli girdi legacy değerle EZİLMEZ, girdi
+ * nesnesi mutate edilmez. Yeni şekil girdi AYNI referansla geri döner —
+ * okuyucular alan adına özel mantık kopyalamaz, bu fonksiyona güvenir.
+ */
+export function normalizeSnapshotInternalEvidence(
+  snap: RequestUnderstandingSnapshot,
+): RequestUnderstandingSnapshot {
+  const legacyKeys = INTERNAL_EVIDENCE_ATTRIBUTE_KEYS.filter((key) =>
+    Boolean(snap.attributes?.[key]?.value),
+  );
+  if (legacyKeys.length === 0) return snap;
+  const attributes = { ...snap.attributes };
+  const internalEvidence = { ...(snap.internalEvidence ?? {}) };
+  for (const key of legacyKeys) {
+    const fact = attributes[key];
+    delete attributes[key];
+    // Legacy kayıtta value string olmayabilir — normalize eder, throw etmez.
+    const value = String(fact?.value ?? "").trim();
+    if (value && !internalEvidence[key]?.value?.trim()) {
+      internalEvidence[key] = {
+        value,
+        ...(fact?.confidence === undefined
+          ? {}
+          : { confidence: fact.confidence }),
+      };
+    }
+  }
+  return { ...snap, attributes, internalEvidence };
+}
+
 export function parseUnderstandingSnapshot(
   value: unknown,
 ): RequestUnderstandingSnapshot | null {
-  return isRequestUnderstandingSnapshot(value) ? value : null;
+  return isRequestUnderstandingSnapshot(value)
+    ? normalizeSnapshotInternalEvidence(value)
+    : null;
 }
 
 /** En fazla kaç tipli varlık kalıcı olur — sınırsız liste snapshot şişirir. */
@@ -182,17 +271,80 @@ function sanitizeResolvedEntities(
   return { resolvedEntities: out.slice(0, RESOLVED_ENTITY_MAX) };
 }
 
+/** İç kanıt listesi başına en çok bu kadar kanıt cümleciği saklanır. */
+const INTERNAL_EVIDENCE_ITEM_MAX = 8;
+
+/**
+ * Tipli iç kanıtı snapshot disiplinine sokar: metin kırpılır, güven 0..1'e
+ * sıkıştırılır, provenance/source OLDUĞU GİBİ taşınır (uydurulmaz), boşsa
+ * alan hiç üretilmez.
+ */
+function sanitizeInternalEvidence(
+  input: Record<string, InternalEvidenceSnapshot> | undefined,
+): { internalEvidence?: Record<string, InternalEvidenceSnapshot> } {
+  const out: Record<string, InternalEvidenceSnapshot> = {};
+  for (const [key, entry] of Object.entries(input ?? {})) {
+    const value = truncateSnapshotValue(String(entry?.value ?? ""));
+    if (!value) continue;
+    out[key] = {
+      value,
+      ...(entry.confidence === undefined
+        ? {}
+        : { confidence: clamp01(entry.confidence) }),
+      ...(entry.provenance ? { provenance: entry.provenance } : {}),
+      ...(entry.source ? { source: entry.source } : {}),
+      ...(entry.evidence?.length
+        ? {
+            evidence: entry.evidence
+              .slice(0, INTERNAL_EVIDENCE_ITEM_MAX)
+              .map((s) => truncateSnapshotValue(String(s)))
+              .filter(Boolean),
+          }
+        : {}),
+    };
+  }
+  if (!Object.keys(out).length) return {};
+  return { internalEvidence: out };
+}
+
 export function buildUnderstandingSnapshot(input: {
   builtAt?: string;
   categoryResolution: RequestUnderstandingSnapshot["categoryResolution"];
   entities?: Record<string, UnderstandingFieldSnapshot>;
   attributes?: Record<string, UnderstandingFieldSnapshot>;
+  internalEvidence?: Record<string, InternalEvidenceSnapshot>;
   resolvedEntities?: ResolvedEntitySnapshot[];
   requestScope?: RequestScope;
   unresolvedExpressions?: string[];
   confirmedFieldKeys?: string[];
   profileVersion?: string;
 }): RequestUnderstandingSnapshot {
+  /**
+   * TEK ŞEKİL ZORLAMASI (D3c-b): hangi kurucu çağırırsa çağırsın, iç kanıt
+   * anahtarı `attributes` içinde KALAMAZ. Tipli girdisi yoksa değer
+   * value+confidence ile tipli kanala AYRILIR (kayıp yok); aynı veri iki
+   * yerde birden yazılmaz.
+   */
+  const attributesInput = { ...(input.attributes ?? {}) };
+  const internalEvidenceInput = { ...(input.internalEvidence ?? {}) };
+  for (const key of INTERNAL_EVIDENCE_ATTRIBUTE_KEYS) {
+    const fact = attributesInput[key];
+    if (!fact) continue;
+    delete attributesInput[key];
+    /* Koruma koşulu DEĞER üzerinden okunur (varlık değil): boş bir tipli
+     * girdi, gerçek attribute değerinin sessizce düşmesine yol açamaz. */
+    if (
+      !internalEvidenceInput[key]?.value?.trim() &&
+      String(fact.value ?? "").trim()
+    ) {
+      internalEvidenceInput[key] = {
+        value: String(fact.value),
+        ...(fact.confidence === undefined
+          ? {}
+          : { confidence: fact.confidence }),
+      };
+    }
+  }
   const primary = input.categoryResolution.primary
     ? {
         ...input.categoryResolution.primary,
@@ -230,7 +382,7 @@ export function buildUnderstandingSnapshot(input: {
       ]),
     ),
     attributes: Object.fromEntries(
-      Object.entries(input.attributes ?? {}).map(([key, fact]) => [
+      Object.entries(attributesInput).map(([key, fact]) => [
         key,
         {
           value: truncateSnapshotValue(String(fact.value ?? "")),
@@ -241,6 +393,7 @@ export function buildUnderstandingSnapshot(input: {
         },
       ]),
     ),
+    ...sanitizeInternalEvidence(internalEvidenceInput),
     ...sanitizeResolvedEntities(input.resolvedEntities),
     // Additive: alan yoksa eski snapshot'lar DEMAND gibi okunur.
     ...(input.requestScope ? { requestScope: input.requestScope } : {}),

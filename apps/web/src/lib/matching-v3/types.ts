@@ -6,6 +6,7 @@
 import type {
   CategoryResolutionStatus,
   CategoryUserChoice,
+  InternalEvidenceSnapshot,
 } from "@/lib/request/understanding-snapshot";
 import type { MATCHER_VERSION } from "./matcher-version";
 
@@ -84,6 +85,14 @@ export type RequestRoutingEnvelope = {
   model: string | null;
   variant: string | null;
   attributes: Record<string, string>;
+  /**
+   * İÇ KANIT (D3c-b) — Talepo'nun kendi tahmin muhasebesi, kullanıcı beyanı
+   * değil. Genel `attributes` torbasına ve attributeHit hesabına GİRMEZ;
+   * gelecekteki eşleştirme mantığı tahmini yalnız bu tipli kanaldan, tahmin
+   * olduğunu bilerek okuyabilir. Eski kayıtlarda `attributes` içinde duran
+   * anahtarlar envelope kurulurken buraya ayrılır.
+   */
+  internalEvidence?: Record<string, InternalEvidenceSnapshot>;
   unresolvedExpressions: string[];
   location: {
     status: LocationStatus;
