@@ -23,8 +23,9 @@ import {
   buildAiSummary,
   mapFieldType,
   mapFieldValue,
-  parseDeliveryDeadline,
-  parseBudgetRange,
+  resolveDedicatedBudget,
+  resolveDedicatedCity,
+  resolveDedicatedDeadline,
 } from "./mapper";
 import type { CreateRequestInput } from "./request-schema";
 import {
@@ -200,7 +201,9 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       formFields.set(field.key, savedField.id);
     }
 
-    const budget = parseBudgetRange(input.budget);
+    /* Dedicated kolon kararı structured cevaptan gelir (D3f Dilim 3a):
+     * bilinçli değer taşımayan cevap sahte bir tutar/şehir/tarih yazdıramaz. */
+    const budget = resolveDedicatedBudget(input);
     const now = new Date();
     const standardDelayHours = getPlanDefinition("STANDARD").requestAccessDelayHours;
     const visibleToSuppliersAt = new Date(
@@ -238,11 +241,11 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         aiSummary: buildAiSummary(input),
         discoveryProjection: discoveryProjection ?? undefined,
         status: "PUBLISHED",
-        city: input.city,
+        city: resolveDedicatedCity(input),
         district: input.district,
         budgetMin: budget.min,
         budgetMax: budget.max,
-        deadlineAt: parseDeliveryDeadline(input.delivery),
+        deadlineAt: resolveDedicatedDeadline(input),
         publishedAt: now,
         isUrgent: input.isUrgent ?? false,
         isFeatured,

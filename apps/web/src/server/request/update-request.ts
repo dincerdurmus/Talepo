@@ -11,8 +11,9 @@ import {
   buildAiSummary,
   mapFieldType,
   mapFieldValue,
-  parseDeliveryDeadline,
-  parseBudgetRange,
+  resolveDedicatedBudget,
+  resolveDedicatedCity,
+  resolveDedicatedDeadline,
 } from "./mapper";
 import {
   RequestValidationError,
@@ -146,8 +147,9 @@ export async function updateRequest(
       where: { requestId: existing.id },
     });
 
-    const budget = parseBudgetRange(input.budget);
-    const deadlineAt = parseDeliveryDeadline(input.delivery);
+    /* Dedicated kolon kararı structured cevaptan gelir (D3f Dilim 3a). */
+    const budget = resolveDedicatedBudget(input);
+    const deadlineAt = resolveDedicatedDeadline(input);
     /* Güven sınırı: istemcinin `fieldAuthority` haritası atılır, otorite
      * sunucunun metninden ve süzülmüş cevap kanalından yeniden türetilir. */
     const serverNormalizedProjection = resolveUpdateProjection(
@@ -172,7 +174,7 @@ export async function updateRequest(
         ...(serverNormalizedProjection
           ? { discoveryProjection: serverNormalizedProjection }
           : {}),
-        city: input.city,
+        city: resolveDedicatedCity(input),
         district: input.district,
         budgetMin: budget.min,
         budgetMax: budget.max,
