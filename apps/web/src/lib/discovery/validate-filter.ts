@@ -23,6 +23,37 @@ import {
   type RequestDiscoveryProjection,
 } from "./types";
 
+/**
+ * OTORİTE HARİTASINA GİREMEYECEK ANAHTARLAR (D3d, 2026-08-27).
+ *
+ * `__proto__` / `constructor` / `prototype` bir alan adı DEĞİL, JavaScript
+ * nesne modelinin kendi anahtarlarıdır. Bir JSON kolonundan gelip düz bir
+ * nesneye yazıldıklarında okuma tarafında alan adı gibi sorgulanabilirler;
+ * ölçüldü (2026-08-27): guard'dan önce okuma sınırı `constructor` ve
+ * `prototype` için istemcinin yazdığı seviyeyi döndürüyordu.
+ *
+ * İç kanıt (`brandCandidate` / `brandEvidence`) ise kullanıcı beyanı değildir
+ * ve D3c-b'den beri generic `attributes`/`constraints` torbalarına girmez;
+ * aynı gerekçeyle otorite haritasında da yeri yoktur.
+ *
+ * KURAL BURADA DURUR çünkü hem OKUMA sınırı (`projectionAuthorityOf`) hem
+ * YAZMA sınırı (`server-authority`) aynı elemeyi uygular ve iki kopya zamanla
+ * sessizce ayrışırdı. Yazma sınırı bu modülden okur; ters yönde bağımlılık
+ * YOKTUR.
+ */
+const BLOCKED_AUTHORITY_KEYS: readonly string[] = [
+  "__proto__",
+  "constructor",
+  "prototype",
+];
+
+/** Bu anahtar generic otorite haritasında YAŞAYABİLİR Mİ? */
+export function isProjectionAuthorityKeyAllowed(key: string): boolean {
+  if (!key) return false;
+  if (BLOCKED_AUTHORITY_KEYS.includes(key)) return false;
+  return !(INTERNAL_EVIDENCE_ATTRIBUTE_KEYS as readonly string[]).includes(key);
+}
+
 const MAX_TAXONOMY_IDS = 40;
 const MAX_ATTR_KEYS = 40;
 const MAX_STRING_LEN = 120;
@@ -310,6 +341,16 @@ export function projectionAuthorityOf(
   key: string,
   surface: ProjectionAuthoritySurface,
 ): Authority {
+  /**
+   * ANAHTAR GUARD'I (D3d). Yazma sınırı bu anahtarları zaten eler, ama okuma
+   * sınırı yazma sınırından ÖNCE kaydedilmiş kayıtları da okur. İç kanıt
+   * (`brandCandidate`/`brandEvidence`) firmalara dönük bir alan değildir ve
+   * `__proto__`/`constructor`/`prototype` bir alan adı değil nesne modeli
+   * anahtarıdır — ikisi de hiçbir koşulda güvenilir bir seviye döndüremez.
+   * Eleme tek yerde tanımlıdır (`server-authority`), burada tekrarlanmaz.
+   */
+  if (!isProjectionAuthorityKeyAllowed(key)) return "UNKNOWN";
+
   const bag: unknown = projection?.fieldAuthority;
   if (!bag || typeof bag !== "object" || Array.isArray(bag)) return "UNKNOWN";
 

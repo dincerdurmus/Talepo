@@ -1,6 +1,5 @@
 import {
-  buildDiscoveryProjectionFromState,
-  parseDiscoveryProjection,
+  resolveCreateProjection,
   type RequestDiscoveryProjection,
 } from "@/lib/discovery";
 import { assertEntitlement } from "@/lib/membership/assert-entitlement";
@@ -17,7 +16,6 @@ import {
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { prisma } from "@/lib/prisma";
-import { createTextOnlyState } from "@/lib/request-composer";
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -36,31 +34,26 @@ import {
 
 const log = createSubsystemLogger("request");
 
+/**
+ * CREATE YOLUNUN PROJECTION KARARI.
+ *
+ * Karar `lib/discovery/server-authority` içinde durur ve orada saf tutulur:
+ * istemcinin `fieldAuthority` haritası atılıp sunucunun kendi metninden ve
+ * süzülmüş cevap kanalından yeniden türetilir. Burada yalnız alt sistem
+ * günlüğü eklenir — kararın kendisi Prisma'ya bağlanmadığı için veritabanı
+ * yazmadan doğrulanabilir kalır.
+ */
 function resolveDiscoveryProjection(
   input: CreateRequestInput,
 ): RequestDiscoveryProjection | null {
-  const fromClient = parseDiscoveryProjection(input.discoveryProjection);
-  if (fromClient) return fromClient;
-
-  // Publish-time rebuild prefers durable rawInput, then description
-  const text =
-    input.rawInput?.trim() ||
-    input.description?.trim() ||
-    input.professionalDescription?.trim() ||
-    input.title;
-  if (!text || text.length < 3) return null;
-  try {
-    const state = createTextOnlyState(text);
-    return buildDiscoveryProjectionFromState(state);
-  } catch (error) {
+  const decision = resolveCreateProjection(input);
+  if (decision.rebuildFailed) {
     log.warn("request.projection.rebuild_failed", {
       outcome: "fallback",
-      context: {
-        errorName: error instanceof Error ? error.name : "unknown",
-      },
+      context: { errorName: "understanding_rebuild" },
     });
-    return null;
   }
+  return decision.projection;
 }
 
 export async function createRequest(userId: string, input: CreateRequestInput) {

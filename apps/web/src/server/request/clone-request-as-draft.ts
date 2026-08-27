@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 
+import { resolveCloneProjection } from "@/lib/discovery";
 import { canMutateCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { primaryRequestCoverImageUrl } from "@/lib/panel/request-cover-image";
 import {
@@ -273,7 +274,10 @@ export async function cloneRequestAsDraft(
             description: source.description,
             rawInput: source.rawInput,
             professionalDescription: source.professionalDescription,
-            discoveryProjection: source.discoveryProjection ?? undefined,
+            /* Kaynağın `fieldAuthority`'si güvenilir sayılmaz: otorite
+             * kaynağın kendi `rawInput`'undan yeniden türetilir ve clone yeni
+             * bir kullanıcı beyanı üretmez. */
+            discoveryProjection: resolveCloneProjection(source),
             status: "DRAFT",
             country: source.country,
             city: source.city,

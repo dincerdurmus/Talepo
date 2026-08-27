@@ -22,9 +22,24 @@ export { buildDiscoveryProjectionFromState } from "./build-projection";
 export {
   validateCanonicalDiscoveryFilter,
   parseDiscoveryProjection,
+  projectionAuthorityOf,
   hasCanonicalFilterSignal,
   type FilterValidationResult,
 } from "./validate-filter";
+
+export { isProjectionAuthorityKeyAllowed } from "./validate-filter";
+
+/** Sunucu güven sınırı — istemci `fieldAuthority`'si burada yeniden türetilir. */
+export {
+  resolveServerFieldAuthority,
+  resolveCreateProjection,
+  resolveUpdateProjection,
+  resolveCloneProjection,
+  projectionAnswerChannel,
+  type ServerFieldAuthorityInput,
+  type ProjectionWriteInput,
+  type CreateProjectionDecision,
+} from "./server-authority";
 
 export {
   evaluateDiscoveryFilter,

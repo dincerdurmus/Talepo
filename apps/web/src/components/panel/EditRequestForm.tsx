@@ -51,7 +51,10 @@ import {
   withUnderstandingSnapshot,
 } from "@/lib/request/publish-understanding";
 import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
-import { createTextOnlyState } from "@/lib/request-composer";
+import {
+  buildPublishFieldValues,
+  createTextOnlyState,
+} from "@/lib/request-composer";
 
 export type EditRequestInitial = {
   id: string;
@@ -261,6 +264,38 @@ export function EditRequestForm({
     setIsSaving(true);
     setSaveError(null);
 
+    /**
+     * KULLANICI DOKUNUŞUNUN TEK LİSTESİ — `/talep` İLE AYNI SÖZLEŞME (D3d).
+     *
+     * Düzenlemede `manualValues` hem kaydedilmiş eski cevapları hem bu
+     * oturumdaki değişiklikleri taşır; ikisi de kullanıcıya aittir. Aynı
+     * liste hem understanding snapshot'ının `confirmedFieldKeys` girdisini
+     * hem yayın torbasını besler — iki ayrı dokunuş kaydı tutulmaz.
+     */
+    const userConfirmedFieldKeys = Object.keys(manualValues).filter(
+      (key) => (manualValues[key] ?? "").trim().length > 0,
+    );
+    const editCanonicalState = createTextOnlyState(
+      requestText.trim() || professionalText,
+    );
+    /**
+     * ONAYSIZ TAHMİN CEVAP KANALINA GİREMEZ (D3d).
+     *
+     * Bu ekran `fields[]` değerlerini eskiden doğrudan `dynamicValues`tan
+     * okuyordu; `dynamicValues` ise kullanıcı dokunmadığı alanları anlama
+     * katmanının TAHMİNİYLE dolduruyor. Böylece Talepo'nun kendi tahmini
+     * düzenleme kaydedildiği anda kullanıcının cevabı olarak
+     * kalıcılaşıyordu — ve sunucu güven sınırı bu listeyi kullanıcı beyanı
+     * saydığı için tahmin `USER_EXPLICIT` olarak damgalanabilirdi.
+     * `/talep` yayın yolunun kullandığı kanonik süzgeç burada da kullanılır;
+     * ikinci bir süzgeç yazılmaz.
+     */
+    const publishFieldValues = buildPublishFieldValues({
+      canonicalFields: editCanonicalState.fields,
+      values: dynamicValues,
+      userTouchedKeys: userConfirmedFieldKeys,
+    });
+
     try {
       const response = await fetch(`/api/requests/${initial.id}`, {
         method: "PATCH",
@@ -294,15 +329,12 @@ export function EditRequestForm({
           isUrgent,
           publishVersion: "ai",
           discoveryProjection: (() => {
-            const state = createTextOnlyState(requestText.trim() || professionalText);
-            const base = buildDiscoveryProjectionFromState(state);
+            const base = buildDiscoveryProjectionFromState(editCanonicalState);
             const snap = buildPublishUnderstandingSnapshot({
               understanding,
               userSelected: false,
               primarySlug: selectedCategory.id?.trim() || null,
-              confirmedFieldKeys: Object.keys(manualValues).filter(
-                (key) => (manualValues[key] ?? "").trim().length > 0,
-              ),
+              confirmedFieldKeys: userConfirmedFieldKeys,
             });
             return withUnderstandingSnapshot(base, snap) ?? undefined;
           })(),
@@ -310,7 +342,7 @@ export function EditRequestForm({
             ...visibleDynamicFields.map((field) => ({
               ...field,
               required: isFieldRequired(field, dynamicValues),
-              value: dynamicValues[field.key] ?? "",
+              value: publishFieldValues[field.key] ?? "",
             })),
             ...(isRealEstate
               ? [

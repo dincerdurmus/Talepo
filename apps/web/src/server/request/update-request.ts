@@ -1,3 +1,4 @@
+import { resolveUpdateProjection } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
 import {
   isSystemCategorySlug,
@@ -48,6 +49,9 @@ export async function updateRequest(
         budgetMax: true,
         isUrgent: true,
         deadlineAt: true,
+        /* Otorite türetimi sunucunun KENDİ metnini okur — payload'da
+         * `rawInput` yoksa (D3d) buradan gelir. */
+        rawInput: true,
       },
     });
 
@@ -144,6 +148,12 @@ export async function updateRequest(
 
     const budget = parseBudgetRange(input.budget);
     const deadlineAt = parseDeliveryDeadline(input.delivery);
+    /* Güven sınırı: istemcinin `fieldAuthority` haritası atılır, otorite
+     * sunucunun metninden ve süzülmüş cevap kanalından yeniden türetilir. */
+    const serverNormalizedProjection = resolveUpdateProjection(
+      input,
+      existing.rawInput,
+    );
 
     const updated = await tx.request.update({
       where: { id: existing.id },
@@ -159,8 +169,8 @@ export async function updateRequest(
           input.professionalDescription || input.description,
         aiScore: input.aiScore,
         aiSummary: buildAiSummary(input),
-        ...(input.discoveryProjection
-          ? { discoveryProjection: input.discoveryProjection }
+        ...(serverNormalizedProjection
+          ? { discoveryProjection: serverNormalizedProjection }
           : {}),
         city: input.city,
         district: input.district,
