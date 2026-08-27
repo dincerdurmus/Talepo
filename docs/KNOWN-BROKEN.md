@@ -7,6 +7,88 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-27, `83be90b` (onaysız çıkarım yayın kanalından çıkarıldı)
+
+Commit: `83be90b` — *fix(requests): keep unconfirmed inference out of publish
+fields* (parent `62a6bc5`). Bu bölüm aşağıdaki `b12ce53` tabanını **silmez ve
+yerine geçmez**: soru yüzeyi sayılarının tamamı bu commit üzerinde yeniden
+koşuldu ve **birebir aynı çıktı** (D2 `0 / 20 / 49 / 3 / 0 / 4` · kaybolan 0 ·
+D1 `FIRST_SCREEN` high_risk 0 / inference_re_asked 20, `exit 3` yeşil kapanış
+değildir · D3b duran 35 / düşen 0 · ladder 11/11 · user-choice 8/8 · invariants
+`121 / 2 / 1` · kapsama `99 / 9 / 0`). Bu taban yalnız İLK KEZ ölçülen bir
+yüzeyi ekler: **kullanıcı-cevabı yayın kanalı**.
+
+```
+npx --yes tsx scripts/verify-publish-inference-authority-v1.ts   # D3c-a — yayın kanalı
+```
+
+### Yayın kanalı — ilk kez ölçülen sızıntı ve kapanışı
+
+`/talep` yayın payload'ının `fields[]` kanalı (sunucuda `fieldValues` olarak
+kalıcılaşır ve firmalara talebin CEVAPLARI olarak görünür) `dynamicValues`
+torbasından okunuyordu; `softFillFromComposerState` çıkarım değerlerini de o
+torbaya kopyaladığı için tahmin, kullanıcı beyanı gibi yayına gidiyordu.
+
+| Ölçüm (108 senaryo, kullanıcı dokunuşu yok) | `83be90b` öncesi | `83be90b` |
+| --- | --- | --- |
+| `INFERRED` otoriteli kimlik | 85 | 85 — kanonik durumda korunuyor |
+| Kanala dolu değerle sızan kimlik | **23** | **0** |
+| Öneri (`inferredSuggestion`) olarak görünen | 35 | **35** — D3b görünürlüğü korunuyor |
+| `VERIFIED` / `USER_EXPLICIT` değer kaybı | 0 | **0** (206 kanarya) |
+
+Sızan 23 benzersiz kimlik (`scenarioId/fieldKey`), kapanış kimlik bazında:
+`auto-02/condition` · `furn-01/usageArea` · `furn-04/usageArea` ·
+`furn-07/usageArea` · `health-03/usageArea` · `mach-01/needType` ·
+`mach-02/needType` · `mach-03/needType` · `mach-07/needType` ·
+`mach-08/needType` · `print-07/needType` · `tech-01/needType` ·
+`tech-01/solutionType` · `tech-02/solutionType` · `tech-03/needType` ·
+`tech-03/solutionType` · `tech-05/needType` · `tech-06/needType` ·
+`tech-07/needType` · `tech-08/needType` · `tech-10/needType` ·
+`tech-10/solutionType` · `tech-11/needType`.
+
+Doğrulayıcı `scripts/verify-publish-inference-authority-v1.ts` önce mevcut
+kodda tam bu 23 kimlikle kırmızı koştu; düzeltme sonrası 23/23 yeşil, iki
+ardışık koşu birebir aynı. Süzme ölçütü kanonik cevap otoritesidir
+(`isInferenceOnlyAnswer` + kullanıcı dokunuş listesi); alan, kategori ya da
+senaryo adına özel dal yoktur. Kullanıcı dokunuş listesi understanding
+snapshot'ının `confirmedFieldKeys` girdisiyle AYNI diziden kurulur. Ölçülen
+kanaryalar: kullanıcı önerilen değerle AYNI değeri açıkça seçerse değer
+`USER_EXPLICIT` olarak yayınlanır; alanı temizleyen/reddeden kullanıcıya
+çıkarım `payload.fields` içine geri sızmaz; `rawInput` ve kanonik durum
+mutate edilmez (frozen-girdi kanıtı). Ortak üretim girdisi kurulumu
+`scripts/lib/talep-production-inputs-v1.ts` modülüne alındı; D3b doğrulayıcısı
+ve yayın doğrulayıcısı aynı kurucuyu kullanır, ikinci kopya yoktur.
+
+Kanıt sınıfı **`CODE-VERIFIED`**: yayın kanalı ölçümü gerçek yayın kurucularıyla
+yapıldı; bu düzeltme için ayrıca tarayıcı ölçümü YAPILMADI, yeni
+`BROWSER-MEASURED` iddiası yoktur. **Production deploy yoktur.**
+
+### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
+
+- **`discoveryProjection.attributes/constraints` hâlâ 85 `INFERRED` değeri
+  provenance/otorite işareti olmadan taşıyor.** Kullanıcı-cevabı kanalı
+  kapandı; firmaların/Matching V3'ün okuma modeli olan projection ekseni ayrı
+  bir karar dilimidir (bkz. `04-CANONICAL` provenance boşluğu).
+- **`brandCandidate` / `brandEvidence` snapshot ana `attributes` ad alanında
+  duruyor** — D3c-b henüz yapılmadı. Ölçülmüş iç kanıt kimliği **28**'dir
+  (19 `brandCandidate` + 9 `brandEvidence`); `home-06/brandCandidate` ayrıca
+  `NOT-MEASURED = 1` olarak durur ve ölçülmüş 20. brandCandidate sayılmaz.
+  Yayın doğrulayıcısı bu alanların kullanıcı sorusuna dönüşmediğini ölçer;
+  ad alanı temizliğini ölçmez.
+- Profil tanımı olmayan `needType` / `usageArea` / `solutionType` sınıflarının
+  tamamı kapanmış DEĞİLDİR; kapanan yalnız kullanıcı-cevabı yayın kanalıdır.
+- Matching V3 canlı fanout'a bağlı değildir; tedarikçi yetkinliği ve canlı
+  bildirim teslimatı ölçülmemiştir.
+
+**`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** — değişmedi (100 × 99/108, yalnız
+corpus). **`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi**: aynı
+formüllü resmî doğrulayıcı `%23` üretmediği için yüzde oynatılmadı. Bu dilimin
+kazanımı yüzdeye değil şu cümleye kaydedilir: **kullanıcı-cevabı yayın kanalı
+kapandı** — onaysız çıkarım artık `fieldValues` içinde kullanıcı beyanı gibi
+görünmüyor.
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-26, `b12ce53` (çıkarım onaysız öneridir; üç yüzeyde ölçüldü)
 
 Commit: `b12ce53` — *fix(requests): require confirmation for inferred answers*
@@ -1528,11 +1610,11 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53` ile kapandı; kaydın etiket ekseni ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b` ile kapandı; etiket ekseni, projection ekseni ve ölçülemeyenler AÇIK** |
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 
@@ -1611,6 +1693,31 @@ tetiklenen kimlik **0**, parent `d3a64c7`'te de mevcut), `hybrid.isSyncing`
 sırasındaki geçici `canonicalFields = null` render, AST doğrulayıcısının
 binding/alias sınırı, profil tanımı olmayan **50** çıkarım değeri ve
 `NOT-MEASURED` kapasite kanaryası.
+
+### Kullanıcı-cevabı yayın kanalı da KAPANDI (`83be90b`, 2026-08-27)
+
+**Yeni KB açılmadı.** Bu bulgu da KB-17'nin kök nedeninin aynısıdır —
+Talepo'nun kendi çıkarımı kullanıcı cevabı gibi davranıyor — yalnız DÖRDÜNCÜ
+bir yüzeyde görülmüştür: soru sorulsa bile değer, kullanıcı hiç dokunmadan
+yayın payload'ının `fields[]` kanalına yazılıyor ve sunucuda `fieldValues`
+olarak firmalara "talebin cevabı" diye görünüyordu. Kök neden eşleştiği için
+kayıt yine genişletildi.
+
+Ölçüm ve kapanış: 108 senaryoda 85 `INFERRED` kimlikten **23**'ü kanala dolu
+değerle sızıyordu; `83be90b` ile **23/23 kapandı, sızan 0**. Kimlik listesi,
+kanaryalar (aynı-değer onayı → `USER_EXPLICIT` yayını; temizleme/red sonrası
+geri sızıntı yok; `VERIFIED`/`USER_EXPLICIT` kaybı 0; `rawInput`/kanonik durum
+mutasyonsuz) ve doğrulayıcı için bu belgenin başındaki **`83be90b` ölçüm
+tabanı** bölümüne bakın. Düzeltme alan/kategori dalı kullanmaz; tek ölçüt
+kanonik cevap otoritesi + kullanıcı dokunuş kanıtıdır ve tahmin kanonik
+durumda ve `QuestionCandidate.inferredSuggestion` önerisinde korunur
+(D3b'nin 35 kimliği aynen duruyor). Ürün kararı: `11-DECISION-LOG.md` →
+**Karar H, H7**.
+
+**Bu dilimde de kapanmayan eksen:** `discoveryProjection.attributes/constraints`
+85 `INFERRED` değeri otorite işareti olmadan taşımaya devam ediyor; snapshot
+`attributes` içindeki `brandCandidate` / `brandEvidence` ad alanı (ölçülmüş 28
+kimlik; `home-06/brandCandidate` ayrıca `NOT-MEASURED = 1`) D3c-b'ye kaldı.
 
 
 **Kayıt bir bütün olarak ÇÖZÜLDÜ sayılmıyor.** Kapanış ölçüsündeki beş

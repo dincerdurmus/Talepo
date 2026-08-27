@@ -52,6 +52,18 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 > verisinde okunamaz. Bu yüzden `provenance_mismatch = 69` ölçümünün bugün
 > **davranışsal etkisi ölçülmemiştir** — etiket ekseni yayına hiç ulaşmıyor.
 > [`CODE-VERIFIED` — 2026-08-26]
+>
+> **`83be90b` (D3c-a, 2026-08-27) bu boşluğu DARALTTI ama KAPATMADI.**
+> Kullanıcı-cevabı kanalı (`payload.fields[]` → sunucuda `fieldValues`) artık
+> tek kurucudan geçer: `ui-helpers.ts` → `buildPublishFieldValues` onaysız
+> `INFERRED` değeri o kanala yazmaz (108 senaryoda sızan 23 kimlik → 0;
+> kontrol `verify-publish-inference-authority-v1`). Ölçütü kanonik cevap
+> otoritesi + kullanıcı dokunuş kanıtıdır (`userTouchedKeys`, snapshot'ın
+> `confirmedFieldKeys` girdisiyle aynı dizi); alan/kategori dalı yoktur.
+> **AÇIK KALAN:** `discoveryProjection.attributes/constraints` 85 `INFERRED`
+> değeri otorite işareti olmadan taşımaya devam ediyor; projection/snapshot
+> provenance alanı hâlâ yoktur. [`CODE-VERIFIED` — `83be90b`; tarayıcı ölçümü
+> yapılmadı, production deploy yoktur]
 
 ### Client / composer state
 
@@ -110,6 +122,7 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 | profile/model version | `UNDERSTANDING_PROFILE_VERSION` |
 | provenance | source ai/user/system on candidates |
 | inference suggestion | `QuestionCandidate.inferredSuggestion` — onaysız öneri; `authority` yalnız `INFERRED`, `confirmed` yalnız `false`. Kullanıcı cevabı/seçimi değildir ve soruyu kapatmaz [`CODE-VERIFIED` — `b12ce53`] |
+| publish field values (kullanıcı-cevabı kanalı) | `ui-helpers.ts` → `buildPublishFieldValues`: `payload.fields[]` değerlerinin tek kurucusu. Onaysız `INFERRED` değer bu kanala yazılmaz; kullanıcı dokunuşu (`userTouchedKeys` = snapshot `confirmedFieldKeys` dizisi) ve kanonik otorite kanıtıyla süzülür. Projection/snapshot eksenini KAPSAMAZ [`CODE-VERIFIED` — `83be90b`] |
 
 ## Knowledge Engine haritası
 

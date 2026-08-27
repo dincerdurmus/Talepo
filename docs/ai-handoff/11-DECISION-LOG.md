@@ -12,7 +12,7 @@ Durum etiketleri: `BRANCH-WIRED` ≠ `PRODUCTION-DEPLOYED` (`00-START-HERE.md`).
 | Product span marka/model olamaz | **Kısmen** — entity-roles / identity | `entity-roles.ts`, product-identity | entity-global-core | Yanlış soru/match |
 | Marka/model kanıt gerektirir | **V3’te uygulanmış**; legacy fanout’ta yok | matching-v3 identity/scoring | matching-v3 verifier | Sahte EXACT / cartesian |
 | Bütçe+konum olmadan review açılmaz | **Uygulanmış** (`BRANCH-WIRED`) — 2026-08-26'da DAR bir ek geldi: cevaplanmamış **çıkarım doğrulaması** olan `routing_critical` alan da kilitler (bkz. Karar H4); önerisi olmayan routing sorusu kilitlemez | `publish-readiness.ts`, global-core, `question-scheduler.ts` | phase2 / scheduler, `verify-inference-question-authority-v2` | Eksik teklif kalitesi |
-| Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. Karar H | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx` | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
+| Talepo çıkarımı kullanıcı cevabı değildir; yalnız öneridir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`; yayın kanalı `83be90b`, bkz. Karar H (H7) | `answer-authority.ts`, `provenance.ts`, `questions.ts`, `question-scheduler.ts`, `FocusedQuestionsPanel.tsx`, `ui-helpers.ts` (`buildPublishFieldValues`) | `verify-inference-question-authority-v2`, `verify-user-choice-authority-v1`, `verify-publish-inference-authority-v1` | Kullanıcı görmediği bir değerin belirlediği havuza gider (KB-17) |
 | Otorite sırası TEK kanonik merdivendir | **Uygulanmış** (`BRANCH-WIRED`, `CODE-VERIFIED`) — `ce464eb`; tek `AUTHORITY_RANK`, answer katmanı dar görünüm, verified kaynak listesi tipli | `provenance.ts`, `answer-authority.ts`, `build-state.ts` | `verify-authority-ladder-v1` (11/11) | Dört kopyadan biri değişip ötekilerle sessizce ayrışır; kullanıcı beyanı bir katmanda çıkarıma düşer |
 | `rawInput` soru cevaplarıyla değiştirilmez | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, 2026-08-23 kararının yerine geçer (Karar G) | `talep/page.tsx`, `sync.ts` | `verify-user-choice-authority-v1` | Bestecinin yazdığı sözcük başka alanın kullanıcı kanıtı sayılır (KB-20) |
 | Çıplak ilçe adı konum kanıtı değildir | **Uygulanmış** (`BRANCH-WIRED`) — `3d5b2a5`, bkz. KB-20 | `turkey-districts.ts`, `understand-request.ts` | `verify-geo-evidence-authority-v1` | Kullanıcının yazmadığı şehir talebe yazılır |
@@ -196,7 +196,7 @@ tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26) + `83be90b` (H7 · `CODE-VERIFIED`, 2026-08-27), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
 | **Dosyalar**. **`b12ce53` eki:** `ui-helpers.ts`, `request-brain/types.ts`, `request-composer/index.ts`, `EnrichmentChips.tsx`, `talep/page.tsx`, `scripts/verify-inference-confirmation-priority-v1.ts` (yeni) | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
 | **Testler**. **`b12ce53` eki:** `verify-inference-confirmation-priority-v1` (exit 0, iki koşuda byte-birebir) | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
 | **Değişirse risk** | Talepo kendi tahminini kullanıcı cevabı sanar; talep, kullanıcının hiç görmediği bir değerin belirlediği havuza gider |
@@ -344,6 +344,51 @@ durumu yeşil kapanış değildir. `MoneyRangeControl` sabit `budget-amount`
 kimliğini kullanmaya devam ediyor. Sekme kapanınca cevap ve taslak kalıcı
 değildir. Matching V3 canlı fanout'a bağlı değildir; tedarikçi yetkinliği ve
 canlı bildirim teslimatı ölçülmemiştir; production deploy yoktur.
+
+**H7 — Onaysız çıkarım kullanıcı-cevabı YAYIN kanalına yazılmaz.**
+(`83be90b`, 2026-08-27 — H4/H6'nın yayın tarafındaki tamamlayıcısı; H5'in
+tersi yönü: H5 "yapılandırılmış CEVAP yayına taşınır" der, H7 "onaysız TAHMİN
+taşınmaz" der.)
+
+> Ölçülen kusur: soru sorulsa bile değer, kullanıcı hiç dokunmadan yayın
+> payload'ının `fields[]` kanalına (`dynamicValues` üzerinden) yazılıyor ve
+> sunucuda `fieldValues` olarak firmalara "kullanıcı böyle dedi" diye
+> görünüyordu. 108 senaryoda 85 `INFERRED` kimliğin **23**'ü böyle sızıyordu;
+> `83be90b` ile **23/23 kapandı, sızan 0**.
+>
+> Uygulama: kanal artık tek kurucudan geçer —
+> `request-composer/ui-helpers.ts` → `buildPublishFieldValues`. Süzme ölçütü
+> kanonik cevap otoritesi (`isInferenceOnlyAnswer`) ile kullanıcı dokunuş
+> kanıtıdır; karşılaştırma kuralı sunum katmanıyla ortaktır
+> (`isUnconfirmedInferredValue`) ve alan/kategori adına özel dal ya da ikinci
+> bir otorite listesi yoktur. Kullanıcı dokunuş listesi (`userTouchedKeys`)
+> understanding snapshot'ının `confirmedFieldKeys` girdisiyle AYNI diziden
+> kurulur; bu listeye yalnız kullanıcı olay işleyicileri yazar, `INFERRED`
+> değer kendiliğinden giremez.
+>
+> Ölçülen kanaryalar: kullanıcı önerilen değerle AYNI değeri açıkça seçerse
+> değer `USER_EXPLICIT` olarak yayınlanır; alanı temizleyen/reddeden
+> kullanıcıya çıkarım `payload.fields` içine geri sızmaz; `VERIFIED` ve
+> `USER_EXPLICIT` kanaryalarında değer kaybı 0 (206 kimlik); `rawInput` ve
+> kanonik durum mutate edilmez. Tahmin kaybolmaz: kanonik understanding'de ve
+> `QuestionCandidate.inferredSuggestion` önerisinde durur; D3b'nin 35 öneri
+> kimliği aynen görünüyor.
+>
+> Kontrol: `scripts/verify-publish-inference-authority-v1.ts` — önce mevcut
+> kodda tam 23 kimlikle kırmızı, düzeltme sonrası yeşil; iki ardışık koşu
+> birebir aynı; sayfa bağlantısı AST ile kanıtlı. Ortak sayfa-girdisi
+> kurulumu `scripts/lib/talep-production-inputs-v1.ts` modülüne alındı; D3b
+> doğrulayıcısı da aynı kurucuyu kullanır, ikinci kopya yoktur (D3b 35 duran /
+> 0 düşen ile değişmedi).
+>
+> **Kapsam dışı — gizlenmiyor:** `discoveryProjection.attributes/constraints`
+> 85 `INFERRED` değeri hâlâ otorite işareti olmadan taşır (04 belgesindeki
+> provenance boşluğu açık); snapshot `attributes` içindeki
+> `brandCandidate`/`brandEvidence` ad alanı D3c-b'dedir. Bu düzeltme için
+> tarayıcı ölçümü yapılmadı — kanıt sınıfı `CODE-VERIFIED`; production deploy
+> yoktur. Talep beyni **%92**, Pro hattı **%22** — aynı formüllü resmî
+> doğrulayıcı `%23` üretmediği için yüzde değişmedi; kazanım "kullanıcı-cevabı
+> yayın kanalı kapandı" olarak kaydedildi.
 
 **Bunu ne için yapıyoruz?**
 Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı
