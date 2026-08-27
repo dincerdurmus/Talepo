@@ -196,7 +196,7 @@ tedarikçi yetkinliği ve canlı bildirim teslimatı **ölçülmedi**.
 
 | | |
 |--|--|
-| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26) + `83be90b` (H7 · `CODE-VERIFIED`, 2026-08-27), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Durum** | **UYGULANMIŞ** — `3d5b2a5` (H1–H5) + `ce464eb` (H3 tekilleştirme) + `b12ce53` (H6 · `BROWSER-MEASURED-LOCAL · PASS`, 2026-08-26) + `83be90b` (H7 · `CODE-VERIFIED`, 2026-08-27) + `111b412` (H8 · `CODE-VERIFIED`, 2026-08-27), `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL** |
 | **Dosyalar**. **`b12ce53` eki:** `ui-helpers.ts`, `request-brain/types.ts`, `request-composer/index.ts`, `EnrichmentChips.tsx`, `talep/page.tsx`, `scripts/verify-inference-confirmation-priority-v1.ts` (yeni) | `answer-authority.ts`, `provenance.ts`, `understand-request.ts`, `questions.ts`, `sync.ts`, `question-scheduler.ts`, `focused-questions.ts`, `FocusedQuestionsPanel.tsx`, `talep/page.tsx`, `turkey-districts.ts` |
 | **Testler**. **`b12ce53` eki:** `verify-inference-confirmation-priority-v1` (exit 0, iki koşuda byte-birebir) | `verify-inference-question-authority-v2` (exit 0), `verify-question-suppression-authority-v1` (exit 3 — ölçülemeyen 4 kayıt), `verify-geo-evidence-authority-v1` (exit 0), `verify-user-choice-authority-v1` (exit 0) |
 | **Değişirse risk** | Talepo kendi tahminini kullanıcı cevabı sanar; talep, kullanıcının hiç görmediği bir değerin belirlediği havuza gider |
@@ -389,6 +389,88 @@ taşınmaz" der.)
 > yoktur. Talep beyni **%92**, Pro hattı **%22** — aynı formüllü resmî
 > doğrulayıcı `%23` üretmediği için yüzde değişmedi; kazanım "kullanıcı-cevabı
 > yayın kanalı kapandı" olarak kaydedildi.
+
+**H8 — Talepo'nun kendi kanıtı kullanıcı attribute'u AD ALANINDA taşınmaz;
+tipli iç kanıt kanalında yaşar ve kaybolmaz.**
+(`111b412`, 2026-08-27 — H7'nin ad alanı tarafındaki tamamlayıcısı. H7 bir
+DEĞERİN yayın kanalına yazılmasını yasaklar; H8 bir ANAHTARIN kullanıcı beyanı
+ad alanında durmasını yasaklar.)
+
+> Ölçülen kusur: `brandCandidate` ve `brandEvidence` — Talepo'nun marka tahmin
+> muhasebesi — `snapshot.attributes`, `projection.attributes`,
+> `projection.constraints` ve routing envelope'un generic `attributes`
+> torbasında kullanıcı özelliği gibi duruyordu. Oradan `attributeHit` puanına
+> geçiyordu: `auto-11`'in "Araba" tahmini dokuz bebek arabası tedarikçisiyle,
+> `auto-05` "Araç" ve `svc-06` "Uzaktan" alakasız kelime eşleşmeleriyle puan
+> üretiyordu. 108 senaryoda ölçülen iç kanıt kimliği **36**'dır (20 `INFERRED`
+> `brandCandidate` + 9 `INFERRED` `brandEvidence` + 7 `VERIFIED`
+> `brandEvidence`); dört generic kanalın hepsinde 36 → **0**.
+>
+> Uygulama iki katmanlıdır. **Yazım:** snapshot'a additive ve opsiyonel tipli
+> `internalEvidence` alanı eklendi; `buildUnderstandingSnapshot` anahtarı
+> `attributes`tan çıkarıp tipli kanala taşıyarak tek şekli zorlar,
+> `buildPublishUnderstandingSnapshot` kanonik
+> `provenance` / `source` / `confidence` / `evidence` bilgisini olduğu gibi
+> kopyalar, `buildDiscoveryProjectionFromState` generic torbaya yazmaz ama
+> **kendi tipli kanalını yazar** — çünkü snapshot her zaman eklenmez (sunucu
+> yeniden kurulumu ve `hybrid.state == null` dalı çıplak projection persist
+> eder) ve "taşı, silme" sözleşmesi snapshot'ın varlığına bağlanamaz.
+> `withUnderstandingSnapshot` snapshot eklendiğinde daha zengin nested kopya
+> kazandığı için top-level kopyayı düşürür: persist edilen dokümanda anahtar
+> **tam bir** tipli kanalda durur. **Okuma:** tek kanonik normalizer
+> (`parseUnderstandingSnapshot` / `parseDiscoveryProjection`) eski şekli kabul
+> eder, anahtarları generic torbalardan çıkarır ve tipli kanala ayırır; mevcut
+> tipli değer legacy ile ezilmez, çift veri üretilmez, girdi mutate edilmez,
+> yeni şekil aynı referansla geçer. Okuyucular alan adına özel mantık
+> kopyalamaz; anahtar listesi tek otoritedir
+> (`INTERNAL_EVIDENCE_ATTRIBUTE_KEYS`).
+>
+> **Yeni merdiven ya da paralel provenance enum'u kurulmadı**: tipli alan
+> mevcut `UnderstandingProvenance` / `UnderstandingSource` tiplerinden okur.
+> **Migration yoktur**: snapshot ve projection JSON kolonlarıdır, yeni Prisma
+> kolonu açılmadı, **backfill yapılmadı**. Eski kayıtlar veritabanında eski
+> şekliyle durur; güvenli yorumlama yalnız okuma sınırında yapılır.
+> `understand-request`, `build-state`, `compose-text` ve `page.tsx`
+> **değişmedi** — iç kanıt kanonik anlama kaydında (`understanding.attributes`)
+> durmaya devam eder ve compose-text marka çapası oradan okur.
+>
+> Ölçülen kanaryalar: gerçek kullanıcı attribute'ları (`color` dahil)
+> torbalarında kalır (düşen 0); `payload.fields` ve soru adayı sızıntısı 0;
+> eski şekil kapıları kabul 1 / ayrılan 2 / generic torbada kalan 0 / filtre
+> eşleşmesi 0 / kişisel eşleşme 0 / mutasyon 0; çıplak projection ve ondan
+> kurulan envelope kaybı 36/36 → 0.
+>
+> Kontrol: `scripts/verify-snapshot-internal-evidence-v1.ts` — üç ayrı kırmızı
+> aşamayla ölçüldü (yeni şekil 227 ihlal, legacy okuyucu kapıları 13 ihlal,
+> çıplak projection 36/36 kayıp), üçü de kapandıktan sonra yeşil; iki ardışık
+> koşu byte-birebir. Dondurulmuş 36 kimlikli taban
+> `scripts/fixtures/snapshot-internal-evidence-v1.ts` içinde bağımsız veri
+> otoritesidir. Gölge skor: 3.888 çiftte 11 çift / 3 talep değişti, tamamı
+> yalnız `attributeHit` kaybı (tam −8), beklenmedik değişim 0, iki tier
+> düşüşü (`auto-05/sup-auto-clio` ve `svc-06/sup-services-logo`:
+> `NEAR → REVIEW`), golden 117/0 ve hiçbir beklenti değiştirilmedi.
+>
+> **`home-06/brandCandidate` — yüzey ayrımı.** D1 kategori/soru ölçümünde
+> statü `category_unresolved → NOT_MEASURED` olarak **DEĞİŞMEDİ**; D3c-b
+> serileştirme ölçümünde aynı kimlik deterministik olarak **ÖLÇÜLDÜ**. İkisi
+> aynı anda doğrudur, çünkü `NOT_MEASURED` bir kimliğin değil (kimlik × ölçüm
+> yüzeyi) çiftinin statüsüdür. Tarihsel D1 fixture'ı ve kaydı
+> **değiştirilmedi**.
+>
+> **Kapsam dışı — gizlenmiyor:** generic
+> `discoveryProjection.attributes/constraints` otorite işareti taşımamaya
+> devam ediyor. Sayı yeniden ölçüldü, kopyalanmadı: kanonik `INFERRED` 85
+> kimlikten **56**'sı generic torbada kaldı, **29**'u bu commit ile tipli
+> kanala ayrıldı (kalan dağılımı `needType` 45 · `solutionType` 5 ·
+> `usageArea` 4 · `condition` 2; aynı torbada 182 `USER_EXPLICIT` ve 17
+> `VERIFIED` değer de işaretsiz). **D3c bir bütün olarak kapanmış değildir.**
+> Düzenleme yolu snapshot'ı yenilemez; `clone-request-as-draft` legacy şekli
+> kopyalar (okuma güvenli, şekil yaşar); legacy constraint metadata'sı
+> taşınmaz. Bu düzeltme için **tarayıcı ölçümü yapılmadı** — kanıt sınıfı
+> `CODE-VERIFIED`; **production deploy yoktur**; Matching V3 hâlâ `SHADOW` ve
+> canlı fanout'a bağlı değildir; tedarikçi yetkinliği ve canlı bildirim
+> teslimatı ölçülmemiştir. Talep beyni **%92**, Pro hattı **%22** — aynı
+> formüllü resmî doğrulayıcı başka sayı üretmediği için yüzdeler oynatılmadı.
 
 **Bunu ne için yapıyoruz?**
 Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı

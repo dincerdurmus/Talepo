@@ -26,6 +26,14 @@
 - `rawInputRef: "request.rawInput"` (pointer; metin DB’de)
 - `categoryResolution`: status, userSelected, userChoice, primary, candidates
 - `entities`, `attributes`
+- `internalEvidence?` — **additive ve opsiyonel** (`111b412`, D3c-b). Talepo'nun
+  KENDİ kanıtı (`brandCandidate`, `brandEvidence`) burada tipli olarak durur;
+  `attributes` kullanıcı beyanı ad alanıdır ve bu anahtarları taşıyamaz.
+  Girdiler `value` + mevcut kanonik `confidence` / `provenance` / `source` /
+  `evidence` bilgisini taşır — **yeni bir otorite merdiveni ya da paralel
+  provenance enum'u yoktur**. Anahtar listesi tek otoritedir
+  (`INTERNAL_EVIDENCE_ATTRIBUTE_KEYS`). Alan yoksa eski snapshot geçerlidir;
+  **migration gerekmez** (JSON kolonu) [`CODE-VERIFIED` — `111b412`]
 - `unresolvedExpressions`, `confirmedFieldKeys`
 
 Nested: `discoveryProjection.understanding` via `withUnderstandingSnapshot`.
@@ -60,9 +68,31 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 > kontrol `verify-publish-inference-authority-v1`). Ölçütü kanonik cevap
 > otoritesi + kullanıcı dokunuş kanıtıdır (`userTouchedKeys`, snapshot'ın
 > `confirmedFieldKeys` girdisiyle aynı dizi); alan/kategori dalı yoktur.
-> **AÇIK KALAN:** `discoveryProjection.attributes/constraints` 85 `INFERRED`
-> değeri otorite işareti olmadan taşımaya devam ediyor; projection/snapshot
-> provenance alanı hâlâ yoktur. [`CODE-VERIFIED` — `83be90b`; tarayıcı ölçümü
+> **O TARİHTEKİ AÇIK KALAN:** `discoveryProjection.attributes/constraints` 85
+> `INFERRED` değeri otorite işareti olmadan taşımaya devam ediyor;
+> projection/snapshot provenance alanı hâlâ yoktur. [`CODE-VERIFIED` —
+> `83be90b`; tarayıcı ölçümü yapılmadı, production deploy yoktur]
+>
+> **`111b412` (D3c-b, 2026-08-27) boşluğu bir kez daha DARALTTI ama KAPATMADI.**
+> Talepo'nun kendi kanıtı (`brandCandidate` / `brandEvidence`) artık kullanıcı
+> attribute'u ad alanında taşınmıyor: yazımda snapshot'ın ve projection'ın
+> tipli `internalEvidence` kanalına, okumada tek kanonik normalizer
+> (`parseUnderstandingSnapshot` / `parseDiscoveryProjection`) üzerinden gider —
+> böylece eski kayıtlar da güvenli yorumlanır. 108 senaryoda ölçülen 36 iç
+> kanıt kimliği dört generic kanalda birden 36 → 0; tipli kanalda korunan
+> 36/36; provenance kaybı 0. Kontrol:
+> `verify-snapshot-internal-evidence-v1`.
+>
+> **BUGÜNKÜ AÇIK KALAN — sayı yeniden ölçüldü, kopyalanmadı.** Yukarıdaki 85,
+> `83be90b` tarihindeki gerçek ölçümdür ve tarihsel kanıt olarak duruyor;
+> `111b412` ile daralmıştır. İki deterministik koşuda yeniden ölçüm: kanonik
+> `INFERRED` **85** kimlikten **56**'sı generic
+> `projection.attributes/constraints` içinde otorite işareti olmadan **kalmaya
+> devam ediyor**, **29**'u tipli iç kanıt kanalına ayrıldı. Kalan dağılım:
+> `needType` 45 · `solutionType` 5 · `usageArea` 4 · `condition` 2. Aynı
+> torbadaki 182 `USER_EXPLICIT` ve 17 `VERIFIED` değer de işaretsizdir —
+> provenance boşluğu yalnız `INFERRED`e özgü değildir ve **projection otoritesi
+> sorunu ÇÖZÜLMÜŞ DEĞİLDİR**. [`CODE-VERIFIED` — `111b412`; tarayıcı ölçümü
 > yapılmadı, production deploy yoktur]
 
 ### Client / composer state
@@ -123,6 +153,7 @@ Yani türetilmiş taxonomy/constraint okuması AI metninden doğabilir. rawInput
 | provenance | source ai/user/system on candidates |
 | inference suggestion | `QuestionCandidate.inferredSuggestion` — onaysız öneri; `authority` yalnız `INFERRED`, `confirmed` yalnız `false`. Kullanıcı cevabı/seçimi değildir ve soruyu kapatmaz [`CODE-VERIFIED` — `b12ce53`] |
 | publish field values (kullanıcı-cevabı kanalı) | `ui-helpers.ts` → `buildPublishFieldValues`: `payload.fields[]` değerlerinin tek kurucusu. Onaysız `INFERRED` değer bu kanala yazılmaz; kullanıcı dokunuşu (`userTouchedKeys` = snapshot `confirmedFieldKeys` dizisi) ve kanonik otorite kanıtıyla süzülür. Projection/snapshot eksenini KAPSAMAZ [`CODE-VERIFIED` — `83be90b`] |
+| internal evidence (Talepo'nun kendi kanıtı) | `brandCandidate` / `brandEvidence` — kullanıcı beyanı DEĞİLDİR. Tipli `internalEvidence` kanalında yaşar (snapshot ve, snapshot eklenmemiş çıplak projection'da, projection); generic `attributes` / `constraints` / envelope torbasına ve `attributeHit` puanına giremez. Eski kayıtlarda generic torbada duran anahtarları tek kanonik normalizer okuma sınırında ayırır — **DB'de backfill yoktur**. Kanonik anlama kaydı (`understanding.attributes`) değişmez; compose-text marka çapası oradan okur [`CODE-VERIFIED` — `111b412`] |
 
 ## Knowledge Engine haritası
 

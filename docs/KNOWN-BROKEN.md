@@ -7,6 +7,211 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-27, `111b412` (iç kanıt kullanıcı attribute'undan ayrıldı)
+
+Commit: `111b412` — *fix(requests): separate internal evidence from user
+attributes* (parent `77648d2`). Bu bölüm aşağıdaki `83be90b` tabanını **silmez
+ve yerine geçmez**; o tabanın yalnız **iki cümlesinin** yerine geçer (aşağıda
+adlarıyla listeleniyor) ve İKİ yüzeyi ilk kez ölçer: **snapshot/projection iç
+kanıt ad alanı** ve **eski kayıtların okuma sınırı**.
+
+Ara commit `77648d2` — *test(requests): freeze publish inference authority
+baseline* — yalnız doğrulayıcı ve fixture içerir; üretim davranışı
+değiştirmez. D3c-a'nın 85/23 ölçüm evrenini dondurulmuş, iki yönlü bir veri
+otoritesine bağlar (kaybolan kimlik de açıklanamayan yeni kimlik de kırmızı).
+
+```
+npx --yes tsx scripts/verify-snapshot-internal-evidence-v1.ts   # D3c-b — iç kanıt ayrımı
+```
+
+### Ölçülen iç kanıt evreni — 36 kimlik
+
+`brandCandidate` ve `brandEvidence`, Talepo'nun kendi marka tahmin
+muhasebesidir; kullanıcı beyanı değildir. 108 senaryoluk tabanda ölçülen
+kimlik sayısı **36**'dır ve sınıflar kanonik merdivenden okunur
+(`classifyAnswerAuthority`, ikinci merdiven kurulmaz):
+
+| Sınıf | Kimlik |
+| --- | --- |
+| `INFERRED` `brandCandidate` | **20** |
+| `INFERRED` `brandEvidence` | **9** |
+| `VERIFIED` `brandEvidence` (katalog doğrulaması, kaynak `FUTURE_KNOWLEDGE`) | **7** |
+| **Toplam ölçülen iç kanıt** | **36** |
+
+**`home-06/brandCandidate` — iki ölçüm yüzeyi karıştırılmaz.** `NOT_MEASURED`
+bir kimliğin değil, **(kimlik × ölçüm yüzeyi)** çiftinin statüsüdür:
+
+| Yüzey | Statü |
+| --- | --- |
+| D1 kategori/soru ölçümü (`verify-question-suppression-authority-v1`) | `category_unresolved` → **`NOT_MEASURED`** — DEĞİŞMEDİ |
+| D3c-b serileştirme ölçümü (`verify-snapshot-internal-evidence-v1`) | iki ardışık koşuda **deterministik olarak ÖLÇÜLDÜ** (değer `Kürek`, `INFERRED`, güven 0.3) |
+
+İki cümle aynı anda doğrudur. Tarihsel D1 fixture'ı, D1 kaydı ve D1'in
+`not_measured = 4` sayısı **değiştirilmedi**. Kimlik ayrıca **sahte marka adayı
+kanaryası** olarak adlandırıldı: "Kürek" bir ürün kelimesidir, marka değildir;
+anlama katmanı bunu bir gün düzelttiğinde D3c-b tabanı kırmızıya döner ve fark
+karar gerekçesiyle düşülür.
+
+> **`83be90b` tabanının YERİNE GEÇEN iki cümlesi:** (1) "Ölçülmüş iç kanıt
+> kimliği **28**'dir (19 `brandCandidate` + 9 `brandEvidence`)" → bugünkü
+> serileştirme yüzeyi ölçümü **36**'dır (20 + 9 + 7); (2) "`home-06`
+> … ölçülmüş 20. brandCandidate sayılmaz" → bu cümle **yalnız D1 yüzeyi için**
+> geçerlidir; serileştirme yüzeyinde kimlik ölçülür. Eski satırlar tarihli
+> kanıt olarak silinmeden duruyor.
+
+### Yeni yazımlarda generic sızıntı — kimlik bazında kapandı
+
+| Ölçüm (108 senaryo) | `111b412` öncesi | `111b412` |
+| --- | --- | --- |
+| `snapshot.attributes` içinde kullanıcı attribute'u gibi duran | **36** | **0** |
+| `projection.attributes` içinde | **36** | **0** |
+| `projection.constraints` içinde | **36** | **0** |
+| Routing envelope generic `attributes` torbasında | **36** | **0** |
+| `payload.fields` yayın torbasında | 0 | **0** |
+| Soru adayı olarak render edilen | 0 | **0** |
+| Tipli `internalEvidence` kanalında korunan | 0 | **36 / 36** |
+| `provenance` / `source` / `confidence` kaybı | — | **0** |
+
+Yeni tipli kanal `internalEvidence`'dır: additive, opsiyonel ve mevcut kanonik
+`UnderstandingProvenance` / `UnderstandingSource` tiplerinden okur — **yeni bir
+otorite merdiveni ya da paralel provenance enum'u kurulmadı**. Anahtar listesi
+tek otoritedir (`INTERNAL_EVIDENCE_ATTRIBUTE_KEYS`).
+
+### Eski kayıtların okuma sınırı — ilk kez ölçüldü
+
+D3c-b öncesi yazılmış kayıtlar iç kanıtı `attributes` içinde taşır ve bu şekil
+**veritabanında olduğu gibi kalır**: migration yoktur, backfill yapılmadı, yeni
+Prisma kolonu açılmadı (`discoveryProjection` ve snapshot JSON kolonlarıdır).
+Güvenli yorumlama tek kanonik normalizer'da, okuma sınırında yapılır
+(`parseUnderstandingSnapshot` / `parseDiscoveryProjection`) — bu sınırdan
+projeksiyonu okuyan bütün yollar geçer (workspace facts alanı,
+`evaluateDiscoveryFilter`, fırsat akışı, kişisel/alarm eşleşmesi, routing
+envelope).
+
+| Legacy kapısı | `111b412` |
+| --- | --- |
+| Parser eski şekli kabul ediyor | **1** (kabul) |
+| Tipli kanala ayrılan anahtar | **2 / 2** |
+| Generic kullanıcı torbasında kalan | **0** |
+| Filtre / `mustIncludes` eşleşmesi üreten | **0** |
+| Kişisel takip eşleşmesi üreten | **0** |
+| Okuma sınırında girdi mutasyonu | **0** |
+| Gerçek kullanıcı attribute'u (`color`) düşmesi | **0** |
+
+### Commit içinde kapatılan sessiz kayıp — çıplak projection yolu
+
+Snapshot **her zaman eklenmiyor**: sunucu yeniden kurulumu
+(`create-request.ts`, istemci geçerli projection göndermediğinde) ve
+`talep/page.tsx`in `hybrid.state == null` dalı **çıplak** projection persist
+eder. İlk uygulamada iç kanıt bu iki yolda hiçbir kalıcı kanala yazılmıyordu —
+yani "taşı, silme" sözleşmesi orada **sessiz silmeye** dönüşüyordu.
+
+| Ölçüm | Düzeltme öncesi | `111b412` |
+| --- | --- | --- |
+| Çıplak projection yolunda kayıp kimlik | **36 / 36** | **0** |
+| Çıplak yoldan kurulan envelope'ta kayıp | **36 / 36** | **0** |
+| Persist edilen dokümanda tekil kopya dışı durum (0 = kayıp, 2 = çift) | — | **0** |
+
+Bu bulgu commit'e **girmedi**: iki salt-okunur inceleme (geriye uyumluluk ·
+sessiz veri kaybı/çift kanıt) sırasında yakalandı, kırmızı kapıyla ölçüldü ve
+aynı commit içinde kapatıldı. İncelemelerin diğer üç bulgusu da kapatıldı:
+okuma normalizer'ı güvenilmez istemci JSON'unda non-string değerle artık
+fırlatmaz, koruma koşulu varlık yerine **değer** üzerinden okunur (boş tipli
+girdi gerçek değeri düşüremez) ve legacy taşıma trim disiplinini paylaşır.
+
+> **Bunlar ECC aracı değildir.** Gerçek `ecc:database-reviewer` ve
+> `ecc:silent-failure-hunter` araçları bu oturumda mevcut değildi; yapılan
+> inceleme salt-okunur ikame incelemedir ve ECC diye adlandırılmaz.
+
+### Matching V3 gölge skor etkisi — önce/sonra ölçüldü
+
+Aynı corpus üzerinde **3.888** talep × tedarikçi çifti (108 senaryo × 36
+sentetik tedarikçi) önce ve sonra ölçüldü:
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| Değişen çift | **11** |
+| Etkilenen talep | **3** (`auto-05`, `auto-11`, `svc-06`) |
+| Değişimin nedeni | **tamamı** yalnız `attributeHit` kaybı — tam **−8** puan |
+| Beklenmedik / ilgisiz skor değişimi | **0** |
+| Tier değişimi | `auto-05` / `sup-auto-clio`: **NEAR → REVIEW** · `svc-06` / `sup-services-logo`: **NEAR → REVIEW** |
+| Golden corpus | **117 / 0** — hiçbir beklenti değiştirilmedi |
+
+Kaybolan puanın kaynağı: `attributeHit` generic `envelope.attributes`
+torbasından beslenir ve oraya yazılan tahminler alakasız kelime eşleşmesi
+üretiyordu — `auto-11`'in "Araba" tahmini **dokuz bebek arabası tedarikçisiyle**
+puan üretiyordu (hepsi zaten `NO_MATCH`), `auto-05` "Araç", `svc-06`
+"Uzaktan". İç kanıt kaybolmadı: envelope'un tipli kanalında 36/36 duruyor.
+**Matching V3 hâlâ `SHADOW`'dur ve canlı fanout'a bağlı değildir.**
+
+### Projection otoritesi YENİDEN ÖLÇÜLDÜ — 85 değil, **56**
+
+`83be90b` tabanındaki "`discoveryProjection.attributes/constraints` hâlâ **85**
+`INFERRED` değeri provenance/otorite işareti olmadan taşıyor" cümlesi o tarihte
+doğruydu ve **tarihsel ölçüm olarak siliniyor değildir**; `111b412` ile
+daralmıştır. Sayı kopyalanmadı, gerçek kodla iki deterministik koşuda yeniden
+ölçüldü:
+
+| Ölçüm (108 senaryo) | Kimlik |
+| --- | --- |
+| Kanonik durumda `INFERRED` (değişmedi) | **85** |
+| Bunlardan generic `projection.attributes`/`constraints` içinde **kalan** | **56** |
+| `111b412` ile tipli `internalEvidence` kanalına **ayrılan** | **29** (20 `brandCandidate` + 9 `INFERRED` `brandEvidence`) |
+| Hiçbirinde olmayan | **0** |
+
+Kalan 56'nın alan dağılımı: `needType` **45** · `solutionType` **5** ·
+`usageArea` **4** · `condition` **2**. Aynı generic torbada ayrıca 182
+`USER_EXPLICIT` ve 17 `VERIFIED` değer de otorite işareti olmadan durur —
+provenance boşluğu yalnız `INFERRED` değerlere özgü değildir.
+
+**Bu satır projection otoritesi sorununu çözülmüş göstermez.** D3c-b yalnız iç
+kanıt ailesini ayırdı; kalan 56 `INFERRED` kimlik generic okuma modelinde
+otorite işareti olmadan durmaya devam ediyor ve **D3c'nin bütünü kapanmış
+değildir**.
+
+### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
+
+- **Generic projection'da provenance/otorite boşluğu AÇIK** — yukarıdaki 56
+  `INFERRED` kimlik (ve 199 diğer otoriteli değer) hâlâ işaretsiz. Ayrı karar
+  dilimi; bkz. `04-CANONICAL` provenance boşluğu.
+- **Düzenleme yolu snapshot'ı yenilemiyor** (`update-request.ts`) — düzenlenen
+  talep eski anlamda kalır; bu dilimde ele alınmadı.
+- **`clone-request-as-draft` ham JSON'u parse etmeden kopyalar** — normalizer
+  idempotent olduğu için okuma güvenlidir, fakat legacy şekil kopyalarda
+  yaşamaya devam eder.
+- **Legacy constraint metadata'sı taşınmıyor** — `mode` / `strength` /
+  `include` / `preferred` alanları ayrımda düşer; yalnız değer tipli kanala
+  geçer. İç kanıtın constraint semantiği yoktur; bu bilinçli bir indirgemedir.
+- **Eski DB kayıtlarına backfill YAPILMADI** — migration yok, DB yazımı yok.
+- **Matching V3 canlı fanout'a bağlı değildir**; tedarikçi yetkinliği ve canlı
+  bildirim teslimatı **ölçülmemiştir**.
+- **Production deploy yoktur.**
+
+### Korunan ölçümler (`111b412`)
+
+```
+publish-inference : 85 / 0 / 0 · 23 / 23 / 0 (dondurulmuş taban)
+D3b               : duran 35 · düşen 0
+D2                : 0 / 20 / 49 / 3 / 0 / 4 · kaybolan 0
+authority ladder  : 11/11
+user-choice       : 8/8
+invariants        : 121 passed · 2 failed · 1 known_fail  (I22/I23 bilinen kırmızı)
+coverage          : 99 pass · 9 known_fail · 0 fail
+matching golden   : 117 passed · 0 failed
+talep beyni       : %92   (yalnız 108 senaryoluk corpus)
+Pro hattı         : %22   (yalnız ölçülen uçtan uca hat)
+```
+
+Kanıt sınıfı **`CODE-VERIFIED`**: ölçüm gerçek üretim kurucularıyla yapıldı; bu
+dilim için **tarayıcı ölçümü YAPILMADI**, yeni `BROWSER-MEASURED` iddiası
+yoktur. **`PRODUCTION-DEPLOYED` DEĞİLDİR.** Yüzdeler oynatılmadı: aynı formüllü
+resmî doğrulayıcılar başka bir sayı üretmedi. Bu dilimin kazanımı yüzdeye
+değil şu cümleye kaydedilir: **Talepo'nun kendi marka tahmini artık kullanıcı
+beyanı kanallarında taşınmıyor — ne yeni kayıtlarda ne eski kayıtların
+okunmasında.**
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-27, `83be90b` (onaysız çıkarım yayın kanalından çıkarıldı)
 
 Commit: `83be90b` — *fix(requests): keep unconfirmed inference out of publish
@@ -1610,11 +1815,11 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b` ile kapandı; etiket ekseni, projection ekseni ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412` ile kapandı; etiket ekseni, generic projection ekseni ve ölçülemeyenler AÇIK** |
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 
@@ -1713,6 +1918,36 @@ kanonik cevap otoritesi + kullanıcı dokunuş kanıtıdır ve tahmin kanonik
 durumda ve `QuestionCandidate.inferredSuggestion` önerisinde korunur
 (D3b'nin 35 kimliği aynen duruyor). Ürün kararı: `11-DECISION-LOG.md` →
 **Karar H, H7**.
+
+### İç kanıt ad alanı ve eski kayıt okuma sınırı da KAPANDI (`111b412`, 2026-08-27)
+
+**Yeni KB açılmadı.** Bu bulgu da KB-17'nin kök nedeninin aynısıdır —
+Talepo'nun kendi çıkarımı kullanıcı beyanı gibi davranıyor — yalnız BEŞİNCİ ve
+ALTINCI bir yüzeyde görülmüştür: (a) marka tahmin muhasebesi
+(`brandCandidate` / `brandEvidence`) snapshot ve projection'ın **kullanıcı
+attribute'u ad alanında** duruyordu, oradan routing envelope'un generic
+torbasına ve `attributeHit` puanına geçiyordu; (b) D3c-b öncesi yazılmış eski
+kayıtlarda aynı anahtarlar, projeksiyonu okuyan **her yola** (workspace facts
+alanı, `evaluateDiscoveryFilter`, fırsat akışı, kişisel/alarm eşleşmesi)
+kullanıcı özelliği gibi görünmeye devam ediyordu. İsim benzerliğiyle değil kök
+nedenle eşleştiği için kayıt yine genişletildi; ayrı bir KB açılmadı.
+
+Ölçüm ve kapanış: 108 senaryoda **36** iç kanıt kimliği (20 `INFERRED`
+`brandCandidate` + 9 `INFERRED` `brandEvidence` + 7 `VERIFIED`
+`brandEvidence`) dört generic kanalda birden duruyordu; `111b412` ile dördü de
+**0**, tipli `internalEvidence` kanalında korunan **36/36**, provenance kaybı
+**0**. Eski şekil kapıları: kabul 1, ayrılan 2/2, generic torbada kalan 0,
+filtre eşleşmesi 0, kişisel eşleşme 0, mutasyon 0. Aynı commit içinde,
+inceleme sırasında yakalanan çıplak-projection sessiz kaybı da kapatıldı
+(36/36 → 0). Kimlik listeleri, gölge skor farkı (11 çift / 3 talep, tamamı
+−8 `attributeHit`, iki `NEAR → REVIEW`) ve doğrulayıcı için bu belgenin
+başındaki **`111b412` ölçüm tabanı** bölümüne bakın. Ürün kararı:
+`11-DECISION-LOG.md` → **Karar H, H8**.
+
+**Kapanış ölçüsü #3 (etiket ekseni) hâlâ AÇIK** — `provenance_mismatch = 69`
+bu dilimde ele alınmadı; generic projection'da kalan **56** `INFERRED` kimlik
+de otorite işareti taşımıyor. Kayıt bir bütün olarak **KISMEN ÇÖZÜLDÜ**
+kalmaya devam eder.
 
 **Bu dilimde de kapanmayan eksen:** `discoveryProjection.attributes/constraints`
 85 `INFERRED` değeri otorite işareti olmadan taşımaya devam ediyor; snapshot

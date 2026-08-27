@@ -155,6 +155,62 @@ Review queue + alias/category conflict araçları.
 
 Ancak labeling + shadow metrics sonrası.
 
+## GELECEK BACKLOG (D3c / projection otoritesi SONRASINDA) — Talepo Data Platform, Market Intelligence and Learning Loop
+
+> **Bu bölüm mevcut aktif sırayı DEĞİŞTİRMEZ.** Bugünkü sıra aynen durur:
+> D3c-b (`111b412`, tamamlandı) → **generic projection otoritesi** (açık; 108
+> senaryoda 56 `INFERRED` kimlik hâlâ otorite işareti olmadan taşınıyor) →
+> Dilim 2a sink kapısı / 2b. Aşağıdaki başlık o sıradan SONRA ele alınacak bir
+> backlog'dur; **hiçbir maddesi uygulanmadı ve hiçbiri ölçülmedi.** Durum:
+> `PROPOSED` · `DECIDED-NOT-IMPLEMENTED` değil, henüz **karar da alınmadı**.
+
+Sıra (bu sıra bir öneridir; her adım kendi onayını gerektirir):
+
+1. **Veri envanteri ve veri sınıflandırması** — hangi veri nerede duruyor,
+   kim üretiyor, kim okuyor.
+2. **KVKK amaç / hukuki dayanak / saklama süresi matrisi** — her veri sınıfı
+   için üçü birlikte yazılmadan o veri toplanmaz.
+3. **Ayrı veri alanları:** `operational` · `crm` · `analytics` · `learning` ·
+   `privacy` · `audit`. Alanlar birbirine serbestçe akmaz; her geçiş açık bir
+   dönüşümdür.
+4. **İzinli CRM ve İYS uyumlu iletişim kayıtları** — izin kaydı olmadan
+   iletişim yok; izin kaydının kendisi denetlenebilir olmalı.
+5. **Analitik olay sözlüğü** — olay adları, alanları ve anlamları tek yerde;
+   isim uydurma yok (bkz. Dilim 2a telemetri sözleşmesi).
+6. **Aylık kategori / şehir / talep / teklif / kabul istatistikleri.**
+7. **Anonimleştirme ve pseudonimleştirme** — analitik ve öğrenme alanlarına
+   giren her kayıt için zorunlu adım.
+8. **Learning events** — sistemin neyi yanlış anladığına dair yapısal sinyaller.
+9. **Knowledge candidates** — öğrenme olaylarından türeyen aday bilgi kayıtları
+   (marka, eşanlam, kategori kuralı); doğrudan kanona yazılmaz.
+10. **İnsan onaylı kürasyon** — aday bilgi ancak insan onayıyla kanona geçer.
+11. **Gölge öğrenme ve regresyon kapıları** — öğrenilen her şey önce gölgede
+    ölçülür; mevcut doğrulayıcı bataryası regresyon kapısıdır.
+12. **Kontrollü otomatik onay** — yalnız gölgede ve regresyon kapılarında
+    kanıtlanmış sınıflar için, sınırlı ve geri alınabilir biçimde.
+13. **Sürümleme ve geri alma** — her bilgi sürümü kimliğiyle saklanır ve tek
+    adımda geri alınabilir.
+14. **Admin Pazar Zekâsı ekranı.**
+15. **Maira Öğrenme Merkezi.**
+16. **Yetki, maskeleme, erişim ve dışa aktarma kayıtları** — kimin neyi
+    gördüğü ve dışa aktardığı denetlenebilir olmalı.
+
+Bu backlog'un sözleşmeleri (şimdiden yazılıyor ki sonra kaymasın):
+
+- **Admin panel verinin saklandığı yer DEĞİLDİR**; güvenli görüntüleme ve
+  yönetim yüzeyidir. Veri kendi alanında yaşar, panel oraya bakar.
+- **İlk aşamada mevcut Supabase/PostgreSQL kullanılabilir** — ayrı bir veri
+  altyapısı almak bu backlog'un önkoşulu değildir.
+- **E-posta ve telefon `analytics` veya `learning` tablosuna doğrudan
+  konmaz.** Bu veriler `crm` / `privacy` alanında, izin kaydıyla birlikte
+  yaşar; analitik ve öğrenme tarafına ancak anonimleştirilmiş/pseudonim
+  biçimde geçer.
+- **"Talep", "teklif", "kabul edilen teklif" ve "satış" AYNI METRİK
+  DEĞİLDİR.** Dördü ayrı sayılır ve raporlarda ayrı adlarla görünür; birini
+  diğerinin yerine kullanmak pazar verisini sessizce yanlış yapar.
+- **Learning Loop henüz uygulanmadı ve ölçülmedi.** Bu bölüm bir plandır;
+  hiçbir satırı `BRANCH-WIRED` ya da `PRODUCTION-DEPLOYED` iddiası taşımaz.
+
 ## Bilinçli erteleme
 
 - Branch fanout’u V3 ile değiştirmek (erken)
