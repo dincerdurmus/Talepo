@@ -50,6 +50,18 @@ import {
 import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import { buildPublishUnderstandingSnapshot } from "../src/lib/request/publish-understanding";
 import { buildRequestRoutingEnvelope } from "../src/lib/matching-v3/routing-envelope";
+/**
+ * Marka kanıtı okuma ve güven eşiği TEK YERDE tanımlıdır
+ * (`verify-readiness-brand-authority-v1.ts`); burada ikinci bir kopyası
+ * kurulmaz. O modül `require.main` kapısıyla korunur, içe aktarmak onu
+ * çalıştırmaz.
+ */
+import {
+  isTrustedBrandAuthority,
+  readBrandEvidence,
+  type BrandEvidenceReading,
+} from "./verify-readiness-brand-authority-v1";
+import type { Authority } from "../src/lib/request-understanding/provenance";
 
 /* ------------------------------------------------------------------ */
 
@@ -84,6 +96,12 @@ type Measured = {
   text: string;
   headline: string;
   snapAttrs: string[];
+  /**
+   * Marka kanıtı — tipli `internalEvidence` kanalından (D3c-b), eski
+   * kayıtlar için kanonik legacy normalizer üzerinden. Anahtarın VARLIĞI
+   * değil, kanonik merdivendeki OTORİTESİ taşınır.
+   */
+  brandEvidence: BrandEvidenceReading;
   snapResolved: Array<{ entityType: string; canonicalId: string }>;
   envSlug: string | null;
   envBrand: string | null;
@@ -137,6 +155,7 @@ function measure(sc: CoverageScenario): Measured {
         ?.headline ?? "",
     ),
     snapAttrs: Object.keys(snap.attributes ?? {}),
+    brandEvidence: readBrandEvidence(snap),
     snapResolved: (snap.resolvedEntities ?? []).map((e) => ({
       entityType: e.entityType,
       canonicalId: e.canonicalId,
@@ -449,31 +468,48 @@ function main() {
   const brainPct = measurable ? Math.round((100 * pass) / measurable) : 0;
   const allSlug = [...verdicts.values()].filter((x) => x.m.envSlug).length;
   /**
-   * İKİ AYRI MARKA METRİĞİ (RC_BRAND düzeltmesi, 2026-08-25):
+   * ÜÇ AYRI MARKA METRİĞİ (RC_BRAND düzeltmesi 2026-08-25; otorite
+   * düzeltmesi 2026-08-27):
    *
    *   BRAND_PRESENT          envelope'ta HERHANGİ bir marka var — sahte
    *                          markaları da sayar, hazırlık ölçüsü DEĞİLDİR.
-   *   BRAND_ROUTABLE_TRUSTED marka + denetlenebilir kanıt etiketi
-   *                          (attributes.brandEvidence: VERIFIED_CATALOG ya
-   *                          da USER_ASSERTED). Pro formülüne YALNIZ bu girer.
+   *   BRAND_EVIDENCE_PRESENT marka kanıtı KAYDI var. "Kanıt mevcut" ayrı
+   *                          bir metriktir ve tek başına güven anlamına
+   *                          GELMEZ; otorite kovalarına bölünerek raporlanır.
+   *   BRAND_ROUTABLE_TRUSTED envelope markası var VE kanıt kanonik otorite
+   *                          merdiveninde en az `VERIFIED`. Pro formülüne
+   *                          YALNIZ bu girer.
+   *
+   * NE DEĞİŞTİ VE NEDEN. Eskiden güven kararı `attributes.brandEvidence`
+   * ANAHTARININ VARLIĞIYLA veriliyordu. Bunun iki ayrı sonucu vardı ve
+   * ikisi de yanlıştı: D3c-b (111b412) kanıtı tipli `internalEvidence`
+   * kanalına taşıdıktan sonra o yol kör kaldı ve sayı sahte olarak 0'a
+   * düştü; öncesinde ise Talepo'nun KENDİ çıkarımını da güvenilir sayıp
+   * sayıyı sahte olarak yüksek gösteriyordu. Karar artık kanonik
+   * merdivenden okunur — burada yeni bir rank tablosu ya da "doğrulanmış
+   * kaynak" listesi YOKTUR.
    */
   const allBrandPresent = [...verdicts.values()].filter((x) => x.m.envBrand).length;
+  const brandEvidenceRows = [...verdicts.values()].map((x) => x.m.brandEvidence);
+  const allBrandEvidencePresent = brandEvidenceRows.filter((e) => e.present).length;
+  const evidenceByAuthority = (a: Authority) =>
+    brandEvidenceRows.filter((e) => e.present && e.authority === a).length;
   const allBrandTrusted = [...verdicts.values()].filter(
-    (x) => x.m.envBrand && x.m.snapAttrs.includes("brandEvidence"),
+    (x) => x.m.envBrand && isTrustedBrandAuthority(x.m.brandEvidence.authority),
   ).length;
   const allProduct = [...verdicts.values()].filter((x) => x.m.envProduct).length;
   /* Pro hazırlığı: 5 bileşenin ortalaması — envelope slug/GÜVENİLİR marka/
      product erişimi, matching'in resolvedEntities okuması (statik),
      tedarikçi ölçümü (0, CAPABILITY_NOT_MEASURED). */
-  const proPct = Math.round(
+  const proRaw =
     (100 *
       (allSlug / scenarios.length +
         allBrandTrusted / scenarios.length +
         allProduct / scenarios.length +
         (matchingReadsEntities ? 1 : 0) +
         0)) /
-      5,
-  );
+    5;
+  const proPct = Math.round(proRaw);
 
   console.log("\n--- oranlar ---");
   console.log(
@@ -490,7 +526,22 @@ function main() {
    *                            ölçülemeyen yetenekler — PASS'e sayılmaz ve
    *                            Pro hazırlık formülünde 0 katkı verir.
    */
-  console.log(`BRAND_PRESENT=${allBrandPresent}/${scenarios.length}  BRAND_ROUTABLE_TRUSTED=${allBrandTrusted}/${scenarios.length}`);
+  console.log(
+    `BRAND_PRESENT=${allBrandPresent}/${scenarios.length}  ` +
+      `BRAND_EVIDENCE_PRESENT=${allBrandEvidencePresent}/${scenarios.length}`,
+  );
+  console.log(
+    `BRAND_EVIDENCE_UNKNOWN=${evidenceByAuthority("UNKNOWN")}  ` +
+      `BRAND_EVIDENCE_INFERRED=${evidenceByAuthority("INFERRED")}  ` +
+      `BRAND_EVIDENCE_VERIFIED=${evidenceByAuthority("VERIFIED")}  ` +
+      `BRAND_EVIDENCE_USER_EXPLICIT=${evidenceByAuthority("USER_EXPLICIT")}  ` +
+      `(kovalar BRAND_EVIDENCE_PRESENT'i böler)`,
+  );
+  console.log(
+    `BRAND_ROUTABLE_TRUSTED=${allBrandTrusted}/${scenarios.length}  ` +
+      `(envelope markası VAR ve kanıt kanonik merdivende ≥ VERIFIED; ` +
+      `INFERRED ve UNKNOWN güvenilir DEĞİLDİR)`,
+  );
   console.log(`SCENARIO_NOT_MEASURED=${notMeasured}`);
   const capabilityNotMeasured = [
     "supplier_capability",
@@ -509,6 +560,16 @@ function main() {
       `(formül: 100 × ortalama[slug ${allSlug}/${scenarios.length}, GÜVENİLİR marka ${allBrandTrusted}/${scenarios.length}, ` +
       `product ${allProduct}/${scenarios.length}, matching entity okuması ${matchingReadsEntities ? 1 : 0}, ` +
       `tedarikçi 0 (CAPABILITY_NOT_MEASURED)]; payda: 5 bileşen)`,
+  );
+  /**
+   * Yuvarlanmamış değer ayrıca yazılır: yuvarlama, küçük ama gerçek bir
+   * hareketi görünmez yapabilir ve iki farklı ham değer aynı yüzdeyi
+   * gösterebilir.
+   */
+  console.log(
+    `PRO_RAW=${proRaw} (yuvarlanmamış)  PRO_ROUNDED=${proPct}  ` +
+      `ham formül: 100 × (${allSlug}/${scenarios.length} + ${allBrandTrusted}/${scenarios.length} + ` +
+      `${allProduct}/${scenarios.length} + ${matchingReadsEntities ? 1 : 0} + 0) / 5`,
   );
 
   if (problems.length) {
