@@ -68,6 +68,7 @@ import { buildDiscoveryProjectionFromState } from "./build-projection";
 import type {
   ProjectionAuthoritySurface,
   ProjectionFieldAuthority,
+  ProjectionFieldConfirmation,
   ProjectionFieldResponse,
   RequestDiscoveryProjection,
 } from "./types";
@@ -209,6 +210,39 @@ export function projectionAnswerChannel(
   return out;
 }
 
+/**
+ * BİR CEVABIN DETERMİNİSTİK İMZASI (D3f Dilim 3e, 2026-08-28).
+ *
+ * Onay damgası anahtar varlığına bağlanamaz: bir alan için verilmiş eski bir
+ * onay, o alanın SONRADAN DEĞİŞMİŞ cevabını taze gösterirdi. Damga bu yüzden
+ * cevabın kendisine bağlanır ve cevap değiştiğinde kendiliğinden geçersiz
+ * olur.
+ *
+ * HAM DEĞER TAŞINMAZ. İmza tek yönlü ve deterministiktir; kullanıcının
+ * yazdığı şehir ya da bütçe metni metadata kanalına kopyalanmaz. Kriptografik
+ * bir güvence amaçlanmaz — burada sorulan tek soru "bu, onaylanan cevabın ta
+ * kendisi mi?"dir; bu yüzden Node'a bağlı olmayan saf ve taşınabilir bir
+ * karma kullanılır (istemci ve sunucu aynı sonucu üretmelidir).
+ */
+export function answerSignature(input: {
+  key: string;
+  mode: FieldValueKind;
+  value?: string | null;
+}): string {
+  /* Değer taşımayan modda değer YOK sayılır: etiket cevabın kendisi değildir. */
+  const value =
+    input.mode === "VALUE"
+      ? (input.value ?? "").trim().toLocaleLowerCase("tr-TR")
+      : "";
+  const material = `${input.key}|${input.mode}|${value}`;
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < material.length; index++) {
+    hash ^= material.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `v1:${hash.toString(16).padStart(8, "0")}`;
+}
+
 export type ServerFieldAuthorityInput = {
   /** İstemciden gelen, parse edilmiş projection. Değerleri korunur. */
   projection: RequestDiscoveryProjection | null | undefined;
@@ -219,6 +253,12 @@ export type ServerFieldAuthorityInput = {
    * Yoksa (clone) yalnız metin türetimi kullanılır.
    */
   answers?: Record<string, ProjectionAnswer> | null | undefined;
+  /**
+   * Kullanıcının BU yazma işleminde gerçekten onayladığı anahtarlar
+   * (`confirmedFieldKeys`). Yalnız bunlar onay damgası kazanır: bir cevabın
+   * sadece yeniden gönderilmiş olması onu taze YAPMAZ.
+   */
+  confirmedKeys?: readonly string[] | null;
 };
 
 /**
@@ -382,12 +422,43 @@ export function resolveServerFieldAuthority(
     fieldResponses[key] = { kind: answer.mode, authority: responseAuthority };
   }
 
+  /**
+   * ONAY DAMGALARI — İSTEMCİ KOPYASI ATILIR (D3f Dilim 3e).
+   *
+   * Damga "kullanıcı bu cevabı bu kayıtta onayladı" der ve tazelik kararının
+   * tek kalıcı girdisidir; uydurulabilir olsaydı bayat bir cevap taze
+   * görünürdü. Bu yüzden `fieldAuthority` / `fieldResponses` ile aynı muamele:
+   * gelen kopya tamamen atılır ve YALNIZ sunucunun doğruladığı cevap
+   * kanalından, GERÇEKTEN onaylanmış anahtarlar için yeniden türetilir.
+   *
+   * Damga cevabın imzasına bağlanır: cevap değişirse eski onay geçersizdir.
+   */
+  const fieldConfirmations: Record<string, ProjectionFieldConfirmation> = {};
+  const confirmedKeys = new Set(
+    (input.confirmedKeys ?? []).filter((key) => typeof key === "string"),
+  );
+  for (const [key, answer] of answers) {
+    if (!confirmedKeys.has(key)) continue;
+    if (!answerKeyIsCanonical(key)) continue;
+    fieldConfirmations[key] = {
+      signature: answerSignature({
+        key,
+        mode: answer.mode,
+        value: answer.value,
+      }),
+    };
+  }
+
   const next: RequestDiscoveryProjection = { ...projection };
   /* Harita boşsa alan HİÇ üretilmez — metadata'sız legacy şekil korunur. */
   delete next.fieldAuthority;
   delete next.fieldResponses;
+  delete next.fieldConfirmations;
   if (Object.keys(fieldAuthority).length) next.fieldAuthority = fieldAuthority;
   if (Object.keys(fieldResponses).length) next.fieldResponses = fieldResponses;
+  if (Object.keys(fieldConfirmations).length) {
+    next.fieldConfirmations = fieldConfirmations;
+  }
   return next;
 }
 
@@ -396,6 +467,23 @@ export function resolveServerFieldAuthority(
  * ------------------------------------------------------------------ */
 
 /** Yazma yollarının ortak, yapısal payload görünümü. */
+/**
+ * KULLANICININ BU YAZMADA ONAYLADIĞI ANAHTARLAR.
+ *
+ * Kaynak, yayın anında zaten taşınan `understanding.confirmedFieldKeys`
+ * listesidir — ikinci bir "dokunuş kaydı" kurulmaz. Bu liste `fields[]` ile
+ * AYNI güven düzeyindedir: ikisi de kullanıcı beyanıdır. Sahte bir onay
+ * anahtarı yalnız o cevabın imzasıyla eşleştiğinde damga üretir ve cevap
+ * değiştiğinde damga kendiliğinden geçersiz olur.
+ */
+function confirmedKeysOf(
+  projection: RequestDiscoveryProjection | null | undefined,
+): string[] {
+  const raw: unknown = projection?.understanding?.confirmedFieldKeys;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((key): key is string => typeof key === "string");
+}
+
 export type ProjectionWriteInput = {
   discoveryProjection?: unknown;
   rawInput?: string | null;
@@ -460,6 +548,7 @@ export function resolveCreateProjection(
         projection: fromClient,
         rawInput: text,
         answers,
+        confirmedKeys: confirmedKeysOf(fromClient),
       }),
       rebuildFailed: false,
     };
@@ -507,6 +596,7 @@ export function resolveUpdateProjection(
       projection: fromClient,
       rawInput: input.rawInput?.trim() || existingRawInput?.trim() || "",
       answers: projectionAnswerChannel(input.fields),
+      confirmedKeys: confirmedKeysOf(fromClient),
     }) ?? undefined
   );
 }

@@ -36,7 +36,12 @@ import {
   type Authority,
 } from "@/lib/request-understanding/provenance";
 
-import type { CanonicalFieldState, FieldProvenance } from "./types";
+import type {
+  CanonicalFieldState,
+  FieldProvenance,
+  FieldValueKind,
+} from "./types";
+import { isFieldValueKind } from "./types";
 
 export type { Authority };
 
@@ -132,6 +137,146 @@ export function isInferenceOnlyAnswer(
  * soru profili karar verir (`allowUnknown` / `allowDontCare`). Bu yardımcı
  * yalnız kararın GİRDİSİNİ yerelleştirilmiş etiketten kanonik moda taşır.
  */
+/* ------------------------------------------------------------------ *
+ * TAZELİK — OTORİTEDEN AYRI EKSEN (D3f Dilim 3e, 2026-08-28)
+ * ------------------------------------------------------------------ */
+
+/**
+ * HATIRLAMAK İLE GÜNCEL VARSAYMAK AYNI ŞEY DEĞİLDİR (kurucu kararı).
+ *
+ * `Authority` "bunu KİM söyledi?" sorusunu cevaplar ve zamanla değişmez:
+ * kullanıcının geçmişte yazdığı değer sonsuza kadar `USER_EXPLICIT`tir, çünkü
+ * bilginin nereden geldiği sorusunun cevabı eskimez.
+ *
+ * `AnswerFreshness` BAŞKA bir soruyu cevaplar: "bu cevap bugün hâlâ onaylı
+ * mı?". Kullanıcı gerçekten söylemiş olabilir ama talep o günden beri
+ * değişmiş olabilir. Bu yüzden bir alan aynı anda `USER_EXPLICIT` VE
+ * `INHERITED` olabilir — bu bir çelişki değil, iki eksendir.
+ *
+ * İkisini tek duruma indirmek, bayat bir bütçeyi ya da teslim tarihini tam
+ * yetkili bir cevap gibi göstererek talebi yanlış firmalara yönlendirirdi;
+ * hata görünmez olurdu, çünkü veriyi gerçekten bir kullanıcı vermiştir.
+ */
+export const ANSWER_FRESHNESS = ["FRESH", "INHERITED"] as const;
+
+export type AnswerFreshness = (typeof ANSWER_FRESHNESS)[number];
+
+/**
+ * Düzenlemenin YÜKLEME BAĞLAMI — sunucudan gelir, istemci üretemez.
+ *
+ * `?yeni=1` gibi bir sorgu parametresi ya da `localStorage` tazelik kanıtı
+ * DEĞİLDİR: ikisi de istemci kontrolündedir ve yenilemede kaybolur. Bağlam
+ * yalnız sunucunun okuduğu talep durumundan ve sunucunun yazdığı onay
+ * damgasından türer.
+ */
+export type AnswerFreshnessContext = {
+  /** Sunucudan okunan `Request.status`. */
+  status: string | null | undefined;
+  /** Sunucunun bu cevap için yazdığı onay imzası (yoksa `null`). */
+  confirmedSignature?: string | null;
+  /** O anki cevabın deterministik imzası. */
+  answerSignature?: string | null;
+};
+
+/**
+ * TAZELİK KARARI — TEK YER, SÜRE EŞİĞİ YOK.
+ *
+ *   - Yayınlanmış / teklif alan bir talep DÜZENLENİYORSA önceki cevaplar
+ *     `INHERITED`tir: canlı bir talebi değiştirmek yeni bir düzenleme
+ *     eylemidir ve eski cevabın hâlâ geçerli olduğu VARSAYILAMAZ.
+ *   - Onay damgası yoksa `INHERITED`tir. Clone damgayı düşürdüğü için
+ *     klonlanan taslak buradan geçer; ayrı bir "clone" bayrağına gerek yoktur
+ *     ve `?yeni=1` hiçbir yerde güven kaynağı olmaz.
+ *   - Damga VARSA ama O ANKİ CEVABA ait değilse `INHERITED`tir: eski bir
+ *     cevaba verilmiş onay, sonradan değişmiş bir cevabı taze yapamaz.
+ *   - Yalnız aynı taslakta, aynı cevaba ait geçerli damga `FRESH` üretir —
+ *     böylece sıradan bir sayfa yenilemesi kullanıcıyı tekrar rahatsız etmez.
+ */
+export function resolveAnswerFreshness(
+  context: AnswerFreshnessContext,
+): AnswerFreshness {
+  if (context.status !== "DRAFT") return "INHERITED";
+  const confirmed = context.confirmedSignature ?? null;
+  const current = context.answerSignature ?? null;
+  if (!confirmed || !current) return "INHERITED";
+  return confirmed === current ? "FRESH" : "INHERITED";
+}
+
+/**
+ * ÖNCEKİ KULLANICI CEVABI — TALEPO TAHMİNİ DEĞİLDİR (D3f Dilim 3e).
+ *
+ * Bu kanal `inferredSuggestion` ile KARIŞTIRILAMAZ: o kanal Talepo'nun kendi
+ * tahminini taşır ve otoritesi `INFERRED`dır. Buradaki kayıt ise kullanıcının
+ * GERÇEKTEN verdiği bir cevaptır; yalnız bu bağlamda henüz yeniden
+ * onaylanmamıştır. İkisini aynı kanaldan göstermek, kullanıcının kendi
+ * sözünü makinenin tahmini gibi sunmak olurdu.
+ *
+ * `confirmed` her zaman `false`tur: onaylanan cevap artık "önceki" değildir,
+ * normal cevap kanalına geçer.
+ */
+export type PreviousAnswer = {
+  kind: FieldValueKind;
+  value: string | null;
+  originalAuthority: Extract<Authority, "USER_EXPLICIT">;
+  freshness: Extract<AnswerFreshness, "INHERITED">;
+  confirmed: false;
+};
+
+/** Kanonik alan durumundan "önceki cevap" kaydı (uygun değilse `null`). */
+export function toPreviousAnswer(
+  field: AnswerLikeField | CanonicalFieldState | null | undefined,
+): PreviousAnswer | null {
+  if (!field) return null;
+  const f = field as AnswerLikeField;
+  const authority = isDeliberateNonValueAnswer(f)
+    ? answerAuthorityOfProvenance((f.provenance ?? null) as FieldProvenance | null)
+    : classifyAnswerAuthority(f);
+  if (authority !== "USER_EXPLICIT") return null;
+  const kind = f.kind;
+  if (!isFieldValueKind(kind)) return null;
+  return {
+    kind,
+    value: f.value == null ? null : String(f.value),
+    originalAuthority: "USER_EXPLICIT",
+    freshness: "INHERITED",
+    confirmed: false,
+  };
+}
+
+/**
+ * DEĞİŞTİRİLEBİLİR ORTAK ALANLAR (kurucu kapsamı, D3f Dilim 3e).
+ *
+ * `title` bilinçli olarak DIŞARIDADIR: otomatik başlık ayrı bir dilimin
+ * konusudur ve başlığın yeniden onaylanması gereken bir "cevap" değildir.
+ * Liste kanonik ortak alan registry'sinden TÜRETİLİR; elle yazılmış dörtlü
+ * bir isim listesi tutulmaz.
+ */
+export function isReconfirmableCommonKey(
+  key: string,
+  commonKeys: readonly string[],
+): boolean {
+  return key !== "title" && commonKeys.includes(key);
+}
+
+/**
+ * KAYDETME KAPISI — ÇÖZÜLMEMİŞ MİRAS CEVAPLAR.
+ *
+ * Kullanıcı başka bir alanı değiştirip kaydederek eski cevabı sessizce taze
+ * yapamaz: her miras cevap için ya "aynı kalsın" demeli ya da yeni bir cevap
+ * vermelidir. Aynı taslağın yenilenmesinde geçerli damga varsa bu kapı hiç
+ * açılmaz (`resolveAnswerFreshness` orada `FRESH` döner).
+ */
+export function unresolvedInheritedKeys(input: {
+  freshnessByKey: Record<string, AnswerFreshness>;
+  resolvedKeys: Iterable<string>;
+}): string[] {
+  const resolved = new Set(input.resolvedKeys);
+  return Object.entries(input.freshnessByKey)
+    .filter(([key, freshness]) => freshness === "INHERITED" && !resolved.has(key))
+    .map(([key]) => key)
+    .sort();
+}
+
 export function isDeliberateNonValueAnswer(
   field: AnswerLikeField | CanonicalFieldState | null | undefined,
 ): boolean {

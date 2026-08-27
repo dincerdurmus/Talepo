@@ -32,6 +32,7 @@ export { isProjectionAuthorityKeyAllowed } from "./validate-filter";
 
 /** Sunucu güven sınırı — istemci `fieldAuthority`'si burada yeniden türetilir. */
 export {
+  answerSignature,
   resolveServerFieldAuthority,
   resolveCreateProjection,
   resolveUpdateProjection,

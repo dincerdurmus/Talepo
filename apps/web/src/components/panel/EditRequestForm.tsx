@@ -50,7 +50,17 @@ import {
   buildPublishUnderstandingSnapshot,
   withUnderstandingSnapshot,
 } from "@/lib/request/publish-understanding";
-import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
+import {
+  answerSignature,
+  buildDiscoveryProjectionFromState,
+} from "@/lib/discovery";
+import {
+  isReconfirmableCommonKey,
+  resolveAnswerFreshness,
+  toPreviousAnswer,
+  unresolvedInheritedKeys,
+  type PreviousAnswer,
+} from "@/lib/request-composer/answer-authority";
 import {
   applyPublishAnswersToState,
   buildPublishAnswerFields,
@@ -79,7 +89,26 @@ export type EditRequestInitial = {
    * durumunu kurmakta TEK kaynaktır. İstemci bunu üretemez.
    */
   fieldAnswers?: Record<string, PublishFieldAnswer>;
+  /**
+   * TAZELİK BAĞLAMI (D3f Dilim 3e) — sunucudan gelir, istemci üretemez.
+   * `status` talebin kendi kaydından, `fieldConfirmations` sunucunun yazdığı
+   * onay damgalarından okunur.
+   */
+  status?: string | null;
+  fieldConfirmations?: Record<string, { signature: string }> | null;
 };
+
+/**
+ * Önceki cevabın kullanıcıya gösterilen karşılığı. Etiket YALNIZ burada,
+ * gösterim sınırında üretilir; kayıt tarafında hiçbir yerelleştirilmiş metin
+ * saklanmaz.
+ */
+function previousAnswerLabel(previous: PreviousAnswer): string {
+  if (previous.kind === "ANY") return "Fark etmez";
+  if (previous.kind === "UNKNOWN") return "Bilmiyorum";
+  if (previous.kind === "NOT_APPLICABLE") return "Uygulanamaz";
+  return previous.value ?? "";
+}
 
 type CommonDraft = {
   title: string;
@@ -106,13 +135,32 @@ export function EditRequestForm({
   const [manualValues, setManualValues] = useState<Record<string, string>>(
     initial.fieldValues,
   );
+  /**
+   * ORTAK ALAN CEVAPLARI GERİ YÜKLENİR (D3f Dilim 3e, 2026-08-28).
+   *
+   * `quantity` ve `delivery` burada sabit boş yazılıydı; kullanıcının verdiği
+   * cevap düzenleme ekranına hiç dönmüyordu. Kaynak, sunucunun veritabanından
+   * okuduğu kanonik cevap haritasıdır — ikinci bir ayrıştırma yazılmaz.
+   * Değer taşımayan cevaplar taslak METNİNE yazılmaz: onların görünümü
+   * yeniden onay kontrolünde üretilir.
+   */
+  const restoredCommonValue = (key: keyof CommonDraft): string => {
+    const answer = initial.fieldAnswers?.[key];
+    return answer?.mode === "VALUE" ? answer.value : "";
+  };
   const [commonDraft, setCommonDraft] = useState<CommonDraft>({
     title: initial.title,
-    quantity: "",
-    city: initial.city ?? "",
-    delivery: "",
-    budget: initial.budget ?? "",
+    quantity: restoredCommonValue("quantity"),
+    city: initial.city ?? restoredCommonValue("city"),
+    delivery: restoredCommonValue("delivery"),
+    budget: initial.budget ?? restoredCommonValue("budget"),
   });
+  /**
+   * "Aynı kalsın" ya da "Değiştir" ile bu oturumda çözülen miras cevaplar.
+   * Çözülmemiş bir miras cevap varken kaydetme kapısı açılmaz.
+   */
+  const [reconfirmedKeys, setReconfirmedKeys] = useState<string[]>([]);
+  const [changingKeys, setChangingKeys] = useState<string[]>([]);
   const [isUrgent, setIsUrgent] = useState(initial.isUrgent);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -168,6 +216,53 @@ export function EditRequestForm({
   const visibleCommonFields = selectedCategory.commonFields.map(
     resolveCommonField,
   );
+
+  /**
+   * MİRAS CEVAPLAR — TAZELİK EKSENİ (D3f Dilim 3e).
+   *
+   * Karar tek kanonik fonksiyondan gelir (`resolveAnswerFreshness`) ve alan
+   * adına özel bir dal içermez: kapsam kanonik ortak alan registry'sinden
+   * türetilir, `title` bilinçli olarak dışarıdadır.
+   */
+  const inheritedCommonAnswers = ((): {
+    key: string;
+    label: string;
+    previous: PreviousAnswer;
+  }[] => {
+    const out: { key: string; label: string; previous: PreviousAnswer }[] = [];
+    const commonKeys = visibleCommonFields.map((field) => field.key);
+    for (const field of visibleCommonFields) {
+      if (!isReconfirmableCommonKey(field.key, commonKeys)) continue;
+      const answer = initial.fieldAnswers?.[field.key];
+      if (!answer) continue;
+      const previous = toPreviousAnswer({
+        kind: answer.mode,
+        value: answer.mode === "VALUE" ? answer.value : null,
+        provenance: "EXPLICIT_BROWSE",
+      });
+      if (!previous) continue;
+      const freshness = resolveAnswerFreshness({
+        status: initial.status,
+        confirmedSignature:
+          initial.fieldConfirmations?.[field.key]?.signature ?? null,
+        answerSignature: answerSignature({
+          key: field.key,
+          mode: answer.mode,
+          value: answer.value,
+        }),
+      });
+      if (freshness !== "INHERITED") continue;
+      out.push({ key: field.key, label: field.label, previous });
+    }
+    return out;
+  })();
+
+  const unresolvedReconfirmKeys = unresolvedInheritedKeys({
+    freshnessByKey: Object.fromEntries(
+      inheritedCommonAnswers.map((item) => [item.key, "INHERITED" as const]),
+    ),
+    resolvedKeys: [...reconfirmedKeys, ...changingKeys],
+  });
   const visibleCommonFieldKeys = new Set(
     visibleCommonFields.map((field) => field.key),
   );
@@ -265,11 +360,61 @@ export function EditRequestForm({
     commonFields: visibleCommonFields,
   });
 
+  /**
+   * "EVET, AYNI KALSIN" — eski cevap YENİ ve açık bir onay kazanır.
+   *
+   * Anahtar `manualValues` üzerinden `userConfirmedFieldKeys` kanalına girer;
+   * sunucu onay damgasını o cevabın imzasına bağlı olarak yeniden türetir.
+   * Değer taşımayan cevapta taslak metnine etiket YAZILMAZ — cevap kanonik
+   * modundan gider.
+   */
+  function keepPreviousAnswer(key: string) {
+    const answer = initial.fieldAnswers?.[key];
+    if (answer?.mode === "VALUE" && answer.value.trim()) {
+      setCommonDraft((current) => ({ ...current, [key]: answer.value }));
+    }
+    setManualValues((current) => ({
+      ...current,
+      [key]: answer?.mode === "VALUE" ? answer.value : (current[key] ?? ""),
+    }));
+    setReconfirmedKeys((current) =>
+      current.includes(key) ? current : [...current, key],
+    );
+  }
+
+  /**
+   * "DEĞİŞTİRMEK İSTİYORUM" — eski cevap güncel yayın durumundan ÇIKAR.
+   *
+   * Silinmez: `previousAnswer` olarak görünmeye devam eder. Kullanıcı yeni
+   * bir cevap seçmedikçe hiçbir VALUE / ANY / UNKNOWN / NOT_APPLICABLE
+   * üretilmez ve eski cevap Matching'e güncel cevap gibi gönderilmez.
+   */
+  function changePreviousAnswer(key: string) {
+    setCommonDraft((current) => ({ ...current, [key]: "" }));
+    setManualValues((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+    setChangingKeys((current) =>
+      current.includes(key) ? current : [...current, key],
+    );
+  }
+
   async function saveRequest() {
     if (
       isSaving ||
       missingFields.length > 0 ||
-      realEstateLocationMissing
+      realEstateLocationMissing ||
+      /**
+       * ÇÖZÜLMEMİŞ MİRAS CEVAP KAYDETMEYİ DURDURUR (D3f Dilim 3e).
+       *
+       * Başka bir alanı değiştirip kaydetmek, eski bir bütçeyi ya da teslim
+       * tarihini sessizce TAZE yapamaz: kullanıcı her miras cevap için ya
+       * "aynı kalsın" demeli ya da yeni bir cevap vermelidir. Aynı taslağın
+       * yenilenmesinde geçerli damga varsa bu liste zaten boştur.
+       */
+      unresolvedReconfirmKeys.length > 0
     ) {
       return;
     }
@@ -620,6 +765,64 @@ export function EditRequestForm({
           />
           Acil alıcıyım
         </label>
+
+        {/**
+         * ÖNCEKİ CEVABI YENİDEN ONAYLATMA (D3f Dilim 3e, 2026-08-28).
+         *
+         * Geçmiş cevap gösterilir ama SESSİZCE güncel sayılmaz. Bu kanal
+         * `inferredSuggestion` DEĞİLDİR: orası Talepo'nun kendi tahminini
+         * taşır; buradaki kayıt kullanıcının gerçekten verdiği cevaptır ve
+         * yalnız bu bağlamda yeniden onaylanmamıştır.
+         */}
+        {inheritedCommonAnswers.length > 0 && (
+          <div className="rounded-2xl border border-amber-300/60 bg-amber-50/60 p-4">
+            <p className="text-sm font-semibold text-amber-900">
+              Önceki cevaplarınızı doğrulayalım
+            </p>
+            <ul className="mt-3 space-y-3">
+              {inheritedCommonAnswers.map((item) => {
+                const resolved =
+                  reconfirmedKeys.includes(item.key) ||
+                  changingKeys.includes(item.key);
+                return (
+                  <li key={item.key} className="text-sm text-amber-900">
+                    <p>
+                      {`Daha önce ${item.label.toLocaleLowerCase("tr-TR")} için `}
+                      <strong>
+                        {previousAnswerLabel(item.previous)}
+                      </strong>
+                      {" demiştiniz. Aynı şekilde devam edelim mi?"}
+                    </p>
+                    {resolved ? (
+                      <p className="mt-1 text-xs text-amber-800">
+                        {reconfirmedKeys.includes(item.key)
+                          ? "Aynı kalacak."
+                          : "Yeni cevabınızı aşağıdan girebilirsiniz."}
+                      </p>
+                    ) : (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => keepPreviousAnswer(item.key)}
+                          className="rounded-xl border border-amber-400 px-3 py-1.5 text-xs font-semibold text-amber-900"
+                        >
+                          Evet, aynı kalsın
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => changePreviousAnswer(item.key)}
+                          className="rounded-xl border border-black/15 px-3 py-1.5 text-xs text-black/70"
+                        >
+                          Değiştirmek istiyorum
+                        </button>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         {(missingFields.length > 0 || realEstateLocationMissing) && (
           <div className="relative mt-4 rounded-[18px] border border-[#efb8b0] bg-[#fff1ee] px-4 py-3 text-sm text-[#8b352b]">

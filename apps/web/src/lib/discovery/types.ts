@@ -90,6 +90,25 @@ export type ProjectionFieldResponse = {
 };
 
 /**
+ * BİR CEVABIN ONAY DAMGASI (D3f Dilim 3e, 2026-08-28).
+ *
+ * Tazelik otoriteden ayrı bir eksendir: kullanıcı bir cevabı gerçekten
+ * vermiş olabilir ama o cevap bugün hâlâ onaylı olmayabilir. Bu kayıt
+ * "kullanıcı BU CEVABI bu talep kaydında onayladı" bilgisini taşır.
+ *
+ * ANAHTAR VARLIĞI YETMEZ. Damga, onaylanan cevabın DETERMİNİSTİK İMZASINA
+ * bağlanır; cevap sonradan değişirse eski damga kendiliğinden geçersiz olur.
+ * Böylece bir alan için verilmiş eski bir onay, o alanın YENİ bir cevabını
+ * taze gösteremez.
+ *
+ * HAM DEĞER SAKLANMAZ. İmza tek yönlü ve deterministiktir; kullanıcının
+ * yazdığı metin (şehir, bütçe) bu metadata kanalına kopyalanmaz.
+ */
+export type ProjectionFieldConfirmation = {
+  signature: string;
+};
+
+/**
  * Stabil seller-facing projection persisted on Request.
  * Source of truth remains understandRequest() / CanonicalRequestState at publish.
  */
@@ -164,6 +183,17 @@ export type RequestDiscoveryProjection = {
    * (`fields[]` → kanonik `mode`) yeniden türetilir.
    */
   fieldResponses?: Record<string, ProjectionFieldResponse>;
+  /**
+   * CEVAP ONAY DAMGALARI (D3f Dilim 3e) — additive ve OPSİYONEL. Alanı
+   * olmayan eski kayıtlar geçerlidir; `discoveryProjection` bir JSON
+   * kolonudur, migration GEREKMEZ.
+   *
+   * `fieldAuthority` / `fieldResponses` ile AYNI güven modeli: istemcinin
+   * gönderdiği kopya tamamen atılır ve yalnız sunucunun doğruladığı cevap
+   * kanalından yeniden türetilir. Clone bu alanı DÜŞÜRÜR — kopyalamak, hiç
+   * verilmemiş bir onayı üretmek olurdu.
+   */
+  fieldConfirmations?: Record<string, ProjectionFieldConfirmation>;
   /** Reuse Phase 2 match contract shape. */
   matchContract: ConstraintMatchContract;
   /** Reuse Phase 2 filter contract shape. */

@@ -6,6 +6,7 @@ import {
 } from "@/components/panel/EditRequestForm";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
+import { parseDiscoveryProjection } from "@/lib/discovery";
 import { restoredFieldAnswers } from "@/server/request/mapper";
 import { canEditRequestStatus } from "@/server/request/update-request";
 
@@ -76,6 +77,18 @@ export default async function EditMyRequestPage({
     categorySlug: request.category.slug,
     fieldValues,
     fieldAnswers,
+    /**
+     * TAZELİK BAĞLAMI — SUNUCUDAN GELİR (D3f Dilim 3e, 2026-08-28).
+     *
+     * `?yeni=1` gibi bir sorgu parametresi tazelik kanıtı DEĞİLDİR: istemci
+     * kontrolündedir ve yenilemede kaybolur. Bağlam yalnız sunucunun okuduğu
+     * talep durumundan ve sunucunun yazdığı onay damgasından türer; bozuk
+     * kayıt fail-closed olarak damgasız okunur.
+     */
+    status: request.status,
+    fieldConfirmations:
+      parseDiscoveryProjection(request.discoveryProjection)
+        ?.fieldConfirmations ?? null,
   };
 
   return (
