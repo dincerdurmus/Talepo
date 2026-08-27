@@ -390,6 +390,14 @@ taşınmaz" der.)
 > doğrulayıcı `%23` üretmediği için yüzde değişmedi; kazanım "kullanıcı-cevabı
 > yayın kanalı kapandı" olarak kaydedildi.
 
+> **`Pro hattı %22` YERİNE GEÇTİ / SUPERSEDED (`7aa6990`, 2026-08-27).** Bu
+> tabanda (ve `eb317dc` ile belgeye geçen kayıtta) güvenilir marka `15/108`
+> sayılıyordu, çünkü `snapshot.attributes.brandEvidence` **anahtarının
+> varlığı** güven sayılıyordu ve Talepo'nun kendi `INFERRED` çıkarımı da
+> trusted oluyordu. Ölçüm tarihsel kayıt olarak korunur; **artık geçerli
+> readiness otoritesi DEĞİLDİR.** Geçerli değer: güvenilir marka `7/108`,
+> Pro **≈%21** — bkz. **H9**.
+
 **H8 — Talepo'nun kendi kanıtı kullanıcı attribute'u AD ALANINDA taşınmaz;
 tipli iç kanıt kanalında yaşar ve kaybolmaz.**
 (`111b412`, 2026-08-27 — H7'nin ad alanı tarafındaki tamamlayıcısı. H7 bir
@@ -472,9 +480,69 @@ ad alanında durmasını yasaklar.)
 > teslimatı ölçülmemiştir. Talep beyni **%92**, Pro hattı **%22** — aynı
 > formüllü resmî doğrulayıcı başka sayı üretmediği için yüzdeler oynatılmadı.
 
+> **YUKARIDAKİ SON CÜMLE DÜZELTİLDİ (`7aa6990`, 2026-08-27).** Buradaki `Pro
+> hattı %22` yeniden ölçülmemiş, önceki tabandan kopyalanmıştı. `111b412`'te
+> aynı formüllü resmî doğrulayıcı gerçekte **≈%19** üretiyordu: iç kanıt tipli
+> kanala taşınınca doğrulayıcı eski generic `attributes` yolunu okumaya devam
+> etti ve güvenilir marka sayacını `0/108` gördü. **Ürün gerilemesi değildi**;
+> ≈%19 **BAYAT ÖLÇÜM / YERİNE GEÇTİ** sayılır. Geçerli değer: güvenilir marka
+> `7/108`, Pro **≈%21** — bkz. **H9** ve `KNOWN-BROKEN.md` → `7aa6990` ölçüm
+> tabanı. Tarihsel cümle silinmedi.
+
+**H9 — "Marka kanıtı MEVCUT" ile "marka yönlendirmede GÜVENİLİR" iki ayrı
+metriktir; güven kararı kanonik otorite merdiveninden okunur.**
+(`7aa6990`, 2026-08-27 — H8'in ÖLÇÜM tarafındaki tamamlayıcısı. H8 anahtarın
+nerede durduğunu belirler; H9 o anahtarın hangi düzeyde güven ürettiğini
+belirler.)
+
+> **Kurucu kararı.** `INFERRED` marka kanıtı güvenilir sayılamaz. Yalnız
+> kanonik otorite merdiveninde `VERIFIED` ya da `USER_EXPLICIT` düzeyindeki
+> marka kanıtı trusted sayılır; provenance'ı bilinmeyen eski (legacy) kayıt
+> `UNKNOWN`'dır ve o da trusted değildir. Eşik merdivenin kendisinden okunur
+> (`isAtLeastAuthority(·, "VERIFIED")`); yeni bir rank tablosu, yeni bir
+> "doğrulanmış kaynak" listesi ve ikinci bir provenance enumu KURULMAZ.
+>
+> **Ölçülen kusur.** `BRAND_ROUTABLE_TRUSTED`,
+> `snapshot.attributes.brandEvidence` anahtarının VARLIĞINI güven sayıyordu.
+> Bunun iki ayrı yanlış sonucu vardı: `eb317dc`'de Talepo'nun kendi çıkarımı da
+> trusted sayılıp `15/108` (≈%22, sahte yüksek); `111b412` sonrasında ise D3c-b
+> anahtarı tipli `internalEvidence` kanalına taşıdığı için ölçüm kör kalıp
+> `0/108` (≈%19, sahte düşük). Üçü ayrı ölçümdür ve birbirinin yerine geçmez;
+> `%22` ve `%19` kopyalanmadı, gerçek kodla yeniden ölçüldü.
+>
+> **Ölçülen sonuç (`7aa6990`).** Kanıt kaydı `16/108`; kovalar `UNKNOWN 0` ·
+> `INFERRED 9` · `VERIFIED 7` · `USER_EXPLICIT 0`; güvenilir marka **`7/108`**
+> (`auto-01` · `auto-02` · `auto-03` · `auto-04` · `auto-07` · `auto-08` ·
+> `auto-10`, hepsi katalog zenginleştirmesinden `source: FUTURE_KNOWLEDGE`).
+> `16 → 15` farkı `mach-07`'nin envelope'a marka çıkarmamasından, `15 → 7`
+> farkı 9 kanıtın `INFERRED` olmasından gelir. Ham formül:
+> `100 × ((104/108) + (7/108) + (0/108) + 0 + 0) / 5` = `20.555555555555554`,
+> yuvarlanmış **≈%21**. Talep beyni **%92** (100 × 99/108).
+>
+> **`%21` bütün Talepo'nun hazırlık yüzdesi DEĞİLDİR** — yalnız mevcut beş
+> bileşenli, ölçülen Pro hattı metriğidir.
+>
+> **Kapsam dışı — gizlenmiyor.** Ürün kodu, 108 senaryoluk fixture, senaryo
+> beklentileri ve readiness formülü değişmedi; bu yalnız ölçüm otoritesi
+> düzeltmesidir. KNOWN-OPEN: 9 kayıtta (`tech-02` · `tech-03` · `tech-10` ·
+> `print-07` · `appl-04` · `appl-06` · `appl-07` · `mach-03` · `mach-07`) kanıt
+> DEĞERİ `VERIFIED_CATALOG` / `USER_ASSERTED` anlamı taşırken kaydın kendi
+> `source`'u `DETERMINISTIC_INFERENCE`; mevcut merdivende `INFERRED` oldukları
+> için trusted sayılmadılar, **ürün kodu bu turda düzeltilmedi ve bu 9 kayıt
+> güvenilir ilan edilmedi.** `REQUEST_BRAIN` ile Pro metriğinin `NOT_MEASURED`
+> payda yaklaşımı farklıdır ve bu ayrı bir ölçüm-politikası kararıdır; bu turda
+> değiştirilmedi. Product routing `0/108`, matching `resolvedEntities` okuması
+> `0`, tedarikçi yetkinliği `0`, canlı bildirim teslimatı **ölçülmemiştir**.
+> Kanıt sınıfı `CODE-VERIFIED`; **tarayıcı ölçümü yapılmadı**; **production
+> deploy yoktur**. Kayıt: `KNOWN-BROKEN.md` → `7aa6990` ölçüm tabanı ve KB-17
+> yedinci yüzey.
+
 **Bunu ne için yapıyoruz?**
 Talepo'nun kendi yazdığı ya da tahmin ettiği hiçbir şey kullanıcının beyanı
-sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin.
+sayılmasın; kullanıcı görmediği bir değerin belirlediği havuza gitmesin. Ve
+ölçüm bunu doğru raporlasın: "markayı gördük" ile "bu markaya güvenip
+firmaları yönlendirebiliriz" yönetim ekranında da, yatırım kararında da
+birbirine karışmasın.
 
 ## 2026-08-26 — Üyelik dönüşünde yayın niyeti sözleşmesi
 

@@ -7,6 +7,161 @@ sorularını cevaplamak zorundadır, yoksa kayıt geçersizdir.
 
 ---
 
+## ÖLÇÜM TABANI — 2026-08-27, `7aa6990` (güvenilir marka kanonik otorite merdiveninden ölçülüyor)
+
+Commit: `7aa6990` — *test(eval): measure trusted brand through typed evidence*
+(parent `8c16147`). **Yalnız ölçüm otoritesi düzeltmesidir**: ürün kodu, 108
+senaryoluk fixture, senaryo beklentileri ve readiness formülü DEĞİŞMEDİ. Bu
+bölüm aşağıdaki `111b412` tabanını silmez; o tabanın **tek bir satırının**
+(`Pro hattı %22`) yerine geçer ve marka güven eksenindeki bütün önceki
+yüzdeleri yürürlükten kaldırır.
+
+```
+npx --yes tsx scripts/verify-readiness-brand-authority-v1.ts   # marka otoritesi (yeni)
+npx --yes tsx scripts/verify-category-coverage-v1.ts           # kapsam + readiness
+```
+
+### İKİ AYRI KAVRAM — bir daha tek sayıya sıkıştırılamaz
+
+| Kavram | Sayaç | Ne demek |
+| --- | --- | --- |
+| **Marka kanıtı MEVCUT** | `BRAND_EVIDENCE_PRESENT = 16/108` | Talepo'nun marka muhasebesinde bir kanıt KAYDI var. Tek başına güven anlamına **GELMEZ**. |
+| **Marka yönlendirmede GÜVENİLİR** | `BRAND_ROUTABLE_TRUSTED = 7/108` | Routing envelope'a marka çıkıyor **VE** kanıt kanonik otorite merdiveninde en az `VERIFIED`. Pro formülüne **YALNIZ bu** girer. |
+
+Güven kararı `request-understanding/provenance.ts` içindeki tek kanonik
+merdivenden okunur (`Authority` / `AUTHORITY_RANK` / `isAtLeastAuthority`;
+`UNKNOWN < INFERRED < VERIFIED < USER_EXPLICIT`). Eşik
+`isAtLeastAuthority(·, "VERIFIED")`. İkinci bir rank tablosu, ikinci bir
+"doğrulanmış kaynak" listesi ve ikinci bir provenance enumu **kurulmadı**.
+
+- **`INFERRED` kayıtlar trusted SAYILMAZ.** Talepo'nun kendi çıkarımı,
+  kullanıcıya doğrulatılmadığı sürece firmalara yönlendirme sinyali değildir.
+- **Provenance'ı olmayan eski (legacy) kayıtlar da trusted SAYILMAZ.** D3c-b
+  öncesi yazılmış snapshot'larda değer `attributes.brandEvidence` içindedir ve
+  otorite bilgisi HİÇ yoktur; uydurulamaz. Kanonik legacy normalizer
+  (`normalizeSnapshotInternalEvidence`) değeri tipli kanala taşır, otoritesi
+  `UNKNOWN` kalır ve `UNKNOWN` güvenilir değildir.
+
+### Ölçülen marka kanıtı evreni — 16 kimlik
+
+```
+BRAND_PRESENT               = 15/108   (envelope'a marka çıkan senaryo)
+BRAND_EVIDENCE_PRESENT      = 16/108   (kanıt kaydı bulunan senaryo)
+BRAND_EVIDENCE_UNKNOWN      = 0
+BRAND_EVIDENCE_INFERRED     = 9
+BRAND_EVIDENCE_VERIFIED     = 7
+BRAND_EVIDENCE_USER_EXPLICIT= 0
+BRAND_ROUTABLE_TRUSTED      = 7/108
+```
+
+Kovalar `BRAND_EVIDENCE_PRESENT`'i tam olarak böler (0 + 9 + 7 + 0 = 16).
+
+**Trusted kimlikler (çift yönlü donduruldu, `missing = 0` · `unexpected = 0`):**
+`auto-01` · `auto-02` · `auto-03` · `auto-04` · `auto-07` · `auto-08` ·
+`auto-10`. Yedisi de katalog zenginleştirmesinden geçer ve kayıt
+`source: FUTURE_KNOWLEDGE` taşır; merdivende `VERIFIED` seviyesindedir.
+
+**16 ≠ 15 ≠ 7 farkı kasıtlıdır.** `mach-07` kanıt taşır ama envelope'a marka
+çıkmaz (16 → 15); kalan 15 markanın 9'unun kanıtı `INFERRED` olduğu için
+yönlendirmede güvenilir sayılmaz (15 → 7).
+
+### ÜÇ AYRI ÖLÇÜM — birbirinin yerine geçmez
+
+| Ölçüm | Commit | Güvenilir marka | Pro | Durum |
+| --- | --- | --- | --- | --- |
+| Tarihsel | `eb317dc` | 15/108 (anahtar **varlığı** trusted sanıldı) | ≈**%22** | **YERİNE GEÇTİ / SUPERSEDED** — geçerli readiness otoritesi DEĞİLDİR |
+| Bayat | `111b412` → `8c16147` | 0/108 (doğrulayıcı eski generic `attributes` yoluna baktı) | ≈**%19** | **BAYAT ÖLÇÜM / YERİNE GEÇTİ** — ürün gerilemesi DEĞİLDİ |
+| Güncel | `7aa6990` | 7/108 (kanonik merdiven) | ≈**%21** | **GEÇERLİ** |
+
+- **≈%22 neden görülüyordu.** Ölçüm, `snapshot.attributes.brandEvidence`
+  anahtarının VARLIĞINI güven sayıyordu. Kural `3f66adb` tabanında yazılmıştı:
+  "routing envelope'a ulaşan HER marka denetlenebilir kanıt etiketi taşıyor".
+  Bu kural Talepo'nun kendi çıkarımını da trusted yapıyordu; sayı sahte olarak
+  yüksekti. **Ölçümün kendisi tarihsel kayıt olarak korunur, silinmez.**
+- **≈%19 neden görüldü.** `111b412` (D3c-b) iç kanıtı tipli `internalEvidence`
+  kanalına taşıdı. Doğrulayıcı hâlâ generic `attributes` yolunu okuduğu için
+  kanıtı hiç göremedi ve sayaç 0'a düştü. **Bu bir ürün gerilemesi değildi**;
+  kör bir ölçüm aracıydı. Bu tabanda gerçek kodla yeniden koşularak ölçüldü:
+  eski yolun gördüğü kanıt `0/108`, tipli kanalınki `16/108`.
+- **≈%21 neden geçerli.** Okuma önce tipli `internalEvidence.brandEvidence`
+  kanalından yapılır, eski kayıtlar için kanonik legacy normalizer aynı kanala
+  taşır, güven kararı merdivenden okunur.
+
+**Tarihsel `%22`, bayat `%19` ve güncel `%21` üç ayrı ölçümdür ve birbirinin
+yerine geçmez.** `%22` ve `%19` bu turda kopyalanmadı — ikisi de gerçek kodla
+yeniden koşularak ölçüldü.
+
+### Güncel readiness — ham formül ve yuvarlama
+
+```
+REQUEST_BRAIN_MEASURED_READINESS ≈ 92
+  formül: 100 × PASS / ölçülen senaryo = 100 × 99 / 108
+
+PRO_END_TO_END_MEASURED_READINESS ≈ 21
+  bileşenler: envelope kategori erişimi 104/108 · GÜVENİLİR marka 7/108 ·
+              ürün türü erişimi 0/108 · matching resolvedEntities okuması 0 ·
+              tedarikçi yeteneği 0 (CAPABILITY_NOT_MEASURED)
+  ham formül: 100 × ((104/108) + (7/108) + (0/108) + 0 + 0) / 5
+  ham değer : 20.555555555555554
+  yuvarlanmış: 21
+```
+
+**`%21` BÜTÜN TALEPO'NUN HAZIRLIK YÜZDESİ DEĞİLDİR.** Yalnız mevcut BEŞ
+bileşenli, **ölçülen** Pro hattı metriğidir. Düşük olması marka düzeltmesinin
+başarısızlığı değildir; product routing, matching entegrasyonu, tedarikçi
+yeteneği ve canlı bildirim bileşenleri hâlâ ölçülmemiş/0 durumdadır. Aynı
+biçimde `%92` de yalnız 108 senaryoluk talep-beyni corpus'unun ölçümüdür.
+
+### Bu tabanda AÇIK kalanlar — kapanmış gösterilmez
+
+- **9 kayıtta kanıt DEĞERİ ile kaydın OTORİTESİ çelişiyor (KNOWN-OPEN).**
+  `tech-02` · `tech-03` · `tech-10` · `print-07` · `appl-04` · `appl-06` ·
+  `appl-07` · `mach-03` · `mach-07` kayıtlarında değer `VERIFIED_CATALOG` ya da
+  `USER_ASSERTED` anlamı taşırken kaydın kendi `provenance` / `source` bilgisi
+  `INFERRED` / `DETERMINISTIC_INFERENCE` olarak yazılmıştır
+  (`understand-request.ts`). Mevcut kanonik merdivende bu kayıtlar `INFERRED`
+  seviyesindedir, bu yüzden **trusted sayılmadılar**. Ölçüm değer dizesinden
+  ikinci bir güven kaynağı türetmez. **Bu turda ürün kodu düzeltilmedi ve bu 9
+  kayıt güvenilir ilan edilmedi.** Doğrulayıcı sayıyı dondurur ve yayınlar
+  (`KNOWN_OPEN_value_claims_more_than_record = 9`).
+- **`REQUEST_BRAIN` ile Pro metriğinin `NOT_MEASURED` payda yaklaşımı
+  FARKLIDIR.** `REQUEST_BRAIN` paydadan `SCENARIO_NOT_MEASURED` düşer; Pro
+  metriği ölçülemeyen bileşeni paydada tutup 0 katkı verir. Bu ayrı bir
+  **ölçüm-politikası kararıdır** ve bu turda değiştirilmedi.
+- **Product routing `0/108`** — envelope'a ürün türü çıkmıyor.
+- **Matching `resolvedEntities` okuması `0`**, tedarikçi yetkinliği `0`
+  (`CAPABILITY_NOT_MEASURED`); **canlı bildirim teslimatı ölçülmemiştir.**
+- **Matching V3 hâlâ `SHADOW`** ve canlı fanout'a bağlı değildir.
+- **Production deploy yoktur**; `PRODUCTION-DEPLOYED` iddiası bu tabanda da
+  YOKTUR.
+
+### Korunan ölçümler (`7aa6990`)
+
+```
+readiness brand   : present 16 · unknown 0 · inferred 9 · verified 7 · user_explicit 0 · trusted 7
+coverage          : 99 pass · 9 known_fail · 0 fail
+publish-inference : 85 / 0 / 0 · 23 / 23 / 0
+iç kanıt (D3c-b)  : 36 / 36
+matching golden   : 117 passed · 0 failed
+talep beyni       : %92   (yalnız 108 senaryoluk corpus)
+Pro hattı         : %21   (yalnız ölçülen beş bileşenli hat)
+```
+
+Kapılar: iki deterministik coverage koşusu **byte-birebir aynı**; trusted
+kimlik kümesi fixture ile **çift yönlü** (`missing = 0`, `unexpected = 0`);
+gerçek snapshot üzerinde `INFERRED → VERIFIED` mutasyonu sayacı 7 → 8 çıkardı
+ve geri alınca 7'ye döndü; `VERIFIED → INFERRED` mutasyonu 6'ya düşürdü;
+provenance'sız legacy `VERIFIED_CATALOG` değeri `UNKNOWN` okundu ve trusted
+sayılmadı; `tsc` çıkışı 0; kapsamlı lint 0 hata.
+
+Kanıt sınıfı **`CODE-VERIFIED`**: ölçüm gerçek üretim kurucularıyla yapıldı.
+Bu dilim için **tarayıcı ölçümü YAPILMADI**, yeni `BROWSER-MEASURED` iddiası
+yoktur. **`PRODUCTION-DEPLOYED` DEĞİLDİR.** Bu dilimin kazanımı yüzdeye değil
+şu cümleye kaydedilir: **"markayı gördük" ile "bu markaya güvenip firmaları
+yönlendirebiliriz" artık iki ayrı sayıdır.**
+
+---
+
 ## ÖLÇÜM TABANI — 2026-08-27, `111b412` (iç kanıt kullanıcı attribute'undan ayrıldı)
 
 Commit: `111b412` — *fix(requests): separate internal evidence from user
@@ -199,8 +354,19 @@ invariants        : 121 passed · 2 failed · 1 known_fail  (I22/I23 bilinen kı
 coverage          : 99 pass · 9 known_fail · 0 fail
 matching golden   : 117 passed · 0 failed
 talep beyni       : %92   (yalnız 108 senaryoluk corpus)
-Pro hattı         : %22   (yalnız ölçülen uçtan uca hat)
+Pro hattı         : %22   (yalnız ölçülen uçtan uca hat)   ← BAYAT, bkz. aşağıdaki düzeltme
 ```
+
+> **BU SATIRIN YERİNE GEÇİLDİ (`7aa6990`, 2026-08-27).** Buradaki `Pro hattı
+> %22` yeniden ölçülmemiş, önceki tabandan kopyalanmıştı; aşağıdaki "Yüzdeler
+> oynatılmadı" cümlesi de bu yüzden yanlıştır. Bu commit'te aynı formüllü
+> resmî doğrulayıcı gerçekte **≈%19** üretiyordu: D3c-b iç kanıtı tipli
+> `internalEvidence` kanalına taşıdıktan sonra doğrulayıcı eski generic
+> `attributes` yolunu okumaya devam etti ve güvenilir marka sayacını `0/108`
+> gördü. **Bu bir ürün gerilemesi değildi**, kör bir ölçüm aracıydı ve ≈%19 de
+> ≈%22 gibi **BAYAT ÖLÇÜM / YERİNE GEÇTİ** sayılır. Geçerli değer `7aa6990`
+> tabanındadır: güvenilir marka `7/108`, Pro **≈%21**. Bu satır tarihsel kayıt
+> olarak silinmeden bırakılmıştır.
 
 Kanıt sınıfı **`CODE-VERIFIED`**: ölçüm gerçek üretim kurucularıyla yapıldı; bu
 dilim için **tarayıcı ölçümü YAPILMADI**, yeni `BROWSER-MEASURED` iddiası
@@ -287,7 +453,17 @@ yapıldı; bu düzeltme için ayrıca tarayıcı ölçümü YAPILMADI, yeni
 
 **`REQUEST_BRAIN_MEASURED_READINESS ≈ %92`** — değişmedi (100 × 99/108, yalnız
 corpus). **`PRO_END_TO_END_MEASURED_READINESS ≈ %22` — değişmedi**: aynı
-formüllü resmî doğrulayıcı `%23` üretmediği için yüzde oynatılmadı. Bu dilimin
+formüllü resmî doğrulayıcı `%23` üretmediği için yüzde oynatılmadı.
+
+> **YERİNE GEÇTİ / SUPERSEDED (`7aa6990`, 2026-08-27).** Bu tabandaki (ve
+> `eb317dc` ile belgeye geçen) `≈%22`, güvenilir markayı `15/108` sayan
+> ölçümdür: `snapshot.attributes.brandEvidence` **anahtarının varlığı** güven
+> sayılıyordu, bu yüzden Talepo'nun kendi `INFERRED` çıkarımı da trusted
+> oluyordu. Ölçüm tarihsel kayıt olarak korunur; **artık geçerli readiness
+> otoritesi DEĞİLDİR.** Geçerli değer: güvenilir marka `7/108`, Pro **≈%21**
+> (bkz. bu belgenin başındaki `7aa6990` ölçüm tabanı).
+
+Bu dilimin
 kazanımı yüzdeye değil şu cümleye kaydedilir: **kullanıcı-cevabı yayın kanalı
 kapandı** — onaysız çıkarım artık `fieldValues` içinde kullanıcı beyanı gibi
 görünmüyor.
@@ -1012,6 +1188,15 @@ denetlenebilir kanıt etiketi taşıyor (`VERIFIED_CATALOG` ya da
 kaybı: **0** ("eufy marka bebek arabası" küçük harfe rağmen USER_ASSERTED
 çözülüyor; sözdizimsiz "Nordex klima" tasarım gereği yalnız CANDIDATE
 kalır ve metinden silinmez).
+
+> **BU KURAL YERİNE GEÇTİ / SUPERSEDED (`7aa6990`, 2026-08-27).** Yukarıdaki
+> "routing envelope'a ulaşan HER marka denetlenebilir kanıt etiketi taşıyor"
+> cümlesi, `BRAND_ROUTABLE_TRUSTED`'ın **anahtar varlığıyla** sayılmasının
+> kaynağıdır ve Talepo'nun kendi `INFERRED` çıkarımını da trusted yapıyordu.
+> Kanıtın MEVCUT olması ile yönlendirmede GÜVENİLİR olması **iki ayrı
+> metriktir**; güven kanonik otorite merdiveninden okunur. Tarihsel ölçüm
+> silinmedi; **artık geçerli readiness otoritesi DEĞİLDİR.** Geçerli değer:
+> `BRAND_EVIDENCE_PRESENT = 16/108`, `BRAND_ROUTABLE_TRUSTED = 7/108`.
 
 **`REQUEST_BRAIN_MEASURED_READINESS ≈ %84`** — bu, YALNIZ 108 senaryoluk
 talep-beyni corpus'unun ölçümüdür (formül: 100 × 91/108; KNOWN_FAIL paya
@@ -1815,11 +2000,11 @@ alındı ve dördü birden PASS oldu.
 | Katman | Besteci alan durumu → soru otoritesi (`build-state` / `resolveHybridQuestions`) |
 | Sınıf | **GERÇEK ÜRÜN HATASI** — sessiz varsayım; kullanıcı göremediği bir değerin belirlediği havuza gider |
 | Kırık kontrol | `scripts/verify-question-suppression-authority-v1.ts` → `high_risk_silent_suppression` (`FULL_QUEUE`) |
-| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) |
+| Kapanış kontrolü | `scripts/verify-inference-question-authority-v2.ts` (kayıt kimliği düzeyinde) · `scripts/verify-inference-confirmation-priority-v1.ts` (üç yüzey: `next` / `candidates` / nihai render) · `scripts/verify-publish-inference-authority-v1.ts` (yayın kanalı) · `scripts/verify-snapshot-internal-evidence-v1.ts` (iç kanıt ad alanı + eski kayıt okuma sınırı) · `scripts/verify-readiness-brand-authority-v1.ts` (ölçüm otoritesi: güvenilir marka) |
 | Ne zamandan beri | **ÖLÇÜLMEDİ** (bisect yapılmadı) |
 | Tespit | 2026-08-25, KB-15 dilimi sırasında ölçülür hâle geldi |
 | Yeniden üretilebilir ölçüm | 2026-08-26 (D1) — önceki ölçümün aracı repoda kayıtlı değildi |
-| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412` ile kapandı; etiket ekseni, generic projection ekseni ve ölçülemeyenler AÇIK** |
+| Durum | **KISMEN ÇÖZÜLDÜ — `FULL_QUEUE` 20 kayıt `3d5b2a5`, `FIRST_SCREEN` ve nihai render yüzeyi `b12ce53`, kullanıcı-cevabı yayın kanalı `83be90b`, iç kanıt ad alanı ve eski kayıt okuma sınırı `111b412`, ölçüm otoritesi yüzeyi `7aa6990` ile kapandı; etiket ekseni, generic projection ekseni ve ölçülemeyenler AÇIK** |
 
 ### Ölçülen çekirdek KAPANDI — 20 kayıt, kimlikleriyle (`3d5b2a5`)
 
@@ -1943,6 +2128,39 @@ inceleme sırasında yakalanan çıplak-projection sessiz kaybı da kapatıldı
 −8 `attributeHit`, iki `NEAR → REVIEW`) ve doğrulayıcı için bu belgenin
 başındaki **`111b412` ölçüm tabanı** bölümüne bakın. Ürün kararı:
 `11-DECISION-LOG.md` → **Karar H, H8**.
+
+### ÖLÇÜM otoritesi yüzeyi de KAPANDI (`7aa6990`, 2026-08-27)
+
+**Yeni KB açılmadı.** Bu bulgu da KB-17'nin kök nedeninin aynısıdır —
+Talepo'nun kendi çıkarımı kullanıcı/katalog düzeyinde otorite gibi davranıyor —
+yalnız YEDİNCİ bir yüzeyde görülmüştür: **readiness ölçüm aracının kendisinde.**
+`BRAND_ROUTABLE_TRUSTED`, `snapshot.attributes.brandEvidence` **anahtarının
+varlığını** güven sayıyordu; böylece `INFERRED` marka kanıtı da "firmalara
+güvenle yönlendirilebilir marka" olarak sayılıyor ve Pro hazırlığı sahte olarak
+yüksek çıkıyordu (`15/108`, ≈%22). İsim benzerliğiyle değil kök nedenle
+eşleştiği için kayıt yine genişletildi.
+
+Bu yüzey bir **ölçüm** yüzeyidir; kullanıcının gördüğü davranışı değiştirmez.
+Bu yüzden kaydın `KISMEN ÇÖZÜLDÜ` durumu ve açık eksenleri **değişmedi** —
+kapanan şey, kaydın kendi ilerlemesini yanlış raporlayan sayaçtır.
+
+Ölçüm ve kapanış: güven kararı artık kanonik merdivenden okunur
+(`Authority` / `AUTHORITY_RANK` / `isAtLeastAuthority`; eşik `VERIFIED`).
+108 senaryoda kanıt kaydı **16**, kovalar `UNKNOWN 0 · INFERRED 9 · VERIFIED 7 ·
+USER_EXPLICIT 0`, güvenilir marka **7/108**, Pro **≈%21**. `INFERRED` ve
+provenance'sız legacy kayıtlar trusted sayılmaz. Ayrıntı, kimlik listesi ve üç
+ölçümün (`≈%22` / `≈%19` / `≈%21`) uzlaştırması için bu belgenin başındaki
+**`7aa6990` ölçüm tabanı** bölümüne bakın. Ürün kararı:
+`11-DECISION-LOG.md` → **Karar H, H9**.
+
+**AYRI KÖK NEDEN — karıştırılmasın.** Aynı düzeltmede ortaya çıkan iki başka
+bulgu KB-17'nin kök nedeni DEĞİLDİR ve bu kayda yazılmaz:
+(a) doğrulayıcının D3c-b sonrası eski generic `attributes` yolunu okumaya devam
+etmesi bir **bayat ölçüm aracı** sorunudur, çıkarım otoritesi sorunu değil;
+(b) 9 kayıtta kanıt değerinin `VERIFIED_CATALOG` derken kaydın kendi
+`source`'unun `DETERMINISTIC_INFERENCE` yazılması, otoritenin **eksik
+kaydedilmesidir** — çıkarımın fazla güvenilmesi değil. İkisi de `7aa6990`
+tabanında KNOWN-OPEN olarak kayıtlıdır.
 
 **Kapanış ölçüsü #3 (etiket ekseni) hâlâ AÇIK** — `provenance_mismatch = 69`
 bu dilimde ele alınmadı; generic projection'da kalan **56** `INFERRED` kimlik
