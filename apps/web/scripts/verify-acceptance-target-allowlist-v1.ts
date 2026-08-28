@@ -8,7 +8,7 @@
  * Run from apps/web:
  *   npx --yes tsx scripts/verify-acceptance-target-allowlist-v1.ts
  */
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { join } from "node:path";
 
@@ -274,6 +274,118 @@ async function main(): Promise<void> {
     /await import\(\s*["']\.\/lib\/load-acceptance-env["']\s*\)/.test(devSrc) &&
       devSrc.indexOf("load-acceptance-env") < devSrc.indexOf("spawn("),
     "the canonical target guard does not run before the dev server is spawned",
+  );
+
+  console.log("\nG. Prisma CLI wrapper boundary");
+  const prismaWrapperPath = join(SCRIPTS_DIR, "run-acceptance-prisma-v1.ts");
+  let prismaWrapper: typeof import("./run-acceptance-prisma-v1") | null = null;
+  try {
+    prismaWrapper = await import("./run-acceptance-prisma-v1");
+    check("G0-wrapper-imports-without-env-file", true, "");
+  } catch (error) {
+    check(
+      "G0-wrapper-imports-without-env-file",
+      false,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  if (prismaWrapper) {
+    const w = prismaWrapper;
+    const parsed = (argv: string[]): { ok: boolean; action?: string; apply?: boolean } => {
+      try {
+        return { ok: true, ...w.parseAcceptancePrismaAction(argv) };
+      } catch {
+        return { ok: false };
+      }
+    };
+
+    const status = parsed(["status"]);
+    check("G1-status-allowed", status.ok && status.action === "status", "status was refused");
+    check("G2-deploy-without-apply-refused", !parsed(["deploy"]).ok, "deploy ran without --apply");
+    const deployApply = parsed(["deploy", "--apply"]);
+    check(
+      "G3-deploy-with-apply-allowed",
+      deployApply.ok && deployApply.action === "deploy" && deployApply.apply === true,
+      "deploy --apply was refused",
+    );
+    const forbidden = [
+      ["dev"],
+      ["reset"],
+      ["resolve", "--applied", "x"],
+      ["db", "push"],
+      ["db", "pull"],
+      ["generate"],
+      [],
+      ["status", "--force"],
+    ];
+    const accepted = forbidden.filter((argv) => parsed(argv).ok).map((argv) => argv.join(" "));
+    check(
+      "G4-destructive-and-unknown-actions-fail-closed",
+      accepted.length === 0,
+      `accepted: ${accepted.join(" | ")}`,
+    );
+
+    const childEnv = w.buildAcceptancePrismaEnv(
+      {
+        PATH: "/usr/bin",
+        DATABASE_URL: "postgresql://ambient:leak@db.jgfwofiygnsylaclykkb.supabase.co:5432/postgres",
+        DIRECT_URL: "postgresql://ambient:leak@db.jgfwofiygnsylaclykkb.supabase.co:5432/postgres",
+        NEXTAUTH_SECRET: "ambient-secret",
+      },
+      { DATABASE_URL: poolerUrl(ACCEPT), DIRECT_URL: directUrl(ACCEPT) },
+    );
+    check(
+      "G5-child-env-carries-only-verified-urls",
+      childEnv.DATABASE_URL === poolerUrl(ACCEPT) &&
+        childEnv.DIRECT_URL === directUrl(ACCEPT) &&
+        childEnv.TALEPO_ENVIRONMENT === "acceptance",
+      "ambient DATABASE_URL/DIRECT_URL leaked into the Prisma child process",
+    );
+    check(
+      "G6-child-env-pins-dotenv-to-acceptance-file",
+      typeof childEnv.DOTENV_CONFIG_PATH === "string" &&
+        childEnv.DOTENV_CONFIG_PATH.endsWith(".env.acceptance"),
+      "prisma.config.ts imports dotenv/config; without this pin it can read the ambient .env",
+    );
+    check(
+      "G7-child-env-drops-unrelated-secrets",
+      childEnv.NEXTAUTH_SECRET === undefined,
+      "unrelated secrets were forwarded to the Prisma child process",
+    );
+
+    const dirty = [
+      `Datasource "db": PostgreSQL database "postgres", schema "public" at "aws-0-eu-central-1.pooler.supabase.com:5432"`,
+      `postgresql://postgres.${ACCEPT}:hunter2@aws-0-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true`,
+      `password=hunter2`,
+    ].join("\n");
+    const clean = w.redactPrismaOutput(dirty);
+    check(
+      "G8-output-redacts-url-host-user-password",
+      !/hunter2/.test(clean) &&
+        !/supabase\.(com|co)/.test(clean) &&
+        !/postgresql:\/\//.test(clean) &&
+        !new RegExp(ACCEPT).test(clean),
+      "the wrapper leaked a URL, host, user or password",
+    );
+  }
+
+  const prismaWrapperSrc = existsSync(prismaWrapperPath)
+    ? stripComments(readFileSync(prismaWrapperPath, "utf8"))
+    : "";
+  check(
+    "G9-guard-runs-before-prisma-spawn",
+    prismaWrapperSrc.length > 0 &&
+      /await import\(\s*["']\.\/lib\/load-acceptance-env["']\s*\)/.test(prismaWrapperSrc) &&
+      prismaWrapperSrc.indexOf("load-acceptance-env") < prismaWrapperSrc.indexOf("spawn("),
+    "the canonical target guard does not run before Prisma is spawned",
+  );
+  check(
+    "G10-schema-and-migrations-bound-to-repo-files",
+    existsSync(join(SCRIPTS_DIR, "..", "prisma", "schema.prisma")) &&
+      existsSync(join(SCRIPTS_DIR, "..", "prisma", "migrations")) &&
+      /prisma\.config\.ts/.test(prismaWrapperSrc),
+    "the wrapper does not bind to the repository's schema/migrations authority",
   );
 
   // Ratchet: no script may name a project ref except the canonical guard module.

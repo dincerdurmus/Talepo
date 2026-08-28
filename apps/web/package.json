@@ -16,6 +16,7 @@
     "acceptance:verify-allowlist": "npx --yes tsx scripts/verify-acceptance-target-allowlist-v1.ts",
     "acceptance:verify-cleanup-safety": "npx --yes tsx scripts/verify-acceptance-cleanup-safety-v1.ts",
     "acceptance:verify-target": "npx --yes tsx scripts/verify-acceptance-db-target-v1.ts",
+    "acceptance:migrate-status": "npx --yes tsx scripts/run-acceptance-prisma-v1.ts status",
     "acceptance:seed-personas": "npx --yes tsx scripts/seed-acceptance-personas-v1.ts",
     "acceptance:seed-fixtures": "npx --yes tsx scripts/seed-acceptance-fixtures-v1.ts",
     "acceptance:seed": "npm run acceptance:seed-personas && npm run acceptance:seed-fixtures",
