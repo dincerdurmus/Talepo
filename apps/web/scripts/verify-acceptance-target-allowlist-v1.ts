@@ -388,6 +388,83 @@ async function main(): Promise<void> {
     "the wrapper does not bind to the repository's schema/migrations authority",
   );
 
+  console.log("\nH. Target verifier output redaction");
+  // Printed expressions the target verifier must never emit: they carry target
+  // infrastructure (host, port, database name, ref) or session identity.
+  const FORBIDDEN_VALUES = [
+    "host",
+    "port",
+    "database",
+    "projectRef",
+    "current_user",
+    "current_database",
+  ];
+  /** Only this classifier may consume a forbidden value and print its verdict. */
+  const APPROVED_CLASSIFIER = /^hostType\(([\s\S]*)\)$/;
+
+  /**
+   * Collect the value each console.log/error interpolation would print. A bare
+   * member path (`${meta.host}`) prints the value itself; `${hostType(meta.host)}`
+   * prints a classification and is allowed. Wrapping in any other call is NOT a
+   * way out — the wrapper is unwrapped before the path is judged.
+   */
+  const leakedValues = (source: string): string[] => {
+    const found = new Set<string>();
+    for (const call of source.matchAll(/console\.(?:log|error)\(([\s\S]{0,300}?)\);/g)) {
+      for (const slot of call[1]!.matchAll(/\$\{([^}]*)\}/g)) {
+        let expression = slot[1]!.trim();
+        const classified = APPROVED_CLASSIFIER.exec(expression);
+        if (classified) continue;
+        // Unwrap any other single call so String(meta.host) is still caught.
+        const wrapped = /^[A-Za-z_$][\w$]*\(([^()]*)\)$/.exec(expression);
+        if (wrapped) expression = wrapped[1]!.trim();
+        if (!/^[A-Za-z_$][\w$]*(?:\.[\w$]+)*$/.test(expression)) continue;
+        const last = expression.split(".").pop()!;
+        if (FORBIDDEN_VALUES.includes(last)) found.add(last);
+      }
+    }
+    return [...found];
+  };
+
+  const emitted = leakedValues(targetVerifierSrc);
+  check(
+    "H1-target-verifier-prints-no-target-identity",
+    emitted.length === 0,
+    `still printed: ${emitted.join(", ")}`,
+  );
+
+  const SAFE_LABELS = ["URL_PRESENT", "HOST_TYPE", "SAME_PROJECT", "TARGET CLASSIFICATION"];
+  const missingLabels = SAFE_LABELS.filter((label) => !targetVerifierSrc.includes(label));
+  check(
+    "H2-target-verifier-emits-safe-classification-only",
+    missingLabels.length === 0,
+    `missing safe labels: ${missingLabels.join(", ")}`,
+  );
+
+  check(
+    "H3-error-path-uses-shared-redactor",
+    /redactPrismaOutput/.test(targetVerifierSrc) &&
+      !/replace\(\/postgres/.test(targetVerifierSrc),
+    "the error path keeps its own partial redactor instead of the shared one",
+  );
+
+  // Positive control: prove the leak detector fires on a sample that really leaks.
+  const leakSample = [
+    `console.log(\`DB HOST (DATABASE_URL): \${dbMeta.host}\`);`,
+    `console.log(\`DB PORT (DIRECT_URL): \${directMeta.port}\`);`,
+    `console.log(\`DB NAME: \${directMeta.database}\`);`,
+    `console.log(\`SUPABASE PROJECT REF: \${decision.projectRef}\`);`,
+    `console.log(\`current_user: \${row.current_user}\`);`,
+    `console.error(\`db is \${String(row.current_database)}\`);`,
+  ].join("\n");
+  const caught = leakedValues(leakSample);
+  const missed = FORBIDDEN_VALUES.filter((value) => !caught.includes(value));
+  check(
+    "H4-detector-positive-control",
+    missed.length === 0,
+    `detector missed: ${missed.join(", ")}`,
+  );
+
   // Ratchet: no script may name a project ref except the canonical guard module.
   const CANONICAL = "lib/acceptance-db-target-v1.ts";
   const KNOWN_REFS = [ACCEPT, PRIMARY, "cpeoiqppesacjlyrszrl"];

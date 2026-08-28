@@ -15,6 +15,7 @@ import { Client } from "pg";
 
 import {
   evaluateAcceptanceDbTarget,
+  isRecognisedSupabaseHost,
   parseAcceptancePostgresUrl,
 } from "./lib/acceptance-db-target-v1";
 import {
@@ -22,9 +23,18 @@ import {
   acceptanceEnvFileExists,
   readAcceptanceEnvFile,
 } from "./lib/acceptance-env-file-v1";
+import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+
+const TRANSACTION_POOLER_PORT = "6543";
+const SESSION_POOLER_PORT = "5432";
+
+/** Safe host classification — the address itself is never printed. */
+function hostType(host: string): string {
+  return isRecognisedSupabaseHost(host) ? "RECOGNISED_SUPABASE" : "UNRECOGNISED";
+}
 
 function fail(msg: string): never {
-  console.error(`FAIL — ${msg}`);
+  console.error(`FAIL — ${redactPrismaOutput(msg)}`);
   process.exit(1);
 }
 
@@ -63,19 +73,20 @@ async function main() {
   const dbMeta = parseAcceptancePostgresUrl(env.DATABASE_URL ?? "")!;
   const directMeta = parseAcceptancePostgresUrl(env.DIRECT_URL ?? "")!;
 
-  console.log(`DB HOST (DATABASE_URL): ${dbMeta.host}`);
-  console.log(`DB PORT (DATABASE_URL): ${dbMeta.port}`);
-  console.log(`DB HOST (DIRECT_URL): ${directMeta.host}`);
-  console.log(`DB PORT (DIRECT_URL): ${directMeta.port}`);
-  console.log(`DB NAME: ${directMeta.database || dbMeta.database || "(unknown)"}`);
+  // Only safe classifications are printed. The host, port, database name,
+  // project ref and session identity of the target are deliberately absent:
+  // this output is pasted into reports, and a target's address is not a
+  // classification. Whether the target is the right one is already decided by
+  // the canonical guard above — printing its address adds no verification value.
+  console.log(`DATABASE_URL: URL_PRESENT=yes HOST_TYPE=${hostType(dbMeta.host)}`);
+  console.log(`DIRECT_URL: URL_PRESENT=yes HOST_TYPE=${hostType(directMeta.host)}`);
+  console.log(`SAME_PROJECT: ${dbMeta.projectRef === directMeta.projectRef ? "yes" : "no"}`);
 
-  console.log(`SUPABASE PROJECT REF: ${decision.projectRef}`);
-
-  if (dbMeta.port !== "6543") {
-    console.log("WARN — DATABASE_URL port is not 6543 (expected Transaction Pooler)");
+  if (dbMeta.port !== TRANSACTION_POOLER_PORT) {
+    console.log("WARN — DATABASE_URL is not on the expected transaction pooler port");
   }
-  if (directMeta.port !== "5432") {
-    console.log("WARN — DIRECT_URL port is not 5432 (expected Session Pooler)");
+  if (directMeta.port !== SESSION_POOLER_PORT) {
+    console.log("WARN — DIRECT_URL is not on the expected session pooler port");
   }
 
   // Connect with DIRECT_URL (session) for simple SELECT — read-only.
@@ -102,22 +113,10 @@ async function main() {
     await client.connect();
     console.log("DB CONNECTION: ok");
 
-    const identity = await client.query<{
-      current_database: string;
-      current_user: string;
-      current_schema: string;
-      version: string;
-    }>(
-      `SELECT current_database() AS current_database,
-              current_user AS current_user,
-              current_schema() AS current_schema,
-              version() AS version`,
-    );
-    const row = identity.rows[0]!;
-    console.log(`current_database: ${row.current_database}`);
-    console.log(`current_user: ${row.current_user}`);
-    console.log(`current_schema: ${row.current_schema}`);
-    console.log(`version: ${row.version.split(" ").slice(0, 2).join(" ")}`);
+    // The identity round-trip proves the session works; its values name the
+    // target and the login role, so only the fact that it succeeded is printed.
+    const identity = await client.query<{ ok: number }>(`SELECT 1 AS ok`);
+    console.log(`IDENTITY QUERY: ${identity.rows[0]?.ok === 1 ? "ok" : "unexpected"}`);
 
     const mig = await client.query<{ exists: boolean }>(
       `SELECT EXISTS (
@@ -166,14 +165,12 @@ async function main() {
   console.log(
     "  PRECHECK:  npx --yes tsx scripts/precheck-personal-resource-ownership-v1.ts  (only after acceptance env injected)",
   );
+  console.log("  MIGRATE STATUS:  npm run acceptance:migrate-status");
   console.log(
-    "  MIGRATE STATUS:  node --env-file=.env.acceptance ./node_modules/prisma/build/index.js migrate status",
+    "  MIGRATE DEPLOY:  npx --yes tsx scripts/run-acceptance-prisma-v1.ts deploy --apply",
   );
   console.log(
-    "  MIGRATE DEPLOY:  node --env-file=.env.acceptance ./node_modules/prisma/build/index.js migrate deploy",
-  );
-  console.log(
-    "  (Node --env-file loads .env.acceptance into process env before prisma.config dotenv; verify with migrate status first.)",
+    "  (Always via the wrapper: prisma.config.ts imports dotenv/config, so a plain prisma command reads the ambient .env.)",
   );
 
   console.log("\nSECRETS PRINTED: no");
@@ -181,10 +178,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  const msg = e instanceof Error ? e.message : String(e);
-  // Never echo connection string fragments
-  const safe = msg
-    .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]")
-    .replace(/password[=:]\S+/gi, "password=[redacted]");
-  fail(safe);
+  // fail() applies the shared redactor; driver errors often carry host and user.
+  fail(e instanceof Error ? e.message : String(e));
 });
