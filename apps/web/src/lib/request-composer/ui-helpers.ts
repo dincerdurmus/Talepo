@@ -18,6 +18,7 @@ import { budgetPlaceholderForStrategy } from "@/lib/request-brain/budget-actions
 import type { QuestionCandidate } from "@/lib/request-brain/types";
 import {
   COMMON_FIELD_DEFAULTS,
+  isGeneratedCommonField,
   type DynamicField,
 } from "@/lib/request-category-engine";
 import type { PriceStrategyKey } from "@/lib/price-intelligence/price-strategy-registry";
@@ -1130,6 +1131,8 @@ export function buildPublishAnswerFields(
 
   for (const [key, defaults] of Object.entries(COMMON_FIELD_DEFAULTS)) {
     if (seen.has(key)) continue;
+    /* Üretilen etiket bir cevap değildir — kanala hiç girmez (D3f 3g). */
+    if (isGeneratedCommonField(key)) continue;
     const field = input.canonicalFields?.[key];
     if (!isDeliberateNonValueAnswer(field)) continue;
     const answer = answers[key];

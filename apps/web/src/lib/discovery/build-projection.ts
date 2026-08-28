@@ -9,6 +9,7 @@ import {
   isDeliberateNonValueAnswer,
 } from "@/lib/request-composer/answer-authority";
 import type { CanonicalRequestState } from "@/lib/request-composer/types";
+import { isGeneratedCommonField } from "@/lib/request-category-engine";
 import {
   INTERNAL_EVIDENCE_ATTRIBUTE_KEYS,
   isInternalEvidenceAttributeKey,
@@ -235,6 +236,16 @@ export function buildDiscoveryProjectionFromState(
      * ürün özelliği ne de bir kısıttır — döngü burada biter, böylece aynı
      * anahtar ikinci bir yüzeye YAZILAMAZ.
      */
+    /**
+     * ÜRETİLEN ALAN CEVAP TAŞIMAZ (D3f Dilim 3g, 2026-08-28).
+     *
+     * Başlık gibi üretilen bir etiket için "kullanıcı değer vermedi" kaydı
+     * anlamsızdır: `Request.title` gerçek bir başlık taşırken projection'ın
+     * bunun aksini söylemesi çelişkili bir çift yüzeydir. Karar alan adından
+     * değil kanonik registry yeteneğinden okunur.
+     */
+    if (isGeneratedCommonField(key) && field.kind !== "VALUE") continue;
+
     if (field.kind === "UNKNOWN" || field.kind === "NOT_APPLICABLE") {
       /**
        * Otorite KANONİK MERDİVENDEN türetilir, elle yazılmaz. Yüzey yalnız

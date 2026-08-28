@@ -56,6 +56,7 @@
 import {
   COMMON_FIELD_DEFAULTS,
   getCategoryById,
+  isGeneratedCommonField,
 } from "@/lib/request-category-engine";
 import {
   createTextOnlyState,
@@ -149,7 +150,15 @@ const AUTHORITY_SURFACES: readonly ProjectionAuthoritySurface[] = [
 function canonicalAnswerKeyGuard(
   categoryId: string | null | undefined,
 ): (key: string) => boolean {
-  const allowed = new Set<string>(Object.keys(COMMON_FIELD_DEFAULTS));
+  /**
+   * Üretilen etiketler (başlık) alan evrenine GİRMEZ: onlar cevap alanı
+   * değildir ve istemci bir cevap gönderse bile fail-closed düşer (D3f 3g).
+   */
+  const allowed = new Set<string>(
+    Object.keys(COMMON_FIELD_DEFAULTS).filter(
+      (key) => !isGeneratedCommonField(key),
+    ),
+  );
   const category = categoryId ? getCategoryById(categoryId) : null;
   for (const field of category?.fields ?? []) allowed.add(field.key);
   return (key: string) =>

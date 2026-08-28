@@ -4,7 +4,10 @@
  */
 
 import type { QuestionCandidate } from "@/lib/request-brain/types";
-import { getCategoryById } from "@/lib/request-category-engine";
+import {
+  getCategoryById,
+  isGeneratedCommonField,
+} from "@/lib/request-category-engine";
 
 import {
   isDeliberateNonValueAnswer,
@@ -338,7 +341,8 @@ export function scheduleNextQuestions(input: {
   }
   for (const c of input.hybridCandidates) keySet.add(c.fieldKey);
   for (const k of commonKeys) {
-    if (k === "title") continue;
+    /* Üretilen etiket soru olarak zamanlanmaz (D3f 3g — kanonik yetenek). */
+    if (isGeneratedCommonField(k)) continue;
     keySet.add(k);
   }
 
@@ -358,7 +362,7 @@ export function scheduleNextQuestions(input: {
   const pending: Pending[] = [];
 
   for (const fieldKey of keySet) {
-    if (fieldKey === "title") continue;
+    if (isGeneratedCommonField(fieldKey)) continue;
     if (
       fieldKey === "city" &&
       input.categoryId === "real-estate" &&

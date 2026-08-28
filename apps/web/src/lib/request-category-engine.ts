@@ -492,11 +492,27 @@ export type CommonFieldConfig = {
 
 export const COMMON_FIELD_DEFAULTS: Record<
   CommonFieldKey,
-  { label: string; placeholder: string }
+  { label: string; placeholder: string; generated?: true }
 > = {
   title: {
     label: "Talep başlığı",
     placeholder: "Örn. 2015 Toyota Corolla",
+    /**
+     * ÜRETİLEN ETİKET — CEVAP ALANI DEĞİL (kurucu kararı, 2026-08-28).
+     *
+     * Başlık kullanıcıya "Bilmiyorum / Fark etmez / Uygulanamaz" diye
+     * sorulmaz; talebin gerçek içeriğinden `composeRequestTitle` ile
+     * üretilir. Kullanıcı elbette KENDİ başlığını yazabilir — yasak olan
+     * DEĞER TAŞIMAYAN bir cevaptır: "kullanıcı kendi başlığını bilmiyor"
+     * kaydı anlamsızdır ve `Request.title` gerçek bir başlık taşırken
+     * çelişkili bir çift yüzey üretir.
+     *
+     * Bu bayrak, soru motorunun zaten uyguladığı gerçeği VERİYE taşır:
+     * `title` hiçbir zaman soru olarak zamanlanmaz. Böylece aynı gerçek
+     * kodda üç ayrı yerde `key === "title"` diye tekrarlanmak yerine tek
+     * kanonik kaynaktan okunur.
+     */
+    generated: true,
   },
   quantity: {
     label: "Miktar",
@@ -525,6 +541,27 @@ export type RequestCategory = {
   commonFields: CommonFieldConfig[];
   fields: DynamicField[];
 };
+
+/**
+ * BU ALAN ÜRETİLEN BİR ETİKET Mİ? (D3f Dilim 3g, 2026-08-28)
+ *
+ * Üretilen alan bir CEVAP alanı değildir: kullanıcıya değer taşımayan bir
+ * seçenek ("Bilmiyorum" / "Fark etmez" / "Uygulanamaz") sunulmaz ve hiçbir
+ * kanalda böyle bir cevap taşıyamaz. Kullanıcının kendi yazdığı DEĞER
+ * elbette geçerlidir.
+ *
+ * Karar tek kanonik kaynaktan — ortak alan registry'sinden — okunur; cevap
+ * taşıyan yolların hiçbiri kendi `key === "title"` istisnasını yazmaz.
+ */
+export function isGeneratedCommonField(key: string): boolean {
+  const defaults = (
+    COMMON_FIELD_DEFAULTS as Record<
+      string,
+      { generated?: true } | undefined
+    >
+  )[key];
+  return defaults?.generated === true;
+}
 
 export function resolveCommonField(
   config: CommonFieldConfig

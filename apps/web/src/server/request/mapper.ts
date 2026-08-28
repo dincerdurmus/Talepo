@@ -1,5 +1,8 @@
 import { FieldType } from "@/generated/prisma/enums";
-import type { CommonFieldKey } from "@/lib/request-category-engine";
+import {
+  isGeneratedCommonField,
+  type CommonFieldKey,
+} from "@/lib/request-category-engine";
 import { isFieldValueKind, type FieldValueKind } from "@/lib/request-composer";
 
 import type { CreateRequestInput, RequestFieldInput } from "./request-schema";
@@ -247,6 +250,14 @@ export function mapFieldValue(field: RequestFieldInput) {
    */
   const mode = isFieldValueKind(field.mode) ? field.mode : undefined;
   if (mode !== undefined && mode !== "VALUE") {
+    /**
+     * ÜRETİLEN ALAN KALICI CEVAP SATIRI KURMAZ (D3f Dilim 3g).
+     *
+     * Başlık gibi üretilen bir etiket için "kullanıcı değer vermedi" satırı
+     * anlamsızdır; istemci gönderse bile fail-closed düşer. Gerçek başlık
+     * DEĞERİ etkilenmez — o aşağıdaki normal yoldan geçer.
+     */
+    if (isGeneratedCommonField(field.key)) return null;
     return { textValue: null, jsonValue: { mode } };
   }
 

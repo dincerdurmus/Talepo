@@ -37,7 +37,10 @@ import {
   resolveUpdateProjection,
 } from "../src/lib/discovery/server-authority";
 import type { RequestDiscoveryProjection } from "../src/lib/discovery/types";
-import { COMMON_FIELD_DEFAULTS } from "../src/lib/request-category-engine";
+import {
+  COMMON_FIELD_DEFAULTS,
+  isGeneratedCommonField,
+} from "../src/lib/request-category-engine";
 import type { CommonFieldKey } from "../src/lib/request-category-engine";
 import {
   buildPublishAnswerFields,
@@ -57,8 +60,24 @@ function ok(id: string, condition: boolean, detail: string): void {
 
 const SCENE_TEXT = "İstanbul'da ikinci el buzdolabı arıyorum, bütçem 15000 TL";
 
-/** Ortak alan evreni KANONİK REGISTRY'den türer — elle liste yazılmaz. */
-const COMMON_KEYS = Object.keys(COMMON_FIELD_DEFAULTS) as CommonFieldKey[];
+/**
+ * Ortak alan evreni KANONİK REGISTRY'den türer — elle liste yazılmaz.
+ *
+ * ÜRETİLEN ALANLAR DIŞARIDADIR (kurucu kararı, 2026-08-28 — D3f Dilim 3g).
+ * Bu doğrulayıcı ilk yazıldığında `title` de cevap taşıyan bir ortak alan
+ * sayılıyordu. Kurucu sonradan başlığın bir CEVAP alanı olmadığına, talebin
+ * içeriğinden ÜRETİLEN bir etiket olduğuna karar verdi. Beklenti bu yüzden
+ * sayacı düşürmek için değil, ÜRÜN KARARI değiştiği için daraltıldı; kapsam
+ * yine tek kanonik yetenekten okunur ve üretilen alanın hiçbir yüzey
+ * üretmediği aşağıda AYRICA ölçülür (bkz. `measureGeneratedFieldsExcluded`).
+ */
+const COMMON_KEYS = Object.keys(COMMON_FIELD_DEFAULTS).filter(
+  (key) => !isGeneratedCommonField(key),
+) as CommonFieldKey[];
+
+const GENERATED_KEYS = Object.keys(COMMON_FIELD_DEFAULTS).filter((key) =>
+  isGeneratedCommonField(key),
+);
 
 function sceneState(): CanonicalRequestState {
   return createTextOnlyState(SCENE_TEXT);
@@ -217,6 +236,36 @@ const MODES: readonly {
     expectServerConstraintMode: null,
   },
 ];
+
+/**
+ * ÜRETİLEN ALAN HİÇBİR YÜZEY ÜRETMEZ — daraltmanın karşıtı.
+ *
+ * Kapsamdan çıkarmak tek başına bir kanıt değildir; çıkarılan alanın
+ * GERÇEKTEN sessiz kaldığı burada ölçülür.
+ */
+function measureGeneratedFieldsExcluded(): void {
+  for (const key of GENERATED_KEYS) {
+    for (const mode of ["UNKNOWN", "NOT_APPLICABLE", "ANY"] as const) {
+      const outcome = outcomeFor(key, {
+        kind: mode,
+        value: null,
+        provenance: "EXPLICIT_BROWSE",
+      });
+      const id = `A-generated:${key}/${mode}`;
+      ok(`${id}/fields`, !outcome.inFields, "üretilen alan cevap kanalına girdi");
+      ok(
+        `${id}/response`,
+        outcome.serverResponse === null,
+        `üretilen alan cevap yüzeyi üretti → ${outcome.serverResponse}`,
+      );
+      ok(
+        `${id}/constraint`,
+        outcome.serverConstraintMode === null,
+        `üretilen alan constraint üretti → ${outcome.serverConstraintMode}`,
+      );
+    }
+  }
+}
 
 function measureCommonFieldMatrix(): void {
   for (const key of COMMON_KEYS) {
@@ -478,6 +527,7 @@ function main(): void {
   console.log("===== ORTAK ALAN CEVAP KANALI V1 =====");
   console.log(`COMMON_KEYS=${COMMON_KEYS.join(",")} (kanonik registry)`);
 
+  measureGeneratedFieldsExcluded();
   measureCommonFieldMatrix();
   measureNoDuplicates();
   measureKeySafety();

@@ -31,6 +31,7 @@
  * daha pahalıdır — yanlış havuza gitmiş bir talep geri alınamaz.
  */
 
+import { isGeneratedCommonField } from "@/lib/request-category-engine";
 import {
   isAtLeastAuthority,
   type Authority,
@@ -255,7 +256,9 @@ export function isReconfirmableCommonKey(
   key: string,
   commonKeys: readonly string[],
 ): boolean {
-  return key !== "title" && commonKeys.includes(key);
+  /* Kapsam kanonik yetenekten türer; `key !== "title"` literali burada
+   * tekrarlanmaz (D3f Dilim 3g). */
+  return !isGeneratedCommonField(key) && commonKeys.includes(key);
 }
 
 /**
