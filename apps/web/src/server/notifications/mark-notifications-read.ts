@@ -19,6 +19,24 @@ export type MarkNotificationsReadOptions = {
    * Actions are free to leave this on.
    */
   revalidate?: boolean;
+  /**
+   * Yazımı yapacak istemci (KB-22 Dilim 1, 2026-08-28).
+   *
+   * Varsayılan tekil Prisma istemcisidir. Enjekte edilebilir olması, sahiplik
+   * ve idempotency sözleşmesinin GERÇEK BİR VERİTABANI OLMADAN ölçülebilmesi
+   * içindir; üretim davranışı değişmez.
+   */
+  db?: NotificationReadClient;
+};
+
+/** Okundu yazımının ihtiyaç duyduğu en dar istemci yüzeyi. */
+export type NotificationReadClient = {
+  notification: {
+    updateMany: (args: {
+      where: Record<string, unknown>;
+      data: Record<string, unknown>;
+    }) => Promise<{ count: number }>;
+  };
 };
 
 /**
@@ -31,7 +49,9 @@ export async function markAllNotificationsAsRead(
 ) {
   const now = new Date();
 
-  const result = await prisma.notification.updateMany({
+  const db = options.db ?? (prisma as unknown as NotificationReadClient);
+
+  const result = await db.notification.updateMany({
     where: {
       userId,
       ...unreadNotificationWhere,
@@ -56,7 +76,9 @@ export async function markNotificationAsRead(
 ) {
   const now = new Date();
 
-  const result = await prisma.notification.updateMany({
+  const db = options.db ?? (prisma as unknown as NotificationReadClient);
+
+  const result = await db.notification.updateMany({
     where: {
       id: notificationId,
       userId,

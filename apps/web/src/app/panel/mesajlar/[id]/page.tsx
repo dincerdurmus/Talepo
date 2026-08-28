@@ -10,7 +10,7 @@ import { isBilateralDealCompleted } from "@/lib/offer/deal-completion";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-import { markConversationAsRead } from "@/server/message/mark-conversation-read";
+import { ConversationReadReceipt } from "@/components/panel/ConversationReadReceipt";
 import { getDealReviewConversationState } from "@/server/offer/deal-review-service";
 import {
   getCompanyTrustSummary,
@@ -80,8 +80,14 @@ export default async function ConversationDetailPage({
 
   if (!participant) notFound();
 
-  await markConversationAsRead(user.id, id);
-
+  /**
+   * RENDER SALT-OKUNURDUR (KB-22 Dilim 1, 2026-08-28).
+   *
+   * Burada eskiden `markConversationAsRead` çağrılıyordu. Sohbet linklerinde
+   * `prefetch` kapalı olmadığı için bir bağlantının ÜSTÜNE GELMEK bile
+   * konuşmayı okundu işaretleyebiliyordu. Yazım artık ekran açıldıktan sonra
+   * `ConversationReadReceipt` bileşeninin çağırdığı yetkili POST'ta yürür.
+   */
   const offerStatus = participant.conversation.offer.status;
   const offerAccepted = offerStatus === "ACCEPTED";
   const { conversation } = participant;
@@ -179,7 +185,9 @@ export default async function ConversationDetailPage({
   });
 
   return (
-    <ConversationShell
+    <>
+      <ConversationReadReceipt conversationId={conversation.id} />
+      <ConversationShell
       conversationId={conversation.id}
       viewerUserId={user.id}
       counterpartLabel={counterpartLabel}
@@ -223,6 +231,7 @@ export default async function ConversationDetailPage({
       dealRole={dealRole}
       dealCompleted={dealCompleted}
       reviewState={reviewState}
-    />
+      />
+    </>
   );
 }

@@ -241,6 +241,7 @@ export default async function MessagesPage() {
               <Link
                 key={conversation.id}
                 href={`/panel/mesajlar/${conversation.id}`}
+                prefetch={false}
                 className={[
                   "talepo-activity-row talepo-activity-row--clickable",
                   unread ? "talepo-activity-row--unread" : "",

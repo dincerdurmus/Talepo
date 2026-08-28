@@ -358,9 +358,17 @@ ok(
  * üretilmesin. Yeni bir kimlik eklenirse doğrulayıcı kırmızı olur; buradaki
  * kimliklerden biri düzeltilirse listeden ÇIKARILMASI gerekir.
  */
+/**
+ * DİLİM 1'DE İKİ KİMLİK GERÇEKTEN KALKTI (2026-08-28).
+ *
+ * `bildirimler/r/[id] → prisma.notification.updateMany` ve
+ * `mesajlar/[id] → prisma.conversationParticipant.updateMany` listeden SAYAÇ
+ * DÜŞÜRMEK için değil, üretimdeki ÇAĞRI kalktığı için çıkarıldı: iki yazım da
+ * artık açık POST sınırında yürüyor (bkz. `verify-read-receipt-boundary-v1`).
+ * `K2-kimlik-kaybolmadi` kapısı bu çıkarmayı ZORUNLU kılar — ölçülmeyen bir
+ * kimliği listede bırakmak doğrulayıcıyı kırmızı yapar.
+ */
 const FROZEN_RENDER_WRITE_IDENTITIES = [
-  "src/app/panel/bildirimler/r/[id]/page.tsx → prisma.notification.updateMany",
-  "src/app/panel/mesajlar/[id]/page.tsx → prisma.conversationParticipant.updateMany",
   "src/app/panel/talepler/page.tsx → prisma.category.upsert",
   "src/app/panel/talepler/page.tsx → prisma.requestMatch.createMany",
 ] as const;
@@ -387,11 +395,12 @@ ok(
  * ------------------------------------------------------------------ */
 
 /* Pozitif: gerçek bir A sınıfı yazım YAKALANMALI. */
+/* Pozitif çıpa, Dilim 1'de kalkan bildirim yazımından hâlâ AÇIK olan
+ * provisioning yazımına taşındı; çıpa düzeltilen bir kimliğe bağlı kalırsa
+ * dedektör sessizce ölçmez olurdu. */
 ok(
   "K3-pozitif-kontrol",
-  findings.some(
-    (finding) => finding.write === "prisma.notification.updateMany",
-  ),
+  findings.some((finding) => finding.write === "prisma.category.upsert"),
   "bilinen A sınıfı yazım yakalanamadı — çağrı grafiği ölçmüyor",
 );
 

@@ -318,6 +318,7 @@ export function OutgoingOfferCard({
       {offer.status === "ACCEPTED" && offer.conversationId ? (
         <Link
           href={`/panel/mesajlar/${offer.conversationId}`}
+          prefetch={false}
           className={`${terminalOrder} mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white`}
         >
           <MessageCircle className="h-3.5 w-3.5" />

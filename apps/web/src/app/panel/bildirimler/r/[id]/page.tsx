@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
 import {
@@ -7,9 +7,9 @@ import {
   parseOwnedRequestDetailPath,
   resolveNotificationDestination,
 } from "@/lib/notifications/destination";
+import { NotificationReadRedirect } from "@/components/panel/NotificationReadRedirect";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-import { markNotificationAsRead } from "@/server/notifications/mark-notifications-read";
 
 export const dynamic = "force-dynamic";
 
@@ -41,23 +41,32 @@ export default async function NotificationRedirectPage({
 
   if (!notification) notFound();
 
-  // No revalidation here: this is a render, and Next.js only allows
-  // revalidation outside renders. The redirect below starts a fresh request,
-  // so the destination re-renders with the updated read state anyway.
-  await markNotificationAsRead(user.id, notification.id, { revalidate: false });
-
+  /**
+   * RENDER SALT-OKUNURDUR (KB-22 Dilim 1, 2026-08-28).
+   *
+   * Burada eskiden `markNotificationAsRead` çağrılıyordu. "Okundu" bir
+   * KULLANICI EYLEMİDİR; sayfanın render edilmesi değildir. Sayfa artık yalnız
+   * bildirimi okur ve GÜVENLİ HEDEFİ SUNUCUDA hesaplar; yazım ekran açıldıktan
+   * sonra istemciden çağrılan yetkili POST'ta yürür ve yönlendirme ancak
+   * BAŞARIDAN SONRA yapılır.
+   */
   const complaintId = complaintIdFromActionUrl(notification.actionUrl);
-  if (complaintId) {
-    redirect(`/panel/bildirimler?sikayet=${encodeURIComponent(complaintId)}`);
-  }
 
-  if (notification.title === "Şikayetiniz güncellendi") {
-    redirect(`/panel/bildirimler?sikayetBildirimi=${encodeURIComponent(notification.id)}`);
-  }
+  const destination = complaintId
+    ? `/panel/bildirimler?sikayet=${encodeURIComponent(complaintId)}`
+    : notification.title === "Şikayetiniz güncellendi"
+      ? `/panel/bildirimler?sikayetBildirimi=${encodeURIComponent(notification.id)}`
+      : await assertDestinationReachable(
+          user.id,
+          resolveNotificationDestination(notification),
+        );
 
-  const destination = resolveNotificationDestination(notification);
-  const reachable = await assertDestinationReachable(user.id, destination);
-  redirect(reachable);
+  return (
+    <NotificationReadRedirect
+      notificationId={notification.id}
+      destination={destination}
+    />
+  );
 }
 
 function complaintIdFromActionUrl(actionUrl: string | null) {
