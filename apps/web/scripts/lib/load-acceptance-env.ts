@@ -1,33 +1,30 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { evaluateAcceptanceDbTarget } from "./acceptance-db-target-v1";
+import { ACCEPTANCE_ENV_PATH, readAcceptanceEnvFile } from "./acceptance-env-file-v1";
 
-const ACCEPTANCE_ENV_PATH = join(__dirname, "..", "..", ".env.acceptance");
-
-/** Load ONLY apps/web/.env.acceptance — never falls back to .env / .env.local. */
+/**
+ * Load ONLY the acceptance env file (no fallback to the ambient dotenv files)
+ * and refuse to hand the process an environment that points anywhere except the
+ * single allowed acceptance project. Every acceptance script imports this file,
+ * so seed and cleanup are guarded here too, not only the read-only verifier.
+ */
 export function loadAcceptanceEnvOnly(): void {
-  if (!existsSync(ACCEPTANCE_ENV_PATH)) {
-    throw new Error(`.env.acceptance missing at ${ACCEPTANCE_ENV_PATH}`);
-  }
+  const values = readAcceptanceEnvFile();
 
   delete process.env.DATABASE_URL;
   delete process.env.DIRECT_URL;
   delete process.env.TALEPO_ENVIRONMENT;
 
-  const raw = readFileSync(ACCEPTANCE_ENV_PATH, "utf8");
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
+  for (const [key, value] of Object.entries(values)) {
     process.env[key] = value;
+  }
+
+  const decision = evaluateAcceptanceDbTarget(process.env);
+  if (!decision.ok) {
+    delete process.env.DATABASE_URL;
+    delete process.env.DIRECT_URL;
+    throw new Error(
+      `acceptance DB target refused (${decision.reason}): ${decision.detail} [${ACCEPTANCE_ENV_PATH}]`,
+    );
   }
 }
 

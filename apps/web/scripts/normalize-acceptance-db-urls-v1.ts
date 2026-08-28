@@ -5,8 +5,9 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { ACCEPTANCE_PROJECT_REF } from "./lib/acceptance-db-target-v1";
+
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
-const TARGET_PROJECT_REF = "cpeoiqppesacjlyrszrl";
 const URL_KEYS = new Set(["DATABASE_URL", "DIRECT_URL"]);
 
 function safeDecodeURIComponent(value: string): string {
@@ -105,8 +106,8 @@ function main() {
     ports[key] = parts.port;
 
     const ref = projectRefFromUser(parts.user);
-    if (ref !== TARGET_PROJECT_REF) {
-      console.error(`FAIL — ${key} project ref mismatch (expected ${TARGET_PROJECT_REF})`);
+    if (ref !== ACCEPTANCE_PROJECT_REF) {
+      console.error(`FAIL — ${key} project ref mismatch (expected ${ACCEPTANCE_PROJECT_REF})`);
       process.exit(1);
     }
 
@@ -132,7 +133,7 @@ function main() {
   console.log(`URLS UPDATED: ${changed > 0 ? changed : "already encoded"}`);
   console.log(`DATABASE_URL PORT: ${ports.DATABASE_URL}`);
   console.log(`DIRECT_URL PORT: ${ports.DIRECT_URL}`);
-  console.log(`TARGET PROJECT REF: ${TARGET_PROJECT_REF}`);
+  console.log(`TARGET PROJECT REF: ${ACCEPTANCE_PROJECT_REF}`);
   console.log("SECRETS PRINTED: no");
 }
 

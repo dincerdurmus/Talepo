@@ -4,7 +4,7 @@
  *
  * Run: npm run acceptance:seed-personas
  */
-import { readFileSync, existsSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import "./lib/load-acceptance-env";
@@ -14,11 +14,10 @@ import {
   ACCEPTANCE_COMPANY,
   ACCEPTANCE_MARKER,
   ACCEPTANCE_TEST_PASSWORD,
-  BLOCKED_PRIMARY_PROJECT_REF,
   PERSONAS,
-  TARGET_PROJECT_REF,
   type PersonaKey,
 } from "./lib/acceptance-personas-v1.constants";
+import { evaluateAcceptanceDbTarget } from "./lib/acceptance-db-target-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
@@ -36,12 +35,13 @@ function assertAcceptanceEnv(): void {
   }
 }
 
-function projectRefFromDirectUrl(): string | null {
-  const direct = process.env.DIRECT_URL?.trim() ?? "";
-  const userMatch = direct.match(/postgres(?:ql)?:\/\/([^:@/]+):/i);
-  const user = userMatch?.[1] ? decodeURIComponent(userMatch[1]) : "";
-  const ref = user.match(/^postgres\.([a-z0-9]+)$/i);
-  return ref?.[1] ?? null;
+/** Re-runs the canonical target guard; never parses the URL a second way. */
+function assertAcceptanceTarget(): string {
+  const decision = evaluateAcceptanceDbTarget(process.env);
+  if (!decision.ok) {
+    fail(`Refusing seed — ${decision.reason}: ${decision.detail}`);
+  }
+  return decision.projectRef;
 }
 
 async function upsertPersona(key: PersonaKey) {
@@ -85,16 +85,11 @@ async function upsertPersona(key: PersonaKey) {
 async function main() {
   assertAcceptanceEnv();
 
-  const projectRef = projectRefFromDirectUrl();
-  if (projectRef === BLOCKED_PRIMARY_PROJECT_REF) {
-    fail("Refusing seed — primary/production project ref detected");
-  }
-  if (projectRef && projectRef !== TARGET_PROJECT_REF) {
-    fail(`Unexpected project ref (expected ${TARGET_PROJECT_REF})`);
-  }
+  // Defence in depth: the env loader already refused any non-acceptance target.
+  const projectRef = assertAcceptanceTarget();
 
   console.log("=== seed-acceptance-personas-v1 ===");
-  console.log(`TARGET PROJECT REF: ${projectRef ?? TARGET_PROJECT_REF}`);
+  console.log(`TARGET PROJECT REF: ${projectRef}`);
   console.log(`MARKER: ${ACCEPTANCE_MARKER}`);
   console.log("SECRETS PRINTED: no");
 

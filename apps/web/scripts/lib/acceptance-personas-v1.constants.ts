@@ -64,5 +64,6 @@ export const PERSONAS: Record<PersonaKey, PersonaSpec> = {
   },
 };
 
-export const BLOCKED_PRIMARY_PROJECT_REF = "jgfwofiygnsylaclykkb";
-export const TARGET_PROJECT_REF = "cpeoiqppesacjlyrszrl";
+// Project refs are deliberately NOT defined here. The single authority is
+// scripts/lib/acceptance-db-target-v1.ts; this file used to carry a second copy
+// that had gone stale and no longer named the acceptance project.

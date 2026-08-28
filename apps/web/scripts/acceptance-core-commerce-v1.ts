@@ -33,8 +33,8 @@ import {
   ACCEPTANCE_COMPANY,
   ACCEPTANCE_MARKER,
   PERSONAS,
-  TARGET_PROJECT_REF,
 } from "./lib/acceptance-personas-v1.constants";
+import { ACCEPTANCE_PROJECT_REF } from "./lib/acceptance-db-target-v1";
 
 const REQUEST_TEXT_1 =
   "140 ekran televizyon arıyorum, marka fark etmez ama Samsung olmasın.";
@@ -43,7 +43,7 @@ const REQUEST_TEXT_2 = "Alfa Romeo 156 için sağ ön far arıyorum.";
 type StepResult = "PASS" | "FAIL" | "SKIP" | "PARTIAL";
 
 const report = {
-  stagingProject: TARGET_PROJECT_REF,
+  stagingProject: ACCEPTANCE_PROJECT_REF,
   productionTouched: false as boolean,
   request1: { id: "", subject: "", projection: false as boolean },
   request2: { id: "", subject: "", compatibility: "" },
@@ -286,7 +286,7 @@ async function main() {
   }
 
   console.log("=== acceptance-core-commerce-v1 ===");
-  console.log(`STAGING PROJECT: ${TARGET_PROJECT_REF}`);
+  console.log(`STAGING PROJECT: ${ACCEPTANCE_PROJECT_REF}`);
   console.log("SECRETS PRINTED: no\n");
 
   const buyerId = await userId("A");

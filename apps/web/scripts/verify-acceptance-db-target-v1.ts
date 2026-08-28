@@ -1,36 +1,36 @@
 /**
- * Read-only Talepo Staging / acceptance DB target verification.
+ * Read-only acceptance DB target verification.
  *
- * Explicitly loads ONLY apps/web/.env.acceptance — never falls back to .env.
+ * Reads ONLY apps/web/.env.acceptance — never falls back to .env — and takes its
+ * accept/reject decision from the canonical guard in
+ * scripts/lib/acceptance-db-target-v1.ts. It keeps no second copy of the project
+ * ref list, the URL parser or the env file parser.
+ *
  * No migrations, no writes, no persona creation.
  *
  * Run from apps/web:
  *   npx --yes tsx scripts/verify-acceptance-db-target-v1.ts
  */
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
 import { Client } from "pg";
 
-const ROOT = join(__dirname, "..");
-const ACCEPTANCE_ENV_PATH = join(ROOT, ".env.acceptance");
-
-/** Known primary/shared Supabase project ref — must NOT be the acceptance target. */
-const BLOCKED_PRIMARY_PROJECT_REFS = new Set(["jgfwofiygnsylaclykkb"]);
-
-const PLACEHOLDER_MARKERS = [
-  "<STAGING_TRANSACTION_POOLER_URI>",
-  "<STAGING_SESSION_POOLER_URI>",
-  "STAGING_TRANSACTION_POOLER_URI",
-  "STAGING_SESSION_POOLER_URI",
-];
+import {
+  evaluateAcceptanceDbTarget,
+  parseAcceptancePostgresUrl,
+} from "./lib/acceptance-db-target-v1";
+import {
+  ACCEPTANCE_ENV_PATH,
+  acceptanceEnvFileExists,
+  readAcceptanceEnvFile,
+} from "./lib/acceptance-env-file-v1";
 
 function fail(msg: string): never {
   console.error(`FAIL — ${msg}`);
   process.exit(1);
 }
 
+/** Read the acceptance env file and apply it, after clearing ambient DB URLs. */
 function loadAcceptanceEnvOnly(): Record<string, string> {
-  if (!existsSync(ACCEPTANCE_ENV_PATH)) {
+  if (!acceptanceEnvFileExists()) {
     fail(`.env.acceptance missing at ${ACCEPTANCE_ENV_PATH}`);
   }
 
@@ -39,102 +39,11 @@ function loadAcceptanceEnvOnly(): Record<string, string> {
   delete process.env.DIRECT_URL;
   delete process.env.TALEPO_ENVIRONMENT;
 
-  const raw = readFileSync(ACCEPTANCE_ENV_PATH, "utf8");
-  const out: Record<string, string> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq <= 0) continue;
-    const key = trimmed.slice(0, eq).trim();
-    let value = trimmed.slice(eq + 1).trim();
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    out[key] = value;
+  const out = readAcceptanceEnvFile();
+  for (const [key, value] of Object.entries(out)) {
     process.env[key] = value;
   }
   return out;
-}
-
-function looksLikePlaceholder(value: string): boolean {
-  const v = value.trim();
-  if (!v) return true;
-  for (const marker of PLACEHOLDER_MARKERS) {
-    if (v.includes(marker)) return true;
-  }
-  if (v.startsWith("<") && v.endsWith(">")) return true;
-  return false;
-}
-
-function safeDecodeURIComponent(value: string): string {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-/** Parse postgres URLs when passwords contain unencoded ? & % (common in Supabase). */
-function parsePostgresUrlRobust(raw: string): {
-  user: string;
-  password: string;
-  host: string;
-  port: string;
-  database: string;
-  projectRef: string | null;
-} {
-  const trimmed = raw.trim();
-  const schemeMatch = trimmed.match(/^postgres(?:ql)?:\/\//i);
-  if (!schemeMatch) fail("Not a postgres URL");
-  const afterScheme = trimmed.slice(schemeMatch[0].length);
-  const atIdx = afterScheme.lastIndexOf("@");
-  if (atIdx < 0) fail("Missing @ in postgres URL");
-  const userinfo = afterScheme.slice(0, atIdx);
-  const hostpart = afterScheme.slice(atIdx + 1);
-  const colonInUser = userinfo.indexOf(":");
-  if (colonInUser < 0) fail("Missing password separator in postgres URL");
-  const user = safeDecodeURIComponent(userinfo.slice(0, colonInUser));
-  const password = safeDecodeURIComponent(userinfo.slice(colonInUser + 1));
-  const qIdx = hostpart.indexOf("?");
-  const authority = qIdx >= 0 ? hostpart.slice(0, qIdx) : hostpart;
-  const slashIdx = authority.indexOf("/");
-  const hostPort = slashIdx >= 0 ? authority.slice(0, slashIdx) : authority;
-  const database =
-    slashIdx >= 0 ? safeDecodeURIComponent(authority.slice(slashIdx + 1)) : "postgres";
-  const lastColon = hostPort.lastIndexOf(":");
-  const host = lastColon >= 0 ? hostPort.slice(0, lastColon) : hostPort;
-  const port = lastColon >= 0 ? hostPort.slice(lastColon + 1) : "5432";
-
-  let projectRef: string | null = null;
-  const pooler = host.match(/^aws-\d+-[a-z0-9-]+\.pooler\.supabase\.com$/i);
-  const direct = host.match(/^db\.([a-z0-9]+)\.supabase\.co$/i);
-  if (direct?.[1]) projectRef = direct[1];
-  const userRef = user.match(/^postgres\.([a-z0-9]+)$/i);
-  if (!projectRef && userRef?.[1]) projectRef = userRef[1];
-  if (!projectRef && pooler) {
-    // cannot derive ref from pooler host alone without user — leave null
-  }
-
-  return { user, password, host, port, database, projectRef };
-}
-
-function safeParsePgUrl(raw: string): {
-  host: string;
-  port: string;
-  database: string;
-  projectRef: string | null;
-} {
-  const parsed = parsePostgresUrlRobust(raw);
-  return {
-    host: parsed.host,
-    port: parsed.port,
-    database: parsed.database,
-    projectRef: parsed.projectRef,
-  };
 }
 
 async function main() {
@@ -144,26 +53,15 @@ async function main() {
 
   const env = loadAcceptanceEnvOnly();
 
-  if (env.TALEPO_ENVIRONMENT !== "acceptance") {
-    fail(`TALEPO_ENVIRONMENT must be "acceptance" (got ${env.TALEPO_ENVIRONMENT ?? "missing"})`);
+  const decision = evaluateAcceptanceDbTarget(env);
+  if (!decision.ok) {
+    fail(`${decision.reason} — ${decision.detail}`);
   }
   console.log("TALEPO_ENVIRONMENT: acceptance");
-
-  const databaseUrl = env.DATABASE_URL?.trim() ?? "";
-  const directUrl = env.DIRECT_URL?.trim() ?? "";
-
-  if (!databaseUrl || !directUrl) {
-    fail("DATABASE_URL and DIRECT_URL are both required in .env.acceptance");
-  }
-  if (looksLikePlaceholder(databaseUrl) || looksLikePlaceholder(directUrl)) {
-    fail(
-      "Placeholders not resolved — fill staging pooler URIs in .env.acceptance before verify",
-    );
-  }
   console.log("PLACEHOLDERS RESOLVED: yes");
 
-  const dbMeta = safeParsePgUrl(databaseUrl);
-  const directMeta = safeParsePgUrl(directUrl);
+  const dbMeta = parseAcceptancePostgresUrl(env.DATABASE_URL ?? "")!;
+  const directMeta = parseAcceptancePostgresUrl(env.DIRECT_URL ?? "")!;
 
   console.log(`DB HOST (DATABASE_URL): ${dbMeta.host}`);
   console.log(`DB PORT (DATABASE_URL): ${dbMeta.port}`);
@@ -171,14 +69,8 @@ async function main() {
   console.log(`DB PORT (DIRECT_URL): ${directMeta.port}`);
   console.log(`DB NAME: ${directMeta.database || dbMeta.database || "(unknown)"}`);
 
-  const projectRef = directMeta.projectRef || dbMeta.projectRef;
-  console.log(`SUPABASE PROJECT REF: ${projectRef ?? "(not derivable from host/user)"}`);
+  console.log(`SUPABASE PROJECT REF: ${decision.projectRef}`);
 
-  if (projectRef && BLOCKED_PRIMARY_PROJECT_REFS.has(projectRef)) {
-    fail(
-      `Target project ref matches known primary/shared project — refusing acceptance verify`,
-    );
-  }
   if (dbMeta.port !== "6543") {
     console.log("WARN — DATABASE_URL port is not 6543 (expected Transaction Pooler)");
   }
@@ -188,7 +80,7 @@ async function main() {
 
   // Connect with DIRECT_URL (session) for simple SELECT — read-only.
   // Use discrete fields so unencoded ? & % in Supabase passwords do not break connectionString parsing.
-  const directCfg = parsePostgresUrlRobust(directUrl);
+  const directCfg = directMeta;
   const client = new Client({
     user: directCfg.user,
     password: directCfg.password,
@@ -260,13 +152,7 @@ async function main() {
       `APPLICATION TABLES EXIST: ${appTablesExist ? `yes (${appTableSample.join(", ")})` : "no"}`,
     );
 
-    const classification =
-      projectRef && !BLOCKED_PRIMARY_PROJECT_REFS.has(projectRef)
-        ? "STAGING_OR_NON_PRIMARY"
-        : projectRef
-          ? "BLOCKED_PRIMARY"
-          : "UNKNOWN_REF_HOST_OK_IF_NOT_PRIMARY";
-    console.log(`TARGET CLASSIFICATION: ${classification}`);
+    console.log("TARGET CLASSIFICATION: ACCEPTANCE_ALLOWLISTED");
     console.log("PRIMARY/PRODUCTION PROJECT USED: no");
     console.log("READ-ONLY QUERIES ONLY: yes");
     console.log("DB WRITE: no");
@@ -277,9 +163,6 @@ async function main() {
   }
 
   console.log("\nSAFE FUTURE COMMANDS (do not run in this phase):");
-  console.log(
-    '  PRECHECK:  npx --yes tsx -e "require(\'dotenv\').config({path:\'.env.acceptance\', override:true})"  → prefer dedicated script',
-  );
   console.log(
     "  PRECHECK:  npx --yes tsx scripts/precheck-personal-resource-ownership-v1.ts  (only after acceptance env injected)",
   );
