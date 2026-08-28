@@ -3228,13 +3228,13 @@ edildi; hiçbir DB yazımı yapılmadı. Ölçüm yerel bir çalışma kopyasın
 **`PRODUCTION-DEPLOYED` DEĞİLDİR** ve hiçbir satır production iddiası taşımaz.
 A–D'nin neden ölçülemediği için bkz. **KB-22**.
 
-## KB-22 — Panel render'ı kalıcı yazım ve bildirim üretiyor (umbrella) — **KISMEN ÇÖZÜLDÜ**
+## KB-22 — Panel render'ı kalıcı yazım ve bildirim üretiyor (umbrella) — **ÇÖZÜLDÜ (kod kapsamında)**
 
 | Alan | Değer |
 | --- | --- |
 | Yol | `apps/web/src/app/panel/layout.tsx:88` → `apps/web/src/server/request/urgent-no-offer-nudge.ts:63,79` |
 | Sınıf | **Yapısal** — render yan etkisi |
-| Bugünkü sonuç | **KISMEN ÇÖZÜLDÜ · BRANCH-WIRED · CODE-VERIFIED** — nudge alt vakası kapandı (`740e9a4`); dört render yazımı kimliği AÇIK |
+| Bugünkü sonuç | **ÇÖZÜLDÜ · BRANCH-WIRED · CODE-VERIFIED** (kod kapsamında; `236e579`). Dört render yazımı kimliğinin dördü de kapandı. **`PRODUCTION-DEPLOYED` DEĞİL**; gerçek DB/tarayıcı **NOT-MEASURED**; Vercel cron plan desteği **doğrulanmadı** |
 | Ne zamandan beri | Ölçülmedi (bisect yapılmadı); bulgu 2026-08-28 tarihli kabul testi hazırlığında kaynak kod denetimiyle çıktı |
 | Sahibi | Talep/panel |
 
@@ -3438,3 +3438,95 @@ npx --yes tsx scripts/verify-panel-render-no-write-v1.ts
 `prefetch={false}` yerleşimi KAYNAK düzeyinde kilitlendi; tarayıcıda DOM
 üzerinde ölçülmedi. POST'ların canlı davranışı ve rozetin gerçekten düşmesi
 `NOT-MEASURED`'dır (bkz. `09-NEXT-PHASE-RECOMMENDATION.md` → acceptance DB).
+
+### KB-22 KAPANIŞ — 2026-08-28, `236e579` (provisioning + backfill kapandı)
+
+Commit: `236e579` — *fix(panel): move supplier provisioning out of render*
+(parent `1c6b35c`). Yukarıdaki `740e9a4` ve `c2d127d` bölümleri **silinmedi**;
+bu bölüm umbrella kaydı kapatır.
+
+**KOD KAPSAMINDA ÇÖZÜLDÜ · `BRANCH-WIRED` · `CODE-VERIFIED`.** Bu ifade
+YALNIZ ölçülen `app/panel/**` çağrı grafiği içindir. **`PRODUCTION-DEPLOYED`
+DEĞİLDİR**, gerçek DB ve tarayıcı kabulü **NOT-MEASURED**'dır ve Vercel
+planının cron desteği **doğrulanmamıştır**.
+
+**ÜÇ KAPANIŞ AŞAMASI (tarihsel commit'leriyle korunur).**
+
+| # | Aşama | Commit | Kapanan kimlikler |
+| --- | --- | --- | --- |
+| 1 | Acil nudge | `740e9a4` | `panel/layout.tsx → processUrgentNoOfferNudges` (`Request.urgentOfferNudgeAt` + `Notification`) |
+| 2 | Okundu işaretleri | `c2d127d` | `bildirimler/r/[id] → prisma.notification.updateMany` · `mesajlar/[id] → prisma.conversationParticipant.updateMany` |
+| 3 | Provisioning + backfill | `236e579` | `talepler → prisma.category.upsert` · `talepler → prisma.requestMatch.createMany` |
+
+Kapanan dört kimlik bu tabloda **silinmeden korunur**; doğrulayıcının
+dondurulmuş listesinden çıkarılmaları sayaç düşürmek için değil, üretimdeki
+ÇAĞRI kalktığı içindir (`K2-kimlik-kaybolmadi` kapısı bunu zorunlu kılar).
+
+**SON AŞAMANIN SÖZLEŞMESİ (uygulandı).**
+
+- `/panel/talepler` render ve prefetch yazımı **0**.
+- Kategori provisioning ayrı **günlük** job: `GET /api/cron/category-provisioning`, `0 3 * * *`.
+- Eşleşme reconciliation ayrı cron: `GET /api/cron/match-backfill`, `*/15 * * * *`.
+- **Anlık backfill** üç gerçek olayda tetiklenir: şirket oluşturma
+  (`create-company.ts`), şirket kategori/yetenek güncellemesi
+  (`api/company/route.ts`) ve admin durum değişikliği
+  (`api/admin/companies/[id]/route.ts`).
+- **`PENDING_VERIFICATION`** şirkete OLUŞTURULURKEN verilir ve reconciliation
+  cron'u tarafından kapsanır. Admin rotası bugün yalnız `ACTIVE`/`SUSPENDED`
+  üretebilir (`COMPANY_STATUSES`); **hayalî bir PENDING yolu üretilmedi** ve
+  test edilmedi. Uygunluk tek kanonik kümeden okunur
+  (`BACKFILL_ELIGIBLE_COMPANY_STATUSES`), rota ikinci bir liste tutmaz.
+- Şirket güncellemesi **yalnız kategori/yetenek** değiştiğinde tetikler; ad,
+  logo gibi profil değişikliği toplu backfill üretmez.
+- Backfill hatası ana şirket mutasyonunu **GERİ ALMAZ**: sabit etiketli,
+  PII/payload taşımayan bir log yazılır ve cron sonraki turda telafi eder.
+- `isActive=false` **korunur** — job admin kararını geri almaz; silme yok.
+- `slug`/`name`/`description`/`sortOrder` drift'i **düzeltilir** (registry
+  kanonik kaynaktır). `syncCompanyCategories` de artık `isActive` yazmaz.
+- Duplicate **0** (`skipDuplicates`), notification **0**, fanout **0**.
+- Matching V3 **SHADOW** değişmez: backfill'in `matching-v3` referansı yoktur
+  ve `MATCHER_MODE = "shadow"` sabiti korunur.
+- 101 uygun eski talep: **100 → 1 → 0**; kalan her turda gerçekten azalır.
+
+**PANEL RENDER ÇAĞRI GRAFİĞİ: A sınıfı 4 → 2 → 0.** Ölçüm import
+ulaşılabilirliği değil ÇAĞRI grafiğidir; bir server action'ı import etmek
+render yazımı sayılmaz. `verify-panel-render-no-write-v1`'in dondurulmuş
+kimlik listesi artık **boştur** ve bir RATCHET olarak çalışır: panelde yeni bir
+render yazımı belirirse doğrulayıcı kırmızı olur.
+
+**Ölçüm.**
+
+```
+npx --yes tsx scripts/verify-supplier-page-no-provisioning-v1.ts
+npx --yes tsx scripts/verify-panel-render-no-write-v1.ts
+```
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| `verify-supplier-page-no-provisioning-v1` | fix öncesi **17 kırmızı** → `PROBLEMS=0`, iki koşuda byte-birebir |
+| `verify-panel-render-no-write-v1` | `PROBLEMS=0`; A sınıfı render yazımı **0**, dondurulmuş kimlik **0** |
+| `verify-read-receipt-boundary-v1` | `PROBLEMS=0` |
+| `verify-urgent-nudge-boundary-v1` | `PROBLEMS=0` |
+| Batch | 101 talep → **100 / 1 / 0**; üç şirketin tamamı işlendi, starvation **0** |
+| Çapraz şirket sızıntısı | **0** |
+| Notification / fanout | **0** |
+| `verify-projection-authority-v1` | 510/510 |
+| `verify-projection-server-authority-v1` | 135/135 |
+| `verify-notifications-v1` | **50/1** — KB-5 açık, **PASS DEĞİL** |
+| `verify-phase3a-discovery-foundation-v1` | **45/1 KIRMIZI** — tarihsel `28 printing leaf`, **PASS DEĞİL** |
+| tsc / scoped lint | 0 / 0 hata |
+| Migration | **YOK** — `@@unique([requestId, companyId])` zaten şemada |
+| Gerçek DB / tarayıcı | **NOT-MEASURED** |
+| Hazırlık | Talep beyni %92 · Pro hattı %21 |
+
+**KNOWN-OPEN (kapanmadı).**
+
+1. `backfillMatchesForAllCompanies` şirket-batch **checkpoint'i olmadan tam
+   tarama** yapar. Eksik-eşleşme yüklemi turu ucuzlatır, ama şirket sayısı
+   büyüdükçe çalışma süresi riski vardır; kalıcı bir checkpoint gerekirse
+   migration kararı ayrıca alınmalıdır.
+2. Vercel planının dakikalık / 15 dakikalık cron desteği **doğrulanmadı**;
+   "production'da cron çalışıyor" denemez.
+3. Gerçek job / DB / tarayıcı kabulü **yok**.
+4. Acceptance DB hedefi (`.env.acceptance`) **yok**.
+5. **KB-5** ve `verify-phase3a` tarihsel kırmızıları **açık**.

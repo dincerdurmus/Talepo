@@ -291,30 +291,32 @@ Kabul ölçütü: A/B/C/D ve save→reload turu gerçek veriye dokunmadan
 ölçülebilir hâle gelir ve `KNOWN-BROKEN.md` tarayıcı kanıtı tablosundaki
 `NOT-MEASURED` satırları `BROWSER-MEASURED-LOCAL` ile değiştirilebilir.
 
-### Sıra (2026-08-28 · `c2d127d` sonrası güncellendi)
+### Sıra (2026-08-28 · `236e579` sonrası güncellendi)
 
-> Önceki sıranın 1. maddesi "KB-22'nin kalan DÖRT render yazımı" idi. İkisi
-> kapandı (`c2d127d` — bildirim okundu, sohbet okundu); madde geriye kalan
-> ikisiyle daraltıldı. Tarihsel kayıt `KNOWN-BROKEN.md` → KB-22 kapanış
-> tablosunda korunur.
+> Önceki sıranın 1. maddesi "KB-22 Dilim 2 — Category provisioning +
+> RequestMatch backfill" idi ve `236e579` ile **kapandı**; madde listeden
+> çıkarıldı. Ondan önceki "kalan DÖRT render yazımı" maddesi de `c2d127d` ile
+> ikiye inmişti. Dört kimliğin tarihsel kaydı `KNOWN-BROKEN.md` → KB-22
+> kapanış tablosunda **korunur**. KB-22 artık kod kapsamında `ÇÖZÜLDÜ`;
+> production/DB/tarayıcı doğrulaması hâlâ yoktur ve sıranın ilk üç maddesi
+> tam olarak o boşluğu kapatır.
 
-1. **KB-22 Dilim 2 — Category provisioning + RequestMatch backfill.**
-   `panel/talepler/page.tsx` render'ında hâlâ koşan iki yazım:
-   `ensureEngineCategories → Category.upsert` ve
-   `backfillMatchesForCompany → RequestMatch.createMany`. Provisioning açık
-   bir onboarding/configuration mutasyonuna, backfill açık bir job/admin
-   sınırına taşınır. Bu önce gelir: bu yazımlar durdukça panelde salt-okunur
-   bir kabul turu yapmak mümkün değildir.
-2. **Acceptance DB provisioning** — `.env.acceptance` ve ayrı, güvenli bir
-   acceptance/staging veritabanı. Doğrulayıcı/seed/normalizer script'leri
-   hazır; eksik olan yalnız hedeftir.
-3. **A–D tarayıcı kabulü + gerçek save→reload turu + okundu işaretlerinin
-   tarayıcı/DB kabulü** — Karar K'nin `NOT-MEASURED` maddeleri ve `c2d127d`
-   ile gelen okundu POST'larının canlı davranışı (rozetin gerçekten düşmesi,
-   prefetch'in artık yazmadığı) ancak 1 ve 2'den sonra ölçülebilir.
-4. **Diğer açık ölçümler** — `verify-phase3a` tarihsel `28 printing leaf`
-   kırmızısı, KB-5 (bildirim doğrulayıcısının bayat beklentisi) ve Vercel
-   dakikalık cron desteğinin doğrulanması.
+1. **Acceptance DB hedefi** — güvenli `.env.acceptance` ve ayrı bir
+   staging/acceptance veritabanı. Doğrulayıcı/seed/persona/normalizer
+   script'leri hazır; eksik olan yalnız hedeftir.
+2. **DB/tarayıcı kabulü** — A–D + gerçek save→reload turu, okundu
+   işaretlerinin canlı davranışı (rozetin düşmesi, prefetch'in yazmaması) ve
+   iki cron job'un (`category-provisioning`, `match-backfill`) gerçek
+   çalıştırma kabulü. Hepsi 1'den sonra ölçülebilir.
+3. **Vercel cron plan/deploy uygunluğu** — `0 3 * * *` ve `*/15 * * * *`
+   periyotlarının planda desteklendiğinin doğrulanması. Doğrulanana kadar
+   "production'da cron çalışıyor" denemez.
+4. **Full-scan ölçeklendirme / checkpoint kararı** —
+   `backfillMatchesForAllCompanies` şirket-batch checkpoint'i olmadan tam
+   tarama yapıyor. Ölçek büyüdüğünde süre riski var; kalıcı bir checkpoint
+   gerekiyorsa migration kararı ayrıca alınmalıdır.
+5. **Diğer açık ölçümler** — `verify-phase3a` tarihsel `28 printing leaf`
+   kırmızısı ve KB-5 (bildirim doğrulayıcısının bayat beklentisi).
 
 ## Bilinçli erteleme
 

@@ -1028,7 +1028,7 @@ bağımlılık kurulmaz; bilgi kanonik soru adayı sözleşmesinde taşınır.
 
 | | |
 |--|--|
-| **Durum** | **KISMEN UYGULANMIŞ.** Acil nudge: `740e9a4` — `BRANCH-WIRED` · `CODE-VERIFIED`. Okundu işaretleri (bildirim + sohbet): `c2d127d` — `BRANCH-WIRED` · `CODE-VERIFIED`. Provisioning / backfill (`Category.upsert`, `RequestMatch.createMany`): `NOT-WIRED` · `KNOWN-OPEN`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Durum** | **UYGULANMIŞ (kod kapsamında).** Acil nudge: `740e9a4` — `BRANCH-WIRED` · `CODE-VERIFIED`. Okundu işaretleri: `c2d127d` — `BRANCH-WIRED` · `CODE-VERIFIED`. Provisioning / backfill: `236e579` — `BRANCH-WIRED` · `CODE-VERIFIED`. **`PRODUCTION-DEPLOYED` DEĞİL**; gerçek DB ve tarayıcı kabulü **NOT-MEASURED**; Vercel cron plan desteği **doğrulanmadı** |
 | **Dosyalar** | `740e9a4`: `app/panel/layout.tsx`, `server/request/urgent-nudge-core.ts` (yeni), `server/request/urgent-no-offer-nudge.ts`, `server/notifications/create-notification.ts`, `app/api/cron/urgent-nudge/route.ts` (yeni), `vercel.json`, `scripts/verify-panel-render-no-write-v1.ts` (yeni), `scripts/verify-urgent-nudge-boundary-v1.ts` (yeni). **`c2d127d` eki:** `app/panel/bildirimler/r/[id]/page.tsx`, `app/panel/mesajlar/[id]/page.tsx`, `app/api/notifications/[id]/read/route.ts` (yeni), `app/api/messages/[id]/read/route.ts` (yeni), `components/panel/NotificationReadRedirect.tsx` (yeni), `components/panel/ConversationReadReceipt.tsx` (yeni), `server/notifications/mark-notifications-read.ts`, `server/message/mark-conversation-read.ts`, `app/panel/mesajlar/page.tsx`, `components/panel/IncomingOfferCard.tsx`, `components/panel/OutgoingOfferCard.tsx`, `scripts/verify-read-receipt-boundary-v1.ts` (yeni) |
 | **Testler** | `verify-panel-render-no-write-v1`, `verify-urgent-nudge-boundary-v1` ve `verify-read-receipt-boundary-v1` — üçü de `PROBLEMS=0`, iki koşuda byte-birebir. Read-receipt doğrulayıcısı fix öncesi **24 kırmızı** ölçtü |
 | **Kayıt** | **KB-22** (umbrella, `KISMEN ÇÖZÜLDÜ`) |
@@ -1117,3 +1117,53 @@ Bu iki kimlik `NOT-WIRED` · `KNOWN-OPEN`'dır (KB-22 Dilim 2).
 > A sınıfı render yazımı 4 → 2. Tarayıcıda DOM üzerinde ölçüm YAPILMADI;
 > POST'ların canlı davranışı, rozetin gerçekten düşmesi ve prefetch'in artık
 > yazmadığı `NOT-MEASURED`'dır. Migration üretilmedi.
+
+**L12 — GLOBAL TAKSONOMİNİN SAHİBİ BİR JOB'DUR, BİR SAYFA DEĞİL (`236e579`).**
+`REQUEST_CATEGORIES` platformun global taksonomisidir; `Category` satırlarının
+varlığı bir kullanıcının panel açmasına bağlı olamaz. Sağlama işi günlük,
+korumalı bir job'dadır (`GET /api/cron/category-provisioning`, `0 3 * * *`).
+Registry `slug` / `name` / `description` / `sortOrder` için kanonik kaynaktır
+ve drift düzeltilir.
+
+**L13 — OPERASYONEL BAYRAK, KANONİK KAYNAK DEĞİLDİR.** `isActive` bir admin
+kararıdır: yeni satır registry varsayılanıyla oluşur, ama MEVCUT satırın
+değeri job tarafından ASLA değiştirilmez ve silme yapılmaz. Şirketin kategori
+seçimi de kapatılmış bir kategoriyi yan etkiyle aktifleştiremez. Eskiden her
+panel render'ı `isActive: true` yazarak admin kararını sessizce geri alıyordu.
+
+**L14 — ŞİRKET OLAYLARI ANLIK BACKFILL TETİKLER.** Şirket oluşturma, kategori
+/ yetenek güncellemesi ve admin durum değişikliği eski uygun talepler için
+eşleşme üretir. `companyId` HER ZAMAN sunucuda oluşturulan/güncellenen gerçek
+kayıttan gelir; istemcinin serbest metadata'sından değil. Yalnız eşleşmeyi
+ETKİLEYEN güncelleme tetikler — ad ya da logo değişikliği toplu backfill
+üretmez.
+
+**L15 — CRON RECONCILIATION KAPSAMA BOŞLUĞUNU KAPATIR.** Olay tetikleyicileri
+tek başına yeterli değildir: paneli hiç açmayan ve hiçbir olay üretmeyen bir
+şirket kapsam dışı kalırdı. Zamanlanmış tur (`*/15 * * * *`) bütün dağıtılabilir
+şirketleri deterministik sırayla (`id` artan) tarar. Dağıtılabilir durum kümesi
+TEK yerde tanımlıdır; çağrı yerleri ikinci bir liste tutmaz.
+
+**L16 — BACKFILL BİLDİRİM ÜRETMEZ; FANOUT'TAN AYRIDIR.** Backfill yalnız
+`RequestMatch` satırı yazar (`skipDuplicates`). Canlı bildirim/fanout
+`distributeRequestToCompanies` yolundadır ve yeni request publish o yolu
+korur. İki işi ayrı tutmak, reconciliation'ın sessizce toplu bildirim
+göndermesini yapısal olarak imkânsız kılar.
+
+**L17 — MATCHING V3 SHADOW KORUNUR.** Backfill'in `matching-v3`'e hiçbir
+referansı yoktur ve `MATCHER_MODE = "shadow"` sabiti değişmez. Bir işi job
+sınırına taşımak, gölge motoru sessizce canlıya almanın yolu olamaz.
+
+**L18 — OLAY BAŞARISIZLIĞI ANA MUTASYONU GERİ ALMAZ.** Şirket
+create/update/admin mutasyonu başarılıysa, ona bağlı backfill'in hatası
+mutasyonu iptal etmez: hata sabit etiketli ve PII/payload taşımayan bir logla
+görünür olur, zamanlanmış tur telafi eder. Yan işin başarısızlığı asıl
+kullanıcı işlemini kaybettirmemelidir.
+
+> **Sınır — `236e579`.** Ölçümler sahte istemci ve çağrı grafiği analiziyle
+> yapıldı: supplier doğrulayıcısı 17 kırmızıdan `PROBLEMS=0`'a, panel render A
+> sınıfı 2 → 0, 101 talep 100/1/0, üç şirketin tamamı, duplicate/bildirim/
+> fanout 0. **Gerçek job, DB ve tarayıcı kabulü YAPILMADI**; Vercel planının
+> cron desteği doğrulanmadı ve migration üretilmedi.
+> `backfillMatchesForAllCompanies` şirket-batch checkpoint'i olmadan tam
+> tarama yapar — ölçek büyüdüğünde süre riski `KNOWN-OPEN`'dır.
