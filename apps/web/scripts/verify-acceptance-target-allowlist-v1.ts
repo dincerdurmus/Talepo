@@ -30,6 +30,13 @@ function check(name: string, ok: boolean, detail: string): void {
   problems.push(name);
 }
 
+/**
+ * Every channel that reaches stdout/stderr, not just console.log/error: a
+ * console.warn or a process.stdout.write publishes the same bytes.
+ */
+const printCalls = (): RegExp =>
+  /(?:console\.(?:log|error|warn|info|debug)|process\.std(?:out|err)\.write)\(([\s\S]{0,300}?)\);/g;
+
 /** Strip block and line comments so source gates measure executable code, not prose. */
 function stripComments(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
@@ -388,7 +395,7 @@ async function main(): Promise<void> {
     "the wrapper does not bind to the repository's schema/migrations authority",
   );
 
-  console.log("\nH. Target verifier output redaction");
+  console.log("\nH. Acceptance CLI output redaction (every entry point)");
   // Printed expressions the target verifier must never emit: they carry target
   // infrastructure (host, port, database name, ref) or session identity.
   const FORBIDDEN_VALUES = [
@@ -396,9 +403,17 @@ async function main(): Promise<void> {
     "port",
     "database",
     "projectRef",
+    "ACCEPTANCE_PROJECT_REF",
     "current_user",
     "current_database",
+    "password",
+    "safePreview",
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "NEXTAUTH_SECRET",
   ];
+  /** Literal connection material must not be baked into printed text either. */
+  const FORBIDDEN_LITERALS = /\.supabase\.(?:com|co)|postgres(?:ql)?:\/\//;
   /** Only this classifier may consume a forbidden value and print its verdict. */
   const APPROVED_CLASSIFIER = /^hostType\(([\s\S]*)\)$/;
 
@@ -410,8 +425,17 @@ async function main(): Promise<void> {
    */
   const leakedValues = (source: string): string[] => {
     const found = new Set<string>();
-    for (const call of source.matchAll(/console\.(?:log|error)\(([\s\S]{0,300}?)\);/g)) {
-      for (const slot of call[1]!.matchAll(/\$\{([^}]*)\}/g)) {
+    for (const call of source.matchAll(printCalls())) {
+      const argText = call[1]!;
+      // Both forms print a value: `${x.host}` inside a template, and a bare
+      // `x.host` passed as a further console.log argument.
+      const slots = [
+        ...[...argText.matchAll(/\$\{([^}]*)\}/g)].map((m) => m[1]!),
+        // Every argument counts, including the FIRST: `console.log(meta.host)`
+        // carries no template and no comma and used to slip through entirely.
+        ...argText.split(","),
+      ].map((slot) => ({ 1: slot }) as unknown as RegExpMatchArray);
+      for (const slot of slots) {
         let expression = slot[1]!.trim();
         const classified = APPROVED_CLASSIFIER.exec(expression);
         if (classified) continue;
@@ -426,11 +450,71 @@ async function main(): Promise<void> {
     return [...found];
   };
 
-  const emitted = leakedValues(targetVerifierSrc);
+  /** Literal connection material inside a printed template. */
+  const leakedLiterals = (source: string): boolean => {
+    for (const call of source.matchAll(printCalls())) {
+      if (FORBIDDEN_LITERALS.test(call[1]!)) return true;
+    }
+    return false;
+  };
+
+  /**
+   * The ref may be imported and compared, but the moment it is stored in a
+   * variable or an object field it can reach a generic dump such as
+   * `for (const [k, v] of Object.entries(report)) console.log(...)` — which is
+   * exactly how it kept leaking after the explicit print was removed.
+   */
+  const capturesRefIntoData = (source: string): boolean =>
+    // A leading [^=!<>] keeps comparisons (`!==`, `===`) out of the match: those
+    // read the constant, they do not carry it anywhere.
+    /(?:^|[^=!<>])(?::|=)\s*ACCEPTANCE_PROJECT_REF\s*[,;)\n]/m.test(source);
+
+  // Every acceptance CLI entry point, not just the target verifier: the seed
+  // and the env diagnostic were printing the project ref and env values while
+  // the gate only watched one file.
+  // Recursive: scripts/lib holds the guard and the ref owner, and they print too.
+  const cliEntries = (readdirSync(SCRIPTS_DIR, { recursive: true }) as string[])
+    .map((name) => name.replace(/\\/g, "/"))
+    .filter((name) => name.endsWith(".ts") && name.includes("acceptance"))
+    .sort();
+  const offendingCli: string[] = [];
+  for (const entry of cliEntries) {
+    if (entry.endsWith("verify-acceptance-target-allowlist-v1.ts")) continue;
+    const source = stripComments(readFileSync(join(SCRIPTS_DIR, entry), "utf8"));
+    const values = leakedValues(source);
+    if (values.length > 0) offendingCli.push(`${entry}(${values.join("/")})`);
+    else if (leakedLiterals(source)) offendingCli.push(`${entry}(literal)`);
+    else if (!entry.startsWith("lib/") && capturesRefIntoData(source)) {
+      offendingCli.push(`${entry}(ref-captured-into-data)`);
+    }
+  }
   check(
-    "H1-target-verifier-prints-no-target-identity",
-    emitted.length === 0,
-    `still printed: ${emitted.join(", ")}`,
+    "H1-acceptance-cli-prints-no-target-identity",
+    offendingCli.length === 0,
+    `still printed by: ${offendingCli.join(", ")}`,
+  );
+  // Named entry points, not a floor: renaming a script must not quietly drop it
+  // out of the scanned surface.
+  const REQUIRED_CLI_ENTRIES = [
+    "acceptance-core-commerce-v1.ts",
+    "cleanup-acceptance-v1.ts",
+    "diagnose-acceptance-env-v1.ts",
+    "normalize-acceptance-db-urls-v1.ts",
+    "run-acceptance-dev-v1.ts",
+    "run-acceptance-prisma-v1.ts",
+    "seed-acceptance-fixtures-v1.ts",
+    "seed-acceptance-personas-v1.ts",
+    "verify-acceptance-cleanup-safety-v1.ts",
+    "verify-acceptance-db-target-v1.ts",
+    "verify-acceptance-personas-v1.ts",
+    "lib/load-acceptance-env.ts",
+    "lib/acceptance-db-target-v1.ts",
+  ];
+  const unscanned = REQUIRED_CLI_ENTRIES.filter((name) => !cliEntries.includes(name));
+  check(
+    "H1b-every-known-entry-point-is-scanned",
+    unscanned.length === 0,
+    `not in the scanned surface: ${unscanned.join(", ")}`,
   );
 
   const SAFE_LABELS = ["URL_PRESENT", "HOST_TYPE", "SAME_PROJECT", "TARGET CLASSIFICATION"];
@@ -449,20 +533,47 @@ async function main(): Promise<void> {
   );
 
   // Positive control: prove the leak detector fires on a sample that really leaks.
-  const leakSample = [
-    `console.log(\`DB HOST (DATABASE_URL): \${dbMeta.host}\`);`,
-    `console.log(\`DB PORT (DIRECT_URL): \${directMeta.port}\`);`,
-    `console.log(\`DB NAME: \${directMeta.database}\`);`,
-    `console.log(\`SUPABASE PROJECT REF: \${decision.projectRef}\`);`,
-    `console.log(\`current_user: \${row.current_user}\`);`,
-    `console.error(\`db is \${String(row.current_database)}\`);`,
-  ].join("\n");
+  // One leaking print per forbidden value, in both the template and the
+  // comma-argument form, so the control covers every rule the gate enforces.
+  // Three shapes per rule: template interpolation, trailing comma argument and
+  // a single bare argument — the last one was a live blind spot.
+  const leakSample = FORBIDDEN_VALUES.map((value, index) =>
+    index % 3 === 0
+      ? `console.log(\`leak: \${meta.${value}}\`);`
+      : index % 3 === 1
+        ? `console.error("leak:", meta.${value});`
+        : `console.warn(meta.${value});`,
+  ).join("\n");
   const caught = leakedValues(leakSample);
   const missed = FORBIDDEN_VALUES.filter((value) => !caught.includes(value));
   check(
     "H4-detector-positive-control",
-    missed.length === 0,
+    missed.length === 0 && caught.length >= 6,
     `detector missed: ${missed.join(", ")}`,
+  );
+  check(
+    "H6-ref-capture-detector-positive-control",
+    capturesRefIntoData("const report = {\n  stagingProject: ACCEPTANCE_PROJECT_REF,\n};") &&
+      capturesRefIntoData("const ref = ACCEPTANCE_PROJECT_REF;") &&
+      !capturesRefIntoData("if (parsed.projectRef !== ACCEPTANCE_PROJECT_REF) fail();"),
+    "the ref-capture detector cannot separate storing the ref from comparing against it",
+  );
+  check(
+    "H7-print-channels-cover-warn-and-stdout",
+    leakedValues("console.warn(`h: ${meta.host}`);").includes("host") &&
+      leakedValues("process.stdout.write(`h: ${meta.host}`);").includes("host"),
+    "console.warn / process.stdout.write are not part of the scanned print surface",
+  );
+  check(
+    "H5-literal-detector-positive-control",
+    leakedLiterals(
+      'console.log(`target is db.abcdefghijklmnopqrst.supabase.co with pw hunter2`);',
+    ) &&
+      leakedLiterals(
+        'console.error(`postgresql://postgres:hunter2@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`);',
+      ) &&
+      !leakedLiterals('console.log("TARGET_CLASSIFICATION=ACCEPTANCE_ALLOWLISTED");'),
+    "the literal detector does not separate a leaking print from a safe classification",
   );
 
   // Ratchet: no script may name a project ref except the canonical guard module.

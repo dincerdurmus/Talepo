@@ -5,11 +5,17 @@
 import "./lib/load-acceptance-env";
 import { assertEntitlement } from "../src/lib/membership/assert-entitlement";
 import { hasFeature } from "../src/lib/membership/entitlements";
+import {
+  canonicalizePlanTier,
+  isLegacyCorporateAccount,
+} from "../src/lib/membership/plans";
 import { resolveEntitlements } from "../src/lib/membership/resolve-entitlements";
-import { getIncludedSeats } from "../src/lib/membership/seat-policy";
 import { EntitlementError } from "../src/lib/membership/types";
 import { assertCompanyMembership } from "../src/lib/panel/company-workspace";
-import { countActiveCompanySeats } from "../src/server/company/assert-company-seat";
+import {
+  countActiveCompanySeats,
+  getCompanySeatUsage,
+} from "../src/server/company/assert-company-seat";
 import { prisma } from "../src/lib/prisma";
 import {
   ACCEPTANCE_COMPANY,
@@ -17,6 +23,18 @@ import {
   PERSONAS,
   type PersonaKey,
 } from "./lib/acceptance-personas-v1.constants";
+import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+
+const problems: string[] = [];
+
+function check(name: string, ok: boolean, detail: string): void {
+  if (ok) {
+    console.log(`  ok   ${name}`);
+    return;
+  }
+  console.log(`  FAIL ${name} — ${detail}`);
+  problems.push(name);
+}
 
 function fail(msg: string): never {
   console.error(`FAIL — ${msg}`);
@@ -96,9 +114,59 @@ async function main() {
   console.log(`USER E ROLE: ${eMembership?.role ?? "none"}`);
   console.log(`USER F: personal ${users.F.planTier}, no company`);
 
+  // Seat maths comes from the production authority, not a local subtraction:
+  // getCompanySeatUsage is exactly what the seat gate calls, so purchased extra
+  // seats and workspace plan resolution cannot silently disagree with the app.
   const activeSeats = await countActiveCompanySeats(company.id);
-  const seatLimit = getIncludedSeats("CORPORATE");
-  console.log(`SEATS USED: ${activeSeats} / ${seatLimit}`);
+  const seatUsage = await getCompanySeatUsage({ companyId: company.id });
+  const seatLimit = seatUsage.includedSeats;
+  const overSeats = seatLimit === null ? 0 : Math.max(0, activeSeats - seatLimit);
+  console.log(`SEATS USED: ${seatUsage.activeSeats}`);
+  console.log(`SEATS INCLUDED: ${seatLimit ?? "unlimited"}`);
+  console.log(`SEATS OVER LIMIT: ${overSeats}`);
+  console.log(`SEATS AT LIMIT: ${seatUsage.atLimit}`);
+
+  console.log("\n--- PLAN CANONICALISATION (measured on the production functions) ---");
+  // The row keeps the legacy enum; the engine decides what it MEANS today.
+  check(
+    "P1-company-row-stores-legacy-corporate",
+    company.planTier === "CORPORATE",
+    `stored planTier is ${company.planTier}`,
+  );
+  check(
+    "P2-canonical-plan-is-professional",
+    canonicalizePlanTier(company.planTier) === "PROFESSIONAL",
+    `canonicalizePlanTier returned ${canonicalizePlanTier(company.planTier)}`,
+  );
+  check(
+    "P5-legacy-corporate-still-recognised",
+    isLegacyCorporateAccount(company.planTier),
+    "isLegacyCorporateAccount no longer recognises the stored value",
+  );
+  check(
+    "P6-d-is-active-owner",
+    dMembership?.role === "OWNER" && dMembership.status === "ACTIVE",
+    `role=${dMembership?.role ?? "none"} status=${dMembership?.status ?? "none"}`,
+  );
+  check(
+    "P7-e-is-active-member",
+    eMembership?.role === "MEMBER" && eMembership.status === "ACTIVE",
+    `role=${eMembership?.role ?? "none"} status=${eMembership?.status ?? "none"}`,
+  );
+  check(
+    "P8-f-has-no-membership",
+    users.F.companyMemberships.length === 0,
+    `F holds ${users.F.companyMemberships.length} membership(s)`,
+  );
+  check("P9-active-seats-is-2", activeSeats === 2, `active seats = ${activeSeats}`);
+  check("P10-included-seats-is-1", seatLimit === 1, `included seats = ${seatLimit}`);
+  // Reported as its own counter, never hidden: the acceptance workspace runs
+  // one seat over its included allowance and that is a deliberate fixture.
+  check(
+    "P11-over-seat-state-is-1",
+    overSeats === 1,
+    `over-seat count = ${overSeats} (expected the seeded 2-seat workspace on a 1-seat allowance)`,
+  );
 
   if (users.A.planTier !== "STANDARD") fail("A must be STANDARD");
   if (users.B.planTier !== "PREMIUM") fail("B must be PREMIUM");
@@ -133,11 +201,16 @@ async function main() {
   const dPersonalSavedDenied = entitlementDenied(() =>
     assertEntitlement(entDPersonal, "saved_searches"),
   );
-  const dCompanyCorp = entDCompany.effectivePlanTier === "CORPORATE";
+  // Frozen acceptance value. The workspace row still STORES the legacy
+  // "CORPORATE" enum, but the product now ships two plans and the engine
+  // canonicalises it. PROFESSIONAL is the contract; this is not a
+  // "whatever-comes-out" snapshot.
+  const CANONICAL_COMPANY_PLAN = "PROFESSIONAL";
+  const dCompanyCorp = entDCompany.effectivePlanTier === CANONICAL_COMPANY_PLAN;
   const ePersonalSavedDenied = entitlementDenied(() =>
     assertEntitlement(entEPersonal, "saved_searches"),
   );
-  const eCompanyCorp = entECompany.effectivePlanTier === "CORPORATE";
+  const eCompanyCorp = entECompany.effectivePlanTier === CANONICAL_COMPANY_PLAN;
 
   const fCompanyMembership = await assertCompanyMembership(users.F.id, company.id);
 
@@ -161,11 +234,19 @@ async function main() {
   if (!dPersonalSavedDenied || entDPersonal.effectivePlanTier !== "STANDARD") {
     fail("D personal must remain Standard-isolated");
   }
-  if (!dCompanyCorp) fail("D company context must be Corporate");
+  check(
+    "P3-d-company-context-plan",
+    dCompanyCorp,
+    `entitlement resolved ${entDCompany.effectivePlanTier}`,
+  );
   if (!ePersonalSavedDenied || entEPersonal.effectivePlanTier !== "STANDARD") {
     fail("E personal must remain Standard-isolated");
   }
-  if (!eCompanyCorp) fail("E company context must be Corporate");
+  check(
+    "P4-e-company-context-plan",
+    eCompanyCorp,
+    `entitlement resolved ${entECompany.effectivePlanTier}`,
+  );
   if (fCompanyMembership) fail("F must not resolve company membership");
 
   for (const key of ["D", "E"] as const) {
@@ -175,9 +256,17 @@ async function main() {
     }
   }
 
-  console.log("\nPASS — acceptance personas verified");
+  console.log(`\nPROBLEMS=${problems.length}`);
+  if (problems.length > 0) console.log(problems.map((p) => `  - ${p}`).join("\n"));
   console.log("DB WRITE: no");
   console.log("SECRETS PRINTED: no");
+  console.log("\n===== HUKUM =====");
+  console.log(
+    problems.length === 0
+      ? "PASS — acceptance personas verified"
+      : "FAIL — acceptance persona contract not met",
+  );
+  if (problems.length > 0) process.exit(1);
 }
 
 main()
@@ -185,8 +274,10 @@ main()
     if (e instanceof EntitlementError) {
       fail(`${e.code}: ${e.message}`);
     }
-    const msg = e instanceof Error ? e.message : String(e);
-    fail(msg.replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]"));
+    // Shared redactor: Prisma/pg errors carry the host with no URI scheme
+    // ("Can't reach database server at `db.<ref>.supabase.co`"), which the old
+    // URI-only replace let through.
+    fail(redactPrismaOutput(e instanceof Error ? e.message : String(e)));
   })
   .finally(async () => {
     await prisma.$disconnect();

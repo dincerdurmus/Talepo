@@ -80,6 +80,9 @@ type FakeClient = {
 } & Record<string, unknown>;
 
 const FAKE_MODELS = [
+  // `category` is present so a Category delete is REACHABLE in the fake client:
+  // without it the "categories survive" gates would pass vacuously.
+  "category",
   "user",
   "company",
   "companyMember",
@@ -334,6 +337,56 @@ async function main(): Promise<void> {
   const emptyDb = makeClient({});
   const emptyPlan = buildAcceptanceCleanupPlan(await resolveAcceptanceCleanupScope(emptyDb as never));
   check("C3-empty-scope-produces-empty-plan", emptyPlan.length === 0, `${emptyPlan.length} steps on a fresh DB`);
+
+  console.log("\nE. Global taxonomy is never cleanup material");
+  // Category rows are the acceptance database's global taxonomy infrastructure,
+  // not persona-owned fixtures: the seed provisions them through the shared
+  // engine and a cleanup that removed them would break every later run.
+  const categoryStore = buildStore();
+  categoryStore.category = [
+    { id: "cat-1", slug: "elektronik", isActive: true },
+    { id: "cat-2", slug: "insaat", isActive: false },
+  ];
+  const categoryDb = makeClient(categoryStore);
+  await executeAcceptanceCleanup(categoryDb as never, { dryRun: false });
+  check(
+    "E1-category-rows-survive-cleanup",
+    idsOf(categoryStore, "category").length === 2,
+    `${idsOf(categoryStore, "category").length} of 2 category rows survived`,
+  );
+  check(
+    "E2-no-delete-call-targets-category",
+    categoryDb.deleteCalls.every((c) => c.model !== "category"),
+    "cleanup issued a deleteMany against Category",
+  );
+  // Built from a store that DOES hold category rows, so an added category step
+  // would really appear here rather than being impossible to express.
+  const planStore = buildStore();
+  planStore.category = [{ id: "cat-3", slug: "teknoloji", isActive: true }];
+  const categoryPlan = buildAcceptanceCleanupPlan(
+    await resolveAcceptanceCleanupScope(makeClient(planStore) as never),
+  );
+  check(
+    "E3-plan-never-contains-a-category-step",
+    categoryPlan.every((step) => step.model.toLowerCase() !== "category"),
+    "the cleanup plan contains a Category step",
+  );
+  check(
+    "E4-inactive-category-still-inactive",
+    categoryStore.category.find((row) => row.id === "cat-2")?.isActive === false,
+    "cleanup or seed flipped an admin-controlled isActive flag",
+  );
+  // Positive control: the same fake client DOES delete categories when a step
+  // asks it to, so E1/E2 measure a reachable path rather than a missing model.
+  const controlStore = buildStore();
+  controlStore.category = [{ id: "cat-1", slug: "elektronik", isActive: true }];
+  const controlDb = makeClient(controlStore);
+  await controlDb.category!.deleteMany({ where: { id: { in: ["cat-1"] } } });
+  check(
+    "E5-category-delete-is-reachable-in-the-fake-client",
+    idsOf(controlStore, "category").length === 0,
+    "the fake client cannot delete categories at all — E1/E2 would be vacuous",
+  );
 
   console.log("\nD. Source invariants");
   const coreSrc = readFileSync(join(SCRIPTS_DIR, "lib", "acceptance-cleanup-core-v1.ts"), "utf8");

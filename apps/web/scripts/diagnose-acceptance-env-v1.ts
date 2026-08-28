@@ -7,12 +7,6 @@ import { join } from "node:path";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
-function redactUrl(url: string): string {
-  return url
-    .replace(/:([^:@/]+)@/, ":***@")
-    .replace(/^([^:]+:\/\/[^:]+:)[^@]+(@)/, "$1***$2");
-}
-
 function diagnoseValue(key: string, value: string) {
   const issues: string[] = [];
   const trimmed = value.trim();
@@ -56,12 +50,11 @@ function diagnoseValue(key: string, value: string) {
     }
   }
 
-  return {
-    issues,
-    safePreview: key.includes("URL")
-      ? redactUrl(trimmed.slice(0, 100) + (trimmed.length > 100 ? "..." : ""))
-      : trimmed,
-  };
+  // No preview of any kind. A "redacted" URL still carries the host, the user
+  // and the project ref, and a non-URL key such as NEXTAUTH_SECRET was printed
+  // verbatim. This diagnostic answers "is the line well formed", not "what is
+  // in it": only the length and the issue list leave this function.
+  return { issues, valueLength: trimmed.length };
 }
 
 function main() {
@@ -78,7 +71,7 @@ function main() {
     lineNum: number;
     hadQuotes: boolean;
     issues: string[];
-    safePreview: string;
+    valueLength: number;
   }> = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -102,20 +95,20 @@ function main() {
         lineNum: i + 1,
         hadQuotes: false,
         issues: [`DUPLICATE KEY (first at line ${keyLines[key]})`],
-        safePreview: "(duplicate)",
+        valueLength: 0,
       });
     } else {
       keyLines[key] = i + 1;
     }
 
     if (key === "DATABASE_URL" || key === "DIRECT_URL" || key === "TALEPO_ENVIRONMENT") {
-      const { issues, safePreview } = diagnoseValue(key, value);
+      const { issues, valueLength } = diagnoseValue(key, value);
       results.push({
         key,
         lineNum: i + 1,
         hadQuotes: rawValue !== value,
         issues,
-        safePreview,
+        valueLength,
       });
     }
   }
@@ -131,7 +124,7 @@ function main() {
     console.log("");
     console.log(`KEY: ${r.key} LINE: ${r.lineNum}`);
     if (r.hadQuotes) console.log("QUOTES STRIPPED: yes");
-    console.log("SAFE PREVIEW:", r.safePreview);
+    console.log("VALUE LENGTH:", r.valueLength);
     console.log("ISSUES:", r.issues.length ? r.issues.join("; ") : "none detected");
   }
 }

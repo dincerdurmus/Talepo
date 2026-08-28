@@ -24,6 +24,11 @@ import {
   readAcceptanceEnvFile,
 } from "./lib/acceptance-env-file-v1";
 import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
+import {
+  excludeSystemCategories,
+  isSystemCategorySlug,
+} from "../src/lib/request/raw-input";
 
 const TRANSACTION_POOLER_PORT = "6543";
 const SESSION_POOLER_PORT = "5432";
@@ -151,6 +156,19 @@ async function main() {
       `APPLICATION TABLES EXIST: ${appTablesExist ? `yes (${appTableSample.join(", ")})` : "no"}`,
     );
 
+    // Global taxonomy check. The expected key set is DERIVED from the canonical
+    // registry, never restated here, so a registry edit surfaces as drift
+    // instead of silently disagreeing with the acceptance database.
+    //
+    // Skipped before the schema exists: this verifier is the FIRST step of the
+    // bootstrap (target → migrate → seed), and it must still classify the
+    // target on a fresh, unmigrated project instead of dying on a missing table.
+    if (!migrationTableExists || !appTablesExist) {
+      console.log("CATEGORY DRIFT: not measured (schema not deployed yet)");
+    } else {
+      await verifyCategoryRegistry(client);
+    }
+
     console.log("TARGET CLASSIFICATION: ACCEPTANCE_ALLOWLISTED");
     console.log("PRIMARY/PRODUCTION PROJECT USED: no");
     console.log("READ-ONLY QUERIES ONLY: yes");
@@ -175,6 +193,40 @@ async function main() {
 
   console.log("\nSECRETS PRINTED: no");
   console.log("PASS — acceptance DB target read-only verify");
+}
+
+/** Read-only drift check of the global taxonomy against the canonical registry. */
+async function verifyCategoryRegistry(client: Client): Promise<void> {
+  const expectedCategorySlugs = new Set(REQUEST_CATEGORIES.map((meta) => meta.id));
+  {
+    const categoryRows = await client.query<{ slug: string; isActive: boolean }>(
+      `SELECT slug, "isActive" FROM "Category" ORDER BY slug`,
+    );
+    // `unresolved` is a legitimate system row that is deliberately absent from
+    // the registry; the repository already owns that distinction, so filter
+    // through it instead of teaching this verifier a second rule.
+    const actualCategorySlugs = new Set(
+      excludeSystemCategories(categoryRows.rows).map((row) => row.slug),
+    );
+    const systemCategoryCount = categoryRows.rows.filter((row) =>
+      isSystemCategorySlug(row.slug),
+    ).length;
+    const missingCategories = [...expectedCategorySlugs].filter(
+      (slug) => !actualCategorySlugs.has(slug),
+    );
+    const extraCategories = [...actualCategorySlugs].filter(
+      (slug) => !expectedCategorySlugs.has(slug),
+    );
+    console.log(`CATEGORY REGISTRY KEYS: ${expectedCategorySlugs.size}`);
+    console.log(`CATEGORY ROWS: ${actualCategorySlugs.size}`);
+    console.log(`CATEGORY SYSTEM ROWS: ${systemCategoryCount}`);
+    console.log(`CATEGORY INACTIVE ROWS: ${categoryRows.rows.filter((r) => !r.isActive).length}`);
+    console.log(`CATEGORY MISSING: ${missingCategories.length ? missingCategories.join(", ") : "none"}`);
+    console.log(`CATEGORY EXTRA: ${extraCategories.length ? extraCategories.join(", ") : "none"}`);
+    if (missingCategories.length > 0 || extraCategories.length > 0) {
+      fail("Category rows drifted from the canonical request category registry");
+    }
+  }
 }
 
 main().catch((e) => {

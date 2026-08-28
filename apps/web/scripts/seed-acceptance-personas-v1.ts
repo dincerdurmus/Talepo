@@ -17,6 +17,7 @@ import {
   PERSONAS,
   type PersonaKey,
 } from "./lib/acceptance-personas-v1.constants";
+import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
 import { evaluateAcceptanceDbTarget } from "./lib/acceptance-db-target-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
@@ -36,12 +37,12 @@ function assertAcceptanceEnv(): void {
 }
 
 /** Re-runs the canonical target guard; never parses the URL a second way. */
-function assertAcceptanceTarget(): string {
+function assertAcceptanceTarget(): void {
   const decision = evaluateAcceptanceDbTarget(process.env);
   if (!decision.ok) {
     fail(`Refusing seed — ${decision.reason}: ${decision.detail}`);
   }
-  return decision.projectRef;
+  // The ref is deliberately NOT returned: nothing downstream may carry it.
 }
 
 async function upsertPersona(key: PersonaKey) {
@@ -86,10 +87,10 @@ async function main() {
   assertAcceptanceEnv();
 
   // Defence in depth: the env loader already refused any non-acceptance target.
-  const projectRef = assertAcceptanceTarget();
+  assertAcceptanceTarget();
 
   console.log("=== seed-acceptance-personas-v1 ===");
-  console.log(`TARGET PROJECT REF: ${projectRef}`);
+  console.log("TARGET_CLASSIFICATION=ACCEPTANCE_ALLOWLISTED");
   console.log(`MARKER: ${ACCEPTANCE_MARKER}`);
   console.log("SECRETS PRINTED: no");
 
@@ -175,8 +176,9 @@ async function main() {
 
 main()
   .catch((e) => {
-    const msg = e instanceof Error ? e.message : String(e);
-    fail(msg.replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]"));
+    // Shared redactor: a Prisma connection error names the host with no URI
+    // scheme, which the old URI-only replace let through.
+    fail(redactPrismaOutput(e instanceof Error ? e.message : String(e)));
   })
   .finally(async () => {
     await prisma.$disconnect();

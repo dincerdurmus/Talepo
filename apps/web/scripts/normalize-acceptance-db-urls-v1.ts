@@ -107,7 +107,7 @@ function main() {
 
     const ref = projectRefFromUser(parts.user);
     if (ref !== ACCEPTANCE_PROJECT_REF) {
-      console.error(`FAIL — ${key} project ref mismatch (expected ${ACCEPTANCE_PROJECT_REF})`);
+      console.error(`FAIL — ${key} does not name the allowed acceptance project`);
       process.exit(1);
     }
 
@@ -131,9 +131,9 @@ function main() {
 
   console.log("ENV PASSWORD ENCODED: yes");
   console.log(`URLS UPDATED: ${changed > 0 ? changed : "already encoded"}`);
-  console.log(`DATABASE_URL PORT: ${ports.DATABASE_URL}`);
-  console.log(`DIRECT_URL PORT: ${ports.DIRECT_URL}`);
-  console.log(`TARGET PROJECT REF: ${ACCEPTANCE_PROJECT_REF}`);
+  console.log("PORTS: expected transaction/session pooler pair");
+  console.log("TARGET_CLASSIFICATION=ACCEPTANCE_ALLOWLISTED");
+  console.log("SAME_PROJECT=yes");
   console.log("SECRETS PRINTED: no");
 }
 
