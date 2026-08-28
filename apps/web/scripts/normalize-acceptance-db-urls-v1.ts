@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { ACCEPTANCE_PROJECT_REF } from "./lib/acceptance-db-target-v1";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 const URL_KEYS = new Set(["DATABASE_URL", "DIRECT_URL"]);
@@ -137,4 +138,11 @@ function main() {
   console.log("SECRETS PRINTED: no");
 }
 
-main();
+// main() is synchronous, so the boundary is a try/catch: a URL-parsing throw
+// used to reach Node unhandled and print the raw error with a full stack.
+try {
+  main();
+} catch (error) {
+  console.error(`FAIL — ${formatAcceptanceError(error)}`);
+  process.exit(1);
+}

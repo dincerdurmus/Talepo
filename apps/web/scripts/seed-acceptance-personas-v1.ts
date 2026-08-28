@@ -7,9 +7,19 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import "./lib/load-acceptance-env";
-import { hashPassword } from "../src/lib/auth/password";
-import { prisma } from "../src/lib/prisma";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+/**
+ * Product modules are bound inside main(), AFTER the env is verified: a static
+ * import would load `src/lib/prisma`, which reads DATABASE_URL at module scope.
+ */
+let prisma!: typeof import("../src/lib/prisma").prisma;
+let hashPassword!: typeof import("../src/lib/auth/password").hashPassword;
+
+/** Bind every runtime product export. Called only after the env is verified. */
+async function bindProductModules(): Promise<void> {
+  ({ prisma } = await import("../src/lib/prisma"));
+  ({ hashPassword } = await import("../src/lib/auth/password"));
+}
 import {
   ACCEPTANCE_COMPANY,
   ACCEPTANCE_MARKER,
@@ -17,13 +27,14 @@ import {
   PERSONAS,
   type PersonaKey,
 } from "./lib/acceptance-personas-v1.constants";
-import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
 import { evaluateAcceptanceDbTarget } from "./lib/acceptance-db-target-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
 function fail(msg: string): never {
-  console.error(`FAIL — ${msg}`);
+  // Every operator-facing line goes through the single redaction authority.
+  console.error(`FAIL — ${redactAcceptanceOutput(msg)}`);
   process.exit(1);
 }
 
@@ -84,6 +95,8 @@ async function upsertPersona(key: PersonaKey) {
 }
 
 async function main() {
+  loadAcceptanceEnv();
+  await bindProductModules();
   assertAcceptanceEnv();
 
   // Defence in depth: the env loader already refused any non-acceptance target.
@@ -178,8 +191,8 @@ main()
   .catch((e) => {
     // Shared redactor: a Prisma connection error names the host with no URI
     // scheme, which the old URI-only replace let through.
-    fail(redactPrismaOutput(e instanceof Error ? e.message : String(e)));
+    fail(formatAcceptanceError(e));
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma?.$disconnect();
   });

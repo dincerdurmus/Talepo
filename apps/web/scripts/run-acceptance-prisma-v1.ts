@@ -20,6 +20,13 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import {
+  createStreamRedactor,
+  formatAcceptanceError,
+  redactPrismaOutput,
+} from "./lib/acceptance-redaction-v1";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+
 const WEB_ROOT = join(__dirname, "..");
 
 /** Talepo's existing Prisma authority; the wrapper binds to it instead of restating paths. */
@@ -100,14 +107,8 @@ export function buildAcceptancePrismaEnv(
   return childEnv;
 }
 
-/** Strip connection strings, hosts, users, passwords and query strings from CLI output. */
-export function redactPrismaOutput(text: string): string {
-  return text
-    .replace(/postgres(?:ql)?:\/\/\S+/gi, "[redacted-uri]")
-    .replace(/[a-z0-9-]+\.(?:pooler\.)?supabase\.(?:com|co)(?::\d+)?/gi, "[redacted-host]")
-    .replace(/password\s*[=:]\s*\S+/gi, "password=[redacted]")
-    .replace(/\?[A-Za-z0-9_]+=\S*/g, "?[redacted-query]");
-}
+/** Re-exported from the single redaction authority; no second copy lives here. */
+export { redactPrismaOutput };
 
 async function main(): Promise<void> {
   const parsed = parseAcceptancePrismaAction(process.argv.slice(2));
@@ -117,7 +118,7 @@ async function main(): Promise<void> {
   }
 
   // Canonical target guard first: refuses any database except the acceptance project.
-  await import("./lib/load-acceptance-env");
+  loadAcceptanceEnv();
 
   const verified = {
     DATABASE_URL: process.env.DATABASE_URL ?? "",
@@ -139,15 +140,39 @@ async function main(): Promise<void> {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  child.stdout.on("data", (chunk: Buffer) => process.stdout.write(redactPrismaOutput(String(chunk))));
-  child.stderr.on("data", (chunk: Buffer) => process.stderr.write(redactPrismaOutput(String(chunk))));
-  child.on("exit", (code) => process.exit(code ?? 0));
+  // Line-buffered redaction: a pipe boundary can fall inside a host, so nothing
+  // is released until its line is complete.
+  const outRedactor = createStreamRedactor();
+  const errRedactor = createStreamRedactor();
+  // setEncoding, not String(chunk): a UTF-8 character split across a pipe
+  // boundary would otherwise decode to U+FFFD (Turkish output is full of them).
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => process.stdout.write(outRedactor.push(chunk)));
+  child.stderr.on("data", (chunk: string) => process.stderr.write(errRedactor.push(chunk)));
+
+  let spawnFailed = false;
+  child.on("error", (error) => {
+    // spawn ENOENT arrives asynchronously, long after main().catch() resolved.
+    console.error(`FAIL — ${formatAcceptanceError(error, "spawn")}`);
+    spawnFailed = true;
+    process.exitCode = 1;
+  });
+  // "close" — not "exit" — so both pipes have ended before the held-back tail is
+  // flushed; on "exit" the final partial line could still be in flight.
+  child.on("close", (code, signal) => {
+    process.stdout.write(outRedactor.flush());
+    process.stderr.write(errRedactor.flush());
+    // A signal-killed child reports code=null; treating that as 0 would report
+    // a Ctrl-C or OOM kill as success. A spawn error already set the code.
+    if (spawnFailed) return;
+    process.exitCode = code ?? (signal ? 1 : 0);
+  });
 }
 
 if (require.main === module) {
   main().catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`FAIL — ${redactPrismaOutput(message)}`);
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
     process.exit(1);
   });
 }

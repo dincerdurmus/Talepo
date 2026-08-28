@@ -9,10 +9,21 @@
  *   npx --yes tsx scripts/seed-acceptance-personas-v1.ts
  *   npx --yes tsx scripts/seed-acceptance-fixtures-v1.ts
  */
-import "./lib/load-acceptance-env";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
 
-import { prisma } from "../src/lib/prisma";
-import { ensureEngineCategories } from "../src/server/company/sync-company-categories";
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+/**
+ * Product modules are bound inside main(), AFTER the env is verified: a static
+ * import would load `src/lib/prisma`, which reads DATABASE_URL at module scope.
+ */
+let prisma!: typeof import("../src/lib/prisma").prisma;
+let ensureEngineCategories!: typeof import("../src/server/company/sync-company-categories").ensureEngineCategories;
+
+/** Bind every runtime product export. Called only after the env is verified. */
+async function bindProductModules(): Promise<void> {
+  ({ prisma } = await import("../src/lib/prisma"));
+  ({ ensureEngineCategories } = await import("../src/server/company/sync-company-categories"));
+}
 import { PERSONAS, type PersonaKey } from "./lib/acceptance-personas-v1.constants";
 import {
   ACCEPTANCE_FIXTURE_CITY,
@@ -24,7 +35,8 @@ import {
 } from "./lib/acceptance-fixtures-v1.constants";
 
 function fail(message: string): never {
-  console.error(`FAIL — ${message}`);
+  // Same rule as every sibling script: nothing reaches stderr unredacted.
+  console.error(`FAIL — ${redactAcceptanceOutput(message)}`);
   process.exit(1);
 }
 
@@ -33,6 +45,8 @@ function daysAgo(days: number): Date {
 }
 
 async function main(): Promise<void> {
+  loadAcceptanceEnv();
+  await bindProductModules();
   console.log("=== seed-acceptance-fixtures-v1 ===");
 
   const users = await prisma.user.findMany({
@@ -179,10 +193,9 @@ async function main(): Promise<void> {
 
 main()
   .catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`FAIL — ${message.replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]")}`);
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
     process.exitCode = 1;
   })
   .finally(() => {
-    void prisma.$disconnect();
+    void prisma?.$disconnect();
   });

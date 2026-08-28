@@ -4,37 +4,72 @@
  *
  * Run: npx tsx scripts/acceptance-core-commerce-v1.ts
  */
-import "./lib/load-acceptance-env";
-
-import { buildDiscoveryProjectionFromState } from "@/lib/discovery";
-import { buildSupplierVisibilityFilter } from "@/lib/membership/assert-entitlement";
-import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
-import { parseDiscoveryProjection } from "@/lib/discovery/validate-filter";
-import { getCategoryById } from "@/lib/request-category-engine";
-import { buildCanonicalRequestState } from "@/lib/request-composer/build-state";
-import { understandRequest } from "@/lib/request-understanding/understand-request";
-import { resolveSchemaCategory } from "@/lib/request-understanding/activation-bridge";
-import { prisma } from "@/lib/prisma";
-import { createRequest } from "@/server/request/create-request";
-import {
-  assertCanAccessRequest,
-  assertCanSubmitOffer,
-} from "@/lib/membership/assert-entitlement";
-import { containsBlockedContactInfo, sanitizeCommercialText } from "@/lib/membership/contact-filter";
-import { EntitlementError, type ResolveEntitlementsOptions } from "@/lib/membership/types";
-import {
-  acceptOffer,
-  OfferQuotaExceededError,
-  OfferValidationError,
-} from "@/server/offer/offer-service";
-import { getSendableConversation } from "@/server/message/conversation-access";
-import { sendMessage, MessageValidationError } from "@/server/message/send-message";
 import {
   ACCEPTANCE_COMPANY,
   ACCEPTANCE_MARKER,
   PERSONAS,
 } from "./lib/acceptance-personas-v1.constants";
-import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+
+// Type-only: erased at compile time, so it produces no runtime import.
+import type { ResolveEntitlementsOptions } from "@/lib/membership/types";
+
+/**
+ * Every product binding is resolved inside main(), AFTER the acceptance env is
+ * applied and the target verified. A static import here would pull in
+ * `src/lib/prisma`, which reads DATABASE_URL at module scope — a refused target
+ * would then crash before any catch boundary exists and print a raw stack.
+ *
+ * The error classes are bound the same way because they are used with
+ * `instanceof`; an unbound constructor would silently misclassify a failure.
+ */
+let prisma!: typeof import("@/lib/prisma").prisma;
+let buildDiscoveryProjectionFromState!: typeof import("@/lib/discovery").buildDiscoveryProjectionFromState;
+let buildSupplierVisibilityFilter!: typeof import("@/lib/membership/assert-entitlement").buildSupplierVisibilityFilter;
+let assertCanAccessRequest!: typeof import("@/lib/membership/assert-entitlement").assertCanAccessRequest;
+let assertCanSubmitOffer!: typeof import("@/lib/membership/assert-entitlement").assertCanSubmitOffer;
+let resolveEntitlements!: typeof import("@/lib/membership/resolve-entitlements").resolveEntitlements;
+let parseDiscoveryProjection!: typeof import("@/lib/discovery/validate-filter").parseDiscoveryProjection;
+let getCategoryById!: typeof import("@/lib/request-category-engine").getCategoryById;
+let buildCanonicalRequestState!: typeof import("@/lib/request-composer/build-state").buildCanonicalRequestState;
+let understandRequest!: typeof import("@/lib/request-understanding/understand-request").understandRequest;
+let resolveSchemaCategory!: typeof import("@/lib/request-understanding/activation-bridge").resolveSchemaCategory;
+let createRequest!: typeof import("@/server/request/create-request").createRequest;
+let containsBlockedContactInfo!: typeof import("@/lib/membership/contact-filter").containsBlockedContactInfo;
+let sanitizeCommercialText!: typeof import("@/lib/membership/contact-filter").sanitizeCommercialText;
+let EntitlementError!: typeof import("@/lib/membership/types").EntitlementError;
+let acceptOffer!: typeof import("@/server/offer/offer-service").acceptOffer;
+let OfferQuotaExceededError!: typeof import("@/server/offer/offer-service").OfferQuotaExceededError;
+let OfferValidationError!: typeof import("@/server/offer/offer-service").OfferValidationError;
+let getSendableConversation!: typeof import("@/server/message/conversation-access").getSendableConversation;
+let sendMessage!: typeof import("@/server/message/send-message").sendMessage;
+let MessageValidationError!: typeof import("@/server/message/send-message").MessageValidationError;
+
+/** Bind every runtime product export. Called only after the env is verified. */
+async function bindProductModules(): Promise<void> {
+  ({ prisma } = await import("@/lib/prisma"));
+  ({ buildDiscoveryProjectionFromState } = await import("@/lib/discovery"));
+  ({ buildSupplierVisibilityFilter, assertCanAccessRequest, assertCanSubmitOffer } = await import(
+    "@/lib/membership/assert-entitlement"
+  ));
+  ({ resolveEntitlements } = await import("@/lib/membership/resolve-entitlements"));
+  ({ parseDiscoveryProjection } = await import("@/lib/discovery/validate-filter"));
+  ({ getCategoryById } = await import("@/lib/request-category-engine"));
+  ({ buildCanonicalRequestState } = await import("@/lib/request-composer/build-state"));
+  ({ understandRequest } = await import("@/lib/request-understanding/understand-request"));
+  ({ resolveSchemaCategory } = await import("@/lib/request-understanding/activation-bridge"));
+  ({ createRequest } = await import("@/server/request/create-request"));
+  ({ containsBlockedContactInfo, sanitizeCommercialText } = await import(
+    "@/lib/membership/contact-filter"
+  ));
+  ({ EntitlementError } = await import("@/lib/membership/types"));
+  ({ acceptOffer, OfferQuotaExceededError, OfferValidationError } = await import(
+    "@/server/offer/offer-service"
+  ));
+  ({ getSendableConversation } = await import("@/server/message/conversation-access"));
+  ({ sendMessage, MessageValidationError } = await import("@/server/message/send-message"));
+}
 
 const REQUEST_TEXT_1 =
   "140 ekran televizyon arıyorum, marka fark etmez ama Samsung olmasın.";
@@ -282,6 +317,8 @@ async function submitOffer(
 }
 
 async function main() {
+  loadAcceptanceEnv();
+  await bindProductModules();
   if (process.env.TALEPO_ENVIRONMENT !== "acceptance") {
     fail("env", 'TALEPO_ENVIRONMENT must be "acceptance"');
   }
@@ -604,7 +641,7 @@ async function main() {
   }
   if (report.errors.length) {
     console.log("\nERRORS:");
-    for (const e of report.errors) console.log(` - ${e}`);
+    for (const e of report.errors) console.log(` - ${redactAcceptanceOutput(e)}`);
     process.exit(1);
   }
   console.log("\nCORE COMMERCE: PASS");
@@ -613,9 +650,9 @@ async function main() {
 main()
   .catch((e) => {
     // Prisma/pg errors routinely carry the host and the database user.
-    console.error(`FAIL — ${redactPrismaOutput(e instanceof Error ? e.message : String(e))}`);
+    console.error(`FAIL — ${formatAcceptanceError(e)}`);
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma?.$disconnect();
   });

@@ -4,9 +4,22 @@
  *
  * Does NOT mutate data. Exit 1 if blockers found.
  */
-import { prisma } from "../src/lib/prisma";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+
+/**
+ * Bound inside main(), AFTER the env is verified: a static import would load
+ * `src/lib/prisma`, which reads DATABASE_URL at module scope.
+ */
+let prisma!: typeof import("../src/lib/prisma").prisma;
 
 async function main() {
+  // This precheck used to run against whatever ambient env was present, which
+  // on a developer machine is the primary project. It now passes through the
+  // same acceptance guard as the rest of the harness, inside the catch boundary.
+  loadAcceptanceEnv();
+  ({ prisma } = await import("../src/lib/prisma"));
+
   const blockers: string[] = [];
 
   const [savedTotal, alertTotal, savedNullCompany, alertNullCompany] =
@@ -66,10 +79,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(`FAIL — ${formatAcceptanceError(error, "precheck")}`);
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma?.$disconnect();
   });

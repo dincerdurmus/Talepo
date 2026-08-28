@@ -5,6 +5,8 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
 function diagnoseValue(key: string, value: string) {
@@ -34,7 +36,7 @@ function diagnoseValue(key: string, value: string) {
       .replace(/^postgres:/i, "http:");
     new URL(normalized);
   } catch (e) {
-    issues.push(`URL parse fail: ${e instanceof Error ? e.message : String(e)}`);
+    issues.push(`URL parse fail: ${formatAcceptanceError(e)}`);
     if (!trimmed.includes("://")) issues.push("missing ://");
     const atCount = (trimmed.match(/@/g) || []).length;
     if (atCount !== 1) issues.push(`at-sign count: ${atCount} (expected 1)`);
@@ -125,8 +127,14 @@ function main() {
     console.log(`KEY: ${r.key} LINE: ${r.lineNum}`);
     if (r.hadQuotes) console.log("QUOTES STRIPPED: yes");
     console.log("VALUE LENGTH:", r.valueLength);
-    console.log("ISSUES:", r.issues.length ? r.issues.join("; ") : "none detected");
+    console.log("ISSUES:", r.issues.length ? redactAcceptanceOutput(r.issues.join("; ")) : "none detected");
   }
 }
 
-main();
+// main() is synchronous, so the boundary is a try/catch rather than .catch().
+try {
+  main();
+} catch (error) {
+  console.error(`FAIL — ${formatAcceptanceError(error)}`);
+  process.exit(1);
+}

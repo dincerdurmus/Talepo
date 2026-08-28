@@ -18,17 +18,22 @@ import {
   isRecognisedSupabaseHost,
   parseAcceptancePostgresUrl,
 } from "./lib/acceptance-db-target-v1";
-import {
-  ACCEPTANCE_ENV_PATH,
-  acceptanceEnvFileExists,
-  readAcceptanceEnvFile,
-} from "./lib/acceptance-env-file-v1";
-import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
-import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
-import {
-  excludeSystemCategories,
-  isSystemCategorySlug,
-} from "../src/lib/request/raw-input";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+/**
+ * Product modules are bound inside main(), AFTER the env is verified. These two
+ * are leaf modules today, but the rule is structural: no CLI in this harness
+ * loads product code before the target is known.
+ */
+let REQUEST_CATEGORIES!: typeof import("../src/lib/request-category-engine").REQUEST_CATEGORIES;
+let excludeSystemCategories!: typeof import("../src/lib/request/raw-input").excludeSystemCategories;
+let isSystemCategorySlug!: typeof import("../src/lib/request/raw-input").isSystemCategorySlug;
+
+/** Bind every runtime product export. Called only after the env is verified. */
+async function bindProductModules(): Promise<void> {
+  ({ REQUEST_CATEGORIES } = await import("../src/lib/request-category-engine"));
+  ({ excludeSystemCategories, isSystemCategorySlug } = await import("../src/lib/request/raw-input"));
+}
 
 const TRANSACTION_POOLER_PORT = "6543";
 const SESSION_POOLER_PORT = "5432";
@@ -39,34 +44,20 @@ function hostType(host: string): string {
 }
 
 function fail(msg: string): never {
-  console.error(`FAIL — ${redactPrismaOutput(msg)}`);
+  console.error(`FAIL — ${redactAcceptanceOutput(msg)}`);
   process.exit(1);
-}
-
-/** Read the acceptance env file and apply it, after clearing ambient DB URLs. */
-function loadAcceptanceEnvOnly(): Record<string, string> {
-  if (!acceptanceEnvFileExists()) {
-    fail(`.env.acceptance missing at ${ACCEPTANCE_ENV_PATH}`);
-  }
-
-  // Strip any ambient DB URLs so production/shared env cannot leak in.
-  delete process.env.DATABASE_URL;
-  delete process.env.DIRECT_URL;
-  delete process.env.TALEPO_ENVIRONMENT;
-
-  const out = readAcceptanceEnvFile();
-  for (const [key, value] of Object.entries(out)) {
-    process.env[key] = value;
-  }
-  return out;
 }
 
 async function main() {
   console.log("=== verify-acceptance-db-target-v1 (READ-ONLY) ===\n");
-  console.log(`ACCEPTANCE ENV LOADER: explicit file parse → ${ACCEPTANCE_ENV_PATH}`);
+  console.log("ACCEPTANCE ENV LOADER: explicit acceptance-only parse");
   console.log("PRODUCTION ENV FALLBACK: disabled (DATABASE_URL/DIRECT_URL cleared before load)");
 
-  const env = loadAcceptanceEnvOnly();
+  // One loader for the whole harness: this verifier no longer keeps a private
+  // copy that could drift from the guard every other script goes through.
+  loadAcceptanceEnv();
+  await bindProductModules();
+  const env = process.env as Record<string, string>;
 
   const decision = evaluateAcceptanceDbTarget(env);
   if (!decision.ok) {
@@ -230,6 +221,7 @@ async function verifyCategoryRegistry(client: Client): Promise<void> {
 }
 
 main().catch((e) => {
-  // fail() applies the shared redactor; driver errors often carry host and user.
-  fail(e instanceof Error ? e.message : String(e));
+  // Shared formatter: class + short redacted message, never a raw error or stack.
+  console.error(`FAIL — ${formatAcceptanceError(e)}`);
+  process.exit(1);
 });

@@ -9,15 +9,22 @@
  *   npx --yes tsx scripts/cleanup-acceptance-v1.ts            # plan only
  *   npx --yes tsx scripts/cleanup-acceptance-v1.ts --apply    # delete
  */
-import "./lib/load-acceptance-env";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
 
-import { prisma } from "../src/lib/prisma";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
+/**
+ * Bound inside main(), AFTER the env is verified: a static import would load
+ * `src/lib/prisma`, which reads DATABASE_URL at module scope.
+ */
+let prisma!: typeof import("../src/lib/prisma").prisma;
 import {
   executeAcceptanceCleanup,
   type CleanupDb,
 } from "./lib/acceptance-cleanup-core-v1";
 
 async function main(): Promise<void> {
+  loadAcceptanceEnv();
+  ({ prisma } = await import("../src/lib/prisma"));
   const apply = process.argv.includes("--apply");
   const db = prisma as unknown as CleanupDb;
 
@@ -54,10 +61,9 @@ async function main(): Promise<void> {
 
 main()
   .catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`FAIL — ${message.replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]")}`);
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
     process.exitCode = 1;
   })
   .finally(() => {
-    void prisma.$disconnect();
+    void prisma?.$disconnect();
   });

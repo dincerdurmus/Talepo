@@ -16,6 +16,20 @@ export const ACCEPTANCE_PROJECT_REF = "yyirpdhcydavrttiongo";
 /** Known primary/shared Supabase project ref — must NEVER be an acceptance target. */
 export const BLOCKED_PRIMARY_PROJECT_REFS = new Set(["jgfwofiygnsylaclykkb"]);
 
+/**
+ * Refs that are no longer a target but must still never reach a log. They live
+ * here, with the live refs, so redaction derives every ref it hides from ONE
+ * source instead of keeping a second list of its own.
+ */
+export const HISTORICAL_PROJECT_REFS = new Set(["cpeoiqppesacjlyrszrl"]);
+
+/** Every ref this repository knows about, live or retired. */
+export const ALL_KNOWN_PROJECT_REFS: readonly string[] = [
+  ACCEPTANCE_PROJECT_REF,
+  ...BLOCKED_PRIMARY_PROJECT_REFS,
+  ...HISTORICAL_PROJECT_REFS,
+];
+
 export const PLACEHOLDER_MARKERS = [
   "<STAGING_TRANSACTION_POOLER_URI>",
   "<STAGING_SESSION_POOLER_URI>",

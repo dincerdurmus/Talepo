@@ -2,28 +2,47 @@
  * Verify acceptance persona seed + ownership/plan isolation on staging.
  * Run: npm run acceptance:verify-personas
  */
-import "./lib/load-acceptance-env";
-import { assertEntitlement } from "../src/lib/membership/assert-entitlement";
-import { hasFeature } from "../src/lib/membership/entitlements";
-import {
-  canonicalizePlanTier,
-  isLegacyCorporateAccount,
-} from "../src/lib/membership/plans";
-import { resolveEntitlements } from "../src/lib/membership/resolve-entitlements";
-import { EntitlementError } from "../src/lib/membership/types";
-import { assertCompanyMembership } from "../src/lib/panel/company-workspace";
-import {
-  countActiveCompanySeats,
-  getCompanySeatUsage,
-} from "../src/server/company/assert-company-seat";
-import { prisma } from "../src/lib/prisma";
 import {
   ACCEPTANCE_COMPANY,
   ACCEPTANCE_MARKER,
   PERSONAS,
   type PersonaKey,
 } from "./lib/acceptance-personas-v1.constants";
-import { redactPrismaOutput } from "./run-acceptance-prisma-v1";
+import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+
+/**
+ * Product modules are bound inside main(), AFTER the acceptance env is applied
+ * and the target verified. A static import here would pull in `src/lib/prisma`,
+ * which reads DATABASE_URL at module scope — so a refused target would blow up
+ * before any catch boundary exists and Node would print a raw stack.
+ */
+let prisma!: typeof import("../src/lib/prisma").prisma;
+let assertEntitlement!: typeof import("../src/lib/membership/assert-entitlement").assertEntitlement;
+let hasFeature!: typeof import("../src/lib/membership/entitlements").hasFeature;
+let canonicalizePlanTier!: typeof import("../src/lib/membership/plans").canonicalizePlanTier;
+let isLegacyCorporateAccount!: typeof import("../src/lib/membership/plans").isLegacyCorporateAccount;
+let resolveEntitlements!: typeof import("../src/lib/membership/resolve-entitlements").resolveEntitlements;
+let EntitlementError!: typeof import("../src/lib/membership/types").EntitlementError;
+let assertCompanyMembership!: typeof import("../src/lib/panel/company-workspace").assertCompanyMembership;
+let countActiveCompanySeats!: typeof import("../src/server/company/assert-company-seat").countActiveCompanySeats;
+let getCompanySeatUsage!: typeof import("../src/server/company/assert-company-seat").getCompanySeatUsage;
+
+/** Bind every runtime product export. Called only after the env is verified. */
+async function bindProductModules(): Promise<void> {
+  ({ prisma } = await import("../src/lib/prisma"));
+  ({ assertEntitlement } = await import("../src/lib/membership/assert-entitlement"));
+  ({ hasFeature } = await import("../src/lib/membership/entitlements"));
+  ({ canonicalizePlanTier, isLegacyCorporateAccount } = await import(
+    "../src/lib/membership/plans"
+  ));
+  ({ resolveEntitlements } = await import("../src/lib/membership/resolve-entitlements"));
+  ({ EntitlementError } = await import("../src/lib/membership/types"));
+  ({ assertCompanyMembership } = await import("../src/lib/panel/company-workspace"));
+  ({ countActiveCompanySeats, getCompanySeatUsage } = await import(
+    "../src/server/company/assert-company-seat"
+  ));
+}
 
 const problems: string[] = [];
 
@@ -37,7 +56,8 @@ function check(name: string, ok: boolean, detail: string): void {
 }
 
 function fail(msg: string): never {
-  console.error(`FAIL — ${msg}`);
+  // Every operator-facing line goes through the single redaction authority.
+  console.error(`FAIL — ${redactAcceptanceOutput(msg)}`);
   process.exit(1);
 }
 
@@ -78,6 +98,8 @@ async function loadPersona(key: PersonaKey) {
 }
 
 async function main() {
+  loadAcceptanceEnv();
+  await bindProductModules();
   if (process.env.TALEPO_ENVIRONMENT !== "acceptance") {
     fail('TALEPO_ENVIRONMENT must be "acceptance"');
   }
@@ -271,14 +293,16 @@ async function main() {
 
 main()
   .catch((e) => {
-    if (e instanceof EntitlementError) {
+    // EntitlementError is bound only after the env is verified, so a failure
+    // in loadAcceptanceEnv() would make `instanceof` throw INSIDE the handler.
+    if (EntitlementError && e instanceof EntitlementError) {
       fail(`${e.code}: ${e.message}`);
     }
     // Shared redactor: Prisma/pg errors carry the host with no URI scheme
     // ("Can't reach database server at `db.<ref>.supabase.co`"), which the old
     // URI-only replace let through.
-    fail(redactPrismaOutput(e instanceof Error ? e.message : String(e)));
+    fail(formatAcceptanceError(e));
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await prisma?.$disconnect();
   });

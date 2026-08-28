@@ -15,6 +15,11 @@
  */
 import { spawn } from "node:child_process";
 import { createServer } from "node:net";
+import {
+  createStreamRedactor,
+  formatAcceptanceError,
+} from "./lib/acceptance-redaction-v1";
+import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
 
 /** The one port the acceptance harness may listen on. */
 export const ACCEPTANCE_DEV_PORT = 3187;
@@ -65,7 +70,7 @@ export async function assertPortAvailable(port: number): Promise<void> {
 
 async function main(): Promise<void> {
   // Canonical target guard first: refuses any database except the acceptance project.
-  await import("./lib/load-acceptance-env");
+  loadAcceptanceEnv();
 
   if (process.env.TALEPO_ENVIRONMENT !== "acceptance") {
     console.error("FAIL — TALEPO_ENVIRONMENT must be acceptance");
@@ -79,19 +84,41 @@ async function main(): Promise<void> {
   console.log("DB: acceptance project via .env.acceptance only");
   console.log("SECRETS PRINTED: no");
 
+  // Piped, not inherited: this child runs the product with DATABASE_URL in hand,
+  // so a Prisma P1001 here names the acceptance host. Inheriting the terminal
+  // would print it verbatim — the one spawner that most needs redaction had none.
   const child = spawn("npx", buildNextDevArgs(), {
-    stdio: "inherit",
+    stdio: ["inherit", "pipe", "pipe"],
     shell: true,
     env: process.env,
   });
 
-  child.on("exit", (code) => process.exit(code ?? 0));
+  const outRedactor = createStreamRedactor();
+  const errRedactor = createStreamRedactor();
+  child.stdout.setEncoding("utf8");
+  child.stderr.setEncoding("utf8");
+  child.stdout.on("data", (chunk: string) => process.stdout.write(outRedactor.push(chunk)));
+  child.stderr.on("data", (chunk: string) => process.stderr.write(errRedactor.push(chunk)));
+
+  let spawnFailed = false;
+  child.on("error", (error) => {
+    // spawn ENOENT arrives asynchronously, long after main().catch() resolved.
+    console.error(`FAIL — ${formatAcceptanceError(error, "spawn")}`);
+    spawnFailed = true;
+    process.exitCode = 1;
+  });
+  child.on("close", (code, signal) => {
+    process.stdout.write(outRedactor.flush());
+    process.stderr.write(errRedactor.flush());
+    if (spawnFailed) return;
+    // A signal-killed dev server must not report success.
+    process.exitCode = code ?? (signal ? 1 : 0);
+  });
 }
 
 if (require.main === module) {
   main().catch((error) => {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`FAIL — ${message.replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[redacted-uri]")}`);
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
     process.exit(1);
   });
 }
