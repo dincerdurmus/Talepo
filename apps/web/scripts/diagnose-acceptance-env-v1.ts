@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
@@ -132,9 +133,13 @@ function main() {
 }
 
 // main() is synchronous, so the boundary is a try/catch rather than .catch().
-try {
-  main();
-} catch (error) {
-  console.error(`FAIL — ${formatAcceptanceError(error)}`);
-  process.exit(1);
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  try {
+    main();
+  } catch (error) {
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
+    process.exit(1);
+  }
 }

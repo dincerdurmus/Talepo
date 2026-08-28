@@ -21,6 +21,7 @@ import {
   executeAcceptanceCleanup,
   type CleanupDb,
 } from "./lib/acceptance-cleanup-core-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 async function main(): Promise<void> {
   loadAcceptanceEnv();
@@ -59,11 +60,15 @@ async function main(): Promise<void> {
   console.log("PASS — acceptance-owned rows removed");
 }
 
-main()
-  .catch((error) => {
-    console.error(`FAIL — ${formatAcceptanceError(error)}`);
-    process.exitCode = 1;
-  })
-  .finally(() => {
-    void prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((error) => {
+      console.error(`FAIL — ${formatAcceptanceError(error)}`);
+      process.exitCode = 1;
+    })
+    .finally(() => {
+      void prisma?.$disconnect();
+    });
+}

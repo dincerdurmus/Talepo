@@ -29,6 +29,7 @@ import {
 } from "./lib/acceptance-personas-v1.constants";
 import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
 import { evaluateAcceptanceDbTarget } from "./lib/acceptance-db-target-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 
@@ -187,12 +188,16 @@ async function main() {
   console.log("\nRun: npm run acceptance:verify-personas");
 }
 
-main()
-  .catch((e) => {
-    // Shared redactor: a Prisma connection error names the host with no URI
-    // scheme, which the old URI-only replace let through.
-    fail(formatAcceptanceError(e));
-  })
-  .finally(async () => {
-    await prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((e) => {
+      // Shared redactor: a Prisma connection error names the host with no URI
+      // scheme, which the old URI-only replace let through.
+      fail(formatAcceptanceError(e));
+    })
+    .finally(async () => {
+      await prisma?.$disconnect();
+    });
+}

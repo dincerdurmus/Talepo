@@ -24,6 +24,8 @@ import {
   resolveAcceptanceCleanupScope,
   type CleanupStep,
 } from "./lib/acceptance-cleanup-core-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
 
 const SCRIPTS_DIR = __dirname;
 const problems: string[] = [];
@@ -530,4 +532,11 @@ async function main(): Promise<void> {
   process.exit(problems.length === 0 ? 0 : 1);
 }
 
-void main();
+// Inert on import, and no unhandled rejection: a verifier that crashes must say
+// so through the shared redacting formatter, never as a raw stack.
+if (isAcceptanceCliEntrypoint(module)) {
+  main().catch((error) => {
+    console.error(`FAIL — ${formatAcceptanceError(error)}`);
+    process.exit(1);
+  });
+}

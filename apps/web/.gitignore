@@ -36,6 +36,10 @@ yarn-error.log*
 # ...except the placeholder-only acceptance template, which must be committed.
 !.env.acceptance.example
 
+# The manually downloaded acceptance CA. Never committed: it is fetched by a
+# person from the acceptance project dashboard and pinned by fingerprint.
+/.acceptance/
+
 # vercel
 .vercel
 

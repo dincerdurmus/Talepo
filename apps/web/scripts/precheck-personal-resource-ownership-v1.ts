@@ -6,6 +6,7 @@
  */
 import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 /**
  * Bound inside main(), AFTER the env is verified: a static import would load
@@ -78,11 +79,15 @@ async function main() {
   process.exit(0);
 }
 
-main()
-  .catch((error) => {
-    console.error(`FAIL — ${formatAcceptanceError(error, "precheck")}`);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((error) => {
+      console.error(`FAIL — ${formatAcceptanceError(error, "precheck")}`);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma?.$disconnect();
+    });
+}

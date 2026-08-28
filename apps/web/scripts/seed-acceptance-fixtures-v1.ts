@@ -33,6 +33,7 @@ import {
   FIXTURE_REQUESTS,
   type FixtureRequestKey,
 } from "./lib/acceptance-fixtures-v1.constants";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 function fail(message: string): never {
   // Same rule as every sibling script: nothing reaches stderr unredacted.
@@ -191,11 +192,15 @@ async function main(): Promise<void> {
   console.log("PASS — acceptance fixtures seeded");
 }
 
-main()
-  .catch((error) => {
-    console.error(`FAIL — ${formatAcceptanceError(error)}`);
-    process.exitCode = 1;
-  })
-  .finally(() => {
-    void prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((error) => {
+      console.error(`FAIL — ${formatAcceptanceError(error)}`);
+      process.exitCode = 1;
+    })
+    .finally(() => {
+      void prisma?.$disconnect();
+    });
+}

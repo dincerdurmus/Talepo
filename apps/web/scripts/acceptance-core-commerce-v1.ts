@@ -15,6 +15,7 @@ import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
 
 // Type-only: erased at compile time, so it produces no runtime import.
 import type { ResolveEntitlementsOptions } from "@/lib/membership/types";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 /**
  * Every product binding is resolved inside main(), AFTER the acceptance env is
@@ -665,12 +666,16 @@ async function main() {
   console.log("\nCORE COMMERCE: PASS");
 }
 
-main()
-  .catch((e) => {
-    // Prisma/pg errors routinely carry the host and the database user.
-    console.error(`FAIL — ${formatAcceptanceError(e)}`);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((e) => {
+      // Prisma/pg errors routinely carry the host and the database user.
+      console.error(`FAIL — ${formatAcceptanceError(e)}`);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma?.$disconnect();
+    });
+}

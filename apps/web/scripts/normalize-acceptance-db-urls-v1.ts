@@ -5,8 +5,10 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { ACCEPTANCE_PROJECT_REF } from "./lib/acceptance-db-target-v1";
+import { ACCEPTANCE_PROJECT_REF, evaluateAcceptanceDbTarget } from "./lib/acceptance-db-target-v1";
 import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
+import { readAcceptanceEnvFile } from "./lib/acceptance-env-file-v1";
 
 const ACCEPTANCE_ENV_PATH = join(__dirname, "..", ".env.acceptance");
 const URL_KEYS = new Set(["DATABASE_URL", "DIRECT_URL"]);
@@ -19,7 +21,8 @@ function safeDecodeURIComponent(value: string): string {
   }
 }
 
-function parsePostgresUrlRobust(raw: string): {
+/** Exported so the allowlist verifier can measure the repair path directly. */
+export function parsePostgresUrlRobust(raw: string): {
   scheme: string;
   user: string;
   passwordRaw: string;
@@ -33,6 +36,13 @@ function parsePostgresUrlRobust(raw: string): {
   if (!schemeMatch) throw new Error("Not a postgres URL");
   const scheme = schemeMatch[1]!.toLowerCase();
   const afterScheme = trimmed.slice(schemeMatch[0].length);
+  // This is the ONE place that must still read an un-encoded password, because
+  // encoding it is this script's entire job: a Supabase password containing "?"
+  // or "#" is exactly the input the operator pastes in and needs repaired. The
+  // canonical guard refuses such a URL — rightly, since `pg` misreads it — so if
+  // this function refused it too there would be no way back. It is not an
+  // authority on the target: the pair it produces is judged by the guard below,
+  // and nothing is written unless the guard accepts.
   const atIdx = afterScheme.lastIndexOf("@");
   if (atIdx < 0) throw new Error("Missing @ in postgres URL");
   const userinfo = afterScheme.slice(0, atIdx);
@@ -46,20 +56,36 @@ function parsePostgresUrlRobust(raw: string): {
   const query = qIdx >= 0 ? hostpart.slice(qIdx) : "";
   const slashIdx = authority.indexOf("/");
   const hostPort = slashIdx >= 0 ? authority.slice(0, slashIdx) : authority;
-  const database =
-    slashIdx >= 0 ? safeDecodeURIComponent(authority.slice(slashIdx + 1)) : "postgres";
+  // Inventing "postgres" here would WRITE a database name the operator never
+  // chose, quietly moving the target away from the driver's own fallback.
+  if (slashIdx < 0) throw new Error("Postgres URL names no database");
+  const database = safeDecodeURIComponent(authority.slice(slashIdx + 1));
   const lastColon = hostPort.lastIndexOf(":");
   const host = lastColon >= 0 ? hostPort.slice(0, lastColon) : hostPort;
   const port = lastColon >= 0 ? hostPort.slice(lastColon + 1) : "5432";
   return { scheme, user, passwordRaw, host, port, database, query };
 }
 
-function encodePasswordForUri(passwordRaw: string): string {
+/**
+ * Encode the password component, and be idempotent about it.
+ *
+ * Decoding first and re-encoding was wrong: a password that genuinely contains
+ * "%41BC" decodes to "ABC" and was written back as "ABC" — a silently changed
+ * credential whose only symptom is an authentication failure that no output is
+ * allowed to explain. A value is now left alone ONLY when it already is exactly
+ * what encoding its decoded form would produce; anything else is encoded
+ * verbatim. Running this twice therefore changes nothing the second time.
+ *
+ * The remaining ambiguity is real and deliberate: "p%2Fw" is read as an
+ * already-encoded "p/w", because the raw string cannot say which was meant.
+ */
+export function encodePasswordForUri(passwordRaw: string): string {
   const decoded = safeDecodeURIComponent(passwordRaw);
-  return encodeURIComponent(decoded);
+  if (encodeURIComponent(decoded) === passwordRaw) return passwordRaw;
+  return encodeURIComponent(passwordRaw);
 }
 
-function rebuildPostgresUrl(parts: ReturnType<typeof parsePostgresUrlRobust>, encodedPassword: string): string {
+export function rebuildPostgresUrl(parts: ReturnType<typeof parsePostgresUrlRobust>, encodedPassword: string): string {
   const userPart = parts.user.includes("@") || parts.user.includes(":")
     ? encodeURIComponent(parts.user)
     : parts.user;
@@ -74,17 +100,30 @@ function projectRefFromUser(user: string): string | null {
   return m?.[1] ?? null;
 }
 
+/**
+ * Every refusal ends here, so the operator learns the file's state on EVERY
+ * failing path — not only the one that happened to print it. Nothing is written
+ * before the canonical guard accepts, so "unchanged" is always the truth here.
+ */
+function refuse(message: string): never {
+  console.error(`FAIL — ${message}`);
+  console.error("FILE UNCHANGED: yes");
+  process.exit(1);
+}
+
 function main() {
-  if (!existsSync(ACCEPTANCE_ENV_PATH)) {
-    console.error("FAIL — .env.acceptance missing");
-    process.exit(1);
-  }
+  if (!existsSync(ACCEPTANCE_ENV_PATH)) refuse(".env.acceptance missing");
 
   const raw = readFileSync(ACCEPTANCE_ENV_PATH, "utf8");
   const lines = raw.split(/\r?\n/);
   const eol = raw.includes("\r\n") ? "\r\n" : "\n";
   let changed = 0;
   const ports: Record<string, string> = {};
+  const normalizedUrls: Record<string, string> = {};
+  // The guard is asked about this file's OWN environment, not an assumed one, and
+  // the value is read through the canonical env-file reader rather than a third
+  // hand-written KEY=VALUE parser living in this script.
+  const environment = readAcceptanceEnvFile().TALEPO_ENVIRONMENT;
 
   const outLines = lines.map((line) => {
     const trimmed = line.trim();
@@ -108,27 +147,33 @@ function main() {
 
     const ref = projectRefFromUser(parts.user);
     if (ref !== ACCEPTANCE_PROJECT_REF) {
-      console.error(`FAIL — ${key} does not name the allowed acceptance project`);
-      process.exit(1);
+      refuse(`${key} does not name the allowed acceptance project`);
     }
 
     if (normalized !== value) changed++;
+    normalizedUrls[key] = normalized;
 
     const rendered = quoted ? `${quote}${normalized}${quote}` : normalized;
     const prefix = line.slice(0, line.indexOf(key));
     return `${prefix}${key}=${rendered}`;
   });
 
-  if (ports.DATABASE_URL !== "6543") {
-    console.error("FAIL — DATABASE_URL port must remain 6543");
-    process.exit(1);
-  }
-  if (ports.DIRECT_URL !== "5432") {
-    console.error("FAIL — DIRECT_URL port must remain 5432");
-    process.exit(1);
-  }
+  if (ports.DATABASE_URL !== "6543") refuse("DATABASE_URL port must remain 6543");
+  if (ports.DIRECT_URL !== "5432") refuse("DIRECT_URL port must remain 5432");
 
-  writeFileSync(ACCEPTANCE_ENV_PATH, outLines.join(eol) + (raw.endsWith("\n") || raw.endsWith("\r\n") ? eol : ""), "utf8");
+  // The classification below is not this script's own opinion. The canonical
+  // guard judges the pair that is about to be written, and nothing is written
+  // if it refuses — a rejected run leaves .env.acceptance exactly as it was.
+  const decision = evaluateAcceptanceDbTarget({
+    TALEPO_ENVIRONMENT: environment,
+    DATABASE_URL: normalizedUrls.DATABASE_URL,
+    DIRECT_URL: normalizedUrls.DIRECT_URL,
+  });
+  if (!decision.ok) refuse(`canonical guard rejected the normalized pair (${decision.reason})`);
+
+  // `split(/\r?\n/)` already turns a trailing newline into a final empty element,
+  // so joining restores it. Appending another grew the file by one line per run.
+  writeFileSync(ACCEPTANCE_ENV_PATH, outLines.join(eol), "utf8");
 
   console.log("ENV PASSWORD ENCODED: yes");
   console.log(`URLS UPDATED: ${changed > 0 ? changed : "already encoded"}`);
@@ -140,9 +185,12 @@ function main() {
 
 // main() is synchronous, so the boundary is a try/catch: a URL-parsing throw
 // used to reach Node unhandled and print the raw error with a full stack.
-try {
-  main();
-} catch (error) {
-  console.error(`FAIL — ${formatAcceptanceError(error)}`);
-  process.exit(1);
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  try {
+    main();
+  } catch (error) {
+    refuse(formatAcceptanceError(error));
+  }
 }

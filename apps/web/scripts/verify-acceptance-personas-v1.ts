@@ -10,6 +10,7 @@ import {
 } from "./lib/acceptance-personas-v1.constants";
 import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 /**
  * Product modules are bound inside main(), AFTER the acceptance env is applied
@@ -291,18 +292,22 @@ async function main() {
   if (problems.length > 0) process.exit(1);
 }
 
-main()
-  .catch((e) => {
-    // EntitlementError is bound only after the env is verified, so a failure
-    // in loadAcceptanceEnv() would make `instanceof` throw INSIDE the handler.
-    if (EntitlementError && e instanceof EntitlementError) {
-      fail(`${e.code}: ${e.message}`);
-    }
-    // Shared redactor: Prisma/pg errors carry the host with no URI scheme
-    // ("Can't reach database server at `db.<ref>.supabase.co`"), which the old
-    // URI-only replace let through.
-    fail(formatAcceptanceError(e));
-  })
-  .finally(async () => {
-    await prisma?.$disconnect();
-  });
+// Inert on import: only the started process runs. Importing this file to reach
+// one exported helper must never launch the scenario it drives.
+if (isAcceptanceCliEntrypoint(module)) {
+  main()
+    .catch((e) => {
+      // EntitlementError is bound only after the env is verified, so a failure
+      // in loadAcceptanceEnv() would make `instanceof` throw INSIDE the handler.
+      if (EntitlementError && e instanceof EntitlementError) {
+        fail(`${e.code}: ${e.message}`);
+      }
+      // Shared redactor: Prisma/pg errors carry the host with no URI scheme
+      // ("Can't reach database server at `db.<ref>.supabase.co`"), which the old
+      // URI-only replace let through.
+      fail(formatAcceptanceError(e));
+    })
+    .finally(async () => {
+      await prisma?.$disconnect();
+    });
+}

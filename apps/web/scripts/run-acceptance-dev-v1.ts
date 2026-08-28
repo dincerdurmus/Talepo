@@ -20,6 +20,7 @@ import {
   formatAcceptanceError,
 } from "./lib/acceptance-redaction-v1";
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 /** The one port the acceptance harness may listen on. */
 export const ACCEPTANCE_DEV_PORT = 3187;
@@ -116,7 +117,7 @@ async function main(): Promise<void> {
   });
 }
 
-if (require.main === module) {
+if (isAcceptanceCliEntrypoint(module)) {
   main().catch((error) => {
     console.error(`FAIL — ${formatAcceptanceError(error)}`);
     process.exit(1);
