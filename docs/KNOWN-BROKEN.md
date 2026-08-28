@@ -3353,3 +3353,88 @@ ya da route yardımcısını import etmek render sırasında yazmak DEĞİLDİR.
 artık render girişinin default export gövdesinden başlayarak yalnız gerçekten
 ÇAĞRILAN fonksiyonlara iner (B sınıfı elenir) ve `url.searchParams.delete(...)`
 gibi JS yerleşiklerini ayıklar (C sınıfı elenir).
+
+### KB-22 GÜNCELLEME — 2026-08-28, `c2d127d` (okundu işaretleri kapandı)
+
+Commit: `c2d127d` — *fix(panel): move read receipts out of render*
+(parent `46ca7eb`). Yukarıdaki `740e9a4` bölümü **silinmedi**; bu bölüm onu
+genişletir. Durum yine **KISMEN ÇÖZÜLDÜ · BRANCH-WIRED · CODE-VERIFIED** —
+umbrella kaydın iki alt kimliği daha kapandı, ikisi hâlâ açık.
+
+**KAPANAN İKİ ALT KİMLİK.**
+
+| # | Render girişi | Eski çağrı zinciri | Yazılan | Durum |
+| --- | --- | --- | --- | --- |
+| 1 | `apps/web/src/app/panel/bildirimler/r/[id]/page.tsx` | `#default → mark-notifications-read.ts#markNotificationAsRead` | `Notification.status` (`updateMany`) | **KAPANDI** — `c2d127d` |
+| 2 | `apps/web/src/app/panel/mesajlar/[id]/page.tsx` | `#default → mark-conversation-read.ts#markConversationAsRead` | `ConversationParticipant.lastReadAt` + `Notification.status` (`updateMany`) | **KAPANDI** — `c2d127d` |
+
+Tarihsel kimlikler bu tabloda **korunur**; doğrulayıcının dondurulmuş
+listesinden çıkarılmaları sayaç düşürmek için değil, üretimdeki ÇAĞRI
+kalktığı içindir (`K2-kimlik-kaybolmadi` kapısı bunu zorunlu kılar).
+
+**SÖZLEŞME (uygulandı).**
+
+- GET/RSC render okundu işareti **yazmaz**.
+- Prefetch okundu işareti **yazmaz** — okundu rotalarına giden `<Link>`
+  öğelerinde `prefetch={false}`, alan adına göre değil GERÇEK `href`
+  eşleşmesine göre.
+- Bildirim ve sohbet okundu yazımı **açık, yetkili POST** sınırındadır
+  (`POST /api/notifications/[id]/read`, `POST /api/messages/[id]/read`).
+- **Sahiplik fail-closed**: kullanıcı yalnız `requireUser()` ile belirlenir,
+  istemciden kimlik okunmaz; sohbet rotası katılımcılığı doğrular ve
+  katılımcı değilse varlık sızdırmadan 404 döner. Sahiplik yazım anında da
+  korunur — rota ön kontrolü tek güven sınırı değildir.
+- Bildirim yönlendirmesi yalnız **güvenli iç hedefe** gider. Hedef sunucuda
+  hesaplanır ve prop olarak geçer; `//host`, `/\host`, `http:`, `https:`,
+  ters eğik çizgi ve kodlanmış dış hedefler fail-closed reddedilir.
+- **Hata sessiz başarı değildir**: POST başarısızsa yönlendirme yapılmaz,
+  kullanıcıya `role="alert"` ile bildirilir ve yeniden deneme sunulur.
+  Yeniden deneme gerçekten ikinci POST'u gönderir (tek koşum işareti yalnız
+  otomatik tetikleyiciyi kilitler).
+- Sohbetin iki yazımı **tek transaction**; bildirim yazımı hata verirse
+  katılımcı damgası **rollback** olur.
+- **İdempotent**: ikinci çağrı yeni yazım üretmez; zaten `READ` olan bildirim
+  idempotent başarıdır.
+
+**AÇIK KALAN İKİ KİMLİK (`NOT-WIRED` · `KNOWN-OPEN`).**
+
+| # | Render girişi | Çağrı zinciri | Yazılan |
+| --- | --- | --- | --- |
+| 1 | `apps/web/src/app/panel/talepler/page.tsx` | `#default → sync-company-categories.ts#ensureEngineCategories` | `Category` (`upsert`) |
+| 2 | `apps/web/src/app/panel/talepler/page.tsx` | `#default → distribute-request.ts#backfillMatchesForCompany` | `RequestMatch` (`createMany`) |
+
+İkisi de provisioning/backfill işidir ve açık bir job/admin sınırına
+taşınmalıdır (KB-22 Dilim 2). **"Panel render write 0" İDDİASI YOKTUR.**
+
+**Ölçüm (bu commit'te).**
+
+```
+npx --yes tsx scripts/verify-read-receipt-boundary-v1.ts
+npx --yes tsx scripts/verify-panel-render-no-write-v1.ts
+```
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| `verify-read-receipt-boundary-v1` | `PROBLEMS=0`, iki koşuda byte-birebir. Fix ÖNCESİ **24 kırmızı** (render yazımı iki sayfa, prefetch açık üç dosya, transaction/rollback ölçülemiyor, sessiz başarı) |
+| A sınıfı render yazımı | **4 → 2** |
+| Open redirect saldırıları | `//host` · `/\host` · `http:` · `https:` · `\\host` · `%2F%2F` · boş → hepsi **fail-closed** (gerçek fonksiyon üzerinde ölçüldü) |
+| Yeniden deneme | Kalıcı kapı: `run` gövdesinde koşum kilidi yok, retry ikinci POST'u gönderir |
+| Çapraz kullanıcı sızıntısı | **0** — başkasının kaydı 0 satır, bulunmayan ID ile aynı dış sonuç |
+| Transaction rollback | Ölçüldü — bildirim hatasında katılımcı damgası geri alınır |
+| `verify-panel-render-no-write-v1` | `PROBLEMS=0`, açık dondurulmuş kimlik **2** |
+| `verify-urgent-nudge-boundary-v1` | `PROBLEMS=0` |
+| `verify-notifications-v1` | **50/1** — KB-5 açık, bu değişiklikten etkilenmedi |
+| `verify-phase3a-discovery-foundation-v1` | **45/1 KIRMIZI** — tarihsel `28 printing leaf`; **PASS DEĞİLDİR** |
+| `verify-projection-authority-v1` | 510/510 |
+| `verify-projection-server-authority-v1` | 135/135 · `USER_EXPLICIT 75` / `UNKNOWN 14` |
+| `verify-readiness-brand-authority-v1` | trusted **7/108** |
+| Gerçek DB / tarayıcı | **NOT-MEASURED** |
+| Badge'in canlı düşmesi | **NOT-MEASURED** |
+| Migration | **YOK** |
+| Production / deploy | İddia **yok**; `PRODUCTION-DEPLOYED` değildir |
+| Hazırlık | Talep beyni %92 · Pro hattı %21 |
+
+**Kaynak-düzeyi sınır.** `ranRef` döngü koruması, yeniden deneme davranışı ve
+`prefetch={false}` yerleşimi KAYNAK düzeyinde kilitlendi; tarayıcıda DOM
+üzerinde ölçülmedi. POST'ların canlı davranışı ve rozetin gerçekten düşmesi
+`NOT-MEASURED`'dır (bkz. `09-NEXT-PHASE-RECOMMENDATION.md` → acceptance DB).

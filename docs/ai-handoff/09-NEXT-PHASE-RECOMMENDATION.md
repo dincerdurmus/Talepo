@@ -291,17 +291,27 @@ Kabul ölçütü: A/B/C/D ve save→reload turu gerçek veriye dokunmadan
 ölçülebilir hâle gelir ve `KNOWN-BROKEN.md` tarayıcı kanıtı tablosundaki
 `NOT-MEASURED` satırları `BROWSER-MEASURED-LOCAL` ile değiştirilebilir.
 
-### Sıra (2026-08-28)
+### Sıra (2026-08-28 · `c2d127d` sonrası güncellendi)
 
-1. **KB-22'nin kalan dört render yazımı** — bildirim okundu, sohbet okundu,
-   kategori tohumlama, eşleşme backfill. İlk ikisi açık action/POST sınırına,
-   son ikisi job/admin sınırına taşınır. Bu önce gelir: bu yazımlar durdukça
-   panelde salt-okunur bir kabul turu yapmak mümkün değildir.
+> Önceki sıranın 1. maddesi "KB-22'nin kalan DÖRT render yazımı" idi. İkisi
+> kapandı (`c2d127d` — bildirim okundu, sohbet okundu); madde geriye kalan
+> ikisiyle daraltıldı. Tarihsel kayıt `KNOWN-BROKEN.md` → KB-22 kapanış
+> tablosunda korunur.
+
+1. **KB-22 Dilim 2 — Category provisioning + RequestMatch backfill.**
+   `panel/talepler/page.tsx` render'ında hâlâ koşan iki yazım:
+   `ensureEngineCategories → Category.upsert` ve
+   `backfillMatchesForCompany → RequestMatch.createMany`. Provisioning açık
+   bir onboarding/configuration mutasyonuna, backfill açık bir job/admin
+   sınırına taşınır. Bu önce gelir: bu yazımlar durdukça panelde salt-okunur
+   bir kabul turu yapmak mümkün değildir.
 2. **Acceptance DB provisioning** — `.env.acceptance` ve ayrı, güvenli bir
    acceptance/staging veritabanı. Doğrulayıcı/seed/normalizer script'leri
    hazır; eksik olan yalnız hedeftir.
-3. **A–D tarayıcı kabulü + gerçek save→reload turu** — Karar K'nin
-   `NOT-MEASURED` maddeleri ancak 1 ve 2'den sonra ölçülebilir.
+3. **A–D tarayıcı kabulü + gerçek save→reload turu + okundu işaretlerinin
+   tarayıcı/DB kabulü** — Karar K'nin `NOT-MEASURED` maddeleri ve `c2d127d`
+   ile gelen okundu POST'larının canlı davranışı (rozetin gerçekten düşmesi,
+   prefetch'in artık yazmadığı) ancak 1 ve 2'den sonra ölçülebilir.
 4. **Diğer açık ölçümler** — `verify-phase3a` tarihsel `28 printing leaf`
    kırmızısı, KB-5 (bildirim doğrulayıcısının bayat beklentisi) ve Vercel
    dakikalık cron desteğinin doğrulanması.

@@ -1028,9 +1028,9 @@ bağımlılık kurulmaz; bilgi kanonik soru adayı sözleşmesinde taşınır.
 
 | | |
 |--|--|
-| **Durum** | **KISMEN UYGULANMIŞ** — nudge yolu `740e9a4` ile `BRANCH-WIRED` · `CODE-VERIFIED`; kalan dört render yazımı kimliği `NOT-WIRED` · `KNOWN-OPEN`. **`PRODUCTION-DEPLOYED` DEĞİL** |
-| **Dosyalar** | `app/panel/layout.tsx`, `server/request/urgent-nudge-core.ts` (yeni), `server/request/urgent-no-offer-nudge.ts`, `server/notifications/create-notification.ts`, `app/api/cron/urgent-nudge/route.ts` (yeni), `vercel.json`, `scripts/verify-panel-render-no-write-v1.ts` (yeni), `scripts/verify-urgent-nudge-boundary-v1.ts` (yeni) |
-| **Testler** | `verify-panel-render-no-write-v1` ve `verify-urgent-nudge-boundary-v1` — ikisi de `PROBLEMS=0`, iki koşuda byte-birebir |
+| **Durum** | **KISMEN UYGULANMIŞ.** Acil nudge: `740e9a4` — `BRANCH-WIRED` · `CODE-VERIFIED`. Okundu işaretleri (bildirim + sohbet): `c2d127d` — `BRANCH-WIRED` · `CODE-VERIFIED`. Provisioning / backfill (`Category.upsert`, `RequestMatch.createMany`): `NOT-WIRED` · `KNOWN-OPEN`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `740e9a4`: `app/panel/layout.tsx`, `server/request/urgent-nudge-core.ts` (yeni), `server/request/urgent-no-offer-nudge.ts`, `server/notifications/create-notification.ts`, `app/api/cron/urgent-nudge/route.ts` (yeni), `vercel.json`, `scripts/verify-panel-render-no-write-v1.ts` (yeni), `scripts/verify-urgent-nudge-boundary-v1.ts` (yeni). **`c2d127d` eki:** `app/panel/bildirimler/r/[id]/page.tsx`, `app/panel/mesajlar/[id]/page.tsx`, `app/api/notifications/[id]/read/route.ts` (yeni), `app/api/messages/[id]/read/route.ts` (yeni), `components/panel/NotificationReadRedirect.tsx` (yeni), `components/panel/ConversationReadReceipt.tsx` (yeni), `server/notifications/mark-notifications-read.ts`, `server/message/mark-conversation-read.ts`, `app/panel/mesajlar/page.tsx`, `components/panel/IncomingOfferCard.tsx`, `components/panel/OutgoingOfferCard.tsx`, `scripts/verify-read-receipt-boundary-v1.ts` (yeni) |
+| **Testler** | `verify-panel-render-no-write-v1`, `verify-urgent-nudge-boundary-v1` ve `verify-read-receipt-boundary-v1` — üçü de `PROBLEMS=0`, iki koşuda byte-birebir. Read-receipt doğrulayıcısı fix öncesi **24 kırmızı** ölçtü |
 | **Kayıt** | **KB-22** (umbrella, `KISMEN ÇÖZÜLDÜ`) |
 | **Değişirse risk** | Bir sayfayı görüntülemek — hatta bir bağlantının üstüne gelmek — kalıcı ve geri alınamaz bir ürün davranışını tüketir; hata görünmez olur çünkü kimse bir eylem yapmamıştır |
 
@@ -1076,3 +1076,44 @@ sınırında yükselir, render'ın `catch` bloğunda yutulmaz.
 > gerçek DB'ye yazılmadı, migration üretilmedi. Vercel planının dakikalık cron
 > desteği doğrulanmadı: cron kodda bağlıdır ama "production'da çalışıyor"
 > denemez.
+
+**L7 — OKUNDU İŞARETİ, KULLANICININ EKRANI GERÇEKTEN GÖRMESİDİR (`c2d127d`).**
+"Bildirimi okudum" ve "sohbeti gördüm" birer KULLANICI EYLEMİDİR; sayfanın
+render edilmesi ya da bir bağlantının prefetch edilmesi değildir. Bu yüzden
+okundu yazımı render'dan çıkarıldı ve ekran başarıyla açıldıktan sonra
+çağrılan açık, yetkili POST sınırına taşındı
+(`POST /api/notifications/[id]/read`, `POST /api/messages/[id]/read`).
+Okundu rotalarına giden bağlantılarda `prefetch={false}` durur — hover bir
+okuma eylemi değildir. Koruma alan adına göre değil, GERÇEK `href`
+eşleşmesine göre uygulanır.
+
+**L8 — YÖNLENDİRME YALNIZ GÜVENLİ İÇ HEDEFE.** Bildirim tıklamasında hedef
+SUNUCUDA hesaplanır ve prop olarak geçer; istemci hiçbir yerden (sorgu
+dizesi, `location.search`, kullanıcı girdisi) hedef okumaz. Savunma amaçlı
+guard `//host`, `/\host`, şema taşıyan (`http:` / `https:`), ters eğik
+çizgiyle başlayan ve kodlanmış dış hedefleri fail-closed reddeder. Yalnız tek
+eğik çizgi kontrolü YETMEZ: tarayıcılar `/\host` biçimini de dış adres gibi
+çözer (ölçüldü ve guard sertleştirildi).
+
+**L9 — SAHİPLİK, İDEMPOTENCY VE ATOMİKLİK YAZIM SINIRINDADIR.** Kullanıcı
+yalnız `requireUser()` ile belirlenir; istemciden kimlik okunmaz. Yazım
+sorgusu sahiplikle kapsamlıdır — rota ön kontrolü TEK güven sınırı değildir.
+İkinci çağrı yeni yazım üretmez ve zaten okunmuş bir kayıt idempotent
+başarıdır. Bir eylemin birden çok yazımı varsa hepsi tek transaction'dadır;
+biri başarısızsa öteki geri alınır. Hata sessiz başarı sayılmaz: kullanıcıya
+erişilebilir biçimde bildirilir ve yeniden deneme gerçekten ikinci isteği
+gönderir — tek koşum işareti yalnız otomatik tetikleyiciyi kilitler.
+
+**L10 — VARLIK SIZDIRILMAZ.** Bulunmayan bir kayıt ile başka kullanıcıya ait
+bir kayıt AYNI dış sonucu verir; rota kaydın varlığına göre dallanmaz.
+
+**L11 — PROVISIONING VE BACKFILL BU SINIRA AİT DEĞİLDİR.** Kategori
+tohumlama ve eşleşme geri doldurma birer kullanıcı eylemi değildir; açık bir
+job/admin sınırına aittir ve bir sayfa görüntülemesiyle tetiklenmemelidir.
+Bu iki kimlik `NOT-WIRED` · `KNOWN-OPEN`'dır (KB-22 Dilim 2).
+
+> **Sınır — okundu işaretleri.** `c2d127d` ölçümleri sahte istemci ve kaynak
+> analiziyle yapıldı: `PROBLEMS=0`, iki koşuda byte-birebir, kırmızı 24 → 0,
+> A sınıfı render yazımı 4 → 2. Tarayıcıda DOM üzerinde ölçüm YAPILMADI;
+> POST'ların canlı davranışı, rozetin gerçekten düşmesi ve prefetch'in artık
+> yazmadığı `NOT-MEASURED`'dır. Migration üretilmedi.
