@@ -9,6 +9,7 @@ import {
   ACCEPTANCE_MARKER,
   PERSONAS,
 } from "./lib/acceptance-personas-v1.constants";
+import { ACCEPTANCE_FIXTURE_PREFIX } from "./lib/acceptance-fixtures-v1.constants";
 import { formatAcceptanceError, redactAcceptanceOutput } from "./lib/acceptance-redaction-v1";
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
 
@@ -74,6 +75,23 @@ async function bindProductModules(): Promise<void> {
 const REQUEST_TEXT_1 =
   "140 ekran televizyon arıyorum, marka fark etmez ama Samsung olmasın.";
 const REQUEST_TEXT_2 = "Alfa Romeo 156 için sağ ön far arıyorum.";
+
+/** Title cap enforced by the request schema. */
+const REQUEST_TITLE_MAX = 120;
+
+/**
+ * Every request this E2E writes carries the canonical acceptance prefix.
+ *
+ * Without it the rows are owned by an acceptance persona but unmarked, and
+ * cleanup deliberately preserves unmarked persona rows (`B4`) — so each run
+ * would leave permanent residue that no command can remove. The cap is applied
+ * AFTER the prefix, and the prefix is never the part that gets cut.
+ */
+export function buildAcceptanceRequestTitle(text: string): string {
+  const prefixed = `${ACCEPTANCE_FIXTURE_PREFIX} ${text.trim()}`;
+  if (prefixed.length <= REQUEST_TITLE_MAX) return prefixed;
+  return prefixed.slice(0, REQUEST_TITLE_MAX);
+}
 
 type StepResult = "PASS" | "FAIL" | "SKIP" | "PARTIAL";
 
@@ -185,7 +203,7 @@ async function publishAsBuyer(userId: string, text: string, idempotencyKey: stri
   const projection = buildDiscoveryProjectionFromState(state);
 
   const created = await createRequest(userId, {
-    title: text.slice(0, 120),
+    title: buildAcceptanceRequestTitle(text),
     description: text,
     category: {
       slug: category.id,

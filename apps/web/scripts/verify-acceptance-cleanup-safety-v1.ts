@@ -338,6 +338,93 @@ async function main(): Promise<void> {
   const emptyPlan = buildAcceptanceCleanupPlan(await resolveAcceptanceCleanupScope(emptyDb as never));
   check("C3-empty-scope-produces-empty-plan", emptyPlan.length === 0, `${emptyPlan.length} steps on a fresh DB`);
 
+  console.log("\nF. Core-commerce E2E rows are cleanup material");
+  // The E2E script writes through the real production chain. If its requests do
+  // not carry the canonical prefix, cleanup's marker predicate cannot reach them
+  // and every run leaves permanent residue in the acceptance database — while
+  // B4 deliberately preserves unmarked persona rows, so the residue is by design
+  // unreachable. The prefix is what puts those rows inside the cleanup graph.
+  let commerce: typeof import("./acceptance-core-commerce-v1") | null = null;
+  try {
+    commerce = await import("./acceptance-core-commerce-v1");
+    check("F0-core-commerce-imports-without-env", true, "");
+  } catch (error) {
+    check(
+      "F0-core-commerce-imports-without-env",
+      false,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+
+  const commerceSrc = readFileSync(join(SCRIPTS_DIR, "acceptance-core-commerce-v1.ts"), "utf8");
+  check(
+    "F1-no-bare-sliced-title",
+    !/title:\s*text\.slice\(/.test(commerceSrc),
+    "the E2E request title is still a bare slice of the raw text — cleanup cannot reach it",
+  );
+  check(
+    "F2-title-derives-from-canonical-prefix",
+    /ACCEPTANCE_FIXTURE_PREFIX/.test(commerceSrc) &&
+      !/\[acceptance:v1\]/.test(commerceSrc.replace(/\/\*[\s\S]*?\*\//g, "")),
+    "the title does not derive from the canonical prefix, or a second literal was introduced",
+  );
+
+  if (commerce) {
+    const builder = (commerce as { buildAcceptanceRequestTitle?: (t: string) => string })
+      .buildAcceptanceRequestTitle;
+    check("F3-title-builder-is-exported", typeof builder === "function", "no title builder export");
+    if (typeof builder === "function") {
+      const shortTitle = builder("Buzdolabı arıyorum");
+      const longTitle = builder("x".repeat(400));
+      check(
+        "F4-short-title-carries-the-prefix",
+        shortTitle.startsWith(ACCEPTANCE_FIXTURE_PREFIX),
+        `title was ${shortTitle.slice(0, 40)}`,
+      );
+      check(
+        "F5-long-title-keeps-the-prefix-and-the-cap",
+        longTitle.startsWith(ACCEPTANCE_FIXTURE_PREFIX) && longTitle.length <= 120,
+        `length ${longTitle.length}, starts ${longTitle.slice(0, 24)}`,
+      );
+    }
+  }
+
+  // A full E2E graph, marker-titled, must land inside the cleanup plan.
+  const e2eStore = buildStore();
+  const e2eRequestId = "e2e-req-1";
+  e2eStore.request.push({
+    id: e2eRequestId,
+    createdById: "acc-user-0",
+    title: `${ACCEPTANCE_FIXTURE_PREFIX} 140 ekran televizyon arıyorum`,
+  });
+  e2eStore.offer.push({ id: "e2e-offer-1", requestId: e2eRequestId, submittedById: "acc-user-2" });
+  e2eStore.conversation.push({ id: "e2e-conv-1", offerId: "e2e-offer-1" });
+  e2eStore.conversationParticipant.push({ id: "e2e-part-1", conversationId: "e2e-conv-1" });
+  e2eStore.message.push({ id: "e2e-msg-1", conversationId: "e2e-conv-1", senderUserId: "acc-user-0" });
+  e2eStore.notification.push({ id: "e2e-ntf-1", userId: "acc-user-2" });
+  e2eStore.requestMatch.push({ id: "e2e-match-1", requestId: e2eRequestId });
+  const e2eDb = makeClient(e2eStore);
+  await executeAcceptanceCleanup(e2eDb as never, { dryRun: false });
+  const survivingE2e = [
+    ["request", "e2e-req-1"],
+    ["offer", "e2e-offer-1"],
+    ["conversation", "e2e-conv-1"],
+    ["conversationParticipant", "e2e-part-1"],
+    ["message", "e2e-msg-1"],
+    ["notification", "e2e-ntf-1"],
+    ["requestMatch", "e2e-match-1"],
+  ].filter(([model, id]) => idsOf(e2eStore, model!).includes(id!));
+  check(
+    "F6-marked-e2e-graph-is-fully-removed",
+    survivingE2e.length === 0,
+    `left behind: ${survivingE2e.map(([m, i]) => `${m}:${i}`).join(", ")}`,
+  );
+  check(
+    "F7-foreign-rows-still-survive-alongside-e2e",
+    FOREIGN_IDS.request!.every((id) => idsOf(e2eStore, "request").includes(id)),
+    "a foreign request was deleted while cleaning the E2E graph",
+  );
+
   console.log("\nE. Global taxonomy is never cleanup material");
   // Category rows are the acceptance database's global taxonomy infrastructure,
   // not persona-owned fixtures: the seed provisions them through the shared
