@@ -428,18 +428,69 @@ export async function distributeRequestToCompanies(
  * Slice 2a note: as with the fanout, an unexpected error closes the span with
  * `request.backfill.failed` and the SAME error is re-thrown unchanged.
  */
-export async function backfillMatchesForCompany(companyId: string) {
+/**
+ * BACKFILL İÇİN DAĞITILABİLİR ŞİRKET DURUMLARI — TEK TANIM (KB-22 Dilim 2).
+ *
+ * Hem şirket sorgusu hem de olay tetikleyicileri (admin durum değişikliği)
+ * bu kümeyi okur; ikinci bir liste tutulmaz. `SUSPENDED`, `DRAFT` ve silinmiş
+ * şirketler dışarıdadır ve fail-closed davranır.
+ */
+export const BACKFILL_ELIGIBLE_COMPANY_STATUSES = [
+  "ACTIVE",
+  "PENDING_VERIFICATION",
+] as const;
+
+/** Backfill'in ihtiyaç duyduğu en dar istemci yüzeyi (KB-22 Dilim 2). */
+export type BackfillClient = {
+  company: {
+    findFirst: (args: unknown) => Promise<{
+      id: string;
+      city: string | null;
+      categories: { categoryId: string }[];
+    } | null>;
+    findMany: (args: unknown) => Promise<{ id: string }[]>;
+  };
+  companyMember: { findMany: (args: unknown) => Promise<{ userId: string }[]> };
+  request: {
+    findMany: (args: unknown) => Promise<
+      {
+        id: string;
+        city: string | null;
+        categoryId: string;
+        category: { name: string };
+      }[]
+    >;
+  };
+  requestMatch: {
+    createMany: (args: unknown) => Promise<{ count: number }>;
+  };
+};
+
+export type BackfillOptions = {
+  /**
+   * Yazımı yapacak istemci. Varsayılan tekil Prisma istemcisidir; enjekte
+   * edilebilir olması starvation, duplicate ve sızıntı sözleşmesinin GERÇEK
+   * BİR VERİTABANI OLMADAN ölçülebilmesi içindir.
+   */
+  db?: BackfillClient;
+};
+
+export async function backfillMatchesForCompany(
+  companyId: string,
+  options: BackfillOptions = {},
+) {
+  const db = options.db ?? (prisma as unknown as BackfillClient);
   // Slice 2a telemetry only — this writer was previously invisible.
   const startedAt = Date.now();
   let failureStage: BackfillFailureStage = "load_company";
   logBackfillStarted({ companyId });
 
   try {
-    const company = await prisma.company.findFirst({
+    const company = await db.company.findFirst({
       where: {
         id: companyId,
         deletedAt: null,
-        status: { in: ["ACTIVE", "PENDING_VERIFICATION"] },
+        status: { in: [...BACKFILL_ELIGIBLE_COMPANY_STATUSES] },
       },
       select: {
         id: true,
@@ -482,25 +533,28 @@ export async function backfillMatchesForCompany(companyId: string) {
 
     failureStage = "load_members";
     const memberUserIds = (
-      await prisma.companyMember.findMany({
+      await db.companyMember.findMany({
         where: { companyId, status: "ACTIVE" },
         select: { userId: true },
       })
     ).map((row) => row.userId);
 
-    failureStage = "load_existing_matches";
-    const alreadyMatched = await prisma.requestMatch.findMany({
-      where: { companyId },
-      select: { requestId: true },
-    });
-    const matchedIds = alreadyMatched.map((row) => row.requestId);
-
+    /**
+     * EKSİK EŞLEŞME YÜKLEMİ — SINIRSIZ `notIn` LİSTESİ YERİNE (KB-22 Dilim 2).
+     *
+     * Eskiden şirketin BÜTÜN eşleşmeleri ayrı bir sorguyla çekilip
+     * `id: { notIn: matchedIds }` olarak geçiriliyordu. Semantik doğruydu ama
+     * liste sınırsızdı: çok eşleşmeli bir şirkette sorgu şişerdi. Aynı sonuç
+     * ilişki yüklemiyle tek sorguda ve sınırsız liste olmadan elde edilir.
+     * Yüklem FAIL-CLOSED'dır: yalnız bu şirket için eşleşmesi OLMAYAN talepler
+     * aday olur, böylece her tur kalan gerçekten azalır.
+     */
     failureStage = "scan_candidates";
-    const candidates = await prisma.request.findMany({
+    const candidates = await db.request.findMany({
       where: {
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
-        ...(matchedIds.length ? { id: { notIn: matchedIds } } : {}),
+        requestMatches: { none: { companyId } },
         ...(memberUserIds.length
           ? { createdById: { notIn: memberUserIds } }
           : {}),
@@ -520,7 +574,8 @@ export async function backfillMatchesForCompany(companyId: string) {
         category: { select: { name: true } },
       },
       take: 100,
-      orderBy: { publishedAt: "desc" },
+      /* Deterministik sıra: eşitlikte `id` tamamlayıcıdır (KB-22 Dilim 2). */
+      orderBy: [{ publishedAt: "desc" }, { id: "asc" }],
     });
 
     const candidateScan = executedScan("backfill_scan", candidates.length);
@@ -574,7 +629,7 @@ export async function backfillMatchesForCompany(companyId: string) {
     }
 
     failureStage = "write_matches";
-    const result = await prisma.requestMatch.createMany({
+    const result = await db.requestMatch.createMany({
       data: rows,
       skipDuplicates: true,
     });
@@ -600,6 +655,53 @@ export async function backfillMatchesForCompany(companyId: string) {
     });
     throw error;
   }
+}
+
+/**
+ * BÜTÜN AKTİF ŞİRKETLER İÇİN RECONCILIATION (KB-22 Dilim 2, 2026-08-28).
+ *
+ * Backfill eskiden YALNIZ kurumsal kullanıcı `panel/talepler` sayfasını
+ * açtığında koşuyordu: paneli hiç açmayan bir şirket eski uygun talepler için
+ * hiçbir zaman eşleşme almıyordu. Zamanlanmış tur bu boşluğu kapatır.
+ *
+ * SIRA DETERMİNİSTİKTİR (`id` artan) ve HER şirket taranır — ilk şirketin
+ * batch'i sonrakileri aç bırakmaz. Şirket başına iş zaten "yalnız eksik
+ * eşleşme" yüklemiyle sınırlıdır, bu yüzden eşleşmesi tam olan bir şirket tek
+ * ucuz sorguya mal olur.
+ *
+ * Bir şirketin hatası TURU DÜŞÜRMEZ: hata görünür biçimde loglanır ve tarama
+ * sonraki şirketle devam eder.
+ */
+export async function backfillMatchesForAllCompanies(
+  options: BackfillOptions = {},
+): Promise<{ companies: number; created: number }> {
+  const db = options.db ?? (prisma as unknown as BackfillClient);
+
+  const companies = await db.company.findMany({
+    where: {
+      deletedAt: null,
+      status: { in: [...BACKFILL_ELIGIBLE_COMPANY_STATUSES] },
+    },
+    select: { id: true },
+    orderBy: { id: "asc" },
+  });
+
+  let created = 0;
+  for (const company of companies) {
+    try {
+      const result = await backfillMatchesForCompany(company.id, { db });
+      created += result.created;
+    } catch (error) {
+      logBackfillFailed({
+        companyId: company.id,
+        failureStage: "scan_candidates",
+        errorName: safeErrorName(error),
+        durationMs: 0,
+      });
+    }
+  }
+
+  return { companies: companies.length, created };
 }
 
 /**

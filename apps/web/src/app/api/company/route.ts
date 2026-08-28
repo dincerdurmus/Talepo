@@ -19,6 +19,7 @@ import {
   normalizeCategorySlugs,
   syncCompanyCategories,
 } from "@/server/company/sync-company-categories";
+import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 import {
   CompanyUpdateError,
   updateCompanyProfile,
@@ -142,6 +143,18 @@ export async function PATCH(request: Request) {
     if (hasCategories) {
       categorySlugs = normalizeCategorySlugs(body.categorySlugs);
       await syncCompanyCategories(workspace.companyId, categorySlugs);
+      /**
+       * YETENEK DEĞİŞTİ → ESKİ UYGUN TALEPLER İÇİN EŞLEŞME (KB-22 Dilim 2).
+       *
+       * `companyId` istemci gövdesinden DEĞİL, sunucudaki oturum çalışma
+       * alanından gelir. Backfill başarısız olursa kategori güncellemesi
+       * GERİ ALINMAZ; hata loglanır ve cron telafi eder.
+       */
+      try {
+        await backfillMatchesForCompany(workspace.companyId);
+      } catch (error) {
+        console.error("[company/categories] backfill başarısız:", error);
+      }
     }
 
     let company = null;

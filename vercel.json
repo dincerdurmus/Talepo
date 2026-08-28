@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/urgent-nudge",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/category-provisioning",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/match-backfill",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

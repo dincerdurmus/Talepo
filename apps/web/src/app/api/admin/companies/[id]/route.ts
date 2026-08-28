@@ -9,6 +9,10 @@ import { assertCanActivateCompanySeat } from "@/server/company/assert-company-se
 import { createNotification } from "@/server/notifications/create-notification";
 import { PlatformAuthorizationError, requirePlatformAdmin } from "@/server/auth/require-platform-admin";
 import { AuthenticationError } from "@/server/auth/require-user";
+import {
+  BACKFILL_ELIGIBLE_COMPANY_STATUSES,
+  backfillMatchesForCompany,
+} from "@/server/request/distribute-request";
 
 const PLANS = ["STANDARD", "PREMIUM", "PROFESSIONAL", "CORPORATE"] as const;
 const COMPANY_STATUSES = ["ACTIVE", "SUSPENDED"] as const;
@@ -86,6 +90,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         });
         return result;
       });
+
+      /**
+       * DURUM DAĞITILABİLİR OLDUYSA ESKİ TALEPLER İÇİN EŞLEŞME (KB-22 Dilim 2).
+       *
+       * Uygunluk, backfill'in kendi dağıtılabilir küme tanımından okunur —
+       * burada ikinci bir liste tutulmaz. BU ROTA BUGÜN YALNIZ `ACTIVE` ya da
+       * `SUSPENDED` üretebilir (`COMPANY_STATUSES`); `PENDING_VERIFICATION`
+       * şirkete oluşturulurken verilir ve bu yoldan geçmez. Küme üzerinden
+       * kontrol, `COMPANY_STATUSES` ileride genişlerse tetikleyicinin sessizce
+       * kör kalmamasını sağlar.
+       *
+       * `companyId` istemci gövdesinden DEĞİL, sunucuda güncellenen gerçek
+       * kaydın kimliğinden gelir. Backfill başarısız olursa admin mutasyonu
+       * GERİ ALINMAZ; hata loglanır ve zamanlanmış tur telafi eder.
+       */
+      if (
+        (BACKFILL_ELIGIBLE_COMPANY_STATUSES as readonly string[]).includes(
+          updated.status,
+        )
+      ) {
+        try {
+          await backfillMatchesForCompany(updated.id);
+        } catch (error) {
+          console.error("[admin/companies] backfill başarısız:", error);
+        }
+      }
+
       return NextResponse.json({ ok: true, message: "Firma ayarları kaydedildi.", company: updated });
     }
 

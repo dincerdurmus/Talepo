@@ -3,6 +3,8 @@ import { EntitlementError } from "@/lib/membership/types";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { canCreateCompanyWorkspace } from "@/lib/membership/workspace-effective-plan";
 
+import { backfillMatchesForCompany } from "@/server/request/distribute-request";
+
 import { slugifyCompanyName } from "./slug";
 import {
   normalizeCategorySlugs,
@@ -116,6 +118,20 @@ export async function createCompanyForUser(input: CreateCompanyInput) {
 
   if (categorySlugs.length > 0) {
     await syncCompanyCategories(company.id, categorySlugs);
+  }
+
+  /**
+   * YENİ ŞİRKET ESKİ UYGUN TALEPLER İÇİN EŞLEŞME ALIR (KB-22 Dilim 2).
+   *
+   * `companyId` istemcinin serbest metadata'sından DEĞİL, az önce SUNUCUDA
+   * oluşturulan gerçek kaydın kimliğinden gelir. Backfill başarısız olursa
+   * şirket oluşturma GERİ ALINMAZ — hata görünür biçimde loglanır ve
+   * zamanlanmış reconciliation turu telafi eder.
+   */
+  try {
+    await backfillMatchesForCompany(company.id);
+  } catch (error) {
+    console.error("[company/create] backfill başarısız:", error);
   }
 
   return company;

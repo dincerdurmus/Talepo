@@ -359,19 +359,21 @@ ok(
  * kimliklerden biri düzeltilirse listeden ÇIKARILMASI gerekir.
  */
 /**
- * DİLİM 1'DE İKİ KİMLİK GERÇEKTEN KALKTI (2026-08-28).
+ * LİSTE ARTIK BOŞ — DÖRT KİMLİĞİN DÖRDÜ DE GERÇEKTEN KALKTI (2026-08-28).
  *
- * `bildirimler/r/[id] → prisma.notification.updateMany` ve
- * `mesajlar/[id] → prisma.conversationParticipant.updateMany` listeden SAYAÇ
- * DÜŞÜRMEK için değil, üretimdeki ÇAĞRI kalktığı için çıkarıldı: iki yazım da
- * artık açık POST sınırında yürüyor (bkz. `verify-read-receipt-boundary-v1`).
- * `K2-kimlik-kaybolmadi` kapısı bu çıkarmayı ZORUNLU kılar — ölçülmeyen bir
- * kimliği listede bırakmak doğrulayıcıyı kırmızı yapar.
+ * Dilim 1 (`c2d127d`): `bildirimler/r/[id] → prisma.notification.updateMany`
+ * ve `mesajlar/[id] → prisma.conversationParticipant.updateMany` açık POST
+ * sınırına taşındı.
+ * Dilim 2: `talepler → prisma.category.upsert` ve
+ * `talepler → prisma.requestMatch.createMany` korumalı cron ve gerçek olay
+ * tetikleyicilerine taşındı.
+ *
+ * Hiçbiri SAYAÇ DÜŞÜRMEK için çıkarılmadı; her biri üretimdeki ÇAĞRI kalktığı
+ * için çıkarıldı ve `K2-kimlik-kaybolmadi` kapısı bunu zorunlu kıldı. Liste
+ * bundan sonra bir RATCHET'tir: panelde yeni bir render yazımı belirirse
+ * doğrulayıcı kırmızı olur.
  */
-const FROZEN_RENDER_WRITE_IDENTITIES = [
-  "src/app/panel/talepler/page.tsx → prisma.category.upsert",
-  "src/app/panel/talepler/page.tsx → prisma.requestMatch.createMany",
-] as const;
+const FROZEN_RENDER_WRITE_IDENTITIES: readonly string[] = [];
 
 const frozen = new Set<string>(FROZEN_RENDER_WRITE_IDENTITIES);
 const measured = new Set(findings.map((finding) => finding.id));
@@ -394,15 +396,47 @@ ok(
  * DEDEKTÖR KONTROLLERİ
  * ------------------------------------------------------------------ */
 
-/* Pozitif: gerçek bir A sınıfı yazım YAKALANMALI. */
-/* Pozitif çıpa, Dilim 1'de kalkan bildirim yazımından hâlâ AÇIK olan
- * provisioning yazımına taşındı; çıpa düzeltilen bir kimliğe bağlı kalırsa
- * dedektör sessizce ölçmez olurdu. */
-ok(
-  "K3-pozitif-kontrol",
-  findings.some((finding) => finding.write === "prisma.category.upsert"),
-  "bilinen A sınıfı yazım yakalanamadı — çağrı grafiği ölçmüyor",
-);
+/**
+ * POZİTİF ÇIPA ARTIK BİR İHLALE BAĞLI DEĞİL (2026-08-28).
+ *
+ * Panelde hiç render yazımı kalmadığı için çıpa "bir bulgu olmalı" biçiminde
+ * kurulamaz — öyle olsaydı yeşile ulaşmak dedektörü sessizce devre dışı
+ * bırakırdı. Bunun yerine dedektörün KENDİSİ ölçülür: bilinen bir yazan modül
+ * yazım olarak tanınmalı, salt-okunur bir modül tanınmamalı ve çağrı grafiği
+ * bir render girişinden gerçekten yürüyebilmelidir.
+ */
+{
+  const writerSource = readFileSync(
+    join(SRC, "server/notifications/create-notification.ts"),
+    "utf8",
+  );
+  const readOnlySource = readFileSync(
+    join(SRC, "lib/notifications/unread.ts"),
+    "utf8",
+  );
+  ok(
+    "K3-pozitif-kontrol",
+    bodyWrites(writerSource) !== null,
+    "bilinen yazan modül yazım olarak tanınmadı — dedektör ölçmüyor",
+  );
+  ok(
+    "K3-yanlis-pozitif-yok",
+    bodyWrites(readOnlySource) === null,
+    "salt-okunur modül yazım sanıldı — dedektör aşırı geniş",
+  );
+
+  const supplierPage = join(SRC, "app/panel/talepler/page.tsx");
+  const bodies = functionBodies(supplierPage);
+  const defaultBody = bodies.get("default") ?? "";
+  ok(
+    "K3-zincir-kontrol",
+    defaultBody.length > 200 &&
+      calledNames(defaultBody).some((name) =>
+        importBindings(supplierPage).has(name),
+      ),
+    "çağrı grafiği render girişinden yürüyemiyor — ölçüm boşa düşmüş olabilir",
+  );
+}
 
 /* Negatif: yalnız IMPORT edilen yazıcı kırmızı ÜRETMEMELİ. */
 const layoutFindings = findings.filter(
@@ -425,7 +459,7 @@ for (const problem of problems.slice(0, 20)) console.log(`  - ${problem}`);
 console.log("===== HUKUM =====");
 console.log(
   problems.length === 0
-    ? "GECTI: acil nudge render'dan çıktı; kalan render yazımları dondurulmuş kimliklerle sınırlı (panel render write 0 DEĞİLDİR)."
+    ? `GECTI: panel render yazımı ${findings.length}; dondurulmuş kimlik ${FROZEN_RENDER_WRITE_IDENTITIES.length}. Liste bir RATCHET'tir — yeni bir render yazımı kırmızı üretir.`
     : "KALDI: render sınırı sözleşmeyi ihlal ediyor.",
 );
 process.exit(problems.length === 0 ? 0 : 1);

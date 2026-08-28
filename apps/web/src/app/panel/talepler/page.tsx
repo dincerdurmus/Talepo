@@ -37,9 +37,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
-import { ensureEngineCategories } from "@/server/company/sync-company-categories";
 import { excludeSystemCategories } from "@/lib/request/raw-input";
-import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 
 type ExploreTab = "matched" | "all" | "newest";
 
@@ -167,7 +165,12 @@ export default async function ExploreRequestsPage({
   const taxonomyNode = params.taxonomyNode?.trim() || undefined;
   const leafExact = params.leafExact === "1" || params.leafExact === "true";
 
-  await ensureEngineCategories();
+  /*
+   * RENDER SALT-OKUNURDUR (KB-22 Dilim 2, 2026-08-28). Burada eskiden
+   * `ensureEngineCategories()` (11 `Category.upsert`) ve aşağıda
+   * `backfillMatchesForCompany()` çağrılıyordu. İkisi de provisioning/backfill
+   * işidir; artık korumalı cron ve gerçek olay tetikleyicilerinde yürür.
+   */
 
   const entitlements = await resolveEntitlements(
     user.id,
@@ -201,10 +204,6 @@ export default async function ExploreRequestsPage({
         categoryCount: companyMeta._count.categories,
       })
     : null;
-
-  if (companyMeta) {
-    await backfillMatchesForCompany(companyMeta.id);
-  }
 
   const categories = excludeSystemCategories(
     await prisma.category.findMany({
