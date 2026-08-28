@@ -3228,13 +3228,13 @@ edildi; hiçbir DB yazımı yapılmadı. Ölçüm yerel bir çalışma kopyasın
 **`PRODUCTION-DEPLOYED` DEĞİLDİR** ve hiçbir satır production iddiası taşımaz.
 A–D'nin neden ölçülemediği için bkz. **KB-22**.
 
-## KB-22 — Panel layout'u GET/RSC render sırasında kalıcı yazım ve bildirim üretiyor
+## KB-22 — Panel render'ı kalıcı yazım ve bildirim üretiyor (umbrella) — **KISMEN ÇÖZÜLDÜ**
 
 | Alan | Değer |
 | --- | --- |
 | Yol | `apps/web/src/app/panel/layout.tsx:88` → `apps/web/src/server/request/urgent-no-offer-nudge.ts:63,79` |
 | Sınıf | **Yapısal** — render yan etkisi |
-| Bugünkü sonuç | Açık; düzeltilmedi, geçici olarak da devre dışı bırakılmadı |
+| Bugünkü sonuç | **KISMEN ÇÖZÜLDÜ · BRANCH-WIRED · CODE-VERIFIED** — nudge alt vakası kapandı (`740e9a4`); dört render yazımı kimliği AÇIK |
 | Ne zamandan beri | Ölçülmedi (bisect yapılmadı); bulgu 2026-08-28 tarihli kabul testi hazırlığında kaynak kod denetimiyle çıktı |
 | Sahibi | Talep/panel |
 
@@ -3277,3 +3277,79 @@ kurucu bunu açıkça reddetti.
 
 **Çözülmüş sayılmaz.** Bu kayıt yalnız davranışı belgeler; kod bu turda
 değiştirilmedi.
+
+### KB-22 GÜNCELLEME — 2026-08-28, `740e9a4` (nudge alt vakası kapandı)
+
+Commit: `740e9a4` — *fix(panel): move urgent nudge writes out of render*
+(parent `abdeae9`). Yukarıdaki tarihsel kayıt **silinmedi**: bulgunun ilk hâli
+ve gerekçesi olduğu gibi durur; bu bölüm onu **genişletir**. KB-22 artık bir
+**umbrella** kayıttır — kök neden tek ("render sırasında kalıcı yazım"), ama
+birden çok yolu vardır ve yalnız biri kapandı.
+
+**KAPANAN ALT VAKA — acil nudge (`BRANCH-WIRED` · `CODE-VERIFIED`).**
+
+| Ne | Durum |
+| --- | --- |
+| `panel/layout.tsx` → `processUrgentNoOfferNudges` | Çağrı **tamamen kaldırıldı** |
+| Render / prefetch / `router.refresh()` nudge üretimi | **Yok** |
+| Poller `POST /api/notifications/urgent-nudge` + `GET /api/cron/urgent-nudge` | **Ortak çekirdek** (`urgent-nudge-core.ts`) |
+| Claim + notification | **Aynı `$transaction`** |
+| Bildirim hatası | Damga **rollback**; hata iş sınırında görünür, yutulmaz |
+| Eşzamanlı poller + cron | Aynı talep için duplicate **0** |
+| Bildirim sahibi | Her zaman talebin `createdById` değeri; cron gövde/sorgu okumaz |
+| Yetkisiz cron | **401**, depodaki mevcut `CRON_SECRET` fail-closed deseni |
+| Cron schedule | `* * * * *` — iş kuralı 60 sn, aktif poller 30 sn |
+| Badge okuma yolu | Değişmedi (`getPanelSummary` → `notification.count`) |
+
+**AÇIK KALAN DÖRT KİMLİK (`NOT-WIRED` · `KNOWN-OPEN`).** Çağrı grafiği,
+nudge dışında dört GERÇEK render yazımı daha ölçüyor. Hepsi kullanıcı sayfayı
+YALNIZ AÇINCA çalışır ve hiçbiri bu dilimde düzeltilmedi.
+
+| # | Render girişi | Çağrı zinciri | Yazılan |
+| --- | --- | --- | --- |
+| 1 | `apps/web/src/app/panel/bildirimler/r/[id]/page.tsx` | `#default → apps/web/src/server/notifications/mark-notifications-read.ts#markNotificationAsRead` | `Notification` (`updateMany`) |
+| 2 | `apps/web/src/app/panel/mesajlar/[id]/page.tsx` | `#default → apps/web/src/server/message/mark-conversation-read.ts#markConversationAsRead` | `ConversationParticipant` (`updateMany`) |
+| 3 | `apps/web/src/app/panel/talepler/page.tsx` | `#default → apps/web/src/server/company/sync-company-categories.ts#ensureEngineCategories` | `Category` (`upsert`) |
+| 4 | `apps/web/src/app/panel/talepler/page.tsx` | `#default → apps/web/src/server/request/distribute-request.ts#backfillMatchesForCompany` | `RequestMatch` (`createMany`) |
+
+**Yapılacak (yapılmadı).** 1 ve 2 birer ÜRÜN EYLEMİ olarak gerekli olabilir —
+bildirime tıklayınca okundu saymak, sohbeti açınca okundu saymak. Gereklilik
+onları render'a ait yapmaz: ekran başarıyla açıldıktan SONRA açık bir
+action/POST sınırında yürümelidirler. 3 ve 4 ise provisioning/backfill işidir
+(kategori tohumlama, eşleşme geri doldurma) ve açık bir job/admin sınırına
+taşınmalıdır; bir sayfa görüntülemesi bunları tetiklememelidir.
+
+**"PANEL RENDER WRITE 0" İDDİASI YOKTUR.** Kapanan tek şey nudge alt
+vakasıdır. Panelin genel render yan-etki sorunu **açıktır** ve bu kaydın
+kendisiyle takip edilir. Doğrulayıcı bu dört kimliği tek bir sayı olarak
+DEĞİL, ayrı ayrı dondurur: yeni bir kimlik eklenirse kırmızı olur, biri
+düzeltilirse listeden çıkarılması gerekir.
+
+**Ölçüm (bu commit'te).**
+
+```
+npx --yes tsx scripts/verify-panel-render-no-write-v1.ts
+npx --yes tsx scripts/verify-urgent-nudge-boundary-v1.ts
+```
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| `verify-panel-render-no-write-v1` | `PROBLEMS=0`, iki koşuda byte-birebir. Fix ÖNCESİ `K1-nudge-render-disinda` **KALDI** (`src/app/panel/layout.tsx`) |
+| `verify-urgent-nudge-boundary-v1` | `PROBLEMS=0`, iki koşuda byte-birebir. Rollback / duplicate 0 / çapraz sızıntı 0 / 401 / batch kalanı / deterministik sıra |
+| Panel render girişi | 31 · A sınıfı render yazımı **4** (yukarıdaki kimlikler) |
+| `verify-notifications-v1` | **50/1** — KB-5 açık, bu değişiklikten etkilenmedi |
+| `verify-phase3a-discovery-foundation-v1` | **45/1 KIRMIZI** — tarihsel `28 printing leaf`; **PASS DEĞİLDİR** |
+| `verify-projection-authority-v1` | 510/510, mismatch 0 |
+| `verify-projection-server-authority-v1` | 135/135, `USER_EXPLICIT 75` / `UNKNOWN 14` |
+| Gerçek DB testi | **YOK** — sahte istemciyle ölçüldü |
+| Migration | **YOK**, unique constraint eklenmedi |
+| Vercel dakikalık cron desteği | **DOĞRULANMADI** — deployment `KNOWN-OPEN`; "production'da cron çalışıyor" iddiası yoktur |
+| Production / deploy | İddia **yok**; `PRODUCTION-DEPLOYED` değildir |
+| Hazırlık | Talep beyni %92 · Pro hattı %21 |
+
+**Doğrulayıcı neden çağrı grafiği kullanır.** İlk ölçüm yalnız IMPORT
+ulaşılabilirliğine bakıyordu ve 25 modülü suçluyordu; oysa bir server action'ı
+ya da route yardımcısını import etmek render sırasında yazmak DEĞİLDİR. Ölçüm
+artık render girişinin default export gövdesinden başlayarak yalnız gerçekten
+ÇAĞRILAN fonksiyonlara iner (B sınıfı elenir) ve `url.searchParams.delete(...)`
+gibi JS yerleşiklerini ayıklar (C sınıfı elenir).

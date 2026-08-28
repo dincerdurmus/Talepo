@@ -1021,3 +1021,58 @@ bağımlılık kurulmaz; bilgi kanonik soru adayı sözleşmesinde taşınır.
 > Bkz. **KB-22** ve `09-NEXT-PHASE-RECOMMENDATION.md` → "Yerel kabul testi
 > altyapısı". Bu maddelerin iddiaları `CODE-VERIFIED`'dır;
 > `BROWSER-MEASURED-LOCAL` DEĞİLDİR ve PASS sayılamaz.
+
+---
+
+### Karar L — RSC/GET render salt-okunurdur; kalıcı iş açık sınırda yürür
+
+| | |
+|--|--|
+| **Durum** | **KISMEN UYGULANMIŞ** — nudge yolu `740e9a4` ile `BRANCH-WIRED` · `CODE-VERIFIED`; kalan dört render yazımı kimliği `NOT-WIRED` · `KNOWN-OPEN`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `app/panel/layout.tsx`, `server/request/urgent-nudge-core.ts` (yeni), `server/request/urgent-no-offer-nudge.ts`, `server/notifications/create-notification.ts`, `app/api/cron/urgent-nudge/route.ts` (yeni), `vercel.json`, `scripts/verify-panel-render-no-write-v1.ts` (yeni), `scripts/verify-urgent-nudge-boundary-v1.ts` (yeni) |
+| **Testler** | `verify-panel-render-no-write-v1` ve `verify-urgent-nudge-boundary-v1` — ikisi de `PROBLEMS=0`, iki koşuda byte-birebir |
+| **Kayıt** | **KB-22** (umbrella, `KISMEN ÇÖZÜLDÜ`) |
+| **Değişirse risk** | Bir sayfayı görüntülemek — hatta bir bağlantının üstüne gelmek — kalıcı ve geri alınamaz bir ürün davranışını tüketir; hata görünmez olur çünkü kimse bir eylem yapmamıştır |
+
+**L1 — RSC / GET render SALT-OKUNURDUR.** Bir sayfanın ya da layout'un render
+edilmesi veri okur, veri DEĞİŞTİRMEZ. Talepo'da panel layout'u
+`force-dynamic` + `revalidate = 0`'dır; yani her navigasyon, her
+`router.refresh()` ve her `<Link>` prefetch'i render'ı yeniden koşturur.
+Render'a bağlanan bir yazım bu yüzden "bir kez" çalışmaz — kullanıcının
+farkında bile olmadığı isteklerde çalışır.
+
+**L2 — Kalıcı KULLANICI EYLEMLERİ açık bir action/POST sınırında yürür.**
+"Bildirimi okundu say", "sohbeti okundu say" gibi işler gerçek ürün
+eylemleridir; gerekli olmaları onları render'a ait yapmaz. Ekran başarıyla
+açıldıktan SONRA açık bir sınırda çağrılırlar.
+
+**L3 — Provisioning / backfill / tarama işleri JOB veya CRON sınırında
+yürür.** Kategori tohumlama, eşleşme geri doldurma ve vadesi gelen bildirim
+taraması bir sayfa görüntülemesiyle tetiklenmez. Zamanlanmış yol, panel hiç
+açılmasa da işin yapılmasını sağlar — render'a bağlı bir iş, kullanıcı gelmezse
+hiç çalışmaz.
+
+**L4 — IMPORT ETMEK YAZMAK DEĞİLDİR.** Bir server action'ı ya da route
+yardımcısını import eden sayfa, o yazımı render sırasında yapıyor SAYILMAZ.
+Ölçüm import grafiğiyle değil ÇAĞRI grafiğiyle yapılır: render girişinin
+default export gövdesinden başlayarak yalnız gerçekten çağrılan fonksiyonlara
+inilir. İlk ölçüm bu ayrımı yapmadığı için 25 modülü suçluyordu; çağrı
+grafiğiyle gerçek sayı 4'e indi (nudge kaldırıldıktan sonra).
+
+**L5 — Yetki ve sahiplik iş sınırında belirlenir.** Kullanıcıya bağlı yol
+kimliği yalnız `requireUser()`'dan alır; zamanlanmış yol hiçbir istemci
+kimliğine güvenmez ve etkilenen kaydın kendi sahibinden (`createdById`)
+türetir. Yetkisiz zamanlanmış çağrı fail-closed düşer (`CRON_SECRET`, 401).
+
+**L6 — Kalıcı iş ATOMİKTİR ve hatası GÖRÜNÜR.** Bir işi "yapıldı" diye
+damgalayıp yan etkisini ayrı yazmak, yan etki başarısız olduğunda işi kalıcı
+olarak kaybettirir. Damga ve etki aynı transaction'da durur; hata iş
+sınırında yükselir, render'ın `catch` bloğunda yutulmaz.
+
+> **Sınır — kapsam ve ölçüm.** Bu karar yalnız acil nudge yolunda uygulandı.
+> `KB-22` altındaki dört kimlik (bildirim okundu, sohbet okundu, kategori
+> tohumlama, eşleşme backfill) hâlâ render'da koşar ve `NOT-WIRED`'dır;
+> "panel render write 0" İDDİA EDİLMEZ. Ölçümler sahte istemciyle yapıldı,
+> gerçek DB'ye yazılmadı, migration üretilmedi. Vercel planının dakikalık cron
+> desteği doğrulanmadı: cron kodda bağlıdır ama "production'da çalışıyor"
+> denemez.

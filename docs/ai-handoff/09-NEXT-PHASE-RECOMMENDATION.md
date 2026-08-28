@@ -237,15 +237,35 @@ Bu backlog'un sözleşmeleri (şimdiden yazılıyor ki sonra kaymasın):
   hiçbir satırı `BRANCH-WIRED` ya da `PRODUCTION-DEPLOYED` iddiası taşımaz.
 
 
-## Yerel kabul testi altyapısı (BAŞLAMADI — araç eksiği, ürün kusuru DEĞİL)
+## Kabul testi altyapısı (BAŞLAMADI — araç eksiği, ürün kusuru DEĞİL)
+
+> **DÜZELTME — 2026-08-28 · SUPERSEDED/BAYAT.** Bu bölümün ilk hâli "kabul
+> testi altyapısı tamamen yok" diyordu; bu ifade **yanlıştı** ve burada
+> yerinde düzeltiliyor. Depoda kabul altyapısının önemli bir kısmı ZATEN VAR:
+>
+> - `scripts/verify-acceptance-db-target-v1.ts` — hedef doğrulaması. Yalnız
+>   `.env.acceptance` okur, `.env`'e **düşmez** ve bilinen birincil/paylaşık
+>   Supabase project ref'ini **fail-closed** bloke eder.
+> - `scripts/seed-acceptance-personas-v1.ts` — sentetik persona tohumlama.
+> - `scripts/verify-acceptance-personas-v1.ts` — tohumlananların doğrulanması.
+> - `scripts/normalize-acceptance-db-urls-v1.ts` — bağlantı dizesi
+>   normalleştirme.
+>
+> **Eksik olan altyapı değil, HEDEF:** `.env.acceptance` üç worktree'nin
+> hiçbirinde yok ve güvenli, ayrı bir acceptance/staging veritabanı
+> provision edilmemiş. Hedef **yerel bir DB DEĞİLDİR** — tasarım ayrı bir
+> acceptance/staging DB'sine bağlanmak üzerine kuruludur. Aşağıdaki
+> "atılabilir yerel Postgres" kapsamı bu yüzden tek seçenek değil, hedefin
+> yokluğunda düşünülmüş bir alternatiftir.
 
 Bu madde bir ürün hatası değildir: **ölçüm yeteneği** eksiktir. Bugün panel
 akışlarının (kimlik doğrulama → düzenleme → kaydetme → yeniden yükleme)
-tarayıcı kabulü yapılamıyor, çünkü tek `DATABASE_URL` uzak bir veritabanını
-gösteriyor ve makinede kullanılabilir bir yerel Postgres yok (denetim
-2026-08-28: Docker, Podman, Windows PostgreSQL servisi, `psql`, WSL — hiçbiri
-kurulu değil; depoda compose/devcontainer/test-DB kurulumu ve
-`pg-mem` / `testcontainers` / `embedded-postgres` bağımlılığı yok).
+tarayıcı kabulü yapılamıyor, çünkü tek `DATABASE_URL` uzak bir **birincil**
+veritabanını gösteriyor, `.env.acceptance` yok ve makinede kullanılabilir bir
+yerel Postgres de bulunmuyor (denetim 2026-08-28: Docker, Podman, Windows
+PostgreSQL servisi, `psql`, WSL — hiçbiri kurulu değil; depoda
+compose/devcontainer kurulumu ve `pg-mem` / `testcontainers` /
+`embedded-postgres` bağımlılığı yok).
 
 Sonuç: Karar K'nin A/B/C/D maddeleri ve gerçek save→reload turu
 `NOT-MEASURED` kalıyor. **KB-22** (panel render'ının kalıcı yazım yapması) bu
@@ -270,6 +290,21 @@ Kapsam:
 Kabul ölçütü: A/B/C/D ve save→reload turu gerçek veriye dokunmadan
 ölçülebilir hâle gelir ve `KNOWN-BROKEN.md` tarayıcı kanıtı tablosundaki
 `NOT-MEASURED` satırları `BROWSER-MEASURED-LOCAL` ile değiştirilebilir.
+
+### Sıra (2026-08-28)
+
+1. **KB-22'nin kalan dört render yazımı** — bildirim okundu, sohbet okundu,
+   kategori tohumlama, eşleşme backfill. İlk ikisi açık action/POST sınırına,
+   son ikisi job/admin sınırına taşınır. Bu önce gelir: bu yazımlar durdukça
+   panelde salt-okunur bir kabul turu yapmak mümkün değildir.
+2. **Acceptance DB provisioning** — `.env.acceptance` ve ayrı, güvenli bir
+   acceptance/staging veritabanı. Doğrulayıcı/seed/normalizer script'leri
+   hazır; eksik olan yalnız hedeftir.
+3. **A–D tarayıcı kabulü + gerçek save→reload turu** — Karar K'nin
+   `NOT-MEASURED` maddeleri ancak 1 ve 2'den sonra ölçülebilir.
+4. **Diğer açık ölçümler** — `verify-phase3a` tarihsel `28 printing leaf`
+   kırmızısı, KB-5 (bildirim doğrulayıcısının bayat beklentisi) ve Vercel
+   dakikalık cron desteğinin doğrulanması.
 
 ## Bilinçli erteleme
 
