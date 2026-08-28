@@ -236,6 +236,41 @@ Bu backlog'un sözleşmeleri (şimdiden yazılıyor ki sonra kaymasın):
 - **Learning Loop henüz uygulanmadı ve ölçülmedi.** Bu bölüm bir plandır;
   hiçbir satırı `BRANCH-WIRED` ya da `PRODUCTION-DEPLOYED` iddiası taşımaz.
 
+
+## Yerel kabul testi altyapısı (BAŞLAMADI — araç eksiği, ürün kusuru DEĞİL)
+
+Bu madde bir ürün hatası değildir: **ölçüm yeteneği** eksiktir. Bugün panel
+akışlarının (kimlik doğrulama → düzenleme → kaydetme → yeniden yükleme)
+tarayıcı kabulü yapılamıyor, çünkü tek `DATABASE_URL` uzak bir veritabanını
+gösteriyor ve makinede kullanılabilir bir yerel Postgres yok (denetim
+2026-08-28: Docker, Podman, Windows PostgreSQL servisi, `psql`, WSL — hiçbiri
+kurulu değil; depoda compose/devcontainer/test-DB kurulumu ve
+`pg-mem` / `testcontainers` / `embedded-postgres` bağımlılığı yok).
+
+Sonuç: Karar K'nin A/B/C/D maddeleri ve gerçek save→reload turu
+`NOT-MEASURED` kalıyor. **KB-22** (panel render'ının kalıcı yazım yapması) bu
+boşluğu daha da sertleştiriyor — sayfayı yalnızca açmak bile gerçek veriye
+yazıyor, dolayısıyla uzak DB ile salt-okunur kabul testi mümkün değil.
+
+Kapsam:
+
+- **Tek komutla atılabilir yerel Postgres** — yalnız `127.0.0.1` üzerinde,
+  ayrı bir portta (örn. `55432`), production portuna (`5432`) ve dev sunucusu
+  portuna (`3000`) dokunmadan.
+- **Sentetik seed** — gerçek e-posta, telefon ve talep metni KULLANILMAZ.
+  Senaryolar (DRAFT + geçerli confirmation, PUBLISHED/RECEIVING_OFFERS miras
+  cevap, ortak alan cevapları) tohum verisinden üretilir.
+- **`test:acceptance` betiği** — depodaki MEVCUT migration'ları geçici DB'ye
+  uygular (yeni migration üretmez), uygulamayı process-level `DATABASE_URL` ile
+  o DB'ye bağlar, etkin host'un `127.0.0.1` olduğunu **fail-closed** doğrular
+  ve tur bitince oluşturduğu container/database/volume'ü adıyla kaldırır.
+- **Auth** — production bypass EKLENMEZ. Kullanıcı girişini kendisi yapar;
+  altyapı yalnız güvenli bir hedef veritabanı sağlar.
+
+Kabul ölçütü: A/B/C/D ve save→reload turu gerçek veriye dokunmadan
+ölçülebilir hâle gelir ve `KNOWN-BROKEN.md` tarayıcı kanıtı tablosundaki
+`NOT-MEASURED` satırları `BROWSER-MEASURED-LOCAL` ile değiştirilebilir.
+
 ## Bilinçli erteleme
 
 - Branch fanout’u V3 ile değiştirmek (erken)

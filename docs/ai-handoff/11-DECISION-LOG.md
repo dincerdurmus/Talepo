@@ -878,3 +878,146 @@ değildir**; bildirim `<details>` ağacının dışında, ana composer kartında
 > değildir. Gerçek kimlik sağlayıcısıyla canlı uçtan uca üyelik akışı ve
 > production başarısı ölçülmüş sayılmaz; C'deki 500 tarayıcıda kesilerek
 > üretilmiştir. Bkz. **KB-21**.
+
+---
+
+### Karar J — Bilinçli değer taşımayan cevap · cevap evreni kategoriyle sınırlı
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — `cee64e8` → `61fdcc1` (10 commit), `BRANCH-WIRED` · `CODE-VERIFIED` · `/talep` yüzeyinde `BROWSER-MEASURED-LOCAL · PASS`. **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `request-composer/answer-authority.ts`, `request-composer/ui-helpers.ts`, `request-composer/v2/question-profiles.ts`, `request-category-engine.ts`, `discovery/types.ts`, `discovery/build-projection.ts`, `discovery/server-authority.ts`, `request/understanding-snapshot.ts`, `server/request/mapper.ts`, `talep/page.tsx`, `components/panel/EditRequestForm.tsx` |
+| **Testler** | `verify-nonvalue-answer-authority-v1`, `verify-field-response-authority-v1`, `verify-common-field-response-v1`, `verify-common-field-persistence-v1`, `verify-field-value-mode-persistence-v1`, `verify-field-value-mode-reload-v1`, `verify-clone-nonvalue-answer-v1`, `verify-generated-field-answer-v1`, `verify-any-answer-authority-v1` (yeni), `verify-answer-lifecycle-separation-v1` (yeni) — hepsi `PROBLEMS=0` |
+| **Kayıt** | Ölçüm tabanı: `KNOWN-BROKEN.md` → `ÖLÇÜM TABANI — 2026-08-28, 61fdcc1` |
+| **Değişirse risk** | Kullanıcının bilinçli "Bilmiyorum / Uygulanamaz / Fark etmez" cevabı ya kaybolur (soru tekrar sorulur) ya da yerelleştirilmiş etiket bir ürün özelliği gibi Matching'e sızar |
+
+**J1 — `UNKNOWN`, `NOT_APPLICABLE` ve `ANY` bilinçli KULLANICI CEVAPLARIDIR.**
+Cevaplanmamış bir alanla aynı şey değildirler. Ayrım kaynağa bağlanır: yalnız
+açık kullanıcı kaynağı (`EXPLICIT_TEXT` / `EXPLICIT_BROWSE`) bir cevap üretir.
+Kanonik modelde `UNKNOWN` aynı zamanda cevaplanmamış her alanın VARSAYILAN
+durumudur — 108 senaryoluk kapsam tabanında 988 alan böyledir ve hepsi
+`INFERRED`'dır; onları cevap saymak hiç sorulmamış soruyu cevaplanmış
+göstermek olurdu. Karar tek yerdedir: `isDeliberateNonValueAnswer`.
+
+**J2 — Değer taşımayan cevap tipli kanalda taşınır, otorite sunucuda YENİDEN
+TÜRETİLİR.** `UNKNOWN` / `NOT_APPLICABLE` additive `fieldResponses` yüzeyinde,
+`ANY` kendi `constraints[key].mode = "ANY"` kanalında yaşar. İstemcinin
+gönderdiği `fieldAuthority` / `fieldResponses` haritaları güven sınırında
+ATILIR; seviye sunucunun kendi `rawInput` metninden ve süzülmüş cevap
+kanalından (`fields[] + mode`) yeniden türetilir. Yerelleştirilmiş etiket
+("Fark etmez") hiçbir koşulda kanıt değildir — karar kanonik `mode` üzerinden
+verilir.
+
+**J3 — Dedicated kolonlara sahte değer yazılmaz.** `budget` / `city` /
+`delivery` alanlarında değer taşımayan bir cevap, `budgetMin = budgetMax = 0`,
+`city = "Konum fark etmez"` ya da uydurma bir tarih üretemez. `parseMoney`
+rakam içermeyen metinde fail-closed davranır; dedicated çözücüler üç sonuçlu
+sözleşmeyi uygular (`undefined` = dokunma, `null` = temizle, değer = yaz).
+
+**J4 — Dinamik alan modları MEVCUT `jsonValue` kanalında kalıcılaşır.**
+`RequestFieldValue.jsonValue = { mode }` yazılır, `textValue` boşaltılır. Yeni
+kolon, yeni tablo ve **migration YOKTUR**. Çelişki kuralı: `jsonValue.mode` ile
+`textValue` birlikteyse structured mod kazanır; legacy `textValue="Fark etmez"`
+kaydı `VALUE` okunur ve backfill yapılmaz — geçmişe structured cevap
+uydurulmaz.
+
+**J5 — Edit/reload ve clone'da structured cevap korunur.** Düzenleme ekranı
+`restoredFieldAnswers` ile modu kanonik state'e geri yükler; kullanıcının
+başlattığı clone, kaynağın DB'de DOĞRULANMIŞ `UNKNOWN` / `NOT_APPLICABLE` /
+`ANY` cevabını yeni DRAFT'a taşır (kurucunun 2026-08-28'de daralttığı kapsam).
+Clone kendiliğinden YENİ bir kullanıcı beyanı üretmez.
+
+**J6 — Üretilen `title` bir cevap/onay yüzeyi DEĞİLDİR.** Başlık talebin
+içeriğinden `composeRequestTitle` ile üretilen bir etikettir.
+`fieldResponses.title`, `constraints.title`, `fieldAuthority.title` ve
+`fields[]` içinde `title` satırı hiçbir istemci, kurucu, projection ya da
+sunucu yolunda üretilemez; istemci zorlarsa fail-closed düşer. `Request.title`
+NOT NULL korunur, migration yoktur. Kanonik registry alanı `generated: true`
+ile işaretlidir; karar `isGeneratedCommonField` tek yerinden okunur.
+
+**J7 — Cevap evreni soru ZAMANLAMASINDAN bağımsızdır ama MEVCUT KATEGORİYLE
+sınırlıdır.** Evren tek kanonik fonksiyondan türer
+(`publishAnswerKeyUniverse`): kategori registry'si + o kategorinin soru
+profilleri (`listProfileKeysForCategory`) + üretilmeyen ortak alanlar, üstünde
+mevcut `isProjectionAuthorityKeyAllowed` guard'ı. `whenProductTypes` /
+`whenNeedTypes` süzgeci ZAMANLAMA sorusunu cevaplar ("şu an sorulsun mu?") ve
+evreni daraltamaz: kullanıcı cevabı verdikten sonra ürün tipi değişirse cevabı
+evren dışına düşerdi. Ölçüldü — `fridgeType` cevabı tam olarak bu yüzden
+kayboluyordu; evren 119 → 151 kimliğe genişledi ve 32 yeni kimliğin tamamı
+gerçek soru profili anahtarıdır (iç kanıt 0, kategori dışı 0, prototype 0,
+generated title 0, onaysız inference 0).
+
+**J8 — Kabul edilen anahtar, sunucunun KALICILAŞTIRDIĞI kategoriye göre
+denetlenir.** Kaynak `category.slug`'dır — `discoveryProjection.categoryId`
+DEĞİL. İkisi de istemciden gelir ama yalnız birincisi `Request.categoryId`
+olarak yazılır ve yönlendirme/filtreleme kararlarını besler; ikincisi serbestçe
+uydurulabilen bir JSON alanıdır. Tanınmayan, boş ya da bozuk tipli bir kategori
+evreni GENİŞLETEMEZ, yalnız daraltır (fail-closed): geriye üretilmeyen ortak
+alanlar (`budget`, `city`, `delivery`, `quantity`) kalır. Bu dördü hiçbir
+kategorinin kendi alanı değildir (çakışma 0) ve 11 kategorinin hepsinin
+evreninde bulunur (eksik 0); bu yüzden yabancı kategori anahtarı olmaları
+yapısal olarak imkânsızdır. Kategori meşru biçimde değişirse yalnız YENİ
+kategorinin alanları kabul edilir; eski kategorinin alanı yayın ve persistence
+yüzeyinden çıkar.
+
+**J9 — Açık `ANY` cevabı constraint + `USER_EXPLICIT` authority taşır;
+`confirmedFieldKeys` KÜME semantiğindedir.** `constraints[key].mode = "ANY"`
+kalır, `fieldAuthority[key].constraints = "USER_EXPLICIT"` olur,
+`attributes[key]` ÜRETİLMEZ ("fark etmez" bir ürün özelliği değildir) ve
+`fieldResponses[key]` üretilmez (`ANY` kendi kanalındadır). Onay listesinde
+aynı anahtar en fazla bir kez bulunur; tekilleştirme kanonik sınırda
+(`buildUnderstandingSnapshot`) yapılır, çağrı yerlerinde tek tek değil.
+
+> **Kanıt kanalı kapanmaz.** Kategori denetimi YALNIZ cevap kanalını daraltır.
+> Kullanıcı bir değeri kendi metninde yazarsa otorite metin kanalından gelmeye
+> devam eder: `"Beyaz buzdolabi ariyorum"` → `attributes.color = "Beyaz"`,
+> değer taşıyan constraint korunur ve iki yüzey de `USER_EXPLICIT` olur (S10).
+> Aynı alan yalnız istemcinin structured metadata'sından gelir ve sahte
+> `fieldAuthority` taşırsa `UNKNOWN` kalır (S11). İkisi arasındaki tek fark
+> kanıtın KAYNAĞIdır.
+
+### Karar K — Hatırlamak ≠ güncel varsaymak · miras cevabın yeniden onayı
+
+| | |
+|--|--|
+| **Durum** | **UYGULANMIŞ** — `6cd753f` (+ `61fdcc1` uzlaştırması), `BRANCH-WIRED` · `CODE-VERIFIED`. Düzenleme ekranı akışı `NOT-MEASURED` (bkz. aşağıdaki sınır). **`PRODUCTION-DEPLOYED` DEĞİL** |
+| **Dosyalar** | `request-composer/answer-authority.ts`, `discovery/server-authority.ts`, `server/request/mapper.ts`, `panel/taleplerim/[id]/duzenle/page.tsx`, `components/panel/EditRequestForm.tsx` |
+| **Testler** | `verify-answer-freshness-v1` — `PROBLEMS=0` |
+| **Kayıt** | **KB-22** (kabul testinin neden ölçülemediği) |
+| **Değişirse risk** | Bayat bir bütçe ya da teslim tarihi tam yetkili bir cevap gibi okunur; talep yanlış firmalara gider ve hata GÖRÜNMEZ olur, çünkü veriyi gerçekten bir kullanıcı vermiştir |
+
+**Bu karar Karar H'nin altına sıkıştırılamaz.** H "bunu KİM söyledi?"
+sorusunun cevabıdır ve zamanla değişmez. K başka bir soruyu cevaplar: "bu
+cevap BUGÜN hâlâ onaylı mı?". Bir alan aynı anda `USER_EXPLICIT` ve
+`INHERITED` olabilir — bu bir çelişki değil, İKİ EKSENDİR. Aynı köke
+indirgenirlerse ikisinden biri sessizce kaybolur.
+
+**K1 — Geçmiş cevap hatırlanır.** Kullanıcının daha önce verdiği ortak alan
+cevabı (`budget`, `city`, `delivery`, `quantity`) silinmez ve düzenleme
+ekranında görünür kalır. `title` bu sözleşmenin DIŞINDADIR (bkz. J6).
+
+**K2 — Güncelliği VARSAYILMAZ.** `AnswerFreshness = FRESH | INHERITED` ayrı bir
+eksendir. Yayınlanmış / teklif alan bir talep düzenleniyorsa önceki cevaplar
+`INHERITED`'dır; `DRAFT` içinde ise ancak sunucunun yazdığı onay imzası o anki
+cevabın imzasıyla ÇAKIŞIYORSA `FRESH` sayılır.
+
+**K3 — "Aynı kalsın / Değiştirmek istiyorum" AÇIK bir kullanıcı eylemidir.**
+Kullanıcıya önceki cevabı hatırlatılır ve iki seçenek sunulur; karar
+verilmeden kaydetme ilerlemez. Sessiz devralma yoktur.
+
+**K4 — SÜRE EŞİĞİ YOKTUR.** Tazelik "şu kadar gün geçti" ile ölçülmez; yalnız
+talebin `status` bilgisi, düzenleme/clone bağlamı ve cevabın KENDİSİNE bağlı
+deterministik onay imzası (`answerSignature`, FNV-1a, `v1:xxxxxxxx`, ham PII
+taşımaz) kullanılır. Cevap değişince damga kendiliğinden geçersiz olur.
+`localStorage` ve URL parametresi tazelik kanıtı DEĞİLDİR.
+
+**K5 — Maira UYGULANMIŞ SAYILMAZ.** Bu karar yalnız freshness sözleşmesini ve
+düzenleme ekranındaki yeniden onay kontrolünü kapsar. `TalepoAiPanel`'e
+bağımlılık kurulmaz; bilgi kanonik soru adayı sözleşmesinde taşınır.
+
+> **Sınır — `NOT-MEASURED`.** Yeniden onay akışının tarayıcı kabulü (A/B/C/D)
+> ve gerçek save→reload DB turu ÖLÇÜLMEDİ: panel yolları kimlik doğrulama
+> gerektiriyor ve bu makinede kullanılabilir bir yerel test veritabanı yok.
+> Bkz. **KB-22** ve `09-NEXT-PHASE-RECOMMENDATION.md` → "Yerel kabul testi
+> altyapısı". Bu maddelerin iddiaları `CODE-VERIFIED`'dır;
+> `BROWSER-MEASURED-LOCAL` DEĞİLDİR ve PASS sayılamaz.

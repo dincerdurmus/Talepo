@@ -3167,3 +3167,113 @@ argümanındaki `$(git log …)` komut ikamesi `$?` değerini **ezer** ve sonda 
 etmesine yol açtı; doğru cevap (`d7839b0`) sınırın iki ucu doğrudan
 çalıştırılarak bulundu. **Her bisect sonucu, `X^` yeşil / `X` kırmızı diye
 elle doğrulanmadan kayda geçirilmemelidir.**
+
+---
+
+## ÖLÇÜM TABANI — 2026-08-28, `61fdcc1` (bilinçli cevap · kategori kapsamı)
+
+Commit: `61fdcc1` — *fix(requests): preserve explicit answers within category
+scope* (parent `33013b8`). Bu bölüm yukarıdaki `008a4ac` ve `7aa6990`
+tabanlarını **silmez ve yerine geçmez**; onlar marka güven ve generic
+projection otorite eksenlerini ölçer, bu taban değer taşımayan cevap ve cevap
+evreni eksenini kapatır. Sayılar birbirinin yerine kullanılamaz.
+
+```
+npx --yes tsx scripts/verify-any-answer-authority-v1.ts
+npx --yes tsx scripts/verify-answer-lifecycle-separation-v1.ts
+npx --yes tsx scripts/verify-projection-authority-v1.ts
+npx --yes tsx scripts/verify-projection-server-authority-v1.ts
+npx --yes tsx scripts/verify-inference-question-authority-v2.ts
+```
+
+| Ölçüm | Sonuç |
+| --- | --- |
+| Açık `ANY` cevabı (11 kategori × dinamik alan) | **151/151** — otoritesi kaybolan 0 |
+| Sunucu güven sınırı kimlikleri | **135/135** — `AUTHORITY_MISMATCH=0`, drift 0 |
+| Sunucu seviye dağılımı | `USER_EXPLICIT 75` · `UNKNOWN 14` · `INFERRED 28` · `VERIFIED 18` |
+| Projection otorite kimlikleri | **510/510** — mismatch 0, payload drift 0 |
+| D2 çıkarım/soru tabanı | `0 / 20 / 49 / 3 / 0 / 4` — kaybolan 0 |
+| Generated `title` sızıntısı | **0** (fields / attributes / constraints / fieldAuthority / fieldResponses) |
+| Kategori dışı anahtar sızıntısı | **0** |
+| İç kanıt (`brandCandidate` / `brandEvidence`) sızıntısı | **0** |
+| S10 — renk kullanıcının GERÇEK metninde | `attributes.color` + constraint → **USER_EXPLICIT** |
+| S11 — renk yalnız sahte structured metadata'da | iki yüzey de **UNKNOWN** |
+| `verify-phase3a-discovery-foundation-v1` | **45/1 KIRMIZI** — yalnız tarihsel `28 printing leaf`; **PASS DEĞİLDİR**, bu değişiklikle artmadı (HEAD `33013b8` ağacında da aynı kimlik) |
+
+**Taban değişimleri (sessiz değil).** Cevap evreni 119 → 151 kimliğe
+**genişledi**: eski evren soru profillerini `whenProductTypes` / `whenNeedTypes`
+süzgeciyle kuruyordu, o süzgeç ise ZAMANLAMA sorusunu cevaplar. 32 yeni
+kimliğin tamamı gerçek soru profili anahtarıdır. Sunucu tabanında kimlik sayısı
+önce 123'te sabit kaldı (kategori dışı `color` üç yüzeyi `USER_EXPLICIT` →
+`UNKNOWN`, yani **SIKILAŞMA**), sonra S10/S11 çifti eklenince 123 → 135 oldu
+(+12; `USER_EXPLICIT` 65 → 75, `UNKNOWN` 12 → 14). Artışların tamamı yeni
+senaryolardan gelir; mevcut hiçbir satırın beklentisi bu turda değişmedi.
+
+**Tarayıcı kanıtı — yüzey bazında.**
+
+| Yüzey | Durum |
+| --- | --- |
+| `/talep` · masaüstü + 375×812 · generated `title` hiçbir cevap/onay yüzeyinde yok | `BROWSER-MEASURED-LOCAL · PASS` |
+| `/talep` · açık `ANY` → `fields[] = fridgeType:ANY`, constraint `ANY`, authority `USER_EXPLICIT`, `attributes` yok | `BROWSER-MEASURED-LOCAL · PASS` |
+| `/talep` · `confirmedFieldKeys` tekilliği | `BROWSER-MEASURED-LOCAL · PASS` |
+| `/talep` · `rawInput` değişmiyor | `BROWSER-MEASURED-LOCAL · PASS` |
+| A — aynı DRAFT + geçerli confirmation | **NOT-MEASURED** |
+| B — miras cevap + yeniden onay kontrolü | **NOT-MEASURED** |
+| C — "Evet, aynı kalsın" | **NOT-MEASURED** |
+| D — "Değiştirmek istiyorum" | **NOT-MEASURED** |
+| DB save → reload turu | **NOT-MEASURED** |
+
+Yayın istekleri tarayıcı ağ katmanında yakalanıp sunucuya ulaşmadan iptal
+edildi; hiçbir DB yazımı yapılmadı. Ölçüm yerel bir çalışma kopyasındadır:
+**`PRODUCTION-DEPLOYED` DEĞİLDİR** ve hiçbir satır production iddiası taşımaz.
+A–D'nin neden ölçülemediği için bkz. **KB-22**.
+
+## KB-22 — Panel layout'u GET/RSC render sırasında kalıcı yazım ve bildirim üretiyor
+
+| Alan | Değer |
+| --- | --- |
+| Yol | `apps/web/src/app/panel/layout.tsx:88` → `apps/web/src/server/request/urgent-no-offer-nudge.ts:63,79` |
+| Sınıf | **Yapısal** — render yan etkisi |
+| Bugünkü sonuç | Açık; düzeltilmedi, geçici olarak da devre dışı bırakılmadı |
+| Ne zamandan beri | Ölçülmedi (bisect yapılmadı); bulgu 2026-08-28 tarihli kabul testi hazırlığında kaynak kod denetimiyle çıktı |
+| Sahibi | Talep/panel |
+
+**Gözlenen (kaynak koddan doğrulandı).** `panel/layout.tsx` bütün `/panel/*`
+sayfalarını sarar ve rozet sayımlarından ÖNCE
+`await processUrgentNoOfferNudges(user.id)` çağırır. Kodun kendi yorumu bunu
+açıkça söyler: *"Best-effort: create due 'teklif gelmedi' nudges before badge
+counts."* Çağrılan fonksiyon iki kalıcı yazım yapar:
+
+- `urgent-no-offer-nudge.ts:63` — `prisma.request.updateMany({ ... data: { urgentOfferNudgeAt: now } })`,
+  kullanıcının açık, `isUrgent` ve henüz gerçek teklif almamış taleplerinden
+  **20'ye kadarını** damgalar.
+- `urgent-no-offer-nudge.ts:79` — `createNotification({ userId, type: "GENERAL", ... requestId })`,
+  damgalanan her talep için kalıcı bildirim satırı üretir.
+
+**Kök neden (doğrulandı).** Yan etki bir kullanıcı EYLEMİNE değil, sayfanın
+GÖRÜNTÜLENMESİNE bağlanmış. Bir GET/RSC render'ı okuma olmalıdır; burada
+render'ın kendisi durum değiştiriyor.
+
+**Neden önemli.**
+
+1. **Geri alınamaz.** Uygunluk koşulu `urgentOfferNudgeAt: null` olduğu için bir
+   talep bir kez damgalandığında bir daha nudge üretmez. Sayfayı yalnızca açmak
+   gerçek bir ürün davranışını sessizce TÜKETİR.
+2. **Beklenmedik tetikleyiciler.** Sayfa yenileme, prefetch, sekme geri gelmesi
+   ya da bir bot/önizleme isteği aynı yazımı başlatabilir.
+3. **Salt-okunur kabul testini imkânsız kılıyor.** Yazım sunucu tarafında,
+   render sırasında koştuğu için tarayıcı ağ katmanındaki iptal mekanizmasıyla
+   durdurulamaz. Bu makinede tek `DATABASE_URL` uzak bir veritabanını gösterdiği
+   ve kullanılabilir yerel Postgres/Docker/Podman/WSL bulunmadığı için (denetim
+   2026-08-28) panel akışlarının kabul testi yapılamadı: **KB-22 doğrudan
+   Karar K'nin A/B/C/D ve save→reload maddelerinin `NOT-MEASURED` kalma
+   sebebidir.**
+
+**Yapılacak (bu turda YAPILMADI).** Nudge üretimi render'dan çıkarılıp açık bir
+kullanıcı eylemine, bir POST rotasına ya da zamanlanmış bir işe taşınmalıdır.
+Alternatif olarak render yolunda yalnız OKUMA bırakılıp yazım tembel bir
+kuyruğa alınabilir. Geçici olarak devre dışı bırakmak bir düzeltme değildir ve
+kurucu bunu açıkça reddetti.
+
+**Çözülmüş sayılmaz.** Bu kayıt yalnız davranışı belgeler; kod bu turda
+değiştirilmedi.
