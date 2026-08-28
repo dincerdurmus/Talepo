@@ -29,8 +29,23 @@ type CreateNotificationInput = {
   companyId?: string;
 };
 
-export async function createNotification(input: CreateNotificationInput) {
-  return prisma.notification.create({
+/**
+ * Bildirimi yazacak istemci (KB-22, 2026-08-28).
+ *
+ * Varsayılan tekil Prisma istemcisidir. Bir transaction içinde yazmak
+ * gerektiğinde çağıran kendi `tx` istemcisini geçer; böylece claim ile
+ * bildirim aynı işlemde kalır. İKİNCİ BİR BİLDİRİM YAZMA KOPYASI AÇILMAZ —
+ * kanonik yazıcı burada tektir.
+ */
+export type NotificationWriteClient = {
+  notification: { create: (args: { data: unknown }) => Promise<unknown> };
+};
+
+export async function createNotification(
+  input: CreateNotificationInput,
+  client: NotificationWriteClient = prisma as unknown as NotificationWriteClient,
+) {
+  return client.notification.create({
     data: {
       userId: input.userId,
       type: input.type,

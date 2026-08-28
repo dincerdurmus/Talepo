@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/overdue-complaints",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/urgent-nudge",
+      "schedule": "* * * * *"
     }
   ]
 }

@@ -17,7 +17,6 @@ import {
   AuthenticationError,
   requireUser,
 } from "@/server/auth/require-user";
-import { processUrgentNoOfferNudges } from "@/server/request/urgent-no-offer-nudge";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -83,13 +82,22 @@ export default async function PanelLayout({
     }
 
     try {
-      // Best-effort: create due “teklif gelmedi” nudges before badge counts.
-      try {
-        await processUrgentNoOfferNudges(user.id);
-      } catch (nudgeError) {
-        console.error("[panel] Acil talep nudge işlenemedi:", nudgeError);
-      }
-
+      /**
+       * RENDER SALT-OKUNURDUR (KB-22, 2026-08-28).
+       *
+       * Burada eskiden `processUrgentNoOfferNudges` çağrılıyordu: rozet
+       * sayımlarından önce vadesi gelen "teklif gelmedi" nudge'ları
+       * ÜRETİLİYORDU. Bu layout `force-dynamic` + `revalidate = 0` olduğu
+       * için iş her RSC isteğinde koşuyordu — navigasyon, `router.refresh()`
+       * ve `<Link>` prefetch'i dâhil. Sayfayı görüntülemek (hatta bir bağlantı
+       * üstüne gelmek) kalıcı ve geri alınamaz bir ürün davranışını
+       * tüketiyordu.
+       *
+       * İş artık iki AÇIK sınırda yürür: `POST /api/notifications/urgent-nudge`
+       * (poller, `requireUser`) ve `GET /api/cron/urgent-nudge` (zamanlanmış,
+       * `CRON_SECRET`). Aşağıdaki sayımlar salt-okunurdur ve rozet davranışı
+       * değişmez.
+       */
       const [summary, messageCount, entitlements] = await Promise.all([
         getPanelSummary(user.id),
         getUnreadMessageCount(user.id),

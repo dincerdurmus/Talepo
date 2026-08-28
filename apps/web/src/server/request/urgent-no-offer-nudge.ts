@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/prisma";
+import { URGENT_NO_OFFER_NUDGE_MS } from "@/lib/request/urgent-nudge-constants";
 import {
-  URGENT_NO_OFFER_NUDGE_MESSAGE,
-  URGENT_NO_OFFER_NUDGE_MS,
-  URGENT_NO_OFFER_NUDGE_TITLE,
-} from "@/lib/request/urgent-nudge-constants";
-import { createNotification } from "@/server/notifications/create-notification";
+  createNotification,
+  type NotificationWriteClient,
+} from "@/server/notifications/create-notification";
 import { distributeRequestToCompanies } from "@/server/request/distribute-request";
+
+import {
+  runUrgentNudgeScan,
+  URGENT_NUDGE_OPEN_STATUSES as OPEN_STATUSES,
+  type UrgentNudgeDb,
+} from "./urgent-nudge-core";
 
 export {
   URGENT_NO_OFFER_NUDGE_MESSAGE,
@@ -13,82 +18,60 @@ export {
   URGENT_NO_OFFER_NUDGE_TITLE,
 } from "@/lib/request/urgent-nudge-constants";
 
-const OPEN_STATUSES = ["PUBLISHED", "RECEIVING_OFFERS"] as const;
-
-const REAL_OFFER_STATUSES = [
-  "SUBMITTED",
-  "VIEWED",
-  "ACCEPTED",
-  "REJECTED",
-  "WITHDRAWN",
-] as const;
+export {
+  URGENT_NUDGE_BATCH_SIZE,
+  runUrgentNudgeScan,
+  type UrgentNudgeDb,
+} from "./urgent-nudge-core";
 
 /**
- * Scan the buyer's open urgent requests and create at most one in-app nudge
- * per request when no real offer has arrived after the wait window.
+ * KALICI İŞ RENDER SINIRINDA DEĞİL, AÇIK BİR İŞ SINIRINDA KOŞAR (KB-22).
+ *
+ * Aşağıdaki iki sarmalayıcı yalnız üretim istemcisini ve kanonik bildirim
+ * yazıcısını saf çekirdeğe bağlar. Kural mantığı `urgent-nudge-core.ts`
+ * içindedir ve ikinci bir kopyası yoktur.
  */
-export async function processUrgentNoOfferNudges(userId: string): Promise<{
-  created: number;
-}> {
-  const cutoff = new Date(Date.now() - URGENT_NO_OFFER_NUDGE_MS);
 
-  const eligible = await prisma.request.findMany({
-    where: {
-      createdById: userId,
-      deletedAt: null,
-      isUrgent: true,
-      urgentOfferNudgeAt: null,
-      status: { in: [...OPEN_STATUSES] },
-      offers: {
-        none: { status: { in: [...REAL_OFFER_STATUSES] } },
-      },
-      OR: [
-        { publishedAt: { lte: cutoff } },
-        { AND: [{ publishedAt: null }, { createdAt: { lte: cutoff } }] },
-      ],
-    },
-    select: { id: true, title: true },
-    take: 20,
+const notify = (
+  input: {
+    userId: string;
+    type: "GENERAL";
+    title: string;
+    message: string;
+    actionUrl: string;
+    requestId: string;
+  },
+  client: UrgentNudgeDb,
+) => createNotification(input, client as unknown as NotificationWriteClient);
+
+/** Alıcıya bağlı tur — poller POST rotası kullanır. */
+export async function processUrgentNoOfferNudges(
+  userId: string,
+  db: UrgentNudgeDb = prisma as unknown as UrgentNudgeDb,
+): Promise<{ created: number }> {
+  return runUrgentNudgeScan({
+    db,
+    notify,
+    userId,
+    waitMs: URGENT_NO_OFFER_NUDGE_MS,
   });
+}
 
-  if (eligible.length === 0) {
-    return { created: 0 };
-  }
-
-  let created = 0;
-  const now = new Date();
-
-  for (const request of eligible) {
-    // Claim first so concurrent panel loads cannot create duplicate nudges.
-    const claimed = await prisma.request.updateMany({
-      where: {
-        id: request.id,
-        createdById: userId,
-        urgentOfferNudgeAt: null,
-        isUrgent: true,
-        status: { in: [...OPEN_STATUSES] },
-        offers: {
-          none: { status: { in: [...REAL_OFFER_STATUSES] } },
-        },
-      },
-      data: { urgentOfferNudgeAt: now },
-    });
-
-    if (claimed.count === 0) continue;
-
-    await createNotification({
-      userId,
-      type: "GENERAL",
-      title: URGENT_NO_OFFER_NUDGE_TITLE,
-      message: URGENT_NO_OFFER_NUDGE_MESSAGE,
-      actionUrl: `/panel/taleplerim/${request.id}?acil-yayin=1`,
-      requestId: request.id,
-    });
-
-    created += 1;
-  }
-
-  return { created };
+/**
+ * Kullanıcıdan bağımsız tur — cron kullanır.
+ *
+ * Cron hiçbir istemci kimliğine güvenmez: bildirim sahibi her zaman talebin
+ * kendi `createdById` değerinden türer. Panel hiç açılmasa da vadesi gelen
+ * nudge'lar bu yoldan işlenir.
+ */
+export async function processDueUrgentNoOfferNudges(
+  db: UrgentNudgeDb = prisma as unknown as UrgentNudgeDb,
+): Promise<{ created: number }> {
+  return runUrgentNudgeScan({
+    db,
+    notify,
+    waitMs: URGENT_NO_OFFER_NUDGE_MS,
+  });
 }
 
 /**
