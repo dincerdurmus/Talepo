@@ -2578,6 +2578,8 @@ function TalepOlusturForm() {
      */
     const publishAnswerFields = buildPublishAnswerFields({
       canonicalFields: hybrid.state?.fields ?? null,
+      /* Kamuya açık soru evreni talebin O ANKİ kategorisinden türer (3h). */
+      categoryId: hybrid.state?.categoryId ?? activeCategoryId,
       values: dynamicValues,
       userTouchedKeys: userConfirmedFieldKeys,
       dynamicFieldKeys: visibleDynamicFields.map((field) => field.key),

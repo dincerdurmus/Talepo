@@ -31,7 +31,12 @@
  * daha pahalıdır — yanlış havuza gitmiş bir talep geri alınamaz.
  */
 
-import { isGeneratedCommonField } from "@/lib/request-category-engine";
+import { isProjectionAuthorityKeyAllowed } from "@/lib/discovery/validate-filter";
+import {
+  COMMON_FIELD_DEFAULTS,
+  getCategoryById,
+  isGeneratedCommonField,
+} from "@/lib/request-category-engine";
 import {
   isAtLeastAuthority,
   type Authority,
@@ -43,6 +48,7 @@ import type {
   FieldValueKind,
 } from "./types";
 import { isFieldValueKind } from "./types";
+import { listProfileKeysForCategory } from "./v2/question-profiles";
 
 export type { Authority };
 
@@ -292,4 +298,77 @@ export function isDeliberateNonValueAnswer(
     | FieldProvenance
     | null;
   return answerAuthorityOfProvenance(provenance) === "USER_EXPLICIT";
+}
+
+/* ------------------------------------------------------------------ *
+ * KAMUYA AÇIK SORU EVRENİ (D3f Dilim 3h, 2026-08-28)
+ * ------------------------------------------------------------------ */
+
+/**
+ * BİR CEVAP ANAHTARI YAYIN KANALINA GİREBİLİR Mİ?
+ *
+ * Cevap kanalının evreni, kanonik durumun TAMAMI olamaz. Kanonik durum
+ * çalışma anında geçici, eskimiş ve tamamen iç anahtarlar da taşır:
+ * kullanıcının kategorisi değiştiğinde önceki kategoriden kalan alanlar, iç
+ * kanıt anahtarları (`brandCandidate` / `brandEvidence`) ve nesne modeli
+ * anahtarları (`__proto__` / `constructor` / `prototype`). Bunların hiçbiri
+ * kullanıcıya SORULMUŞ bir soru değildir; kalıcı bir cevap yüzeyi üretmeleri
+ * "kullanıcı bunu söyledi" iddiasını uydurmak olurdu (ölçüldü, 2026-08-28:
+ * cevap evreni kanonik durumun tamamına açıldığında yabancı kategori alanı ve
+ * `__hack__` USER_EXPLICIT otorite kazanıyordu).
+ *
+ * EVREN ÜÇ KANONİK KAYNAKTAN TÜRER, ELLE LİSTE YOKTUR:
+ *   1. kategorinin kendi alan registry'si (`getCategoryById`),
+ *   2. o kategori için tanımlı soru profilleri (`listProfileKeysForCategory`),
+ *   3. üretilmeyen ortak alan registry'si (`COMMON_FIELD_DEFAULTS`).
+ * Üstüne mevcut anahtar guard'ı (`isProjectionAuthorityKeyAllowed`) uygulanır;
+ * o guard iç kanıt ve nesne modeli anahtarlarının TEK sahibidir ve burada
+ * ikinci bir kopyası kurulmaz.
+ *
+ * TEK OTORİTE. Hem istemci yayın kurucusu hem sunucu güven sınırı bu
+ * fonksiyondan okur; iki taraf ayrı evren tutarsa istemcinin gönderdiği bir
+ * cevap sunucuda sessizce düşerdi.
+ */
+export function publishAnswerKeyUniverse(
+  categoryId: string | null | undefined,
+): Set<string> {
+  const universe = new Set<string>();
+  for (const key of Object.keys(COMMON_FIELD_DEFAULTS)) {
+    if (!isGeneratedCommonField(key)) universe.add(key);
+  }
+  /**
+   * KATEGORİ ÖNCE KANONİK REGISTRY'DE DOĞRULANIR (D3f Dilim 3h).
+   *
+   * Tanınmayan ya da bozuk bir kategori kimliği için soru profillerine HİÇ
+   * sorulmaz. Sebep yapısaldır: profil eşleşmesi, `categories` alanı
+   * tanımlanmamış bir profili HER kategori için eşleşmiş sayar. Doğrulama
+   * olmasaydı uydurma bir kategori dizesi, kategoriden bağımsız bütün
+   * profillerin birleşimini açardı — istemcinin seçtiği bir dize evreni
+   * genişletemez.
+   */
+  /**
+   * BOZUK TİP DE FAIL-CLOSED DÜŞER. Girdi çalışma anında istemciden gelen
+   * ayrıştırılmamış JSON olabilir; sayı ya da nesne geldiğinde fonksiyon
+   * ÇÖKMEZ, kategoriyi çözemez ve evren yalnız ortak alanlarda kalır.
+   */
+  const category =
+    typeof categoryId === "string" && categoryId.trim()
+      ? getCategoryById(categoryId)
+      : null;
+  if (category) {
+    for (const field of category.fields ?? []) universe.add(field.key);
+    for (const key of listProfileKeysForCategory(category.id)) universe.add(key);
+  }
+  for (const key of [...universe]) {
+    if (!isProjectionAuthorityKeyAllowed(key)) universe.delete(key);
+  }
+  return universe;
+}
+
+/** Kısayol: tek anahtar sorgusu. Karar `publishAnswerKeyUniverse`dedir. */
+export function isPublishAnswerKey(
+  categoryId: string | null | undefined,
+  key: string,
+): boolean {
+  return publishAnswerKeyUniverse(categoryId).has(key);
 }

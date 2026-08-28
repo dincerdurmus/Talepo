@@ -401,10 +401,27 @@ export function buildUnderstandingSnapshot(input: {
       .map((s) => truncateSnapshotValue(String(s)))
       .filter(Boolean)
       .slice(0, 40),
-    confirmedFieldKeys: (input.confirmedFieldKeys ?? [])
-      .map((s) => String(s).trim())
-      .filter(Boolean)
-      .slice(0, 80),
+    /**
+     * ONAY LİSTESİ KÜME SEMANTİĞİNDEDİR (D3f Dilim 3h, 2026-08-28).
+     *
+     * "Bu anahtarı kullanıcı onayladı" bir SAYIM değil, bir ÜYELİK
+     * iddiasıdır: aynı anahtarın iki kez bulunması hiçbir ek bilgi taşımaz,
+     * ama okuyucuya onay sayısı varmış izlenimi verir ve 80'lik üst sınırı
+     * gereksiz yere doldurarak GERÇEK onayların düşmesine yol açabilir
+     * (ölçüldü: `/talep` yayınında `["fridgeType","fridgeType"]`).
+     *
+     * Tekilleştirme çağrı yerlerinde tek tek yapılmaz — kanonik sınır
+     * burasıdır; hangi kurucu çağırırsa çağırsın liste küme olarak çıkar.
+     * Kırpma tekilleştirmeden SONRA uygulanır, yoksa yinelenen anahtarlar
+     * kotayı yer.
+     */
+    confirmedFieldKeys: [
+      ...new Set(
+        (input.confirmedFieldKeys ?? [])
+          .map((s) => String(s).trim())
+          .filter(Boolean),
+      ),
+    ].slice(0, 80),
   };
 }
 

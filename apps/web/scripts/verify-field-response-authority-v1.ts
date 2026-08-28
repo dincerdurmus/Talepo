@@ -307,6 +307,8 @@ function measureServerBoundary(): void {
   const created = resolveCreateProjection({
     discoveryProjection: honest,
     rawInput: SCENE_TEXT,
+    /* Sunucu kategoriyi KENDİ yazdığı alandan okur (D3f 3h). */
+    category: { slug: honest.categoryId },
     fields,
   }).projection;
   ok(
@@ -317,7 +319,12 @@ function measureServerBoundary(): void {
   );
 
   const updated = resolveUpdateProjection(
-    { discoveryProjection: honest, rawInput: SCENE_TEXT, fields },
+    {
+      discoveryProjection: honest,
+      rawInput: SCENE_TEXT,
+      category: { slug: honest.categoryId },
+      fields,
+    },
     SCENE_TEXT,
   );
   ok(

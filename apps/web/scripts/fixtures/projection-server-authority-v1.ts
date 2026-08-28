@@ -26,8 +26,8 @@
  *       yeniden türetir. `model` cevap kanalında da vardır ama katalogdan
  *       gelen `VERIFIED` cevap kanalıyla EZİLMEZ; `needType` ise yalnız
  *       çıkarımdır ve süzülmüş cevap kanalıyla onaylandığı için yükselir.
- *   S04 create — `color` metinde YOKTUR, yalnız süzülmüş cevap kanalından
- *       gelir; kullanıcı beyanı olarak kabul edilir.
+ *   S04 create — `color` metinde YOKTUR ve `appliances` kategorisinin soru
+ *       evreninde de bulunmaz; cevap kanalından gelse bile fail-closed kalır.
  *   S05 create — `attributes.color` değeri değiştirilmiş, `constraints.color`
  *       cevapla uyumlu kalmıştır; iki yüzey ayrışır.
  *   S06 update — payload'da `rawInput` YOKTUR; sunucu kendi kaydettiği
@@ -86,13 +86,25 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
   "S03/partSystem/attributes = VERIFIED",
   "S03/partSystem/constraints = VERIFIED",
 
-  /* S04 — metinde olmayan, süzülmüş cevap kanalından gelen değer. */
+  /**
+   * S04 — metinde olmayan, süzülmüş cevap kanalından gelen değer.
+   *
+   * `color` KATEGORİ DENETİMİNE TAKILIR (D3f Dilim 3h, 2026-08-28). Sahne
+   * bir buzdolabı talebidir (`appliances`) ve `color` o kategorinin kamuya
+   * açık soru evreninde YOKTUR — ne alan registry'sinde ne soru
+   * profillerinde. Kurucu kararı gereği "mevcut kategori altında başka
+   * kategori anahtarı gönderilince fail-closed" olur; cevap kanalı artık
+   * kategori dışı bir anahtarı onaylayamaz. Bu bir sayaç düşürme DEĞİLDİR:
+   * kimlik sayısı değişmedi (123), yalnız üç satırın beklenen seviyesi
+   * SIKILAŞTI. Metinden türetim etkilenmez — kullanıcı gerçekten "beyaz
+   * buzdolabı" yazarsa otorite metin kanalından gelmeye devam eder.
+   */
   "S04/productType/attributes = USER_EXPLICIT",
   "S04/productType/constraints = USER_EXPLICIT",
   "S04/applianceType/attributes = USER_EXPLICIT",
   "S04/applianceType/constraints = USER_EXPLICIT",
-  "S04/color/attributes = USER_EXPLICIT",
-  "S04/color/constraints = USER_EXPLICIT",
+  "S04/color/attributes = UNKNOWN",
+  "S04/color/constraints = UNKNOWN",
 
   /* S05 — aynı alanın iki yüzeyi ayrışır: cevap yalnız birini doğrular. */
   "S05/productType/attributes = USER_EXPLICIT",
@@ -100,7 +112,38 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
   "S05/applianceType/attributes = USER_EXPLICIT",
   "S05/applianceType/constraints = USER_EXPLICIT",
   "S05/color/attributes = UNKNOWN",
-  "S05/color/constraints = USER_EXPLICIT",
+  "S05/color/constraints = UNKNOWN",
+
+  /**
+   * S10 / S11 — AYNI ALAN, İKİ KANIT KANALI (D3f Dilim 3h, 2026-08-28).
+   *
+   * Kategori denetimi `color`ı appliances cevap evreninin dışında tutar.
+   * Bu çift, denetimin METİN kanalını kapatmadığını kilitler:
+   *
+   *   S10 — renk kullanıcının kendi cümlesindedir ("Beyaz buzdolabi
+   *         ariyorum"); istemci structured alan, `fieldAuthority` ya da
+   *         sahte provenance GÖNDERMEZ ve cevap kanalı boştur. Sunucu
+   *         kendi metninden türetir: iki yüzey de `USER_EXPLICIT`, değer
+   *         taşıyan `constraints.color` korunur.
+   *   S11 — aynı alan, aynı değer, aynı kategori; ama kanıt yalnız
+   *         istemcinin structured metadata'sındadır ve otorite haritası
+   *         sahtedir. İki yüzey de `UNKNOWN` kalır.
+   *
+   * İkisi arasındaki tek fark kanıtın kaynağıdır.
+   */
+  "S10/productType/attributes = USER_EXPLICIT",
+  "S10/productType/constraints = USER_EXPLICIT",
+  "S10/applianceType/attributes = USER_EXPLICIT",
+  "S10/applianceType/constraints = USER_EXPLICIT",
+  "S10/color/attributes = USER_EXPLICIT",
+  "S10/color/constraints = USER_EXPLICIT",
+
+  "S11/productType/attributes = USER_EXPLICIT",
+  "S11/productType/constraints = USER_EXPLICIT",
+  "S11/applianceType/attributes = USER_EXPLICIT",
+  "S11/applianceType/constraints = USER_EXPLICIT",
+  "S11/color/attributes = UNKNOWN",
+  "S11/color/constraints = UNKNOWN",
 
   /* S06 — update, payload'da rawInput yokken sunucunun kendi metnini okur. */
   "S06/brand/attributes = USER_EXPLICIT",
@@ -219,13 +262,23 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
  * SEVİYE DAĞILIMI. Kimlik listesi tek başına yeterli değildir: toplu bir
  * kayma (örneğin her şeyin `UNKNOWN`a düşmesi) kimlik listesinde satır satır
  * görünür ama dağılım tek bakışta okunabilir bir güvenlik göstergesidir.
+ *
+ * D3f Dilim 3h (2026-08-28), birinci tur: kimlik sayısı DEĞİŞMEDİ (123).
+ * Kategori denetimi devreye girince kategori dışı `color` anahtarının üç
+ * yüzeyi `USER_EXPLICIT` yerine `UNKNOWN` okunur; dağılım 68→65 / 9→12
+ * olarak SIKILAŞTI. Bu bir gevşeme değil, cevap kabulünün daralmasıdır.
+ *
+ * İkinci tur: S10/S11 çifti eklendi. Kimlik 123 → 135 (+12: S10 altı, S11
+ * altı satır). Dağılım USER_EXPLICIT 65 → 75 (+10) ve UNKNOWN 12 → 14 (+2);
+ * artışların TAMAMI yeni senaryolardan gelir, mevcut hiçbir satırın
+ * beklentisi değişmedi.
  */
 export const SERVER_AUTHORITY_BASELINE = {
-  identities: 123,
-  UNKNOWN: 9,
+  identities: 135,
+  UNKNOWN: 14,
   INFERRED: 28,
   VERIFIED: 18,
-  USER_EXPLICIT: 68,
+  USER_EXPLICIT: 75,
 } as const;
 
 /**

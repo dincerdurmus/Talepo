@@ -1104,6 +1104,30 @@ export function listAllProfiles(): readonly QuestionProfileDef[] {
   return STANDARD;
 }
 
+/**
+ * BU KATEGORİDE SORULABİLECEK BÜTÜN PROFİL ANAHTARLARI (D3f Dilim 3h).
+ *
+ * `listProfilesForCategory`ten farkı, `needType` / `productType` süzgecini
+ * UYGULAMAMASIDIR. O süzgeç ZAMANLAMA içindir: "şu an bu soruyu sor". Cevap
+ * evreni ise zamanlamaya bağlı olamaz — kullanıcı ürün tipi henüz
+ * çözülmemişken bir soruya cevap verip sonra ürün tipini değiştirirse, cevabı
+ * evren dışına düşerdi. Ölçüldü (2026-08-28): `fridgeType`,
+ * `whenProductTypes` süzgeci yüzünden ürün tipi geçilmeden kurulan evrende
+ * bulunmuyordu; kullanıcının gerçekten verdiği "Fark etmez" cevabı bu yüzden
+ * reddedilirdi.
+ *
+ * Kategori eşleşmesi kararı burada TEK kopya olarak durur (`matchesCategory`);
+ * çağıran taraf kendi kopyasını kurmaz.
+ */
+export function listProfileKeysForCategory(categoryId: string): string[] {
+  const keys = new Set<string>();
+  for (const def of STANDARD) {
+    if (!matchesCategory(def, categoryId)) continue;
+    keys.add(def.fieldKey);
+  }
+  return [...keys].sort();
+}
+
 export function importanceRank(importance: QuestionProfileDef["importance"]): number {
   switch (importance) {
     case "publish_required":

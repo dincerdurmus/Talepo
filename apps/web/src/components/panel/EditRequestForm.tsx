@@ -490,6 +490,8 @@ export function EditRequestForm({
      */
     const commonAnswerFields = buildPublishAnswerFields({
       canonicalFields: editCanonicalState.fields,
+      /* Kamuya açık soru evreni talebin O ANKİ kategorisinden türer (3h). */
+      categoryId: editCanonicalState.categoryId ?? activeCategoryId,
       values: dynamicValues,
       userTouchedKeys: userConfirmedFieldKeys,
       dynamicFieldKeys: visibleDynamicFields.map((field) => field.key),

@@ -27,6 +27,7 @@ import type { BrowseNode, KnowledgeField } from "@/lib/knowledge/types";
 import {
   isDeliberateNonValueAnswer,
   isInferenceOnlyAnswer,
+  publishAnswerKeyUniverse,
 } from "./answer-authority";
 import type { BrowseSelectionInput } from "./apply-browse";
 import { toResolverFieldBag } from "./build-state";
@@ -1082,6 +1083,13 @@ export type PublishAnswerFieldsInput = PublishFieldValuesInput & {
    * korunur: bu alanlar cevapları boş olsa da listeye girer.
    */
   dynamicFieldKeys: Iterable<string>;
+  /**
+   * Talebin O ANKİ kategorisi. Kamuya açık soru evreni bundan türer; verilmezse
+   * evren yalnız üretilmeyen ortak alanlardan oluşur — yani kategoriye ait bir
+   * cevap sessizce düşmez, hiç girmez. Kategori bilinen her çağrı yerinde
+   * geçilmelidir.
+   */
+  categoryId?: string | null;
 };
 
 /**
@@ -1096,9 +1104,22 @@ export type PublishAnswerFieldsInput = PublishFieldValuesInput & {
  * doğru kuruluyor ama sunucuya HİÇ ulaşmıyor ve güven sınırında fail-closed
  * düşüyordu.
  *
- * ELLE BEŞLİ LİSTE YOKTUR. Ortak alan evreni kanonik registry'den türer
- * (`COMMON_FIELD_DEFAULTS`); registry büyürse bu kurucu kendiliğinden büyür
- * ve `if (key === "budget" || ...)` gibi bir zincir hiçbir yerde yazılmaz.
+ * ELLE LİSTE YOKTUR. Cevap evreni KANONİK DURUMUN KENDİSİDİR: kullanıcının
+ * bilinçli olarak değer taşımayan bir cevap verdiği HER alan kanala girer.
+ * Ne alan adına, ne kategoriye özel bir dal yazılır.
+ *
+ * EVREN NEDEN GENİŞLETİLDİ (D3f Dilim 3h, 2026-08-28). Bu tur önce yalnız
+ * `COMMON_FIELD_DEFAULTS` üzerinde dönüyordu; sonuç olarak registry dışında
+ * kalan dinamik anahtarlar — soru profili alanları (`fridgeType` gibi) ve o
+ * an ekranda RENDER EDİLMEYEN kategori alanları — kanala hiç giremiyordu.
+ * Kullanıcının açık "Fark etmez" cevabı istemci projection'ında doğru
+ * kuruluyor, ama sunucu güven sınırı onu cevap kanalından doğrulayamadığı
+ * için `USER_EXPLICIT` damgası fail-closed düşüyordu (tarayıcıda ölçüldü,
+ * 2026-08-28; 11 kategoride 151/151 dinamik alan). Cevabın kanalda olması,
+ * alanın o an görünür olmasına bağlı OLAMAZ.
+ *
+ * `COMMON_FIELD_DEFAULTS` artık yalnız İNSAN ETİKETİNİN kaynağıdır; evreni
+ * o belirlemez.
  *
  * YENİ KANAL YOKTUR. Aynı `fields[] + mode` sözleşmesi kullanılır; sunucu
  * tarafı değişmeden ortak alanları da kabul eder.
@@ -1129,20 +1150,29 @@ export function buildPublishAnswerFields(
     });
   }
 
-  for (const [key, defaults] of Object.entries(COMMON_FIELD_DEFAULTS)) {
+  const universe = publishAnswerKeyUniverse(input.categoryId);
+  for (const [key, field] of Object.entries(input.canonicalFields ?? {})) {
     if (seen.has(key)) continue;
     /* Üretilen etiket bir cevap değildir — kanala hiç girmez (D3f 3g). */
     if (isGeneratedCommonField(key)) continue;
-    const field = input.canonicalFields?.[key];
+    /**
+     * ANAHTAR KAMUYA AÇIK BİR SORU OLMALIDIR (D3f Dilim 3h). Kanonik durum
+     * eskimiş kategori alanları, iç kanıt ve nesne modeli anahtarları da
+     * taşır; hiçbiri kullanıcıya sorulmuş bir soru değildir.
+     */
+    if (!universe.has(key)) continue;
     if (!isDeliberateNonValueAnswer(field)) continue;
     const answer = answers[key];
     if (!answer) continue;
     seen.add(key);
+    const label = (
+      COMMON_FIELD_DEFAULTS as Record<string, { label: string } | undefined>
+    )[key]?.label;
     rows.push({
       key,
       value: answer.value,
       mode: answer.mode,
-      label: defaults.label,
+      ...(label ? { label } : {}),
     });
   }
 

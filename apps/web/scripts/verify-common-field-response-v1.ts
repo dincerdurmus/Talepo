@@ -127,6 +127,8 @@ function outcomeFor(key: string, field: CanonicalFieldState | null): Outcome {
   const created = resolveCreateProjection({
     discoveryProjection: projection,
     rawInput: SCENE_TEXT,
+    /* Sunucu kategoriyi KENDİ yazdığı alandan okur (D3f 3h). */
+    category: { slug: projection.categoryId },
     fields,
   }).projection;
   return {
@@ -371,6 +373,8 @@ function measureKeySafety(): void {
     const created = resolveCreateProjection({
       discoveryProjection: projection,
       rawInput: SCENE_TEXT,
+      /* Sunucu kategoriyi KENDİ yazdığı alandan okur (D3f 3h). */
+      category: { slug: projection.categoryId },
       fields: [{ key, value: "", mode: "UNKNOWN" }],
     }).projection;
     ok(
@@ -385,6 +389,8 @@ function measureKeySafety(): void {
     const created = resolveCreateProjection({
       discoveryProjection: projection,
       rawInput: SCENE_TEXT,
+      /* Sunucu kategoriyi KENDİ yazdığı alandan okur (D3f 3h). */
+      category: { slug: projection.categoryId },
       fields: [{ key, value: "", mode: "UNKNOWN" }],
     }).projection;
     ok(
@@ -412,6 +418,8 @@ function measureWritePaths(): void {
     const created = resolveCreateProjection({
       discoveryProjection: projection,
       rawInput: SCENE_TEXT,
+      /* Sunucu kategoriyi KENDİ yazdığı alandan okur (D3f 3h). */
+      category: { slug: projection.categoryId },
       fields,
     }).projection;
     const updated = resolveUpdateProjection(

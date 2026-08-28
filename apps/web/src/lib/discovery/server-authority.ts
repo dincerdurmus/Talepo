@@ -53,16 +53,13 @@
  * tiplerini içeri almaz.
  */
 
-import {
-  COMMON_FIELD_DEFAULTS,
-  getCategoryById,
-  isGeneratedCommonField,
-} from "@/lib/request-category-engine";
+import { getCategoryById } from "@/lib/request-category-engine";
 import {
   createTextOnlyState,
   isFieldValueKind,
   type FieldValueKind,
 } from "@/lib/request-composer";
+import { publishAnswerKeyUniverse } from "@/lib/request-composer/answer-authority";
 import type { Authority } from "@/lib/request-understanding/provenance";
 
 import { buildDiscoveryProjectionFromState } from "./build-projection";
@@ -154,13 +151,14 @@ function canonicalAnswerKeyGuard(
    * Üretilen etiketler (başlık) alan evrenine GİRMEZ: onlar cevap alanı
    * değildir ve istemci bir cevap gönderse bile fail-closed düşer (D3f 3g).
    */
-  const allowed = new Set<string>(
-    Object.keys(COMMON_FIELD_DEFAULTS).filter(
-      (key) => !isGeneratedCommonField(key),
-    ),
-  );
-  const category = categoryId ? getCategoryById(categoryId) : null;
-  for (const field of category?.fields ?? []) allowed.add(field.key);
+  /**
+   * EVREN TEK YERDEN OKUNUR (D3f Dilim 3h, 2026-08-28). Sunucu daha önce
+   * kendi listesini kuruyordu (ortak alanlar + kategori registry'si) ve soru
+   * profili anahtarlarını tanımıyordu; istemci onları gönderdiğinde cevap
+   * sessizce düşerdi. Karar artık `publishAnswerKeyUniverse`dedir ve iki
+   * taraf AYNI kaynaktan okur.
+   */
+  const allowed = publishAnswerKeyUniverse(categoryId);
   return (key: string) =>
     isProjectionAuthorityKeyAllowed(key) && allowed.has(key);
 }
@@ -268,6 +266,15 @@ export type ServerFieldAuthorityInput = {
    * sadece yeniden gönderilmiş olması onu taze YAPMAZ.
    */
   confirmedKeys?: readonly string[] | null;
+  /**
+   * SUNUCUNUN KANONİK KATEGORİ BAĞLAMI (D3f Dilim 3h, 2026-08-28).
+   *
+   * Cevap kanalı bu kategorinin soru evreniyle sınırlanır. Verilmezse
+   * projection'ın kendi `categoryId`'si okunur — bu YALNIZ clone yolunda
+   * güvenlidir, çünkü orada kaynak projection sunucunun kendi kaydıdır.
+   * Yazma yolları (create/update) her zaman açıkça geçirir.
+   */
+  categoryId?: string | null;
 };
 
 /**
@@ -297,10 +304,23 @@ export function resolveServerFieldAuthority(
     }
   }
 
-  /* Cevap kanalı: yalnız izinli anahtarlar ve tanınan modlar. */
+  /**
+   * Cevap kanalı: yalnız izinli anahtarlar, tanınan modlar ve SUNUCUNUN
+   * kategori evrenine ait sorular (D3f Dilim 3h).
+   *
+   * Kategori denetimi burada durur çünkü otorite kararının TEK girdisi bu
+   * haritadır. Mevcut kategori altında başka bir kategorinin alan anahtarı
+   * gönderilirse cevap kanala hiç girmez ve o anahtar `USER_EXPLICIT`
+   * kazanamaz — kategori meşru biçimde değişmiş olsa bile yalnız YENİ
+   * kategorinin kendi alanları kabul edilir, eskiler taşınmaz.
+   */
+  const answerKeyIsInCategory = canonicalAnswerKeyGuard(
+    input.categoryId !== undefined ? input.categoryId : projection.categoryId,
+  );
   const answers = new Map<string, ProjectionAnswer>();
   for (const [key, answer] of Object.entries(input.answers ?? {})) {
     if (!isProjectionAuthorityKeyAllowed(key)) continue;
+    if (!answerKeyIsInCategory(key)) continue;
     if (!answer || typeof answer !== "object") continue;
     if (!isFieldValueKind(answer.mode)) continue;
     const value = typeof answer.value === "string" ? answer.value.trim() : "";
@@ -396,7 +416,8 @@ export function resolveServerFieldAuthority(
    * Kanal yoksa (clone) yüzey de yoktur: fail-closed.
    */
   const fieldResponses: Record<string, ProjectionFieldResponse> = {};
-  const answerKeyIsCanonical = canonicalAnswerKeyGuard(projection.categoryId);
+  /* AYNI kategori evreni — ikinci bir guard kurulmaz (D3f Dilim 3h). */
+  const answerKeyIsCanonical = answerKeyIsInCategory;
   for (const [key, answer] of answers) {
     if (answer.mode !== "UNKNOWN" && answer.mode !== "NOT_APPLICABLE") continue;
     /**
@@ -510,7 +531,34 @@ export type ProjectionWriteInput = {
     value?: unknown;
     mode?: unknown;
   }> | null;
+  /**
+   * TALEBİN KALICILAŞTIRILAN KATEGORİSİ (D3f Dilim 3h, 2026-08-28).
+   *
+   * Cevap evreni bu alandan türer, `discoveryProjection.categoryId`'den DEĞİL.
+   * İkisi de istemciden gelir ama aynı değildir: `category.slug` sunucunun
+   * gerçekten `Request.categoryId` olarak yazdığı ve yönlendirme/filtreleme
+   * kararlarının okuduğu alandır; projection'ın içindeki `categoryId` ise
+   * serbestçe uydurulabilen bir JSON alanıdır. Cevap kabulünü ikincisine
+   * bağlamak, istemcinin talebi bir kategoriye yazdırıp cevaplarını BAŞKA bir
+   * kategorinin evreninden geçirmesine izin verirdi.
+   */
+  category?: { slug?: unknown } | null;
 };
+
+/**
+ * SUNUCUNUN CEVAP KABULÜNDE KULLANDIĞI KANONİK KATEGORİ.
+ *
+ * Kanonik registry'de KARŞILIĞI OLMAYAN her değer `null` okunur: tanınmayan
+ * bir dize evreni genişletemez, yalnız daraltabilir (fail-closed).
+ */
+function serverAnswerCategoryOf(
+  input: ProjectionWriteInput,
+): string | null {
+  const slug =
+    typeof input.category?.slug === "string" ? input.category.slug.trim() : "";
+  if (!slug) return null;
+  return getCategoryById(slug)?.id ?? null;
+}
 
 /**
  * Sunucunun bu talep için sahip olduğu KENDİ metni. Otorite türetimi ve
@@ -549,6 +597,8 @@ export function resolveCreateProjection(
 ): CreateProjectionDecision {
   const text = serverOwnedText(input);
   const answers = projectionAnswerChannel(input.fields);
+  /* Cevap evreni sunucunun KALICILAŞTIRDIĞI kategoriden türer (D3f 3h). */
+  const serverCategory = serverAnswerCategoryOf(input);
 
   const fromClient = parseDiscoveryProjection(input.discoveryProjection);
   if (fromClient) {
@@ -557,6 +607,7 @@ export function resolveCreateProjection(
         projection: fromClient,
         rawInput: text,
         answers,
+        categoryId: serverCategory,
         confirmedKeys: confirmedKeysOf(fromClient),
       }),
       rebuildFailed: false,
@@ -573,6 +624,7 @@ export function resolveCreateProjection(
         projection: buildDiscoveryProjectionFromState(createTextOnlyState(text)),
         rawInput: text,
         answers,
+        categoryId: serverCategory,
       }),
       rebuildFailed: false,
     };
@@ -605,6 +657,8 @@ export function resolveUpdateProjection(
       projection: fromClient,
       rawInput: input.rawInput?.trim() || existingRawInput?.trim() || "",
       answers: projectionAnswerChannel(input.fields),
+      /* Cevap evreni sunucunun KALICILAŞTIRDIĞI kategoriden türer (D3f 3h). */
+      categoryId: serverAnswerCategoryOf(input),
       confirmedKeys: confirmedKeysOf(fromClient),
     }) ?? undefined
   );

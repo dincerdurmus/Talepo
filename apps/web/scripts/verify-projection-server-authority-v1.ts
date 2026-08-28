@@ -63,6 +63,8 @@ const SURFACES: readonly ProjectionAuthoritySurface[] = [
 
 const TEXT_DESK = "Ikinci el bir masa ariyorum";
 const TEXT_FRIDGE = "Buzdolabi ariyorum";
+/** S10 pozitifi: renk kullanıcının KENDİ cümlesindedir (D3f Dilim 3h). */
+const TEXT_WHITE_FRIDGE = "Beyaz buzdolabi ariyorum";
 const TEXT_PART = "Mercedes C200 icin sag on far ariyorum";
 const TEXT_TV = "55 inc televizyon ariyorum";
 const TEXT_TV_ANY = "55 inc televizyon ariyorum, marka fark etmez";
@@ -127,12 +129,23 @@ function writeInput(over: {
   projection?: unknown;
   fields?: FieldInput[];
 }): ProjectionWriteInput {
+  /**
+   * Sunucu cevap evrenini KENDİ kalıcılaştırdığı kategoriden okur (D3f 3h);
+   * üretimde `category.slug` her yazma payload'ında bulunur, bu yüzden kanarya
+   * girdisi de onu taşır. Taşımasaydı bu doğrulayıcı üretimde olmayan bir
+   * "kategorisiz yazma" durumunu ölçerdi.
+   */
+  const categorySlug = (over.projection as { categoryId?: unknown } | null)
+    ?.categoryId;
   return {
     title: "Kanarya talebi",
     description: over.description ?? over.rawInput ?? "",
     rawInput: over.rawInput,
     fields: over.fields ?? [],
     discoveryProjection: over.projection,
+    ...(typeof categorySlug === "string"
+      ? { category: { slug: categorySlug } }
+      : {}),
   };
 }
 
@@ -325,6 +338,84 @@ function measureIdentities(problems: string[]): Map<string, Authority> {
     if (input.rawInput !== undefined) {
       problems.push(
         "S06: kanarya kurulumu bozuk — payload rawInput taşımamalıydı",
+      );
+    }
+  }
+
+  /* ---------------------------------------------------------------- *
+   * S10 / S11 — AYNI ALAN, İKİ KANIT KANALI (D3f Dilim 3h, 2026-08-28)
+   *
+   * Bu çift yan yana durur çünkü tek başına her biri yanıltıcıdır. Kategori
+   * denetimi (`publishAnswerKeyUniverse`) devreye girdiğinde `color`
+   * appliances kategorisinin kanonik kullanıcı alanı OLMADIĞI için cevap
+   * kanalından otorite kazanamaz — S04/S05 bunu ölçer. Buradaki risk,
+   * denetimin metin kanalını da sessizce kapatmasıdır: kullanıcı rengi
+   * GERÇEKTEN kendi cümlesinde yazdığında otoritenin kaybolması, kategori
+   * denetiminin kabul edilemez bir yan etkisi olurdu.
+   *
+   * S10 pozitif: kanıt kullanıcının kendi metnindedir; istemci hiçbir
+   *   structured alan, `fieldAuthority` ya da sahte provenance göndermez.
+   * S11 negatif eşi: aynı alan, aynı değer, aynı kategori — ama kanıt yalnız
+   *   istemcinin structured metadata'sındadır ve otorite haritası sahtedir.
+   *
+   * İkisi arasındaki TEK fark kanıtın kaynağıdır; sonuçların ayrışması bu
+   * yüzden kategori denetiminin değil, kanıt kanalının kararıdır.
+   * ---------------------------------------------------------------- */
+
+  /* S10 — renk kullanıcının KENDİ metninde geçer; istemci hiçbir şey iddia etmez. */
+  {
+    const honest = projectionFromText(TEXT_WHITE_FRIDGE);
+    if (honest.attributes?.color !== "Beyaz") {
+      problems.push(
+        "S10: kanarya kurulumu bozuk — metinden `attributes.color = \"Beyaz\"` türemedi, " +
+          `ölçülen ${JSON.stringify(honest.attributes?.color ?? null)}`,
+      );
+    }
+    /**
+     * İSTEMCİ HİÇBİR İDDİA GÖNDERMEZ. Otorite haritası payload'dan tamamen
+     * SİLİNİR; böylece ölçülen her seviye yalnız sunucunun kendi metninden
+     * türemiş olabilir. Cevap kanalı da boştur (`fields` verilmez).
+     */
+    delete (honest as { fieldAuthority?: unknown }).fieldAuthority;
+    const out = createProjection(
+      writeInput({ rawInput: TEXT_WHITE_FRIDGE, projection: honest }),
+    );
+    add(identitiesOf("S10", out));
+    /* Değer taşıyan constraint yüzeyi de korunur ve aynı otoriteyi taşır. */
+    const constraint = out?.constraints?.color;
+    if (
+      !constraint ||
+      constraint.mode !== "VALUE" ||
+      constraint.value !== "Beyaz"
+    ) {
+      problems.push(
+        `S10: VALUE constraint korunmadı → ${JSON.stringify(constraint ?? null)}`,
+      );
+    }
+    if (out?.attributes?.color !== "Beyaz") {
+      problems.push(
+        `S10: metinden gelen değer korunmadı → ${JSON.stringify(out?.attributes?.color ?? null)}`,
+      );
+    }
+  }
+
+  /* S11 — aynı alan, kanıt YALNIZ istemcinin structured metadata'sında. */
+  {
+    const tampered = forgeAll(
+      projectionFromStructured(TEXT_FRIDGE, { color: "beyaz" }),
+      "USER_EXPLICIT",
+    );
+    const out = createProjection(
+      writeInput({
+        rawInput: TEXT_FRIDGE,
+        projection: tampered,
+        fields: [{ key: "color", value: "beyaz" }],
+      }),
+    );
+    add(identitiesOf("S11", out));
+    if (/beyaz/i.test(TEXT_FRIDGE)) {
+      problems.push(
+        "S11: kanarya kurulumu bozuk — negatif eşin metni rengi içermemeli",
       );
     }
   }

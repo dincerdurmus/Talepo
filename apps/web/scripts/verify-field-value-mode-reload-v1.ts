@@ -308,6 +308,8 @@ function savedRowsFor(
     : state;
   const fields = buildPublishAnswerFields({
     canonicalFields: patched.fields,
+    /* Kamuya açık soru evreni sahnenin kategorisinden türer (D3f 3h). */
+    categoryId: SCENE_FIELDS[0]?.categoryId ?? null,
     values: Object.fromEntries(
       Object.entries(overrides).map(([k, a]) => [k, a.value]),
     ),
@@ -381,12 +383,39 @@ function measureRoundTrip(): void {
     `geçiş bozuldu → ${JSON.stringify(savedUnknown ?? null)}`,
   );
 
-  /* Cevap kaldırıldığında satır kurulmaz (update onu siler). */
-  const removed = savedRowsFor([row(key, { jsonValue: { mode: "UNKNOWN" } })], []);
+  /**
+   * SENARYO ADI DÜZELTİLDİ (D3f Dilim 3h, 2026-08-28).
+   *
+   * Bu satır önce `D:kaldirildi` adını taşıyor ve "kaldırıldı"yı
+   * `dynamicFieldKeys` listesinde BULUNMAMAK olarak ifade ediyordu. Ölçüldü
+   * ki o sahne bir kaldırma eylemini değil, YALNIZ alanın o an ekranda render
+   * edilmemesini temsil ediyordu: kullanıcının görünmeyen bir alandaki cevabı
+   * kaldırmak için bir arayüzü YOKTUR. Eski beklenti korunsaydı, kayıtlı bir
+   * cevap yalnız görünmediği için silinirdi — sessiz veri kaybı (aynı kusur
+   * sınıfı `/talep` yayınında tarayıcıda ölçüldü, 2026-08-28).
+   *
+   * Sayaç düşürülmedi: eski sahne aşağıda `D:gorunmez-korunur` adıyla DOĞRU
+   * beklentisiyle duruyor, buraya ise gerçekten farklı bir durum yazıldı —
+   * cevabın geri yükleme kanalında hiç bulunmaması. Kullanıcının açık kaldırma
+   * / değiştirme eylemi ayrıca `verify-answer-lifecycle-separation-v1`
+   * içindeki `S2:*` senaryolarında ölçülür.
+   */
+  const removed = savedRowsFor([], []);
   ok(
-    "D:kaldirildi",
+    "D:reload-kanalinda-yok",
     !removed.some((r) => r.key === key),
-    "kaldırılan cevap için satır kuruldu",
+    "geri yükleme kanalında olmayan cevap için satır kuruldu",
+  );
+
+  /* Alan render edilmese de kayıtlı ve geçerli cevap KORUNUR. */
+  const hidden = savedRowsFor([row(key, { jsonValue: { mode: "UNKNOWN" } })], []);
+  const savedHidden = hidden.find((r) => r.key === key);
+  ok(
+    "D:gorunmez-korunur",
+    savedHidden?.textValue === null &&
+      JSON.stringify(savedHidden?.jsonValue) ===
+        JSON.stringify({ mode: "UNKNOWN" }),
+    `render edilmeyen alanın kayıtlı cevabı kayboldu → ${JSON.stringify(savedHidden ?? null)}`,
   );
 
   /* Malformed kayıt yeniden güvenilir cevap olarak YAZILMAZ. */
