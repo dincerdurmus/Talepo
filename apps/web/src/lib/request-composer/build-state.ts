@@ -1621,8 +1621,14 @@ export function preserveValidCommonBrowseAnswers(
   previousCategoryId?: string | null,
 ): Record<string, CanonicalFieldState> {
   if (!previousFields || !nextCategoryId) return nextFields;
+  /**
+   * Kanonik ortak alan anahtarları `CommonFieldKey` birliğidir; burada ise
+   * `Object.entries` üzerinden gelen düz `string` anahtarlarla karşılaştırılır.
+   * Küme `string` olarak yazılır — karşılaştırma davranışı değişmez, yalnız
+   * tür güvenliği sağlanır.
+   */
   const commonKeys = (id: string | null | undefined) =>
-    new Set(
+    new Set<string>(
       (REQUEST_CATEGORIES.find((cat) => cat.id === id)?.commonFields ?? []).map(
         (f) => f.key,
       ),
