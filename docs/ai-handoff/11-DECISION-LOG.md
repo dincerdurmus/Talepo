@@ -1167,3 +1167,132 @@ kullanıcı işlemini kaybettirmemelidir.
 > cron desteği doğrulanmadı ve migration üretilmedi.
 > `backfillMatchesForAllCompanies` şirket-batch checkpoint'i olmadan tam
 > tarama yapar — ölçek büyüdüğünde süre riski `KNOWN-OPEN`'dır.
+
+---
+
+### Karar M — Acceptance veritabanı sınırı (2026-08-28 … 2026-08-29, `346938f`…`8a3b2be`)
+
+**Durum: `BRANCH-WIRED` · `CODE-VERIFIED` + `DB-MEASURED-ACCEPTANCE`.
+`PRODUCTION-DEPLOYED` DEĞİLDİR.** Bu dilim `feature/dincer-acceptance-db-boundary-v1`
+dalında altı commit olarak durur (`579c346` tabanından ölçüldü: 6 commit,
+0 merge, 23 dosya). Integration'a taşınmadı.
+
+**M1 — ACCEPTANCE HEDEFİ PRODUCTION DEĞİLDİR.** Ayrı bir Supabase projesi
+kuruldu ve yalnız o proje kabul edilir. Supabase arayüzünde bir projenin
+`main` / `PRODUCTION` etiketi taşıması, o projenin **müşteriyle buluşan Talepo
+deployment'ı olduğu anlamına GELMEZ**; bu etiket Supabase'in kendi dal
+adlandırmasıdır. Talepo'nun müşteriye açık bir deployment'ı bu dilimde
+kurulmadı, güncellenmedi ve ölçülmedi.
+
+**M2 — HEDEF SEÇİMİ DENYLIST DEĞİL ALLOWLIST'TİR.** Karar öncesinde yalnız
+birincil ref engelleniyordu; başka her Supabase projesi, Neon, localhost ve
+ref'i türetilemeyen her host PASS alıyordu. Artık tek kanonik modül
+(`scripts/lib/acceptance-db-target-v1.ts`) karar verir: exact acceptance ref,
+tanınan Supabase host şekli, iki URL'nin aynı projeyi adlandırması, placeholder
+reddi. Birincil ref **fail-closed** reddedilir. Ref karşılaştırması
+büyük/küçük harfe duyarsızdır ve acceptance + primary + tarihsel ref'ler TEK
+kaynaktan gelir; ikinci liste yasaktır.
+
+**M3 — PRISMA CLI YALNIZ SANCTIONED WRAPPER'DAN GEÇER.** `prisma.config.ts`
+`import "dotenv/config"` yapar ve datasource'u `DIRECT_URL`'den okur; bu yüzden
+düz `npx prisma migrate status` ambient `.env`'i yükleyip **birincil projeye**
+bağlanır. `run-acceptance-prisma-v1.ts` kanonik guard'ı önce koşar, çocuk
+sürece yalnız doğrulanmış acceptance değerlerini verir ve `DOTENV_CONFIG_PATH`'i
+acceptance dosyasına sabitler. Yalnız `status` ve `deploy` vardır; `deploy`
+ayrıca açık `--apply` ister. `dev`, `reset`, `resolve`, `db push`, `db pull`,
+`generate` fail-closed'dır.
+
+**M4 — ENV YÜKLEME IMPORT YAN ETKİSİ DEĞİLDİR.** Loader import anında hiçbir
+şey yapmaz: env okumaz, fırlatmaz, yazdırmaz, `process.exit()` çağırmaz.
+Sıra kesindir: `loadAcceptanceEnv()` → hedef doğrulaması → ürün modüllerinin
+DİNAMİK importu → iş mantığı. Bunun nedeni ölçülmüştür: `src/lib/prisma`
+`DATABASE_URL`'i modül kapsamında okur, dolayısıyla statik bir ürün importu
+reddedilen hedefte `main().catch(...)` kurulmadan çöker ve Node ham hatayı,
+tam stack'i ve env dosyasının mutlak yolunu basar. Kütüphane katmanı süreci
+sonlandırmaz; ne yazılacağına ve exit koduna CLI sınırı karar verir.
+
+**M5 — TEK REDAKSİYON OTORİTESİ.** `scripts/lib/acceptance-redaction-v1.ts`
+dışında ikinci redaktör yoktur; spawner üzerinden dolaylı import kalmadı.
+Kapsam: URI, şemasız Supabase host, parola (atama/JSON/tırnaklı/tırnaksız/
+sonlandırılmamış/önekli anahtar), diğer sır anahtarları, DB rolü/kullanıcısı,
+IPv4/IPv6, Windows/UNC ve POSIX sistem yolları, `.env*`, query string ve bilinen
+ref'ler. İki tasarım kuralı ölçümden doğdu: redaksiyon **satır bazlıdır** (bir
+tırnaklı değer ardındaki logları yutuyordu) ve **teşhisi yok etmez** (rota,
+sayaç, persona rolü ve sürüm numarası korunur; anahtar adı da korunur, yalnız
+değer maskelenir). Çocuk süreç çıktısı satır tamponludur: parça parça redaksiyon
+bir host'u ikiye bölüp fragman yayınlıyordu.
+
+**M6 — TEMİZLİK MARKER'A BAĞLIDIR VE GEVŞETİLMEZ.** Sahiplik metinle değil
+KİMLİKLE çözülür (persona e-postaları → kullanıcı id'leri, şirket slug'ı →
+şirket id'si), marker prefix'i talep için EK koşuldur. Markersız persona satırı
+ve marker'ı taklit eden yabancı satır **silinmez**. Silme sırası şemanın
+`Restrict` kenarlarına göre sabittir. Bu yüzden E2E'nin yazdığı talepler de
+kanonik prefix taşımak ZORUNDADIR: aksi hâlde her koşum, hiçbir komutun
+kaldıramayacağı kalıcı artık bırakırdı.
+
+**M7 — GLOBAL TAKSONOMİ TEMİZLİK MALZEMESİ DEĞİLDİR.** `Category` satırları
+acceptance veritabanının altyapısıdır, persona-owned fixture değildir. Cleanup
+onlara dokunamaz, `isActive` bayrağı korunur, ve beklenen anahtar kümesi
+`REQUEST_CATEGORIES` registry'sinden TÜRETİLİR — ikinci bir liste yoktur.
+
+**M8 — HER SIZINTI SINIFI POZİTİF MUTASYON KONTROLÜ İSTER.** Bir kapı, ihlal
+bilerek geri getirildiğinde gerçekten kırmızıya dönebildiğini kanıtlamalıdır.
+Bu dilimde üç kapı yanlış nedenle yeşildi (test double'da erişilemeyen bir yol,
+görülmeyen bir print şekli, tamponu hiç zorlamayan bir örnek) ve hepsi bağımsız
+inceleme tarafından bulundu, kapı tarafından değil.
+
+**M9 — GEÇİCİ İŞLETİM SÖZLEŞMESİ: YALNIZ SENTETİK ACCEPTANCE VERİSİ.**
+Acceptance hedefi, yalnız bu harness'ın ürettiği sentetik veriyi barındıran ayrı
+bir Supabase projesidir. Gerçek müşteri ya da firma verisi bu veritabanına
+**girmez**; birincil proje kanonik guard tarafından fail-closed reddedilir.
+Bu sözleşme bir tespit değil, bir karardır: aşağıdaki M11 sınırlarının kabul
+edilebilir olmasının tek dayanağı odur. Paylaşılan bir staging'e, geri
+yüklenmiş bir production dump'ına ya da kendi hesabıyla test eden bir kişiye
+geçildiği anda sözleşme düşer ve M11'deki backlog zorunlu hâle gelir.
+
+**M10 — TLS SÖZLEŞMESİ "ŞİFRELİ" DEĞİL "DOĞRULANMIŞ SUNUCU"DUR.** Bağlantı
+dizesi birebir `sslmode=verify-full` taşımak zorundadır; `require` ve
+`verify-ca` reddedilir, çünkü ilki libpq semantiğinde sertifika ve hostname
+doğrulaması vaat etmez, ikincisi hostname'i doğrulamaz. Query yalnız izinli
+anahtarları taşıyabilir, yinelenen anahtar ve `#` fragment reddedilir, ve
+değer ham metinde birebir karşılaştırılır (`%76erify-full` aynı karakterlere
+çözülür ama aynı dize değildir; başka bir tüketici onu farklı okuyabilir).
+Supabase'in kökü Node'un güven deposunda bulunmadığı için, doğrulamayı
+kapatmak yerine **kullanıcı tarafından indirilen resmî acceptance CA'sı**
+pinlenir: tek, süresi geçerli, private key içermeyen bir CA sertifikası, sabit
+ve gitignore'lu bir yolda, ve `.env.acceptance` içindeki SHA-256 parmak iziyle
+birebir eşleşmek zorunda. Otomatik indirme yoktur ve `rejectUnauthorized`
+hiçbir ortam değişkeniyle kapatılamaz. **DB-MEASURED-ACCEPTANCE:**
+`acceptance:verify-target` bu pinle uçtan uca PASS verdi.
+
+**M11 — AÇIK SINIRLAR (çözülmüş gösterilmeyecek).** Prisma migrate
+`status`/`deploy` **kapalıdır**: şema motoru URL'i kendi ayrıştırıcısıyla
+okur ve kanonik `verify-full`'ü nasıl yorumladığı el sıkışma olmadan
+kanıtlanamadı, bu yüzden yol `PRISMA_TLS_VERIFICATION_UNAVAILABLE` ile
+reddeder — daha zayıf bir moda düşülmez. Mevcut cleanup **transaction'sızdır**
+ve planını iki kez hesaplar; yalnız M9 sözleşmesi altındaki adanmış sentetik
+veritabanı için kabul edilmiştir, karışık ya da yabancı veri bulunan bir
+veritabanı için güvenli olduğu **iddia edilmemektedir**. Backlog'dadır ve
+**kodda uygulanmamıştır**: şemadan türetilen 65 ilişki kenarının politika
+tablosu, plan kapsamı dışındaki 24 child model, tek `Serializable`
+transaction, exact count mutabakatı ve tam rollback, schema-drift doğrulayıcısı,
+ve `NEW_MESSAGE` bildiriminin talebe bağlanarak sahiplik kazanması.
+
+> **Sınır — `8a3b2be`.**
+> `CODE-VERIFIED`: hedef allowlist ve birincil fail-closed, exact
+> `sslmode=verify-full` query politikası, pinlenmiş CA'nın dosya/parmak izi
+> doğrulaması, Prisma wrapper ve kapalı migrate yolu, redaksiyon ve hata sınırı,
+> import sırası ve CLI giriş kapıları, marker'a bağlı cleanup sözleşmesi.
+> `DB-MEASURED-ACCEPTANCE`: 36/36 migration; 43 tablo ve 11 kategori taşıyan
+> ölçülmüş acceptance hedefi; seed; **seed idempotency** (ikinci seed 0 yeni
+> satır, 16/16 anlık görüntü birebir — bu bir kod okuması değil, veritabanı
+> ölçümüdür ve taslakta yanlışlıkla `CODE-VERIFIED` yazılmıştı); core-commerce
+> E2E; cleanup apply (33 marker-owned satır, planla birebir) ve temiz başlangıca
+> dönüş; `acceptance:verify-target` pinlenmiş CA ile PASS.
+> `NOT-MEASURED`: A–D tarayıcı kabulü, save→reload, read-receipt canlı kabulü,
+> cron canlı koşumu, Vercel planının cron desteği. **Prisma migrate TLS:
+> NOT-MEASURED / CLOSED.** `scripts/` genel typecheck'i tarihsel hatalar
+> nedeniyle PASS değildir.
+> Birincil DB'ye, `integration/talepo-dev`'e, `main`'e veya production'a
+> **hiçbir DB yazımı yapılmadı**; 36 migration yalnız ayrı acceptance projesine
+> kuruldu. **Production deployment yoktur.**

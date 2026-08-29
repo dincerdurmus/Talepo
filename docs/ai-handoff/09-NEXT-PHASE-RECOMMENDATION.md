@@ -328,3 +328,48 @@ Kabul ölçütü: A/B/C/D ve save→reload turu gerçek veriye dokunmadan
 
 **Bunu ne için yapıyoruz?**  
 Önce “Laboratuvardaki akıllı eşleştirme, gerçek taleplerde legacy’den ne kadar iyi?” sorusunu ölçülebilir kılıyoruz; Pro’ya dokunmadan güven kazanıyoruz.
+
+---
+
+## Güncel sıra (2026-08-29)
+
+Acceptance sınırı dilimi bittikten sonra sıra şudur. Bu liste yukarıdaki
+telemetri tartışmasının yerini almaz; onu **önceler**, çünkü aşağıdaki ilk iki
+madde ürün tarafında ölçülebilir değer üretir, telemetri dilimi ise hâlâ kendi
+önkoşulunu (canlı sink) bekler.
+
+1. **Acceptance docs commit'i + integration fast-forward.** Karar M ve KB-23
+   yazıldıktan sonra `feature/dincer-acceptance-db-boundary-v1`
+   `integration/talepo-dev` ucuna fast-forward edilir. Ölçüm durumu:
+   `acceptance:verify-target` **DB-MEASURED-ACCEPTANCE PASS**; 36 migration,
+   43 tablo, 11 kategori ölçülmüş acceptance hedefi; core-commerce E2E
+   **DB-MEASURED-ACCEPTANCE PASS**; cleanup apply tarihsel olarak 33
+   marker-owned satırı planla birebir kaldırdı. A–D tarayıcı, read-receipt ve
+   cron **NOT-MEASURED**; Prisma migrate TLS **NOT-MEASURED / CLOSED**.
+   Production deployment yoktur.
+
+2. **Maira v1'i `/talep` deneyimine bağlamak ve mevcut `TalepoAiPanel`'in yerini
+   almak.** Maira **`/talep` tarafına aittir**, firma/Pro paneline değil: talebi
+   yazan kişinin yanında durur, kategoriyi ve alanları onun onayıyla netleştirir.
+   `TalepoAiPanel` geçici bir arayüzdür ve Maira devreye girdiğinde kaldırılır;
+   ona özel bir prop zinciri kurulmaz, bilgi kanonik soru adayı sözleşmesinde
+   taşınır.
+
+3. **`/talep` kullanıcı deneyimi ve tasarımı.** Talep girişindeki rahatsızlık
+   hâlâ kapanmadı; bu, ürünün en çok değer üreten yüzeyidir.
+
+4. **Pro/firma paneli görünüm ve kullanıcı deneyimi.** Teknik altyapı ilerledi,
+   arayüz ilerlemedi.
+
+5. **Acceptance cleanup/migrate backlog'u** — ancak paylaşılan/staging bir
+   veritabanına veya gerçek veriye ihtiyaç doğmadan **önce**. İçeriği KB-23'te
+   yazılıdır: ilişki-kenarı politika tablosu, schema-drift doğrulayıcısı, tek
+   `Serializable` transaction, exact count mutabakatı ve tam rollback,
+   `NEW_MESSAGE` bildirim sahipliği, ve Prisma migrate yolunun TLS kanıtı.
+
+**Hazırlık.** Talep beyni %92 · Pro teknik altyapı %21 · Pro tasarım/kullanıcı
+deneyimi yaklaşık %10 (kurucu tahmini, resmî ölçüm değildir). Acceptance sınırı
+dilimi bir **harness** dilimidir; ürün hazırlığını artırmaz ve artırmış gibi
+raporlanmaz. `verify-notifications-v1` **50/1** (KB-5) ve
+`verify-phase3a-discovery-foundation-v1` **45/1** tarihsel kırmızılardır,
+**PASS değildir**.

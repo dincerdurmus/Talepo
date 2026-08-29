@@ -3530,3 +3530,47 @@ npx --yes tsx scripts/verify-panel-render-no-write-v1.ts
 3. Gerçek job / DB / tarayıcı kabulü **yok**.
 4. Acceptance DB hedefi (`.env.acceptance`) **yok**.
 5. **KB-5** ve `verify-phase3a` tarihsel kırmızıları **açık**.
+
+---
+
+## KB-23 — Acceptance harness'ı yalnız adanmış sentetik veritabanı için güvenlidir
+
+**Durum: AÇIK (kabul edilmiş sınır).** Kök neden KB-9'un devamıdır — orada
+doğrulayıcıların ortak bir veritabanına yazabilmesi kapatılmıştı; burada ayrı bir
+acceptance veritabanı kuruldu ve o veritabanına giden yol sertleştirildi. KB-9
+kapalı kalır; bu kayıt, yeni aracın **hangi koşulda** güvenli sayıldığını
+yazar.
+
+**Çözülen (bu dilimde ölçüldü).** Hedef seçimi allowlist'tir ve birincil proje
+fail-closed reddedilir. Bağlantı yalnız birebir `sslmode=verify-full` ile kurulur;
+Supabase'in kökü Node'un güven deposunda olmadığı için, doğrulamayı kapatmak
+yerine kullanıcının indirdiği resmî acceptance CA'sı SHA-256 parmak iziyle
+pinlenir. `acceptance:verify-target` bu pinle uçtan uca PASS verdi
+(DB-MEASURED-ACCEPTANCE). Bu bir **production/deploy başarısı değildir**;
+production deployment yoktur.
+
+**Açık sınırlar (çözülmüş sayılmayacak).**
+
+1. **Prisma migrate yolu kapalıdır.** `status` ve `deploy`,
+   `PRISMA_TLS_VERIFICATION_UNAVAILABLE` ile reddeder: şema motoru bağlantı
+   dizesini kendi ayrıştırıcısıyla okur ve kanonik TLS modunu nasıl yorumladığı
+   el sıkışma olmadan kanıtlanamadı. Daha zayıf bir moda düşülmez. Durum:
+   **NOT-MEASURED / CLOSED**.
+2. **Mevcut cleanup transaction'sızdır** ve planını iki kez hesaplar; gösterilen
+   plan ile uygulanan plan aynı olmayabilir. Bir adım hata verirse kısmi silme
+   kalır.
+3. **Yalnız adanmış sentetik acceptance veritabanı için kabul edilmiş geçici bir
+   araçtır.** Karışık ya da yabancı veri bulunan bir veritabanında güvenli olduğu
+   **iddia edilmemektedir**: şemada plan köklerine gelen ilişkilerin çoğu plan
+   kapsamı dışındadır ve veritabanının kendi zincirleme silme kuralları, hiçbir
+   sayaca girmeden başka satırları kaldırabilir.
+4. **`scripts/` genel typecheck'i PASS değildir.** Tarihsel hatalar nedeniyle
+   proje `tsconfig.json`'ı `scripts`'i dışlar; bu dilim yeni hata eklemedi, ama
+   "scripts typecheck geçiyor" denemez.
+
+**Backlog (kodda uygulanmadı).** Şemadan türetilen ilişki-kenarı politika
+tablosu ve schema-drift doğrulayıcısı, plan kapsamı dışındaki child modeller,
+tek `Serializable` transaction + exact count mutabakatı + tam rollback, ve
+`NEW_MESSAGE` bildiriminin talebe bağlanarak sahiplik kazanması. Bunlar
+paylaşılan/staging bir veritabanına ya da gerçek veriye geçilmeden **önce**
+gereklidir.
