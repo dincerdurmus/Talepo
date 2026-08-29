@@ -37,10 +37,7 @@ import {
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 // Kategori alanlarının kanonik değer kaydı — KB-15 seçenek bağlayıcısı bunu okur.
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
-import {
-  listProfileKeysForCategory,
-  listProfilesForCategory,
-} from "./v2/question-profiles";
+import { listProfilesForCategory } from "./v2/question-profiles";
 import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/activation-bridge";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
