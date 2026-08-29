@@ -87,6 +87,21 @@ const APPROXIMATION_MARKERS =
 const SIMILARITY_MARKERS =
   /(görünüm|gorunum|görünt|gorunt|tarzı|tarzi|tarzında|tarzinda|imitasyon|benzeri|benzer|gibi)/i;
 
+/**
+ * BELİRSİZLİK İŞARETLERİ (T8, kurucu kararı 2026-08-29).
+ *
+ * "no-frost mu statik mi bilmiyorum" bir BEYAN değildir; kullanıcı iki
+ * seçenek arasında karar veremediğini söylüyor. Bu, çekincenin bir türüdür
+ * ve tek çekince otoritesinde durur — hiçbir ürüne özel ikinci olumsuzlama
+ * tablosu kurulmaz. İki imza tanınır: doğrudan bilmeme ifadesi ve Türkçe
+ * seçenekli soru kalıbı ("... mu ... mi").
+ */
+const UNCERTAINTY_MARKERS =
+  /(bilmiyorum|bilmiyoruz|emin\s*değilim|emin\s*degilim|karar\s*veremedim|kararsızım|kararsizim|fikrim\s*yok)/i;
+
+const ALTERNATIVE_QUESTION =
+  /\b(mu|mü|mi|mı)\b[^.?!]{0,40}?\b(mu|mü|mi|mı)\b/i;
+
 const OPTIONAL_MARKERS =
   /(olmasa\s*da\s*olur|şart\s*değil|sart\s*degil|olmak\s*zorunda\s*değil|olmak\s*zorunda\s*degil|istemiyorum|önemli\s*değil|onemli\s*degil)/i;
 
@@ -111,7 +126,15 @@ export function isHedgedExpression(text: string, span?: string): boolean {
       );
     }
   }
+  /**
+   * Belirsizlik, KESİNLİK işaretinden önce değerlendirilir: "bilmiyorum ama
+   * mutlaka no-frost olsun" cümlesinde son açık karar kazanmalıdır; bu yüzden
+   * MUST işareti belirsizliği geçersiz kılar ve sıra bozulmaz.
+   */
   if (MUST_MARKERS.test(scope)) return false;
+  if (UNCERTAINTY_MARKERS.test(scope) || ALTERNATIVE_QUESTION.test(scope)) {
+    return true;
+  }
   return (
     APPROXIMATION_MARKERS.test(scope) ||
     SIMILARITY_MARKERS.test(scope) ||

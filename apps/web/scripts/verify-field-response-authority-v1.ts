@@ -559,15 +559,28 @@ function measureCorpus(): {
   }
 
   ok("F1", scenarios === 108, `senaryo sayısı değişti → ${scenarios}`);
-  ok("F2", fields === 1279, `kanonik alan sayısı değişti → ${fields}`);
+  /**
+   * TABAN ÖLÇÜMÜ TAZELENDİ (2026-08-29) — yalnız sayı değiştiği için değil,
+   * delta tek tek doğrulandığı için. Taban ile karşılaştırma sonucu:
+   * 5 YENİ bağlanma, 0 kayıp, 0 değişen satır. Beşi de kullanıcının
+   * metninde TAM olarak yazdığı kanonik profil seçeneği ya da para işareti
+   * taşıyan açık bütçe beyanıdır:
+   *   capacityKg = "9 kg"          « 9 kg çamaşır makinesi arıyorum
+   *   ovenType   = "Ankastre"      « Ankastre fırın arıyorum
+   *   fridgeType = "No-Frost"      « Buzdolabı arıyorum, no-frost olsun
+   *   seatingType= "Koltuk takımı" « Koltuk takımı arıyorum
+   *   budget     = "25.000 TL"     « Kadıköy kiralık daire, bütçem aylık 25.000 TL
+   * `unknown` sayısı değişmedi (988): çıkarım sızıntısı yok.
+   */
+  ok("F2", fields === 1284, `kanonik alan sayısı değişti → ${fields}`);
   ok("F3", unknown === 988, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok(
     "F4",
     responses === 0,
     `varsayılan UNKNOWN cevap yüzeyi üretti → ${responses}`,
   );
-  ok("F5", attributes === 255, `attributes tabanı kaydı → ${attributes}`);
-  ok("F6", constraints === 255, `constraints tabanı kaydı → ${constraints}`);
+  ok("F5", attributes === 260, `attributes tabanı kaydı → ${attributes}`);
+  ok("F6", constraints === 260, `constraints tabanı kaydı → ${constraints}`);
 
   return { scenarios, fields, unknown, responses, attributes, constraints };
 }

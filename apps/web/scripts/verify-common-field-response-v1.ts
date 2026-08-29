@@ -269,11 +269,35 @@ function measureGeneratedFieldsExcluded(): void {
   }
 }
 
+/**
+ * SAHNE METNİ BÜTÇEYİ AÇIKÇA YAZIYOR (kurucu kararı 2026-08-29).
+ *
+ * `SCENE_TEXT` "...bütçem 15000 TL" cümlesini içerir. Kullanıcının kendi
+ * yazdığı bu sayı artık kanonik `fields.budget` üretir; dolayısıyla bu tek
+ * hücre için senaryonun adı "untouched" olsa da alan DOKUNULMAMIŞ DEĞİLDİR.
+ * Beklenti yalnız burada, yalnız `budget` için değişir: açık kullanıcı
+ * beyanı sunucuya VALUE constraint'i ve attribute olarak gider.
+ *
+ * Genel bir gevşetme YAPILMAZ: diğer dört ortak alanın ve bütün çıkarım
+ * modlarının beklentisi aynen durur — sızıntı koruması yerinde kalır.
+ */
+function expectedFor(
+  key: string,
+  mode: (typeof MODES)[number],
+): { constraintMode: string | null; attributeAllowed: boolean } {
+  const explicitInSceneText = key === "budget" && mode.id === "untouched";
+  return {
+    constraintMode: explicitInSceneText ? "VALUE" : mode.expectServerConstraintMode,
+    attributeAllowed: explicitInSceneText || mode.id === "VALUE",
+  };
+}
+
 function measureCommonFieldMatrix(): void {
   for (const key of COMMON_KEYS) {
     for (const mode of MODES) {
       const id = `A:${key}/${mode.id}`;
       const o = outcomeFor(key, mode.field);
+      const expected = expectedFor(key, mode);
 
       ok(
         `${id}/fields`,
@@ -292,12 +316,12 @@ function measureCommonFieldMatrix(): void {
       );
       ok(
         `${id}/server-constraint`,
-        (o.serverConstraintMode ?? null) === mode.expectServerConstraintMode,
-        `server constraint modu '${String(o.serverConstraintMode)}' (beklenen '${String(mode.expectServerConstraintMode)}')`,
+        (o.serverConstraintMode ?? null) === expected.constraintMode,
+        `server constraint modu '${String(o.serverConstraintMode)}' (beklenen '${String(expected.constraintMode)}')`,
       );
       ok(
         `${id}/attribute-sizinti`,
-        mode.id === "VALUE" || o.attribute === null,
+        expected.attributeAllowed || o.attribute === null,
         `attributes sızıntısı → '${String(o.attribute)}'`,
       );
       ok(`${id}/rawInput`, o.rawInput === SCENE_TEXT, "rawInput değişti");
@@ -393,9 +417,18 @@ function measureKeySafety(): void {
       category: { slug: projection.categoryId },
       fields: [{ key, value: "", mode: "UNKNOWN" }],
     }).projection;
+    /**
+     * Kapının amacı: kanonik anahtar REDDEDİLMEZ (uydurma anahtarın karşıtı).
+     * Kullanıcının metinde açıkça yazdığı bir alan (burada `budget`) zaten
+     * VALUE taşıdığı için boş bir UNKNOWN satırı onu EZMEZ — bu doğru
+     * davranıştır. O yüzden kabul, cevap ya da constraint yüzeyinden ölçülür.
+     */
+    const accepted =
+      created?.fieldResponses?.[key]?.kind === "UNKNOWN" ||
+      created?.constraints?.[key] != null;
     ok(
       `C-ok:'${key}'`,
-      created?.fieldResponses?.[key]?.kind === "UNKNOWN",
+      accepted,
       `kanonik anahtar reddedildi → ${JSON.stringify(created?.fieldResponses ?? null)}`,
     );
   }
@@ -509,12 +542,25 @@ function measureCorpus(): {
   }
 
   ok("E1", scenarios === 108, `senaryo sayısı değişti → ${scenarios}`);
-  ok("E2", fields === 1279, `kanonik alan sayısı değişti → ${fields}`);
+  /**
+   * TABAN ÖLÇÜMÜ TAZELENDİ (2026-08-29) — yalnız sayı değiştiği için değil,
+   * delta tek tek doğrulandığı için. Taban ile karşılaştırma sonucu:
+   * 5 YENİ bağlanma, 0 kayıp, 0 değişen satır. Beşi de kullanıcının
+   * metninde TAM olarak yazdığı kanonik profil seçeneği ya da para işareti
+   * taşıyan açık bütçe beyanıdır:
+   *   capacityKg = "9 kg"          « 9 kg çamaşır makinesi arıyorum
+   *   ovenType   = "Ankastre"      « Ankastre fırın arıyorum
+   *   fridgeType = "No-Frost"      « Buzdolabı arıyorum, no-frost olsun
+   *   seatingType= "Koltuk takımı" « Koltuk takımı arıyorum
+   *   budget     = "25.000 TL"     « Kadıköy kiralık daire, bütçem aylık 25.000 TL
+   * `unknown` sayısı değişmedi (988): çıkarım sızıntısı yok.
+   */
+  ok("E2", fields === 1284, `kanonik alan sayısı değişti → ${fields}`);
   ok("E3", unknown === 988, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
-  ok("E6", attributes === 255, `attributes tabanı kaydı → ${attributes}`);
-  ok("E7", constraints === 255, `constraints tabanı kaydı → ${constraints}`);
+  ok("E6", attributes === 260, `attributes tabanı kaydı → ${attributes}`);
+  ok("E7", constraints === 260, `constraints tabanı kaydı → ${constraints}`);
 
   return {
     scenarios,

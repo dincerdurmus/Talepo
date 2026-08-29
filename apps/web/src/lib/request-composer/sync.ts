@@ -11,7 +11,9 @@ import {
   type BrowseSelectionInput,
 } from "./apply-browse";
 import { isInferenceOnlyAnswer } from "./answer-authority";
-import { buildCanonicalRequestState } from "./build-state";
+import {
+  preserveValidCommonBrowseAnswers,
+  buildCanonicalRequestState } from "./build-state";
 import { composeNaturalRequestText } from "./compose-text";
 import {
   resolveTextSyncAuthority,
@@ -214,6 +216,28 @@ export function syncFromText(
    * değer yoktur ve uydurulmaz.
    */
   state = withUserSelectedProvenance(state, opts?.structured?.fieldValues);
+
+  /**
+   * ESKİYEN TARAMA SABİTİ HER CEVABI SİLMEZ (T7, 2026-08-29).
+   *
+   * `STALE_BROWSE_CLEARED` yolunda `previous` bilerek okunmuyor: yeni ürün
+   * eski taramanın evrenini geçersiz kılar. Ama bu, kullanıcının tıklayarak
+   * verdiği ve YENİ kategoride hâlâ sorulan cevapları (konum, bütçe, adet,
+   * zaman) da siliyordu. Geçerlilik kararı yeni kategorinin soru profilinden
+   * türetilir; burada ayrı bir 'ortak alan' listesi tutulmaz.
+   */
+  if (clearedStaleBrowse && previous?.fields) {
+    state = {
+      ...state,
+      fields: preserveValidCommonBrowseAnswers(
+        previous.fields,
+        state.fields,
+        state.categoryId,
+        state.understanding,
+        previous.categoryId,
+      ),
+    };
+  }
 
   const composed = composeNaturalRequestText(state);
   return {

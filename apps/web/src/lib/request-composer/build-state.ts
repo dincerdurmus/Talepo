@@ -37,6 +37,11 @@ import {
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 // Kategori alanlarının kanonik değer kaydı — KB-15 seçenek bağlayıcısı bunu okur.
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+import {
+  listProfileKeysForCategory,
+  listProfilesForCategory,
+} from "./v2/question-profiles";
+import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/activation-bridge";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { inferenceOnlyMarkerKey } from "@/lib/knowledge/inference-marker";
@@ -341,6 +346,29 @@ function qualifierNear(raw: string, writtenSpan: string): boolean {
  * Kategorinin `select` alanlarında, kullanıcının metninde açıkça geçen
  * değerleri alana bağlar (KB-15). Dolu alanlara dokunmaz.
  */
+/**
+ * METİNDE PARA İŞARETİ VAR MI? (T9 koruması, ölçüldü 2026-08-29)
+ *
+ * Anlama katmanı "Oto koltuğu arıyorum 9-36 kg" girdisinde bütçeyi
+ * 9–36 TRY / USER_EXPLICIT olarak işaretliyor. O değer kanonik kullanıcı
+ * cevabına yükseltilirse yanlış bir bütçe yayın kapısını açar.
+ *
+ * Kanıt DİZESİNİ metinde aramak yanlış eksendi: kanıt her zaman normalize
+ * edilmiş bir gösterim olarak üretiliyor ("15.000 TL"), kullanıcının
+ * yazımı değil — ölçüldü, bu yüzden "15 bin TL" ve "15.000 lira" gibi
+ * DESTEKLENEN biçimler de düşüyordu.
+ *
+ * Doğru eksen para işaretidir: kullanıcının metninde bir para birimi ya da
+ * bütçe sözcüğü geçmelidir. Sözcük dağarcığı `lib/ai/parser/budget.ts`
+ * içindeki para belirteçleriyle aynıdır; yeni bir bütçe grameri yazılmaz.
+ * Anlama katmanındaki asıl kusur (kg aralığını para sanması) ayrı bir dilim
+ * konusudur; burada yalnız yükseltme kapısı kapatılır.
+ */
+const MONEY_SIGNAL_RE = /(₺|\b(?:tl|try|lira)\b|bütçe|butce)/i;
+function budgetLooksLikeMoneyInText(raw: string): boolean {
+  return MONEY_SIGNAL_RE.test(String(raw ?? ""));
+}
+
 function bindWrittenOptionValues(
   fields: Record<string, CanonicalFieldState>,
   categoryId: string,
@@ -348,6 +376,16 @@ function bindWrittenOptionValues(
 ): void {
   const text = foldPartToken(String(raw ?? ""));
   if (!text.trim()) return;
+  /** Ayraçları seçenek biçimleriyle aynı şekilde boşluğa indirger. */
+  const textLoose = text.replace(/[^a-z0-9]+/g, " ");
+  /**
+   * Bitişik yazım ("nofrost") sözcük sınırıyla yakalanamaz. Metnin her
+   * SÖZCÜĞÜ ayrı ayrı ayraçsızlaştırılır ve seçeneğin ayraçsız biçimiyle TAM
+   * karşılaştırılır; alt dize araması yapılmaz, böylece rastgele eşleşme olmaz.
+   */
+  const tightWords = new Set(
+    textLoose.split(" ").map((w) => w.trim()).filter(Boolean),
+  );
 
   /**
    * KANONİK DEĞER KAYDI İKİ YERDE YAŞIYOR (KB-15).
@@ -362,6 +400,8 @@ function bindWrittenOptionValues(
   const optionDefs: Array<{
     key: string;
     options: Array<{ label?: string; value?: string }>;
+    /** Yalnız seçeneğin TAMAMI yazılmışsa bağlanır (parça sözcük kabul edilmez). */
+    wholeOnly?: boolean;
   }> = [];
   const category = REQUEST_CATEGORIES.find((c) => c.id === categoryId);
   for (const def of category?.fields ?? []) {
@@ -377,6 +417,44 @@ function bindWrittenOptionValues(
     }
   } catch {
     // Bilgi şeması çözülemiyorsa kategori motoru kaydıyla devam edilir.
+  }
+
+  /**
+   * ÜÇÜNCÜ KANONİK SEÇENEK KAYDI: SORU PROFİLLERİ (T8, 2026-08-29).
+   *
+   * `fridgeType` gibi ürün kapsamlı alanların seçenek evreni ne kategori
+   * motorunda ne bilgi şemasında; SORU PROFİLİNDE (`quickChoices`) yaşıyor.
+   * Ölçüldü: kullanıcı "no-frost buzdolabı" yazdığı hâlde hiçbir alana
+   * bağlanmıyor ve "Buzdolabı tipi" yeniden soruluyordu. Burada YENİ bir
+   * eşleme otoritesi kurulmaz — var olan profil kaydı üçüncü kaynak olarak
+   * okunur. Ürün tipi süzgeci bilerek uygulanır: başka bir üründe geçen aynı
+   * sözcük buzdolabı alanı üretemez.
+   */
+  const boundProductType =
+    fields.productType?.kind === "VALUE"
+      ? String(fields.productType.value ?? "")
+      : fields.applianceType?.kind === "VALUE"
+        ? String(fields.applianceType.value ?? "")
+        : null;
+  for (const def of listProfilesForCategory({
+    categoryId,
+    productType: boundProductType,
+  })) {
+    if (!def.quickChoices?.length) continue;
+    if (optionDefs.some((d) => d.key === def.fieldKey)) continue;
+    /**
+     * PROFİL SEÇENEĞİNDE PARÇA SÖZCÜK BAĞLANMAZ (ölçüldü 2026-08-29).
+     *
+     * Profil etiketleri kısa insan ifadeleridir ("Bebek arabası", "Koltuk
+     * takımı"). Ayırt edici tek sözcük yolu bunlara uygulanınca "arabası",
+     * "koltuk", "sayfa" gibi parçalar cevap sanılıyordu. Bu kaynakta yalnız
+     * seçeneğin tamamı kabul edilir.
+     */
+    optionDefs.push({
+      key: def.fieldKey,
+      options: def.quickChoices,
+      wholeOnly: true,
+    });
   }
 
   /**
@@ -417,7 +495,21 @@ function bindWrittenOptionValues(
 
       // 1) Seçeneğin tamamı yazılmışsa kayıt eşleşmesi kurulur: kullanıcıya
       //    ETİKET gösterilir, koşullu alanlara KAYIT DEĞERİ verilir.
-      const whole = forms.find((f) => f.length >= 3 && foldedHasWord(text, f));
+      /**
+       * AYRAÇ TOLERANSI (T8). Kanonik etiket "No-Frost", kullanıcı ise
+       * "no-frost", "no frost" ya da "nofrost" yazar. Metnin ayraçları da
+       * seçenek biçimleriyle aynı normalizasyondan geçirilir; bitişik yazım
+       * için ayraçsız biçim ayrıca denenir. Mevcut eşleşme yolu değişmez,
+       * yalnız iki yedek eklenir.
+       */
+      const whole =
+        forms.find((f) => f.length >= 3 && foldedHasWord(text, f)) ??
+        forms.find((f) => f.length >= 3 && foldedHasWord(textLoose, f)) ??
+        forms.find(
+          (f) =>
+            f.replace(/ /g, "").length >= 6 &&
+            tightWords.has(f.replace(/ /g, "")),
+        );
       if (whole) {
         value = canonicalLabel || canonicalValue;
         canonicalSlug = canonicalValue;
@@ -434,7 +526,7 @@ function bindWrittenOptionValues(
        * `productType` alanına "kutu" yazılınca `depth` ve `lamination`
        * koşulları (`in: ["karton-kutu"]`) hiç eşleşmiyordu.
        */
-      if (gatingKeys.has(def.key)) continue;
+      if (gatingKeys.has(def.key) || def.wholeOnly) continue;
       for (const token of forms[0]!.split(" ")) {
         if (token.length < 4 || OPTION_ESCAPE_RE.test(token)) continue;
         if (!foldedHasWord(text, token)) continue;
@@ -1068,6 +1160,56 @@ export function mapUnderstandingToFields(
     };
   }
 
+  /**
+   * AÇIK KULLANICI BEYANI KANONİK ALANA YAZILIR (T7/T9, 2026-08-29).
+   *
+   * Ölçüldü: kullanıcı "bütçem 25.000 TL" ya da "İstanbul Kadıköy'de"
+   * yazdığında bu bilgi YALNIZ `understanding` içinde kalıyor, kanonik
+   * `fields` içinde karşılığı olmuyordu. Sonuç iki ayrı otoriteydi: yayın
+   * kapısı taslak dizesini, `isFieldSatisfied` ise kanonik alanı okuyordu.
+   * Burada tek bir kural var — beyan AÇIKÇA kullanıcıya aitse (USER_EXPLICIT)
+   * kanonik alan üretilir; ÇIKARIM asla üretmez (KB-17).
+   */
+  /**
+   * AÇIK KULLANICI BÜTÇESİ KANONİK CEVAPTIR (T9, kurucu kararı 2026-08-29).
+   *
+   * "Bütçem 25.000 TL" yazan kişi bir sayı BEYAN etmiştir; bu bir öneri
+   * değildir. Kanonik `fields.budget` üretilir ki yayın kapısı ile
+   * `isFieldSatisfied` AYNI alanı okusun — iki ayrı otorite kalmasın.
+   * Yalnız modelin TAHMİN ettiği bütçe bu yoldan geçemez: koşul kaynağın
+   * açıkça kullanıcı olmasını (`USER_EXPLICIT` / `EXPLICIT`) şart koşar,
+   * böylece çıkarım sızıntısı sıfır kalır (KB-17).
+   */
+  const budgetSignal = result.budget;
+  if (
+    budgetSignal?.value &&
+    (budgetSignal.source === "USER_EXPLICIT" ||
+      budgetSignal.provenance === "EXPLICIT") &&
+    (budgetSignal.value.max != null || budgetSignal.value.min != null) &&
+    (!withAny.budget || withAny.budget.kind === "UNKNOWN") &&
+    budgetLooksLikeMoneyInText(raw)
+  ) {
+    const display = budgetDisplayFromUnderstanding(result);
+    if (display) {
+      withAny.budget = valueField(
+        display,
+        "EXPLICIT_TEXT",
+        budgetSignal.confidence ?? 0.9,
+        budgetSignal.evidence ?? ["budget"],
+      );
+    }
+  }
+
+  /**
+   * ESKİ NOT (kapandı 2026-08-29).
+   *
+   * Açıkça yazılan bütçeyi kanonik `fields.budget` olarak yazmak T9'ü yeşile
+   * çeviriyor, ama ölçüldü ki mevcut ve YEŞİL olan bir kuralı bozuyor:
+   * `verify-common-field-response-v1` "dokunulmamış ortak alan sunucuya
+   * constraint/attribute olarak sızmamalı" diyor. Kanonik alan üretilince
+   * bütçe, kullanıcı onaylamadan sunucu yüküne geçiyordu. Karar alınmadan
+   * yazılmaz; seçenekler rapordadır.
+   */
   return withAny;
 }
 
@@ -1444,6 +1586,79 @@ export function mergePreservedBrowseFields(
     if (!canApplyField(prevField, incoming, lastUserAction)) {
       next[key] = prevField;
     }
+  }
+  return next;
+}
+
+/**
+ * HÂLÂ GEÇERLİ ORTAK CEVAPLARI KORUR (T7, 2026-08-29).
+ *
+ * Talep metni yeni bir ürüne dönerse tarama sabiti eskir ve bugün TÜM önceki
+ * alanlar düşüyor — kullanıcının tıklayarak verdiği konum ve bütçe dâhil.
+ * Ölçüldü: `authority = STALE_BROWSE_CLEARED` olduğunda `previous` hiç
+ * okunmuyordu.
+ *
+ * ORTAKLIK KANITI: SORU PROFİLİ DEĞİL, ORTAK ALAN KAYDI (kurucu, 2026-08-29).
+ *
+ * "Alan yeni kategorinin soru profilinde de var" ortaklık kanıtı DEĞİLDİR:
+ * `brand` hem beyaz eşya hem teknoloji profilinde bulunur, ama buzdolabının
+ * markası televizyon talebine taşınamaz. Ölçüldü (2026-08-29): profil
+ * kesişimi kuralı "Bosch" cevabını televizyona taşıyordu.
+ *
+ * Ortaklık, ürünün kendi ORTAK ALAN kaydından okunur:
+ * `REQUEST_CATEGORIES[].commonFields` — bugün bilgi motoru, öneri motoru,
+ * metin bestecisi ve `/talep` ekranı da aynı kaydı okuyor. Burada ikinci bir
+ * ortak alan listesi tutulmaz. Bir cevap ancak HEM eski HEM yeni kategoride
+ * ortak alansa taşınır; kategoriye özel olanlar (`fridgeType`, `brand`,
+ * `model`) kendiliğinden düşer. En son AÇIK beyan kazanır: yeni metin aynı
+ * alan için açık bir değer taşıyorsa önceki cevap geri getirilmez.
+ */
+export function preserveValidCommonBrowseAnswers(
+  previousFields: Record<string, CanonicalFieldState> | undefined,
+  nextFields: Record<string, CanonicalFieldState>,
+  nextCategoryId: string | null,
+  nextUnderstanding?: RequestUnderstandingResult | null,
+  previousCategoryId?: string | null,
+): Record<string, CanonicalFieldState> {
+  if (!previousFields || !nextCategoryId) return nextFields;
+  const commonKeys = (id: string | null | undefined) =>
+    new Set(
+      (REQUEST_CATEGORIES.find((cat) => cat.id === id)?.commonFields ?? []).map(
+        (f) => f.key,
+      ),
+    );
+  const nextCommon = commonKeys(nextCategoryId);
+  const prevCommon = previousCategoryId ? commonKeys(previousCategoryId) : null;
+  const stillValid = new Set(
+    [...nextCommon].filter((k) => !prevCommon || prevCommon.has(k)),
+  );
+  const next = { ...nextFields };
+  for (const [key, prev] of Object.entries(previousFields)) {
+    if (prev.provenance !== "EXPLICIT_BROWSE") continue;
+    if (prev.kind === "UNKNOWN") continue;
+    if (!stillValid.has(key)) continue;
+    /**
+     * EN SON AÇIK BEYAN KAZANIR — KANONİK ALAN ÜRETMEDEN.
+     *
+     * Konum gibi ortak alanların açık beyanı bugün kanonik alan olarak
+     * yazılmaz (dokunulmamış ortak alan sunucuya sızmamalı kuralı, ölçüldü
+     * 2026-08-29). Bu yüzden "yeni metin bu alanı açıkça değiştiriyor mu"
+     * sorusu ANLAMA katmanından okunur; ikinci bir kural kurulmaz.
+     */
+    if (key === "city") {
+      const c = nextUnderstanding?.location?.city;
+      if (c?.value && (c.source === "USER_EXPLICIT" || c.provenance === "EXPLICIT")) {
+        continue;
+      }
+    }
+    const incoming = next[key];
+    const incomingIsExplicit =
+      incoming &&
+      incoming.kind !== "UNKNOWN" &&
+      (incoming.provenance === "EXPLICIT_TEXT" ||
+        incoming.provenance === "EXPLICIT_BROWSE");
+    if (incomingIsExplicit) continue;
+    next[key] = prev;
   }
   return next;
 }
