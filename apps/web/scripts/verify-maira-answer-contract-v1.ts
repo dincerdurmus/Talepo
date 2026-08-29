@@ -24,11 +24,16 @@ import {
   type FieldAnswerState,
 } from "../src/lib/request-composer/v2/question-scheduler";
 import { buildUnderstoodFacts } from "../src/lib/request-composer/ui-helpers";
-import {
-  listAllProfiles,
-} from "../src/lib/request-composer/v2/question-profiles";
+import { listAllProfiles } from "../src/lib/request-composer/v2/question-profiles";
 import type { QuestionProfileDef } from "../src/lib/request-composer/v2/question-profile-types";
 import { resolveQuestionControl } from "../src/lib/request-composer/v2/question-control-registry";
+import { readFileSync } from "node:fs";
+import { mergeAnswersIntoUnderstoodFacts } from "../src/app/talep/ui-helpers";
+import type { UserAnswerRow } from "../src/lib/request-composer/v2/answer-apply-plan";
+import {
+  planAnswerApplication,
+  projectUserAnswers,
+} from "../src/lib/request-composer/v2/answer-apply-plan";
 import { budgetDisplayFromUnderstanding } from "../src/lib/request-understanding/activation-bridge";
 import type { CanonicalRequestState } from "../src/lib/request-composer/types";
 
@@ -1214,6 +1219,519 @@ function scheduleFor(
       allowDontCare: true,
     }).options.length === 0,
   );
+}
+
+/* ================================================================== *
+ * V — MAIRA ↔ STANDART GÖRÜNÜM GEÇİŞ SÖZLEŞMESİ.
+ *
+ * Kapılar DAVRANIŞSALDIR: kaynak metni taramaz, gerçek üretim yollarını
+ * çalıştırır. Aşağıdaki koşum, sayfanın state kaplarını birebir taklit eder
+ * ve cevabı `planAnswerApplication` → `syncFromBrowse` yolundan uygular —
+ * yani üretimde iki görünümün de kullanacağı yol.
+ *
+ * ÖLÇÜM SINIRI: bu kapılar kod düzeyinde ölçer (CODE-VERIFIED). Tarayıcıda
+ * gerçek tıklama ile geçiş davranışı bu koşumda ÖLÇÜLMEZ (NOT-MEASURED) ve
+ * öyle raporlanır.
+ * ================================================================== */
+{
+  type Harness = {
+    canonical: CanonicalRequestState;
+    common: Record<string, string>;
+    touchedCommon: string[];
+    dynamic: Record<string, string>;
+    answered: string[];
+    confirmed: string[];
+    stage: "compose" | "clarify" | "review";
+  };
+
+  const STAGE_RANK = { compose: 0, clarify: 1, review: 2 } as const;
+
+  function harnessFromText(text: string): Harness {
+    return {
+      canonical: syncFromText(null, text).state,
+      common: {},
+      touchedCommon: [],
+      dynamic: {},
+      answered: [],
+      confirmed: [],
+      stage: "clarify",
+    };
+  }
+
+  /** Planı uygular — sayfanın yaptığı işin aynısı, React'siz. */
+  function applyPlan(h: Harness, fieldKey: string, rawValue: string): Harness {
+    const plan = planAnswerApplication({
+      fieldKey,
+      rawValue,
+      currentText: String(h.canonical.understanding.rawInput ?? ""),
+    });
+    const next: Harness = {
+      ...h,
+      common: { ...h.common },
+      dynamic: { ...h.dynamic },
+      touchedCommon: [...h.touchedCommon],
+    };
+    for (const e of plan.effects) {
+      if (e.kind === "canonical") {
+        next.canonical = syncFromBrowse(next.canonical, {
+          key: e.fieldKey,
+          value: e.value,
+          isAny: e.isAny,
+          kind: e.valueKind,
+        }).state;
+      } else if (e.kind === "common") {
+        next.common[e.fieldKey] = e.value;
+        if (!next.touchedCommon.includes(e.fieldKey)) {
+          next.touchedCommon.push(e.fieldKey);
+        }
+      } else if (e.kind === "dynamic") {
+        next.dynamic[e.fieldKey] = e.value;
+      } else if (e.kind === "cityFilter") {
+        next.common.city = e.value;
+        if (!next.touchedCommon.includes("city")) next.touchedCommon.push("city");
+      }
+    }
+    if (plan.noop === null) {
+      if (!next.answered.includes(plan.fieldKey)) next.answered.push(plan.fieldKey);
+      if (!next.confirmed.includes(plan.fieldKey)) next.confirmed.push(plan.fieldKey);
+    }
+    return next;
+  }
+
+  /** İki görünümün de okuduğu tek soru türetimi. */
+  function questionKeys(h: Harness): string[] {
+    return scheduleFor(h.canonical, { answeredKeys: h.answered }).visible;
+  }
+
+  /** İki görünümün de okuduğu tek cevap türetimi. */
+  function answerRows(h: Harness) {
+    return projectUserAnswers({
+      fields: h.canonical.fields,
+      commonDraft: h.common,
+      touchedCommonKeys: h.touchedCommon,
+      categoryId: h.canonical.categoryId,
+      rawInput: String(h.canonical.understanding.rawInput ?? ""),
+      /* Üretimdeki sayfa ile aynı: metinde açıkça yazılan konum taşınır. */
+      explicitCommon: (() => {
+        const c = h.canonical.understanding.location?.city;
+        return c?.value && (c.source === "USER_EXPLICIT" || c.provenance === "EXPLICIT")
+          ? { city: String(c.value) }
+          : {};
+      })(),
+    });
+  }
+
+  const rowFor = (h: Harness, key: string) =>
+    answerRows(h).find((r) => r.fieldKey === key) ?? null;
+
+  /* ---- V1: Maira'da verilen cevap standart yüzeyde görünür ---- */
+  {
+    const base = harnessFromText("Buzdolabı arıyorum");
+    const after = applyPlan(base, "fridgeType", "No-Frost");
+    gate(
+      "V1a-cevap-kanonik-duruma-yazildi",
+      after.canonical.fields.fridgeType?.kind === "VALUE" &&
+        String(after.canonical.fields.fridgeType?.value) === "No-Frost",
+      JSON.stringify(after.canonical.fields.fridgeType ?? null),
+    );
+    gate(
+      "V1b-standart-kontrolde-dolu",
+      rowFor(after, "fridgeType")?.displayValue === "No-Frost",
+      JSON.stringify(rowFor(after, "fridgeType")),
+    );
+    gate(
+      "V1c-soru-listeden-dustu",
+      !questionKeys(after).includes("fridgeType"),
+      JSON.stringify(questionKeys(after)),
+    );
+    mutationControl("V1-mutasyon", rowFor(base, "fridgeType") === null);
+  }
+
+  /* ---- V2: standartta verilen cevap Maira'ya dönünce tekrar sorulmaz ---- */
+  {
+    const h = applyPlan(harnessFromText("Buzdolabı arıyorum"), "delivery", "1 hafta içinde");
+    /* Görünüm değişimi state'e dokunmaz: aynı koşum, aynı türetim. */
+    const maira = questionKeys(h);
+    const standart = questionKeys(h);
+    gate("V2a-iki-gorunum-ayni-soru-listesi", maira.join("|") === standart.join("|"));
+    gate("V2b-tekrar-sorulmaz", !maira.includes("delivery"), JSON.stringify(maira));
+    gate("V2c-yanitlarimda-var", rowFor(h, "delivery") !== null, JSON.stringify(answerRows(h)));
+  }
+
+  /* ---- V3: Yanıtlarım'dan değiştirilen cevap iki yüzeyde tek güncel değer ---- */
+  {
+    let h = applyPlan(harnessFromText("Buzdolabı arıyorum"), "fridgeType", "No-Frost");
+    const before = answerRows(h).length;
+    h = applyPlan(h, "fridgeType", "Mini");
+    const rows = answerRows(h).filter((r) => r.fieldKey === "fridgeType");
+    gate("V3a-tek-satir", rows.length === 1, JSON.stringify(rows));
+    gate("V3b-guncel-deger", rows[0]?.displayValue === "Mini", JSON.stringify(rows[0]));
+    gate("V3c-satir-cogalmadi", answerRows(h).length === before, `${answerRows(h).length} ≠ ${before}`);
+    gate(
+      "V3d-kanonik-de-guncel",
+      String(h.canonical.fields.fridgeType?.value) === "Mini",
+      JSON.stringify(h.canonical.fields.fridgeType ?? null),
+    );
+  }
+
+  /* ---- V4: üç kez görünüm değişimi çoğaltmaz, aşamayı geriletmez ---- */
+  {
+    let h = applyPlan(harnessFromText("Buzdolabı arıyorum"), "fridgeType", "No-Frost");
+    h = applyPlan(h, "delivery", "1 hafta içinde");
+    const snapshot = {
+      answered: [...h.answered],
+      confirmed: [...h.confirmed],
+      rows: answerRows(h).length,
+      stage: h.stage,
+      questions: questionKeys(h).join("|"),
+    };
+    for (let i = 0; i < 3; i++) {
+      /* Görünüm değişimi: state kabına DOKUNMAZ. */
+      h = { ...h };
+    }
+    gate("V4a-answered-cogalmadi", h.answered.length === snapshot.answered.length &&
+      new Set(h.answered).size === h.answered.length, JSON.stringify(h.answered));
+    gate("V4b-confirmed-cogalmadi", h.confirmed.length === snapshot.confirmed.length &&
+      new Set(h.confirmed).size === h.confirmed.length, JSON.stringify(h.confirmed));
+    gate("V4c-cevap-kaybi-yok", answerRows(h).length === snapshot.rows,
+      `${answerRows(h).length} ≠ ${snapshot.rows}`);
+    gate("V4d-asama-gerilemedi", STAGE_RANK[h.stage] >= STAGE_RANK[snapshot.stage]);
+    gate("V4e-soru-listesi-ayni", questionKeys(h).join("|") === snapshot.questions);
+  }
+
+  /* ---- V5: kategori değişince ortak korunur, kategoriye özel düşer ---- */
+  {
+    let h = harnessFromText("İstanbul'da buzdolabı arıyorum, bütçem 25.000 TL");
+    h = applyPlan(h, "city", "İstanbul");
+    h = applyPlan(h, "budget", "25.000 TL");
+    h = applyPlan(h, "fridgeType", "No-Frost");
+    const switched: Harness = {
+      ...h,
+      canonical: syncFromText(h.canonical, "Televizyon arıyorum").state,
+    };
+    gate(
+      "V5a-ortak-korunur",
+      switched.canonical.fields.city?.kind === "VALUE" &&
+        switched.canonical.fields.budget?.kind === "VALUE",
+      JSON.stringify({
+        city: switched.canonical.fields.city ?? null,
+        budget: switched.canonical.fields.budget ?? null,
+      }),
+    );
+    gate(
+      "V5b-kategoriye-ozel-duser",
+      !switched.canonical.fields.fridgeType,
+      JSON.stringify(switched.canonical.fields.fridgeType ?? null),
+    );
+    gate(
+      "V5c-yanitlarimda-gorunmez",
+      rowFor(switched, "fridgeType") === null,
+      JSON.stringify(answerRows(switched)),
+    );
+  }
+
+  /* ---- V6: ANY / serbest metin / hazır seçenek cevapları kaybolmaz ---- */
+  {
+    let h = harnessFromText("Buzdolabı arıyorum");
+    h = applyPlan(h, "fridgeType", "No-Frost");            // hazır seçenek
+    h = applyPlan(h, "brand", "Sony");                      // serbest metin
+    h = applyPlan(h, "usageArea", "no_preference");         // ANY
+    h = applyPlan(h, "capacityKg", "unknown");              // UNKNOWN
+    for (const key of ["fridgeType", "brand", "usageArea", "capacityKg"]) {
+      gate(
+        `V6:${key}/yanitlarimda-var`,
+        rowFor(h, key) !== null,
+        JSON.stringify(answerRows(h).map((r) => r.fieldKey)),
+      );
+    }
+    gate(
+      "V6-fark-etmez-etiketi",
+      /fark etmez/i.test(String(rowFor(h, "usageArea")?.displayValue ?? "")),
+      JSON.stringify(rowFor(h, "usageArea")),
+    );
+  }
+
+  /* ---- V7: televizyon talebinde buzdolabı sorusu/seçeneği yok ---- */
+  {
+    const h = harnessFromText("Televizyon arıyorum");
+    const keys = questionKeys(h);
+    const labels = scheduleFor(h.canonical, { answeredKeys: [] }).result.visible.flatMap(
+      (q) => {
+        const f = scheduledToFocusedQuestion(q, undefined, { productType: "televizyon" });
+        return [f.label, ...(f.control?.options ?? []).map((o) => o.label)];
+      },
+    );
+    const FRIDGE = /fridge|buzdolab|no-?frost|donduruculu|gardrop/i;
+    gate("V7a-soru-yok", !keys.some((k) => FRIDGE.test(k)), JSON.stringify(keys));
+    gate("V7b-secenek-yok", !labels.some((l) => FRIDGE.test(l)), JSON.stringify(labels));
+    gate(
+      "V7c-yanitlarimda-yok",
+      !answerRows(h).some((r) => FRIDGE.test(r.fieldKey) || FRIDGE.test(r.displayValue)),
+      JSON.stringify(answerRows(h)),
+    );
+  }
+
+
+  /* ---- V9: tarayıcı turunda görülen üç kusur (2026-08-30) ---- */
+  {
+    const h = harnessFromText(
+      "İstanbul Kadıköy'de no-frost buzdolabı arıyorum, bütçem 25.000 TL",
+    );
+    const rows = answerRows(h);
+
+    /* V9a — iç anahtar kullanıcıya gösterilmez. */
+    const rawKeyRows = rows.filter((r) => r.label === r.fieldKey);
+    gate(
+      "V9a-ic-anahtar-gosterilmez",
+      rawKeyRows.length === 0,
+      JSON.stringify(rawKeyRows.map((r) => r.fieldKey)),
+    );
+
+    /* V9b — aynı etiket+değer iki satırda görünmez. */
+    const pairs = rows.map((r) => `${r.label}=${r.displayValue}`);
+    gate(
+      "V9b-yinelenen-satir-yok",
+      new Set(pairs).size === pairs.length,
+      JSON.stringify(pairs),
+    );
+
+    /* V9c — metinde açıkça yazılan konum listede görünür. */
+    gate(
+      "V9c-acik-konum-gorunur",
+      rows.some((r) => /kadıköy|istanbul/i.test(r.displayValue)),
+      JSON.stringify(rows.map((r) => `${r.label}=${r.displayValue}`)),
+    );
+  }
+
+
+  /* ---- V10: cevaplanmış bir satır DÜZENLENEBİLİR olmalı (2026-08-30) ---- *
+   * Tarayıcı turunda ölçüldü: "Yanıtlarım"da bir satıra dokunmak soruyu
+   * yeniden açmıyordu — kanonik değer soruyu KAPALI tuttuğu için zamanlayıcı
+   * onu bir daha yayınlamıyor. Düzenleme bu yüzden zamanlayıcıdan değil,
+   * kontrol kaydından beslenmelidir: aynı kanonik seçenekler ve aynı serbest
+   * cevap yolu. Maira kendi seçeneğini üretmez.                              */
+  {
+    const h = applyPlan(
+      harnessFromText("Buzdolabı arıyorum"),
+      "fridgeType",
+      "No-Frost",
+    );
+    const row = rowFor(h, "fridgeType");
+    gate("V10a-cevap-satiri-var", row !== null, JSON.stringify(answerRows(h)));
+
+    /* Düzenleme yüzeyi kanonik kontrol kaydından gelir. */
+    const editControl = resolveQuestionControl({
+      categoryId: h.canonical.categoryId ?? "appliances",
+      fieldKey: "fridgeType",
+      importance: "quote_critical",
+      allowUnknown: false,
+      allowDontCare: true,
+      productType: "Buzdolabı",
+      profileChoices: listAllProfiles().find((d) => d.fieldKey === "fridgeType")
+        ?.quickChoices,
+    });
+    gate(
+      "V10b-duzenleme-secenekleri-kanonik",
+      editControl.options.map((o) => o.label).join("|") ===
+        "No-Frost|Alttan donduruculu|Gardrop tipi|Mini",
+      JSON.stringify(editControl.options.map((o) => o.label)),
+    );
+    gate(
+      "V10c-duzenlemede-serbest-cevap",
+      editControl.allowCustom === true,
+      "düzenlemede listede olmayan cevap yazılamıyor",
+    );
+
+    /* Yeni değer eskisinin YERİNE geçer. */
+    const edited = applyPlan(h, "fridgeType", "Mini");
+    const rows = answerRows(edited).filter((r) => r.fieldKey === "fridgeType");
+    gate("V10d-tek-guncel-deger", rows.length === 1 && rows[0]?.displayValue === "Mini",
+      JSON.stringify(rows));
+
+    /* Maira bileşeni kendi kontrol çözücüsünü kurmaz; props ile alır. */
+    let src = "";
+    try {
+      src = readFileSync("src/components/request/maira/MairaAnswers.tsx", "utf8");
+    } catch {
+      src = "";
+    }
+    gate(
+      "V10e-maira-kendi-cozucusunu-kurmaz",
+      src.length > 0 && !/resolveQuestionControl|question-control-registry/.test(src),
+      "MairaAnswers kendi kontrol otoritesini kuruyor",
+    );
+    gate(
+      "V10f-duzenleme-yuzeyi-props-ile",
+      /editControl/.test(src),
+      "MairaAnswers düzenleme kontrolünü props ile almıyor",
+    );
+  }
+
+
+  /* ================================================================== *
+   * W — KANONİK CEVAPLAR STANDART "ANLADIKLARIMIZ" PANOSUNDA GÖRÜNÜR.
+   *
+   * Tarayıcı turunda ölçüldü (2026-08-30): Maira'da verilen `delivery` ve
+   * düzeltilen `fridgeType` standart görünümde hiçbir yerde görünmüyordu;
+   * pano yalnız anlama katmanı olgularını basıyor. Birleştirme KÖR DEĞİLDİR:
+   * aynı alan tek satır üretir ve kanonik cevap eski olguyu yener.
+   * ================================================================== */
+  {
+    const fact = (key: string, label: string, displayValue: string) => ({
+      key,
+      label,
+      displayValue,
+      tone: "medium" as const,
+      trustLabel: "",
+    });
+
+    /* W1 — cevap panoda görünür. */
+    {
+      const merged = mergeAnswersIntoUnderstoodFacts({
+        facts: [fact("productType", "Ürün", "Buzdolabı")],
+        answers: [
+          {
+            fieldKey: "fridgeType",
+            label: "Buzdolabı tipi",
+            displayValue: "Mini",
+            mode: "VALUE",
+            source: "canonical",
+          },
+        ],
+      });
+      gate(
+        "W1-cevap-panoda-gorunur",
+        merged.some((f) => f.key === "fridgeType" && f.displayValue === "Mini"),
+        JSON.stringify(merged.map((f) => `${f.label}=${f.displayValue}`)),
+      );
+      gate(
+        "W1b-mevcut-olgu-korunur",
+        merged.some((f) => f.key === "productType"),
+        "anlama olgusu kayboldu",
+      );
+    }
+
+    /* W2 — aynı alanda kanonik cevap eski olguyu yener, eski değer kalmaz. */
+    {
+      const merged = mergeAnswersIntoUnderstoodFacts({
+        facts: [fact("fridgeType", "Buzdolabı tipi", "No-Frost")],
+        answers: [
+          {
+            fieldKey: "fridgeType",
+            label: "Buzdolabı tipi",
+            displayValue: "Mini",
+            mode: "VALUE",
+            source: "canonical",
+          },
+        ],
+      });
+      const rows = merged.filter((f) => f.key === "fridgeType");
+      gate("W2a-tek-satir", rows.length === 1, JSON.stringify(rows));
+      gate("W2b-kanonik-kazanir", rows[0]?.displayValue === "Mini", JSON.stringify(rows[0]));
+      gate(
+        "W2c-eski-deger-kalmaz",
+        !merged.some((f) => f.displayValue === "No-Frost"),
+        JSON.stringify(merged.map((f) => f.displayValue)),
+      );
+    }
+
+    /* W3 — aynı etiket+değer iki kez görünmez (kör birleştirme yok). */
+    {
+      const merged = mergeAnswersIntoUnderstoodFacts({
+        facts: [fact("productType", "Ürün", "Buzdolabı")],
+        answers: [
+          {
+            fieldKey: "applianceType",
+            label: "Ürün",
+            displayValue: "Buzdolabı",
+            mode: "VALUE",
+            source: "canonical",
+          },
+        ],
+      });
+      const pairs = merged.map((f) => `${f.label}=${f.displayValue}`);
+      gate("W3-yinelenme-yok", new Set(pairs).size === pairs.length, JSON.stringify(pairs));
+    }
+
+    /* W4 — sözleşmede sayılan cevap türlerinin hepsi panoda. */
+    {
+      const answers: UserAnswerRow[] = [
+        { fieldKey: "fridgeType", label: "Buzdolabı tipi", displayValue: "Mini", mode: "VALUE", source: "canonical" },
+        { fieldKey: "delivery", label: "Zaman", displayValue: "1 hafta içinde", mode: "VALUE", source: "canonical" },
+        { fieldKey: "brand", label: "Marka", displayValue: "Bosch", mode: "VALUE", source: "canonical" },
+        { fieldKey: "budget", label: "Bütçe", displayValue: "32.500 TL", mode: "VALUE", source: "canonical" },
+        { fieldKey: "city", label: "Şehir", displayValue: "İstanbul / Kadıköy", mode: "VALUE", source: "draft" },
+        { fieldKey: "model", label: "Model", displayValue: "Serbest yazılmış değer", mode: "VALUE", source: "canonical" },
+        { fieldKey: "condition", label: "Durum", displayValue: "Fark etmez", mode: "ANY", source: "canonical" },
+      ];
+      const merged = mergeAnswersIntoUnderstoodFacts({ facts: [], answers });
+      for (const a of answers) {
+        gate(
+          `W4:${a.fieldKey}/panoda`,
+          merged.some((f) => f.key === a.fieldKey && f.displayValue === a.displayValue),
+          JSON.stringify(merged.map((f) => f.key)),
+        );
+      }
+    }
+
+    /* W5 — kategori değişince kategoriye özel cevap panodan da düşer. */
+    {
+      let h = harnessFromText("İstanbul'da buzdolabı arıyorum, bütçem 25.000 TL");
+      h = applyPlan(h, "city", "İstanbul");
+      h = applyPlan(h, "budget", "25.000 TL");
+      h = applyPlan(h, "fridgeType", "Mini");
+      const switched: typeof h = {
+        ...h,
+        canonical: syncFromText(h.canonical, "Televizyon arıyorum").state,
+      };
+      const merged = mergeAnswersIntoUnderstoodFacts({
+        facts: [],
+        answers: answerRows(switched),
+      });
+      gate(
+        "W5a-buzdolabi-satiri-duser",
+        !merged.some((f) => /Mini|No-Frost|Buzdolabı tipi/.test(`${f.label}${f.displayValue}`)),
+        JSON.stringify(merged.map((f) => `${f.label}=${f.displayValue}`)),
+      );
+      gate(
+        "W5b-sehir-ve-butce-kalir",
+        merged.some((f) => f.key === "city") && merged.some((f) => f.key === "budget"),
+        JSON.stringify(merged.map((f) => f.key)),
+      );
+    }
+  }
+
+  /* ---- V8: Maira kaynağında hardcoded soru/seçenek yok (kaynak kapısı) ---- */
+  {
+    const dir = "src/components/request/maira";
+    const files = ["MairaStage.tsx", "MairaAnswers.tsx"];
+    for (const file of files) {
+      const path = `${dir}/${file}`;
+      let src = "";
+      try {
+        src = readFileSync(path, "utf8");
+      } catch {
+        gate(`V8:${file}/mevcut`, false, "dosya yok");
+        continue;
+      }
+      gate(`V8:${file}/mevcut`, true);
+      gate(
+        `V8:${file}/urun-sorusu-yok`,
+        !/buzdolab|no-?frost|statik|televizyon|ekran boyut/i.test(src),
+        "kaynakta ürün sorusu/seçeneği geçiyor",
+      );
+      gate(
+        `V8:${file}/soru-uretimi-yok`,
+        !/resolveHybridQuestions|scheduleComposerQuestions|question-profiles/.test(src),
+        "Maira kendi soru otoritesini kuruyor",
+      );
+      gate(
+        `V8:${file}/cevap-deposu-yok`,
+        !/useState<[^>]*(Record<string, ?string>|CanonicalFieldState)/.test(src),
+        "Maira kalıcı cevap deposu tutuyor",
+      );
+    }
+  }
 }
 
 console.log(`\nPROBLEMS=${PROBLEMS.length}`);

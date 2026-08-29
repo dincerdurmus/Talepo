@@ -41,6 +41,15 @@ import { UnderstoodFactsBoard } from "@/components/request/v2/UnderstoodFactsBoa
 import { shouldConfirmYearCondition } from "@/components/request/YearConditionConfirmation";
 import { isImplausibleFutureModelYear } from "@/components/request/FutureModelYearConfirmation";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
+import { MairaStage } from "@/components/request/maira/MairaStage";
+import {
+  formatBudgetDigits,
+  planAnswerApplication,
+  projectUserAnswers,
+} from "@/lib/request-composer/v2/answer-apply-plan";
+import { resolveQuestionControl } from "@/lib/request-composer/v2/question-control-registry";
+import { mergeAnswersIntoUnderstoodFacts } from "./ui-helpers";
+import { listAllProfiles } from "@/lib/request-composer/v2/question-profiles";
 import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
 import {
@@ -151,14 +160,6 @@ type CommonDraft = {
   budget: string;
 };
 
-function formatBudgetDigits(raw: string): string {
-  const [wholeRaw, decimal] = raw.replace(/\s/g, "").split(",");
-  const whole = wholeRaw.replace(/\./g, "").replace(/\D/g, "");
-  if (!whole) return raw;
-  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return decimal != null ? `${grouped},${decimal.replace(/\D/g, "")}` : grouped;
-}
-
 function formatBudgetNumbersInText(text: string): string {
   return text
     .replace(
@@ -169,20 +170,6 @@ function formatBudgetNumbersInText(text: string): string {
       /\b(\d[\d.\s]*)\s*adet\b/giu,
       (_match, amount: string) => `${formatBudgetDigits(amount)} adet`,
     );
-}
-
-function formatBudgetAnswer(value: string): string {
-  if (!/^\s*(?:₺\s*)?\d[\d.\s]*(?:,\d{1,2})?\s*(?:tl|₺)?\s*$/iu.test(value)) {
-    return value.trim();
-  }
-  const amount = value.replace(/₺|tl/giu, "").trim();
-  return `${formatBudgetDigits(amount)} TL`;
-}
-
-function formatQuantityAnswer(value: string): string {
-  if (!/^\s*\d[\d.\s]*(?:\s*adet)?\s*$/iu.test(value)) return value.trim();
-  const amount = value.replace(/adet/giu, "").trim();
-  return `${formatBudgetDigits(amount)} adet`;
 }
 
 const TITLE_OVERLAP_STOP_WORDS = new Set([
@@ -425,6 +412,14 @@ function TalepOlusturForm() {
   const aiPanelOffsetRef = useRef(0);
   /** 1 = ihtiyaç metni, 2 = AI özeti onay / yayın */
   const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  /**
+   * GÖRÜNÜM YALNIZ BİR SUNUM SEÇİMİDİR (2026-08-29).
+   *
+   * Maira ve standart görünüm AYNI bileşen örneğinde yaşar: geçiş yalnız bu
+   * değeri değiştirir, bileşen unmount olmaz ve hiçbir cevap yeniden
+   * kurulmaz. İkinci bir state ağacı ya da serileştirme yoktur.
+   */
+  const [viewMode, setViewMode] = useState<"standard" | "maira">("standard");
   const [confirmedYearConditionKey, setConfirmedYearConditionKey] =
     useState<string | null>(null);
   const [confirmedFutureModelYearKey, setConfirmedFutureModelYearKey] =
@@ -2193,143 +2188,134 @@ function TalepOlusturForm() {
     setPublishedVersion(null);
   }
 
+
+  /**
+   * ODAKLI SORU İŞLEYİCİLERİ — İKİ GÖRÜNÜM İÇİN TEK YOL (2026-08-29).
+   *
+   * Bu iki işleyici JSX içinde satır içi tanımlıydı; o hâlde yalnız standart
+   * görünüm onlara ulaşabiliyordu. Adlandırılınca Maira sahnesi de AYNI
+   * fonksiyonu çağırır: cevap uygulaması, answered/confirmed defterleri ve
+   * telemetri tek yerde kalır, ikinci bir cevap yolu doğmaz.
+   */
+  function handleFocusedAnswer(fieldKey: string, value: string) {
+                            if (
+                              value === "skip" ||
+                              value === "skip_optional"
+                            ) {
+                              setSkippedQuestionKeys((keys) =>
+                                keys.includes(fieldKey)
+                                  ? keys
+                                  : [...keys, fieldKey],
+                              );
+                              trackComposerEvent("focused_question_skipped", {
+                                fieldKey,
+                              });
+                              return;
+                            }
+                            /**
+                             * CEVAP, SORU GÖRÜNÜR DEĞİLKEN DE UYGULANIR.
+                             *
+                             * Zaten cevaplanmış bir alan zamanlayıcıdan
+                             * yayınlanmaz; "Yanıtlarım" üzerinden düzeltilen
+                             * cevap bu yüzden sessizce düşüyordu (tarayıcıda
+                             * ölçüldü, 2026-08-30). Uygulayıcının ihtiyacı olan
+                             * tek şey alan anahtarıdır; görünür soru bulunamazsa
+                             * anahtarla devam edilir. İkinci bir cevap yolu
+                             * açılmaz — aynı işleyici, aynı apply-plan.
+                             */
+                            const question =
+                              enrichmentCandidates.find(
+                                (q) => q.fieldKey === fieldKey,
+                              ) ??
+                              focusedQuestions.find(
+                                (q) => q.fieldKey === fieldKey,
+                              ) ?? ({ fieldKey } as QuestionCandidate);
+                            applyBrainQuestion(question, value);
+                            /**
+                             * KULLANICI METNİ OTORİTESİ (kurucu, 2026-08-26).
+                             *
+                             * Verilen cevap ARTIK serbest metne yazılmaz. Bu,
+                             * 2026-08-23 tarihli "cevap metne de işlenir"
+                             * kararının YERİNE GEÇER. Gerekçe ölçülmüş bir
+                             * zarardır: bestecinin metne yazdığı sözcük bir
+                             * sonraki okumada BAŞKA bir alanın kullanıcı kanıtı
+                             * sayılabiliyordu ve kullanıcı kendi cümlesinde
+                             * makine slug'ı ("Talep türü: vehicle.") görüyordu.
+                             *
+                             * Cevap kaybolmaz: `applyBrainQuestion` zaten her
+                             * cevabı `hybrid.applyQuickOption` üzerinden
+                             * kanonik duruma EXPLICIT_BROWSE kaynağıyla yazar
+                             * ve o yol rawInput'u bilerek korur. `rawInput`
+                             * kullanıcının yazdığı metin olarak değişmeden
+                             * kalır.
+                             */
+                            setAnsweredQuestionKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            setConfirmedFactKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            trackComposerEvent(
+                              isSoftEscapeValue(value)
+                                ? "focused_question_skipped"
+                                : "focused_question_answered",
+                              { fieldKey },
+                            );
+                          }
+
+  function handleFocusedSkip(fieldKey: string) {
+                            const importance = focusedQuestions.find(
+                              (q) => q.fieldKey === fieldKey,
+                            )?.importance;
+                            if (importance && importance !== "optional") {
+                              return;
+                            }
+                            setSkippedQuestionKeys((keys) =>
+                              keys.includes(fieldKey)
+                                ? keys
+                                : [...keys, fieldKey],
+                            );
+                            trackComposerEvent("focused_question_skipped", {
+                              fieldKey,
+                            });
+                          }
+  /**
+   * CEVAP UYGULAMA — KARAR SAF MODÜLDE, ETKİ BURADA.
+   *
+   * Kararın kendisi `planAnswerApplication` içindedir ve React bilmez;
+   * burada yalnız planın etkileri bugünkü kanonik yollara uygulanır.
+   * Maira görünümü de aynı fonksiyonu çağırır — iki yüzey için ikinci bir
+   * cevap yolu yoktur.
+   */
   function applyBrainQuestion(question: QuestionCandidate, rawValue: string) {
-    const field =
-      question.fieldKey === "deliveryDays" ? "delivery" : question.fieldKey;
-    const soft = softStatusFromAnswerValue(rawValue);
-    if (soft === "skip_optional" || rawValue.trim() === "skip") {
-      // Optional skip only — caller marks skippedQuestionKeys.
-      return;
-    }
-
-    let typed =
-      field === "budget"
-        ? formatBudgetAnswer(rawValue)
-        : field === "quantity"
-          ? formatQuantityAnswer(rawValue)
-          : rawValue.trim();
-    if (!typed) return;
-
-    if (soft === "open_to_offers" && field === "budget") {
-      typed = "Teklifleri görmek istiyorum";
-      hybrid.applyQuickOption(field, typed, false);
-      updateCommonField("budget", typed);
-      return;
-    }
-
-    // Location soft statuses — store canonical labels, never invent districts
-    const locationFold = rawValue.trim().toLocaleLowerCase("tr-TR");
-    if (field === "city") {
-      if (
-        locationFold === "nationwide" ||
-        locationFold === "türkiye geneli" ||
-        locationFold === "turkiye geneli"
-      ) {
-        updateCommonField("city", "Türkiye geneli");
-        return;
-      }
-      if (locationFold === "remote" || locationFold === "uzaktan") {
-        updateCommonField("city", "Uzaktan");
-        updateDynamicField("locationMode", "remote");
-        return;
-      }
-      if (
-        locationFold === "no_location_preference" ||
-        locationFold === "konum fark etmez"
-      ) {
-        updateCommonField("city", "Konum fark etmez");
-        return;
+    const plan = planAnswerApplication({
+      fieldKey: question.fieldKey,
+      rawValue,
+      currentText: hybrid.text,
+    });
+    if (plan.noop) return;
+    for (const effect of plan.effects) {
+      if (effect.kind === "canonical") {
+        hybrid.applyQuickOption(
+          effect.fieldKey,
+          effect.value,
+          effect.isAny,
+          effect.valueKind,
+        );
+      } else if (effect.kind === "common") {
+        updateCommonField(effect.fieldKey, effect.value);
+      } else if (effect.kind === "dynamic") {
+        updateDynamicField(effect.fieldKey, effect.value);
+      } else if (effect.kind === "appendText") {
+        hybrid.setText(effect.value);
+      } else if (effect.kind === "cityFilter") {
+        if (effect.value) applyCityFilter(effect.value);
       }
     }
-
-    if (soft === "unknown") {
-      const label = "Henüz bilmiyorum";
-      /**
-       * Kanonik mod taşınır, etiket taşınmaz (D3f Dilim 1). Ortak alanların
-       * (`budget` / `city` / `delivery` / `quantity`) taslak metni AYNEN
-       * korunur: yayın kapıları o dizeyi okur ve bu dilimde gevşetilmez.
-       */
-      hybrid.applyQuickOption(field, label, false, "UNKNOWN");
-      if (field === "budget" || field === "quantity" || field === "delivery") {
-        updateCommonField(field, label);
-      } else if (field === "city") {
-        updateCommonField("city", label);
-        return;
-      } else {
-        updateDynamicField(field, label);
-      }
-      return;
-    }
-    if (soft === "no_preference" || soft === "flexible") {
-      const label = soft === "flexible" ? "Esnek" : "Fark etmez";
-      /**
-       * "FARK ETMEZ" VE "ESNEK" DEĞER DEĞİLDİR (B2, 2026-08-27).
-       *
-       * Burada eskiden alan adına bakan bir `useAny` ayrımı vardı ve
-       * `budget` / `city` / `delivery` / `quantity` için kaçış cevabı
-       * yerelleştirilmiş bir VALUE ETİKETİ olarak kanonik duruma yazılıyordu.
-       * O beş alanda soruyu kapatan tek şey, v2 zamanlayıcısının o etiketi
-       * geri okumasıydı — yani ekranda yazan metin bir cevap otoritesiydi.
-       *
-       * İki kaçış da aynı kanonik anlamı taşır: bu eksende kullanıcının
-       * bağlayıcı bir tercihi YOKTUR → `kind: "ANY"`. Görünen etiket ("Esnek"
-       * / "Fark etmez") yalnız arayüz sunumudur ve taslak metninde kalır;
-       * yayın kapılarının okuduğu ortak alan taslakları AYNEN korunur.
-       */
-      hybrid.applyQuickOption(field, label, true, "ANY");
-      if (field === "delivery") {
-        updateCommonField("delivery", label);
-        return;
-      }
-      if (field === "city") {
-        updateCommonField("city", "Konum fark etmez");
-        return;
-      }
-      if (field === "quantity" || field === "budget" || field === "title") {
-        updateCommonField(field, label);
-        return;
-      }
-      updateDynamicField(field, label);
-      return;
-    }
-
-    if (field === "locationMode") {
-      updateDynamicField("locationMode", typed);
-      hybrid.applyQuickOption("locationMode", typed, false);
-      return;
-    }
-
-    if (field === "needDescription") {
-      const current = hybrid.text.trim();
-      const next = current ? `${current} ${typed}` : typed;
-      hybrid.setText(next);
-      return;
-    }
-
-    // Canonical hybrid reducer (same path as browse / quick-select).
-    // Preserves rawInput text inside applyQuickOption.
-    hybrid.applyQuickOption(
-      field,
-      field === "delivery" && /^\d+$/.test(typed) ? `${typed} gün` : typed,
-      false,
-    );
-
-    if (field === "delivery") {
-      updateCommonField(
-        "delivery",
-        /^\d+$/.test(typed) ? `${typed} gün` : typed,
-      );
-      return;
-    }
-    if (field === "city") {
-      if (typed) applyCityFilter(typed);
-      return;
-    }
-    if (field === "quantity" || field === "budget" || field === "title") {
-      updateCommonField(field, typed);
-      return;
-    }
-    updateDynamicField(field, typed);
   }
 
   const filterCityValue = isRealEstate
@@ -2999,6 +2985,86 @@ function TalepOlusturForm() {
     </div>
   );
 
+  /**
+   * Kanonik cevaplardan türetilmiş "Yanıtlarım" satırları. İkinci depo
+   * değildir; her render'da aynı kaynaktan yeniden türer.
+   */
+  const userAnswerRows = projectUserAnswers({
+    fields: hybrid.state?.fields ?? {},
+    commonDraft: {
+      city: mergedCommonDraft.city,
+      budget: mergedCommonDraft.budget,
+      delivery: mergedCommonDraft.delivery,
+      quantity: mergedCommonDraft.quantity,
+    },
+    touchedCommonKeys: [
+      ...(cityTouched ? ["city"] : []),
+      ...(budgetTouched ? ["budget"] : []),
+    ],
+    categoryId: activeCategoryId,
+    rawInput: understanding.rawInput,
+    /**
+     * Konum kanonik alan üretmez (dokunulmamış ortak alan sunucuya sızmamalı
+     * kuralı), ama kullanıcı metinde açıkça yazdıysa bu bir CEVAPTIR ve
+     * listeden düşmemelidir. Yalnız USER_EXPLICIT olan taşınır; çıkarım hayır.
+     */
+    explicitCommon: {
+      ...(understanding.location?.city?.value &&
+      (understanding.location.city.source === "USER_EXPLICIT" ||
+        understanding.location.city.provenance === "EXPLICIT")
+        ? { city: String(understanding.location.city.value) }
+        : {}),
+    },
+  });
+
+  if (viewMode === "maira") {
+    return (
+      <div className="min-h-screen bg-[#07040f] p-3 sm:p-5">
+        <MairaStage
+          questions={focusedQuestions}
+          draftByKey={focusedDraftByKey}
+          onDraftChange={(fieldKey, value) =>
+            setFocusedDraftByKey((current) => ({ ...current, [fieldKey]: value }))
+          }
+          onAnswer={handleFocusedAnswer}
+          onSkip={handleFocusedSkip}
+          remainingCriticalCount={composerReadiness.remainingCriticalCount}
+          answers={userAnswerRows}
+          subtitle={readinessLabel}
+          onExitToStandard={() => setViewMode("standard")}
+          editControl={(fieldKey) => {
+            /**
+             * Cevaplanmış bir alan zamanlayıcıdan yeniden yayınlanmaz (kanonik
+             * değer soruyu kapatır). Düzenleme yüzeyi bu yüzden doğrudan
+             * KONTROL KAYDINDAN çözülür — seçenekler ve serbest cevap izni
+             * aynı otoriteden gelir, Maira hiçbir şey üretmez.
+             */
+            if (!activeCategoryId) return null;
+            const profile = listAllProfiles().find(
+              (def) => def.fieldKey === fieldKey,
+            );
+            const control = resolveQuestionControl({
+              categoryId: activeCategoryId,
+              fieldKey,
+              importance: profile?.importance ?? "optional",
+              allowUnknown: Boolean(profile?.allowUnknown),
+              allowDontCare: Boolean(profile?.allowDontCare),
+              isRealEstate: activeCategoryId === "real-estate",
+              profileChoices: profile?.quickChoices,
+            });
+            return control.options.length > 0 || control.allowCustom
+              ? control
+              : null;
+          }}
+          onEditAnswer={(fieldKey, value) => {
+            /* Mevcut kanonik cevap işleyicisi — ikinci güncelleme yolu yok. */
+            handleFocusedAnswer(fieldKey, value);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <main className={`relative min-h-screen overflow-x-hidden bg-[#f4f7f6] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
       <header className="sticky top-0 z-40 border-b border-[#0f1f1d]/8 bg-white/80 backdrop-blur-xl">
@@ -3205,7 +3271,15 @@ function TalepOlusturForm() {
                         hasText
                         updating={hybrid.isSyncing}
                         degraded={hybrid.browseDegraded}
-                        facts={editableUnderstoodFacts}
+                        /*
+                          Kullanıcının VERDİĞİ cevaplar da bu panoda görünür:
+                          birleştirme kör değildir, kanonik cevap aynı alandaki
+                          eski olguyu yener ve yinelenen satır üretmez.
+                        */
+                        facts={mergeAnswersIntoUnderstoodFacts({
+                          facts: editableUnderstoodFacts,
+                          answers: userAnswerRows,
+                        })}
                         collapsed={uxStage === "review"}
                         onExpand={() => setUxStage("clarify")}
                         categoryLabel={
@@ -3290,6 +3364,22 @@ function TalepOlusturForm() {
                         }}
                       />
 
+                      {/*
+                        MAIRA GİRİŞİ — AYNI STATE, FARKLI YÜZEY.
+                        Görünüm değişimi cevapları yeniden kurmaz; yalnız
+                        `viewMode` değişir ve bileşen unmount olmaz.
+                      */}
+                      {focusedQuestions.length > 0 && uxStage !== "compose" ? (
+                        <button
+                          type="button"
+                          data-testid="composer-enter-maira"
+                          onClick={() => setViewMode("maira")}
+                          className="mb-3 min-h-11 w-full rounded-xl border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-medium text-[#0f5f59] transition hover:border-[#0f766e]/45"
+                        >
+                          Maira ile devam et
+                        </button>
+                      ) : null}
+
                       {focusedQuestions.length > 0 && uxStage !== "compose" ? (
                         <FocusedQuestionsPanel
                           questions={focusedQuestions}
@@ -3306,82 +3396,8 @@ function TalepOlusturForm() {
                               [fieldKey]: value,
                             }))
                           }
-                          onAnswer={(fieldKey, value) => {
-                            if (
-                              value === "skip" ||
-                              value === "skip_optional"
-                            ) {
-                              setSkippedQuestionKeys((keys) =>
-                                keys.includes(fieldKey)
-                                  ? keys
-                                  : [...keys, fieldKey],
-                              );
-                              trackComposerEvent("focused_question_skipped", {
-                                fieldKey,
-                              });
-                              return;
-                            }
-                            const question =
-                              enrichmentCandidates.find(
-                                (q) => q.fieldKey === fieldKey,
-                              ) ??
-                              focusedQuestions.find(
-                                (q) => q.fieldKey === fieldKey,
-                              );
-                            if (question) {
-                              applyBrainQuestion(question, value);
-                            }
-                            /**
-                             * KULLANICI METNİ OTORİTESİ (kurucu, 2026-08-26).
-                             *
-                             * Verilen cevap ARTIK serbest metne yazılmaz. Bu,
-                             * 2026-08-23 tarihli "cevap metne de işlenir"
-                             * kararının YERİNE GEÇER. Gerekçe ölçülmüş bir
-                             * zarardır: bestecinin metne yazdığı sözcük bir
-                             * sonraki okumada BAŞKA bir alanın kullanıcı kanıtı
-                             * sayılabiliyordu ve kullanıcı kendi cümlesinde
-                             * makine slug'ı ("Talep türü: vehicle.") görüyordu.
-                             *
-                             * Cevap kaybolmaz: `applyBrainQuestion` zaten her
-                             * cevabı `hybrid.applyQuickOption` üzerinden
-                             * kanonik duruma EXPLICIT_BROWSE kaynağıyla yazar
-                             * ve o yol rawInput'u bilerek korur. `rawInput`
-                             * kullanıcının yazdığı metin olarak değişmeden
-                             * kalır.
-                             */
-                            setAnsweredQuestionKeys((keys) =>
-                              keys.includes(fieldKey)
-                                ? keys
-                                : [...keys, fieldKey],
-                            );
-                            setConfirmedFactKeys((keys) =>
-                              keys.includes(fieldKey)
-                                ? keys
-                                : [...keys, fieldKey],
-                            );
-                            trackComposerEvent(
-                              isSoftEscapeValue(value)
-                                ? "focused_question_skipped"
-                                : "focused_question_answered",
-                              { fieldKey },
-                            );
-                          }}
-                          onSkip={(fieldKey) => {
-                            const importance = focusedQuestions.find(
-                              (q) => q.fieldKey === fieldKey,
-                            )?.importance;
-                            if (importance && importance !== "optional") {
-                              return;
-                            }
-                            setSkippedQuestionKeys((keys) =>
-                              keys.includes(fieldKey)
-                                ? keys
-                                : [...keys, fieldKey],
-                            );
-                            trackComposerEvent("focused_question_skipped", {
-                              fieldKey,
-                            });
-                          }}
+                          onAnswer={handleFocusedAnswer}
+                          onSkip={handleFocusedSkip}
                         />
                       ) : null}
 
