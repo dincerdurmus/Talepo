@@ -268,13 +268,46 @@ export function resolveQuestionControl(
 
   // Fallback — only for non-critical descriptive fields
   const soft = softFromCtx(ctx);
+  const escapes = [
+    ...(soft.unknown ? [soft.unknown] : []),
+    ...(soft.dontCare ? [soft.dontCare] : []),
+  ];
+
+  /**
+   * PROFİL SEÇENEKLERİ SON ÇAREDEN ÖNCE OKUNUR (2026-08-29).
+   *
+   * Ölçüldü: 34 profil alanı kanonik hızlı seçenek taşıdığı hâlde burada
+   * seçeneksiz metin kutusuna düşüyordu; kullanıcı tek dokunuşla
+   * cevaplayabileceği soruyu elle yazmak zorunda kalıyordu.
+   *
+   * İki sınır korunur. (1) Bu dal EN SONDADIR: budget, city, delivery,
+   * dimensions, searchable_entity gibi özel kontroller zaten yukarıda
+   * çözülmüştür ve etkilenmez. (2) `allowCustom` AÇIK bırakılır: profil
+   * seçenekleri kapalı enum değildir, listede olmayan geçerli cevap arayüzün
+   * mevcut 'Listede yok / Özel değer' yolundan yazılmaya devam eder.
+   *
+   * Kaçış cevapları buraya elle EKLENMEZ; yalnız `softFromCtx` sözleşmesinden
+   * gelir. Seçeneklerin sırası, etiketi ve gönderilecek değeri profilden
+   * aynen taşınır.
+   */
+  if (ctx.profileChoices && ctx.profileChoices.length > 0) {
+    return {
+      controlType: "single_choice",
+      options: ctx.profileChoices.map((o) => ({
+        label: o.label,
+        value: o.value,
+      })),
+      softOptions: escapes,
+      allowCustom: true,
+      customLabel: "Listede yok / Özel değer",
+      commitOnSelect: true,
+    };
+  }
+
   return {
     controlType: "text_fallback",
     options: [],
-    softOptions: [
-      ...(soft.unknown ? [soft.unknown] : []),
-      ...(soft.dontCare ? [soft.dontCare] : []),
-    ],
+    softOptions: escapes,
     allowCustom: true,
     customLabel: "Cevabınız",
     commitOnSelect: false,

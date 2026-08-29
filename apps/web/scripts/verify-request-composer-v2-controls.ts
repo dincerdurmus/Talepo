@@ -10,6 +10,7 @@ import {
 } from "../src/lib/request-composer/v2/question-control-registry";
 import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
 import { quantityPresets } from "../src/lib/request-composer/v2/option-providers";
+import { listAllProfiles } from "../src/lib/request-composer/v2/question-profiles";
 
 let passed = 0;
 let failed = 0;
@@ -119,6 +120,105 @@ check("descriptive notes may text_fallback", () => {
   });
   assert.equal(def.controlType, "text_fallback");
 });
+
+/**
+ * PROFİL ALANLARI DA SINANIR — KAPININ ESKİ KÖR NOKTASI (2026-08-29).
+ *
+ * Bu doğrulayıcı bugüne kadar yalnız elle yazılmış CRITICAL_CONTROL_KEYS
+ * kümesini dolaşıyordu. Soru profillerinden gelen alanlar hiç sınanmadığı
+ * için, kanonik seçenek taşıyan 34 kritik alanın seçeneksiz text_fallback'e
+ * düşmesi 128 yeşil kapının altında görünmez kalmıştı.
+ *
+ * Aşağıdaki tarama iki şeyi birlikte ölçer: seçenekler kontrol yüzeyine
+ * ULAŞIR ve cevap evreni KAPANMAZ. İkisinden biri olmadan kapı yeşil olmaz.
+ */
+for (const def of listAllProfiles()) {
+  if (!def.quickChoices?.length) continue;
+  const cat = (def.categories ?? ["technology"])[0]!;
+  const id = `${cat}/${def.fieldKey}`;
+  const ctrl = resolveQuestionControl({
+    categoryId: cat,
+    fieldKey: def.fieldKey,
+    importance: def.importance,
+    allowUnknown: Boolean(def.allowUnknown),
+    allowDontCare: Boolean(def.allowDontCare),
+    isRealEstate: cat === "real-estate",
+    productType: (def.whenProductTypes ?? [])[0] ?? null,
+    needType: (def.whenNeedTypes ?? [])[0] ?? null,
+    profileChoices: def.quickChoices,
+  });
+
+  check(`profile ${id}: kanonik seçenek kontrol yüzeyine ulaşır`, () => {
+    assert.ok(
+      ctrl.options.length > 0,
+      `${id} → ${ctrl.controlType} / options=0`,
+    );
+  });
+
+  /*
+   * ÖZEL KAYIT KONTROLLERİ HER ZAMAN ÖNCELİKLİDİR.
+   *
+   * `printing/quantity` (number_presets), `printing/printSize` (dimensions)
+   * ve `machinery/condition` (kilitli single_choice) seçeneklerini kaydın
+   * KENDİ dalından alır; profil listesiyle birebir aynı olmaları beklenmez.
+   * Onlarda ölçülen şey kimliğin değişmemesidir, profil eşitliği değil.
+   */
+  const SPECIAL_CONTROLS = new Set([
+    "money_range",
+    "location_picker",
+    "date_or_deadline",
+    "searchable_entity",
+    "dimensions",
+    "number_presets",
+    "multi_choice",
+    "yes_no",
+  ]);
+  const registryOwned =
+    SPECIAL_CONTROLS.has(ctrl.controlType) || def.fieldKey === "condition";
+
+  if (!registryOwned) {
+    check(`profile ${id}: seçenek sırası ve etiketi korunur`, () => {
+      assert.deepEqual(
+        ctrl.options.map((o) => [o.label, o.value]),
+        def.quickChoices!.map((o) => [o.label, o.value]),
+      );
+    });
+  }
+
+  check(`profile ${id}: seçenekler tekrar etmez`, () => {
+    assert.equal(
+      new Set(ctrl.options.map((o) => o.value)).size,
+      ctrl.options.length,
+    );
+  });
+
+  /*
+   * `machinery/condition` kaydın KENDİ özel dalından gelir ve bilerek
+   * kilitlidir (allowCustom: false). Bu ürün kararı profil düzeltmesiyle
+   * değiştirilmez; bu yüzden serbest cevap şartından muaf tutulur ve
+   * kilidi ayrıca doğrulanır.
+   */
+  if (def.fieldKey === "condition") {
+    check(`profile ${id}: mevcut kilitli davranış korunur`, () => {
+      assert.equal(ctrl.controlType, "single_choice");
+      assert.equal(ctrl.allowCustom, false);
+    });
+    continue;
+  }
+
+  check(`profile ${id}: serbest cevap yolu kapanmaz`, () => {
+    const escape =
+      ctrl.allowCustom === true ||
+      [...ctrl.options, ...ctrl.softOptions].some((o) => o.opensCustom);
+    assert.ok(escape, `${id} listede olmayan cevabı yazma yolunu kaybetti`);
+  });
+
+  check(`profile ${id}: kaçış cevabı seçeneklere karışmaz`, () => {
+    assert.ok(
+      !ctrl.options.some((o) => o.soft || /^fark\s*etmez$/i.test(o.label)),
+    );
+  });
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

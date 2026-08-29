@@ -97,6 +97,14 @@ export function scheduledToFocusedQuestion(
     isRemoteService: extras?.isRemoteService,
     isRealEstate: categoryId === "real-estate",
     listingType: extras?.listingType,
+    /**
+     * KAYIP NOKTASI BURASIYDI (ölçüldü 2026-08-29): profilin kanonik hızlı
+     * seçenekleri zamanlanmış soruda duruyor ama kontrol çözücüye hiç
+     * verilmiyordu; panel `control.options` okuduğu için 34 soru seçeneksiz
+     * çiziliyordu. Tek kanal: seçenekler profilden gelir, kontrol tipini
+     * kayıt seçer.
+     */
+    profileChoices: q.quickChoices,
   });
 
   const escapeChoices = q.escapeChoices.map((e) =>

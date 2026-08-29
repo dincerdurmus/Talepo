@@ -24,6 +24,11 @@ import {
   type FieldAnswerState,
 } from "../src/lib/request-composer/v2/question-scheduler";
 import { buildUnderstoodFacts } from "../src/lib/request-composer/ui-helpers";
+import {
+  listAllProfiles,
+} from "../src/lib/request-composer/v2/question-profiles";
+import type { QuestionProfileDef } from "../src/lib/request-composer/v2/question-profile-types";
+import { resolveQuestionControl } from "../src/lib/request-composer/v2/question-control-registry";
 import { budgetDisplayFromUnderstanding } from "../src/lib/request-understanding/activation-bridge";
 import type { CanonicalRequestState } from "../src/lib/request-composer/types";
 
@@ -927,7 +932,7 @@ function scheduleFor(
   }
 
   for (const text of NEGATIVE) {
-    const { state, field, satisfied } = budgetOf(text);
+    const { field, satisfied } = budgetOf(text);
     const id = `T9m-:${text.slice(0, 22)}`;
     gate(
       `${id}/kanonik-yok`,
@@ -941,6 +946,273 @@ function scheduleFor(
   mutationControl(
     "T9m-mutasyon",
     !budgetOf("Oto koltuğu 9-36 kg").field,
+  );
+}
+
+/* ================================================================== *
+ * P — KANONİK PROFİL SEÇENEKLERİ KONTROL YÜZEYİNE ULAŞIR.
+ *
+ * Ölçüldü (2026-08-29): 37 profil alanı `quickChoices` taşıyor, 34'ünde
+ * seçenekler `FocusedQuestion.control.options` yüzeyine hiç ulaşmıyor ve
+ * soru serbest metin kutusu olarak çiziliyor. Kayıp noktası
+ * `scheduledToFocusedQuestion` içinde `resolveQuestionControl` çağrısının
+ * profil seçeneklerini taşımaması.
+ *
+ * SÖZLEŞME: seçenekler görünür olur AMA cevap evreni kapanmaz —
+ * `quickChoices` kapalı enum değildir (profil kaydında bunu söyleyen bir
+ * metadata yok), bu yüzden serbest cevap yolu korunur.
+ * ================================================================== */
+{
+  const profilesWithChoices = (listAllProfiles() as QuestionProfileDef[]).filter(
+    (d) => (d.quickChoices?.length ?? 0) > 0,
+  );
+
+  function controlFor(def: QuestionProfileDef) {
+    const cat = (def.categories ?? ["technology"])[0]!;
+    return resolveQuestionControl({
+      categoryId: cat,
+      fieldKey: def.fieldKey,
+      importance: def.importance,
+      allowUnknown: Boolean(def.allowUnknown),
+      allowDontCare: Boolean(def.allowDontCare),
+      isRealEstate: cat === "real-estate",
+      productType: (def.whenProductTypes ?? [])[0] ?? null,
+      needType: (def.whenNeedTypes ?? [])[0] ?? null,
+      profileChoices: def.quickChoices,
+    });
+  }
+
+  /** Kaydın kendi özel dalından gelen kontroller — profil yolu bunlara dokunmaz. */
+  const SPECIAL = new Set([
+    "money_range",
+    "location_picker",
+    "date_or_deadline",
+    "searchable_entity",
+    "dimensions",
+    "number_presets",
+    "multi_choice",
+    "yes_no",
+  ]);
+
+  gate(
+    "P0-profil-alani-sayisi",
+    profilesWithChoices.length === 37,
+    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 37)`,
+  );
+
+  let lost = 0;
+  let profileSourced = 0;
+  const dist: Record<string, number> = {};
+  for (const def of profilesWithChoices) {
+    const cat = (def.categories ?? ["technology"])[0]!;
+    const id = `${cat}/${def.fieldKey}`;
+    const ctrl = controlFor(def);
+    dist[ctrl.controlType] = (dist[ctrl.controlType] ?? 0) + 1;
+
+    if (SPECIAL.has(ctrl.controlType)) continue; // özel kontrol korunur
+    if (def.fieldKey === "condition") continue; // kayıt kararı, P5'te ayrıca ölçülür
+    profileSourced += 1;
+
+    if (ctrl.options.length === 0) {
+      lost += 1;
+      gate(`P1:${id}/secenek-ulasti`, false, "profil seçenekleri kontrol yüzeyine ulaşmadı");
+      continue;
+    }
+    gate(
+      `P1:${id}/secenek-sayisi`,
+      ctrl.options.length === def.quickChoices!.length,
+      `${ctrl.options.length} ≠ profil ${def.quickChoices!.length}`,
+    );
+    gate(
+      `P2:${id}/sira-ve-etiket`,
+      ctrl.options.map((o) => o.label).join("|") ===
+        def.quickChoices!.map((o) => o.label).join("|"),
+      JSON.stringify(ctrl.options.map((o) => o.label)),
+    );
+    gate(
+      `P2b:${id}/deger-ayrimi`,
+      ctrl.options.every(
+        (o, i) => o.value === def.quickChoices![i]!.value && Boolean(o.label),
+      ),
+      "etiket ile gönderilecek değer karıştı",
+    );
+    gate(
+      `P3:${id}/duplicate-yok`,
+      new Set(ctrl.options.map((o) => o.value)).size === ctrl.options.length,
+      JSON.stringify(ctrl.options.map((o) => o.value)),
+    );
+    gate(
+      `P4:${id}/serbest-cevap-korunur`,
+      ctrl.allowCustom === true ||
+        [...ctrl.options, ...ctrl.softOptions].some((o) => o.opensCustom),
+      "listede olmayan cevabı yazma yolu kapandı",
+    );
+    gate(
+      `P5:${id}/kacis-hardcoded-degil`,
+      !ctrl.options.some((o) => /^fark\s*etmez$/i.test(o.label) || o.soft),
+      "kaçış cevabı profil seçeneklerine karıştı",
+    );
+  }
+  gate("P1-toplam-kayip", lost === 0, `${lost} alanda seçenek kaybı sürüyor`);
+  gate(
+    "P6-profil-kaynakli-kontrol-sayisi",
+    profileSourced === 34,
+    `profil kaynaklı kontrol ${profileSourced} (beklenen 34)`,
+  );
+  gate(
+    "P7-drift-single-choice",
+    (dist.single_choice ?? 0) === 35,
+    `single_choice ${dist.single_choice ?? 0} (beklenen 35 = 34 profil + machinery/condition)`,
+  );
+  gate(
+    "P7b-drift-text-fallback",
+    (dist.text_fallback ?? 0) === 0,
+    `text_fallback ${dist.text_fallback ?? 0} (beklenen 0)`,
+  );
+
+  /* --- P8: machinery/condition kilidi bu dilimde KORUNUR --- */
+  {
+    const cond = profilesWithChoices.find(
+      (d) => d.fieldKey === "condition" && (d.categories ?? []).includes("machinery"),
+    );
+    gate("P8a-condition-profili-var", Boolean(cond));
+    if (cond) {
+      const c = controlFor(cond);
+      gate("P8b-condition-single-choice", c.controlType === "single_choice", c.controlType);
+      gate(
+        "P8c-condition-kilidi-korunur",
+        c.allowCustom === false,
+        "kayıt kararı profil düzeltmesiyle değişti",
+      );
+    }
+  }
+
+  /* --- P9: özel kontroller değişmez --- */
+  {
+    const expect: Array<[string, string, string]> = [
+      ["appliances", "budget", "money_range"],
+      ["appliances", "city", "location_picker"],
+      ["appliances", "delivery", "date_or_deadline"],
+      ["technology", "brand", "searchable_entity"],
+      ["printing", "printSize", "dimensions"],
+      ["printing", "quantity", "number_presets"],
+    ];
+    for (const [cat, key, type] of expect) {
+      const c = resolveQuestionControl({
+        categoryId: cat,
+        fieldKey: key,
+        importance: "quote_critical",
+        allowUnknown: true,
+        allowDontCare: true,
+        isRealEstate: false,
+      });
+      gate(`P9:${cat}/${key}`, c.controlType === type, `${c.controlType} ≠ ${type}`);
+    }
+  }
+
+  /* --- P10: seçeneksiz gerçek soru text_fallback kalır --- */
+  {
+    const c = resolveQuestionControl({
+      categoryId: "appliances",
+      fieldKey: "notes",
+      importance: "optional",
+      allowUnknown: true,
+      allowDontCare: true,
+    });
+    gate("P10-secenekssiz-soru-text-kalir", c.controlType === "text_fallback", c.controlType);
+  }
+
+  /* --- P11: fridgeType uçtan uca --- */
+  {
+    const st = syncFromText(null, "Buzdolabı arıyorum").state;
+    const sch = scheduleFor(st);
+    const q = sch.result.visible.find((v) => v.fieldKey === "fridgeType");
+    gate("P11a-fridgeType-soruluyor", Boolean(q), JSON.stringify(sch.visible));
+    if (q) {
+      const f = scheduledToFocusedQuestion(q, undefined, { productType: "Buzdolabı" });
+      gate(
+        "P11b-dort-secenek-gorunur",
+        (f.control?.options ?? []).map((o) => o.label).join("|") ===
+          "No-Frost|Alttan donduruculu|Gardrop tipi|Mini",
+        JSON.stringify((f.control?.options ?? []).map((o) => o.label)),
+      );
+      gate("P11c-serbest-cevap-var", f.control?.allowCustom === true, "serbest cevap yolu yok");
+    }
+    /* Seçim kanonik alana gider ve soru tekrar sorulmaz. */
+    const answered = syncFromBrowse(st, {
+      key: "fridgeType",
+      value: "No-Frost",
+      isAny: false,
+    }).state;
+    gate(
+      "P11d-secim-kanonik-alana-gider",
+      answered.fields.fridgeType?.kind === "VALUE" &&
+        String(answered.fields.fridgeType?.value) === "No-Frost" &&
+        answered.fields.fridgeType?.provenance === "EXPLICIT_BROWSE",
+      JSON.stringify(answered.fields.fridgeType ?? null),
+    );
+    gate(
+      "P11e-tekrar-sorulmaz",
+      !scheduleFor(answered).visible.includes("fridgeType"),
+      JSON.stringify(scheduleFor(answered).visible),
+    );
+    /* Listede olmayan geçerli değer aynı yoldan yazılabilir. */
+    const custom = syncFromBrowse(st, {
+      key: "fridgeType",
+      value: "Yan yana çift kapılı",
+      isAny: false,
+    }).state;
+    gate(
+      "P11f-liste-disi-deger-yazilabilir",
+      custom.fields.fridgeType?.kind === "VALUE" &&
+        String(custom.fields.fridgeType?.value) === "Yan yana çift kapılı",
+      JSON.stringify(custom.fields.fridgeType ?? null),
+    );
+  }
+
+  /* --- P12: televizyon sorusu buzdolabı seçeneği almaz --- */
+  {
+    const tv = syncFromText(null, "Televizyon arıyorum").state;
+    const surface = scheduleFor(tv).result.visible.flatMap((v) => {
+      const f = scheduledToFocusedQuestion(v, undefined, { productType: "televizyon" });
+      return (f.control?.options ?? []).map((o) => o.label);
+    });
+    gate(
+      "P12-buzdolabi-secenegi-sizmaz",
+      !surface.some((l) => /no-?frost|donduruculu|gardrop/i.test(l)),
+      JSON.stringify(surface),
+    );
+  }
+
+  /* --- P13: listede olmayan serbest cevap örnekleri --- */
+  {
+    const samples: Array<[string, string]> = [
+      ["brand", "Sony"],
+      ["screenSize", "65 inç"],
+      ["seatingType", "Modüler köşe koltuk"],
+    ];
+    const base = syncFromText(null, "Televizyon arıyorum").state;
+    for (const [key, value] of samples) {
+      const st = syncFromBrowse(base, { key, value, isAny: false }).state;
+      gate(
+        `P13:${key}/serbest-deger`,
+        st.fields[key]?.kind === "VALUE" &&
+          String(st.fields[key]?.value) === value &&
+          st.fields[key]?.provenance === "EXPLICIT_BROWSE",
+        JSON.stringify(st.fields[key] ?? null),
+      );
+    }
+  }
+
+  mutationControl(
+    "P-mutasyon",
+    resolveQuestionControl({
+      categoryId: "appliances",
+      fieldKey: "fridgeType",
+      importance: "quote_critical",
+      allowUnknown: false,
+      allowDontCare: true,
+    }).options.length === 0,
   );
 }
 
