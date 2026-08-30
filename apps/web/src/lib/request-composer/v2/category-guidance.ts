@@ -101,6 +101,18 @@ function seedFallbackCandidates(
 
   if (map.size >= MIN_CANDIDATES) return;
 
+  /**
+   * DOLGU ADAYI UYDURULMAZ (2026-08-30).
+   *
+   * Kanıta dayalı en az bir aday varken listeyi MIN_CANDIDATES'e
+   * tamamlamak için REQUEST_CATEGORIES sırasından bir kategori eklemek,
+   * kullanıcıya ALAKASIZ bir seçenek gösteriyordu — ölçülen vaka: "araba
+   * lastiği" kartında Otomotiv'in yanında Emlak beliriyordu, çünkü
+   * dizinin ilk kategorisi oydu. Nötr tohumlar yalnız HİÇBİR kanıt
+   * yokken meşrudur; o zaman kart gerçek bir "hangi alan?" sorusudur.
+   */
+  if (map.size >= 1) return;
+
   // Neutral product-domain seeds — never invent browse leaves.
   for (const cat of REQUEST_CATEGORIES) {
     if (map.size >= MIN_CANDIDATES) break;

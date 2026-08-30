@@ -650,7 +650,13 @@ const STANDARD: QuestionProfileDef[] = [
     prompt: "Hangi tip kahve makinesi?",
     summaryLabel: "Kahve tipi",
     importance: "quote_critical",
-    categories: ["home-kitchen"],
+    /**
+     * KURUCU KARARI (2026-08-31): kahve makinesinin kanonik sahibi
+     * appliances'tır; soru sahibiyle birlikte yaşar. home-kitchen'da
+     * kalan kahve ürünleri (fincan takımı, kahve seti) bu soruyu zaten
+     * tetiklemez.
+     */
+    categories: ["appliances"],
     whenProductTypes: ["kahve"],
     rank: 60,
     allowDontCare: true,

@@ -241,7 +241,13 @@ check("I8: MediaMarkt-sourced brands resolve with correct category", () => {
     ["karcher halı yıkama makinesi", "appliances", "Kärcher"],
     ["KARCHER HALI YIKAMA", "appliances", "Kärcher"],
     ["braun tıraş makinesi", "appliances", "Braun"],
-    ["nespresso kahve makinesi kapsüllü", "home-kitchen", "Nespresso"],
+    /**
+     * KURUCU KARARI (2026-08-31): kahve makinesinin kanonik sahibi
+     * appliances'tır (Küçük Ev Aletleri → Kahve Makinesi); home-kitchen
+     * bu ürünün sahibi değildir. Beklenti taksonomi düğümünün categoryId
+     * değerinden gelir.
+     */
+    ["nespresso kahve makinesi kapsüllü", "appliances", "Nespresso"],
   ] as const) {
     const r = ru(raw);
     assert.equal(catOf(r), wantCat, raw);
@@ -561,7 +567,13 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     { cat: "appliances", product: "Çamaşır Makinesi", must: ["capacityKg"], never: ["capacityBtu", "screenSize"] },
     { cat: "appliances", product: "Buzdolabı", must: ["fridgeType"], never: ["screenSize", "capacityKg"] },
     { cat: "appliances", product: null, must: [], never: ["screenSize", "capacityBtu", "vacuumType"] },
-    { cat: "home-kitchen", product: "Kahve Makinesi", must: ["coffeeType"], never: ["capacityBtu", "screenSize"] },
+    /**
+     * KURUCU KARARI (2026-08-31): kahve makinesinin kanonik sahibi
+     * appliances'tır — soru da sahibiyle birlikte yaşar. home-kitchen bu
+     * ürünün sorusunu artık üretmez.
+     */
+    { cat: "appliances", product: "Kahve Makinesi", must: ["coffeeType"], never: ["capacityBtu", "screenSize"] },
+    { cat: "home-kitchen", product: "Kahve Makinesi", must: [], never: ["coffeeType", "capacityBtu", "screenSize"] },
     // Matbaaloji ailesi (2026-08-22)
     { cat: "printing", product: "Kartvizit", must: ["quantity", "lamination"], never: ["printSize", "pageCount", "capacityBtu"] },
     { cat: "printing", product: "Broşür", must: ["quantity", "printSize", "paperWeight"], never: ["pageCount", "capacityBtu"] },

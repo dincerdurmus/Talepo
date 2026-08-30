@@ -28,6 +28,8 @@
     "verify:core": "npx --yes tsx scripts/verify-core.ts",
     "verify:phase4b": "npx --yes tsx scripts/verify-phase4b-soft-launch-v1.ts",
     "verify:maira-answer-contract": "npx --yes tsx scripts/verify-maira-answer-contract-v1.ts",
+    "verify:routing-matrix": "npx --yes tsx scripts/verify-request-routing-matrix-v1.ts",
+    "verify:answer-edit-parity": "npx --yes tsx scripts/verify-answer-edit-parity-v1.ts",
     "deploy:check": "npx --yes tsx scripts/check-production-env.ts --production && prisma generate && prisma migrate status",
     "postinstall": "prisma generate"
   },

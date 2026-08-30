@@ -411,11 +411,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "kahve seti",
     "çay seti",
     "cay seti",
-    "kahve makinesi",
-    "kahve makina",
-    "espresso",
-    "latte go",
-    "lattego",
+    /**
+     * KURUCU KARARI (2026-08-31): kahve makinesi (espresso / kapsüllü
+     * dahil) appliances'ın malıdır; makine belirteçleri bu listeden
+     * kaldırıldı. home-kitchen'da sofra/servis dünyası kalır.
+     */
     "fincan",
     "bardak",
     "çatal",
@@ -620,10 +620,9 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         normalized.includes("cay seti") ||
         normalized.includes("tabak") ||
         normalized.includes("yemek takımı") ||
-        normalized.includes("yemek takimi") ||
-        normalized.includes("kahve makinesi") ||
-        normalized.includes("espresso") ||
-        normalized.includes("lattego")
+        normalized.includes("yemek takimi")
+        /* kahve makinesi / espresso / lattego: kurucu kararıyla appliances
+           (2026-08-31); makine takviyesi burada yaşayamaz. */
       ) {
         score += 4;
       }

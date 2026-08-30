@@ -47,9 +47,7 @@ import {
   planAnswerApplication,
   projectUserAnswers,
 } from "@/lib/request-composer/v2/answer-apply-plan";
-import { resolveQuestionControl } from "@/lib/request-composer/v2/question-control-registry";
 import { mergeAnswersIntoUnderstoodFacts } from "./ui-helpers";
-import { listAllProfiles } from "@/lib/request-composer/v2/question-profiles";
 import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
 import {
@@ -133,6 +131,7 @@ import {
 import {
   isSoftEscapeValue,
   scheduleComposerQuestions,
+  resolveEditQuestion,
   scheduledToFocusedQuestion,
 } from "@/lib/request-composer/v2/focused-questions";
 import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
@@ -1476,43 +1475,45 @@ function TalepOlusturForm() {
     understandingCity,
   ]);
 
+  /**
+   * SORU BAĞLAMI — NORMAL SORU İLE DÜZELTME SORUSU İÇİN TEK OKUMA.
+   *
+   * Bu dört değer daha önce yalnız `focusedQuestions` içinde okunuyordu;
+   * düzeltme yüzeyi kendi (eksik) bağlamını kuruyordu ve iki yüzey
+   * ayrışabiliyordu. Tek memo, ayrışmayı yapısal olarak imkânsız kılar.
+   */
+  const questionContext = useMemo(() => {
+    const valueOf = (key: string) => {
+      const f = hybrid.state?.fields[key];
+      return f?.kind === "VALUE" ? String(f.value ?? "") : null;
+    };
+    return {
+      productType: valueOf("productType") ?? valueOf("applianceType"),
+      needType: valueOf("needType"),
+      listingType: valueOf("listingType"),
+      isRemoteService:
+        /\buzaktan\b/i.test(requestText) ||
+        (manualValues.locationMode ?? "").toLocaleLowerCase("tr-TR") ===
+          "remote",
+    };
+  }, [hybrid.state?.fields, manualValues.locationMode, requestText]);
+
   const focusedQuestions = useMemo(() => {
     const hybridByKey = new Map(
       enrichmentCandidates.map((c) => [c.fieldKey, c]),
     );
-    const productType =
-      hybrid.state?.fields.productType?.kind === "VALUE"
-        ? String(hybrid.state.fields.productType.value ?? "")
-        : hybrid.state?.fields.applianceType?.kind === "VALUE"
-          ? String(hybrid.state.fields.applianceType.value ?? "")
-          : null;
-    const needTypeField = hybrid.state?.fields.needType;
-    const needType =
-      needTypeField?.kind === "VALUE"
-        ? String(needTypeField.value ?? "")
-        : null;
-    const listingType =
-      hybrid.state?.fields.listingType?.kind === "VALUE"
-        ? String(hybrid.state.fields.listingType.value ?? "")
-        : null;
-    const isRemote =
-      /\buzaktan\b/i.test(requestText) ||
-      (manualValues.locationMode ?? "").toLocaleLowerCase("tr-TR") ===
-        "remote";
     return focusedQuestionSchedule.visible.map((q) =>
       scheduledToFocusedQuestion(q, hybridByKey.get(q.fieldKey), {
-        productType,
-        needType,
-        isRemoteService: isRemote,
-        listingType,
+        productType: questionContext.productType,
+        needType: questionContext.needType,
+        isRemoteService: questionContext.isRemoteService,
+        listingType: questionContext.listingType,
       }),
     );
   }, [
     enrichmentCandidates,
     focusedQuestionSchedule.visible,
-    hybrid.state?.fields,
-    manualValues.locationMode,
-    requestText,
+    questionContext,
   ]);
 
   const composerReadiness = useMemo(
@@ -2266,6 +2267,36 @@ function TalepOlusturForm() {
                               { fieldKey },
                             );
                           }
+
+  /**
+   * DÜZELTME KONTROLÜ — İKİ YÜZEY İÇİN TEK KÖPRÜ (2026-08-30).
+   *
+   * Maira "Yanıtlarım" ve standart "Talepo'nun anladıkları" panosu AYNI
+   * çözücüyü çağırır. Çözücü, normal soru üretiminin kendi zincirini
+   * kullanır (`resolveEditQuestion` → profil → `scheduledToFocusedQuestion`)
+   * ve bağlamı normal soruyla aynı `questionContext` memosundan okur; bu
+   * yüzden iki yüzeyin seçenek listesi ayrışamaz. Kayıt bir kontrol
+   * veremiyorsa satır düzenlenemez — uydurma metin kutusu açılmaz.
+   */
+  function resolveAnswerEditQuestion(fieldKey: string) {
+    if (!activeCategoryId) return null;
+    const resolved = resolveEditQuestion({
+      state: hybrid.state ?? null,
+      fieldKey,
+      categoryId: activeCategoryId,
+      needType: questionContext.needType,
+      productType: questionContext.productType,
+      isRemoteService: questionContext.isRemoteService,
+      listingType: questionContext.listingType,
+    });
+    return resolved.status === "ready" ? resolved.question : null;
+  }
+
+  function resolveAnswerEditControl(fieldKey: string) {
+    const control = resolveAnswerEditQuestion(fieldKey)?.control ?? null;
+    if (!control) return null;
+    return control.options.length > 0 || control.allowCustom ? control : null;
+  }
 
   function handleFocusedSkip(fieldKey: string) {
                             const importance = focusedQuestions.find(
@@ -3032,30 +3063,7 @@ function TalepOlusturForm() {
           answers={userAnswerRows}
           subtitle={readinessLabel}
           onExitToStandard={() => setViewMode("standard")}
-          editControl={(fieldKey) => {
-            /**
-             * Cevaplanmış bir alan zamanlayıcıdan yeniden yayınlanmaz (kanonik
-             * değer soruyu kapatır). Düzenleme yüzeyi bu yüzden doğrudan
-             * KONTROL KAYDINDAN çözülür — seçenekler ve serbest cevap izni
-             * aynı otoriteden gelir, Maira hiçbir şey üretmez.
-             */
-            if (!activeCategoryId) return null;
-            const profile = listAllProfiles().find(
-              (def) => def.fieldKey === fieldKey,
-            );
-            const control = resolveQuestionControl({
-              categoryId: activeCategoryId,
-              fieldKey,
-              importance: profile?.importance ?? "optional",
-              allowUnknown: Boolean(profile?.allowUnknown),
-              allowDontCare: Boolean(profile?.allowDontCare),
-              isRealEstate: activeCategoryId === "real-estate",
-              profileChoices: profile?.quickChoices,
-            });
-            return control.options.length > 0 || control.allowCustom
-              ? control
-              : null;
-          }}
+          editControl={resolveAnswerEditControl}
           onEditAnswer={(fieldKey, value) => {
             /* Mevcut kanonik cevap işleyicisi — ikinci güncelleme yolu yok. */
             handleFocusedAnswer(fieldKey, value);
@@ -3268,6 +3276,7 @@ function TalepOlusturForm() {
                   {requestText.trim().length > 0 ? (
                     <>
                       <UnderstoodFactsBoard
+                        editControl={resolveAnswerEditControl}
                         hasText
                         updating={hybrid.isSyncing}
                         degraded={hybrid.browseDegraded}

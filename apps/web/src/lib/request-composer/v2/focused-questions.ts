@@ -18,6 +18,7 @@ import {
   type FieldAnswerState,
 } from "./question-scheduler";
 import { resolveQuestionControl } from "./question-control-registry";
+import { resolveProfileForField } from "./question-profiles";
 import type { QuestionControlDef } from "./question-control-types";
 
 export type FocusedQuestion = HumanizedQuestion & {
@@ -351,3 +352,102 @@ export function scheduleComposerQuestions(input: {
 }
 
 export type { ScheduleResult };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CEVAP DÜZELTME KAPISI — TEK SAF KÖPRÜ (2026-08-30)
+
+   NEDEN VAR. Cevaplanmış bir alan zamanlayıcıdan yeniden yayınlanmaz:
+   kanonik değer soruyu kapatır ve bu bastırma DOĞRUDUR, gevşetilmez.
+   Ama "bir daha sorma" ile "düzeltemezsin" aynı şey değildir. Kullanıcı
+   verdiği cevabı değiştirmek istediğinde o alanın kanonik sorusu yeniden
+   çözülmek zorundadır.
+
+   NEDEN AYNI ÜRETİM YOLU. Düzeltme yüzeyi daha önce `page.tsx` içinde
+   satır içi çözülüyordu ve profili `listAllProfiles().find(...)` ile,
+   yani kategori/ürün özgüllüğünü YOK SAYARAK buluyordu. Ölçüldü
+   (2026-08-30): `printing/quantity` alanında bu kopya normal sorudan
+   farklı bir kaçış seçeneği ("Henüz bilmiyorum") üretiyordu — iki yüzey
+   sessizce farklı bir cevap evreni gösteriyordu. Bu köprü artık normal
+   soru üretiminin KENDİ zincirini kullanır: `resolveProfileForField` →
+   `ScheduledQuestion` → `scheduledToFocusedQuestion`. Seçenekler profilden
+   gelir, kontrol tipini kayıt seçer; burada ikinci bir eşleme tablosu
+   ya da ikinci bir seçenek aktarımı YOKTUR.
+
+   NEDEN FAIL-CLOSED. Kanonik kontrol çözülemiyorsa uydurma bir metin
+   kutusu açmak, kullanıcının serbestçe yazdığı metni kanonik cevap gibi
+   kaydeder ve eşleşmeyi bozar. Kapı o durumda KAPALI döner.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export type EditQuestionResolution =
+  | {
+      status: "ready";
+      /** Normal akıştakiyle aynı sözleşme: `FocusedQuestion`. */
+      question: FocusedQuestion;
+      /** Kanonik durumdaki mevcut değer — yalnız gösterim içindir. */
+      currentValue: string | null;
+      /** Kanonik merdivendeki mevcut mod (VALUE / ANY / UNKNOWN / …). */
+      currentKind: string | null;
+    }
+  | { status: "unavailable"; fieldKey: string; reason: "no_profile" };
+
+type CanonicalFieldLike = { kind?: string; value?: string | null };
+
+export function resolveEditQuestion(input: {
+  /** Besteci kanonik durumu — yalnız mevcut değeri OKUMAK için. */
+  state: { fields?: Record<string, CanonicalFieldLike | undefined> } | null;
+  fieldKey: string;
+  categoryId: string;
+  needType?: string | null;
+  productType?: string | null;
+  isRemoteService?: boolean;
+  listingType?: string | null;
+}): EditQuestionResolution {
+  const { fieldKey, categoryId } = input;
+
+  const profile = resolveProfileForField({
+    fieldKey,
+    categoryId,
+    needType: input.needType ?? null,
+    productType: input.productType ?? null,
+  });
+  if (!profile) return { status: "unavailable", fieldKey, reason: "no_profile" };
+
+  /**
+   * Zamanlayıcının ürettiğiyle AYNI ara sözleşme. `escapeChoices` boş
+   * bırakılır: ANY / UNKNOWN kaçışlarını kontrol kaydı zaten
+   * `softOptions` içinde taşır ve ikinci bir kaçış listesi aynı bilginin
+   * ikinci kopyası olurdu.
+   */
+  const scheduled: ScheduledQuestion = {
+    fieldKey,
+    prompt: profile.prompt,
+    summaryLabel: profile.summaryLabel,
+    importance: profile.importance,
+    allowUnknown: Boolean(profile.allowUnknown),
+    allowDontCare: Boolean(profile.allowDontCare),
+    inputHint: profile.inputHint ?? "text",
+    budgetBasis: profile.budgetBasis,
+    priorityScore: 0.5,
+    quickChoices: profile.quickChoices,
+    escapeChoices: [],
+    categoryId,
+  };
+
+  const question = scheduledToFocusedQuestion(scheduled, undefined, {
+    productType: input.productType ?? null,
+    needType: input.needType ?? null,
+    isRemoteService: input.isRemoteService,
+    listingType: input.listingType ?? null,
+  });
+
+  const field = input.state?.fields?.[fieldKey] ?? null;
+  return {
+    status: "ready",
+    question,
+    currentValue:
+      field && field.kind === "VALUE" && typeof field.value === "string"
+        ? field.value
+        : null,
+    currentKind: field ? (field.kind ?? null) : null,
+  };
+}

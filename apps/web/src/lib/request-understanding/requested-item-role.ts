@@ -308,6 +308,14 @@ const TAIL_TOKENS: ReadonlySet<string> = new Set([
   "gerek",
   "alacagim",
   "alicam",
+  /**
+   * Satın-alma fiilleri de istek kuyruğudur (2026-08-30): "araba lastiği
+   * almak istiyorum" cümlesinde baş isim "almak" değil "lastik"tir. Bunlar
+   * eklenmeden geriye tarama fiilde duruyor ve baş isim hiç bulunmuyordu.
+   */
+  "almak",
+  "satin",
+  "yaptirmak",
   "olsun",
   "olmasin",
   "icin",
@@ -392,7 +400,13 @@ export function classifyRequestedTargetRole(
   if (!t) return NONE;
   const tokens = t.split(/\s+/u).filter(Boolean);
 
-  // (1) Baş sözcük — sondan başa, sağlayıcı adlarını atlayarak.
+  // (1) Baş sözcük — sondan başa, sağlayıcı adlarını atlayarak. Taramanın
+  // DURDUĞU sözcük ifadenin başıdır ve (3) numaralı taksonomi denetimi de
+  // aynı sözcüğü kullanır; cümledeki literal son sözcük (çoğu zaman istek
+  // fiili) değil. Ölçüldü (2026-08-30): "araba lastiği arıyorum" cümlesinde
+  // (3) "arıyorum"u deniyor ve taksonomiye baş isim hiç sorulmadan NONE
+  // dönüyordu; aynı ifade fiilsiz verilince TAXONOMY_HEAD buluyordu.
+  let headToken: string | null = null;
   for (let i = tokens.length - 1; i >= 0; i--) {
     const forms = headForms(tokens[i] ?? "");
     if (!forms.length) continue;
@@ -412,34 +426,53 @@ export function classifyRequestedTargetRole(
       }
     }
     // Baş sözcük bulundu ama rolü sözlükte yok — karar taksonomiye kalır.
+    headToken = tokens[i] ?? null;
     break;
   }
 
-  // (2) İfadenin tamamı kanonik taksonomide.
-  if (isCanonicalWholeProductPhrase(t)) {
-    return {
-      role: "WHOLE_PRODUCT",
-      domain: null,
-      head: null,
-      confidence: 0.9,
-      provenance: "TAXONOMY_PHRASE",
-      evidence: [t],
-    };
+  // (2) İfadenin tamamı kanonik taksonomide — istek kuyruğu SOYULARAK da
+  // denenir. "360 kamera almak istiyorum" cümlesinde kanonik ifade "360
+  // kamera"dır; kuyruk fiilleri taksonomi araması yapılmadan önce atılmazsa
+  // çok sözcüklü kanonik adlar hiç bulunamıyordu (ölçüldü 2026-08-30).
+  let coreEnd = tokens.length;
+  while (coreEnd > 0) {
+    const forms = headForms(tokens[coreEnd - 1] ?? "");
+    if (forms.length && forms.some((f) => TAIL_TOKENS.has(f))) {
+      coreEnd--;
+      continue;
+    }
+    break;
   }
-  const phraseRole = roleForNodeTypes(listCanonicalPhraseNodeTypes(t));
-  if (phraseRole !== "UNKNOWN") {
-    return {
-      role: phraseRole,
-      domain: null,
-      head: null,
-      confidence: 0.85,
-      provenance: "TAXONOMY_PHRASE",
-      evidence: [t],
-    };
+  const corePhrase =
+    coreEnd > 0 && coreEnd < tokens.length
+      ? tokens.slice(0, coreEnd).join(" ")
+      : null;
+  for (const aday of corePhrase ? [t, corePhrase] : [t]) {
+    if (isCanonicalWholeProductPhrase(aday)) {
+      return {
+        role: "WHOLE_PRODUCT",
+        domain: null,
+        head: null,
+        confidence: 0.9,
+        provenance: "TAXONOMY_PHRASE",
+        evidence: [aday],
+      };
+    }
+    const phraseRole = roleForNodeTypes(listCanonicalPhraseNodeTypes(aday));
+    if (phraseRole !== "UNKNOWN") {
+      return {
+        role: phraseRole,
+        domain: null,
+        head: null,
+        confidence: 0.85,
+        provenance: "TAXONOMY_PHRASE",
+        evidence: [aday],
+      };
+    }
   }
 
-  // (3) Baş sözcük kanonik taksonomide.
-  const last = tokens[tokens.length - 1];
+  // (3) Baş sözcük kanonik taksonomide — (1)'in bulduğu baş kullanılır.
+  const last = headToken;
   if (last && tokens.length > 1) {
     for (const f of headForms(last)) {
       if (isCanonicalWholeProductPhrase(f)) {

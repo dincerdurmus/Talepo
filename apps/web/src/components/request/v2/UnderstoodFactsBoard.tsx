@@ -10,6 +10,7 @@ import {
 } from "@/components/panel/profile/ProfileSignal";
 import { DONT_CARE_FIELD_KEYS } from "@/lib/request-composer/v2/display-format";
 import type { EditableUnderstoodFact } from "@/lib/request-composer/v2/understood-facts";
+import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
 
 type Props = {
   facts: EditableUnderstoodFact[];
@@ -26,6 +27,16 @@ type Props = {
   onDismissFact: (key: string) => void;
   onEditFact: (key: string, value: string) => void;
   onDontCareFact: (key: string) => void;
+  /**
+   * KANONİK DÜZELTME KONTROLÜ (2026-08-30).
+   *
+   * Maira "Yanıtlarım" ile AYNI köprüden gelir. Kayıt bir kontrol
+   * verdiğinde kalem serbest metin kutusu yerine kanonik seçenekleri
+   * gösterir; böylece iki yüzey aynı cevap evrenini sunar. Kontrol yoksa
+   * mevcut serbest yazma davranışı aynen korunur — uydurma seçenek
+   * üretilmez.
+   */
+  editControl?: (key: string) => QuestionControlDef | null;
 };
 
 export function UnderstoodFactsBoard({
@@ -41,6 +52,7 @@ export function UnderstoodFactsBoard({
   onDismissFact,
   onEditFact,
   onDontCareFact,
+  editControl,
 }: Props) {
   const baseId = useId();
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -148,6 +160,7 @@ export function UnderstoodFactsBoard({
               onConfirmFact={onConfirmFact}
               onDismissFact={onDismissFact}
               onEditFact={onEditFact}
+              editControl={editControl}
               onDontCareFact={onDontCareFact}
             />
           ))}
@@ -171,6 +184,7 @@ export function UnderstoodFactsBoard({
               onConfirmFact={onConfirmFact}
               onDismissFact={onDismissFact}
               onEditFact={onEditFact}
+              editControl={editControl}
               onDontCareFact={onDontCareFact}
             />
           ))}
@@ -194,6 +208,7 @@ function FactRow({
   onDismissFact,
   onEditFact,
   onDontCareFact,
+  editControl,
 }: {
   fact: EditableUnderstoodFact;
   baseId: string;
@@ -208,11 +223,18 @@ function FactRow({
   onDismissFact: (key: string) => void;
   onEditFact: (key: string, value: string) => void;
   onDontCareFact: (key: string) => void;
+  editControl?: (key: string) => QuestionControlDef | null;
 }) {
   const editId = `${baseId}-edit-${fact.key}`;
   const isEditing = editingKey === fact.key;
   const menuOpen = menuKey === fact.key;
   const allowDontCare = DONT_CARE_FIELD_KEYS.has(fact.key);
+  const control = editControl?.(fact.key) ?? null;
+  const canonicalOptions = control
+    ? [...control.options, ...control.softOptions].filter(
+        (o) => o.value !== "__custom__",
+      )
+    : [];
 
   if (variant === "check") {
     return (
@@ -227,11 +249,18 @@ function FactRow({
           ) : null}
         </p>
         {isEditing ? (
-          <EditInline
+          <CanonicalOrFreeEdit
             id={editId}
             label={fact.label}
+            options={canonicalOptions}
+            allowCustom={control ? control.allowCustom : true}
             draft={draft}
             setDraft={setDraft}
+            onPick={(value) => {
+              onEditFact(fact.key, value);
+              setEditingKey(null);
+              setDraft("");
+            }}
             onSave={() => {
               const next = draft.trim();
               if (next) onEditFact(fact.key, next);
@@ -289,11 +318,18 @@ function FactRow({
       }`}
     >
       {isEditing ? (
-        <EditInline
+        <CanonicalOrFreeEdit
           id={editId}
           label={fact.label}
+          options={canonicalOptions}
+          allowCustom={control ? control.allowCustom : true}
           draft={draft}
           setDraft={setDraft}
+          onPick={(value) => {
+            onEditFact(fact.key, value);
+            setEditingKey(null);
+            setDraft("");
+          }}
           onSave={() => {
             const next = draft.trim();
             if (next) onEditFact(fact.key, next);
@@ -372,6 +408,83 @@ function FactRow({
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * DÜZELTME YÜZEYİ — KANONİK SEÇENEK VARSA ONU GÖSTERİR.
+ *
+ * Bu bileşen hiçbir seçenek ÜRETMEZ: aldığı liste, normal soru üretimiyle
+ * aynı köprüden (`resolveEditQuestion`) gelen kanonik kontrolün kendisidir.
+ * Kayıt seçenek veremiyorsa mevcut serbest yazma yolu aynen korunur;
+ * kontrol serbest cevaba izin veriyorsa iki yol birlikte durur — cevap
+ * evreni kapanmaz.
+ */
+function CanonicalOrFreeEdit({
+  id,
+  label,
+  options,
+  allowCustom,
+  draft,
+  setDraft,
+  onPick,
+  onSave,
+  onCancel,
+}: {
+  id: string;
+  label: string;
+  options: { label: string; value: string }[];
+  allowCustom: boolean;
+  draft: string;
+  setDraft: (v: string) => void;
+  onPick: (value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+}) {
+  if (options.length === 0) {
+    return (
+      <EditInline
+        id={id}
+        label={label}
+        draft={draft}
+        setDraft={setDraft}
+        onSave={onSave}
+        onCancel={onCancel}
+      />
+    );
+  }
+  return (
+    <div className="mt-1 flex flex-col gap-2" data-testid="fact-canonical-edit">
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            className="min-h-9 rounded-full border border-teal-900/15 bg-white px-3 text-[13px] font-medium text-[#0f1f1d] hover:border-[#0f766e]/40"
+            onClick={() => onPick(opt.value)}
+          >
+            {opt.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="min-h-9 rounded-full px-2 text-[13px] text-teal-950/60"
+          onClick={onCancel}
+        >
+          Vazgeç
+        </button>
+      </div>
+      {allowCustom ? (
+        <EditInline
+          id={id}
+          label={label}
+          draft={draft}
+          setDraft={setDraft}
+          onSave={onSave}
+          onCancel={onCancel}
+        />
+      ) : null}
+    </div>
   );
 }
 

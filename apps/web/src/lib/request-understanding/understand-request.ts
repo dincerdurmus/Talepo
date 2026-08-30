@@ -45,6 +45,7 @@ import type {
   UnderstandingValue,
 } from "@/lib/request-understanding/types";
 import { detectCategoryResult, hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
+import { findCanonicalCategoryClaim } from "@/lib/taxonomy/phrase-classification";
 import { extractBudgetFromText } from "@/lib/ai/parser/budget";
 import { detectCity } from "@/lib/ai/parser/entity";
 import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
@@ -58,7 +59,10 @@ import {
 } from "@/lib/price-intelligence/strategy-resolver";
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
 
-import { isRequestedItemNotModel } from "@/lib/request-understanding/requested-item-role";
+import {
+  isRequestedItemNotModel,
+  SERVICE_LEMMAS,
+} from "@/lib/request-understanding/requested-item-role";
 import {
   canonicalParentProductSpan,
   findUnresolvedCompatibilityTarget,
@@ -66,6 +70,7 @@ import {
   isUsageContextOnlyDesignator,
   readUsageContextSplit,
   resolveRelationDomain,
+  splitCompatibilityPhrase,
 } from "@/lib/request-understanding/part-relation";
 
 import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
@@ -153,6 +158,104 @@ function gateCategory(
 ): UnderstandingDecision<string> {
   const detected = detectCategoryResult(rawInput);
   const scoreConf = clamp01(detected.score / 6);
+
+  /**
+   * ÖNCELİK 1 — KANONİK EN-UZUN EŞLEŞME (2026-08-30).
+   *
+   * Ölçüldü: tam katalog matrisinde 804 kanonik yaprak adı taksonomide
+   * çözülebildiği hâlde token skorlayıcı içlerindeki tek bir genel
+   * kelimeye yenildi ("Klima gaz dolumu" → appliances, "Buz Makinesi" →
+   * machinery). Metindeki en uzun tam kanonik yaprak/alias eşleşmesi ve
+   * onun katalog sahibi artık token skorundan önce gelir; skorlayıcı
+   * yalnız kanonik kanıt bulunamayınca çalışan fallback'tir. Çok sahipli
+   * ifade tipli belirsizlik politikasından okunur; karar UYDURULMAZ.
+   *
+   * KURUCU İSTİSNASI KORUNUR (2026-08-23): ürün kategorisinde SERVİS
+   * niyeti Hizmetler'e yönlenir (otomotiv hariç). Kanonik iddia bir
+   * HİZMET yaprağına çözülüyorsa yönlendirmeye gerek yoktur — sahip
+   * kategori hizmetin kanonik evidir; ürün yaprağına çözülüyorsa ve
+   * niyet servisse mevcut yönlendirme aynen işler.
+   */
+  /**
+   * "X için Y" cümlelerinde iddia ÜRETİLMEZ: uyumluluk ilişkisinin tek
+   * yetkilisi part-relation zinciridir ve kategori kararını rol + bağlam
+   * verir (öncelik sözleşmesinin 4. basamağı oradadır). Ölçülen
+   * regresyonlar: "Klima için dış ünite fan motoru" iddia yüzünden
+   * otomotive, "Renault Clio için bakım" bebek "Bakım" düğümüne
+   * kayıyordu. Bağlaçsız düz metinde iddia tam yetkilidir.
+   */
+  const rawClaim = findCanonicalCategoryClaim(rawInput);
+  const claimSpansConnective =
+    rawClaim != null && /(?:^|[^\p{L}])i[cç]in(?:[^\p{L}]|$)/iu.test(rawClaim.phrase);
+  const claim =
+    splitCompatibilityPhrase(rawInput) && !claimSpansConnective
+      ? null
+      : rawClaim;
+  /**
+   * Servis niyeti kanıtı, iddia edilen kanonik adın DIŞINDA aranır: "Video
+   * Montaj Donanımı ... arıyorum" bir donanım satın alma talebidir; ürün
+   * adının içindeki "montaj" sözcüğü servis niyeti sayılırsa kanonik ürün
+   * Hizmetler'e sürülür (ölçüldü). Ad çıkarıldıktan sonra kalan metinde
+   * servis dili varsa kurucu yönlendirmesi aynen işler.
+   */
+  /**
+   * Hizmet dili tek yetkiliden türetilir (SERVICE_LEMMAS) — ikinci bir
+   * fiil listesi tutulmaz. "yaptır" lemmalarda yoktur çünkü o bir niyet
+   * fiilidir; burada niyet + lemma birlikte arandığı için eklenir.
+   */
+  const SERVICE_WORD_RE = new RegExp(
+    [...SERVICE_LEMMAS, "yaptır", "yaptir", "arıza", "ariza"]
+      /* Türkçe ünsüz yumuşaması: "temizlik" iyelikle "temizliği" olur. */
+      .map((l) => l.replace(/k$/u, "[kğg]"))
+      .join("|"),
+    "i",
+  );
+  const textOutsideClaim = claim
+    ? rawInput
+        .toLocaleLowerCase("tr-TR")
+        .replace(claim.phrase.toLocaleLowerCase("tr-TR"), " ")
+    : rawInput;
+  /* Niyet etiketi bu noktada henüz kaba olabilir; belirleyici olan, adın
+     DIŞINDA gerçek servis dili bulunmasıdır ("web sitesi yaptırmak
+     istiyorum" → yaptır dışarıda → kurucu yönlendirmesi işler). */
+  const serviceIntentForClaim = SERVICE_WORD_RE.test(textOutsideClaim);
+  if (claim?.kind === "unique") {
+    const claimIsService = claim.node.nodeType === "SERVICE_TYPE";
+    const productServiceRedirect =
+      serviceIntentForClaim &&
+      !claimIsService &&
+      claim.categoryId !== "automotive";
+    if (!productServiceRedirect) {
+      return {
+        value: claim.categoryId,
+        confidence: Math.max(0.85, scoreConf),
+        status: "CONFIDENT",
+        evidence: [
+          "canonical-claim",
+          `phrase=${claim.phrase}`,
+          `node=${claim.node.id}`,
+          `span=${claim.span}`,
+        ],
+      };
+    }
+  } else if (claim?.kind === "ambiguous") {
+    return {
+      value: null,
+      confidence: 0.4,
+      status: "UNKNOWN",
+      evidence: [
+        "canonical-claim-ambiguous",
+        `phrase=${claim.phrase}`,
+        `allowed=${claim.categoryIds.join("|")}`,
+      ],
+      alternatives: claim.categoryIds.map((cid) => ({
+        value: cid,
+        confidence: 0.5,
+        evidence: ["ambiguity-policy"],
+      })),
+    };
+  }
+
   const alternatives =
     detected.runnerUpId && detected.runnerUpScore > 0
       ? [
@@ -669,6 +772,19 @@ export function understandRequest(
 
   let category = gateCategory(normalizedInput, intentResolved.intent);
 
+  /**
+   * KANONİK İDDİA SONRAKİ TAHMİNLERLE EZİLMEZ (2026-08-30).
+   *
+   * `gateCategory` metindeki EN UZUN tam kanonik yaprak eşleşmesiyle kesin
+   * karar verdiyse, daha KISA span'lı semantik tahminler (tek kelimelik
+   * domain izi, hizmet sözcüğü) o kararı geri alamaz — öncelik sözleşmesi
+   * tam bu sırayı kurar. Kullanıcının kendi seçimi (STRUCTURED_FIELD) bu
+   * kuralın ÜSTÜNDEDİR ve kendi dalında zaten kazanır.
+   */
+  const categoryFromCanonicalClaim = () =>
+    category.evidence?.[0] === "canonical-claim" &&
+    category.status === "CONFIDENT";
+
   // STRUCTURED OVERRIDE wins over inference (user locked category / form pick)
   const structuredCategoryId = structured?.categoryId?.trim() || null;
   if (structuredCategoryId) {
@@ -745,7 +861,10 @@ export function understandRequest(
           },
         ]
       : [];
-  if (usageContext) {
+  if (usageContext && !categoryFromCanonicalClaim()) {
+    /* Bağlacın kendisi kanonik yaprak ADININ içindeyse ("Mobilyalar için
+       Zemin Koruyucular") bu bir kullanım bağlamı cümlesi değil, ürünün
+       adıdır; bölme mantığı iddiayı ezemez (ölçüldü). */
     const fromTarget = gateCategory(usageContext.target, intentResolved.intent);
     if (
       fromTarget.value &&
@@ -814,7 +933,13 @@ export function understandRequest(
       };
     }
   }
-  if (relationDomain && relationDomain.categoryId !== category.value) {
+  if (
+    relationDomain &&
+    relationDomain.categoryId !== category.value &&
+    /* Ölçüldü: "Klima gaz dolumu" (3 sözcüklü kanonik hizmet yaprağı) tek
+       sözcüklük "Klima" domain izine yenilip appliances'a taşınıyordu. */
+    !categoryFromCanonicalClaim()
+  ) {
     category = {
       value: relationDomain.categoryId,
       confidence: relationDomain.verified
@@ -1969,7 +2094,16 @@ export function understandRequest(
      * Kanıt yoksa genel hizmet pazarı devreye girer — "ev temizliği",
      * "hukuk danışmanlığı".
      */
-    if (!relationDomain) {
+    /* Kanonik iddia da bir ALAN kanıtıdır: "Detaylı ekspertiz" otomotiv
+       bakım yaprağıdır ve genel hizmet pazarına düşmez (ölçüldü). Otomotiv
+       istisnası kurucu kuralın kendisidir: araç üzerindeki hizmet
+       (arac-bakim) genel pazara sürülmez — "araba bakımı yaptırmak
+       istiyorum" otomotivde kalır (ölçüldü). */
+    if (
+      !relationDomain &&
+      !categoryFromCanonicalClaim() &&
+      category.value !== "automotive"
+    ) {
       category = {
         value: "services",
         confidence: Math.max(category.confidence, requestSubject.kind.confidence),

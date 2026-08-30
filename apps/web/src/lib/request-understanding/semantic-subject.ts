@@ -23,6 +23,8 @@ import {
   resolvePartBearingParent,
   splitCompatibilityPhrase,
 } from "./part-relation";
+import { classifyTaxonomyPhrase } from "@/lib/taxonomy/phrase-classification";
+import { getTaxonomyAncestorIds } from "@/lib/taxonomy";
 import { classifyNumbers } from "./number-role";
 import { clamp01, uv } from "./provenance";
 import type {
@@ -756,7 +758,46 @@ function resolveSemanticSubjectCore(
 
   const partNegated = PART_NEGATION.test(text);
   const explicitVehiclePurchase = WHOLE_VEHICLE_SEEK.test(text);
-  const wholeVehicle = explicitVehiclePurchase || partNegated;
+
+  /**
+   * KANONİK BAŞ İSİM, ARAÇ ÇÖKÜŞÜNÜ ENGELLER (2026-08-30).
+   *
+   * Türkçe ad tamlamasında baş SONDADIR: "araba lastiği" bir lastiktir,
+   * "araba" yalnız bağlamdır. Ölçülen hata: otomotiv kategorisinde BUY
+   * niyeti gören her cümle ("araba lastiği arıyorum", "360 kamera almak
+   * istiyorum") kapalı PART_LEMMAS sözlüğünde karşılığı yoksa bütün-araç
+   * dalına düşüyor ve talep türü "vehicle" oluyordu — 411 kanonik parça
+   * yaprağı araç satın almaya zorlanıyordu.
+   *
+   * Kural kelimeye özel DEĞİLDİR: baş isim tek yetkili rol
+   * sınıflandırıcısından (`classifyRequestedTargetRole`) okunur ve kanonik
+   * taksonomiye sorulur. Baş isim araç-satın-alma alt ağacının DIŞINDA bir
+   * kanonik düğüme (parça, aksesuar, bambaşka bir ürün) çözülüyorsa istenen
+   * şey ODUR; cümledeki satın-alma fiili ya da araç sözcüğü onu bütün araca
+   * çeviremez. Kullanıcının kendi seçtiği rol (`forcedNeedType`) bu kuralın
+   * ÜSTÜNDEDİR ve bu noktaya gelmeden çözülmüştür.
+   */
+  const canonicalHeadVerdict = classifyRequestedTargetRole(text);
+  const canonicalHeadBlocksVehicle = (() => {
+    if (canonicalHeadVerdict.role === "COMPONENT_OR_ACCESSORY") return true;
+    /* TAXONOMY_PHRASE kanıtında baş yerine ifadenin kendisi çözülür
+       ("hafif ticari lastik" gibi çok sözcüklü kanonik adlar). */
+    const aranacak =
+      canonicalHeadVerdict.head ??
+      (canonicalHeadVerdict.provenance === "TAXONOMY_PHRASE"
+        ? canonicalHeadVerdict.evidence[0] ?? null
+        : null);
+    if (!aranacak) return false;
+    const node = classifyTaxonomyPhrase(aranacak);
+    if (!node) return false;
+    const zincir = [node.id, ...getTaxonomyAncestorIds(node.id)];
+    return !zincir.some((id) =>
+      id.startsWith("tax:automotive:arac-satin-alma"),
+    );
+  })();
+
+  const wholeVehicle =
+    (explicitVehiclePurchase && !canonicalHeadBlocksVehicle) || partNegated;
 
   /**
    * NİYET ÖNCELİĞİ — AÇIK ÜRETİM, PARÇA SÖZLÜĞÜNÜ YENER (1F).
@@ -1417,6 +1458,7 @@ function resolveSemanticSubjectCore(
       identitySuggestsVehicle(input.identity));
   if (
     !categoryBlocksVehicle &&
+    !canonicalHeadBlocksVehicle &&
     (wholeVehicle ||
       autoModelCredible ||
       (input.categoryId === "automotive" &&
