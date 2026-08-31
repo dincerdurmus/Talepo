@@ -50,18 +50,18 @@ export type FrozenAuthorityName =
 /** Ölçülen taban — yüzey başına ve toplam. */
 export const PROJECTION_AUTHORITY_BASELINE = {
   scenarios: 108,
-  totalIdentities: 526,
+  totalIdentities: 524,
   attributes: {
     UNKNOWN: 0,
     INFERRED: 56,
     VERIFIED: 17,
-    USER_EXPLICIT: 190,
+    USER_EXPLICIT: 189,
   },
   constraints: {
     UNKNOWN: 0,
     INFERRED: 56,
     VERIFIED: 17,
-    USER_EXPLICIT: 190,
+    USER_EXPLICIT: 189,
   },
   /**
    * Aynı `senaryo/alan` çiftinin iki yüzeyde FARKLI otorite taşıdığı kimlik
@@ -458,8 +458,6 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "re-02/productType/constraints=USER_EXPLICIT",
   "re-02/propertyType/attributes=USER_EXPLICIT",
   "re-02/propertyType/constraints=USER_EXPLICIT",
-  "re-02/quantity/attributes=USER_EXPLICIT",
-  "re-02/quantity/constraints=USER_EXPLICIT",
   "re-02/roomCount/attributes=USER_EXPLICIT",
   "re-02/roomCount/constraints=USER_EXPLICIT",
   "re-03/listingType/attributes=USER_EXPLICIT",
@@ -625,7 +623,7 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
  */
 export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "re-01=b522b31911420aed",
-  "re-02=5479b79df1c27ace",
+  "re-02=bf0de82fd9e996f6",
   "re-03=82d82fdb1b4c0fb6",
   "re-04=4c11a3617e59cdcc",
   "re-05=5e13d98d589cdeea",

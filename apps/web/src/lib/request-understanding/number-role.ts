@@ -324,6 +324,30 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     // "50bin km" already claimed by mileage; "5bin kutu" is quantity
     const after = lower.slice(bm.index + bm[0].length, bm.index + bm[0].length + 12);
     if (/^\s*km\b/.test(after)) continue;
+    /**
+     * PARA EKSENİ ADEDİ YENEMEZ — TERSİ DE GEÇERLİ (RC QA, 2026-08-31).
+     * "bütçem 20 bin TL" cümlesinde "20 bin" hem bütçeye hem adede
+     * yazılıyordu; kullanıcı 20.000 adet bulaşık makinesi istiyormuş gibi
+     * yayına gidiyordu. Kural kelimeye değil EKSENE bağlıdır: sayının
+     * hemen ardında para birimi (₺/TL/lira/eur/usd) ya da hemen önünde
+     * bütçe bağlamı ("bütçe(m)", "fiyat") varsa rol PRICE'tır ve adet
+     * kanalına ASLA yazılmaz.
+     */
+    const before = lower.slice(Math.max(0, bm.index - 16), bm.index);
+    const currencyAfter = /^\s*(?:₺|tl\b|try\b|lira\b|eur(?:o)?\b|usd\b|dolar\b)/.test(after);
+    const budgetBefore = /(?:bütçe\w*|butce\w*|fiyat\w*)\s*$/.test(before);
+    if (currencyAfter || budgetBefore) {
+      results.push({
+        raw: bm[0],
+        role: "PRICE",
+        value: n * 1000,
+        unit: "TL",
+        evidence: [bm[0], "bin multiplier", currencyAfter ? "currency-after" : "budget-context"],
+        index: bm.index,
+      });
+      claim(bm.index, bm[0].length);
+      continue;
+    }
     results.push({
       raw: bm[0],
       role: "QUANTITY",
