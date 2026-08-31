@@ -2708,13 +2708,32 @@ check("I26e: kürasyon durumu çalışma zamanında okunur — onaysız kayıt k
     "CANDIDATE",
     "PENDING_CURATION yalnız aday kanıt üretir",
   );
+  /**
+   * ONAY = STATÜ + KARAR KAYDI (Wave M, 2026-08-31). Sözleşme GEVŞEMEDİ,
+   * SIKILAŞTI: statüyü elle çevirmek tek başına güçlü kanıt üretmez;
+   * karar referansı/tarihi/gerekçesi eksikse kayıt aday seviyesinde kalır.
+   */
   assert.equal(
     domainEntityEvidenceStrength({
       ...base,
       provenance: { ...base.provenance, verificationStatus: "CURATOR_APPROVED" },
     }),
+    "CANDIDATE",
+    "karar kaydı olmayan onay güçlü kanıt ÜRETEMEZ",
+  );
+  assert.equal(
+    domainEntityEvidenceStrength({
+      ...base,
+      provenance: {
+        ...base.provenance,
+        verificationStatus: "CURATOR_APPROVED",
+        curationDecisionRef: "invariant-fixture/decision",
+        curationDecidedAt: "2026-08-31",
+        curationReason: "fixture — karar kaydı tam",
+      },
+    }),
     "VERIFIED",
-    "CURATOR_APPROVED güçlü kanıt üretebilir",
+    "karar kaydı tam olan onay güçlü kanıt üretebilir",
   );
   for (const dead of ["REJECTED", "DEPRECATED"] as const) {
     assert.equal(
@@ -2727,28 +2746,60 @@ check("I26e: kürasyon durumu çalışma zamanında okunur — onaysız kayıt k
     );
   }
 
-  // Üretimdeki beş seed'in tamamı kürasyon bekliyor → hepsi TENTATIVE.
+  /**
+   * KÜRASYON DURUMU KAYIT BAŞINA (Wave M, 2026-08-31 — kurucu ölçütü).
+   * Beş seed artık aynı sınıfta değildir; ölçüt ada özel DEĞİL, kaydın
+   * kendi alanlarından okunur ve burada TEK TEK sınanır:
+   *   onaylı  ⇔ confidence HIGH  ve  bağlam koruması YOK  ve  karar kaydı TAM
+   *   bekleyen ⇔ aksi hâlde (SAP ve Logo Yazılım: koruma taşıyor)
+   * Böylece bir kaydın sessizce yükseltilmesi hâlâ yakalanır.
+   */
   for (const e of DOMAIN_ENTITIES) {
+    const guarded = Boolean(
+      e.caseSensitiveAliases?.length || e.requiresContext?.length,
+    );
+    const eligible = e.provenance.confidence === "HIGH" && !guarded;
     assert.equal(
       e.provenance.verificationStatus,
-      "PENDING_CURATION",
-      `${e.canonicalId}: seed'ler bu turda onaylanmış sayılamaz`,
+      eligible ? "CURATOR_APPROVED" : "PENDING_CURATION",
+      `${e.canonicalId}: kürasyon durumu onay ölçütüyle uyuşmuyor`,
     );
+    if (e.provenance.verificationStatus === "CURATOR_APPROVED") {
+      assert.ok(
+        e.provenance.curationDecisionRef?.trim() &&
+          e.provenance.curationDecidedAt?.trim() &&
+          e.provenance.curationReason?.trim(),
+        `${e.canonicalId}: onay karar kaydı eksik`,
+      );
+    }
   }
-  const PENDING: Array<{ raw: string; domain: string }> = [
-    { raw: "WordPress destek arıyorum", domain: "technology" },
-    { raw: "Shopify entegrasyon arıyorum", domain: "technology" },
-    { raw: "SAP danışmanlık arıyorum", domain: "technology" },
-    { raw: "Logo e-fatura kurulumu arıyorum", domain: "technology" },
-    { raw: "CNC tezgâh bakımı arıyorum", domain: "machinery" },
+  /**
+   * KÜRASYON DURUMU KATEGORİ KESİNLİĞİNİ GERÇEKTEN DEĞİŞTİRİR.
+   * Belgelenen kural (domain-entities.ts): "PENDING_CURATION tek başına
+   * CONFIDENT kategori ÜRETEMEZ". Wave M'de onay zinciri kurulunca bu
+   * kural iki yönlü ölçülebilir hâle geldi — ölü metadata olmadığının
+   * kanıtı artık AYNI corpus üzerinde iki farklı sonuçtur.
+   */
+  const ENTITY_CATEGORY_STATUS: Array<{
+    raw: string;
+    domain: string;
+    status: "CONFIDENT" | "TENTATIVE";
+  }> = [
+    // Onaylı kayıtlar (karar kaydı tam) → alan kanıtı kesinleşebilir.
+    { raw: "WordPress destek arıyorum", domain: "technology", status: "CONFIDENT" },
+    { raw: "Shopify entegrasyon arıyorum", domain: "technology", status: "CONFIDENT" },
+    { raw: "CNC tezgâh bakımı arıyorum", domain: "machinery", status: "CONFIDENT" },
+    // Kürasyon bekleyen kayıtlar → yalnız ADAY; kesinlik üretemez.
+    { raw: "SAP danışmanlık arıyorum", domain: "technology", status: "TENTATIVE" },
+    { raw: "Logo e-fatura kurulumu arıyorum", domain: "technology", status: "TENTATIVE" },
   ];
-  for (const c of PENDING) {
+  for (const c of ENTITY_CATEGORY_STATUS) {
     const s = surfacesFor(c.raw);
     assert.equal(s.categoryId, c.domain, `${c.raw}: alan adayı (${s.categoryId})`);
     assert.equal(
       s.understandingCategoryStatus,
-      "TENTATIVE",
-      `${c.raw}: onaysız kayıt CONFIDENT üretemez (${s.understandingCategoryStatus})`,
+      c.status,
+      `${c.raw}: kürasyon durumu kategori kesinliğini belirlemeli (${s.understandingCategoryStatus})`,
     );
   }
 });
@@ -2806,7 +2857,21 @@ check("I26f: tipli varlık otoritesi tek kapıdan okunur ve çakışma sessizce 
    */
   const wp = resolveDomainEntity("WordPress");
   assert.equal(wp.status, "RESOLVED", "WordPress tek kaynakta — çözülmeli");
-  assert.equal(wp.evidenceStrength, "CANDIDATE", "onaysız kayıt aday kalır");
+  /**
+   * Wave M: WordPress kurucu ölçütüyle onaylandı (karar kaydı tam), bu
+   * yüzden VERIFIED. İddianın ASLI korunur ve aşağıda ayrıca sınanır:
+   * onaysız/kürasyon bekleyen kayıt hâlâ yalnız ADAY üretir.
+   */
+  assert.equal(wp.evidenceStrength, "VERIFIED", "karar kaydı tam onaylı kayıt güçlü kanıt üretir");
+  const pendingEntity = DOMAIN_ENTITIES.find(
+    (e) => e.provenance.verificationStatus === "PENDING_CURATION",
+  );
+  assert.ok(pendingEntity, "kürasyon bekleyen en az bir kayıt korunmalı");
+  assert.equal(
+    domainEntityEvidenceStrength(pendingEntity!),
+    "CANDIDATE",
+    "kürasyon bekleyen kayıt aday kalır",
+  );
   assert.equal(
     resolveDomainEntity("Arçelik").status,
     "NONE",
@@ -2842,7 +2907,12 @@ check("I26g: anlaşılan tipli varlık canonical snapshot'ta yaşar", () => {
   assert.equal(first.entityType, "PLATFORM");
   assert.equal(first.canonicalLabel, "WordPress");
   assert.equal(first.domainId, "technology");
-  assert.equal(first.verificationStatus, "PENDING_CURATION");
+  /**
+   * Wave M: WordPress kurucu ölçütüyle onaylandı. Sözleşmenin ASLI —
+   * snapshot kürasyon durumunu OLDUĞU GİBİ taşır, yeniden yorumlamaz —
+   * değişmedi; taşınan değer değişti.
+   */
+  assert.equal(first.verificationStatus, "CURATOR_APPROVED");
   assert.ok(typeof first.confidence === "number" && first.confidence <= 1);
   assert.ok(first.source, "provenance kaynağı taşınmalı");
   assert.ok(

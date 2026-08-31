@@ -1340,3 +1340,36 @@ bulundu (`tax:machinery:diger:el-aletleri-ve-hirdavat:saplar`) ve yeni yaprak
 tek başına YASAK (SAP çakışması). home-06 fixture sahipliği kurucu kararıyla
 `["machinery","null"]`. Sahte-marka kanaryası bilinçli çözüldü ve gerileme
 bekçisine dönüştürüldü.
+
+## D-2026-08-31-M — Kürasyon zinciri ve bileşen ④ tüketim sözleşmesi (Wave M)
+
+**Karar.** Matching'in kanonik tipli varlık sinyalini tüketmesi, varlığın
+kürasyon durumuna bağlıdır ve bu durum varlığın KENDİ kanonik kaydında
+yaşar (`catalog/domain-entities.ts`). İkinci bir kayıt defteri, ikinci
+matcher, skorlayıcıya gömülü whitelist veya probe metnine özel dal
+oluşturulmamıştır.
+
+**Onay = statü + karar kaydı.** `CURATOR_APPROVED` statüsü tek başına güçlü
+kanıt üretmez; karar referansı (`curationDecisionRef`), tarihi
+(`curationDecidedAt`) ve gerekçesi (`curationReason`) eksikse kayıt aday
+seviyesinde kalır. Böylece bir kaydın sessizce yükseltilmesi mümkün değildir.
+
+**Onay ölçütü ada özel değildir:** `confidence === "HIGH"` + bağlam koruması
+gerektirmemesi (`caseSensitiveAliases` / `requiresContext` yok) + gerçek
+kullanıcı probe'unda `RESOLVED` ve çakışma 0. Bu ölçütle WordPress, Shopify
+ve CNC tezgâhı onaylandı; SAP ve Logo Yazılım bilinçli olarak
+`PENDING_CURATION` kaldı (adları Türkçede sıradan sözcüklerdir).
+
+**Negatif tüketim sözleşmesi (dondurulmuş).** Skorlayıcı şunları TÜKETMEZ:
+PENDING_CURATION / REJECTED / DEPRECATED kayıtlar, `confidence <= 0.5`
+(belirsiz çözümler dâhil), boş kanonik etiket, kürasyon kararı olmayan onay.
+Varlık tek başına da yetmez: tedarikçi profili eşleşmezse skor üretilmez.
+
+**Ölçüm.** Bileşen ④ payda 108 (Wave L paydası korunur): tüketilebilir 5,
+kürasyon bekleyen 2, kanonik kaydı olmayan 101. "Kayıt yok" ölçülmüş bir
+yokluktur; ölçülememiş değildir. `PROFESSIONAL_DISCOVERY_DATA_READINESS`
+%35,37 → %36,30; ölçüm adı değişmedi ve Wave L değeri tarihsel kayıt olarak
+korunur.
+
+**Kapsam sınırı.** Matching SHADOW'da kalmıştır; bu karar eşleşme yayınlama,
+bildirim veya fanout yetkisi vermez.

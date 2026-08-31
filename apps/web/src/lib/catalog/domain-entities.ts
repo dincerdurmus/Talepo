@@ -64,6 +64,22 @@ export type DomainEntityProvenance = {
     | "CURATOR_APPROVED"
     | "REJECTED"
     | "DEPRECATED";
+  /**
+   * KÜRASYON KARARININ KENDİSİ (Wave M, 2026-08-31) — additive.
+   *
+   * Statüyü çevirmek tek başına yetki üretmez: `CURATOR_APPROVED` ancak
+   * kararın kim/ne zaman/neden bilgisi kayıtlıysa GÜÇLÜ KANIT olur
+   * (`domainEntityEvidenceStrength` bunu denetler). Böylece bir kaydın
+   * sessizce yükseltilmesi mümkün değildir ve onay kaydı denetlenebilir
+   * kalır. Alan adları mevcut provenance dilbilgisini izler
+   * (`knowledge/types.ts` → `sourceRef` / `retrievedAt` kalıbı).
+   *
+   * Kayıt defteri İKİNCİ bir yapıya kopyalanmaz: karar, varlığın kendi
+   * kanonik kaydında yaşar.
+   */
+  curationDecisionRef?: string;
+  curationDecidedAt?: string;
+  curationReason?: string;
 };
 
 export type DomainEntity = {
@@ -92,11 +108,22 @@ export type DomainEntity = {
 };
 
 /**
- * SEED KAYITLARI — kürasyon BEKLİYOR.
+ * KAYIT DEFTERİ — kürasyon durumu kayıt BAŞINA okunur.
  *
- * Beş kaydın hiçbiri kurucu tarafından tek tek onaylanmadı; `provenance`
- * bunu açıkça söyler (`AI_INFERRED` / `PENDING_CURATION`). Kayıtlar yalnız
- * ALAN kanıtı üretir; kesin marka iddiası taşımazlar.
+ * ONAY ÖLÇÜTÜ (Wave M, 2026-08-31 — kurucu mandası). Bir seed kaydı ancak
+ * ÜÇÜ birden sağlanınca `CURATOR_APPROVED` olur; ölçüt ada özel DEĞİL,
+ * kaydın kendi alanlarından okunur:
+ *   1) `provenance.confidence === "HIGH"`,
+ *   2) kayıt bağlam koruması GEREKTİRMİYOR — ne `caseSensitiveAliases`
+ *      ne `requiresContext`; adı Türkçede başka bir şey demiyor,
+ *   3) gerçek kullanıcı probe'unda çözüm `RESOLVED` ve `conflicts = 0`
+ *      ölçüldü (`verify-curated-entity-consumption-v1`).
+ * Koruma taşıyan kayıtlar (SAP, Logo Yazılım) bilinçli `PENDING_CURATION`
+ * KALIR: adları Türkçede sıradan sözcüklerdir ("sap", "logo").
+ *
+ * Onaylı kayıtlar da yalnız ALAN kanıtı üretir; kesin marka iddiası
+ * taşımazlar (platform / yazılım paketi / makine türü üretici markası
+ * değildir).
  */
 export const DOMAIN_ENTITIES: readonly DomainEntity[] = [
   {
@@ -109,7 +136,11 @@ export const DOMAIN_ENTITIES: readonly DomainEntity[] = [
       sourceType: "AI_INFERRED",
       sourceName: "talepo-1j-seed",
       confidence: "HIGH",
-      verificationStatus: "PENDING_CURATION",
+      verificationStatus: "CURATOR_APPROVED",
+      curationDecisionRef: "wave-m/curated-entity-consumption",
+      curationDecidedAt: "2026-08-31",
+      curationReason:
+        "HIGH güven · bağlam koruması gerekmiyor · 'WordPress sitesi yaptırmak istiyorum' probe'unda RESOLVED, çakışma 0.",
     },
   },
   {
@@ -122,7 +153,11 @@ export const DOMAIN_ENTITIES: readonly DomainEntity[] = [
       sourceType: "AI_INFERRED",
       sourceName: "talepo-1j-seed",
       confidence: "HIGH",
-      verificationStatus: "PENDING_CURATION",
+      verificationStatus: "CURATOR_APPROVED",
+      curationDecisionRef: "wave-m/curated-entity-consumption",
+      curationDecidedAt: "2026-08-31",
+      curationReason:
+        "HIGH güven · bağlam koruması gerekmiyor · 'Shopify mağazası kurdurmak istiyorum' probe'unda RESOLVED, çakışma 0.",
     },
   },
   {
@@ -176,7 +211,11 @@ export const DOMAIN_ENTITIES: readonly DomainEntity[] = [
       sourceType: "AI_INFERRED",
       sourceName: "talepo-1j-seed",
       confidence: "HIGH",
-      verificationStatus: "PENDING_CURATION",
+      verificationStatus: "CURATOR_APPROVED",
+      curationDecisionRef: "wave-m/curated-entity-consumption",
+      curationDecidedAt: "2026-08-31",
+      curationReason:
+        "HIGH güven · bağlam koruması gerekmiyor · 'CNC tezgahı arıyorum' probe'unda RESOLVED, çakışma 0.",
     },
   },
 ];
@@ -285,13 +324,34 @@ export function domainEntityEvidenceStrength(
 ): DomainEntityEvidenceStrength {
   switch (entity.provenance.verificationStatus) {
     case "CURATOR_APPROVED":
-      return "VERIFIED";
+      /**
+       * ONAY, KARAR KAYDIYLA BİRLİKTE YETKİDİR (Wave M).
+       *
+       * Statüyü elle `CURATOR_APPROVED` yazmak tek başına güçlü kanıt
+       * ÜRETMEZ: karar referansı, tarihi ve gerekçesi eksikse kayıt
+       * aday seviyesinde kalır. Bu, onayın denetlenebilirliğini kodun
+       * kendisine bağlar — belge ile davranış ayrışamaz.
+       */
+      return hasCurationDecisionRecord(entity.provenance)
+        ? "VERIFIED"
+        : "CANDIDATE";
     case "PENDING_CURATION":
       return "CANDIDATE";
     default:
       // REJECTED / DEPRECATED — routing kanıtı olamaz.
       return "NONE";
   }
+}
+
+/** Onay kaydı tam mı? (ref + tarih + gerekçe) */
+export function hasCurationDecisionRecord(
+  provenance: DomainEntityProvenance,
+): boolean {
+  return Boolean(
+    provenance.curationDecisionRef?.trim() &&
+      provenance.curationDecidedAt?.trim() &&
+      provenance.curationReason?.trim(),
+  );
 }
 
 /**

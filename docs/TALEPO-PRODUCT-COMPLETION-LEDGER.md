@@ -10,11 +10,12 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: L (ölçüm adları + ürün türü + resolvedEntities +
+- CURRENT_WAVE: M (kürasyon zinciri + bileşen ④ tüketimi) — COMMIT EDİLMEDİ.
+  Önceki: L (ölçüm adları + ürün türü + resolvedEntities +
   Pro ürün karnesi) tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**,
   G **27583e0**, H **76f1fed**, I **889125d**, J **b2d396f**,
-  K **0e484f0** (hepsi pushlandı).
-- LAST_VERIFIED_ITEM: LG-63l (FD kürasyon kapanışı — batarya yeşil, D1 not_measured 4→1).
+  K **0e484f0**, L **c8c2547** (hepsi pushlandı).
+- LAST_VERIFIED_ITEM: LG-69m (bileşen ④ 0→5/108, mutasyon kanıtlı).
 - NEXT_SAFE_ACTION: Kurucu incelemesi → Wave K commit onayı; sonra
   projection-authority imza tabanının kendi dilimi ya da FD-2'de sonraki
   tarihsel (aday: provider-routing / sayfam-home); 4 category_unresolved
@@ -24,6 +25,29 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
   senaryo (tech-12 "logo tasarımı", health-07 "test çubuğu", health-08
   "hangi ilacı almalıyım", home-06 "kürek sapı") — kategori çözümü/
   taksonomi kürasyonu; hedef sayaçların ÜÇÜ DE SIFIR (aşağıda).
+
+## Wave M kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-64m | Bileşen ④ kürasyon otoritesi | IMPLEMENTED | Kürasyon kararı varlığın KENDİ kanonik kaydında yaşar (`domain-entities.ts` → `DomainEntityProvenance`); ikinci kayıt defteri/matcher/whitelist YOK. Additive üç alan: `curationDecisionRef`, `curationDecidedAt`, `curationReason` (mevcut provenance dilbilgisi: `sourceRef`/`retrievedAt` kalıbı) |
+| LG-65m | ONAY = STATÜ + KARAR KAYDI | HARDENED | `domainEntityEvidenceStrength` artık `CURATOR_APPROVED` statüsünü tek başına VERIFIED saymaz: karar kaydı eksikse kayıt CANDIDATE kalır (`hasCurationDecisionRecord`). Sözleşme GEVŞEMEDİ, sıkılaştı; I26e iki yönlü ölçüme çevrildi |
+| LG-66m | Onay ölçütü (ada özel DEĞİL) | CURATED | Üç koşul: `confidence === "HIGH"` + bağlam koruması YOK (`caseSensitiveAliases`/`requiresContext`) + gerçek probe'da `RESOLVED` & çakışma 0. Onaylanan 3: `platform:wordpress`, `platform:shopify`, `machine-type:cnc-tezgahi`. Bilinçli PENDING kalan 2: `software-suite:sap`, `software-suite:logo-yazilim` — adları Türkçede sıradan sözcükler ("sap", "logo") |
+| LG-67m | Kabul kapısı | GREEN 42/0 | `verify-curated-entity-consumption-v1`: 11 satırlık cohort (4 sınıf birlikte), 9 negatif tüketim sözleşmesi, 3 onay-kaydı denetimi, 4 mutasyon adımı. Tedarikçi profili YALNIZ varlık etiketini taşır ve `attributes` boşaltılır → "attribute" bileşeni eşleşirse tek açıklama kanonik varlık sinyalidir (sinyal izolasyonu ayrıca negatif kontrolle kanıtlandı) |
+| LG-68m | Mutasyon kanıtı | PROVEN | M0 tüketiliyor → M1 statü PENDING'e çevrilince tüketim DURUYOR → M2 statü onaylı ama karar kaydı silinince yine tüketilmiyor (strength CANDIDATE) → M3 geri yükleme sonrası taban aynen dönüyor. Kayıt defteri koşum sonunda DEĞİŞMEZ |
+| LG-69m | Bileşen ④ ölçümü (payda 108 korundu) | MEASURED 0→5/108 | `CURATED_ENTITY_CONSUMABLE=5` (tech-05 WordPress, tech-06 Shopify, mach-01/mach-02/mach-07 CNC) · `PENDING_ENTITY=2` (tech-07 SAP, tech-08 Logo) · `NO_ENTITY=101` (ölçülmüş yokluk — kanonik kayıt yok, ölçülememiş DEĞİL). Sınıflar paydayı tüketir: 5+2+101=108. Taban SAYI değil KİMLİK KÜMESİ olarak dondurulur |
+| LG-70m | mach-07 kurucu dikkatine | FLAGGED | "CNC marka bir ürün arıyorum": kullanıcı CNC'yi MARKA beyan ediyor (brandEvidence USER_ASSERTED), kanonik kayıt onu MAKİNE TÜRÜ sayıyor. Roller karışmıyor (marka kendi kanalında, varlık kendi kanalında) ve alan sinyali doğru; yine de satır bilinçle sayıldı — kurucu istemezse çözüm REJECTED değil alias daraltmasıdır |
+| LG-71m | Kürasyonun beyin davranışına etkisi | MEASURED | Belgelenen kural ("PENDING tek başına CONFIDENT kategori üretemez") artık iki yönlü ölçülüyor: onaylı varlıklı üç probe CONFIDENT/0.8, kürasyon bekleyen iki probe TENTATIVE/0.5. Kategori ATAMASI değişmedi (coverage 100/8/0 aynen); değişen yalnız kesinlik statüsü |
+
+**PROFESSIONAL_DISCOVERY_DATA_READINESS (Wave M yeniden hesabı — ad DEĞİŞMEDİ):**
+`100×((107/108)+(15/108)+(69/108)+(5/108)+0)/5` = **%36,30 ≈ %36**
+(Wave L checkpoint'i **%35,37** tarihsel kayıt olarak KORUNUR; artışın tek
+kaynağı bileşen ④'ün 0→5/108 ölçülmesidir. ⑤ tedarikçi yeteneği hâlâ
+ölçülmedi ve 0 katkı veriyor — "ölçülmedi" 0-ölçüm olarak sunulmaz.)
+
+**Matching SHADOW'da kaldı.** Bu dalgada bildirim/fanout iddiası, otomatik
+sağlayıcı dağıtımı ve LIVE geçişi YOKTUR; kapanan tek şey varlık sinyalinin
+doğruluğudur.
 
 ## Wave L kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 
