@@ -45,6 +45,24 @@ Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042+a22
 RC QA sentetik verisi (request+offer+conversation+company+add-on+inventory)
 kesin id ile temizlendi (kalan 0).
 
+### Launch Hardening turu (2026-09-01)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-90lh | ENV üretim sözleşmesi | VERIFIED | instrumentation.ts boot hard-gate: production'da eksik REQUIRED, prod'da açık DEVELOPMENT_ONLY (mock bayrakları) ve NEXT_PUBLIC sızıntı riski BOOT'u durdurur; secret loglanmaz. ENV_CATALOG tipli (REQUIRED/OPTIONAL/DEVELOPMENT_ONLY; iyzico/CRON/DataForSEO dahil); EMAIL_PROVIDER OPTIONAL olarak eklendi. |
+| LG-91lh | Ödeme/abonelik sertleştirme | PASS | Tutar/plan yalnız sunucu otoritesi (assertCheckoutPlan; client fiyatı yok sayılır); webhook iyzico V3 imza + [provider,providerEventId] DB-unique idempotency (duplicate event aboneliği ikinci kez değiştiremez); canonical BillingSubscription state; mock prod'da imkânsız; phase4c+phase4d kapıları YEŞİL. Gerçek anahtar EXTERNAL. |
+| LG-92lh | E-posta teslim sınırı | IMPLEMENTED | İkinci motor değil: kanonik tek bildirim yazıcısının içinde, YALNIZ kritik aileler (OFFER_ACCEPTED, COMPANY_INVITATION, DEAL_COMPLETED) için non-blocking görünüm. Sağlayıcı yoksa dürüst 'unconfigured' + tek yapılandırılmış ops-log (PII'siz); sahte başarı yok; ana akış hiçbir durumda kırılmaz. Push altyapısı repoda yok → NOT_APPLICABLE (sırf kutu için sistem kurulmadı). |
+| LG-93lh | ESLint 0 hata | PASS | 22→0 error (45 uyarı kaldı: 41 unused-vars STYLE, 3 exhaustive-deps davranış-hassas kabul, 1 düzeltildi aria-selected). Gerçek düzeltmeler: prefer-const ×3, require-import kapsam düzeltmesi, unescaped-entity, composer latest-ref kalıbı effect'e taşındı, aria-selected eklendi. Belgeli dar istisnalar: prop-sync setState (PanelShell emsali, satır-bazlı gerekçeli), RSC try/catch-JSX iki sayfa (config'te dosya-bazlı), MairaStage LOCKED_WIP (kaynağa dokunmadan config'te, kilit kalkınca kaldırılacak notuyla). Lint kapatılarak yeşil üretilmedi. |
+| LG-94lh | ÜRÜN KUSURU: marka substring sızıntısı | FIXED_BEFORE_LAUNCH | 'Logo muhasebe programı' → Marka: GoPro KULLANICIYA ve publish'e sızıyordu (state.fields.brand + snapshot.entities.brand ölçüldü). Kök: brand-catalog aliasMatches yalnız ≤4 karakteri sınırlıyordu; 'go pro' alias'ı 'LOGO PROgram' içinde substring eşleşti. Eksen düzeltmesi: HER alias jeton sınırında eşleşir (ada özel hack yok). Korumalar: 'go pro kamera'/'GoPro Hero' markalı kalır, Arçelik/Bosch etkilenmez. Marka-hassas 13 kapı yeşil. |
+| LG-95lh | Company team lifecycle | VERIFIED 8/0 | acceptance-company-team-lifecycle-v1 (kalıcı): yanlış-kullanıcı davet reddi, kabul→ACTIVE, mükerrer üyelik DB-unique engeli, plan-türevli koltuk sayımı (PROFESSIONAL taban 1 + add-on ek koltuk — kanonik model), limit doluyken aktivasyon reddi, üye çıkarınca koltuk serbest, son-OWNER öncülü. Route katmanında rol hiyerarşisi + last-owner 403 kod-kanıtlı. |
+| LG-96lh | Bildirim matrisi final | CLASSIFIED | 17 tip: FULL_E2E 5 (REQUEST_PUBLISHED, NEW_OFFER, OFFER_ACCEPTED, NEW_MESSAGE, GENERAL[alarm+bütçe]); CONTRACT_TESTED 7 (deal ailesi 77/77, pazarlık ailesi inbox/unified kapıları); PRODUCER_TESTED 4 (OFFER_VIEWED, NEW_REQUEST_MATCH[SHADOW], COMPANY_INVITATION[server-side lifecycle kanıtlı], COMPANY_MEMBER_JOINED); NOT_APPLICABLE 1 (push). Kritik listede GAP yok; P1 yok. |
+| LG-97lh | DB üretim güvenliği | PASS | Kritik unique'ler: Conversation.offerId, participant[conv,user]/[conv,company], CompanyMember[companyId,userId], BillingEvent[provider,providerEventId], IdempotencyRecord.key, providerSubscriptionId, membershipNumber. 132 index. Migration gerekmedi; destructive değişiklik yok. |
+
+Matching FINAL kararı: OPTION A — SHADOW. Gerekçe: ⑤ yükleyicisi feed'e
+bağlı değil; canlı öneriler V3-öncesi motorla gerçek veridir; kullanıcıya
+hiçbir 'AI sizi eşleştirdi' vaadi gösterilmiyor (keşif kartları kategori/
+kriter temelli etiket taşır). LIVE kesişimi ayrı programdır.
+
 ### RC-3 turu (2026-09-01) — kapanış
 
 | ID | İş | Durum | Kanıt |
