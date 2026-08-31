@@ -10,7 +10,8 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: M (kürasyon zinciri + bileşen ④ tüketimi) — COMMIT EDİLMEDİ.
+- CURRENT_WAVE: RC (Release Candidate programı) — sürüyor. Wave M pushlandı (e10aaf2).
+  RC-1 sayı-ekseni düzeltmesi + canlı E2E pushlandı (024356f).
   Önceki: L (ölçüm adları + ürün türü + resolvedEntities +
   Pro ürün karnesi) tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**,
   G **27583e0**, H **76f1fed**, I **889125d**, J **b2d396f**,
@@ -25,6 +26,24 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
   senaryo (tech-12 "logo tasarımı", health-07 "test çubuğu", health-08
   "hangi ilacı almalıyım", home-06 "kürek sapı") — kategori çözümü/
   taksonomi kürasyonu; hedef sayaçların ÜÇÜ DE SIFIR (aşağıda).
+
+## RC programı kaydı (2026-09-01 — sürüyor)
+
+Kurucu otonom Release Candidate mandası. Wave adları iç organizasyon.
+Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f (hepsi pushlandı).
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-72rc | Ürün envanteri | MAPPED | 47 sayfa route + 74 API route gerçek kaynaktan sayıldı. 42 Prisma modeli. API auth taraması: yalnız 9 meşru-public route auth taşımıyor (nextauth, register, health/ready, imzalı webhook, tokenlı callback, geo/cover public); admin uçları requirePlatformAdmin+MFA taşıyor. |
+| LG-73rc | ÜRÜN KUSURU: sayı ekseni çift-tüketimi | FIXED | Canlı /talep QAsinda yakalandı: bütçem 20 bin TL hem BÜTÇE hem ADET=20000 üretiyordu. Kanonik sayı otoritesinde (number-role.ts binRe) eksen düzeltmesi: sayının ardında para birimi ya da önünde bütçe bağlamı varsa rol PRICE, adet kanalına yazılmaz. 5 sınıf ayrık doğrulandı. projection-authority 526→524 sayılı delta (re-02 sahte adet düştü). |
+| LG-74rc | ÇEKİRDEK E2E (canlı browser + DB) | VERIFIED | ALICI(C) talep yazdı→beyin doğru anladı→yayınladı (PUBLISHED, budgetMax 20000, quantity YOK); SATICI(D) keşfetti→teklif verdi (18.500 TL); ALICI kabul etti→request OFFER_SELECTED, offer ACCEPTED; TEK conversation (offerId unique) 2 katılımcıyla oluştu; bildirimler doğru kişiye (REQUEST_PUBLISHED+NEW_OFFER→alıcı, OFFER_ACCEPTED→satıcı). Refresh/logout/login sonrası veri kalıcı. |
+| LG-75rc | IDOR / conversation erişimi | SECURE | İlgisiz STANDARD(A) conversation mesaj APIsine erişemedi (getSendableConversation katılımcı olmayan için MessageValidationError, veri sızmadı). Alıcı 201; A POST 400. |
+| LG-76rc | Entitlement server-gate | SECURE | STANDARD(A): smart_alerts/saved_searches/ai_offer_assistant/hidden_inventory false. Server bypass: saved-searches POST 403, alerts POST 403, watchlist POST 403, company/team 403 — hepsi kanonik requireResourceOwnerFeaturedan. |
+| LG-77rc | COMPANY workspace + Gizli Envanter add-on | VERIFIED | Pro(C) firma oluşturdu (POST /api/company 200). Beş-durumlu Gizli Envanter kuralı server-side: company+PROFESSIONAL ama add-on YOK → 403 Gizli envanter bu hesapta kapalı; DBde addon açılınca GET/POST 200, stok kalıcı. Bireysel Pro hiç erişemez. |
+| LG-78rc | Verifier scratch artifact | GITIGNORED | verify-global-product-identity.ts çalışma dizinine kalıcı TEST-OUTPUT.txt yazıp tekrar tekrar untracked kirlilik üretiyordu; .gitignorea eklendi. |
+
+RC QA sentetik verisi (request+offer+conversation+company+add-on+inventory)
+kesin id ile temizlendi (kalan 0).
 
 ## Wave M kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 
