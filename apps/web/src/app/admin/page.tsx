@@ -128,6 +128,8 @@ export default async function AdminPage() {
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <DateRangeComparison /> : null}
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminHealthMeta /> : null}
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminChartInsights /> : null}
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/notifications" className="mt-5 mr-3 inline-flex items-center rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-2.5 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20">Bildirim akışı (debug)</Link> : null}
+        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/curation" className="mt-5 mr-3 inline-flex items-center rounded-xl border border-violet-300/30 bg-violet-300/10 px-4 py-2.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-300/20">Varlık kürasyonu</Link> : null}
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/health" className="mt-5 inline-flex items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20">Sağlık merkezini aç</Link> : null}
 
         <div className="mt-5 flex items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-5 py-4 text-xs text-white/35"><Activity className="h-4 w-4 text-emerald-300/60" /> Değişiklikler yalnızca sunucuda doğrulanan admin oturumuyla uygulanır.</div>
