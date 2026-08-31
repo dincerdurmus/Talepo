@@ -23,6 +23,7 @@ import {
   resolvePartBearingParent,
   splitCompatibilityPhrase,
 } from "./part-relation";
+import { mergePositionIntoPartName } from "@/lib/catalog/part-display";
 import { classifyTaxonomyPhrase } from "@/lib/taxonomy/phrase-classification";
 import { getTaxonomyAncestorIds } from "@/lib/taxonomy";
 import { classifyNumbers } from "./number-role";
@@ -514,7 +515,39 @@ function applyCompatibilityAuthority(
   }
 
   if (authority.verdict === "VERIFIED") {
-    return withKindEvidence(subject, [
+    /**
+     * ZENGİNLEŞTİRİLMİŞ GÖRÜNEN AD DOĞRULANMIŞ DALDA DA KORUNUR
+     * (I22 / KB-11, 2026-08-31).
+     *
+     * Kanıtsız dal kullanıcının hedef ifadesini zaten koruyordu; doğrulanmış
+     * dal ise lemma'ya indirgenen görünen adı olduğu gibi geçiriyordu ve
+     * başlık "nemlendirme pompası"nı "pompa"ya düşürüyordu (ölçüldü).
+     * Kanıt sıralaması iki dalda AYNIDIR: kullanıcı ifadesi, indirgenmiş
+     * adın bütün sözcüklerini kapsıyorsa görünen ad kullanıcının hâlidir.
+     * Kapsama kararı tek yetkiliden (`coversRequestedTokens`) okunur;
+     * kanonik `name` (lemma) değişmez — yalnız görünen ad zenginleşir.
+     */
+    const verifiedSplit = splitCompatibilityPhrase(input.normalizedInput);
+    const verifiedRequested = verifiedSplit
+      ? readRequestedTarget(verifiedSplit.requested).value
+      : null;
+    const currentDisplay = String(subject.displayPhrase?.value ?? "");
+    const enrichedSubject =
+      verifiedRequested &&
+      currentDisplay &&
+      verifiedRequested.length > currentDisplay.length &&
+      coversRequestedTokens(verifiedRequested, currentDisplay)
+        ? {
+            ...subject,
+            displayPhrase: uv(verifiedRequested.toLocaleLowerCase("tr-TR"), {
+              provenance: "EXPLICIT" as const,
+              source: "NORMALIZED_EXPLICIT" as const,
+              confidence: 0.85,
+              evidence: [verifiedRequested],
+            }),
+          }
+        : subject;
+    return withKindEvidence(enrichedSubject, [
       ...roleEvidence,
       authority.evidence!.code,
     ]);
@@ -1028,7 +1061,23 @@ function resolveSemanticSubjectCore(
       const pos = lemmaHit
         ? extractPositions(requested, lemmaHit.index)
         : extractPositions(requested, requested.length);
-      const display = [pos, name].filter(Boolean).join(" ");
+      /**
+       * I22/I23 (2026-08-31): görünen ad iki eksen kuralıyla kurulur.
+       * - Zenginleştirme: kullanıcının hedef ifadesi ("nemlendirme
+       *   pompası") lemma'nın ("pompa") bütün sözcüklerini kapsıyorsa
+       *   görünen ad kullanıcının hâlidir — başlık KB-11 bunu kaybediyordu.
+       * - Konum: naif [pos, name] join'i belirteci çoğaltabiliyordu;
+       *   birleşim tek yetkiliden yapılır.
+       */
+      const requestedTargetValue = readRequestedTarget(requested).value;
+      const displayBase =
+        name !== "parça" &&
+        requestedTargetValue &&
+        requestedTargetValue.length > name.length &&
+        coversRequestedTokens(requestedTargetValue, name)
+          ? requestedTargetValue.toLocaleLowerCase("tr-TR")
+          : name;
+      const display = mergePositionIntoPartName(pos, displayBase);
       const parentKind: ParentEntityKind =
         input.categoryId === "machinery"
           ? "MACHINE"

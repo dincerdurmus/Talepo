@@ -75,6 +75,27 @@ check(
     helper.includes("yakında kullanıma açılacak"),
 );
 
+/**
+ * TEK INTELLIGENCE CORE (FD-3 kurucu kararı, 2026-08-31).
+ *
+ * İki asistan giriş yüzeyi (panel bağlamı + teklif bağlamı) korunur ama
+ * taslak/fiyat mantığı TEK çekirdekten türer: `@/lib/ai/offer-assistant`
+ * (generateOfferAssistantDraft). Monetization sağlayıcısı kendi ikinci
+ * şablonunu/fiyat metnini KURAMAZ — ölçülen kusur: rule-based stub ayrı
+ * bir taslak şablonu ve sahte pricingHint taşıyordu.
+ */
+const monetizationProvider = read("server/monetization/ai-offer-assistant.ts");
+check(
+  "monetization provider derives from the single core",
+  monetizationProvider.includes('from "@/lib/ai/offer-assistant"') &&
+    monetizationProvider.includes("generateOfferAssistantDraft"),
+);
+check(
+  "monetization provider keeps no second draft template",
+  !monetizationProvider.includes("Kapsam:") &&
+    !monetizationProvider.includes("Gerçek AI fiyat önerisi bir sonraki fazda"),
+);
+
 if (fail > 0) {
   console.log(`\nFAILED ${fail} / ${pass + fail}`);
   process.exit(1);

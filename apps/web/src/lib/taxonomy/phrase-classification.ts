@@ -329,6 +329,19 @@ export function findCanonicalCategoryClaim(
       });
       if (!nodes.length) continue;
       const cats = [...new Set(nodes.map((n) => n.categoryId))].sort();
+      /**
+       * TEK SÖZCÜKLÜK KANIT, ÇOK SÖZCÜKLÜ İFADEYİ TAŞIYAMAZ (2026-08-31).
+       *
+       * Ölçülen regresyonlar: "Tekerlekli sandalye" (sağlık) tek sözcüklük
+       * "sandalye" kanıtıyla mobilyaya, "koltuk destek mekanizması" tek
+       * sözcüklük "koltuk" belirsizliğiyle boşluğa düşüyordu. Türkçe ad
+       * tamlamasında niteleyici anlamı değiştirir; iddia ya ÇOK sözcüklü
+       * kanonik kanıt taşımalı ya da ifadenin TAMAMI olmalıdır. Tek
+       * sözcüklük iddia yalnız çekirdek metin de tek sözcükse geçerlidir;
+       * aksi hâlde karar skorlayıcıya kalır.
+       */
+      const claimCoversCore = size === core.length;
+      if (size === 1 && !claimCoversCore) continue;
       if (cats.length === 1) {
         const resolved = resolveTaxonomyAlias(phrase)?.node ?? null;
         const node =
@@ -343,7 +356,7 @@ export function findCanonicalCategoryClaim(
           span: size,
         };
       }
-      if (rule?.policy === "ALLOWED_CLARIFICATION") {
+      if (rule?.policy === "ALLOWED_CLARIFICATION" && claimCoversCore) {
         return {
           kind: "ambiguous",
           categoryIds: rule.categoryIds,

@@ -12,6 +12,7 @@ import {
   enrichAutomotiveSubject,
   hasAutomotiveCatalogSignal,
 } from "./automotive/enrich";
+import { mergePositionIntoPartName } from "./part-display";
 import type { AutomotiveSubjectEnrichment } from "./automotive/types";
 import type { CatalogConfidence } from "./types";
 
@@ -263,9 +264,12 @@ export function applyCatalogEnrichment(
           evidence: [`catalog:${enrichment.part.id}`],
         }),
         displayPhrase: uv(
-          [enrichment.position?.name, partLabel.toLocaleLowerCase("tr-TR")]
-            .filter(Boolean)
-            .join(" "),
+          // I23 (2026-08-31): naif join "ön" + "Ön far"ı "ön ön far" yapıyordu;
+          // konum belirteci tek yetkiliden, çoğaltmadan birleşir.
+          mergePositionIntoPartName(
+            enrichment.position?.name,
+            partLabel.toLocaleLowerCase("tr-TR"),
+          ),
           {
             provenance: "INFERRED",
             source: "FUTURE_KNOWLEDGE",

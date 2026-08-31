@@ -186,7 +186,11 @@ export function mapUnknownToSafeError(
     error instanceof Error &&
     (error.name === "OfferValidationError" ||
       error.name === "RequestValidationError" ||
-      error.name === "RegisterValidationError")
+      error.name === "RegisterValidationError" ||
+      // AC-1 (2026-08-31): mesajlaşma guard'ının fırlattığı doğrulama
+      // hatası kardeşleriyle aynı sınıftır; adı bu listede olmadığı için
+      // yetkisiz mesaj denemesi 500 INTERNAL_ERROR görünüyordu.
+      error.name === "MessageValidationError")
   ) {
     return {
       status: 400,

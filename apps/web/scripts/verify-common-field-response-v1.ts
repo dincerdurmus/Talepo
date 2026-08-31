@@ -555,12 +555,21 @@ function measureCorpus(): {
    *   budget     = "25.000 TL"     « Kadıköy kiralık daire, bütçem aylık 25.000 TL
    * `unknown` sayısı değişmedi (988): çıkarım sızıntısı yok.
    */
-  ok("E2", fields === 1284, `kanonik alan sayısı değişti → ${fields}`);
+  /**
+   * TABAN TAZELENDİ (2026-08-31) — delta satır satır doğrulandı.
+   * Tek fark home-03 ("Kahve makinesi arıyorum"): kurucu kararıyla kahve
+   * makinesinin kanonik sahibi appliances olunca home-kitchen ekseninin
+   * kopya taşıyıcısı `kitchenProductType:VALUE` düştü; değer
+   * `applianceType` + `productType` olarak YERİNDE duruyor, hiçbir
+   * senaryoda kayıp ya da yeni sızıntı yok (0 başka satır değişti,
+   * unknown 988 sabit).
+   */
+  ok("E2", fields === 1283, `kanonik alan sayısı değişti → ${fields}`);
   ok("E3", unknown === 988, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
-  ok("E6", attributes === 260, `attributes tabanı kaydı → ${attributes}`);
-  ok("E7", constraints === 260, `constraints tabanı kaydı → ${constraints}`);
+  ok("E6", attributes === 259, `attributes tabanı kaydı → ${attributes}`);
+  ok("E7", constraints === 259, `constraints tabanı kaydı → ${constraints}`);
 
   return {
     scenarios,

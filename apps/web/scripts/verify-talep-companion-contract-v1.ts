@@ -97,6 +97,17 @@ function skipBraces(src: string, from: number): number {
 }
 
 function extractJsxPropNames(src: string, tag: string): string[] {
+  /**
+   * YORUMLAR ÖNCE SOYULUR (2026-08-31). skipBraces tek tırnağı dize
+   * açılışı sayar; prop gövdesindeki Türkçe kesme işaretli YORUM
+   * ("Talepo'nun") sahte bir dize açıp süslü parantezleri yutuyor ve
+   * kapı, sayfa GERÇEKTE geçirdiği prop'ları görmeden kırmızıya
+   * düşüyordu (tabanda da aynı — tarihsel doğrulayıcı kusuru). Ölçülen
+   * şey üretim JSX'idir; yorum metni ölçüme giremez.
+   */
+  src = src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
   const start = src.search(new RegExp(`<${tag}\\b`));
   if (start < 0) throw new Error(`<${tag} not found`);
   const names: string[] = [];

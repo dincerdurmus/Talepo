@@ -128,6 +128,21 @@ check(
     mapped.body.correlationId === "corr-x",
 );
 
+// 5b message validation error maps like its siblings (AC-1, 2026-08-31)
+// Ölçülen canlı kusur: yetkisiz konuşmaya mesaj POST'u guard'da
+// MessageValidationError fırlatıyor ama mapUnknownToSafeError bu adı
+// tanımadığı için 500 INTERNAL_ERROR dönüyordu; sınır tutuyor (yazma yok)
+// fakat hata sınıfı yanlıştı. Kardeş doğrulama hatalarıyla AYNI eşleme.
+const messageValidationLike = new Error("Bu sohbete erişiminiz yok.");
+messageValidationLike.name = "MessageValidationError";
+const mappedMessage = mapUnknownToSafeError(messageValidationLike, "corr-m");
+check(
+  "5b MessageValidationError → 400 VALIDATION_FAILED",
+  mappedMessage.status === 400 &&
+    mappedMessage.body.code === DomainErrorCode.VALIDATION_FAILED &&
+    mappedMessage.body.message === "Bu sohbete erişiminiz yok.",
+);
+
 // 6 provider success metric
 clearRecentLogs();
 recordProviderOperationalMetric({

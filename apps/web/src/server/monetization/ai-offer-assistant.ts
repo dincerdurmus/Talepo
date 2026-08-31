@@ -1,6 +1,18 @@
 /**
  * AI Offer Assistant — provider boundary (no external LLM in this phase).
+ *
+ * TEK INTELLIGENCE CORE (FD-3 kurucu kararı, 2026-08-31): taslak ve fiyat
+ * mantığı `@/lib/ai/offer-assistant` çekirdeğinden TÜRER. Bu sağlayıcı
+ * yalnız teklif-bağlamı giriş yüzeyinin uyarlayıcısıdır; ikinci bir şablon
+ * ya da ayrı fiyat metni kuramaz (verify-offer-draft-lock-v1 bunu ölçer).
+ * Panel bağlamının canonical yüzeyi /api/ai/offer-assistant aynı çekirdeği
+ * kullanır; UI bağlama göre farklı kalabilir, beyin tektir.
  */
+import {
+  formatTry,
+  generateOfferAssistantDraft,
+} from "@/lib/ai/offer-assistant";
+
 export type OfferAssistantInput = {
   requestTitle: string;
   requestDescription: string;
@@ -24,15 +36,23 @@ class RuleBasedOfferAssistant implements OfferAssistantProvider {
   async generateDraft(
     input: OfferAssistantInput,
   ): Promise<OfferAssistantResult> {
-    const intro = input.existingDraft?.trim()
-      ? input.existingDraft.trim()
-      : `${input.requestTitle} talebiniz için hazırladığımız teklif:`;
+    const core = generateOfferAssistantDraft({
+      title: input.requestTitle,
+      description: input.requestDescription,
+      // Teklif bağlamı slug taşımaz; çekirdek kategori bilinmediğinde
+      // temkinli genel tabanıyla üretir — ikinci bir fiyat kuralı yazılmaz.
+      categorySlug: "",
+      categoryName: input.categoryName ?? "Genel",
+    });
+
+    const draft = input.existingDraft?.trim()
+      ? `${input.existingDraft.trim()}\n\n${core.description}`
+      : core.description;
 
     return {
       ok: true,
-      draft: `${intro}\n\n• Kapsam: ${input.categoryName ?? "Genel"} kategorisinde talep edilen iş/ürün\n• Teslim: Talep detaylarına göre planlanır\n• Not: Fiyat ve süre firmanızın operasyonel koşullarına göre güncellenmelidir.`,
-      pricingHint:
-        "Gerçek AI fiyat önerisi bir sonraki fazda devreye alınacak. Şimdilik kategori ve talep metnine dayalı şablon üretildi.",
+      draft,
+      pricingHint: `${core.pricingExplanation} Önerilen aralık: ${formatTry(core.priceMin)} – ${formatTry(core.priceMax)}.`,
       provider: "rule-based-stub",
     };
   }

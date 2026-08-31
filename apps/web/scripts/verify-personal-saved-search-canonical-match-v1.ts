@@ -199,11 +199,20 @@ const projection = furnitureLeafProjection();
     "G card renders matchReasons",
     hub.includes("item.matchReasons") && hub.includes("matchReasonList"),
   );
+  /**
+   * Probun eski hâli `fitReasons.map` metnini arıyordu; Signal
+   * yenilemesi aynı listeyi primary + secondary olarak çiziyor
+   * (2026-08-31'de bayatladı, ürün davranışı değişmedi). Ölçülen NİYET
+   * aynı: tek kaynak listesi (matchReasonList) çizilir, ikinci bir
+   * "fırsat nedenleri" dökümü yoktur.
+   */
   check(
     "G card does not dump opportunityReasons as a second list",
     !hub.includes("Fırsat neden ilginç") &&
       !hub.includes("Neden sana uygun") &&
-      hub.includes("fitReasons.map"),
+      /const\s+primaryReason\s*=\s*fitReasons\[0\]/.test(hub) &&
+      /const\s+secondaryReasons\s*=\s*fitReasons\.slice\(1\)/.test(hub) &&
+      hub.includes("secondaryReasons.map"),
   );
   check(
     "G no fake match reason when absent",
