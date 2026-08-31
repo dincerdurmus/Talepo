@@ -16,8 +16,25 @@
  * ölçmemek, ortak veriye yazmaktan iyidir ve "ölçemedim" ile "ölçtüm, bozuk"
  * asla aynı renge boyanmaz (bkz. not-measured.ts).
  *
- * Davranışı verify-understanding-invariants-v1 (I15) sınar.
+ * Davranışı verify-understanding-invariants-v1 (I15, I15b) sınar.
+ *
+ * FD-5 (kurucu kararı, 2026-08-31): güncel acceptance projesi yalnız
+ * `pooler.supabase.com` alan adları sunduğu için kapı topyekûn pooler
+ * yasağıyla acceptance kabulünü de ölçülemez kılıyordu. Karar: geniş
+ * wildcard ya da genel gevşetme YOK; yalnız şu bileşim açılır —
+ * doğrulanmış proje referansı + doğrulanmış direct/pooler host biçimleri
+ * + development/test hedefi + TLS doğrulaması (verify-full) + CA pin +
+ * bilinmeyen/production hedefte fail-closed. Ref/host/TLS kararı kanonik
+ * `evaluateAcceptanceDbTarget` yetkilisinden, CA pin kararı
+ * `loadAcceptanceCa` yetkilisinden okunur; bu dosya ikinci bir kopya
+ * kurmaz. (Bu modül yalnız doğrulayıcı katmanının kapısıdır; ürün runtime
+ * kodu buradan import etmez — scripts/lib bağımlılığı bu yüzden kabul.)
  */
+import {
+  ACCEPTANCE_CA_FINGERPRINT_KEY,
+  loadAcceptanceCa,
+} from "../../../scripts/lib/acceptance-ca-v1";
+import { evaluateAcceptanceDbTarget } from "../../../scripts/lib/acceptance-db-target-v1";
 
 /** 1) Açık niyet bayrağı. Varsayılan: yazma yok. */
 const ALLOW_FLAG = "TALEPO_VERIFY_ALLOW_DB";
@@ -75,6 +92,8 @@ export function databaseHost(url: string | undefined | null): string | null {
  */
 export function canWriteToDatabase(
   env: Record<string, string | undefined> = process.env,
+  /** I15b bu yolu diske dokunmadan ölçebilsin diye enjekte edilebilir. */
+  deps: { loadCa?: typeof loadAcceptanceCa } = {},
 ): DbGuardVerdict {
   if (env[ALLOW_FLAG]?.trim() !== "1") {
     return {
@@ -91,6 +110,37 @@ export function canWriteToDatabase(
       reason:
         "DATABASE_URL/DIRECT_URL yok ya da host ayrıştırılamadı — bilinmeyen hedefe yazılmaz",
     };
+  }
+
+  /**
+   * FD-5 acceptance yolu — ortam AÇIKÇA acceptance beyan edildiğinde ve
+   * yalnız o zaman: karar kanonik yetkililere devredilir, buradaki genel
+   * listeler atlanmaz GEVŞETİLMEZ (yol ya tam bileşimle açılır ya
+   * fail-closed kapanır; genel dallara düşmez).
+   */
+  if ((env.TALEPO_ENVIRONMENT ?? "").trim() === "acceptance") {
+    const target = evaluateAcceptanceDbTarget(env);
+    if (!target.ok) {
+      return {
+        allowed: false,
+        reason: `acceptance hedefi doğrulanamadı (${target.reason}) — fail-closed`,
+      };
+    }
+    const expectedFingerprint = env[ACCEPTANCE_CA_FINGERPRINT_KEY]?.trim();
+    if (!expectedFingerprint) {
+      return {
+        allowed: false,
+        reason: `${ACCEPTANCE_CA_FINGERPRINT_KEY} yok — CA pin'siz acceptance hedefine yazılmaz`,
+      };
+    }
+    const ca = (deps.loadCa ?? loadAcceptanceCa)({ expectedFingerprint });
+    if (!ca.ok) {
+      return {
+        allowed: false,
+        reason: `CA pin doğrulanamadı (${ca.reason}) — fail-closed`,
+      };
+    }
+    return { allowed: true, host };
   }
 
   const lower = host.toLowerCase();

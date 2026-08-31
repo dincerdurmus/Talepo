@@ -10,17 +10,26 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: E (AC-1 canlı kabul + I22/I23 + telemetri temeli + FD-3)
-  tamamlandı, 2026-08-31.
-- LAST_VERIFIED_ITEM: LG-15 (FD-3 tek çekirdek ortaklaştırması, offer-draft-lock 10/0).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → commit onayı; sonra FD-2 sırasına
-  göre tarihsel kırmızı kapanış dilimleri (önce fanout-telemetry/DW-1 sink
-  doğrulaması) ya da DW-2 (olay üreticileri).
-- BLOCKERS: (1) Admin+MFA POZİTİF canlı kanıtı — sentetik personaya geçici
-  SUPER_ADMIN yazımı oturum izin sınıflandırıcısınca engellendi; kurucu
-  isterse tek UPDATE ile açılır (negatif kanıt canlı alındı). (2) 22
-  tarihsel kırmızı kapı (aşağıda). (3) DW provision (DW-3 karar verildi,
-  provision ayrı onay).
+- CURRENT_WAVE: F (FD-5 + FD-6 + DW-1) tamamlandı, 2026-08-31; checkpoint
+  2eef7ee + 05dd2a4 pushlanmış tabandan devam edildi.
+- LAST_VERIFIED_ITEM: LG-18 (DW-1 sink zinciri kapısı 10/0, mutasyon kanıtlı).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → commit onayı (Wave F kapsamı);
+  sonra DW-2 (olay üreticileri) ve acceptance fixture-boşluğu dilimi
+  (aşağıda LG-19 notu), ardından FD-2 sırasıyla tarihsel kırmızılar.
+- BLOCKERS: (1) 24+2 tarihsel/davranışsal kırmızı kapı (kendi dilimleri).
+  (2) DW provision — DW-1 kod tarafı kapandı ama ÜRETİM sink kaydı hâlâ
+  yok (PRODUCTION-SINK-NOT-VERIFIED sürüyor; provision DW-3 onaylı karar,
+  uygulaması ayrı tur). (3) 4 kapının canlı yarısı kendi fixture
+  kimliklerini bekliyor (fixture-boşluğu, ürün kusuru değil).
+
+## Wave F kaydı (2026-08-31 — FD-5/FD-6/DW-1 uygulandı)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-16 | FD-5 host güvenlik kapısı | FIXED | `db-guard.ts` acceptance yolu KANONİK yetkililerden türer (`evaluateAcceptanceDbTarget` ref/host/verify-full + `loadAcceptanceCa` CA pin, fingerprint zorunlu); genel liste GEVŞETİLMEDİ, bilinmeyen/production fail-closed. Test-first: I15b (kırmızı 123/1 → yeşil), I15 eski kural korunuyor; invariants **124/0** (1 known_fail I25d). Sonuç: offer-inbox-scope tam YEŞİL; my-requests, profile-security zaten yeşildi; 4 kapı artık gerçekten ÖLÇÜYOR (aşağıda LG-19) |
+| LG-17 | FD-6 pozitif admin+MFA canlı kanıtı | VERIFIED + GERİ ALINDI | Yeni QA-only hesap `acceptance-v1-qa-admin@talepo.test` (id `cmth2jumz0000y4uykegoot6k`), EN DAR rol SUPPORT, kanonik guard yoluyla oluşturuldu. Canlı: MFA'sız /admin 404 → gerçek TOTP kaydı (secret tarayıcı dışına çıkmadı, WebCrypto ile) → /admin ve /admin/health RENDER (hassas alanlar rol gereği kapalı) → revoke (role USER, MFA temiz, SUSPENDED) → /admin yeniden 404. Geçici araç silindi |
+| LG-18 | DW-1 sink zinciri | FIXED | Ölçülen kusur: fırlatan sink her iki kanalda ürün akışını kırıyordu (yalıtım yok, sessiz kayıp). Teslim sink başına yalıtıldı + düşen teslim sayaçları eklendi (logger + product-events). Yeni kalıcı kapı `verify-log-sink-chain-v1` 10/0, mutasyon kontrolü kanıtlı (naif dispatch → 7/3). Üretim sink kaydı DÜRÜSTÇE raporlanır: YOK — DW-3 provision'a bağlı |
+| LG-19 | FD-5 sonrası kalan 4 canlı yarım | DOCUMENTED | request-publish 15/1 ("live buyer" fixture kimliği yok), auth-fix (beklediği kullanıcı yok), outgoing-offer-inbox 55/2 (fixture + 1 statik drift), question-suppression (KB-17 production düzeltmesine bağlı kapanış kapısı). Fixture kimliklerinin seed-acceptance-fixtures'a eklenmesi AYRI dilim — harness sözleşmesine dokunur |
 
 ## Kurucu kararları (2026-08-31 turu — uygulandı/kaydedildi)
 

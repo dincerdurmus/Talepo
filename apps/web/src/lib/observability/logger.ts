@@ -46,6 +46,27 @@ export function addLogSink(sink: LogSink): () => void {
   };
 }
 
+/**
+ * DW-1 (2026-08-31): fırlatan bir sink log ÇAĞIRANINI kıramaz ve diğer
+ * sink'leri açlığa mahkûm edemez — teslim sink başına yalıtılır, düşen
+ * teslim sayaçla görünür (sessiz kayıp yok). verify-log-sink-chain-v1 ölçer.
+ */
+let sinkDeliveryFailures = 0;
+
+export function getSinkDeliveryFailures(): number {
+  return sinkDeliveryFailures;
+}
+
+function dispatchToSinks(entry: OperationalLogEvent): void {
+  for (const sink of [...sinks]) {
+    try {
+      sink(entry);
+    } catch {
+      sinkDeliveryFailures += 1;
+    }
+  }
+}
+
 /** Test helper */
 export function clearRecentLogs(): void {
   recent.length = 0;
@@ -100,7 +121,7 @@ export function logOperational(
   if (sinks.length === 0) {
     defaultSink(entry);
   } else {
-    for (const sink of sinks) sink(entry);
+    dispatchToSinks(entry);
   }
 
   return entry;

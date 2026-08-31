@@ -47,6 +47,7 @@ import {
   canWriteToDatabase,
   databaseHost,
 } from "../src/lib/verification/db-guard";
+import { ACCEPTANCE_PROJECT_REF } from "./lib/acceptance-db-target-v1";
 import {
   ensureTaxonomyLoaded,
   getTaxonomyAncestorIds,
@@ -1181,6 +1182,107 @@ check("I15: DB'ye yazan doğrulayıcı allowlist dışı host'a asla yazmaya kal
   }
   assert.equal(databaseHost("not-a-url"), null);
   assert.equal(databaseHost(SHARED), "aws-0-eu-central-1.pooler.supabase.com");
+});
+
+check("I15b: doğrulanmış acceptance hedefi FD-5 sözleşmesiyle açılır, gerisi fail-closed", () => {
+  /**
+   * Kurucu kararı FD-5 (2026-08-31): Supabase host kapısı geniş wildcard ya
+   * da genel gevşetmeyle ÇÖZÜLMEZ. Yalnız şu bileşim kabul: doğrulanmış
+   * proje referansı + doğrulanmış direct/pooler host biçimleri +
+   * development/test hedefi + TLS doğrulaması + CA pin + bilinmeyen veya
+   * production hedefte fail-closed. Kapı ref/host/TLS kararını kanonik
+   * `evaluateAcceptanceDbTarget` yetkilisinden, CA pin kararını
+   * `loadAcceptanceCa` yetkilisinden okur — ikinci kopya kurmaz.
+   */
+  const ACC_URL = `postgresql://postgres.${ACCEPTANCE_PROJECT_REF}:p@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=verify-full`;
+  const FAKE_SHA = "a".repeat(64);
+  const okCa = () =>
+    ({ ok: true, pem: "-----BEGIN CERTIFICATE-----", fingerprint: FAKE_SHA }) as const;
+
+  // 1) Tam bileşim (ref + verify-full + fingerprint + CA pin) → açılır.
+  const full = canWriteToDatabase(
+    {
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL: ACC_URL,
+      DIRECT_URL: ACC_URL,
+      ACCEPTANCE_DB_CA_SHA256: FAKE_SHA,
+    },
+    { loadCa: okCa },
+  );
+  assert.equal(full.allowed, true, `tam FD-5 bileşimi açılmalı: ${full.allowed === false ? full.reason : ""}`);
+
+  // 2) Aynı URL, acceptance ORTAMI YOKKEN → eski kural aynen: reddedilir.
+  const noEnv = canWriteToDatabase(
+    { TALEPO_VERIFY_ALLOW_DB: "1", DATABASE_URL: ACC_URL },
+    { loadCa: okCa },
+  );
+  assert.equal(noEnv.allowed, false, "acceptance ortamı beyan edilmeden pooler açılamaz");
+
+  // 3) Acceptance ortamı VAR ama ref yanlış/başka proje → fail-closed.
+  const wrongRef = canWriteToDatabase(
+    {
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL:
+        "postgresql://postgres.zzzzzzzzzzzzzzzzzzzz:p@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=verify-full",
+      DIRECT_URL:
+        "postgresql://postgres.zzzzzzzzzzzzzzzzzzzz:p@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=verify-full",
+      ACCEPTANCE_DB_CA_SHA256: FAKE_SHA,
+    },
+    { loadCa: okCa },
+  );
+  assert.equal(wrongRef.allowed, false, "doğrulanmamış ref fail-closed olmalı");
+
+  // 4) TLS doğrulaması eksik (sslmode yok) → fail-closed.
+  const noTls = canWriteToDatabase(
+    {
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL: ACC_URL.replace("?sslmode=verify-full", ""),
+      DIRECT_URL: ACC_URL.replace("?sslmode=verify-full", ""),
+      ACCEPTANCE_DB_CA_SHA256: FAKE_SHA,
+    },
+    { loadCa: okCa },
+  );
+  assert.equal(noTls.allowed, false, "verify-full olmadan acceptance açılamaz");
+
+  // 5) CA pin fingerprint'i env'de yok → fail-closed (pin zorunlu).
+  const noPin = canWriteToDatabase(
+    {
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL: ACC_URL,
+      DIRECT_URL: ACC_URL,
+    },
+    { loadCa: okCa },
+  );
+  assert.equal(noPin.allowed, false, "CA pin fingerprint'i olmadan açılamaz");
+
+  // 6) CA yetkilisi reddediyor → fail-closed.
+  const badCa = canWriteToDatabase(
+    {
+      TALEPO_VERIFY_ALLOW_DB: "1",
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL: ACC_URL,
+      DIRECT_URL: ACC_URL,
+      ACCEPTANCE_DB_CA_SHA256: FAKE_SHA,
+    },
+    { loadCa: () => ({ ok: false, reason: "CA_FILE_MISSING", detail: "yok" }) as const },
+  );
+  assert.equal(badCa.allowed, false, "CA pin doğrulanamazsa açılamaz");
+
+  // 7) Bayrak yine ön koşul: acceptance bileşimi bayraksız da kapalı.
+  const noFlag = canWriteToDatabase(
+    {
+      TALEPO_ENVIRONMENT: "acceptance",
+      DATABASE_URL: ACC_URL,
+      DIRECT_URL: ACC_URL,
+      ACCEPTANCE_DB_CA_SHA256: FAKE_SHA,
+    },
+    { loadCa: okCa },
+  );
+  assert.equal(noFlag.allowed, false, "TALEPO_VERIFY_ALLOW_DB=1 hâlâ zorunlu");
 });
 
 check("I16: üretilen cümlede hedef ifade birden fazla kez geçemez", () => {

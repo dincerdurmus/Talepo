@@ -63,6 +63,16 @@ export function addProductEventSink(sink: ProductEventSink): () => void {
   };
 }
 
+/**
+ * DW-1 (2026-08-31): logger ile AYNI teslim yalıtımı — fırlatan sink ürün
+ * akışını kıramaz, düşen teslim sayaçla görünür. verify-log-sink-chain-v1.
+ */
+let productSinkDeliveryFailures = 0;
+
+export function getProductSinkDeliveryFailures(): number {
+  return productSinkDeliveryFailures;
+}
+
 export function clearRecentProductEvents(): void {
   recent.length = 0;
 }
@@ -98,7 +108,13 @@ export function trackProductEvent(input: {
     recent.splice(0, recent.length - MAX_RECENT);
   }
 
-  for (const sink of sinks) sink(event);
+  for (const sink of [...sinks]) {
+    try {
+      sink(event);
+    } catch {
+      productSinkDeliveryFailures += 1;
+    }
+  }
 
   // Optional debug visibility in non-production without flooding ops JSON.
   if (process.env.NODE_ENV !== "production" && process.env.TALEPO_PRODUCT_EVENTS_STDOUT === "1") {
