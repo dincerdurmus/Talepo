@@ -13,3 +13,6 @@ data/catalog-ingestion/state/**
 data/catalog-ingestion/cache/**
 !data/catalog-ingestion/cache/.gitkeep
 
+
+# Verifier scratch output (never committed)
+apps/web/TALEPO-GLOBAL-PRODUCT-IDENTITY-V1-TEST-OUTPUT.txt
