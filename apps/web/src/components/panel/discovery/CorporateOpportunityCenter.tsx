@@ -207,6 +207,7 @@ export function CorporateOpportunityCenter({
   const [localItems, setLocalItems] = useState(items);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL/props → sekme durumu senkronu (PanelShell emsali)
     setLocalItems(items);
   }, [items]);
 

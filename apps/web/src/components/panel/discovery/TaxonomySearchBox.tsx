@@ -39,6 +39,7 @@ export function TaxonomySearchBox({ onPick }: TaxonomySearchBoxProps) {
               <button
                 type="button"
                 role="option"
+                aria-selected={false}
                 className="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-teal-50"
                 onClick={() => {
                   const node = getTaxonomyNode(hit.id);

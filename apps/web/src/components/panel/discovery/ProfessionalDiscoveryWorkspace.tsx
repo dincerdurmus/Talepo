@@ -167,10 +167,12 @@ export function ProfessionalDiscoveryWorkspace({
   const [localItems, setLocalItems] = useState(discoveryItems);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL/props → görünüm durumu senkronu (PanelShell emsali)
     setLocalItems(discoveryItems);
   }, [discoveryItems]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL/props → görünüm durumu senkronu (PanelShell emsali)
     setCityDraft(city ?? "");
   }, [city]);
 

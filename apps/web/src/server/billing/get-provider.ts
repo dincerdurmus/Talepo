@@ -46,9 +46,9 @@ export function getBillingProvider(): BillingProvider {
     return createMockBillingProvider();
   }
   if (id === "iyzico") {
+    // Bilinçli lazy-load (yukarıdaki modül notu): status-only yollar prisma'yı çekmesin.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createIyzicoBillingProvider } =
-      require("./iyzico-provider") as typeof import("./iyzico-provider");
+    const { createIyzicoBillingProvider } = require("./iyzico-provider") as typeof import("./iyzico-provider");
     return createIyzicoBillingProvider();
   }
   return noneProvider;

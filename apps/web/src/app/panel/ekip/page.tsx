@@ -85,7 +85,7 @@ export default async function TeamPage() {
             href="/panel/plan"
             className="mt-6 inline-flex items-center gap-2 rounded-full bg-amber-900 px-5 py-3 text-sm font-semibold text-white"
           >
-            Profesyonel'e geç
+            Profesyonel&apos;e geç
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

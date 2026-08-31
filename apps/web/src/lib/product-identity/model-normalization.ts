@@ -35,7 +35,7 @@ export function normalizeModelText(value: string): string {
       .replace(/[^a-z0-9]/g, "");
   }
 
-  let raw = trimmed
+  const raw = trimmed
     .replace(/([a-z]{2,})([A-Z])/g, "$1 $2")
     .replace(/([A-Za-z]{2,})(\d)/g, "$1 $2")
     .replace(/(\d)([A-Za-z])/g, "$1 $2");

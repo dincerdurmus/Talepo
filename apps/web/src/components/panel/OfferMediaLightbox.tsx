@@ -27,6 +27,7 @@ export function OfferMediaLightbox({
   const [index, setIndex] = useState(startIndex);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- lightbox açılınca aktif görseli hizala (PanelShell emsali)
     if (open) setIndex(startIndex);
   }, [open, startIndex]);
 

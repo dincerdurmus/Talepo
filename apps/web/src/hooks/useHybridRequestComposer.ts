@@ -111,7 +111,6 @@ export function useHybridRequestComposer(
   );
 
   const stateRef = useRef(state);
-  stateRef.current = state;
   const seqRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastComposedRef = useRef<string | undefined>(state?.lastComposedText);
@@ -119,7 +118,15 @@ export function useHybridRequestComposer(
   const skipPathWalkSyncRef = useRef(false);
   const lastPathSigRef = useRef("");
   const browseWalkRef = useRef(browseWalk);
-  browseWalkRef.current = browseWalk;
+  /**
+   * "Son değer" ref kalıbı: yazım render sırasında değil commit sonrası
+   * yapılır (react-hooks/refs). Tüketiciler kullanıcı olaylarında ve
+   * zamanlayıcılarda okur; effect her commit'te koştuğu için davranış aynı.
+   */
+  useEffect(() => {
+    stateRef.current = state;
+    browseWalkRef.current = browseWalk;
+  }, [state, browseWalk]);
 
   const applyState = useCallback((next: CanonicalRequestState | null) => {
     stateRef.current = next;
@@ -493,10 +500,12 @@ export function useHybridRequestComposer(
     if (sig === lastPathSigRef.current) return;
     lastPathSigRef.current = sig;
     if (browsePath.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- metin otoritesi → sütun yürüyüşü senkronu; sig koruması döngüyü keser
       setBrowseWalk(createBrowseWalkState());
       return;
     }
     try {
+       
       setBrowseWalk(browseWalkFromPath(browsePath));
     } catch {
       // keep current walk

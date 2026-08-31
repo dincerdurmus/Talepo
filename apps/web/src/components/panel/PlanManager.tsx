@@ -277,6 +277,8 @@ export function PlanManager({
         return;
       }
       if (result.checkoutUrl) {
+        // Ödeme sağlayıcısına tam-sayfa yönlendirme — event handler içinde kasıtlı navigasyon.
+        // eslint-disable-next-line react-hooks/immutability
         window.location.href = result.checkoutUrl;
         return;
       }

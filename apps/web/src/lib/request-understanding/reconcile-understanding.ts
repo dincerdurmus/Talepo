@@ -20,7 +20,8 @@ export function reconcileUnderstanding(input: {
   strategy: UnderstandingDecision<PriceStrategyKey>;
   subject: UnderstandingDecision<SubjectKind>;
 } {
-  let { intent, category, strategy, subject } = input;
+  const { intent, strategy } = input;
+  let { category, subject } = input;
 
   // Strong intent beats weak category for downstream interpretation markers
   if (

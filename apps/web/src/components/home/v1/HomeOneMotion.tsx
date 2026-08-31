@@ -22,6 +22,7 @@ export function HomeOneReveal({
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- görünürlük/animasyon başlangıcı — mount'ta tek sefer, prop-türevi (PanelShell emsali)
       setVisible(true);
       return;
     }

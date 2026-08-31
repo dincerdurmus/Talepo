@@ -57,6 +57,7 @@ export function DealReviewPanel({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- prop değişince form durumunu sıfırla — sig/prop korumalı (PanelShell emsali)
     setDismissed(window.localStorage.getItem(dismissKey) === "1");
   }, [dismissKey]);
 

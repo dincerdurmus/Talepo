@@ -227,6 +227,7 @@ export function useRequestBrain(input: UseRequestBrainInput): UseRequestBrainRes
 
   useEffect(() => {
     if (input.wizardStep === 2 && input.enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- anlama sonucu → panel durumu senkronu; token korumalı (PanelShell emsali)
       setAnalysisStatus((s) => (s === "IDLE" || s === "PARSING" ? "READY_FOR_REVIEW" : s));
     }
   }, [input.enabled, input.wizardStep]);
