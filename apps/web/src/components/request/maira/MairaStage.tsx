@@ -4,24 +4,41 @@
  * MAIRA SAHNESİ — SUNUM KATMANI, CEVAP OTORİTESİ DEĞİL.
  *
  * Bu bileşen hiçbir soru, seçenek ya da kategori kuralı üretmez. Gösterdiği
- * her şey kanonik `FocusedQuestion[]` listesinden gelir ve kontroller mevcut
- * `FocusedQuestionsPanel` ile çizilir — 11 kontrol tipinin davranışı tek
- * yerde kalır, Maira ikinci bir kopyasını kurmaz.
+ * her şey kanonik `FocusedQuestion[]` listesinden ve o sorunun KANONİK
+ * kontrolünden (`question.control`) gelir; Maira ikinci bir soru sistemi
+ * kurmaz. Kalıcı cevap deposu tutmaz: taslak metin dışında state yoktur ve
+ * cevap uygulaması sayfanın apply-plan yolundan geçer.
  *
- * Kalıcı cevap deposu tutmaz: taslak metin ve panelin kendi geçici durumu
- * dışında state yoktur. Cevap uygulaması sayfanın apply-plan yolundan geçer.
+ * KOMPOZİSYON (2026-08-31, görsel ret sonrası). Önceki sürüm sahneyi 26vh
+ * yüksekliğinde, 520px genişliğinde bir yuvaya sıkıştırıyor; mor sayfa
+ * zemini ve standart beyaz "Son birkaç detay" kartı Maira'nın içinde
+ * kalıyordu — sonuç "sayfaya eklenmiş video küçük resmi"ydi. Artık onaylanan
+ * Showcase kompozisyonu taşınır: sahne `fixed inset-0` ile bütün viewport'u
+ * kaplar, üstünde yalnız üç bölge durur — nav, `M A I R A` plakası ve alt
+ * sıra (soru → cevaplar → Yanıtlarım). Standart form yüzeyi Maira'da HİÇ
+ * çizilmez; o yüzey yalnız "Standart görünüme geç" ile açılır.
  *
- * Görsel kimlik bu dilimin dışındadır: sahnede sahte bir yüz üretilmez, sade
- * ve sessiz bir ışık alanı bırakılır.
+ * Ölçüler (30px kenar boşluğu, 20px kart aralığı, 267px alt sıra, 256px
+ * wordmark) onaylanan `maira8/overlay.css` tokenlarından birebir alındı;
+ * burada yeniden tasarlanmaz.
  */
-import { useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 
-import { FocusedQuestionsPanel } from "@/components/request/v2/FocusedQuestionsPanel";
 import type { FocusedQuestion } from "@/lib/request-composer/v2/focused-questions";
 import type { UserAnswerRow } from "@/lib/request-composer/v2/answer-apply-plan";
 import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
 
 import { MairaAnswers } from "./MairaAnswers";
+
+/**
+ * Sahne yalnız istemcide yaşar: WebGL sunucuda yoktur ve ana paket
+ * büyümesin diye ayrı bir parçaya alınır.
+ */
+const MairaContourScene = dynamic(
+  () => import("./MairaContourScene").then((m) => m.MairaContourScene),
+  { ssr: false },
+);
 
 type Props = {
   /** Tek soru otoritesi — kanonik liste, olduğu gibi. */
@@ -42,6 +59,74 @@ type Props = {
   onEditAnswer: (fieldKey: string, value: string) => void;
 };
 
+/**
+ * ONAYLANAN SHOWCASE TOKEN SETİ — `maira8/overlay.css`'ten birebir taşındı.
+ *
+ * Neden burada: 1440 ve 1024'te sabit 1920 değerleri kullanmak ölçüleri
+ * onaylanan kompozisyondan ayırıyordu (ölçüldü: 1024'te lead sütunu 44px'e
+ * eziliyordu). Kırılım noktaları ve yeniden yığma kuralı da kaynağın
+ * kendisinden gelir; burada yeni bir ölçek uydurulmaz.
+ */
+const SHOWCASE_TOKENS = `
+.maira-showcase{
+  --sc-pad:30px; --sc-gap:30px; --sc-radius:32px; --sc-text:24px;
+  --sc-stat:64px; --sc-wm:256px; --sc-pill-px:40px; --sc-pill-py:16px;
+  --sc-pill-r:47px; --sc-btn-gap:20px; --sc-lead-w:606px;
+  --sc-card-h:267px; --sc-card-pad:32px; --sc-card-gap:20px;
+  --sc-card1-w:293px; --sc-card2-w:607px; --sc-plate-min:180px;
+}
+@media (max-width:1680px){.maira-showcase{
+  --sc-pad:26px; --sc-gap:26px; --sc-radius:28px; --sc-text:21px; --sc-stat:56px;
+  --sc-wm:224px; --sc-pill-px:35px; --sc-pill-py:14px; --sc-pill-r:41px;
+  --sc-btn-gap:18px; --sc-lead-w:530px; --sc-card-h:234px; --sc-card-pad:28px;
+  --sc-card-gap:18px; --sc-card1-w:256px; --sc-card2-w:531px;}}
+@media (max-width:1440px){.maira-showcase{
+  --sc-pad:22px; --sc-gap:22px; --sc-radius:24px; --sc-text:18px; --sc-stat:48px;
+  --sc-wm:192px; --sc-pill-px:30px; --sc-pill-py:12px; --sc-pill-r:35px;
+  --sc-btn-gap:15px; --sc-lead-w:455px; --sc-card-h:200px; --sc-card-pad:24px;
+  --sc-card-gap:15px; --sc-card1-w:220px; --sc-card2-w:455px;}}
+@media (max-width:1200px){.maira-showcase{
+  --sc-pad:19px; --sc-gap:19px; --sc-radius:20px; --sc-text:15px; --sc-stat:40px;
+  --sc-wm:160px; --sc-pill-px:25px; --sc-pill-py:10px; --sc-pill-r:29px;
+  --sc-btn-gap:13px; --sc-lead-w:379px; --sc-card-h:167px; --sc-card-pad:20px;
+  --sc-card-gap:13px; --sc-card1-w:183px; --sc-card2-w:379px;}}
+@media (max-width:1024px){.maira-showcase{
+  --sc-pad:20px; --sc-gap:20px; --sc-radius:20px; --sc-text:16px; --sc-stat:44px;
+  --sc-wm:150px; --sc-pill-px:22px; --sc-pill-py:10px; --sc-pill-r:28px;
+  --sc-btn-gap:12px; --sc-card-pad:24px; --sc-card-gap:12px; --sc-plate-min:260px;}
+  .maira-showcase .sc-bottom{flex-wrap:wrap;height:auto;}
+  .maira-showcase .sc-lead{flex:1 0 100%;align-items:stretch;}
+  .maira-showcase .maira-options{flex:2 1 360px;width:auto;}
+  .maira-showcase .sc-card-stat{flex:1 1 220px;width:auto;}}
+@media (max-width:768px){.maira-showcase{
+  --sc-pad:16px; --sc-gap:16px; --sc-radius:18px; --sc-text:15px; --sc-stat:40px;
+  --sc-wm:105px; --sc-card-pad:20px; --sc-card-gap:12px; --sc-plate-min:200px;}
+  .maira-showcase .maira-options,.maira-showcase .sc-card-stat{flex:1 1 100%;}}
+@media (max-width:480px){.maira-showcase{
+  --sc-text:14px; --sc-stat:34px; --sc-wm:66px; --sc-card-pad:16px;}}
+@media (max-width:414px){.maira-showcase{--sc-wm:58px;}}
+@media (min-width:1025px) and (max-height:820px){.maira-showcase{--sc-wm:200px;}}
+@media (min-width:1025px) and (max-height:820px) and (max-width:1440px){.maira-showcase{--sc-wm:176px;}}
+@media (min-width:1025px) and (max-height:680px){.maira-showcase{--sc-wm:156px;}}
+`;
+
+const WORDMARK = ["M", "A", "I", "R", "A"] as const;
+
+const ARROW = (
+  <svg
+    className="sc-arrow h-[0.614em] w-[0.834em] flex-none"
+    viewBox="0 0 20 14.7279"
+    fill="none"
+    aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M1 6.36396C0.447715 6.36396 0 6.81168 0 7.36396C0 7.91625 0.447715 8.36396 1 8.36396V7.36396V6.36396ZM19.7071 8.07107C20.0976 7.68054 20.0976 7.04738 19.7071 6.65685L13.3431 0.292893C12.9526 -0.097631 12.3195 -0.097631 11.9289 0.292893C11.5384 0.683418 11.5384 1.31658 11.9289 1.70711L17.5858 7.36396L11.9289 13.0208C11.5384 13.4113 11.5384 14.0445 11.9289 14.435C12.3195 14.8256 12.9526 14.8256 13.3431 14.435L19.7071 8.07107ZM1 7.36396V8.36396H19V7.36396V6.36396H1V7.36396Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 export function MairaStage({
   questions,
   draftByKey,
@@ -55,82 +140,212 @@ export function MairaStage({
   editControl,
   onEditAnswer,
 }: Props) {
-  /* Yalnız yaprağın açık/kapalı olması — cevap değil, görünüm durumu. */
+  /* Yalnız görünüm durumu — cevap değil. */
   const [answersOpen, setAnswersOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  const active = questions[0] ?? null;
+  const control = active?.control ?? null;
+
+  /* Soru değişince "diğer seçenekler" kapanır; taslak sayfanın state'idir. */
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [active?.fieldKey]);
+
+  /**
+   * Görünen seçenekler KANONİK kontrolden gelir: önce değer seçenekleri,
+   * sonra kanonik kaçışlar. İlk üçü görünür, kalanı "Diğer seçenekler"
+   * aynı yüzeyde açar — Showcase'in alt sıra düzeni budur.
+   */
+  const allOptions = [
+    ...(control?.options ?? []),
+    ...(control?.softOptions ?? []),
+  ].filter((o) => o.value && o.value !== "__custom__");
+  const visibleOptions = moreOpen ? allOptions : allOptions.slice(0, 3);
+  const hasMore = allOptions.length > 3;
+
+  const draft = active ? (draftByKey[active.fieldKey] ?? "") : "";
+  const allowCustom = Boolean(control?.allowCustom) || allOptions.length === 0;
+
+  const commit = (value: string) => {
+    if (!active) return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    onAnswer(active.fieldKey, trimmed);
+  };
 
   return (
     <section
-      className="relative min-h-[70vh] overflow-hidden rounded-3xl bg-[#07040f] text-[#f2ede9]"
+      className="maira-showcase fixed inset-0 z-40 overflow-hidden bg-[#0c0c0c] text-[#f2f2f2]"
       data-testid="maira-stage"
-      style={{
-        backgroundImage:
-          "radial-gradient(115% 88% at 50% 26%, #2b1848 0%, rgba(25,14,44,.86) 34%, rgba(11,6,20,.98) 68%, #07040f 100%)",
-      }}
     >
-      <header className="flex items-start justify-between gap-3 px-6 py-5">
-        <div>
-          <span className="font-serif text-2xl leading-none tracking-[0.015em]">
-            m<b className="font-normal text-[#ffb489]">AI</b>ra
-          </span>
-          <span className="mt-1.5 block text-[9.5px] uppercase tracking-[0.34em] text-[#f2ede9]/30">
-            Talepo
-          </span>
-        </div>
-        <div className="flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            data-testid="maira-open-answers"
-            onClick={() => setAnswersOpen(true)}
-            className="min-h-10 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[13px] transition hover:border-white/25"
-          >
-            Yanıtlarım · <b className="font-semibold text-[#ffb489]">{answers.length}</b>
-          </button>
+      <style>{SHOWCASE_TOKENS}</style>
+
+      {/* Sahne katmanı — bütün viewport, dekoratif, etkileşimsiz. */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(closest-side, rgba(255,180,137,0.16), rgba(201,138,166,0.06) 55%, transparent 100%)",
+          }}
+        />
+        <MairaContourScene />
+      </div>
+
+      <div className="sc relative flex h-full flex-col gap-[var(--sc-gap)] p-[var(--sc-pad)]">
+        {/* nav — tek eylem, sahneyi boğmayan sade kapsül */}
+        <header className="sc-nav flex flex-none items-center justify-end">
           <button
             type="button"
             data-testid="maira-exit-to-standard"
             onClick={onExitToStandard}
-            className="min-h-10 rounded-full border border-white/10 bg-white/[0.05] px-4 text-[13px] transition hover:border-white/25"
+            className="sc-pill sc-pill-dark inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--sc-pill-r)] bg-[#f2f2f2] px-[var(--sc-pill-px)] py-[var(--sc-pill-py)] text-[length:var(--sc-text)] font-medium leading-none text-[#0c0c0c] transition hover:bg-white"
           >
             Standart görünüme geç
+            {ARROW}
+          </button>
+        </header>
+
+        {/* plate — M A I R A kilidi, sahnenin üstünde */}
+        <div className="sc-plate relative flex min-h-[var(--sc-plate-min)] flex-1 items-center justify-center">
+          <h1
+            className="sc-wordmark maira-wordmark flex w-[calc(var(--sc-wm)*5.859375)] max-w-full select-none items-center justify-between text-[length:var(--sc-wm)] font-normal leading-none"
+            aria-label="Maira"
+          >
+            {WORDMARK.map((ch, i) => (
+              <span
+                key={`${ch}-${i}`}
+                aria-hidden="true"
+                className="block bg-clip-text text-center text-transparent"
+                style={{
+                  backgroundImage:
+                    i % 2 === 1
+                      ? "linear-gradient(180deg,rgba(255,255,255,0) 0%,#ffffff 100%)"
+                      : "linear-gradient(180deg,#ffffff 0%,rgba(255,255,255,0) 100%)",
+                }}
+              >
+                {ch}
+              </span>
+            ))}
+          </h1>
+        </div>
+
+        {/* alt sıra — soru → cevaplar → Yanıtlarım (Showcase düzeni) */}
+        <div className="sc-bottom flex h-[var(--sc-card-h)] flex-none items-stretch gap-[var(--sc-card-gap)]">
+          <div className="sc-lead flex min-w-0 flex-1 flex-col items-end justify-between gap-6">
+            <div className="w-full max-w-[var(--sc-lead-w)]">
+              <p className="maira-eyebrow text-[14px] uppercase tracking-[0.14em] text-[#f2f2f2]/60">
+                {active ? "Maira soruyor" : "Maira"}
+              </p>
+              <p
+                className="sc-para mt-2 text-[length:var(--sc-text)] leading-tight"
+                aria-live="polite"
+                role="status"
+                data-testid="maira-question-prompt"
+              >
+                {active ? (active.humanPrompt ?? active.label) : subtitle}
+              </p>
+              {typeof remainingCriticalCount === "number" &&
+              remainingCriticalCount > 0 ? (
+                <p className="mt-2 text-[13px] text-[#f2f2f2]/45">
+                  Yayına {remainingCriticalCount} soru
+                </p>
+              ) : null}
+            </div>
+
+            {active ? (
+              <div className="sc-cta flex w-full max-w-[var(--sc-lead-w)] gap-[var(--sc-btn-gap)]">
+                {allowCustom ? (
+                  <>
+                    <label className="sr-only" htmlFor="maira-free-answer">
+                      {active.humanPrompt ?? active.label}
+                    </label>
+                    <input
+                      id="maira-free-answer"
+                      data-testid="maira-free-answer"
+                      value={draft}
+                      placeholder={active.placeholder ?? "Yanıtını yaz"}
+                      onChange={(e) =>
+                        onDraftChange(active.fieldKey, e.target.value)
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commit(draft);
+                      }}
+                      className="min-h-[52px] flex-1 rounded-[81px] border border-[#f2f2f2]/25 bg-[#171717]/80 px-6 text-[15px] text-[#f2f2f2] outline-none placeholder:text-[#f2f2f2]/35 focus:border-[#f2f2f2]/55"
+                    />
+                    <button
+                      type="button"
+                      data-testid="maira-send-answer"
+                      onClick={() => commit(draft)}
+                      className="sc-btn sc-btn-solid min-h-[52px] rounded-[81px] bg-[#f2f2f2] px-8 text-[15px] font-medium text-[#0c0c0c]"
+                    >
+                      Gönder
+                    </button>
+                  </>
+                ) : null}
+                {active.importance === "optional" ? (
+                  <button
+                    type="button"
+                    data-testid="maira-skip"
+                    onClick={() => onSkip(active.fieldKey)}
+                    className="sc-btn sc-btn-ghost min-h-[52px] rounded-[81px] border border-[#f2f2f2]/45 px-6 text-[15px]"
+                  >
+                    Şimdilik geç
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="sc-card sc-card-tags maira-options flex w-[var(--sc-card2-w)] flex-none flex-col gap-3 overflow-hidden rounded-[var(--sc-radius)] bg-[#171717] p-[var(--sc-card-pad)]">
+            <p className="sc-cardtitle text-[length:var(--sc-text)] font-medium leading-tight">
+              {active ? "Bir yanıt seç" : "Şu an bekleyen soru yok"}
+            </p>
+            <div className="maira-option-list flex min-h-0 shrink flex-col gap-1.5 overflow-y-auto">
+              {visibleOptions.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  data-testid={`maira-option-${opt.value}`}
+                  onClick={() => commit(opt.value)}
+                  className="maira-option flex h-10 w-full items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#242424] px-[18px] text-left text-[15px] text-[#f2f2f2] transition hover:bg-[#2e2e2e]"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {hasMore ? (
+              <button
+                type="button"
+                data-testid="maira-more-options"
+                onClick={() => setMoreOpen((v) => !v)}
+                className="maira-more self-start text-[13px] text-[#f2f2f2]/60 transition hover:text-[#f2f2f2]"
+              >
+                {moreOpen ? "Daha az göster" : "Diğer seçenekler"}
+              </button>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            data-testid="maira-open-answers"
+            onClick={() => setAnswersOpen(true)}
+            className="sc-card sc-card-stat flex w-[var(--sc-card1-w)] flex-none flex-col justify-between gap-6 rounded-[var(--sc-radius)] bg-[#171717] p-[var(--sc-card-pad)] text-left transition hover:bg-[#1d1d1d]"
+          >
+            <span className="sc-cardtitle text-[length:var(--sc-text)] font-medium leading-tight">
+              Yanıtlarım
+            </span>
+            <span className="sc-statblock flex flex-col gap-3">
+              <span className="sc-figure text-[length:var(--sc-stat)] font-medium leading-tight">
+                {answers.length}
+              </span>
+              <span className="sc-statfoot text-[length:var(--sc-text)] leading-tight">
+                bilgi kaydedildi
+              </span>
+            </span>
           </button>
         </div>
-      </header>
-
-      {/*
-        GÖRSEL KİMLİK BU DİLİMİN DIŞINDA. Sahte yüz üretilmez; yalnız sessiz
-        bir ışık alanı bırakılır ve nihai varlık ayrı yöntemle çözülür.
-      */}
-      <div
-        className="mx-auto h-[26vh] max-h-[240px] w-full max-w-[520px] rounded-[50%] opacity-70"
-        aria-hidden="true"
-        style={{
-          backgroundImage:
-            "radial-gradient(closest-side, rgba(255,180,137,0.16), rgba(201,138,166,0.06) 55%, transparent 100%)",
-        }}
-      />
-
-      <div className="mx-auto grid w-full max-w-[680px] justify-items-center gap-4 px-6 pb-8">
-        <p
-          className="m-0 max-w-[620px] text-center text-[19px] leading-relaxed"
-          aria-live="polite"
-          role="status"
-          data-testid="maira-subtitle"
-        >
-          {subtitle}
-        </p>
-
-        {questions.length > 0 ? (
-          <div className="w-full rounded-2xl bg-white/[0.96] p-1 text-[#0f1f1d]">
-            <FocusedQuestionsPanel
-              questions={questions}
-              draftByKey={draftByKey}
-              onDraftChange={onDraftChange}
-              onAnswer={onAnswer}
-              onSkip={onSkip}
-              remainingCriticalCount={remainingCriticalCount}
-            />
-          </div>
-        ) : null}
       </div>
 
       <MairaAnswers
