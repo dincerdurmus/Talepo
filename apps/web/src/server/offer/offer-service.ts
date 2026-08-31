@@ -10,6 +10,7 @@ import { EntitlementError, type EntitlementContext } from "@/lib/membership/type
 import { isPrismaUniqueViolation } from "@/lib/observability/idempotency";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
+import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist";
 import {
   collectSubmittedCommercialLockIssues,
   OFFER_NO_LONGER_EDITABLE_MESSAGE,
@@ -257,6 +258,9 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
       title: true,
       createdById: true,
       visibleToSuppliersAt: true,
+      // DW-2 köprüsü: kategori + il (il yalnız kanonik çözümleyiciden geçer).
+      city: true,
+      category: { select: { slug: true } },
     },
   });
 
@@ -449,7 +453,12 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
     plan: entitlements.effectivePlanTier,
     requestId: request.id,
     companyId: companyId ?? undefined,
-    metadata: { offerId: offer.id },
+    metadata: {
+      offerId: offer.id,
+      // DW-2 köprü alanları (2026-08-31); il yalnız kanonik çözümleyiciden.
+      categoryId: request.category?.slug,
+      provinceCode: resolveProvinceTelemetry(request.city).provinceCode,
+    },
   });
   log.info("offer.created", {
     outcome: "success",
@@ -688,7 +697,16 @@ export async function acceptOffer(
       },
     },
     include: {
-      request: { select: { id: true, title: true, createdById: true } },
+      request: {
+        select: {
+          id: true,
+          title: true,
+          createdById: true,
+          // DW-2 koprusu: kategori + il (yalniz kanonik cozumleyiciden).
+          city: true,
+          category: { select: { slug: true } },
+        },
+      },
       submittedBy: { select: { id: true, name: true } },
       company: { select: { id: true, name: true } },
       conversation: { select: { id: true } },
@@ -915,7 +933,13 @@ export async function acceptOffer(
       surface: "api.offers.accept",
       requestId: offer.requestId,
       companyId: offer.companyId ?? undefined,
-      metadata: { offerId: offer.id, conversationId: result.conversationId },
+      metadata: {
+        offerId: offer.id,
+        conversationId: result.conversationId,
+        // DW-2 köprü alanları; il yalnız kanonik çözümleyiciden.
+        categoryId: offer.request.category?.slug,
+        provinceCode: resolveProvinceTelemetry(offer.request.city).provinceCode,
+      },
     });
     trackProductEvent({
       eventName: ProductEventName.CONVERSATION_STARTED,

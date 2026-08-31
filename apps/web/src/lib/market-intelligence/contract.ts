@@ -56,8 +56,9 @@ const PRODUCT_TO_MARKET: Partial<Record<ProductEventName, MarketEventName>> = {
   [ProductEventName.REQUEST_PUBLISHED]: MarketEventName.REQUEST_PUBLISHED,
   [ProductEventName.OFFER_SUBMITTED]: MarketEventName.OFFER_SUBMITTED,
   [ProductEventName.OFFER_ACCEPTED]: MarketEventName.OFFER_ACCEPTED,
-  // deal_completed'ın ürün-olayı üreticisi DW-2 diliminde bağlanır
-  // (DealOutcome COMPLETED); sözleşme burada şimdiden ayrık durur.
+  // DW-2 (2026-08-31): üretici deal-outcome çift onay geçişidir
+  // (justCompleted); kabul ile AYRIK sayılır.
+  [ProductEventName.DEAL_COMPLETED]: MarketEventName.DEAL_COMPLETED,
 };
 
 /** Geri çözülemez, alan-ayrık özet: `sha256(alan:v1:değer)` ilk 16 baytı. */

@@ -20,6 +20,12 @@ export const ProductEventName = {
   OFFER_STARTED: "OFFER_STARTED",
   OFFER_SUBMITTED: "OFFER_SUBMITTED",
   OFFER_ACCEPTED: "OFFER_ACCEPTED",
+  /**
+   * DW-2 (2026-08-31): kabul edilen teklif ile TAMAMLANAN satış ayrı
+   * olaylardır (ölçüm sözlüğü). Üretici: deal-outcome çift onay geçişi
+   * (`justCompleted`) — DealOutcome COMPLETED'a tam bir kez döndüğünde.
+   */
+  DEAL_COMPLETED: "DEAL_COMPLETED",
   CONVERSATION_STARTED: "CONVERSATION_STARTED",
   INVENTORY_ITEM_CREATED: "INVENTORY_ITEM_CREATED",
   INVENTORY_IMPORT_COMPLETED: "INVENTORY_IMPORT_COMPLETED",

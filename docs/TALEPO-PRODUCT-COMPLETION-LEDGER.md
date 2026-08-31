@@ -10,17 +10,36 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: F (FD-5 + FD-6 + DW-1) tamamlandı, 2026-08-31; checkpoint
-  2eef7ee + 05dd2a4 pushlanmış tabandan devam edildi.
-- LAST_VERIFIED_ITEM: LG-18 (DW-1 sink zinciri kapısı 10/0, mutasyon kanıtlı).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → commit onayı (Wave F kapsamı);
-  sonra DW-2 (olay üreticileri) ve acceptance fixture-boşluğu dilimi
-  (aşağıda LG-19 notu), ardından FD-2 sırasıyla tarihsel kırmızılar.
-- BLOCKERS: (1) 24+2 tarihsel/davranışsal kırmızı kapı (kendi dilimleri).
-  (2) DW provision — DW-1 kod tarafı kapandı ama ÜRETİM sink kaydı hâlâ
-  yok (PRODUCTION-SINK-NOT-VERIFIED sürüyor; provision DW-3 onaylı karar,
-  uygulaması ayrı tur). (3) 4 kapının canlı yarısı kendi fixture
-  kimliklerini bekliyor (fixture-boşluğu, ürün kusuru değil).
+- CURRENT_WAVE: G (DW-2 üreticileri + LG-19 fixture dilimi) tamamlandı,
+  2026-08-31. Wave F checkpoint: **2d834f0** (pushlandı; local=remote).
+- LAST_VERIFIED_ITEM: LG-21g (request-publish canlı 18/0).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave G commit onayı; sonra FD-2
+  sırasıyla kanıtlı tarihsel kırmızılar (öneri: outgoing-offer-inbox
+  pinned-id onarımı + PanelShell "collapsed dot" drift'i tek dilimde) ve
+  FD-7/DW kararları.
+- BLOCKERS: (1) 24+2 tarihsel/davranışsal kırmızı (kendi dilimleri).
+  (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED sürüyor;
+  köprü+transport hazır, provision DW-3 uygulama turu bekliyor.
+  (3) question-suppression kapanışı KB-17 production düzeltmesine bağlı
+  (bilinçli NOT_MEASURED çıkışı — yeşile boyanmadı).
+
+## Wave G kaydı (2026-08-31 — DW-2 + LG-19; COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-20g | DW-2 üreticileri | FIXED | 1-3 zaten kanonik servis sınırındaydı (create-request, offer-service submit/accept — yeniden kurulmadı); köprü alanları eklendi (categoryId + provinceCode, il YALNIZ `resolveProvinceTelemetry`dan). 4. üretici: `DEAL_COMPLETED` deal-outcome çift onay geçişine bağlandı (`justCompleted` — yarış korumalı, DB sonrası, tek sefer). DOMAIN_EVENT_MISSING GEREKMEDİ: gerçek domain geçişi mevcut |
+| LG-20g-b | MI köprüsü | FIXED | `market-intelligence/bridge.ts`: ürün olayı → v1 warehouse olayı → sink; sözleşmesiz olay sessizce sayılmaz, retry duplicate üretmez (deterministik eventId + sink idempotency), köprü/sink hatası ürün akışını kırmaz, abonelik geri alınabilir. Kapı 35/0 + mutasyon kanıtı (kontrol atlatılınca H3 kırmızı). ÜRETİM KAYDI YAPILMADI — transport DW-3 |
+| LG-20g-c | Canlı üretici kanıtı | VERIFIED | AC-1 anlaşması iki taraflı canlı tamamlandı (deal `cmtgzzy1x000o2cuy3vy6dau3` → COMPLETED/BOTH_CONFIRMED): sunucu logunda TAM 1 `DEAL_COMPLETED` (categoryId=appliances, provinceCode=TR-34, özne=dealOutcomeId); tekrar onay ikinci olay ÜRETMEDİ; alıcı tek onayı olay üretmedi (PENDING) |
+| LG-21g | LG-19/1 request-publish | FIXED (canlı 18/0) | Neden: yalnız eksik persona (`e2e-alici-20260817184814@talepo.test`). Sentetik + işaretli olarak kanonik guard yoluyla kuruldu (id `cmth6al8g0000jsuy6njzxbau`, TLP-990098); kapının canlı yazma sözleşmesi + idempotent replay artık ölçülüyor: 18/0, 0 not-measured |
+| LG-22g | LG-19/2 auth-fix | RECLASSIFIED | Sözleşme kapısı DEĞİL: kurucunun GERÇEK kişisel hesabının (≥3 talep + firma üyeliği) eski-DB anlık görüntüsünü bekleyen olay-bazlı debug probu. FD-6 gereği gerçek kimlik acceptance'ta kurulamaz; sahte veriyle yeşile boyanmadı. FD-7: emekliye ayır ya da sentetik sözleşme olarak yeniden yaz (kurucu kararı) |
+| LG-23g | LG-19/3 outgoing-offer-inbox | DOCUMENTED | 55/2: (a) canlı yarım eski DB'den SABİTLENMİŞ offer id bekliyor (`cmsyipshk…`) — ölçülen nesneyi elle üretmek sahte fixture olur; kapı keşfedilebilir işaretli fixture'a yeniden bağlanmalı (kendi dilimi); (b) "collapsed uses dot" statik drift — PanelShell incelemesiyle kapanacak, aynı dilim |
+| LG-24g | LG-19/4 question-suppression | CONFIRMED BLOCKED | Kapanış kapısı BİLİNÇLİ NOT_MEASURED çıkışıyla KB-17 production düzeltmesine bağlı (kapı içi belge: D2). Gerçek bağımlılık; saklanmadı, boyanmadı |
+
+## Yeni FOUNDER_DECISION adayı
+
+| ID | Karar | Tek öneri |
+|---|---|---|
+| FD-7 | verify-auth-fix'in geleceği | Emekliye ayır (tarihsel olay probu; ölçtüğü şey kişisel hesap anlık görüntüsü) — ya da resolveSessionUser sözleşmesini sentetik kimlikle ölçen gerçek kapıya dönüştür |
 
 ## Wave F kaydı (2026-08-31 — FD-5/FD-6/DW-1 uygulandı)
 

@@ -172,9 +172,155 @@ for (const file of ["contract.ts", "sink.ts", "provider.ts"]) {
   check(`F ${file} prisma/DB import etmez`, !/from ["']@\/lib\/prisma|@prisma\//.test(src));
 }
 
+// G. DW-2 üreticileri — kanonik servis sınırından, UI'dan DEĞİL (statik).
+function producerChecks() {
+  const web = join(__dirname, "..", "src");
+  const read = (rel: string) => readFileSync(join(web, rel), "utf8");
+
+  const productEvents = read("lib/observability/product-events.ts");
+  check(
+    "G1 DEAL_COMPLETED ürün olayı tanımlı (kabul ile AYRIK)",
+    /DEAL_COMPLETED:\s*"DEAL_COMPLETED"/.test(productEvents),
+  );
+  const contractSrc = read("lib/market-intelligence/contract.ts");
+  check(
+    "G2 dört kanonik olayın DÖRDÜ de ürün olayından eşlenir",
+    /REQUEST_PUBLISHED\]/.test(contractSrc) &&
+      /OFFER_SUBMITTED\]/.test(contractSrc) &&
+      /OFFER_ACCEPTED\]/.test(contractSrc) &&
+      /DEAL_COMPLETED\]/.test(contractSrc),
+  );
+
+  const dealOutcome = read("server/price-intelligence/deal-outcome.ts");
+  check(
+    "G3 deal_completed üreticisi justCompleted geçişine bağlı (tek sefer, DB sonrası)",
+    /justCompleted/.test(dealOutcome) &&
+      /trackProductEvent\(\{[\s\S]{0,400}?DEAL_COMPLETED/.test(dealOutcome),
+  );
+
+  for (const [rel, ev] of [
+    ["server/request/create-request.ts", "REQUEST_PUBLISHED"],
+    ["server/offer/offer-service.ts", "OFFER_SUBMITTED"],
+    ["server/offer/offer-service.ts", "OFFER_ACCEPTED"],
+  ] as const) {
+    const src = read(rel);
+    const site = src.split(`ProductEventName.${ev}`)[1]?.slice(0, 500) ?? "";
+    check(
+      `G4 ${ev} üreticisi köprü alanlarını taşır (categoryId + provinceCode)`,
+      site.includes("categoryId") && site.includes("provinceCode"),
+    );
+  }
+  check(
+    "G5 konum yalnız kanonik çözümleyiciden taşınır (ikinci liste yok)",
+    /resolveProvinceTelemetry/.test(read("server/request/create-request.ts")) &&
+      /resolveProvinceTelemetry/.test(read("server/offer/offer-service.ts")) &&
+      /resolveProvinceTelemetry/.test(dealOutcome),
+  );
+}
+
+// H. Köprü: ürün olayı → v1 warehouse olayı → sink (davranışsal).
+async function bridgeChecks() {
+  const { registerMarketIntelligenceBridge } = await import(
+    "../src/lib/market-intelligence/bridge"
+  );
+  const { createBufferedWarehouseSink: mk } = await import(
+    "../src/lib/market-intelligence/sink"
+  );
+  const { ProductEventName: PEN, trackProductEvent } = await import(
+    "../src/lib/observability/product-events"
+  );
+
+  const batches: unknown[][] = [];
+  const sink = mk({
+    transport: {
+      name: "test",
+      async deliverBatch(events) {
+        batches.push(events);
+        return { ok: true, delivered: events.length };
+      },
+    },
+  });
+  const off = registerMarketIntelligenceBridge(sink);
+
+  trackProductEvent({
+    eventName: PEN.REQUEST_PUBLISHED,
+    actorType: "buyer",
+    surface: "verify-mi",
+    requestId: "req_BRIDGE_RAW",
+    metadata: { categoryId: "appliances", provinceCode: "TR-34" },
+  });
+  check("H1 köprü ürün olayını warehouse olayına çevirip sink'e verir", sink.status().buffered === 1);
+
+  // Aynı özne tekrar (retry) → idempotent, sayı artmaz.
+  trackProductEvent({
+    eventName: PEN.REQUEST_PUBLISHED,
+    actorType: "buyer",
+    surface: "verify-mi",
+    requestId: "req_BRIDGE_RAW",
+    metadata: { categoryId: "appliances", provinceCode: "TR-34" },
+  });
+  check("H2 retry/duplicate ikinci analitik olay üretmez", sink.status().buffered === 1);
+
+  // Köprü alanları eksikse olay SESSİZCE sayıya dönüşmez.
+  trackProductEvent({
+    eventName: PEN.OFFER_SUBMITTED,
+    actorType: "seller",
+    surface: "verify-mi",
+    metadata: {},
+  });
+  check("H3 sözleşmesiz olay sayılmaz (kategori/özne yoksa düşer)", sink.status().buffered === 1);
+
+  // PII: ham id serilerde görünmez.
+  const flushed = await sink.flush();
+  check(
+    "H4 ham id warehouse'a sızmaz",
+    flushed.ok && !JSON.stringify(batches).includes("req_BRIDGE_RAW"),
+  );
+
+  // Köprü/sink hatası ürün akışını KIRAMAZ.
+  const bomb = mk({ transport: { name: "bomb", async deliverBatch() { throw new Error("x"); } } });
+  const offBomb = registerMarketIntelligenceBridge({
+    ...bomb,
+    offer() {
+      throw new Error("kasıtlı köprü hatası");
+    },
+  });
+  let threw = false;
+  try {
+    trackProductEvent({
+      eventName: PEN.OFFER_ACCEPTED,
+      actorType: "buyer",
+      surface: "verify-mi",
+      metadata: { categoryId: "appliances", offerId: "of_X" },
+    });
+  } catch {
+    threw = true;
+  }
+  check("H5 köprü hatası trackProductEvent çağıranını kırmaz", !threw);
+  offBomb();
+  off();
+
+  // H5'in geçerli OFFER_ACCEPTED olayı meşru olarak sayılmış olabilir;
+  // ölçülen şey off() SONRASI teslimin durmasıdır (sayı değişmemeli).
+  const bufferedBeforeOff = sink.status().buffered;
+  trackProductEvent({
+    eventName: PEN.REQUEST_PUBLISHED,
+    actorType: "buyer",
+    surface: "verify-mi",
+    requestId: "req_AFTER_OFF",
+    metadata: { categoryId: "appliances" },
+  });
+  check(
+    "H6 köprü aboneliği geri alınabilir",
+    sink.status().buffered === bufferedBeforeOff,
+  );
+}
+
 async function main() {
   await sinkChecks();
   await providerChecks();
+  producerChecks();
+  await bridgeChecks();
   console.log(`\nMarket intelligence foundation: ${pass} PASS / ${fail} FAIL`);
   if (errors.length) {
     for (const e of errors) console.log(" -", e);

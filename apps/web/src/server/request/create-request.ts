@@ -15,6 +15,7 @@ import {
 } from "@/lib/observability/idempotency";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
+import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist";
 import { prisma } from "@/lib/prisma";
 
 import { distributeRequestToCompanies } from "./distribute-request";
@@ -299,6 +300,13 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       requestId: request.id,
       metadata: {
         status: request.status,
+        /**
+         * DW-2 köprü alanları (2026-08-31): kategori + il. İl yalnız
+         * kanonik çözümleyiciden geçer; ham şehir metni TAŞINMAZ.
+         */
+        categoryId: input.category.slug,
+        provinceCode: resolveProvinceTelemetry(resolveDedicatedCity(input))
+          .provinceCode,
       },
     });
     log.info("request.publish.completed", {

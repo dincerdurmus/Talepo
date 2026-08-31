@@ -5,6 +5,8 @@ import {
   isBilateralDealCompleted,
 } from "@/lib/offer/deal-completion";
 import { DomainError, DomainErrorCode } from "@/lib/observability/errors";
+import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
+import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist";
 import { prisma } from "@/lib/prisma";
 import type { TransactionConfirmationLevel } from "@/lib/price-intelligence/types";
 import { createNotification } from "@/server/notifications/create-notification";
@@ -146,6 +148,9 @@ export async function confirmDealCompletion(userId: string, dealOutcomeId: strin
               createdById: true,
               status: true,
               deletedAt: true,
+              // DW-2 köprüsü: kategori + il (il yalnız kanonik çözümleyiciden).
+              city: true,
+              category: { select: { slug: true } },
             },
           },
         },
@@ -270,6 +275,28 @@ export async function confirmDealCompletion(userId: string, dealOutcomeId: strin
   }
 
   if (result.justCompleted && isBilateralDealCompleted(result.updated)) {
+    /**
+     * DW-2 üreticisi (2026-08-31): TAMAMLANAN SATIŞ, kabulden AYRI kanonik
+     * olaydır ve yalnız çift onay geçişinin gerçekleştiği TEK seferde
+     * üretilir — `justCompleted` yarış korumalı updateMany sayacından gelir,
+     * bu yüzden retry/tekrar onay duplicate olay üretemez. DB işlemi
+     * başarısızsa buraya hiç gelinmez.
+     */
+    trackProductEvent({
+      eventName: ProductEventName.DEAL_COMPLETED,
+      actorType: result.side === "BUYER" ? "buyer" : "seller",
+      surface: "api.deal-completion",
+      requestId: deal.requestId,
+      companyId: deal.companyId ?? undefined,
+      metadata: {
+        offerId: deal.offerId,
+        dealOutcomeId: deal.id,
+        // DW-2 köprü alanları; il yalnız kanonik çözümleyiciden.
+        categoryId: deal.offer.request.category?.slug,
+        provinceCode: resolveProvinceTelemetry(deal.offer.request.city)
+          .provinceCode,
+      },
+    });
     try {
       await recordConfirmedTransactionObservation(result.updated.id);
     } catch (error) {
