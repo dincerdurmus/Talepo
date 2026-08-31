@@ -30,7 +30,7 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 ## RC programı kaydı (2026-09-01 — sürüyor)
 
 Kurucu otonom Release Candidate mandası. Wave adları iç organizasyon.
-Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f (hepsi pushlandı).
+Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042 (hepsi pushlandı).
 
 | ID | İş | Durum | Kanıt |
 |---|---|---|---|
@@ -44,6 +44,23 @@ Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f (hepsi pushlandı).
 
 RC QA sentetik verisi (request+offer+conversation+company+add-on+inventory)
 kesin id ile temizlendi (kalan 0).
+
+### RC-2 turu (2026-09-01)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-79rc | ADMIN operasyon derinliği | VERIFIED+EXTENDED | QA admin (FD-6: geçici yükseltme, test sonrası USER/SUSPENDED geri alındı) ile canlı gezinti: MFA kapısı (localhost bypass yalnız dev), users (arama ad/e-posta/üye-no/telefon — telefon yalnız sensitive.view; sayfalama; rol/plan/durum filtreleri; CSV), companies (plan+koltuk), requests (talep-no arama, sahip, teklif drawer), offers, health (eşik uyarılı gerçek metrikler), audit (writeAdminAudit), moderasyon SLA. İKİ YENİ yüzey eklendi: /admin/notifications (tür/alıcı/okundu/dedupe-kimliği; alıcı e-postası sensitive.view kapılı) ve /admin/curation (kanonik DOMAIN_ENTITIES defterinden — ikinci liste yok; onaylı satır karar ref+tarih gösterir, eksikse EKSİK! bayrağı). |
+| LG-80rc | NOTIFICATIONS tam E2E | VERIFIED | Üretici envanteri koddan: kanonik tek yazıcı (create-notification.ts, KB-22) + 17 tip + 8 tüketici + 6 doğrudan site. Canlı zincir: unread 2→1 (deep-link tıklaması /panel/bildirimler/r/<id> üzerinden OKUNDU işaretleyip DOĞRU sohbete indi) → tümü-okundu → reload sonrası kalıcı 0. Redirect route sahiplik kapılı (userId), silinmiş hedefe NOTIFICATION_MISSING_TARGET_HREF ile graceful. verify-notifications-v1 51/0. |
+| LG-81rc | PLAN LIFECYCLE | VERIFIED | Kanonik syncSubjectPlanFromBilling üzerinden: STANDARD(hepsi false) → UPGRADE(PROFESSIONAL; alerts/saved/analytics true) → EXPIRED(süre geçmiş Pro → efektif STANDARD, stale entitlement YOK) → DOWNGRADE(kapandı). Veri silinmedi; persona E başlangıç durumuna döndü. Mock upgrade prod'da HER ZAMAN kapalı (sahte ödeme başarısı yok); iyzico webhook V3 imza doğrulamalı; gerçek sağlayıcı anahtarı EXTERNAL_PRODUCTION_DEPENDENCY. |
+| LG-82rc | RESPONSIVE örneklem | PASS | 375px: panel gerçek mobil desen (alt tab bar + FAB), talepler/taleplerim/analiz/teklifler/talep sıfır yatay taşma (scrollWidth ölçümü). 1024px: fırsatlar/gelen-teklifler sıfır taşma. Tam 47-route süpürmesi yapılmadı — örneklem; kalan rotalar continuation kapsamında. |
+| LG-83rc | BİLEŞEN ⑤ tedarikçi yeteneği | MEASURED 6/6 sınıf | Kök neden bulundu: kanonik adaptörün (adaptDbCompanyToProfile) hiçbir ÜRETİM çağıranı yoktu. Yeni tek yükleyici src/server/matching/load-supplier-capability.ts (ikinci matcher DEĞİL): CompanyCategory/city/CompanyInventoryItem/AlertRule/SavedSearch(kanonik filters JSON) → mevcut adaptör → mevcut skorlayıcı. verify-supplier-capability-consumption-v1 16/0 GERÇEK kabul DB satırlarıyla: sınıf başına pozitif tüketim + yanlış-tedarikçi bastırma + olmayan-firma null + mutasyon (satır silinince kanıt durdu, geri gelince döndü). SUPPLIER_CAPABILITY_PROVEN=6/6 (payda 6 kanonik sinyal sınıfı — ölçüm BİRİMİ boru-hattı kanıtıdır; corpus-yoğunluğu lansman metriğidir ve lansman öncesi bilinçli ölçülmez). Fixture kesin etiketle silindi. |
+| LG-84rc | Tarihsel kırmızı triyajı (kısmi) | TRIAGED | deal-review 75/77→77/77: (1) STILL_REAL_PRODUCT_BUG — kullanıcıya değerlendirme değişmezliği vaadi kaybolmuştu; kanonik DEAL_REVIEW_BLIND_HINT metnine geri eklendi (davranış zaten değişmezdi). (2) SUPERSEDED_CONTRACT — pencere props kablolaması ConversationShell'e taşınmıştı; test iki dosyayı birden okuyor. nonvalue-answer-authority H2 988→986 rebase (FD-7/8/10 kürasyonu productType'ları VALUE yaptı — kararla geçen delta). Env-runner ile: my-requests-surface/offer-inbox-scope/outgoing-offer-inbox/auth-fix YEŞİL (yalnız DB env ister); incoming-offers-nav-badge + offer-unread-action LOW_PRIORITY_DATA_GAP (kurucunun birincil-DB canlı hesabını bekliyor, kabul DB'de yok). Kalan 14 tarihsel gate sınıflandırma/karar bekliyor — continuation listesinde. |
+
+SHADOW→LIVE değerlendirmesi: matching SHADOW KALIR. Gerekçe: (a) V3'ün
+üretim tedarikçi yükleyicisi bu turda doğdu ve henüz feed'e bağlanmadı;
+(b) canlı öneri motoru hâlâ V3-öncesi smart-matching.ts (bilinen mimari,
+V3 kesişiminde emekliye ayrılacak); (c) kullanıcıya sahte eşleşme vaadi
+gösterilmiyor (fırsat feed'i mevcut motordan gerçek veriyle çalışıyor).
 
 ## Wave M kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 
