@@ -464,7 +464,20 @@ export function extractConstraintSemantics(rawText: string): ConstraintBundle {
         const win = windowAround(text, m.index, m[0].length, 40);
         strength = strengthInWindow(win) ?? strength;
       }
-      if (positive && brands.length === 1) {
+      /**
+       * EKSEN DÜZELTMESİ (Wave I, 2026-08-31; phase2 15b ile ölçüldü).
+       * "Tek pozitif marka" kuralı cümledeki TÜM katalog isabetlerini
+       * sayıyordu; "LG olsun ama Samsung olmasın"da dışlanan Samsung da
+       * sayılınca (2 isabet) kullanıcının AÇIKÇA istediği LG değer
+       * olamıyordu — pozitif tercih düşüyor, yalnız dışlama kalıyordu.
+       * Doğru eksen: teklik, DIŞLANANLAR ÇIKARILDIKTAN sonra kalan
+       * pozitif marka üzerinden ölçülür. Çok-pozitifli belirsizlik
+       * davranışı değişmedi.
+       */
+      const positiveBrandCount = brands.filter(
+        (b) => !excludedBrands.has(b.toLocaleLowerCase("tr-TR")),
+      ).length;
+      if (positive && positiveBrandCount === 1) {
         upsert(byField, {
           fieldKey: "brand",
           value: brand,

@@ -37,7 +37,15 @@ console.log("\n=== DECISION FOOTER ORDER ===\n");
   check("1 shared outcome component", outcome.includes("OfferDecisionOutcome"));
   check("2 footer data attribute", outcome.includes("data-offer-decision-footer"));
   check("3 layout footer mode", actions.includes('layout?: "default" | "toolbar" | "stack" | "footer"'));
-  check("4 incoming uses layout footer", incoming.includes('layout="footer"'));
+  /**
+   * DRIFT ONARIMI (Wave I, 2026-08-31): gelen kartta karar çubuğu bağlama
+   * göre düzen seçer (seçilen-teklif masasında compact, listede footer) —
+   * ölçülen bu kesin ifadedir; sabit `layout="footer"` metni tarihe karıştı.
+   */
+  check(
+    "4 incoming uses layout footer",
+    incoming.includes('layout={decisionDesk ? "compact" : "footer"}'),
+  );
   check("5 outgoing uses layout footer", outgoing.includes('layout="footer"'));
   check("6 message before gallery incoming", incoming.includes("sectionOrder") && incoming.includes("galleryOrder") && incoming.indexOf("sectionOrder") < incoming.indexOf("galleryOrder"));
   check("7 gallery before history incoming", incoming.indexOf("IncomingOfferGallery") < incoming.indexOf("NegotiationHistory"));

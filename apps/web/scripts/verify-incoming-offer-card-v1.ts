@@ -64,7 +64,17 @@ console.log("\n=== STRUCTURE ===\n");
     !card.includes("rounded-xl border border-teal-900/[0.06] bg-white px-3.5 py-3"),
   );
   check("action bar OfferActions", card.includes("<OfferActions"));
-  check("decision footer layout", card.includes('layout="footer"'));
+  /**
+   * DRIFT ONARIMI (Wave I, 2026-08-31). Eski beklenti sabit
+   * `layout="footer"` metniydi; ürün kararı incelmiş durumda (temiz
+   * tabanda da aynı): karar çubuğu SEÇİLEN TEKLİF masasında (decisionDesk)
+   * compact, liste kartında footer düzenindedir. Ölçülen, bu kesin
+   * bağlam ayrımıdır — gevşek "layout var/yok" değil.
+   */
+  check(
+    "decision footer layout",
+    card.includes('layout={decisionDesk ? "compact" : "footer"}'),
+  );
   check("footer after history", card.indexOf("NegotiationHistory") < card.indexOf("<OfferActions"));
   check("OfferDecisionOutcome wired", actions.includes("OfferDecisionOutcome"));
   check("Teklifi kabul et copy", actions.includes("Teklifi kabul et"));

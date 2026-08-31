@@ -416,11 +416,19 @@ ensureTaxonomyLoaded();
 
 // --- no DB ---
 {
-  const status = readFileSync(
-    join(__dirname, "../../../.git/HEAD"),
-    "utf8",
-  );
-  check("no migration in phase2 script", !status.includes("impossible"));
+  /**
+   * ORTAM KIRILGANLIĞI ONARIMI (Wave I, 2026-08-31). Eski prob
+   * `.git/HEAD`i dosya olarak okuyordu; git WORKTREE'de `.git` bir
+   * DOSYADIR ve prob ENOENT ile çöküyordu — üstelik ölçtüğü şey bir
+   * no-op'tu ("impossible" HEAD'te asla geçmez). Beyan edilen niyet
+   * ("bu script migration koşmaz") artık DOĞRUDAN ölçülür: script'in
+   * kendisi prisma migrate/db push çağrısı içermez.
+   */
+  const self = readFileSync(__filename, "utf8");
+  const forbidden = new RegExp("prisma\\s+" + "(migrate|db\\s+push)");
+  // Kendi belgeleme yorumu ölçüme girmesin diye yorum blokları soyulur.
+  const selfCode = self.replace(/\/\*[\s\S]*?\*\//g, "");
+  check("no migration in phase2 script", !forbidden.test(selfCode));
 }
 
 console.log("\n========================================");

@@ -10,17 +10,33 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: H (FD-7 + pinned-ID + PanelShell drift + izolasyon dilimi)
-  tamamlandı, 2026-08-31. Checkpointler: Wave F **2d834f0**, Wave G
-  **27583e0** (ikisi de pushlandı; local=remote).
-- LAST_VERIFIED_ITEM: LG-28h (corporate-workspace-isolation 26/0, mutasyon kanıtlı).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave H commit onayı; sonra FD-2
-  sırasında kalan tarihsel kırmızılardan bir sonraki tutarlı dilim
-  (aday: notifications ya da incoming-offer-card — ana akış sınıfı).
-- BLOCKERS: (1) 22+1 tarihsel/davranışsal kırmızı (aşağıda güncel sayım).
-  (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED; provision
-  DW-3 uygulama turu bekliyor. (3) question-suppression kapanışı KB-17
-  production düzeltmesine bağlı (bilinçli NOT_MEASURED).
+- CURRENT_WAVE: I (bildirimler + gelen teklif kartı + Pro/alarm sözleşmesi)
+  tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**, G **27583e0**,
+  H **76f1fed** (hepsi pushlandı; local=remote).
+- LAST_VERIFIED_ITEM: LG-35i (marka pozitif/dışlama ekseni; tam batarya yeşil).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave I commit onayı; sonra canlı
+  alarm E2E (kural→yayın→bildirim) ve FD-2 sırasında sonraki dilim
+  (aday: sayfam-home / public-home ya da provider-routing).
+- BLOCKERS: (1) **17**+1 tarihsel/davranışsal kırmızı (güncel sayım
+  aşağıda). (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED;
+  DW-3 provision turu bekliyor. (3) question-suppression KB-17'ye bağlı.
+
+## Wave I kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-29i | Bildirimler uçtan uca | VERIFIED (canlı) | Gerçek akış bildirimleri (yayın/teklif/mesaj/DEAL_COMPLETED) doğru kullanıcıda; sayaç↔liste paritesi (4=4, DB unread=4); tek okundu: tıklama → doğru gerçek detay + sayaç 3; tümü okundu → 0; duplicate YOK (tekrar-kabul/tekrar-onay tek satır — DB per-type 1/1/1); yabancı bildirim: sayfa sızıntısız 404, yazım 0 satır, 200-varlık-sızdırmaz İMZALI belgeli tasarım; mobil 390 taşmasız; tür etiketleri ayrık |
+| LG-30i | verify-notifications drift | VERIFIER REPAIRED | "render'da mark-read" beklentisi KB-22 Dilim 1 kararıyla tarihe karıştı; kapı üç bacaklı güncel sözleşmeyi ölçüyor (sayfa yazmaz + istemci başarı-koşullu yönlendirir + POST tek yetkili sahiplikli). 51/0 |
+| LG-31i | Gelen teklif kartı canlı | VERIFIED (canlı) | AC1I fixture'ı kanonik akışlarla üretildi: request `cmth7kzea0002fcuylzgfuhsc`, offer C `cmth7lmf00004fcuy5ukn3qa2` (pazarlık ₺16.000, tur BUYER), offer B `cmth7m8b50007fcuy8kro6t9n` (reddedildi). Liste: filtre sayaçları (Tümü 3/Okunmadı 1/Yeni 1/Pazarlıkta 1/Sonuçlananlar 2), gerçek aralık ₺16.000–₺21.000, "2 teklif · 1 yeni", durum=pazarlik filtresi sonucu değiştiriyor; kart: pazarlık masası (sıra satıcıda, %11, 2 hareket·1 tur); CTA'lar doğru detaya; id sızıntısı yok; 1440/1024/390 taşmasız. Kayıtlar sentetik DB'de kanıt olarak duruyor |
+| LG-32i | incoming-offer-card + offer-decision-footer driftleri | VERIFIER REPAIRED | Sabit `layout="footer"` beklentisi; ürün bağlam ayrımına evrilmiş (decisionDesk→compact, liste→footer; tabanda da aynı). İki kapı kesin ifadeye bağlandı: 41/41 ve 95/95 |
+| LG-33i | unified-preference-criteria driftleri | VERIFIER REPAIRED | (a) dedupe: actionUrl artık kullanıcıya özel İMZALI token taşıdığı için bilinçli olarak user+request+alarm-adı üçlüsü — kapı gerçek koruyucuyu ölçüyor; (b) tıklama: KB-22 sanitized-destination sözleşmesi. Kapı GEÇTİ |
+| LG-34i | phase2 worktree kırılganlığı | VERIFIER REPAIRED | `.git/HEAD`i dosya okuyan no-op prob worktree'de çöküyordu; niyet ("script migration koşmaz") artık script içeriğinden doğrudan ölçülüyor |
+| LG-35i | Marka pozitif/dışlama EKSEN düzeltmesi (ÜRÜN) | FIXED | Gerçek kusur (15b): "LG olsun ama Samsung olmasın"da pozitif LG düşüyordu — teklik kuralı dışlanan markayı da sayıyordu. Eksen: teklik dışlananlar çıkarıldıktan sonra ölçülür (`constraint-semantics.ts`). phase2 56/0; TAM batarya: matrix 6069/0, invariants 124/0, coverage/common/field/nonvalue/knowledge/maira/controls/parity/user-choice yeşil, TSC 0 |
+| LG-36i | Alarm eski risklerinin güncel durumu | RE-VERIFIED | Matcher ayrışması KAPALI (tek `evaluatePreferenceCriteria`); null-budget bypass KAPALI (eksik bütçe wildcard değil — belgeli); leaf yazımı kapıda; keyword tek yardımcıda (substring semantiği BİLİNÇLİ ortak — kalite iyileştirmesi ayrı aday); city/district hâlâ serbest-metin contains ama TEK yardımcıda + canonical location zarfı backfill'li (derin kanonikleştirme açık kalem); discoveryFilter zarfı kapıda |
+
+Tarihsel kırmızı güncel sayımı: 22 → **17** (notifications,
+incoming-offer-card, offer-decision-footer, unified-preference-criteria,
+phase2-constraint-preference kapandı).
 
 ## Wave H kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 

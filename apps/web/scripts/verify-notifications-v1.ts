@@ -221,9 +221,28 @@ console.log("\n=== SOURCE ===\n");
     "missing target safe bounce",
     redirect.includes("NOTIFICATION_MISSING_TARGET_HREF"),
   );
+  /**
+   * DRIFT ONARIMI (Wave I, 2026-08-31). Eski beklenti okundu-yazımını
+   * RENDER içinde arıyordu; ürün kararı KB-22 Dilim 1 (2026-08-28) bunu
+   * bilinçli değiştirdi: "okundu" bir KULLANICI EYLEMİDİR — sayfa salt
+   * okunur, yazım ekran açıldıktan sonra istemcinin çağırdığı yetkili
+   * POST'ta yürür ve yönlendirme ancak BAŞARIDAN SONRA yapılır. Ölçülen
+   * güncel sözleşme üç bacaklıdır ve GEVŞEK değildir:
+   * sayfa yazmaz + istemci başarı koşullu yönlendirir + POST tek yetkiliyle
+   * sahiplik altında işaretler.
+   */
+  const readRedirectClient = read(
+    "src/components/panel/NotificationReadRedirect.tsx",
+  );
+  const readApi = read("src/app/api/notifications/[id]/read/route.ts");
   check(
-    "single mark read before redirect",
-    redirect.includes("markNotificationAsRead(user.id, notification.id)"),
+    "single mark read via authorized POST after screen open",
+    !redirect.includes("markNotificationAsRead(") &&
+      redirect.includes("NotificationReadRedirect") &&
+      readRedirectClient.includes("/read") &&
+      readRedirectClient.includes("if (!response.ok)") &&
+      readRedirectClient.includes("router.replace") &&
+      readApi.includes("markNotificationAsRead(user.id, id"),
   );
   check(
     "published producer uses taleplerim + request.id",

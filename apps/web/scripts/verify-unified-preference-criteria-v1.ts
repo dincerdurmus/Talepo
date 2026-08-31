@@ -230,12 +230,35 @@ check("notification toggle uses setFromSavedSearch", manager.includes("setFromSa
 check("save path passes taxonomyLeaf", saveBtn.includes("taxonomyLeaf"));
 check("alert matcher uses shared evaluator", alerts.includes("evaluatePreferenceCriteria") && !alerts.includes("includesKeyword"));
 check("own-request skipped in notify", notify.includes("createdById"));
-check("dedupe uses alertRuleId actionUrl", notify.includes("alertNotificationActionUrl") || notify.includes("alertRule="));
+/**
+ * DRIFT ONARIMI (Wave I, 2026-08-31). Eski beklenti dedupe'u actionUrl
+ * üzerinden arıyordu; ürün kararı DEĞİŞTİ ve dosya başlığında belgeli:
+ * actionUrl artık KULLANICIYA ÖZEL İMZALI attribution token taşır (her
+ * üretimde değişir), bu yüzden dedupe bilinçli olarak user+request+alarm
+ * adı üçlüsüne anahtarlanır. Ölçülen, bu gerçek koruyucudur.
+ */
+check(
+  "dedupe uses alertRuleId actionUrl",
+  notify.includes("do not key on full actionUrl") &&
+    notify.includes("requestId: request.id") &&
+    notify.includes("message: { contains: `(${match.alertRuleName})` }"),
+);
 check("alert create writes canonical envelope", alertRoute.includes("normalizePreferenceCriteria") && alertRoute.includes("createFromSavedSearch"));
 check("duplicate active alert blocked", alertRoute.includes("alreadyExists") && alertRoute.includes("setFromSavedSearch"));
 check("legacy alert/saved pages redirect", uyarilar.includes('redirect("/panel/takiplerim")') && kayitli.includes('redirect("/panel/takiplerim")'));
 check("OC feed passes full facts", feed.includes("district:") && feed.includes("createdById: req.createdById"));
-check("15 notification click still redirects actionUrl", click.includes("notification.actionUrl") && click.includes("redirect"));
+/**
+ * DRIFT ONARIMI (Wave I, 2026-08-31): KB-22 Dilim 1 kararıyla tıklama
+ * artık ham actionUrl'e redirect ETMEZ — hedef sunucuda
+ * `resolveNotificationDestination` ile hesaplanır, okundu-yazımı ekran
+ * sonrası yetkili POST'ta yürür (NotificationReadRedirect). Ölçülen budur.
+ */
+check(
+  "15 notification click resolves sanitized destination",
+  click.includes("resolveNotificationDestination") &&
+    click.includes("NotificationReadRedirect") &&
+    !click.includes("redirect(notification.actionUrl"),
+);
 
 console.log(`\n=== SUMMARY pass=${pass} fail=${fail} ===\n`);
 if (errors.length) {
