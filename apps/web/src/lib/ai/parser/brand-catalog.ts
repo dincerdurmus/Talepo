@@ -861,16 +861,20 @@ function aliasMatches(normalized: string, alias: string): boolean {
   const needle = alias.toLocaleLowerCase("tr-TR");
   if (!needle) return false;
 
-  // Short tokens (vw, kia, alfa, ford…) need word boundaries to avoid noise.
-  if (needle.length <= 4) {
-    const re = new RegExp(
-      `(?:^|[^a-zçğıöşü0-9])${escapeRegex(needle)}(?=$|[^a-zçğıöşü0-9])`,
-      "i",
-    );
-    return re.test(normalized);
-  }
-
-  return normalized.includes(needle);
+  /**
+   * HER alias JETON SINIRINDA eşleşir (Launch Hardening, 2026-09-01).
+   * Eski kural yalnız ≤4 karakteri sınırlıyordu; uzun alias'lar düz
+   * `includes` ile aranıyordu ve "go pro" alias'ı "LOGO PROgram" içinde
+   * substring eşleşip talebe GoPro markası yazıyordu (kullanıcıya ve
+   * publish'e sızdı — canlıda ölçüldü). Kural ada özel değildir: çok
+   * kelimeli alias'lar dahil her eşleşme sözcük sınırı ister; gerçek
+   * "go pro kamera" yazımı sınırda başladığı için etkilenmez.
+   */
+  const re = new RegExp(
+    `(?:^|[^a-zçğıöşü0-9])${escapeRegex(needle)}(?=$|[^a-zçğıöşü0-9])`,
+    "i",
+  );
+  return re.test(normalized);
 }
 
 /** Longest-alias wins so "mercedes-benz" beats a shorter accidental hit. */

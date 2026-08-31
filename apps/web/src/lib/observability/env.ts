@@ -69,6 +69,13 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     description: "Optional AI assistant provider.",
   },
   {
+    name: "EMAIL_PROVIDER",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "Outbound email provider id (kritik bildirim aileleri). Boşsa teslim dürüstçe 'unconfigured' sayılır; sahte başarı üretilmez.",
+  },
+  {
     name: "ALLOW_MOCK_UPGRADE",
     classification: "DEVELOPMENT_ONLY",
     serverOnly: true,

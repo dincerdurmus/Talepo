@@ -45,7 +45,7 @@ export async function createNotification(
   input: CreateNotificationInput,
   client: NotificationWriteClient = prisma as unknown as NotificationWriteClient,
 ) {
-  return client.notification.create({
+  const created = await client.notification.create({
     data: {
       userId: input.userId,
       type: input.type,
@@ -57,6 +57,33 @@ export async function createNotification(
       companyId: input.companyId,
     },
   });
+  /**
+   * E-POSTA GÖRÜNÜMÜ (Launch Hardening). E-posta ikinci bir motor değildir;
+   * kanonik yazımın hemen ardından, YALNIZ kritik aileler için, non-blocking
+   * teslim denenir. Sağlayıcı yapılandırılmadıysa sınır dürüstçe
+   * "unconfigured" der; ana akış hiçbir durumda kırılmaz.
+   */
+  void (async () => {
+    try {
+      const { deliverNotificationEmail, EMAIL_CRITICAL_NOTIFICATION_TYPES } =
+        await import("@/server/email/deliver-notification-email");
+      if (!EMAIL_CRITICAL_NOTIFICATION_TYPES.has(input.type)) return;
+      const user = await prisma.user.findUnique({
+        where: { id: input.userId },
+        select: { email: true },
+      });
+      await deliverNotificationEmail({
+        recipientEmail: user?.email,
+        notificationType: input.type,
+        title: input.title,
+        message: input.message,
+        actionPath: input.actionUrl ?? null,
+      });
+    } catch {
+      // teslim sınırı kendi logunu tutar; yazma yolu asla etkilenmez
+    }
+  })();
+  return created;
 }
 
 /** One row per recipient + type + offer + exact actionUrl (includes negotiation round). */
