@@ -52,6 +52,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import { classifyNumbers } from "../src/lib/request-understanding/number-role";
 import {
   SIMULATED_ANSWER_VALUE,
   walkQuestionWavesFromText,
@@ -414,6 +415,31 @@ function measureScenario(sc: ScenarioInput): Rec[] {
     ) {
       evidence = "EXPLICIT_TEXT";
       evidenceDetail = "phrase-match:canonicalValue";
+    } else if (
+      /**
+       * D2 KAPANIŞI 1/3 (Wave K, 2026-08-31): SAYISAL NORMALİZASYON,
+       * markadaki "çağrılabilir otorite" ilkesinin bütçe karşılığıdır.
+       * "bütçem aylık 25 bin TL" yazan kullanıcının kaydı "25.000 TL"dir;
+       * ham harf eşleşmesi bulunamayınca AÇIK beyan INFERENCE_ONLY
+       * sayılıyor ve high-risk YUKARI sapıyordu (ölçülen: re-02/budget).
+       * Kanıt, KANONİK tek sayı otoritesiyle aranır (`classifyNumbers` —
+       * "25 bin" → 25000 dönüşümünün tek sahibi): metindeki sınıflanmış
+       * bir sayının değeri kayıtlı bütçe sayısına eşitse beyan metindedir.
+       * İkinci bir sayı çözümleyici YAZILMADI.
+       */
+      fieldKey === "budget" &&
+      (() => {
+        const stored = Number(
+          rawValue.replace(/[^\d,\.]/g, "").replace(/\./g, "").replace(",", "."),
+        );
+        if (!Number.isFinite(stored) || stored <= 0) return false;
+        return classifyNumbers(sc.input).some(
+          (n) => n.value === stored,
+        );
+      })()
+    ) {
+      evidence = "EXPLICIT_TEXT";
+      evidenceDetail = "phrase-match:budget-number-authority";
     } else if (observedProvenance === "EXPLICIT_BROWSE") {
       evidence = "EXPLICIT_BROWSE";
       evidenceDetail = "user-browse-selection";
@@ -436,9 +462,23 @@ function measureScenario(sc: ScenarioInput): Rec[] {
         authorityFunction = "isBrandLikeEntityType+resolvedEntities";
         authorityCanonicalId = brandHit.canonicalId;
       } else if (catalogBrandHit) {
-        evidence = "AUTHORITY_VERIFIED_EQUIVALENT";
-        authorityFunction = catalogBrandHit.fn;
-        authorityCanonicalId = catalogBrandHit.id;
+        /**
+         * D2 KAPANIŞI 2/3 (Wave K, 2026-08-31): katalogun KENDİ alias
+         * listesindeki bir ad kullanıcı METNİNDE geçiyorsa ("iPhone" →
+         * Apple), kullanıcı markayı o markanın kabul edilmiş adıyla
+         * SÖYLEMİŞTİR — bu açık beyanın normalize hâlidir, bilgi türetimi
+         * değil (ürün kaydı da EXPLICIT_TEXT diyor; ölçülen: tech-02/10).
+         * Model→marka bağı (findModelInText) böyle DEĞİLDİR ve otorite
+         * sınıfında kalır.
+         */
+        if (catalogBrandHit.fn.startsWith("findBrand(")) {
+          evidence = "EXPLICIT_TEXT";
+          evidenceDetail = `brand-alias-in-text:${catalogBrandHit.id}`;
+        } else {
+          evidence = "AUTHORITY_VERIFIED_EQUIVALENT";
+          authorityFunction = catalogBrandHit.fn;
+          authorityCanonicalId = catalogBrandHit.id;
+        }
       } else if (aliasHit) {
         evidence = "AUTHORITY_VERIFIED_EQUIVALENT";
         authorityFunction = aliasHit.fn;
@@ -510,6 +550,18 @@ function measureScenario(sc: ScenarioInput): Rec[] {
         } else if (suppressionPolicy === "USER_DECISION_REQUIRED") {
           outcome = "high_risk_silent_suppression";
           detail = "AUTHORITY_INSUFFICIENT_FOR_POLICY";
+        } else if (provenanceMatch === "OK") {
+          /**
+           * D2 KAPANIŞI 3/3 (Wave K, 2026-08-31): politika bastırmaya
+           * İZİN veriyor (AUTHORITY_MAY_SUPPRESS), kanıt çağrılabilir
+           * otoriteyle doğrulanmış VE ürün kaydının kendi provenance'ı da
+           * bu sınıfı DOĞRU beyan ediyorsa (CATALOG_ENRICHED), bastırma
+           * kapanış açısından DOĞRUDUR (ölçülen: auto-10 C200→Mercedes).
+           * Koşul ÇİFTTİR: provenance uyuşmazsa kayıt eskisi gibi
+           * `authority_suppressed`ta kalır — sürüklenme hâlâ yakalanır.
+           */
+          outcome = "correctly_suppressed";
+          detail = "authority-verified+provenance-recorded";
         } else {
           outcome = "authority_suppressed";
         }

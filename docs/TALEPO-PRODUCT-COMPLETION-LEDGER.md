@@ -10,18 +10,30 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: J (canlı Alarm E2E + konum kanonikleştirmesi +
-  global-product-identity + KB-17 ölçümü) tamamlandı, 2026-08-31.
-  Checkpointler: F **2d834f0**, G **27583e0**, H **76f1fed**, I **889125d**
-  (hepsi pushlandı; local=remote).
-- LAST_VERIFIED_ITEM: LG-44j (tam batarya yeşil; external-price dahil).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave J commit onayı; sonra KB-17
-  kapanış dilimi (kalan 1 high-risk + 3 authority_suppressed) ya da FD-2
-  sırasında sonraki tarihsel dilim (aday: provider-routing / sayfam-home).
-- BLOCKERS: (1) **16** tarihsel kırmızı (external-price ve
-  global-product-identity bu dalgada kapandı). (2) ÜRETİM sink kaydı yok —
-  DW-3 provision turu. (3) KB-17 kapanışı: 1 high-risk + 3
-  authority_suppressed kaldı (aşağıda ölçüm).
+- CURRENT_WAVE: K (KB-17 kapanışı + Pro güvenilir-marka dilimi)
+  tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**, G **27583e0**,
+  H **76f1fed**, I **889125d**, J **b2d396f** (hepsi pushlandı).
+- LAST_VERIFIED_ITEM: LG-49k (canlı DB'de projection.brand="Apple" kanıtı).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave K commit onayı; sonra
+  projection-authority imza tabanının kendi dilimi ya da FD-2'de sonraki
+  tarihsel (aday: provider-routing / sayfam-home); 4 category_unresolved
+  senaryo kurucu taksonomi kürasyonu adayı.
+- BLOCKERS: (1) **16** tarihsel kırmızı. (2) ÜRETİM sink kaydı — DW-3
+  provision turu. (3) Suppression D1 exit-3: 4 `category_unresolved`
+  senaryo (tech-12 "logo tasarımı", health-07 "test çubuğu", health-08
+  "hangi ilacı almalıyım", home-06 "kürek sapı") — kategori çözümü/
+  taksonomi kürasyonu; hedef sayaçların ÜÇÜ DE SIFIR (aşağıda).
+
+## Wave K kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-45k | KB-17 dört vaka | CLOSED | re-02 (high-risk): kullanıcı "25 bin TL" YAZDI, ürün kaydı EXPLICIT_TEXT doğruydu; kapının kanıt probu sayı-normalize edilmiş beyanı bulamıyordu → kanonik TEK sayı otoritesi (`classifyNumbers`) probu eklendi. tech-02/10 (authority): "iPhone" katalogun KENDİ Apple alias'ı — alias-metinde = markanın açık beyanı → EXPLICIT; model→marka türetimi (auto-10) otoritede KALDI ve çift koşulla (çağrılabilir otorite + ürün kaydının CATALOG_ENRICHED provenance'ı) correctly_suppressed sayılır — provenance uyuşmazsa hâlâ yakalanır. Sonuç: **wrongly_repeated=0 · high_risk=0 · authority_suppressed=0**, correctly 53→57; mutasyon kanıtı (alias yükseltmesi kapatılınca 2 geri geldi) |
+| LG-46k | Davranış bataryası | GREEN | nonvalue(ANY)/freshness/user-choice/edit-parity(Maira↔standart)/maira-contract/inference-confirmation/scheduler hepsi yeşil |
+| LG-47k | Pro dilimi: KNOWN-OPEN 9 sertifika kaydı (ÜRÜN) | FIXED | `understand-request` brandEvidence kaydı artık belgelediği statüyü merdivende taşıyor (VERIFIED_CATALOG→PRODUCT_IDENTITY/VERIFIED; USER_ASSERTED→USER_EXPLICIT). Delta TAM olarak 7aa6990'ın adlı 9 kümesi: **BRAND_ROUTABLE_TRUSTED 7→15/108** (mach-07 envelope'sız → doğru şekilde dışarıda). readiness-brand 0 ihlal + RED-2/G3 mutasyon çapaları yeni dağılıma taşındı (kanıt gücü korunarak) |
+| LG-48k | İmza tabanları (delta'lı) | REBASED | publish-inference INFERRED evreni 85→76 (çıkan 9 adlı satır) YEŞİL; snapshot-internal-evidence yeni USER_EXPLICIT_BRAND_EVIDENCE sınıfıyla YEŞİL. projection-authority (tarihsel) 15 imza kayması genişledi — kendi dilimi |
+| LG-49k | Canlı değer kanıtı | VERIFIED | Gerçek acceptance DB'de "AC1K iPhone 15 Pro" talebi kanonik yayın yolundan geçti; satırın `discoveryProjection.attributes.brand="Apple"` — güvenilir marka gerçek kayda akıyor; kayıt kesin kimlikle temizlendi |
+| LG-50k | Pro %41 düzeltmesi (ölçüm dürüstlüğü) | CORRECTED | Wave J'de 5. bileşeni yanlış atadım: resmî 5. bileşen "tedarikçi yeteneği"dir, "canlı bildirim teslimatı" formül DIŞI bağlamdı. %41 GERİ ÇEKİLDİ. Güncel resmî hesap: `100×((104/108)+(15/108)+0+0+0)/5 = 22.04` ≈ **%22** (7→15 güvenilir marka bu dalganın gerçek kazancı) |
 
 ## Wave J kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 

@@ -57,24 +57,26 @@ export const BASELINE_INFERRED_BRAND_CANDIDATES: readonly string[] = [
   "tech-06/brandCandidate",
 ];
 
-/** Kanonik merdivende INFERRED kalan marka kanıt durumları (9 kimlik). */
-export const BASELINE_INFERRED_BRAND_EVIDENCE: readonly string[] = [
-  "appl-04/brandEvidence",
-  "appl-06/brandEvidence",
-  "appl-07/brandEvidence",
-  "mach-03/brandEvidence",
-  "mach-07/brandEvidence",
-  "print-07/brandEvidence",
-  "tech-02/brandEvidence",
-  "tech-03/brandEvidence",
-  "tech-10/brandEvidence",
-];
+/**
+ * Kanonik merdivende INFERRED kalan marka kanıt durumları.
+ *
+ * Wave K (2026-08-31): 7aa6990'da adlarıyla dondurulan KNOWN-OPEN 9 kayıt,
+ * ürün kodundaki sertifika-merdiveni düzeltmesiyle (understand-request
+ * brandEvidence kaydı artık belgelediği statüyü taşıyor) bu sınıftan
+ * çıktı — 8'i VERIFIED'a, mach-07 (USER_ASSERTED) USER_EXPLICIT'e.
+ * Delta satır satır sayıldı ve tam olarak o dondurulmuş kümedir.
+ */
+export const BASELINE_INFERRED_BRAND_EVIDENCE: readonly string[] = [];
 
 /**
  * Kanonik merdivende VERIFIED sınıfına çıkan marka kanıt durumları
- * (7 otomotiv kimliği — katalog doğrulaması).
+ * (7 otomotiv katalog doğrulaması + Wave K'de merdiveni düzeltilen 8
+ * VERIFIED_CATALOG kaydı).
  */
 export const BASELINE_VERIFIED_BRAND_EVIDENCE: readonly string[] = [
+  "appl-04/brandEvidence",
+  "appl-06/brandEvidence",
+  "appl-07/brandEvidence",
   "auto-01/brandEvidence",
   "auto-02/brandEvidence",
   "auto-03/brandEvidence",
@@ -82,6 +84,19 @@ export const BASELINE_VERIFIED_BRAND_EVIDENCE: readonly string[] = [
   "auto-07/brandEvidence",
   "auto-08/brandEvidence",
   "auto-10/brandEvidence",
+  "mach-03/brandEvidence",
+  "print-07/brandEvidence",
+  "tech-02/brandEvidence",
+  "tech-03/brandEvidence",
+  "tech-10/brandEvidence",
+];
+
+/**
+ * Kullanıcının "X marka" beyanıyla (USER_ASSERTED) belgelenen kanıt —
+ * merdivende USER_EXPLICIT (Wave K).
+ */
+export const BASELINE_USER_EXPLICIT_BRAND_EVIDENCE: readonly string[] = [
+  "mach-07/brandEvidence",
 ];
 
 /**

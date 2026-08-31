@@ -1711,11 +1711,24 @@ export function understandRequest(
    * görünemez.
    */
   if (identityBlock.brand?.value && brandEvidenceStatus) {
+    /**
+     * KNOWN-OPEN 9 KAYDIN KAPANIŞI (Wave K, 2026-08-31; `7aa6990` tabanında
+     * adlarıyla dondurulmuştu). Sertifika kaydının KENDİ merdiven yeri,
+     * belgelediği şeyi yansıtır: katalog doğrulaması VERIFIED kaynaktır
+     * (PRODUCT_IDENTITY), kullanıcının "X marka" beyanı USER_EXPLICIT'tir.
+     * Eski hâli her ikisini de DETERMINISTIC_INFERENCE yazıyor, bu yüzden
+     * değeri VERIFIED_CATALOG olan kayıt bile merdivende INFERRED kalıyor
+     * ve güvenilir marka sayısı (7/108) sahte düşük ölçülüyordu.
+     */
     attributes.brandEvidence = uv(brandEvidenceStatus, {
-      provenance: "INFERRED",
-      source: "DETERMINISTIC_INFERENCE",
+      provenance:
+        brandEvidenceStatus === "USER_ASSERTED" ? "EXPLICIT" : "INFERRED",
+      source:
+        brandEvidenceStatus === "USER_ASSERTED"
+          ? "USER_EXPLICIT"
+          : "PRODUCT_IDENTITY",
       confidence: 1,
-      evidence: ["brand-evidence"],
+      evidence: ["brand-evidence", brandEvidenceStatus],
     });
   }
 

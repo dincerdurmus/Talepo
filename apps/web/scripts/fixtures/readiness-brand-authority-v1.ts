@@ -36,6 +36,20 @@ export const TRUSTED_BRAND_IDENTITIES = [
   "auto-07",
   "auto-08",
   "auto-10",
+  // Wave K (2026-08-31): KNOWN-OPEN 9 kaydın sertifika merdiveni ürün
+  // kodunda düzeltildi (understand-request brandEvidence kaydı artık
+  // belgelediği statüyü taşıyor). Delta satır satır sayıldı ve TAM olarak
+  // 7aa6990'da adlarıyla dondurulan kümedir; 8'i envelope markası
+  // taşıdığı için güvenilir kümeye girdi. mach-07 USER_EXPLICIT oldu ama
+  // envelope markası yok — "present ≠ trusted" ayrımı bozulmadı.
+  "tech-02",
+  "tech-03",
+  "tech-10",
+  "print-07",
+  "appl-04",
+  "appl-06",
+  "appl-07",
+  "mach-03",
 ] as const;
 
 /**
@@ -55,15 +69,18 @@ export const BRAND_EVIDENCE_AUTHORITY_BASELINE: Readonly<
   "auto-07": "VERIFIED",
   "auto-08": "VERIFIED",
   "auto-10": "VERIFIED",
-  "tech-02": "INFERRED",
-  "tech-03": "INFERRED",
-  "tech-10": "INFERRED",
-  "print-07": "INFERRED",
-  "appl-04": "INFERRED",
-  "appl-06": "INFERRED",
-  "appl-07": "INFERRED",
-  "mach-03": "INFERRED",
-  "mach-07": "INFERRED",
+  // Wave K (2026-08-31): sertifika kaydı artık belgelediği statüyü taşır —
+  // VERIFIED_CATALOG → VERIFIED (PRODUCT_IDENTITY), USER_ASSERTED →
+  // USER_EXPLICIT. Bu 9 satır 7aa6990'ın KNOWN-OPEN kümesinin kendisidir.
+  "tech-02": "VERIFIED",
+  "tech-03": "VERIFIED",
+  "tech-10": "VERIFIED",
+  "print-07": "VERIFIED",
+  "appl-04": "VERIFIED",
+  "appl-06": "VERIFIED",
+  "appl-07": "VERIFIED",
+  "mach-03": "VERIFIED",
+  "mach-07": "USER_EXPLICIT",
 };
 
 /**
@@ -78,18 +95,20 @@ export const BRAND_BASELINE = {
   /** Marka kanıtı KAYDI bulunan senaryo sayısı (tipli kanal + legacy). */
   brandEvidencePresent: 16,
   brandEvidenceUnknown: 0,
-  brandEvidenceInferred: 9,
-  brandEvidenceVerified: 7,
-  brandEvidenceUserExplicit: 0,
+  // Wave K (2026-08-31): KNOWN-OPEN 9'un ürün kodundaki kapanışı sonrası
+  // dağılım — 8 VERIFIED_CATALOG kaydı VERIFIED'a, mach-07 (USER_ASSERTED)
+  // USER_EXPLICIT'e çıktı; INFERRED sertifika kaydı kalmadı.
+  brandEvidenceInferred: 0,
+  brandEvidenceVerified: 15,
+  brandEvidenceUserExplicit: 1,
   /** Envelope markası VAR ve kanıtı merdivende ≥ VERIFIED. */
-  brandRoutableTrusted: 7,
+  brandRoutableTrusted: 15,
   /**
-   * KNOWN-OPEN (ürün kodu, bu turun kapsamı dışında). Kanıt kaydının
-   * DEĞERİ "VERIFIED_CATALOG" / "USER_ASSERTED" diyor ama kaydın kendi
-   * provenance/source bilgisi çıkarım seviyesinde yazılmış. Ölçüm kanonik
-   * merdiveni okur; değer dizesinden ikinci bir güven kaynağı türetmez.
+   * KNOWN-OPEN kapandı (Wave K): kanıt kaydının değeri ile kaydın kendi
+   * merdiven yeri artık çelişmiyor. Sayaç kasıtlı olarak kaldı ki bir
+   * regresyon çelişkiyi yeniden üretirse çift yönlü karşılaştırma yakalasın.
    */
-  evidenceValueClaimsAuthorityAboveRecord: 9,
+  evidenceValueClaimsAuthorityAboveRecord: 0,
 } as const;
 
 /**

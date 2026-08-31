@@ -217,14 +217,34 @@ function main(): void {
       `${evidencePresent} kanıt görüyor — beklenen 0 / >0.`,
   );
 
-  /* ---- KIRMIZI KANIT 2: anahtar saymak INFERRED'i trusted yapar ---- */
+  /* ---- KIRMIZI KANIT 2: anahtar saymak otorite kapısının yerine geçemez.
+   * Wave K (2026-08-31): KNOWN-OPEN kapanışından sonra bütün envelope
+   * markaları ≥VERIFIED sertifika taşıdığı için iki sayı MEŞRU olarak
+   * çakışıyor; eski `naif > kapılı` eşitsizliği kusurlu dönemin
+   * artefaktıydı. Ayrımın kalıcı kanıtı mutasyonladır: tek kaydın source'u
+   * düşürülünce NAİF sayım yerinde durur, otorite-kapılı sayım düşer. ---- */
   const naiveKeyCount = rows.filter((r) => r.envBrand && r.evidence.present)
     .length;
-  check(
-    naiveKeyCount > routableTrusted,
-    `RED-2 anahtar sayma: "anahtar mevcut" ${naiveKeyCount}, otorite kapılı ` +
-      `${routableTrusted} — naif sayım fazla saymalıydı.`,
-  );
+  {
+    const victim = rows.find(
+      (r) => r.envBrand && r.evidence.present && r.evidence.authority === "VERIFIED",
+    );
+    assert.ok(victim, "RED-2 için VERIFIED kaydı bulunamadı");
+    const bag = victim.snapshot.internalEvidence!;
+    const original = bag.brandEvidence;
+    bag.brandEvidence = { ...original, source: "DETERMINISTIC_INFERENCE" as never };
+    victim.evidence = readBrandEvidence(victim.snapshot);
+    const naiveAfter = rows.filter((r) => r.envBrand && r.evidence.present).length;
+    const gatedAfter = trustedIds(rows).length;
+    bag.brandEvidence = original;
+    victim.evidence = readBrandEvidence(victim.snapshot);
+    check(
+      naiveAfter === naiveKeyCount && gatedAfter === routableTrusted - 1,
+      `RED-2 anahtar sayma ≠ otorite kapısı: mutasyonda naif ${naiveAfter}` +
+        `(sabit beklenen ${naiveKeyCount}), kapılı ${gatedAfter} ` +
+        `(düşmüş beklenen ${routableTrusted - 1}).`,
+    );
+  }
 
   /* ---- G2: fixture ile çift yönlü kimlik doğrulaması ---- */
   const expected = [...TRUSTED_BRAND_IDENTITIES].sort();
@@ -277,18 +297,38 @@ function main(): void {
     victim.evidence = readBrandEvidence(victim.snapshot);
     return result;
   };
-  const up = mutate("INFERRED", "FUTURE_KNOWLEDGE");
-  check(
-    up.authority === "VERIFIED" && up.after === routableTrusted + 1,
-    `G3 INFERRED→VERIFIED: otorite ${up.authority}, sayaç ${up.after}, ` +
-      `beklenen VERIFIED / ${routableTrusted + 1}.`,
-  );
+  /**
+   * Wave K (2026-08-31): KNOWN-OPEN kapanışından sonra INFERRED sertifika
+   * kaydı kalmadı; yukarı-yön mutasyonu artık İNDİRİLMİŞ bir kurbanda
+   * ölçülür. Kanıt gücü aynıdır: sayaç her iki yönde de hareket eder.
+   */
   const down = mutate("VERIFIED", "DETERMINISTIC_INFERENCE");
   check(
     down.authority === "INFERRED" && down.after === routableTrusted - 1,
     `G4 VERIFIED→INFERRED: otorite ${down.authority}, sayaç ${down.after}, ` +
       `beklenen INFERRED / ${routableTrusted - 1}.`,
   );
+  {
+    const victim = rows.find(
+      (r) => r.envBrand && r.evidence.present && r.evidence.authority === "VERIFIED",
+    );
+    assert.ok(victim, "mutasyon için VERIFIED kaydı bulunamadı");
+    const bag = victim.snapshot.internalEvidence!;
+    const original = bag.brandEvidence;
+    bag.brandEvidence = { ...original, source: "DETERMINISTIC_INFERENCE" as never };
+    victim.evidence = readBrandEvidence(victim.snapshot);
+    const mid = trustedIds(rows).length;
+    bag.brandEvidence = { ...original, source: "FUTURE_KNOWLEDGE" as never };
+    victim.evidence = readBrandEvidence(victim.snapshot);
+    const up = trustedIds(rows).length;
+    bag.brandEvidence = original;
+    victim.evidence = readBrandEvidence(victim.snapshot);
+    check(
+      mid === routableTrusted - 1 && up === routableTrusted,
+      `G3 İNDİRİLMİŞ→VERIFIED: sayaç ${mid}→${up}, beklenen ` +
+        `${routableTrusted - 1}→${routableTrusted}.`,
+    );
+  }
   check(
     trustedIds(rows).length === routableTrusted &&
       serialize(rows) === serialA,

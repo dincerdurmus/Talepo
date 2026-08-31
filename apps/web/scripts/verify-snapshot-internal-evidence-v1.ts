@@ -44,6 +44,7 @@ import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
 import {
   BASELINE_INFERRED_BRAND_CANDIDATES,
   BASELINE_INFERRED_BRAND_EVIDENCE,
+  BASELINE_USER_EXPLICIT_BRAND_EVIDENCE,
   BASELINE_VERIFIED_BRAND_EVIDENCE,
   FALSE_BRAND_CANDIDATE_CANARY,
   LEGACY_PROJECTION_SAMPLE,
@@ -90,12 +91,15 @@ const BASELINE_BY_CLASS = {
   INFERRED_BRAND_CANDIDATE: BASELINE_INFERRED_BRAND_CANDIDATES,
   INFERRED_BRAND_EVIDENCE: BASELINE_INFERRED_BRAND_EVIDENCE,
   VERIFIED_BRAND_EVIDENCE: BASELINE_VERIFIED_BRAND_EVIDENCE,
+  // Wave K (2026-08-31): USER_ASSERTED beyani merdivende USER_EXPLICIT.
+  USER_EXPLICIT_BRAND_EVIDENCE: BASELINE_USER_EXPLICIT_BRAND_EVIDENCE,
 } as const;
 
 const BASELINE_ALL: readonly string[] = [
   ...BASELINE_INFERRED_BRAND_CANDIDATES,
   ...BASELINE_INFERRED_BRAND_EVIDENCE,
   ...BASELINE_VERIFIED_BRAND_EVIDENCE,
+  ...BASELINE_USER_EXPLICIT_BRAND_EVIDENCE,
 ];
 
 /** İç kanıt anahtarları fixture kimliklerinden türetilir — ikinci liste yok. */
@@ -109,6 +113,9 @@ function classifyBaselineClass(key: string, authority: Authority): string {
   }
   if (key === "brandEvidence" && authority === "INFERRED") {
     return "INFERRED_BRAND_EVIDENCE";
+  }
+  if (key === "brandEvidence" && authority === "USER_EXPLICIT") {
+    return "USER_EXPLICIT_BRAND_EVIDENCE";
   }
   if (key === "brandEvidence" && authority === "VERIFIED") {
     return "VERIFIED_BRAND_EVIDENCE";

@@ -26,14 +26,10 @@
  * Ölçülen çıkarım evreni: 108 senaryoluk kapsama tabanında, serbest metin
  * sonrası kanonik durumda `INFERRED` otoriteyle değer taşıyan 85 kimlik
  * (`senaryo/alanAnahtarı`). İç kanıt alanları (`brandCandidate`,
- * `brandEvidence`) da bu evrendedir: onların da kaybolması ölçümün
  * daralması demektir.
  */
 export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
-  "appl-04/brandEvidence",
-  "appl-06/brandEvidence",
   "appl-06/needType",
-  "appl-07/brandEvidence",
   "appl-07/needType",
   "appl-08/needType",
   "appl-09/needType",
@@ -70,15 +66,12 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "home-07/brandCandidate",
   "mach-01/needType",
   "mach-02/needType",
-  "mach-03/brandEvidence",
   "mach-03/needType",
   "mach-05/brandCandidate",
   "mach-05/needType",
-  "mach-07/brandEvidence",
   "mach-07/needType",
   "mach-08/needType",
   "print-04/brandCandidate",
-  "print-07/brandEvidence",
   "print-07/needType",
   "print-11/needType",
   "print-12/brandCandidate",
@@ -99,9 +92,7 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "svc-08/needType",
   "tech-01/needType",
   "tech-01/solutionType",
-  "tech-02/brandEvidence",
   "tech-02/solutionType",
-  "tech-03/brandEvidence",
   "tech-03/needType",
   "tech-03/solutionType",
   "tech-05/brandCandidate",
@@ -111,7 +102,6 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "tech-07/needType",
   "tech-08/needType",
   "tech-09/needType",
-  "tech-10/brandEvidence",
   "tech-10/needType",
   "tech-10/solutionType",
   "tech-11/needType",
