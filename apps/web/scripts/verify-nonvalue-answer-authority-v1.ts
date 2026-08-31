@@ -773,7 +773,13 @@ function measureCorpusDenominator(): {
   }
 
   ok("H1", scenarios === 108, `senaryo sayısı değişti → ${scenarios}`);
-  ok("H2", unknown === 988, `varsayılan UNKNOWN sayısı değişti → ${unknown}`);
+  /**
+   * Taban 988→986 (RC, 2026-09-01): FD-7/8/10 kurucu kürasyonu tech-12/
+   * health-07/home-06 kategorilerini çözdü ve productType alanları
+   * UNKNOWN→VALUE oldu (Wave L, satır satır onaylı delta). Sayaç tam da bu
+   * tür değişimi yakalamak için vardı; fark kararla buradan geçiyor.
+   */
+  ok("H2", unknown === 986, `varsayılan UNKNOWN sayısı değişti → ${unknown}`);
   ok(
     "H3",
     explicitNonValue === 0,

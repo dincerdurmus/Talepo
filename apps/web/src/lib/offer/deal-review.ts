@@ -32,7 +32,7 @@ export const DEAL_REVIEWS_PUBLISHED_MESSAGE =
   "İşlem değerlendirmeleri artık görünür.";
 
 export const DEAL_REVIEW_BLIND_HINT =
-  "Değerlendirmeler, iki taraf da değerlendirmesini tamamladığında veya süre dolunca görünür.";
+  "Değerlendirmeler, iki taraf da değerlendirmesini tamamladığında veya süre dolunca görünür. Gönderilen değerlendirme değiştirilemez.";
 
 export const DEAL_REVIEW_WINDOW_HINT = `Değerlendirme için ${DEAL_REVIEW_WINDOW_DAYS} gününüz var.`;
 

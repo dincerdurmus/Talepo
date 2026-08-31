@@ -67,7 +67,10 @@ const api = read("src/app/api/deal-reviews/route.ts");
 const panel = read("src/components/panel/DealReviewPanel.tsx");
 const completionPanel = read("src/components/panel/DealOutcomePanel.tsx");
 const badge = read("src/components/panel/TrustSummaryBadge.tsx");
-const conversation = read("src/app/panel/mesajlar/[id]/page.tsx");
+/** Pencere props kablolaması ConversationShell'e taşındı (refactor); sözleşme aynı. */
+const conversation =
+  read("src/app/panel/mesajlar/[id]/page.tsx") +
+  read("src/components/panel/ConversationShell.tsx");
 const destination = read("src/lib/notifications/destination.ts");
 const notify = read("src/server/notifications/create-notification.ts");
 const radar = read("src/server/monetization/talepo-radar.ts");
@@ -400,7 +403,8 @@ console.log("\n=== TRUST / UI / NOTIFICATIONS ===\n");
     !existsSync(join(root, "src/app/api/deal-reviews/[id]")) &&
       !service.includes("prisma.dealReview.update") &&
       !service.includes("prisma.dealReview.delete") &&
-      panel.includes("değiştirilemez"),
+      /** Vaat kanonik metin sabitindedir; panel sabiti render eder (RC düzeltmesi). */
+      DEAL_REVIEW_BLIND_HINT.includes("değiştirilemez"),
   );
   check(
     "pair reveal notification",
