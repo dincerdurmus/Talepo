@@ -264,6 +264,18 @@ export async function distributeRequestToCompanies(
         durationMs: Date.now() - startedAt,
         location,
       });
+      /**
+       * ALARM TESLİMİ FANOUT'TAN BAĞIMSIZDIR (Wave J, 2026-08-31).
+       *
+       * Ölçülen kusur: bu erken dönüş `deliverAlertRuleNotifications`
+       * çağrısından ÖNCE çıkıyordu; kullanıcı/firma alarm kuralları, firma
+       * fanout'unun BOŞ kaldığı — alarmın tam da fark yarattığı — durumda
+       * hiç teslim edilmiyordu (canlı alarm E2E'de yakalandı). Teslim
+       * non-blocking'dir ve kendi dedupe'unu taşır.
+       */
+      void deliverAlertRuleNotifications(request.id).catch((error) => {
+        console.error("[distribute] alert notifications failed:", error);
+      });
       return { matchedCompanyCount: 0, notifiedUserCount: 0 };
     }
 

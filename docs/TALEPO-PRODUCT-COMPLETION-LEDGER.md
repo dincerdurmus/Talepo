@@ -10,16 +10,46 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: I (bildirimler + gelen teklif kartı + Pro/alarm sözleşmesi)
-  tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**, G **27583e0**,
-  H **76f1fed** (hepsi pushlandı; local=remote).
-- LAST_VERIFIED_ITEM: LG-35i (marka pozitif/dışlama ekseni; tam batarya yeşil).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave I commit onayı; sonra canlı
-  alarm E2E (kural→yayın→bildirim) ve FD-2 sırasında sonraki dilim
-  (aday: sayfam-home / public-home ya da provider-routing).
-- BLOCKERS: (1) **17**+1 tarihsel/davranışsal kırmızı (güncel sayım
-  aşağıda). (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED;
-  DW-3 provision turu bekliyor. (3) question-suppression KB-17'ye bağlı.
+- CURRENT_WAVE: J (canlı Alarm E2E + konum kanonikleştirmesi +
+  global-product-identity + KB-17 ölçümü) tamamlandı, 2026-08-31.
+  Checkpointler: F **2d834f0**, G **27583e0**, H **76f1fed**, I **889125d**
+  (hepsi pushlandı; local=remote).
+- LAST_VERIFIED_ITEM: LG-44j (tam batarya yeşil; external-price dahil).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave J commit onayı; sonra KB-17
+  kapanış dilimi (kalan 1 high-risk + 3 authority_suppressed) ya da FD-2
+  sırasında sonraki tarihsel dilim (aday: provider-routing / sayfam-home).
+- BLOCKERS: (1) **16** tarihsel kırmızı (external-price ve
+  global-product-identity bu dalgada kapandı). (2) ÜRETİM sink kaydı yok —
+  DW-3 provision turu. (3) KB-17 kapanışı: 1 high-risk + 3
+  authority_suppressed kaldı (aşağıda ölçüm).
+
+## Wave J kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-37j | Canlı Alarm E2E | VERIFIED (uçtan uca) | Kural `AC1J` gerçek API ile kuruldu (kategori+şehir+ilçe+bütçe+keyword+df zarfı DB'de doğrulandı); eşleşen yayın → yayın-anında TAM 1 bildirim; tıklama → doğru `/panel/talepler/<id>`; Opportunity Center AYNI talebi AYNI kuralla listeledi ("Takiplerim kriterlerinizle eşleşen"); replay dedupe (1→0); pasif→0, yeniden aktif→1, kriter düzenleme uygulanıyor (espresso→0), silme→0+satır yok; kendi talebi tetiklemiyor; STANDARD kullanıcı plan kapısında temiz 403. Negatifler 5/5 sıfır: yanlış kategori/şehir, bütçe-dışı, null bütçe (wildcard DEĞİL), eksik keyword. Tüm AC1J kayıtları kesin id ile temizlendi (11 talep, 14 bildirim, kural 0) |
+| LG-38j | ÜRÜN KUSURU: alarm teslimi fanout'a bağlıydı | FIXED | Sıfır firma eşleşmesi erken dönüşü `deliverAlertRuleNotifications`tan ÖNCE çıkıyordu — alarmlar tam da fanout'un boş kaldığı durumda hiç teslim edilmiyordu (canlıda yakalandı). Teslim zero-match yoluna da kondu (non-blocking, kendi dedupe'u). Test-first: unified kapıya kural 17 (kırmızı→44/0); canlı POZ5 yayın-anı 1 bildirim |
+| LG-39j | ÜRÜN KUSURU: konum eşleşmesi | FIXED (kanonik, migration'sız) | (a) Composer talepleri `city="İl / İlçe"` + district=null sakladığından ilçeli alarm HİÇ eşleşmiyordu; (b) contains, ad-içinde-ad yanlış pozitifi ("Van"⊂"Şirvan") üretiyordu. TEK yardımcı (`locationMatches`) kanonik parça kuralına geçti: "/" bölme (mevcut konvansiyon; adanmış kolon yetkili) + Türkçe fold'lu TAM parça eşitliği. Test-first 8 vaka (4 kırmızı→43/0); saved-search kapısı yeşil kaldı. LOCATION_CANONICALIZATION_REQUIRED blocker'ına GEREK KALMADI |
+| LG-40j | Davranışsal kırmızı: global-product-identity | FIXED | Kök: "ürün ifadesi marka olamaz" koruması, solutionType'tan gelen tam ÜRÜN ADINI ("Samsung Galaxy S24 Ultra 256GB") tip-ifadesi sanıp katalog-doğrulamalı markayı siliyordu. Eksen: ifade kanonik marka taşıyorsa AD'dır, koruma atlanır (tek kimlik motoru `identity-builder`; karar kanonik `extractBrandFromText`ten). Kapı YEŞİL; bonus: tarihsel `external-price-intelligence` de yeşile döndü |
+| LG-41j | KB-17 / question-suppression ölçümü | MEASURED, NOT CLOSED | Güncel: `wrongly_repeated=0` (cevaplanan soru TEKRAR SORULMUYOR — çekirdek güvence sağlam), `correctly_suppressed=53`, `high_risk_silent_suppression=1` (tarihsel 45→1), `authority_suppressed=3`, `not_measured=4`. Kapanış kapısı (D2) bilinçli NOT_MEASURED; kalan 1+3 vaka kendi beyin dilimi — boyanmadı |
+
+## Pro yetenek tablosu (Wave J sonrası — ölçülü)
+
+| Yetenek | Durum | Kanıt |
+|---|---|---|
+| Alarm/Uyarı (kural→eşleşme→bildirim→detay) | **TAMAM (canlı)** | LG-37j/38j/39j |
+| Saved search / Takiplerim sözleşmesi | TAMAM (kapı) | unified 44/0 |
+| Opportunity Center eşleşme tutarlılığı | TAMAM (canlı, aynı kural) | LG-37j |
+| Teklif asistanı (tek çekirdek) | KISMİ (LOCKED-until-LIVE) | LG-15/offer-draft-lock 10/0 |
+| Fırsat routing (108 corpus bileşeni) | EKSİK (0/108) | 11-DECISION-LOG formülü |
+| Matching resolvedEntities okuması | EKSİK (0) | aynı formül |
+
+**Pro hazırlık yeniden hesabı (aynı resmî formül, `7aa6990` tabanı):**
+`100 × ((104/108) + (7/108) + (0/108) + 0 + 1) / 5` = **%40,6 ≈ %41**.
+Değişen TEK bileşen 5.si: "canlı bildirim teslimatı" önceden ÖLÇÜLMEMİŞ
+(0) idi; Wave J bunu uçtan uca canlı kanıtladı (=1). 1-2. bileşenler
+ölçülü sabit, 3-4 hâlâ 0 — sayı şişirilmedi, yalnız gerçekten kapanan
+bileşen sayıldı.
 
 ## Wave I kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 

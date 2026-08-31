@@ -56,22 +56,57 @@ export function locNorm(value: string): string {
   return value.trim().toLocaleLowerCase("tr-TR");
 }
 
-/** Free-text city/district: needle must be contained in haystack. Empty filter passes. */
+/** Kanonik Türkçe fold — province-allowlist ile aynı harf eşlemesi. */
+function locFold(value: string): string {
+  return locNorm(value)
+    .replace(/ı/g, "i")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u");
+}
+
+/**
+ * KONUM EŞLEŞMESİ — kanonik parça kuralı (Wave J, 2026-08-31).
+ *
+ * Ölçülen iki gerçek kusur bu kuralla kapanır (canlı alarm E2E):
+ *  1) Composer talepleri ilçeyi `city = "İl / İlçe"` biçiminde saklar
+ *     (aynı konvansiyonu province-allowlist de böler); ilçe kriterli alarm
+ *     null `district` kolonu yüzünden HİÇ eşleşmiyordu.
+ *  2) Serbest contains ad-içinde-ad yanlış pozitifi üretiyordu
+ *     ("Van" ⊂ "Şirvan").
+ *
+ * Kural: istek konumu "/" ile parçalara ayrılır (adanmış `district`
+ * kolonu VARSA yetkili odur); filtre değeri parçalardan biriyle Türkçe
+ * fold'lu TAM EŞİTLİKLE eşleşmelidir. Filtreler picker'dan kanonik adla
+ * gelir; boş filtre her zaman geçer. İkinci bir konum sistemi kurulmaz.
+ */
 export function locationMatches(
   requestCity: string | null | undefined,
   requestDistrict: string | null | undefined,
   filterCity: string | null | undefined,
   filterDistrict: string | null | undefined,
 ): boolean {
+  const cityParts = (requestCity ?? "")
+    .split("/")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const dedicatedDistrict = trimOrNull(requestDistrict);
+
   const fc = trimOrNull(filterCity);
   if (fc) {
-    const rc = locNorm(requestCity ?? "");
-    if (!rc.includes(locNorm(fc))) return false;
+    const needle = locFold(fc);
+    if (!cityParts.some((p) => locFold(p) === needle)) return false;
   }
+
   const fd = trimOrNull(filterDistrict);
   if (fd) {
-    const rd = locNorm(requestDistrict ?? "");
-    if (!rd.includes(locNorm(fd))) return false;
+    const needle = locFold(fd);
+    const districtParts = dedicatedDistrict
+      ? [dedicatedDistrict]
+      : cityParts.slice(1);
+    if (!districtParts.some((p) => locFold(p) === needle)) return false;
   }
   return true;
 }

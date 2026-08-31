@@ -260,6 +260,72 @@ check(
     !click.includes("redirect(notification.actionUrl"),
 );
 
+/**
+ * KONUM KANONİKLEŞTİRMESİ (Wave J, 2026-08-31; canlı alarm E2E ile ölçüldü).
+ *
+ * Ölçülen GERÇEK kusurlar:
+ *  1) Composer talepleri ilçeyi `city = "İl / İlçe"` içinde saklar,
+ *     `district` kolonu null kalır — ilçe kriterli alarm HİÇBİR composer
+ *     talebiyle eşleşmiyordu (canlı: "location-mismatch").
+ *  2) Serbest contains, ad-içinde-ad yanlış pozitifi üretiyordu
+ *     ("Van" ⊂ "Şirvan").
+ * Kanonik kural: istek konumu, mevcut "İl / İlçe" konvansiyonuyla parçalara
+ * bölünür ve filtreyle TÜRKÇE fold'lu PARÇA EŞİTLİĞİ aranır (filtre
+ * değerleri picker'dan kanonik gelir). İkinci bir konum sistemi yok.
+ */
+check(
+  "16 district criteria matches composer 'İl / İlçe' storage",
+  locationMatches("İstanbul / Kadıköy", null, "İstanbul", "Kadıköy"),
+);
+check(
+  "16b city-only criteria still matches combined storage",
+  locationMatches("İstanbul / Kadıköy", null, "İstanbul", null),
+);
+check(
+  "16c wrong district in combined storage refused",
+  locationMatches("İstanbul / Beşiktaş", null, "İstanbul", "Kadıköy") === false,
+);
+check(
+  "16d name-inside-name false positive killed (Van ⊄ Şirvan)",
+  locationMatches("Şirvan", null, "Van", null) === false,
+);
+check(
+  "16e Turkish fold + case (KADIKOY ≡ Kadıköy)",
+  locationMatches("İstanbul / Kadıköy", null, "istanbul", "KADIKOY"),
+);
+check(
+  "16f trailing space tolerated",
+  locationMatches(" İstanbul / Kadıköy ", null, "İstanbul ", " Kadıköy"),
+);
+check(
+  "16g dedicated district column still authoritative when present",
+  locationMatches("İstanbul", "Kadıköy", "İstanbul", "Kadıköy") &&
+    locationMatches("İstanbul", "Beşiktaş", "İstanbul", "Kadıköy") === false,
+);
+check(
+  "16h district filter with cityless bare storage refused",
+  locationMatches("Ankara", null, "Ankara", "Kadıköy") === false,
+);
+
+/**
+ * ALARM TESLİMİ FANOUT'TAN BAĞIMSIZDIR (Wave J, 2026-08-31; canlı ölçüldü).
+ * Kusur: sıfır firma eşleşmesi erken dönüşü `deliverAlertRuleNotifications`
+ * çağrısından ÖNCE çıkıyordu — kullanıcı alarmları, firma fanout'unun boş
+ * kaldığı (alarmın tam da işe yaradığı) durumda hiç teslim edilmiyordu.
+ * Sözleşme: teslim çağrısı hem normal yolda hem zero-match yolunda durur.
+ */
+{
+  const distribute = read("src/server/request/distribute-request.ts");
+  const zeroBlock = distribute.slice(
+    distribute.indexOf("logFanoutZeroMatch"),
+    distribute.indexOf("const now = new Date()"),
+  );
+  check(
+    "17 alert delivery also fires on zero company match",
+    zeroBlock.includes("deliverAlertRuleNotifications"),
+  );
+}
+
 console.log(`\n=== SUMMARY pass=${pass} fail=${fail} ===\n`);
 if (errors.length) {
   for (const e of errors) console.log(" -", e);

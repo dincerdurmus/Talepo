@@ -302,7 +302,26 @@ export function buildProductIdentity(input: BuildIdentityInput): ProductIdentity
       productType ??
       attributes.productType ??
       null;
-    if (productPhrase) {
+    /**
+     * EKSEN DÜZELTMESİ (Wave J, 2026-08-31; global-product-identity ile
+     * ölçüldü). Bu koruma TİP ifadeleri içindir ("bebek" ⊂ "bebek
+     * arabası"). solutionType'tan türeyen productType bazen tam bir ÜRÜN
+     * ADIDIR ("Samsung Galaxy S24 Ultra 256GB"); o zaman doğrulanmış
+     * katalog markasının ifadeyle örtüşmesi BEKLENEN durumdur ve marka
+     * silinirse kimlik yok olur (ölçülen: brand=null). Kural: ifade
+     * kanonik katalog markası taşıyorsa bu bir AD'dır, tip değil —
+     * koruma atlanır. Markasız tip ifadeleri için davranış değişmedi.
+     */
+    const phraseBrandProbe = productPhrase
+      ? extractBrandFromText(productPhrase)
+      : null;
+    const phraseCarriesCatalogBrand = Boolean(
+      phraseBrandProbe?.brand &&
+        (phraseBrandProbe.source === "catalog" ||
+          phraseBrandProbe.source === "memory" ||
+          phraseBrandProbe.confidence >= 0.55),
+    );
+    if (productPhrase && !phraseCarriesCatalogBrand) {
       if (tokenOverlapsProductPhrase(brand, productPhrase)) {
         brand = null;
         brandConfidence = 0;
