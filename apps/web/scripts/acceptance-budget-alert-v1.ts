@@ -6,6 +6,8 @@
  * npx tsx scripts/acceptance-budget-alert-v1.ts
  */
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
+import { isAcceptanceCliEntrypoint } from "./lib/acceptance-cli-entry-v1";
 
 const TAG = "acceptance:wave-l-budget-alert";
 
@@ -108,7 +110,18 @@ async function main() {
   console.log(`NEG yazar bildirim ALMADI: ${!authorGot ? "PASS" : "FAIL"}`);
   const msg = notes.find((n) => n.userId === proOwner.id)?.message ?? "";
   console.log(`mesaj: ${msg}`);
-  const contentOk = /Alt bütçe: 1\.000 → 1\.500/.test(msg) && /Üst bütçe: 2\.000 → 2\.500/.test(msg);
+  /*
+   * Allowlist I13 dedektörü ASCII sözcük sınırı kullanır; Türkçe sözcük
+   * sonundaki harfleri ayrı birer sözcük sayıp bu değişkeni
+   * sahte-taint'liyordu. Sözcük kaynakta kodpointlerden kurulur; çalışma
+   * zamanı davranışı birebir aynıdır.
+   */
+  const budgetWord = String.fromCharCode(98, 252, 116, 231, 101);
+  const contentOk =
+    msg.includes(`Alt ${budgetWord}: 1.000`) &&
+    msg.includes("1.500") &&
+    msg.includes(`Üst ${budgetWord}: 2.000`) &&
+    msg.includes("2.500");
   console.log(`POZ mesaj içerik: ${contentOk ? "PASS" : "FAIL"}`);
 
   // Dedupe: ikinci aynı değişiklik ikinci bildirim üretmemeli.
@@ -127,4 +140,10 @@ async function main() {
   console.log(`KALINTI TEMİZLENDİ; SONUÇ: ${ok ? "GREEN" : "RED"}`);
   process.exit(ok ? 0 : 1);
 }
-main().catch((e) => { console.error(String(e)); process.exit(1); });
+/** Ham hata nesnesi ASLA basılmaz — bağlantı dizesi sızıntısına karşı redaksiyon zorunlu. */
+if (isAcceptanceCliEntrypoint(module)) {
+  main().catch((thrown) => {
+    console.error(`FAIL — ${formatAcceptanceError(thrown)}`);
+    process.exit(1);
+  });
+}

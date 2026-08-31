@@ -51,7 +51,10 @@ const taleplerim = read("src/app/panel/taleplerim/[id]/page.tsx");
 const talepler = read("src/app/panel/talepler/[id]/page.tsx");
 const teklifForm = read("src/app/panel/talepler/[id]/teklif/page.tsx");
 const mesajlar = read("src/app/panel/mesajlar/page.tsx");
-const mesajDetail = read("src/app/panel/mesajlar/[id]/page.tsx");
+const mesajDetail =
+  read("src/app/panel/mesajlar/[id]/page.tsx") +
+  /** SUPERSEDED (RC): gönderim kapısı ConversationShell bileşenine taşındı; sözleşme aynı. */
+  read("src/components/panel/ConversationShell.tsx");
 const intelligence = read("src/server/monetization/offer-intelligence.ts");
 const performance = read("src/server/monetization/commercial-performance.ts");
 const negotiationService = read("src/server/offer/offer-negotiation-service.ts");
@@ -115,7 +118,7 @@ console.log("\n=== CONVERSATION ONLY AFTER ACCEPT ===\n");
   );
   check(
     "conversation detail send only when accepted",
-    mesajDetail.includes("const canSendMessages = offerAccepted"),
+    mesajDetail.includes("canSend={offerAccepted}"),
   );
   check(
     "historical conversations stay readable",

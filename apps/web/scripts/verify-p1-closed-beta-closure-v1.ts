@@ -159,8 +159,9 @@ console.log("\n=== P1-3 STALE FLASH ===\n");
   const panel = read("src/components/request/HybridComposerPanels.tsx");
   check(
     "text change sets isSyncing immediately",
+    /** SUPERSEDED (RC, 2026-09-01): kirli-metin koruması seq-token kapısına taşındı; bayrak yine anında kalkar. */
     hook.includes("setIsSyncing(true)") &&
-      hook.includes("if (next.trim() !== currentRaw)"),
+      hook.includes("expectedToken !== seqRef.current"),
   );
   check(
     "questions/facts empty while syncing",
@@ -325,7 +326,8 @@ console.log("\n=== P1-6 HYDRATION ===\n");
   const walk = createBrowseWalkState();
   check(
     "PanelShell does not read localStorage in useState initializer",
-    /useState\(false\)/.test(shell) &&
+    /** SUPERSEDED (RC): varsayılan artık kapalı ray (useState(true)); hydration koruması aynı. */
+    /useState\(true\)/.test(shell) &&
       !/useState\(\(\)\s*=>\s*\{[\s\S]*localStorage/.test(shell) &&
       shell.includes("localStorage.getItem(SIDEBAR_COLLAPSED_KEY)") &&
       shell.includes("useEffect"),

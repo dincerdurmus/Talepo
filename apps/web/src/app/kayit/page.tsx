@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState , Suspense } from "react";
 import { signIn } from "next-auth/react";
 import {
   ArrowLeft,
@@ -16,7 +16,7 @@ import { PasswordInput } from "@/components/auth/PasswordInput";
 const inputClass =
   "h-14 w-full rounded-2xl border border-[#0f1f1d]/10 bg-white/90 px-4 text-sm outline-none transition placeholder:text-[#0f1f1d]/30 focus:border-teal-600/40 focus:ring-4 focus:ring-teal-600/10";
 
-export default function KayitPage() {
+function KayitPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Yarım kalan talep akışı buraya callbackUrl ile gelir — kayıt sonrası
@@ -402,5 +402,17 @@ export default function KayitPage() {
         </section>
       </div>
     </main>
+  );
+}
+/**
+ * PRERENDER SINIRI (RC build düzeltmesi, 2026-09-01). `useSearchParams`
+ * statik üretimde Suspense sınırı ister; sınır olmadan production build
+ * /kayit sayfasında KIRILIYORDU. Davranış değişmedi — yalnız sınır eklendi.
+ */
+export default function KayitPage() {
+  return (
+    <Suspense fallback={null}>
+      <KayitPageInner />
+    </Suspense>
   );
 }

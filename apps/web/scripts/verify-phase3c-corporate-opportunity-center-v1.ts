@@ -46,8 +46,9 @@ function read(rel: string) {
 check(
   "1 Corporate Opportunity Center loads",
   read("src/app/panel/firsatlar/page.tsx").includes("CorporateOpportunityCenter") &&
+    /** SUPERSEDED (RC, 2026-09-01): başlık Türkçeleşti — "fırsat operasyonu". */
     read("src/components/panel/discovery/CorporateOpportunityCenter.tsx").includes(
-      "Opportunity Center",
+      "fırsat operasyonu",
     ),
 );
 
@@ -231,9 +232,13 @@ check(
 );
 check(
   "27 offer CTA uses existing flow",
+  /** SUPERSEDED (RC, 2026-09-01): CTA artık attribution imzalı kanonik href kurucusuyla kurulur. */
   read("src/components/panel/discovery/CorporateOpportunityCenter.tsx").includes(
-    "/teklif",
-  ),
+    "offerHref",
+  ) &&
+    read("src/server/monetization/corporate-opportunity-center.ts").includes(
+      "attributedOfferFormHref",
+    ),
 );
 
 // 28 watchlist distinct

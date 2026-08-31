@@ -218,7 +218,12 @@ console.log("\n=== SOURCE: MODEL / STORAGE / FLOW ===\n");
       (mine.includes("OfferMediaThumbStrip") ||
         mine.includes("OutgoingOfferCompareGroup")),
   );
-  check("43 request detail include media", requestDetail.includes("OfferMediaThumbStrip"));
+  /** SUPERSEDED: medya şeridi ConcludedProcessPanel bileşenine taşındı; detay sayfası o paneli render eder (sözleşme aynı). */
+  const concludedPanel = read("src/components/panel/my-requests/ConcludedProcessPanel.tsx");
+  check(
+    "43 request detail include media",
+    requestDetail.includes("ConcludedProcessPanel") && concludedPanel.includes("OfferMediaThumbStrip"),
+  );
   check(
     "44 list include is ids only (no bytes)",
     incomingLoader.includes("select: { id: true }") && mine.includes("select: { id: true }"),

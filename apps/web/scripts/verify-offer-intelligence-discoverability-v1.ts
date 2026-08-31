@@ -124,14 +124,21 @@ console.log("\n=== SIDEBAR IA ===\n");
     "26 shell does not render asistan sidebar entry",
     !shell.includes("asistanItem") && !shell.includes("WandSparkles"),
   );
+  /**
+   * SUPERSEDED_CONTRACT güncellemesi (RC, 2026-09-01): PanelShell yeniden
+   * tasarlandı; Pro araçları artık title-nesnesi yerine rota-başlık
+   * haritası + label ile taşıyor. SÖZLEŞMENİN ASLI aynı: üç Pro yüzeyi
+   * kabuktan keşfedilebilir kalmalı.
+   */
   check(
     "27 Pro tools = Fırsatlar / Takiplerim / Analiz",
-    shell.includes('title: "Fırsatlar"') &&
-      shell.includes('title: "Takiplerim"') &&
-      shell.includes('title: "Analiz"') &&
-      shell.includes("Pro Araçlar"),
+    shell.includes('return "Fırsatlar"') &&
+      shell.includes('return "Takiplerim"') &&
+      shell.includes('return "Analiz"') &&
+      shell.includes('label="Fırsatlar"'),
   );
-  check("28 Plan separate", shell.includes("PlanNavRow") && shell.includes('href === "/panel/plan"'));
+  /** Plan hâlâ ayrı bir kabuk girişi: rota-başlık haritası + doğrudan link. */
+  check("28 Plan separate", shell.includes('return "Plan"') && shell.includes('href="/panel/plan"'));
   check(
     "deep-link /panel/asistan still exists as route file",
     read("src/app/panel/asistan/page.tsx").length > 0,

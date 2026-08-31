@@ -23,6 +23,7 @@
  * ÜRETİLMEZ (kabul DB'si yalnız sentetik veri taşır).
  */
 import { loadAcceptanceEnv } from "./lib/load-acceptance-env";
+import { formatAcceptanceError } from "./lib/acceptance-redaction-v1";
 
 let pass = 0;
 let fail = 0;

@@ -446,8 +446,9 @@ ensureTaxonomyLoaded();
   const report = auditTaxonomyCoverage();
   // Pin updated 2026-08-23: Google TR overlay (+762 leaf, +41 GROUP) —
   // kurucu kararı, tüm dallar "Al".
-  check("29 taxonomy nodes 2151", report.nodeCount === 2151);
-  check("29 taxonomy leaves 1862", report.leafCount === 1862);
+  // RC rebase (2026-09-01): FD-7 kurucu kürasyonu +1 SERVICE_TYPE yaprağı ekledi (grafik-ve-logo-tasarimi).
+  check("29 taxonomy nodes 2152", report.nodeCount === 2152);
+  check("29 taxonomy leaves 1863", report.leafCount === 1863);
   check("29 taxonomy empty parents 0", report.emptyParents.length === 0);
   check("29 taxonomy orphans 0", report.orphans.length === 0);
   check("29 taxonomy cycles 0", report.cycles.length === 0);
