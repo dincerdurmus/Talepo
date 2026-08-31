@@ -10,18 +10,30 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: G (DW-2 üreticileri + LG-19 fixture dilimi) tamamlandı,
-  2026-08-31. Wave F checkpoint: **2d834f0** (pushlandı; local=remote).
-- LAST_VERIFIED_ITEM: LG-21g (request-publish canlı 18/0).
-- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave G commit onayı; sonra FD-2
-  sırasıyla kanıtlı tarihsel kırmızılar (öneri: outgoing-offer-inbox
-  pinned-id onarımı + PanelShell "collapsed dot" drift'i tek dilimde) ve
-  FD-7/DW kararları.
-- BLOCKERS: (1) 24+2 tarihsel/davranışsal kırmızı (kendi dilimleri).
-  (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED sürüyor;
-  köprü+transport hazır, provision DW-3 uygulama turu bekliyor.
-  (3) question-suppression kapanışı KB-17 production düzeltmesine bağlı
-  (bilinçli NOT_MEASURED çıkışı — yeşile boyanmadı).
+- CURRENT_WAVE: H (FD-7 + pinned-ID + PanelShell drift + izolasyon dilimi)
+  tamamlandı, 2026-08-31. Checkpointler: Wave F **2d834f0**, Wave G
+  **27583e0** (ikisi de pushlandı; local=remote).
+- LAST_VERIFIED_ITEM: LG-28h (corporate-workspace-isolation 26/0, mutasyon kanıtlı).
+- NEXT_SAFE_ACTION: Kurucu incelemesi → Wave H commit onayı; sonra FD-2
+  sırasında kalan tarihsel kırmızılardan bir sonraki tutarlı dilim
+  (aday: notifications ya da incoming-offer-card — ana akış sınıfı).
+- BLOCKERS: (1) 22+1 tarihsel/davranışsal kırmızı (aşağıda güncel sayım).
+  (2) ÜRETİM sink kaydı yok — PRODUCTION-SINK-NOT-VERIFIED; provision
+  DW-3 uygulama turu bekliyor. (3) question-suppression kapanışı KB-17
+  production düzeltmesine bağlı (bilinçli NOT_MEASURED).
+
+## Wave H kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-25h | FD-7 → **RESOLVED_BY_FIXTURE** | FIXED | `verify-auth-fix` kişisel-hesap probu, `resolveSessionUser` SÖZLEŞME kapısına yeniden yazıldı: sentetik QA kimliği (turda kurulur + kesin id'lerle TAMAMEN temizlenir), id→e-posta düşüşü, veri bağlantısı (eski "≥3/≥1" → tam "=3/=1"e SIKILAŞTIRILDI), bilinmeyen kimlikte fallback+dbUnavailable sözleşmesi. Canlı 5/0; env'siz dürüst NOT-MEASURED. Emeklilik gerekmedi — güvence benzersizdi |
+| LG-26h | Pinned-ID (outgoing-offer-inbox) | FIXED | Eski sabit offer id (`cmsyipshk…`) kaldırıldı; fixture turda kanonik yollarla üretiliyor (createRequest + harness kalıbı cookie'siz teklif [acceptance-core-commerce emsali] + proposeOfferNegotiation/rejectPendingNegotiation), HER İKİ dal deterministik ölçülüyor (Pazarlıkta/aksiyonlu/rozet=1 → çözülünce değil/değil/0), kesin id temizliği; yazma kapısı KB-9/FD-5 + NOT-MEASURED. Canlı **62/0**, env'siz 56/0 |
+| LG-27h | PanelShell "collapsed dot" drift | VERIFIER REPAIRED | Kaynak otorite: onaylı Signal PanelShell (temiz tabanda da aynı) — daraltılmış rozet DAVRANIŞI yerinde (hasBadge && collapsed → h-2 w-2 rounded-full inline dot; açıkta sayısal rozet), yalnız eski `talepo-plan-dot` sınıf adı tarihe karışmış. Kapı gerçek sözleşmeyi ölçüyor; ürün DEĞİŞTİRİLMEDİ |
+| LG-28h | FD-2 dilimi: corporate-workspace-isolation | FIXED | Tabanda da aynı 2 fail (tarihsel ✓). Kök: kapı KALDIRILMIŞ ürün kararını bekliyordu — ürün evrildi: workspace planı TEK yetkiliden (`resolveWorkspaceEffectivePlan`), tek istisna belgeli owner-inheritance (membership-rules 3/6); izolasyon özü kural 2/5. Kapı güncel değişmezlere onarıldı (tek yetkili + üye-planı MAX'i yok + resolver salt-okunur); **26/0** + mutasyon kanıtı (yasak yazma izi → 25/1) |
+
+Tarihsel kırmızı güncel sayımı: 24 → **22** (outgoing-offer-inbox,
+corporate-workspace-isolation kapandı); +1 davranışsal
+(global-product-identity) + KB-17'ye bağlı question-suppression ayrı.
 
 ## Wave G kaydı (2026-08-31 — DW-2 + LG-19; COMMIT EDİLMEDİ)
 
@@ -37,9 +49,9 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Yeni FOUNDER_DECISION adayı
 
-| ID | Karar | Tek öneri |
+| ID | Karar | Sonuç |
 |---|---|---|
-| FD-7 | verify-auth-fix'in geleceği | Emekliye ayır (tarihsel olay probu; ölçtüğü şey kişisel hesap anlık görüntüsü) — ya da resolveSessionUser sözleşmesini sentetik kimlikle ölçen gerçek kapıya dönüştür |
+| FD-7 | verify-auth-fix'in geleceği | **RESOLVED_BY_FIXTURE (Wave H)** — kurucu kararıyla sentetik sözleşme kapısına dönüştürüldü; kişisel kimlik kalmadı (LG-25h) |
 
 ## Wave F kaydı (2026-08-31 — FD-5/FD-6/DW-1 uygulandı)
 

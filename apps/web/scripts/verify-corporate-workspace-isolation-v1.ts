@@ -162,11 +162,21 @@ check(
 );
 
 // Docs / rules
+/**
+ * DRIFT ONARIMI (Wave H, 2026-08-31). Eski beklenti ("Corporate company
+ * membership" İngilizce notu) kaldırılmış bir metne bağlıydı; ürün kararı
+ * EVRİLDİ ve kurallar dosyası artık kanonik Türkçe üyelik kurallarını
+ * (1-7) taşıyor. İzolasyonun ÖZÜ 2. ve 5. kuraldadır: kişisel plan firma
+ * planına YAZILMAZ ve bonus/kota havuzları BİRLEŞTİRİLMEZ.
+ */
 check(
   "21 membership rules isolation note",
   read("src/lib/membership/membership-rules.ts").includes(
-    "Corporate company membership",
-  ),
+    "Company.planTier'a yazılmaz",
+  ) &&
+    read("src/lib/membership/membership-rules.ts").includes(
+      "havuzları birleştirilmez",
+    ),
 );
 
 check(
@@ -181,11 +191,22 @@ check(
   ),
 );
 
+/**
+ * DRIFT ONARIMI (Wave H, 2026-08-31). Eski beklenti kaldırılmış yorum
+ * metinlerine ve `effectivePlanTier =` YASAĞINA bağlıydı; ürün kararı
+ * evrildi: workspace planı TEK yetkiliden (`resolveWorkspaceEffectivePlan`)
+ * türer ve tek istisna, belgeli "Professional owner inheritance"tır
+ * (membership-rules 3/6). Ölçülen GÜNCEL değişmezler: (a) resolver plan
+ * kararını tek yetkiliden okur; (b) rastgele üyenin kişisel planıyla MAX
+ * birleşimi yapılmaz (planTierRank karşılaştırması resolver'da yok);
+ * (c) resolver salt-okunurdur — Company.planTier'a YAZMAZ.
+ */
 check(
   "24 no MAX(user, company) merge",
-  resolver.includes("No MAX(userPlan, companyPlan)") &&
-    !resolver.includes("effectivePlanTier =") &&
-    resolver.includes("Company plan NEVER mutates"),
+  resolver.includes("resolveWorkspaceEffectivePlan") &&
+    !/planTierRank\([^)]*personal/i.test(resolver) &&
+    !resolver.includes("company.update") &&
+    !resolver.includes("prisma.company.update"),
 );
 
 check(

@@ -333,7 +333,20 @@ console.log("\n=== WIRING ===\n");
     shell.includes('href === "/panel/teklifler"') &&
       shell.includes("unreadOutgoingOfferEvents"),
   );
-  check("collapsed uses dot", shell.includes("badge && collapsed") && shell.includes("talepo-plan-dot"));
+  /**
+   * DRIFT ONARIMI (Wave H, 2026-08-31). Eski beklenti `talepo-plan-dot`
+   * CSS sınıfını arıyordu; onaylı Signal PanelShell (temiz tabanda da)
+   * daraltılmış moddaki rozeti inline dot ile çizer — DAVRANIŞ yerinde,
+   * yalnız sınıf adı tarihe karıştı. Ölçülen kanonik sözleşme: rozet
+   * varken VE menü daraltılmışken dot-biçimli gösterge (h-2 w-2
+   * rounded-full) çizilir; açık modda sayısal rozet sürer.
+   */
+  check(
+    "collapsed uses dot",
+    /hasBadge && collapsed/.test(shell) &&
+      /hasBadge && !collapsed/.test(shell) &&
+      shell.includes("h-2 w-2 rounded-full"),
+  );
   check(
     "professional bottom nav badges Tekliflerim",
     shell.includes('label="Tekliflerim"') &&
@@ -353,69 +366,219 @@ console.log("\n=== WIRING ===\n");
 }
 
 async function liveFixture() {
-  const { config } = await import("dotenv");
-  config({ path: join(ROOT, ".env.local") });
-  config({ path: join(ROOT, ".env") });
+  /**
+   * PINNED-ID KALDIRILDI (Wave H, 2026-08-31). Eski hâli eski bir
+   * veritabanındaki sabit offer id'sine (`cmsyipshk…`) bağlıydı; o kayıt
+   * olmayan her ortamda kapı kırmızıydı ve ölçüm tekrarlanamıyordu.
+   * Şimdi fixture bu turda KANONİK SERVİSLERLE üretilir (createRequest →
+   * createOffer → proposeOfferNegotiation → rejectPendingNegotiation),
+   * her iki dal da DETERMİNİSTİK ölçülür ve turda oluşturulan kesin
+   * kimlikler temizlenir. Yazma kapısı KB-9/FD-5 mekanizmasıdır; kapı
+   * açılmazsa prisma import edilmez ve sonuç NOT-MEASURED olur
+   * (ölçülmeyen, sıfır ya da yeşil değildir).
+   */
+  const { canWriteToDatabase } = await import("../src/lib/verification/db-guard");
+  const { createNotMeasuredTally } = await import(
+    "../src/lib/verification/not-measured"
+  );
+  const tally = createNotMeasuredTally();
+  const hasDb = Boolean(
+    process.env.DATABASE_URL?.trim() || process.env.DIRECT_URL?.trim(),
+  );
+  const guard = hasDb ? canWriteToDatabase() : null;
+  if (!hasDb || !guard?.allowed) {
+    tally.record(
+      "live outgoing inbox",
+      `${!hasDb ? "DATABASE_URL/DIRECT_URL tanımlı değil" : (guard as { reason: string }).reason} — canlı sözleşme ÖLÇÜLMEDİ`,
+    );
+    console.log("Ölçülemeyenler (yeşil DEĞİL, kırmızı da değil):");
+    for (const msg of tally.reasons) console.log(` ? ${msg}`);
+    process.exitCode = tally.exitCode();
+    return;
+  }
+
   const { prisma } = await import("../src/lib/prisma");
+  const { hashPassword } = await import("../src/lib/auth/password");
+  const { createRequest } = await import("../src/server/request/create-request");
+  const { proposeOfferNegotiation, rejectPendingNegotiation } = await import(
+    "../src/server/offer/offer-negotiation-service"
+  );
+
+  /**
+   * Cookie'siz teklif gönderimi — `createOffer` Next.js request bağlamı
+   * (cookies) ister ve script'ten çağrılamaz; kabul harness'ının yerleşik
+   * kalıbı izlenir (acceptance-core-commerce-v1 `submitOffer`: "same DB
+   * invariants as createOffer"). Entitlement kapıları bu kapının konusu
+   * DEĞİL (kendi kapıları ölçer); burada korunan DB değişmezleri: tekil
+   * aktif teklif, SUBMITTED durumu, offerCount artışı.
+   */
+  const submitOfferCookieFree = async (
+    actorUserId: string,
+    input: { requestId: string; description: string; amount: number; deliveryDays?: number; title?: string },
+  ) => {
+    const dup = await prisma.offer.findFirst({
+      where: {
+        requestId: input.requestId,
+        status: { not: "DRAFT" },
+        submittedById: actorUserId,
+        companyId: null,
+      },
+      select: { id: true },
+    });
+    if (dup) throw new Error("fixture: duplicate offer");
+    const now = new Date();
+    return prisma.$transaction(async (tx) => {
+      const created = await tx.offer.create({
+        data: {
+          requestId: input.requestId,
+          submittedById: actorUserId,
+          companyId: null,
+          title: input.title ?? null,
+          description: input.description,
+          amount: input.amount,
+          deliveryDays: input.deliveryDays,
+          status: "SUBMITTED",
+          submittedAt: now,
+        },
+        select: { id: true },
+      });
+      await tx.request.update({
+        where: { id: input.requestId },
+        data: { offerCount: { increment: 1 }, status: "RECEIVING_OFFERS" },
+      });
+      return created;
+    });
+  };
+
+  const createdRequestIds: string[] = [];
+  let offerId: string | null = null;
+  let buyerId: string | null = null;
+  let sellerId: string | null = null;
+
+  const upsertQaUser = async (email: string, name: string, member: string) => {
+    const { id } = await prisma.user.upsert({
+      where: { email },
+      update: { status: "ACTIVE" },
+      create: {
+        email,
+        name,
+        biography: "acceptance:v1 QA_OUTGOING_INBOX fixture",
+        planTier: "STANDARD",
+        membershipNumber: member,
+        status: "ACTIVE",
+        passwordHash: hashPassword("AcceptanceV1!test"),
+      },
+      select: { id: true },
+    });
+    return id;
+  };
+
+  const liveSelect = {
+    id: true,
+    status: true,
+    submittedById: true,
+    companyId: true,
+    negotiations: {
+      select: { id: true, status: true, proposedBySide: true, createdAt: true },
+      orderBy: { createdAt: "asc" as const },
+    },
+  };
 
   try {
-    const live = await prisma.offer.findUnique({
-      where: { id: "cmsyipshk000tkguy176jagd4" },
-      select: {
-        id: true,
-        status: true,
-        submittedById: true,
-        companyId: true,
-        negotiations: {
-          select: {
-            id: true,
-            status: true,
-            proposedBySide: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: "asc" },
-        },
-      },
+    buyerId = await upsertQaUser(
+      "qa-outgoing-inbox-buyer-v1@talepo.test",
+      "[acceptance:v1] QA Inbox Alıcı",
+      "TLP-990096",
+    );
+    sellerId = await upsertQaUser(
+      "qa-outgoing-inbox-seller-v1@talepo.test",
+      "[acceptance:v1] QA Inbox Satıcı",
+      "TLP-990095",
+    );
+
+    const request = await createRequest(buyerId, {
+      title: "QA giden teklif kutusu talebi",
+      description:
+        "QA_OUTGOING_INBOX — pazarlık kovası ve satıcı rozetinin canlı ölçümü için sentetik talep.",
+      category: { slug: "furniture", name: "Mobilya ve Ofis" },
+      city: "İstanbul",
+      budget: 5000,
+      fields: [],
+      fieldValues: {},
+    } as never);
+    createdRequestIds.push(request.id);
+
+    const offer = await submitOfferCookieFree(sellerId, {
+      requestId: request.id,
+      description: "QA_OUTGOING_INBOX sentetik teklif — harness kalıbı yolu.",
+      amount: 4500,
+      deliveryDays: 5,
+      title: "QA sentetik teklif",
     });
-    if (!live) {
-      check("live offer fixture", false, "missing");
-      return;
-    }
-    const bucket = classifyOutgoingOfferInbox(live);
-    const latest = live.negotiations[live.negotiations.length - 1];
-    if (latest?.status === "PENDING") {
-      check("live pending round is Pazarlıkta", bucket === "negotiating");
-      check(
-        "live pending buyer round is seller-actionable",
-        latest.proposedBySide === "BUYER"
-          ? isSellerActionableOutgoingOffer(live)
-          : !isSellerActionableOutgoingOffer(live),
-      );
-    } else {
-      check(
-        "live offer without PENDING is not Pazarlıkta",
-        bucket !== "negotiating",
-      );
-      check(
-        "live offer without PENDING is not seller-actionable",
-        !isSellerActionableOutgoingOffer(live),
-      );
-    }
+    offerId = offer.id;
+
+    // Dal 1 — alıcı karşı teklifi: PENDING/BUYER → Pazarlıkta + satıcı-aksiyonlu.
+    await proposeOfferNegotiation(buyerId, offer.id, 4200);
+    const pendingState = await prisma.offer.findUniqueOrThrow({
+      where: { id: offer.id },
+      select: liveSelect,
+    });
+    check(
+      "live pending buyer round is Pazarlıkta",
+      classifyOutgoingOfferInbox(pendingState) === "negotiating",
+    );
+    check(
+      "live pending buyer round is seller-actionable",
+      isSellerActionableOutgoingOffer(pendingState),
+    );
+
     const { countSellerActionableOutgoingOffersForScope } = await import(
       "../src/lib/panel/get-panel-data"
     );
     const badge = await countSellerActionableOutgoingOffersForScope({
-      userId: live.submittedById,
-      companyId: live.companyId,
+      userId: sellerId,
+      companyId: null,
+    });
+    check("live seller badge counts exactly this round", badge === 1, `→ ${badge}`);
+
+    // Dal 2 — satıcı turu reddeder: PENDING kalmaz → Pazarlıkta değil,
+    // satıcı-aksiyonlu değil, rozet 0.
+    await rejectPendingNegotiation(sellerId, offer.id);
+    const resolvedState = await prisma.offer.findUniqueOrThrow({
+      where: { id: offer.id },
+      select: liveSelect,
     });
     check(
-      "live seller badge is non-negative integer",
-      Number.isInteger(badge) && badge >= 0,
+      "live resolved round is not Pazarlıkta",
+      classifyOutgoingOfferInbox(resolvedState) !== "negotiating",
     );
-    console.log(
-      `INFO — live bucket=${bucket} latest=${latest?.id}:${latest?.status} badge=${badge}`,
+    check(
+      "live resolved round is not seller-actionable",
+      !isSellerActionableOutgoingOffer(resolvedState),
     );
+    const badgeAfter = await countSellerActionableOutgoingOffersForScope({
+      userId: sellerId,
+      companyId: null,
+    });
+    check("live seller badge drops to zero", badgeAfter === 0, `→ ${badgeAfter}`);
   } finally {
+    if (offerId) {
+      await prisma.offerNegotiation.deleteMany({ where: { offerId } }).catch(() => undefined);
+      // offerEvent modeli yok; rozet olayları OfferNegotiation üzerinden.
+      await prisma.offerAttribution.deleteMany({ where: { offerId } }).catch(() => undefined);
+      await prisma.notification.deleteMany({ where: { offerId } }).catch(() => undefined);
+      await prisma.offer.delete({ where: { id: offerId } }).catch(() => undefined);
+    }
+    for (const id of createdRequestIds) {
+      await prisma.notification.deleteMany({ where: { requestId: id } }).catch(() => undefined);
+      await prisma.priceObservation.deleteMany({ where: { requestId: id } }).catch(() => undefined);
+      await prisma.requestMatch.deleteMany({ where: { requestId: id } }).catch(() => undefined);
+      await prisma.request.delete({ where: { id } }).catch(() => undefined);
+    }
+    for (const uid of [buyerId, sellerId]) {
+      if (!uid) continue;
+      await prisma.notification.deleteMany({ where: { userId: uid } }).catch(() => undefined);
+    }
     await prisma.$disconnect();
   }
 }
