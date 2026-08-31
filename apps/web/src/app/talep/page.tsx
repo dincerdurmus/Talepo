@@ -150,6 +150,7 @@ import {
   seedFieldValuesFromUnderstanding,
 } from "@/lib/request-understanding/activation-bridge";
 import { emptyRequestUnderstanding } from "@/lib/request-understanding/understand-request";
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 
 type CommonDraft = {
   title: string;
@@ -1351,7 +1352,7 @@ function TalepOlusturForm() {
    * de aynı kapsam kararını okur.
    */
   const composerOutOfScope =
-    hybrid.state?.understanding?.requestScope?.value === "UNSUPPORTED_SUPPLY";
+    isUnsupportedRequestScope(hybrid.state?.understanding?.requestScope?.value);
 
   const focusedQuestionSchedule = useMemo(() => {
     if (composerOutOfScope) {

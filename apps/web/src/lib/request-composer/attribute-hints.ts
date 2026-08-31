@@ -236,8 +236,19 @@ export function extractProductTypeHint(raw: string): {
     ) {
       return null;
     }
+    /**
+     * ALIAS EŞLEŞMESİNDE KULLANICI İFADESİ YÜZEY KİMLİĞİDİR (FD-10 ile
+     * ölçüldü). "kürek sapı" alias'ı "Saplar" yaprağına çözülür; kanonik ad
+     * TAKSONOMİ kimliğidir (taxonomyNodeId zaten taşınır) ama kullanıcının
+     * yazdığı ürün ifadesi profesyonel metinden silinemez (I43d, I22).
+     * İfade kanonik adla aynıysa kanonik büyük/küçük yazım kullanılır;
+     * değilse kullanıcının ifadesi AYNEN korunur.
+     */
+    const phraseIsCanonicalName =
+      phrase.toLocaleLowerCase("tr-TR") ===
+      hit.node.canonicalName.toLocaleLowerCase("tr-TR");
     return {
-      productType: hit.node.canonicalName,
+      productType: phraseIsCanonicalName ? hit.node.canonicalName : phrase,
       taxonomyNodeId: hit.ambiguous ? null : hit.node.id,
       /**
        * Düğüm kimliği belirsiz olsa bile ALANI bilinir. Aşağı akıştaki

@@ -2369,7 +2369,11 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "test çubuğu",
+        "şeker ölçüm çubuğu",
+        "glukometre test çubuğu"
+      ],
       "searchTerms": [
         "Tıbbi Testler"
       ],
@@ -2388,7 +2392,7 @@
       "requestSchemaId": "health/medikal-cihaz",
       "provenance": {
         "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
+        "note": "kurucu onayı 2026-08-23 | alias kürasyonu: kurucu onayı 2026-08-31 (FD-8); 'test' tek başına alias DEĞİL (yanlış pozitif)"
       }
     },
     {

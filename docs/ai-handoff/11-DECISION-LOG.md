@@ -1296,3 +1296,47 @@ ve `NEW_MESSAGE` bildiriminin talebe bağlanarak sahiplik kazanması.
 > Birincil DB'ye, `integration/talepo-dev`'e, `main`'e veya production'a
 > **hiçbir DB yazımı yapılmadı**; 36 migration yalnız ayrı acceptance projesine
 > kuruldu. **Production deployment yoktur.**
+## D-2026-08-31-L — Pro ölçüm adları ayrıştı (kurucu mandası, Wave L)
+
+**Karar.** `100×(Σ 5 bileşen)/5` formülünün adı bundan böyle
+**PROFESSIONAL_DISCOVERY_DATA_READINESS**tir: yalnız teknik keşif/projection
+VERİ hazırlığını ölçer (bileşenler: envelope kategori erişimi, güvenilir
+marka, ürün türü erişimi, matching resolvedEntities okuması, tedarikçi
+yeteneği). Pro ürün deneyimi ayrı metrikle ölçülür:
+**PROFESSIONAL_PRODUCT_READINESS** — gerçek kullanıcı-yüzü Pro yetenekleri ×
+5 kanıt ekseni (plan kapısı / gerçek veri / canlı E2E / cihaz UX /
+hata-boş-güvenlik), TAM=1 · KISMİ=0.5 · YOK/BLOCKED/NOT_MEASURED=0, payda
+tam. İki sayı birbirinin devamı olarak SUNULMAZ; tarihsel %21/%22/%41
+serileri keşif-veri hattına aittir ve %41 geri çekilmiştir (LG-50k).
+İlk resmî değerler (Wave L): keşif-veri %34,26 · ürün %60.
+Kayıt: ledger LG-51l/LG-57l.
+
+## D-2026-08-31-FD — Dört kürasyon vakası kurucu kararları (FD-7..FD-10)
+
+**FD-7 (APPROVED-A).** "logo tasarımı arıyorum" → `services:diger:diger-hizmetler`
+altına "Grafik ve logo tasarımı" SERVICE_TYPE yaprağı. "logo" tek başına alias
+DEĞİL (Logo yazılım firması çakışması domain-entities `requiresContext`
+korumasında). Kalan teknik borç: subject.kind=PRODUCT (ayrı dilim).
+
+**FD-8 (APPROVED-A).** "Şeker ölçüm cihazı için test çubuğu" → YENİ YAPRAK YOK;
+mevcut `tax:health:medikal-cihaz:saglik-urunleri:tibbi-testler` yaprağına
+tam-ifade alias kürasyonu. "test" tek başına DEĞİL. Follow-up: glukometre
+cihaz yaprağı ayrı kurucu backlog maddesi.
+
+**FD-9 (APPROVED-A).** Kurucu ürün politikası: kişiye özel tıbbi tavsiye /
+hangi ilaç-tedavi sorusu marketplace talebi olarak YAYINLANMAZ. Uygulama
+demand-only kapsam otoritesinden türetildi: `RequestScope`a
+`UNSUPPORTED_MEDICAL_ADVICE` değeri + tek `isUnsupportedRequestScope`
+yardımcısı; ikinci policy engine/classifier/yasak listesi YOK. "İlaç"
+kelimesi tek başına engelleyemez; "Ağrı kesici arıyorum" tipi gerçek ürün
+talepleri DEMAND kalır (I52 invariantları). OTC/reçeteli ilaç ÜRÜN
+taleplerinin koşulları BU KARARIN DIŞINDADIR — açık kurucu follow-up.
+
+**FD-10 (APPROVED-A, düzeltilmiş öneri).** "Kürek sapı arıyorum": Wave L
+raporundaki ilk öneri (home-kitchen'a "Bahçe el aletleri" yaprağı) taksonomi
+tam incelenmeden yapılmıştı; kurucu review'da machinery kanonik otoritesi
+bulundu (`tax:machinery:diger:el-aletleri-ve-hirdavat:saplar`) ve yeni yaprak
+önerisi GERİ ÇEKİLDİ. Mevcut yaprağa "kürek sapı"/"alet sapı" alias'ı; "sap"
+tek başına YASAK (SAP çakışması). home-06 fixture sahipliği kurucu kararıyla
+`["machinery","null"]`. Sahte-marka kanaryası bilinçli çözüldü ve gerileme
+bekçisine dönüştürüldü.

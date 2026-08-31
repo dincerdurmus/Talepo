@@ -214,6 +214,11 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   const scopeText = rawInputExplicit ?? description;
   if (scopeText.length >= 3) {
     const scope = understandRequest({ rawInput: scopeText }).requestScope;
+    if (scope.value === "UNSUPPORTED_MEDICAL_ADVICE") {
+      issues.push(
+        "Talepo yalnız ihtiyaç taleplerini yayınlar. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; lütfen bir eczacıya veya hekime başvurun. Bir sağlık ürünü satın almak istiyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"ağrı kesici arıyorum\".",
+      );
+    }
     if (scope.value === "UNSUPPORTED_SUPPLY") {
       issues.push(
         "Talepo yalnız ihtiyaç taleplerini yayınlar: ürün satın alma, kiralama, hizmet alma veya üretim yaptırma. Kendi ürününüzü satmak ya da kiraya vermek için ilan veremezsiniz. Aradığınız hizmeti yazarsanız yayınlayabilirsiniz — örneğin \"aracımı satmak için ekspertiz hizmeti arıyorum\".",

@@ -886,6 +886,32 @@
       }
     },
     {
+      "aliases": [
+        "logo tasarımı",
+        "grafik tasarım",
+        "kurumsal kimlik tasarımı"
+      ],
+      "searchTerms": [
+        "Grafik ve logo tasarımı"
+      ],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:diger:diger-hizmetler:grafik-ve-logo-tasarimi",
+      "parentId": "tax:services:diger:diger-hizmetler",
+      "canonicalName": "Grafik ve logo tasarımı",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "services/diger",
+      "provenance": {
+        "source": "founder-curation",
+        "note": "kurucu onayı 2026-08-31 (FD-7); 'logo' tek başına alias DEĞİL — Logo yazılım firması çakışması domain-entities requiresContext korumasında"
+      }
+    },
+    {
       "aliases": [],
       "searchTerms": [],
       "applicableCapabilities": [

@@ -12,6 +12,7 @@ import type {
   RequestUnderstandingResult,
   UnderstandingSource,
 } from "@/lib/request-understanding/types";
+import { GENERIC_SUBJECT_PLACEHOLDER_RE } from "@/lib/request-understanding/types";
 import { isVerifiedSource } from "@/lib/request-understanding/provenance";
 import {
   findTaxonomyTypeUnderSubcategory,
@@ -953,7 +954,7 @@ export function mapUnderstandingToFields(
     fields.productType?.kind !== "VALUE"
   ) {
     const prodName = String(result.requestSubject.name.value).trim();
-    const placeholder = /^(ürün|urun|servis|hizmet|cihaz|makine|eşya|esya)$/i.test(
+    const placeholder = GENERIC_SUBJECT_PLACEHOLDER_RE.test(
       prodName,
     );
     const writtenByUser = foldPartToken(String(result.rawInput ?? "")).includes(

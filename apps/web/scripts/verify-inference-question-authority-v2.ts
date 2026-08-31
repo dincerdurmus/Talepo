@@ -74,12 +74,34 @@ const D1_HIGH_RISK_FULL_QUEUE: readonly string[] = [
   "print-07/needType@FULL_QUEUE",
 ];
 
-/** Korunacak taban — kullanıcının yazdığı değer yeniden sorulmamalıdır. */
+/**
+ * Korunacak taban — kullanıcının yazdığı değer yeniden sorulmamalıdır.
+ *
+ * Wave L (2026-08-31) sayılmış delta — Wave K sertifika-merdiveni düzeltmesi
+ * (understand-request brandEvidence artık belgelediği statüyü taşıyor) 8
+ * kaydı meşru olarak bu sınıfa taşıdı; her biri girdiden tek tek doğrulandı:
+ *   appl-03/fridgeType  "no-frost olsun"         — açık kullanıcı beyanı
+ *   appl-05/capacityKg  "9 kg"                   — açık beyan (D1'de sorulması kusurdu)
+ *   appl-10/ovenType    "Ankastre"               — açık beyan (D1'de sorulması kusurdu)
+ *   furn-01/seatingType "Koltuk takımı"          — açık beyan
+ *   re-02/budget        "bütçem aylık 25 bin TL" — açık beyan
+ *   auto-10/brand       "C200"→Mercedes-Benz     — CATALOG_ENRICHED (izinli)
+ *   tech-02/brand       "iPhone 15 Pro"→Apple    — CATALOG_ENRICHED
+ *   tech-10/brand       "MacBook Pro"→Apple      — CATALOG_ENRICHED
+ * Marka üçlüsü eski authority_suppressed sınıfından buraya GÖÇTÜ (o liste
+ * artık boş); appl-05/capacityKg ile appl-10/ovenType ASKED tabanından
+ * düşürüldü — sessiz bastırma değil, yazılmış değerin yeniden sorulmaması.
+ * FD sonrası ek delta: furn-07/diningSeats ("6 kişilik" açık beyan) yüzey-
+ * kimliği düzeltmesiyle bu sınıfa girdi.
+ */
 const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
   "appl-02/capacityBtu@FULL_QUEUE",
+  "appl-03/fridgeType@FULL_QUEUE",
   "appl-04/brand@FULL_QUEUE",
+  "appl-05/capacityKg@FULL_QUEUE",
   "appl-06/brand@FULL_QUEUE",
   "appl-07/brand@FULL_QUEUE",
+  "appl-10/ovenType@FULL_QUEUE",
   "auto-01/brand@FULL_QUEUE",
   "auto-01/model@FULL_QUEUE",
   "auto-02/brand@FULL_QUEUE",
@@ -94,9 +116,12 @@ const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
   "auto-07/brand@FULL_QUEUE",
   "auto-07/model@FULL_QUEUE",
   "auto-08/brand@FULL_QUEUE",
+  "auto-10/brand@FULL_QUEUE",
   "auto-10/model@FULL_QUEUE",
   "baby-04/condition@FULL_QUEUE",
+  "furn-01/seatingType@FULL_QUEUE",
   "furn-02/quantity@FULL_QUEUE",
+  "furn-07/diningSeats@FULL_QUEUE",
   "home-04/quantity@FULL_QUEUE",
   "mach-03/brand@FULL_QUEUE",
   "mach-03/model@FULL_QUEUE",
@@ -109,6 +134,7 @@ const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
   "re-01/listingType@FULL_QUEUE",
   "re-01/propertyType@FULL_QUEUE",
   "re-01/roomCount@FULL_QUEUE",
+  "re-02/budget@FULL_QUEUE",
   "re-02/listingType@FULL_QUEUE",
   "re-02/propertyType@FULL_QUEUE",
   "re-02/roomCount@FULL_QUEUE",
@@ -121,18 +147,21 @@ const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
   "re-07/listingType@FULL_QUEUE",
   "re-11/listingType@FULL_QUEUE",
   "re-11/propertyType@FULL_QUEUE",
+  "tech-02/brand@FULL_QUEUE",
   "tech-02/model@FULL_QUEUE",
   "tech-03/brand@FULL_QUEUE",
   "tech-03/screenSize@FULL_QUEUE",
+  "tech-10/brand@FULL_QUEUE",
   "tech-10/model@FULL_QUEUE",
 ];
 
-/** Otorite doğrulamalı bastırma — bu dilimde davranışı DEĞİŞMEZ. */
-const D1_AUTHORITY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
-  "auto-10/brand@FULL_QUEUE",
-  "tech-02/brand@FULL_QUEUE",
-  "tech-10/brand@FULL_QUEUE",
-];
+/**
+ * Otorite doğrulamalı bastırma — bu dilimde davranışı DEĞİŞMEZ.
+ * Wave L: Wave K merdiven düzeltmesiyle üç marka kaydı provenance'ı artık
+ * tam eşleştiği için correctly_suppressed sınıfına göçtü; liste boş kaldı
+ * (sınıf silinmedi — gelecekte yeniden dolabilir, kapı izlemeye devam eder).
+ */
+const D1_AUTHORITY_SUPPRESSED_FULL_QUEUE: readonly string[] = [];
 
 /**
  * D1'de SORULAN (ASKED) ve değeri olmayan 142 kayıt.
@@ -155,13 +184,11 @@ const D1_CORRECTLY_ASKED_FULL_QUEUE: readonly string[] = [
   "appl-03/condition@FULL_QUEUE",
   "appl-04/condition@FULL_QUEUE",
   "appl-05/brand@FULL_QUEUE",
-  "appl-05/capacityKg@FULL_QUEUE",
   "appl-05/condition@FULL_QUEUE",
   "appl-08/brand@FULL_QUEUE",
   "appl-09/brand@FULL_QUEUE",
   "appl-10/brand@FULL_QUEUE",
   "appl-10/condition@FULL_QUEUE",
-  "appl-10/ovenType@FULL_QUEUE",
   "appl-11/brand@FULL_QUEUE",
   "appl-11/condition@FULL_QUEUE",
   "appl-12/brand@FULL_QUEUE",
@@ -290,11 +317,16 @@ const D1_CORRECTLY_ASKED_FULL_QUEUE: readonly string[] = [
 ];
 
 /** Ölçülemeyenler — yeşile boyanmamalı; exit 3 sözleşmesi buradan gelir. */
+/**
+ * Wave L (2026-08-31) sayılı delta — FD-7/8/10 kurucu kürasyonu üç kaydı
+ * ölçülebilir yaptı ve defterden düşürdü: health-07/__scenario__ (tibbi-
+ * testler alias'ı), home-06/brandCandidate (kanarya çözüldü — sahte "Kürek"
+ * adayı artık üretilmiyor), tech-12/__scenario__ (grafik-logo yaprağı).
+ * health-08 kalır: FD-9 gereği tıbbi tavsiye sorusu bilinçli kapsam dışıdır
+ * ve ölçüm evrenine girmez.
+ */
 const D1_NOT_MEASURED_FULL_QUEUE: readonly string[] = [
-  "health-07/__scenario__@FULL_QUEUE",
   "health-08/__scenario__@FULL_QUEUE",
-  "home-06/brandCandidate@FULL_QUEUE",
-  "tech-12/__scenario__@FULL_QUEUE",
 ];
 
 const D1_EXPECTED_EXIT_CODE = 3;
@@ -434,10 +466,10 @@ function main(): void {
     "\nFULL_QUEUE sayimlari:\n" +
       `  high_risk_silent_suppression ${highRisk.size}\t(hedef 0, D1 tabani 20)\n` +
       `  inference_re_asked           ${inferenceReAsked.size}\t(hedef 20, D1 tabani 0)\n` +
-      `  correctly_suppressed         ${correctlySuppressed.size}\t(korunacak 49)\n` +
-      `  authority_suppressed         ${authoritySuppressed.size}\t(korunacak 3)\n` +
+      `  correctly_suppressed         ${correctlySuppressed.size}\t(korunacak 58)\n` +
+      `  authority_suppressed         ${authoritySuppressed.size}\t(korunacak 0)\n` +
       `  wrongly_repeated             ${wronglyRepeated.size}\t(korunacak 0)\n` +
-      `  not_measured                 ${notMeasured.size}\t(korunacak 4)`,
+      `  not_measured                 ${notMeasured.size}\t(korunacak 1)`,
   );
 
   /* ---- (2) 20 kaydın TEK TEK taşınması ---- */
@@ -913,7 +945,7 @@ function main(): void {
   }
   console.log(
     "YESIL — D1 tabanindaki 20 sessiz bastirma kaydinin her biri\n" +
-      "inference_re_asked sinifina tasindi; korunacak taban (49 / 3 / 0 / 4)\n" +
+      "inference_re_asked sinifina tasindi; korunacak taban (58 / 0 / 0 / 1)\n" +
       "aynen duruyor; dalga yuruyusu ve reviewa ulasma bozulmadi.\n" +
       "\nBU YESIL PROVENANCE ETIKET EKSENINI (provenance_mismatch) KAPSAMAZ.",
   );

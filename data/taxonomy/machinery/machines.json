@@ -4658,7 +4658,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "kürek sapı",
+        "alet sapı"
+      ],
       "searchTerms": [
         "Saplar"
       ],
@@ -4677,7 +4680,7 @@
       "requestSchemaId": "machinery/diger",
       "provenance": {
         "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
+        "note": "kurucu onayı 2026-08-23 | alias kürasyonu: kurucu onayı 2026-08-31 (FD-10); 'sap' tek başına alias DEĞİL (SAP yazılım firması çakışması)"
       }
     },
     {

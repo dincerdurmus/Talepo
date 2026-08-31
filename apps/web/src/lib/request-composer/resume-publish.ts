@@ -1,4 +1,5 @@
 import type { RequestScope } from "../request-understanding/types";
+import { isUnsupportedRequestScope } from "../request-understanding/types";
 
 /**
  * ÜYELİK DÖNÜŞÜ YAYIN NİYETİ — SAF KARAR (2026-08-26).
@@ -96,7 +97,7 @@ export function decideResumePublishAction(
   if ((input.understandingRawInput ?? "").trim() !== input.composerText.trim()) {
     return { kind: "wait", reason: "text_not_digested", closeLatch: false };
   }
-  if (input.requestScope === "UNSUPPORTED_SUPPLY") {
+  if (isUnsupportedRequestScope(input.requestScope)) {
     return { kind: "blocked", reason: "out_of_scope", closeLatch: true };
   }
   return { kind: "attempt", closeLatch: true };

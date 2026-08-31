@@ -7,6 +7,7 @@ import type {
   CategoryResolutionStatus,
   CategoryUserChoice,
   InternalEvidenceSnapshot,
+  ResolvedEntitySnapshot,
 } from "@/lib/request/understanding-snapshot";
 import type { MATCHER_VERSION } from "./matcher-version";
 
@@ -93,6 +94,13 @@ export type RequestRoutingEnvelope = {
    * anahtarlar envelope kurulurken buraya ayrılır.
    */
   internalEvidence?: Record<string, InternalEvidenceSnapshot>;
+  /**
+   * KANONİK TİPLİ VARLIKLAR (Wave L). Publish snapshot'ındaki
+   * resolvedEntities AYNEN taşınır — zarf yeniden çıkarım yapmaz. Kürasyon
+   * sözleşmesi skorlamada uygulanır: yalnız CURATOR_APPROVED kayıt kanıt
+   * üretebilir; PENDING_CURATION aday olarak taşınır ama skor üretmez.
+   */
+  resolvedEntities?: ResolvedEntitySnapshot[];
   unresolvedExpressions: string[];
   location: {
     status: LocationStatus;

@@ -10,10 +10,11 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 
 ## Devam bloğu
 
-- CURRENT_WAVE: K (KB-17 kapanışı + Pro güvenilir-marka dilimi)
-  tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**, G **27583e0**,
-  H **76f1fed**, I **889125d**, J **b2d396f** (hepsi pushlandı).
-- LAST_VERIFIED_ITEM: LG-49k (canlı DB'de projection.brand="Apple" kanıtı).
+- CURRENT_WAVE: L (ölçüm adları + ürün türü + resolvedEntities +
+  Pro ürün karnesi) tamamlandı, 2026-08-31. Checkpointler: F **2d834f0**,
+  G **27583e0**, H **76f1fed**, I **889125d**, J **b2d396f**,
+  K **0e484f0** (hepsi pushlandı).
+- LAST_VERIFIED_ITEM: LG-63l (FD kürasyon kapanışı — batarya yeşil, D1 not_measured 4→1).
 - NEXT_SAFE_ACTION: Kurucu incelemesi → Wave K commit onayı; sonra
   projection-authority imza tabanının kendi dilimi ya da FD-2'de sonraki
   tarihsel (aday: provider-routing / sayfam-home); 4 category_unresolved
@@ -23,6 +24,46 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
   senaryo (tech-12 "logo tasarımı", health-07 "test çubuğu", health-08
   "hangi ilacı almalıyım", home-06 "kürek sapı") — kategori çözümü/
   taksonomi kürasyonu; hedef sayaçların ÜÇÜ DE SIFIR (aşağıda).
+
+## Wave L kaydı (2026-08-31 — COMMIT EDİLMEDİ)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-51l | ÖLÇÜM ADI SÖZLEŞMESİ | RENAMED | `100×(Σ bileşen)/5` formülünün adı artık **PROFESSIONAL_DISCOVERY_DATA_READINESS** — yalnız teknik keşif/projection VERİ hazırlığını ölçer, Pro ürün deneyimini DEĞİL. Ürün deneyimi ayrı metriktir: **PROFESSIONAL_PRODUCT_READINESS** (LG-57l). %21/%22/%41 birbirinin devamı olarak SUNULMAZ; %41 zaten geri çekilmişti (LG-50k) |
+| LG-52l | Tarihsel kırmızı: projection-authority | CLOSED (16→15) | Dondurulmuş taban satır-satır sayılmış delta ile yeniden kuruldu: 2 home-03/kitchenProductType satırı kurucu sahiplik kararıyla ÇIKTI, 10 USER_EXPLICIT satırı (appl-03/05/10, furn-01, re-02 × attributes+constraints — hepsi girdiden probe edildi) GİRDİ; totalIdentities 510→518, 15 payload imzası güncellendi. Mutasyon kanıtı: re-02 satırı INFERRED'e çevrilince 1 ihlal, geri alınca yeşil |
+| LG-53l | Keşif bileşeni ③: ürün türü erişimi 0→66/108 | IMPLEMENTED | Publish snapshot köprüsü: TEK beynin `requestSubject` kaydı, kanıt eşiğiyle (`EXPLICIT` provenance + USER_EXPLICIT/VERIFIED kaynak) `entities.product`a taşınır; jenerik yer tutucular (paylaşılan `GENERIC_SUBJECT_PLACEHOLDER_RE` otoritesi) ve marka/model rol sızıntısı (tech-03 "Samsung"→"televizyon", appl-04 "Arçelik"→"Bulaşık Makinesi" düzeldi; auto-10 "C200" model kanalına ayrıldı, −1 dürüst) ASLA taşınmaz. Kapı `verify-product-type-envelope-v1` 14/14 (6 aile pozitifi, 2 negatif, 66 donmuş erişim, mutasyon kontrolü); ölçüm ÜRETİM-EŞDEĞER çağrıyla (snapshot+projection, db-shaped adaptör sırası) |
+| LG-54l | D2 tabanı Wave K sonuçlarıyla uzlaştırıldı | REBASED | `verify-inference-question-authority-v2` HEAD'de de kırmızıydı (Wave K merdiven düzeltmesinin meşru sonucu; bu dalganın değişikliklerinden bağımsız — HEAD'e geri alınarak kanıtlandı). Sayılmış delta: 8 kayıt correctly_suppressed'e (5 açık beyan: no-frost/9 kg/Ankastre/koltuk takımı/25 bin TL; 3 CATALOG_ENRICHED marka), authority_suppressed 3→0 (göç), ASKED'den 2 düştü (yazılmış değer yeniden sorulmuyor — sessiz bastırma değil). Kapı YEŞİL, D1 exit-3 sözleşmesi korunuyor |
+| LG-55l | Keşif bileşeni ④: matching resolvedEntities | CONTRACT CLOSED (kanıt 0 = kürasyon açığı) | Zarf `resolvedEntities`i snapshot'tan AYNEN taşır (yeniden çıkarım yok); skorlayıcı kürasyon sözleşmesini uygular: yalnız `CURATOR_APPROVED` + güven>0.5 kanıt üretir, `PENDING_CURATION` üretmez (domain-entities.ts'nin kendi belgelediği kural). Kapı D bölümü: taşıma + PENDING-negatif + APPROVED-pozitif (çift aynı zamanda mutasyon kontrolü). Bugünkü katalogda TÜM varlıklar PENDING_CURATION → ölçülen tüketim 0; bu kod açığı değil kürasyon açığıdır. Golden 117/0, matrix, unified, phase2, personal-opportunity hepsi yeşil |
+| LG-56l | Pro dilimi: budget_change_alerts (YOK→CANLI) | IMPLEMENTED + VERIFIED | Entitlement anahtarı yalnız plan pazarlamasında yaşıyordu; artık gerçek: bütçe alanı değişince `recordRequestChanges` watchlist sahibi firmalara bakar, yetkiyi kanonik `featuresForPlan`dan okur (ikinci yetki listesi yok), OWNER/ADMIN/MANAGER üyelere GENERAL bildirim üretir (yazar hariç, non-blocking, alarm-teslim kalıbıyla dedupe). Canlı kabul DB kanıtı (`acceptance-budget-alert-v1`): PRO firma aldı / STANDARD almadı / yazar almadı / mesaj içeriği "1.000 → 1.500" / dedupe 1 — 5/5, kalıntı kesin etiketle temizlendi |
+| LG-57l | PROFESSIONAL_PRODUCT_READINESS (ilk resmî ölçüm) | MEASURED **%60** | 6 gerçek kullanıcı-yüzü Pro yeteneği × 5 eksen (plan kapısı / gerçek veri / canlı E2E / cihaz UX / hata-boş-güvenlik). TAM=1, KISMİ=0.5, YOK-BLOCKED-NOT_MEASURED=0; payda tam tutulur. Alarmlar %80 (canlı, Wave J) · Bütçe-değişim alarmı %80 (canlı, bu dalga) · Analiz %60 · Takip+Kayıtlı arama %60 · Fırsatlar/Smart Match %50 (motor SHADOW) · AI Asistan %30 (LLM yok — BLOCKED). Cihaz UX ekseni hiçbir yüzeyde ölçülmedi (0 katkı, paydada). Ayrıntı tablo aşağıda |
+| LG-58l | 4 kürasyon vakası kurucu masasında | TABLED→APPROVED (aşağıda FD tablosu) | FOUNDER_DECISION_REQUIRED tablosuna FD-7..FD-10 eklendi; bu dalgada kategori sahipliği DEĞİŞTİRİLMEDİ. health-07 ayrıca teknik aday: `tibbi-testler` yaprağı VAR ama alias'ında "test çubuğu" yok — kürasyon kararına bağlı alias dilimi |
+
+| LG-59l | FD-7/8/10 kürasyonu uygulandı | CURATED | services'e 1 yeni SERVICE_TYPE yaprağı; tibbi-testler + machinery/saplar alias kürasyonu (tam-ifade; "logo"/"test"/"sap" tek başına YASAK). Negatif probe'lar temiz: "yazılım testi"→technology, "SAP danışmanlığı"→technology, "Logo muhasebe programı"→technology (services'e sızmadı) |
+| LG-60l | FD-9 tıbbi-tavsiye kapsam politikası | IMPLEMENTED | `UNSUPPORTED_MEDICAL_ADVICE` + merkezî `isUnsupportedRequestScope`; I52a-e kalıcı invariantlar (3 pozitif kapsam-dışı; koruma: "Ağrı kesici arıyorum"/"Tansiyon aleti"/"test çubuğu"/"İlaç kutusu"/"Hangi laptopu almalıyım" DEMAND; supply önceliği korunur). Batarya 129/0 |
+| LG-61l | Yüzey-kimliği düzeltmesi (I43d ile yakalandı) | FIXED | FD-10 alias'ı gerçek kusuru gösterdi: alias eşleşmesinde kanonik yaprak adı ("Saplar") kullanıcı ifadesini ("kürek sapı") eziyordu. attribute-hints: alias-eşleşen ifade ≠ kanonik ad ise KULLANICI İFADESİ korunur. Sayılı imza etkisi: auto-04 "su pompası", auto-09 "panelvan", print-05 "promosyon kalem", appl-10 "Ankastre fırın", furn-07 "Yemek masası"+diningSeats — hepsi kullanıcı dilinden doğrulandı; tech-04 "Muhasebe" ve print-10 "Kraft" kullanıcı sözcüğü ama kısmî ifade (kozmetik takip notu) |
+| LG-62l | Taban rebase'leri (hepsi sayılı) | REBASED | projection-authority 518→526 (+8: furn-07/diningSeats, health-07/productType, home-06/productType, tech-12/productType × a+c; USER_EXPLICIT 186→190; 10 imza), publish-inference 76→75 (kanarya), snapshot-internal-evidence INFERRED 20→19 + kanarya→gerileme bekçisi, D2 correctly 57→58 + not_measured 4→1, coverage fixture health-07 knownIssue kaldırıldı (XPASS kapanışı) + home-06 sahiplik machinery, readiness G8 99/9→100/8, envelope tabanı 66→69 (+3 FD) ve "logo tasarımı" negatiften pozitife taşındı |
+| LG-63l | Kürasyon sonrası ölçümler | MEASURED | Coverage 100 pass/8 known_fail/0 fail; D1 not_measured 4→1 (yalnız health-08 — FD-9 gereği bilinçli kapsam dışı); PROFESSIONAL_DISCOVERY_DATA_READINESS %34,26→**%35,37** = `100×((107/108)+(15/108)+(69/108)+0+0)/5` (slug 104→107, ürün türü 66→69; yüzey: üretim-eşdeğer zarf çağrısı — coverage'ın snapshot-only product ölçümü 13/108 AYRI yüzeydir ve karıştırılmaz) |
+
+**PROFESSIONAL_DISCOVERY_DATA_READINESS (yeniden hesap, bu dalga):**
+`100×((104/108)+(15/108)+(66/108)+0+0)/5` = **%34,26** → FD kürasyonu sonrası
+`100×((107/108)+(15/108)+(69/108)+0+0)/5` = **%35,37 ≈ %35**
+(③ 0→66 bu dalganın kazancı; ④ sözleşme kapalı ama tüketilebilir kanıt 0 —
+kürasyon açığı; ⑤ tedarikçi yeteneği ölçülmedi, 0 katkı paydada).
+
+**PROFESSIONAL_PRODUCT_READINESS karnesi (LG-57l ayrıntısı):**
+
+| Yetenek | Plan kapısı | Gerçek veri | Canlı E2E | Cihaz UX | Hata/boş/güvenlik | Skor |
+|---|---|---|---|---|---|---|
+| Uyarılar/Alarmlar | TAM | TAM | TAM (Wave J 15 adım + 8 negatif) | NOT_MEASURED | TAM (negatifler+403) | %80 |
+| Bütçe-değişim alarmı | TAM | TAM | TAM (kabul 5/5) | NOT_MEASURED | TAM (non-blocking+dedupe+plan negatifi) | %80 |
+| Analiz | TAM | TAM (`generateMarketInsight`) | NOT_MEASURED | NOT_MEASURED | TAM (insufficientData+upsell fallback) | %60 |
+| Takiplerim + Kayıtlı arama | TAM | TAM | KISMİ (server-path kapılar) | NOT_MEASURED | KISMİ | %60 |
+| Fırsatlar / Smart Match | TAM | TAM | NOT_MEASURED | NOT_MEASURED | KISMİ (motor SHADOW) | %50 |
+| AI Asistan | TAM | KISMİ (talep listesi gerçek; taslak LLM'siz) | BLOCKED | NOT_MEASURED | BLOCKED | %30 |
+
+Kapsam dışı (firma-içi ürünler, karneye girmez): ekip/koltuk yönetimi,
+Gizli Envanter. Eksen kanıtları kod-inceleme + adı geçen canlı koşular;
+"NOT_MEASURED" hiçbir yerde 0-ölçüm olarak sunulmaz.
 
 ## Wave K kaydı (2026-08-31 — COMMIT EDİLMEDİ)
 
@@ -278,6 +319,10 @@ FD-1..FD-4 ve DW-3 önceki blokta; bu turda kurucu şunları karara bağladı:
 
 | ID | Karar | Not |
 |---|---|---|
+| FD-7 | tech-12 "logo tasarımı arıyorum" kanonik sahibi | **APPROVED-A + UYGULANDI (2026-08-31):** `tax:services:diger:diger-hizmetler:grafik-ve-logo-tasarimi` SERVICE_TYPE yaprağı eklendi (alias: "logo tasarımı", "grafik tasarım", "kurumsal kimlik tasarımı"; "logo" tek başına DEĞİL — Logo yazılım çakışması). Kalan teknik borç: subject.kind hâlâ PRODUCT (SUBJECT_EXTRACTION_GAP, ayrı dilim) |
+| FD-8 | health-07 "şeker ölçüm cihazı için test çubuğu" | **APPROVED-A + UYGULANDI:** mevcut `tibbi-testler` yaprağına tam-ifade alias kürasyonu ("test çubuğu", "şeker ölçüm çubuğu", "glukometre test çubuğu"); yeni yaprak YOK, "test" tek başına DEĞİL. Follow-up (kurucu backlog): glukometre CİHAZ yaprağı `cihaz-gruplari`na eklenebilir |
+| FD-9 | health-08 "baş ağrım için hangi ilacı almalıyım" | **APPROVED-A + UYGULANDI:** kurucu ürün politikası — kişiye özel tıbbi tavsiye sorusu marketplace talebi olarak yayınlanmaz. Mevcut kapsam otoritesi merkezî genişletildi: `RequestScope`a `UNSUPPORTED_MEDICAL_ADVICE`, tek yardımcı `isUnsupportedRequestScope` beş kapıyı kapatır (soru motoru/review-publish/sunucu şeması/resume/talep sayfası); eczacı-hekim yönlendirmeli nazik metin. Eksen soru biçimi+tıbbi bağlam; "ilaç" kelimesi tek başına engelleyemez (I52e korumaları). Follow-up (ayrı kurucu kararı): OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları |
+| FD-10 | home-06 "kürek sapı arıyorum" | **APPROVED-A + UYGULANDI:** İLK ÖNERİ ("home-kitchen/Bahçe el aletleri" yaprağı) taksonomi tam incelenmeden yapılmıştı; kurucu review sırasında machinery kanonik otoritesi bulundu (`tax:machinery:diger:el-aletleri-ve-hirdavat:saplar`, kurucu onayı 2026-08-23) ve YENİ YAPRAK ÖNERİSİ GERİ ÇEKİLDİ — mevcut otorite güçlendirildi: alias "kürek sapı", "alet sapı" ("sap" tek başına DEĞİL — SAP yazılım çakışması). Fixture sahipliği kurucu kararıyla `["machinery","null"]` yapıldı. Kanarya (home-06/brandCandidate) BİLİNÇLİ çözüldü: sahte "Kürek" adayı artık üretilmiyor, sabit gerileme bekçisine dönüştü |
 | DW-4 | Admin "Pazar ve Talep Zekâsı" yüzeyi | Read-model sözleşmesi hazır (`market-intelligence/provider.ts`); yüzey dilimi DW-1 sink doğrulaması sonrası |
 
 ## Data warehouse programı

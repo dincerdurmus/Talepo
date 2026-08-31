@@ -5058,6 +5058,112 @@ check("I47g: alıcı/kiracı tarafı kapsam içindedir (koruma)", () => {
 });
 
 /* ------------------------------------------------------------------------ *
+ * I52 — TIBBİ TAVSİYE SORUSU KAPSAM DIŞIDIR (kurucu kararı, 2026-08-31 — FD-9)
+ *
+ * Talepo, kişiye özel tıbbi tavsiye / hangi ilacın-tedavinin kullanılacağı
+ * sorusunu marketplace talebi olarak yayınlamaz. Eksen SORU BİÇİMİDİR
+ * ("hangi X'i almalıyım") + tıbbi bağlam; "ilaç" kelimesi tek başına asla
+ * engelleyemez. GERÇEK satın alma niyeti DEMAND kalır. OTC/reçeteli ilaç
+ * ÜRÜN taleplerinin koşulları bu invariantın konusu DEĞİLDİR (ayrı kurucu
+ * kararı — açık follow-up).
+ * ------------------------------------------------------------------------ */
+
+check("I52a: tıbbi tavsiye sorusu kapsam dışıdır", () => {
+  const CASES = [
+    "Baş ağrım için hangi ilacı almalıyım",
+    "Hangi ilacı kullanmalıyım",
+    "Bu belirti için ne kullanmalıyım",
+  ];
+  for (const raw of CASES) {
+    assert.equal(
+      scopeOf(raw),
+      "UNSUPPORTED_MEDICAL_ADVICE",
+      `${raw}: tıbbi tavsiye sorusu kapsam dışı olmalı → '${scopeOf(raw)}'`,
+    );
+    const s2 = surfacesFor(raw);
+    assert.equal(s2.understandingCategory, null, `${raw}: kategori uydurulamaz`);
+  }
+});
+
+check("I52b: kapsam dışında soru motoru başlamaz ve gerekçe kayıtlıdır", () => {
+  const { state } = syncFromText(null, "Baş ağrım için hangi ilacı almalıyım");
+  const qr = resolveHybridQuestions(state) as unknown as {
+    next?: unknown[];
+    candidates?: unknown[];
+    suppressed?: string[];
+  };
+  assert.equal((qr.next ?? []).length, 0, "soru sorulamaz");
+  assert.equal((qr.candidates ?? []).length, 0, "soru adayı üretilemez");
+  assert.ok(
+    (qr.suppressed ?? []).includes("unsupported-medical-advice"),
+    `bastırma gerekçesi kayıtlı olmalı → ${(qr.suppressed ?? []).join(",")}`,
+  );
+});
+
+check("I52c: review/publish açılmaz, tıbbi yönlendirme metni gösterilir", () => {
+  const readiness = computeComposerPublishReadiness({
+    hasUsableText: true,
+    schedule: {
+      visible: [],
+      blockingLabels: [],
+      canEnterReview: true,
+      remainingCriticalCount: 0,
+    } as never,
+    budgetValue: "500",
+    cityValue: "İstanbul",
+    requestScope: "UNSUPPORTED_MEDICAL_ADVICE",
+  });
+  assert.equal(readiness.canReview, false, "review açılamaz");
+  assert.equal(readiness.canPublish, false, "publish açılamaz");
+  assert.ok(
+    /eczac|hekim/i.test(readiness.outOfScopeNotice ?? ""),
+    "yönlendirme eczacı/hekime işaret etmeli",
+  );
+});
+
+check("I52d: sunucu yayın kapısı tavsiye sorusunu Request oluşmadan reddeder", () => {
+  let threw: unknown = null;
+  try {
+    parseCreateRequestInput({
+      title: "Baş ağrım için hangi ilacı almalıyım",
+      description: "Baş ağrım için hangi ilacı almalıyım?",
+      rawInput: "Baş ağrım için hangi ilacı almalıyım",
+      category: { slug: "health", name: "Sağlık" },
+    });
+  } catch (err) {
+    threw = err;
+  }
+  assert.ok(
+    threw instanceof RequestValidationError,
+    "tavsiye sorusu doğrulama aşamasında reddedilmeli",
+  );
+  const issues = (threw as InstanceType<typeof RequestValidationError>).issues;
+  assert.ok(
+    issues.some((i) => /eczac|hekim/i.test(i)),
+    `red gerekçesi tıbbi yönlendirme içermeli → ${issues.join(" | ")}`,
+  );
+});
+
+check("I52e: gerçek satın alma niyeti ASLA bu karara takılmaz (koruma)", () => {
+  const CASES = [
+    "Ağrı kesici arıyorum",
+    "Tansiyon aleti arıyorum",
+    "Şeker ölçüm cihazı için test çubuğu arıyorum",
+    "İlaç kutusu arıyorum",
+    "Hangi laptopu almalıyım",
+  ];
+  for (const raw of CASES) {
+    assert.equal(
+      scopeOf(raw),
+      "DEMAND",
+      `${raw}: satın alma niyeti / tıp-dışı soru DEMAND kalmalı → '${scopeOf(raw)}'`,
+    );
+  }
+  // Arz kararı da değişmedi (öncelik: supply > medical).
+  assert.equal(scopeOf("Aracımı satmak istiyorum"), "UNSUPPORTED_SUPPLY");
+});
+
+/* ------------------------------------------------------------------------ *
  * I48 — KAPSAM KAPISININ KAPANIŞI (kurucu, commit öncesi)
  *
  * I47 "engellenmedi"yi kanıtlıyordu; bu blok "DOĞRU YERE gitti"yi kanıtlar.

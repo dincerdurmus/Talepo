@@ -290,8 +290,17 @@ export function scoreAllComponents(
   const brandHit = bm.brandHit;
 
   const attrKeys = Object.keys(envelope.attributes);
-  const attributeHit = attrKeys.some((k) => {
-    const v = foldText(envelope.attributes[k]);
+  /**
+   * KANONİK TİPLİ VARLIK TÜKETİMİ (Wave L). Zarfın `resolvedEntities`
+   * kanalı okunur — yeniden çıkarım yok, rol karışımı yok. Kürasyon
+   * sözleşmesi (domain-entities.ts): yalnız CURATOR_APPROVED kayıt kanıt
+   * üretebilir; PENDING_CURATION/REJECTED/DEPRECATED aday olarak taşınsa
+   * da skor ÜRETMEZ. Düşük güven exact sayılmaz (eşik 0.5 üstü).
+   */
+  const canonicalEntityHit = (envelope.resolvedEntities ?? []).some((e) => {
+    if (e.verificationStatus !== "CURATOR_APPROVED") return false;
+    if (!(e.confidence > 0.5)) return false;
+    const v = foldText(e.canonicalLabel);
     if (!v || v.length < 2) return false;
     return (
       includesToken(profile.keywords.join(" "), v) ||
@@ -299,6 +308,17 @@ export function scoreAllComponents(
       profile.products.some((p) => includesToken(p, v))
     );
   });
+  const attributeHit =
+    canonicalEntityHit ||
+    attrKeys.some((k) => {
+      const v = foldText(envelope.attributes[k]);
+      if (!v || v.length < 2) return false;
+      return (
+        includesToken(profile.keywords.join(" "), v) ||
+        includesToken(profile.aliases.join(" "), v) ||
+        profile.products.some((p) => includesToken(p, v))
+      );
+    });
 
   const inventoryEvidence = classifyInventoryEvidence(envelope, profile);
   const followEvidence = classifyFollowEvidence(envelope, profile);
@@ -406,7 +426,11 @@ export function scoreAllComponents(
       "attribute",
       w.attribute,
       attributeHit,
-      attributeHit ? "Özellik/alias uyumu" : null,
+      attributeHit
+        ? canonicalEntityHit
+          ? "Kanonik varlık uyumu (CURATOR_APPROVED)"
+          : "Özellik/alias uyumu"
+        : null,
     ),
     component(
       "inventory",

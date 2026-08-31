@@ -569,9 +569,14 @@ function checkFixtureAuthority(): string[] {
   if (new Set(BASELINE_ALL).size !== BASELINE_ALL.length) {
     problems.push("fixture: sınıflar ayrık değil — kimlik iki sınıfta");
   }
-  if (!BASELINE_INFERRED_BRAND_CANDIDATES.includes(FALSE_BRAND_CANDIDATE_CANARY)) {
+  /**
+   * KANARYA ÇÖZÜLDÜ (Wave L, 2026-08-31): sahte marka adayı artık
+   * üretilmiyor; sabit gerileme bekçisine dönüştü. Kimlik ne tabanda ne
+   * ölçülen evrende olabilir — geri dönerse kusur geri gelmiş demektir.
+   */
+  if (BASELINE_INFERRED_BRAND_CANDIDATES.includes(FALSE_BRAND_CANDIDATE_CANARY)) {
     problems.push(
-      "fixture: sahte marka adayı kanaryası ölçülen tabanın dışında",
+      "fixture: çözülmüş kanarya hâlâ tabanda — bilinçli karar kaydı ihlali",
     );
   }
   const fixtureSource = fs.readFileSync(

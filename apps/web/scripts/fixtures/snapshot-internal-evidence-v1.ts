@@ -33,7 +33,17 @@
  * sınıflar ayrıktır; doğrulayıcı bunları da denetler.
  */
 
-/** Kanonik merdivende INFERRED kalan marka adayları (20 kimlik). */
+/**
+ * Kanonik merdivende INFERRED kalan marka adayları (19 kimlik).
+ *
+ * Wave L (2026-08-31): home-06/brandCandidate BİLİNÇLİ olarak düştü —
+ * kanaryanın beklediği düzeltme gerçekleşti: FD-10 kürasyonu
+ * (machinery/saplar alias) + yüzey-kimliği düzeltmesiyle "Kürek" artık
+ * marka adayı ÜRETİLMİYOR (brandCandidate=null), ürün türü "Kürek sapı"
+ * EXPLICIT_TEXT olarak doğru kanalda. Aşağıdaki kanarya sabiti artık
+ * ÇÖZÜLMÜŞ-GERİLEME-BEKÇİSİ anlamındadır: kimlik ölçülen evrene GERİ
+ * DÖNERSE kapı kırmızı olur.
+ */
 export const BASELINE_INFERRED_BRAND_CANDIDATES: readonly string[] = [
   "auto-05/brandCandidate",
   "auto-09/brandCandidate",
@@ -41,7 +51,6 @@ export const BASELINE_INFERRED_BRAND_CANDIDATES: readonly string[] = [
   "furn-03/brandCandidate",
   "furn-08/brandCandidate",
   "home-04/brandCandidate",
-  "home-06/brandCandidate",
   "home-07/brandCandidate",
   "mach-05/brandCandidate",
   "print-04/brandCandidate",

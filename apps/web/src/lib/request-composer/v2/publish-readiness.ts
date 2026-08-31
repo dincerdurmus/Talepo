@@ -2,6 +2,7 @@
  * Composer publish readiness — gates review CTA and hard publish.
  */
 
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import type { ScheduleResult } from "./question-profile-types";
 import {
   isBudgetSatisfiedForPublish,
@@ -42,6 +43,14 @@ export const OUT_OF_SCOPE_SUPPLY_NOTICE =
 /** Kapsam dışı talepte tek eylem: metne dön ve düzenle. */
 export const OUT_OF_SCOPE_EDIT_ACTION = "Metnimi düzenle";
 
+/**
+ * Tıbbi tavsiye sorusunda gösterilen tek metin (kurucu kararı, 2026-08-31 —
+ * FD-9). Aynı ilkeler: kısa, suçlayıcı değil, yol gösterir. Kullanıcının
+ * SATIN ALMA niyeti varsa onu yazması yeterlidir.
+ */
+export const OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE =
+  "Talepo, ürün veya hizmet arayanların talep oluşturduğu bir platformdur. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; bunun için lütfen bir eczacıya veya hekime başvurun. Bir sağlık ürünü satın almak istiyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"ağrı kesici arıyorum\".";
+
 export function computeComposerPublishReadiness(input: {
   hasUsableText: boolean;
   schedule: ScheduleResult;
@@ -61,7 +70,7 @@ export function computeComposerPublishReadiness(input: {
    * kapı bundan bağımsız olarak ayrıca çalışır — bu yalnız kullanıcıyı
    * yayınlanamayacak bir yolda yürütmemek içindir.
    */
-  if (input.requestScope === "UNSUPPORTED_SUPPLY") {
+  if (isUnsupportedRequestScope(input.requestScope)) {
     return {
       canReview: false,
       canPublish: false,
@@ -69,7 +78,10 @@ export function computeComposerPublishReadiness(input: {
       remainingCriticalCount: 0,
       primaryCta: "continue",
       primaryCtaLabel: "Talebini düzenle",
-      outOfScopeNotice: OUT_OF_SCOPE_SUPPLY_NOTICE,
+      outOfScopeNotice:
+        input.requestScope === "UNSUPPORTED_MEDICAL_ADVICE"
+          ? OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE
+          : OUT_OF_SCOPE_SUPPLY_NOTICE,
       editActionLabel: OUT_OF_SCOPE_EDIT_ACTION,
     };
   }

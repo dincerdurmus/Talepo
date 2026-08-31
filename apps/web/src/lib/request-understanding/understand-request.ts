@@ -2658,9 +2658,43 @@ export function understandRequest(
    * Bu yüzden kapsam kuralı tek satırdır ve kelimeye özel değildir.
    */
   const isUnsupportedSupply = reconciled.intent.value === "SELL";
+
+  /**
+   * TIBBİ TAVSİYE SORUSU (kurucu kararı, 2026-08-31 — FD-9).
+   *
+   * Eksen kelime değil SORU BİÇİMİDİR: birinci tekil "hangi X'i almalıyım /
+   * ne kullanmalıyım" kalıbı + tıbbi tedavi hedefi ya da belirti bağlamı
+   * BİRLİKTE gerekir. "İlaç" kelimesi tek başına asla karar veremez —
+   * "Ağrı kesici arıyorum" gerçek bir ürün talebidir ve DEMAND kalır.
+   * Bu, demand-only kapsam otoritesinin ikinci kapsam-dışı değeri olarak
+   * AYNI tek kapıdan okunur; ikinci bir policy engine yoktur. OTC/reçeteli
+   * ilaç ÜRÜN taleplerinin koşulları burada KARARLAŞTIRILMAMIŞTIR.
+   */
+  const adviceQuestionForm =
+    /\b(hangi|ne)\b[\s\S]{0,60}?\b(almal[ıi]y[ıi]m|kullanmal[ıi]y[ıi]m|i[cç]meliyim|[oö]nerirsiniz)\b/i.test(
+      normalizedInput,
+    );
+  const medicalTreatmentContext =
+    /\b(ila[cç]|ila[cç][ıi]|hap[ıi]?|merhem|tedavi(?:yi|si)?)\b/i.test(
+      normalizedInput,
+    ) ||
+    /\b(a[gğ]r[ıi]m|a[gğ]r[ıi]s[ıi]|belirti(?:m|lerim)?)\b/i.test(
+      normalizedInput,
+    );
+  const isMedicalAdviceQuestion =
+    !isUnsupportedSupply && adviceQuestionForm && medicalTreatmentContext;
+
   const requestScope: UnderstandingDecision<RequestScope> = {
-    value: isUnsupportedSupply ? "UNSUPPORTED_SUPPLY" : "DEMAND",
-    confidence: isUnsupportedSupply ? reconciled.intent.confidence : 0.9,
+    value: isUnsupportedSupply
+      ? "UNSUPPORTED_SUPPLY"
+      : isMedicalAdviceQuestion
+        ? "UNSUPPORTED_MEDICAL_ADVICE"
+        : "DEMAND",
+    confidence: isUnsupportedSupply
+      ? reconciled.intent.confidence
+      : isMedicalAdviceQuestion
+        ? 0.85
+        : 0.9,
     status: "CONFIDENT",
     evidence: isUnsupportedSupply
       ? [
@@ -2668,7 +2702,9 @@ export function understandRequest(
           `intent=${String(reconciled.intent.value)}`,
           ...(reconciled.intent.evidence ?? []),
         ]
-      : ["demand"],
+      : isMedicalAdviceQuestion
+        ? ["medical-advice-question", "treatment-choice-form"]
+        : ["demand"],
   };
 
   /**
@@ -2678,18 +2714,24 @@ export function understandRequest(
    * bir talep yoktur. Kararı sessizce silmek yerine UNKNOWN'a çekip kanıtı
    * kaydediyoruz — "ölçemedim" ile "ölçtüm, yok" ayrımı korunur (I14).
    */
-  if (isUnsupportedSupply) {
+  if (isUnsupportedSupply || isMedicalAdviceQuestion) {
+    const noCategoryTag = isUnsupportedSupply
+      ? "unsupported-supply-no-category"
+      : "medical-advice-no-category";
+    const noSubjectTag = isUnsupportedSupply
+      ? "unsupported-supply-no-subject"
+      : "medical-advice-no-subject";
     reconciled.category = {
       value: null,
       confidence: 0,
       status: "UNKNOWN",
-      evidence: ["unsupported-supply-no-category"],
+      evidence: [noCategoryTag],
     };
     reconciled.subject = {
       value: null,
       confidence: 0,
       status: "UNKNOWN",
-      evidence: ["unsupported-supply-no-subject"],
+      evidence: [noSubjectTag],
     };
     // Semantik konu da susar: "Evimi kiraya vermek istiyorum" cümlesinde ev
     // gerçekten bir gayrimenkuldür, ama Talepo için yönlendirilecek bir TALEP
@@ -2700,7 +2742,7 @@ export function understandRequest(
         value: null,
         confidence: 0,
         status: "UNKNOWN",
-        evidence: ["unsupported-supply-no-subject"],
+        evidence: [noSubjectTag],
       },
       name: undefined,
       displayPhrase: undefined,

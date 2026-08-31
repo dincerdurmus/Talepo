@@ -83,8 +83,33 @@ export type RequestIntent =
  * ifadesi kullanım bağlamındadır, istenen hedef hizmettir. Bu ayrımı yapan
  * kural KB-16'da kurulan kapsam kuralıdır (bkz. intent-signals IntentScope);
  * burada yeni bir ayrıştırıcı kurulmaz, o kararın sonucu okunur.
+ *
+ *   UNSUPPORTED_MEDICAL_ADVICE — kurucu kararı 2026-08-31 (FD-9):
+ * kullanıcı kişiye özel tıbbi tavsiye / hangi ilacın-tedavinin
+ * kullanılacağını soruyor ("Baş ağrım için hangi ilacı almalıyım"). Bu bir
+ * danışmanlık sorusudur, marketplace talebi değildir; yayınlanamaz,
+ * eşleştirilmez, bildirim üretmez. GERÇEK satın alma niyeti bu karara
+ * GİRMEZ: "Ağrı kesici arıyorum" bir ürün talebidir ve DEMAND kalır.
+ * OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları ayrı bir kurucu kararıdır
+ * ve burada verilmemiştir.
  */
-export type RequestScope = "DEMAND" | "UNSUPPORTED_SUPPLY";
+export type RequestScope =
+  | "DEMAND"
+  | "UNSUPPORTED_SUPPLY"
+  | "UNSUPPORTED_MEDICAL_ADVICE";
+
+/**
+ * Kapsam kapılarının TEK yardımcısı. Yeni bir kapsam-dışı değer
+ * eklendiğinde bütün kapılar (soru motoru, review/publish, sunucu şeması,
+ * resume) otomatik kapanır; kapı kapı eşitlik denetimi çoğaltılmaz.
+ */
+export function isUnsupportedRequestScope(
+  scope: string | null | undefined,
+): boolean {
+  return (
+    scope === "UNSUPPORTED_SUPPLY" || scope === "UNSUPPORTED_MEDICAL_ADVICE"
+  );
+}
 
 export type SubjectKind =
   | "VEHICLE"
@@ -295,3 +320,15 @@ export type RequestUnderstandingResult = {
    */
   catalogEnrichment?: import("@/lib/catalog/automotive/types").AutomotiveSubjectEnrichment;
 };
+
+/**
+ * JENERİK ÖZNE YER TUTUCULARI — tek yetkili (Wave L, 2026-08-31).
+ *
+ * Anlama katmanı özne adı bulamadığında bu jenerik adlarla döner; bunlar
+ * ürün türü DEĞİLDİR ve hiçbir tüketici yüzeyine (productType alanı,
+ * routing envelope `product`) taşınamaz. Liste daha önce build-state
+ * içinde yerel bir regex'ti; yetkiyi bölmemek için buraya taşındı —
+ * build-state ve publish snapshot köprüsü AYNI tanımı okur.
+ */
+export const GENERIC_SUBJECT_PLACEHOLDER_RE =
+  /^(ürün|urun|servis|hizmet|cihaz|makine|eşya|esya)$/i;

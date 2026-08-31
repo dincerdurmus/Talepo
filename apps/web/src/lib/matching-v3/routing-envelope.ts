@@ -319,6 +319,14 @@ export function buildRequestRoutingEnvelope(
     variant,
     attributes,
     ...(Object.keys(internalEvidence).length ? { internalEvidence } : {}),
+    /**
+     * KANONİK TİPLİ VARLIKLAR (Wave L). Snapshot kanalından AYNEN taşınır;
+     * zarf metinden yeniden çıkarım yapmaz, statü/güven değiştirmez.
+     * Kürasyon sözleşmesinin uygulanması skorlayıcıdadır.
+     */
+    ...(snap?.resolvedEntities?.length
+      ? { resolvedEntities: snap.resolvedEntities }
+      : {}),
     unresolvedExpressions: snap?.unresolvedExpressions ?? [],
     location: resolveLocation(input),
     budget: resolveBudget(input),

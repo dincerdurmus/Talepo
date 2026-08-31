@@ -447,8 +447,9 @@ function main(): void {
       );
     }
     check(
-      /99 pass, 9 known_fail, 0 fail/.test(outA),
-      "G8 coverage senaryo sonucu 99 PASS / 9 known_fail / 0 fail değil.",
+      // Wave L (2026-08-31): FD-8/FD-10 kürasyonu health-07 ve home-06 senaryolarını çözdü — 99/9 → 100/8 (sayılı delta ledger LG-59l).
+      /100 pass, 8 known_fail, 0 fail/.test(outA),
+      "G8 coverage senaryo sonucu 100 PASS / 8 known_fail / 0 fail değil.",
     );
   }
 

@@ -1,5 +1,7 @@
 import type { RequestDiscoveryProjection } from "@/lib/discovery";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
+import { GENERIC_SUBJECT_PLACEHOLDER_RE } from "@/lib/request-understanding/types";
+import { isVerifiedSource } from "@/lib/request-understanding/provenance";
 import {
   buildUnderstandingSnapshot,
   deriveCategoryResolutionStatus,
@@ -102,6 +104,50 @@ export function buildPublishUnderstandingSnapshot(input: {
     entities.model = {
       value: String(model.value),
       confidence: model.confidence,
+    };
+  }
+
+  /**
+   * ÜRÜN TÜRÜ KÖPRÜSÜ (Wave L, 2026-08-31). Routing envelope'un `product`
+   * alanı `entities.product` bekler ama snapshot özneyi hiç taşımıyordu —
+   * teknik keşif formülünün 3. bileşeni bu yüzden 0/108'di. Kaynak TEK
+   * beynin `requestSubject` kaydıdır (ikinci çıkarıcı yok) ve kanıt
+   * eşiklidir: provenance EXPLICIT ya da kaynak kanonik VERIFIED sınıfında.
+   * Jenerik yer tutucu adlar (tek yetkili GENERIC_SUBJECT_PLACEHOLDER_RE)
+   * ASLA taşınmaz; eşik altı kayıtta alan boş kalır — 0 hata değildir.
+   */
+  const subject = input.understanding.requestSubject;
+  const subjectRecord = subject?.displayPhrase ?? subject?.name;
+  const subjectValue = subjectRecord?.value != null ? String(subjectRecord.value).trim() : "";
+  /*
+   * Yalnız EXPLICIT provenance taşınır (açık kullanıcı beyanı USER_EXPLICIT
+   * ya da kanonik VERIFIED sınıf kaynak). INFERRED özet — kaynağı
+   * doğrulanmış olsa bile (ör. "koltuk takımı" → "koltuk") — taşınmaz:
+   * zarf `entities.product`u projection'dan ÖNCE okur, buraya yazılan
+   * indirgeme kanonik EXPLICIT_TEXT productType'ı ezerdi.
+   * INFERRED-doğrulanmış tür zaten projection kanalından akar.
+   */
+  /*
+   * ROL AYRIMI: özne adı kanonik marka/model kaydıyla aynıysa bu bir ürün
+   * türü değil, rol sızıntısıdır ("Arçelik 55 inç televizyon" → özne
+   * "Arçelik"). Marka kendi kanalında yaşar; product'a kopyalanırsa zarf
+   * projection'daki gerçek türü ("televizyon") gölgeler.
+   */
+  const brandValue = brand?.value != null ? String(brand.value).trim().toLocaleLowerCase("tr") : "";
+  const modelValue = model?.value != null ? String(model.value).trim().toLocaleLowerCase("tr") : "";
+  const subjectLower = subjectValue.toLocaleLowerCase("tr");
+  if (
+    subjectValue &&
+    !GENERIC_SUBJECT_PLACEHOLDER_RE.test(subjectValue) &&
+    subjectLower !== brandValue &&
+    subjectLower !== modelValue &&
+    subjectRecord?.provenance === "EXPLICIT" &&
+    (subjectRecord?.source === "USER_EXPLICIT" ||
+      isVerifiedSource(subjectRecord?.source))
+  ) {
+    entities.product = {
+      value: subjectValue,
+      confidence: subjectRecord?.confidence,
     };
   }
 

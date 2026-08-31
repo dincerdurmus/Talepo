@@ -28,6 +28,11 @@
  * (`senaryo/alanAnahtarı`). İç kanıt alanları (`brandCandidate`,
  * daralması demektir.
  */
+/**
+ * Wave L (2026-08-31): home-06/brandCandidate bilinçli düştü (75) — FD-10
+ * kürasyonu + yüzey-kimliği düzeltmesiyle sahte "Kürek" adayı artık
+ * üretilmiyor; kanarya kaydı snapshot-internal-evidence fixture'ında.
+ */
 export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "appl-06/needType",
   "appl-07/needType",
@@ -62,7 +67,6 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "health-06/needType",
   "health-06/solutionType",
   "home-04/brandCandidate",
-  "home-06/brandCandidate",
   "home-07/brandCandidate",
   "mach-01/needType",
   "mach-02/needType",

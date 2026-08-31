@@ -2039,14 +2039,6 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "PRODUCT"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_SPLIT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'Şeker ölçüm cihazı için test çubuğu' hiçbir kategoriye bağlanamıyor; parça yakalanıyor ama talep yönlendirilemez.",
-      "signature": {
-        "stateCategoryEquals": null
-      }
-    },
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2377,12 +2369,13 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
     "adversarial": true,
     "expected": {
       "allowedCategories": [
-        "home-kitchen",
+        "machinery",
         "null"
       ],
       "allowedKinds": [
         "PART",
-        "PRODUCT"
+        "PRODUCT",
+        "INDUSTRIAL_EQUIPMENT"
       ],
       "forbiddenBrands": [
         "kürek"

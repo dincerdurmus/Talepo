@@ -3,6 +3,7 @@
  * Sole question authority for Hybrid Composer / /talep ask surface.
  */
 
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import {
   getCategoryById,
   type DynamicField,
@@ -245,13 +246,17 @@ export function resolveHybridQuestions(
    * sormak kullanıcıyı yayınlanamayacak bir formda yürütmek olur. Karar
    * burada verilmez — anlama katmanının tek kapsam kararı okunur.
    */
-  if (state.understanding.requestScope?.value === "UNSUPPORTED_SUPPLY") {
+  if (isUnsupportedRequestScope(state.understanding.requestScope?.value)) {
     return {
       known: [],
       missingRequired: [],
       optionalUseful: [],
       next: [],
-      suppressed: ["unsupported-supply"],
+      suppressed: [
+        state.understanding.requestScope?.value === "UNSUPPORTED_MEDICAL_ADVICE"
+          ? "unsupported-medical-advice"
+          : "unsupported-supply",
+      ],
       candidates: [],
       questionSource: "canonical-hybrid",
     };

@@ -137,7 +137,9 @@ export type RequestUnderstandingSnapshot = {
   /**
    * TALEPO KAPSAMI (kurucu kararı, 2026-08-25) — additive ve OPSİYONEL.
    *
-   * `"UNSUPPORTED_SUPPLY"` bir arz ilanıdır: yayınlanamaz, eşleştirilmez,
+   * `"UNSUPPORTED_SUPPLY"` bir arz ilanıdır, `"UNSUPPORTED_MEDICAL_ADVICE"`
+   * kişiye özel tıbbi tavsiye sorusudur (kurucu kararı 2026-08-31, FD-9):
+   * ikisi de yayınlanamaz, eşleştirilmez,
    * bildirim üretmez. Alan yoksa eski snapshot'lar `"DEMAND"` gibi okunur
    * (geriye uyumlu). `discoveryProjection` bir JSON kolonu olduğu için
    * migration GEREKMEZ — yeni Prisma kolonu açılmadı.
