@@ -30,7 +30,7 @@ Branch `feature/dincer-maira-view-state-v1` · HEAD `bbb3b5f` (+çalışma ağac
 ## RC programı kaydı (2026-09-01 — sürüyor)
 
 Kurucu otonom Release Candidate mandası. Wave adları iç organizasyon.
-Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042 (hepsi pushlandı).
+Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042+a22e9ac, RC-3 6fb051e+d0a65c2 (hepsi pushlandı).
 
 | ID | İş | Durum | Kanıt |
 |---|---|---|---|
@@ -44,6 +44,16 @@ Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042 (he
 
 RC QA sentetik verisi (request+offer+conversation+company+add-on+inventory)
 kesin id ile temizlendi (kalan 0).
+
+### RC-3 turu (2026-09-01) — kapanış
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-85rc | PRODUCTION BUILD ZİNCİRİ | PASS | Prisma validate 0, Prisma generate 0 (kabul env ile), production next build EXIT=0 — 70 sayfa. GERÇEK build kusuru bulundu ve kapatıldı: /kayit prerender useSearchParams Suspense sınırı olmadan KIRILIYORDU; sınır eklendi (davranış aynı). ESLint: 22 error/47 warning — tamamı stil sınıfı (unescaped-entities, server-component try/catch-JSX kuralı, unused-vars); çalışma zamanı hatası yok, release-blocker değil. |
+| LG-86rc | TARİHSEL KIRMIZI TRİYAJI TAMAM | TRIAGED 25→8 | Bu turda kapananlar (9): allowlist (kendi yeni kabul betiklerimde redaksiyon/K9 disiplinine uyum — gerçek harness-güvenlik düzeltmesi; ASCII-\b Türkçe 'bütçe' sahte-taint'i kodpoint kurulumuyla çözüldü), p1-closed-beta (seq-token + rail varsayılanı SUPERSEDED), phase3c (başlık Türkçeleşti + attributedOfferFormHref SUPERSEDED), commercial-journey (ConversationShell taşınması SUPERSEDED), offer-media (ConcludedProcessPanel taşınması SUPERSEDED), offer-intelligence-discoverability (yeni kabuk işaretleri SUPERSEDED), hybrid-composer (taksonomi 2151→2152 FD-7 rebase), deal-review, nonvalue (önceki tur). KALAN 8 aktif kırmızı sınıflandırması: STILL_REAL_PRODUCT_BUG P2 ×4 (browse-semantic-closure uyumlu-marka ekseni; catalog-generations-v2a E210-far çıkarımı; fanout-telemetry span bölüntüsü; phase3a tek-fixture printing yaprağı '50 bin adet karton kutu'), LOW_PRIORITY_DATA_GAP ×3 (incoming-offers-nav-badge, offer-unread-action, offer-role-surfaces — kurucunun birincil-DB canlı fixture'larını bekler), EXTERNAL ×1 (dataforseo-live API anahtarı). RELEASE_BLOCKER: 0. Hiçbir test silinmedi. |
+| LG-87rc | 47-ROUTE WALKTHROUGH | COVERED | 42 statik/oturumlu route canlı sweep: 33 kullanıcı yüzeyi 200/meşru-redirect; 9 admin route normal kullanıcıya 404 (admin sızıntısı YOK). 9 dinamik [id] rotası program boyunca gerçek akışlarla gezildi (talep detay/düzenle, teklif formu, gelen-teklif çalışma alanı, sohbet, bildirim-r, firma-profil, admin detayları). Silinmiş/geçersiz nesneler (talep, sohbet, bildirim deep-link, firma) markalı yol-gösteren 404'e düşer — ham stack/boş sayfa YOK. |
+| LG-88rc | A11Y + SCRATCH TEMİZLİĞİ | PASS | Panel statik denetim: adsız buton 0, alt'sız görsel 0, etiketsiz input 0, main landmark var; blocker yok. Scratch araçlar final tree'den çıktı: tmp-rc-dev.ts SİLİNDİ (kanonik tek-port 3187 kararına aykırı kalıcılaşmasın), tmp-envrun.ts gerçek altyapıya TERFİ etti → scripts/run-with-acceptance-env-v1.ts (kanonik loadAcceptanceEnv + redaksiyon + K9 girişi; allowlist kapısından geçiyor). Working tree CLEAN. |
+| LG-89rc | FİNAL REGRESYON | GREEN | 32 kapılık geniş batarya tamamı yeşil + D1 bilinçli exit-3 + TSC 0 + kabul: budget-alert GREEN, supplier-capability 16/0. |
 
 ### RC-2 turu (2026-09-01)
 
