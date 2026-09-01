@@ -579,15 +579,16 @@ function measureCorpus(): {
    * `applianceType`/`productType` olarak yerinde. Ayrıntı:
    * verify-common-field-response-v1 E2 yorumunda.
    */
-  ok("F2", fields === 1283, `kanonik alan sayısı değişti → ${fields}`);
-  ok("F3", unknown === 988, `varsayılan UNKNOWN değişti → ${unknown}`);
+  /* 98+ Faz I (2026-09-01) sayılı rebase — kimlik listesi: fixtures/projection-authority-v1.ts */
+  ok("F2", fields === 1280, `kanonik alan sayısı değişti → ${fields}`);
+  ok("F3", unknown === 982, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok(
     "F4",
     responses === 0,
     `varsayılan UNKNOWN cevap yüzeyi üretti → ${responses}`,
   );
-  ok("F5", attributes === 259, `attributes tabanı kaydı → ${attributes}`);
-  ok("F6", constraints === 259, `constraints tabanı kaydı → ${constraints}`);
+  ok("F5", attributes === 264, `attributes tabanı kaydı → ${attributes}`);
+  ok("F6", constraints === 264, `constraints tabanı kaydı → ${constraints}`);
 
   return { scenarios, fields, unknown, responses, attributes, constraints };
 }

@@ -82,8 +82,14 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "pick-up",
     "minivan",
     "station wagon",
-    "yedek parça",
-    "yedek parca",
+    /**
+     * "yedek parça" bu listeden ÇIKARILDI (98+ Faz I, 2026-09-01): ifade
+     * alan-bağımsız bir parça sözüdür; her domain'in makinesi için yedek
+     * parça aranır. Ölçüldü: "Torna tezgahı için yedek parça arıyorum"
+     * cümlesinde +3 puanla kategoriyi automotive'e çekip makineyi ("torna"
+     * +1) eziyordu. Hiçbir kategori sinyali yoksa tarihsel automotive
+     * varsayılanı skor döngüsünden SONRA ayrıca korunur.
+     */
     "tampon",
     "balata",
     "far",
@@ -847,6 +853,20 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
 
   // No keyword signal → do not confidently claim services (historical default).
   if (winnerScore <= 0) {
+    /**
+     * Çıplak "yedek parça" talebi (başka hiçbir kategori sinyali yokken)
+     * tarihsel automotive varsayılanını korur; ifade artık kategori
+     * SEÇTİREMEZ ama tek başına yazıldığında talep düşmesin (98+ Faz I).
+     */
+    if (/yedek\s*par[çc]a/.test(normalized)) {
+      return {
+        categoryId: "automotive",
+        score: 1,
+        confident: false,
+        runnerUpId: null,
+        runnerUpScore: 0,
+      };
+    }
     return {
       categoryId: "services",
       score: 0,

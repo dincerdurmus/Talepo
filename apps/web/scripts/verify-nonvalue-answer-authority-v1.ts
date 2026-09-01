@@ -779,7 +779,8 @@ function measureCorpusDenominator(): {
    * UNKNOWN→VALUE oldu (Wave L, satır satır onaylı delta). Sayaç tam da bu
    * tür değişimi yakalamak için vardı; fark kararla buradan geçiyor.
    */
-  ok("H2", unknown === 986, `varsayılan UNKNOWN sayısı değişti → ${unknown}`);
+  /* 98+ Faz I (2026-09-01) sayılı rebase: 13 senaryoluk davranış deltası — appl-02 inverter parça sızıntısı kapandı (-part,-partSystem), auto-11 lastik ürünleşti (-needType=vehicle, araç soruları düştü), tech-04/tech-11 RC ayrışması kapandı (state kategorisi beyni izler), tech-12 SERVICE kind (+needType,+serviceType), mach-05 machinery claim (+productType), baby-08/furn-04/home-07 kullanıcı parça beyanı korunuyor (+part), health-06 hint kategoriyi ezemiyor. Kimlik-düzeyi tam liste: fixtures/projection-authority-v1.ts */
+  ok("H2", unknown === 982, `varsayılan UNKNOWN sayısı değişti → ${unknown}`);
   ok(
     "H3",
     explicitNonValue === 0,

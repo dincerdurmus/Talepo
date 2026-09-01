@@ -175,6 +175,26 @@ export function getTaxonomyNodesByCategory(categoryId: string): TaxonomyNode[] {
   return state.byCategory.get(categoryId) ?? [];
 }
 
+/**
+ * Kategori kendi kanonik hizmet yapraklarına sahip mi? (98+ Faz I, 2026-09-01)
+ *
+ * "Servis niyeti Hizmetler'e yönlendirir" kuralının istisnası ada özel
+ * ("automotive") yazılmıştı; oysa istisnanın gerçek gerekçesi kategorinin
+ * hizmeti KENDİ taksonomisinde adlandırmasıdır (technology'de "Bakım /
+ * destek sözleşmesi" SERVICE_TYPE yaprağı gibi). Kural artık kanonik
+ * veriden türetilir; sonuç kategori başına önbelleğe alınır.
+ */
+const serviceLeafOwnership = new Map<string, boolean>();
+export function categoryOwnsServiceLeaves(categoryId: string): boolean {
+  const cached = serviceLeafOwnership.get(categoryId);
+  if (cached !== undefined) return cached;
+  const owns = getTaxonomyNodesByCategory(categoryId).some(
+    (n) => n.nodeType === "SERVICE_TYPE",
+  );
+  serviceLeafOwnership.set(categoryId, owns);
+  return owns;
+}
+
 export function getSubcategoryTaxonomyNode(
   categoryId: string,
   subcategorySlug: string,

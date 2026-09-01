@@ -53,7 +53,6 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "auto-09/needType",
   "auto-10/needType",
   "auto-11/brandCandidate",
-  "auto-11/needType",
   "auto-12/needType",
   "furn-01/usageArea",
   "furn-03/brandCandidate",
@@ -71,7 +70,6 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "mach-01/needType",
   "mach-02/needType",
   "mach-03/needType",
-  "mach-05/brandCandidate",
   "mach-05/needType",
   "mach-07/needType",
   "mach-08/needType",
@@ -109,6 +107,8 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "tech-10/needType",
   "tech-10/solutionType",
   "tech-11/needType",
+  /** 98+ Faz I: kanonik SERVICE rolü kind'a taşındı — needType=service çıkarımı (tech-12 logo tasarımı). */
+  "tech-12/needType",
 ];
 
 /**

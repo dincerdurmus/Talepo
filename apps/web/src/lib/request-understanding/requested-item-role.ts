@@ -408,6 +408,16 @@ export function classifyRequestedTargetRole(
   // dönüyordu; aynı ifade fiilsiz verilince TAXONOMY_HEAD buluyordu.
   let headToken: string | null = null;
   for (let i = tokens.length - 1; i >= 0; i--) {
+    /**
+     * SAYI/SPEC JETONU BAŞ OLAMAZ (98+ Faz I, 2026-09-01). Türkçe ad
+     * tamlamasının başı bir SÖZCÜKTÜR; "205/55", "R16", "12000" gibi rakam
+     * içeren ölçü/spec jetonları başı gizler. Ölçüldü: "Araba lastiği
+     * arıyorum 205/55 R16" cümlesinde baş taraması "R16"da durup NONE
+     * dönüyor, gerçek baş "lastik" taksonomiye hiç sorulmadan NONE dönüyordu.
+     * Kural kelimeye özel DEĞİLDİR: rakam içeren jeton atlanır, karar bir
+     * sonraki gerçek sözcüğe kalır.
+     */
+    if (/\d/.test(tokens[i] ?? "")) continue;
     const forms = headForms(tokens[i] ?? "");
     if (!forms.length) continue;
     if (forms.some((f) => TAIL_TOKENS.has(f))) continue;
@@ -436,6 +446,16 @@ export function classifyRequestedTargetRole(
   // çok sözcüklü kanonik adlar hiç bulunamıyordu (ölçüldü 2026-08-30).
   let coreEnd = tokens.length;
   while (coreEnd > 0) {
+    /**
+     * Kuyruktaki rakamlı ölçü/spec jetonları da soyulur (98+ Faz I):
+     * "araba lastiği arıyorum 205/55 R16" için kanonik aday "araba
+     * lastiği"dir. Tam ifade adayı (t) zaten rakamlı hâliyle deneniyor;
+     * burada yalnız EK aday üretilir, bilgi kaybolmaz.
+     */
+    if (/\d/.test(tokens[coreEnd - 1] ?? "")) {
+      coreEnd--;
+      continue;
+    }
     const forms = headForms(tokens[coreEnd - 1] ?? "");
     if (forms.length && forms.some((f) => TAIL_TOKENS.has(f))) {
       coreEnd--;

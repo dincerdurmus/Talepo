@@ -214,10 +214,19 @@ function clearedField(reason: string): CanonicalFieldState {
 /**
  * Drop category-exclusive fields that cannot belong to the current domain.
  * Brand/model/city/condition stay unless they are exclusive (they are not).
+ *
+ * `preserveExplicitText` (98+ Faz I, 2026-09-01): AYNI metin çözümünden
+ * gelen açık kullanıcı beyanı bu temizlikte SİLİNEMEZ. Ölçüldü: "Bebek
+ * arabası için tekerlek arıyorum" — beyin part=tekerlek üretiyor, kategori
+ * baby olduğu için izin tablosu alanı temizliyor ve kullanıcının yazdığı
+ * parça state'ten kayboluyordu. Temizliğin amacı ESKİ domain'in bayat
+ * kalıntılarını düşürmektir; kullanıcının şu anki cümlesindeki beyan bayat
+ * değildir. Browse-geçiş çağrıları eski davranışı korur (bayrak geçmez).
  */
 export function stripIncompatibleDomainFields(
   fields: Record<string, CanonicalFieldState>,
   categoryId: string | null | undefined,
+  options?: { preserveExplicitText?: boolean },
 ): Record<string, CanonicalFieldState> {
   const cat = normalizeCategoryId(categoryId);
   if (!cat) return fields;
@@ -225,6 +234,23 @@ export function stripIncompatibleDomainFields(
   const next = { ...fields };
   for (const [key, field] of Object.entries(next)) {
     if (!field || field.kind === "UNKNOWN") continue;
+    /**
+     * Koruma yalnız ÇOK-domain'li alanlar içindir (izin tablosundan
+     * türetilir, ada özel değildir): "part" gibi birden çok kategoride
+     * yaşayan bir kavramda kullanıcının beyanı tek kanaldır ve silinirse
+     * KAYBOLUR. listingType/roomCount gibi TEK domain'e özel kanallar ise
+     * kendi domain'i dışında yaşayamaz; oradaki bilgi kendi ekseninde
+     * (intent, kind) zaten taşınır ve temizlik kayıp üretmez (ölçüldü:
+     * health'te listingType, services'te roomCount hayalet kalıyordu).
+     */
+    const allowedSet = FIELD_ALLOWED_CATEGORIES[key];
+    if (
+      options?.preserveExplicitText &&
+      field.provenance === "EXPLICIT_TEXT" &&
+      (allowedSet?.size ?? 0) > 1
+    ) {
+      continue;
+    }
     if (!isFieldCompatibleWithCategory(key, cat)) {
       next[key] = clearedField(`cleared-on-domain-switch:${cat}`);
     }

@@ -30,6 +30,17 @@
  * kaldırıldığında, fark burada TEK TEK kimlik olarak ve karar gerekçesiyle
  * güncellenir; verifier çıktısından kopyalanarak "yeşile boyanmaz".
  *
+ * 98+ FAZ I DELTASI (2026-09-01, sayılı karar): 8 kimlik ÇIKTI / 12 GİRDİ.
+ * Çıkanlar: appl-02 part+partSystem (inverter baş-konum kuralı — otomotiv
+ * parça sızıntısı kapandı), auto-11 needType=vehicle (lastik taksonomi
+ * otoritesiyle ürün), health-06 healthProductType (ürün ipucu tek beynin
+ * services kararını artık ezemiyor). Girenler: baby-08/furn-04/home-07 part
+ * (kullanıcının yazdığı parça beyanı domain-switch temizliğinde artık
+ * silinmiyor), mach-05 productType (torna tezgahı kanonik alias claim),
+ * tech-12 needType+serviceType (kanonik SERVICE rolü kind'a taşındı).
+ * USER_EXPLICIT 189→193, VERIFIED 17→15, INFERRED değişmedi; 9 payload
+ * imzası aynı kararlarla yenilendi.
+ *
  * SIRALAMA SÖZLEŞMESİ: liste kod-birimi (`Array.prototype.sort` varsayılanı)
  * sırasında ve benzersizdir; verifier bunu da denetler.
  */
@@ -50,18 +61,18 @@ export type FrozenAuthorityName =
 /** Ölçülen taban — yüzey başına ve toplam. */
 export const PROJECTION_AUTHORITY_BASELINE = {
   scenarios: 108,
-  totalIdentities: 524,
+  totalIdentities: 528,
   attributes: {
     UNKNOWN: 0,
     INFERRED: 56,
-    VERIFIED: 17,
-    USER_EXPLICIT: 189,
+    VERIFIED: 15,
+    USER_EXPLICIT: 193,
   },
   constraints: {
     UNKNOWN: 0,
     INFERRED: 56,
-    VERIFIED: 17,
-    USER_EXPLICIT: 189,
+    VERIFIED: 15,
+    USER_EXPLICIT: 193,
   },
   /**
    * Aynı `senaryo/alan` çiftinin iki yüzeyde FARKLI otorite taşıdığı kimlik
@@ -86,10 +97,6 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "appl-01/productType/constraints=USER_EXPLICIT",
   "appl-02/capacityBtu/attributes=USER_EXPLICIT",
   "appl-02/capacityBtu/constraints=USER_EXPLICIT",
-  "appl-02/part/attributes=VERIFIED",
-  "appl-02/part/constraints=VERIFIED",
-  "appl-02/partSystem/attributes=VERIFIED",
-  "appl-02/partSystem/constraints=VERIFIED",
   "appl-02/productType/attributes=USER_EXPLICIT",
   "appl-02/productType/constraints=USER_EXPLICIT",
   "appl-03/applianceType/attributes=USER_EXPLICIT",
@@ -238,8 +245,6 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "auto-10/model/constraints=VERIFIED",
   "auto-10/needType/attributes=INFERRED",
   "auto-10/needType/constraints=INFERRED",
-  "auto-11/needType/attributes=INFERRED",
-  "auto-11/needType/constraints=INFERRED",
   "auto-11/tireSize/attributes=USER_EXPLICIT",
   "auto-11/tireSize/constraints=USER_EXPLICIT",
   "auto-12/needType/attributes=INFERRED",
@@ -280,6 +285,8 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "baby-07/productType/constraints=USER_EXPLICIT",
   "baby-08/babyProductType/attributes=USER_EXPLICIT",
   "baby-08/babyProductType/constraints=USER_EXPLICIT",
+  "baby-08/part/attributes=USER_EXPLICIT",
+  "baby-08/part/constraints=USER_EXPLICIT",
   "baby-08/productType/attributes=USER_EXPLICIT",
   "baby-08/productType/constraints=USER_EXPLICIT",
   "furn-01/furnitureType/attributes=USER_EXPLICIT",
@@ -302,6 +309,8 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "furn-03/serviceType/constraints=USER_EXPLICIT",
   "furn-04/furnitureType/attributes=USER_EXPLICIT",
   "furn-04/furnitureType/constraints=USER_EXPLICIT",
+  "furn-04/part/attributes=USER_EXPLICIT",
+  "furn-04/part/constraints=USER_EXPLICIT",
   "furn-04/productType/attributes=USER_EXPLICIT",
   "furn-04/productType/constraints=USER_EXPLICIT",
   "furn-04/usageArea/attributes=INFERRED",
@@ -348,8 +357,6 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "health-04/usageArea/constraints=USER_EXPLICIT",
   "health-05/productType/attributes=USER_EXPLICIT",
   "health-05/productType/constraints=USER_EXPLICIT",
-  "health-06/healthProductType/attributes=USER_EXPLICIT",
-  "health-06/healthProductType/constraints=USER_EXPLICIT",
   "health-06/needType/attributes=INFERRED",
   "health-06/needType/constraints=INFERRED",
   "health-06/productType/attributes=USER_EXPLICIT",
@@ -380,6 +387,8 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "home-06/productType/constraints=USER_EXPLICIT",
   "home-07/material/attributes=USER_EXPLICIT",
   "home-07/material/constraints=USER_EXPLICIT",
+  "home-07/part/attributes=USER_EXPLICIT",
+  "home-07/part/constraints=USER_EXPLICIT",
   "home-08/applianceType/attributes=USER_EXPLICIT",
   "home-08/applianceType/constraints=USER_EXPLICIT",
   "home-08/productType/attributes=USER_EXPLICIT",
@@ -404,6 +413,8 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "mach-05/needType/constraints=INFERRED",
   "mach-05/part/attributes=USER_EXPLICIT",
   "mach-05/part/constraints=USER_EXPLICIT",
+  "mach-05/productType/attributes=USER_EXPLICIT",
+  "mach-05/productType/constraints=USER_EXPLICIT",
   "mach-06/productType/attributes=USER_EXPLICIT",
   "mach-06/productType/constraints=USER_EXPLICIT",
   "mach-07/needType/attributes=INFERRED",
@@ -602,8 +613,12 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "tech-11/productType/constraints=USER_EXPLICIT",
   "tech-11/serviceType/attributes=USER_EXPLICIT",
   "tech-11/serviceType/constraints=USER_EXPLICIT",
+  "tech-12/needType/attributes=INFERRED",
+  "tech-12/needType/constraints=INFERRED",
   "tech-12/productType/attributes=USER_EXPLICIT",
   "tech-12/productType/constraints=USER_EXPLICIT",
+  "tech-12/serviceType/attributes=USER_EXPLICIT",
+  "tech-12/serviceType/constraints=USER_EXPLICIT",
 ];
 
 /**
@@ -644,12 +659,12 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "auto-08=199e7362cfe4730f",
   "auto-09=27be6197f51c63be",
   "auto-10=8ffb31503f260167",
-  "auto-11=5deb8020e411dc4c",
+  "auto-11=0d446ffae95fd43c",
   "auto-12=cdca1d7d1f6a1c6b",
   "tech-01=f7bdf27e96a0778b",
   "tech-02=a9bd213d1e0c5827",
   "tech-03=6f0d91cd98f13742",
-  "tech-04=5f6e2019ae8fc6f7",
+  "tech-04=b43382ebd320d2c9",
   "tech-05=303f2fb017ae8c30",
   "tech-06=6260bad0d6931b0b",
   "tech-07=b91261e5acc18673",
@@ -657,7 +672,7 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "tech-09=c148d241565c39ed",
   "tech-10=9266510d087cb469",
   "tech-11=3e0a9a3362e93b46",
-  "tech-12=75c35e8e6793cb59",
+  "tech-12=75eb1ab25b778074",
   "print-01=a8f37a5d3ebb0eff",
   "print-02=0dec6c4e7ead60ca",
   "print-03=6c0ae8a4b7f53ccb",
@@ -671,7 +686,7 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "print-11=c148d241565c39ed",
   "print-12=1824963b8f57704b",
   "appl-01=0b765e95d26c1990",
-  "appl-02=3aa3cfdf2c4811f3",
+  "appl-02=1605c9397aa9ef5f",
   "appl-03=3b6f02f877013893",
   "appl-04=65cc0702ddb0fa04",
   "appl-05=0a393fbf0ab3f22a",
@@ -686,14 +701,14 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "mach-02=3818bf0ba15e62db",
   "mach-03=db54189d75f1285f",
   "mach-04=5e88b8c3e3e68b6c",
-  "mach-05=8b724edc64adf633",
+  "mach-05=1a7d410cd70c2663",
   "mach-06=011628c7e2c6aa5d",
   "mach-07=2e3b4518f614de50",
   "mach-08=610484d92bc1e9bb",
   "furn-01=00ed39dac187f87b",
   "furn-02=eebf4cf9a68db9c0",
   "furn-03=143273451810554d",
-  "furn-04=011f4e797fa6839c",
+  "furn-04=5a35f22932e2c6ec",
   "furn-05=ab7defb1b325a035",
   "furn-06=ea8aeb14ef2403da",
   "furn-07=011acdbd48c06ad8",
@@ -703,7 +718,7 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "health-03=b885dc67c1b03da9",
   "health-04=7dd246c45f7982ed",
   "health-05=18bd94f09cb2ad57",
-  "health-06=d07ad0d9062159dc",
+  "health-06=d26a384f67af803a",
   "health-07=bc5b213fbcf9daf6",
   "health-08=a7576b1e10709c00",
   "baby-01=4e2c653a4a2537b3",
@@ -713,14 +728,14 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "baby-05=e55b6e7474c3b74c",
   "baby-06=d7d7844b6785ccd0",
   "baby-07=1dae8abb8344683c",
-  "baby-08=4e2c653a4a2537b3",
+  "baby-08=55fab9cf4a1e7b15",
   "home-01=65622abbf407400c",
   "home-02=86bd93b00885df5f",
   "home-03=3c70128be0c650e1",
   "home-04=2a064a3469f7dfb3",
   "home-05=1c6336dcfc48b557",
   "home-06=a753ad7ae6fc996e",
-  "home-07=55c535979c9c4300",
+  "home-07=1d87459bbc4d51e2",
   "home-08=1e59bea2d7f9d4e8",
   "svc-01=3d892a872f50bb53",
   "svc-02=06f6ba328a692595",

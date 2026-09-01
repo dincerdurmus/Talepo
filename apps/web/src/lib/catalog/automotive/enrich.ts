@@ -1,4 +1,5 @@
 import { isNegatedMention } from "@/lib/ai/parser/negation";
+import { isCanonicalWholeProductPhrase } from "@/lib/taxonomy/phrase-classification";
 import type { CatalogConfidence } from "../types";
 import { foldCatalogKey } from "../normalize";
 import {
@@ -191,6 +192,20 @@ export function enrichAutomotiveSubject(
     if (p.record.name.length < 4 && p.matchMode === "alias" && !autoContext) {
       return false;
     }
+    /**
+     * BAŞ-KONUM KURALI (98+ Faz I, 2026-09-01). Türkçe ad tamlamasında baş
+     * SONDADIR: parça adı, hemen ardından kanonik bir BÜTÜN ÜRÜN adı
+     * geliyorsa o ürünün NİTELEYİCİSİDİR, talebin parçası değil. Ölçüldü:
+     * "İnverter klima arıyorum 12000 BTU" cümlesinde otomotiv kataloğu
+     * "inverter"i EV yüksek-voltaj parçası sanıp part/partSystem yazıyor,
+     * beyaz eşya talebine otomotiv parça alanları sızıyordu. Kural parça
+     * adına özel DEĞİLDİR; ardıl sözcük kanonik taksonomide bütün ürünse
+     * eşleşme düşer (hizmet lemmaları için aynı ilke: requested-item-role
+     * `serviceLemmaIsPhraseHead`).
+     */
+    if (p.nextWord && isCanonicalWholeProductPhrase(p.nextWord)) {
+      return false;
+    }
     return true;
   });
 
@@ -216,6 +231,7 @@ export function enrichAutomotiveSubject(
           record: lamp,
           confidence: "high",
           matchMode: "alias",
+          nextWord: null,
         },
       ];
     }

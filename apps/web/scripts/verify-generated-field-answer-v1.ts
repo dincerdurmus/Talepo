@@ -429,10 +429,11 @@ function measureCorpus(): {
   }
 
   ok("G1", scenarios === 108, `senaryo sayısı değişti → ${scenarios}`);
-  ok("G2", fields === 1279, `kanonik alan sayısı değişti → ${fields}`);
-  ok("G3", unknown === 988, `varsayılan UNKNOWN değişti → ${unknown}`);
-  ok("G4", attributes === 255, `attributes tabanı kaydı → ${attributes}`);
-  ok("G5", constraints === 255, `constraints tabanı kaydı → ${constraints}`);
+  /* 98+ Faz I (2026-09-01) sayılı rebase: 13 senaryoluk davranış deltası — appl-02 inverter parça sızıntısı kapandı (-part,-partSystem), auto-11 lastik ürünleşti (-needType=vehicle, araç soruları düştü), tech-04/tech-11 RC ayrışması kapandı (state kategorisi beyni izler), tech-12 SERVICE kind (+needType,+serviceType), mach-05 machinery claim (+productType), baby-08/furn-04/home-07 kullanıcı parça beyanı korunuyor (+part), health-06 hint kategoriyi ezemiyor. Kimlik-düzeyi tam liste: fixtures/projection-authority-v1.ts */
+  ok("G2", fields === 1280, `kanonik alan sayısı değişti → ${fields}`);
+  ok("G3", unknown === 982, `varsayılan UNKNOWN değişti → ${unknown}`);
+  ok("G4", attributes === 264, `attributes tabanı kaydı → ${attributes}`);
+  ok("G5", constraints === 264, `constraints tabanı kaydı → ${constraints}`);
   ok("G6", responses === 0, `varsayılan cevap yüzeyi → ${responses}`);
 
   return { scenarios, fields, unknown, attributes, constraints, responses };

@@ -1303,17 +1303,34 @@ function resolveSemanticSubjectCore(
   const serviceNegated =
     /(?:servis|bakım|bakim|tamir|onarım|onarim)\s*istemiyorum/i.test(text) ||
     /kendisini\s*(?:arıyorum|ariyorum)/i.test(text);
+  /**
+   * KANONİK ROL SINIFLANDIRICISININ SERVICE KARARI KIND'A TAŞINIR
+   * (98+ Faz I, 2026-09-01). "logo tasarımı arıyorum" ifadesini tek yetkili
+   * rol modülü taksonomiden SERVICE olarak çözüyordu
+   * (tax:services:...:grafik-ve-logo-tasarimi SERVICE_TYPE) ama bu dal
+   * yalnız SERVICE_LEMMAS sözlüğüne baktığı için kind PRODUCT çıkıyor ve
+   * profesyonel metin öznesiz kalıyordu (ölçüldü). İkinci bir sözlük
+   * KURULMAZ: karar zaten hesaplanan canonicalHeadVerdict'ten okunur ve
+   * hizmet adı kullanıcının kendi ifadesidir.
+   */
+  const canonicalServicePhrase =
+    canonicalHeadVerdict.role === "SERVICE" &&
+    canonicalHeadVerdict.provenance !== "NONE"
+      ? canonicalHeadVerdict.evidence[0] ?? null
+      : null;
   if (
     !serviceNegated &&
     !manufactureAsk &&
     (input.intent === "SERVICE" ||
       serviceHit ||
+      canonicalServicePhrase ||
       /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*|boyat\w*|montaj|bakım|bakim)(?=[^\p{L}\p{N}]|$)/iu.test(
         text,
       ))
   ) {
     const serviceLemma =
       serviceHit?.lemma ??
+      canonicalServicePhrase ??
       (/\bboya|boyat|badana/i.test(text)
         ? "boyama"
         : /\bbakım|bakim/i.test(text)

@@ -494,6 +494,33 @@ function composeFurniture(state: CanonicalRequestState): string {
   if (fieldAny(state, "brand")) bits.push("marka fark etmez");
   else if (brand) bits.push(brand);
 
+  /**
+   * KULLANICININ AÇIK BEYANI PROFESYONEL METİNDE KALIR (98+ Faz I,
+   * 2026-09-01). "Yemek masası arıyorum 6 kişilik ahşap" yazan kullanıcının
+   * "6 kişilik" ve "ahşap" beyanları state'e doğru biniyor ama cümleye geri
+   * yazılmıyordu; sorular aynı bilgiyi YENİDEN soruyordu (ölçüldü,
+   * furn-07). Türkçe sıfat isimden önce gelir: beyanlar tip adının ÖNÜNE
+   * eklenir. YALNIZ kullanıcı beyanı (EXPLICIT provenance) yazılır —
+   * çıkarım/katalog dolgusu cevap gibi gösterilmez
+   * (suggestion-is-not-an-answer sözleşmesi).
+   */
+  const explicitModifier = (key: string): string | null => {
+    const f = state.fields[key];
+    if (!f || f.kind !== "VALUE" || !f.value?.trim()) return null;
+    if (
+      f.provenance !== "EXPLICIT_TEXT" &&
+      f.provenance !== "EXPLICIT_BROWSE"
+    ) {
+      return null;
+    }
+    return f.value.trim();
+  };
+  const seats =
+    explicitModifier("diningSeats") ?? explicitModifier("seatingCapacity");
+  if (seats) bits.push(seats);
+  const material = explicitModifier("material");
+  if (material) bits.push(material.toLocaleLowerCase("tr-TR"));
+
   if (furnitureType) bits.push(furnitureType);
   else if (product) bits.push(product);
   else if (state.subcategorySlug === "ev-mobilyasi") bits.push("ev mobilyası");

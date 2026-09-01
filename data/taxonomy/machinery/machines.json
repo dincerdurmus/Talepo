@@ -151,9 +151,13 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "torna tezgahı",
+        "torna tezgahi"
+      ],
       "searchTerms": [
-        "Universal torna"
+        "Universal torna",
+        "torna tezgahı"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",

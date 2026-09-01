@@ -52,7 +52,6 @@ export const BASELINE_INFERRED_BRAND_CANDIDATES: readonly string[] = [
   "furn-08/brandCandidate",
   "home-04/brandCandidate",
   "home-07/brandCandidate",
-  "mach-05/brandCandidate",
   "print-04/brandCandidate",
   "print-12/brandCandidate",
   "re-01/brandCandidate",

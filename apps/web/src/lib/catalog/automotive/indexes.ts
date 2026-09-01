@@ -538,6 +538,10 @@ export function findPartsInText(text: string): Array<{
   record: AutomotivePartRecord;
   confidence: CatalogConfidence;
   matchMode: CatalogMatchMode;
+  /** Eşleşen ifadenin metinde HEMEN ARDINDAN gelen sözcük (varsa). Baş-konum
+   *  denetimi (98+ Faz I) için taşınır; ikinci bir eşleme kopyası kurulmasın
+   *  diye tek yerde, eşleşmenin yapıldığı aynı haystack üzerinde çıkarılır. */
+  nextWord: string | null;
 }> {
   const idx = getAutomotiveIndexes();
   const textNorm = normalizeCatalogKey(text);
@@ -547,9 +551,18 @@ export function findPartsInText(text: string): Array<{
     record: AutomotivePartRecord;
     confidence: CatalogConfidence;
     matchMode: CatalogMatchMode;
+    nextWord: string | null;
     phraseLen: number;
   }> = [];
   const seen = new Set<string>();
+
+  const wordAfter = (hay: string, needle: string): string | null => {
+    const at = hay.indexOf(` ${needle} `);
+    if (at < 0) return null;
+    const rest = hay.slice(at + needle.length + 2);
+    const m = rest.match(/^\s*([\p{L}\p{N}][\p{L}\p{N}-]*)/u);
+    return m ? m[1] ?? null : null;
+  };
 
   for (const row of idx.partPhrases) {
     const inNorm = padded.includes(` ${row.phrase} `);
@@ -565,6 +578,9 @@ export function findPartsInText(text: string): Array<{
       record: row.record,
       confidence: confidenceFromMatchMode(mode),
       matchMode: mode,
+      nextWord: inNorm
+        ? wordAfter(padded, row.phrase)
+        : wordAfter(foldedHay, row.folded),
       phraseLen: row.length,
     });
   }

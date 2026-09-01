@@ -1237,7 +1237,21 @@ function taxonomyFromUnderstanding(
         (result.category.evidence ?? []).includes(
           "service-intent-routes-to-services",
         );
-      if (serviceRouted) {
+      /**
+       * TEK BEYİN KATEGORİ OTORİTESİDİR (98+ Faz I, 2026-09-01). Ham
+       * metinden ikinci kez çözülen ürün ipucu, beynin karara bağladığı
+       * kategoriden FARKLI bir kategoriye işaret ediyorsa state'i o yöne
+       * çeviremez — aksi RC ayrışması üretir. Ölçüldü: "Muhasebe yazılımı
+       * lisansı arıyorum" beyinde technology iken ipucu services/danışmanlık
+       * düğümüyle state'i services'e çekiyor, kullanıcıya hizmet soruları
+       * geliyordu. İpucu yalnız AYNI kategori içinde düğüm/alt-kategori
+       * inceltir; kategori bilinmiyorsa (UNKNOWN) boşluğu doldurabilir.
+       */
+      const brainCategory =
+        result.category.status !== "UNKNOWN" ? result.category.value : null;
+      const crossCategoryHint =
+        Boolean(brainCategory) && node.categoryId !== brainCategory;
+      if (serviceRouted || crossCategoryHint) {
         taxonomyNodeId = null;
       } else {
         categoryId = node.categoryId;
@@ -1733,7 +1747,11 @@ export function buildCanonicalRequestState(input: {
     );
   }
 
-  fields = stripIncompatibleDomainFields(fields, categoryId);
+  /* Metinden AZ ÖNCE çözülen açık beyan bayat sayılmaz — bkz.
+     stripIncompatibleDomainFields (98+ Faz I). */
+  fields = stripIncompatibleDomainFields(fields, categoryId, {
+    preserveExplicitText: true,
+  });
 
   return {
     version: "hybrid-v1",

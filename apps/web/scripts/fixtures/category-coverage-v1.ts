@@ -636,24 +636,27 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
     "family": "lastik",
     "input": "Araba lastiği arıyorum 205/55 R16",
     "adversarial": true,
+    /**
+     * BEKLENTİ GÜNCELLEMESİ (98+ Faz I, 2026-09-01 — bilinçli delta).
+     * Kayıt "lastik ailesi yok" döneminden kalmaydı ve PART bekliyordu.
+     * Kanonik taksonomi bugün lastiği perakende ürün ailesi olarak tutuyor
+     * (tax:automotive:lastik-ve-jant altında PRODUCT_TYPE yaprakları).
+     * Kök düzeltme: rakamlı ölçü jetonları ("205/55", "R16") baş sözcük
+     * taramasını artık gizleyemiyor; baş "lastik" taksonomiye çözülüyor ve
+     * araç çöküşü engelleniyor. kind=VEHICLE hatası kapandı; doğru beklenti
+     * taksonomi otoritesiyle PRODUCT'tır. knownIssue XPASS sözleşmesi
+     * gereği kaldırıldı.
+     */
     "expected": {
       "allowedCategories": [
         "automotive"
       ],
       "allowedKinds": [
-        "PART"
+        "PRODUCT"
       ],
       "forbiddenQuestionKeys": [
         "modelYear"
       ]
-    },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Lastik ailesi yok: talep bütün araç sanılıyor, modelYear/engine gibi ilgisiz sorular geliyor, ebat kayboluyor.",
-      "signature": {
-        "kindEquals": "VEHICLE"
-      }
     },
     "notMeasured": [
       "supplier_capability",
@@ -767,14 +770,9 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "technology"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_SPLIT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Yazılım lisansı ürünü hizmet ipucuyla eziliyor: understanding=technology, state=services; hizmet soruları geliyor.",
-      "signature": {
-        "stateCategoryEquals": "services"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): ham metinden ikinci kez çözülen ürün ipucu artık tek beynin kararından FARKLI kategoriye state çekemiyor (build-state crossCategoryHint korumasi).
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -958,14 +956,9 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "technology"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_SPLIT",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Sunucu bakımı: understanding=services, state=technology — iki otorite ayrışıyor.",
-      "signature": {
-        "understandingCategoryEquals": "services"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): hizmet lemmasının önündeki nesne taksonomide tek kategoriye çözülüyor ve o kategori kendi SERVICE_TYPE yapraklarına sahipse alan orada kalır (domain:service-object; kombi/ofis üretmez, kurucu kuralı sürer).
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -991,14 +984,12 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "logo tasarımı"
       ]
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'logo tasarımı' bir hizmettir; kind PRODUCT çıkıyor ve profesyonel metin öznesiz kalıyor.",
-      "signature": {
-        "kindEquals": "PRODUCT"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): kanonik rol modülünün
+     * taksonomiden çözdüğü SERVICE kararı artık kind'a taşınıyor
+     * (semantic-subject SERVICE dalı canonicalHeadVerdict okur); hizmet adı
+     * kullanıcının ifadesi ("logo tasarımı") olarak korunur.
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1306,14 +1297,12 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "inverter"
       ]
     },
-    "knownIssue": {
-      "rootCause": "RC_NUMBER",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'İnverter' parça alanına yazılıyor; 12000 BTU hiçbir alanda tutulmuyor.",
-      "signature": {
-        "partEquals": "İnverter"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): otomotiv parça kataloğuna
+     * baş-konum kuralı eklendi — parça adının hemen ardından kanonik bütün
+     * ürün geliyorsa ("inverter KLİMA") parça değil niteleyicidir, eşleşme
+     * düşer. capacityBtu=12000 zaten korunuyordu.
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1630,14 +1619,12 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "torna"
       ]
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "RC_BRAND kısmı kapandı: 'Torna' artık marka değil. Kalan açık: 'yedek parça' anahtar kelimesi kategoriyi automotive'e çekiyor; makine parçası ailesi kategori dedektöründe yok.",
-      "signature": {
-        "understandingCategoryEquals": "automotive"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): "yedek parça" artık kategori
+     * SEÇTİREMEZ (alan-bağımsız parça sözü; çıplak kullanımda automotive
+     * varsayılanı korunur) ve "torna tezgahı" kanonik makine taksonomisine
+     * alias olarak bağlandı — canonical-claim kategoriyi machinery yapar.
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -1861,14 +1848,11 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "ahşap"
       ]
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "'6 kişilik ahşap' çıkarılmıyor; material/dimensions kullanıcıya YENİDEN soruluyor, başlık '6'ya bozuluyor.",
-      "signature": {
-        "missingSurfaceTerm": "ahşap"
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): mobilya bestecisi kullanıcının
+     * AÇIK beyanlarını (kişi sayısı, malzeme) tip adının önüne yazar; yalnız
+     * EXPLICIT provenance yazılır, çıkarım cevap gibi gösterilmez.
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",
@@ -2233,14 +2217,11 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
       ],
       "requiredPart": "tekerlek"
     },
-    "knownIssue": {
-      "rootCause": "CATEGORY_SPECIFIC",
-      "expectedVerdict": "KNOWN_FAIL",
-      "explanation": "Parça talebi tanınıyor ama 'tekerlek' part alanına yazılmıyor; ageRange gibi ilgisiz soru geliyor.",
-      "signature": {
-        "partFieldEmpty": true
-      }
-    },
+    /**
+     * knownIssue KAPANDI (98+ Faz I, 2026-09-01): domain-switch temizliği aynı
+     * metinden çözülen EXPLICIT_TEXT beyanı artık silemiyor
+     * (preserveExplicitText); kullanıcının yazdığı parça state alanında kalır.
+     */
     "notMeasured": [
       "supplier_capability",
       "live_notification",

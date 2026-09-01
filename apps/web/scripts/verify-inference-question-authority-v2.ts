@@ -64,7 +64,12 @@ const D1_HIGH_RISK_FULL_QUEUE: readonly string[] = [
   "auto-08/needType@FULL_QUEUE",
   "auto-09/needType@FULL_QUEUE",
   "auto-10/needType@FULL_QUEUE",
-  "auto-11/needType@FULL_QUEUE",
+  
+  /** 98+ Faz I (2026-09-01): auto-11 satırları tabandan ÇIKTI — "araba
+   * lastiği" artık bütün araç sanılmıyor (kind PRODUCT/lastik); araç soruları
+   * (brand/model/modelYear/fuel/mileage/transmission/condition) ve
+   * needType=vehicle çıkarımı bu senaryoda meşru olarak yok. modelYear
+   * coverage fixture'ında forbiddenQuestionKeys ile ayrıca korunuyor. */
   "mach-01/needType@FULL_QUEUE",
   "mach-02/needType@FULL_QUEUE",
   "mach-03/needType@FULL_QUEUE",
@@ -226,13 +231,13 @@ const D1_CORRECTLY_ASKED_FULL_QUEUE: readonly string[] = [
   "auto-10/mileage@FULL_QUEUE",
   "auto-10/modelYear@FULL_QUEUE",
   "auto-10/transmission@FULL_QUEUE",
-  "auto-11/brand@FULL_QUEUE",
-  "auto-11/condition@FULL_QUEUE",
-  "auto-11/fuel@FULL_QUEUE",
-  "auto-11/mileage@FULL_QUEUE",
-  "auto-11/model@FULL_QUEUE",
-  "auto-11/modelYear@FULL_QUEUE",
-  "auto-11/transmission@FULL_QUEUE",
+  
+  
+  
+  
+  
+  
+  
   "auto-12/brand@FULL_QUEUE",
   "auto-12/installation@FULL_QUEUE",
   "baby-01/condition@FULL_QUEUE",

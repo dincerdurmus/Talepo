@@ -39,9 +39,11 @@ import { listTaxonomyAliasCandidates } from "@/lib/taxonomy/registry";
 import type { TaxonomyNode } from "@/lib/taxonomy";
 
 import {
+  SERVICE_LEMMAS,
   classifyRequestedTargetRole,
   foldRoleToken,
 } from "./requested-item-role";
+import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import type { RequestedTargetRole } from "./requested-item-role";
 
 /** Uyumluluk bağlacı — kelime sınırında. */
@@ -392,6 +394,7 @@ export type RelationDomainEvidence = {
   categoryId: string;
   code:
     | "domain:taxonomy-part-bearing"
+    | "domain:service-object"
     | "domain:taxonomy-area"
     | "domain:catalog-brand"
     | "domain:catalog-entity"
@@ -550,6 +553,51 @@ export function resolveRelationDomain(
           span: split.parent.trim(),
           verified: false,
         };
+      }
+    }
+  }
+
+  /**
+   * (6) HİZMET LEMMASININ ÖNÜNDEKİ NESNE ALANI ADLANDIRIR (98+ Faz I,
+   * 2026-09-01). "Sunucu bakım hizmeti arıyorum" cümlesinde bağlaç yoktur;
+   * hizmetin nesnesi ("sunucu") hizmet lemmasının hemen solundadır ve
+   * kanonik taksonomide TEK kategoriye çözülüyorsa alan odur. Kanıt yalnız,
+   * o kategori hizmeti KENDİ taksonomisinde adlandırıyorsa
+   * (categoryOwnsServiceLeaves) üretilir: "sunucu bakımı" technology'de
+   * kalır (Bakım/destek yaprağı var), "kombi bakımı" ve "ofis temizliği"
+   * üretmez ve kurucu kuralıyla genel hizmet pazarına düşer. Kanıt
+   * doğrulanmamıştır (verified: false) — kesinlik iddia edilmez.
+   */
+  {
+    const tokens = text.split(/\s+/u).filter(Boolean);
+    let lemmaAt = -1;
+    outer: for (let i = 1; i < tokens.length; i++) {
+      const tf = foldRoleToken(tokens[i] ?? "");
+      for (const lemma of SERVICE_LEMMAS) {
+        const lf = foldRoleToken(lemma);
+        if (tf === lf || (tf.startsWith(lf) && tf.length - lf.length <= 4)) {
+          lemmaAt = i;
+          break outer;
+        }
+      }
+    }
+    if (lemmaAt > 0) {
+      const prefix1 = tokens[lemmaAt - 1] ?? "";
+      const prefix2 =
+        lemmaAt > 1 ? `${tokens[lemmaAt - 2]} ${prefix1}` : null;
+      for (const aday of [prefix2, prefix1].filter(Boolean) as string[]) {
+        const nodes = listTaxonomyAliasCandidates(aday.trim()).nodes;
+        const domains = new Set(nodes.map((n) => n.categoryId).filter(Boolean));
+        if (domains.size !== 1) continue;
+        const only = [...domains][0];
+        if (only && categoryOwnsServiceLeaves(only)) {
+          return {
+            categoryId: only,
+            code: "domain:service-object",
+            span: aday.trim(),
+            verified: false,
+          };
+        }
       }
     }
   }

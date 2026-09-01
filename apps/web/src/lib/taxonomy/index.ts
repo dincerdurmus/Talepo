@@ -25,6 +25,7 @@ export {
   getRootTaxonomyNodes,
   getTaxonomyChildren,
   getTaxonomyNodesByCategory,
+  categoryOwnsServiceLeaves,
   getSubcategoryTaxonomyNode,
   findTaxonomyTypeUnderSubcategory,
   listTaxonomyAliasCandidates,

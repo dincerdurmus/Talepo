@@ -46,6 +46,7 @@ import type {
 } from "@/lib/request-understanding/types";
 import { detectCategoryResult, hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import { findCanonicalCategoryClaim } from "@/lib/taxonomy/phrase-classification";
+import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import { extractBudgetFromText } from "@/lib/ai/parser/budget";
 import { detectCity } from "@/lib/ai/parser/entity";
 import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
@@ -221,10 +222,21 @@ function gateCategory(
   const serviceIntentForClaim = SERVICE_WORD_RE.test(textOutsideClaim);
   if (claim?.kind === "unique") {
     const claimIsService = claim.node.nodeType === "SERVICE_TYPE";
+    /**
+     * Servis niyeti Hizmetler'e YÖNLENDİRMEZ, eğer iddia edilen kategori
+     * hizmeti KENDİ kanonik taksonomisinde adlandırıyorsa (98+ Faz I,
+     * 2026-09-01). Eski istisna ada özeldi ("automotive"); gerçek gerekçe
+     * kategorinin SERVICE_TYPE yaprağı sahipliğidir ve artık kanonik
+     * veriden türetilir. Ölçüldü: "Sunucu bakım hizmeti arıyorum" —
+     * technology "Bakım / destek sözleşmesi" yaprağına sahipken talep
+     * services'e kaçıyor, IT tedarikçileri onu hiç görmüyordu. Kombi
+     * örneği değişmez: appliances hizmet yaprağı taşımaz, yönlendirme
+     * kurucu kararıyla sürer.
+     */
     const productServiceRedirect =
       serviceIntentForClaim &&
       !claimIsService &&
-      claim.categoryId !== "automotive";
+      !categoryOwnsServiceLeaves(claim.categoryId);
     if (!productServiceRedirect) {
       return {
         value: claim.categoryId,
