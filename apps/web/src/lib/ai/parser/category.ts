@@ -74,6 +74,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "araç",
     "arac",
     "otomobil",
+    /** 98+ Faz I: iki tekerlekli araç dünyası da otomotivdir (ölçüldü:
+     * "Motosiklet kaskı" kategorisiz kalıyordu). */
+    "motosiklet",
+    "motorsiklet",
+    "moto kask",
     "otomotiv",
     "sedan",
     "hatchback",
@@ -118,6 +123,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "üretim hattı",
     "uretim hatti",
     "forklift",
+    "ekskavatör",
+    "ekskavator",
     "torna",
     "freze",
     "enjeksiyon",
@@ -170,6 +177,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "kanepe",
     "vestiyer",
     "gardrop",
+    "gardirop",
     "yatak odası",
     "yatak odasi",
     "tv ünitesi",
@@ -197,6 +205,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "dron",
     "gimbal",
     "yazılım",
+    "otomasyon",
     "yazilim",
     "web sitesi",
     "internet sitesi",
@@ -354,6 +363,12 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     ...APPLIANCE_BRAND_KEYWORDS,
   ],
   health: [
+    /** 98+ Faz I (2026-09-01): kurucu kararıyla (FD-9/I52) "Ağrı kesici
+     * arıyorum" DEMAND'dir; kategori sinyali yoktu ve talep UNKNOWN
+     * kalıyordu (ölçüldü). OTC ürün TAKSONOMİSİ ayrı kurucu kararıdır —
+     * burada yalnız kategori yönlendirmesi verilir. */
+    "ağrı kesici",
+    "agri kesici",
     "sağlık",
     "saglik",
     "medikal",
@@ -442,6 +457,10 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "tepsi",
     "sofra",
     "tencere",
+    /** 98+ Faz I (2026-09-01): çok yaygın mutfak ürünü; kategori sinyali
+     * yoktu ve talep UNKNOWN kalıyordu (ölçüldü, çaydanlık). */
+    "çaydanlık",
+    "caydanlik",
     "tava",
     "süzgeç",
     "suzgec",
@@ -489,8 +508,46 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   ],
 };
 
+/**
+ * Sınır-kurallı anahtar kelime isabeti (98+ Faz I, 2026-09-01): marka/model
+ * bonusları da serbest substring kullanıyordu — ölçüldü: "gla" (Mercedes GLA)
+ * "baGLAntı" içinde eşleşip mobilya parça talebine otomotiv +4 veriyordu.
+ * Kural keywordScore ile AYNIDIR; ikinci bir eşik kurulmaz.
+ */
+function keywordHits(normalized: string, keyword: string): boolean {
+  return keywordScore(normalized, keyword) > 0;
+}
+
 function keywordScore(normalized: string, keyword: string) {
-  if (!normalized.includes(keyword)) return 0;
+  const at = normalized.indexOf(keyword);
+  if (at < 0) return 0;
+  /**
+   * KISA ANAHTAR KELİMEDE SINIR ZORUNLU (98+ Faz I, 2026-09-01). Serbest
+   * substring, kısa sözcükleri alakasız sözcüklerin İÇİNDE buluyordu —
+   * ölçüldü: "far" ∈ "marka FARk etmez" → çaydanlık talebi otomotive
+   * kayıp bütün-araç sanılıyordu. Türkçe ek almış biçimler kaybolmasın
+   * diye tam sınır aranmaz: ≤4 harflik anahtar, sözcük BAŞINDA başlamalı
+   * ve ya sözcük orada bitmeli ya da devam eden harf Türkçe ek başlangıcı
+   * (ünlü veya l: farı, fara, farlar, farlı) olmalıdır. "fark"taki k ek
+   * başlangıcı değildir ve eşleşme düşer. Uzun anahtarlar eski davranışı
+   * korur.
+   */
+  if (keyword.length <= 4) {
+    let ok = false;
+    let i = at;
+    while (i >= 0) {
+      const before = i === 0 ? "" : normalized[i - 1]!;
+      const afterCh = normalized[i + keyword.length] ?? "";
+      const startBoundary = before === "" || !/[a-zçğıöşü0-9]/.test(before);
+      const endOk =
+        afterCh === "" ||
+        !/[a-zçğıöşü0-9]/.test(afterCh) ||
+        /[aeıioöuüln]/.test(afterCh); // n: tamlama tamponu ("tavanın")
+      if (startBoundary && endOk) { ok = true; break; }
+      i = normalized.indexOf(keyword, i + 1);
+    }
+    if (!ok) return 0;
+  }
   return Math.max(1, Math.ceil(keyword.length / 5));
 }
 
@@ -587,10 +644,10 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
     if (categoryId === "automotive") {
       if (
         AUTOMOTIVE_BRAND_KEYWORDS.some((keyword) =>
-          normalized.includes(keyword),
+          keywordHits(normalized, keyword),
         ) ||
         AUTOMOTIVE_MODEL_KEYWORDS.some((keyword) =>
-          normalized.includes(keyword),
+          keywordHits(normalized, keyword),
         )
       ) {
         score += 4;
@@ -634,7 +691,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       }
       if (
         HOME_KITCHEN_BRAND_KEYWORDS.some((keyword) =>
-          normalized.includes(keyword),
+          keywordHits(normalized, keyword),
         )
       ) {
         score += 4;
@@ -654,7 +711,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       }
       if (
         APPLIANCE_BRAND_KEYWORDS.some((keyword) =>
-          normalized.includes(keyword),
+          keywordHits(normalized, keyword),
         ) &&
         !looksLikeTelevisionScreenContext(normalized)
       ) {
@@ -808,7 +865,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       }
       if (
         MACHINERY_BRAND_KEYWORDS.some((keyword) =>
-          normalized.includes(keyword),
+          keywordHits(normalized, keyword),
         )
       ) {
         score += 5;

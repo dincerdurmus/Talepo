@@ -139,6 +139,9 @@ export const PART_LEMMAS = [
 ] as const;
 
 export const ACCESSORY_LEMMAS = [
+  /** 98+ Faz I: "kask" koruyucu aksesuardır — motosiklet kaskı bütün araç
+   * sanılıyordu (ölçüldü). */
+  "kask",
   "kılıf",
   "kilif",
   "stand",
@@ -168,6 +171,10 @@ export const SERVICE_LEMMAS = [
   "servis",
   "revizyon",
   "temizlik",
+  /** 98+ Faz I (2026-09-01): "Evden eve nakliye arıyorum" hizmet dilidir;
+   * lemma eksik olduğu için kind PRODUCT çıkıyordu (ölçüldü). */
+  "nakliye",
+  "nakliyat",
   /**
    * Destek, danışmanlık ve hizmet de hizmettir (1G). Taksonomi bunu zaten
    * böyle adlandırıyor: technology/yazilim-gelistirme altında "Bakım /
@@ -201,6 +208,9 @@ export const SERVICE_LEMMAS = [
    * almak isteyenlerin havuzuna gönderiyor ve ona ilan türü / oda sayısı
    * soruyordu. "emlakçı" bir MÜLK değil, bir hizmet sağlayıcı adıdır.
    */
+  /** 98+ Faz I: "muhasebeci" da hizmet sağlayıcı rol adıdır (ölçüldü:
+   * "Muhasebeci arıyorum aylık" UNKNOWN kalıyordu). */
+  "muhasebeci",
   "emlakçı",
   "emlakci",
 ] as const;
@@ -314,6 +324,15 @@ const TAIL_TOKENS: ReadonlySet<string> = new Set([
    * eklenmeden geriye tarama fiilde duruyor ve baş isim hiç bulunmuyordu.
    */
   "almak",
+  /** 98+ Faz I: aciliyet/selamlama sözleri de istek kuyruğudur — "… acil",
+   * "Merhaba, …" baş taramasını ve kanonik ifade adayını bozuyordu. */
+  "acil",
+  "merhaba",
+  "selam",
+  "bakiyorum",
+  "bakıyorum",
+  "lütfen",
+  "lutfen",
   "satin",
   "yaptirmak",
   "olsun",
@@ -418,6 +437,25 @@ export function classifyRequestedTargetRole(
      * sonraki gerçek sözcüğe kalır.
      */
     if (/\d/.test(tokens[i] ?? "")) continue;
+    /** Sayıyı izleyen kısa birim jetonu ("100 kVA") da baş olamaz (98+
+     *  Faz I): tarama birimde durup gerçek başı gizliyordu (ölçüldü,
+     *  "Jeneratör arıyorum 100 kVA"). */
+    if ((tokens[i] ?? "").length <= 4 && /\d/.test(tokens[i - 1] ?? "")) {
+      continue;
+    }
+    /**
+     * FİİL KUYRUĞU EKİ (98+ Faz I, 2026-09-01): "aryorum" (typo), "arıyom"
+     * (konuşma) TAIL_TOKENS'ta yoktur ama yapıca istek fiilidir; baş
+     * sayılırsa gerçek baş isim taksonomiye hiç sorulmuyor ve araç/ürün
+     * çöküşü doğuyordu (ölçüldü: "Araba lastği aryorum" → VEHICLE).
+     * ≥6 harfli, yorum/iyom ekiyle biten jeton baş olamaz.
+     */
+    if (
+      (tokens[i] ?? "").length >= 6 &&
+      /(?:yorum|iyom)$/u.test(foldRoleToken(tokens[i] ?? ""))
+    ) {
+      continue;
+    }
     const forms = headForms(tokens[i] ?? "");
     if (!forms.length) continue;
     if (forms.some((f) => TAIL_TOKENS.has(f))) continue;
@@ -456,6 +494,21 @@ export function classifyRequestedTargetRole(
       coreEnd--;
       continue;
     }
+    if (
+      (tokens[coreEnd - 1] ?? "").length <= 4 &&
+      /\d/.test(tokens[coreEnd - 2] ?? "")
+    ) {
+      // Sayıyı izleyen kısa birim jetonu ("100 kVA") kuyruktan soyulur.
+      coreEnd--;
+      continue;
+    }
+    if (
+      (tokens[coreEnd - 1] ?? "").length >= 6 &&
+      /(?:yorum|iyom)$/u.test(foldRoleToken(tokens[coreEnd - 1] ?? ""))
+    ) {
+      coreEnd--;
+      continue;
+    }
     const forms = headForms(tokens[coreEnd - 1] ?? "");
     if (forms.length && forms.some((f) => TAIL_TOKENS.has(f))) {
       coreEnd--;
@@ -467,7 +520,34 @@ export function classifyRequestedTargetRole(
     coreEnd > 0 && coreEnd < tokens.length
       ? tokens.slice(0, coreEnd).join(" ")
       : null;
-  for (const aday of corePhrase ? [t, corePhrase] : [t]) {
+  /**
+   * SON YAN CÜMLE DE ADAYDIR (98+ Faz I, 2026-09-01): "Merhaba, logo
+   * tasarımı arıyorum" cümlesinde kanonik ifade son yan cümlededir;
+   * selamlama öbeği bütün-ifade adayını bozuyor ve rol UNKNOWN kalıyordu
+   * (ölçüldü).
+   */
+  const lastClause = (() => {
+    const parts = t.split(/[,;:!?]/).map((x) => x.trim()).filter(Boolean);
+    if (parts.length < 2) return null;
+    const last = parts[parts.length - 1]!;
+    const lt = last.split(/\s+/u).filter(Boolean);
+    let end = lt.length;
+    while (end > 0) {
+      const w = lt[end - 1] ?? "";
+      const forms = headForms(w);
+      if (/\d/.test(w) || (forms.length && forms.some((f) => TAIL_TOKENS.has(f)))) {
+        end--;
+        continue;
+      }
+      if (w.length >= 6 && /(?:yorum|iyom)$/u.test(foldRoleToken(w))) { end--; continue; }
+      break;
+    }
+    const core = end > 0 ? lt.slice(0, end).join(" ") : null;
+    return core && core !== t ? core : null;
+  })();
+  const adaylar = [t, ...(corePhrase ? [corePhrase] : []), ...(lastClause ? [lastClause] : [])];
+  for (const aday of adaylar) {
+
     if (isCanonicalWholeProductPhrase(aday)) {
       return {
         role: "WHOLE_PRODUCT",

@@ -11,6 +11,7 @@ export type NumberRole =
   | "QUANTITY"
   | "WEIGHT"
   | "DIMENSION"
+  | "ROOM_LAYOUT"
   | "MILEAGE"
   | "CAPACITY"
   | "AREA"
@@ -102,7 +103,10 @@ export function typicalTelevisionSizeInText(text: string): string | null {
  * then bare-after-alpha model candidates, then OTHER.
  */
 export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
-  const text = normalizedText;
+  /** 98+ Faz I (2026-09-01): JS /i Türkçe İ'yi katlamaz — "50 BİN ADET"
+   * hiçbir role girmiyordu (ölçüldü). Tek yerde tr-katlanır; Türkçe
+   * katlama uzunluk korur, indeksler değişmez. */
+  const text = normalizedText.toLocaleLowerCase("tr-TR");
   const lower = text.toLocaleLowerCase("tr-TR");
   const results: ClassifiedNumber[] = [];
   const claimed = new Set<number>();
@@ -301,6 +305,63 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     claim(dm.index, dm[0].length);
   }
 
+  /**
+   * UZUNLUK BİRİMİ VE BEDEN NUMARASI (98+ Faz I, 2026-09-01). Ölçüldü:
+   * "24 cm" ve "4 numara" hiçbir role girmeyip OTHER kalıyor, model kanıt
+   * kapısı bu sayıyı "serbest" sanıp "tencere kapağı 24 cm" / "4" gibi çöp
+   * model kimlikleri kabul ediyordu. "N cm/mm/metre" bir BOYUTTUR;
+   * "N numara/beden" bir BEDENDİR — ikisi de model/adet/bütçe olamaz.
+   */
+  const lenRe = /(\d+(?:[.,]\d+)?)\s*(cm|mm|santim|milim|metre)\b/gi;
+  let lm: RegExpExecArray | null;
+  while ((lm = lenRe.exec(text)) !== null) {
+    if (isClaimed(lm.index, lm[0].length)) continue;
+    results.push({
+      raw: lm[1] ?? lm[0],
+      role: "DIMENSION",
+      value: Number((lm[1] ?? "").replace(",", ".")),
+      unit: (lm[2] ?? "").toLocaleLowerCase("tr-TR"),
+      evidence: [lm[0], "length-unit"],
+      index: lm.index,
+    });
+    claim(lm.index, lm[0].length);
+  }
+  /**
+   * ÖZELLİK SAYISI (98+ Faz I): "2 kapaklı", "3 çekmeceli", "5 raflı" bir
+   * ürün NİTELİĞİDİR — model/adet/bütçe olamaz. Ölçüldü: "2 kapaklı"
+   * serbest sayı sanılıp model kanalına yazılıyordu.
+   */
+  const featRe =
+    /(\d+)\s*(kapaklı|kapakli|kapılı|kapili|çekmeceli|cekmeceli|raflı|rafli|gözlü|gozlu|kollu|katlı|katli)(?=$|[^\p{L}\p{N}])/giu;
+  let fm2: RegExpExecArray | null;
+  while ((fm2 = featRe.exec(text)) !== null) {
+    if (isClaimed(fm2.index, fm2[0].length)) continue;
+    results.push({
+      raw: fm2[1] ?? fm2[0],
+      role: "DIMENSION",
+      value: Number(fm2[1]),
+      unit: (fm2[2] ?? "").toLocaleLowerCase("tr-TR"),
+      evidence: [fm2[0], "feature-count"],
+      index: fm2.index,
+    });
+    claim(fm2.index, fm2[0].length);
+  }
+
+  const sizeNoRe = /(\d+)\s*(numara|beden)\b/gi;
+  let sm2: RegExpExecArray | null;
+  while ((sm2 = sizeNoRe.exec(text)) !== null) {
+    if (isClaimed(sm2.index, sm2[0].length)) continue;
+    results.push({
+      raw: sm2[1] ?? sm2[0],
+      role: "DIMENSION",
+      value: Number(sm2[1]),
+      unit: (sm2[2] ?? "").toLocaleLowerCase("tr-TR"),
+      evidence: [sm2[0], "size-number"],
+      index: sm2.index,
+    });
+    claim(sm2.index, sm2[0].length);
+  }
+
   // Room layout like 2+1 — not quantity
   const roomRe = /\b([1-9])\s*\+\s*([0-9])\b/g;
   let rm: RegExpExecArray | null;
@@ -308,7 +369,12 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     if (isClaimed(rm.index, rm[0].length)) continue;
     results.push({
       raw: rm[0],
-      role: "OTHER",
+      /**
+       * 98+ Faz I (2026-09-01): oda düzeni OTHER değil kendi rolüdür —
+       * OTHER "serbest sayı" sayılıp model kanıt kapısından geçiyordu
+       * ("2+1" model halüsinasyonu ölçüldü).
+       */
+      role: "ROOM_LAYOUT",
       evidence: [rm[0], "room-layout"],
       index: rm.index,
     });
@@ -570,6 +636,7 @@ export type ModelTokenEvidence = "VERIFIED_MODEL" | "REJECTED";
 
 const NON_MODEL_CLAIM_ROLES: ReadonlySet<string> = new Set([
   "MODEL_YEAR",
+  "ROOM_LAYOUT",
   "QUANTITY",
   "WEIGHT",
   "DIMENSION",

@@ -181,8 +181,25 @@ export function extractAssertedBrand(rawInput: string): string | null {
     .split(/[^\p{L}\p{N}&.+-]+/u)
     .filter(Boolean);
   const isMarka = (w: string) => /^marka(?:s[ıi]|l[ıi])?$/u.test(foldTr(w));
+  /**
+   * "marka fark etmez / farketmez / önemli değil" bir TERCİH beyanıdır,
+   * marka beyanı değil (98+ Faz I, 2026-09-01). Ölçülen halüsinasyon:
+   * "supurge ariyorum marka farketmez" cümlesinde desen "marka"nın SOLUNDAKİ
+   * sözcüğü ("arıyorum", "kg", "acil") marka sanıp USER_ASSERTED yazıyordu.
+   * ANY ifadesine ait "marka" jetonu beyan taramasından atlanır; kural
+   * kelimeye değil ifade sınıfına bağlıdır.
+   */
+  const anyAfterMarka = (i: number) => {
+    const n1 = foldTr(words[i + 1] ?? "");
+    const n2 = foldTr(words[i + 2] ?? "");
+    if (/^farketme/.test(n1) || /^farkeder/.test(n1)) return true;
+    if (n1 === "fark" && /^etmez/.test(n2)) return true;
+    if (/^onemli/.test(n1) && (/^degil/.test(n2) || n2 === "")) return true;
+    return false;
+  };
   for (let i = 0; i < words.length; i++) {
     if (!isMarka(words[i]!)) continue;
+    if (anyAfterMarka(i)) continue;
     // "marka olarak X"
     if (foldTr(words[i]!) === "marka" && foldTr(words[i + 1] ?? "") === "olarak") {
       const cand = words[i + 2];

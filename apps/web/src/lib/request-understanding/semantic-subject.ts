@@ -1005,8 +1005,16 @@ function resolveSemanticSubjectCore(
   }
 
   // Structural "X için Y" when Y looks like a spare and lemma path did not resolve
+  /**
+   * 98+ Faz I (2026-09-01): bağlaç diyakritiksiz de yazılır ("icin") ve
+   * fiil her zaman yoktur. Ölçüldü: "bebek arabasi icin tekerlek ariyorum"
+   * ve fiilsiz "Bebek arabası için tekerlek" bu bloğa hiç giremeyip bütün
+   * ürün sanılıyordu. Bağlaç artık iki yazımıyla eşleşir; fiil koşulu,
+   * cümlenin TAMAMI "X için Y" yapısındaysa aranmaz (fiilsiz talep de
+   * talebin kendisidir), aksi hâlde eski gürültü koruması sürer.
+   */
   const forPart = text.match(
-    /(.+?)\s+için\s+(.+?)(?:\s+(?:arıyorum|ariyorum|lazım|lazim)|$)/iu,
+    /(.+?)\s+(?:için|icin)\s+(.+?)(?:\s+(?:arıyorum|ariyorum|arıyom|ariyom|lazım|lazim|istiyorum|istiyom)|$)/iu,
   );
   if (
     !wholeVehicle &&
@@ -1014,7 +1022,10 @@ function resolveSemanticSubjectCore(
     // plastik parça ürettirmek" bir tedarik değil, ürettirme talebidir.
     !explicitManufactureIntent &&
     forPart?.[2] &&
-    /(?:arıyorum|ariyorum|lazım|lazim|olmasın)/i.test(text)
+    (/(?:arıyorum|ariyorum|arıyom|ariyom|lazım|lazim|olmasın|istiyorum|istiyom)/i.test(
+      text,
+    ) ||
+      (forPart[0] ?? "").trim().length === text.trim().length)
   ) {
     const requested = forPart[2].trim();
     const requestedLower = requested.toLocaleLowerCase("tr-TR");
@@ -1491,6 +1502,10 @@ function resolveSemanticSubjectCore(
     !partHit &&
     !accessoryHit &&
     (acquiresWholeObject(input.intent) ||
+      /* 98+ Faz I (2026-09-01): fiilsiz "CNC tezgahı" da bütün makine
+         talebidir — araç dalıyla aynı kural (intent UNKNOWN kabul);
+         kategori/makine kanıtı zaten koşulun başında aranıyor. */
+      input.intent === "UNKNOWN" ||
       /ikinci\s*el|makine\s*(?:arıyorum|lazım|ariyorum|lazim)/i.test(text))
   ) {
     return {
@@ -1554,7 +1569,16 @@ function resolveSemanticSubjectCore(
 
   // --- PRODUCT (whole retail) ---
   if (
-    input.intent === "BUY" ||
+    /* 98+ Faz I (2026-09-01): hizmet pazarında (services) çıplak BUY niyeti
+       tek başına PRODUCT iddia edemez — "dugun fotogrfcisi ariyorum" (typo)
+       hizmet lemmasını kaçırınca 0.75 güvenle PRODUCT üretiyordu (ölçüldü).
+       Belirsizlikte UNKNOWN dürüstlüğü yüksek güvenli yanlıştan iyidir. */
+    (input.intent === "BUY" &&
+      (input.categoryId != null
+        ? input.categoryId !== "services"
+        : /* Kategori çözülmese de kanonik rol bütün ürün diyorsa ürün
+             kanıtı vardır — "Jeneratör arıyorum 100 kVA" (ölçüldü). */
+          canonicalHeadVerdict.role === "WHOLE_PRODUCT")) ||
     input.identity.brand ||
     input.identity.model ||
     input.categoryId === "appliances" ||

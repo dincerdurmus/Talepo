@@ -45,7 +45,7 @@ import type {
   UnderstandingValue,
 } from "@/lib/request-understanding/types";
 import { detectCategoryResult, hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
-import { findCanonicalCategoryClaim } from "@/lib/taxonomy/phrase-classification";
+import { findCanonicalCategoryClaim, isCanonicalWholeProductPhrase } from "@/lib/taxonomy/phrase-classification";
 import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import { extractBudgetFromText } from "@/lib/ai/parser/budget";
 import { detectCity } from "@/lib/ai/parser/entity";
@@ -537,6 +537,8 @@ function extractListingType(
   normalized: string,
   intent: RequestIntent,
 ): UnderstandingValue<string> | undefined {
+  /* 98+ Faz I: BÜYÜK HARF yazım için tek yerde tr-katla ("KİRALIK DAİRE"). */
+  normalized = normalized.toLocaleLowerCase("tr-TR");
   const saleWord = normalized.match(/\bsatılık\b|\bsatilik\b/i);
   const rentWord = normalized.match(/\bkiralık\b|\bkiralik\b/i);
   // Yazılmış söz her hâlükârda çıkarımı yener; "satılık" ikisi birden
@@ -553,6 +555,21 @@ function extractListingType(
       provenance: "EXPLICIT",
       source: "USER_EXPLICIT",
       evidence: [rentWord[0]],
+    });
+  }
+  /**
+   * FİİL DE AÇIK BEYANDIR (98+ Faz I, 2026-09-01). "Ofis kiralamak
+   * istiyorum" yazan kullanıcı ilan türünü SÖYLEMİŞTİR; değer intent
+   * çıkarımı değil, yazılı fiilin deterministik okumasıdır. INFERRED
+   * bırakılınca soru motoru listingType'ı YENİDEN soruyordu (ölçüldü).
+   * "kiraya ver..." arz dilidir ve bu kalıba girmez (SELL yolu ayrı).
+   */
+  const rentVerb = normalized.match(/\bkirala\w*/iu);
+  if (rentVerb && intent === "RENT") {
+    return uv("Kiralık", {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      evidence: [rentVerb[0]],
     });
   }
   if (intent === "SELL") {
@@ -1589,7 +1606,23 @@ export function understandRequest(
         const after = lt
           .slice(bi + String(identityBlock.brand.value).length)
           .replace(/^[\s,:–-]+/, "");
-        if (lc && after.startsWith(lc)) return true;
+        if (lc && after.startsWith(lc)) {
+          /**
+           * BAŞ-KONUM İSTİSNASI (98+ Faz I, 2026-09-01). Marka-ardılı span
+           * kanıtı, adayın hemen ardından kanonik bir BÜTÜN ÜRÜN adı
+           * geliyorsa geçersizdir: "Bosch anastre fırın" cümlesinde
+           * "anastre" fırının NİTELEYİCİSİDİR (yazım hatalı bir sıfat),
+           * modeli değil — Türkçede baş sondadır. Rakam içeren adaylar
+           * ("A123 buzdolabı") gerçek model kodudur ve istisnadan muaftır.
+           */
+          if (/\d/.test(lc)) return true;
+          const rest = after.slice(lc.length).replace(/^[\s,:–-]+/, "");
+          const nextWord = rest.match(/^([\p{L}][\p{L}-]*)/u)?.[1] ?? null;
+          if (nextWord && isCanonicalWholeProductPhrase(nextWord)) {
+            return false;
+          }
+          return true;
+        }
       }
     }
     return false;
@@ -2682,16 +2715,28 @@ export function understandRequest(
    * AYNI tek kapıdan okunur; ikinci bir policy engine yoktur. OTC/reçeteli
    * ilaç ÜRÜN taleplerinin koşulları burada KARARLAŞTIRILMAMIŞTIR.
    */
+  /**
+   * Yazım biçiminden bağımsızlık (98+ Faz I, 2026-09-01): kalıplar
+   * tr-katlanmış kopya üstünde aranır — BÜYÜK HARF ("İLACINI") ve
+   * diyakritiksiz ("ilacini") yazımlar da aynı soru biçimidir. Ölçüldü:
+   * JS \b ASCII'dir ve dotted-ı yazımda tesadüfen sınır üretiyordu; ascii
+   * yazımda ekli "ilacini" hiç eşleşmiyor, tavsiye sorusu DEMAND'e
+   * sızıyordu. "ilaç" hâlâ tek başına karar VEREMEZ — iki koşul birlikte.
+   */
+  const scopeHay = normalizedInput
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
+    .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u");
   const adviceQuestionForm =
-    /\b(hangi|ne)\b[\s\S]{0,60}?\b(almal[ıi]y[ıi]m|kullanmal[ıi]y[ıi]m|i[cç]meliyim|[oö]nerirsiniz)\b/i.test(
-      normalizedInput,
+    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanmaliyim|icmeliyim|onerirsiniz)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
     );
   const medicalTreatmentContext =
-    /\b(ila[cç]|ila[cç][ıi]|hap[ıi]?|merhem|tedavi(?:yi|si)?)\b/i.test(
-      normalizedInput,
+    /(?:^|[^a-z0-9])(ilac[a-z]*|hap[i]?|merhem|tedavi[a-z]*)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
     ) ||
-    /\b(a[gğ]r[ıi]m|a[gğ]r[ıi]s[ıi]|belirti(?:m|lerim)?)\b/i.test(
-      normalizedInput,
+    /(?:^|[^a-z0-9])(agrim|agrisi|belirti(?:m|lerim)?)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
     );
   const isMedicalAdviceQuestion =
     !isUnsupportedSupply && adviceQuestionForm && medicalTreatmentContext;

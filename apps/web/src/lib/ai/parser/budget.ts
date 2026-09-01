@@ -84,7 +84,12 @@ type BudgetCandidate = {
  * Prefers currency / "bin" / budget keywords; avoids bare quantity numbers.
  */
 export function extractBudgetFromText(text: string): DetectedBudget | undefined {
-  const source = text.replace(/\u00a0/g, " ");
+  /**
+   * 98+ Faz I (2026-09-01): B\u00dcY\u00dcK HARF T\u00fcrk\u00e7e yaz\u0131m ("B\u00dcT\u00c7EM 2 M\u0130LYON TL")
+   * /i bayra\u011f\u0131yla e\u015fle\u015fmiyordu \u2014 \u0130 ASCII i'ye katlanmaz. Kaynak tek yerde
+   * tr-katlan\u0131r; desenler zaten k\u00fc\u00e7\u00fck harf arar.
+   */
+  const source = text.replace(/\u00a0/g, " ").toLocaleLowerCase("tr-TR");
   const candidates: BudgetCandidate[] = [];
 
   const afterOf = (match: RegExpMatchArray) =>

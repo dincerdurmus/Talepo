@@ -127,6 +127,25 @@ export function enrichAutomotiveSubject(
   if (modelHit && catalogModelOnlyNegated(text, modelHit.record)) {
     modelHit = null;
   }
+  /**
+   * SÖZCÜK-BİÇİMLİ MODEL TEK BAŞINA OTOMOTİV KANITI DEĞİLDİR (98+ Faz I,
+   * 2026-09-01). "Excel raporlama otomasyonu" cümlesinde katalog "Excel"i
+   * Hyundai Excel sanıp talebe Hyundai markası yazıyordu (ölçüldü) — çünkü
+   * modelHit kendi kendisinin bağlam kanıtıydı. Rakam içermeyen model adı
+   * ("excel", "clio"), başka HİÇBİR otomotiv kanıtı yokken (kategori
+   * bağlamı, marka, nesil, OEM) eşleşme sayılmaz. "Clio bakımı" korunur:
+   * "clio" kategori dedektöründe otomotivi kazandırır ve bağlam bayrağı
+   * gelir; rakamlı kodlar ("320i") kendi kanıtını taşır.
+   */
+  if (
+    modelHit &&
+    !/\d/.test(modelHit.record.name) &&
+    !input.automotiveContext &&
+    !brandHit &&
+    !oem
+  ) {
+    modelHit = null;
+  }
 
   let inferredBrand = brandHit;
   if (!inferredBrand && modelHit) {

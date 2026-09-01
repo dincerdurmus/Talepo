@@ -61,18 +61,18 @@ export type FrozenAuthorityName =
 /** Ölçülen taban — yüzey başına ve toplam. */
 export const PROJECTION_AUTHORITY_BASELINE = {
   scenarios: 108,
-  totalIdentities: 528,
+  totalIdentities: 530,
   attributes: {
     UNKNOWN: 0,
     INFERRED: 56,
     VERIFIED: 15,
-    USER_EXPLICIT: 193,
+    USER_EXPLICIT: 194,
   },
   constraints: {
     UNKNOWN: 0,
     INFERRED: 56,
     VERIFIED: 15,
-    USER_EXPLICIT: 193,
+    USER_EXPLICIT: 194,
   },
   /**
    * Aynı `senaryo/alan` çiftinin iki yüzeyde FARKLI otorite taşıdığı kimlik
@@ -385,6 +385,10 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
   "home-04/quantity/constraints=USER_EXPLICIT",
   "home-06/productType/attributes=USER_EXPLICIT",
   "home-06/productType/constraints=USER_EXPLICIT",
+  /** 98+ Faz I korpus kazancı: "24 cm" artık DIMENSION rolüyle sınıflanıyor
+   * ve kullanıcının ölçü beyanı projeksiyona USER_EXPLICIT iner. */
+  "home-07/dimensions/attributes=USER_EXPLICIT",
+  "home-07/dimensions/constraints=USER_EXPLICIT",
   "home-07/material/attributes=USER_EXPLICIT",
   "home-07/material/constraints=USER_EXPLICIT",
   "home-07/part/attributes=USER_EXPLICIT",
@@ -637,7 +641,7 @@ export const FROZEN_PROJECTION_AUTHORITY_IDENTITIES: readonly string[] = [
  * Biçim: `senaryo=sha256(JSON)[0..16]`.
  */
 export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
-  "re-01=b522b31911420aed",
+  "re-01=0ba04b7da606a0bc",
   "re-02=bf0de82fd9e996f6",
   "re-03=82d82fdb1b4c0fb6",
   "re-04=4c11a3617e59cdcc",
@@ -735,11 +739,11 @@ export const FROZEN_PROJECTION_PAYLOAD_SIGNATURES: readonly string[] = [
   "home-04=2a064a3469f7dfb3",
   "home-05=1c6336dcfc48b557",
   "home-06=a753ad7ae6fc996e",
-  "home-07=1d87459bbc4d51e2",
+  "home-07=c4f87bf5f75fd8b9",
   "home-08=1e59bea2d7f9d4e8",
   "svc-01=3d892a872f50bb53",
   "svc-02=06f6ba328a692595",
-  "svc-03=0285e74622378256",
+  "svc-03=1aa3ea471928c00a",
   "svc-04=704ca4b651b80981",
   "svc-05=3375b3ae41dd5760",
   "svc-06=a5ff1aeebc03dc35",

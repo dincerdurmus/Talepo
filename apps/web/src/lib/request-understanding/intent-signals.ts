@@ -179,6 +179,12 @@ const LEXICON: Lexicon[] = [
       // ("Makinemizi satmak istiyoruz" yalnız tekil kalıp yüzünden hiçbir
       //  sinyal üretmiyordu — ölçüldü.)
       /\bsatmak\s+isti(?:yorum|yoruz|yor)\b/i,
+      /**
+       * 98+ Faz I (2026-09-01): iyelik ekli nesne + çıplak "satmak" mastarı
+       * da arzdır — "Aracımı satmak" (fiil düşmüş) DEMAND'e sızıyordu
+       * (ölçüldü).
+       */
+      /(?:^|[^\p{L}\p{N}])\p{L}+[ıiuü]m(?:[ıiuü]z)?[ıiuü]?\s+satmak(?:[^\p{L}\p{N}]|$)/iu,
       /\bsat(?:ıyorum|iyorum|ıyoruz|iyoruz)\b/i,
       /\bsat(?:acağım|acagim|acağız|acagiz)\b/i,
       /\bsatışa\s*çıkar/i,
@@ -281,6 +287,13 @@ export function collectIntentSignals(
   normalizedText: string,
   scope?: IntentScope,
 ): IntentSignalHit[] {
+  /**
+   * YAZIM BİÇİMİNDEN BAĞIMSIZLIK (98+ Faz I, 2026-09-01). JS /i bayrağı
+   * Türkçe İ'yi katlamaz: "ARACIMI SATMAK İSTİYORUM" hiçbir SELL kalıbıyla
+   * eşleşmiyor, arz talebi DEMAND olarak yayına sızıyordu (ölçüldü).
+   * Desenler küçük-harf dilindedir; haystack tek yerde tr-katlanır.
+   */
+  normalizedText = normalizedText.toLocaleLowerCase("tr-TR");
   const hits: IntentSignalHit[] = [];
   const negated = new Set<RequestIntent>();
 

@@ -55,7 +55,7 @@ const CONNECTIVE_RE = /(?:^|[^\p{L}\p{N}])(?:için|icin)(?=[^\p{L}\p{N}]|$)/iu;
  * adları için güncellenmesi gerekmez.
  */
 const REQUEST_TAIL_RE =
-  /(?:^|[^\p{L}\p{N}])(?:arıyorum|ariyorum|arıyoruz|ariyoruz|lazım|lazim|gerekiyor|gerek|istiyorum|istiyoruz|alacağım|alacagim|almak|bakıyorum|bakiyorum|olmasın|olmasin|bulmak|temin|acil)(?=[^\p{L}\p{N}]|$)/giu;
+  /(?:^|[^\p{L}\p{N}])(?:arıyorum|ariyorum|arıyom|ariyom|arıyoruz|ariyoruz|lazım|lazim|istiyom|bakıyom|bakiyom|gerekiyor|gerek|istiyorum|istiyoruz|alacağım|alacagim|almak|bakıyorum|bakiyorum|olmasın|olmasin|bulmak|temin|acil)(?=[^\p{L}\p{N}]|$)/giu;
 
 /**
  * Yalnız bir GÜVENLİK sınırı — ad sınırı değil, bozuk/serbest metne karşı
@@ -292,7 +292,17 @@ export function readUsageContextSplit(rawInput: string): UsageContextSplit | nul
    * geçmez: onlarda ilişki gerçekten parça ilişkisidir ve sol taraf kanıtsız
    * olsa bile korunur.
    */
-  if (role === "UNKNOWN" && !contextNamesConcreteProduct(split.parent)) {
+  /**
+   * Selamlama/gürültü yan cümlesi ürün kanıtını GİZLEYEMEZ (98+ Faz I,
+   * 2026-09-01). "Merhaba, Bebek arabası için tekerlek" cümlesinde sol
+   * yakanın SON yan cümlesi ("Bebek arabası") somut ürünü adlandırır; bütün
+   * yakaya bakınca selamlama kontrolü bozuyor ve talep kullanım bağlamı
+   * sanılıp parça ilişkisi düşüyordu (ölçüldü). readRelationContext ile
+   * aynı kural: karar SON yan cümle üstünden verilir.
+   */
+  const parentCore =
+    split.parent.split(/[,;:!?]/).pop()?.trim() || split.parent;
+  if (role === "UNKNOWN" && !contextNamesConcreteProduct(parentCore)) {
     return { context: split.parent, target, role };
   }
   return null;

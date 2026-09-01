@@ -565,12 +565,12 @@ function measureCorpus(): {
    * unknown 988 sabit).
    */
   /* 98+ Faz I (2026-09-01) sayılı rebase: 13 senaryoluk davranış deltası — appl-02 inverter parça sızıntısı kapandı (-part,-partSystem), auto-11 lastik ürünleşti (-needType=vehicle, araç soruları düştü), tech-04/tech-11 RC ayrışması kapandı (state kategorisi beyni izler), tech-12 SERVICE kind (+needType,+serviceType), mach-05 machinery claim (+productType), baby-08/furn-04/home-07 kullanıcı parça beyanı korunuyor (+part), health-06 hint kategoriyi ezemiyor. Kimlik-düzeyi tam liste: fixtures/projection-authority-v1.ts */
-  ok("E2", fields === 1280, `kanonik alan sayısı değişti → ${fields}`);
+  ok("E2", fields === 1281, `kanonik alan sayısı değişti → ${fields}`);
   ok("E3", unknown === 982, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
-  ok("E6", attributes === 264, `attributes tabanı kaydı → ${attributes}`);
-  ok("E7", constraints === 264, `constraints tabanı kaydı → ${constraints}`);
+  ok("E6", attributes === 265, `attributes tabanı kaydı → ${attributes}`);
+  ok("E7", constraints === 265, `constraints tabanı kaydı → ${constraints}`);
 
   return {
     scenarios,
