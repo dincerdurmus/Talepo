@@ -14,6 +14,7 @@ import {
   PART_LEMMAS,
   SERVICE_LEMMAS,
   serviceLemmaIsPhraseHead,
+  serviceNounIsPostVerbAuxiliary,
 } from "./requested-item-role";
 import {
   containsPhraseToken,
@@ -107,8 +108,19 @@ function acquiresWholeObject(intent: SemanticSubjectInput["intent"]): boolean {
   return intent === "BUY" || intent === "RENT";
 }
 
+/**
+ * EKSEN AYRIMI (98+ Part IV, 2026-09-01): "almak istiyorum / satın almak"
+ * SATIN ALMA niyeti kanıtıdır, ARAÇ kanıtı değil. Çıplak satın-alma fiili
+ * araç dalını tek başına tetiklerse kategorisiz her alışveriş cümlesi
+ * ("catering fiyatı almak istiyorum") VEHICLE'a çöküyordu (ölçüldü).
+ * Araç-çapalı ifadeler (araç arıyorum/lazım, komple/kendisini arıyorum)
+ * ayrı desende kalır; jenerik satın-alma fiili yalnız araç bağlamıyla
+ * (kategori automotive ya da araç kimliği) birlikte araç kanıtı sayılır.
+ */
 const WHOLE_VEHICLE_SEEK =
-  /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)|(?:satın\s*almak|satin\s*almak|satın\s*alıyorum|satin\s*aliyorum|almak\s*istiyorum)/i;
+  /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)/i;
+const GENERIC_PURCHASE_VERB =
+  /(?:satın\s*almak|satin\s*almak|satın\s*alıyorum|satin\s*aliyorum|almak\s*istiyorum)/i;
 
 type IdentityLite = {
   brand?: string | null;
@@ -791,7 +803,11 @@ function resolveSemanticSubjectCore(
   }
 
   const partNegated = PART_NEGATION.test(text);
-  const explicitVehiclePurchase = WHOLE_VEHICLE_SEEK.test(text);
+  const explicitVehiclePurchase =
+    WHOLE_VEHICLE_SEEK.test(text) ||
+    (GENERIC_PURCHASE_VERB.test(text) &&
+      (input.categoryId === "automotive" ||
+        identitySuggestsVehicle(input.identity)));
 
   /**
    * KANONİK BAŞ İSİM, ARAÇ ÇÖKÜŞÜNÜ ENGELLER (2026-08-30).
@@ -1330,13 +1346,27 @@ function resolveSemanticSubjectCore(
     canonicalHeadVerdict.provenance !== "NONE"
       ? canonicalHeadVerdict.evidence[0] ?? null
       : null;
+  /**
+   * ÇIPLAK AD BACAĞI DA KONUM KURALINA TABİDİR (98+ Part IV): fiil
+   * sonrası "montaj/bakım" eşlik eden spektir; tek yetkili kural
+   * requested-item-role'den okunur (fiil bacakları yaptır/boyat muaf).
+   */
+  const bareServiceNoun = (() => {
+    const m =
+      /(?:^|[^\p{L}\p{N}])(montaj|bakım|bakim)(?=[^\p{L}\p{N}]|$)/iu.exec(
+        text,
+      );
+    if (!m) return false;
+    return !serviceNounIsPostVerbAuxiliary(text, m.index);
+  })();
   if (
     !serviceNegated &&
     !manufactureAsk &&
     (input.intent === "SERVICE" ||
       serviceHit ||
       canonicalServicePhrase ||
-      /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*|boyat\w*|montaj|bakım|bakim)(?=[^\p{L}\p{N}]|$)/iu.test(
+      bareServiceNoun ||
+      /(?:^|[^\p{L}\p{N}])(?:yaptır\w*|yaptir\w*|boyat\w*)(?=[^\p{L}\p{N}]|$)/iu.test(
         text,
       ))
   ) {
@@ -1746,7 +1776,12 @@ function userProductPhrase(
     if (VERB_TAIL_WORDS.has(f) || REQUEST_VERB_WORDS.has(f)) return true;
     return (
       (w.length >= 6 && /(?:yorum|iyom)$/u.test(f)) ||
-      (w.length >= 7 && /(?:tirmak|turmak|durmak|lamak|lemek)$/u.test(f))
+      /* Ettirgen mastarın İNCE ünlü uyumu da fiildir: "diktirmek",
+         "yeniletmek" ada sızıyordu (ölçüldü, 98+ Part IV). */
+      (w.length >= 7 &&
+        /(?:tirmak|tirmek|turmak|turmek|dirmak|dirmek|durmak|durmek|lamak|lemek|latmak|letmek)$/u.test(
+          f,
+        ))
     );
   };
   let end = tokens.length;
@@ -1781,6 +1816,23 @@ function userProductPhrase(
       .map((v) => foldRoleToken(v)),
   );
   while (words.length && idBits.has(foldRoleToken(words[0] ?? ""))) {
+    words.shift();
+  }
+  /* Baştaki 1. tekil iyelik+yönelme jetonu KONUM/YARARLANICI bağlamıdır,
+     ürün adı değil: "işyerime güvenlik kamerası", "evime klima" (ölçüldü,
+     98+ Part IV). Desen morfolojiktir ve BİLEREK dardır: iyelik eki YÜKSEK
+     ünlülüdür (-ım/-im/-um/-üm), fiil-isim -ma/-me ise düşük ünlü taşır —
+     "paketleme makinesi"nin "paketleme"si bu kapıdan geçemez (ölçüldü:
+     geniş desen onu soyup ürünü "makinesi"ne indiriyordu). Ünlü-sonlu
+     gövdelerin çıplak -m'li hâli ("kafeme") bilinçli kapsam dışıdır —
+     yanlış soyma riski sıfır tutulur. Yalnız baş jeton, yalnız ad başka
+     sözcük bırakıyorsa soyulur. */
+  while (
+    words.length > 1 &&
+    /^\p{L}{2,}[ıiuü]m[ea]$/iu.test(
+      (words[0] ?? "").toLocaleLowerCase("tr-TR"),
+    )
+  ) {
     words.shift();
   }
   if (words.length < 1 || words.length > 4) return null;

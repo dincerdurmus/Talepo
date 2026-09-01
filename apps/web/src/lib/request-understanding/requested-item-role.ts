@@ -486,6 +486,26 @@ export function classifyRequestedTargetRole(
     if (!forms.length) continue;
     if (forms.some((f) => TAIL_TOKENS.has(f))) continue;
     if (forms.some((f) => PROVIDER_HEADS.has(f))) continue;
+    /**
+     * FİİL SONRASI HİZMET BAŞI SEÇİLMEZ (98+ Part IV): istek fiilinin
+     * SAĞINDA kalan sözlük SERVICE başı eşlik eden spektir ("akvaryum
+     * arıyorum ... kurulum"); tarama gerçek başı bulmak için sola devam
+     * eder. Konum kuralının jeton-düzeyi karşılığıdır.
+     */
+    const isPostVerbServiceHead =
+      i > 0 &&
+      forms.some((f) => ROLE_BY_HEAD.get(f) === "SERVICE") &&
+      (() => {
+        const verbIdx = tokens.findIndex((tok) =>
+          /^(?:arıyorum|ariyorum|aryorum|arıyom|ariyom|lazım|lazim|istiyorum|istiyom|bakıyorum|bakiyorum|bakıyom)$/iu.test(
+            (tok ?? "")
+              .replace(/[^\p{L}\p{N}]+/gu, "")
+              .toLocaleLowerCase("tr-TR"),
+          ),
+        );
+        return verbIdx >= 0 && verbIdx < i;
+      })();
+    if (isPostVerbServiceHead) continue;
     for (const f of forms) {
       const role = ROLE_BY_HEAD.get(f);
       if (role) {
@@ -637,6 +657,35 @@ export function classifyRequestedTargetRole(
 }
 
 /**
+ * FİİL SONRASI HİZMET SÖZCÜĞÜ KUYRUK SPEKİDİR (98+ Part IV, 2026-09-01).
+ *
+ * Türkçede çekimli istek fiili yüklemi kapatır; ondan SONRA gelen çıplak
+ * hizmet adı talebin başı değil, eşlik eden ek istektir. Ölçüldü: "akvaryum
+ * arıyorum 100 litre bitkili kurulum" %86 güvenle SERVICE'e çöküyordu —
+ * istenen şey akvaryumdur, kurulum spektir. Kural konumsaldır: yalnız
+ * (a) istek fiili hizmet sözcüğünden ÖNCE geldiğinde ve (b) fiil öncesi
+ * baş HİZMET DEĞİLKEN uygulanır. "servis arıyorum acil" (hizmet fiilden
+ * önce) ve "klima montajı yaptırmak istiyorum" etkilenmez. Tek yetkili
+ * konum kuralı budur; hem 1G baş denetimi hem niyet sinyalleri buradan
+ * okur — ikinci bir kopya kurulmaz.
+ */
+export function serviceNounIsPostVerbAuxiliary(
+  text: string,
+  hitIndex: number,
+): boolean {
+  const src = String(text ?? "");
+  const verbM =
+    /(?:^|[^\p{L}\p{N}])(?:arıyorum|ariyorum|aryorum|arıyom|ariyom|lazım|lazim|istiyorum|istiyom|bakıyorum|bakiyorum|bakıyom)(?=[^\p{L}\p{N}]|$)/iu.exec(
+      src,
+    );
+  if (!verbM || verbM.index >= hitIndex) return false;
+  const prefix = src.slice(0, verbM.index).trim();
+  if (!prefix) return false;
+  const pre = classifyRequestedTargetRole(prefix);
+  return pre.role !== "SERVICE";
+}
+
+/**
  * HİZMET LEMMASI GERÇEKTEN BAŞ MI? (1G)
  *
  * Türkçe ad tamlamasında baş sondadır; hizmet adı bir NİTELEYİCİ olarak da
@@ -653,6 +702,7 @@ export function serviceLemmaIsPhraseHead(
   hitIndex: number,
   hitRaw: string,
 ): boolean {
+  if (serviceNounIsPostVerbAuxiliary(text, hitIndex)) return false;
   const rest = String(text ?? "").slice(hitIndex + hitRaw.length);
   const next = rest.match(/[\p{L}\p{N}][\p{L}\p{N}-]*/u);
   if (!next || next.index == null) return true;

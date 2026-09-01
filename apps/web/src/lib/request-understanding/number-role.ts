@@ -170,6 +170,31 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     claim(tm.index, tm[0].length);
   }
 
+  // Boşluklu lastik ebadı: "205 55 r16", "315 80 22.5" (98+ Part IV).
+  // Ayraçsız yazım halk dilinde yaygındır; üçlü, gerçek lastik geometrisi
+  // aralıklarıyla doğrulanır (genişlik 125–445 / oran 25–85 / jant 10–26) —
+  // rastgele üç sayı bu kapıdan geçemez. Span içindeki hiçbir parça
+  // (r16 dahil) model olamaz.
+  const spacedTire3Re =
+    /\b(\d{3})\s+(\d{2})\s+(?:z?r\s*)?(\d{2}(?:[.,]\d)?)\b/gi;
+  let st3: RegExpExecArray | null;
+  while ((st3 = spacedTire3Re.exec(text)) !== null) {
+    if (isClaimed(st3.index, st3[0].length)) continue;
+    const w = Number(st3[1]);
+    const a = Number(st3[2]);
+    const r = Number(String(st3[3]).replace(",", "."));
+    if (w < 125 || w > 445 || a < 25 || a > 85 || r < 10 || r > 26) continue;
+    results.push({
+      raw: st3[0],
+      role: "TIRE_SIZE",
+      value: w,
+      unit: "tire",
+      evidence: [st3[0], "spaced-tire-size"],
+      index: st3.index,
+    });
+    claim(st3.index, st3[0].length);
+  }
+
   // Tarım/iş makinesi lastik ebadı: "16.9-30", "12.4-24" (98+ Part IV).
   const agTireRe = /(?:^|[^0-9])(\d{2}(?:[.,]\d)?)\s*[-–]\s*(\d{2})(?=$|[^0-9])/g;
   let agm: RegExpExecArray | null;

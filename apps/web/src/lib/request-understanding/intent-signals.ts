@@ -1,4 +1,23 @@
 import type { RequestIntent, SubjectKind } from "./types";
+import { serviceNounIsPostVerbAuxiliary } from "./requested-item-role";
+
+/**
+ * Konumsal hizmet demosyonuna tabi ÇIPLAK AD kalıpları. Fiiller (yaptır,
+ * boyat), arıza fiilleri ve sağlayıcı adları (tamirci, usta) bu sınıfta
+ * DEĞİLDİR — onlar konumdan bağımsız hizmet kanıtıdır.
+ */
+const SERVICE_NOUN_EVIDENCE: ReadonlySet<string> = new Set([
+  "bakım",
+  "bakim",
+  "onarım",
+  "onarim",
+  "tamir",
+  "servis",
+  "montaj",
+  "temizlik",
+  "renovasyon",
+  "tadilat",
+]);
 
 /**
  * İŞLEM KANIT SINIFI (KB-16).
@@ -322,6 +341,22 @@ export function collectIntentSignals(
     for (const p of entry.patterns) {
       const m = normalizedText.match(p);
       if (!m) continue;
+      /**
+       * FİİL SONRASI ÇIPLAK HİZMET ADI NİYET SEÇEMEZ (98+ Part IV).
+       * Tek yetkili konum kuralı requested-item-role'dedir; "akvaryum
+       * arıyorum ... kurulum/montaj" sınıfında istek fiilinden sonraki
+       * çıplak hizmet adı eşlik eden spektir, SERVICE kanıtı değildir.
+       */
+      if (
+        entry.intent === "SERVICE" &&
+        m.index != null &&
+        SERVICE_NOUN_EVIDENCE.has(
+          m[0].replace(/[^\p{L}]+/gu, "").toLocaleLowerCase("tr-TR"),
+        ) &&
+        serviceNounIsPostVerbAuxiliary(normalizedText, m.index)
+      ) {
+        continue;
+      }
       if (
         scoped &&
         TRANSACTION_AXIS.has(entry.intent) &&
