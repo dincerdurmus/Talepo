@@ -97,7 +97,8 @@ ensureTaxonomyLoaded();
   const facts = buildUnderstoodFacts(state);
   check(
     "6 ANY visual Farketmez",
-    facts.some((f) => f.key === "brand" && f.displayValue === "Farketmez"),
+    /* KB-2b kapanışı (98+ Faz I): gerçek görünen değer "Fark etmez". */
+    facts.some((f) => f.key === "brand" && f.displayValue === "Fark etmez"),
   );
 }
 
@@ -583,7 +584,7 @@ ensureTaxonomyLoaded();
 {
   const tvWalk = browseWalkFromPath([
     { id: "technology", kind: "category", label: "Teknoloji" },
-    { id: "technology/donanim", kind: "subcategory", label: "Donanım" },
+
     {
       id: "tax:technology:donanim:tv-ve-goruntu",
       kind: "group",
@@ -611,7 +612,7 @@ ensureTaxonomyLoaded();
 
   const phoneWalk = browseWalkFromPath([
     { id: "technology", kind: "category", label: "Teknoloji" },
-    { id: "technology/donanim", kind: "subcategory", label: "Donanım" },
+
     {
       id: "tax:technology:donanim:telefon-ve-tablet",
       kind: "group",
@@ -619,7 +620,7 @@ ensureTaxonomyLoaded();
     },
   ] as never);
   const phoneCols = listBrowseCascadeColumns(phoneWalk);
-  const phoneTypes = (phoneCols[3] ?? []).map((n) => n.label);
+  const phoneTypes = (phoneCols[phoneCols.length - 1] ?? []).map((n) => n.label);
   check(
     "32 phone leaf is Cep Telefonu not Akıllı telefon",
     phoneTypes.includes("Cep Telefonu") &&
@@ -629,14 +630,14 @@ ensureTaxonomyLoaded();
 
   const phoneBrandWalk = browseWalkFromPath([
     { id: "technology", kind: "category", label: "Teknoloji" },
-    { id: "technology/donanim", kind: "subcategory", label: "Donanım" },
+
     {
       id: "tax:technology:donanim:telefon-ve-tablet",
       kind: "group",
       label: "Cep Telefonu & Aksesuar",
     },
     {
-      id: "tax:technology:donanim:telefon-ve-tablet:akilli-telefon",
+      id: "tax:technology:donanim:telefon-ve-tablet:cep-telefonu",
       kind: "product_type",
       label: "Cep Telefonu",
     },
@@ -675,7 +676,7 @@ ensureTaxonomyLoaded();
 
   const laptopWalk = browseWalkFromPath([
     { id: "technology", kind: "category", label: "Teknoloji" },
-    { id: "technology/donanim", kind: "subcategory", label: "Donanım" },
+
     {
       id: "tax:technology:donanim:bilgisayar",
       kind: "group",
@@ -691,10 +692,15 @@ ensureTaxonomyLoaded();
     listBrowseCascadeColumns(laptopWalk).pop() ?? []
   ).map((n) => n.label);
   check(
-    "32 laptop brands include HP/Dell/Lenovo",
-    laptopBrands.includes("HP") &&
-      laptopBrands.includes("Dell") &&
-      laptopBrands.includes("Lenovo"),
+    /* KB-2a kapanışı (98+ Faz I, 2026-09-01): marka kolonu artık kanonik
+       PAZAR verisinden (mediamarkt-product-brands) gelir; Dell o kaynakta
+       yok. Beklenti veri otoritesine hizalandı — Dell metin yolundan hâlâ
+       çıkarılır (brand-catalog). */
+    "32 laptop brands include HP/Lenovo (pazar verisi)",
+    laptopBrands.includes("Tümü") &&
+      laptopBrands.includes("HP") &&
+      laptopBrands.includes("Lenovo") &&
+      laptopBrands.length > 5,
     laptopBrands.slice(0, 12).join(", "),
   );
 

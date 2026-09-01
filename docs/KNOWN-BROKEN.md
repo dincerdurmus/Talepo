@@ -1647,6 +1647,15 @@ gerileme değil (aynı hata `c5562bd` öncesinde de vardı).
 
 ## KB-2 — Hybrid UI doğrulayıcısı eski ağaç şeklini bekliyor
 
+> **KAPANDI (2026-09-01, 98+ Faz I).** `verify-talep-hybrid-ui-v1` artık
+> **97 passed / 0 failed**. KB-2a/2b bayat beklentileri yeni ağaca ve
+> gerçek etikete güncellendi (Donanım hoist yolları, cep-telefonu yaprağı,
+> "Fark etmez" fact değeri, laptop marka kolonu pazar-verisi otoritesine
+> hizalandı — Dell pazar kaynağında yok, metin yolunda çıkarımı sürüyor).
+> KB-2c (Bosch çift "için") beklenti DEĞİŞTİRİLMEDEN yeşile döndü —
+> compose zincirindeki önceki eksen düzeltmeleri metni onarmış; kayıt
+> sözleşmesi gereği kapandı.
+
 | Alan | Değer |
 | --- | --- |
 | Doğrulayıcı | `apps/web/scripts/verify-talep-hybrid-ui-v1.ts` |

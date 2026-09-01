@@ -3,6 +3,31 @@
  */
 
 import { TURKEY_IL_NAMES } from "@/lib/geo/turkey-districts";
+import { findBrandInText, findModelInText } from "@/lib/catalog/automotive/indexes";
+
+/**
+ * Marka bağlamındaki salt-rakam modeli KANONİK katalog doğrular mı?
+ * ("Alfa Romeo" + "156" → catalog model_alfa-romeo_156). Token listesi
+ * (isKnownAutomotiveModelName) rakam modelleri bilerek dışladığı için
+ * doğrulama katalog eşleşmesinden okunur — ikinci bir liste kurulmaz.
+ */
+function catalogConfirmsNumericModel(brand: string, model: string): boolean {
+  try {
+    const brandHit = findBrandInText(brand);
+    if (!brandHit) return false;
+    const hit = findModelInText(model, brandHit.record.id);
+    if (!hit) return false;
+    const fold = model.toLocaleLowerCase("tr-TR");
+    return (
+      hit.record.name.toLocaleLowerCase("tr-TR") === fold ||
+      (hit.record.aliases ?? []).some(
+        (a: string) => a.toLocaleLowerCase("tr-TR") === fold,
+      )
+    );
+  } catch {
+    return false;
+  }
+}
 import {
   findLongestProductPhrase,
   tokenOverlapsProductPhrase,
@@ -94,7 +119,19 @@ export function isInvalidModelCandidate(input: {
   if (CATEGORY_WORDS.has(fold)) return true;
   if (PRODUCT_NOUNS.has(fold)) return true;
   if (PROVINCE_FOLD.has(fold)) return true;
-  if (/^\d+$/.test(fold)) return true;
+  /**
+   * SALT-RAKAM MODEL yalnız KATALOG doğruluyorsa geçerlidir (98+ Faz I,
+   * 2026-09-01). Eski kural her salt-rakamı reddediyordu; "Alfa Romeo 156"
+   * gerçek bir katalog modelidir ve "Uyumlu model" bilgisi kullanıcı
+   * yüzeyinden siliniyordu (ölçüldü). Marka bağlamı olmayan çıplak sayı
+   * hâlâ reddedilir.
+   */
+  if (
+    /^\d+$/.test(fold) &&
+    !(brand && catalogConfirmsNumericModel(brand, model))
+  ) {
+    return true;
+  }
   if (/^\d+\s*(?:adet|broşür|brosur|inç|inc|ekran)/i.test(fold)) return true;
   // Multi-word sentence / location fragment is not a model
   if (model.split(/\s+/).length >= 4) return true;

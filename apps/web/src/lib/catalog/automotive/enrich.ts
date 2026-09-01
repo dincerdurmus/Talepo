@@ -503,9 +503,26 @@ export function enrichAutomotiveSubject(
           engine.marketingName != null &&
           foldCatalogKey(alias) === foldCatalogKey(engine.marketingName),
       );
+    /**
+     * NESLİN SAHİPLENDİĞİ KOD MODEL ADINI ÇALAMAZ (98+ Faz I, 2026-09-01).
+     * compactOrFamilyName BMW/Mercedes kısa kodları için metindeki
+     * "[cesagl]\d{3}" jetonunu model adı yapar; "Corolla E210 far"
+     * cümlesinde E210 zaten ÇÖZÜLMÜŞ NESİLDİR ve model "E210" oluyordu
+     * (ölçüldü). Nesil çözüldüyse ve kompakt jeton neslin adında/kodundaysa
+     * model, katalog model adında kalır.
+     */
+    const compactName = engineAlias
+      ? inferredModel.record.name
+      : compactOrFamilyName(text, inferredModel);
+    const generationOwnsCompact =
+      generation?.status === "resolved" &&
+      compactName !== inferredModel.record.name &&
+      foldCatalogKey(
+        `${generation.name ?? ""} ${generation.id ?? ""}`,
+      ).includes(foldCatalogKey(compactName));
     result.model = {
       id: inferredModel.record.id,
-      name: engineAlias ? inferredModel.record.name : compactOrFamilyName(text, inferredModel),
+      name: generationOwnsCompact ? inferredModel.record.name : compactName,
       confidence: inferredModel.confidence,
       matchMode: inferredModel.matchMode,
     };

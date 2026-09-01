@@ -24,6 +24,7 @@ import {
   getTaxonomyAncestorIds,
   getTaxonomyChildren,
   getTaxonomyNode,
+  getTaxonomyNodesByCategory,
   resolveTaxonomyAlias,
 } from "@/lib/taxonomy";
 
@@ -153,6 +154,34 @@ function resolveLeafFromState(state: CanonicalRequestState): string | null {
       if (hit?.node?.id && hit.node.id !== `tax:${categoryId}`) {
         return hit.node.id;
       }
+    }
+  }
+
+  /**
+   * JENERİK AİLE ADI ALT-KATEGORİYE ÇAPALANIR (98+ Faz I, 2026-09-01).
+   * "50 bin adet karton kutu" talebinde kullanıcı belirli bir kutu TİPİ
+   * söylemez; taksonomide jenerik yaprak yoktur ve projeksiyon çapasız
+   * (yalnız tax:printing) kalıyordu — Pro keşif ailesine filtrelenemiyordu
+   * (ölçüldü). Kullanıcının ifadesi bir SUBCATEGORY ailesinin kanonik
+   * adını birebir içeriyorsa ve kategori içinde TEK aday buysa, çapa o
+   * ailedir. Ürün tipi UYDURULMAZ: yaprak seçilmez, aile adlandırılır.
+   */
+  if (categoryId) {
+    const foldTr = (v: string) =>
+      v
+        .toLocaleLowerCase("tr-TR")
+        .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
+        .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u");
+    const raw = foldTr(String(state.understanding?.rawInput ?? ""));
+    if (raw) {
+      const subs = getTaxonomyNodesByCategory(categoryId).filter(
+        (n) => n.nodeType === "SUBCATEGORY",
+      );
+      const hits = subs.filter((n) => {
+        const name = foldTr(n.canonicalName ?? "");
+        return name.length >= 5 && raw.includes(name);
+      });
+      if (hits.length === 1 && hits[0]) return hits[0].id;
     }
   }
 

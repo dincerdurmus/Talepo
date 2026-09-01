@@ -117,6 +117,16 @@ export function syncFromText(
     return true;
   })();
 
+  /**
+   * ECHO ATLAMASI ANLAMAYI BAYAT BIRAKAMAZ (98+ Faz I, 2026-09-01).
+   * Browse seçimleri metni yeniden besteler ama anlamayı güncellemez;
+   * atlama TOHUM metnin ("yedek parça arıyorum") anlamasını taşıyordu —
+   * "Alfa Romeo 156 için yedek parça" durumunda parentEntity null kalıyor,
+   * uyumluluk ilişkisi eşleştirmeye hiç inmiyordu (ölçüldü). Atlama (döngü
+   * koruması) KORUNUR; ama önceki anlamanın rawInput'u bu metinden
+   * farklıysa YALNIZ anlama tazelenir — alanlara dokunulmaz, bir sonraki
+   * besteleme aynı metni üretir, döngü doğmaz.
+   */
   if (
     !opts?.force &&
     previous?.lastComposedText &&
@@ -124,9 +134,26 @@ export function syncFromText(
       normalizeComparable(previous.lastComposedText) &&
     subjectMatchesBrowseNeed
   ) {
+    const previousUnderstandingCurrent =
+      normalizeComparable(String(previous.understanding?.rawInput ?? "")) ===
+      normalizeComparable(text);
+    const refreshedUnderstanding = previousUnderstandingCurrent
+      ? previous.understanding
+      : understandRequest({
+          rawInput: text,
+          structured:
+            opts?.structured ??
+            (previousBrowseNeed
+              ? {
+                  categoryId: previous.categoryId ?? undefined,
+                  fieldValues: { needType: previousBrowseNeed },
+                }
+              : undefined),
+        });
     return {
       state: {
         ...previous,
+        understanding: refreshedUnderstanding,
         naturalTextDirty: false,
       },
       skipped: true,
