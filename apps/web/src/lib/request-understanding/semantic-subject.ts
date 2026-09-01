@@ -9,6 +9,7 @@ import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import {
   ACCESSORY_LEMMAS,
   classifyRequestedTargetRole,
+  foldRoleToken,
   isRequestedItemNotModel,
   PART_LEMMAS,
   SERVICE_LEMMAS,
@@ -1405,7 +1406,13 @@ function resolveSemanticSubjectCore(
     /(?:baskı|baski|ofset)\s*makine/i.test(text) ||
     /makine(?:si)?\s*(?:arıyorum|ariyorum|lazım|lazim)/i.test(text);
   if (manufactureAsk && !(wholePrintMachine && !mfgProduct)) {
-    const name = mfgProduct?.product ?? "üretim";
+    /* 98+ Part II: yer tutucu "üretim" yerine kullanıcının kendi ürün öbeği
+       ("Broşür bastırmak istiyorum" → "Broşür"); uydurma yok, öbek yoksa
+       yer tutucu kalır ve publish köprüsü onu taşımaz. */
+    const name =
+      mfgProduct?.product ??
+      userProductPhrase(text, input.identity) ??
+      "üretim";
     evidence.push(name);
     return {
       kind: decision("MANUFACTURED_ITEM", 0.88, evidence),
@@ -1460,14 +1467,28 @@ function resolveSemanticSubjectCore(
      */
     const usage = readUsageContextSplit(text);
     const propScope = usage ? usage.target : text;
-    const namedProp =
-      /(?:^|[^\p{L}\p{N}])(?:dükkan|dukkan)(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
-        ? "dükkan"
-        : /(?:^|[^\p{L}\p{N}])daire(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
-          ? "daire"
-          : /(?:^|[^\p{L}\p{N}])ev(?=[^\p{L}\p{N}]|$)/iu.test(propScope)
-            ? "ev"
-            : null;
+    /**
+     * 98+ Part II (2026-09-01): kullanıcının adlandırdığı BÜTÜN mülk türleri
+     * kendi sözcüğüyle taşınır — "Satılık arsa" ve "Ofis kiralamak" talepleri
+     * "gayrimenkul" jeneriğine düşüyordu (ölçüldü). Sözcük sınıfı, emlak
+     * kategori sözlüğünün mülk çıpalarıyla aynıdır.
+     */
+    const namedProp = (() => {
+      const PROP_WORDS = [
+        ["dükkan", /(?:^|[^\p{L}\p{N}])(?:dükkan|dukkan)(?=[^\p{L}\p{N}]|$)/iu],
+        ["daire", /(?:^|[^\p{L}\p{N}])daire(?=[^\p{L}\p{N}]|$)/iu],
+        ["arsa", /(?:^|[^\p{L}\p{N}])arsa(?=[^\p{L}\p{N}]|$)/iu],
+        ["villa", /(?:^|[^\p{L}\p{N}])villa(?=[^\p{L}\p{N}]|$)/iu],
+        ["ofis", /(?:^|[^\p{L}\p{N}])ofis(?=[^\p{L}\p{N}]|$)/iu],
+        ["işyeri", /(?:^|[^\p{L}\p{N}])(?:işyeri|isyeri)(?=[^\p{L}\p{N}]|$)/iu],
+        ["konut", /(?:^|[^\p{L}\p{N}])konut(?=[^\p{L}\p{N}]|$)/iu],
+        ["ev", /(?:^|[^\p{L}\p{N}])ev(?=[^\p{L}\p{N}]|$)/iu],
+      ] as const;
+      for (const [word, re] of PROP_WORDS) {
+        if (re.test(propScope)) return word;
+      }
+      return null;
+    })();
     const structuralProperty = Boolean(input.roomCount || input.listingType);
     const prop =
       namedProp ?? (usage && !structuralProperty ? null : "gayrimenkul");
@@ -1512,6 +1533,7 @@ function resolveSemanticSubjectCore(
       kind: decision("INDUSTRIAL_EQUIPMENT", 0.85, ["machinery"]),
       name: uv(
         [input.identity.brand, input.identity.model].filter(Boolean).join(" ") ||
+          userProductPhrase(text, input.identity) ||
           "makine",
         {
           provenance: "EXPLICIT",
@@ -1595,8 +1617,27 @@ function resolveSemanticSubjectCore(
     const parent = buildParentEntity(input.identity, "PRODUCT");
     // Kullanıcı bağlacın sağında bütün bir ürün adlandırdıysa ad ODUR; soldaki
     // kullanım yerinden türetilen marka/model adayı onu bastıramaz.
+    /**
+     * KANONİK BAŞ, YER TUTUCUDAN VE MARKADAN ÖNCE GELİR (98+ Part II,
+     * 2026-09-01). Ölçüldü (1077 korpus): "Buzdolabı arıyorum" gibi düz
+     * ürün taleplerinde ad "ürün" yer tutucusuna, "Arçelik bulaşık
+     * makinesi"nde MARKAYA düşüyordu; publish köprüsü yer tutucuyu haklı
+     * olarak taşımadığı için keşif ürün kanalı %5,2'de kalıyordu. Rol
+     * sınıflandırıcısı başı kullanıcının SÖZCÜĞÜYLE çözer (evidence[0]
+     * orijinal jeton/ifade); marka bir ürün türü DEĞİLDİR ve ad zincirinde
+     * en sona iner.
+     */
+    const userPhrase = userProductPhrase(text, input.identity);
+    const canonicalHeadProductPhrase =
+      canonicalHeadVerdict.role === "WHOLE_PRODUCT"
+        ? userPhrase ??
+          canonicalHeadVerdict.evidence[0] ??
+          canonicalHeadVerdict.head ??
+          null
+        : userPhrase;
     const label =
       wholeProductTarget ||
+      canonicalHeadProductPhrase ||
       parentDisplay(parent) ||
       input.identity.model ||
       input.identity.brand ||
@@ -1607,7 +1648,13 @@ function resolveSemanticSubjectCore(
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
         confidence: 0.7,
-        evidence: [wholeProductTarget ? "icin-whole-product-target" : "product"],
+        evidence: [
+          wholeProductTarget
+            ? "icin-whole-product-target"
+            : canonicalHeadProductPhrase
+              ? "canonical-head-product"
+              : "product",
+        ],
       }),
       parentEntity: parent,
       relationship: decision("PRODUCT_REQUEST", 0.75, ["product-request"]),
@@ -1621,6 +1668,123 @@ function resolveSemanticSubjectCore(
     relation: decision("UNKNOWN", 0.2, []),
   };
 }
+
+/**
+ * KULLANICININ ÜRÜN AD-ÖBEĞİ (98+ Part II, 2026-09-01).
+ *
+ * İstek fiilinden ÖNCE gelen sözcükler Türkçe talepte ürün öbeğidir:
+ * "Oyun bilgisayarı arıyorum 32 GB RAM olsun" → "Oyun bilgisayarı",
+ * "Arçelik bulaşık makinesi bakıyorum" → (marka soyulur) "bulaşık makinesi".
+ * Yalnız kullanıcının KENDİ sözcükleri döner (uydurma yok); güvenli değilse
+ * null. Selamlama yan cümleleri atılır; rakam ve rakamı izleyen birim
+ * jetonları öbekten çıkar; marka/model jetonları başta soyulur (marka bir
+ * ürün türü değildir).
+ */
+function userProductPhrase(
+  text: string,
+  identity: IdentityLite,
+): string | null {
+  const clauses = String(text ?? "")
+    .split(/[,;:!?]/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+  /* İstek fiili taşıyan İLK yan cümle ürün öbeğini taşır ("Buzdolabı
+     arıyorum, no-frost olsun" → 1. cümle); hiçbirinde yoksa son cümle
+     (selamlama atılır: "Merhaba, X arıyorum" → 2. cümle). */
+  const hasReqVerb = (cl: string) =>
+    cl.split(/\s+/u).some((w) => {
+      const f = foldRoleToken(w);
+      if (REQUEST_VERB_WORDS.has(f)) return true;
+      return w.length >= 6 && /(?:yorum|iyom|mak|mek)$/u.test(f) && !/(?:olmak)$/u.test(f);
+    });
+  const lastClause = clauses.find(hasReqVerb) ?? clauses.pop() ?? "";
+  const tokens = lastClause.split(/\s+/u).filter(Boolean);
+  if (!tokens.length) return null;
+  const isVerbTail = (w: string) => {
+    const f = foldRoleToken(w);
+    if (VERB_TAIL_WORDS.has(f) || REQUEST_VERB_WORDS.has(f)) return true;
+    return (
+      (w.length >= 6 && /(?:yorum|iyom)$/u.test(f)) ||
+      (w.length >= 7 && /(?:tirmak|turmak|durmak|lamak|lemek)$/u.test(f))
+    );
+  };
+  let end = tokens.length;
+  for (let i = 0; i < tokens.length; i++) {
+    if (isVerbTail(tokens[i] ?? "")) {
+      end = i;
+      break;
+    }
+  }
+  let words = tokens.slice(0, end);
+  // Rakam ve rakamı izleyen kısa birim jetonları öbek dışıdır.
+  const kept: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i] ?? "";
+    if (/\d/.test(w)) continue;
+    if (w.length <= 8 && /\d/.test(words[i - 1] ?? "")) continue;
+    kept.push(w);
+  }
+  words = kept;
+  // Baştaki marka/model jetonları soyulur.
+  const idBits = new Set(
+    [identity.brand, identity.model]
+      .filter((v): v is string => Boolean(v))
+      .flatMap((v) => v.split(/\s+/u))
+      .map((v) => foldRoleToken(v)),
+  );
+  while (words.length && idBits.has(foldRoleToken(words[0] ?? ""))) {
+    words.shift();
+  }
+  if (words.length < 1 || words.length > 4) return null;
+  if (words.some((w) => w.length < 2)) return null;
+  /* Zamir/gösterme sözcükleri ürün ADI değildir: "yenisini arıyorum"
+     cümlesinde ad "yenisini" oluyordu (ölçüldü). Öbek zamirse ürün adı
+     üretilmez; karar diğer kanallara kalır. */
+  if (
+    words.every((w) =>
+      /^(?:yeni(?:si|sini)?|aynısı|aynisi|aynısını|aynisini|biri|birini|bunu|şunu|sunu|onu|böyle|boyle|şöyle|soyle|tane|adet)$/iu.test(
+        foldRoleToken(w) === "" ? w : w.toLocaleLowerCase("tr-TR"),
+      ),
+    )
+  ) {
+    return null;
+  }
+  return words.join(" ");
+}
+
+const REQUEST_VERB_WORDS: ReadonlySet<string> = new Set([
+  "ariyorum",
+  "ariyoruz",
+  "lazim",
+  "istiyorum",
+  "istiyoruz",
+  "gerekiyor",
+  "bakiyorum",
+  "almak",
+  "bastirmak",
+  "yaptirmak",
+  "urettirmek",
+  "kurdurmak",
+  "kiralamak",
+]);
+
+const VERB_TAIL_WORDS: ReadonlySet<string> = new Set([
+  "ariyorum",
+  "arıyorum",
+  "ariyoruz",
+  "arıyoruz",
+  "lazim",
+  "lazım",
+  "istiyorum",
+  "istiyoruz",
+  "gerekiyor",
+  "gerek",
+  "almak",
+  "bakıyorum",
+  "bakiyorum",
+  "olsun",
+  "acil",
+]);
 
 function identitySuggestsVehicle(identity: IdentityLite): boolean {
   // Heuristic without brand lists: model codes like C180, F30, Golf 7.

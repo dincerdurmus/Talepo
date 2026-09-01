@@ -113,7 +113,7 @@ for (const c of NEGATIVE) {
   /*
    * DONDURULMUŞ TABAN (Wave L, 2026-08-31): kanıt eşiği (EXPLICIT +
    * USER_EXPLICIT/VERIFIED, placeholder yok, marka/model rol guard'ı)
-   * altında ölçülen erişim 69'dur. Delta geçmişi (her adım satır satır):
+   * altında ölçülen erişim 98'dir. Delta geçmişi (her adım satır satır):
    *   67→66: rol guard'ı — tech-03 "Samsung"→"televizyon", appl-04
    *          "Arçelik"→"Bulaşık Makinesi" (sızıntı düzeldi), auto-10
    *          "C200" model kanalına ayrıldı (−1, dürüst boş).
@@ -122,7 +122,14 @@ for (const c of NEGATIVE) {
    *          yaprağa çözülüyor (+3).
    * Sayı HER İKİ yönde kilitlidir; değişiklik sayılmış delta ister.
    */
-  check("C erişim dondurulmuş tabana eşit (69)", reach === 69, `→ ${reach}`);
+  /**
+   * 69→98 (98+ Part II, 2026-09-01): kullanıcının ürün ad-öbeği artık yer
+   * tutucu/marka yerine özne adına iner (userProductPhrase) ve köprü
+   * bar-geçen ilk kaydı taşır. +29 satırın kimlik listesi projection
+   * tabanının PART II notunda; kalite karşılığı verify-discovery-quality-v1
+   * (bileşen ③ %100, 584 uygulanabilir vakada WRONG=0).
+   */
+  check("C erişim dondurulmuş tabana eşit (98)", reach === 98, `→ ${reach}`);
   check(
     "C jenerik placeholder hiçbir kayıtta taşınmadı",
     !CATEGORY_COVERAGE_V1.some((sc) => {

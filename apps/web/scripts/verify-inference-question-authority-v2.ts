@@ -100,6 +100,10 @@ const D1_HIGH_RISK_FULL_QUEUE: readonly string[] = [
  * kimliği düzeltmesiyle bu sınıfa girdi.
  */
 const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
+  /** 98+ Part II (2026-09-01): "Satılık ofis" — propertyType artık
+   * kullanıcının kendi sözcüğüyle doluyor; yazılmış değer yeniden
+   * sorulmaz (sessiz bastırma değil, cevaplandı). */
+  "re-07/propertyType@FULL_QUEUE",
   "appl-02/capacityBtu@FULL_QUEUE",
   "appl-03/fridgeType@FULL_QUEUE",
   "appl-04/brand@FULL_QUEUE",
@@ -303,7 +307,6 @@ const D1_CORRECTLY_ASKED_FULL_QUEUE: readonly string[] = [
   "re-06/listingType@FULL_QUEUE",
   "re-06/propertyType@FULL_QUEUE",
   "re-07/area@FULL_QUEUE",
-  "re-07/propertyType@FULL_QUEUE",
   "re-08/area@FULL_QUEUE",
   "re-08/listingType@FULL_QUEUE",
   "re-08/propertyType@FULL_QUEUE",

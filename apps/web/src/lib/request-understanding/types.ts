@@ -331,4 +331,4 @@ export type RequestUnderstandingResult = {
  * build-state ve publish snapshot köprüsü AYNI tanımı okur.
  */
 export const GENERIC_SUBJECT_PLACEHOLDER_RE =
-  /^(ürün|urun|servis|hizmet|cihaz|makine|eşya|esya)$/i;
+  /^(ürün|urun|servis|hizmet|cihaz|makine|eşya|esya|üretim|uretim|araç|arac)$/i;

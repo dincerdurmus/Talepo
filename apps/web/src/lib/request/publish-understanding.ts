@@ -117,7 +117,23 @@ export function buildPublishUnderstandingSnapshot(input: {
    * ASLA taşınmaz; eşik altı kayıtta alan boş kalır — 0 hata değildir.
    */
   const subject = input.understanding.requestSubject;
-  const subjectRecord = subject?.displayPhrase ?? subject?.name;
+  /**
+   * KANIT BARINI GEÇEN İLK KAYIT SEÇİLİR (98+ Part II, 2026-09-01).
+   * displayPhrase çoğu dalda NORMALIZED_EXPLICIT kaynaklıdır ve eşik onu
+   * eliyordu; ad kaydı USER_EXPLICIT ve AYNI kullanıcı sözcüğü olduğu
+   * hâlde ürün kanalı boş kalıyordu (ölçüldü: "1000 adet kartvizit" →
+   * product YOK). Sabit displayPhrase??name yerine bar-geçen ilk aday
+   * alınır; eşik ve yer tutucu kuralları DEĞİŞMEZ.
+   */
+  const subjectRecord =
+    [subject?.displayPhrase, subject?.name].find(
+      (r) =>
+        r?.value != null &&
+        r?.provenance === "EXPLICIT" &&
+        (r?.source === "USER_EXPLICIT" || isVerifiedSource(r?.source)),
+    ) ??
+    subject?.displayPhrase ??
+    subject?.name;
   const subjectValue = subjectRecord?.value != null ? String(subjectRecord.value).trim() : "";
   /*
    * Yalnız EXPLICIT provenance taşınır (açık kullanıcı beyanı USER_EXPLICIT
