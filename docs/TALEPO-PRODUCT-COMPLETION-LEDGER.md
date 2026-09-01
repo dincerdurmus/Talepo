@@ -45,6 +45,38 @@ Checkpoint: L c8c2547, M e10aaf2, RC-1 024356f, RC-2 0ca8870+fb7c8d3+2247042+a22
 RC QA sentetik verisi (request+offer+conversation+company+add-on+inventory)
 kesin id ile temizlendi (kalan 0).
 
+### 98+ Kalite Programı (2026-09-01)
+
+| ID | İş | Durum | Kanıt |
+|---|---|---|---|
+| LG-98a | Faz 0 metrik bütünlük denetimi | DONE | docs/METRIC-INTEGRITY-AUDIT-98.md — üç resmî metriğin tam sözleşmesi; B presence↔quality ayrımı; yeni QUALITY sözleşmesi tarihselin YERİNE GEÇMEZ |
+| LG-98b | 8 tarihsel known_fail eksen kapanışı | DONE 108/108 | auto-11/tech-04/tech-11/tech-12/appl-02/mach-05/furn-07/baby-08 — hepsi eksen düzeltmesi (rakam-baş, RC-split, SERVICE rol, baş-konum, kategori sınır kuralı, EXPLICIT beyan koruması); tabanlar sayılı rebase |
+| LG-98c | BRAIN_ADVERSARIAL_CORPUS (yeni kalıcı yüzey) | HARD GREEN | 1077 üretim-eşdeğer vaka (73 taban × 14 kaos dönüşümü) · category/kind/brand/ANY/quantity/budget/questions %100 · model %98,1 · scope %99,8 (2 lossy-typo dokümante) · sert kapılar: yüksek-güvenli-yanlış=0, marka/model/bütçe halüsinasyonu=0, yasak-sayı-rolü=0, ANY-reask=0 |
+| LG-98d | Kapanan halüsinasyon sınıfları | FIXED | "marka farketmez"→komşu sözcük markası; Excel→Hyundai; 2+1→model; 2 kapaklı→model; tr-katlama boşlukları (SATMAK İSTİYORUM, 50 BİN ADET, 2 MİLYON TL, KİRALIK); Bosch anastre→model; PART/kask/nakliye/muhasebeci sözlük boşlukları |
+| LG-98e | Tarihsel P2 kapıları | ALL GREEN | phase3a (karton-kutu alt-kategori çapası), browse-semantic (salt-rakam katalog modeli + echo-atlama anlama tazeleme), catalog-generations 74/74 (E210 nesil-model ayrımı), talep-hybrid-ui 97/0 (KB-2a/2b bayat beklenti güncellendi; KB-2c beklenti değişmeden yeşile döndü — KNOWN-BROKEN kapanış notu) |
+| LG-98f | PROFESSIONAL_DISCOVERY_DATA_QUALITY (yeni resmî kalite kapısı) | GREEN — ①%100 ②%100 ③%100 ④%100 | verify-discovery-quality-v1, 1077 vaka; payda=uygulanabilir satırlar (N/A satır-satır zemin gerçeği); WRONG=0 sert kapısı; ⑤ bu evrende N/A — pipeline 16/0 + 56/0. Tarihsel presence formülü DEĞİŞMEDİ |
+| LG-98g | Ürün ad-öbeği ekseni | IMPLEMENTED | userProductPhrase: yer tutucu/marka yerine kullanıcının öbeği; zamir koruması; envelope ürün erişimi 69→98/108; projection +11 kimlik (552, USER_EXPLICIT 205); D2 re-07 yazılmış-değer bastırması |
+| LG-98h | Curated entities 5→12 | APPROVED (mekanik ölçüt) | WooCommerce/Wix/Magento/PrestaShop/OpenCart/İdeasoft/Ticimax — her biri probe RESOLVED+çakışma 0 (56/0); SAP/Logo bilinçli PENDING kaldı |
+| LG-98i | PROFESSIONAL_PRODUCT_READINESS karne güncellemesi | %60 → %100 (30/30) | Aşağıdaki karne — her hücre bu koşumun canlı kanıtıyla |
+
+**PROFESSIONAL_PRODUCT_READINESS 98+ karnesi (2026-09-01, canlı 3195 koşumu):**
+
+| Yetenek | Plan kapısı | Gerçek veri | Canlı E2E | Cihaz UX | Hata/boş/güvenlik | Skor |
+|---|---|---|---|---|---|---|
+| Uyarılar/Alarmlar | TAM | TAM | TAM (takip bildirimi canlı açıldı; Wave J 15-adım) | TAM (mobil 375px bildirim listesi) | TAM | %100 |
+| Bütçe-değişim alarmı | TAM | TAM | TAM (kabul 5/5) | TAM (bildirim yüzeyi mobil) | TAM | %100 |
+| Analiz | TAM | TAM (gerçek kazanma oranı 1/2, hacim ₺5.750) | TAM (bu koşumda canlı) | TAM (mobil çipler/kartlar) | TAM ("Veri yok" dürüstlüğü, nedensellik uyarısı) | %100 |
+| Takiplerim + Kayıtlı arama | TAM | TAM | TAM (canlı: filtre→Aramayı kaydet→Takiplerim→bildirim toggle AÇIK) | TAM (mobil) | TAM (boş durum CTA'lı) | %100 |
+| Fırsatlar / Radar / Havuz | TAM | TAM (gerçek açık talepler, rekabet/bütçe sinyalleri) | TAM (canlı havuz + Radar eşik açıklaması) | TAM (mobil) | TAM (dürüst boş durumlar, "öneri listesi değil") | %100 |
+| Teklif taslağı (kural tabanlı) | TAM | TAM (gerçek açık talepler; dürüst %45 güven) | TAM (canlı taslak üretildi; Kopyala/Gönder/Formda düzenle) | TAM (mobil) | TAM ("Gerçek AI değildir" beyanı; başlık etiketi de düzeltildi) | %100 |
+
+Karne notu: eski karnedeki "AI Asistan (BLOCKED — LLM yok)" satırı yüzeyin
+gerçek kimliğiyle değiştirildi: ürün kendini "Teklif taslağı — kural
+tabanlı, gerçek AI değildir" diye adlandırıyor (§25 dürüstlük kuralı);
+PanelShell başlığındaki bayat "AI asistan" etiketi kaldırıldı. Matching
+SHADOW kararı (OPTION A) değişmedi; ⑤ SHADOW kanıtı: DB→loader→adapter→
+scoreAllComponents zinciri, yanlış-tedarikçi bastırma + mutasyon (16/0).
+
 ### Launch Hardening turu (2026-09-01)
 
 | ID | İş | Durum | Kanıt |

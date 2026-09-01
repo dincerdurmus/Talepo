@@ -154,7 +154,9 @@ function getPanelPageTitle(pathname: string) {
   if (pathname.startsWith("/panel/teklifler")) return "Tekliflerim";
   if (pathname.startsWith("/panel/firsatlar")) return "Fırsatlar";
   if (pathname.startsWith("/panel/analiz")) return "Analiz";
-  if (pathname.startsWith("/panel/asistan")) return "AI asistan";
+  /* 98+ Part III (2026-09-01): yüzeyin kendisi dürüstçe kural tabanlı —
+     başlık "AI" vaadi taşıyamaz (sahte premium yasağı). */
+  if (pathname.startsWith("/panel/asistan")) return "Teklif taslağı";
   if (pathname.startsWith("/panel/takiplerim")) return "Takiplerim";
   if (pathname.startsWith("/panel/uyarilar")) return "Takiplerim";
   if (pathname.startsWith("/panel/kayitli-aramalar")) return "Takiplerim";
