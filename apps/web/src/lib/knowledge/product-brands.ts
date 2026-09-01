@@ -108,7 +108,7 @@ const RULES: BrandRule[] = [
     cats: TECH,
   },
   { words: ["tablet", "tablet bilgisayar"], type: "tablet", cats: TECH },
-  { words: ["cep telefon", "akilli telefon"], type: "cep-telefonu", cats: TECH },
+  { words: ["cep telefon", "akilli telefon", "telefon"], type: "cep-telefonu", cats: TECH },
   // —— Beyaz eşya / mutfak (yalnız o kategorilerde) ——
   { words: ["buzdolabi", "buzdolap", "mini buzdolabi"], type: "buzdolabi", cats: HOME },
   { words: ["camasir makine"], type: "camasir-makinesi", cats: HOME },

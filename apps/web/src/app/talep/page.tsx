@@ -19,6 +19,7 @@ import {
   Send,
   SlidersHorizontal,
   Sparkles,
+  TrendingUp,
   Zap,
 } from "lucide-react";
 
@@ -41,6 +42,7 @@ import { UnderstoodFactsBoard } from "@/components/request/v2/UnderstoodFactsBoa
 import { shouldConfirmYearCondition } from "@/components/request/YearConditionConfirmation";
 import { isImplausibleFutureModelYear } from "@/components/request/FutureModelYearConfirmation";
 import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
+import { MairaHandoffScene } from "@/components/request/maira/MairaHandoffScene";
 import { MairaStage } from "@/components/request/maira/MairaStage";
 import {
   formatBudgetDigits,
@@ -420,6 +422,27 @@ function TalepOlusturForm() {
    * kurulmaz. İkinci bir state ağacı ya da serileştirme yoktur.
    */
   const [viewMode, setViewMode] = useState<"standard" | "maira">("standard");
+  /**
+   * MAIRA GİRİŞ ANI (kurucu talebi, 2026-09-01). Kullanıcı metnini yazıp
+   * Enter'a bastığında "talebini anladım — konuşalım / standart formla
+   * devam" seçimi çıkar; "Konuşalım" Maira görünümünü açar. Bu YALNIZ bir
+   * sunum anıdır: cevap state'ine dokunmaz, kapatınca standart akış aynen
+   * kaldığı yerden sürer. Kategori ağacının yanındaki eski "Maira ile
+   * devam et" düğmesi kaldırıldı — giriş kapısı artık bu an.
+   */
+  const [mairaHandoffOpen, setMairaHandoffOpen] = useState(false);
+  /** Konuşalım geçişi: sahne 0,65 sn'de alttaki Maira katmanına erir. */
+  const [mairaHandoffLeaving, setMairaHandoffLeaving] = useState(false);
+  /** Sahneden gelişte Maira katmanı beliriş animasyonu atlar (altta tam
+   *  opak bekler); yalnız "Maira seni bekliyor" kartından açılışta oynar. */
+  const [mairaSummonInstant, setMairaSummonInstant] = useState(false);
+  /**
+   * YAZARKEN ALT YÜZEYLER GÖRÜNMEZ (kurucu, 2026-09-01): kategori,
+   * sorular ve sağ sütun ancak kullanıcı giriş sahnesinde bir yol
+   * seçtikten sonra açılır. Yazma alanı sakin kalır; "Devam et" (ya da
+   * Enter) sahneyi açar.
+   */
+  const [introDecided, setIntroDecided] = useState(false);
   const [confirmedYearConditionKey, setConfirmedYearConditionKey] =
     useState<string | null>(null);
   const [confirmedFutureModelYearKey, setConfirmedFutureModelYearKey] =
@@ -1490,6 +1513,7 @@ function TalepOlusturForm() {
     };
     return {
       productType: valueOf("productType") ?? valueOf("applianceType"),
+      brand: valueOf("brand"),
       needType: valueOf("needType"),
       listingType: valueOf("listingType"),
       isRemoteService:
@@ -1507,6 +1531,7 @@ function TalepOlusturForm() {
       scheduledToFocusedQuestion(q, hybridByKey.get(q.fieldKey), {
         productType: questionContext.productType,
         needType: questionContext.needType,
+        brand: questionContext.brand,
         isRemoteService: questionContext.isRemoteService,
         listingType: questionContext.listingType,
       }),
@@ -2294,9 +2319,14 @@ function TalepOlusturForm() {
   }
 
   function resolveAnswerEditControl(fieldKey: string) {
-    const control = resolveAnswerEditQuestion(fieldKey)?.control ?? null;
-    if (!control) return null;
-    return control.options.length > 0 || control.allowCustom ? control : null;
+    /**
+     * SERBEST-METİN CEVAPLAR DA DÜZENLENEBİLİR (kurucu QA, 2026-09-01).
+     * Eski koşul options+allowCustom olmayan kontrolleri (bütçe, konum
+     * gibi) null'a düşürüyor ve "Yanıtlarım" satırı kilitleniyordu.
+     * Kontrol varsa satır düzenlenebilir; seçenek yoksa düzenleyici
+     * zaten serbest giriş gösterir (MairaAnswers 144. satır koşulu).
+     */
+    return resolveAnswerEditQuestion(fieldKey)?.control ?? null;
   }
 
   function handleFocusedSkip(fieldKey: string) {
@@ -2780,6 +2810,7 @@ function TalepOlusturForm() {
 
   const aiPanelContent = (
     <TalepoAiPanel
+      insightMode
       analysisStatus={brain.analysisStatus}
       categoryLabel={
         requestSummary.subtypeLabel
@@ -2964,22 +2995,16 @@ function TalepOlusturForm() {
       >
         <div className="flex min-w-0 items-center gap-3">
           <span className="talepo-ai-emblem shrink-0">
-            <Sparkles className="h-5 w-5" />
+            <TrendingUp className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
-              <span className="talepo-ai-status-dot" />
-              Talepo AI
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
+              Talep Analizi
             </p>
             <p className="talepo-ai-title mt-1 truncate text-sm font-semibold">
-              {/* Kapsam dışı talep "yayına hazır" diyemez — uyarıyla çelişir. */}
               {composerOutOfScope
                 ? "Talepo kapsamı dışında"
-                : readiness.state === "READY"
-                ? "Yayına hazır"
-                : enrichmentCandidates.length > 0
-                  ? `${enrichmentCandidates.length} öneri · netleştir`
-                  : "Analiz asistanı"}
+                : "Piyasa & profesyonel görünüm"}
             </p>
           </div>
         </div>
@@ -2992,15 +3017,14 @@ function TalepOlusturForm() {
 
       <div className="relative z-[1] hidden items-center gap-3 px-5 pt-6 lg:flex">
         <span className="talepo-ai-emblem shrink-0">
-          <Sparkles className="h-5 w-5" />
+          <TrendingUp className="h-5 w-5" />
         </span>
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
-            <span className="talepo-ai-status-dot" />
-            Talepo AI
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-teal-200/75">
+            Talep Analizi
           </p>
           <p className="talepo-ai-title mt-1 text-base font-semibold">
-            Analiz asistanı
+            Piyasa & profesyonel görünüm
           </p>
         </div>
       </div>
@@ -3049,9 +3073,22 @@ function TalepOlusturForm() {
     },
   });
 
-  if (viewMode === "maira") {
-    return (
-      <div className="min-h-screen bg-[#07040f] p-3 sm:p-5">
+  /**
+   * MAIRA KATMANI (kurucu, 2026-09-01): yeni sayfa DEĞİL — mevcut sayfanın
+   * üstüne çağrılan varlık. Standart yüzey altta kalır; katman yumuşak bir
+   * belirişle gelir, kapanınca sayfa zaten oradadır. State tek ağaçta yaşar.
+   */
+  const mairaOverlay =
+    viewMode === "maira" ? (
+      <div className={mairaSummonInstant ? "fixed inset-0 z-[60]" : "maira-summon fixed inset-0 z-[60]"}>
+        <style>{`
+          @keyframes maira-summon-in {
+            from { opacity: 0; transform: scale(1.03); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .maira-summon { animation: maira-summon-in 1.15s cubic-bezier(0.22,0.61,0.36,1) both; }
+          @media (prefers-reduced-motion: reduce) { .maira-summon { animation: none; } }
+        `}</style>
         <MairaStage
           questions={focusedQuestions}
           draftByKey={focusedDraftByKey}
@@ -3063,7 +3100,10 @@ function TalepOlusturForm() {
           remainingCriticalCount={composerReadiness.remainingCriticalCount}
           answers={userAnswerRows}
           subtitle={readinessLabel}
-          onExitToStandard={() => setViewMode("standard")}
+          onExitToStandard={() => {
+            setViewMode("standard");
+            setMairaSummonInstant(false);
+          }}
           editControl={resolveAnswerEditControl}
           onEditAnswer={(fieldKey, value) => {
             /* Mevcut kanonik cevap işleyicisi — ikinci güncelleme yolu yok. */
@@ -3071,11 +3111,45 @@ function TalepOlusturForm() {
           }}
         />
       </div>
-    );
-  }
+    ) : null;
 
   return (
     <main className={`relative min-h-screen overflow-x-hidden bg-[#f4f7f6] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
+      {/*
+        MAIRA GİRİŞ ANI (kurucu talebi, 2026-09-01). Enter'dan sonra tek
+        soru sorulur: nasıl devam edelim? "Konuşalım" Maira görünümünü
+        açar; "Standart formla devam" bu anı kapatır ve akış hiçbir state
+        kaybı olmadan sürer. Anlama verisi kanonik requestSummary'den
+        okunur — ikinci bir çıkarım yolu yoktur.
+      */}
+      {/*
+        MAIRA GİRİŞ SAHNESİ (kurucu, 2026-09-01) — onaylanan görselin
+        kendisi: contour figürü ışık süzmeleriyle belirir, "Maira hazır /
+        Talebini aldım", iki kapsül. Beyaz kart yüzeyi kaldırıldı.
+      */}
+      {mairaOverlay}
+      {mairaHandoffOpen ? (
+        <MairaHandoffScene
+          leaving={mairaHandoffLeaving}
+          onTalk={() => {
+            /* SERT GEÇİŞ YOK (kurucu, 2026-09-01): Maira katmanı ALTINDA
+               açılır, sahne üstte yumuşakça erir — aynı karanlık dünyada
+               çapraz geçiş. */
+            setIntroDecided(true);
+            setMairaSummonInstant(true);
+            setViewMode("maira");
+            setMairaHandoffLeaving(true);
+            window.setTimeout(() => {
+              setMairaHandoffOpen(false);
+              setMairaHandoffLeaving(false);
+            }, 1180);
+          }}
+          onForm={() => {
+            setMairaHandoffOpen(false);
+            setIntroDecided(true);
+          }}
+        />
+      ) : null}
       <header className="sticky top-0 z-40 border-b border-[#0f1f1d]/8 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto grid h-14 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
           <div className="justify-self-start">
@@ -3191,7 +3265,7 @@ function TalepOlusturForm() {
 
             <div
               className={`mx-auto grid items-start gap-5 ${
-                hasText
+                hasText && introDecided
                   ? `max-w-[1180px] lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.95fr)] lg:gap-7 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : ""}`
                   : "max-w-[920px]"
               }`}
@@ -3251,10 +3325,24 @@ function TalepOlusturForm() {
                         setAiCompanionOpen(true);
                       }
                     }}
+                    onKeyDown={(event) => {
+                      /* Enter = "anlat bitti" jesti (kurucu talebi):
+                         Maira giriş anını açar. Shift+Enter satır ekler —
+                         çok satırlı yazma engellenmez. */
+                      if (
+                        event.key === "Enter" &&
+                        !event.shiftKey &&
+                        requestText.trim().length >= 5
+                      ) {
+                        event.preventDefault();
+                        setMairaHandoffOpen(true);
+                      }
+                    }}
                     className="mt-3 min-h-[120px] w-full resize-y bg-transparent text-[16px] leading-7 text-[#0f1f1d] outline-none placeholder:text-[#0f1f1d]/28 sm:min-h-[140px] sm:text-[17px] sm:leading-8"
                     placeholder="Örn. İstanbul’da 55 inç Arçelik televizyon arıyorum."
                   />
 
+                  {introDecided ? (
                   <HybridCategoryBrowsePanel
                     open={hybrid.openBrowsePanel}
                     onToggle={() =>
@@ -3273,9 +3361,64 @@ function TalepOlusturForm() {
                     }}
                     onReset={hybrid.resetBrowseWalk}
                   />
+                  ) : null}
 
-                  {requestText.trim().length > 0 ? (
+                  {!introDecided ? (
+                    /* Tek eylem (kurucu, 2026-09-01): "Daha fazla bilgi
+                       ekle" — boşken kilitli durur, en az 5 harf yazılınca
+                       açılır ve Maira giriş sahnesini çağırır. Enter da
+                       aynı sahneyi açar. Kategoriden seç bu aşamada yok. */
+                    <button
+                      type="button"
+                      data-testid="composer-intro-continue"
+                      disabled={requestText.trim().length < 5}
+                      onClick={() => setMairaHandoffOpen(true)}
+                      className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#0f1f1d]/15 disabled:text-[#0f1f1d]/40 disabled:shadow-none"
+                    >
+                      Daha fazla bilgi ekle
+                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    </button>
+                  ) : null}
+
+                  {requestText.trim().length > 0 && introDecided ? (
                     <>
+                      {/*
+                        MAIRA'YA DÖNÜŞ (kurucu, 2026-09-01): formla devam
+                        eden kullanıcı istediği an Maira'ya geçebilir.
+                        Görünür, tek dokunuş; ikon contour figürünün başını
+                        andıran ışık halkalarıdır.
+                      */}
+                      <button
+                        type="button"
+                        data-testid="composer-enter-maira"
+                        onClick={() => setViewMode("maira")}
+                        className="group flex min-h-14 w-full items-center gap-3.5 rounded-2xl border border-[#0c2f3a]/50 bg-[#04121a] px-4 py-3 text-left shadow-[0_14px_40px_rgba(4,18,26,0.35)] transition hover:border-[#2dd4bf]/40"
+                      >
+                        <span
+                          aria-hidden
+                          className="grid h-10 w-10 flex-none place-items-center rounded-full"
+                          style={{
+                            background:
+                              "radial-gradient(closest-side, rgba(45,212,191,0.85), rgba(45,212,191,0.25) 55%, transparent 75%)",
+                          }}
+                        >
+                          <svg viewBox="0 0 40 40" className="h-9 w-9" fill="none">
+                            <ellipse cx="20" cy="18" rx="9" ry="12" stroke="rgba(230,255,250,0.9)" strokeWidth="1.1" />
+                            <ellipse cx="20" cy="18" rx="6" ry="8.5" stroke="rgba(180,240,228,0.65)" strokeWidth="0.9" />
+                            <ellipse cx="20" cy="18" rx="3.2" ry="5" stroke="rgba(140,225,210,0.5)" strokeWidth="0.8" />
+                            <path d="M11 33c2.5-3 6-4.5 9-4.5s6.5 1.5 9 4.5" stroke="rgba(230,255,250,0.75)" strokeWidth="1.1" strokeLinecap="round" />
+                          </svg>
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-semibold text-[#e6fffa]">
+                            Maira seni bekliyor
+                          </span>
+                          <span className="block text-xs text-[#8ccfc4]/75">
+                            Kalan soruları konuşarak tamamla
+                          </span>
+                        </span>
+                        <ArrowRight className="h-4 w-4 flex-none text-[#2dd4bf] transition group-hover:translate-x-0.5" aria-hidden />
+                      </button>
                       <UnderstoodFactsBoard
                         editControl={resolveAnswerEditControl}
                         hasText
@@ -3375,21 +3518,12 @@ function TalepOlusturForm() {
                       />
 
                       {/*
-                        MAIRA GİRİŞİ — AYNI STATE, FARKLI YÜZEY.
-                        Görünüm değişimi cevapları yeniden kurmaz; yalnız
+                        MAIRA GİRİŞİ BURADAN KALDIRILDI (kurucu talebi,
+                        2026-09-01): giriş kapısı artık Enter ile açılan
+                        anlama/seçim anıdır (mairaHandoffOpen). Görünüm
+                        geçişi hâlâ aynı state üzerinde yaşar; yalnız
                         `viewMode` değişir ve bileşen unmount olmaz.
                       */}
-                      {focusedQuestions.length > 0 && uxStage !== "compose" ? (
-                        <button
-                          type="button"
-                          data-testid="composer-enter-maira"
-                          onClick={() => setViewMode("maira")}
-                          className="mb-3 min-h-11 w-full rounded-xl border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-medium text-[#0f5f59] transition hover:border-[#0f766e]/45"
-                        >
-                          Maira ile devam et
-                        </button>
-                      ) : null}
-
                       {focusedQuestions.length > 0 && uxStage !== "compose" ? (
                         <FocusedQuestionsPanel
                           questions={focusedQuestions}
@@ -3547,7 +3681,7 @@ function TalepOlusturForm() {
                   </div>
                 </div>
 
-                {hasText ? (
+                {hasText && introDecided ? (
               <section
                 id="talep-finish"
                 className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
@@ -3872,7 +4006,7 @@ function TalepOlusturForm() {
                 ) : null}
               </div>
 
-              {hasText ? (
+              {hasText && introDecided ? (
         <aside className={`talepo-rise talepo-rise-delay-2 hidden min-w-0 lg:block ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : "lg:self-start"}`}>
                 <div
                   ref={aiPanelFollowRef}

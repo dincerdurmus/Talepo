@@ -70,6 +70,15 @@ export type QuickSelectGroup = {
   options: QuickSelectOption[];
 };
 
+/**
+ * Alan anahtarının kullanıcı dili karşılığı — TEK yetkili harita.
+ * Ham fieldKey hiçbir yüzeyde kullanıcıya gösterilmez (kurucu QA,
+ * 2026-09-01: "quantity bilgisini ekleyelim" sızıntısı ölçüldü).
+ */
+export function fieldDisplayLabel(fieldKey: string): string | null {
+  return FIELD_LABELS[fieldKey] ?? null;
+}
+
 const FIELD_LABELS: Record<string, string> = {
   brand: "Marka",
   model: "Model",

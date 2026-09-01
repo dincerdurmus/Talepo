@@ -7,7 +7,7 @@ import {
   seedFieldValuesFromUnderstanding,
   resolveSchemaCategory,
 } from "@/lib/request-understanding/activation-bridge";
-import { TECH_HARDWARE_SIGNAL } from "@/lib/request-category-engine";
+import { TECH_HARDWARE_SIGNAL, TECH_SOFTWARE_SIGNAL } from "@/lib/request-category-engine";
 import type {
   RequestUnderstandingResult,
   UnderstandingSource,
@@ -310,6 +310,10 @@ function coversAllTokens(whole: string, part: string): boolean {
  * Kaçamak seçenekler kanıt sayılmaz: "Fark etmez" yazmak bir tercih beyanı
  * değildir, tercih YOKLUĞUDUR.
  */
+/** Dilek/yardımcı sözcükler — tek başlarına hiçbir seçeneği kanıtlamaz. */
+const AUX_DESIRE_TOKEN_RE =
+  /^(?:olsun|olmasin|isterim|istiyorum|istiyoruz|gerek|gerekli|lazim|tercih|tercihen|mumkunse)$/;
+
 const OPTION_ESCAPE_RE =
   /fark\s*etmez|karisik|bilmiyorum|diger|belirtmek\s*istemiyorum|onemli\s*degil/;
 
@@ -527,6 +531,15 @@ function bindWrittenOptionValues(
       if (gatingKeys.has(def.key) || def.wholeOnly) continue;
       for (const token of forms[0]!.split(" ")) {
         if (token.length < 4 || OPTION_ESCAPE_RE.test(token)) continue;
+        /**
+         * DİLEK/YARDIMCI SÖZCÜK AYIRT EDİCİ DEĞİLDİR (kurucu QA,
+         * 2026-09-01). "Dahil olsun" seçeneğinin "olsun"u her istek
+         * cümlesinde geçer ("no frost olsun") ve installation="olsun"
+         * gibi anlamsız bir kayıt üretiyordu (ölçüldü). Bu sözcükler
+         * seçeneğin KENDİNE ÖZGÜ kısmı olamaz; tam-ifade yolu (1) zaten
+         * bunlardan etkilenmez.
+         */
+        if (AUX_DESIRE_TOKEN_RE.test(token)) continue;
         if (!foldedHasWord(text, token)) continue;
         value = originalSpelling(raw, token) ?? token;
         evidence = token;
@@ -1093,6 +1106,19 @@ export function mapUnderstandingToFields(
     // keep ANY
   }
 
+  /* Talep türü, cümlenin güvenli yeniden ifadesiyse kapatılır — karar tek
+     yetkili deriveExplicitNeedType'tadır (D1 kanıt oraklı da AYNI fonksiyonu
+     çağırır; ikinci bir karar kopyası yoktur). */
+  {
+    const cur = withAny.needType;
+    const canSeed =
+      !cur || cur.kind === "UNKNOWN" || cur.provenance === "INFERRED";
+    const seed = canSeed ? deriveExplicitNeedType(result) : null;
+    if (seed) {
+      withAny.needType = valueField(seed.value, "EXPLICIT_TEXT", 0.85, seed.evidence);
+    }
+  }
+
   // Technology hardware demand → needType/solutionType for Step-2 filters
   const taxId = productHint?.taxonomyNodeId ?? "";
   const pt =
@@ -1119,9 +1145,23 @@ export function mapUnderstandingToFields(
       (!withAny.solutionType || withAny.solutionType.kind === "UNKNOWN") &&
       pt
     ) {
-      withAny.solutionType = valueField(pt, "INFERRED", 0.85, [
-        "tech-solution-seed",
-      ]);
+      /**
+       * ÇÖZÜM/ÜRÜN, ÜRÜN ALANININ AYNASIDIR (kurucu, 2026-09-01):
+       * kullanıcı ürünü zaten yazdıysa ("televizyon") aynı bilgi ikinci
+       * kez SORULMAZ. productType açık beyansa solutionType da aynı
+       * sözcükle açık beyandır (kanıt: kullanıcının kendi sözcüğü metinde);
+       * yalnız gerçekten çıkarımsa (ürün türü tahminse) öneri olarak kalır.
+       */
+      const ptProv = withAny.productType?.provenance;
+      const ptExplicit =
+        withAny.productType?.kind === "VALUE" &&
+        (ptProv === "EXPLICIT_TEXT" || ptProv === "EXPLICIT_BROWSE");
+      withAny.solutionType = valueField(
+        pt,
+        ptExplicit ? "EXPLICIT_TEXT" : "INFERRED",
+        0.85,
+        ptExplicit ? [pt] : ["tech-solution-seed"],
+      );
     }
   }
 
@@ -1842,4 +1882,71 @@ export function getFieldKind(
   key: string,
 ): CanonicalFieldState["kind"] {
   return state.fields[key]?.kind ?? "UNKNOWN";
+}
+
+/**
+ * TALEP TÜRÜ KULLANICININ CÜMLESİNİN KENDİSİDİR (kurucu, 2026-09-01).
+ *
+ * "Televizyon arıyorum" yazan kullanıcıya "Ne arıyorsunuz?" sorulmaz:
+ * kanonik beyin niyeti (BUY/RENT/SERVICE/PART) ve özneyi GÜVENLE çözdüyse
+ * talep türü bir tahmin değil, cümlenin yeniden ifadesidir. Değer yalnız
+ * kategorinin KENDİ şema seçeneklerinden döner; eşleşme yoksa null döner ve
+ * soru sorulmaya devam eder. BU FONKSİYON TEK KARAR SAHİBİDİR: hem alan
+ * tohumlaması hem D1 bastırma-kanıt oraklı buradan okur.
+ */
+export function deriveExplicitNeedType(
+  result: RequestUnderstandingResult,
+): { value: string; evidence: string[] } | null {
+  const intentObj = result.intent;
+  const kindRec = result.requestSubject?.kind;
+  const kindVal = String(kindRec?.value ?? "");
+  const kindConf = Number(kindRec?.confidence ?? 0);
+  const intentConfident =
+    intentObj?.status === "CONFIDENT" && Number(intentObj.confidence) >= 0.6;
+  /* Eşik 0.7: kanonik bütün-ürün kararı (taksonomi yolu) 0.75 güvenle gelir —
+     0.8 eşiği "televizyon arıyorum"u bile kapatmıyordu (ölçüldü, kurucu QA).
+     Belirsiz dallar 0.4-0.6 bandındadır; niyet kapısı (CONFIDENT) ayrıca durur. */
+  if (!intentConfident || kindConf < 0.7) return null;
+  const schemaVals = new Set(
+    (REQUEST_CATEGORIES.find((c) => c.id === result.category.value)?.fields ?? [])
+      .filter((f) => f.key === "needType")
+      .flatMap((f) => f.options ?? [])
+      .map((o) => String(o.value ?? "")),
+  );
+  const WHOLE_KINDS = new Set([
+    "PRODUCT",
+    "MANUFACTURED_ITEM",
+    "INDUSTRIAL_EQUIPMENT",
+    "MEDICAL_DEVICE",
+  ]);
+  const iv = String(intentObj.value);
+  let candidates: string[] = [];
+  if (iv === "SERVICE" || kindVal === "SERVICE") candidates = ["service"];
+  else if (iv === "PART" || kindVal === "PART" || kindVal === "ACCESSORY")
+    candidates = ["part"];
+  else if (kindVal === "VEHICLE" && (iv === "BUY" || iv === "RENT"))
+    candidates = ["vehicle"];
+  else if (WHOLE_KINDS.has(kindVal) && (iv === "BUY" || iv === "RENT")) {
+    /* "vehicle" BURADA ADAY DEĞİLDİR: otomotivde araç-olmayan bütün ürün
+       (lastik, akü vs.) araca çözülüyordu (ölçüldü: "Araba lastiği
+       arıyorum" → vehicle). Araç yalnız kindVal===VEHICLE dalından gelir.
+       TEKNOLOJİDE donanım/yazılım ekseni kanonik sinyalle ayrılır:
+       "muhasebe yazılımı arıyorum" hardware'e KAPANAMAZ (ölçüldü —
+       yanlış değerle kapatmak sormaktan beterdir); eksen belirsizse null
+       döner ve soru şema seçenekleriyle sorulur. */
+    if (result.category.value === "technology") {
+      const raw = String(result.rawInput ?? "");
+      const hw = TECH_HARDWARE_SIGNAL.test(raw);
+      const sw = TECH_SOFTWARE_SIGNAL.test(raw);
+      candidates = hw && !sw ? ["hardware"] : sw && !hw ? ["software"] : [];
+    } else {
+      candidates = ["machine", "product"];
+    }
+  }
+  const resolved = candidates.find((c) => schemaVals.has(c));
+  if (!resolved) return null;
+  return {
+    value: resolved,
+    evidence: [...(intentObj.evidence ?? []).slice(0, 2), `kind=${kindVal}`],
+  };
 }

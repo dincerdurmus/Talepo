@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 import {
   signalHelper,
@@ -349,6 +350,14 @@ function MoneyRangeControl(props: {
               props.onAnswer(`${formatLive(digits)} TL`);
             }
           }}
+          onBlur={() => {
+            /* YAZILAN TUTAR CEVAPTIR (kurucu QA, 2026-09-01). Kullanıcı
+               tutarı yazıp Kaydet'e basmadan devam edince alan boş
+               sayılıyor ve yayın kapısı "Bütçe" istemeye devam ediyordu
+               (ölçüldü). Alandan çıkış yazılan değeri kanonik cevaba
+               taşır; Kaydet klavye akışı için durur. */
+            if (digits) props.onAnswer(`${formatLive(digits)} TL`);
+          }}
           placeholder="Örn. 50.000"
         />
       </div>
@@ -390,6 +399,142 @@ function MoneyRangeControl(props: {
  * geçebilir. Öneri artık kendi rozetiyle, seçim dilinin DIŞINDA gösterilir;
  * seçili görünüm yalnız gerçek bir dokunuştan sonra oluşur.
  */
+/**
+ * MARKA — AÇ/KAPA ÇOKLU SEÇİM (kurucu, 2026-09-01).
+ *
+ * Kanonik katalog kategorideki TÜM markaları verir; kalabalık görüntü
+ * aç/kapa bir listeyle çözülür. Solda kutucuk, birden fazla işaretlenebilir;
+ * "Kaydet" işaretlenenleri tek kanonik cevaba virgülle birleştirir.
+ * Seçenek üretmez, sıralamaz — kontrol kaydı ne verdiyse onu gösterir.
+ */
+function BrandMultiControl(props: {
+  control: QuestionControlDef;
+  onAnswer: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customDraft, setCustomDraft] = useState("");
+  const brands = props.control.options;
+  const toggle = (v: string) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v);
+      else next.add(v);
+      return next;
+    });
+  return (
+    <div className="mt-3 space-y-3" data-testid="control-brand-multi">
+      <button
+        type="button"
+        data-testid="brand-multi-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex min-h-11 w-full items-center justify-between rounded-xl border border-[#0f1f1d]/12 bg-white px-4 text-sm font-medium text-[#0f1f1d]/80 transition hover:border-[#0f766e]/40"
+      >
+        <span>
+          {checked.size > 0
+            ? `${checked.size} marka seçildi`
+            : `Markaları göster (${brands.length})`}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div className="max-h-64 overflow-y-auto rounded-xl border border-[#0f1f1d]/10 bg-white p-2">
+          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+            {brands.map((opt) => {
+              const on = checked.has(opt.value);
+              return (
+                <label
+                  key={opt.value}
+                  className={`flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-[13px] transition ${
+                    on
+                      ? "bg-[#0f766e]/10 text-[#0f5f59]"
+                      : "text-[#0f1f1d]/75 hover:bg-[#0f1f1d]/[0.04]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={() => toggle(opt.value)}
+                    className="h-4 w-4 flex-none accent-[#0f766e]"
+                  />
+                  <span className="truncate">{opt.label}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-testid="brand-multi-save"
+          disabled={checked.size === 0}
+          onClick={() => {
+            if (checked.size === 0) return;
+            props.onAnswer(
+              brands
+                .filter((o) => checked.has(o.value))
+                .map((o) => o.value)
+                .join(", "),
+            );
+          }}
+          className="min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {checked.size > 1 ? `${checked.size} markayı kaydet` : "Kaydet"}
+        </button>
+        <span className="text-xs text-[#0f1f1d]/40">veya</span>
+        {props.control.softOptions
+          .filter((o) => o.soft)
+          .map((opt) => (
+            <OptionChip
+              key={opt.value}
+              label={opt.label}
+              soft
+              onClick={() => props.onAnswer(opt.value)}
+            />
+          ))}
+        {props.control.allowCustom ? (
+          <button
+            type="button"
+            onClick={() => setCustomOpen((v) => !v)}
+            className="text-xs font-medium text-[#0f766e] transition hover:text-[#115e59]"
+          >
+            {props.control.customLabel ?? "Başka marka"}
+          </button>
+        ) : null}
+      </div>
+      {customOpen ? (
+        <div className="flex gap-2">
+          <input
+            value={customDraft}
+            onChange={(e) => setCustomDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && customDraft.trim()) {
+                props.onAnswer(customDraft.trim());
+              }
+            }}
+            placeholder="Marka adı yaz"
+            className="min-h-11 flex-1 rounded-xl border border-[#0f1f1d]/12 px-3.5 text-sm outline-none focus:border-[#0f766e]/50"
+          />
+          <button
+            type="button"
+            disabled={!customDraft.trim()}
+            onClick={() => props.onAnswer(customDraft.trim())}
+            className="min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white disabled:opacity-40"
+          >
+            Ekle
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ChoiceControl(props: {
   control: QuestionControlDef;
   fieldKey: string;
@@ -402,7 +547,14 @@ function ChoiceControl(props: {
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [dateOpen, setDateOpen] = useState(false);
-  const primary = props.control.options;
+  /* UZUN LİSTE KAPAĞI (kurucu, 2026-09-01): katalogdan gelen 30+ model
+     çipi ekranı boğuyordu; ilk 8 görünür, kalanı "Tümünü göster (N)". */
+  const [allOptionsOpen, setAllOptionsOpen] = useState(false);
+  const allPrimary = props.control.options;
+  const primary =
+    allOptionsOpen || allPrimary.length <= 10
+      ? allPrimary
+      : allPrimary.slice(0, 8);
   const soft = props.control.softOptions;
   // Kullanıcıya ETİKET gösterilir; slug ("vehicle") asla ekrana çıkmaz.
   const suggestionLabel = (props.suggestedLabel ?? "").trim();
@@ -422,6 +574,16 @@ function ChoiceControl(props: {
       />
       {primary.length > 0 ? (
         <div className="flex flex-wrap gap-2">
+          {allPrimary.length > 10 ? (
+            <button
+              type="button"
+              data-testid="choice-show-all"
+              onClick={() => setAllOptionsOpen((v) => !v)}
+              className="inline-flex min-h-11 items-center rounded-xl border border-dashed border-[#0f766e]/35 px-3.5 text-sm font-medium text-[#0f766e] transition hover:border-[#0f766e]/60 sm:min-h-10"
+            >
+              {allOptionsOpen ? "Daha az göster" : `Tümünü göster (${allPrimary.length})`}
+            </button>
+          ) : null}
           {primary.map((opt) => (
             <OptionChip
               key={opt.value}
@@ -733,6 +895,20 @@ export function FocusedQuestionsPanel({
               suggestionId={
                 active.suggestedLabel ? `${baseId}-suggestion` : undefined
               }
+            />
+          </>
+        ) : active.fieldKey === "brand" && control && control.options.length > 0 ? (
+          <>
+            <SuggestionBadge
+              id={`${baseId}-suggestion`}
+              fieldKey={active.fieldKey}
+              value={active.suggestedValue}
+              label={active.suggestedLabel}
+            />
+            <BrandMultiControl
+              key={active.fieldKey}
+              control={control}
+              onAnswer={commit}
             />
           </>
         ) : control ? (

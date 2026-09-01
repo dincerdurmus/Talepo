@@ -78,6 +78,7 @@ export function computeComposerV2Flow(
     scheduledToFocusedQuestion(q, hybridByKey.get(q.fieldKey), {
       productType,
       needType: input.needType,
+      brand: input.values.brand ?? null,
       isRemoteService: input.isRemoteService,
       listingType: input.values.listingType ?? null,
     }),

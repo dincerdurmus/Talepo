@@ -80,6 +80,19 @@ const D1_HIGH_RISK_FULL_QUEUE: readonly string[] = [
 ];
 
 /**
+ * SÖZLEŞME GÜNCELLEMESİ (kurucu, 2026-09-01): TALEP TÜRÜ, cümlenin güvenli
+ * yeniden ifadesiyse SORULMAZ — "televizyon arıyorum" yazana "Ne
+ * arıyorsunuz?" sormak ölçülen kurucu şikâyetiydi. Tek karar sahibi
+ * deriveExplicitNeedType'tır ve D1 kanıt oraklı aynı fonksiyonla bu
+ * kayıtları EXPLICIT_TEXT sayar. Aşağıdaki 17 kayıt bu yüzden artık
+ * inference_re_asked'e DEĞİL, correctly_suppressed'e gider; D1 tabanındaki
+ * yalnız 2 condition kaydı eski hareket beklentisinde kalır.
+ */
+const D1_NEEDTYPE_RESTATED = new Set(
+  D1_HIGH_RISK_FULL_QUEUE.filter((id) => id.includes("/needType@")),
+);
+
+/**
  * Korunacak taban — kullanıcının yazdığı değer yeniden sorulmamalıdır.
  *
  * Wave L (2026-08-31) sayılmış delta — Wave K sertifika-merdiveni düzeltmesi
@@ -100,6 +113,34 @@ const D1_HIGH_RISK_FULL_QUEUE: readonly string[] = [
  * kimliği düzeltmesiyle bu sınıfa girdi.
  */
 const D1_CORRECTLY_SUPPRESSED_FULL_QUEUE: readonly string[] = [
+  /**
+   * Kurucu sözleşme güncellemesi (2026-09-01) — sayılmış 20 kayıt: talep
+   * türü güvenli yeniden ifadeyle KAPANIR (deriveExplicitNeedType; D1
+   * oraklı intent-kind-authority kanıtıyla aynı fonksiyonu çağırır).
+   * 17'si eski high-risk tabanından göçtü; home-06/mach-04/print-06 aynı
+   * kuralla ilk kez bu sınıfa girdi (print-06 ASKED tabanından — soru
+   * cevaplandığı için artık sorulmuyor, sessiz bastırma değil).
+   */
+  "auto-01/needType@FULL_QUEUE",
+  "auto-02/needType@FULL_QUEUE",
+  "auto-03/needType@FULL_QUEUE",
+  "auto-04/needType@FULL_QUEUE",
+  "auto-05/needType@FULL_QUEUE",
+  "auto-06/needType@FULL_QUEUE",
+  "auto-07/needType@FULL_QUEUE",
+  "auto-08/needType@FULL_QUEUE",
+  "auto-09/needType@FULL_QUEUE",
+  "auto-10/needType@FULL_QUEUE",
+  "home-06/needType@FULL_QUEUE",
+  "mach-01/needType@FULL_QUEUE",
+  "mach-02/needType@FULL_QUEUE",
+  "mach-03/needType@FULL_QUEUE",
+  "mach-04/needType@FULL_QUEUE",
+  "mach-05/needType@FULL_QUEUE",
+  "mach-07/needType@FULL_QUEUE",
+  "mach-08/needType@FULL_QUEUE",
+  "print-06/needType@FULL_QUEUE",
+  "print-07/needType@FULL_QUEUE",
   /** 98+ Part II (2026-09-01): "Satılık ofis" — propertyType artık
    * kullanıcının kendi sözcüğüyle doluyor; yazılmış değer yeniden
    * sorulmaz (sessiz bastırma değil, cevaplandı). */
@@ -483,8 +524,17 @@ function main(): void {
   /* ---- (2) 20 kaydın TEK TEK taşınması ---- */
   const stillHighRisk = D1_HIGH_RISK_FULL_QUEUE.filter((id) => highRisk.has(id));
   const notReAsked = D1_HIGH_RISK_FULL_QUEUE.filter(
-    (id) => !inferenceReAsked.has(id),
+    (id) => !D1_NEEDTYPE_RESTATED.has(id) && !inferenceReAsked.has(id),
   );
+  const restatedNotSuppressed = [...D1_NEEDTYPE_RESTATED].filter(
+    (id) => !correctlySuppressed.has(id),
+  );
+  if (restatedNotSuppressed.length) {
+    problems.push(
+      `${restatedNotSuppressed.length} yeniden-ifade kaydı correctly_suppressed değil: ` +
+        restatedNotSuppressed.join(", "),
+    );
+  }
   if (stillHighRisk.length) {
     problems.push(
       `${stillHighRisk.length} D1 kaydı hâlâ high_risk_silent_suppression: ` +
@@ -532,7 +582,10 @@ function main(): void {
     ...wronglyRepeated,
   ]);
   const noLongerAsked = D1_CORRECTLY_ASKED_FULL_QUEUE.filter(
-    (id) => !askedNow.has(id),
+    (id) =>
+      !askedNow.has(id) &&
+      /* print-06/needType: güvenli yeniden ifade — cevaplandı, sorulmuyor. */
+      !(id.includes("/needType@") && correctlySuppressed.has(id)),
   );
   if (noLongerAsked.length) {
     problems.push(
@@ -554,10 +607,13 @@ function main(): void {
    * MATEMATİKSEL DENKLİK. D2'nin tek meşru ASKED artışı, D1'de sessizce
    * bastırılan 20 kayıttır. Bunun dışında her sapma tek tek listelenir.
    */
-  const expectedAsked = new Set<string>([
-    ...D1_CORRECTLY_ASKED_FULL_QUEUE,
-    ...D1_HIGH_RISK_FULL_QUEUE,
-  ]);
+  const expectedAsked = new Set<string>(
+    [...D1_CORRECTLY_ASKED_FULL_QUEUE, ...D1_HIGH_RISK_FULL_QUEUE].filter(
+      (id) =>
+        !D1_NEEDTYPE_RESTATED.has(id) &&
+        !(id.includes("/needType@") && correctlySuppressed.has(id)),
+    ),
+  );
   const unexplainedNew = [...askedNow].filter((id) => !expectedAsked.has(id));
   console.log(
     `\nASKED denkligi: D1 sorulan ${D1_CORRECTLY_ASKED_FULL_QUEUE.length} + ` +
@@ -847,7 +903,45 @@ function main(): void {
 
   /* ---- (B3) CEVAPLANMAMIŞ ÇIKARIM DOĞRULAMASI REVIEW'I AÇMAZ ---- */
   {
-    const raw = inputById.get("auto-01") ?? "Mercedes C180 satın almak istiyorum";
+    /**
+     * SÖZLEŞME GÜNCELLEMESİ (kurucu, 2026-09-01) — iki AYRI durum:
+     *
+     * (1) GÜVENLİ YENİDEN İFADE: "satın almak istiyorum" + güvenli özne
+     *     türü needType'ı EXPLICIT_TEXT olarak KAPATIR — soru sorulmaz,
+     *     review açılır ("televizyon arıyorum"a 'Ne arıyorsunuz?' sormak
+     *     ölçülen kurucu şikâyetiydi).
+     * (2) ÇIKARIM DOĞRULAMASI (D2'nin asıl ekseni) düşük güvenli örnekte
+     *     aynen yaşar: fiilsiz "MacBook Pro dizüstü" niyeti belirsizdir,
+     *     needType INFERRED kalır, soru öneriyle gelir ve review kilitli.
+     */
+    const rawConfident = inputById.get("auto-01") ?? "Mercedes C180 satın almak istiyorum";
+    {
+      const { state: st } = syncFromText(null, rawConfident);
+      const nt = (st.fields as Record<string, { provenance?: string; value?: unknown }>).needType;
+      if (nt?.provenance !== "EXPLICIT_TEXT" || String(nt?.value) !== "vehicle") {
+        problems.push(
+          `B3a: güvenli alım cümlesi needType'ı kapatmadı → ${JSON.stringify(nt ?? null)}`,
+        );
+      }
+      const sched = scheduleNextQuestions({
+        categoryId: st.categoryId ?? "automotive",
+        hybridCandidates: [],
+        values: { budget: "850.000 TL", city: "İstanbul / Kadıköy" },
+        fieldStates: Object.fromEntries(
+          Object.entries(st.fields as Record<string, { kind?: string; value?: unknown; provenance?: string }>).map(
+            ([k, f]) => [k, { kind: f?.kind, value: f?.kind === "VALUE" ? String(f.value ?? "") : null, provenance: f?.provenance ?? null }],
+          ),
+        ) as never,
+      });
+      if (!sched.canEnterReview) {
+        problems.push(
+          `B3a: kapanmış needType'a rağmen review kapalı → [${sched.blockingFieldKeys.join(", ")}]`,
+        );
+      }
+    }
+    /* Fiilsiz cümle: niyet belirsiz → needType INFERRED kalır ve D2'nin
+       asıl ekseni (doğrulanmamış çıkarım review'ı kilitler) burada yaşar. */
+    const raw = "Mercedes C180";
     const { state } = syncFromText(null, raw);
     const fields = state.fields as Record<
       string,
@@ -936,9 +1030,10 @@ function main(): void {
       problems.push("B2: needType sorusu öneri değeri taşımıyor");
     } else {
       const focused = scheduledToFocusedQuestion(needTypeQuestion);
-      if (focused.suggestedLabel !== "Araç") {
+      /* Şema tek kaynak olunca kanonik etiket "Aracın kendisi (satın alma)" oldu (2026-09-01). */
+      if (focused.suggestedLabel !== "Aracın kendisi (satın alma)") {
         problems.push(
-          `B5: öneri etiketi '${focused.suggestedLabel}'; 'Araç' olmalı`,
+          `B5: öneri etiketi '${focused.suggestedLabel}'; 'Aracın kendisi (satın alma)' olmalı`,
         );
       }
     }

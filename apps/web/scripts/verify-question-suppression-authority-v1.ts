@@ -53,6 +53,8 @@ import { readFileSync } from "node:fs";
 
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
 import { classifyNumbers } from "../src/lib/request-understanding/number-role";
+import { understandRequest } from "../src/lib/request-understanding/understand-request";
+import { deriveExplicitNeedType } from "../src/lib/request-composer/build-state";
 import {
   SIMULATED_ANSWER_VALUE,
   walkQuestionWavesFromText,
@@ -440,6 +442,25 @@ function measureScenario(sc: ScenarioInput): Rec[] {
     ) {
       evidence = "EXPLICIT_TEXT";
       evidenceDetail = "phrase-match:budget-number-authority";
+    } else if (
+      /**
+       * D2 SÖZLEŞME GÜNCELLEMESİ (kurucu, 2026-09-01): TALEP TÜRÜ, cümlenin
+       * güvenli yeniden ifadesiyse AÇIK BEYANDIR. "Televizyon arıyorum"
+       * yazana "Ne arıyorsunuz?" sorulmaz. Kanıt, üretimle AYNI tek yetkili
+       * fonksiyondan aranır (deriveExplicitNeedType — niyet+özne otoritesi);
+       * ikinci bir karar kopyası yazılmadı. Fonksiyon null derse (belirsiz
+       * niyet) kayıt eskisi gibi INFERENCE_ONLY kalır ve D2 kilidi yaşar.
+       */
+      fieldKey === "needType" &&
+      (() => {
+        const seed = deriveExplicitNeedType(
+          understandRequest({ rawInput: sc.input } as never) as never,
+        );
+        return seed?.value === rawValue;
+      })()
+    ) {
+      evidence = "EXPLICIT_TEXT";
+      evidenceDetail = "phrase-match:intent-kind-authority";
     } else if (observedProvenance === "EXPLICIT_BROWSE") {
       evidence = "EXPLICIT_BROWSE";
       evidenceDetail = "user-browse-selection";

@@ -58,6 +58,8 @@ export type ControlResolveContext = {
   fieldKey: string;
   needType?: string | null;
   productType?: string | null;
+  /** Model seçenekleri markaya göre daraltılır (katalog hasadı). */
+  brand?: string | null;
   importance?: string;
   allowUnknown?: boolean;
   allowDontCare?: boolean;

@@ -4,6 +4,7 @@
  */
 
 import type { QuestionCandidate } from "@/lib/request-brain/types";
+import { fieldDisplayLabel } from "@/lib/request-composer/ui-helpers";
 import {
   getCategoryById,
   isGeneratedCommonField,
@@ -246,7 +247,11 @@ function escapesFor(input: {
 }
 
 function defaultPrompt(fieldKey: string, fallback?: string): string {
-  return fallback ?? `${fieldKey} bilgisini ekleyelim.`;
+  if (fallback) return fallback;
+  /* Ham İngilizce anahtar kullanıcıya ASLA gösterilmez; Türkçe etiket
+     kanonik haritadan gelir, o da yoksa nötr bir cümleye düşülür. */
+  const label = fieldDisplayLabel(fieldKey);
+  return label ? `${label} bilgisini ekleyelim.` : "Bir detayı birlikte ekleyelim.";
 }
 
 /**

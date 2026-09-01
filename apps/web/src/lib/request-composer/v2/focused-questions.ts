@@ -82,6 +82,7 @@ export function scheduledToFocusedQuestion(
   extras?: {
     productType?: string | null;
     needType?: string | null;
+    brand?: string | null;
     isRemoteService?: boolean;
     listingType?: string | null;
   },
@@ -92,6 +93,7 @@ export function scheduledToFocusedQuestion(
     fieldKey: q.fieldKey,
     needType: extras?.needType,
     productType: extras?.productType,
+    brand: extras?.brand,
     importance: q.importance,
     allowUnknown: q.allowUnknown,
     allowDontCare: q.allowDontCare,
@@ -433,9 +435,14 @@ export function resolveEditQuestion(input: {
     categoryId,
   };
 
+  const brandField = input.state?.fields?.brand;
   const question = scheduledToFocusedQuestion(scheduled, undefined, {
     productType: input.productType ?? null,
     needType: input.needType ?? null,
+    brand:
+      brandField?.kind === "VALUE" && typeof brandField.value === "string"
+        ? brandField.value
+        : null,
     isRemoteService: input.isRemoteService,
     listingType: input.listingType ?? null,
   });

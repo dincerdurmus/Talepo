@@ -2,6 +2,26 @@
  * Category/product-aware option providers for composer controls.
  */
 
+import {
+  APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  BABY_BRANDS,
+  FURNITURE_BRANDS,
+  HOME_KITCHEN_BRANDS,
+  MACHINERY_BRANDS,
+  TECHNOLOGY_BRANDS,
+} from "@/lib/ai/parser/brand-catalog";
+import { brandsForProductName } from "@/lib/knowledge/product-brands";
+import { getAutomotiveIndexes } from "@/lib/catalog/automotive/indexes";
+import { TECHNOLOGY_PRODUCT_MODELS } from "@/lib/ai/parser/brand-catalog";
+import {
+  babyBrandsForProductName,
+  furnitureBrandsForProduct,
+  inferMachineryBrandFamily,
+  kitchenBrandsForProductName,
+  machineryBrandsForFamily,
+} from "@/lib/knowledge/harvest-brands";
+
 import type { ControlOption, ControlResolveContext } from "./question-control-types";
 import { isRemoteEligibleService } from "./question-profiles";
 
@@ -174,6 +194,58 @@ export function printSizePresets(): ControlOption[] {
   ];
 }
 
+/**
+ * MODEL SEÇENEKLERİ MARKANIN KENDİ KATALOĞUNDAN (kurucu, 2026-09-01):
+ * otomotivde 803 modellik hasat (marka başına ≤36), teknolojide 54 kayıtlı
+ * ürün modeli depoda duruyordu ama model sorusu boş geliyordu. Tek yetkili
+ * kaynaklar: otomotiv indeksi ve TECHNOLOGY_PRODUCT_MODELS — ikinci liste
+ * yazılmaz; marka bilinmiyorsa boş döner ve serbest giriş kalır.
+ */
+export function modelOptionsForBrand(ctx: {
+  categoryId: string;
+  brand?: string | null;
+}): ControlOption[] {
+  const brand = (ctx.brand ?? "").trim();
+  if (!brand) return [];
+  const fold = (s: string) => s.toLocaleLowerCase("tr-TR");
+  if (ctx.categoryId === "automotive") {
+    const idx = getAutomotiveIndexes();
+    const rec = idx.brands.find(
+      (b) =>
+        fold(b.name) === fold(brand) ||
+        /* "Mercedes" ↔ "Mercedes-Benz": öne eşleşme iki yönlü kabul. */
+        fold(b.name).startsWith(fold(brand)) ||
+        fold(brand).startsWith(fold(b.name)) ||
+        (b.aliases ?? []).some((a: string) => fold(a) === fold(brand)),
+    );
+    if (!rec) return [];
+    const models = idx.modelsByBrand.get(rec.id) ?? [];
+    /* Salt-rakam tarihî adlar ("1200", "9") listenin sonuna — kullanıcıya
+       önce gerçek model adları görünür. */
+    const isNumeric = (x: string) => /^\d+$/.test(x.trim());
+    return models
+      .map((m) => ({ label: m.name, value: m.name }))
+      .sort((a, b) => {
+        const na = isNumeric(a.label) ? 1 : 0;
+        const nb = isNumeric(b.label) ? 1 : 0;
+        if (na !== nb) return na - nb;
+        return a.label.localeCompare(b.label, "tr-TR");
+      });
+  }
+  if (ctx.categoryId === "technology") {
+    return TECHNOLOGY_PRODUCT_MODELS.filter(
+      (e) => fold(e.brand ?? "") === fold(brand),
+    ).map((e) => {
+      /* Model adında marka tekrarı olmaz: "Samsung Galaxy S24" → "Galaxy S24". */
+      const stripped = fold(e.canonical).startsWith(fold(brand) + " ")
+        ? e.canonical.slice(brand.length + 1)
+        : e.canonical;
+      return { label: stripped, value: stripped };
+    });
+  }
+  return [];
+}
+
 export function brandModelSoftOptions(): ControlOption[] {
   return [
     { label: "Fark etmez", value: "no_preference", soft: true },
@@ -185,44 +257,76 @@ export function brandModelSoftOptions(): ControlOption[] {
   ];
 }
 
-/** Popular brand chips — catalog-backed where possible; not exhaustive. */
+/**
+ * MARKA SEÇENEKLERİ KANONİK KATALOGDAN TÜRETİLİR (kurucu, 2026-09-01).
+ * Elle yazılmış 4'lük "popüler" listesi kaldırıldı: tek yetkili kaynak
+ * brand-catalog'dur; kategoriye düşen TÜM markalar tr alfabetik sırayla
+ * sunulur. İkinci bir liste tutulmaz — katalog büyüyünce burası kendiliğinden
+ * büyür. Kalabalık görünüm UI'da aç/kapa + çoklu seçimle çözülür.
+ */
 export function popularBrandOptions(ctx: ControlResolveContext): ControlOption[] {
   const soft = brandModelSoftOptions();
-  if (ctx.categoryId === "baby") {
+  /**
+   * ÖNCE ÜRÜNÜN KENDİ PAZARI (kurucu, 2026-09-01): "televizyon arayana
+   * Acer gösterilmez." Ürün türü biliniyorsa markalar kategori torbasından
+   * DEĞİL, gerçek pazar dağılımından gelir (MediaMarkt hasadı —
+   * brandsForProductName, 35 ürün tipi; tek yetkili kaynak). Ürün türü
+   * eşleşmiyorsa kategori kataloğuna düşülür.
+   */
+  const pt = ctx.productType ?? "";
+  const productScoped: string[] | null = (() => {
+    /* 1) Gerçek pazar dağılımı (MediaMarkt hasadı, 35 tip). */
+    const market = brandsForProductName(pt, ctx.categoryId);
+    if (market && market.length >= 3) return market;
+    if (!pt) return null;
+    /* 2) Makine: Makinecim hasadının aile seçimi (metal/inşaat/enerji/
+          el aleti/matbaa) — torna Caterpillar göstermez. */
+    if (ctx.categoryId === "machinery") {
+      const fam = inferMachineryBrandFamily({ id: pt, name: pt });
+      if (fam) {
+        const picks = machineryBrandsForFamily(fam);
+        if (picks.length >= 3) return picks;
+      }
+      return null;
+    }
+    /* 3) Mobilya: yalnız gerçek mobilya ürününde marka kolonu. */
+    if (ctx.categoryId === "furniture") {
+      return furnitureBrandsForProduct({ name: pt });
+    }
+    /* 4) Ev & mutfak: sofra/pişirme seçimi. */
+    if (ctx.categoryId === "home-kitchen") {
+      return kitchenBrandsForProductName(pt);
+    }
+    /* 5) Anne & çocuk: aile seçimi. */
+    if (ctx.categoryId === "baby") {
+      return babyBrandsForProductName(pt);
+    }
+    return null;
+  })();
+  if (productScoped && productScoped.length >= 3) {
     return [
-      { label: "Chicco", value: "Chicco" },
-      { label: "Joie", value: "Joie" },
-      { label: "Maxi-Cosi", value: "Maxi-Cosi" },
-      { label: "Cybex", value: "Cybex" },
+      ...productScoped.map((b) => ({ label: b, value: b })),
       ...soft,
     ];
   }
-  if (ctx.categoryId === "appliances" || ctx.categoryId === "home-kitchen") {
-    return [
-      { label: "Bosch", value: "Bosch" },
-      { label: "Arçelik", value: "Arçelik" },
-      { label: "Siemens", value: "Siemens" },
-      { label: "Beko", value: "Beko" },
-      ...soft,
-    ];
+  const byCategory: Record<string, ReadonlyArray<{ canonical: string }>> = {
+    automotive: AUTOMOTIVE_BRANDS,
+    appliances: APPLIANCE_BRANDS,
+    "home-kitchen": [...APPLIANCE_BRANDS, ...HOME_KITCHEN_BRANDS],
+    machinery: MACHINERY_BRANDS,
+    technology: TECHNOLOGY_BRANDS,
+    furniture: FURNITURE_BRANDS,
+    baby: BABY_BRANDS,
+  };
+  const entries = byCategory[ctx.categoryId] ?? [];
+  const seen = new Set<string>();
+  const options: ControlOption[] = [];
+  for (const e of entries) {
+    const key = e.canonical.toLocaleLowerCase("tr-TR");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push({ label: e.canonical, value: e.canonical });
   }
-  if (ctx.categoryId === "technology") {
-    return [
-      { label: "Apple", value: "Apple" },
-      { label: "Samsung", value: "Samsung" },
-      { label: "Xiaomi", value: "Xiaomi" },
-      { label: "Lenovo", value: "Lenovo" },
-      ...soft,
-    ];
-  }
-  if (ctx.categoryId === "automotive") {
-    return [
-      { label: "Renault", value: "Renault" },
-      { label: "Volkswagen", value: "Volkswagen" },
-      { label: "Toyota", value: "Toyota" },
-      { label: "Ford", value: "Ford" },
-      ...soft,
-    ];
-  }
-  return soft;
+  options.sort((a, b) => a.label.localeCompare(b.label, "tr-TR"));
+  return [...options, ...soft];
 }

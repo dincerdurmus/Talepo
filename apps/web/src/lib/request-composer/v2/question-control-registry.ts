@@ -16,6 +16,7 @@ import {
   deliveryDeadlineOptions,
   listingTypeOptions,
   locationSoftOptions,
+  modelOptionsForBrand,
   popularBrandOptions,
   printDesignReadyOptions,
   printSizePresets,
@@ -24,6 +25,7 @@ import {
   yesNoDontCareOptions,
 } from "./option-providers";
 import { budgetBasisForListing } from "./listing-budget-basis";
+import { getCategoryById } from "@/lib/request-category-engine";
 
 function softFromCtx(ctx: ControlResolveContext): {
   unknown?: { label: string; value: string; soft: true };
@@ -80,7 +82,7 @@ export function resolveQuestionControl(
       options: budgetEntryOptions(),
       softOptions: [],
       allowCustom: true,
-      customLabel: "Bütçe aralığı",
+      customLabel: "Tutar gir",
       currency: "TRY",
       budgetBasis: basis,
       commitOnSelect: true,
@@ -150,7 +152,7 @@ export function resolveQuestionControl(
   if (key === "model" || key === "series") {
     return {
       controlType: "searchable_entity",
-      options: [],
+      options: modelOptionsForBrand(ctx),
       softOptions: brandModelSoftOptions(),
       allowCustom: true,
       customLabel: "Başka model",
@@ -217,18 +219,48 @@ export function resolveQuestionControl(
   }
 
   if (key === "needType" || key === "locationMode") {
+    /**
+     * TALEP TÜRÜ SEÇENEKLERİ KATEGORİNİN KENDİ ŞEMASINDAN GELİR (kurucu,
+     * 2026-09-01). Eski sabit liste (Araç/Yedek parça/Servis/Filo)
+     * otomotive aitti ve televizyon talebine "Filo" öneriyordu (ölçüldü).
+     * Kanonik kanal profileChoices'tır; yalnız o boşsa otomotiv varsayılanı
+     * (bu sabitin asıl sahibi) kullanılır.
+     */
     const options =
       key === "locationMode"
         ? [
             { label: "Uzaktan uygun", value: "remote" },
             { label: "Yerinde olsun", value: "onsite" },
           ]
-        : [
-            { label: "Araç", value: "vehicle" },
-            { label: "Yedek parça", value: "part" },
-            { label: "Servis", value: "service" },
-            { label: "Filo", value: "fleet" },
-          ];
+        : (() => {
+            /* TEK YETKİLİ KAYNAK: kategori şemasının kendi needType
+               seçenekleri — HANGİ yoldan gelinirse gelinsin (profil,
+               hybrid aday, düzenleme). profileChoices yalnız yedektir;
+               otomotiv sabiti YALNIZ otomotivde ve son çaredir. */
+            const schema = (getCategoryById(ctx.categoryId)?.fields ?? [])
+              .filter((f) => f.key === "needType")
+              .flatMap((f) => f.options ?? [])
+              .map((o) => ({
+                label: String(o.label ?? o.value ?? ""),
+                value: String(o.value ?? o.label ?? ""),
+              }))
+              .filter((o) => o.value);
+            if (schema.length) return schema;
+            if (ctx.profileChoices?.length) {
+              return ctx.profileChoices.map((o) => ({
+                label: o.label,
+                value: o.value,
+              }));
+            }
+            return ctx.categoryId === "automotive"
+              ? [
+                  { label: "Araç", value: "vehicle" },
+                  { label: "Yedek parça", value: "part" },
+                  { label: "Servis", value: "service" },
+                  { label: "Filo", value: "fleet" },
+                ]
+              : [];
+          })();
     return {
       controlType: "single_choice",
       options,

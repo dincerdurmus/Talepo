@@ -108,6 +108,13 @@ export type TalepoAiPanelProps = {
   onApplyProfessionalDraft: () => void;
   matchingFirmCount?: number;
   compact?: boolean;
+  /**
+   * "TALEP ANALİZİ" MODU (kurucu, 2026-09-01): AI-asistan kimliği emekli.
+   * Bu mod yalnız iki değerli bölümü çizer — Piyasa görünümü ve Profesyonel
+   * talep. Anladığım/Netleştirelim/Sıradaki adım/durum barı çizilmez;
+   * yayın hatası ve eksik-bilgi uyarısı korunur (kullanıcıyı korur).
+   */
+  insightMode?: boolean;
 };
 
 export function TalepoAiPanel(props: TalepoAiPanelProps) {
@@ -166,6 +173,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
         </section>
       ) : null}
 
+      {props.insightMode ? null : (
       <header>
         <div className="talepo-ai-console-bar">
           <span className="inline-flex items-center gap-2">
@@ -200,8 +208,10 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
           </button>
         ) : null}
       </header>
+      )}
 
       {/* 1. ANLADIĞIM */}
+      {props.insightMode ? null : (
       <WorkspaceSection title="Anladığım" tone="default">
         {props.analysisStatus === "PARSING" ? (
           <p className="flex items-center gap-2 text-xs text-teal-100/60">
@@ -260,6 +270,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
           </p>
         )}
       </WorkspaceSection>
+      )}
 
       {props.yearConditionConfirmation && props.onChangeConfirmedCondition && props.onConfirmYearCondition ? (
         <YearConditionConfirmation
@@ -287,7 +298,7 @@ export function TalepoAiPanel(props: TalepoAiPanelProps) {
       ) : null}
 
       {/* 2. NETLEŞTİRELİM — single ask surface (no duplicate left chips) */}
-      {props.enrichmentCandidates.length > 0 ? (
+      {!props.insightMode && props.enrichmentCandidates.length > 0 ? (
         <WorkspaceSection title="Netleştirelim" tone="accent">
           <EnrichmentChips
             variant="dark"

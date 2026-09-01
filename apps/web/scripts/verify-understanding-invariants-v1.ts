@@ -623,12 +623,19 @@ check("I9: each product family gets its own questions and nobody else's", () => 
 });
 
 check("I9b: product-scoped questions ship one-tap options", () => {
+  /* Kurucu deltası (2026-09-01): marka artık 1. dalgada (quote_critical,
+     rank 76) — btu bir sonraki dalgada gelir. Sözleşmenin özü değişmedi:
+     ürün-kapsamlı soru TEK DOKUNUŞ seçenekleriyle gelmelidir; ölçüm,
+     önceki dalga cevaplandıktan sonraki dalgada yapılır. */
   const result = scheduleNextQuestions({
     categoryId: "appliances",
     productType: "Klima",
     hybridCandidates: [],
-    values: {},
-  });
+    values: { budget: "20.000 TL", city: "İstanbul" },
+    fieldStates: {
+      brand: { kind: "VALUE", value: "Arçelik", provenance: "EXPLICIT_BROWSE" },
+    },
+  } as never);
   const btu = result.visible.find((q) => q.fieldKey === "capacityBtu");
   assert.ok(btu, "btu question missing");
   assert.ok(

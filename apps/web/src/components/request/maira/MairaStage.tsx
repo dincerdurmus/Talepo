@@ -30,6 +30,7 @@ import type { UserAnswerRow } from "@/lib/request-composer/v2/answer-apply-plan"
 import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
 
 import { MairaAnswers } from "./MairaAnswers";
+import { formatBudgetDigits } from "@/lib/request-composer/v2/answer-apply-plan";
 
 /**
  * Sahne yalnız istemcide yaşar: WebGL sunucuda yoktur ve ana paket
@@ -68,23 +69,25 @@ type Props = {
  * kendisinden gelir; burada yeni bir ölçek uydurulmaz.
  */
 const SHOWCASE_TOKENS = `
+/* Kurucu 2026-09-01: kompozisyon bir kademe geri çekildi ("çok yakın").
+   Taban artık eski 1680 katmanının değerlerini kullanır; oran korunur. */
 .maira-showcase{
-  --sc-pad:30px; --sc-gap:30px; --sc-radius:32px; --sc-text:24px;
-  --sc-stat:64px; --sc-wm:256px; --sc-pill-px:40px; --sc-pill-py:16px;
-  --sc-pill-r:47px; --sc-btn-gap:20px; --sc-lead-w:606px;
-  --sc-card-h:267px; --sc-card-pad:32px; --sc-card-gap:20px;
-  --sc-card1-w:293px; --sc-card2-w:607px; --sc-plate-min:180px;
+  --sc-pad:26px; --sc-gap:26px; --sc-radius:28px; --sc-text:21px;
+  --sc-stat:56px; --sc-wm:224px; --sc-pill-px:35px; --sc-pill-py:14px;
+  --sc-pill-r:41px; --sc-btn-gap:18px; --sc-lead-w:530px;
+  --sc-card-h:234px; --sc-card-pad:28px; --sc-card-gap:18px;
+  --sc-card1-w:256px; --sc-card2-w:531px; --sc-plate-min:180px;
 }
 @media (max-width:1680px){.maira-showcase{
-  --sc-pad:26px; --sc-gap:26px; --sc-radius:28px; --sc-text:21px; --sc-stat:56px;
-  --sc-wm:224px; --sc-pill-px:35px; --sc-pill-py:14px; --sc-pill-r:41px;
-  --sc-btn-gap:18px; --sc-lead-w:530px; --sc-card-h:234px; --sc-card-pad:28px;
-  --sc-card-gap:18px; --sc-card1-w:256px; --sc-card2-w:531px;}}
-@media (max-width:1440px){.maira-showcase{
   --sc-pad:22px; --sc-gap:22px; --sc-radius:24px; --sc-text:18px; --sc-stat:48px;
   --sc-wm:192px; --sc-pill-px:30px; --sc-pill-py:12px; --sc-pill-r:35px;
   --sc-btn-gap:15px; --sc-lead-w:455px; --sc-card-h:200px; --sc-card-pad:24px;
   --sc-card-gap:15px; --sc-card1-w:220px; --sc-card2-w:455px;}}
+@media (max-width:1440px){.maira-showcase{
+  --sc-pad:19px; --sc-gap:19px; --sc-radius:20px; --sc-text:16px; --sc-stat:42px;
+  --sc-wm:168px; --sc-pill-px:26px; --sc-pill-py:11px; --sc-pill-r:31px;
+  --sc-btn-gap:14px; --sc-lead-w:400px; --sc-card-h:176px; --sc-card-pad:21px;
+  --sc-card-gap:14px; --sc-card1-w:194px; --sc-card2-w:400px;}}
 @media (max-width:1200px){.maira-showcase{
   --sc-pad:19px; --sc-gap:19px; --sc-radius:20px; --sc-text:15px; --sc-stat:40px;
   --sc-wm:160px; --sc-pill-px:25px; --sc-pill-py:10px; --sc-pill-r:29px;
@@ -161,7 +164,7 @@ export function MairaStage({
     ...(control?.options ?? []),
     ...(control?.softOptions ?? []),
   ].filter((o) => o.value && o.value !== "__custom__");
-  const visibleOptions = moreOpen ? allOptions : allOptions.slice(0, 3);
+  const visibleOptions = allOptions.slice(0, 3);
   const hasMore = allOptions.length > 3;
 
   const draft = active ? (draftByKey[active.fieldKey] ?? "") : "";
@@ -200,7 +203,7 @@ export function MairaStage({
             type="button"
             data-testid="maira-exit-to-standard"
             onClick={onExitToStandard}
-            className="sc-pill sc-pill-dark inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--sc-pill-r)] bg-[#f2f2f2] px-[var(--sc-pill-px)] py-[var(--sc-pill-py)] text-[length:var(--sc-text)] font-medium leading-none text-[#0c0c0c] transition hover:bg-white"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/20 bg-white/[0.06] px-5 py-2.5 text-[14px] font-medium leading-none text-[#f2f2f2]/85 backdrop-blur transition hover:border-white/45 hover:bg-white/[0.12] hover:text-white"
           >
             Standart görünüme geç
             {ARROW}
@@ -266,9 +269,19 @@ export function MairaStage({
                       data-testid="maira-free-answer"
                       value={draft}
                       placeholder={active.placeholder ?? "Yanıtını yaz"}
-                      onChange={(e) =>
-                        onDraftChange(active.fieldKey, e.target.value)
-                      }
+                      onChange={(e) => {
+                        /* Para alanında binlik ayraç YAZARKEN görünür
+                           (kurucu, 2026-09-01: "450000" ham görünüyordu). */
+                        const v =
+                          control?.controlType === "money_range"
+                            ? /* Yalnız rakam: harf para alanına hiç giremez
+                                 (kurucu, 2026-09-01). */
+                              formatBudgetDigits(
+                                e.target.value.replace(/[^0-9.,]/g, ""),
+                              )
+                            : e.target.value;
+                        onDraftChange(active.fieldKey, v);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") commit(draft);
                       }}
@@ -298,7 +311,7 @@ export function MairaStage({
             ) : null}
           </div>
 
-          <div className="sc-card sc-card-tags maira-options flex w-[var(--sc-card2-w)] flex-none flex-col gap-3 overflow-hidden rounded-[var(--sc-radius)] bg-[#171717] p-[var(--sc-card-pad)]">
+          <div className="sc-card sc-card-tags maira-options relative flex w-[var(--sc-card2-w)] flex-none flex-col gap-3 rounded-[var(--sc-radius)] bg-[#171717] p-[var(--sc-card-pad)]">
             <p className="sc-cardtitle text-[length:var(--sc-text)] font-medium leading-tight">
               {active ? "Bir yanıt seç" : "Şu an bekleyen soru yok"}
             </p>
@@ -309,7 +322,7 @@ export function MairaStage({
                   type="button"
                   data-testid={`maira-option-${opt.value}`}
                   onClick={() => commit(opt.value)}
-                  className="maira-option flex h-10 w-full items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#242424] px-[18px] text-left text-[15px] text-[#f2f2f2] transition hover:bg-[#2e2e2e]"
+                  className="maira-option flex h-10 w-full flex-none items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#242424] px-[18px] text-left text-[15px] text-[#f2f2f2] transition hover:bg-[#2e2e2e]"
                 >
                   {opt.label}
                 </button>
@@ -320,10 +333,54 @@ export function MairaStage({
                 type="button"
                 data-testid="maira-more-options"
                 onClick={() => setMoreOpen((v) => !v)}
+                aria-expanded={moreOpen}
                 className="maira-more self-start text-[13px] text-[#f2f2f2]/60 transition hover:text-[#f2f2f2]"
               >
-                {moreOpen ? "Daha az göster" : "Diğer seçenekler"}
+                {moreOpen ? "Kapat" : `Diğer seçenekler (${allOptions.length - 3})`}
               </button>
+            ) : null}
+
+            {/*
+              DİĞER SEÇENEKLER BALONU (kurucu, 2026-09-01): liste kartın
+              içinde büyüyüp satırları eziyordu; artık kartın ÜSTÜNDE kendi
+              cam panelinde açılır. Seçenekler yine kanonik kontrolden gelir.
+            */}
+            {moreOpen ? (
+              <div
+                data-testid="maira-more-balloon"
+                className="absolute inset-x-0 bottom-[calc(100%+14px)] z-30 overflow-hidden rounded-2xl border border-white/10 bg-[#101418]/95 shadow-[0_28px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+                style={{ animation: "maira-balloon-in 0.35s cubic-bezier(0.22,0.61,0.36,1) both" }}
+              >
+                <style>{`@keyframes maira-balloon-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
+                <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+                  <span className="text-[13px] font-medium uppercase tracking-[0.14em] text-[#2dd4bf]/80">
+                    Tüm seçenekler
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen(false)}
+                    className="text-[12px] text-white/50 transition hover:text-white"
+                  >
+                    Kapat
+                  </button>
+                </div>
+                <div className="grid max-h-[44vh] grid-cols-2 gap-1.5 overflow-y-auto p-3">
+                  {allOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      data-testid={`maira-option-${opt.value}`}
+                      onClick={() => {
+                        setMoreOpen(false);
+                        commit(opt.value);
+                      }}
+                      className="flex h-10 w-full flex-none items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-lg bg-white/[0.05] px-3.5 text-left text-[14px] text-[#f2f2f2]/90 transition hover:bg-[#2dd4bf]/15 hover:text-white"
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ) : null}
           </div>
 

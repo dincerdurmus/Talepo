@@ -43,7 +43,7 @@ const CONFIG = {
   nearColor:'#f6ea3c', farColor:'#17b4da', rimColor:'#2ad6f2', fillColor:'#082031', bgColor:'#000407',
   contourFreq:56.0, lineWidth:1.60, lineGain:1.20, warmPow:1.55, fillGain:0.05,
   rimPow:2.40, rimGain:0.95,
-  autoRotate:0.28, camTargetY:0.56, breathe:1.00, camDist:1.95, camFov:36,
+  autoRotate:0.28, camTargetY:0.56, breathe:1.00, camDist:2.35 /* kurucu 2026-09-01: sahne uzaklaştırıldı (1.95 çok yakındı) */, camFov:36,
   pulseSpeed:1.90, pulseWidth:7.0, pulseGain:1.30,
   grain:0.030, vignette:0.38, exposure:1.20, blackFloor:0.045, fadeIn:1.40,
   bgTop:'#01040a', bgBottom:'#031019', bgGlow:'#0b3948', bgGlowAmount:0.28, bgFlow:1.00,

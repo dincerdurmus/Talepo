@@ -221,7 +221,12 @@ const STANDARD: QuestionProfileDef[] = [
     fieldKey: "brand",
     prompt: "Marka tercihiniz var mı?",
     summaryLabel: "Marka",
-    importance: "optional",
+    /**
+     * Kurucu (2026-09-01): marka, ürün kategorilerinde profesyonel
+     * eşleşmenin ana filtresidir — detay sorularının önünde gelir.
+     * "Fark etmez" kaçışı durur; soru asla yayını bloklamaz.
+     */
+    importance: "quote_critical",
     // Marka/model yalnız ürün kategorilerinde anlamlı — emlak ve hizmetlerde
     // asla sorulmaz (kurucu geri bildirimi, 2026-08-23).
     categories: [
@@ -235,7 +240,7 @@ const STANDARD: QuestionProfileDef[] = [
       "automotive",
       "health",
     ],
-    rank: 48,
+    rank: 76,
     allowDontCare: true,
     allowUnknown: true,
   },

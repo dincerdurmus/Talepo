@@ -33,25 +33,27 @@
  * kürasyonu + yüzey-kimliği düzeltmesiyle sahte "Kürek" adayı artık
  * üretilmiyor; kanarya kaydı snapshot-internal-evidence fixture'ında.
  */
+/**
+ * Kurucu sözleşme kararı (2026-09-01): TALEP TÜRÜ, cümlenin güvenli yeniden
+ * ifadesiyse artık ÇIKARIM DEĞİL AÇIK BEYANDIR (deriveExplicitNeedType —
+ * tek karar sahibi; D1 oraklı aynı fonksiyonla EXPLICIT_TEXT sayar).
+ * solutionType aynası (2026-09-01): productType açık beyansa çözüm/ürün aynı
+ * sözcükle kapanır — health-06 ve tech-01/02/03/10 solutionType kimlikleri
+ * INFERRED evreninden ve dokunuşsuz aileden bilinçli düştü.
+ * Bu kararla (eşik 0.7 + hw/sw ekseni dahil, 2. sayım: tech-01, tech-03 de düştü) 23 needType kimliği INFERRED evreninden, 10'u ayrıca
+ * dokunuşsuz-yayın ailesinden TEK TEK çıkarıldı: auto-01…auto-10,
+ * mach-01/02/03/05/07/08, print-07, tech-05/06/07/11. Kayıtlar kaybolmadı;
+ * USER_EXPLICIT otoriteyle projection-authority tabanında yaşıyorlar.
+ */
 export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "appl-06/needType",
   "appl-07/needType",
   "appl-08/needType",
   "appl-09/needType",
-  "auto-01/needType",
   "auto-02/condition",
-  "auto-02/needType",
-  "auto-03/needType",
-  "auto-04/needType",
   "auto-05/brandCandidate",
-  "auto-05/needType",
-  "auto-06/needType",
-  "auto-07/needType",
   "auto-08/condition",
-  "auto-08/needType",
   "auto-09/brandCandidate",
-  "auto-09/needType",
-  "auto-10/needType",
   "auto-11/brandCandidate",
   "auto-12/needType",
   "furn-01/usageArea",
@@ -64,17 +66,9 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "furn-08/needType",
   "health-03/usageArea",
   "health-06/needType",
-  "health-06/solutionType",
   "home-04/brandCandidate",
   "home-07/brandCandidate",
-  "mach-01/needType",
-  "mach-02/needType",
-  "mach-03/needType",
-  "mach-05/needType",
-  "mach-07/needType",
-  "mach-08/needType",
   "print-04/brandCandidate",
-  "print-07/needType",
   "print-11/needType",
   "print-12/brandCandidate",
   "re-01/brandCandidate",
@@ -92,21 +86,11 @@ export const BASELINE_INFERRED_IDENTITIES: readonly string[] = [
   "svc-07/brandCandidate",
   "svc-07/needType",
   "svc-08/needType",
-  "tech-01/needType",
-  "tech-01/solutionType",
-  "tech-02/solutionType",
-  "tech-03/needType",
-  "tech-03/solutionType",
   "tech-05/brandCandidate",
-  "tech-05/needType",
   "tech-06/brandCandidate",
-  "tech-06/needType",
-  "tech-07/needType",
   "tech-08/needType",
   "tech-09/needType",
   "tech-10/needType",
-  "tech-10/solutionType",
-  "tech-11/needType",
   /** 98+ Faz I: kanonik SERVICE rolü kind'a taşındı — needType=service çıkarımı (tech-12 logo tasarımı). */
   "tech-12/needType",
 ];
@@ -125,22 +109,6 @@ export const BASELINE_UNCONFIRMED_PUBLISH_CANDIDATES: readonly string[] = [
   "furn-04/usageArea",
   "furn-07/usageArea",
   "health-03/usageArea",
-  "mach-01/needType",
-  "mach-02/needType",
-  "mach-03/needType",
-  "mach-07/needType",
-  "mach-08/needType",
-  "print-07/needType",
-  "tech-01/needType",
-  "tech-01/solutionType",
-  "tech-02/solutionType",
-  "tech-03/needType",
-  "tech-03/solutionType",
-  "tech-05/needType",
-  "tech-06/needType",
-  "tech-07/needType",
   "tech-08/needType",
   "tech-10/needType",
-  "tech-10/solutionType",
-  "tech-11/needType",
 ];

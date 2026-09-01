@@ -65,7 +65,7 @@ const REAL_ESTATE_STRUCTURED_KEYS = new Set(["neighborhoods"]);
 export const TECH_HARDWARE_SIGNAL =
   /televizyon|\btv\b|laptop|dizüstü|dizustu|notebook|telefon|iphone|ipad|tablet|monitör|monitor|bilgisayar|donanım|donanim|hardware|kulaklık|kulaklik|smartwatch|yazıcı|yazici|printer|drone|dron\b|kamera|fotoğraf makinesi|fotograf makinesi|gimbal|objektif|tripod|hoparlör|hoparlor|soundbar|mikrofon|modem|router|mesh|access point|konsol|gamepad|vr gözlük|vr gozluk|akıllı saat|akilli saat|bileklik|tarayıcı|tarayici|klavye|\bmouse\b|webcam|projeksiyon|media player/i;
 
-const TECH_SOFTWARE_SIGNAL =
+export const TECH_SOFTWARE_SIGNAL =
   /yazılım|yazilim|web\s*sitesi|e-?ticaret|erp|crm|uygulama|saas|platform|entegrasyon|software/i;
 
 function looksLikeTechHardware(
