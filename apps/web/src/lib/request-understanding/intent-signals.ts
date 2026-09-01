@@ -110,6 +110,14 @@ const LEXICON: Lexicon[] = [
       /\btemizlik\b/i,
       /\brenovasyon\b/i,
       /\btadilat\b/i,
+      /**
+       * SAHİPLİ CİHAZ ARIZASI HİZMET DİLİDİR (98+ Part IV, 2026-09-01).
+       * "vestel buzdolabım su akıtıyor", "klimam soğutmuyor" — kullanıcı
+       * ürünü değil ONARIMI arıyor; arıza fiilleri PRODUCT'a düşüyordu
+       * (ölçüldü). Servis sağlayıcı adları da aynı sınıftır.
+       */
+      /(?:^|[^\p{L}\p{N}])(?:bozuldu|bozulmuş|bozulmus|çalışmıyor|calismiyor|soğutmuyor|sogutmuyor|ısıtmıyor|isitmiyor|akıtıyor|akitiyor|açılmıyor|acilmiyor|arıza|ariza)(?=[^\p{L}\p{N}]|$)/iu,
+      /(?:^|[^\p{L}\p{N}])(?:tamirci|usta)(?=[^\p{L}\p{N}]|$)/iu,
     ],
   },
   {
@@ -126,6 +134,8 @@ const LEXICON: Lexicon[] = [
       /(?:^|[^\p{L}\p{N}])uret(?:mek|im|ece\w*|iyorum)/iu,
       /\bimalat\b/i,
       /\bimal\s+(?:et\w*|edil\w*)/i,
+      /* 98+ Part IV: "gelinlik diktirmek" bir ürettirme talebidir. */
+      /(?:^|[^\p{L}\p{N}])diktir/iu,
       /\bfason\b/i,
       // "N adet … yaptırmak/ürettirmek" — adet + üretim bağlamı.
       /(?:\d[\d.]*\s*(?:adet|bin|tane))[\s\S]{0,40}?(?:yaptır|yaptir|ürettir|urettir|imal|üret|uret)/i,

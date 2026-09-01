@@ -170,6 +170,37 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     claim(tm.index, tm[0].length);
   }
 
+  // Tarım/iş makinesi lastik ebadı: "16.9-30", "12.4-24" (98+ Part IV).
+  const agTireRe = /(?:^|[^0-9])(\d{2}(?:[.,]\d)?)\s*[-–]\s*(\d{2})(?=$|[^0-9])/g;
+  let agm: RegExpExecArray | null;
+  while ((agm = agTireRe.exec(text)) !== null) {
+    if (isClaimed(agm.index, agm[0].length)) continue;
+    results.push({
+      raw: agm[0].trim(),
+      role: "TIRE_SIZE",
+      unit: "tire",
+      evidence: [agm[0].trim(), "ag-tire-size"],
+      index: agm.index,
+    });
+    claim(agm.index, agm[0].length);
+  }
+
+  // İnsan sayısı: "45 çalışan", "12 personel" — adet/bütçe/model değildir.
+  const personsRe = /(\d+)\s*(çalışan|calisan|personel)(?=$|[^\p{L}\p{N}])/giu;
+  let prm: RegExpExecArray | null;
+  while ((prm = personsRe.exec(text)) !== null) {
+    if (isClaimed(prm.index, prm[0].length)) continue;
+    results.push({
+      raw: prm[1] ?? prm[0],
+      role: "SEATING",
+      value: Number(prm[1]),
+      unit: (prm[2] ?? "").toLocaleLowerCase("tr-TR"),
+      evidence: [prm[0], "person-count"],
+      index: prm.index,
+    });
+    claim(prm.index, prm[0].length);
+  }
+
   // Soğutma kapasitesi: "12000 BTU" — birim rolü belirler.
   const btuRe = /(\d+(?:[.,]\d+)*)\s*btu\b/gi;
   let cm: RegExpExecArray | null;

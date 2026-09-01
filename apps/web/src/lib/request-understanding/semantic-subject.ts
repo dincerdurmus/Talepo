@@ -1409,10 +1409,17 @@ function resolveSemanticSubjectCore(
     /* 98+ Part II: yer tutucu "üretim" yerine kullanıcının kendi ürün öbeği
        ("Broşür bastırmak istiyorum" → "Broşür"); uydurma yok, öbek yoksa
        yer tutucu kalır ve publish köprüsü onu taşımaz. */
+    const mfgUserPhrase = userProductPhrase(text, input.identity);
+    /* Kullanıcının TAM öbeği, indirgeme lemmasını kapsıyorsa adı o taşır:
+       "Karton kutu ürettirmek" → "kutu" değil "Karton kutu" (ölçüldü). */
     const name =
-      mfgProduct?.product ??
-      userProductPhrase(text, input.identity) ??
-      "üretim";
+      mfgUserPhrase &&
+      mfgProduct?.product &&
+      mfgUserPhrase
+        .toLocaleLowerCase("tr-TR")
+        .includes(mfgProduct.product.toLocaleLowerCase("tr-TR"))
+        ? mfgUserPhrase
+        : mfgProduct?.product ?? mfgUserPhrase ?? "üretim";
     evidence.push(name);
     return {
       kind: decision("MANUFACTURED_ITEM", 0.88, evidence),
@@ -1490,8 +1497,15 @@ function resolveSemanticSubjectCore(
       return null;
     })();
     const structuralProperty = Boolean(input.roomCount || input.listingType);
-    const prop =
-      namedProp ?? (usage && !structuralProperty ? null : "gayrimenkul");
+    /**
+     * 98+ Part IV: "villa temizliği haftalık" bir TEMİZLİK talebidir —
+     * baş konumdaki hizmet lemması varken mülk sözcüğü emlak öznesi
+     * üretemez (ölçüldü: kind REAL_ESTATE, metin "villa arıyorum."
+     * oluyordu). Hizmet dalı aşağıda kendi kanıtıyla değerlendirilir.
+     */
+    const prop = serviceHit
+      ? null
+      : namedProp ?? (usage && !structuralProperty ? null : "gayrimenkul");
     // Kanıt yoksa dal ATEŞLENMEZ; talep aşağıdaki dallarda değerlendirilmeye
     // devam eder (erken dönüş yok — hiçbir talep sessizce düşmez).
     if (prop != null) {
@@ -1522,6 +1536,18 @@ function resolveSemanticSubjectCore(
       /(?:^|[^\p{L}\p{N}])(?:makine|pres|ofset)(?=[^\p{L}\p{N}]|$)/iu.test(text)) &&
     !partHit &&
     !accessoryHit &&
+    /* 98+ Part IV: baş isim makine-dışı kanonik bir ürüne çözülüyorsa
+       ("traktör lastiği" → lastik) bütün-makine dalı talebi sahiplenemez. */
+    !(
+      canonicalHeadVerdict.role === "WHOLE_PRODUCT" &&
+      (() => {
+        const aranan =
+          canonicalHeadVerdict.head ?? canonicalHeadVerdict.evidence[0] ?? null;
+        if (!aranan) return false;
+        const node = classifyTaxonomyPhrase(aranan);
+        return Boolean(node && node.categoryId !== "machinery");
+      })()
+    ) &&
     (acquiresWholeObject(input.intent) ||
       /* 98+ Faz I (2026-09-01): fiilsiz "CNC tezgahı" da bütün makine
          talebidir — araç dalıyla aynı kural (intent UNKNOWN kabul);
@@ -1601,6 +1627,10 @@ function resolveSemanticSubjectCore(
         : /* Kategori çözülmese de kanonik rol bütün ürün diyorsa ürün
              kanıtı vardır — "Jeneratör arıyorum 100 kVA" (ölçüldü). */
           canonicalHeadVerdict.role === "WHOLE_PRODUCT")) ||
+    /* 98+ Part IV: baş isim kanonik BÜTÜN ÜRÜNE çözülüyorsa bu tek başına
+       ürün kanıtıdır — fiilsiz "traktör lastiği 16.9-30" kind'sız
+       kalıyordu (ölçüldü). */
+    canonicalHeadVerdict.role === "WHOLE_PRODUCT" ||
     input.identity.brand ||
     input.identity.model ||
     input.categoryId === "appliances" ||
@@ -1698,6 +1728,17 @@ function userProductPhrase(
       return w.length >= 6 && /(?:yorum|iyom|mak|mek)$/u.test(f) && !/(?:olmak)$/u.test(f);
     });
   const lastClause = clauses.find(hasReqVerb) ?? clauses.pop() ?? "";
+  /**
+   * "İÇİN" YAPISI BU YARDIMCININ YETKİSİ DEĞİLDİR (98+ Part IV düzeltmesi):
+   * uyumluluk/kullanım-bağlamı cümlelerinde ad, kendi dallarında kurulur;
+   * öbek "için"i yutarsa hem ada bağlaç sızar hem de çözümsüz uyumluluk
+   * hedefi kaydı (capability-unknown) bastırılır (ölçüldü, I21).
+   *
+   * KAPSAM SINIRI (aynı dalganın ikinci ölçümü): denetim tüm cümleye değil,
+   * fiil kesitinden ÖNCEKİ aday pencereye uygulanır. "Kompresör arıyorum
+   * atölye için" cümlesinde "için" fiilden SONRA gelir — aday pencere
+   * ("Kompresör") temizdir ve meşru ad düşürülmemelidir (ölçüldü, mach-08).
+   */
   const tokens = lastClause.split(/\s+/u).filter(Boolean);
   if (!tokens.length) return null;
   const isVerbTail = (w: string) => {
@@ -1716,6 +1757,13 @@ function userProductPhrase(
     }
   }
   let words = tokens.slice(0, end);
+  if (
+    words.some((w) =>
+      /^(?:için|icin)$/iu.test(w.replace(/[^\p{L}\p{N}]+/gu, "").toLocaleLowerCase("tr-TR")),
+    )
+  ) {
+    return null;
+  }
   // Rakam ve rakamı izleyen kısa birim jetonları öbek dışıdır.
   const kept: string[] = [];
   for (let i = 0; i < words.length; i++) {

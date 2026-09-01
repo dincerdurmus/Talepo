@@ -6013,8 +6013,11 @@ check("I51a: gizlenen soru sonrası ürün kimliği routing envelope'a ulaşır"
    * kopmadığını uçtan uca kanıtlar.
    */
   const CASES: Array<{ raw: string; product: string | null; brand?: string | null }> = [
-    { raw: "6 kişilik ahşap toplantı masası arıyorum", product: "Toplantı Masası" },
-    { raw: "Karton kutu ürettirmek istiyorum", product: "Karton kutu" },
+    /* 98+ Part IV bilinçli delta: ürün kanalı artık kullanıcının TAM öbeğini
+       taşır (malzeme dahil) — kanonik etiket yerine kullanıcı-verbatim değer.
+       Zincir kopmadı; içerik zenginleşti (discovery-quality ③ %100). */
+    { raw: "6 kişilik ahşap toplantı masası arıyorum", product: "ahşap toplantı masası" },
+    { raw: "Karton kutu ürettirmek istiyorum", product: "karton kutu" },
     { raw: "Arçelik 55 inç televizyon arıyorum", product: "televizyon", brand: "Arçelik" },
     { raw: "Koltuk takımı arıyorum", product: "koltuk takımı" },
   ];

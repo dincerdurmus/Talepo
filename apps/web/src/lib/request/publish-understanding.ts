@@ -152,7 +152,23 @@ export function buildPublishUnderstandingSnapshot(input: {
   const brandValue = brand?.value != null ? String(brand.value).trim().toLocaleLowerCase("tr") : "";
   const modelValue = model?.value != null ? String(model.value).trim().toLocaleLowerCase("tr") : "";
   const subjectLower = subjectValue.toLocaleLowerCase("tr");
+  /**
+   * ROL AYRIMI 2 (98+ Part IV): ürün kanalı yalnız ÜRÜN-SINIFI öznelerden
+   * dolar. PART/ACCESSORY/SERVICE öznesinin adı ürün kimliği DEĞİLDİR —
+   * parça talebinde 'pompa' ürün kanalına sızıyordu (ölçüldü, I51b).
+   */
+  const subjectKindValue = String(
+    input.understanding.requestSubject?.kind?.value ?? "",
+  );
+  const productBearingKind =
+    subjectKindValue === "PRODUCT" ||
+    subjectKindValue === "MANUFACTURED_ITEM" ||
+    subjectKindValue === "INDUSTRIAL_EQUIPMENT" ||
+    subjectKindValue === "MEDICAL_DEVICE" ||
+    subjectKindValue === "REAL_ESTATE" ||
+    subjectKindValue === "VEHICLE";
   if (
+    productBearingKind &&
     subjectValue &&
     !GENERIC_SUBJECT_PLACEHOLDER_RE.test(subjectValue) &&
     subjectLower !== brandValue &&

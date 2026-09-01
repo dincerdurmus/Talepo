@@ -786,7 +786,35 @@ export function composeNaturalRequestText(
 function composeNaturalRequestTextCore(
   state: CanonicalRequestState,
 ): string {
-  const wholeProductComposerAllowed = !hasCompatibilityPartSubject(state);
+  /* 98+ Part IV: "70 inç tv duvar montajı" bir HİZMET talebidir; TV
+     bestecisi ürün cümlesi üretip montajı siliyordu (ölçüldü). Hizmet
+     kipindeki state'i bütün-ürün bestecileri sahiplenemez. */
+  const serviceState =
+    state.fields.needType?.kind === "VALUE" &&
+    String(state.fields.needType.value).toLowerCase() === "service";
+  const wholeProductComposerAllowed =
+    !hasCompatibilityPartSubject(state) && !serviceState;
+  /* 98+ Part IV: metin-yerli HİZMET talebi ürün bestecilerine gidemez —
+     "vestel buzdolabım su akıtıyor tamirci" cümlesi "Vestel Buzdolabı
+     arıyorum." oluyordu (ölçüldü). Hedef + hizmet adı kullanıcı
+     kanallarından okunur. */
+  if (serviceState) {
+    const svc =
+      fieldValue(state, "serviceType") ??
+      fieldValue(state, "part") ??
+      "servis";
+    const target = [
+      fieldValue(state, "brand"),
+      fieldValue(state, "applianceType") ??
+        fieldValue(state, "productType") ??
+        fieldValue(state, "furnitureType"),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    return target
+      ? `${target} için ${svc} arıyorum.`
+      : `${svc} arıyorum.`;
+  }
   if (wholeProductComposerAllowed && isTv(state)) return composeTv(state);
   if (wholeProductComposerAllowed && isVacuum(state)) return composeVacuum(state);
 

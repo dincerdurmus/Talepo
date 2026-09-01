@@ -129,7 +129,25 @@ for (const c of NEGATIVE) {
    * tabanının PART II notunda; kalite karşılığı verify-discovery-quality-v1
    * (bileşen ③ %100, 584 uygulanabilir vakada WRONG=0).
    */
-  check("C erişim dondurulmuş tabana eşit (98)", reach === 98, `→ ${reach}`);
+  /**
+   * 98→83 (98+ Part IV, 2026-09-01): rol ayrımı kapısı (I51b) PART/
+   * ACCESSORY/SERVICE öznelerinin ADINI ürün kanalından çıkardı; kanal
+   * kanonik projection'a düştü. Sayılmış delta (satır satır, iki sınıf):
+   *   DEĞER İYİLEŞTİ (parça/servis adı → ebeveyn/nesne ürün türü, 10):
+   *     tech-10 şarj adaptörü→dizüstü bilgisayar, tech-11 bakım→Sunucu,
+   *     appl-08 montaj→Klima, appl-09 tamir→Buzdolabı, mach-05 yedek
+   *     parça→Torna tezgahı, furn-04 aparat→Masa, baby-08 tekerlek→bebek
+   *     arabası, svc-03 boya→Daire, svc-07 danışmanlık→Hukuk danışmanlığı,
+   *     svc-08 bakım→Kombi.
+   *   DÜRÜST BOŞ (rol sızıntısı temizlendi, ebeveyn çözülmedi, 15):
+   *     auto-07/appl-07/mach-03/tech-11 sınıfı "bakım" vb. servis adları
+   *     (auto-07, auto-08, tech-05, tech-06, tech-07, appl-07, mach-03,
+   *     furn-08, svc-01, svc-04, svc-05, svc-06) ve ebeveynsiz parçalar
+   *     (print-07 pompa, home-07 kapak, tech-08 e-fatura modülü).
+   * Parça bilgisi kaybolmaz: kanonik part alanı attributes kanalında
+   * yaşamaya devam eder. Kalite karşılığı: discovery-quality ③ GREEN.
+   */
+  check("C erişim dondurulmuş tabana eşit (83)", reach === 83, `→ ${reach}`);
   check(
     "C jenerik placeholder hiçbir kayıtta taşınmadı",
     !CATEGORY_COVERAGE_V1.some((sc) => {

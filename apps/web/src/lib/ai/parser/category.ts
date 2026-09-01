@@ -123,6 +123,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "üretim hattı",
     "uretim hatti",
     "forklift",
+    "traktör",
+    "traktor",
     "ekskavatör",
     "ekskavator",
     "torna",
@@ -248,6 +250,9 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "smart tv",
     "smarttv",
     "yazıcı",
+    "yazar kasa",
+    "pos cihazı",
+    "pos cihazi",
     "yazici",
     "donanım",
     "donanim",
@@ -473,6 +478,10 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     ...HOME_KITCHEN_BRAND_KEYWORDS,
   ],
   services: [
+    "müşavir",
+    "musavir",
+    "organizasyon",
+    "kurs",
     "hizmet",
     "danışmanlık",
     "danismanlik",
@@ -521,6 +530,25 @@ function keywordHits(normalized: string, keyword: string): boolean {
 function keywordScore(normalized: string, keyword: string) {
   const at = normalized.indexOf(keyword);
   if (at < 0) return 0;
+  /**
+   * İYELİK EKLİ GEÇİŞ SAHİPLİK/KULLANIM BAĞLAMIDIR (98+ Part IV,
+   * 2026-09-01). "dükkanıma yazar kasa", "buzdolabım su akıtıyor" —
+   * 1. tekil iyelik eki taşıyan sözcük kullanıcının KENDİ nesnesini/yerini
+   * anlatır, aradığı şeyi değil; oy kullanırsa POS cihazı talebi emlağa
+   * düşüyordu (ölçüldü). Böyle geçişler kategori oyu ÜRETMEZ; talebin
+   * gerçek hedefi kendi sözcükleriyle oy verir.
+   */
+  {
+    let i = at;
+    let hasNonPossessive = false;
+    while (i >= 0) {
+      const rest = normalized.slice(i + keyword.length);
+      const possessive = /^[ıiuü]?m(?:[ıiuüae]|[ıiuü]z[ae]?)?(?![a-zçğıöşü])/.test(rest);
+      if (!possessive) { hasNonPossessive = true; break; }
+      i = normalized.indexOf(keyword, i + 1);
+    }
+    if (!hasNonPossessive) return 0;
+  }
   /**
    * KISA ANAHTAR KELİMEDE SINIR ZORUNLU (98+ Faz I, 2026-09-01). Serbest
    * substring, kısa sözcükleri alakasız sözcüklerin İÇİNDE buluyordu —

@@ -211,6 +211,10 @@ export const SERVICE_LEMMAS = [
   /** 98+ Faz I: "muhasebeci" da hizmet sağlayıcı rol adıdır (ölçüldü:
    * "Muhasebeci arıyorum aylık" UNKNOWN kalıyordu). */
   "muhasebeci",
+  "tamirci",
+  "usta",
+  "değişim",
+  "degisim",
   "emlakçı",
   "emlakci",
 ] as const;
@@ -327,6 +331,17 @@ const TAIL_TOKENS: ReadonlySet<string> = new Set([
   /** 98+ Faz I: aciliyet/selamlama sözleri de istek kuyruğudur — "… acil",
    * "Merhaba, …" baş taramasını ve kanonik ifade adayını bozuyordu. */
   "acil",
+  /** 98+ Part IV: periyot sıfatları baş olamaz ve hizmet başlığını bozmaz
+   * ("villa temizliği haftalık" ölçüldü). */
+  "haftalık",
+  "haftalik",
+  "aylık",
+  "aylik",
+  "günlük",
+  "gunluk",
+  "yıllık",
+  "yillik",
+  "saatlik",
   "merhaba",
   "selam",
   "bakiyorum",
@@ -456,6 +471,17 @@ export function classifyRequestedTargetRole(
     ) {
       continue;
     }
+    /**
+     * EDAT NESNESİ BAŞ OLAMAZ (98+ Part IV, 2026-09-01). "için"in hemen
+     * solundaki jeton edatın nesnesidir — kullanım bağlamı, istenen şey
+     * değil. Ölçüldü: "Klima arıyorum salon için" cümlesinde baş "salon"
+     * seçilip ürün kanalına iniyordu; gerçek baş "klima"dır. Kural
+     * konumsaldır, kelimeye özel değildir.
+     */
+    {
+      const nextFold = foldRoleToken((tokens[i + 1] ?? "").replace(/[^\p{L}\p{N}]+/gu, ""));
+      if (nextFold === "için" || nextFold === "icin") continue;
+    }
     const forms = headForms(tokens[i] ?? "");
     if (!forms.length) continue;
     if (forms.some((f) => TAIL_TOKENS.has(f))) continue;
@@ -508,6 +534,14 @@ export function classifyRequestedTargetRole(
     ) {
       coreEnd--;
       continue;
+    }
+    {
+      // Edat nesnesi kuyruktan da soyulur ("… salon için" → "salon" düşer).
+      const nextFold = foldRoleToken((tokens[coreEnd] ?? "").replace(/[^\p{L}\p{N}]+/gu, ""));
+      if (nextFold === "için" || nextFold === "icin") {
+        coreEnd--;
+        continue;
+      }
     }
     const forms = headForms(tokens[coreEnd - 1] ?? "");
     if (forms.length && forms.some((f) => TAIL_TOKENS.has(f))) {
