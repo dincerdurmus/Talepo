@@ -101,8 +101,8 @@ export function HomeOneExplore() {
             id="home-one-explore-heading"
             className="talepo-home1-section-title mt-5 font-semibold text-[#0f1f1d]"
           >
-            Her kategori.
-            <span className="block text-teal-800/50">Aynı sakin akış.</span>
+            Ne arıyorsanız.
+            <span className="block text-teal-800/50">Yazmanız yeterli.</span>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-[16px] leading-8 text-teal-950/45 lg:mx-0">
             Kategori yalnızca yönlendirme içindir. Listede olmayan ürün ve

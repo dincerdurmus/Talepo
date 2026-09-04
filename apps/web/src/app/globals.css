@@ -228,9 +228,9 @@ body {
 
 /* Ana Sayfa 1 — premium landing rhythm */
 .talepo-home1-display {
-  font-size: clamp(2.35rem, 4.8vw, 4.15rem);
-  line-height: 1.02;
-  letter-spacing: -0.048em;
+  font-size: clamp(3rem, 5vw, 4.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
 }
 
 .talepo-home1-section-title {
@@ -255,7 +255,7 @@ body {
 
 .talepo-home1-hero-scene {
   isolation: isolate;
-  background: #070c0b;
+  background: #030a09;
 }
 
 .talepo-home1-hero-illustration {
@@ -263,25 +263,67 @@ body {
 }
 
 .talepo-home1-hero-canvas {
-  background-color: #0e1614;
+  background-color: #030a09;
   background-image:
     radial-gradient(
-      ellipse 115% 95% at 24% 46%,
-      rgba(45, 212, 191, 0.13) 0%,
-      rgba(45, 212, 191, 0.03) 38%,
-      transparent 62%
+      ellipse 90% 85% at 82% 48%,
+      rgba(45, 212, 191, 0.055) 0%,
+      transparent 68%
     ),
     radial-gradient(
-      ellipse 75% 55% at 78% 22%,
-      rgba(94, 234, 212, 0.06) 0%,
-      transparent 52%
-    ),
-    radial-gradient(
-      ellipse 90% 45% at 50% 108%,
-      rgba(0, 0, 0, 0.22) 0%,
-      transparent 58%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 20%);
+      ellipse 72% 80% at 10% 45%,
+      rgba(5, 22, 19, 0.5) 0%,
+      transparent 70%
+    );
+}
+
+.talepo-planet-beam {
+  stroke: rgba(143, 240, 220, 0.9);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px rgba(94, 234, 212, 0.5));
+  transition: opacity 300ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.talepo-planet-beam.is-active {
+  opacity: 1;
+  animation: talepo-planet-beam-draw 760ms cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+}
+
+.talepo-planet-pulse {
+  box-shadow:
+    0 0 8px rgba(204, 251, 241, 0.9),
+    0 0 24px rgba(45, 212, 191, 0.58);
+}
+
+.talepo-planet-pulse > span {
+  animation: talepo-planet-pulse 1.8s ease-out infinite;
+}
+
+.talepo-planet-pulse > span + span {
+  animation-delay: 520ms;
+}
+
+@keyframes talepo-planet-beam-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes talepo-planet-pulse {
+  0% {
+    opacity: 0.72;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
 }
 
 .talepo-home1-hero-horizon {
@@ -425,6 +467,15 @@ body {
 
   .talepo-home1-composer-field::before,
   .talepo-home1-composer-label::before {
+    animation: none;
+  }
+
+  .talepo-planet-beam.is-active {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+
+  .talepo-planet-pulse > span {
     animation: none;
   }
 }

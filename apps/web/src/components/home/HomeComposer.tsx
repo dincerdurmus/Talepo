@@ -7,10 +7,13 @@ import { FormEvent, useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 import { detectCategoryHintLabel } from "@/lib/request-category-engine";
 
+/* Kurucu (2026-09-04): çipler Talepo genişliğini anlatır — tüketici,
+   üretim, hizmet ve makine bir arada; salt B2B ofis hissi verilmez. */
 const SUGGESTIONS = [
-  "50 ofis sandalyesi, İstanbul",
-  "2+1 kiralık daire, Bağcılar",
-  "5.000 adet karton kutu",
+  "Mercedes C200 arıyorum",
+  "10.000 adet kraft kutu",
+  "Logo tasarımı yaptıracağım",
+  "CNC torna tezgahı arıyorum",
 ];
 
 type HomeComposerProps = {
@@ -73,32 +76,35 @@ export function HomeComposer({ onInk = false, variant = "default" }: HomeCompose
   return (
     <div className={`w-full ${home1 ? "talepo-home1-composer-wrap" : ""}`}>
       <form onSubmit={onSubmit} className="talepo-composer w-full">
-        <div className="flex items-baseline justify-between gap-3 px-1">
-          <label
-            htmlFor={fieldId}
-            className={`text-[11px] font-medium uppercase tracking-[0.2em] ${
-              onInk ? "text-white/35" : "text-[#0a1210]/40"
-            } ${home1 ? "talepo-home1-composer-label" : ""}`}
-          >
-            Talep
-          </label>
-          {categoryHint ? (
-            <span
-              className={`text-[11px] tracking-[0.02em] ${
-                onInk ? "text-teal-200/40" : "text-teal-800/45"
+        {!home1 ? (
+          <div className="flex items-baseline justify-between gap-3 px-1">
+            <label
+              htmlFor={fieldId}
+              className={`text-[11px] font-medium uppercase tracking-[0.2em] ${
+                onInk ? "text-white/35" : "text-[#0a1210]/40"
               }`}
             >
-              {categoryHint}
-            </span>
-          ) : null}
-        </div>
+              Talep
+            </label>
+            {categoryHint ? (
+              <span
+                className={`text-[11px] tracking-[0.02em] ${
+                  onInk ? "text-teal-200/40" : "text-teal-800/45"
+                }`}
+              >
+                {categoryHint}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
 
         <div
-          className={`mt-3 flex items-end gap-2 rounded-[1.75rem] border px-3 py-2.5 backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-300 sm:gap-3 sm:px-4 sm:py-3 ${
+          data-talepo-composer-anchor={home1 ? "true" : undefined}
+          className={`${home1 ? "" : "mt-3"} flex items-center gap-2 rounded-[1.75rem] border px-3 py-2.5 backdrop-blur-2xl transition-[background-color,border-color,box-shadow] duration-300 sm:gap-3 sm:px-4 sm:py-3 ${
             home1
               ? focused
-                ? "talepo-home1-composer-field is-focused border-teal-300/22 bg-white/[0.11] shadow-[0_0_0_1px_rgba(45,212,191,0.08),0_16px_48px_rgba(0,0,0,0.22)]"
-                : "talepo-home1-composer-field border-white/10 bg-white/[0.07] hover:border-white/14 hover:bg-white/[0.09]"
+                ? "talepo-home1-composer-field is-focused border-teal-200/38 bg-[#07110f]/88 shadow-[0_0_0_1px_rgba(45,212,191,0.08)]"
+                : "talepo-home1-composer-field border-teal-200/24 bg-[#07110f]/76 hover:border-teal-200/34"
               : onInk
               ? focused
                 ? "border-white/18 bg-white/[0.12] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]"
@@ -112,19 +118,27 @@ export function HomeComposer({ onInk = false, variant = "default" }: HomeCompose
             ref={textareaRef}
             id={fieldId}
             name="query"
-            rows={2}
+            rows={home1 ? 1 : 2}
             value={text}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            onChange={(event) => setText(event.target.value)}
+            onChange={(event) => {
+              const nextText = event.target.value;
+              setText(nextText);
+              /* Planet sahnesi yazımı hisseder — yalnız hafif bir olay;
+                 render maliyeti yok, input asla beklemez. */
+              if (text.trim().length === 0 && nextText.trim().length > 0) {
+                window.dispatchEvent(new Event("talepo:home-typing"));
+              }
+            }}
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
                 go(text);
               }
             }}
-            placeholder="İhtiyacınızı yazın…"
-            className={`max-h-[140px] min-h-[56px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] leading-6 outline-none sm:text-[16px] sm:leading-7 ${
+            placeholder="Ne arıyorsunuz?"
+            className={`relative z-10 max-h-[140px] min-h-[56px] flex-1 resize-none bg-transparent px-2 py-2.5 text-[15px] leading-6 outline-none sm:text-[16px] sm:leading-7 ${
               onInk
                 ? "text-white/92 placeholder:text-white/28"
                 : "text-[#0a1210] placeholder:text-[#0a1210]/28"
@@ -133,47 +147,47 @@ export function HomeComposer({ onInk = false, variant = "default" }: HomeCompose
 
           <button
             type="submit"
-            className={`mb-1 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-medium tracking-[0.01em] transition sm:h-11 sm:px-5 ${
+            className={`relative z-10 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 px-4 text-[13px] font-medium tracking-[0.01em] transition sm:h-11 sm:px-5 ${
               home1
                 ? canSubmit
-                  ? "bg-white text-[#070c0b] shadow-[0_8px_24px_rgba(255,255,255,0.12)] hover:bg-white/92"
-                  : "bg-white/10 text-white/55 hover:bg-white/14 hover:text-white/78"
+                  ? "border-l border-white/12 text-teal-100 hover:text-white"
+                  : "border-l border-white/10 text-teal-100/62 hover:text-teal-100"
                 : onInk
                 ? canSubmit
-                  ? "bg-white text-[#070c0b] hover:bg-white/92"
-                  : "bg-white/12 text-white/55 hover:bg-white/16 hover:text-white/75"
+                  ? "rounded-full bg-white text-[#070c0b] hover:bg-white/92"
+                  : "rounded-full bg-white/12 text-white/55 hover:bg-white/16 hover:text-white/75"
                 : canSubmit
-                  ? "bg-[#0a1210] text-white hover:bg-[#121c1a]"
-                  : "bg-[#0a1210]/70 text-white/90 hover:bg-[#0a1210]/82"
+                  ? "rounded-full bg-[#0a1210] text-white hover:bg-[#121c1a]"
+                  : "rounded-full bg-[#0a1210]/70 text-white/90 hover:bg-[#0a1210]/82"
             }`}
           >
-            Devam
+            {home1 ? "Talebi yayınla" : "Devam"}
             <ArrowRight className="h-3.5 w-3.5 opacity-70" />
           </button>
         </div>
 
-        <ul className="mt-4 flex flex-wrap items-center justify-center gap-2 px-1 sm:mt-5 lg:justify-start">
-          {SUGGESTIONS.map((suggestion) => (
-            <li key={suggestion}>
-              <button
-                type="button"
-                onClick={() => applySuggestion(suggestion)}
-                className={`text-[12.5px] tracking-[0.01em] transition sm:text-[13px] ${
-                  home1
-                    ? "rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-white/42 backdrop-blur-sm hover:border-white/14 hover:bg-white/[0.07] hover:text-white/72"
-                    : onInk
-                    ? "text-white/32 hover:text-white/62"
-                    : "text-[#0a1210]/38 hover:text-[#0a1210]/70"
-                }`}
-              >
-                {suggestion}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {!home1 ? (
+          <ul className="mt-4 flex flex-wrap items-center justify-center gap-2 px-1 sm:mt-5 lg:justify-start">
+            {SUGGESTIONS.map((suggestion) => (
+              <li key={suggestion}>
+                <button
+                  type="button"
+                  onClick={() => applySuggestion(suggestion)}
+                  className={`text-[12.5px] tracking-[0.01em] transition sm:text-[13px] ${
+                    onInk
+                      ? "text-white/32 hover:text-white/62"
+                      : "text-[#0a1210]/38 hover:text-[#0a1210]/70"
+                  }`}
+                >
+                  {suggestion}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </form>
 
-      {isLoggedIn && (
+      {isLoggedIn && !home1 && (
         <div className="mt-6 flex justify-center">
           <Link
             href="/panel"

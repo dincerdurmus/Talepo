@@ -43,7 +43,7 @@ console.log("\n=== PUBLIC ROUTE ===\n");
   check("page uses HomePublicPage", page.includes("HomePublicPage"));
   check("page metadata title", page.includes("İhtiyacınızı yazın, teklifleri karşılaştırın"));
   check("no preview banner on /", !page.includes("HomeOnePreviewBanner"));
-  check("public page ink hero shell", publicPage.includes('bg-[#0e1614]'));
+  check("public page ink hero shell", publicPage.includes('bg-[#030a09]'));
   check("public page home1 header", publicPage.includes('variant="home1"'));
 }
 
@@ -53,8 +53,15 @@ console.log("\n=== HEADER NAV ===\n");
   check("home1 nasil anchor", header.includes('href="#nasil"'));
   check("home1 planlar anchor", header.includes('href="#planlar"'));
   check("home1 saticilar anchor", header.includes('href="#saticilar"'));
-  check("profile hover open", header.includes("onMouseEnter={() => setProfileMenuOpen(true)}"));
-  check("profile focus open", header.includes("onFocus={() => setProfileMenuOpen(true)}"));
+  /* BAYAT BEKLENTİ GÜNCELLENDİ (2026-09-04): hesap menüsü 313039e'de
+     PanelAccountMenu + useHoverDisclosure'a taşındı; hover/focus açılışı
+     artık TEK paylaşılan hook'ta yaşar. Bu iki satır HEAD'de bu görevden
+     bağımsız kırmızıydı (Header'da inline setProfileMenuOpen kalmadı). */
+  check("profile menu via PanelAccountMenu", header.includes("PanelAccountMenu"));
+  check(
+    "account menu hover/focus hook",
+    read("src/components/panel/PanelAccountMenu.tsx").includes("useHoverDisclosure()"),
+  );
   check("login route", header.includes('href="/giris"'));
   check("register route", header.includes('href="/kayit"'));
   check("talep CTA", header.includes('href="/talep"'));
@@ -63,7 +70,10 @@ console.log("\n=== HEADER NAV ===\n");
 console.log("\n=== HERO & COMPOSER ===\n");
 {
   check("single H1 in hero", (hero.match(/<h1/g) ?? []).length === 1);
-  check("hero headline copy", hero.includes("İhtiyacınızı yazın."));
+  /* Kurucu hero kararı (2026-09-04): tek talebin pazar etkisini anlatan
+     kısa ürün vaadi; metadata SEO metni ayrı yaşamaya devam eder. */
+  check("hero headline copy", hero.includes("Bir talep."));
+  check("hero headline second line", hero.includes("Binlerce olasılık."));
   check("composer on ink", hero.includes('variant="home1"'));
   check("composer query handoff", composer.includes("/talep?query="));
   check("composer encodeURIComponent", composer.includes("encodeURIComponent"));

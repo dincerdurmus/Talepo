@@ -194,6 +194,9 @@ export function MairaStage({
           }}
         />
         <MairaContourScene />
+        {/* Alt kenar sahne rengine erir: gövde kesimi görünmez, kadraj
+            dışındaki hiçbir ayrıntı okunmaz (kurucu, 2026-09-04). */}
+        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-[#0c0c0c] via-[#0c0c0c]/78 to-transparent" />
       </div>
 
       <div className="sc relative flex h-full flex-col gap-[var(--sc-gap)] p-[var(--sc-pad)]">

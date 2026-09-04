@@ -8,7 +8,7 @@ import { HomeOneFooter, HomeOnePlans } from "@/components/home/v1/HomeOnePlans";
 export function HomePublicPage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#f4f7f6] text-[#0f1f1d]">
-      <div className="relative bg-[#0e1614]">
+      <div className="relative bg-[#030a09]">
         <Header tone="ink" variant="home1" />
         <HomeOneHero />
       </div>
