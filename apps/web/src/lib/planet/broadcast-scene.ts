@@ -1156,11 +1156,11 @@ export function createBroadcastPlanetScene(opts: {
       scene.clear();
       draco.dispose();
       renderer.dispose();
-      try {
-        renderer.getContext().getExtension("WEBGL_lose_context")?.loseContext();
-      } catch {
-        /* bağlam zaten kapalı olabilir */
-      }
+      /* WEBGL_lose_context ÇAĞRILMAZ (ölçüldü, 2026-09-05): React StrictMode
+         geliştirme modunda efekti iki kez çalıştırır; ilk sahnenin dispose'u
+         canvas bağlamını kalıcı olarak öldürünce İKİNCİ sahne aynı canvas
+         üzerinde hiç çizemiyor ve hero posterde kalıyordu. renderer.dispose()
+         GPU kaynaklarını zaten bırakır; bağlam GC ile toplanır. */
     },
   };
 }
