@@ -16,3 +16,6 @@ data/catalog-ingestion/cache/**
 
 # Verifier scratch output (never committed)
 apps/web/TALEPO-GLOBAL-PRODUCT-IDENTITY-V1-TEST-OUTPUT.txt
+
+# GetLayers lisanslı sahne varlıkları repoya girmez (lisans sınırı).
+apps/web/public/planet/

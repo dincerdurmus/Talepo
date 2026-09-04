@@ -19,6 +19,17 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
+/**
+ * LİSANS SINIRI (Maira sahnesiyle aynı sözleşme): satın alınan GetLayers
+ * varlıklarının adresi TAKİP EDİLEN kaynağa gömülmez ve dosyalar repoya
+ * girmez. Taban adres yalnız ortam değişkeninden gelir; tanımsızsa sahne
+ * hiç kurulmaz ve hero React tarafındaki statik posterle çalışır.
+ */
+const ASSET_BASE = process.env.NEXT_PUBLIC_TALEPO_PLANET_ASSETS ?? "";
+export function planetAssetsConfigured(): boolean {
+  return ASSET_BASE.length > 0;
+}
+
 /** Talepo paletine çevrilmiş sahne ayarları (GetLayers CONFIG'ten türetildi). */
 const CONFIG = {
   rimColor: "#bff5ea",
@@ -492,7 +503,7 @@ export function createBroadcastPlanetScene(opts: {
   }> = [];
   function addClouds() {
     const tex = track(
-      new THREE.TextureLoader().load("/planet/planet-clouds.png"),
+      new THREE.TextureLoader().load(`${ASSET_BASE}/planet-clouds.png`),
     );
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.repeat.set(5, 5);
@@ -894,7 +905,7 @@ export function createBroadcastPlanetScene(opts: {
 
   function buildPlanet(nightTex: THREE.Texture | null) {
     gltfLoader.load(
-      "/planet/planet.glb",
+      `${ASSET_BASE}/planet.glb`,
       (gltf) => {
         if (disposed) return;
         const mesh = firstMesh(gltf.scene);
@@ -967,7 +978,7 @@ export function createBroadcastPlanetScene(opts: {
   }
 
   gltfLoader.load(
-    "/planet/planet-lights.glb",
+    `${ASSET_BASE}/planet-lights.glb`,
     (lights) => {
       if (disposed) return;
       const lmesh = firstMesh(lights.scene);

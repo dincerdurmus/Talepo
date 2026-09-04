@@ -134,8 +134,13 @@ export function TalepoSignalPlanet() {
     };
 
     import("@/lib/planet/broadcast-scene")
-      .then(({ createBroadcastPlanetScene }) => {
+      .then(({ createBroadcastPlanetScene, planetAssetsConfigured }) => {
         if (cancelled) return;
+        if (!planetAssetsConfigured()) {
+          /* Lisanslı varlıkların adresi tanımsız — sahne kurulmaz. */
+          setFailed(true);
+          return;
+        }
         handle = createBroadcastPlanetScene({
           canvas,
           container: wrap,
