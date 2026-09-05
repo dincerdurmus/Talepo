@@ -185,6 +185,32 @@ export function HomeComposer({ onInk = false, variant = "default" }: HomeCompose
             ))}
           </ul>
         ) : null}
+
+        {/* Örnek talepler (kurucu, 2026-09-05): boş alan tek başına ne
+            yazılacağını anlatmıyordu. Örnekler YALNIZ alan boşken durur;
+            kullanıcı yazmaya başladığı anda kaybolurlar, böylece "yazarken
+            aşağıda bir şey belirmesin" kuralı korunur. Dördü Talepo'nun
+            genişliğini anlatır: tüketici, üretim, hizmet, makine. */}
+        {home1 && !canSubmit ? (
+          <div className="mt-4 sm:mt-5">
+            <p className="mb-2.5 text-[12px] tracking-[0.01em] text-white/28 sm:text-[12.5px]">
+              Örneğin şunları yazabilirsiniz
+            </p>
+            <ul className="flex flex-wrap items-center gap-1.5">
+              {SUGGESTIONS.map((suggestion) => (
+                <li key={suggestion}>
+                  <button
+                    type="button"
+                    onClick={() => applySuggestion(suggestion)}
+                    className="rounded-full border border-teal-200/16 bg-[#07110f]/60 px-2.5 py-1.5 text-[12px] tracking-[-0.005em] text-white/48 transition hover:border-teal-200/34 hover:bg-[#07110f]/85 hover:text-white/82"
+                  >
+                    {suggestion}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </form>
 
       {isLoggedIn && !home1 && (
