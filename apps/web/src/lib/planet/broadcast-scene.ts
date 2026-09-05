@@ -423,6 +423,10 @@ export function createBroadcastPlanetScene(opts: {
   /* Türkiye gecedeyken uzak gündüz yüzeyini sıkıştıran bağlamsal ağırlık.
      Gezegen ve bulut shader'ları AYNI nesneyi paylaşır. */
   const localNight = { value: 0 };
+  /* Türkiye yönü (view uzayı). Hero'nun anlattığı yer burası olduğu için
+     şehir ışıkları bu kapak içinde bir miktar yükseltilir. SANATSAL bir
+     vurgudur, veri değildir; yarıçap ~10 derece, kazanç sınırlı. */
+  const turkeyDirView = { value: new THREE.Vector3(0, 0, 1) };
   const sunLocal = new THREE.Vector3(0, 0, 1);
   const cameraViewInverse = new THREE.Matrix4();
   let lonOffsetRad = 0;
@@ -462,6 +466,7 @@ export function createBroadcastPlanetScene(opts: {
       .transformDirection(planetMesh.matrixWorld)
       .transformDirection(cameraViewInverse);
     const turkeyNdl = turkeyNormalView.dot(sunDirView.value);
+    turkeyDirView.value.copy(turkeyNormalView);
     localNight.value = localNightAmount(turkeyNdl);
 
     if (process.env.NODE_ENV !== "production") {
@@ -502,6 +507,7 @@ export function createBroadcastPlanetScene(opts: {
       shader.uniforms.time = planetTime;
       shader.uniforms.uSunDirection = sunDirView;
       shader.uniforms.uLocalNight = localNight;
+      shader.uniforms.uTurkeyDir = turkeyDirView;
       shader.uniforms.noiseScale = { value: 30.0 };
       shader.uniforms.speedX = { value: 1.5 };
       shader.uniforms.speedY = { value: 2.0 };
@@ -526,7 +532,7 @@ export function createBroadcastPlanetScene(opts: {
       shader.fragmentShader =
         `
         uniform float time; uniform float noiseScale; uniform float speedX; uniform float speedY; uniform float speedZ;
-        uniform vec3 uSunDirection; uniform float uLocalNight;
+        uniform vec3 uSunDirection; uniform float uLocalNight; uniform vec3 uTurkeyDir;
         uniform vec3 rimColor; uniform float rimPower; uniform sampler2D nightBlendTexture; uniform float hasNight; uniform float nightLights;
         uniform float terrainDepth; uniform float terrainShade;
         uniform float oceanGlint; uniform float oceanDeep; uniform float oceanFlow;
@@ -748,8 +754,20 @@ export function createBroadcastPlanetScene(opts: {
            yüzey kahverengi görünmez, doku detayı luminance olarak korunur.
            Gündüz tarafı nightAmt ile dışarıda kalır. */
         float nightLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, nightLum * vec3(0.76, 0.90, 1.20), nightAmt * 0.72);
-        gl_FragColor.rgb += (1.0 - waterMask) * nightAmt * 0.055 * vec3(0.55, 0.70, 0.95);
+        /* Gece renk düzleştirmesi hafif tutulur (0.26 → 0.10): doku çok
+           nötrleşince bütün kara çöl gibi kurak görünüyordu. */
+        /* Gece renk düzleştirmesi uLocalNight ile geçiş yapar: gündüz
+           kompozisyonunda ÖNCEKİ davranış birebir korunur (0.72, soğuk mavi),
+           gece kompozisyonunda yeni hafif ton (0.10) kullanılır — doku çok
+           nötrleşince bütün kara çöl gibi kurak görünüyordu. */
+        gl_FragColor.rgb = mix(
+          gl_FragColor.rgb,
+          nightLum * mix(vec3(0.76, 0.90, 1.20), vec3(0.96, 0.97, 1.00), uLocalNight),
+          nightAmt * mix(0.72, 0.10, uLocalNight));
+        /* Baseline'in gece kara taban ışığı. Gündüz kompozisyonunda (uLocalNight=0)
+           BİREBİR korunur; gece kompozisyonunda sönerek yerini aşağıdaki
+           doku-çarpanına bırakır. */
+        gl_FragColor.rgb += (1.0 - waterMask) * nightAmt * (1.0 - uLocalNight) * 0.055 * vec3(0.55, 0.70, 0.95);
         /* GECE KOMPOZİSYONUNDA YÜZEY GERİ ÇEKİLİR. Ölçüldü (2026-09-05):
            gece karesinde görünen diskin yalnız %11.9'u gündüzdür ve en parlak
            nokta ekran dışındaki sağ limbdedir — soldaki parlaklık gündüz
@@ -757,12 +775,36 @@ export function createBroadcastPlanetScene(opts: {
            kara yüzeyi kısılır; şehir ışıkları BUNDAN SONRA eklendiği için
            yüzeyden baskın hâle gelir. Şehir ışığı dağılımı değişmez. */
         gl_FragColor.rgb *= mix(1.0, mix(0.52, 1.0, dayAmt), uLocalNight * nightAmt);
+        /* KITA SİLUETİ (kurucu, 2026-09-05): gece karesinde kıtalar ve kıyı
+           çizgisi okunmuyordu. Siluet ışığı yukarıdaki sıkıştırmadan SONRA
+           eklenir — yüzey dokusu kısılmış kalır, ama kara/deniz sınırı
+           belirginleşir. Okyanus dışarıda tutulduğu için kontrast karadan
+           gelir; şehir ışıkları hâlâ yüzeyden baskındır. */
+        /* Kara kendi DOKUSUNDAN aydınlanır. Sabit bir dolgu eklemek kıtaları
+           düz bir kesme-yapıştır lekesine çeviriyordu: her kara pikseli aynı
+           değeri alıyor, arazi tamamen kayboluyordu. Çarpan kullanmak yüzeyin
+           kendi değişimini (çöl, dağ, bitki örtüsü) ölçekleyerek büyütür;
+           küçük taban yalnız en karanlık araziyi siyahtan kurtarır. */
+        /* KONTRAST YÖNÜ referans gece fotoğraflarındaki gibidir: DENİZ
+           karadan DAHA AÇIK koyu bir lacivert, kara ise koyu ve nötr.
+           Kıyı çizgisi ve ülke sınırları bu farktan doğar. Önceki hâlde yön
+           tersti — kara soluk gri, deniz siyahtı — ve hiçbir sınır okunmuyordu.
+           Kara yalnız hafifçe kaldırılır ki arazi dokusu korunsun. */
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * mix(1.0, 6.4, uLocalNight) * mix(vec3(1.0), vec3(0.94, 1.02, 0.93), uLocalNight), (1.0 - waterMask) * nightAmt);
+        /* Gece denizi: gökyüzü ışığını yansıtan koyu lacivert. */
+        gl_FragColor.rgb += waterMask * nightAmt * uLocalNight * 0.021 * vec3(0.26, 0.48, 1.00);
         /* ŞEHİR IŞIKLARI kademeli karışır: tam gündüzde neredeyse sıfır,
            alacakaranlıkta kısmen görünür, gecede mevcut seviyede. Kare
            alınarak gündüze doğru daha hızlı söner. */
         float lightsFactor = smoothstep(0.34, -0.10, ndl);
         lightsFactor *= lightsFactor;
-        gl_FragColor.rgb += cityLights * lightsFactor;
+        /* TÜRKİYE VURGUSU (kurucu, 2026-09-05). Hero'nun anlattığı yer burası;
+           Türkiye çevresindeki kapak içinde şehir ışıkları bir miktar yükselir.
+           Bu SANATSAL bir vurgudur, veri değildir: hiçbir yere olmayan ışık
+           EKLENMEZ, yalnız var olan ışık ölçeklenir. Yarıçap ~10 derece,
+           kenarı smoothstep ile yumuşak, en fazla 1.45 kat. */
+        float turkeyCap = smoothstep(0.982, 0.9994, dot(normalizedNormal, uTurkeyDir));
+        gl_FragColor.rgb += cityLights * lightsFactor * (1.0 + turkeyCap * 0.45 * uLocalNight);
         /* DENİZ YANSIMASI (kurucu, 2026-09-05).
 
            ÖNCEKİ KUSUR: 240x UV frekanslı gürültü doğrudan specular üssünün
@@ -790,7 +832,7 @@ export function createBroadcastPlanetScene(opts: {
         /* Beyaz karışımı 0.45 → 0.28: güneş alan üst limbdeki beyaz patlama
            azalır, mint atmosfer korunur. */
         vec3 dayRim   = mix(rimColor, vec3(0.94, 1.00, 0.97), 0.28);
-        vec3 nightRim = vec3(0.24, 0.52, 0.50);
+        vec3 nightRim = mix(vec3(0.24, 0.52, 0.50), vec3(0.26, 0.50, 0.80), uLocalNight);
         vec3 duskRim  = mix(rimColor, vec3(1.00, 0.84, 0.63), 0.42);
         vec3 rimTint  = mix(nightRim, dayRim, dayAmt);
         rimTint = mix(rimTint, duskRim, duskAmt * 0.75);
