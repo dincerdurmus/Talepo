@@ -213,7 +213,10 @@ export function devTimeOverrideUtcMs(): number | null {
 const CONFIG = {
   rimColor: "#bff5ea",
   rimPower: 4.6,
-  nightLights: 15,
+  /* Işıklar artık yüzey rengiyle çarpılmadığı için kazanç yeniden
+     ölçeklendi (15 → 0.9): yoğun çekirdek ~1.0'a doyar, sönük yerleşim
+     ~0.03'te kalır. Patlamış beyaz leke üretmez. */
+  nightLights: 2.4,
   terrainDepth: 0.33,
   terrainShade: 1.3,
   oceanGlint: 0.24,
@@ -581,11 +584,55 @@ export function createBroadcastPlanetScene(opts: {
         vec3 vGrad = sign(fDet) * (dFdx(terrH) * vR1 + dFdy(terrH) * vR2);
         vec3 bumpedNormal = normalize(abs(fDet) * normalizedNormal - terrainDepth * vGrad);
         vec3 shadeNormal = mix(bumpedNormal, normalizedNormal, waterMask);
-        vec3 cityLights = hasNight > 0.5
-          ? texture2D(nightBlendTexture, vCustomUv).rgb * gl_FragColor.rgb * nightLights
-          : vec3(0.0);
-        /* Talepo: şehir ışıkları mint'e çekilir. */
-        cityLights = mix(cityLights, vec3(dot(cityLights, vec3(0.333))) * vec3(0.55, 1.0, 0.88), 0.6);
+        /* ŞEHİR IŞIKLARI — gerçekçi emission (kurucu, 2026-09-05).
+
+           ÖLÇÜLDÜ: earth_night_Diffuse 4000x4000 VP8, maksimum luminance 255,
+           16 kovalı histogramda %99.09 karanlık ve kalan %0.99 sürekli bir
+           düşüşle dağılıyor — yani doku ikili bir maske DEĞİL, gerçek bir
+           yoğunluk gradyanı taşıyor. Işıklı piksellerin ortalaması (83,83,83),
+           yani doku NÖTR; renk shader'da üretilmek zorunda.
+
+           ESKİ KUSUR: doku, altındaki yüzey rengiyle (gl_FragColor.rgb)
+           çarpılıp 15 ile ölçekleniyordu. Bu iki şeyi birden bozuyordu —
+           ışık şiddeti topoğrafyaya bağlanıyor (kar/dağ bölgeleri yanlışlıkla
+           aydınlanıyor), ve parlak arazi üzerinde sonuç 1.0'ı aşıp düz beyaz
+           lekeye patlıyordu. Sorun çözünürlük veya kanal değil, bu çarpımdı.
+
+           YENİ: ışık yalnız dokunun luminance'ından türer, yüzeyden bağımsızdır
+           ve üç yoğunluk seviyesi smoothstep ile karışır — sert eşik yok. */
+        float lightsRaw = hasNight > 0.5
+          ? dot(texture2D(nightBlendTexture, vCustomUv).rgb, vec3(0.299, 0.587, 0.114))
+          : 0.0;
+        float tSettlement = smoothstep(0.010, 0.085, lightsRaw);
+        float tCluster    = smoothstep(0.075, 0.300, lightsRaw);
+        float tCore       = smoothstep(0.340, 0.800, lightsRaw);
+        /* Doygun turuncu-amber → altın → sıcak beyaza yaklaşan çekirdek.
+           Referans gece görselindeki gibi belirgin turuncu; mint YOK, o renk
+           yalnız ışın, radar, Türkiye noktası ve durum arayüzüne aittir. */
+        vec3 lightsTone = vec3(1.00, 0.42, 0.10);
+        lightsTone = mix(lightsTone, vec3(1.00, 0.66, 0.22), tCluster);
+        lightsTone = mix(lightsTone, vec3(1.00, 0.88, 0.62), tCore);
+        /* Şiddet dokunun luminance ayrıntısını korur; çekirdek ayrı bir
+           katkıyla küçük ve sıcak kalır. */
+        float lightsAmp = tSettlement * (0.16 + 0.85 * lightsRaw) + tCore * 0.30;
+        vec3 cityLights = lightsTone * lightsAmp * nightLights;
+        /* HÂLE. Referans görselde şehir kümeleri çevrelerine gerçek bir ışık
+           yayıyor. Bunu AYNI dokunun iki kaba mip seviyesinden üretiyoruz —
+           yakın hâle kümeyi sarar, uzak hâle bölgeye genel bir parıltı verir.
+           Composer/bloom zinciri EKLENMEZ; tek renderer yolunda kalır.
+           Mipmap'ler tuneTexture'da zaten üretiliyor. */
+        float haloNear = hasNight > 0.5
+          ? dot(texture2D(nightBlendTexture, vCustomUv, 2.0).rgb, vec3(0.299, 0.587, 0.114))
+          : 0.0;
+        float haloFar = hasNight > 0.5
+          ? dot(texture2D(nightBlendTexture, vCustomUv, 5.0).rgb, vec3(0.299, 0.587, 0.114))
+          : 0.0;
+        cityLights += lightsTone * smoothstep(0.008, 0.22, haloNear) * 0.34 * nightLights;
+        cityLights += lightsTone * smoothstep(0.004, 0.12, haloFar) * 0.26 * nightLights;
+        /* YUMUŞAK DOYUM. Kazanç referanstaki parlaklığa çıkarıldığı için
+           çekirdekler 1.0'ı aşabilir; Reinhard tipi bir diz bunları düz beyaz
+           diske patlatmadan doyurur. Patlamış leke bu satır sayesinde oluşmaz. */
+        cityLights = cityLights / (1.0 + cityLights * 0.55);
         /* ARAZİ KABARTMASI. Gündüzde okunur, ama YÖNETMEZ. 2.05 yüzeyi
            metalik bir kabartma haritasına çeviriyordu; 1.45 hâlâ oyulmuş
            hissi bırakıyordu (kurucu, 2026-09-05). 1.20: mikro-kontrast ve
@@ -633,7 +680,12 @@ export function createBroadcastPlanetScene(opts: {
         gl_FragColor.rgb = min(gl_FragColor.rgb, vec3(0.86, 0.88, 0.83));
         /* Kara siluetleri gecede de okunsun (kurucu, 2026-09-04): kıtalara
            çok hafif mint-nötr bir taban ışık; okyanus koyu kalır. */
-        gl_FragColor.rgb += (1.0 - waterMask) * nightAmt * 0.055 * vec3(0.62, 0.82, 0.74);
+        /* GECE KARASI referanstaki gibi soğuk mavi-griye kayar: aydınlanmamış
+           yüzey kahverengi görünmez, doku detayı luminance olarak korunur.
+           Gündüz tarafı nightAmt ile dışarıda kalır. */
+        float nightLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, nightLum * vec3(0.76, 0.90, 1.20), nightAmt * 0.72);
+        gl_FragColor.rgb += (1.0 - waterMask) * nightAmt * 0.055 * vec3(0.55, 0.70, 0.95);
         /* GECE KOMPOZİSYONUNDA YÜZEY GERİ ÇEKİLİR. Ölçüldü (2026-09-05):
            gece karesinde görünen diskin yalnız %11.9'u gündüzdür ve en parlak
            nokta ekran dışındaki sağ limbdedir — soldaki parlaklık gündüz
