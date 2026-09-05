@@ -220,7 +220,9 @@ const CONFIG = {
   terrainDepth: 0.33,
   terrainShade: 1.3,
   oceanGlint: 0.24,
-  oceanDeep: 0.62,
+  /* 0.62 gerçek okyanus dokusunu düz tonla eziyordu; 0.44'te batimetri
+     ve kıyı sığlığı okunur kalır (kurucu, 2026-09-05). */
+  oceanDeep: 0.44,
   oceanFlow: 2.2,
   oceanFlowSpeed: 0.8,
   oceanFlowScale: 2.1,
@@ -532,6 +534,38 @@ export function createBroadcastPlanetScene(opts: {
         varying vec2 vCustomUv;
         ${SNOISE}
       ` + shader.fragmentShader;
+      /* DENİZ, SIKIŞTIRILMIŞ ARAZİ HARİTALARINI KULLANMAZ (kurucu, 2026-09-05).
+
+         ÖLÇÜLDÜ: paketteki earth_Normal 6000x6000'i 184 KB'a, earth_Diffuse
+         574 KB'a sıkıştırılmış. Normal haritasında 4 piksellik blok ızgarası
+         komşu farklarında 1.34 kat, diffuse'ta 1.56 kat baskın — yani her iki
+         dokuda da kodlayıcının blok yapısı ölçülebilir durumda.
+
+         Karada bu görünmez, çünkü arazi zaten yüksek frekanslıdır. Ama deniz
+         bu ölçekte düz bir aynadır: blok sınırları yönlü ışık altında
+         dikdörtgen fasetler hâline geliyordu — kurucunun ekran görüntüsündeki
+         kutular tam olarak buydu.
+
+         Çözüm dokuyu yapay olarak yumuşatmak değil, SU ÜZERİNDE arazi
+         normalini ve pürüzlülüğünü hiç kullanmamak. Denizin yansımasını
+         aşağıdaki kontrollü güneş parlaması sağlar. */
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <roughnessmap_fragment>",
+        `#include <roughnessmap_fragment>
+        vec4 talepoSeaTex = texture2D(map, vCustomUv);
+        float talepoSeaMask = clamp(
+          smoothstep(-0.005, 0.03, talepoSeaTex.b - max(talepoSeaTex.r, talepoSeaTex.g)),
+          0.0, 1.0);
+        /* Su tamamen pürüzlü sayılır: standart materyalin keskin specular'ı
+           blok fasetleri aydınlatamaz. */
+        roughnessFactor = mix(roughnessFactor, 1.0, talepoSeaMask);`,
+      );
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <normal_fragment_maps>",
+        `#include <normal_fragment_maps>
+        /* Su üzerinde normal haritası yerine düz küre normali kullanılır. */
+        normal = normalize(mix(normal, normalize(vNormal), talepoSeaMask));`,
+      );
       shader.fragmentShader = shader.fragmentShader.replace(
         "#include <dithering_fragment>",
         `#include <dithering_fragment>
@@ -551,39 +585,69 @@ export function createBroadcastPlanetScene(opts: {
         float rim = 1.0 - max(dot(viewDir, normalizedNormal), 0.0);
         rim = pow(rim, rimPower); rim = pow(rim, 1.5); rim *= 2.1;
         vec3 currentColor = gl_FragColor.rgb;
-        float blueDom = currentColor.b - max(currentColor.r, currentColor.g);
-        float waterMask = clamp(smoothstep(-0.005, 0.03, blueDom), 0.0, 1.0);
+        /* SU MASKESİ sıkıştırma bloklarına duyarsız olmalı (kurucu, 2026-09-05).
+           Dar pencere (-0.005..0.03) blok düzeyindeki minik renk basamaklarını
+           görünür maske basamaklarına çeviriyordu; maske 0 ile 1 arasında
+           kaldığı her yerde arazi kabartması denize sızıyordu. Kaba bir mip
+           seviyesinden örnekleyip pencereyi genişletmek bunu kaynağında keser. */
+        vec4 waterProbe = texture2D(map, vCustomUv, 2.0);
+        float blueDom = waterProbe.b - max(waterProbe.r, waterProbe.g);
+        float waterMask = clamp(smoothstep(-0.02, 0.06, blueDom), 0.0, 1.0);
+        /* OKYANUS (kurucu, 2026-09-05).
+
+           Önceki hâl deniz yüzeyini sahte gösteriyordu çünkü GLB diffuse
+           haritasındaki GERÇEK okyanus görüntüsünü düz tek bir tonla
+           %62 oranında boyuyordu; batimetri, şelf ve kıyı sığlığı farkı
+           kayboluyordu. Ayrıca yüksek genlikli akış gürültüsü suyu
+           lekeli gösteriyordu. Yeni asset gerekmedi — çözüm, kaynak
+           dokunun kendi bilgisini geri getirmek. */
+
+        /* Kaynak dokunun parlaklığı sığ/derin ayrımını taşır: derin abisal
+           su koyu, şelf daha açık, kıyı sığlığı en açık. Hedef ton bu
+           bilgiden türetilir, düz bir renkle ezilmez. */
+        float seaLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+        vec3 seaDeep    = vec3(0.014, 0.046, 0.072);
+        vec3 seaShelf   = vec3(0.030, 0.094, 0.126);
+        vec3 seaCoastal = vec3(0.058, 0.156, 0.170);
+        vec3 seaDay = mix(seaDeep, seaShelf, smoothstep(0.05, 0.24, seaLum));
+        seaDay = mix(seaDay, seaCoastal, smoothstep(0.24, 0.44, seaLum));
+        /* Gece suyu neredeyse siyah kalır — onaylanan gece görünümü. */
+        vec3 seaNight = vec3(0.014, 0.055, 0.050);
+        /* Karışım %62 → %44: dokunun gerçek renk değişimi yüzeyde okunur. */
+        gl_FragColor.rgb = mix(
+          gl_FragColor.rgb,
+          mix(seaNight, seaDay, dayAmt),
+          waterMask * oceanDeep);
+
+        /* Yüzey dokusu: dalga alanı görünür bir leke değil, çok hafif bir
+           kırılma olmalı. Genlikler düşürüldü (shimmer 0.025 → 0.010,
+           akış katkısı 0.12 → 0.045). */
         float shimmer = snoise(vec3(vCustomUv.x * noiseScale + time * speedX, vCustomUv.y * noiseScale - time * speedY, time * speedZ));
-        gl_FragColor.rgb += waterMask * shimmer * 0.025;
+        gl_FragColor.rgb += waterMask * shimmer * 0.010;
         float fT = time * oceanFlowSpeed * 4.0;
         float fS = 4.0 * oceanFlowScale;
         float warp = snoise(vec3(vCustomUv.x * fS - fT * 0.5, vCustomUv.y * fS + fT * 0.4, fT * 0.5));
         float flow = snoise(vec3(vCustomUv.x * fS * 2.0 + fT * 0.6 + warp, vCustomUv.y * fS * 2.0 - fT * 0.5, fT * 0.7));
         flow = warp * 0.6 + flow * 0.4;
-        gl_FragColor.rgb += waterMask * flow * 0.12 * oceanFlow;
-        /* Talepo okyanusu: gecede neredeyse siyah yeşil, gündüzde biraz
-           açılmış koyu lacivert-teal. Parlak maviye ASLA dönmez; fark
-           yalnız bir tık okunurluk kadardır. */
-        /* Bu tonlar POZLAMA ÖNCESİdir: gündüz ~1.05, gece ~0.156 ile
-           çarpılırlar. Gece 0.014 → ~0.002 (siyah), gündüz 0.048 → ~0.050
-           yani okunur bir koyu lacivert-teal. */
-        vec3 oceanNightTone = vec3(0.014, 0.055, 0.050);
-        vec3 oceanDayTone   = vec3(0.048, 0.120, 0.138);
-        gl_FragColor.rgb = mix(
-          gl_FragColor.rgb,
-          mix(oceanNightTone, oceanDayTone, dayAmt),
-          waterMask * oceanDeep);
-        /* Talepo dünyası: kalan maviyi de yeşile çek — uzay demosu mavisi yok. */
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(0.72, 1.05, 0.95), waterMask * 0.85);
+        gl_FragColor.rgb += waterMask * flow * 0.045 * oceanFlow;
+        /* Kalan maviyi hafifçe yeşile çek — ama denizi teale boğma. */
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(0.82, 1.02, 0.98), waterMask * 0.55);
         gl_FragColor = vec4(gl_FragColor.rgb, 1.0);
         vec3 surfPos = -vViewPosition;
-        float terrH = dot(texture2D(map, vCustomUv).rgb, vec3(0.299, 0.587, 0.114));
+        /* Kabartma yüksekliği hafif yumuşatılmış bir mip'ten okunur: türev
+           artık 4 piksellik kodlayıcı bloklarının kenarını görmez, büyük
+           arazi formu korunur. */
+        float terrH = dot(texture2D(map, vCustomUv, 0.75).rgb, vec3(0.299, 0.587, 0.114));
         vec3 sigX = dFdx(surfPos), sigY = dFdy(surfPos);
         vec3 vR1 = cross(sigY, normalizedNormal), vR2 = cross(normalizedNormal, sigX);
         float fDet = dot(sigX, vR1);
         vec3 vGrad = sign(fDet) * (dFdx(terrH) * vR1 + dFdy(terrH) * vR2);
         vec3 bumpedNormal = normalize(abs(fDet) * normalizedNormal - terrainDepth * vGrad);
-        vec3 shadeNormal = mix(bumpedNormal, normalizedNormal, waterMask);
+        /* Kabartma yalnız karada ve yalnız gündüzde uygulanır. Gölgedeki
+           yüzeyde zaten okunamaz; orada açık bırakmak yalnız blok artefaktı
+           üretiyordu. */
+        float bumpAllow = (1.0 - waterMask) * dayAmt;
+        vec3 shadeNormal = mix(normalizedNormal, bumpedNormal, bumpAllow);
         /* ŞEHİR IŞIKLARI — gerçekçi emission (kurucu, 2026-09-05).
 
            ÖLÇÜLDÜ: earth_night_Diffuse 4000x4000 VP8, maksimum luminance 255,
@@ -699,13 +763,26 @@ export function createBroadcastPlanetScene(opts: {
         float lightsFactor = smoothstep(0.34, -0.10, ndl);
         lightsFactor *= lightsFactor;
         gl_FragColor.rgb += cityLights * lightsFactor;
-        /* DENİZ YANSIMASI. Yalnız güneşe uygun açıda, ince bir specular
-           çizgi. Yüzeyi maviye boyamaz, sadece gündüzü ele verir. */
+        /* DENİZ YANSIMASI (kurucu, 2026-09-05).
+
+           ÖNCEKİ KUSUR: 240x UV frekanslı gürültü doğrudan specular üssünün
+           girdisine ekleniyordu. Küre üzerinde yumuşak değişen bir terimin
+           içine bu kadar yüksek frekans girince tek bir güneş yansıması
+           yerine noktalı bir mozaik — pullu, sahte bir parıltı alanı —
+           oluşuyordu.
+
+           GERÇEK deniz yansıması tek, uzamış ve yumuşak bir parlamadır:
+           geniş bir taban lobu ile daha dar bir çekirdek. Dalga alanı
+           artık üsse değil, yalnız parlamanın ŞİDDETİNE ve düşük frekansta
+           uygulanır; böylece kenarı doğal biçimde kırılır ama nokta deseni
+           üretmez. */
         vec3 halfDir = normalize(viewSunDir + viewDir);
-        float ripple = snoise(vec3(vCustomUv * 240.0, time * 4.0));
-        float ndh = max(dot(normalizedNormal, halfDir) + ripple * 0.02, 0.0);
-        float glint = pow(ndh, 220.0);
-        gl_FragColor.rgb += glint * waterMask * dayAmt * oceanGlint * 1.9 * vec3(0.86, 1.0, 0.94);
+        float ndh = max(dot(normalizedNormal, halfDir), 0.0);
+        float glintBroad = pow(ndh, 30.0);
+        float glintCore = pow(ndh, 170.0);
+        float swell = snoise(vec3(vCustomUv * 16.0, time * 0.45)) * 0.5 + 0.5;
+        float glint = glintBroad * (0.55 + 0.45 * swell) * 0.42 + glintCore * 0.85;
+        gl_FragColor.rgb += glint * waterMask * dayAmt * oceanGlint * 1.7 * vec3(0.94, 0.98, 1.0);
         /* ATMOSFER RIM'İ çember boyunca aynı değildir: güneş alan limb daha
            parlak ve nötr-mint, gece limbi daha ince ve koyu teal, terminatör
            kuşağı sıcak-mint. Mint baskın kalır; turuncu uzay demosu tonuna
