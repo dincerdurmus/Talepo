@@ -30,6 +30,185 @@ export function planetAssetsConfigured(): boolean {
   return ASSET_BASE.length > 0;
 }
 
+/* ---------- GERÇEK GÜNEŞ KONUMU (UTC) ---------- */
+
+/**
+ * Türkiye referans ekseni. Coğrafi çerçeve bu noktadan kalibre edilir ve
+ * QA senaryoları da bu eksende doğrulanır (kurucu, 2026-09-05).
+ */
+export const TURKEY_LAT_DEG = 39;
+export const TURKEY_LON_DEG = 35;
+
+export type SolarAngles = {
+  /** Güneşin deklinasyonu (radyan): yılın gününe bağlı mevsim ekseni. */
+  declinationRad: number;
+  /** Güneşin tam tepede olduğu boylam (radyan): günün saatine bağlı. */
+  subsolarLonRad: number;
+};
+
+/**
+ * Yaklaşık güneş konumu — NOAA'nın düşük hassasiyetli günlük serileri.
+ * Dakika mertebesinde doğrudur; aydınlatma için fazlasıyla yeterli.
+ *
+ * Girdi UTC milisaniyedir ve YALNIZ UTC alanları okunur. Kullanıcının
+ * bilgisayar saat dilimi hiçbir yerde kullanılmaz: yanlış ayarlı bir
+ * makine dünyanın aydınlatmasını kaydıramaz.
+ */
+export function solarAnglesForUtc(utcMs: number): SolarAngles {
+  const d = new Date(utcMs);
+  const yearStartMs = Date.UTC(d.getUTCFullYear(), 0, 1);
+  const dayOfYear = Math.floor((utcMs - yearStartMs) / 86_400_000) + 1;
+  const utcHours =
+    d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600;
+
+  /* Yılın kesirli açısı (radyan). */
+  const g = ((2 * Math.PI) / 365) * (dayOfYear - 1 + (utcHours - 12) / 24);
+
+  const declinationRad =
+    0.006918 -
+    0.399912 * Math.cos(g) +
+    0.070257 * Math.sin(g) -
+    0.006758 * Math.cos(2 * g) +
+    0.000907 * Math.sin(2 * g) -
+    0.002697 * Math.cos(3 * g) +
+    0.00148 * Math.sin(3 * g);
+
+  /* Zaman denklemi (dakika): gerçek güneş saatiyle ortalama saat farkı. */
+  const eqTimeMin =
+    229.18 *
+    (0.000075 +
+      0.001868 * Math.cos(g) -
+      0.032077 * Math.sin(g) -
+      0.014615 * Math.cos(2 * g) -
+      0.040849 * Math.sin(2 * g));
+
+  /* 12:00 UTC'de güneş ~0° boylamdadır ve saatte 15° batıya kayar. */
+  const subsolarLonDeg = -15 * (utcHours - 12 + eqTimeMin / 60);
+
+  return {
+    declinationRad,
+    subsolarLonRad: (subsolarLonDeg * Math.PI) / 180,
+  };
+}
+
+/**
+ * Coğrafi (enlem, boylam) → modelin YEREL yön vektörü.
+ *
+ * GLB küp-atlas açılımlıdır, bu yüzden boylam sıfırı UV'den okunamaz;
+ * `calibrateLongitudeOffset` ile Türkiye çapasından türetilir. Kutup
+ * ekseni modelin +Y'sidir ve bu varsayım çalışma anında doğrulanır.
+ */
+export function geoDirection(
+  latRad: number,
+  lonRad: number,
+  lonOffsetRad: number,
+  out: THREE.Vector3,
+): THREE.Vector3 {
+  const a = lonRad + lonOffsetRad;
+  return out
+    .set(
+      Math.cos(latRad) * Math.sin(a),
+      Math.sin(latRad),
+      Math.cos(latRad) * Math.cos(a),
+    )
+    .normalize();
+}
+
+/**
+ * Modelin boylam sıfırını, UV'den bulunmuş Türkiye yüzey noktasından
+ * çözer. Tek kalibrasyon noktası kullanmak, ışığın ve radar noktasının
+ * aynı çapaya bağlı kalmasını ve birbirinden asla ayrışmamasını sağlar.
+ */
+export function calibrateLongitudeOffset(turkeyLocal: THREE.Vector3): number {
+  const n = turkeyLocal.clone().normalize();
+  return Math.atan2(n.x, n.z) - (TURKEY_LON_DEG * Math.PI) / 180;
+}
+
+/** Kalibrasyon noktasının ima ettiği enlem (derece) — +Y kutup denetimi. */
+export function impliedLatitudeDeg(turkeyLocal: THREE.Vector3): number {
+  return (Math.asin(turkeyLocal.clone().normalize().y) * 180) / Math.PI;
+}
+
+/** GLSL smoothstep'in JS karşılığı; edge0 > edge1 durumunda da çalışır. */
+export function smoothstep01(edge0: number, edge1: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * BAĞLAMSAL GECE MİKTARI (kurucu, 2026-09-05).
+ *
+ * Hero'nun anlattığı yer Türkiye'dir. Türkiye gece bölgesindeyken görünen
+ * yarımkürenin uzak ucunda kalan gündüz yüzeyi kompozisyonu ele geçiriyor
+ * ve sahne "kararsız" görünüyordu. Bu değer yükseldikçe shader, uzak gündüz
+ * yüzeyinin yalnız SUNUM pozlamasını yumuşak biçimde sıkıştırır.
+ *
+ * Güneş geometrisi, terminatörün yeri ve hiçbir noktanın gündüz/gece kararı
+ * DEĞİŞMEZ — bu yalnız bir derecelendirme ağırlığıdır. Ekran koordinatına
+ * bakmaz; tek girdisi Türkiye'nin gerçek solar ndl değeridir.
+ */
+export function localNightAmount(turkeyNdl: number): number {
+  return smoothstep01(0.1, -0.35, turkeyNdl);
+}
+
+/**
+ * Modelin YEREL güneş yönünü, shader'ın `vNormal`'ı ile AYNI zincirden
+ * geçirerek view uzayına taşır: önce gezegenin dünya matrisi, sonra
+ * kameranın view'i.
+ *
+ * Yapay Y dönüşünün kompanzasyonu tam da buradadır: güneş yönü coğrafi
+ * çerçevede üretilip gezegenin kendi matrisiyle döndürüldüğü için, normal
+ * ve güneş aynı dönüşü yer. İkisinin iç çarpımı — yani bir noktanın
+ * gündüz/gece durumu — görsel dönüşten bağımsız olarak sabit kalır.
+ *
+ * Sahne bu fonksiyonu her karede çağırır; doğrulayıcı da aynısını çağırır.
+ */
+export function sunDirectionInView(
+  sunLocalDir: THREE.Vector3,
+  carrierMatrixWorld: THREE.Matrix4,
+  cameraMatrixWorldInverse: THREE.Matrix4,
+  out: THREE.Vector3,
+): THREE.Vector3 {
+  return out
+    .copy(sunLocalDir)
+    .transformDirection(carrierMatrixWorld)
+    .transformDirection(cameraMatrixWorldInverse);
+}
+
+/** QA zaman override'ı — YALNIZ development. */
+export type PlanetTimeOverride = "day" | "sunset" | "night";
+
+/**
+ * Deterministik QA anları. Tarih ekinoksa sabitlenmiştir (deklinasyon ~0),
+ * saatler Türkiye ekseninde (35°E) yerel öğle / gün batımı / gece yarısına
+ * denk gelir. Production'da bu yol hiç çalışmaz.
+ */
+export function overrideUtcMsFor(mode: PlanetTimeOverride): number {
+  if (mode === "day") return Date.UTC(2026, 2, 20, 9, 40, 0);
+  if (mode === "sunset") return Date.UTC(2026, 2, 20, 15, 40, 0);
+  return Date.UTC(2026, 2, 20, 21, 40, 0);
+}
+
+/**
+ * Yalnız development'ta bir QA anı döndürür. Production build'de
+ * `NODE_ENV` sabiti "production"a katlanır ve bu fonksiyon her zaman
+ * null verir; gerçek UTC dışına çıkılamaz.
+ */
+export function devTimeOverrideUtcMs(): number | null {
+  if (process.env.NODE_ENV === "production") return null;
+  if (typeof window === "undefined") return null;
+  let raw: string | null = null;
+  try {
+    raw = new URLSearchParams(window.location.search).get("planetTime");
+  } catch {
+    return null;
+  }
+  if (raw === "day" || raw === "sunset" || raw === "night") {
+    return overrideUtcMsFor(raw);
+  }
+  return null;
+}
+
 /** Talepo paletine çevrilmiş sahne ayarları (GetLayers CONFIG'ten türetildi). */
 const CONFIG = {
   rimColor: "#bff5ea",
@@ -49,9 +228,10 @@ const CONFIG = {
   spin: 0.012,
   initRotation: 2.07,
   tilt: 0.37,
-  /* Referans gece görünümü: bulutlar yalnız limbte hafif bir nem hissi. */
+  /* Taban opaklık gündüz için yükseltildi (kurucu, 2026-09-05); shader'daki
+     cloudVis gecede 0.05'e indirdiği için referans gece görünümü korunur. */
   cloudLayers: [
-    { height: 1.008, opacity: 0.1, spin: 0.05, ry: 0.0, phase: 0.0 },
+    { height: 1.008, opacity: 0.55, spin: 0.05, ry: 0.0, phase: 0.0 },
   ],
   markerColor: "#7ceccb",
   markerCount: 26,
@@ -224,6 +404,72 @@ export function createBroadcastPlanetScene(opts: {
   const cloudTime = { value: 0 };
   const markerTime = { value: 0 };
 
+  /* ---------- GÜNEŞ DURUMU ----------
+     Tek uniform nesnesi hem gezegen hem bulut shader'ına verilir; iki yüzey
+     asla farklı bir güneş görmez. Değer VIEW uzayındadır (vNormal de öyle).
+
+     Astronomi ~60 saniyede bir hesaplanır (kurucu kuralı). View'a çevirme
+     her karede yapılır ve YAPAY Y DÖNÜŞÜNÜ KOMPANSE EDER: güneş yönü
+     modelin coğrafi çerçevesinde üretilip gezegenin kendi dünya matrisiyle
+     taşındığı için, 8,7 dakikalık görsel dönüş Türkiye'nin gündüz/gece
+     durumunu değiştiremez — aydınlatma coğrafyaya kilitlidir. */
+  const SOLAR_REFRESH_MS = 60_000;
+  const sunDirView = { value: new THREE.Vector3(-0.66, 0.4, -0.62).normalize() };
+  /* Türkiye gecedeyken uzak gündüz yüzeyini sıkıştıran bağlamsal ağırlık.
+     Gezegen ve bulut shader'ları AYNI nesneyi paylaşır. */
+  const localNight = { value: 0 };
+  const sunLocal = new THREE.Vector3(0, 0, 1);
+  const cameraViewInverse = new THREE.Matrix4();
+  let lonOffsetRad = 0;
+  let lastSolarWallMs = Number.NEGATIVE_INFINITY;
+
+  function refreshSolarLocal(force = false) {
+    const wall = Date.now();
+    if (!force && wall - lastSolarWallMs < SOLAR_REFRESH_MS) return;
+    lastSolarWallMs = wall;
+    const utcMs = devTimeOverrideUtcMs() ?? wall;
+    const { declinationRad, subsolarLonRad } = solarAnglesForUtc(utcMs);
+    geoDirection(declinationRad, subsolarLonRad, lonOffsetRad, sunLocal);
+  }
+
+  const turkeyNormalView = new THREE.Vector3();
+
+  function updateSunUniform() {
+    refreshSolarLocal();
+    const carrier = planetMesh ?? planetGroup;
+    camera.updateMatrixWorld();
+    cameraViewInverse.copy(camera.matrixWorld).invert();
+    sunDirectionInView(
+      sunLocal,
+      carrier.matrixWorld,
+      cameraViewInverse,
+      sunDirView.value,
+    );
+
+    if (!turkeyPoint || !planetMesh) return;
+
+    /* Türkiye'nin aydınlanması, shader'ın gördüğü ZİNCİRİN AYNISINDAN
+       ölçülür — yerel normal, gezegenin dünya matrisi, kamera view'i.
+       Görsel dönüş sürerken bu değerin sabit kalması, aydınlatmanın
+       coğrafyaya kilitli olduğunun kanıtıdır. */
+    turkeyNormalView
+      .copy(turkeyPoint)
+      .transformDirection(planetMesh.matrixWorld)
+      .transformDirection(cameraViewInverse);
+    const turkeyNdl = turkeyNormalView.dot(sunDirView.value);
+    localNight.value = localNightAmount(turkeyNdl);
+
+    if (process.env.NODE_ENV !== "production") {
+      (window as unknown as Record<string, unknown>).__talepoPlanetSun = {
+        turkeyNdl,
+        localNight: localNight.value,
+        sunView: sunDirView.value.toArray(),
+        rotationY: planetGroup.rotation.y,
+        lonOffsetDeg: (lonOffsetRad * 180) / Math.PI,
+      };
+    }
+  }
+
   const disposables: Array<{ dispose: () => void }> = [];
   const track = <T extends { dispose: () => void }>(x: T): T => {
     disposables.push(x);
@@ -249,6 +495,8 @@ export function createBroadcastPlanetScene(opts: {
   ) {
     material.onBeforeCompile = (shader) => {
       shader.uniforms.time = planetTime;
+      shader.uniforms.uSunDirection = sunDirView;
+      shader.uniforms.uLocalNight = localNight;
       shader.uniforms.noiseScale = { value: 30.0 };
       shader.uniforms.speedX = { value: 1.5 };
       shader.uniforms.speedY = { value: 2.0 };
@@ -273,6 +521,7 @@ export function createBroadcastPlanetScene(opts: {
       shader.fragmentShader =
         `
         uniform float time; uniform float noiseScale; uniform float speedX; uniform float speedY; uniform float speedZ;
+        uniform vec3 uSunDirection; uniform float uLocalNight;
         uniform vec3 rimColor; uniform float rimPower; uniform sampler2D nightBlendTexture; uniform float hasNight; uniform float nightLights;
         uniform float terrainDepth; uniform float terrainShade;
         uniform float oceanGlint; uniform float oceanDeep; uniform float oceanFlow;
@@ -285,6 +534,17 @@ export function createBroadcastPlanetScene(opts: {
         `#include <dithering_fragment>
         vec3 normalizedNormal = normalize(vNormal);
         vec3 viewDir = normalize(vViewPosition);
+        /* Güneş terimleri EN BAŞTA hesaplanır: okyanus derinliği, arazi
+           kabartması, palet ve rim'in hepsi gündüz miktarına bakar
+           (kurucu, 2026-09-05). Güneş yönü gerçek UTC'den gelir ve view
+           uzayına gezegenin kendi matrisiyle taşınır. */
+        vec3 viewSunDir = normalize(uSunDirection);
+        float ndl = dot(normalizedNormal, viewSunDir);
+        /* Üç bölge yumuşak karışır — gündüz, alacakaranlık, gece. Hiçbir
+           yerde sert terminatör çizgisi oluşmaz. */
+        float dayAmt   = smoothstep(-0.06, 0.26, ndl);
+        float nightAmt = 1.0 - dayAmt;
+        float duskAmt  = exp(-(ndl * ndl) / 0.032);
         float rim = 1.0 - max(dot(viewDir, normalizedNormal), 0.0);
         rim = pow(rim, rimPower); rim = pow(rim, 1.5); rim *= 2.1;
         vec3 currentColor = gl_FragColor.rgb;
@@ -298,8 +558,18 @@ export function createBroadcastPlanetScene(opts: {
         float flow = snoise(vec3(vCustomUv.x * fS * 2.0 + fT * 0.6 + warp, vCustomUv.y * fS * 2.0 - fT * 0.5, fT * 0.7));
         flow = warp * 0.6 + flow * 0.4;
         gl_FragColor.rgb += waterMask * flow * 0.12 * oceanFlow;
-        /* Talepo: açık okyanus maviye değil koyu yeşil-siyaha derinleşir. */
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.014, 0.055, 0.05), waterMask * oceanDeep);
+        /* Talepo okyanusu: gecede neredeyse siyah yeşil, gündüzde biraz
+           açılmış koyu lacivert-teal. Parlak maviye ASLA dönmez; fark
+           yalnız bir tık okunurluk kadardır. */
+        /* Bu tonlar POZLAMA ÖNCESİdir: gündüz ~1.05, gece ~0.156 ile
+           çarpılırlar. Gece 0.014 → ~0.002 (siyah), gündüz 0.048 → ~0.050
+           yani okunur bir koyu lacivert-teal. */
+        vec3 oceanNightTone = vec3(0.014, 0.055, 0.050);
+        vec3 oceanDayTone   = vec3(0.048, 0.120, 0.138);
+        gl_FragColor.rgb = mix(
+          gl_FragColor.rgb,
+          mix(oceanNightTone, oceanDayTone, dayAmt),
+          waterMask * oceanDeep);
         /* Talepo dünyası: kalan maviyi de yeşile çek — uzay demosu mavisi yok. */
         gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * vec3(0.72, 1.05, 0.95), waterMask * 0.85);
         gl_FragColor = vec4(gl_FragColor.rgb, 1.0);
@@ -316,28 +586,91 @@ export function createBroadcastPlanetScene(opts: {
           : vec3(0.0);
         /* Talepo: şehir ışıkları mint'e çekilir. */
         cityLights = mix(cityLights, vec3(dot(cityLights, vec3(0.333))) * vec3(0.55, 1.0, 0.88), 0.6);
-        vec3 viewSunDir = normalize(vec3(-0.66, 0.40, -0.62));
-        float ndl = dot(normalizedNormal, viewSunDir);
-        float dayAmt = smoothstep(-0.05, 0.35, ndl);
+        /* ARAZİ KABARTMASI. Gündüzde okunur, ama YÖNETMEZ. 2.05 yüzeyi
+           metalik bir kabartma haritasına çeviriyordu; 1.45 hâlâ oyulmuş
+           hissi bırakıyordu (kurucu, 2026-09-05). 1.20: mikro-kontrast ve
+           normal sertliği ~%17 azalır, büyük coğrafi formlar okunmaya devam
+           eder. Clamp aralığı da daraltılarak en sert vurgu/gölge uçları
+           alınır — arazi DÜZLEŞTİRİLMEZ, yalnız yumuşar.
+           GECE ETKİLENMEZ: gündüz ucu değişti, gece ucu 0.55 sabit. */
         float relief = dot(shadeNormal, viewSunDir) - ndl;
-        gl_FragColor.rgb *= clamp(1.0 + relief * terrainShade * dayAmt, 0.55, 1.6);
-        /* Referans kompozisyonu (kurucu, 2026-09-04): görünen yüzün neredeyse
-           tamamı gecedir; terminatör sol üst limbe itilir, gündüz katkısı
-           düşük albedoya çekilir ve yüzeyi şehir ağı taşır. */
-        float nightFactor  = smoothstep(0.72, 0.02, ndl);
-        float lightsFactor = smoothstep(0.86, -0.05, ndl);
-        gl_FragColor.rgb *= 0.52;
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * 0.3, nightFactor);
+        float reliefStrength = terrainShade * mix(0.55, 1.20, dayAmt);
+        gl_FragColor.rgb *= clamp(1.0 + relief * reliefStrength, 0.62, 1.46);
+        /* BAĞLAMSAL SIKIŞTIRMA. Türkiye gecedeyken görünen yarımkürenin uzak
+           ucundaki gündüz yüzeyi sunum pozlamasında bastırılır. Terminatöre
+           yakın kuşak daha az bastırılır (0.62), tam gündüz daha çok (0.36),
+           böylece geriye yalnız ince ve yumuşak bir şafak hilali kalır.
+           Güneş geometrisi ve terminatörün yeri DEĞİŞMEZ. */
+        float farDay = smoothstep(0.18, 0.62, ndl);
+        float dayPresence = mix(1.0, mix(0.62, 0.36, farDay), uLocalNight);
+        /* POZLAMA. Gece beğenilen referans seviyesinde kalır (0.156);
+           gündüz 1.05'tir. Renderer'ın global exposure'ına DOKUNULMAZ;
+           yalnız güneş alan katman değişir, hero'nun siyah/yeşil zemini
+           korunur. */
+        gl_FragColor.rgb *= mix(0.156, 1.05 * dayPresence, dayAmt);
+        /* GÜNDÜZ KARA PALETİ. Orijinal diffuse renkleri BASKIN kalır — büyük
+           coğrafi renk bölgeleri okunsun diye: bitki örtüsü koyu doğal
+           zeytin-yeşil, çöl düşük doygunluklu sıcak taş, dağlar nötr
+           kahverengi-gri. Yalnız doygunluk bir miktar düşürülür ve kırmızı
+           kanal kısılarak çölün sarı parlaması alınır. Luminance rampasına
+           dönüştürme YOK: gri/metal görünümün kaynağı oydu. */
+        float dayLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+        vec3 landDay = mix(vec3(dayLum), gl_FragColor.rgb, 0.74) * vec3(0.88, 0.97, 0.83);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, landDay, dayAmt * (1.0 - waterMask));
+        /* Gündüz gölgelerinin tabanı hafifçe yükselir. dayAmt ile
+           ölçeklendiği için terminatörü yumuşatmaz. */
+        gl_FragColor.rgb += (1.0 - waterMask) * dayAmt * dayPresence * 0.030 * vec3(0.66, 0.80, 0.68);
+        /* KAR CLAMP'İ. Yalnız KAR sıkıştırılır: yüksek ışıklılık VE düşük
+           doygunluk birlikte arandığı için açık ama renkli arazi (çöl, bozkır)
+           kar gibi beyazlaşmaz. Şehir ışıkları ve rim BUNDAN SONRA eklenir. */
+        float hiLum = dot(gl_FragColor.rgb, vec3(0.299, 0.587, 0.114));
+        float hiMax = max(max(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+        float hiMin = min(min(gl_FragColor.r, gl_FragColor.g), gl_FragColor.b);
+        float hiSat = (hiMax - hiMin) / max(hiMax, 1e-4);
+        float snowish = smoothstep(0.42, 0.78, hiLum) * (1.0 - smoothstep(0.10, 0.32, hiSat));
+        gl_FragColor.rgb *= mix(1.0, 0.55, snowish * dayAmt);
+        /* Güvenlik tavanı: patlamayı keser, renkli araziyi düzleştirmez. */
+        gl_FragColor.rgb = min(gl_FragColor.rgb, vec3(0.86, 0.88, 0.83));
         /* Kara siluetleri gecede de okunsun (kurucu, 2026-09-04): kıtalara
            çok hafif mint-nötr bir taban ışık; okyanus koyu kalır. */
-        gl_FragColor.rgb += (1.0 - waterMask) * nightFactor * 0.055 * vec3(0.62, 0.82, 0.74);
+        gl_FragColor.rgb += (1.0 - waterMask) * nightAmt * 0.055 * vec3(0.62, 0.82, 0.74);
+        /* GECE KOMPOZİSYONUNDA YÜZEY GERİ ÇEKİLİR. Ölçüldü (2026-09-05):
+           gece karesinde görünen diskin yalnız %11.9'u gündüzdür ve en parlak
+           nokta ekran dışındaki sağ limbdedir — soldaki parlaklık gündüz
+           yüzeyi değil, fazla öne çıkmış GECE yüzeyiydi. Türkiye gecedeyken
+           kara yüzeyi kısılır; şehir ışıkları BUNDAN SONRA eklendiği için
+           yüzeyden baskın hâle gelir. Şehir ışığı dağılımı değişmez. */
+        gl_FragColor.rgb *= mix(1.0, mix(0.52, 1.0, dayAmt), uLocalNight * nightAmt);
+        /* ŞEHİR IŞIKLARI kademeli karışır: tam gündüzde neredeyse sıfır,
+           alacakaranlıkta kısmen görünür, gecede mevcut seviyede. Kare
+           alınarak gündüze doğru daha hızlı söner. */
+        float lightsFactor = smoothstep(0.34, -0.10, ndl);
+        lightsFactor *= lightsFactor;
         gl_FragColor.rgb += cityLights * lightsFactor;
+        /* DENİZ YANSIMASI. Yalnız güneşe uygun açıda, ince bir specular
+           çizgi. Yüzeyi maviye boyamaz, sadece gündüzü ele verir. */
         vec3 halfDir = normalize(viewSunDir + viewDir);
         float ripple = snoise(vec3(vCustomUv * 240.0, time * 4.0));
         float ndh = max(dot(normalizedNormal, halfDir) + ripple * 0.02, 0.0);
-        float glint = pow(ndh, 140.0);
-        gl_FragColor.rgb += glint * waterMask * dayAmt * oceanGlint * vec3(0.85, 1.0, 0.95);
-        gl_FragColor.rgb += rimColor * rim * 1.15;
+        float glint = pow(ndh, 220.0);
+        gl_FragColor.rgb += glint * waterMask * dayAmt * oceanGlint * 1.9 * vec3(0.86, 1.0, 0.94);
+        /* ATMOSFER RIM'İ çember boyunca aynı değildir: güneş alan limb daha
+           parlak ve nötr-mint, gece limbi daha ince ve koyu teal, terminatör
+           kuşağı sıcak-mint. Mint baskın kalır; turuncu uzay demosu tonuna
+           kaçmaz. */
+        /* Beyaz karışımı 0.45 → 0.28: güneş alan üst limbdeki beyaz patlama
+           azalır, mint atmosfer korunur. */
+        vec3 dayRim   = mix(rimColor, vec3(0.94, 1.00, 0.97), 0.28);
+        vec3 nightRim = vec3(0.24, 0.52, 0.50);
+        vec3 duskRim  = mix(rimColor, vec3(1.00, 0.84, 0.63), 0.42);
+        vec3 rimTint  = mix(nightRim, dayRim, dayAmt);
+        rimTint = mix(rimTint, duskRim, duskAmt * 0.75);
+        /* Gündüz kazancı 1.55 → 1.28 (~%17 daha az). Gece kompozisyonunda
+           gündüz limbi ayrıca sıkışır, böylece rim geniş beyaz bant değil
+           ince mint-teal çizgi olarak kalır. */
+        float rimGain = mix(0.58, 1.28, dayAmt) + duskAmt * 0.22;
+        rimGain *= mix(1.0, mix(1.0, 0.45, dayAmt), uLocalNight);
+        gl_FragColor.rgb += rimTint * rim * rimGain;
       `,
       );
     };
@@ -525,6 +858,9 @@ export function createBroadcastPlanetScene(opts: {
       );
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uTime = cloudTime;
+        /* Gezegenle AYNI uniform nesnesi: iki yüzey tek güneşi paylaşır. */
+        shader.uniforms.uSunDirection = sunDirView;
+        shader.uniforms.uLocalNight = localNight;
         shader.uniforms.noiseScale = { value: 20.0 };
         shader.uniforms.uSpeedX = { value: 1.0 };
         shader.uniforms.uSpeedY = { value: 2.0 };
@@ -538,6 +874,7 @@ export function createBroadcastPlanetScene(opts: {
         );
         shader.fragmentShader =
           `
+          uniform vec3 uSunDirection; uniform float uLocalNight;
           uniform float uTime; uniform float noiseScale; uniform float uSpeedX; uniform float uSpeedY; uniform float uSpeedZ; uniform float uOpacity; uniform float uPhase;
           varying vec2 vCloudUv;
           ${SNOISE}
@@ -545,14 +882,26 @@ export function createBroadcastPlanetScene(opts: {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <dithering_fragment>",
           `#include <dithering_fragment>
-          gl_FragColor.rgb = vec3(1.0);
           float cloudNoise = snoise(vec3(vCloudUv.x * noiseScale + uTime * uSpeedX + uPhase, vCloudUv.y * noiseScale - uTime * uSpeedY + uPhase, uTime * uSpeedZ + uPhase));
           float cloudNdv = max(dot(normalize(vNormal), normalize(vViewPosition)), 0.0);
           float cloudEdge = pow(1.0 - cloudNdv, 3.0);
-          float cloudMod = mix(cloudNoise, 0.35, cloudEdge);
-          float cloudNdl = dot(normalize(vNormal), normalize(vec3(-0.66, 0.40, -0.62)));
-          float cloudDay = 1.0 - smoothstep(0.30, -0.30, cloudNdl) * 0.9;
-          gl_FragColor.a *= cloudMod * uOpacity * cloudDay;
+          /* snoise -1..1 aralığındadır; kırpılmadan opaklığa çarpılınca
+             bulutun yarısı görünmez oluyordu. Gündüz katmanı için pozitif
+             aralığa alınır. */
+          float cloudMod = mix(cloudNoise * 0.5 + 0.5, 0.42, cloudEdge);
+          /* Gezegenle AYNI üç bölge: bulutlar gündüzü ele veren katmandır. */
+          float cloudNdl  = dot(normalize(vNormal), normalize(uSunDirection));
+          float cloudDay  = smoothstep(-0.06, 0.26, cloudNdl);
+          float cloudDusk = exp(-(cloudNdl * cloudNdl) / 0.032);
+          /* Gündüz yumuşak beyaz-mint, gece mint'e düşen çok soluk bir nem.
+             Düşük kontrast: 0.86 ile 0.97 arası, parlak beyaz değil. */
+          gl_FragColor.rgb = mix(vec3(0.74, 0.88, 0.86), vec3(0.95, 0.97, 0.94), cloudDay);
+          /* Opaklık gündüzde görünür, gecede çok düşük, gün batımında arada. */
+          float cloudVis = mix(0.05, 1.0, cloudDay) + cloudDusk * 0.10;
+          /* Türkiye gecedeyken uzak gündüz bulutları da kompozisyonu ele
+             geçirmesin — gezegen yüzeyiyle aynı bağlamsal sıkıştırma. */
+          cloudVis *= mix(1.0, mix(1.0, 0.34, cloudDay), uLocalNight);
+          gl_FragColor.a *= cloudMod * uOpacity * cloudVis;
         `,
         );
       };
@@ -941,6 +1290,20 @@ export function createBroadcastPlanetScene(opts: {
           planetRotationY = turkeyFacingRotation;
           focusStartRotation = turkeyFacingRotation;
           planetGroup.rotation.y = planetRotationY;
+          /* Coğrafi çerçeveyi aynı çapadan kalibre et: ışık ve radar noktası
+             tek kaynaktan türediği için birbirinden ayrışamaz. */
+          lonOffsetRad = calibrateLongitudeOffset(turkeyPoint);
+          refreshSolarLocal(true);
+          if (process.env.NODE_ENV !== "production") {
+            /* +Y kutup varsayımının denetimi: bu değer 39'a yakın değilse
+               modelin ekseni farklıdır ve aydınlatma coğrafyaya oturmaz. */
+            console.info(
+              "[planet] kalibrasyon — ima edilen enlem:",
+              impliedLatitudeDeg(turkeyPoint).toFixed(2),
+              "beklenen:",
+              TURKEY_LAT_DEG,
+            );
+          }
         }
         const armLand = () => {
           if (disposed || !planetMesh || !planetMat) return;
@@ -1050,8 +1413,13 @@ export function createBroadcastPlanetScene(opts: {
       onStory(s);
     }
 
+    scene.updateMatrixWorld(true);
+    /* Reduced-motion yalnız hareketi kapatır; doğru saat aydınlatması tek
+       karede de çalışsın diye güneş her çizimde tazelenir (astronomi kendi
+       60 saniyelik eşiğiyle korunur). */
+    updateSunUniform();
+
     if (planetMesh && turkeyPoint && opts.onAnchor) {
-      scene.updateMatrixWorld(true);
       projectedAnchor.copy(turkeyPoint);
       planetMesh.localToWorld(projectedAnchor);
       projectedAnchor.project(camera);
