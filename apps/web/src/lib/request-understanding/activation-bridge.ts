@@ -9,6 +9,7 @@ import {
 } from "@/lib/catalog/consumer";
 
 import { stripRequestedItemClause } from "@/lib/request-composer/attribute-hints";
+import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
 import { looksLikeYearToken } from "./number-role";
 import { toLegacyFormHints, toStrategyContext } from "./adapters";
 import type {
@@ -44,6 +45,34 @@ function isSafeForDraft(v: UnderstandingValue<unknown> | undefined): boolean {
     v.source === "USER_EXPLICIT" ||
     v.source === "NORMALIZED_EXPLICIT"
   );
+}
+
+/**
+ * A location is request context, never part of the requested spare-part
+ * label.  Keep this boundary in the legacy form adapter as well as in the
+ * canonical mapper: the /talep UI still seeds its editable fields through
+ * this adapter, so a parser fallback such as "ön far İstanbul" must not reach
+ * the visible Parça input.
+ */
+function stripTrailingPartLocation(value: string, rawInput: string): string {
+  const location = findProvinceAndDistrictInText(rawInput);
+  if (!location) return value.trim();
+
+  let result = value.trim();
+  for (const place of [location.ilce, location.il]) {
+    if (!place?.trim()) continue;
+    const escaped = place.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result
+      .replace(
+        new RegExp(
+          `\\s+${escaped}(?:['’]?(?:da|de|dan|den|ta|te|tan|ten))?\\s*$`,
+          "iu",
+        ),
+        "",
+      )
+      .trim();
+  }
+  return result;
 }
 
 /** Schema category for forms — never silently claim services for UNKNOWN. */
@@ -109,9 +138,18 @@ export function seedFieldValuesFromUnderstanding(
 
   const rs = result.requestSubject;
   if (rs?.displayPhrase?.value) {
-    seeded.part = String(rs.displayPhrase.value);
+    seeded.part =
+      rs.kind.value === "PART" || rs.kind.value === "ACCESSORY"
+        ? stripTrailingPartLocation(
+            String(rs.displayPhrase.value),
+            String(result.rawInput ?? ""),
+          )
+        : String(rs.displayPhrase.value);
   } else if (rs?.name?.value && (rs.kind.value === "PART" || rs.kind.value === "ACCESSORY")) {
-    seeded.part = String(rs.name.value);
+    seeded.part = stripTrailingPartLocation(
+      String(rs.name.value),
+      String(result.rawInput ?? ""),
+    );
   }
   if (rs?.position?.value) {
     seeded.partPosition = String(rs.position.value);

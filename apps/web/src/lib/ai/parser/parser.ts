@@ -68,7 +68,6 @@ function resolveSubcategory(
   if (categoryId === "machinery") {
     if (needType === "machine") return "Üretim Makinesi";
     if (needType === "part") return "Yedek Parça";
-    if (needType === "service") return "Diğer";
   }
 
   if (categoryId === "technology") {

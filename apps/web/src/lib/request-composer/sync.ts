@@ -224,6 +224,7 @@ export function syncFromText(
             : {}),
         },
         categoryId,
+        { preserveExplicitText: true, previousFields: previous.fields },
       ),
     };
   }

@@ -151,13 +151,9 @@
       }
     },
     {
-      "aliases": [
-        "torna tezgahı",
-        "torna tezgahi"
-      ],
+      "aliases": [],
       "searchTerms": [
-        "Universal torna",
-        "torna tezgahı"
+        "Universal torna"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
@@ -2205,7 +2201,9 @@
     {
       "aliases": [
         "beko loder",
-        "loader"
+        "loader",
+        "yükleyici",
+        "loder"
       ],
       "searchTerms": [
         "Yükleyici (Loder)"
@@ -2321,7 +2319,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "yol silindiri",
+        "kompaktör"
+      ],
       "searchTerms": [
         "Silindir (Kompaktör)"
       ],
@@ -2420,7 +2421,7 @@
       "status": "active",
       "id": "tax:machinery:diger:tarim-makineleri",
       "parentId": "tax:machinery:diger",
-      "canonicalName": "Tarım makineleri",
+      "canonicalName": "Tarım ve Hayvancılık Makineleri",
       "nodeType": "GROUP",
       "categoryId": "machinery",
       "subcategoryId": "diger",
@@ -4662,10 +4663,7 @@
       }
     },
     {
-      "aliases": [
-        "kürek sapı",
-        "alet sapı"
-      ],
+      "aliases": [],
       "searchTerms": [
         "Saplar"
       ],
@@ -4684,7 +4682,7 @@
       "requestSchemaId": "machinery/diger",
       "provenance": {
         "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23 | alias kürasyonu: kurucu onayı 2026-08-31 (FD-10); 'sap' tek başına alias DEĞİL (SAP yazılım firması çakışması)"
+        "note": "kurucu onayı 2026-08-23"
       }
     },
     {
@@ -4826,13 +4824,17 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "torna tezgahı",
+        "torna tezgahi"
+      ],
       "searchTerms": [
         "Torna Tezgahları"
       ],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
+        "ATTRIBUTE_SCHEMA",
+        "PART_BEARING"
       ],
       "status": "active",
       "id": "tax:machinery:diger:el-aletleri-ve-hirdavat:torna-tezgahlari",
@@ -4846,6 +4848,9 @@
       "provenance": {
         "source": "google-product-taxonomy-tr",
         "note": "kurucu onayı 2026-08-23"
+      },
+      "meta": {
+        "partBearingSource": "verified:brain-adversarial-machinery-part"
       }
     },
     {
@@ -6409,7 +6414,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "arazi ölçüm cihazı"
+      ],
       "searchTerms": [
         "Arazi Ölçümü"
       ],
@@ -6421,29 +6428,6 @@
       "id": "tax:machinery:diger:insaat-ve-is-makineleri:arazi-olcumu",
       "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
       "canonicalName": "Arazi Ölçümü",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "machinery",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "machinery/diger",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Trafik Konileri ve Silindirleri"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:machinery:diger:insaat-ve-is-makineleri:trafik-konileri-ve-silindirleri",
-      "parentId": "tax:machinery:diger:insaat-ve-is-makineleri",
-      "canonicalName": "Trafik Konileri ve Silindirleri",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "machinery",
       "subcategoryId": "diger",
@@ -6591,7 +6575,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "koruyucu eldiven",
+        "lastik eldiven"
+      ],
       "searchTerms": [
         "Koruyucu Eldivenler"
       ],
@@ -7431,29 +7418,6 @@
       "id": "tax:machinery:diger:sihhi-tesisat:tesisat-hortumlari-ve-ikmal-hatlari",
       "parentId": "tax:machinery:diger:sihhi-tesisat",
       "canonicalName": "Tesisat Hortumları ve İkmal Hatları",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "machinery",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "machinery/diger",
-      "provenance": {
-        "source": "google-product-taxonomy-tr",
-        "note": "kurucu onayı 2026-08-23"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Hayvancılık"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:machinery:diger:tarim-makineleri:hayvancilik",
-      "parentId": "tax:machinery:diger:tarim-makineleri",
-      "canonicalName": "Hayvancılık",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "machinery",
       "subcategoryId": "diger",

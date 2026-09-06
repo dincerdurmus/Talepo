@@ -8,6 +8,7 @@ import { fieldDisplayLabel } from "@/lib/request-composer/ui-helpers";
 import {
   getCategoryById,
   isGeneratedCommonField,
+  resolveCategoryQuestionContract,
 } from "@/lib/request-category-engine";
 
 import {
@@ -300,22 +301,48 @@ export function scheduleNextQuestions(input: {
   const productTypeContext =
     input.productType ??
     input.values.productType ??
+    input.values.solutionType ??
     input.values.applianceType ??
+    input.values.furnitureType ??
+    input.values.babyProductType ??
     input.values.kitchenProductType ??
+    input.values.machineType ??
     input.values.propertyType ??
     input.values.serviceType ??
+    input.values.tireItemType ??
     input.fieldStates?.productType?.value ??
+    input.fieldStates?.solutionType?.value ??
     input.fieldStates?.applianceType?.value ??
+    input.fieldStates?.furnitureType?.value ??
+    input.fieldStates?.babyProductType?.value ??
     input.fieldStates?.kitchenProductType?.value ??
+    input.fieldStates?.machineType?.value ??
     input.fieldStates?.propertyType?.value ??
     input.fieldStates?.serviceType?.value ??
+    input.fieldStates?.tireItemType?.value ??
+    null;
+
+  const needTypeContext =
+    input.needType ??
+    input.values.needType ??
+    input.fieldStates?.needType?.value ??
     null;
 
   const categoryProfiles = listProfilesForCategory({
     categoryId: input.categoryId,
-    needType: input.needType,
+    needType: needTypeContext,
     productType: productTypeContext,
   });
+  const productContract = resolveCategoryQuestionContract({
+    categoryId: input.categoryId,
+    productType: productTypeContext,
+    needType: needTypeContext,
+  });
+  const hybridCandidates = productContract
+    ? input.hybridCandidates.filter((candidate) =>
+        productContract.allowedCandidateFieldKeys.includes(candidate.fieldKey),
+      )
+    : input.hybridCandidates;
   // Global core cannot be overwritten/suppressed by category profiles.
   const listingFromValues =
     input.values.listingType?.trim() ||
@@ -323,6 +350,7 @@ export function scheduleNextQuestions(input: {
     null;
   const globalCore = globalCoreQuestionProfiles(input.categoryId, {
     listingType: listingFromValues,
+    needType: needTypeContext,
   });
   const profileByKey = new Map<string, (typeof globalCore)[number]>();
   for (const p of categoryProfiles) profileByKey.set(p.fieldKey, p);
@@ -344,21 +372,27 @@ export function scheduleNextQuestions(input: {
     if (p.fieldKey === "city" && input.isRemoteService) continue;
     keySet.add(p.fieldKey);
   }
-  for (const c of input.hybridCandidates) keySet.add(c.fieldKey);
+  for (const c of hybridCandidates) keySet.add(c.fieldKey);
   for (const k of commonKeys) {
     /* Üretilen etiket soru olarak zamanlanmaz (D3f 3g — kanonik yetenek). */
     if (isGeneratedCommonField(k)) continue;
     keySet.add(k);
   }
+  // Explicit product decisions also apply to shared and inferred time questions.
+  if (productContract?.omitDeliveryQuestion) keySet.delete("delivery");
 
   const hybridByKey = new Map(
-    input.hybridCandidates.map((c) => [c.fieldKey, c]),
+    hybridCandidates.map((c) => [c.fieldKey, c]),
   );
 
   // Location already answered via mode or soft status
+  const currentValue = (key: string) => {
+    const canonical = input.fieldStates?.[key];
+    return canonical ? (canonical.kind === "VALUE" ? canonical.value : null) : input.values[key];
+  };
   const locationSatisfiedEarly = isLocationSatisfiedForPublish({
-    cityValue: input.values.city,
-    locationMode: input.values.locationMode,
+    cityValue: currentValue("city"),
+    locationMode: currentValue("locationMode"),
     realEstateComplete: input.realEstateLocationComplete,
     categoryId: input.categoryId,
   });
@@ -391,7 +425,7 @@ export function scheduleNextQuestions(input: {
       resolveProfileForField({
         fieldKey,
         categoryId: input.categoryId,
-        needType: input.needType,
+        needType: needTypeContext,
         productType: productTypeContext,
       }) ??
       ({
@@ -406,10 +440,9 @@ export function scheduleNextQuestions(input: {
 
     const state: FieldAnswerState = {
       ...(input.fieldStates?.[fieldKey] ?? {}),
-      value:
-        input.fieldStates?.[fieldKey]?.value ??
-        input.values[fieldKey] ??
-        null,
+      value: input.fieldStates?.[fieldKey]
+        ? input.fieldStates[fieldKey].value ?? null
+        : input.values[fieldKey] ?? null,
     };
 
     const satisfied = isFieldSatisfied({
@@ -420,9 +453,14 @@ export function scheduleNextQuestions(input: {
       allowDontCare: Boolean(profile.allowDontCare),
       optionallySkipped: optionalSkipped.has(fieldKey),
     });
-    if (satisfied || answered.has(fieldKey)) continue;
+    // A session ledger is not an answer store. Cleared canonical answers must
+    // reopen even when their old key is still in the UI's history.
+    const draftAnswer = answered.has(fieldKey) &&
+      (!input.fieldStates ||
+        (!input.fieldStates[fieldKey] && Boolean(input.values[fieldKey]?.trim())));
+    if (satisfied || draftAnswer) continue;
 
-    if (fieldKey === "quantity" && (input.values.quantity ?? "").trim()) {
+    if (fieldKey === "quantity" && !input.fieldStates?.quantity && (input.values.quantity ?? "").trim()) {
       continue;
     }
 

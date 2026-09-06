@@ -31,7 +31,7 @@ export type GlobalBudgetStatus =
 
 export function globalCoreQuestionProfiles(
   categoryId: string,
-  extras?: { listingType?: string | null },
+  extras?: { listingType?: string | null; needType?: string | null },
 ): QuestionProfileDef[] {
   const isRealEstate = categoryId === "real-estate";
   const isServiceLike =
@@ -39,9 +39,11 @@ export function globalCoreQuestionProfiles(
 
   const locationPrompt = isRealEstate
     ? "Hangi il ve ilçede arıyorsunuz?"
-    : isServiceLike
-      ? "Hizmet nerede verilecek?"
-      : "Nereye teslim edilecek?";
+    : categoryId === "machinery" && extras?.needType === "part"
+      ? "Teslimat adresi neresi? Türkiye geneli veya il ve ilçe seçin."
+      : isServiceLike
+        ? "Hizmet nerede verilecek?"
+        : "Nereye teslim edilecek?";
 
   const listingRaw = extras?.listingType ?? null;
   const reBasis = isRealEstate ? budgetBasisForListing(listingRaw) : null;

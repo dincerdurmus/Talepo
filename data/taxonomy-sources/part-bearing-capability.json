@@ -99,6 +99,13 @@
       "scope": "subtree",
       "source": "derived:machinery-spare-part-taxonomy",
       "note": "Aynı türetim kanıtı. tax:machinery:diger BİLEREK dışarıdadır — Google uzun kuyruğu yapı malzemesi (Cam) gibi makine olmayan düğümler taşır."
+    },
+    {
+      "nodeId": "tax:machinery:diger:el-aletleri-ve-hirdavat:torna-tezgahlari",
+      "bearing": true,
+      "scope": "node",
+      "source": "verified:brain-adversarial-machinery-part",
+      "note": "Torna tezgahı için yedek parça talebi makine alanında kalmalıdır; genel yedek parça alias'ı farklı bir kategoriye taşıyamaz."
     }
   ]
 }

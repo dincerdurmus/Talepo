@@ -4,7 +4,10 @@
 
 import { applyBrowseSelection } from "@/lib/knowledge/browse";
 
-import { resolveBrowseSemanticRole } from "./browse-semantic-role";
+import {
+  resolveBrowseSemanticRole,
+  type BrowseSemanticRole,
+} from "./browse-semantic-role";
 import { canApplyField } from "./build-state";
 import { composeNaturalRequestText } from "./compose-text";
 import { stripIncompatibleDomainFields } from "./request-transition";
@@ -36,6 +39,22 @@ export type BrowseSelectionInput = {
    */
   kind?: FieldValueKind;
 };
+
+function applyRoleFixedFields(
+  fields: Record<string, CanonicalFieldState>,
+  role: BrowseSemanticRole,
+  subcategorySlug: string | null,
+) {
+  for (const [key, value] of Object.entries(role.fixedFields ?? {})) {
+    fields[key] = {
+      kind: "VALUE",
+      value,
+      provenance: "EXPLICIT_BROWSE",
+      confidence: 1,
+      evidence: [`browse-role:${subcategorySlug}`, `browse-fixed:${key}`],
+    };
+  }
+}
 
 /**
  * Apply one browse selection onto hybrid state.
@@ -100,6 +119,25 @@ export function applyBrowseSelectionToState(
     [selection.key]: incoming,
   };
 
+  // `tireItemType` is the user's product-family choice. Keep the canonical
+  // product context in lockstep with it; otherwise an older `productType:
+  // Lastik` can win the scheduler's fallback chain after the user switches to
+  // Jant, leaving the old season question visible.
+  if (
+    selection.key === "tireItemType" &&
+    !isAny &&
+    !nonValueKind &&
+    selection.value.trim()
+  ) {
+    fields.productType = {
+      ...incoming,
+      evidence: [
+        ...(incoming.evidence ?? []),
+        "product-context:tireItemType",
+      ],
+    };
+  }
+
   // Furniture leaf: drop bogus category brands like "Ev"
   if (selection.key === "furnitureType" && !isAny && !nonValueKind) {
     const brand = fields.brand;
@@ -152,6 +190,25 @@ export function applyBrowseSelectionToState(
   let categoryId = state.categoryId;
   let subcategorySlug = state.subcategorySlug;
   let taxonomyNodeId = state.taxonomyNodeId;
+
+  // Automotive service changes are product-family changes too. Keep the
+  // selected service leaf and the canonical product context synchronized so
+  // "Periyodik bakım → Fren bakımı" updates the final summary.
+  if (
+    selection.key === "serviceType" &&
+    (categoryId === "automotive" || state.categoryId === "automotive") &&
+    !isAny &&
+    !nonValueKind &&
+    selection.value.trim()
+  ) {
+    fields.productType = {
+      ...incoming,
+      evidence: [
+        ...(incoming.evidence ?? []),
+        "product-context:serviceType",
+      ],
+    };
+  }
 
   if (selection.key === "furnitureType") {
     categoryId = "furniture";
@@ -206,6 +263,7 @@ export function applyBrowseSelectionToState(
       fields.needType = pinNeed;
     }
   }
+  applyRoleFixedFields(fields, role, subcategorySlug);
 
   // Bütün-ürün satın alma yaprağı seçildiğinde eski parça/aksesuar bağlamı
   // yaşayamaz: "Cep Telefonu & Aksesuar" gibi ara grup metinlerinin ürettiği
@@ -216,6 +274,7 @@ export function applyBrowseSelectionToState(
     selection.key === "applianceType" ||
     selection.key === "kitchenProductType" ||
     selection.key === "furnitureType" ||
+    selection.key === "babyProductType" ||
     selection.key === "machineType";
   if (
     isWholeProductLeafKey &&
@@ -249,12 +308,34 @@ export function applyBrowseSelectionToState(
     }
   }
 
+  // Product-family selection is the only moment where old tire answers are
+  // invalidated. A later `tireSize` answer must pass through untouched.
+  if (
+    categoryId === "automotive" &&
+    (selection.key === "tireItemType" || selection.key === "productType")
+  ) {
+    for (const key of ["tireSize", "tireSeason", "tireQuantity", "serviceDate", "serviceType"]) {
+      const field = fields[key];
+      if (field && field.kind !== "UNKNOWN") {
+        fields[key] = {
+          kind: "UNKNOWN",
+          value: null,
+          provenance: "INFERRED",
+          confidence: 0,
+          evidence: ["cleared-on-automotive-family-selection"],
+        };
+      }
+    }
+  }
+
   const next: CanonicalRequestState = {
     ...state,
     categoryId,
     subcategorySlug,
     taxonomyNodeId,
-    fields: stripIncompatibleDomainFields(fields, categoryId),
+    fields: stripIncompatibleDomainFields(fields, categoryId, {
+      automotiveFamilyTransition: false,
+    }),
     lastUserAction: "browse",
     naturalTextDirty: true,
     syncGeneration: state.syncGeneration + 1,
@@ -315,6 +396,7 @@ export function pinBrowseSemanticContext(
       evidence: ["category-root-no-intent"],
     };
   }
+  applyRoleFixedFields(fields, role, subcategorySlug);
 
   // Subject switch: drop fields that are only valid for the previous subject.
   // Brand/model may survive; vehicle-purchase condition must not bleed into PART.

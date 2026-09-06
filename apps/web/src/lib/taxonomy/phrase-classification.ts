@@ -303,7 +303,10 @@ export function findCanonicalCategoryClaim(
           n.nodeType === "SUBCATEGORY" ||
           n.nodeType === "GROUP"
         ) {
-          return false;
+          // Qualified, curated family aliases are intentional requests too
+          // ("bebek oyuncağı"). Bare group labels still cannot claim a route.
+          return n.nodeType === "GROUP" && size >= 2 &&
+            n.aliases.some((alias) => foldAmbiguityPhrase(alias) === foldAmbiguityPhrase(phrase));
         }
         return true;
       }).filter((n) => {

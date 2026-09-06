@@ -106,8 +106,6 @@ const LEXICON: Lexicon[] = [
       /yedek\s*parca/i,
       /\bfiltresi?\b/i,
       /\bbalata\b/i,
-      /\blastik\b/i,
-      /\bjant\b/i,
     ],
   },
   {

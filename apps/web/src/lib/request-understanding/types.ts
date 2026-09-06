@@ -92,11 +92,17 @@ export type RequestIntent =
  * GİRMEZ: "Ağrı kesici arıyorum" bir ürün talebidir ve DEMAND kalır.
  * OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları ayrı bir kurucu kararıdır
  * ve burada verilmemiştir.
+ *
+ *   UNSUPPORTED_REMOVED_SCOPE — Talepo'da artık aktif bir kategori/akış
+ * bulunmayan kapsam (ör. tıbbi test yaptırma). Metindeki hizmet fiili bu
+ * ifadeyi genel Hizmetler veya Teknik Servis'e taşıyamaz; talep açıklama
+ * olarak kalır ve yayın akışına girmez.
  */
 export type RequestScope =
   | "DEMAND"
   | "UNSUPPORTED_SUPPLY"
-  | "UNSUPPORTED_MEDICAL_ADVICE";
+  | "UNSUPPORTED_MEDICAL_ADVICE"
+  | "UNSUPPORTED_REMOVED_SCOPE";
 
 /**
  * Kapsam kapılarının TEK yardımcısı. Yeni bir kapsam-dışı değer
@@ -107,7 +113,9 @@ export function isUnsupportedRequestScope(
   scope: string | null | undefined,
 ): boolean {
   return (
-    scope === "UNSUPPORTED_SUPPLY" || scope === "UNSUPPORTED_MEDICAL_ADVICE"
+    scope === "UNSUPPORTED_SUPPLY" ||
+    scope === "UNSUPPORTED_MEDICAL_ADVICE" ||
+    scope === "UNSUPPORTED_REMOVED_SCOPE"
   );
 }
 

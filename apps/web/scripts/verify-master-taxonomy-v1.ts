@@ -174,9 +174,10 @@ const aliasSamples: Array<{ term: string; categoryId?: string; expect?: string }
   { term: "split klima", categoryId: "appliances" },
   { term: "akıllı telefon", categoryId: "technology" },
   { term: "evden eve nakliyat", categoryId: "services" },
+  { term: "ev yardımcısı", categoryId: "services", expect: "Ev yardımcısı / ev hizmetlisi" },
+  { term: "tansiyon ölçer", categoryId: "health", expect: "Tansiyon aleti" },
   { term: "eviye", categoryId: "home-kitchen" },
   { term: "ön far", categoryId: "automotive" },
-  { term: "nitrile glove", categoryId: "health" },
   { term: "travel system", categoryId: "baby" },
   { term: "forklift", categoryId: "machinery" },
 ];
@@ -286,6 +287,31 @@ check(
   "kitchen/bath eviye under home-kitchen",
   Boolean(eviye && eviye.node.categoryId === "home-kitchen"),
 );
+
+const accessoryId = "tax:automotive:diger:diger-otomotiv:aksesuar";
+const accessoryChildren = getTaxonomyChildren(accessoryId);
+for (const name of ["Çeki demiri", "Tavan / bagaj sistemleri"]) {
+  const matches = all.filter((node) => node.canonicalName === name && node.categoryId === "automotive");
+  check(`automotive ${name} lives only under Aksesuar`,
+    matches.length === 1 && matches[0].parentId === accessoryId &&
+    accessoryChildren.some((node) => node.id === matches[0].id));
+}
+
+const homeHelper = resolveTaxonomyAlias("ev yardımcısı", "services");
+check(
+  "home helper survives master taxonomy regeneration",
+  homeHelper?.node.nodeType === "SERVICE_TYPE" &&
+    homeHelper.node.canonicalName === "Ev yardımcısı / ev hizmetlisi",
+  homeHelper?.node.id ?? "missing",
+);
+const pressureMonitorAlias = resolveTaxonomyAlias("tansiyon ölçer", "health");
+check(
+  "tansiyon ölçer resolves to canonical Tansiyon aleti",
+  pressureMonitorAlias?.node.canonicalName === "Tansiyon aleti",
+  pressureMonitorAlias?.node.id ?? "missing",
+);
+check("automotive Aksesuar is a browsable group",
+  getTaxonomyNode(accessoryId)?.nodeType === "GROUP");
 
 // Scores not fake 100%
 check("structural score < 1", report.scores.structural < 1);

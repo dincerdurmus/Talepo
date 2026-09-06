@@ -48,7 +48,7 @@ function automotiveNeedType(state: CanonicalRequestState): string {
   const intent = state.understanding.intent.value;
   if (intent === "PART") return "part";
   if (intent === "SERVICE") return "service";
-  return "vehicle";
+  return "unknown";
 }
 
 function automotiveSubSlug(state: CanonicalRequestState): string {
@@ -57,7 +57,7 @@ function automotiveSubSlug(state: CanonicalRequestState): string {
   if (need === "part") return "yedek-parca";
   if (need === "service") return "arac-bakim";
   if (need === "tire") return "lastik-ve-jant";
-  return "arac-satin-alma";
+  return "diger";
 }
 
 function automotiveBrowsePath(state: CanonicalRequestState): BrowsePathStep[] {
@@ -76,6 +76,58 @@ function automotiveBrowsePath(state: CanonicalRequestState): BrowsePathStep[] {
       AUTOMOTIVE_SUB_LABELS[subSlug] ?? subSlug,
     ),
   );
+
+  // Preserve the curated automotive taxonomy branch in the breadcrumb. The
+  // legacy automotive path only rendered the broad subcategory, which made a
+  // text-resolved roof-rack request look like generic spare parts even when
+  // its taxonomy leaf was known.
+  if (state.taxonomyNodeId?.startsWith("tax:automotive:")) {
+    const node = getTaxonomyNode(state.taxonomyNodeId);
+    if (node) {
+      const chain: typeof node[] = [];
+      let current: typeof node | undefined = node;
+      while (
+        current &&
+        current.nodeType !== "CATEGORY" &&
+        current.nodeType !== "SUBCATEGORY"
+      ) {
+        chain.unshift(current);
+        current = current.parentId
+          ? getTaxonomyNode(current.parentId)
+          : undefined;
+      }
+      for (const taxonomyNode of chain) {
+        path.push(
+          step(
+            taxonomyNode.id,
+            String(taxonomyNode.nodeType).toLowerCase(),
+            taxonomyNode.canonicalName,
+            taxonomyNode.id,
+          ),
+        );
+      }
+    }
+  }
+
+  // Araç bakım is the parent market, but PPF has its own question contract.
+  // Keep that distinction visible in the breadcrumb so the UI does not look
+  // as if the request was routed to generic maintenance only.
+  const productTypeLabel =
+    state.fields.productType?.kind === "VALUE"
+      ? String(state.fields.productType.value ?? "")
+      : "";
+  if (
+    need === "service" &&
+    /koruma filmi|kaplama|ppf|wrapping/iu.test(productTypeLabel)
+  ) {
+    path.push(
+      step(
+        "automotive/arac-bakim:koruma-filmi-kaplama",
+        "product_type",
+        productTypeLabel || "Koruma filmi / kaplama",
+      ),
+    );
+  }
 
   const brandLabel = state.fields.brand?.kind === "VALUE" ? state.fields.brand.value : null;
   const modelLabel = state.fields.model?.kind === "VALUE" ? state.fields.model.value : null;
@@ -226,14 +278,20 @@ function automotiveBrowsePath(state: CanonicalRequestState): BrowsePathStep[] {
         ? String(state.fields.partPosition.value)
         : null;
     if (posLabel) {
-      const pos = idx.positions.find((p) => {
-        const tr = fold(p.tr);
-        const target = fold(posLabel);
-        if (tr === target) return true;
-        if (p.aliases.some((a) => fold(a) === target)) return true;
-        const tokens = target.split(/\s+/).filter(Boolean);
-        return tokens.length > 0 && tokens.every((t) => tr.includes(t));
+      const target = fold(posLabel);
+      const exact = idx.positions.find((p) => {
+        return (
+          fold(p.tr) === target ||
+          p.aliases.some((alias) => fold(alias) === target)
+        );
       });
+      const pos = exact ?? idx.positions
+        .filter((p) => {
+          const tr = fold(p.tr);
+          const tokens = target.split(/\s+/).filter(Boolean);
+          return tokens.length > 0 && tokens.every((token) => tr.includes(token));
+        })
+        .sort((a, b) => a.tr.length - b.tr.length)[0];
       if (pos) {
         path.push(
           step(

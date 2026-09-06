@@ -72,7 +72,12 @@ export function computeComposerV2Flow(
   );
   const productType =
     input.values.productType ??
+    input.values.solutionType ??
     input.values.applianceType ??
+    input.values.furnitureType ??
+    input.values.babyProductType ??
+    input.values.kitchenProductType ??
+    input.values.machineType ??
     null;
   const visibleQuestions = schedule.visible.map((q) =>
     scheduledToFocusedQuestion(q, hybridByKey.get(q.fieldKey), {

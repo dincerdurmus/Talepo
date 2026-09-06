@@ -24,6 +24,7 @@ import { foldLabel } from "./slug";
 export type MachineryBrandFamily =
   | "metal"
   | "construction"
+  | "agriculture"
   | "energy"
   | "tools"
   | "printing-press";
@@ -32,6 +33,18 @@ export type MachineryBrandFamily =
 const MACHINERY_FAMILY_PICKS: Record<MachineryBrandFamily, string[]> = {
   metal: ["Durma", "Baykal", "Ermaksan", "Magmaweld", "Dalgakıran"],
   construction: ["Caterpillar", "JCB", "Hidromek", "Bobcat"],
+  agriculture: [
+    "New Holland",
+    "Massey Ferguson",
+    "John Deere",
+    "Case IH",
+    "Deutz-Fahr",
+    "Kubota",
+    "Başak",
+    "Tümosan",
+    "Erkunt",
+    "Landini",
+  ],
   energy: ["Aksa", "Teksan", "Emsa", "Dalgakıran"],
   tools: [
     "Makita",
@@ -69,6 +82,9 @@ export function inferMachineryBrandFamily(opts: {
     )
   ) {
     return "construction";
+  }
+  if (/(traktor|tarim|balya|mibzer|pulluk|sagim|yem-karma)/.test(blob)) {
+    return "agriculture";
   }
   if (/(jenerator|trafo|kompresor|guc-kaynagi)/.test(blob)) {
     return "energy";

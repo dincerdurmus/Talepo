@@ -355,94 +355,6 @@
         "ATTRIBUTE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:automotive:arac-satin-alma:durum",
-      "parentId": "tax:automotive:arac-satin-alma",
-      "canonicalName": "Durum",
-      "nodeType": "GROUP",
-      "categoryId": "automotive",
-      "subcategoryId": "arac-satin-alma",
-      "depth": 2,
-      "requestSchemaId": "automotive/arac-satin-alma",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "0 km"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:automotive:arac-satin-alma:durum:sifir-arac",
-      "parentId": "tax:automotive:arac-satin-alma:durum",
-      "canonicalName": "Sıfır araç",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "automotive",
-      "subcategoryId": "arac-satin-alma",
-      "depth": 3,
-      "requestSchemaId": "automotive/arac-satin-alma",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "2. el"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:automotive:arac-satin-alma:durum:ikinci-el-arac",
-      "parentId": "tax:automotive:arac-satin-alma:durum",
-      "canonicalName": "İkinci el araç",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "automotive",
-      "subcategoryId": "arac-satin-alma",
-      "depth": 3,
-      "requestSchemaId": "automotive/arac-satin-alma",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:automotive:arac-satin-alma:durum:hasar-kayitli",
-      "parentId": "tax:automotive:arac-satin-alma:durum",
-      "canonicalName": "Hasar kayıtlı",
-      "nodeType": "TECHNICAL_TYPE",
-      "categoryId": "automotive",
-      "subcategoryId": "arac-satin-alma",
-      "depth": 3,
-      "requestSchemaId": "automotive/arac-satin-alma",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
       "id": "tax:automotive:yedek-parca",
       "parentId": "tax:automotive",
       "canonicalName": "Yedek Parça",
@@ -13746,9 +13658,7 @@
       "aliases": [
         "oto aksesuar"
       ],
-      "searchTerms": [
-        "Aksesuar"
-      ],
+      "searchTerms": [],
       "applicableCapabilities": [
         "ENTITY_CATALOG",
         "ATTRIBUTE_SCHEMA"
@@ -13757,10 +13667,60 @@
       "id": "tax:automotive:diger:diger-otomotiv:aksesuar",
       "parentId": "tax:automotive:diger:diger-otomotiv",
       "canonicalName": "Aksesuar",
-      "nodeType": "PRODUCT_TYPE",
+      "nodeType": "GROUP",
       "categoryId": "automotive",
       "subcategoryId": "diger",
       "depth": 3,
+      "requestSchemaId": "automotive/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Çeki demiri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:diger:diger-otomotiv:aksesuar:ceki-demiri",
+      "parentId": "tax:automotive:diger:diger-otomotiv:aksesuar",
+      "canonicalName": "Çeki demiri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "diger",
+      "depth": 4,
+      "requestSchemaId": "automotive/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "tavan bagajı",
+        "tavan bagaj",
+        "portbagaj"
+      ],
+      "searchTerms": [
+        "Tavan / bagaj sistemleri"
+      ],
+      "applicableCapabilities": [
+        "ENTITY_CATALOG",
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:automotive:diger:diger-otomotiv:aksesuar:tavan-bagaj-sistemleri",
+      "parentId": "tax:automotive:diger:diger-otomotiv:aksesuar",
+      "canonicalName": "Tavan / bagaj sistemleri",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "automotive",
+      "subcategoryId": "diger",
+      "depth": 4,
       "requestSchemaId": "automotive/diger",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
@@ -13806,52 +13766,6 @@
       "id": "tax:automotive:diger:diger-otomotiv:koruma-filmi-kaplama",
       "parentId": "tax:automotive:diger:diger-otomotiv",
       "canonicalName": "Koruma filmi / kaplama",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "automotive",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "automotive/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Çeki demiri"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:automotive:diger:diger-otomotiv:ceki-demiri",
-      "parentId": "tax:automotive:diger:diger-otomotiv",
-      "canonicalName": "Çeki demiri",
-      "nodeType": "PRODUCT_TYPE",
-      "categoryId": "automotive",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "automotive/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [
-        "Roman / bagaj sistemleri"
-      ],
-      "applicableCapabilities": [
-        "ENTITY_CATALOG",
-        "ATTRIBUTE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:automotive:diger:diger-otomotiv:roman-bagaj-sistemleri",
-      "parentId": "tax:automotive:diger:diger-otomotiv",
-      "canonicalName": "Roman / bagaj sistemleri",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "automotive",
       "subcategoryId": "diger",

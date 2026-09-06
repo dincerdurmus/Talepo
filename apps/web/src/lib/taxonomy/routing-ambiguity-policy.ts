@@ -95,12 +95,6 @@ export const AMBIGUITY_RULES: readonly AmbiguityRule[] = [
       "Tek başına 'ev' emlaktır; araç dünyasında yalnız karavan/mobil ev bağlamında geçer.",
   },
   {
-    phrase: "bakim hizmetleri",
-    policy: "ALLOWED_CLARIFICATION",
-    categoryIds: ["services", "automotive"],
-    reason: "Genel bakım ile araç bakımı ayrı otoritelerdir.",
-  },
-  {
     phrase: "salincak",
     policy: "ALLOWED_CLARIFICATION",
     categoryIds: ["baby", "automotive"],

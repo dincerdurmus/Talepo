@@ -4,6 +4,8 @@
 
 import { TURKEY_IL_NAMES } from "@/lib/geo/turkey-districts";
 import { findBrandInText, findModelInText } from "@/lib/catalog/automotive/indexes";
+import { findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
+import { normalizeCasualTurkish } from "@/lib/ai/parser/normalize-casual-tr";
 
 /**
  * Marka bağlamındaki salt-rakam modeli KANONİK katalog doğrular mı?
@@ -189,7 +191,15 @@ export function sanitizeFactRoles(input: {
   ) {
     model = null;
   }
-  if (model && tokenOverlapsProductPhrase(model, productPhrase)) model = null;
+  const catalogProduct = findTechnologyProduct(normalizeCasualTurkish(input.rawInput ?? ""));
+  const catalogConfirmsModel = Boolean(
+    model && brand && catalogProduct &&
+    catalogProduct.canonical.toLocaleLowerCase("tr-TR") === model.toLocaleLowerCase("tr-TR") &&
+    catalogProduct.brand.toLocaleLowerCase("tr-TR") === brand.toLocaleLowerCase("tr-TR"),
+  );
+  // A catalog model may contain its family name (PlayStation 5 / PlayStation).
+  // An unverified product phrase still cannot become a model.
+  if (model && !catalogConfirmsModel && tokenOverlapsProductPhrase(model, productPhrase)) model = null;
   if (!brand) model = null;
   if (
     brand &&

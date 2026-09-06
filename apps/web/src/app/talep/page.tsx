@@ -47,6 +47,7 @@ import { MairaStage } from "@/components/request/maira/MairaStage";
 import {
   formatBudgetDigits,
   planAnswerApplication,
+  projectCanonicalCommonAnswers,
   projectUserAnswers,
 } from "@/lib/request-composer/v2/answer-apply-plan";
 import { mergeAnswersIntoUnderstoodFacts } from "./ui-helpers";
@@ -598,6 +599,10 @@ function TalepOlusturForm() {
     setEnrichmentDraft("");
   }, [activeCategoryId]);
 
+  const canonicalCommon = useMemo(
+    () => projectCanonicalCommonAnswers(hybrid.state?.fields ?? {}),
+    [hybrid.state?.fields],
+  );
   const understandingCity = understanding.location?.city?.value ?? "";
   const understandingBudgetDisplay = budgetDisplayFromUnderstanding(understanding);
   const understandingQuantity = understanding.quantity?.value?.value;
@@ -610,13 +615,14 @@ function TalepOlusturForm() {
   const suggestedRealEstateLocation = useMemo(
     () =>
       resolveRealEstateLocationFromSources({
-        parsedCity: commonDraft.city || understandingCity,
+        parsedCity: commonDraft.city || canonicalCommon.city || understandingCity,
         rawText: requestText,
         parsedNeighborhoods: manualValues.neighborhoods,
       }),
     [
       understandingCity,
       commonDraft.city,
+      canonicalCommon.city,
       manualValues.neighborhoods,
       requestText,
     ],
@@ -772,7 +778,7 @@ function TalepOlusturForm() {
     () => ({
       title: titleManuallyEdited ? commonDraft.title : aiSuggestedTitle,
       quantity: visibleCommonFieldKeys.has("quantity")
-        ? commonDraft.quantity ||
+        ? commonDraft.quantity || canonicalCommon.quantity ||
           (understandingQuantity != null
             ? `${understandingQuantity} ${understandingUnit}`
             : "")
@@ -780,25 +786,26 @@ function TalepOlusturForm() {
       city: isRealEstate
         ? (cityTouched ? commonDraft.city : "") ||
           realEstateLocationToCity(realEstateLocation) ||
-          commonDraft.city ||
+          commonDraft.city || canonicalCommon.city ||
           understandingCity ||
           ""
         : visibleCommonFieldKeys.has("city")
           ? cityTouched
             ? commonDraft.city
-            : commonDraft.city || understandingCity || ""
+            : commonDraft.city || canonicalCommon.city || understandingCity || ""
           : "",
       delivery: visibleCommonFieldKeys.has("delivery")
-        ? commonDraft.delivery
+        ? commonDraft.delivery || canonicalCommon.delivery || ""
         : "",
       budget: visibleCommonFieldKeys.has("budget")
         ? budgetTouched
           ? commonDraft.budget
-          : commonDraft.budget || understandingBudgetDisplay
+          : commonDraft.budget || canonicalCommon.budget || understandingBudgetDisplay
         : "",
     }),
     [
       understandingBudgetDisplay,
+      canonicalCommon,
       understandingCity,
       understandingQuantity,
       understandingUnit,
@@ -1512,7 +1519,14 @@ function TalepOlusturForm() {
       return f?.kind === "VALUE" ? String(f.value ?? "") : null;
     };
     return {
-      productType: valueOf("productType") ?? valueOf("applianceType"),
+      productType:
+        valueOf("productType") ??
+        valueOf("solutionType") ??
+        valueOf("applianceType") ??
+        valueOf("furnitureType") ??
+        valueOf("babyProductType") ??
+        valueOf("kitchenProductType") ??
+        valueOf("machineType"),
       brand: valueOf("brand"),
       needType: valueOf("needType"),
       listingType: valueOf("listingType"),
@@ -3298,6 +3312,9 @@ function TalepOlusturForm() {
                       // The composer is authoritative. Any field removed from
                       // the text must not survive as a stale manual answer.
                       setManualValues({});
+                      setAnsweredQuestionKeys([]);
+                      setSkippedQuestionKeys([]);
+                      setConfirmedFactKeys([]);
                       setCommonDraft({
                         title: "",
                         quantity: "",

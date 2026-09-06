@@ -224,6 +224,11 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
         "Talepo yalnız ihtiyaç taleplerini yayınlar: ürün satın alma, kiralama, hizmet alma veya üretim yaptırma. Kendi ürününüzü satmak ya da kiraya vermek için ilan veremezsiniz. Aradığınız hizmeti yazarsanız yayınlayabilirsiniz — örneğin \"aracımı satmak için ekspertiz hizmeti arıyorum\".",
       );
     }
+    if (scope.value === "UNSUPPORTED_REMOVED_SCOPE") {
+      issues.push(
+        "Bu tıbbi test / tahlil hizmeti şu an Talepo'da aktif bir kategori olarak sunulmuyor; bu kapsam Teknik Servis'e veya başka bir aktif kategoriye yönlendirilemez.",
+      );
+    }
   }
 
   const fields: RequestFieldInput[] = Array.isArray(raw.fields)

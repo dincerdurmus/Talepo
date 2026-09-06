@@ -113,6 +113,7 @@ export function useHybridRequestComposer(
   const stateRef = useRef(state);
   const seqRef = useRef(0);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingTextBaseRef = useRef<CanonicalRequestState | null>(null);
   const lastComposedRef = useRef<string | undefined>(state?.lastComposedText);
   /** When user clicks columns, skip one text→walk realign cycle. */
   const skipPathWalkSyncRef = useRef(false);
@@ -135,11 +136,11 @@ export function useHybridRequestComposer(
   }, []);
 
   const runSyncFromText = useCallback(
-    (raw: string, expectedToken: number) => {
+    (raw: string, expectedToken: number, previous = stateRef.current) => {
       if (expectedToken !== seqRef.current) return;
       setIsSyncing(true);
       try {
-        const result = syncFromText(stateRef.current, raw);
+        const result = syncFromText(previous, raw);
         if (expectedToken !== seqRef.current) return;
         if (result.clearedStaleBrowse) {
           skipPathWalkSyncRef.current = false;
@@ -172,6 +173,8 @@ export function useHybridRequestComposer(
       const trimmed = next.trim();
 
       if (!trimmed) {
+        pendingTextBaseRef.current = null;
+        debounceTimerRef.current = null;
         applyState(null);
         setBrowseWalk(createBrowseWalkState());
         lastPathSigRef.current = "";
@@ -181,12 +184,17 @@ export function useHybridRequestComposer(
         return;
       }
 
-      // Hide previous facts immediately — never show Heidelberg while typing Arçelik.
+      // Hide stale facts while typing, but keep the last committed state as the
+      // input to the engine's field-level transition rules across rapid edits.
+      const previous = stateRef.current ?? pendingTextBaseRef.current;
+      pendingTextBaseRef.current = previous;
       setIsSyncing(true);
       applyState(null);
 
       debounceTimerRef.current = setTimeout(() => {
-        runSyncFromText(next, token);
+        debounceTimerRef.current = null;
+        runSyncFromText(next, token, previous);
+        pendingTextBaseRef.current = null;
       }, debounceMs);
     },
     [applyState, debounceMs, runSyncFromText],
@@ -195,6 +203,8 @@ export function useHybridRequestComposer(
   const resetWithText = useCallback(
     (next: string) => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+      pendingTextBaseRef.current = null;
       setTextState(next);
       setBrowseWalk(createBrowseWalkState());
       lastPathSigRef.current = "";

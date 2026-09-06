@@ -25,6 +25,7 @@ import {
   yesNoDontCareOptions,
 } from "./option-providers";
 import { budgetBasisForListing } from "./listing-budget-basis";
+import { resolveMeasurementContract } from "./measurement-kind";
 import { getCategoryById } from "@/lib/request-category-engine";
 
 function softFromCtx(ctx: ControlResolveContext): {
@@ -141,8 +142,11 @@ export function resolveQuestionControl(
   if (key === "brand") {
     return {
       controlType: "searchable_entity",
-      options: popularBrandOptions(ctx).filter((o) => !o.opensCustom && !o.soft),
-      softOptions: brandModelSoftOptions().filter((o) => o.soft || o.opensCustom),
+      ...withSoft(
+        popularBrandOptions(ctx).filter((o) => !o.opensCustom && !o.soft),
+        ctx,
+        brandModelSoftOptions().filter((o) => o.opensCustom),
+      ),
       allowCustom: true,
       customLabel: "Başka marka",
       commitOnSelect: true,
@@ -152,8 +156,11 @@ export function resolveQuestionControl(
   if (key === "model" || key === "series") {
     return {
       controlType: "searchable_entity",
-      options: modelOptionsForBrand(ctx),
-      softOptions: brandModelSoftOptions(),
+      ...withSoft(
+        modelOptionsForBrand(ctx).filter((o) => !o.soft),
+        ctx,
+        brandModelSoftOptions().filter((o) => o.opensCustom),
+      ),
       allowCustom: true,
       customLabel: "Başka model",
       commitOnSelect: true,
@@ -270,20 +277,21 @@ export function resolveQuestionControl(
     };
   }
 
-  if (
-    key === "dimensions" ||
-    key === "size" ||
-    key === "printSize" ||
-    key === "paperSize"
-  ) {
+  const measurement = resolveMeasurementContract(ctx);
+  if (measurement) {
+    const isPrintFormat = measurement.kind === "print_format";
     return {
       controlType: "dimensions",
-      options: printSizePresets(),
+      measurementKind: measurement.kind,
+      options: isPrintFormat ? printSizePresets() : [],
       softOptions: ctx.allowUnknown
         ? [{ label: "Ölçüyü bilmiyorum", value: "unknown", soft: true }]
         : [],
       allowCustom: true,
-      customLabel: "Özel ölçü",
+      customLabel: isPrintFormat
+        ? "Özel baskı ölçüsü"
+        : "Özel ölçü (En × Boy × Yükseklik)",
+      placeholder: measurement.example,
       commitOnSelect: true,
     };
   }

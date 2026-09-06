@@ -293,6 +293,17 @@ export const MACHINERY_BRANDS: BrandEntry[] = [
   { canonical: "JCB", aliases: ["jcb"] },
   { canonical: "Hidromek", aliases: ["hidromek"] },
   { canonical: "Bobcat", aliases: ["bobcat"] },
+  // —— Kürasyon (2026-09-02): traktör / tarım makineleri ——
+  { canonical: "New Holland", aliases: ["new holland"] },
+  { canonical: "Massey Ferguson", aliases: ["massey ferguson", "massey"] },
+  { canonical: "John Deere", aliases: ["john deere"] },
+  { canonical: "Case IH", aliases: ["case ih"] },
+  { canonical: "Deutz-Fahr", aliases: ["deutz fahr", "deutz-fahr"] },
+  { canonical: "Kubota", aliases: ["kubota"] },
+  { canonical: "Başak", aliases: ["başak traktör", "basak traktör", "basak traktor"] },
+  { canonical: "Tümosan", aliases: ["tümosan", "tumosan"] },
+  { canonical: "Erkunt", aliases: ["erkunt"] },
+  { canonical: "Landini", aliases: ["landini"] },
   { canonical: "Durma", aliases: ["durmazlar", "durma pres", "durma abkant"] },
   { canonical: "Baykal", aliases: ["baykal makina", "baykal pres", "baykal abkant", "baykal giyotin"] },
   { canonical: "Ermaksan", aliases: ["ermaksan"] },
@@ -1009,6 +1020,16 @@ export function findAutomotiveModel(
   text: string,
   brand?: string,
 ): string | undefined {
+  // Check BMW / Mercedes dotted series before the generic catalog tokens.
+  // Otherwise "model 3.20d" is prematurely captured as Tesla "Model 3".
+  const dotted = text.match(/\b([1-8])\.([0-9]{2})([ijd])?\b/i);
+  if (dotted) {
+    const autoBrand = brand || findAutomotiveBrandInText(text);
+    if (autoBrand) {
+      return `${dotted[1]}.${dotted[2]}${dotted[3]?.toLowerCase() ?? ""}`;
+    }
+  }
+
   const modelTokenPattern = new RegExp(
     `(?<![\\p{L}\\p{N}])(${AUTOMOTIVE_MODEL_TOKENS.map(escapeRegex).join("|")})(?![\\p{L}\\p{N}])`,
     "giu",
@@ -1017,16 +1038,6 @@ export function findAutomotiveModel(
   while ((known = modelTokenPattern.exec(text)) !== null) {
     if (isNegatedMention(text, known.index, known[0].length)) continue;
     if (known[1]) return normalizeModelLabel(known[1]);
-  }
-
-  // BMW / Mercedes dotted series: 3.20, 3.20d, 5.20i, 1.16 — only
-  // with automotive brand context.
-  const dotted = text.match(/\b([1-8])\.([0-9]{2})([ijd])?\b/i);
-  if (dotted) {
-    const autoBrand = brand || findAutomotiveBrandInText(text);
-    if (autoBrand) {
-      return `${dotted[1]}.${dotted[2]}${dotted[3]?.toLowerCase() ?? ""}`;
-    }
   }
 
   // Compact series codes: 320i / 520d (letter suffix) always OK;

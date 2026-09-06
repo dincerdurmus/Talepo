@@ -162,6 +162,10 @@ const CONDITION_USED =
 const CONDITION_NEW = /\b(sıfır|sifir|0\s*km|brand\s*new|yeni)\b/i;
 
 const COLOR_WORDS: Array<{ re: RegExp; value: string }> = [
+  {
+    re: /(?:^|[^\p{L}])(şeffaf|seffaf|transparent|clear)(?=$|[^\p{L}])/iu,
+    value: "Şeffaf",
+  },
   { re: /\b(kırmızı|kirmizi|red)\b/i, value: "Kırmızı" },
   { re: /\b(beyaz|white)\b/i, value: "Beyaz" },
   { re: /\b(siyah|black)\b/i, value: "Siyah" },

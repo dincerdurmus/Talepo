@@ -92,12 +92,7 @@ async function main() {
     const gotScope = rawScope.startsWith("UNSUPPORTED") ? rawScope : "SUPPORTED";
     if (gotScope === c.expected.scope) scopeCorrect += 1;
     else if (c.lossy) {
-      /**
-       * KALİBRASYON İSTİSNASI DEĞİL, DÜRÜST AYRI SAYAÇ: typo ile bozulmuş
-       * kapsam-dışı kalıp ("kullanaliyim") çözülemeyebilir; bu bir sert kapı
-       * ihlali sayılmaz ama SAKLANMAZ — scopeMissLossy olarak raporlanır ve
-       * launch riski listesinde görünür.
-       */
+      // Typo cases stay separately measurable, but a scope regression fails.
       scopeMissLossy += 1;
       fail(c.id, `scope(lossy) beklenen=${c.expected.scope} gözlenen=${gotScope}`);
     } else {
@@ -164,10 +159,6 @@ async function main() {
       } else if (!c.expected.model) {
         modelHallucination += 1;
         fail(c.id, `MODEL HALÜSİNASYONU: "${gotModel}"`);
-      } else if (c.lossy) {
-        // typo model sözcüğünü bozdu — kalan parça yanlış model sayılmaz,
-        // ayrı raporlanır (sert kapı dışı, saklanmaz).
-        fail(c.id, `model(lossy) "${gotModel}" (beyan: ${c.expected.model})`);
       } else {
         modelHallucination += 1;
         fail(c.id, `MODEL YANLIŞ: "${gotModel}" (beyan: ${c.expected.model})`);
@@ -264,7 +255,8 @@ async function main() {
     budgetHallucination === 0 &&
     forbiddenNumberInRole === 0 &&
     anyReask === 0 &&
-    scopeMiss === 0;
+    scopeMiss === 0 &&
+    scopeMissLossy === 0;
 
   if (failures.length) {
     console.log(`\n--- başarısızlıklar (${failures.length}) ---`);

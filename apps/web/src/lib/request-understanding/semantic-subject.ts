@@ -9,6 +9,7 @@ import { hasFurnitureObjectNoun } from "@/lib/ai/parser/category";
 import {
   ACCESSORY_LEMMAS,
   classifyRequestedTargetRole,
+  requestedTargetBlocksVehicle,
   foldRoleToken,
   isRequestedItemNotModel,
   PART_LEMMAS,
@@ -27,9 +28,9 @@ import {
 } from "./part-relation";
 import { mergePositionIntoPartName } from "@/lib/catalog/part-display";
 import { classifyTaxonomyPhrase } from "@/lib/taxonomy/phrase-classification";
-import { getTaxonomyAncestorIds } from "@/lib/taxonomy";
 import { classifyNumbers } from "./number-role";
 import { clamp01, uv } from "./provenance";
+import { readTireRequestContext } from "./tire-request-context";
 import type {
   ParentEntityKind,
   RequestIntent,
@@ -38,7 +39,6 @@ import type {
   SemanticRequestSubject,
   SubjectRelation,
   UnderstandingDecision,
-  UnderstandingValue,
 } from "./types";
 
 /** Categories that must never collapse to VEHICLE via numeric false positives */
@@ -118,9 +118,11 @@ function acquiresWholeObject(intent: SemanticSubjectInput["intent"]): boolean {
  * (kategori automotive ya da araç kimliği) birlikte araç kanıtı sayılır.
  */
 const WHOLE_VEHICLE_SEEK =
-  /\b(?:araç|arac)\s*(?:arıyorum|ariyorum|lazım|lazim)|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)/i;
+  /\b(?:araç|arac|otomobil|araba)\s*(?:(?:arıyorum|ariyorum|lazım|lazim)|(?:satın\s*(?:almak|alıyorum)|satin\s*(?:almak|aliyorum)|almak\s+istiyorum))|(?:komple|kendisini)\s*(?:arıyorum|ariyorum)/i;
 const GENERIC_PURCHASE_VERB =
   /(?:satın\s*almak|satin\s*almak|satın\s*alıyorum|satin\s*aliyorum|almak\s*istiyorum)/i;
+const AUTOMOTIVE_BODY_SEEK =
+  /\b(?:suv|sedan|hatchback|station\s+wagon|pickup|kamyonet|kamyon)\b.*\b(?:arıyorum|ariyorum|lazım|lazim|istiyorum)\b/i;
 
 type IdentityLite = {
   brand?: string | null;
@@ -806,8 +808,17 @@ function resolveSemanticSubjectCore(
   const explicitVehiclePurchase =
     WHOLE_VEHICLE_SEEK.test(text) ||
     (GENERIC_PURCHASE_VERB.test(text) &&
-      (input.categoryId === "automotive" ||
-        identitySuggestsVehicle(input.identity)));
+      identitySuggestsVehicle(input.identity)) ||
+    (input.categoryId === "automotive" && AUTOMOTIVE_BODY_SEEK.test(text)) ||
+    /**
+     * Fiilsiz varyantlarda da açık araç adı konu kanıtıdır: "İkinci el araba".
+     * Parça tamlamaları aşağıdaki canonicalHeadBlocksVehicle kapısından
+     * geçtiği için "araba lastiği" gibi istekler bütün araca dönüşmez.
+     */
+    (input.categoryId === "automotive" &&
+      /\b(?:araba|otomobil|suv|sedan|hatchback|station\s+wagon|pickup|kamyonet|kamyon)\b/i.test(
+        text,
+      ));
 
   /**
    * KANONİK BAŞ İSİM, ARAÇ ÇÖKÜŞÜNÜ ENGELLER (2026-08-30).
@@ -827,24 +838,16 @@ function resolveSemanticSubjectCore(
    * çeviremez. Kullanıcının kendi seçtiği rol (`forcedNeedType`) bu kuralın
    * ÜSTÜNDEDİR ve bu noktaya gelmeden çözülmüştür.
    */
-  const canonicalHeadVerdict = classifyRequestedTargetRole(text);
-  const canonicalHeadBlocksVehicle = (() => {
-    if (canonicalHeadVerdict.role === "COMPONENT_OR_ACCESSORY") return true;
-    /* TAXONOMY_PHRASE kanıtında baş yerine ifadenin kendisi çözülür
-       ("hafif ticari lastik" gibi çok sözcüklü kanonik adlar). */
-    const aranacak =
-      canonicalHeadVerdict.head ??
-      (canonicalHeadVerdict.provenance === "TAXONOMY_PHRASE"
-        ? canonicalHeadVerdict.evidence[0] ?? null
-        : null);
-    if (!aranacak) return false;
-    const node = classifyTaxonomyPhrase(aranacak);
-    if (!node) return false;
-    const zincir = [node.id, ...getTaxonomyAncestorIds(node.id)];
-    return !zincir.some((id) =>
-      id.startsWith("tax:automotive:arac-satin-alma"),
-    );
-  })();
+  const targetSplit = splitCompatibilityPhrase(text);
+  const requestedCore = readRequestedTarget(targetSplit?.requested ?? text).value;
+  const requestedPhrase = targetSplit && requestedCore
+    ? `${targetSplit.parent} için ${requestedCore}` : requestedCore;
+  const fullHeadVerdict = classifyRequestedTargetRole(text);
+  const canonicalHeadVerdict = fullHeadVerdict.role === "UNKNOWN" && requestedPhrase
+    ? classifyRequestedTargetRole(requestedPhrase) : fullHeadVerdict;
+  const canonicalHeadBlocksVehicle = requestedTargetBlocksVehicle(text) ||
+    Boolean(requestedCore && requestedTargetBlocksVehicle(requestedCore)) ||
+    Boolean(readTireRequestContext(text)?.isTireRequest);
 
   const wholeVehicle =
     (explicitVehiclePurchase && !canonicalHeadBlocksVehicle) || partNegated;
@@ -863,10 +866,12 @@ function resolveSemanticSubjectCore(
    */
   const explicitManufactureIntent =
     input.intent === "MANUFACTURE" && !forcedNeed;
-  const partHit = explicitManufactureIntent
+  const canonicalWholeProduct = canonicalHeadVerdict.role === "WHOLE_PRODUCT" &&
+    canonicalHeadVerdict.provenance === "TAXONOMY_PHRASE";
+  const partHit = explicitManufactureIntent || canonicalWholeProduct
     ? null
     : findLemmaHit(text, PART_LEMMAS);
-  const accessoryHit = explicitManufactureIntent
+  const accessoryHit = explicitManufactureIntent || canonicalWholeProduct
     ? null
     : findLemmaHit(text, ACCESSORY_LEMMAS);
   /**
@@ -898,6 +903,7 @@ function resolveSemanticSubjectCore(
   })();
   const serviceLemmaHit = findLemmaHit(text, SERVICE_LEMMAS);
   const serviceHit =
+    !canonicalWholeProduct &&
     serviceLemmaHit &&
     serviceLemmaIsPhraseHead(text, serviceLemmaHit.index, serviceLemmaHit.raw)
       ? serviceLemmaHit
@@ -1080,7 +1086,10 @@ function resolveSemanticSubjectCore(
       readRequestedTarget(requested).value ?? requested,
     ).role;
     const requestedIsCompatible =
-      requestedRole !== "SERVICE" && requestedRole !== "WHOLE_PRODUCT";
+      requestedRole !== "SERVICE" && requestedRole !== "WHOLE_PRODUCT" &&
+      // Named accessories have their own role below; the generic structural
+      // part fallback must not consume them merely because they follow "için".
+      !findLemmaHit(requested, ACCESSORY_LEMMAS);
     if (parentEvidence && looksLikePart && requestedIsCompatible) {
       const lemmaHit = findLemmaHit(requested, PART_LEMMAS);
       const name = lemmaHit?.lemma === "parça" || lemmaHit?.lemma === "parca"
@@ -1623,7 +1632,8 @@ function resolveSemanticSubjectCore(
       (input.categoryId === "automotive" &&
         (acquiresWholeObject(input.intent) || input.intent === "UNKNOWN") &&
         !partHit &&
-        !accessoryHit))
+        !accessoryHit &&
+        (explicitVehiclePurchase || identitySuggestsVehicle(input.identity))))
   ) {
     const parent = buildParentEntity(
       input.identity,

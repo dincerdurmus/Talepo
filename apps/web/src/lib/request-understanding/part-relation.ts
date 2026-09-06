@@ -109,7 +109,7 @@ export type RequestedTarget = {
 export function readRequestedTarget(requested: string): RequestedTarget {
   const raw = requested.trim();
   const firstClause = raw.split(/[,;:.!?()/]|\s+(?:ve|veya|ile)\s+/iu)[0] ?? "";
-  const t = firstClause.replace(REQUEST_TAIL_RE, " ").replace(/\s+/g, " ").trim();
+  const t = firstClause.replace(REQUEST_TAIL_RE, " ").replace(MAKE_VERB_RE, " ").replace(/\s+/g, " ").trim();
   if (!t || !/\p{L}/u.test(t)) return { value: null, raw, reason: "no-content" };
   // İkinci bir "için" varsa ilişki tek hedefe indirgenememiştir.
   if (CONNECTIVE_RE.test(t)) return { value: null, raw, reason: "multi-connective" };
@@ -160,6 +160,7 @@ export function readSafePhraseContaining(
   for (const clause of raw.split(/[,;:.!?()/\n]/u)) {
     const candidate = clause
       .replace(REQUEST_TAIL_RE, " ")
+      .replace(MAKE_VERB_RE, " ")
       .replace(/\s+/gu, " ")
       .trim();
     if (!candidate || !/\p{L}/u.test(candidate)) continue;

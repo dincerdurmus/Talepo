@@ -105,6 +105,26 @@ function isCommon(key: string): key is PlanCommonFieldKey {
   return COMMON_KEYS.has(key);
 }
 
+/** Common form values are a projection of the surviving canonical answers.
+ * A text edit may clear transient drafts without erasing a separate answer. */
+export function projectCanonicalCommonAnswers(
+  fields: Record<string, CanonicalFieldState>,
+): Partial<Record<PlanCommonFieldKey, string>> {
+  const values: Partial<Record<PlanCommonFieldKey, string>> = {};
+  for (const [key, field] of Object.entries(fields)) {
+    if (!isCommon(key) || !isUserProvenance(field.provenance)) continue;
+    if (field.kind === "VALUE" && field.value) {
+      values[key] = key === "budget" ? formatBudgetAnswer(field.value)
+        : key === "quantity" ? formatQuantityAnswer(field.value) : field.value;
+    } else if (field.kind === "ANY") {
+      values[key] = key === "city" ? "Konum fark etmez" : "Fark etmez";
+    } else if (field.kind === "UNKNOWN") {
+      values[key] = "Henüz bilmiyorum";
+    }
+  }
+  return values;
+}
+
 /**
  * Bir soruya verilen ham cevabı, uygulanacak etkilere çevirir.
  *
@@ -156,7 +176,10 @@ export function planAnswerApplication(input: {
       return {
         fieldKey: field,
         noop: null,
-        effects: [{ kind: "common", fieldKey: "city", value: "Türkiye geneli" }],
+        effects: [
+          { kind: "canonical", fieldKey: "city", value: "Türkiye geneli", isAny: false },
+          { kind: "common", fieldKey: "city", value: "Türkiye geneli" },
+        ],
       };
     }
     if (locationFold === "remote" || locationFold === "uzaktan") {
@@ -164,6 +187,8 @@ export function planAnswerApplication(input: {
         fieldKey: field,
         noop: null,
         effects: [
+          { kind: "canonical", fieldKey: "city", value: "Uzaktan", isAny: false },
+          { kind: "canonical", fieldKey: "locationMode", value: "remote", isAny: false },
           { kind: "common", fieldKey: "city", value: "Uzaktan" },
           { kind: "dynamic", fieldKey: "locationMode", value: "remote" },
         ],
@@ -177,6 +202,7 @@ export function planAnswerApplication(input: {
         fieldKey: field,
         noop: null,
         effects: [
+          { kind: "canonical", fieldKey: "city", value: "Konum fark etmez", isAny: true, valueKind: "ANY" },
           { kind: "common", fieldKey: "city", value: "Konum fark etmez" },
         ],
       };

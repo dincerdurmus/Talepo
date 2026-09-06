@@ -3,6 +3,12 @@
  * Single authority for prompts / importance / soft-answer policy.
  */
 
+import {
+  REQUEST_CATEGORIES,
+  resolveCategoryQuestionContract,
+  type ProductQuestionContract,
+} from "@/lib/request-category-engine";
+
 import type { QuestionProfileDef } from "./question-profile-types";
 
 /** Shared Talepo Standard keys — evaluated for every active category when relevant. */
@@ -133,6 +139,18 @@ const STANDARD: QuestionProfileDef[] = [
     allowDontCare: false,
   },
   {
+    fieldKey: "serviceType",
+    prompt: "Hangi hizmete ihtiyacınız var?",
+    summaryLabel: "Hizmet türü",
+    importance: "routing_critical",
+    categories: ["services"],
+    whenNeedTypes: ["service"],
+    rank: 96,
+    inputHint: "select",
+    allowUnknown: false,
+    allowDontCare: false,
+  },
+  {
     fieldKey: "city",
     prompt: "Hizmet nerede verilecek?",
     summaryLabel: "Hizmet yeri",
@@ -202,6 +220,48 @@ const STANDARD: QuestionProfileDef[] = [
     allowUnknown: true,
   },
   {
+    // Emlakta ikinci el karşılığı yoktur; yalnız yeni bina isteği anlamlıdır.
+    fieldKey: "newBuildPreference",
+    prompt: "Sıfır / yeni bina tercihiniz var mı?",
+    summaryLabel: "Bina durumu",
+    importance: "optional",
+    categories: ["real-estate"],
+    whenProductTypes: [
+      "daire",
+      "rezidans",
+      "müstakil",
+      "villa",
+      "çiftlik evi",
+      "köşk",
+      "konak",
+      "yalı",
+      "stüdyo",
+      "dubleks",
+      "iş yeri",
+      "ofis",
+      "plaza",
+      "dükkan",
+      "mağaza",
+      "depo",
+      "antrepo",
+      "fabrika",
+      "imalathane",
+      "avm",
+      "otel",
+      "apart",
+      "müştemilat",
+      "turistik tesis",
+      "devre mülk",
+    ],
+    rank: 43,
+    inputHint: "select",
+    allowDontCare: true,
+    quickChoices: [
+      { label: "Sıfır / yeni bina şart", value: "Yeni bina şart" },
+      { label: "Yeni veya yakın tarihli", value: "Yeni / yakın tarihli" },
+    ],
+  },
+  {
     // Makine pazarında sıfır/ikinci el ayrımı fiyatın ana eksenidir
     // (makinecim.com envanteri, 2026-08-22) — optional değil, quote_critical.
     fieldKey: "condition",
@@ -209,12 +269,67 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Durum",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     rank: 66,
     allowDontCare: true,
     inputHint: "select",
     quickChoices: [
       { label: "Sıfır", value: "Sıfır" },
       { label: "İkinci el", value: "İkinci el" },
+    ],
+  },
+  {
+    fieldKey: "modelYear",
+    prompt: "En eski kabul edilebilir model yılı nedir?",
+    summaryLabel: "En eski model yılı",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["ikinci el", "2. el", "2.el", "second hand"],
+    rank: 65,
+    inputHint: "number",
+    allowUnknown: true,
+    allowDontCare: true,
+    quickChoices: [
+      { label: "2015 ve sonrası", value: "2015+" },
+      { label: "2018 ve sonrası", value: "2018+" },
+      { label: "2021 ve sonrası", value: "2021+" },
+    ],
+  },
+  {
+    fieldKey: "operatingHours",
+    prompt: "Maksimum çalışma saati tercihiniz nedir?",
+    summaryLabel: "Maksimum çalışma saati",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["ikinci el", "2. el", "2.el", "second hand"],
+    rank: 63,
+    inputHint: "number",
+    allowUnknown: true,
+    allowDontCare: true,
+    quickChoices: [
+      { label: "5.000 saate kadar", value: "≤5.000 saat" },
+      { label: "10.000 saate kadar", value: "≤10.000 saat" },
+      { label: "20.000 saate kadar", value: "≤20.000 saat" },
+      { label: "20.000 saat üzeri de olur", value: "20.000+ saat" },
+    ],
+  },
+  {
+    fieldKey: "inspectionAvailability",
+    prompt: "Yerinde test veya ekspertiz imkânı gerekli mi?",
+    summaryLabel: "Test / ekspertiz",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["ikinci el", "2. el", "2.el", "second hand"],
+    rank: 61,
+    inputHint: "select",
+    allowDontCare: true,
+    quickChoices: [
+      { label: "Ekspertiz şart", value: "Ekspertiz şart" },
+      { label: "Yerinde test yeterli", value: "Yerinde test yeterli" },
+      { label: "Gerekli değil", value: "Gerekli değil" },
     ],
   },
   {
@@ -234,12 +349,24 @@ const STANDARD: QuestionProfileDef[] = [
       "appliances",
       "home-kitchen",
       "furniture",
-      "machinery",
       "printing",
       "baby",
       "automotive",
       "health",
     ],
+    rank: 76,
+    allowDontCare: true,
+    allowUnknown: true,
+  },
+  {
+    fieldKey: "brand",
+    prompt: "Marka tercihiniz var mı?",
+    summaryLabel: "Marka",
+    importance: "quote_critical",
+    categories: ["machinery"],
+    // Yedek parçada marka/model teknik serbest forma yazılır; yalnız makine
+    // satın alma niyetinde hızlı soru olarak kalır.
+    whenNeedTypes: ["machine"],
     rank: 76,
     allowDontCare: true,
     allowUnknown: true,
@@ -254,10 +381,20 @@ const STANDARD: QuestionProfileDef[] = [
       "appliances",
       "home-kitchen",
       "furniture",
-      "machinery",
       "baby",
       "automotive",
     ],
+    rank: 46,
+    allowDontCare: true,
+    allowUnknown: true,
+  },
+  {
+    fieldKey: "model",
+    prompt: "Model tercihiniz var mı?",
+    summaryLabel: "Model",
+    importance: "optional",
+    categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     rank: 46,
     allowDontCare: true,
     allowUnknown: true,
@@ -328,127 +465,11 @@ const STANDARD: QuestionProfileDef[] = [
     rank: 45,
     allowUnknown: true,
   },
-  {
-    fieldKey: "modelYear",
-    prompt: "Hangi model yılı ve üzeri olsun?",
-    summaryLabel: "Yıl",
-    importance: "quote_critical",
-    categories: ["automotive"],
-    whenNeedTypes: ["vehicle"],
-    rank: 78,
-    allowUnknown: true,
-  },
-  {
-    fieldKey: "fuel",
-    prompt: "Yakıt tercihiniz?",
-    summaryLabel: "Yakıt",
-    importance: "optional",
-    categories: ["automotive"],
-    whenNeedTypes: ["vehicle"],
-    rank: 42,
-    allowDontCare: true,
-  },
-  {
-    fieldKey: "transmission",
-    prompt: "Vites tercihiniz?",
-    summaryLabel: "Vites",
-    importance: "optional",
-    categories: ["automotive"],
-    whenNeedTypes: ["vehicle"],
-    rank: 41,
-    allowDontCare: true,
-  },
-  {
-    fieldKey: "mileage",
-    prompt: "Kilometre üst sınırı var mı?",
-    summaryLabel: "Kilometre",
-    importance: "optional",
-    categories: ["automotive"],
-    whenNeedTypes: ["vehicle"],
-    rank: 40,
-    allowDontCare: true,
-    allowUnknown: true,
-  },
-  // (screenSize artık ürün-kapsamlı tanımda — aşağıda; kategori-geneli sürüm
-  // ürün bilinmeden ekran sorusu sorduğu için kaldırıldı.)
-
   /* ------------------------------------------------------------------ */
-  /* Product-scoped questions — "hangi ürüne hangi soru?"                */
-  /* Sourced from the MediaMarkt TR category tree (2026-08-22): each     */
-  /* product family gets ONLY the questions a seller actually needs to   */
-  /* quote it. Asked only when the product type is detected.             */
+  /* Legacy product-scoped questions. The core technology families now */
+  /* live in their category-owned contracts; their next batch remains  */
+  /* here until it is migrated with an equivalent contract.             */
   /* ------------------------------------------------------------------ */
-
-  // —— TV / monitör ——
-  {
-    fieldKey: "screenSize",
-    prompt: "Kaç inç olsun?",
-    summaryLabel: "Ekran",
-    importance: "quote_critical",
-    categories: ["technology"],
-    whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],
-    rank: 70,
-    allowDontCare: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "43\"", value: "43" },
-      { label: "50\"", value: "50" },
-      { label: "55\"", value: "55" },
-      { label: "65\" ve üzeri", value: "65+" },
-    ],
-  },
-  {
-    fieldKey: "panelType",
-    prompt: "Panel tercihin var mı?",
-    summaryLabel: "Panel",
-    importance: "optional",
-    categories: ["technology"],
-    whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],
-    rank: 30,
-    allowDontCare: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "OLED", value: "OLED" },
-      { label: "QLED", value: "QLED" },
-      { label: "LED", value: "LED" },
-    ],
-  },
-  // —— telefon / tablet ——
-  {
-    fieldKey: "storageCapacity",
-    prompt: "Depolama ne kadar olsun?",
-    summaryLabel: "Depolama",
-    importance: "quote_critical",
-    categories: ["technology"],
-    whenProductTypes: ["telefon", "iphone", "tablet", "ipad"],
-    rank: 60,
-    allowDontCare: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "128 GB", value: "128 GB" },
-      { label: "256 GB", value: "256 GB" },
-      { label: "512 GB", value: "512 GB" },
-      { label: "1 TB", value: "1 TB" },
-    ],
-  },
-  // —— laptop ——
-  {
-    fieldKey: "usagePurpose",
-    prompt: "Ne için kullanacaksın?",
-    summaryLabel: "Kullanım",
-    importance: "quote_critical",
-    categories: ["technology"],
-    whenProductTypes: ["laptop", "notebook", "bilgisayar", "macbook"],
-    rank: 60,
-    allowDontCare: false,
-    inputHint: "select",
-    quickChoices: [
-      { label: "Oyun", value: "Oyun" },
-      { label: "İş / Ofis", value: "İş" },
-      { label: "Okul", value: "Okul" },
-      { label: "Günlük kullanım", value: "Günlük" },
-    ],
-  },
   // —— kulaklık ——
   {
     fieldKey: "headphoneType",
@@ -502,40 +523,13 @@ const STANDARD: QuestionProfileDef[] = [
       { label: "Şipşak (Instax)", value: "Şipşak" },
     ],
   },
-  // —— klima ——
-  {
-    /**
-     * KB-15: alan adı kanonik şemayla aynı olmalı.
-     *
-     * Anlama katmanı bu bilgiyi `capacityBtu` olarak yazıyor
-     * (`knowledge/request-schema.ts` → `capacityBtu`, alias `btu`); soru
-     * profili ise `btu` diyordu. Aynı bilgi için iki ad, soru motorunun
-     * dolu alanı görememesine ve "12000 BTU klima arıyorum" yazan kullanıcıya
-     * BTU'yu tekrar sormasına yol açıyordu. Ad tek kaynağa çekildi.
-     */
-    fieldKey: "capacityBtu",
-    prompt: "Kaç BTU olmalı?",
-    summaryLabel: "BTU",
-    importance: "quote_critical",
-    categories: ["appliances"],
-    whenProductTypes: ["klima"],
-    rank: 70,
-    allowUnknown: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "9.000 BTU", value: "9000 BTU" },
-      { label: "12.000 BTU", value: "12000 BTU" },
-      { label: "18.000 BTU", value: "18000 BTU" },
-      { label: "24.000 BTU", value: "24000 BTU" },
-    ],
-  },
   {
     fieldKey: "installation",
     prompt: "Montaj da dahil olsun mu?",
     summaryLabel: "Montaj",
     importance: "optional",
     categories: ["appliances"],
-    whenProductTypes: ["klima", "kombi", "sofben", "şofben", "termosifon"],
+    whenProductTypes: ["kombi", "sofben", "şofben", "termosifon"],
     rank: 30,
     allowDontCare: true,
     inputHint: "select",
@@ -544,32 +538,14 @@ const STANDARD: QuestionProfileDef[] = [
       { label: "Sadece ürün", value: "Sadece ürün" },
     ],
   },
-  // —— buzdolabı ——
-  {
-    fieldKey: "fridgeType",
-    prompt: "Nasıl bir buzdolabı?",
-    summaryLabel: "Buzdolabı tipi",
-    importance: "quote_critical",
-    categories: ["appliances"],
-    whenProductTypes: ["buzdolabi", "buzdolabı"],
-    rank: 60,
-    allowDontCare: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "No-Frost", value: "No-Frost" },
-      { label: "Alttan donduruculu", value: "Alttan donduruculu" },
-      { label: "Gardrop tipi", value: "Gardrop tipi" },
-      { label: "Mini", value: "Mini" },
-    ],
-  },
-  // —— çamaşır / kurutma ——
+  // —— kurutma makinesi (çamaşır makinesi sözleşmesinden ayrıdır) ——
   {
     fieldKey: "capacityKg",
     prompt: "Kaç kilogram kapasite?",
     summaryLabel: "Kapasite",
     importance: "quote_critical",
     categories: ["appliances"],
-    whenProductTypes: ["camasir", "çamaşır", "kurutma"],
+    whenProductTypes: ["kurutma"],
     rank: 60,
     allowUnknown: true,
     inputHint: "select",
@@ -673,39 +649,7 @@ const STANDARD: QuestionProfileDef[] = [
       { label: "Türk kahvesi", value: "Türk kahvesi" },
     ],
   },
-  // —— anne & bebek (e-bebek ağacından, 2026-08-22) ——
-  {
-    fieldKey: "strollerType",
-    prompt: "Nasıl bir bebek arabası?",
-    summaryLabel: "Araba tipi",
-    importance: "quote_critical",
-    categories: ["baby"],
-    whenProductTypes: ["bebek arabasi", "bebek arabası", "puset"],
-    rank: 62,
-    allowDontCare: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "Travel sistem", value: "Travel sistem" },
-      { label: "Baston puset", value: "Baston" },
-      { label: "İkiz arabası", value: "İkiz" },
-    ],
-  },
-  {
-    fieldKey: "carSeatGroup",
-    prompt: "Hangi kilo grubu için?",
-    summaryLabel: "Kilo grubu",
-    importance: "quote_critical",
-    categories: ["baby"],
-    whenProductTypes: ["oto koltugu", "oto koltuğu", "ana kucagi", "ana kucağı"],
-    rank: 62,
-    allowUnknown: true,
-    inputHint: "select",
-    quickChoices: [
-      { label: "0–13 kg (bebek)", value: "0-13 kg" },
-      { label: "9–18 kg", value: "9-18 kg" },
-      { label: "15–36 kg (yükseltici)", value: "15-36 kg" },
-    ],
-  },
+  // —— bebek bezi (Anne & Çocuk sözleşmesine sonraki bakım diliminde taşınacak) ——
   {
     fieldKey: "diaperSize",
     prompt: "Kaç numara?",
@@ -779,7 +723,14 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Kişi",
     importance: "quote_critical",
     categories: ["furniture"],
-    whenProductTypes: ["yemek masasi", "yemek masası", "mutfak masasi", "mutfak masası", "masa takimi", "masa takımı"],
+    whenProductTypes: [
+      "yemek masasi",
+      "yemek masası",
+      "yemek odası takımı",
+      "yemek odasi takimi",
+      "mutfak masasi",
+      "mutfak masası",
+    ],
     rank: 62,
     allowUnknown: true,
     inputHint: "select",
@@ -883,6 +834,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Güç",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["jenerator", "jeneratör"],
     rank: 62,
     allowUnknown: true,
@@ -900,6 +852,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Kapasite",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["forklift", "transpalet", "vinc", "vinç", "caraskal"],
     rank: 62,
     allowUnknown: true,
@@ -917,6 +870,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Kompresör tipi",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["kompresor", "kompresör"],
     rank: 62,
     allowDontCare: true,
@@ -933,6 +887,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Güç tipi",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["matkap", "vidalama", "testere", "taslama", "taşlama", "kirici", "kırıcı"],
     rank: 60,
     allowDontCare: true,
@@ -949,6 +904,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Çalışma tipi",
     importance: "quote_critical",
     categories: ["machinery"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["cim bicme", "çim biçme", "budama", "tirpan", "tırpan"],
     rank: 60,
     allowDontCare: true,
@@ -966,6 +922,7 @@ const STANDARD: QuestionProfileDef[] = [
     summaryLabel: "Kullanım yeri",
     importance: "quote_critical",
     categories: ["machinery", "services"],
+    whenNeedTypes: ["machine"],
     whenProductTypes: ["boya"],
     rank: 60,
     allowDontCare: true,
@@ -1012,6 +969,37 @@ const STANDARD: QuestionProfileDef[] = [
   },
 ];
 
+/**
+ * Kategori sözleşmelerini zamanlayıcının profil biçimine uyarlar. Soru metni,
+ * seçenekler ve ürün türü eşleşmesi kategori motorunda yaşar; burada ikinci
+ * bir mobilya kural listesi tutulmaz.
+ */
+function categoryContractProfiles(
+  categoryId: string,
+  contracts: readonly ProductQuestionContract[],
+): QuestionProfileDef[] {
+  return contracts.flatMap((contract) =>
+    contract.questions.map((question) => ({
+      ...question,
+      categories: [categoryId],
+      whenProductTypes: contract.whenProductTypes,
+      whenNeedTypes: contract.whenNeedTypes,
+      requiresNeedType: Boolean(contract.whenNeedTypes?.length),
+      contractScope: contract,
+    })),
+  );
+}
+
+const CATEGORY_CONTRACT_PROFILES: QuestionProfileDef[] =
+  REQUEST_CATEGORIES.flatMap((category) =>
+    categoryContractProfiles(category.id, category.questionContracts ?? []),
+  );
+
+const ALL_PROFILES: readonly QuestionProfileDef[] = [
+  ...STANDARD,
+  ...CATEGORY_CONTRACT_PROFILES,
+];
+
 const PROFILE_FOLD: Record<string, string> = {
   ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", â: "a", î: "i", û: "u",
 };
@@ -1048,8 +1036,35 @@ function matchesNeedType(
   needType: string | null | undefined,
 ): boolean {
   if (!def.whenNeedTypes || def.whenNeedTypes.length === 0) return true;
-  if (!needType) return true;
+  if (!needType) return !def.requiresNeedType;
   return def.whenNeedTypes.includes(needType);
+}
+
+function matchesProfileContext(
+  def: QuestionProfileDef,
+  input: {
+    categoryId: string;
+    needType?: string | null;
+    productType?: string | null;
+  },
+  activeContract: ProductQuestionContract | null,
+): boolean {
+  if (!matchesCategory(def, input.categoryId)) return false;
+  // Contract resolution already applies its product aliases and need gate.
+  // Rechecking the raw spelling here can hide every question of that contract.
+  if (def.contractScope) return def.contractScope === activeContract;
+  if (!matchesNeedType(def, input.needType)) return false;
+  if (!matchesProductType(def, input.productType)) return false;
+  if (activeContract?.omitDeliveryQuestion && def.fieldKey === "delivery") return false;
+  if (
+    activeContract?.restrictStandardProfiles &&
+    !def.contractScope &&
+    def.categories?.includes(input.categoryId) &&
+    !activeContract.allowedCandidateFieldKeys.includes(def.fieldKey)
+  ) {
+    return false;
+  }
+  return !def.contractScope || def.contractScope === activeContract;
 }
 
 /**
@@ -1059,7 +1074,9 @@ function matchesNeedType(
 /** Specificity: product-scoped > category-scoped > global. */
 function profileSpecificity(def: QuestionProfileDef): number {
   return (
-    (def.whenProductTypes?.length ? 2 : 0) + (def.categories?.length ? 1 : 0)
+    (def.whenProductTypes?.length ? 2 : 0) +
+    (def.categories?.length ? 1 : 0) +
+    (def.contractScope ? 1 : 0)
   );
 }
 
@@ -1069,12 +1086,11 @@ export function resolveProfileForField(input: {
   needType?: string | null;
   productType?: string | null;
 }): QuestionProfileDef | null {
-  const matches = STANDARD.filter(
+  const activeContract = resolveCategoryQuestionContract(input);
+  const matches = ALL_PROFILES.filter(
     (d) =>
       d.fieldKey === input.fieldKey &&
-      matchesCategory(d, input.categoryId) &&
-      matchesNeedType(d, input.needType) &&
-      matchesProductType(d, input.productType),
+      matchesProfileContext(d, input, activeContract),
   );
   if (matches.length === 0) return null;
   matches.sort((a, b) => {
@@ -1091,11 +1107,10 @@ export function listProfilesForCategory(input: {
   needType?: string | null;
   productType?: string | null;
 }): QuestionProfileDef[] {
+  const activeContract = resolveCategoryQuestionContract(input);
   const byKey = new Map<string, QuestionProfileDef>();
-  for (const def of STANDARD) {
-    if (!matchesCategory(def, input.categoryId)) continue;
-    if (!matchesNeedType(def, input.needType)) continue;
-    if (!matchesProductType(def, input.productType)) continue;
+  for (const def of ALL_PROFILES) {
+    if (!matchesProfileContext(def, input, activeContract)) continue;
     const existing = byKey.get(def.fieldKey);
     if (!existing) {
       byKey.set(def.fieldKey, def);
@@ -1112,7 +1127,7 @@ export function listProfilesForCategory(input: {
 
 /** Read-only view of every profile — tooling/inspection only, not scheduling. */
 export function listAllProfiles(): readonly QuestionProfileDef[] {
-  return STANDARD;
+  return ALL_PROFILES;
 }
 
 /**
@@ -1132,7 +1147,7 @@ export function listAllProfiles(): readonly QuestionProfileDef[] {
  */
 export function listProfileKeysForCategory(categoryId: string): string[] {
   const keys = new Set<string>();
-  for (const def of STANDARD) {
+  for (const def of ALL_PROFILES) {
     if (!matchesCategory(def, categoryId)) continue;
     keys.add(def.fieldKey);
   }

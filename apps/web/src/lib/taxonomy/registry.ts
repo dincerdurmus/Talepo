@@ -220,7 +220,21 @@ export function findTaxonomyTypeUnderSubcategory(
         n.nodeType === "SERVICE_TYPE" ||
         n.nodeType === "COMMODITY_TYPE"),
   );
-  const hit = nodes.find((n) => {
+  const matchesExact = (n: TaxonomyNode) => {
+    const terms = [
+      n.canonicalName,
+      ...n.aliases,
+      ...(n.searchTerms ?? []),
+    ];
+    return terms.some((t) => foldLabel(t) === key);
+  };
+  const exact = nodes.find(matchesExact);
+  if (exact) return exact;
+
+  // Kısmî eşleşme yalnız tam kanonik/alias eşleşmesi yoksa devreye girer.
+  // Aksi halde "Yalı Dairesi" içinde geçen "Daire" ilk düğüme bağlanır ve
+  // daha özel ürün ailesi kaybolur.
+  const partial = nodes.find((n) => {
     const terms = [
       n.canonicalName,
       ...n.aliases,
@@ -228,10 +242,10 @@ export function findTaxonomyTypeUnderSubcategory(
     ];
     return terms.some((t) => {
       const f = foldLabel(t);
-      return f === key || f.includes(key) || key.includes(f);
+      return f.includes(key) || key.includes(f);
     });
   });
-  return hit ?? null;
+  return partial ?? null;
 }
 
 export function isTaxonomyLeaf(node: TaxonomyNode): boolean {

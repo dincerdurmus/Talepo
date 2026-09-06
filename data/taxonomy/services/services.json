@@ -27,390 +27,6 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:danismanlik",
-      "parentId": "tax:services",
-      "canonicalName": "Danışmanlık",
-      "nodeType": "SUBCATEGORY",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 1,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri",
-      "parentId": "tax:services:danismanlik",
-      "canonicalName": "Danışmanlık türleri",
-      "nodeType": "GROUP",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 2,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:yonetim-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "Yönetim danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "muhasebe"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:mali-musavirlik-muhasebe",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "Mali müşavirlik / muhasebe",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "human resources"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:ik-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "İK danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:hukuk-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "Hukuk danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:iso-kalite-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "ISO / kalite danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:pazarlama-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "Pazarlama danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:danismanlik:danismanlik-turleri:ihracat-danismanligi",
-      "parentId": "tax:services:danismanlik:danismanlik-turleri",
-      "canonicalName": "İhracat danışmanlığı",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "danismanlik",
-      "depth": 3,
-      "requestSchemaId": "services/danismanlik",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim",
-      "parentId": "tax:services",
-      "canonicalName": "Bakım ve Onarım",
-      "nodeType": "SUBCATEGORY",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 1,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "REQUEST_CATEGORIES"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "parentId": "tax:services:bakim-ve-onarim",
-      "canonicalName": "Bakım hizmetleri",
-      "nodeType": "GROUP",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 2,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:kombi-bakim",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Kombi bakım",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:klima-bakim-gaz-dolumu",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Klima bakım / gaz dolumu",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:beyaz-esya-tamiri",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Beyaz eşya tamiri",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:elektrik-tesisat",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Elektrik tesisat",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "plumbing"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:su-tesisat",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Su tesisat",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:asansor-bakim",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Asansör bakım",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:jenerator-bakim",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Jeneratör bakım",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:bakim-ve-onarim:bakim-hizmetleri:endustriyel-makine-bakim",
-      "parentId": "tax:services:bakim-ve-onarim:bakim-hizmetleri",
-      "canonicalName": "Endüstriyel makine bakım",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "bakim-ve-onarim",
-      "depth": 3,
-      "requestSchemaId": "services/bakim-ve-onarim",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
       "id": "tax:services:temizlik",
       "parentId": "tax:services",
       "canonicalName": "Temizlik",
@@ -450,9 +66,9 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:ofis-temizligi",
+      "id": "tax:services:temizlik:temizlik-hizmetleri:bos-ev-temizligi",
       "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "Ofis temizliği",
+      "canonicalName": "Boş ev temizliği",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
       "subcategoryId": "temizlik",
@@ -470,9 +86,9 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:insaat-sonu-temizlik",
+      "id": "tax:services:temizlik:temizlik-hizmetleri:ev-temizligi",
       "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "İnşaat sonu temizlik",
+      "canonicalName": "Ev temizliği",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
       "subcategoryId": "temizlik",
@@ -490,9 +106,32 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:apartman-site-temizligi",
+      "id": "tax:services:temizlik:temizlik-hizmetleri:hali-yikama-temizleme",
       "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "Apartman / site temizliği",
+      "canonicalName": "Halı yıkama / temizleme",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "temizlik",
+      "depth": 3,
+      "requestSchemaId": "services/temizlik",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "koltuk yıkama",
+        "koltuk temizleme"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:temizlik:temizlik-hizmetleri:koltuk-yikama-temizleme",
+      "parentId": "tax:services:temizlik:temizlik-hizmetleri",
+      "canonicalName": "Koltuk yıkama / temizleme",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
       "subcategoryId": "temizlik",
@@ -510,14 +149,33 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:cam-temizligi",
-      "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "Cam temizliği",
-      "nodeType": "SERVICE_TYPE",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon",
+      "parentId": "tax:services",
+      "canonicalName": "Ev Tadilat ve Dekorasyon",
+      "nodeType": "SUBCATEGORY",
       "categoryId": "services",
-      "subcategoryId": "temizlik",
-      "depth": 3,
-      "requestSchemaId": "services/temizlik",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 1,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon",
+      "canonicalName": "Tadilat ve dekorasyon hizmetleri",
+      "nodeType": "GROUP",
+      "categoryId": "services",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 2,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -530,14 +188,14 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:dezenfeksiyon",
-      "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "Dezenfeksiyon",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:boya-badana",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "Boya badana",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
-      "subcategoryId": "temizlik",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
       "depth": 3,
-      "requestSchemaId": "services/temizlik",
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -550,14 +208,193 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:temizlik:temizlik-hizmetleri:hali-koltuk-yikama",
-      "parentId": "tax:services:temizlik:temizlik-hizmetleri",
-      "canonicalName": "Halı / koltuk yıkama",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:cam-balkon",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "Cam balkon",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
-      "subcategoryId": "temizlik",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
       "depth": 3,
-      "requestSchemaId": "services/temizlik",
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:duvar-dekorasyon",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "Duvar dekorasyon",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 3,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:ev-dekorasyon",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "Ev dekorasyon",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 3,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:fayans-doseme",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "Fayans döşeme",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 3,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri:ic-mimar",
+      "parentId": "tax:services:ev-tadilat-ve-dekorasyon:tadilat-ve-dekorasyon-hizmetleri",
+      "canonicalName": "İç mimar",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "ev-tadilat-ve-dekorasyon",
+      "depth": 3,
+      "requestSchemaId": "services/ev-tadilat-ve-dekorasyon",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:teknik-servis",
+      "parentId": "tax:services",
+      "canonicalName": "Teknik Servis",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "services",
+      "subcategoryId": "teknik-servis",
+      "depth": 1,
+      "requestSchemaId": "services/teknik-servis",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:teknik-servis:teknik-servis-hizmetleri",
+      "parentId": "tax:services:teknik-servis",
+      "canonicalName": "Teknik servis hizmetleri",
+      "nodeType": "GROUP",
+      "categoryId": "services",
+      "subcategoryId": "teknik-servis",
+      "depth": 2,
+      "requestSchemaId": "services/teknik-servis",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:teknik-servis:teknik-servis-hizmetleri:kombi-servisi",
+      "parentId": "tax:services:teknik-servis:teknik-servis-hizmetleri",
+      "canonicalName": "Kombi servisi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "teknik-servis",
+      "depth": 3,
+      "requestSchemaId": "services/teknik-servis",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:teknik-servis:teknik-servis-hizmetleri:klima-servisi",
+      "parentId": "tax:services:teknik-servis:teknik-servis-hizmetleri",
+      "canonicalName": "Klima servisi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "teknik-servis",
+      "depth": 3,
+      "requestSchemaId": "services/teknik-servis",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:teknik-servis:teknik-servis-hizmetleri:elektrikci",
+      "parentId": "tax:services:teknik-servis:teknik-servis-hizmetleri",
+      "canonicalName": "Elektrikçi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "teknik-servis",
+      "depth": 3,
+      "requestSchemaId": "services/teknik-servis",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -631,31 +468,9 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:ofis-tasima",
+      "id": "tax:services:nakliye:nakliye-hizmetleri:parca-esya-tasima",
       "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Ofis taşıma",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "nakliye",
-      "depth": 3,
-      "requestSchemaId": "services/nakliye",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [
-        "LTL"
-      ],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:parsiyel-yuk",
-      "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Parsiyel yük",
+      "canonicalName": "Parça eşya taşıma",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
       "subcategoryId": "nakliye",
@@ -673,94 +488,14 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:komple-yuk-ftl",
-      "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Komple yük / FTL",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "nakliye",
-      "depth": 3,
-      "requestSchemaId": "services/nakliye",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:sehirlerarasi-nakliye",
-      "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Şehirlerarası nakliye",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "nakliye",
-      "depth": 3,
-      "requestSchemaId": "services/nakliye",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:uluslararasi-lojistik",
-      "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Uluslararası lojistik",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "nakliye",
-      "depth": 3,
-      "requestSchemaId": "services/nakliye",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:nakliye:nakliye-hizmetleri:depolama-antrepo-hizmeti",
-      "parentId": "tax:services:nakliye:nakliye-hizmetleri",
-      "canonicalName": "Depolama / antrepo hizmeti",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "nakliye",
-      "depth": 3,
-      "requestSchemaId": "services/nakliye",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:diger",
+      "id": "tax:services:egitim",
       "parentId": "tax:services",
-      "canonicalName": "Diğer",
+      "canonicalName": "Eğitim",
       "nodeType": "SUBCATEGORY",
       "categoryId": "services",
-      "subcategoryId": "diger",
+      "subcategoryId": "egitim",
       "depth": 1,
-      "requestSchemaId": "services/diger",
+      "requestSchemaId": "services/egitim",
       "provenance": {
         "source": "REQUEST_CATEGORIES"
       }
@@ -772,14 +507,14 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler",
-      "parentId": "tax:services:diger",
-      "canonicalName": "Diğer hizmetler",
+      "id": "tax:services:egitim:egitim-hizmetleri",
+      "parentId": "tax:services:egitim",
+      "canonicalName": "Eğitim hizmetleri",
       "nodeType": "GROUP",
       "categoryId": "services",
-      "subcategoryId": "diger",
+      "subcategoryId": "egitim",
       "depth": 2,
-      "requestSchemaId": "services/diger",
+      "requestSchemaId": "services/egitim",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -792,14 +527,14 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:organizasyon-event",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Organizasyon / event",
+      "id": "tax:services:egitim:egitim-hizmetleri:direksiyon-dersi",
+      "parentId": "tax:services:egitim:egitim-hizmetleri",
+      "canonicalName": "Direksiyon dersi",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
-      "subcategoryId": "diger",
+      "subcategoryId": "egitim",
       "depth": 3,
-      "requestSchemaId": "services/diger",
+      "requestSchemaId": "services/egitim",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -812,17 +547,16 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:guvenlik-hizmeti",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Güvenlik hizmeti",
-      "nodeType": "SERVICE_TYPE",
+      "id": "tax:services:grafik-ve-tasarim",
+      "parentId": "tax:services",
+      "canonicalName": "Grafik ve Tasarım",
+      "nodeType": "SUBCATEGORY",
       "categoryId": "services",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "services/diger",
+      "subcategoryId": "grafik-ve-tasarim",
+      "depth": 1,
+      "requestSchemaId": "services/grafik-ve-tasarim",
       "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
+        "source": "REQUEST_CATEGORIES"
       }
     },
     {
@@ -832,54 +566,14 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:ceviri-tercume",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Çeviri / tercüme",
-      "nodeType": "SERVICE_TYPE",
+      "id": "tax:services:grafik-ve-tasarim:grafik-ve-tasarim-hizmetleri",
+      "parentId": "tax:services:grafik-ve-tasarim",
+      "canonicalName": "Grafik ve tasarım hizmetleri",
+      "nodeType": "GROUP",
       "categoryId": "services",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "services/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:egitim-kurumsal-training",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Eğitim / kurumsal training",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "services/diger",
-      "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
-      }
-    },
-    {
-      "aliases": [],
-      "searchTerms": [],
-      "applicableCapabilities": [
-        "SERVICE_SCHEMA"
-      ],
-      "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:fotograf-video-produksiyon",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Fotoğraf / video prodüksiyon",
-      "nodeType": "SERVICE_TYPE",
-      "categoryId": "services",
-      "subcategoryId": "diger",
-      "depth": 3,
-      "requestSchemaId": "services/diger",
+      "subcategoryId": "grafik-ve-tasarim",
+      "depth": 2,
+      "requestSchemaId": "services/grafik-ve-tasarim",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
@@ -888,27 +582,26 @@
     {
       "aliases": [
         "logo tasarımı",
+        "logo tasarimi",
         "grafik tasarım",
-        "kurumsal kimlik tasarımı"
+        "grafik tasarim"
       ],
-      "searchTerms": [
-        "Grafik ve logo tasarımı"
-      ],
+      "searchTerms": [],
       "applicableCapabilities": [
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:grafik-ve-logo-tasarimi",
-      "parentId": "tax:services:diger:diger-hizmetler",
+      "id": "tax:services:grafik-ve-tasarim:grafik-ve-tasarim-hizmetleri:grafik-ve-logo-tasarimi",
+      "parentId": "tax:services:grafik-ve-tasarim:grafik-ve-tasarim-hizmetleri",
       "canonicalName": "Grafik ve logo tasarımı",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
-      "subcategoryId": "diger",
+      "subcategoryId": "grafik-ve-tasarim",
       "depth": 3,
-      "requestSchemaId": "services/diger",
+      "requestSchemaId": "services/grafik-ve-tasarim",
       "provenance": {
-        "source": "founder-curation",
-        "note": "kurucu onayı 2026-08-31 (FD-7); 'logo' tek başına alias DEĞİL — Logo yazılım firması çakışması domain-entities requiresContext korumasında"
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
       }
     },
     {
@@ -918,14 +611,86 @@
         "SERVICE_SCHEMA"
       ],
       "status": "active",
-      "id": "tax:services:diger:diger-hizmetler:montaj-demontaj",
-      "parentId": "tax:services:diger:diger-hizmetler",
-      "canonicalName": "Montaj / demontaj",
+      "id": "tax:services:evde-bakim-ve-destek",
+      "parentId": "tax:services",
+      "canonicalName": "Evde Bakım ve Destek",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "services",
+      "subcategoryId": "evde-bakim-ve-destek",
+      "depth": 1,
+      "requestSchemaId": "services/evde-bakim-ve-destek",
+      "provenance": {
+        "source": "REQUEST_CATEGORIES"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:evde-bakim-ve-destek:evde-bakim-ve-destek-hizmetleri",
+      "parentId": "tax:services:evde-bakim-ve-destek",
+      "canonicalName": "Evde bakım ve destek hizmetleri",
+      "nodeType": "GROUP",
+      "categoryId": "services",
+      "subcategoryId": "evde-bakim-ve-destek",
+      "depth": 2,
+      "requestSchemaId": "services/evde-bakim-ve-destek",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "evde bakım",
+        "evde bakim",
+        "hasta refakati"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:evde-bakim-ve-destek:evde-bakim-ve-destek-hizmetleri:evde-bakim-destegi",
+      "parentId": "tax:services:evde-bakim-ve-destek:evde-bakim-ve-destek-hizmetleri",
+      "canonicalName": "Evde bakım desteği",
       "nodeType": "SERVICE_TYPE",
       "categoryId": "services",
-      "subcategoryId": "diger",
+      "subcategoryId": "evde-bakim-ve-destek",
       "depth": 3,
-      "requestSchemaId": "services/diger",
+      "requestSchemaId": "services/evde-bakim-ve-destek",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "ev yardımcısı",
+        "ev yardimcisi",
+        "evde yardımcı",
+        "evde yardimci",
+        "ev hizmetlisi",
+        "evde hizmetli",
+        "ev işleri yardımcısı",
+        "ev isleri yardimcisi"
+      ],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "SERVICE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:services:evde-bakim-ve-destek:evde-bakim-ve-destek-hizmetleri:ev-yardimcisi-ev-hizmetlisi",
+      "parentId": "tax:services:evde-bakim-ve-destek:evde-bakim-ve-destek-hizmetleri",
+      "canonicalName": "Ev yardımcısı / ev hizmetlisi",
+      "nodeType": "SERVICE_TYPE",
+      "categoryId": "services",
+      "subcategoryId": "evde-bakim-ve-destek",
+      "depth": 3,
+      "requestSchemaId": "services/evde-bakim-ve-destek",
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"

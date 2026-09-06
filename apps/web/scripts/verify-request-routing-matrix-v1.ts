@@ -78,6 +78,20 @@ const fail = (f: Failure) => failures.push(f);
  */
 const DUMP_PATH = process.env.TALEPO_ROUTING_DUMP ?? null;
 
+/**
+ * Büyük katalog koşumunu deterministik kategori dilimlerine ayırmak için
+ * isteğe bağlı filtre. Boş bırakılırsa eski davranış korunur ve tüm katalog
+ * çalışır; örn. TALEPO_ROUTING_CATEGORIES=services,health.
+ */
+const ROUTING_CATEGORIES = new Set(
+  String(process.env.TALEPO_ROUTING_CATEGORIES ?? "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean),
+);
+const includesCategory = (categoryId: string) =>
+  ROUTING_CATEGORIES.size === 0 || ROUTING_CATEGORIES.has(categoryId);
+
 /* ────────────────────── 1) KANONİK ENVANTER ────────────────────── */
 
 ensureTaxonomyLoaded();
@@ -92,7 +106,9 @@ const leafTypes = new Set([
   "COMMODITY_TYPE",
   "TECHNICAL_TYPE",
 ]);
-const leaves = nodes.filter((n) => leafTypes.has(n.nodeType));
+const leaves = nodes.filter(
+  (n) => leafTypes.has(n.nodeType) && includesCategory(n.categoryId),
+);
 const profiles = listAllProfiles();
 const aliasCount = nodes.reduce(
   (s, n) => s + (n.aliases?.length ?? 0) + (n.searchTerms?.length ?? 0),
@@ -529,7 +545,11 @@ const questionContexts: Array<{
   );
 }
 
-for (const ctx of questionContexts) {
+const filteredQuestionContexts = questionContexts.filter((ctx) =>
+  includesCategory(ctx.categoryId),
+);
+
+for (const ctx of filteredQuestionContexts) {
   const schedule = scheduleComposerQuestions({
     categoryId: ctx.categoryId,
     candidates: [],
@@ -592,7 +612,12 @@ for (const ctx of questionContexts) {
 const say = (sinif: Failure["sinif"]) =>
   failures.filter((f) => f.sinif === sinif).length;
 
-console.log("CATEGORIES:", REQUEST_CATEGORIES.length);
+console.log(
+  "CATEGORIES:",
+  ROUTING_CATEGORIES.size > 0
+    ? [...ROUTING_CATEGORIES].sort().join(",")
+    : REQUEST_CATEGORIES.length,
+);
 console.log("LEAF ROUTES:", leaves.length);
 console.log("PROFILES:", profiles.length);
 console.log("ALIASES:", aliasCount);
@@ -607,7 +632,7 @@ console.log("PROBLEMS:", failures.length);
 console.log(
   "PASSED:",
   `routing=${routingOk}/${cases.length}`,
-  `question=${questionOk}`,
+  `question=${questionOk}/${filteredQuestionContexts.length}`,
 );
 
 /* Tekilleştirilmiş küme raporu — hata gizlenmez, kategori/alan bazında

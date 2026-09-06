@@ -862,8 +862,7 @@
         "group": "İnşaat ve iş makineleri",
         "leaves": [
           "Ağaç Yonga Makineleri",
-          "Arazi Ölçümü",
-          "Trafik Konileri ve Silindirleri"
+          "Arazi Ölçümü"
         ]
       },
       {
@@ -932,13 +931,6 @@
           "Sıhhi Tesisat Bağlantı Parçaları",
           "Sıhhi Tesisat Boruları",
           "Tesisat Hortumları ve İkmal Hatları"
-        ]
-      },
-      {
-        "sub": "diger",
-        "group": "Tarım makineleri",
-        "leaves": [
-          "Hayvancılık"
         ]
       },
       {
@@ -1038,31 +1030,6 @@
         ]
       },
       {
-        "sub": "sarf-malzeme",
-        "group": "Kişisel bakım",
-        "leaves": [
-          "Ayak Bakımı",
-          "Ağız Bakımı",
-          "Bronzlaştırıcı Sprey Çadırları",
-          "Cımbızlar",
-          "Deodorantlar ve Ter Önleyiciler",
-          "Göz Bakımı",
-          "Kadın Hijyen Ürünleri",
-          "Kayganlaştırıcılar",
-          "Kozmetik",
-          "Kulak Bakımı",
-          "Kulak Temizleme Çubukları",
-          "Lavman Kitleri ve Malzemeleri",
-          "Makyaj Pamukları",
-          "Masaj ve Rahatlama",
-          "Saç Bakımı",
-          "Solaryum Yatakları",
-          "Sırt Bakımı",
-          "Tıraş ve Kişisel Bakım",
-          "Uyumaya Yardımcı Ürünler"
-        ]
-      },
-      {
         "sub": "klinik-donanim",
         "group": "Klinik ekipmanı",
         "leaves": [
@@ -1072,7 +1039,6 @@
           "Hasta Önlükleri",
           "Hastane Perdeleri",
           "Medikal Ekipmanlar",
-          "Medikal Sarf Malzemeleri",
           "Medikal Yatak Takımları",
           "Tıbbi Aletler",
           "Tıp Eğitimi Ekipmanları"
@@ -1091,30 +1057,24 @@
         "sub": "medikal-cihaz",
         "group": "Sağlık ürünleri",
         "leaves": [
-          "Akupunktur",
-          "Ameliyat Sonrası Bakım Kremleri",
           "Biyometrik Monitör Aksesuarları",
           "Biyometrik Monitörler",
           "Destek ve Bilezikler",
           "Doğum Kontrol Hapı Muhafazaları",
           "Fitness ve Sporcu Besinleri",
-          "Işık Terapisi Lambaları",
           "Medikal Alarm Sistemleri",
           "Medikal Kimlik Etiket ve Takıları",
           "Mobilite ve Kolay Erişim",
           "Numune Kapları",
           "Prezervatifler",
           "Protez Çorapları",
-          "Solunum Güçlüğü Tedavisi",
           "Spermisidler",
-          "Tıbbi Testler",
           "Yatak Lazımlıkları",
           "İlaç Kutuları",
           "İlaçlar",
           "İletkenlik Jelleri ve Losyonları",
           "İlk Yardım",
-          "İnkontinans Yardımcıları",
-          "İş Terapisi ve Fiziksel Terapi Ekipmanları"
+          "İnkontinans Yardımcıları"
         ]
       }
     ],

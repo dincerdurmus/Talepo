@@ -22,9 +22,11 @@
  * yalnız taksonomide düğümü OLMAYAN baş sözcükler için konuşur.
  */
 import {
+  classifyTaxonomyPhrase,
   isCanonicalWholeProductPhrase,
   listCanonicalPhraseNodeTypes,
 } from "@/lib/taxonomy/phrase-classification";
+import { getTaxonomyAncestorIds } from "@/lib/taxonomy";
 
 /** Türkçe katlama — rol kuralı için (KB-12). */
 export function foldRoleToken(value: string): string {
@@ -154,6 +156,11 @@ export const ACCESSORY_LEMMAS = [
   "baslik",
   "şarj",
   "sarj",
+  "çeki demiri",
+  "ceki demiri",
+  "tavan bagaj",
+  "tavan / bagaj",
+  "bagaj sistemi",
 ] as const;
 
 export const SERVICE_LEMMAS = [
@@ -328,6 +335,7 @@ const TAIL_TOKENS: ReadonlySet<string> = new Set([
    * eklenmeden geriye tarama fiilde duruyor ve baş isim hiç bulunmuyordu.
    */
   "almak",
+  "kiralamak",
   /** 98+ Faz I: aciliyet/selamlama sözleri de istek kuyruğudur — "… acil",
    * "Merhaba, …" baş taramasını ve kanonik ifade adayını bozuyordu. */
   "acil",
@@ -369,6 +377,10 @@ const ROLE_BY_HEAD: ReadonlyMap<string, RequestedTargetRole> = new Map([
   ),
   ...SERVICE_LEMMAS.map((l) => [foldRoleToken(l), "SERVICE"] as const),
 ]);
+
+const MAX_ROLE_HEAD_WORDS = Math.max(
+  ...[...ROLE_BY_HEAD.keys()].map((head) => head.split(/\s+/u).length),
+);
 
 /**
  * Bir sözcüğün olası kök biçimleri — Türkçe iyelik eki ve ünsüz yumuşaması.
@@ -506,16 +518,37 @@ export function classifyRequestedTargetRole(
         return verbIdx >= 0 && verbIdx < i;
       })();
     if (isPostVerbServiceHead) continue;
-    for (const f of forms) {
+    // Compound heads share the same vocabulary as single-word heads. Reading
+    // only "demiri"/"bagajı" loses the role of "çeki demiri"/"tavan bagajı".
+    const phraseForms = Array.from(
+      { length: Math.min(MAX_ROLE_HEAD_WORDS, i + 1) },
+      (_, offset) => {
+        const prefix = tokens.slice(i - offset, i).map(foldRoleToken).join(" ");
+        return forms.map((form) => [prefix, form].filter(Boolean).join(" "));
+      },
+    ).reverse().flat();
+    for (const f of phraseForms) {
       const role = ROLE_BY_HEAD.get(f);
       if (role) {
+        const namedProduct = tokens.slice(0, i + 1).join(" ");
+        // A complete catalog product ("beton pompası") is stronger than
+        // the component meaning of its head ("pompa"). Explicit part and
+        // service nodes remain governed by their own role.
+        const types = i > 0 && role === "COMPONENT_OR_ACCESSORY"
+          ? listCanonicalPhraseNodeTypes(namedProduct)
+          : [];
+        if (types.includes("PRODUCT_TYPE") &&
+          !types.includes("PART_TYPE") && !types.includes("SERVICE_TYPE")) {
+          return { role: "WHOLE_PRODUCT", domain: null, head: null,
+            confidence: 0.9, provenance: "TAXONOMY_PHRASE", evidence: [namedProduct] };
+        }
         return {
           role,
           domain: ROLE_VOCABULARY_DOMAIN.get(f) ?? null,
           head: f,
           confidence: 0.8,
           provenance: "ROLE_HEAD_VOCABULARY",
-          evidence: [tokens[i] ?? f],
+          evidence: [tokens.slice(i + 1 - f.split(/\s+/u).length, i + 1).join(" ") || f],
         };
       }
     }
@@ -654,6 +687,17 @@ export function classifyRequestedTargetRole(
   }
 
   return NONE;
+}
+
+/** A named component or catalog object cannot be a whole-vehicle request. */
+export function requestedTargetBlocksVehicle(phrase: string): boolean {
+  const role = classifyRequestedTargetRole(phrase);
+  if (role.role === "COMPONENT_OR_ACCESSORY") return true;
+  const head = role.head ?? (role.provenance === "TAXONOMY_PHRASE" ? role.evidence[0] : null);
+  const node = head ? classifyTaxonomyPhrase(head) : null;
+  return Boolean(node && ![node.id, ...getTaxonomyAncestorIds(node.id)].some(
+    (id) => id.startsWith("tax:automotive:arac-satin-alma"),
+  ));
 }
 
 /**

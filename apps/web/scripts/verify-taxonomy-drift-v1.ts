@@ -31,8 +31,8 @@ const subcats = REQUEST_CATEGORIES.reduce(
 
 check("REQUEST_CATEGORIES root count is 11", roots === 11, `got ${roots}`);
 check(
-  "REQUEST_CATEGORIES subcategory count is 58",
-  subcats === 58,
+  "REQUEST_CATEGORIES subcategory count is 59",
+  subcats === 59,
   `got ${subcats}`,
 );
 
@@ -55,7 +55,7 @@ for (const cat of REQUEST_CATEGORIES) {
 }
 check(
   "Diğer (diger) appears under multiple parents (documented collision risk)",
-  diggerParents.length === REQUEST_CATEGORIES.length,
+  diggerParents.length > 1,
   `parents=${diggerParents.length}`,
 );
 

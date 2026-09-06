@@ -20,6 +20,8 @@ export type BrowseCompositionMode =
 export type BrowseSemanticRole = {
   /** Form/schema needType when known */
   needType: string | null;
+  /** Browse path can pin an unambiguous commercial fact (e.g. second hand). */
+  fixedFields?: Readonly<Record<string, string>>;
   /** Semantic request subject kind */
   subjectKind:
     | "VEHICLE"
@@ -95,6 +97,7 @@ const MACHINERY_BY_SUB: Record<string, BrowseSemanticRole> = {
   },
   "ikinci-el-makine": {
     needType: "machine",
+    fixedFields: { condition: "İkinci el" },
     subjectKind: "INDUSTRIAL_EQUIPMENT",
     compositionMode: "whole_product",
     subjectNounTr: "makine",
@@ -104,12 +107,6 @@ const MACHINERY_BY_SUB: Record<string, BrowseSemanticRole> = {
     subjectKind: "PART",
     compositionMode: "compatibility_part",
     subjectNounTr: "yedek parça",
-  },
-  bakim: {
-    needType: "service",
-    subjectKind: "SERVICE",
-    compositionMode: "service",
-    subjectNounTr: "bakım",
   },
 };
 

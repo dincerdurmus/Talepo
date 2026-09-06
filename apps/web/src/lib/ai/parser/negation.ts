@@ -106,7 +106,8 @@ export function isNegatedMention(
   const nextWords = after.trim().split(/\s+/).slice(0, 2).join(" ");
   if (NEGATION_TAIL.test(nextWords)) return true;
   const before = text.slice(Math.max(0, index - 12), index);
-  if (/\b(hariç|haric|değil|degil)\s*$/i.test(before)) return true;
+  // "X değil Y" rejects X; the following Y is the replacement.
+  if (/\b(hariç|haric)\s*$/i.test(before)) return true;
   return false;
 }
 

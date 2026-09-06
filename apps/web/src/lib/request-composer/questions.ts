@@ -255,7 +255,9 @@ export function resolveHybridQuestions(
       suppressed: [
         state.understanding.requestScope?.value === "UNSUPPORTED_MEDICAL_ADVICE"
           ? "unsupported-medical-advice"
-          : "unsupported-supply",
+          : state.understanding.requestScope?.value === "UNSUPPORTED_REMOVED_SCOPE"
+            ? "unsupported-removed-scope"
+            : "unsupported-supply",
       ],
       candidates: [],
       questionSource: "canonical-hybrid",

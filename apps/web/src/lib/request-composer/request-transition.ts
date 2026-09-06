@@ -39,13 +39,36 @@ const FIELD_ALLOWED_CATEGORIES: Record<string, ReadonlySet<string>> = {
   roomCount: new Set(["real-estate"]),
   floor: new Set(["real-estate"]),
   buildingAge: new Set(["real-estate"]),
+  newBuildPreference: new Set(["real-estate"]),
   heating: new Set(["real-estate"]),
   deedStatus: new Set(["real-estate"]),
+  parking: new Set(["real-estate"]),
+  storefrontNeed: new Set(["real-estate"]),
+  loadingAccess: new Set(["real-estate"]),
+  ceilingHeight: new Set(["real-estate"]),
+  industrialPower: new Set(["real-estate"]),
+  lodgingPermit: new Set(["real-estate"]),
+  businessActivity: new Set(["real-estate"]),
+  transferScope: new Set(["real-estate"]),
+  businessPermitStatus: new Set(["real-estate"]),
+  outbuildingUsage: new Set(["real-estate"]),
+  independentAccess: new Set(["real-estate"]),
+  utilityInfrastructure: new Set(["real-estate"]),
+  cooperativePurpose: new Set(["real-estate"]),
+  cooperativeStage: new Set(["real-estate"]),
+  cooperativeShareCount: new Set(["real-estate"]),
+  cooperativePaymentPlan: new Set(["real-estate"]),
+  tourismFacilityType: new Set(["real-estate"]),
+  tourismOperationStatus: new Set(["real-estate"]),
+  timeshareFacilityType: new Set(["real-estate"]),
+  timesharePeriod: new Set(["real-estate"]),
+  timeshareSeason: new Set(["real-estate"]),
   machineType: new Set(["machinery", "industrial"]),
   capacity: new Set(["machinery", "industrial"]),
   furnitureType: new Set(["furniture"]),
   applianceType: new Set(["appliances"]),
   mileage: new Set(["automotive"]),
+  serviceDate: new Set(["automotive"]),
   fuel: new Set(["automotive"]),
   transmission: new Set(["automotive"]),
   bodyType: new Set(["automotive"]),
@@ -63,6 +86,118 @@ const FIELD_ALLOWED_CATEGORIES: Record<string, ReadonlySet<string>> = {
   ]),
   screenSize: new Set(["technology", "appliances"]),
   resolution: new Set(["technology", "appliances"]),
+  emptyHomeSize: new Set(["services"]),
+  emptyHomeCondition: new Set(["services"]),
+  emptyHomeSupplies: new Set(["services"]),
+  paintArea: new Set(["services"]),
+  paintPrep: new Set(["services"]),
+  paintSupply: new Set(["services"]),
+  balconySize: new Set(["services"]),
+  balconySystem: new Set(["services"]),
+  balconyGlass: new Set(["services"]),
+  boilerBrand: new Set(["services"]),
+  boilerServiceNeed: new Set(["services"]),
+  boilerIssue: new Set(["services"]),
+  boilerUrgency: new Set(["services"]),
+  airConditionerBrand: new Set(["services"]),
+  airConditionerNeed: new Set(["services"]),
+  airConditionerIssue: new Set(["services"]),
+  airConditionerType: new Set(["services", "appliances"]),
+  drivingLicenseClass: new Set(["services"]),
+  drivingLevel: new Set(["services"]),
+  drivingSchedule: new Set(["services"]),
+  wallDecorArea: new Set(["services"]),
+  wallDecorType: new Set(["services"]),
+  wallDecorPrep: new Set(["services"]),
+  electricalWork: new Set(["services"]),
+  electricalPlace: new Set(["services"]),
+  electricalUrgency: new Set(["services"]),
+  partialMoveItems: new Set(["services"]),
+  partialMoveFloors: new Set(["services"]),
+  partialMoveDate: new Set(["services"]),
+  homeDecorScope: new Set(["services"]),
+  homeDecorArea: new Set(["services"]),
+  homeDecorDelivery: new Set(["services"]),
+  homeCleaningSize: new Set(["services"]),
+  homeCleaningFrequency: new Set(["services"]),
+  homeCleaningSupplies: new Set(["services"]),
+  movingHomeSize: new Set(["services"]),
+  movingFloors: new Set(["services"]),
+  movingPacking: new Set(["services"]),
+  movingDate: new Set(["services"]),
+  tileArea: new Set(["services"]),
+  tileSpace: new Set(["services"]),
+  tileRemoval: new Set(["services"]),
+  tileSupply: new Set(["services"]),
+  carpetLoad: new Set(["services"]),
+  carpetPickup: new Set(["services"]),
+  carpetIssue: new Set(["services"]),
+  upholsterySeatCount: new Set(["services"]),
+  upholsteryOnSite: new Set(["services"]),
+  upholsteryIssue: new Set(["services"]),
+  upholsteryFabric: new Set(["services"]),
+  boxDimensions: new Set(["printing"]),
+  boxMaterial: new Set(["printing"]),
+  boxPrintCoverage: new Set(["printing"]),
+  boxDieLine: new Set(["printing"]),
+  boxDesignReady: new Set(["printing"]),
+  labelDimensions: new Set(["printing"]),
+  labelMaterial: new Set(["printing"]),
+  labelAdhesive: new Set(["printing"]),
+  labelFormat: new Set(["printing"]),
+  labelDesignReady: new Set(["printing"]),
+  publicationFormat: new Set(["printing"]),
+  publicationPageCount: new Set(["printing"]),
+  publicationBinding: new Set(["printing"]),
+  publicationPaper: new Set(["printing"]),
+  publicationDesignReady: new Set(["printing"]),
+  flatPrintFormat: new Set(["printing"]),
+  flatPrintSides: new Set(["printing"]),
+  flatPrintPaperWeight: new Set(["printing"]),
+  flatPrintFold: new Set(["printing"]),
+  flatPrintDesignReady: new Set(["printing"]),
+  cardFormat: new Set(["printing"]),
+  cardStock: new Set(["printing"]),
+  cardFinish: new Set(["printing"]),
+  cardDesignReady: new Set(["printing"]),
+  promoTextilePrintMethod: new Set(["printing"]),
+  promoTextileSizing: new Set(["printing"]),
+  promoTextilePlacement: new Set(["printing"]),
+  promoDesignReady: new Set(["printing"]),
+  promoObjectPrintMethod: new Set(["printing"]),
+  promoObjectBrandingArea: new Set(["printing"]),
+  promoObjectPackaging: new Set(["printing"]),
+  largeFormatDimensions: new Set(["printing"]),
+  largeFormatPlacement: new Set(["printing"]),
+  largeFormatInstall: new Set(["printing"]),
+  largeFormatDesignReady: new Set(["printing"]),
+  customPrintSpecs: new Set(["printing"]),
+  customPrintMaterial: new Set(["printing"]),
+  customPrintDesignReady: new Set(["printing"]),
+  medicalDeviceSetting: new Set(["health"]),
+  medicalDeviceCondition: new Set(["health"]),
+  medicalDeviceSpec: new Set(["health"]),
+  medicalDeviceService: new Set(["health"]),
+  clinicalEquipmentMode: new Set(["health"]),
+  clinicalDimensions: new Set(["health"]),
+  clinicalAccessories: new Set(["health"]),
+  clinicalCondition: new Set(["health"]),
+  labUseCase: new Set(["health"]),
+  labDeviceSpec: new Set(["health"]),
+  labCalibration: new Set(["health"]),
+  labCondition: new Set(["health"]),
+  supportProductUsage: new Set(["health"]),
+  supportProductFit: new Set(["health"]),
+  supportProductCondition: new Set(["health"]),
+  supportProductRequirement: new Set(["health"]),
+  homeCareSupportScope: new Set(["services"]),
+  homeCareSchedule: new Set(["services"]),
+  homeCareDuration: new Set(["services"]),
+  homeCareStart: new Set(["services"]),
+  interiorDesignScope: new Set(["services"]),
+  interiorDesignArea: new Set(["services"]),
+  interiorDesignDelivery: new Set(["services"]),
+  interiorDesignStyle: new Set(["services"]),
 };
 
 const NEED_TYPE_CATEGORIES: Record<string, ReadonlySet<string>> = {
@@ -211,6 +346,36 @@ function clearedField(reason: string): CanonicalFieldState {
   };
 }
 
+function fieldValue(
+  fields: Record<string, CanonicalFieldState>,
+  key: string,
+): string {
+  const field = fields[key];
+  return field?.kind === "VALUE" ? String(field.value ?? "").trim() : "";
+}
+
+function clearField(
+  fields: Record<string, CanonicalFieldState>,
+  key: string,
+  reason: string,
+): void {
+  const field = fields[key];
+  if (!field || field.kind === "UNKNOWN") return;
+  fields[key] = clearedField(reason);
+}
+
+function isJantProduct(value: string): boolean {
+  return /(?:^|\s)(?:jant|çelik jant|celik jant|alaşım jant|alasim jant|forged jant)(?:$|\s)/iu.test(
+    value,
+  );
+}
+
+function isTireServiceProduct(value: string): boolean {
+  return /lastik değişimi|lastik degisimi|rot ayarı|rot ayari|balans|lastik otel|lastik saklama|rot balans/iu.test(
+    value,
+  );
+}
+
 /**
  * Drop category-exclusive fields that cannot belong to the current domain.
  * Brand/model/city/condition stay unless they are exclusive (they are not).
@@ -226,7 +391,13 @@ function clearedField(reason: string): CanonicalFieldState {
 export function stripIncompatibleDomainFields(
   fields: Record<string, CanonicalFieldState>,
   categoryId: string | null | undefined,
-  options?: { preserveExplicitText?: boolean },
+  options?: {
+    preserveExplicitText?: boolean;
+    /** Run product-family cleanup for an explicit family switch. */
+    automotiveFamilyTransition?: boolean;
+    /** Distinguish an existing wheel diameter from a previous tire size. */
+    previousFields?: Record<string, CanonicalFieldState>;
+  },
 ): Record<string, CanonicalFieldState> {
   const cat = normalizeCategoryId(categoryId);
   if (!cat) return fields;
@@ -261,6 +432,59 @@ export function stripIncompatibleDomainFields(
     const allowed = NEED_TYPE_CATEGORIES[String(need.value).toLowerCase()];
     if (allowed && !allowed.has(cat)) {
       next.needType = clearedField(`cleared-needType-on-domain-switch:${cat}`);
+    }
+  }
+
+  /**
+   * Product-family changes inside Otomotiv are also request transitions.
+   * Browse answers are intentionally preserved across text edits, but a
+   * previous Lastik flow must not resurrect Mevsim when the user changes to
+   * Jant (or to a service/PPF flow). The same boundary removes stale service
+   * answers from a purchase flow.
+   */
+  if (cat === "automotive" && options?.automotiveFamilyTransition !== false) {
+    const clearFamilyField = (key: string, reason: string) => {
+      // A fresh text/browse answer belongs to the new family. Only stale
+      // values from the previous family may be removed here.
+      if (
+        options?.preserveExplicitText &&
+        next[key]?.provenance === "EXPLICIT_TEXT"
+      ) {
+        return;
+      }
+      clearField(next, key, reason);
+    };
+    const resolvedNeed = fieldValue(next, "needType");
+    const product =
+      fieldValue(next, "productType") || fieldValue(next, "tireItemType");
+    const previousFields = options?.previousFields;
+    const previousProduct = previousFields
+      ? fieldValue(previousFields, "productType") || fieldValue(previousFields, "tireItemType")
+      : "";
+    if (resolvedNeed !== "tire") {
+      for (const key of ["tireItemType", "tireSize", "tireSeason", "tireQuantity", "serviceDate"]) {
+        clearFamilyField(key, `cleared-on-automotive-family-switch:${resolvedNeed || "unknown"}`);
+      }
+    } else if (isTireServiceProduct(product)) {
+      for (const key of ["tireItemType", "tireSize", "tireSeason"]) {
+        clearFamilyField(key, "cleared-on-tire-service-family-switch");
+      }
+    } else if (isJantProduct(product)) {
+      // tireSize holds a diameter once the user is already in the wheel
+      // flow. Rebuilding that request must not erase its browse answer.
+      if (!isJantProduct(previousProduct)) {
+        clearFamilyField("tireSize", "cleared-on-jant-family-switch");
+      }
+      for (const key of ["tireSeason", "serviceDate", "serviceType"]) {
+        clearFamilyField(key, "cleared-on-jant-family-switch");
+      }
+    } else {
+      if (product && isJantProduct(previousProduct)) {
+        clearFamilyField("tireSize", "cleared-on-tire-purchase-family-switch");
+      }
+      for (const key of ["serviceDate", "serviceType"]) {
+        clearFamilyField(key, "cleared-on-tire-purchase-family-switch");
+      }
     }
   }
 

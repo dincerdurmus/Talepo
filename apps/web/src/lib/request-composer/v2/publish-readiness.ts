@@ -51,6 +51,9 @@ export const OUT_OF_SCOPE_EDIT_ACTION = "Metnimi düzenle";
 export const OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE =
   "Talepo, ürün veya hizmet arayanların talep oluşturduğu bir platformdur. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; bunun için lütfen bir eczacıya veya hekime başvurun. Bir sağlık ürünü satın almak istiyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"ağrı kesici arıyorum\".";
 
+export const OUT_OF_SCOPE_REMOVED_NOTICE =
+  "Bu tıbbi test / tahlil hizmeti şu an Talepo'da aktif bir kategori olarak sunulmuyor. Talep Teknik Servis'e veya başka bir aktif kategoriye yönlendirilmez.";
+
 export function computeComposerPublishReadiness(input: {
   hasUsableText: boolean;
   schedule: ScheduleResult;
@@ -81,7 +84,9 @@ export function computeComposerPublishReadiness(input: {
       outOfScopeNotice:
         input.requestScope === "UNSUPPORTED_MEDICAL_ADVICE"
           ? OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE
-          : OUT_OF_SCOPE_SUPPLY_NOTICE,
+          : input.requestScope === "UNSUPPORTED_REMOVED_SCOPE"
+            ? OUT_OF_SCOPE_REMOVED_NOTICE
+            : OUT_OF_SCOPE_SUPPLY_NOTICE,
       editActionLabel: OUT_OF_SCOPE_EDIT_ACTION,
     };
   }

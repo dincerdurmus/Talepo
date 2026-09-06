@@ -1049,6 +1049,28 @@
     {
       "aliases": [],
       "searchTerms": [
+        "Emzik aksesuarı"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:baby:beslenme:beslenme-urunleri:emzik-aksesuari",
+      "parentId": "tax:baby:beslenme:beslenme-urunleri",
+      "canonicalName": "Emzik aksesuarı",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "baby",
+      "subcategoryId": "beslenme",
+      "depth": 3,
+      "requestSchemaId": "baby/beslenme",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "e-bebek"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
         "Bebek Yatağı"
       ],
       "applicableCapabilities": [
@@ -1113,7 +1135,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek oyun ve gezi ürünü"
+      ],
       "searchTerms": [],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
@@ -1356,7 +1380,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek bezi çöp kovası"
+      ],
       "searchTerms": [
         "Bebek Bezi Çöp Kovaları"
       ],
@@ -1616,7 +1642,11 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek sağlık bakım ürünü",
+        "bebek sağlık bakım seti",
+        "bebek bakım seti"
+      ],
       "searchTerms": [
         "Bebek Sağlığı ve Bakım Setleri"
       ],
@@ -1704,7 +1734,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "anne sütü saklama poşeti",
+        "anne sütü saklama kabı"
+      ],
       "searchTerms": [
         "Anne Sütü Depolama Kapları"
       ],
@@ -1770,7 +1803,11 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "biberon sterilizatörü",
+        "bebek biberon sterilizatörü",
+        "biberon ısıtıcı"
+      ],
       "searchTerms": [
         "Biberon Isıtıcı ve Sterilizatörler"
       ],
@@ -1792,7 +1829,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "biberon ucu"
+      ],
       "searchTerms": [
         "Biberon Uçları ve Eklentileri"
       ],
@@ -2164,7 +2203,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek arabası aksesuarı"
+      ],
       "searchTerms": [
         "Bebek Arabası Aksesuarları"
       ],
@@ -2208,7 +2249,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "oto koltuğu aksesuarı"
+      ],
       "searchTerms": [
         "Bebek ve Küçük Çocuk Oto Koltuğu Aksesuarları"
       ],
@@ -2230,7 +2273,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "kanguru aksesuarı"
+      ],
       "searchTerms": [
         "Kanguru Aksesuarları"
       ],
@@ -2538,7 +2583,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek oyuncağı"
+      ],
       "searchTerms": [],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
@@ -3194,7 +3241,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "bebek lazımlığı",
+        "lazımlık"
+      ],
       "searchTerms": [
         "Lazımlıklar"
       ],

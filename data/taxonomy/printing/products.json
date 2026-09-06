@@ -21,7 +21,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "karton kutu"
+      ],
       "searchTerms": [],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
@@ -1994,7 +1996,8 @@
     {
       "aliases": [
         "rollup",
-        "roll up"
+        "roll up",
+        "roll-up"
       ],
       "searchTerms": [
         "Roll-up Banner"

@@ -612,7 +612,9 @@
     },
     {
       "aliases": [
-        "oven dish"
+        "oven dish",
+        "fırın kabı",
+        "borcam"
       ],
       "searchTerms": [
         "Fırın kabı / borcam"
@@ -676,7 +678,10 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "mutfak gereçleri",
+        "mutfak gereci"
+      ],
       "searchTerms": [],
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
@@ -839,7 +844,9 @@
         "batarya",
         "musluk",
         "faucet",
-        "armatür"
+        "armatür",
+        "mutfak bataryası",
+        "mutfak musluğu"
       ],
       "searchTerms": [
         "Batarya / musluk"
@@ -977,6 +984,48 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:bahce-ve-dis-mekan",
+      "parentId": "tax:home-kitchen:diger",
+      "canonicalName": "Bahçe ve dış mekan",
+      "nodeType": "GROUP",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 2,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [
+        "Bahçe hortumu"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:home-kitchen:diger:bahce-ve-dis-mekan:bahce-hortumu",
+      "parentId": "tax:home-kitchen:diger:bahce-ve-dis-mekan",
+      "canonicalName": "Bahçe hortumu",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "home-kitchen",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "home-kitchen/diger",
+      "provenance": {
+        "source": "harvest-2026-08-22",
+        "note": "MediaMarkt + Koçtaş"
       }
     },
     {
@@ -1788,7 +1837,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "kilim"
+      ],
       "searchTerms": [
         "Kilimler"
       ],
@@ -2602,7 +2653,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "vazo"
+      ],
       "searchTerms": [
         "Vazolar"
       ],
@@ -3062,7 +3115,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "ev düzenleme ürünü"
+      ],
       "searchTerms": [
         "Saklama ve Düzenleme"
       ],
@@ -3326,7 +3381,9 @@
       }
     },
     {
-      "aliases": [],
+      "aliases": [
+        "prefabrike mutfak"
+      ],
       "searchTerms": [
         "Prefabrike Mutfaklar"
       ],

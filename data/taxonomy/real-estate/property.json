@@ -535,7 +535,8 @@
     },
     {
       "aliases": [
-        "işyeri"
+        "işyeri",
+        "iş yeri"
       ],
       "searchTerms": [
         "Ofis"
@@ -581,7 +582,10 @@
     },
     {
       "aliases": [
-        "warehouse"
+        "warehouse",
+        "depo",
+        "deposu",
+        "antrepo"
       ],
       "searchTerms": [
         "Depo / antrepo"
@@ -941,6 +945,30 @@
       "id": "tax:real-estate:diger:diger-emlak:turistik-tesis",
       "parentId": "tax:real-estate:diger:diger-emlak",
       "canonicalName": "Turistik tesis",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "real-estate",
+      "subcategoryId": "diger",
+      "depth": 3,
+      "requestSchemaId": "real-estate/diger",
+      "provenance": {
+        "source": "talepo-master-taxonomy-v1",
+        "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [
+        "devre mulk"
+      ],
+      "searchTerms": [
+        "Devre mülk"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:real-estate:diger:diger-emlak:devre-mulk",
+      "parentId": "tax:real-estate:diger:diger-emlak",
+      "canonicalName": "Devre mülk",
       "nodeType": "PRODUCT_TYPE",
       "categoryId": "real-estate",
       "subcategoryId": "diger",

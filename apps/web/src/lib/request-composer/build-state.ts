@@ -18,6 +18,7 @@ import {
   findTaxonomyTypeUnderSubcategory,
   getTaxonomyNode,
 } from "@/lib/taxonomy";
+import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
 
 import {
   isHedgedExpression,
@@ -44,6 +45,7 @@ import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/acti
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { inferenceOnlyMarkerKey } from "@/lib/knowledge/inference-marker";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
+import { withoutRejectedTireMentions } from "@/lib/request-understanding/tire-request-context";
 import {
   classifyRequestedTargetRole,
   isRequestedItemNotModel,
@@ -306,6 +308,36 @@ function coversAllTokens(whole: string, part: string): boolean {
   return needles.every((n) => haystack.some((h) => h.startsWith(n)));
 }
 
+/** Keep location and generic relationship words out of the part field. */
+function cleanRequestedPartLabel(value: string, rawInput: string): string {
+  let result = value.trim();
+  const location = findProvinceAndDistrictInText(rawInput);
+  if (location) {
+    for (const place of [location.ilce, location.il]) {
+      if (!place?.trim()) continue;
+      const escaped = place.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      result = result
+        .replace(
+          new RegExp(
+            `\\s+${escaped}(?:['’]?(?:da|de|dan|den|ta|te|tan|ten))?\\s*$`,
+            "iu",
+          ),
+          "",
+        )
+        .trim();
+    }
+  }
+  // "Ön far yedek parçası" describes the same requested part as "ön far".
+  // Do not collapse a standalone generic "yedek parça" label to empty.
+  if (
+    result.length > "yedek parça".length + 1 &&
+    /\s+yedek\s+parças[ıi]\s*$/iu.test(result)
+  ) {
+    result = result.replace(/\s+yedek\s+parças[ıi]\s*$/iu, "").trim();
+  }
+  return result;
+}
+
 /**
  * Kaçamak seçenekler kanıt sayılmaz: "Fark etmez" yazmak bir tercih beyanı
  * değildir, tercih YOKLUĞUDUR.
@@ -435,13 +467,35 @@ function bindWrittenOptionValues(
   const boundProductType =
     fields.productType?.kind === "VALUE"
       ? String(fields.productType.value ?? "")
+      : fields.solutionType?.kind === "VALUE"
+        ? String(fields.solutionType.value ?? "")
       : fields.applianceType?.kind === "VALUE"
         ? String(fields.applianceType.value ?? "")
-        : null;
-  for (const def of listProfilesForCategory({
+        : fields.furnitureType?.kind === "VALUE"
+          ? String(fields.furnitureType.value ?? "")
+          : fields.babyProductType?.kind === "VALUE"
+            ? String(fields.babyProductType.value ?? "")
+          : fields.kitchenProductType?.kind === "VALUE"
+            ? String(fields.kitchenProductType.value ?? "")
+            : fields.tireItemType?.kind === "VALUE"
+              ? String(fields.tireItemType.value ?? "")
+            : null;
+  const boundNeedType =
+    fields.needType?.kind === "VALUE"
+      ? String(fields.needType.value ?? "")
+      : null;
+  const boundProfiles = listProfilesForCategory({
     categoryId,
     productType: boundProductType,
-  })) {
+    needType: boundNeedType,
+  });
+  if (boundProfiles.some((profile) => profile.fieldKey === "generatorPower")) {
+    const powers = [...raw.matchAll(/\b(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?)\s*kva\b/gi)]
+      .filter((match) => !qualifierNear(raw, match[0]));
+    const power = powers.at(-1);
+    if (power) fields.generatorPower = valueField(`${power[1].replace(/\s+/g, "")} kVA`, "EXPLICIT_TEXT", 0.95, [power[0]]);
+  }
+  for (const def of boundProfiles) {
     if (!def.quickChoices?.length) continue;
     if (optionDefs.some((d) => d.key === def.fieldKey)) continue;
     /**
@@ -484,7 +538,22 @@ function bindWrittenOptionValues(
     let canonicalSlug: string | null = null;
     let evidence: string | null = null;
 
-    for (const opt of def.options) {
+    /**
+     * "Yalı" ile "Yalı Dairesi" gibi iç içe kanonik seçeneklerde kısa
+     * etiket önce gelirse doğru ürün ailesi sessizce ezilir. Tam ifade
+     * eşleşmeleri en uzun seçenekten başlatılır; eşitlikte kaynak sırası
+     * korunur. Bu, tüm kategori sözleşmeleri için tek bağlama kuralıdır.
+     */
+    const optionsBySpecificity = [...def.options].sort((left, right) => {
+      const lengthOf = (option: { label?: string; value?: string }) =>
+        Math.max(
+          foldPartToken(String(option.label ?? "")).replace(/[^a-z0-9]+/g, " ").trim().length,
+          foldPartToken(String(option.value ?? "")).replace(/[^a-z0-9]+/g, " ").trim().length,
+        );
+      return lengthOf(right) - lengthOf(left);
+    });
+
+    for (const opt of optionsBySpecificity) {
       const canonicalValue = String(opt.value ?? opt.label ?? "").trim();
       const canonicalLabel = String(opt.label ?? opt.value ?? "").trim();
       if (!canonicalValue) continue;
@@ -640,8 +709,9 @@ function isCleanEnrichedPartLabel(
  * sol taraf gerçek üst üründür ve ipucu üretmesi DOĞRUdur.
  */
 function resolveProductHint(
-  raw: string,
+  input: string,
 ): ReturnType<typeof extractProductTypeHint> {
+  const raw = withoutRejectedTireMentions(input);
   const usage = readUsageContextSplit(raw);
   if (!usage) return extractProductTypeHint(raw);
   const hint = extractProductTypeHint(usage.target);
@@ -783,7 +853,11 @@ export function mapUnderstandingToFields(
     fields.condition = unknownField();
   }
 
-  if (result.subject.productType?.value) {
+  const understoodProduct = String(result.subject.productType?.value ?? "");
+  const moreSpecificProduct = productHint && understoodProduct &&
+    productHint.productType.length > understoodProduct.length &&
+    foldPartToken(productHint.productType).includes(foldPartToken(understoodProduct));
+  if (result.subject.productType?.value && !moreSpecificProduct) {
     fields.productType = valueField(
       String(result.subject.productType.value),
       mapRuProvenance(
@@ -1038,7 +1112,10 @@ export function mapUnderstandingToFields(
         partLabel = candidate;
       }
     }
-    partLabel = partLabel.replace(/^\s*için\s+/iu, "").trim();
+    partLabel = cleanRequestedPartLabel(
+      partLabel.replace(/^\s*için\s+/iu, "").trim(),
+      rawPhrase,
+    );
     if (partLabel) {
       fields.part = valueField(
         partLabel,
@@ -1267,6 +1344,19 @@ function taxonomyFromUnderstanding(
   let taxonomyNodeId = productHint?.taxonomyNodeId ?? null;
   let subcategorySlug: string | null = null;
 
+  // Tavan/bagaj sistemleri is a curated automotive accessory leaf. The
+  // phrase is also noisy in generic role vocabulary (and was previously
+  // falling back to the broad PART -> Yedek Parça route), so pin the exact
+  // taxonomy leaf before the generic automotive subject fallback below.
+  if (
+    categoryId === "automotive" &&
+    /tavan\s+bagaj|bagaj\s+sistemi/iu.test(result.rawInput ?? "")
+  ) {
+    taxonomyNodeId =
+      "tax:automotive:diger:diger-otomotiv:aksesuar:tavan-bagaj-sistemleri";
+    subcategorySlug = "diger";
+  }
+
   if (taxonomyNodeId) {
     const node = getTaxonomyNode(taxonomyNodeId);
     if (node) {
@@ -1296,6 +1386,18 @@ function taxonomyFromUnderstanding(
       } else {
         categoryId = node.categoryId;
         subcategorySlug = node.subcategoryId ?? null;
+        if (
+          node.categoryId === "real-estate" &&
+          node.nodeType === "PRODUCT_TYPE" &&
+          (!fields.propertyType || fields.propertyType.kind === "UNKNOWN")
+        ) {
+          fields.propertyType = valueField(
+            node.canonicalName,
+            "EXPLICIT_TEXT",
+            0.85,
+            ["taxonomy-property-type"],
+          );
+        }
       }
     }
   } else if (fields.productType?.kind === "VALUE" && fields.productType.value) {
@@ -1317,10 +1419,7 @@ function taxonomyFromUnderstanding(
       subcategorySlug = "lastik-ve-jant";
     } else if (
       need === "vehicle" ||
-      subject === "VEHICLE" ||
-      result.intent.value === "BUY" ||
-      result.intent.value === "SELL" ||
-      result.intent.value === "RENT"
+      subject === "VEHICLE"
     ) {
       subcategorySlug = "arac-satin-alma";
     }
@@ -1343,18 +1442,22 @@ function taxonomyFromUnderstanding(
     ).toLocaleLowerCase("tr-TR");
 
     if (!subcategorySlug) {
-      if (listing.includes("kiralık") || /\bkiralık\b/.test(raw)) {
+      if (/\b(arsa|tarla)\b/.test(raw) || propHint.includes("arsa") || propHint.includes("tarla")) {
+        subcategorySlug = "arsa";
+      } else if (
+        /\b(devre\s+mülk|devre\s+mulk|devren\s+işyeri|devren\s+isyeri|müştemilat|mustemilat|kooperatif\s+hissesi|turistik\s+tesis)\b/.test(raw) ||
+        /\b(devre\s+mülk|devre\s+mulk|devren\s+işyeri|devren\s+isyeri|müştemilat|mustemilat|kooperatif\s+hissesi|turistik\s+tesis)\b/.test(propHint)
+      ) {
+        subcategorySlug = "diger";
+      } else if (
+        /\b(dükkan|dukkan|mağaza|magaza|ofis|plaza|işyeri|isyeri|depo|antrepo|fabrika|imalathane|otel|apart|avm)\b/.test(raw) ||
+        /\b(dükkan|dukkan|mağaza|magaza|ofis|plaza|işyeri|isyeri|depo|antrepo|fabrika|imalathane|otel|apart|avm)\b/.test(propHint)
+      ) {
+        subcategorySlug = "ticari-gayrimenkul";
+      } else if (listing.includes("kiralık") || /\bkiralık\b/.test(raw)) {
         subcategorySlug = "kiralik-konut";
       } else if (listing.includes("satılık") || /\bsatılık\b/.test(raw)) {
         subcategorySlug = "satilik-konut";
-      } else if (/\b(arsa|tarla)\b/.test(raw) || propHint.includes("arsa")) {
-        subcategorySlug = "arsa";
-      } else if (
-        /\b(dükkan|dukkan|ofis|işyeri|isyeri|depo)\b/.test(raw) ||
-        propHint.includes("ofis") ||
-        propHint.includes("dükkan")
-      ) {
-        subcategorySlug = "ticari-gayrimenkul";
       } else if (
         /\b(daire|villa|rezidans|konut|ev|stüdyo|studyo|dubleks)\b/.test(raw) ||
         /\b(daire|villa|ev)\b/.test(propHint)
@@ -1365,28 +1468,78 @@ function taxonomyFromUnderstanding(
     }
 
     if (!taxonomyNodeId && subcategorySlug) {
+      const foldedPropertyHint = foldPartToken(propHint);
+      const foldedRaw = foldPartToken(raw);
+      const hasPropertyPhrase = (...phrases: string[]) =>
+        phrases.some((phrase) => {
+          const foldedPhrase = foldPartToken(phrase);
+          return (
+            foldedHasWord(foldedPropertyHint, foldedPhrase) ||
+            foldedHasWord(foldedRaw, foldedPhrase)
+          );
+        });
       const typeToken =
-        /\bdaire\b/.test(propHint) || /\bdaire\b/.test(raw)
-          ? "daire"
-          : /\brezidans\b/.test(propHint) || /\brezidans\b/.test(raw)
-            ? "rezidans"
-            : /\bvilla\b/.test(propHint) || /\bvilla\b/.test(raw)
-              ? "villa"
-              : /\bmüstakil\b/.test(raw)
-                ? "müstakil ev"
-                : /\byalı\b/.test(raw)
-                  ? "yalı"
-                  : propHint.trim() &&
-                      !/^(gayrimenkul|emlak|konut)$/i.test(propHint.trim())
-                    ? propHint.trim()
-                    : null;
+        hasPropertyPhrase("devre mülk", "devre mulk")
+          ? "devre mülk"
+          : hasPropertyPhrase("devren işyeri", "devren isyeri")
+          ? "devren işyeri"
+          : hasPropertyPhrase("müştemilat", "mustemilat")
+            ? "müştemilat"
+            : hasPropertyPhrase("kooperatif hissesi")
+              ? "kooperatif hissesi"
+              : hasPropertyPhrase("turistik tesis")
+                ? "turistik tesis"
+                : hasPropertyPhrase("plaza ofisi")
+                  ? "plaza ofisi"
+                  : hasPropertyPhrase("dükkan", "dukkan", "mağaza", "magaza")
+            ? "dükkan / mağaza"
+            : hasPropertyPhrase("depo", "antrepo")
+              ? "depo / antrepo"
+              : hasPropertyPhrase("fabrika", "imalathane")
+                ? "fabrika / imalathane"
+                : hasPropertyPhrase("avm ünitesi", "avm unitesi")
+                  ? "avm ünitesi"
+                  : hasPropertyPhrase("otel", "apart")
+                    ? "otel / apart"
+                    : hasPropertyPhrase("ofis")
+                      ? "ofis"
+                      : hasPropertyPhrase("yalı dairesi", "yali dairesi")
+                        ? "yalı dairesi"
+                        : hasPropertyPhrase("çiftlik evi", "ciftlik evi")
+                          ? "çiftlik evi"
+                          : hasPropertyPhrase("müstakil", "mustakil")
+                            ? "müstakil ev"
+                            : hasPropertyPhrase("köşk", "kosk")
+                              ? "köşk & konak"
+                              : hasPropertyPhrase("daire")
+                                ? "daire"
+                                : hasPropertyPhrase("rezidans", "residans")
+                                  ? "rezidans"
+                                  : hasPropertyPhrase("villa")
+                                    ? "villa"
+                                    : hasPropertyPhrase("yalı", "yali")
+                                      ? "yalı"
+                                      : propHint.trim() &&
+                                          !/^(gayrimenkul|emlak|konut)$/i.test(propHint.trim())
+                                        ? propHint.trim()
+                                        : null;
       if (typeToken) {
         const hit = findTaxonomyTypeUnderSubcategory(
           "real-estate",
           subcategorySlug,
           typeToken,
         );
-        if (hit) taxonomyNodeId = hit.id;
+        if (hit) {
+          taxonomyNodeId = hit.id;
+          if (!fields.propertyType || fields.propertyType.kind === "UNKNOWN") {
+            fields.propertyType = valueField(
+              hit.canonicalName,
+              "EXPLICIT_TEXT",
+              0.85,
+              ["taxonomy-property-type"],
+            );
+          }
+        }
       }
     }
   }
@@ -1609,14 +1762,14 @@ export function mergePreservedBrowseFields(
   fromUnderstanding: Record<string, CanonicalFieldState>,
   previous: Record<string, CanonicalFieldState> | undefined,
   lastUserAction: LastUserAction,
-  rawInputs?: { previous?: string; current?: string },
+  rawInputs?: { previous?: string; previousComposed?: string; current?: string },
 ): Record<string, CanonicalFieldState> {
   if (!previous) return fromUnderstanding;
 
   const next = { ...fromUnderstanding };
   for (const [key, prevField] of Object.entries(previous)) {
     if (prevField.provenance !== "EXPLICIT_BROWSE") continue;
-    if (prevField.kind === "UNKNOWN") continue;
+    if (prevField.kind === "UNKNOWN" && !isDeliberateNonValueAnswer(prevField)) continue;
 
     const incoming = next[key];
     if (!incoming || incoming.kind === "UNKNOWN") {
@@ -1626,9 +1779,17 @@ export function mergePreservedBrowseFields(
 
     // An unchanged phrase from the old text is not a fresh user statement —
     // the explicit answer (browse/question flow) stays authoritative.
+    // Tire-family selections rewrite the displayed subject. Compare against
+    // that text so returning to the original "Lastik" after choosing "Jant"
+    // is treated as a new family choice, not a replay of the bootstrap text.
+    const previousText =
+      (key === "productType" || key === "tireItemType") &&
+      previous.needType?.value === "tire"
+        ? rawInputs?.previousComposed ?? rawInputs?.previous
+        : rawInputs?.previous;
     if (
       incoming.provenance === "EXPLICIT_TEXT" &&
-      isStaleTextRestatement(incoming, rawInputs?.previous, rawInputs?.current)
+      isStaleTextRestatement(incoming, previousText, rawInputs?.current)
     ) {
       next[key] = prevField;
       continue;
@@ -1693,7 +1854,7 @@ export function preserveValidCommonBrowseAnswers(
   const next = { ...nextFields };
   for (const [key, prev] of Object.entries(previousFields)) {
     if (prev.provenance !== "EXPLICIT_BROWSE") continue;
-    if (prev.kind === "UNKNOWN") continue;
+    if (prev.kind === "UNKNOWN" && !isDeliberateNonValueAnswer(prev)) continue;
     if (!stillValid.has(key)) continue;
     /**
      * EN SON AÇIK BEYAN KAZANIR — KANONİK ALAN ÜRETMEDEN.
@@ -1721,6 +1882,33 @@ export function preserveValidCommonBrowseAnswers(
   return next;
 }
 
+/** Only common answers cross a change of product question family. The
+ * family and its keys come from the same profiles used by the form. */
+function previousFieldsForProduct(
+  previous: CanonicalRequestState,
+  fresh: Record<string, CanonicalFieldState>,
+  understanding: RequestUnderstandingResult,
+) {
+  if (previous.categoryId === "automotive") return previous.fields;
+  const categoryId = taxonomyFromUnderstanding(understanding, fresh).categoryId;
+  if (!categoryId || categoryId !== previous.categoryId) return previous.fields;
+  const profiles = (fields: Record<string, CanonicalFieldState>) => {
+    const value = (key: string) => fields[key]?.kind === "VALUE" ? fields[key].value : null;
+    const productType = (categoryId === "services" ? value("serviceType") : null) ||
+      value("productType") || value("propertyType") || value("applianceType") ||
+      value("furnitureType") || value("machineType") || value("babyProductType") || value("kitchenProductType");
+    return productType ? listProfilesForCategory({ categoryId, productType, needType: value("needType") }) : null;
+  };
+  const before = profiles(previous.fields);
+  const after = profiles(fresh);
+  if (!before || !after) return previous.fields;
+  const signature = (items: typeof before) => items.map((item) => item.fieldKey).sort().join("|");
+  if (signature(before) === signature(after)) return previous.fields;
+  const common = new Set<string>((REQUEST_CATEGORIES.find((category) => category.id === categoryId)?.commonFields ?? []).map((field) => field.key));
+  const scoped = new Set(before.map((profile) => profile.fieldKey).filter((key) => !common.has(key)));
+  return Object.fromEntries(Object.entries(previous.fields).filter(([key]) => !scoped.has(key)));
+}
+
 export function buildCanonicalRequestState(input: {
   understanding: RequestUnderstandingResult;
   browseFields?: Record<string, string>;
@@ -1735,16 +1923,25 @@ export function buildCanonicalRequestState(input: {
   const lastAction =
     input.lastUserAction ?? input.previous?.lastUserAction ?? "text";
   const mapped = mapUnderstandingToFields(input.understanding);
+  // A precise taxonomy hint can establish the category after the initial
+  // understanding pass (e.g. a generator preceded by its kVA rating). Apply
+  // the same need-type authority against that resolved category before merge.
+  const mappedCategory = taxonomyFromUnderstanding(input.understanding, mapped).categoryId;
+  if (mappedCategory && (!mapped.needType || mapped.needType.kind === "UNKNOWN")) {
+    const seed = deriveExplicitNeedType(input.understanding, mappedCategory);
+    if (seed) mapped.needType = valueField(seed.value, "EXPLICIT_TEXT", 0.85, seed.evidence);
+  }
   let fields = mergeBrowseFieldBag(mapped, input.browseFields, lastAction);
 
   // Progressive text path: preserve browse pins; never keep stale text inference
   if (input.progressiveReset && input.previous?.fields) {
     fields = mergePreservedBrowseFields(
       fields,
-      input.previous.fields,
+      previousFieldsForProduct(input.previous, fields, input.understanding),
       lastAction,
       {
         previous: input.previous.understanding?.rawInput,
+        previousComposed: input.previous.lastComposedText,
         current: input.understanding.rawInput,
       },
     );
@@ -1787,10 +1984,28 @@ export function buildCanonicalRequestState(input: {
     );
   }
 
+  // “Sıfır bina” emlakta ürün kondisyonu değildir. Seçenek bağlayıcısı
+  // etiketteki kısa “sıfır” sözcüğünü tek başına yakalasa bile, burada onu
+  // yeni bina tercihinin kanonik değerine çeviririz.
+  if (
+    categoryId === "real-estate" &&
+    fields.newBuildPreference?.kind === "VALUE" &&
+    /^(sıfır|sifir|yeni)$/i.test(
+      String(fields.newBuildPreference.value ?? "").trim(),
+    )
+  ) {
+    fields.newBuildPreference = {
+      ...fields.newBuildPreference,
+      value: "Yeni bina şart",
+      canonicalValue: "Yeni bina şart",
+    };
+  }
+
   /* Metinden AZ ÖNCE çözülen açık beyan bayat sayılmaz — bkz.
      stripIncompatibleDomainFields (98+ Faz I). */
   fields = stripIncompatibleDomainFields(fields, categoryId, {
     preserveExplicitText: true,
+    previousFields: input.progressiveReset ? input.previous?.fields : undefined,
   });
 
   return {
@@ -1896,6 +2111,7 @@ export function getFieldKind(
  */
 export function deriveExplicitNeedType(
   result: RequestUnderstandingResult,
+  categoryId = result.category.value,
 ): { value: string; evidence: string[] } | null {
   const intentObj = result.intent;
   const kindRec = result.requestSubject?.kind;
@@ -1908,7 +2124,7 @@ export function deriveExplicitNeedType(
      Belirsiz dallar 0.4-0.6 bandındadır; niyet kapısı (CONFIDENT) ayrıca durur. */
   if (!intentConfident || kindConf < 0.7) return null;
   const schemaVals = new Set(
-    (REQUEST_CATEGORIES.find((c) => c.id === result.category.value)?.fields ?? [])
+    (REQUEST_CATEGORIES.find((c) => c.id === categoryId)?.fields ?? [])
       .filter((f) => f.key === "needType")
       .flatMap((f) => f.options ?? [])
       .map((o) => String(o.value ?? "")),
@@ -1934,7 +2150,7 @@ export function deriveExplicitNeedType(
        "muhasebe yazılımı arıyorum" hardware'e KAPANAMAZ (ölçüldü —
        yanlış değerle kapatmak sormaktan beterdir); eksen belirsizse null
        döner ve soru şema seçenekleriyle sorulur. */
-    if (result.category.value === "technology") {
+    if (categoryId === "technology") {
       const raw = String(result.rawInput ?? "");
       const hw = TECH_HARDWARE_SIGNAL.test(raw);
       const sw = TECH_SOFTWARE_SIGNAL.test(raw);

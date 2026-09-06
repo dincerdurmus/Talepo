@@ -521,6 +521,41 @@ function realEstatePropertyTypeLeaves(
   return out;
 }
 
+/**
+ * Ev & Mutfak'ta "Diğer" bir ürün ailesi değildir: altında altı gerçek
+ * aile bulunur. Bunları kökte gösteririz; ham taxonomy düğüm kimlikleri ve
+ * geçmiş seçimler değişmeden kalır. Böylece kullanıcı "Diğer"e girip yüz
+ * yirmi ürünü taramak zorunda kalmaz.
+ */
+function homeKitchenRootFamilies(): BrowseNode[] {
+  const categoryId = "home-kitchen";
+  const category = getCategoryById(categoryId);
+  const explicitFamilies = (category?.subcategories ?? [])
+    .filter((label) => label !== "Diğer")
+    .map((label) => {
+      const slug = subcategorySlug(label);
+      return node({
+        id: `${categoryId}/${slug}`,
+        kind: "subcategory",
+        label,
+        categoryId,
+        parentId: categoryId,
+        hasChildren: true,
+        meta: { subcategorySlug: slug },
+      });
+    });
+
+  ensureTaxonomyLoaded();
+  const otherRoot = getSubcategoryTaxonomyNode(categoryId, "diger");
+  const formerlyOtherFamilies = otherRoot
+    ? getTaxonomyChildren(otherRoot.id)
+        .filter((child) => child.nodeType === "GROUP")
+        .map((child) => taxonomyToBrowse(child, categoryId))
+    : [];
+
+  return [...explicitFamilies, ...formerlyOtherFamilies];
+}
+
 export function getCategoryChildren(categoryId: string): BrowseNode[] {
   const cat = getCategoryById(categoryId);
   if (
@@ -535,6 +570,10 @@ export function getCategoryChildren(categoryId: string): BrowseNode[] {
 
   if (categoryId === "real-estate") {
     return realEstateRootSegments();
+  }
+
+  if (categoryId === "home-kitchen") {
+    return homeKitchenRootFamilies();
   }
 
   return real.subcategories.flatMap((label) => {

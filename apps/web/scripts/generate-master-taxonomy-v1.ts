@@ -7,6 +7,7 @@ import path from "node:path";
 
 import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
 import { subcategorySlug, foldLabel } from "../src/lib/knowledge/slug";
+import requestFamilyAliases from "../../../data/taxonomy-sources/request-family-aliases.json";
 import type {
   TaxonomyNode,
   TaxonomyNodeType,
@@ -230,7 +231,6 @@ function leafTypeFor(categoryId: string, subSlug: string): TaxonomyNodeType {
   if (categoryId === "automotive" && subSlug === "arac-bakim") return "SERVICE_TYPE";
   if (categoryId === "technology" && (subSlug === "yazilim-gelistirme" || subSlug === "web-sitesi"))
     return "SERVICE_TYPE";
-  if (categoryId === "health" && subSlug === "sarf-malzeme") return "COMMODITY_TYPE";
   if (categoryId === "printing" && subSlug.includes("malzeme")) return "COMMODITY_TYPE";
   if (categoryId === "automotive" && subSlug === "yedek-parca") return "PART_TYPE";
   if (categoryId === "machinery" && subSlug === "yedek-parca") return "PART_TYPE";
@@ -245,7 +245,13 @@ function leafTypeFor(categoryId: string, subSlug: string): TaxonomyNodeType {
  * Aynı isim/alias (fold bazlı) domain içinde zaten varsa atlanır.
  */
 type HarvestLeaf = string | { name: string; aliases?: string[] };
-type HarvestAdd = { sub: string; group: string; leaves: HarvestLeaf[] };
+type HarvestAdd = {
+  sub: string;
+  group: string;
+  /** Display-label revisions must not invalidate existing taxonomy ids. */
+  stableGroupSlug?: string;
+  leaves: HarvestLeaf[];
+};
 
 const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = {
   technology: {
@@ -339,6 +345,7 @@ const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = 
   "home-kitchen": {
     source: "MediaMarkt + Koçtaş",
     adds: [
+      { sub: "diger", group: "Bahçe ve dış mekan", leaves: ["Bahçe hortumu"] },
       { sub: "diger", group: "Pişirme gereçleri", leaves: [
         "Tencere Seti",
         "Tava",
@@ -405,7 +412,7 @@ const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = 
         "Dizel Jeneratör",
         "Trafo",
       ] },
-      { sub: "diger", group: "Tarım makineleri", leaves: [
+      { sub: "diger", group: "Tarım ve Hayvancılık Makineleri", stableGroupSlug: "tarim-makineleri", leaves: [
         "Traktör",
         "Balya Makinesi",
         "Mibzer",
@@ -467,6 +474,7 @@ const HARVEST_OVERLAY: Record<string, { source: string; adds: HarvestAdd[] }> = 
         "Göğüs Pompası",
         "Sterilizatör",
         "Mama Isıtıcı",
+        "Emzik aksesuarı",
       ] },
       { sub: "uyku-besik", group: "Uyku", leaves: [
         { name: "Park Yatak", aliases: ["oyun parkı", "oyun parki"] },
@@ -521,7 +529,7 @@ function applyHarvestOverlay(
       );
       if (!group) {
         group = nodeOf({
-          id: `${subId}:${slugPart(add.group)}`,
+          id: `${subId}:${add.stableGroupSlug ?? slugPart(add.group)}`,
           parentId: subId,
           canonicalName: add.group,
           nodeType: "GROUP",
@@ -1749,6 +1757,7 @@ function realEstateTree(): TaxonomyNode[] {
           { name: "Müştemilat" },
           { name: "Kooperatif hissesi" },
           { name: "Turistik tesis" },
+          { name: "Devre mülk", aliases: ["devre mulk"] },
         ],
       },
     ],
@@ -1766,45 +1775,37 @@ function servicesTree(): TaxonomyNode[] {
   const cat = REQUEST_CATEGORIES.find((c) => c.id === "services")!;
   const nodes: TaxonomyNode[] = [catRoot(cat.id, cat.label)];
   const trees: Record<string, ChildSpec[]> = {
-    Danışmanlık: [
-      {
-        name: "Danışmanlık türleri",
-        children: [
-          { name: "Yönetim danışmanlığı", type: "SERVICE_TYPE" },
-          { name: "Mali müşavirlik / muhasebe", type: "SERVICE_TYPE", aliases: ["muhasebe"] },
-          { name: "İK danışmanlığı", type: "SERVICE_TYPE", aliases: ["human resources"] },
-          { name: "Hukuk danışmanlığı", type: "SERVICE_TYPE" },
-          { name: "ISO / kalite danışmanlığı", type: "SERVICE_TYPE" },
-          { name: "Pazarlama danışmanlığı", type: "SERVICE_TYPE" },
-          { name: "İhracat danışmanlığı", type: "SERVICE_TYPE" },
-        ],
-      },
-    ],
-    "Bakım ve Onarım": [
-      {
-        name: "Bakım hizmetleri",
-        children: [
-          { name: "Kombi bakım", type: "SERVICE_TYPE" },
-          { name: "Klima bakım / gaz dolumu", type: "SERVICE_TYPE" },
-          { name: "Beyaz eşya tamiri", type: "SERVICE_TYPE" },
-          { name: "Elektrik tesisat", type: "SERVICE_TYPE" },
-          { name: "Su tesisat", type: "SERVICE_TYPE", aliases: ["plumbing"] },
-          { name: "Asansör bakım", type: "SERVICE_TYPE" },
-          { name: "Jeneratör bakım", type: "SERVICE_TYPE" },
-          { name: "Endüstriyel makine bakım", type: "SERVICE_TYPE" },
-        ],
-      },
-    ],
     Temizlik: [
       {
         name: "Temizlik hizmetleri",
         children: [
-          { name: "Ofis temizliği", type: "SERVICE_TYPE" },
-          { name: "İnşaat sonu temizlik", type: "SERVICE_TYPE" },
-          { name: "Apartman / site temizliği", type: "SERVICE_TYPE" },
-          { name: "Cam temizliği", type: "SERVICE_TYPE" },
-          { name: "Dezenfeksiyon", type: "SERVICE_TYPE" },
-          { name: "Halı / koltuk yıkama", type: "SERVICE_TYPE" },
+          { name: "Boş ev temizliği", type: "SERVICE_TYPE" },
+          { name: "Ev temizliği", type: "SERVICE_TYPE" },
+          { name: "Halı yıkama / temizleme", type: "SERVICE_TYPE" },
+          { name: "Koltuk yıkama / temizleme", type: "SERVICE_TYPE" },
+        ],
+      },
+    ],
+    "Ev Tadilat ve Dekorasyon": [
+      {
+        name: "Tadilat ve dekorasyon hizmetleri",
+        children: [
+          { name: "Boya badana", type: "SERVICE_TYPE" },
+          { name: "Cam balkon", type: "SERVICE_TYPE" },
+          { name: "Duvar dekorasyon", type: "SERVICE_TYPE" },
+          { name: "Ev dekorasyon", type: "SERVICE_TYPE" },
+          { name: "Fayans döşeme", type: "SERVICE_TYPE" },
+          { name: "İç mimar", type: "SERVICE_TYPE" },
+        ],
+      },
+    ],
+    "Teknik Servis": [
+      {
+        name: "Teknik servis hizmetleri",
+        children: [
+          { name: "Kombi servisi", type: "SERVICE_TYPE" },
+          { name: "Klima servisi", type: "SERVICE_TYPE" },
+          { name: "Elektrikçi", type: "SERVICE_TYPE" },
         ],
       },
     ],
@@ -1813,25 +1814,49 @@ function servicesTree(): TaxonomyNode[] {
         name: "Nakliye hizmetleri",
         children: [
           { name: "Evden eve nakliyat", type: "SERVICE_TYPE", aliases: ["asansörlü taşıma"] },
-          { name: "Ofis taşıma", type: "SERVICE_TYPE" },
-          { name: "Parsiyel yük", type: "SERVICE_TYPE", aliases: ["LTL"] },
-          { name: "Komple yük / FTL", type: "SERVICE_TYPE" },
-          { name: "Şehirlerarası nakliye", type: "SERVICE_TYPE" },
-          { name: "Uluslararası lojistik", type: "SERVICE_TYPE" },
-          { name: "Depolama / antrepo hizmeti", type: "SERVICE_TYPE" },
+          { name: "Parça eşya taşıma", type: "SERVICE_TYPE" },
         ],
       },
     ],
-    Diğer: [
+    Eğitim: [
       {
-        name: "Diğer hizmetler",
+        name: "Eğitim hizmetleri",
         children: [
-          { name: "Organizasyon / event", type: "SERVICE_TYPE" },
-          { name: "Güvenlik hizmeti", type: "SERVICE_TYPE" },
-          { name: "Çeviri / tercüme", type: "SERVICE_TYPE" },
-          { name: "Eğitim / kurumsal training", type: "SERVICE_TYPE" },
-          { name: "Fotoğraf / video prodüksiyon", type: "SERVICE_TYPE" },
-          { name: "Montaj / demontaj", type: "SERVICE_TYPE" },
+          { name: "Direksiyon dersi", type: "SERVICE_TYPE" },
+        ],
+      },
+    ],
+    "Grafik ve Tasarım": [
+      {
+        name: "Grafik ve tasarım hizmetleri",
+        children: [
+          {
+            name: "Grafik ve logo tasarımı",
+            type: "SERVICE_TYPE",
+            aliases: ["logo tasarımı", "logo tasarimi", "grafik tasarım", "grafik tasarim"],
+          },
+        ],
+      },
+    ],
+    "Evde Bakım ve Destek": [
+      {
+        name: "Evde bakım ve destek hizmetleri",
+        children: [
+          { name: "Evde bakım desteği", type: "SERVICE_TYPE", aliases: ["evde bakım", "evde bakim", "hasta refakati"] },
+          {
+            name: "Ev yardımcısı / ev hizmetlisi",
+            type: "SERVICE_TYPE",
+            aliases: [
+              "ev yardımcısı",
+              "ev yardimcisi",
+              "evde yardımcı",
+              "evde yardimci",
+              "ev hizmetlisi",
+              "evde hizmetli",
+              "ev işleri yardımcısı",
+              "ev isleri yardimcisi",
+            ],
+          },
         ],
       },
     ],
@@ -1861,25 +1886,8 @@ function healthTree(): TaxonomyNode[] {
           { name: "İnfüzyon pompası" },
           { name: "Oksijen konsantratörü" },
           { name: "Nebulizatör" },
-          { name: "Tansiyon aleti", aliases: ["sphygmomanometer"] },
+          { name: "Tansiyon aleti", aliases: ["tansiyon ölçer", "tansiyon olcer", "sphygmomanometer"] },
           { name: "Pulse oksimetre" },
-        ],
-      },
-    ],
-    "Sarf Malzeme": [
-      {
-        name: "Sarf grupları",
-        children: [
-          { name: "Eldiven", type: "COMMODITY_TYPE", aliases: ["muayene eldiveni", "nitrile glove"] },
-          { name: "Maske", type: "COMMODITY_TYPE", aliases: ["cerrahi maske", "N95"] },
-          { name: "Enjektör / iğne", type: "COMMODITY_TYPE", aliases: ["syringe"] },
-          { name: "Serum seti", type: "COMMODITY_TYPE" },
-          { name: "Gazlı bez / pamuk", type: "COMMODITY_TYPE" },
-          { name: "Plaster / flaster", type: "COMMODITY_TYPE" },
-          { name: "İdrar kabı / numune kabı", type: "COMMODITY_TYPE" },
-          { name: "Dezenfektan", type: "COMMODITY_TYPE" },
-          { name: "Muayene örtüsü", type: "COMMODITY_TYPE" },
-          { name: "Kateter", type: "COMMODITY_TYPE" },
         ],
       },
     ],
@@ -1912,7 +1920,6 @@ function healthTree(): TaxonomyNode[] {
           { name: "Santrifüj" },
           { name: "Mikroskop" },
           { name: "Analizör", aliases: ["lab analyzer"] },
-          { name: "Pipet / lab sarf", type: "COMMODITY_TYPE" },
         ],
       },
     ],
@@ -2427,14 +2434,6 @@ function automotiveTree(): TaxonomyNode[] {
             { name: "Hibrit araç", aliases: ["HEV", "PHEV"] },
           ],
         },
-        {
-          name: "Durum",
-          children: [
-            { name: "Sıfır araç", type: "TECHNICAL_TYPE", aliases: ["0 km"] },
-            { name: "İkinci el araç", type: "TECHNICAL_TYPE", aliases: ["2. el"] },
-            { name: "Hasar kayıtlı", type: "TECHNICAL_TYPE" },
-          ],
-        },
       ],
       "Araç Bakım": [
         {
@@ -2486,11 +2485,16 @@ function automotiveTree(): TaxonomyNode[] {
         {
           name: "Diğer otomotiv",
           children: [
-            { name: "Aksesuar", aliases: ["oto aksesuar"] },
+            {
+              name: "Aksesuar",
+              aliases: ["oto aksesuar"],
+              children: [
+                { name: "Çeki demiri" },
+                { name: "Tavan / bagaj sistemleri" },
+              ],
+            },
             { name: "Ses sistemi / amplifikatör" },
             { name: "Koruma filmi / kaplama", aliases: ["PPF", "wrapping"] },
-            { name: "Çeki demiri" },
-            { name: "Roman / bagaj sistemleri" },
           ],
         },
       ],
@@ -2528,6 +2532,12 @@ function main() {
   let anyDomainChanged = false;
   applyHarvestOverlay(domains);
   applyGoogleOverlay(domains);
+  const nodesById = new Map(domains.flatMap((domain) => domain.nodes.map((node) => [node.id, node] as const)));
+  for (const [id, aliases] of Object.entries(requestFamilyAliases)) {
+    const node = nodesById.get(id);
+    if (!node) throw new Error(`Unknown request family alias target: ${id}`);
+    node.aliases = [...new Set([...node.aliases, ...aliases])];
+  }
   // Yetkinlik EN SON uygulanır: overlay'lerden gelen düğümler de kapsansın.
   applyPartBearingCapability(domains);
 

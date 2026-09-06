@@ -15,6 +15,8 @@ export type QuestionControlType =
   | "yes_no"
   | "text_fallback";
 
+export type { MeasurementKind } from "@/lib/request-category-engine";
+
 export type ControlOption = {
   label: string;
   value: string;
@@ -38,6 +40,8 @@ export type QuestionControlDef = {
   placeholder?: string;
   /** Immediate commit on single chip select */
   commitOnSelect: boolean;
+  /** Only set for controls governed by the measurement contract. */
+  measurementKind?: import("@/lib/request-category-engine").MeasurementKind;
 };
 
 export type ControlResolveContext = {

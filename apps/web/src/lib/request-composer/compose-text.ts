@@ -10,6 +10,8 @@ import {
   stripRequestedItemClause,
 } from "./attribute-hints";
 import { resolveDomainEntity } from "@/lib/catalog";
+import { getCategoryById } from "@/lib/request-category-engine";
+import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import {
   readRelationContext,
   readRequestedTarget,
@@ -22,6 +24,11 @@ function fieldValue(state: CanonicalRequestState, key: string): string | null {
   const f = state.fields[key];
   if (!f || f.kind !== "VALUE" || !f.value?.trim()) return null;
   return f.value.trim();
+}
+
+function understandingValue(state: CanonicalRequestState, key: string): string | null {
+  const value = state.understanding.attributes?.[key]?.value;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function fieldAny(state: CanonicalRequestState, key: string): boolean {
@@ -329,19 +336,93 @@ function planPartPhrase(
 }
 
 function composeAutoPart(state: CanonicalRequestState): string {
+  const need = automotiveNeedType(state);
+  const productContext =
+    fieldValue(state, "productType") ?? fieldValue(state, "serviceType") ?? "";
+  if (
+    need === "tire" &&
+    /lastik değişimi|lastik degisimi|rot ayarı|rot ayari|balans|lastik otel|lastik saklama|rot balans/iu.test(
+      productContext,
+    )
+  ) {
+    const target = planIdentityPhrase(
+      fieldValue(state, "brand"),
+      fieldValue(state, "model"),
+      fieldValue(state, "generation"),
+    );
+    const rawQuantity =
+      fieldValue(state, "tireQuantity") ?? fieldValue(state, "quantity");
+    const quantity = rawQuantity
+      ? /adet|takım|çift/iu.test(rawQuantity)
+        ? rawQuantity
+        : `${rawQuantity} adet`
+      : "";
+    const service = productContext.toLocaleLowerCase("tr-TR");
+    const date = fieldValue(state, "serviceDate");
+    const body = `${[quantity, service].filter(Boolean).join(" ")}${
+      date ? `, ${date} tarihinde` : ""
+    } yaptırmak istiyorum.`;
+    return target.length ? `${target.join(" ")} için ${body}` : body;
+  }
+  const tireItem =
+    fieldValue(state, "tireItemType") ??
+    (/^(?:jant|alaşım jant|çelik jant)$/iu.test(
+      fieldValue(state, "productType") ?? "",
+    )
+      ? fieldValue(state, "productType")
+      : null);
+  if (need === "tire" && tireItem) {
+    const rawQuantity = fieldValue(state, "tireQuantity");
+    const rawSize = fieldValue(state, "tireSize");
+    const quantity = rawQuantity
+      ? /adet|takım|çift/iu.test(rawQuantity)
+        ? rawQuantity
+        : `${rawQuantity} adet`
+      : "";
+    const size =
+      rawSize &&
+      tireItem.toLocaleLowerCase("tr-TR") !== "lastik" &&
+      /^\d+(?:[.,]\d+)?$/u.test(rawSize)
+        ? `${rawSize} inç`
+        : rawSize;
+    const details = [
+      quantity,
+      size,
+      fieldValue(state, "tireSeason")?.toLocaleLowerCase("tr-TR"),
+      fieldValue(state, "condition")?.toLocaleLowerCase("tr-TR"),
+    ].filter(Boolean);
+    const identity = planIdentityPhrase(
+      fieldValue(state, "brand"),
+      fieldValue(state, "model"),
+      fieldValue(state, "generation"),
+    );
+    const noun =
+      tireItem.toLocaleLowerCase("tr-TR") === "lastik"
+        ? "lastiği"
+        : tireItem.toLocaleLowerCase("tr-TR");
+    const isTire = noun === "lastiği";
+    const request = `${details.length ? `${details.join(isTire ? " " : ", ")} ` : ""}${noun} arıyorum.`;
+    return identity.length
+      ? `${identity.join(" ")} için ${request}`
+      : request;
+  }
   const role = resolveBrowseSemanticRole({
     categoryId: state.categoryId,
     subcategorySlug: state.subcategorySlug,
   });
   const fallbackNoun =
     automotiveNeedType(state) === "tire"
-      ? "lastik"
+      ? fieldValue(state, "tireItemType") ??
+        fieldValue(state, "productType") ??
+        "lastik"
       : role.subjectNounTr ?? "yedek parça";
   return composeCompatibilityPartSentence({
     brand: fieldValue(state, "brand"),
     model: fieldValue(state, "model"),
     generation: fieldValue(state, "generation"),
-    part: fieldValue(state, "part"),
+    part: /tavan\s+bagaj/iu.test(fieldValue(state, "part") ?? "")
+      ? "tavan bagaj sistemi"
+      : fieldValue(state, "part"),
     position: fieldValue(state, "partPosition"),
     fallbackNoun,
   });
@@ -352,14 +433,20 @@ function composeAutoVehicle(state: CanonicalRequestState): string {
   const brand = fieldValue(state, "brand");
   const model = fieldValue(state, "model");
   const generation = fieldValue(state, "generation");
-  const year = fieldValue(state, "year");
+  const year = fieldValue(state, "modelYear") ?? fieldValue(state, "year");
   const condition = fieldValue(state, "condition");
+  const color = fieldValue(state, "color");
+  const bodyType =
+    fieldValue(state, "bodyType") ?? understandingValue(state, "bodyType");
 
   if (year) bits.push(`${year} model`);
   bits.push(...planIdentityPhrase(brand, model, generation));
   appendExclusionBits(bits, state, ["brand", "model"]);
+  if (color) bits.push(color.toLocaleLowerCase("tr-TR"));
   if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
-  if (bits.length === 0) bits.push("araç");
+  if (bodyType) bits.push(bodyType);
+  const hasVehicleName = Boolean(year || brand || model || generation || bodyType);
+  if (!hasVehicleName) bits.push("araç");
   bits.push("arıyorum");
   return bits.join(" ").replace(/\s+/g, " ").trim() + ".";
 }
@@ -409,11 +496,16 @@ function isAutomotiveDomain(state: CanonicalRequestState): boolean {
 function compatibilityParentProduct(
   state: CanonicalRequestState,
 ): string | null {
-  return (
+  const structuredParent =
     fieldValue(state, "applianceType") ??
     fieldValue(state, "productType") ??
-    fieldValue(state, "machineType")
-  );
+    fieldValue(state, "machineType");
+  if (structuredParent) return structuredParent;
+
+  /* Şemada alanı olmayan kanonik üst ürünler (örn. torna tezgâhı) de
+     güvenli X için Y ayrımından özetlenmelidir. */
+  const split = splitCompatibilityPhrase(state.understanding.rawInput ?? "");
+  return split ? readRelationContext(split.parent) : null;
 }
 
 /**
@@ -617,7 +709,8 @@ function composeGeneric(state: CanonicalRequestState): string {
   }
   appendExclusionBits(bits, state, ["brand", "model"]);
   if (furnitureType) bits.push(furnitureType);
-  if (product && product !== furnitureType) bits.push(product);
+  if (product && product !== furnitureType &&
+    !model?.toLocaleLowerCase("tr-TR").includes(productFold)) bits.push(product);
   const condition = fieldValue(state, "condition");
   if (condition) bits.push(condition.toLocaleLowerCase("tr-TR"));
   if (
@@ -755,7 +848,9 @@ function preserveResolvedEntity(
     ...(candidate ? [String(candidate)] : []),
   ].filter(Boolean);
   for (const alias of anchors) {
-    if (lower(sentence).includes(lower(alias))) continue;
+    if (lower(normalizeUnderstandingInput(sentence)).includes(
+      lower(normalizeUnderstandingInput(alias)),
+    )) continue;
     const safe = readSafePhraseContaining(raw, alias);
     if (safe) return `${safe} arıyorum.`;
   }
@@ -774,13 +869,35 @@ function preserveResolvedEntity(
 export function composeNaturalRequestText(
   state: CanonicalRequestState,
 ): string {
+  const serviceType = fieldValue(state, "serviceType") ?? "";
+  const canonicalHomeSupport =
+    state.categoryId === "services" &&
+    /^(?:ev yardımcısı\s*\/\s*ev hizmetlisi|evde bakım desteği)$/iu.test(
+      serviceType,
+    );
+  // These service leaves are canonical names, not compatibility targets. Do
+  // not let the generic target-preservation safety net duplicate the user's
+  // alias in front of the canonical service summary.
+  if (canonicalHomeSupport) {
+    return appendCanonicalLocation(state, composeNaturalRequestTextCore(state));
+  }
   return appendCanonicalLocation(
     state,
-    preserveResolvedEntity(
+    preserveQuantity(state, preserveResolvedEntity(
       state,
       preserveRequestedTarget(state, composeNaturalRequestTextCore(state)),
-    ),
+    )),
   );
+}
+
+function preserveQuantity(state: CanonicalRequestState, sentence: string): string {
+  const quantity = fieldValue(state, "quantity");
+  if (!quantity || state.categoryId === "automotive" ||
+    !getCategoryById(state.categoryId ?? "")?.commonFields.some((field) => field.key === "quantity")) return sentence;
+  const escaped = quantity.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  if (new RegExp(`(?:^|\\s)${escaped}\\s*(?:adet|takım|set|kutu|paket)(?:\\s|$)`, "iu").test(sentence)) return sentence;
+  const label = /\p{L}/u.test(quantity) ? quantity : `${quantity} adet`;
+  return `${label} ${sentence}`;
 }
 
 function composeNaturalRequestTextCore(
@@ -803,6 +920,50 @@ function composeNaturalRequestTextCore(
       fieldValue(state, "serviceType") ??
       fieldValue(state, "part") ??
       "servis";
+    const isAutomotivePpf =
+      isAutomotiveDomain(state) &&
+      /koruma filmi|kaplama|ppf|wrapping/iu.test(
+        `${fieldValue(state, "productType") ?? ""} ${svc}`,
+      );
+    if (isAutomotivePpf) {
+      const vehicleTarget = [
+        fieldValue(state, "brand"),
+        fieldValue(state, "model"),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const color = fieldValue(state, "color");
+      const ppfPhrase = [
+        color?.toLocaleLowerCase("tr-TR"),
+        "PPF kaplama",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return vehicleTarget
+        ? `${vehicleTarget} için ${ppfPhrase} arıyorum.`
+        : `${ppfPhrase} arıyorum.`;
+    }
+    if (isAutomotiveDomain(state)) {
+      const vehicleTarget = [
+        fieldValue(state, "brand"),
+        fieldValue(state, "model"),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const serviceProduct =
+        fieldValue(state, "productType") ?? svc;
+      return vehicleTarget
+        ? `${vehicleTarget} için ${serviceProduct} arıyorum.`
+        : `${serviceProduct} arıyorum.`;
+    }
+    if (
+      state.categoryId === "services" &&
+      /^(?:ev yardımcısı\s*\/\s*ev hizmetlisi|evde bakım desteği)$/iu.test(
+        svc,
+      )
+    ) {
+      return `${svc} arıyorum.`;
+    }
     const target = [
       fieldValue(state, "brand"),
       fieldValue(state, "applianceType") ??
@@ -811,9 +972,19 @@ function composeNaturalRequestTextCore(
     ]
       .filter(Boolean)
       .join(" ");
-    return target
-      ? `${target} için ${svc} arıyorum.`
-      : `${svc} arıyorum.`;
+    const normalizedTarget = target.toLocaleLowerCase("tr-TR");
+    const normalizedService = svc.toLocaleLowerCase("tr-TR");
+    const distinctTarget =
+      normalizedTarget === normalizedService ||
+      normalizedService.includes(normalizedTarget) ||
+      normalizedTarget.includes(normalizedService)
+        ? ""
+        : target;
+    const color = fieldValue(state, "color");
+    const servicePhrase = [color, svc].filter(Boolean).join(" ");
+    return distinctTarget
+      ? `${distinctTarget} için ${servicePhrase} arıyorum.`
+      : `${servicePhrase} arıyorum.`;
   }
   if (wholeProductComposerAllowed && isTv(state)) return composeTv(state);
   if (wholeProductComposerAllowed && isVacuum(state)) return composeVacuum(state);
@@ -860,6 +1031,14 @@ function composeNaturalRequestTextCore(
   // makine parçalarını da yutuyordu.
   if (isAutomotiveDomain(state) && isAutoPart(state)) {
     return composeAutoPart(state);
+  }
+  if (
+    isAutomotiveDomain(state) &&
+    automotiveNeedType(state) == null &&
+    state.understanding.requestSubject.kind.value === "PRODUCT"
+  ) {
+    const product = fieldValue(state, "productType");
+    return `${product || "Otomotiv ürünü"} arıyorum.`;
   }
   if (isAutoVehicle(state)) return composeAutoVehicle(state);
   // Bütün-varlık bestecisi de uyumluluk talebini sahiplenemez (1C kuralının

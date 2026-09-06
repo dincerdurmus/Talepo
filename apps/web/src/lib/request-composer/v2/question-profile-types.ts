@@ -4,6 +4,8 @@
  * they are not a parallel form schema.
  */
 
+import type { ProductQuestionContract } from "@/lib/request-category-engine";
+
 export type QuestionImportance =
   | "publish_required"
   | "routing_critical"
@@ -43,6 +45,8 @@ export type QuestionProfileDef = {
   /** Empty = all categories that surface this key via engine/common */
   categories?: string[];
   whenNeedTypes?: string[];
+  /** Product contracts stay silent until their routing need type is known. */
+  requiresNeedType?: boolean;
   /**
    * Product-scoped questions: only ask when the detected product/appliance
    * type (diacritic-folded, substring match) hits one of these. A TV gets
@@ -57,6 +61,11 @@ export type QuestionProfileDef = {
   budgetBasis?: BudgetBasis;
   /** Rank within same importance (higher first) */
   rank?: number;
+  /**
+   * Sözleşme profili yalnız çözülen tek ürün sözleşmesinde görünür. Bu,
+   * üst aile eşleşmelerinin dar ürün sorularını sızdırmasını engeller.
+   */
+  contractScope?: ProductQuestionContract;
 };
 
 export type ScheduledQuestion = {

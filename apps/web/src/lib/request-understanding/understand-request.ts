@@ -17,6 +17,7 @@ import {
 } from "@/lib/product-identity/brand-extraction";
 import { isNonBrandDomainEntity, resolveDomainEntity } from "@/lib/catalog";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
+import { readTireRequestContext, withoutRejectedTireMentions } from "./tire-request-context";
 import {
   classifyModelTokenEvidence,
   classifyNumbers,
@@ -61,6 +62,8 @@ import {
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
 
 import {
+  classifyRequestedTargetRole,
+  requestedTargetBlocksVehicle,
   isRequestedItemNotModel,
   SERVICE_LEMMAS,
 } from "@/lib/request-understanding/requested-item-role";
@@ -72,6 +75,7 @@ import {
   readUsageContextSplit,
   resolveRelationDomain,
   splitCompatibilityPhrase,
+  readRequestedTarget,
 } from "@/lib/request-understanding/part-relation";
 
 import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
@@ -153,12 +157,131 @@ function textIncludes(haystack: string, needle: string): boolean {
   return foldTr(haystack).includes(foldTr(needle));
 }
 
+/** The controlled Hizmetler catalogue. Order keeps narrow phrases ahead of
+ * their broader cousins ("boş ev temizliği" before "ev temizliği"). */
+function extractPopularServiceType(input: string): { value: string; evidence: string } | null {
+  const normalized = foldTr(input);
+  const candidates: Array<{ value: string; terms: string[] }> = [
+    { value: "Boş ev temizliği", terms: ["bos ev temizligi"] },
+    { value: "Grafik ve logo tasarımı", terms: ["logo tasarimi", "grafik tasarim"] },
+    { value: "Evde bakım desteği", terms: ["evde bakim destegi", "evde bakim", "hasta refakati", "yasli bakim", "hasta bakim", "yasli bakici", "hasta bakici"] },
+    { value: "Ev yardımcısı / ev hizmetlisi", terms: ["ev yardimcisi", "evde yardimci", "ev hizmetlisi", "evde hizmetli", "ev isleri yardimcisi"] },
+    { value: "Koltuk yıkama / temizleme", terms: ["koltuk yikama"] },
+    { value: "Kombi servisi", terms: ["kombi servisi", "demirdokum kombi", "eca kombi"] },
+    { value: "Klima servisi", terms: ["klima servisi", "klima bakim"] },
+    { value: "Parça eşya taşıma", terms: ["parca esya tasima"] },
+    { value: "Evden eve nakliyat", terms: ["evden eve nakliyat", "evden eve nakliye", "evden eve tasima"] },
+    { value: "Halı yıkama / temizleme", terms: ["hali yikama"] },
+    { value: "Fayans döşeme", terms: ["fayans doseme"] },
+    { value: "Direksiyon dersi", terms: ["direksiyon dersi"] },
+    { value: "Duvar dekorasyon", terms: ["duvar dekorasyon"] },
+    { value: "Ev dekorasyon", terms: ["ev dekorasyon"] },
+    { value: "Cam balkon", terms: ["cam balkon"] },
+    { value: "Elektrikçi", terms: ["elektrikci"] },
+    { value: "İç mimar", terms: ["ic mimar"] },
+    { value: "Boya badana", terms: ["boya badana", "boya", "badana", "boyat"] },
+    { value: "Ev temizliği", terms: ["ev temizligi"] },
+  ];
+  const match = candidates.find((candidate) =>
+    candidate.terms.some((term) => normalized.includes(term)),
+  );
+  return match ? { value: match.value, evidence: match.terms.find((term) => normalized.includes(term))! } : null;
+}
+
 function gateCategory(
   rawInput: string,
   intent: RequestIntent,
 ): UnderstandingDecision<string> {
+  const foldedInput = foldTr(rawInput);
+  const explicitHomeSupport = /ev\s+(?:de\s+)?yardimcisi|ev\s+(?:de\s+)?hizmetli|ev\s+isleri\s+yardimcisi|(?:yasli|hasta)\s+bak(?:im|ici)/.test(
+    foldedInput,
+  );
+  const ambiguousHelper = /(?:^|\s)yardimci\s+ariyorum(?:\s|$)/.test(
+    foldedInput,
+  );
+
+  // "Ev" is also an Emlak keyword. Explicit human-support phrases must
+  // enter Hizmetler before the generic category scorer sees that token.
+  if (explicitHomeSupport) {
+    return {
+      value: "services",
+      confidence: 0.98,
+      status: "CONFIDENT",
+      evidence: ["explicit-home-support-service"],
+    };
+  }
+  // A bare "yardımcı arıyorum" is a clarification case, not a reason to
+  // guess Emlak or another product root.
+  if (ambiguousHelper) {
+    return {
+      value: "services",
+      confidence: 0.55,
+      status: "TENTATIVE",
+      evidence: ["ambiguous-helper-service-clarification"],
+    };
+  }
+
   const detected = detectCategoryResult(rawInput);
   const scoreConf = clamp01(detected.score / 6);
+
+  /* Kamyon/araba gibi üst ürün adları lastik/jant tamlamasında alan kanıtını
+     gölgeleyebilir. Lastik ailesi kendi başına otomotiv routing kanıtıdır;
+     böylece "kamyon lastiği" de kategori dışı kalmaz. */
+  const canonicalClaimBeforeTireRouting = findCanonicalCategoryClaim(rawInput);
+  const tireContext = readTireRequestContext(rawInput);
+  if (!canonicalClaimBeforeTireRouting && tireContext?.competingCategory) {
+    return {
+      value: tireContext.competingCategory,
+      confidence: 0.85,
+      status: "CONFIDENT",
+      evidence: ["canonical-claim", `node=${tireContext.head?.id}`, "tire-modifier-only"],
+    };
+  }
+  const tireSignalOwnsRouting =
+    !canonicalClaimBeforeTireRouting ||
+    canonicalClaimBeforeTireRouting.kind !== "unique" ||
+    canonicalClaimBeforeTireRouting.categoryId === "automotive";
+  if (lastikWheelOrServiceSignal(rawInput) && tireSignalOwnsRouting) {
+    return {
+      value: "automotive",
+      confidence: 0.88,
+      status: "CONFIDENT",
+      evidence: ["automotive-tire-or-wheel"],
+    };
+  }
+
+  /**
+   * PARÇA UYUMLULUK ALANI, GENEL PARÇA ALIAS'INDAN ÖNCE GELİR.
+   *
+   * "Torna tezgahı için yedek parça" gibi cümlelerde sağ hedef olan
+   * "yedek parça" birden fazla katalog alanında bulunabilir. Sol taraftaki
+   * doğrulanmış üst ürün alanı (burada machinery) daha güçlü kanıttır; aksi
+   * halde genel "yedek parça" alias'ı Beyaz Eşya'ya kilitlenebilir.
+   */
+  const compatibility = splitCompatibilityPhrase(rawInput);
+  if (compatibility) {
+    const target = readRequestedTarget(compatibility.requested).value;
+    const targetClaim = target ? findCanonicalCategoryClaim(target) : null;
+    if (targetClaim?.kind === "unique" &&
+      targetClaim.node.id.startsWith("tax:automotive:diger:diger-otomotiv:aksesuar:")) {
+      return {
+        value: targetClaim.categoryId, confidence: 0.85, status: "CONFIDENT",
+        evidence: ["canonical-claim", `phrase=${targetClaim.phrase}`, `node=${targetClaim.node.id}`, "accessory-target"],
+      };
+    }
+    const targetRole = classifyRequestedTargetRole(compatibility.requested).role;
+    if (targetRole === "COMPONENT_OR_ACCESSORY") {
+      const relationDomain = resolveRelationDomain(rawInput);
+      if (relationDomain?.categoryId) {
+        return {
+          value: relationDomain.categoryId,
+          confidence: relationDomain.verified ? 0.92 : 0.62,
+          status: relationDomain.verified ? "CONFIDENT" : "TENTATIVE",
+          evidence: [relationDomain.code, `domainSpan=${relationDomain.span}`],
+        };
+      }
+    }
+  }
 
   /**
    * ÖNCELİK 1 — KANONİK EN-UZUN EŞLEŞME (2026-08-30).
@@ -707,13 +830,17 @@ export function emptyRequestUnderstanding(): RequestUnderstandingResult {
  * Canonical Request Understanding entry point.
  * Orchestrates existing engines — does not rewrite them.
  */
+function lastikWheelOrServiceSignal(text: string): boolean {
+  return readTireRequestContext(text)?.isTireRequest ?? false;
+}
+
 export function understandRequest(
   input: UnderstandRequestInput | string,
 ): RequestUnderstandingResult {
   understandCallCount += 1;
   const rawInput = typeof input === "string" ? input : input.rawInput;
   const structured = typeof input === "string" ? undefined : input.structured;
-  const normalizedInput = normalizeUnderstandingInput(rawInput);
+  const normalizedInput = normalizeUnderstandingInput(withoutRejectedTireMentions(rawInput));
 
   const numbers = classifyNumbers(normalizedInput);
   /**
@@ -739,9 +866,22 @@ export function understandRequest(
     /^[a-z]?\d{2,3}[a-z]?$/i.test(t.raw.replace(/\s/g, "")) ||
     /^[cesagl]\d{2,3}/i.test(t.raw),
   );
+  /**
+   * Araç satın alma talepleri model adı vermek zorunda değildir. "İkinci el
+   * araba" ve "0 km SUV" gibi cümlelerde otomotiv kategorisi bulunurken konu
+   * daha önce genel PRODUCT'a düşüyordu. Parça/hizmet yolları intent önceliği
+   * ile zaten dışarıda kaldığından bu sinyaller yalnız araç talebi için
+   * VEHICLE üretir.
+   */
+  const hasVehicleRequestSignals =
+    !requestedTargetBlocksVehicle(normalizedInput) &&
+    !requestedTargetBlocksVehicle(readRequestedTarget(splitCompatibilityPhrase(normalizedInput)?.requested ?? normalizedInput).value ?? "") && (hasVehicleModel ||
+    /\b(araba|otomobil|suv|sedan|hatchback|station\s+wagon|pickup|kamyonet|kamyon)\b/i.test(
+      normalizedInput,
+    ));
 
   const hasPropertySignals =
-    (/\b(ev|daire|dükkan|dukkan|villa|konut|2\s*\+\s*1|3\s*\+\s*1)\b/i.test(
+    (/\b(ev|daire|dükkan|dukkan|mağaza|magaza|villa|konut|arsa|tarla|imarli|imarlı|ofis|depo|antrepo|fabrika|imalathane|otel|devren|müştemilat|mustemilat|kooperatif|turistik|2\s*\+\s*1|3\s*\+\s*1)\b|\bdevre\s+(mülk|mulk)\b/i.test(
       normalizedInput,
     ) ||
       Boolean(extractRoomLayout(normalizedInput)) ||
@@ -762,7 +902,7 @@ export function understandRequest(
 
   const subjectKind = subjectKindForIntent(intentResolved.intent, {
     hasVehicleModel:
-      hasVehicleModel &&
+      hasVehicleRequestSignals &&
       intentResolved.intent !== "PART" &&
       intentResolved.intent !== "SERVICE",
     hasPropertySignals,
@@ -890,7 +1030,13 @@ export function understandRequest(
           },
         ]
       : [];
-  if (usageContext && !categoryFromCanonicalClaim()) {
+  /*
+   * Parça uyumluluk alanı `X için Y` kullanım bölmesinden daha güçlüdür.
+   * `Torna tezgahı için yedek parça` cümlesinde sağ tarafın genel alias'ı
+   * (`yedek parça`) Beyaz Eşya'ya düşebilir; relationDomain zaten sol ürünün
+   * Makine alanını doğrulamışsa usage-context-split bunu geri alamaz.
+   */
+  if (usageContext && !categoryFromCanonicalClaim() && !relationDomain?.categoryId) {
     /* Bağlacın kendisi kanonik yaprak ADININ içindeyse ("Mobilyalar için
        Zemin Koruyucular") bu bir kullanım bağlamı cümlesi değil, ürünün
        adıdır; bölme mantığı iddiayı ezemez (ölçüldü). */
@@ -976,6 +1122,33 @@ export function understandRequest(
         : Math.max(category.confidence, 0.5),
       status: relationDomain.verified ? "CONFIDENT" : "TENTATIVE",
       evidence: [relationDomain.code, `domainSpan=${relationDomain.span}`],
+      alternatives: category.value
+        ? [
+            {
+              value: category.value,
+              confidence: category.confidence,
+              evidence: category.evidence,
+            },
+          ]
+        : category.alternatives,
+    };
+  }
+
+  // Automotive accessories are explicit product signals. They must not be
+  // pulled into Technology merely because "tavan" is also a role-vocabulary
+  // token; the accessory phrase itself is the stronger domain evidence.
+  if (
+    !structuredCategoryId &&
+    /çeki\s+demiri|ceki\s+demiri|tavan\s+bagaj|bagaj\s+sistemi/iu.test(
+      normalizedInput,
+    ) &&
+    category.value !== "automotive"
+  ) {
+    category = {
+      value: "automotive",
+      confidence: Math.max(category.confidence, 0.9),
+      status: "CONFIDENT",
+      evidence: ["automotive-accessory-signal"],
       alternatives: category.value
         ? [
             {
@@ -1274,23 +1447,94 @@ export function understandRequest(
       evidence: intentResolved.evidence,
     });
   }
-  if (intentResolved.intent === "SERVICE") {
+  // Controlled service leaves may be written as a noun phrase ("cam balkon
+  // istiyorum") without an explicit service verb. Category evidence is enough
+  // to enter the same service path; otherwise the exact leaf would be lost to
+  // the broad requested-item extractor later in the pipeline.
+  if (intentResolved.intent === "SERVICE" || category.value === "services") {
     attributes.needType = uv("service", {
       provenance: "INFERRED",
       source: "DETERMINISTIC_INFERENCE",
       evidence: intentResolved.evidence,
     });
-    if (/\bboya|boyat/i.test(normalizedInput)) {
-      attributes.serviceType = uv("boya", {
+    const isAutomotivePpf =
+      category.value === "automotive" &&
+      /\b(ppf|koruma filmi|kaplama)\b/iu.test(normalizedInput);
+    const popularService = extractPopularServiceType(normalizedInput);
+    if (isAutomotivePpf) {
+      attributes.serviceType = uv("Koruma filmi / kaplama", {
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
-        evidence: ["boya"],
+        evidence: ["automotive-ppf"],
       });
-    } else if (/\bbakım|bakim/i.test(normalizedInput)) {
-      attributes.serviceType = uv("bakım", {
+    } else if (popularService) {
+      attributes.serviceType = uv(popularService.value, {
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
-        evidence: ["bakım"],
+        evidence: [popularService.evidence],
+      });
+    }
+  }
+  // Automotive lastik/jant is a product purchase, not a generic PART or
+  // whole-vehicle request. Keep the wheel/tire family as a first-class
+  // product context so the jant contract can replace the tire contract.
+  if (
+    category.value === "automotive" &&
+    // A tire-domain browse pin does not pin the Lastik/Jant family.
+    // Read a new explicit family even while preserving that domain.
+    (!structured?.fieldValues?.needType || structured.fieldValues.needType === "tire") &&
+    (lastikWheelOrServiceSignal(normalizedInput))
+  ) {
+    attributes.needType = uv("tire", {
+      provenance: "EXPLICIT",
+      source: "USER_EXPLICIT",
+      confidence: 0.95,
+      evidence: ["automotive-tire-or-wheel"],
+    });
+    const tireFamily = readTireRequestContext(normalizedInput)?.family;
+    if (tireFamily) {
+      attributes.tireItemType = uv(
+        tireFamily,
+        {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          evidence: ["automotive-tire-or-wheel"],
+        },
+      );
+    }
+  }
+  // Accessory leaves already identify the commercial need. Use the existing
+  // part lane internally so the user is not asked to choose a need again.
+  // Their taxonomy leaf keeps the short accessory question contract.
+  if (category.value === "automotive" && !structured?.fieldValues?.needType) {
+    const targetText = splitCompatibilityPhrase(normalizedInput)?.requested ?? normalizedInput;
+    const accessoryClaim = findCanonicalCategoryClaim(readRequestedTarget(targetText).value ?? targetText);
+    if (accessoryClaim?.kind === "unique" &&
+      accessoryClaim.node.id.startsWith("tax:automotive:diger:diger-otomotiv:aksesuar:")) {
+      attributes.needType = uv("part", {
+        provenance: "EXPLICIT",
+        source: "NORMALIZED_EXPLICIT",
+        evidence: [`accessory-leaf=${accessoryClaim.node.id}`],
+      });
+      if (!attributes.part) attributes.part = uv(accessoryClaim.phrase, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [accessoryClaim.phrase],
+      });
+    }
+  }
+  // Wheel purchases use tireSize for diameter. Read the explicit unit so
+  // quantities and vehicle years cannot become wheel sizes on text sync.
+  // This also runs with a structured needType pin from a previous browse.
+  if (category.value === "automotive" && /\bjant\b/iu.test(normalizedInput)) {
+    const diameter = normalizedInput.match(
+      /\b(\d{1,2}(?:[.,]\d+)?)\s*(?:inç|inc|inch|["″])(?=\s|[,.;]|$)/iu,
+    );
+    if (diameter) {
+      attributes.tireSize = uv(diameter[1], {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [diameter[0]],
       });
     }
   }
@@ -2131,8 +2375,21 @@ export function understandRequest(
         evidence: requestSubject.kind.evidence,
       }),
     );
-    if (requestSubject.serviceType) {
+    if (requestSubject.serviceType && !attributes.serviceType) {
       attributes.serviceType = requestSubject.serviceType;
+    }
+    if (
+      category.value === "automotive" &&
+      /\b(ppf|koruma filmi|kaplama)\b/iu.test(normalizedInput)
+    ) {
+      // The semantic SERVICE pass can run after the initial category pass
+      // (where PPF may still be classified as generic services). Re-assert
+      // the automotive PPF contract once the final category is known.
+      attributes.serviceType = uv("Koruma filmi / kaplama", {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: ["automotive-ppf"],
+      });
     }
     if (requestSubject.target) {
       attributes.serviceTarget = requestSubject.target;
@@ -2160,7 +2417,11 @@ export function understandRequest(
     if (
       !relationDomain &&
       !categoryFromCanonicalClaim() &&
-      category.value !== "automotive"
+      category.value !== "automotive" &&
+      // Matbaa üretim talebi hizmet fiiliyle yazılabilir ("kartvizit
+      // yaptırmak"). Baskı alanı zaten ürünün ticari evidir; genel Hizmetler
+      // yedeği bunu ezemez.
+      category.value !== "printing"
     ) {
       category = {
         value: "services",
@@ -2513,6 +2774,10 @@ export function understandRequest(
   const explicitColor =
     constraintBundle.byField.color?.value ??
     ([
+      [
+        /(?:^|[^\p{L}])(şeffaf|seffaf|transparent|clear)(?=$|[^\p{L}])/iu,
+        "Şeffaf",
+      ],
       [/\b(kırmızı|kirmizi)\b/iu, "Kırmızı"],
       [/\b(siyah)\b/iu, "Siyah"],
       [/\b(beyaz)\b/iu, "Beyaz"],
@@ -2672,6 +2937,55 @@ export function understandRequest(
               source: "USER_EXPLICIT",
               evidence: ["kahve makinesi"],
             })
+          : category.value === "automotive" &&
+              /lastik\s+değişimi|lastik\s+degisimi|rot\s+ayarı|rot\s+ayari|\bbalans\b|lastik\s+otel|lastik\s+saklama/iu.test(
+                normalizedInput,
+              )
+            ? uv(
+                /lastik\s+değişimi|lastik\s+degisimi/iu.test(normalizedInput)
+                  ? "Lastik değişimi"
+                  : /rot\s+ayarı|rot\s+ayari/iu.test(normalizedInput)
+                    ? "Rot ayarı"
+                    : /lastik\s+otel|lastik\s+saklama/iu.test(normalizedInput)
+                      ? "Lastik otel / saklama"
+                      : "Balans",
+                {
+                  provenance: "EXPLICIT",
+                  source: "USER_EXPLICIT",
+                  evidence: ["automotive-tire-service"],
+                },
+              )
+          : category.value === "automotive" &&
+              /\b(lastik|lastiği|lastigi|jant|stepne)\b/iu.test(normalizedInput)
+            ? uv(
+                /\b(jant)\b/iu.test(normalizedInput) ? "Jant" : "Lastik",
+                {
+                  provenance: "EXPLICIT",
+                  source: "USER_EXPLICIT",
+                  evidence: ["automotive-tire-or-wheel"],
+                },
+              )
+            : category.value === "automotive" &&
+                /\b(ppf|koruma filmi|kaplama)\b/iu.test(normalizedInput)
+              ? uv("Koruma filmi / kaplama", {
+                  provenance: "EXPLICIT",
+                  source: "USER_EXPLICIT",
+                  evidence: ["automotive-ppf"],
+                })
+              : category.value === "automotive" &&
+                  /çeki\s+demiri|ceki\s+demiri|tavan\s+bagaj|bagaj\s+sistemi/iu.test(
+                    normalizedInput,
+                  )
+                ? uv(
+                    /çeki\s+demiri|ceki\s+demiri/iu.test(normalizedInput)
+                      ? "Çeki demiri"
+                      : "Tavan / bagaj sistemleri",
+                    {
+                      provenance: "EXPLICIT",
+                      source: "USER_EXPLICIT",
+                      evidence: ["automotive-accessory"],
+                    },
+                  )
           : /\baraç\b|\barac\b/i.test(normalizedInput) &&
               subjectValue === "VEHICLE"
             ? uv("araç", {
@@ -2728,7 +3042,7 @@ export function understandRequest(
     .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
     .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u");
   const adviceQuestionForm =
-    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanmaliyim|icmeliyim|onerirsiniz)(?:[^a-z0-9]|$)/.test(
+    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz)(?:[^a-z0-9]|$)/.test(
       scopeHay,
     );
   const medicalTreatmentContext =
@@ -2740,18 +3054,40 @@ export function understandRequest(
     );
   const isMedicalAdviceQuestion =
     !isUnsupportedSupply && adviceQuestionForm && medicalTreatmentContext;
+  /**
+   * KAPSAM DIŞI: kaldırılan tıbbi test / tahlil hizmeti.
+   *
+   * "Tıbbi test yaptırmak istiyorum" içindeki "yaptırmak" meşru bir hizmet
+   * sinyalidir; ancak bu sinyal, artık aktif olmayan sağlık test akışını
+   * genel Hizmetler'e veya Teknik Servis'e taşıyamaz. Yalnız açık tıbbi test
+   * adlandırması kapıyı açar; "tıbbi test cihazı" veya "tıbbi test kiti"
+   * gibi açık ürün talepleri bu kapıya girmez.
+   */
+  const medicalTestingPhrase =
+    /\b(?:tibbi|medikal)\s+(?:test|tahlil|analiz)\b/.test(scopeHay);
+  const medicalTestingProductSignal =
+    /\b(?:cihaz(?:ı|i)?|kit(?:i)?|alet(?:i)?|set(?:i)?)\b/.test(scopeHay);
+  const isRemovedMedicalTestingScope =
+    !isUnsupportedSupply &&
+    !isMedicalAdviceQuestion &&
+    medicalTestingPhrase &&
+    !medicalTestingProductSignal;
 
   const requestScope: UnderstandingDecision<RequestScope> = {
     value: isUnsupportedSupply
       ? "UNSUPPORTED_SUPPLY"
       : isMedicalAdviceQuestion
         ? "UNSUPPORTED_MEDICAL_ADVICE"
-        : "DEMAND",
+        : isRemovedMedicalTestingScope
+          ? "UNSUPPORTED_REMOVED_SCOPE"
+          : "DEMAND",
     confidence: isUnsupportedSupply
       ? reconciled.intent.confidence
       : isMedicalAdviceQuestion
         ? 0.85
-        : 0.9,
+        : isRemovedMedicalTestingScope
+          ? 0.95
+          : 0.9,
     status: "CONFIDENT",
     evidence: isUnsupportedSupply
       ? [
@@ -2761,7 +3097,9 @@ export function understandRequest(
         ]
       : isMedicalAdviceQuestion
         ? ["medical-advice-question", "treatment-choice-form"]
-        : ["demand"],
+        : isRemovedMedicalTestingScope
+          ? ["removed-medical-testing-scope", "service-intent"]
+          : ["demand"],
   };
 
   /**
@@ -2771,13 +3109,17 @@ export function understandRequest(
    * bir talep yoktur. Kararı sessizce silmek yerine UNKNOWN'a çekip kanıtı
    * kaydediyoruz — "ölçemedim" ile "ölçtüm, yok" ayrımı korunur (I14).
    */
-  if (isUnsupportedSupply || isMedicalAdviceQuestion) {
+  if (isUnsupportedSupply || isMedicalAdviceQuestion || isRemovedMedicalTestingScope) {
     const noCategoryTag = isUnsupportedSupply
       ? "unsupported-supply-no-category"
-      : "medical-advice-no-category";
+      : isMedicalAdviceQuestion
+        ? "medical-advice-no-category"
+        : "removed-medical-testing-no-category";
     const noSubjectTag = isUnsupportedSupply
       ? "unsupported-supply-no-subject"
-      : "medical-advice-no-subject";
+      : isMedicalAdviceQuestion
+        ? "medical-advice-no-subject"
+        : "removed-medical-testing-no-subject";
     reconciled.category = {
       value: null,
       confidence: 0,
@@ -2803,7 +3145,16 @@ export function understandRequest(
       },
       name: undefined,
       displayPhrase: undefined,
+      serviceType: undefined,
+      parentEntity: undefined,
+      position: undefined,
+      relation: undefined,
+      relationship: undefined,
+      target: undefined,
     };
+    delete attributes.needType;
+    delete attributes.serviceType;
+    delete attributes.serviceTarget;
   }
 
   const resolvedKeys = new Set<string>();

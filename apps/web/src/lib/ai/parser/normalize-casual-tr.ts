@@ -65,6 +65,7 @@ const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bsatin\s*al(mak|ıyorum|iyorum|ıyom|iyom)?\b/gi, "satın al"],
 
   // Product / category shorthand
+  [/\bplaysttion\b/gi, "PlayStation"],
   [/\byedek\s*prc\b/gi, "yedek parça"],
   [/\byedekprc\b/gi, "yedek parça"],
   [/\byedek\s*parca\b/gi, "yedek parça"],

@@ -9,6 +9,7 @@ import {
   BABY_BRANDS,
   findAutomotiveModel,
   findBrand,
+  MACHINERY_BRANDS,
   findTechnologyProduct,
   TECHNOLOGY_BRANDS,
 } from "./brand-catalog";
@@ -176,11 +177,7 @@ export function detectAttributes(text: string, categoryId: string) {
       normalized.includes("parça lazım") ||
       normalized.includes("parca lazim");
 
-    const wantsTire =
-      /\b(lastik|jant|stepne)\b/i.test(text) &&
-      !normalized.includes("araba") &&
-      !normalized.includes("araç") &&
-      !normalized.includes("arac");
+    const wantsTire = /\b(lastik|lastiği|lastigi|jant|stepne)\b/i.test(text);
 
     const wantsService =
       normalized.includes("periyodik bakım") ||
@@ -188,6 +185,8 @@ export function detectAttributes(text: string, categoryId: string) {
       normalized.includes("yag degisimi") ||
       normalized.includes("bakım yaptır") ||
       normalized.includes("bakim yaptir") ||
+      normalized.includes("ppf") ||
+      normalized.includes("kaplama") ||
       (normalized.includes("servis") &&
         !normalized.includes("servis kaydı") &&
         wantsPartExplicitly === false &&
@@ -229,17 +228,20 @@ export function detectAttributes(text: string, categoryId: string) {
     // Default = whole vehicle. Parts only when clearly asked.
     if (!rejectsPart && wantsTire) {
       attributes.needType = "tire";
+      attributes.tireItemType = normalized.includes("jant") ? "Jant" : "Lastik";
       if (!attributes.part) {
         attributes.part = normalized.includes("jant") ? "jant" : "lastik";
       }
     } else if (!rejectsPart && wantsPartExplicitly) {
       attributes.needType = "part";
-    } else if (!rejectsPart && wantsService && !wantsVehicle) {
+    } else if (!rejectsPart && wantsService) {
       attributes.needType = "service";
       if (normalized.includes("periyodik")) {
         attributes.serviceType = "Periyodik bakım";
       } else if (normalized.includes("yağ") || normalized.includes("yag")) {
         attributes.serviceType = "Yağ değişimi";
+      } else if (normalized.includes("ppf") || normalized.includes("kaplama")) {
+        attributes.serviceType = "Koruma filmi / kaplama";
       }
     } else {
       attributes.needType = "vehicle";
@@ -267,6 +269,13 @@ export function detectAttributes(text: string, categoryId: string) {
   }
 
   if (categoryId === "machinery") {
+    const machineryBrand = findBrand(text, MACHINERY_BRANDS);
+    if (machineryBrand) attributes.brand = machineryBrand;
+
+    const isUsedMachine =
+      normalized.includes("ikinci el") ||
+      /\b2\s*\.?\s*el\b/u.test(normalized) ||
+      normalized.includes("second hand");
     const partSignals = [
       "yedek parça",
       "yedek parca",
@@ -277,34 +286,256 @@ export function detectAttributes(text: string, categoryId: string) {
       "kayış",
       "kayis",
     ];
-    const serviceSignals = [
-      "servis",
-      "bakım",
-      "bakim",
-      "kurulum",
-      "montaj",
-      "tamir",
-    ];
-
     if (partSignals.some((item) => normalized.includes(item))) {
       attributes.needType = "part";
       const part = partSignals.find((item) => normalized.includes(item));
       if (part && !part.includes("yedek")) attributes.part = part;
-    } else if (serviceSignals.some((item) => normalized.includes(item))) {
-      attributes.needType = "service";
     } else {
       attributes.needType = "machine";
     }
 
+    if (isUsedMachine && attributes.needType === "machine") {
+      attributes.condition = "İkinci el";
+    }
+
+    if (attributes.needType === "part") {
+      if (
+        normalized.includes("orijinal") ||
+        normalized.includes("orjinal")
+      ) {
+        attributes.partPreference = "Orijinal";
+      } else if (normalized.includes("muadil")) {
+        attributes.partPreference = "Muadil";
+      }
+    }
+
     if (
-      normalized.includes("cnc") ||
-      normalized.includes("pres") ||
-      normalized.includes("kompresör") ||
-      normalized.includes("kompresor")
+      normalized.includes("mini ekskavatör") ||
+      normalized.includes("mini ekskavator") ||
+      normalized.includes("mini excavator")
     ) {
-      if (normalized.includes("cnc")) attributes.machineType = "CNC";
-      else if (normalized.includes("pres")) attributes.machineType = "Pres";
-      else attributes.machineType = "Kompresör";
+      attributes.machineType = "Mini ekskavatör";
+    } else if (
+      normalized.includes("ekskavatör") ||
+      normalized.includes("ekskavator") ||
+      normalized.includes("excavator")
+    ) {
+      attributes.machineType = "Ekskavatör";
+    } else if (
+      normalized.includes("yükleyici") ||
+      normalized.includes("yukleyici") ||
+      normalized.includes("loder") ||
+      normalized.includes("loader")
+    ) {
+      attributes.machineType = "Yükleyici (loder)";
+    } else if (
+      normalized.includes("beton santrali") ||
+      normalized.includes("hazır beton santrali") ||
+      normalized.includes("hazir beton santrali")
+    ) {
+      attributes.machineType = "Beton Santrali";
+    } else if (
+      normalized.includes("beton pompası") ||
+      normalized.includes("beton pompasi")
+    ) {
+      attributes.machineType = "Beton Pompası";
+    } else if (
+      normalized.includes("kule vinç") ||
+      normalized.includes("kule vinc") ||
+      normalized.includes("tower crane")
+    ) {
+      attributes.machineType = "Kule Vinç";
+    } else if (
+      normalized.includes("mobil vinç") ||
+      normalized.includes("mobil vinc") ||
+      normalized.includes("mobile crane")
+    ) {
+      attributes.machineType = "Mobil Vinç";
+    } else if (
+      normalized.includes("kompaktör") ||
+      normalized.includes("kompaktor") ||
+      normalized.includes("road roller") ||
+      normalized.includes("silindir")
+    ) {
+      attributes.machineType = "Silindir (kompaktör)";
+    } else if (
+      normalized.includes("ağaç yonga") ||
+      normalized.includes("agac yonga") ||
+      normalized.includes("dal öğütücü") ||
+      normalized.includes("dal ogutucu") ||
+      normalized.includes("wood chipper")
+    ) {
+      attributes.machineType = "Ağaç yonga makinesi";
+    } else if (
+      normalized.includes("arazi ölçümü") ||
+      normalized.includes("arazi olcumu") ||
+      normalized.includes("gnss") ||
+      normalized.includes("gps rtk") ||
+      normalized.includes("total station") ||
+      normalized.includes("teodolit") ||
+      normalized.includes("nivelman")
+    ) {
+      attributes.machineType = "Arazi ölçüm cihazı";
+    } else if (
+      normalized.includes("traktör") ||
+      normalized.includes("traktor") ||
+      normalized.includes("tractor")
+    ) {
+      attributes.machineType = "Traktör";
+    } else if (
+      normalized.includes("balya makinesi") ||
+      normalized.includes("balya") ||
+      normalized.includes("baler")
+    ) {
+      attributes.machineType = "Balya makinesi";
+    } else if (
+      normalized.includes("mibzer") ||
+      normalized.includes("ekim makinesi") ||
+      normalized.includes("pnömatik ekim") ||
+      normalized.includes("pnomatik ekim") ||
+      normalized.includes("seeder")
+    ) {
+      attributes.machineType = "Ekim makinesi (mibzer)";
+    } else if (
+      normalized.includes("pulluk") ||
+      normalized.includes("plow")
+    ) {
+      attributes.machineType = "Pulluk";
+    } else if (
+      normalized.includes("süt sağım") ||
+      normalized.includes("sut sagim") ||
+      normalized.includes("milking machine")
+    ) {
+      attributes.machineType = "Süt sağım makinesi";
+    } else if (
+      normalized.includes("yem karma") ||
+      normalized.includes("yem mikseri") ||
+      normalized.includes("feed mixer")
+    ) {
+      attributes.machineType = "Yem karma makinesi";
+    } else if (
+      normalized.includes("jeneratör") ||
+      normalized.includes("jenerator") ||
+      normalized.includes("generator")
+    ) {
+      attributes.machineType = "Jeneratör";
+      if (normalized.includes("dizel")) {
+        attributes.generatorFuel = "Dizel";
+      } else if (normalized.includes("benzin")) {
+        attributes.generatorFuel = "Benzin";
+      } else if (
+        normalized.includes("lpg") ||
+        normalized.includes("doğalgaz") ||
+        normalized.includes("dogalgaz")
+      ) {
+        attributes.generatorFuel = "LPG / doğalgaz";
+      }
+    } else if (
+      normalized.includes("shrink paketleme") ||
+      normalized.includes("shrink tunnel") ||
+      normalized.includes("paketleme hattı") ||
+      normalized.includes("paketleme hatti") ||
+      normalized.includes("flowpack") ||
+      normalized.includes("yatay paketleme") ||
+      normalized.includes("dikey form-fill-seal") ||
+      normalized.includes("vffs") ||
+      normalized.includes("karton doldurma") ||
+      normalized.includes("cartoner") ||
+      normalized.includes("palet streç") ||
+      normalized.includes("palet strec") ||
+      normalized.includes("pallet wrapper") ||
+      normalized.includes("etiketleme makinesi") ||
+      normalized.includes("labeler") ||
+      normalized.includes("dolum makinesi") ||
+      normalized.includes("dozaj makinesi") ||
+      normalized.includes("kapak kapama") ||
+      normalized.includes("capper")
+    ) {
+      attributes.machineType = "Paketleme makinesi";
+    } else if (
+      normalized.includes("lazer kesim") ||
+      normalized.includes("fiber lazer") ||
+      normalized.includes("laser cutter") ||
+      normalized.includes("plazma kesim") ||
+      normalized.includes("oksijen kesim") ||
+      normalized.includes("su jeti") ||
+      normalized.includes("waterjet") ||
+      normalized.includes("giyotin kesim") ||
+      normalized.includes("şerit testere") ||
+      normalized.includes("serit testere") ||
+      normalized.includes("disk testere") ||
+      normalized.includes("cnc router") ||
+      normalized.includes("ahşap kesim") ||
+      normalized.includes("ahsap kesim")
+    ) {
+      attributes.machineType = "Kesim teknolojisi";
+    } else if (
+      normalized.includes("cnc") ||
+      normalized.includes("torna") ||
+      normalized.includes("freze") ||
+      normalized.includes("işleme merkezi") ||
+      normalized.includes("isleme merkezi") ||
+      normalized.includes("taşlama") ||
+      normalized.includes("taslama") ||
+      normalized.includes("elektroerozyon") ||
+      normalized.includes("edm")
+    ) {
+      attributes.machineType = "CNC / talaşlı imalat";
+    } else if (
+      /(^|[^\p{L}\p{N}])pres(?=[^\p{L}\p{N}]|$)/u.test(normalized) ||
+      normalized.includes("press") ||
+      normalized.includes("abkant") ||
+      normalized.includes("giyotin") ||
+      normalized.includes("punç") ||
+      normalized.includes("punc")
+    ) {
+      attributes.machineType = "Pres / şekillendirme";
+    } else if (
+      normalized.includes("plastik enjeksiyon") ||
+      normalized.includes("enjeksiyon makinesi") ||
+      normalized.includes("şişirme makinesi") ||
+      normalized.includes("sisirme makinesi") ||
+      normalized.includes("ekstruder") ||
+      normalized.includes("extruder")
+    ) {
+      attributes.machineType = "Plastik enjeksiyon / ekstrüzyon";
+    } else if (
+      normalized.includes("mig") ||
+      normalized.includes("mıg") ||
+      normalized.includes("mag") ||
+      normalized.includes("gazaltı") ||
+      normalized.includes("gazalti") ||
+      normalized.includes("tig") ||
+      normalized.includes("tıg") ||
+      normalized.includes("spot kaynak") ||
+      normalized.includes("robot kaynak")
+    ) {
+      attributes.machineType = "Kaynak / birleştirme";
+    } else if (
+      normalized.includes("kompresör") ||
+      normalized.includes("kompresor") ||
+      normalized.includes("vakum pompası") ||
+      normalized.includes("vakum pompasi") ||
+      normalized.includes("chiller") ||
+      normalized.includes("soğutma grubu") ||
+      normalized.includes("sogutma grubu")
+    ) {
+      attributes.machineType = "Kompresör / akışkan sistemi";
+    } else if (
+      normalized.includes("forklift") ||
+      normalized.includes("reach truck") ||
+      normalized.includes("transpalet") ||
+      normalized.includes("vinç") ||
+      normalized.includes("vinc") ||
+      normalized.includes("monoray") ||
+      normalized.includes("konveyör") ||
+      normalized.includes("konveyor")
+    ) {
+      attributes.machineType = "Taşıma / istifleme";
+    }
+
+    if (isUsedMachine && typeof attributes.machineType === "string") {
+      attributes.machineType = `2. el ${attributes.machineType}`;
     }
   }
 
@@ -648,13 +879,242 @@ export function detectAttributes(text: string, categoryId: string) {
 
   if (categoryId === "baby") {
     if (
+      normalized.includes("emniyet kilit") ||
+      normalized.includes("güvenlik kilit") ||
+      normalized.includes("guvenlik kilit") ||
+      normalized.includes("güvenlik çit") ||
+      normalized.includes("guvenlik cit") ||
+      normalized.includes("güvenlik kayış") ||
+      normalized.includes("guvenlik kayis") ||
+      normalized.includes("bebek kapı") ||
+      normalized.includes("bebek kapi") ||
+      normalized.includes("bebek izleme cihaz") ||
+      normalized.includes("bebek izleme cihazi")
+    ) {
+      attributes.babyProductType = "Bebek güvenlik ürünü";
+    } else if (
+      normalized.includes("bebek monitör") ||
+      normalized.includes("bebek monitor") ||
+      normalized.includes("oyun parkı") ||
+      normalized.includes("oyun parki") ||
+      normalized.includes("activity gym") ||
+      normalized.includes("bebek tekstil")
+    ) {
+      attributes.babyProductType = "Diğer bebek ürünü";
+    } else if (
+      normalized.includes("akülü araba") ||
+      normalized.includes("akulu araba") ||
+      normalized.includes("yürüteç") ||
+      normalized.includes("yurutec") ||
+      normalized.includes("salıncak") ||
+      normalized.includes("salincak") ||
+      normalized.includes("oyun halısı") ||
+      normalized.includes("oyun halisi") ||
+      normalized.includes("üç teker") ||
+      normalized.includes("uc teker") ||
+      normalized.includes("scooter") ||
+      normalized.includes("hoppala") ||
+      normalized.includes("dönence") ||
+      normalized.includes("donence") ||
+      normalized.includes("itmeli oyuncak") ||
+      normalized.includes("çekmeli oyuncak") ||
+      normalized.includes("cekmeli oyuncak")
+    ) {
+      attributes.babyProductType = "Oyun / gezi ürünü";
+    } else if (
+      normalized.includes("oyuncak") ||
+      normalized.includes("robotik") ||
+      normalized.includes("uzaktan kumandalı") ||
+      normalized.includes("uzaktan kumandali") ||
+      normalized.includes("yapı oyuncağı") ||
+      normalized.includes("yapi oyuncagi") ||
+      normalized.includes("top havuzu")
+    ) {
+      attributes.babyProductType = "Oyuncak";
+    } else if (
+      normalized.includes("bez saklama") ||
+      normalized.includes("atık yönetimi") ||
+      normalized.includes("atik yonetimi") ||
+      normalized.includes("bebek bezi kutu") ||
+      normalized.includes("bebek bezi çöp") ||
+      normalized.includes("bebek bezi cop") ||
+      normalized.includes("kirli bebek bezi çanta") ||
+      normalized.includes("kirli bebek bezi canta")
+    ) {
+      attributes.babyProductType = "Bez saklama / atık yönetimi";
+    } else if (
+      normalized.includes("ıslak mendil") ||
+      normalized.includes("islak mendil") ||
+      normalized.includes("pişik") ||
+      normalized.includes("pisik")
+    ) {
+      attributes.babyProductType = "Islak mendil / pişik bakımı";
+    } else if (
+      normalized.includes("alt açma") ||
+      normalized.includes("alt acma") ||
+      normalized.includes("alt alma") ||
+      normalized.includes("alt değiştirme") ||
+      normalized.includes("alt degistirme") ||
+      normalized.includes("bez değiştirme") ||
+      normalized.includes("bez degistirme")
+    ) {
+      attributes.babyProductType = "Bebek bezi / alt değiştirme";
+    } else if (
+      normalized.includes("bebek küvet") ||
+      normalized.includes("bebek kuvet") ||
+      normalized.includes("banyo küvet") ||
+      normalized.includes("banyo kuvet") ||
+      normalized.includes("banyo tabure") ||
+      normalized.includes("banyo şapka") ||
+      normalized.includes("banyo sapka")
+    ) {
+      attributes.babyProductType = "Bebek banyo ürünü";
+    } else if (
+      normalized.includes("ateş ölçer") ||
+      normalized.includes("ates olcer") ||
+      normalized.includes("tırnak makası") ||
+      normalized.includes("tirnak makasi") ||
+      normalized.includes("burun aspiratör") ||
+      normalized.includes("burun aspirator") ||
+      normalized.includes("bebek sağlık seti") ||
+      normalized.includes("bebek saglik seti") ||
+      normalized.includes("bebek bakım seti") ||
+      normalized.includes("bebek bakim seti")
+    ) {
+      attributes.babyProductType = "Bebek sağlık / bakım ürünü";
+    } else if (
+      normalized.includes("emzik mendil") ||
+      normalized.includes("emzik klips") ||
+      normalized.includes("emzik tutucu")
+    ) {
+      attributes.babyProductType = "Emzik aksesuarı / temizliği";
+    } else if (
+      normalized.includes("lazımlık") ||
+      normalized.includes("lazimlik") ||
+      normalized.includes("tuvalet eğitimi") ||
+      normalized.includes("tuvalet egitimi")
+    ) {
+      attributes.babyProductType = "Lazımlık / tuvalet eğitimi";
+    } else if (
+      normalized.includes("oto koltuğu aksesuar") ||
+      normalized.includes("oto koltugu aksesuar")
+    ) {
+      attributes.babyProductType = "Oto koltuğu aksesuarı";
+    } else if (
+      normalized.includes("bebek arabası aksesuar") ||
+      normalized.includes("bebek arabasi aksesuar") ||
+      normalized.includes("puset aksesuar") ||
+      normalized.includes("bebek arabası örtü") ||
+      normalized.includes("bebek arabasi ortu") ||
+      normalized.includes("bebek arabası tulum") ||
+      normalized.includes("bebek arabasi tulum") ||
+      normalized.includes("bebek arabası yağmurluk") ||
+      normalized.includes("bebek arabasi yagmurluk") ||
+      normalized.includes("bebek arabası yağmurlu") ||
+      normalized.includes("bebek arabasi yagmurlu") ||
+      normalized.includes("puset yağmurluk") ||
+      normalized.includes("puset yagmurluk") ||
+      normalized.includes("puset yağmurlu") ||
+      normalized.includes("puset yagmurlu") ||
+      normalized.includes("puset ayak tulumu") ||
+      normalized.includes("alışveriş arabası kılıf") ||
+      normalized.includes("alisveris arabasi kilif") ||
+      normalized.includes("mama sandalyesi kılıf") ||
+      normalized.includes("mama sandalyesi kilif")
+    ) {
+      attributes.babyProductType = "Bebek arabası aksesuarı";
+    } else if (
+      normalized.includes("kanguru aksesuar") ||
+      normalized.includes("bebek taşıyıcı aksesuar") ||
+      normalized.includes("bebek tasiyici aksesuar")
+    ) {
+      attributes.babyProductType = "Kanguru aksesuarı";
+    } else if (
+      normalized.includes("kanguru") ||
+      normalized.includes("bebek taşıyıcı") ||
+      normalized.includes("bebek tasiyici") ||
+      normalized.includes("baby carrier")
+    ) {
+      attributes.babyProductType = "Kanguru / bebek taşıyıcı";
+    } else if (
+      normalized.includes("portbebe") || normalized.includes("carrycot")
+    ) {
+      attributes.babyProductType = "Portbebe";
+    } else if (
       normalized.includes("bebek arabası") ||
       normalized.includes("bebek arabasi") ||
       normalized.includes("puset")
     ) {
       attributes.babyProductType = "Bebek arabası / puset";
+    } else if (
+      normalized.includes("oto koltuğu") ||
+      normalized.includes("oto koltugu") ||
+      normalized.includes("ana kucağı") ||
+      normalized.includes("ana kucagi") ||
+      normalized.includes("yükseltici") ||
+      normalized.includes("yukseltici")
+    ) {
+      attributes.babyProductType = "Oto koltuğu / ana kucağı";
     } else if (normalized.includes("mama sandalyesi")) {
       attributes.babyProductType = "Mama sandalyesi";
+    } else if (
+      normalized.includes("sterilizatör") ||
+      normalized.includes("sterilizator") ||
+      normalized.includes("mama ısıtıcı") ||
+      normalized.includes("mama isitici") ||
+      normalized.includes("mama hazırlama") ||
+      normalized.includes("mama hazirlama") ||
+      normalized.includes("biberon ısıtıcı") ||
+      normalized.includes("biberon isitici")
+    ) {
+      attributes.babyProductType = "Sterilizatör / mama hazırlama";
+    } else if (
+      normalized.includes("göğüs pompası") ||
+      normalized.includes("gogus pompasi") ||
+      normalized.includes("anne sütü depolama") ||
+      normalized.includes("anne sutu depolama") ||
+      normalized.includes("emzirme yastığı") ||
+      normalized.includes("emzirme yastigi") ||
+      normalized.includes("emzirme önlüğü") ||
+      normalized.includes("emzirme onlugu")
+    ) {
+      attributes.babyProductType = "Göğüs pompası / süt saklama";
+    } else if (
+      normalized.includes("biberon") ||
+      normalized.includes("alıştırma bardağı") ||
+      normalized.includes("alistirma bardagi") ||
+      normalized.includes("suluk")
+    ) {
+      attributes.babyProductType = "Biberon / suluk";
+    } else if (
+      normalized.includes("emzik") ||
+      normalized.includes("diş kaşıyıcı") ||
+      normalized.includes("dis kasiyici")
+    ) {
+      attributes.babyProductType = "Emzik / diş kaşıyıcı";
+    } else if (
+      normalized.includes("bebek odası mobilya") ||
+      normalized.includes("bebek odasi mobilya") ||
+      normalized.includes("bebek odası seti") ||
+      normalized.includes("bebek odasi seti")
+    ) {
+      attributes.babyProductType = "Bebek odası mobilyası";
+    } else if (
+      normalized.includes("uyku tulumu") ||
+      normalized.includes("sleeping bag")
+    ) {
+      attributes.babyProductType = "Uyku tulumu";
+    } else if (
+      normalized.includes("bebek battaniye") ||
+      normalized.includes("kundak")
+    ) {
+      attributes.babyProductType = "Bebek battaniyesi / kundak";
+    } else if (
+      normalized.includes("yatak koruyucu") ||
+      normalized.includes("bebek nest") ||
+      normalized.includes("uyku nest")
+    ) {
+      attributes.babyProductType = "Yatak koruyucu / nest";
     } else if (
       normalized.includes("beşik") ||
       normalized.includes("besik") ||
@@ -664,11 +1124,18 @@ export function detectAttributes(text: string, categoryId: string) {
     } else if (normalized.includes("bebek bezi")) {
       attributes.babyProductType = "Bebek bezi / bakım";
     } else if (
-      normalized.includes("mama") ||
-      normalized.includes("biberon") ||
-      normalized.includes("emzik")
+      normalized.includes("bebek gıdası") ||
+      normalized.includes("bebek gidasi") ||
+      normalized.includes("çocuk gıdası") ||
+      normalized.includes("cocuk gidasi") ||
+      normalized.includes("püre") ||
+      normalized.includes("pure") ||
+      normalized.includes("atıştırmalık") ||
+      normalized.includes("atistirmalik")
     ) {
-      attributes.babyProductType = "Beslenme ürünleri";
+      attributes.babyProductType = "Bebek / çocuk gıdası";
+    } else if (normalized.includes("mama")) {
+      attributes.babyProductType = "Bebek / çocuk gıdası";
     }
 
     if (normalized.includes("yenidoğan") || normalized.includes("yenidogan")) {
@@ -739,16 +1206,64 @@ export function detectAttributes(text: string, categoryId: string) {
       attributes.listingType = "Satılık";
     }
 
-    if (normalized.includes("villa")) attributes.propertyType = "Villa";
+    if (normalized.includes("yalı dairesi") || normalized.includes("yali dairesi")) {
+      attributes.propertyType = "Yalı Dairesi";
+    } else if (normalized.includes("çiftlik evi") || normalized.includes("ciftlik evi")) {
+      attributes.propertyType = "Çiftlik Evi";
+    } else if (normalized.includes("müstakil") || normalized.includes("mustakil")) {
+      attributes.propertyType = "Müstakil Ev";
+    } else if (normalized.includes("villa")) attributes.propertyType = "Villa";
+    else if (normalized.includes("köşk") || normalized.includes("kosk")) {
+      attributes.propertyType = "Köşk & Konak";
+    } else if (normalized.includes("yalı") || normalized.includes("yali")) {
+      attributes.propertyType = "Yalı";
+    }
     else if (normalized.includes("stüdyo") || normalized.includes("studyo"))
       attributes.propertyType = "Stüdyo";
     else if (normalized.includes("dubleks")) attributes.propertyType = "Dubleks";
     else if (normalized.includes("rezidans") || normalized.includes("residans"))
       attributes.propertyType = "Rezidans";
-    else if (normalized.includes("arsa")) attributes.propertyType = "Arsa";
+    else if (normalized.includes("devre mülk") || normalized.includes("devre mulk")) {
+      attributes.propertyType = "Devre mülk";
+    } else if (normalized.includes("devren işyeri") || normalized.includes("devren isyeri")) {
+      attributes.propertyType = "Devren işyeri";
+    } else if (normalized.includes("müştemilat") || normalized.includes("mustemilat")) {
+      attributes.propertyType = "Müştemilat";
+    } else if (normalized.includes("kooperatif hissesi")) {
+      attributes.propertyType = "Kooperatif hissesi";
+    } else if (normalized.includes("turistik tesis")) {
+      attributes.propertyType = "Turistik tesis";
+    }
+    else if (normalized.includes("plaza ofisi")) {
+      attributes.propertyType = "Plaza ofisi";
+    } else if (normalized.includes("dükkan") || normalized.includes("dukkan") || normalized.includes("mağaza") || normalized.includes("magaza")) {
+      attributes.propertyType = "Dükkan / mağaza";
+    } else if (normalized.includes("depo") || normalized.includes("antrepo")) {
+      attributes.propertyType = "Depo / antrepo";
+    } else if (normalized.includes("fabrika") || normalized.includes("imalathane")) {
+      attributes.propertyType = "Fabrika / imalathane";
+    } else if (normalized.includes("avm ünitesi") || normalized.includes("avm unitesi")) {
+      attributes.propertyType = "AVM ünitesi";
+    } else if (
+      normalized.includes("otel") ||
+      /(?:öğrenci|ogrenci)\s+apart\b|\bapart\s*otel\b/i.test(normalized)
+    ) {
+      attributes.propertyType = "Otel / apart";
+    } else if (normalized.includes("ofis")) {
+      attributes.propertyType = "Ofis";
+    }
+    else if (normalized.includes("konut imarlı arsa") || normalized.includes("konut imarli arsa")) {
+      attributes.propertyType = "Konut imarlı arsa";
+    } else if (normalized.includes("ticari arsa")) {
+      attributes.propertyType = "Ticari arsa";
+    } else if (normalized.includes("sanayi arsası") || normalized.includes("sanayi arsasi")) {
+      attributes.propertyType = "Sanayi arsası";
+    } else if (normalized.includes("imarlı arsa") || normalized.includes("imarli arsa")) {
+      attributes.propertyType = "İmarlı arsa";
+    } else if (normalized.includes("tarla")) {
+      attributes.propertyType = "Tarla";
+    } else if (normalized.includes("arsa")) attributes.propertyType = "Arsa";
     else if (
-      normalized.includes("dükkan") ||
-      normalized.includes("dukkan") ||
       normalized.includes("işyeri") ||
       normalized.includes("isyeri")
     )
@@ -784,8 +1299,26 @@ export function detectAttributes(text: string, categoryId: string) {
     const floorMatch = text.match(/(\d+)\s*\/\s*(\d+)\s*kat/i);
     if (floorMatch) attributes.floor = `${floorMatch[1]} / ${floorMatch[2]}`;
 
+    const detachedResidentialTypes = new Set([
+      "Müstakil Ev",
+      "Villa",
+      "Çiftlik Evi",
+      "Köşk & Konak",
+      "Yalı",
+    ]);
+    const totalFloorsMatch = text.match(/\b(\d+)\s*katlı(?=\s|$|[.,;!?])/i);
+    if (
+      totalFloorsMatch &&
+      detachedResidentialTypes.has(String(attributes.propertyType ?? ""))
+    ) {
+      attributes.totalFloors = Number(totalFloorsMatch[1]);
+    }
+
     const ageMatch = text.match(/(\d{1,2})\s*yıllık/i);
     if (ageMatch) attributes.buildingAge = Number(ageMatch[1]);
+    if (/\b(sıfır|sifir|yeni)\s+(bina|yapı|yapi|ev|konut|daire|villa|mülk|mulk)\b/i.test(text)) {
+      attributes.newBuildPreference = "Yeni bina şart";
+    }
   }
 
   return attributes;

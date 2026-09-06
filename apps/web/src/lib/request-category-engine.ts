@@ -11,13 +11,7224 @@ import {
 } from "@/lib/ai/parser/brand-catalog";
 import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
 import { resolveBrowseSemanticRole } from "@/lib/request-composer/browse-semantic-role";
+import { resolveTaxonomyAlias } from "@/lib/taxonomy/registry";
 
 export type DynamicFieldType = "text" | "number" | "select";
+
+/**
+ * A measurement is a category contract, not a field-name convention.
+ * The same `dimensions` storage key may mean a paper format or a physical
+ * object size; the declared contract is the sole UI decision source.
+ */
+export type MeasurementKind = "print_format" | "physical_dimensions";
+export type MeasurementAxis = "width" | "height" | "depth";
+export type MeasurementContract = {
+  kind: MeasurementKind;
+  example: string;
+  unit?: "mm" | "cm" | "inch";
+  axes?: MeasurementAxis[];
+  variants?: Array<{
+    whenProductTypes: string[];
+    kind: MeasurementKind;
+    example: string;
+    unit?: "mm" | "cm" | "inch";
+    axes?: MeasurementAxis[];
+  }>;
+};
+
+/**
+ * Ürün türüne göre soru sözleşmesi. Bu, alan adından tahmin yürütmek yerine
+ * kategorinin hangi ürününde hangi detayların sorulabileceğini açıkça tanımlar.
+ * `allowedCandidateFieldKeys` özellikle çıkarım katmanından gelen ilgisiz soru
+ * adaylarını süzer; ortak yayın soruları ayrı çekirdekten gelmeye devam eder.
+ */
+export type ProductQuestionContractQuestion = {
+  fieldKey: string;
+  prompt: string;
+  summaryLabel: string;
+  importance: "publish_required" | "routing_critical" | "quote_critical" | "optional";
+  quickChoices?: DynamicFieldOption[];
+  allowUnknown?: boolean;
+  allowDontCare?: boolean;
+  inputHint?: "text" | "select" | "budget" | "location" | "number";
+  rank?: number;
+};
+
+export type ProductQuestionContract = {
+  whenProductTypes?: string[];
+  whenNeedTypes?: string[];
+  allowedCandidateFieldKeys: string[];
+  /**
+   * Dar ailelerde standart kategori profillerini de bu sözleşmenin anahtar
+   * listesiyle sınırla. Global yayın soruları (bütçe/konum/zaman) bundan
+   * etkilenmez; yalnız marka/model gibi ek hızlı sorular gizlenir.
+   */
+  restrictStandardProfiles?: boolean;
+  /** Omit the shared time question when this flow does not request it. */
+  omitDeliveryQuestion?: boolean;
+  /** Product-owned controls such as physical dimensions. */
+  measurementContracts?: Record<string, MeasurementContract>;
+  questions: ProductQuestionContractQuestion[];
+};
 
 export type DynamicFieldOption = {
   label: string;
   value: string;
 };
+
+const FURNITURE_COMMON_CANDIDATE_KEYS = [
+  "furnitureType",
+  "usageArea",
+  "dimensions",
+  "material",
+  "color",
+  "features",
+  "condition",
+  "assembly",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+const FURNITURE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenProductTypes: [
+      "makam odası",
+      "makam odasi",
+      "makam",
+      "yönetici masa",
+      "yonetici masa",
+    ],
+    allowedCandidateFieldKeys: [
+      ...FURNITURE_COMMON_CANDIDATE_KEYS,
+      "executiveDeskConfiguration",
+      "cableManagement",
+    ],
+    questions: [
+      {
+        fieldKey: "executiveDeskConfiguration",
+        prompt: "Nasıl bir yönetici masa takımı arıyorsunuz?",
+        summaryLabel: "Takım içeriği",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tek yönetici masası", value: "Tek masa" },
+          { label: "Masa + etajer", value: "Masa + etajer" },
+          { label: "Masa + dolap / kitaplık", value: "Masa + dolap" },
+          { label: "Komple takım", value: "Komple takım" },
+        ],
+      },
+      {
+        fieldKey: "cableManagement",
+        prompt: "Kablo kanalı veya masa üstü priz modülü gerekli mi?",
+        summaryLabel: "Kablo / priz çözümü",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["toplantı masası", "toplanti masasi"],
+    allowedCandidateFieldKeys: [
+      ...FURNITURE_COMMON_CANDIDATE_KEYS,
+      "meetingCapacity",
+      "meetingTableShape",
+    ],
+    questions: [
+      {
+        fieldKey: "meetingCapacity",
+        prompt: "Kaç kişilik toplantı masası gerekli?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "4–6 kişilik", value: "4-6" },
+          { label: "8 kişilik", value: "8" },
+          { label: "10–12 kişilik", value: "10-12" },
+          { label: "14+ kişilik", value: "14+" },
+        ],
+      },
+      {
+        fieldKey: "meetingTableShape",
+        prompt: "Masa formu için bir tercihiniz var mı?",
+        summaryLabel: "Masa formu",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dikdörtgen", value: "Dikdörtgen" },
+          { label: "Oval", value: "Oval" },
+          { label: "Yuvarlak", value: "Yuvarlak" },
+          { label: "U düzeni", value: "U düzeni" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "ofis sandalyesi",
+      "ofis koltuğu",
+      "ofis koltugu",
+      "büro sandalyesi",
+      "buro sandalyesi",
+      "yönetici koltuğu",
+      "yonetici koltugu",
+    ],
+    allowedCandidateFieldKeys: [
+      ...FURNITURE_COMMON_CANDIDATE_KEYS,
+      "officeChairMechanism",
+      "officeChairErgonomics",
+    ],
+    questions: [
+      {
+        fieldKey: "officeChairMechanism",
+        prompt: "Mekanizma tercihiniz var mı?",
+        summaryLabel: "Mekanizma",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Senkron mekanizma", value: "Senkron" },
+          { label: "Tilt mekanizma", value: "Tilt" },
+          { label: "Sabit / mekanizmasız", value: "Sabit" },
+        ],
+      },
+      {
+        fieldKey: "officeChairErgonomics",
+        prompt: "Öncelikli ergonomi özelliğiniz nedir?",
+        summaryLabel: "Ergonomi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bel destekli", value: "Bel destekli" },
+          { label: "Başlıklı", value: "Başlıklı" },
+          { label: "Ayarlanabilir kolçaklı", value: "Ayarlanabilir kolçaklı" },
+          { label: "Temel kullanım", value: "Temel kullanım" },
+        ],
+      },
+    ],
+  },
+];
+
+const APPLIANCE_COMMON_CANDIDATE_KEYS = [
+  "applianceType",
+  "usageArea",
+  "brand",
+  "energyClass",
+  "features",
+  "condition",
+  "installation",
+  "dimensions",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+const APPLIANCE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenProductTypes: ["buzdolabı", "buzdolabi"],
+    allowedCandidateFieldKeys: [
+      ...APPLIANCE_COMMON_CANDIDATE_KEYS,
+      "fridgeType",
+      "fridgeCapacity",
+      "fridgeCoolingSystem",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "75 × 70 × 185 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "fridgeType",
+        prompt: "Nasıl bir buzdolabı arıyorsunuz?",
+        summaryLabel: "Buzdolabı tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Alttan donduruculu", value: "Alttan donduruculu" },
+          { label: "Üstten donduruculu", value: "Üstten donduruculu" },
+          { label: "Gardrop tipi", value: "Gardrop tipi" },
+          { label: "Mini / ofis tipi", value: "Mini" },
+        ],
+      },
+      {
+        fieldKey: "fridgeCapacity",
+        prompt: "Yaklaşık hangi net hacim aralığı gerekli?",
+        summaryLabel: "Net hacim",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "200–300 litre", value: "200-300 L" },
+          { label: "300–400 litre", value: "300-400 L" },
+          { label: "400–500 litre", value: "400-500 L" },
+          { label: "500 litre ve üzeri", value: "500+ L" },
+        ],
+      },
+      {
+        fieldKey: "fridgeCoolingSystem",
+        prompt: "Soğutma sistemi tercihiniz var mı?",
+        summaryLabel: "Soğutma sistemi",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "No-Frost", value: "No-Frost" },
+          { label: "Statik", value: "Statik" },
+        ],
+      },
+      {
+        fieldKey: "energyClass",
+        prompt: "Enerji sınıfı için bir tercihiniz var mı?",
+        summaryLabel: "Enerji sınıfı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "A", value: "A" },
+          { label: "B", value: "B" },
+          { label: "C", value: "C" },
+          { label: "D ve altı", value: "D ve altı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["çamaşır makinesi", "camasir makinesi"],
+    allowedCandidateFieldKeys: [
+      ...APPLIANCE_COMMON_CANDIDATE_KEYS,
+      "capacityKg",
+      "washerLoadType",
+      "washerDryFeature",
+      "spinSpeed",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "60 × 60 × 85 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "capacityKg",
+        prompt: "Kaç kilogram kapasite gerekli?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "7 kg", value: "7 kg" },
+          { label: "8 kg", value: "8 kg" },
+          { label: "9 kg", value: "9 kg" },
+          { label: "10 kg", value: "10 kg" },
+          { label: "12 kg ve üzeri", value: "12+ kg" },
+        ],
+      },
+      {
+        fieldKey: "washerDryFeature",
+        prompt: "Kurutma özelliği gerekli mi?",
+        summaryLabel: "Kurutma özelliği",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sadece çamaşır makinesi", value: "Sadece çamaşır" },
+          { label: "Kurutmalı çamaşır makinesi", value: "Kurutmalı" },
+        ],
+      },
+      {
+        fieldKey: "washerLoadType",
+        prompt: "Yükleme tipi için tercihiniz var mı?",
+        summaryLabel: "Yükleme tipi",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Önden yüklemeli", value: "Önden yüklemeli" },
+          { label: "Üstten yüklemeli", value: "Üstten yüklemeli" },
+        ],
+      },
+      {
+        fieldKey: "spinSpeed",
+        prompt: "Sıkma devri için bir tercihiniz var mı?",
+        summaryLabel: "Sıkma devri",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "1.000 devir", value: "1000 rpm" },
+          { label: "1.200 devir", value: "1200 rpm" },
+          { label: "1.400 devir", value: "1400 rpm" },
+          { label: "1.600 devir ve üzeri", value: "1600+ rpm" },
+        ],
+      },
+      {
+        fieldKey: "energyClass",
+        prompt: "Enerji sınıfı için bir tercihiniz var mı?",
+        summaryLabel: "Enerji sınıfı",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "A", value: "A" },
+          { label: "B", value: "B" },
+          { label: "C", value: "C" },
+          { label: "D ve altı", value: "D ve altı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["klima"],
+    allowedCandidateFieldKeys: [
+      ...APPLIANCE_COMMON_CANDIDATE_KEYS,
+      "airConditionerType",
+      "capacityBtu",
+      "climateRoomSize",
+      "inverterPreference",
+      "heatingFunction",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "90 × 23 × 30 cm (iç ünite)",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "airConditionerType",
+        prompt: "Hangi klima tipini arıyorsunuz?",
+        summaryLabel: "Klima tipi",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Duvar tipi split", value: "Split" },
+          { label: "Salon tipi", value: "Salon tipi" },
+          { label: "Portatif", value: "Portatif" },
+        ],
+      },
+      {
+        fieldKey: "capacityBtu",
+        prompt: "Kaç BTU olmalı?",
+        summaryLabel: "BTU",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "9.000 BTU", value: "9000 BTU" },
+          { label: "12.000 BTU", value: "12000 BTU" },
+          { label: "18.000 BTU", value: "18000 BTU" },
+          { label: "24.000 BTU", value: "24000 BTU" },
+        ],
+      },
+      {
+        fieldKey: "climateRoomSize",
+        prompt: "Yaklaşık kaç metrekarelik alan için?",
+        summaryLabel: "Alan büyüklüğü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "10–15 m²", value: "10-15 m²" },
+          { label: "16–25 m²", value: "16-25 m²" },
+          { label: "26–35 m²", value: "26-35 m²" },
+          { label: "36 m² ve üzeri", value: "36+ m²" },
+        ],
+      },
+      {
+        fieldKey: "inverterPreference",
+        prompt: "Inverter özelliği gerekli mi?",
+        summaryLabel: "Inverter",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Inverter olsun", value: "Inverter" },
+          { label: "Inverter olmasa da olur", value: "Inverter değil" },
+        ],
+      },
+      {
+        fieldKey: "heatingFunction",
+        prompt: "Isıtma fonksiyonu da gerekli mi?",
+        summaryLabel: "Isıtma",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Isıtma + soğutma", value: "Isıtma + soğutma" },
+          { label: "Sadece soğutma", value: "Sadece soğutma" },
+        ],
+      },
+      {
+        fieldKey: "energyClass",
+        prompt: "Enerji sınıfı için bir tercihiniz var mı?",
+        summaryLabel: "Enerji sınıfı",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "A", value: "A" },
+          { label: "B", value: "B" },
+          { label: "C", value: "C" },
+          { label: "D ve altı", value: "D ve altı" },
+        ],
+      },
+      {
+        fieldKey: "installation",
+        prompt: "Montaj da dahil olsun mu?",
+        summaryLabel: "Montaj",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Montaj dahil", value: "Montaj dahil" },
+          { label: "Sadece ürün", value: "Sadece ürün" },
+        ],
+      },
+    ],
+  },
+];
+
+/**
+ * Donanım ürünlerinde ortak kalan ticari bilgiler. Ürüne özgü teknik sorular
+ * aşağıdaki sözleşmelerde yaşar; örneğin TV için RAM veya telefon için ekran
+ * kartı adayının görünmesine izin verilmez.
+ */
+const TECHNOLOGY_COMMON_CANDIDATE_KEYS = [
+  "needType",
+  "solutionType",
+  "brand",
+  "model",
+  "condition",
+  "warranty",
+  "specs",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+const TECHNOLOGY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenNeedTypes: ["hardware"],
+    whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],
+    allowedCandidateFieldKeys: [
+      ...TECHNOLOGY_COMMON_CANDIDATE_KEYS,
+      "screenSize",
+      "panelType",
+      "resolution",
+      "refreshRate",
+    ],
+    questions: [
+      {
+        fieldKey: "screenSize",
+        prompt: "Kaç inç ekran arıyorsunuz?",
+        summaryLabel: "Ekran boyutu",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "32 inç", value: "32" },
+          { label: "43 inç", value: "43" },
+          { label: "50 inç", value: "50" },
+          { label: "55 inç", value: "55" },
+          { label: "65 inç ve üzeri", value: "65+" },
+        ],
+      },
+      {
+        fieldKey: "resolution",
+        prompt: "Çözünürlük tercihiniz var mı?",
+        summaryLabel: "Çözünürlük",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Full HD", value: "Full HD" },
+          { label: "4K UHD", value: "4K UHD" },
+          { label: "8K", value: "8K" },
+        ],
+      },
+      {
+        fieldKey: "panelType",
+        prompt: "Panel teknolojisi tercihiniz var mı?",
+        summaryLabel: "Panel",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "OLED", value: "OLED" },
+          { label: "QLED", value: "QLED" },
+          { label: "Mini LED", value: "Mini LED" },
+          { label: "LED", value: "LED" },
+        ],
+      },
+      {
+        fieldKey: "refreshRate",
+        prompt: "Yenileme hızı için tercihiniz var mı?",
+        summaryLabel: "Yenileme hızı",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "60 Hz", value: "60 Hz" },
+          { label: "120 Hz", value: "120 Hz" },
+          { label: "144 Hz ve üzeri", value: "144+ Hz" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["hardware"],
+    whenProductTypes: ["laptop", "notebook", "macbook", "dizüstü", "dizustu"],
+    allowedCandidateFieldKeys: [
+      ...TECHNOLOGY_COMMON_CANDIDATE_KEYS,
+      "usagePurpose",
+      "processor",
+      "ram",
+      "storage",
+      "graphics",
+      "screenSize",
+    ],
+    questions: [
+      {
+        fieldKey: "usagePurpose",
+        prompt: "Laptopu öncelikle ne için kullanacaksınız?",
+        summaryLabel: "Kullanım amacı",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: false,
+        quickChoices: [
+          { label: "İş / ofis", value: "İş / ofis" },
+          { label: "Okul", value: "Okul" },
+          { label: "Yazılım / profesyonel", value: "Profesyonel" },
+          { label: "Oyun", value: "Oyun" },
+          { label: "Günlük kullanım", value: "Günlük" },
+        ],
+      },
+      {
+        fieldKey: "processor",
+        prompt: "İşlemci için bir tercihiniz var mı?",
+        summaryLabel: "İşlemci",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Apple M serisi", value: "Apple M serisi" },
+          { label: "Intel Core i5 / Ultra 5", value: "Intel Core i5 / Ultra 5" },
+          { label: "Intel Core i7 / Ultra 7", value: "Intel Core i7 / Ultra 7" },
+          { label: "AMD Ryzen 5", value: "AMD Ryzen 5" },
+          { label: "AMD Ryzen 7", value: "AMD Ryzen 7" },
+        ],
+      },
+      {
+        fieldKey: "ram",
+        prompt: "Ne kadar RAM gerekli?",
+        summaryLabel: "RAM",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "8 GB", value: "8 GB" },
+          { label: "16 GB", value: "16 GB" },
+          { label: "32 GB", value: "32 GB" },
+          { label: "64 GB ve üzeri", value: "64+ GB" },
+        ],
+      },
+      {
+        fieldKey: "storage",
+        prompt: "Depolama kapasitesi ne olsun?",
+        summaryLabel: "Depolama",
+        importance: "quote_critical",
+        rank: 62,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "256 GB SSD", value: "256 GB SSD" },
+          { label: "512 GB SSD", value: "512 GB SSD" },
+          { label: "1 TB SSD", value: "1 TB SSD" },
+          { label: "2 TB ve üzeri", value: "2 TB+" },
+        ],
+      },
+      {
+        fieldKey: "screenSize",
+        prompt: "Ekran boyutu tercihiniz var mı?",
+        summaryLabel: "Ekran boyutu",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "13–14 inç", value: "13-14" },
+          { label: "15–16 inç", value: "15-16" },
+          { label: "17 inç ve üzeri", value: "17+" },
+        ],
+      },
+      {
+        fieldKey: "graphics",
+        prompt: "Harici ekran kartı gerekli mi?",
+        summaryLabel: "Ekran kartı",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli değil", value: "Gerekli değil" },
+          { label: "RTX 4050 / eşdeğeri", value: "RTX 4050" },
+          { label: "RTX 4060 / eşdeğeri", value: "RTX 4060" },
+          { label: "RTX 4070 ve üzeri", value: "RTX 4070+" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["hardware"],
+    whenProductTypes: [
+      "masaüstü",
+      "masaustu",
+      "desktop",
+      "oyun bilgisayarı",
+      "oyun bilgisayari",
+      "gaming pc",
+      "bilgisayar",
+      "pc",
+    ],
+    allowedCandidateFieldKeys: [
+      ...TECHNOLOGY_COMMON_CANDIDATE_KEYS,
+      "usagePurpose",
+      "processor",
+      "ram",
+      "storage",
+      "graphics",
+    ],
+    questions: [
+      {
+        fieldKey: "usagePurpose",
+        prompt: "Bilgisayarı öncelikle ne için kullanacaksınız?",
+        summaryLabel: "Kullanım amacı",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: false,
+        quickChoices: [
+          { label: "İş / ofis", value: "İş / ofis" },
+          { label: "Yazılım / profesyonel", value: "Profesyonel" },
+          { label: "Oyun", value: "Oyun" },
+          { label: "Tasarım / video", value: "Tasarım / video" },
+          { label: "Günlük kullanım", value: "Günlük" },
+        ],
+      },
+      {
+        fieldKey: "processor",
+        prompt: "İşlemci için bir tercihiniz var mı?",
+        summaryLabel: "İşlemci",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Intel Core i5 / Ultra 5", value: "Intel Core i5 / Ultra 5" },
+          { label: "Intel Core i7 / Ultra 7", value: "Intel Core i7 / Ultra 7" },
+          { label: "Intel Core i9 / Ultra 9", value: "Intel Core i9 / Ultra 9" },
+          { label: "AMD Ryzen 5", value: "AMD Ryzen 5" },
+          { label: "AMD Ryzen 7", value: "AMD Ryzen 7" },
+        ],
+      },
+      {
+        fieldKey: "ram",
+        prompt: "Ne kadar RAM gerekli?",
+        summaryLabel: "RAM",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "16 GB", value: "16 GB" },
+          { label: "32 GB", value: "32 GB" },
+          { label: "64 GB", value: "64 GB" },
+          { label: "128 GB ve üzeri", value: "128+ GB" },
+        ],
+      },
+      {
+        fieldKey: "storage",
+        prompt: "Depolama kapasitesi ne olsun?",
+        summaryLabel: "Depolama",
+        importance: "quote_critical",
+        rank: 62,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "512 GB SSD", value: "512 GB SSD" },
+          { label: "1 TB SSD", value: "1 TB SSD" },
+          { label: "2 TB SSD", value: "2 TB SSD" },
+          { label: "4 TB ve üzeri", value: "4 TB+" },
+        ],
+      },
+      {
+        fieldKey: "graphics",
+        prompt: "Ekran kartı için bir tercihiniz var mı?",
+        summaryLabel: "Ekran kartı",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dahili grafik yeterli", value: "Dahili grafik" },
+          { label: "RTX 4060 / eşdeğeri", value: "RTX 4060" },
+          { label: "RTX 4070 / eşdeğeri", value: "RTX 4070" },
+          { label: "RTX 4080 ve üzeri", value: "RTX 4080+" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["hardware"],
+    whenProductTypes: [
+      "telefon",
+      "iphone",
+      "akıllı telefon",
+      "akilli telefon",
+      "smartphone",
+    ],
+    allowedCandidateFieldKeys: [
+      ...TECHNOLOGY_COMMON_CANDIDATE_KEYS,
+      "storageCapacity",
+      "mobileNetwork",
+      "cameraPriority",
+    ],
+    questions: [
+      {
+        fieldKey: "storageCapacity",
+        prompt: "Depolama kapasitesi ne olsun?",
+        summaryLabel: "Depolama",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "128 GB", value: "128 GB" },
+          { label: "256 GB", value: "256 GB" },
+          { label: "512 GB", value: "512 GB" },
+          { label: "1 TB", value: "1 TB" },
+        ],
+      },
+      {
+        fieldKey: "mobileNetwork",
+        prompt: "5G desteği gerekli mi?",
+        summaryLabel: "Mobil bağlantı",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "5G gerekli", value: "5G gerekli" },
+          { label: "4.5G yeterli", value: "4.5G yeterli" },
+        ],
+      },
+      {
+        fieldKey: "cameraPriority",
+        prompt: "Kamera performansı önceliğiniz mi?",
+        summaryLabel: "Kamera önceliği",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Öncelikli", value: "Öncelikli" },
+          { label: "Temel kullanım yeterli", value: "Temel kullanım" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["hardware"],
+    whenProductTypes: ["tablet", "ipad"],
+    allowedCandidateFieldKeys: [
+      ...TECHNOLOGY_COMMON_CANDIDATE_KEYS,
+      "storageCapacity",
+      "tabletConnectivity",
+      "tabletAccessory",
+    ],
+    questions: [
+      {
+        fieldKey: "storageCapacity",
+        prompt: "Depolama kapasitesi ne olsun?",
+        summaryLabel: "Depolama",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "64 GB", value: "64 GB" },
+          { label: "128 GB", value: "128 GB" },
+          { label: "256 GB", value: "256 GB" },
+          { label: "512 GB ve üzeri", value: "512 GB+" },
+        ],
+      },
+      {
+        fieldKey: "tabletConnectivity",
+        prompt: "Bağlantı tipi tercihiniz var mı?",
+        summaryLabel: "Bağlantı",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Wi‑Fi", value: "Wi‑Fi" },
+          { label: "Wi‑Fi + hücresel", value: "Wi‑Fi + hücresel" },
+        ],
+      },
+      {
+        fieldKey: "tabletAccessory",
+        prompt: "Klavye veya kalem desteği gerekli mi?",
+        summaryLabel: "Aksesuar uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kalem desteği gerekli", value: "Kalem desteği" },
+          { label: "Klavye desteği gerekli", value: "Klavye desteği" },
+          { label: "İkisi de gerekli", value: "Kalem + klavye" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+];
+
+/**
+ * Anne & Çocuk ürünleri için ortak ticari çekirdek. Ürün ailesinin kendine
+ * ait güvenlik, kullanım ve uyumluluk soruları aşağıdaki sözleşmelerde
+ * yaşar; böylece pusetin ISOFIX, oto koltuğunun da katlanma sorusu alması
+ * engellenir.
+ */
+const BABY_COMMON_CANDIDATE_KEYS = [
+  "babyProductType",
+  "ageRange",
+  "brandPreference",
+  "brand",
+  "condition",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+const BABY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenProductTypes: [
+      "bebek arabası",
+      "bebek arabasi",
+      "puset",
+      "travel sistem",
+      "baston bebek arabası",
+      "baston bebek arabasi",
+      "cep tipi",
+      "cabin boy",
+      "ikiz bebek arabası",
+      "ikiz bebek arabasi",
+      "jogger",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "strollerType",
+      "strollerUseCase",
+      "strollerFoldPreference",
+    ],
+    questions: [
+      {
+        fieldKey: "strollerType",
+        prompt: "Nasıl bir bebek arabası arıyorsunuz?",
+        summaryLabel: "Araba tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Travel sistem", value: "Travel sistem" },
+          { label: "Baston puset", value: "Baston" },
+          { label: "Cabin boy / kompakt", value: "Cabin boy" },
+          { label: "İkiz arabası", value: "İkiz" },
+        ],
+      },
+      {
+        fieldKey: "strollerUseCase",
+        prompt: "En çok hangi kullanım için gerekli?",
+        summaryLabel: "Kullanım senaryosu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Günlük şehir kullanımı", value: "Şehir" },
+          { label: "Seyahat / kabin bagajı", value: "Seyahat" },
+          { label: "Arazi / uzun yürüyüş", value: "Arazi" },
+          { label: "Koşu", value: "Koşu" },
+        ],
+      },
+      {
+        fieldKey: "strollerFoldPreference",
+        prompt: "Katlanma / taşıma beklentiniz nedir?",
+        summaryLabel: "Katlanma",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tek elle katlansın", value: "Tek elle" },
+          { label: "Çok kompakt kapansın", value: "Kompakt" },
+          { label: "Bagajda az yer kaplasın", value: "Bagaj dostu" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "oto koltuğu",
+      "oto koltugu",
+      "ana kucağı",
+      "ana kucagi",
+      "yükseltici",
+      "yukseltici",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "carSeatGroup",
+      "carSeatMount",
+      "carSeatDirection",
+    ],
+    questions: [
+      {
+        fieldKey: "carSeatGroup",
+        prompt: "Hangi kilo grubu için gerekli?",
+        summaryLabel: "Kilo grubu",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "0–13 kg (bebek)", value: "0-13 kg" },
+          { label: "9–18 kg", value: "9-18 kg" },
+          { label: "15–36 kg (yükseltici)", value: "15-36 kg" },
+        ],
+      },
+      {
+        fieldKey: "carSeatMount",
+        prompt: "Araçta hangi sabitleme sistemi kullanılacak?",
+        summaryLabel: "Sabitleme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "ISOFIX", value: "ISOFIX" },
+          { label: "Araç kemeri", value: "Araç kemeri" },
+          { label: "Her ikisi de uyumlu olsun", value: "ISOFIX / kemer" },
+        ],
+      },
+      {
+        fieldKey: "carSeatDirection",
+        prompt: "Kullanım yönü tercihiniz var mı?",
+        summaryLabel: "Kullanım yönü",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Geriye dönük", value: "Geriye dönük" },
+          { label: "Öne dönük", value: "Öne dönük" },
+          { label: "Çift yönlü", value: "Çift yönlü" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "kanguru aksesuar",
+      "kanguru aksesuari",
+      "bebek taşıyıcı aksesuar",
+      "bebek tasiyici aksesuar",
+      "baby carrier accessory",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "carrierAccessoryType",
+      "carrierAccessoryCompatibility",
+    ],
+    questions: [
+      {
+        fieldKey: "carrierAccessoryType",
+        prompt: "Hangi kanguru / bebek taşıyıcı aksesuarı gerekli?",
+        summaryLabel: "Aksesuar tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Baş / boyun desteği", value: "Baş / boyun desteği" },
+          { label: "Yağmur / hava koruması", value: "Hava koruması" },
+          { label: "Bel desteği / kemer", value: "Bel desteği" },
+          { label: "Yedek parça", value: "Yedek parça" },
+        ],
+      },
+      {
+        fieldKey: "carrierAccessoryCompatibility",
+        prompt: "Uyumlu olması gereken kanguru marka / modeli var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "kanguru",
+      "bebek taşıyıcı",
+      "bebek tasiyici",
+      "baby carrier",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "carrierAgeWeightRange",
+      "carrierCarryPosition",
+      "carrierErgonomicSupport",
+    ],
+    questions: [
+      {
+        fieldKey: "carrierAgeWeightRange",
+        prompt: "Hangi yaş / kilo aralığı için taşıyıcı gerekli?",
+        summaryLabel: "Yaş / kilo aralığı",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Yenidoğan (0+ ay)", value: "Yenidoğan" },
+          { label: "3–9 ay", value: "3-9 ay" },
+          { label: "9 ay ve üzeri", value: "9+ ay" },
+          { label: "20 kg'a kadar", value: "20 kg'a kadar" },
+        ],
+      },
+      {
+        fieldKey: "carrierCarryPosition",
+        prompt: "Hangi taşıma pozisyonu gerekli?",
+        summaryLabel: "Taşıma pozisyonu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ön içe dönük", value: "Ön içe dönük" },
+          { label: "Ön dışa dönük", value: "Ön dışa dönük" },
+          { label: "Sırtta taşıma", value: "Sırtta" },
+          { label: "Kalçada taşıma", value: "Kalçada" },
+        ],
+      },
+      {
+        fieldKey: "carrierErgonomicSupport",
+        prompt: "Öncelikli ergonomi / destek tercihiniz nedir?",
+        summaryLabel: "Ergonomi / destek",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ergonomik oturma paneli", value: "Ergonomik panel" },
+          { label: "Bel desteği", value: "Bel desteği" },
+          { label: "Ayarlanabilir baş desteği", value: "Baş desteği" },
+          { label: "Nefes alan kumaş", value: "Nefes alan kumaş" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["portbebe", "carrycot"],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "carrycotUseCase",
+      "carrycotCompatibility",
+      "carrycotFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "carrycotUseCase",
+        prompt: "Portbebe nasıl kullanılacak?",
+        summaryLabel: "Kullanım tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bebek arabasına takılacak", value: "Bebek arabası uyumlu" },
+          { label: "Tek başına taşımak için", value: "Bağımsız taşıma" },
+          { label: "Seyahat / kısa süreli uyku", value: "Seyahat" },
+        ],
+      },
+      {
+        fieldKey: "carrycotCompatibility",
+        prompt: "Uyumlu olması gereken bebek arabası marka / modeli var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "carrycotFeature",
+        prompt: "Öncelikli taşıma / koruma özelliğiniz nedir?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sert tabanlı", value: "Sert taban" },
+          { label: "Tenteli", value: "Tenteli" },
+          { label: "Havalandırmalı", value: "Havalandırmalı" },
+          { label: "Katlanabilir", value: "Katlanabilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek arabası aksesuar",
+      "bebek arabasi aksesuar",
+      "bebek arabası örtü",
+      "bebek arabasi ortu",
+      "bebek arabası tulum",
+      "bebek arabasi tulum",
+      "alışveriş arabası kılıf",
+      "alisveris arabasi kilif",
+      "mama sandalyesi kılıf",
+      "mama sandalyesi kilif",
+      "stroller accessory",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "strollerAccessoryType",
+      "strollerAccessoryCompatibility",
+      "strollerAccessoryWeatherUse",
+    ],
+    questions: [
+      {
+        fieldKey: "strollerAccessoryType",
+        prompt: "Hangi bebek arabası aksesuarı gerekli?",
+        summaryLabel: "Aksesuar tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yağmurluk / sineklik", value: "Koruyucu örtü" },
+          { label: "Ayak tulumu / kışlık örtü", value: "Ayak tulumu" },
+          { label: "Çanta / düzenleyici", value: "Düzenleyici" },
+          { label: "Adaptör / bağlantı parçası", value: "Adaptör" },
+        ],
+      },
+      {
+        fieldKey: "strollerAccessoryCompatibility",
+        prompt: "Uyumlu olması gereken bebek arabası marka / modeli var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "strollerAccessoryWeatherUse",
+        prompt: "Hangi kullanım koşulu için gerekli?",
+        summaryLabel: "Kullanım koşulu",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yağmur / rüzgâr", value: "Yağmur / rüzgâr" },
+          { label: "Soğuk hava", value: "Soğuk hava" },
+          { label: "Güneş", value: "Güneş" },
+          { label: "Günlük kullanım", value: "Günlük" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "oto koltuğu aksesuar",
+      "oto koltugu aksesuar",
+      "bebek ve küçük çocuk oto koltuğu aksesuar",
+      "bebek ve kucuk cocuk oto koltugu aksesuar",
+      "car seat accessory",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "carSeatAccessoryType",
+      "carSeatAccessoryCompatibility",
+      "carSeatAccessoryPurpose",
+    ],
+    questions: [
+      {
+        fieldKey: "carSeatAccessoryType",
+        prompt: "Hangi oto koltuğu aksesuarı gerekli?",
+        summaryLabel: "Aksesuar tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "ISOFIX tabanı / baz", value: "ISOFIX baz" },
+          { label: "Koruyucu kılıf", value: "Kılıf" },
+          { label: "Araç aynası", value: "Araç aynası" },
+          { label: "Güneşlik / koruyucu", value: "Güneşlik" },
+        ],
+      },
+      {
+        fieldKey: "carSeatAccessoryCompatibility",
+        prompt: "Uyumlu olması gereken oto koltuğu marka / modeli var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "carSeatAccessoryPurpose",
+        prompt: "Aksesuarın öncelikli kullanım amacı nedir?",
+        summaryLabel: "Kullanım amacı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Güvenlik / sabitleme", value: "Güvenlik" },
+          { label: "Konfor", value: "Konfor" },
+          { label: "Temizlik / koruma", value: "Koruma" },
+          { label: "Seyahat", value: "Seyahat" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "alt açma",
+      "alt acma",
+      "alt alma",
+      "alt değiştirme",
+      "alt degistirme",
+      "bez değiştirme",
+      "bez degistirme",
+      "bebek bezi",
+      "diaper",
+      "changing pad",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "diaperCareProduct",
+      "diaperCareMaterial",
+      "diaperCareUseCase",
+    ],
+    questions: [
+      {
+        fieldKey: "diaperCareProduct",
+        prompt: "Hangi alt değiştirme / bez bakım ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Alt açma minderi / mat", value: "Alt açma matı" },
+          { label: "Bez / bez astarı", value: "Bez / astar" },
+          { label: "Örtü / kılıf", value: "Örtü / kılıf" },
+          { label: "Alt alma seti", value: "Alt alma seti" },
+        ],
+      },
+      {
+        fieldKey: "diaperCareMaterial",
+        prompt: "Malzeme veya kullanım tercihiniz nedir?",
+        summaryLabel: "Malzeme / kullanım",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sıvı geçirmez", value: "Sıvı geçirmez" },
+          { label: "Yıkanabilir", value: "Yıkanabilir" },
+          { label: "Tek kullanımlık", value: "Tek kullanımlık" },
+          { label: "Pamuklu", value: "Pamuklu" },
+        ],
+      },
+      {
+        fieldKey: "diaperCareUseCase",
+        prompt: "En çok hangi kullanım için gerekli?",
+        summaryLabel: "Kullanım yeri",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Evde", value: "Ev" },
+          { label: "Seyahatte", value: "Seyahat" },
+          { label: "Bebek odasında sabit alan", value: "Sabit alan" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bez saklama",
+      "atık yönetimi",
+      "atik yonetimi",
+      "bebek bezi kutu",
+      "bebek bezi çöp",
+      "bebek bezi cop",
+      "çöp kovası",
+      "cop kovasi",
+      "kirli bebek bezi çanta",
+      "kirli bebek bezi canta",
+      "diaper pail",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "diaperDisposalProduct",
+      "diaperDisposalCapacity",
+      "diaperDisposalCompatibility",
+    ],
+    questions: [
+      {
+        fieldKey: "diaperDisposalProduct",
+        prompt: "Hangi bez saklama / atık ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bez çöp kovası", value: "Bez çöp kovası" },
+          { label: "Yedek poşet / kaset", value: "Yedek poşet / kaset" },
+          { label: "Kirli bez çantası", value: "Kirli bez çantası" },
+          { label: "Bez saklama kutusu", value: "Saklama kutusu" },
+        ],
+      },
+      {
+        fieldKey: "diaperDisposalCapacity",
+        prompt: "Kapasite tercihiniz nedir?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kompakt / günlük", value: "Kompakt" },
+          { label: "Orta kapasite", value: "Orta" },
+          { label: "Yüksek kapasite", value: "Yüksek" },
+        ],
+      },
+      {
+        fieldKey: "diaperDisposalCompatibility",
+        prompt: "Uyumlu olması gereken kova veya marka / model var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "ıslak mendil",
+      "islak mendil",
+      "mendil ısıtıcı",
+      "mendil isitici",
+      "mendil dispanser",
+      "pişik",
+      "pisik",
+      "pişik tedavi",
+      "pisik tedavi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "skinCareProduct",
+      "skinCareSensitivity",
+      "skinCarePackSize",
+    ],
+    questions: [
+      {
+        fieldKey: "skinCareProduct",
+        prompt: "Hangi cilt bakım ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Islak mendil", value: "Islak mendil" },
+          { label: "Pişik bakım ürünü", value: "Pişik bakımı" },
+          { label: "Mendil dispanseri / ısıtıcısı", value: "Mendil cihazı" },
+        ],
+      },
+      {
+        fieldKey: "skinCareSensitivity",
+        prompt: "Cilt hassasiyeti veya içerik tercihiniz var mı?",
+        summaryLabel: "Hassasiyet / içerik",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Hassas cilt", value: "Hassas cilt" },
+          { label: "Parfümsüz", value: "Parfümsüz" },
+          { label: "Alkolsüz", value: "Alkolsüz" },
+          { label: "Doğal içerik", value: "Doğal içerik" },
+        ],
+      },
+      {
+        fieldKey: "skinCarePackSize",
+        prompt: "Paket / set miktarı tercihiniz var mı?",
+        summaryLabel: "Paket / set",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tekli", value: "Tekli" },
+          { label: "Çoklu paket", value: "Çoklu paket" },
+          { label: "Ekonomik koli", value: "Ekonomik koli" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek banyo",
+      "bebek küvet",
+      "bebek kuvet",
+      "banyo küvet",
+      "banyo kuvet",
+      "banyo tabure",
+      "banyo şapka",
+      "banyo sapka",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "babyBathProduct",
+      "babyBathStage",
+      "babyBathFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "babyBathProduct",
+        prompt: "Hangi bebek banyo ürünü gerekli?",
+        summaryLabel: "Banyo ürünü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bebek küveti", value: "Bebek küveti" },
+          { label: "Küvet / banyo taburesi", value: "Banyo taburesi" },
+          { label: "Banyo şapkası", value: "Banyo şapkası" },
+        ],
+      },
+      {
+        fieldKey: "babyBathStage",
+        prompt: "Hangi yaş / kullanım dönemi için gerekli?",
+        summaryLabel: "Kullanım dönemi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yenidoğan", value: "Yenidoğan" },
+          { label: "0–12 ay", value: "0-12 ay" },
+          { label: "1 yaş ve üzeri", value: "1+ yaş" },
+        ],
+      },
+      {
+        fieldKey: "babyBathFeature",
+        prompt: "Öncelikli banyo özelliğiniz nedir?",
+        summaryLabel: "Banyo özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Katlanabilir", value: "Katlanabilir" },
+          { label: "Kaydırmaz", value: "Kaydırmaz" },
+          { label: "Sıcaklık göstergeli", value: "Sıcaklık göstergeli" },
+          { label: "Gider tıpalı", value: "Gider tıpalı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek sağlık",
+      "bebek saglik",
+      "ateş ölçer",
+      "ates olcer",
+      "thermometer",
+      "tırnak makası",
+      "tirnak makasi",
+      "bakım seti",
+      "bakim seti",
+      "burun aspiratör",
+      "burun aspirator",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "babyHealthProduct",
+      "babyHealthOperation",
+      "babyHealthFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "babyHealthProduct",
+        prompt: "Hangi bebek sağlık / bakım ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ateş ölçer", value: "Ateş ölçer" },
+          { label: "Burun aspiratörü", value: "Burun aspiratörü" },
+          { label: "Tırnak / bakım seti", value: "Bakım seti" },
+        ],
+      },
+      {
+        fieldKey: "babyHealthOperation",
+        prompt: "Kullanım yöntemi tercihiniz nedir?",
+        summaryLabel: "Kullanım yöntemi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dijital / elektronik", value: "Dijital" },
+          { label: "Manuel", value: "Manuel" },
+          { label: "Set halinde", value: "Set" },
+        ],
+      },
+      {
+        fieldKey: "babyHealthFeature",
+        prompt: "Öncelikli özellik tercihiniz nedir?",
+        summaryLabel: "Öncelikli özellik",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Temassız ölçüm", value: "Temassız" },
+          { label: "Yıkanabilir uç / parça", value: "Yıkanabilir" },
+          { label: "Taşıma çantalı", value: "Taşıma çantası" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "emzik aksesuar",
+      "emzik temiz",
+      "emzik mendil",
+      "emzik klips",
+      "emzik tutucu",
+      "pacifier accessory",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "pacifierAccessoryProduct",
+      "pacifierAccessoryMaterial",
+      "pacifierAccessoryFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "pacifierAccessoryProduct",
+        prompt: "Hangi emzik aksesuarı / temizlik ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Emzik klipsi / tutucu", value: "Klips / tutucu" },
+          { label: "Emzik mendili", value: "Emzik mendili" },
+          { label: "Saklama kutusu", value: "Saklama kutusu" },
+        ],
+      },
+      {
+        fieldKey: "pacifierAccessoryMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Silikon", value: "Silikon" },
+          { label: "Kumaş", value: "Kumaş" },
+          { label: "Ahşap detaylı", value: "Ahşap" },
+          { label: "BPA içermeyen plastik", value: "BPA içermeyen plastik" },
+        ],
+      },
+      {
+        fieldKey: "pacifierAccessoryFeature",
+        prompt: "Öncelikli kullanım özelliğiniz nedir?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tek elle takılabilsin", value: "Tek elle" },
+          { label: "Yıkanabilir", value: "Yıkanabilir" },
+          { label: "Çoklu paket", value: "Çoklu paket" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "lazımlık",
+      "lazimlik",
+      "tuvalet eğitimi",
+      "tuvalet egitimi",
+      "potty",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "toiletTrainingProduct",
+      "toiletTrainingStage",
+      "toiletTrainingFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "toiletTrainingProduct",
+        prompt: "Hangi tuvalet eğitimi ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Lazımlık", value: "Lazımlık" },
+          { label: "Klozet adaptörü", value: "Klozet adaptörü" },
+          { label: "Basamaklı set", value: "Basamaklı set" },
+        ],
+      },
+      {
+        fieldKey: "toiletTrainingStage",
+        prompt: "Hangi kullanım dönemi için gerekli?",
+        summaryLabel: "Kullanım dönemi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tuvalet eğitimine başlangıç", value: "Başlangıç" },
+          { label: "Bağımsız kullanım", value: "Bağımsız kullanım" },
+          { label: "Seyahat", value: "Seyahat" },
+        ],
+      },
+      {
+        fieldKey: "toiletTrainingFeature",
+        prompt: "Öncelikli özellik tercihiniz nedir?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kaydırmaz", value: "Kaydırmaz" },
+          { label: "Katlanabilir", value: "Katlanabilir" },
+          { label: "Müzikli / ödüllendirici", value: "Müzikli" },
+          { label: "Kolay temizlenir", value: "Kolay temizlenir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek güvenlik ürünü",
+      "emniyet kilit",
+      "güvenlik kilit",
+      "guvenlik kilit",
+      "muhafaza",
+      "güvenlik kayış",
+      "guvenlik kayis",
+      "güvenlik çit",
+      "guvenlik cit",
+      "bebek kapı",
+      "bebek kapi",
+      "evcil hayvan kapı",
+      "evcil hayvan kapi",
+      "bebek izleme cihaz",
+      "bebek izleme cihazi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "safetyProtectionTarget",
+      "safetyInstallation",
+      "safetyCompatibility",
+    ],
+    questions: [
+      {
+        fieldKey: "safetyProtectionTarget",
+        prompt: "Hangi alan veya eşya için güvenlik çözümü gerekli?",
+        summaryLabel: "Korunacak alan",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dolap / çekmece", value: "Dolap / çekmece" },
+          { label: "Kapı / merdiven", value: "Kapı / merdiven" },
+          { label: "Oda / oyun alanı", value: "Oda / oyun alanı" },
+          { label: "Bebek / çocuk taşıma güvenliği", value: "Taşıma güvenliği" },
+        ],
+      },
+      {
+        fieldKey: "safetyInstallation",
+        prompt: "Montaj tercihiniz nedir?",
+        summaryLabel: "Montaj tipi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yapışkanlı / delmeden", value: "Yapışkanlı" },
+          { label: "Vidalı", value: "Vidalı" },
+          { label: "Basınçla sabitlenen", value: "Basınçlı" },
+          { label: "Taşınabilir", value: "Taşınabilir" },
+        ],
+      },
+      {
+        fieldKey: "safetyCompatibility",
+        prompt: "Uyumlu olması gereken kapı, mobilya veya ölçü bilgisi var mı?",
+        summaryLabel: "Uyumluluk",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "oyun / gezi ürünü",
+      "oyun ve gezi",
+      "akülü araba",
+      "akulu araba",
+      "yürüteç",
+      "yurutec",
+      "salıncak",
+      "salincak",
+      "oyun halısı",
+      "oyun halisi",
+      "üç teker",
+      "uc teker",
+      "scooter",
+      "hoppala",
+      "dönence",
+      "donence",
+      "itme oyuncak",
+      "itmeli oyuncak",
+      "çekme oyuncak",
+      "cekme oyuncak",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "playTravelAgeStage",
+      "playTravelUseSetting",
+      "playTravelFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "playTravelAgeStage",
+        prompt: "Hangi yaş / gelişim dönemi için gerekli?",
+        summaryLabel: "Yaş / gelişim dönemi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "6–12 ay", value: "6-12 ay" },
+          { label: "1–3 yaş", value: "1-3 yaş" },
+          { label: "3–5 yaş", value: "3-5 yaş" },
+          { label: "5+ yaş", value: "5+ yaş" },
+        ],
+      },
+      {
+        fieldKey: "playTravelUseSetting",
+        prompt: "En çok hangi kullanım ortamı için gerekli?",
+        summaryLabel: "Kullanım ortamı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ev içi", value: "Ev içi" },
+          { label: "Bahçe / açık alan", value: "Açık alan" },
+          { label: "Seyahat / dışarı", value: "Dışarı" },
+          { label: "Fiziksel aktivite", value: "Fiziksel aktivite" },
+        ],
+      },
+      {
+        fieldKey: "playTravelFeature",
+        prompt: "Hareket veya kurulum tercihiniz nedir?",
+        summaryLabel: "Hareket / kurulum",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Manuel / itmeli", value: "Manuel" },
+          { label: "Akülü", value: "Akülü" },
+          { label: "Sabit kurulum", value: "Sabit kurulum" },
+          { label: "Katlanabilir", value: "Katlanabilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "oyuncak",
+      "eğitici",
+      "egitici",
+      "müzikli",
+      "muzikli",
+      "kurmalı",
+      "kurmali",
+      "figür",
+      "figur",
+      "yapı oyuncağı",
+      "yapi oyuncagi",
+      "robotik",
+      "uzaktan kumandalı",
+      "uzaktan kumandali",
+      "oyuncak taşıt",
+      "oyuncak tasit",
+      "plaj ve kum",
+      "sanat ve çizim",
+      "sanat ve cizim",
+      "top havuzu",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "toyAgeStage",
+      "toyPlayTheme",
+      "toyOperationFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "toyAgeStage",
+        prompt: "Oyuncak hangi yaş grubu için olacak?",
+        summaryLabel: "Yaş grubu",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "0–12 ay", value: "0-12 ay" },
+          { label: "1–3 yaş", value: "1-3 yaş" },
+          { label: "3–6 yaş", value: "3-6 yaş" },
+          { label: "6+ yaş", value: "6+ yaş" },
+        ],
+      },
+      {
+        fieldKey: "toyPlayTheme",
+        prompt: "Hangi oyun / gelişim teması öncelikli?",
+        summaryLabel: "Oyun teması",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Eğitici / gelişim", value: "Eğitici" },
+          { label: "Yapı / kurma", value: "Yapı / kurma" },
+          { label: "Müzik / duyusal", value: "Müzik / duyusal" },
+          { label: "Taşıt / hareket", value: "Taşıt / hareket" },
+          { label: "Sanat / yaratıcılık", value: "Sanat / yaratıcılık" },
+        ],
+      },
+      {
+        fieldKey: "toyOperationFeature",
+        prompt: "Hareket veya enerji tercihiniz var mı?",
+        summaryLabel: "Hareket / enerji",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Pilsiz / manuel", value: "Pilsiz" },
+          { label: "Pilli / elektronik", value: "Pilli" },
+          { label: "Uzaktan kumandalı", value: "Uzaktan kumandalı" },
+          { label: "Kurmalı", value: "Kurmalı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "diğer bebek ürünü",
+      "diger bebek urunu",
+      "bebek monitör",
+      "bebek monitor",
+      "oyun parkı",
+      "oyun parki",
+      "activity gym",
+      "bebek tekstil",
+      "bebek textil",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "otherBabyProduct",
+      "otherBabyUseStage",
+      "otherBabyPriority",
+    ],
+    questions: [
+      {
+        fieldKey: "otherBabyProduct",
+        prompt: "Hangi bebek ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bebek monitörü", value: "Bebek monitörü" },
+          { label: "Oyun parkı / aktivite gym", value: "Oyun parkı / aktivite gym" },
+          { label: "Bebek tekstili", value: "Bebek tekstili" },
+        ],
+      },
+      {
+        fieldKey: "otherBabyUseStage",
+        prompt: "Hangi kullanım dönemi için gerekli?",
+        summaryLabel: "Kullanım dönemi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yenidoğan", value: "Yenidoğan" },
+          { label: "0–12 ay", value: "0-12 ay" },
+          { label: "1 yaş ve üzeri", value: "1+ yaş" },
+        ],
+      },
+      {
+        fieldKey: "otherBabyPriority",
+        prompt: "Öncelikli özellik veya kullanım beklentiniz nedir?",
+        summaryLabel: "Öncelikli özellik",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "beşik",
+      "besik",
+      "park yatak",
+      "anne yanı",
+      "anne yani",
+      "bebek yatağı",
+      "bebek yatagi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "sleepSetupType",
+      "sleepSafetyFeature",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth"],
+        unit: "cm",
+        example: "60 × 120 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "sleepSetupType",
+        prompt: "Hangi uyku çözümü gerekli?",
+        summaryLabel: "Uyku ürünü",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Klasik beşik", value: "Beşik" },
+          { label: "Park yatak", value: "Park yatak" },
+          { label: "Anne yanı yatak", value: "Anne yanı" },
+          { label: "Bebek yatağı", value: "Bebek yatağı" },
+        ],
+      },
+      {
+        fieldKey: "dimensions",
+        prompt: "Yatak / iç ölçü tercihiniz nedir?",
+        summaryLabel: "Yatak ölçüsü",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "sleepSafetyFeature",
+        prompt: "Öncelikli güvenlik veya kullanım özelliğiniz nedir?",
+        summaryLabel: "Güvenlik / kullanım",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sabit yan korkuluk", value: "Sabit korkuluk" },
+          { label: "Ayarlanabilir yükseklik", value: "Ayarlanabilir yükseklik" },
+          { label: "Tekerlekli", value: "Tekerlekli" },
+          { label: "Alt depolamalı", value: "Alt depolamalı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["mama sandalyesi", "high chair"],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "highChairUseStage",
+      "highChairHarness",
+      "highChairAdjustability",
+    ],
+    questions: [
+      {
+        fieldKey: "highChairUseStage",
+        prompt: "Mama sandalyesi hangi dönem için kullanılacak?",
+        summaryLabel: "Kullanım dönemi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ek gıdaya başlangıç", value: "Ek gıdaya başlangıç" },
+          { label: "Bebek dönemi", value: "Bebek" },
+          { label: "Yürümeye başlayan çocuk", value: "Çocuk" },
+        ],
+      },
+      {
+        fieldKey: "highChairHarness",
+        prompt: "Emniyet kemeri tercihiniz nedir?",
+        summaryLabel: "Emniyet kemeri",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "5 nokta kemer", value: "5 nokta" },
+          { label: "3 nokta kemer", value: "3 nokta" },
+          { label: "Kemerli olması yeterli", value: "Kemerli" },
+        ],
+      },
+      {
+        fieldKey: "highChairAdjustability",
+        prompt: "Hangi kullanım özelliği öncelikli?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Katlanabilir", value: "Katlanabilir" },
+          { label: "Yükseklik ayarlı", value: "Yükseklik ayarlı" },
+          { label: "Yatış pozisyonlu", value: "Yatış pozisyonlu" },
+          { label: "Çıkarılabilir tepsili", value: "Çıkarılabilir tepsi" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "biberon",
+      "alıştırma bardağı",
+      "alistirma bardagi",
+      "suluk",
+      "sippy cup",
+      "bottle",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "feedingBottleCapacity",
+      "feedingBottleMaterial",
+      "feedingBottleFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "feedingBottleCapacity",
+        prompt: "Hangi hacim aralığı gerekli?",
+        summaryLabel: "Hacim",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "120–150 ml", value: "120-150 ml" },
+          { label: "240–260 ml", value: "240-260 ml" },
+          { label: "300 ml ve üzeri", value: "300+ ml" },
+        ],
+      },
+      {
+        fieldKey: "feedingBottleMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Cam", value: "Cam" },
+          { label: "PP plastik", value: "PP plastik" },
+          { label: "Silikon", value: "Silikon" },
+          { label: "Paslanmaz çelik", value: "Paslanmaz çelik" },
+        ],
+      },
+      {
+        fieldKey: "feedingBottleFeature",
+        prompt: "Öncelikli kullanım özelliğiniz nedir?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Antikolik", value: "Antikolik" },
+          { label: "Sızdırmaz", value: "Sızdırmaz" },
+          { label: "Kulplu", value: "Kulplu" },
+          { label: "Set halinde", value: "Set" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "biberon ucu",
+      "biberon uç",
+      "biberon uclari",
+      "emzik",
+      "diş kaşıyıcı",
+      "dis kasiyici",
+      "pacifier",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "feedingNippleStage",
+      "feedingNippleMaterial",
+      "feedingNippleFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "feedingNippleStage",
+        prompt: "Hangi yaş / akış dönemi için gerekli?",
+        summaryLabel: "Yaş / akış",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Yenidoğan / yavaş akış", value: "Yenidoğan" },
+          { label: "Orta akış", value: "Orta akış" },
+          { label: "Hızlı akış", value: "Hızlı akış" },
+          { label: "6+ ay", value: "6+ ay" },
+        ],
+      },
+      {
+        fieldKey: "feedingNippleMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Silikon", value: "Silikon" },
+          { label: "Lateks", value: "Lateks" },
+          { label: "Doğal kauçuk", value: "Doğal kauçuk" },
+        ],
+      },
+      {
+        fieldKey: "feedingNippleFeature",
+        prompt: "Özel bir form / özellik gerekli mi?",
+        summaryLabel: "Form / özellik",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ortodontik", value: "Ortodontik" },
+          { label: "Damaklı", value: "Damaklı" },
+          { label: "Damlama önleyici", value: "Damlama önleyici" },
+          { label: "Klips / tutuculu", value: "Klips / tutucu" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "sterilizatör",
+      "sterilizator",
+      "mama ısıtıcı",
+      "mama isitici",
+      "mama hazırlama",
+      "mama hazirlama",
+      "biberon ısıtıcı",
+      "biberon isitici",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "feedingDeviceType",
+      "feedingDeviceCapacity",
+      "feedingDeviceOperation",
+    ],
+    questions: [
+      {
+        fieldKey: "feedingDeviceType",
+        prompt: "Hangi beslenme cihazı gerekli?",
+        summaryLabel: "Cihaz tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sterilizatör", value: "Sterilizatör" },
+          { label: "Biberon / mama ısıtıcı", value: "Isıtıcı" },
+          { label: "Mama hazırlama makinesi", value: "Mama hazırlama" },
+          { label: "Çok fonksiyonlu", value: "Çok fonksiyonlu" },
+        ],
+      },
+      {
+        fieldKey: "feedingDeviceCapacity",
+        prompt: "Aynı anda kaç biberon / parça işleyebilmeli?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "1 adet", value: "1 adet" },
+          { label: "2–3 adet", value: "2-3 adet" },
+          { label: "4–6 adet", value: "4-6 adet" },
+          { label: "6+ adet", value: "6+ adet" },
+        ],
+      },
+      {
+        fieldKey: "feedingDeviceOperation",
+        prompt: "Çalışma yöntemi tercihiniz var mı?",
+        summaryLabel: "Çalışma yöntemi",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Buharlı", value: "Buharlı" },
+          { label: "Elektrikli ısıtma", value: "Elektrikli" },
+          { label: "Seyahat tipi", value: "Seyahat tipi" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "göğüs pompası",
+      "gogus pompasi",
+      "breast pump",
+      "göğüs pompası aksesuar",
+      "gogus pompasi aksesuar",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "breastPumpOperation",
+      "breastPumpConfiguration",
+      "breastPumpCompatibility",
+    ],
+    questions: [
+      {
+        fieldKey: "breastPumpOperation",
+        prompt: "Pompa çalışma tipi nasıl olmalı?",
+        summaryLabel: "Çalışma tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Manuel", value: "Manuel" },
+          { label: "Elektrikli", value: "Elektrikli" },
+          { label: "Giyilebilir", value: "Giyilebilir" },
+        ],
+      },
+      {
+        fieldKey: "breastPumpConfiguration",
+        prompt: "Tekli mi, çiftli mi gerekli?",
+        summaryLabel: "Pompa seti",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tekli", value: "Tekli" },
+          { label: "Çiftli", value: "Çiftli" },
+          { label: "Aksesuar / yedek parça", value: "Aksesuar" },
+        ],
+      },
+      {
+        fieldKey: "breastPumpCompatibility",
+        prompt: "Uyumlu olması gereken marka / model var mı?",
+        summaryLabel: "Marka / model uyumu",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "anne sütü depolama",
+      "anne sutu depolama",
+      "göğüs pedi",
+      "gogus pedi",
+      "emzirme yastığı",
+      "emzirme yastigi",
+      "emzirme önlüğü",
+      "emzirme onlugu",
+      "gaz çıkarma",
+      "gaz cikarma",
+      "omuz bezi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "maternalFeedingItem",
+      "maternalFeedingMaterial",
+      "maternalFeedingPackSize",
+    ],
+    questions: [
+      {
+        fieldKey: "maternalFeedingItem",
+        prompt: "Hangi emzirme / saklama ürünü gerekli?",
+        summaryLabel: "Ürün amacı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Süt saklama", value: "Süt saklama" },
+          { label: "Göğüs pedi / koruyucu", value: "Göğüs pedi" },
+          { label: "Emzirme yastığı", value: "Emzirme yastığı" },
+          { label: "Emzirme tekstili", value: "Emzirme tekstili" },
+        ],
+      },
+      {
+        fieldKey: "maternalFeedingMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Silikon", value: "Silikon" },
+          { label: "Tek kullanımlık", value: "Tek kullanımlık" },
+          { label: "Yıkanabilir kumaş", value: "Yıkanabilir kumaş" },
+          { label: "BPA içermeyen plastik", value: "BPA içermeyen plastik" },
+        ],
+      },
+      {
+        fieldKey: "maternalFeedingPackSize",
+        prompt: "Paket / set miktarı tercihiniz var mı?",
+        summaryLabel: "Paket / set",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tekli", value: "Tekli" },
+          { label: "2'li / 3'lü", value: "2-3'lü" },
+          { label: "Çoklu paket", value: "Çoklu paket" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek gıdası",
+      "bebek gidasi",
+      "bebek / çocuk gıdası",
+      "bebek / cocuk gidasi",
+      "küçük çocuk gıdası",
+      "kucuk cocuk gidasi",
+      "mama",
+      "püre",
+      "pure",
+      "atıştırmalık",
+      "atistirmalik",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "babyFoodType",
+      "babyFoodPackageSize",
+      "babyFoodPreference",
+    ],
+    questions: [
+      {
+        fieldKey: "babyFoodType",
+        prompt: "Hangi tür bebek / çocuk gıdası arıyorsunuz?",
+        summaryLabel: "Gıda türü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sütlü / tahıllı mama", value: "Mama" },
+          { label: "Püre", value: "Püre" },
+          { label: "Atıştırmalık", value: "Atıştırmalık" },
+          { label: "İçecek", value: "İçecek" },
+        ],
+      },
+      {
+        fieldKey: "babyFoodPackageSize",
+        prompt: "Paket miktarı tercihiniz nedir?",
+        summaryLabel: "Paket miktarı",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Deneme / tekli", value: "Tekli" },
+          { label: "Orta paket", value: "Orta paket" },
+          { label: "Ekonomik çoklu paket", value: "Çoklu paket" },
+        ],
+      },
+      {
+        fieldKey: "babyFoodPreference",
+        prompt: "Belirgin bir içerik tercihiniz var mı?",
+        summaryLabel: "İçerik tercihi",
+        importance: "optional",
+        rank: 38,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["uyku tulumu", "sleeping bag"],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "sleepBagTog",
+      "sleepBagClosure",
+    ],
+    questions: [
+      {
+        fieldKey: "sleepBagTog",
+        prompt: "Hangi ısı derecesi (tog) gerekli?",
+        summaryLabel: "Isı derecesi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "0,5 tog", value: "0,5 tog" },
+          { label: "1 tog", value: "1 tog" },
+          { label: "2,5 tog", value: "2,5 tog" },
+          { label: "3,5 tog", value: "3,5 tog" },
+        ],
+      },
+      {
+        fieldKey: "sleepBagClosure",
+        prompt: "Kapanış / kullanım tipi tercihiniz var mı?",
+        summaryLabel: "Kapanış tipi",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Fermuarlı", value: "Fermuarlı" },
+          { label: "Çıtçıtlı", value: "Çıtçıtlı" },
+          { label: "Ayaklı", value: "Ayaklı" },
+          { label: "Kolsuz", value: "Kolsuz" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek battaniye",
+      "bebek battaniyeleri",
+      "kundak",
+      "kundak battaniye",
+      "kundak battaniyeleri",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "sleepTextileType",
+      "sleepTextileMaterial",
+      "sleepTextileSize",
+    ],
+    questions: [
+      {
+        fieldKey: "sleepTextileType",
+        prompt: "Hangi uyku tekstili gerekli?",
+        summaryLabel: "Tekstil tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Battaniye", value: "Battaniye" },
+          { label: "Kundak battaniyesi", value: "Kundak" },
+          { label: "Çok amaçlı örtü", value: "Çok amaçlı örtü" },
+        ],
+      },
+      {
+        fieldKey: "sleepTextileMaterial",
+        prompt: "Kumaş / doku tercihiniz nedir?",
+        summaryLabel: "Kumaş / doku",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Pamuk", value: "Pamuk" },
+          { label: "Müslin", value: "Müslin" },
+          { label: "Bambu", value: "Bambu" },
+          { label: "Polar / sıcak tutan", value: "Polar" },
+        ],
+      },
+      {
+        fieldKey: "sleepTextileSize",
+        prompt: "Hangi ölçü aralığı gerekli?",
+        summaryLabel: "Ölçü",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "75 × 100 cm", value: "75 × 100 cm" },
+          { label: "90 × 120 cm", value: "90 × 120 cm" },
+          { label: "100 × 150 cm", value: "100 × 150 cm" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "bebek odası mobilya seti",
+      "bebek odasi mobilya seti",
+      "bebek odası",
+      "bebek odasi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "babyRoomSetContents",
+      "babyRoomMaterial",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "280 × 50 × 200 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "babyRoomSetContents",
+        prompt: "Set içinde hangi modüller olmalı?",
+        summaryLabel: "Set içeriği",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Beşik + şifonyer", value: "Beşik + şifonyer" },
+          { label: "Beşik + dolap", value: "Beşik + dolap" },
+          { label: "Tam oda seti", value: "Tam oda seti" },
+          { label: "Tek modül", value: "Tek modül" },
+        ],
+      },
+      {
+        fieldKey: "dimensions",
+        prompt: "Yerleşebileceği yaklaşık alan / ölçü nedir?",
+        summaryLabel: "Yerleşim ölçüsü",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "babyRoomMaterial",
+        prompt: "Gövde / kapak malzemesi tercihiniz var mı?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "MDFLAM", value: "MDFLAM" },
+          { label: "Ahşap", value: "Ahşap" },
+          { label: "Lake", value: "Lake" },
+          { label: "Suntalam", value: "Suntalam" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "yatak koruyucu",
+      "nest",
+      "bebek nest",
+      "uyku nest",
+    ],
+    allowedCandidateFieldKeys: [
+      ...BABY_COMMON_CANDIDATE_KEYS,
+      "sleepSupportType",
+      "sleepSupportMaterial",
+      "sleepSupportFeature",
+    ],
+    questions: [
+      {
+        fieldKey: "sleepSupportType",
+        prompt: "Hangi uyku destek ürünü gerekli?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yatak koruyucu", value: "Yatak koruyucu" },
+          { label: "Nest", value: "Nest" },
+          { label: "Yatak bariyeri", value: "Yatak bariyeri" },
+        ],
+      },
+      {
+        fieldKey: "sleepSupportMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Pamuklu", value: "Pamuklu" },
+          { label: "Sıvı geçirmez", value: "Sıvı geçirmez" },
+          { label: "Nefes alabilen", value: "Nefes alabilen" },
+          { label: "Yıkanabilir", value: "Yıkanabilir" },
+        ],
+      },
+      {
+        fieldKey: "sleepSupportFeature",
+        prompt: "Öncelikli kullanım özelliğiniz nedir?",
+        summaryLabel: "Kullanım özelliği",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Katlanabilir / taşınabilir", value: "Taşınabilir" },
+          { label: "Fermuarlı çıkarılabilir kılıf", value: "Çıkarılabilir kılıf" },
+          { label: "Kaydırmaz taban", value: "Kaydırmaz" },
+        ],
+      },
+    ],
+  },
+];
+
+/**
+ * Ev & Mutfak'ta aile sahibi olmayan serbest soru adayı yayınlanmaz.
+ * Aynı "Diğer" torbasının tencereye fincan, fincana indüksiyon sorusu
+ * sormasını önleyen sınır budur.
+ */
+const HOME_KITCHEN_COMMON_CANDIDATE_KEYS = [
+  "kitchenProductType",
+  "pieceCount",
+  "material",
+  "usageArea",
+  "color",
+  "features",
+  "brand",
+  "condition",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+const HOME_KITCHEN_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenProductTypes: [
+      "yemek / tabak takımı",
+      "yemek takımı",
+      "yemek takimi",
+      "porselen yemek",
+      "bone china",
+      "günlük servis",
+      "gunluk servis",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "serviceCount",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "serviceCount",
+        prompt: "Kaç kişilik yemek takımı gerekli?",
+        summaryLabel: "Kişilik",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "4 kişilik", value: "4 kişilik" },
+          { label: "6 kişilik", value: "6 kişilik" },
+          { label: "12 kişilik", value: "12 kişilik" },
+          { label: "24 kişilik ve üzeri", value: "24+ kişilik" },
+        ],
+      },
+      {
+        fieldKey: "pieceCount",
+        prompt: "Parça sayısı için bir tercihiniz var mı?",
+        summaryLabel: "Parça sayısı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "18–24 parça", value: "18-24 parça" },
+          { label: "36 parça", value: "36 parça" },
+          { label: "48–60 parça", value: "48-60 parça" },
+          { label: "72 parça ve üzeri", value: "72+ parça" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Porselen", value: "Porselen" },
+          { label: "Bone china", value: "Bone china" },
+          { label: "Seramik", value: "Seramik" },
+          { label: "Cam", value: "Cam" },
+        ],
+      },
+      {
+        fieldKey: "dishwasherSafe",
+        prompt: "Bulaşık makinesinde yıkanabilmesi gerekli mi?",
+        summaryLabel: "Bulaşık makinesi uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "kayık tabak",
+      "kayik tabak",
+      "kase / çorba",
+      "kase / corba",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "pieceCount",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "pieceCount",
+        prompt: "Kaç parça sunum ürünü gerekli?",
+        summaryLabel: "Parça sayısı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1–2 parça", value: "1-2 parça" },
+          { label: "4–6 parça", value: "4-6 parça" },
+          { label: "8–12 parça", value: "8-12 parça" },
+          { label: "12+ parça", value: "12+ parça" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Porselen", value: "Porselen" },
+          { label: "Seramik", value: "Seramik" },
+          { label: "Cam", value: "Cam" },
+          { label: "Melamin", value: "Melamin" },
+        ],
+      },
+      {
+        fieldKey: "dishwasherSafe",
+        prompt: "Bulaşık makinesinde yıkanabilmesi gerekli mi?",
+        summaryLabel: "Bulaşık makinesi uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "tencere",
+      "tava",
+      "döküm",
+      "dokum",
+      "düdüklü",
+      "duduklu",
+      "ocak ve fırında",
+      "ocak ve firinda",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "cookwareSetType",
+      "cooktopCompatibility",
+      "cookwareSize",
+      "ovenSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "cookwareSetType",
+        prompt: "Nasıl bir pişirme ürünü arıyorsunuz?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: false,
+        quickChoices: [
+          { label: "Tencere seti", value: "Tencere seti" },
+          { label: "Tava / tava seti", value: "Tava" },
+          { label: "Düdüklü tencere", value: "Düdüklü tencere" },
+          { label: "Döküm tencere / tava", value: "Döküm" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Paslanmaz çelik", value: "Paslanmaz çelik" },
+          { label: "Döküm", value: "Döküm" },
+          { label: "Granit / seramik kaplama", value: "Granit / seramik" },
+          { label: "Alüminyum", value: "Alüminyum" },
+        ],
+      },
+      {
+        fieldKey: "cooktopCompatibility",
+        prompt: "Hangi ocak tipiyle uyumlu olmalı?",
+        summaryLabel: "Ocak uyumu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "İndüksiyon", value: "İndüksiyon" },
+          { label: "Gazlı ocak", value: "Gazlı ocak" },
+          { label: "Elektrikli / seramik", value: "Elektrikli / seramik" },
+          { label: "Tüm ocak tipleri", value: "Tüm ocak tipleri" },
+        ],
+      },
+      {
+        fieldKey: "cookwareSize",
+        prompt: "Kapasite veya çap için tercihiniz var mı?",
+        summaryLabel: "Kapasite / çap",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+      {
+        fieldKey: "ovenSafe",
+        prompt: "Fırında kullanıma uygun olması gerekli mi?",
+        summaryLabel: "Fırın kullanımı",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "kahve seti",
+      "çay seti",
+      "cay seti",
+      "kahve fincan",
+      "espresso fincan",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "serviceCount",
+      "drinkwareSetContents",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "serviceCount",
+        prompt: "Kaç kişilik set gerekli?",
+        summaryLabel: "Kişilik",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "2 kişilik", value: "2 kişilik" },
+          { label: "4 kişilik", value: "4 kişilik" },
+          { label: "6 kişilik", value: "6 kişilik" },
+          { label: "12 kişilik ve üzeri", value: "12+ kişilik" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Porselen", value: "Porselen" },
+          { label: "Cam", value: "Cam" },
+          { label: "Seramik", value: "Seramik" },
+          { label: "Çelik", value: "Çelik" },
+        ],
+      },
+      {
+        fieldKey: "drinkwareSetContents",
+        prompt: "Set içeriğinde ne olmalı?",
+        summaryLabel: "Set içeriği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Fincan + tabak", value: "Fincan + tabak" },
+          { label: "Fincan + tabak + ikramlık", value: "İkramlıklı set" },
+          { label: "Sadece fincan / bardak", value: "Sadece fincan / bardak" },
+        ],
+      },
+      {
+        fieldKey: "dishwasherSafe",
+        prompt: "Bulaşık makinesinde yıkanabilmesi gerekli mi?",
+        summaryLabel: "Bulaşık makinesi uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["french press", "chemex", "pour over"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "brewCapacity",
+      "filterPreference",
+    ],
+    questions: [
+      {
+        fieldKey: "brewCapacity",
+        prompt: "Yaklaşık kaç fincanlık demleme kapasitesi gerekli?",
+        summaryLabel: "Demleme kapasitesi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1–2 fincan", value: "1-2 fincan" },
+          { label: "3–4 fincan", value: "3-4 fincan" },
+          { label: "5–6 fincan", value: "5-6 fincan" },
+          { label: "6+ fincan", value: "6+ fincan" },
+        ],
+      },
+      {
+        fieldKey: "filterPreference",
+        prompt: "Filtre tercihiniz var mı?",
+        summaryLabel: "Filtre",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Metal filtre", value: "Metal filtre" },
+          { label: "Kâğıt filtre", value: "Kâğıt filtre" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["termos", "sürahi", "surahi"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "drinkwareVolume",
+      "insulationPreference",
+    ],
+    questions: [
+      {
+        fieldKey: "drinkwareVolume",
+        prompt: "Hangi hacim aralığı gerekli?",
+        summaryLabel: "Hacim",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "350–500 ml", value: "350-500 ml" },
+          { label: "750 ml", value: "750 ml" },
+          { label: "1 litre", value: "1 litre" },
+          { label: "1,5 litre ve üzeri", value: "1,5 L+" },
+        ],
+      },
+      {
+        fieldKey: "insulationPreference",
+        prompt: "Isı yalıtımı gerekli mi?",
+        summaryLabel: "Isı yalıtımı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sıcak tutmalı", value: "Sıcak tutmalı" },
+          { label: "Soğuk tutmalı", value: "Soğuk tutmalı" },
+          { label: "İkisi de", value: "Sıcak ve soğuk" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "çatal-bıçak",
+      "catal-bicak",
+      "çatal bıçak",
+      "catal bicak",
+      "bıçak seti",
+      "bicak seti",
+      "steak knife",
+      "kaşık seti",
+      "kasik seti",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "cutleryServiceCount",
+      "cutleryFinish",
+    ],
+    questions: [
+      {
+        fieldKey: "cutleryServiceCount",
+        prompt: "Kaç kişilik çatal-bıçak takımı gerekli?",
+        summaryLabel: "Kişilik",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "6 kişilik", value: "6 kişilik" },
+          { label: "12 kişilik", value: "12 kişilik" },
+          { label: "24 kişilik", value: "24 kişilik" },
+          { label: "24+ kişilik", value: "24+ kişilik" },
+        ],
+      },
+      {
+        fieldKey: "pieceCount",
+        prompt: "Parça sayısı tercihiniz var mı?",
+        summaryLabel: "Parça sayısı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "24 parça", value: "24 parça" },
+          { label: "36 parça", value: "36 parça" },
+          { label: "60 parça", value: "60 parça" },
+          { label: "84 parça ve üzeri", value: "84+ parça" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "18/10 paslanmaz çelik", value: "18/10 çelik" },
+          { label: "18/0 paslanmaz çelik", value: "18/0 çelik" },
+          { label: "Gümüş kaplama", value: "Gümüş kaplama" },
+        ],
+      },
+      {
+        fieldKey: "cutleryFinish",
+        prompt: "Yüzey / renk tercihiniz var mı?",
+        summaryLabel: "Yüzey",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Parlak", value: "Parlak" },
+          { label: "Mat", value: "Mat" },
+          { label: "Altın / bakır ton", value: "Altın / bakır" },
+          { label: "Siyah", value: "Siyah" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["bardak seti", "kadeh seti", "bardak", "kadeh"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "glasswareCapacity",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "serviceCount",
+        prompt: "Kaç kişilik bardak / kadeh seti gerekli?",
+        summaryLabel: "Kişilik",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "2 kişilik", value: "2 kişilik" },
+          { label: "4 kişilik", value: "4 kişilik" },
+          { label: "6 kişilik", value: "6 kişilik" },
+          { label: "12 kişilik ve üzeri", value: "12+ kişilik" },
+        ],
+      },
+      {
+        fieldKey: "glasswareCapacity",
+        prompt: "Hacim tercihiniz var mı?",
+        summaryLabel: "Hacim",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "200 ml altı", value: "200 ml altı" },
+          { label: "200–350 ml", value: "200-350 ml" },
+          { label: "350–500 ml", value: "350-500 ml" },
+          { label: "500 ml ve üzeri", value: "500+ ml" },
+        ],
+      },
+      {
+        fieldKey: "dishwasherSafe",
+        prompt: "Bulaşık makinesinde yıkanabilmesi gerekli mi?",
+        summaryLabel: "Bulaşık makinesi uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["fırın kabı", "firin kabi", "borcam"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "bakewareCapacity",
+      "ovenSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Borcam / temperli cam", value: "Cam" },
+          { label: "Seramik", value: "Seramik" },
+          { label: "Döküm", value: "Döküm" },
+        ],
+      },
+      {
+        fieldKey: "bakewareCapacity",
+        prompt: "Yaklaşık kapasite veya ölçü tercihiniz var mı?",
+        summaryLabel: "Kapasite / ölçü",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "ovenSafe",
+        prompt: "Fırında kullanıma uygun olması gerekli mi?",
+        summaryLabel: "Fırın kullanımı",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "saklama kabı",
+      "saklama kabi",
+      "saklama / düzenleyici",
+      "saklama / duzenleyici",
+      "yiyecek saklama",
+      "saklama ve düzenleme",
+      "saklama ve duzenleme",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "storageCapacity",
+      "storageSeal",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "storageCapacity",
+        prompt: "Hangi saklama kapasitesi gerekli?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Küçük (0–1 L)", value: "0-1 L" },
+          { label: "Orta (1–3 L)", value: "1-3 L" },
+          { label: "Büyük (3–5 L)", value: "3-5 L" },
+          { label: "Çoklu set", value: "Çoklu set" },
+        ],
+      },
+      {
+        fieldKey: "storageSeal",
+        prompt: "Sızdırmaz kapak gerekli mi?",
+        summaryLabel: "Kapak / sızdırmazlık",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tam sızdırmaz", value: "Tam sızdırmaz" },
+          { label: "Standart kapak yeterli", value: "Standart kapak" },
+          { label: "Vakumlu tercih edilir", value: "Vakumlu" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Cam", value: "Cam" },
+          { label: "Plastik", value: "Plastik" },
+          { label: "Çelik", value: "Çelik" },
+          { label: "Silikon", value: "Silikon" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "mutfak gereçleri",
+      "mutfak gerecleri",
+      "mutfak aletleri",
+      "mutfak robotu aksesuarı",
+      "mutfak robotu aksesuari",
+      "kesme tahtası",
+      "kesme tahtasi",
+    ],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "kitchenToolPurpose",
+      "kitchenToolMaterial",
+      "accessoryCompatibility",
+    ],
+    questions: [
+      {
+        fieldKey: "kitchenToolPurpose",
+        prompt: "Ürünü hangi iş için kullanacaksınız?",
+        summaryLabel: "Kullanım amacı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Hazırlık / doğrama", value: "Hazırlık / doğrama" },
+          { label: "Pişirme", value: "Pişirme" },
+          { label: "Servis", value: "Servis" },
+          { label: "Mutfak robotu aksesuarı", value: "Robot aksesuarı" },
+        ],
+      },
+      {
+        fieldKey: "kitchenToolMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Paslanmaz çelik", value: "Paslanmaz çelik" },
+          { label: "Silikon", value: "Silikon" },
+          { label: "Ahşap / bambu", value: "Ahşap / bambu" },
+          { label: "Plastik", value: "Plastik" },
+        ],
+      },
+      {
+        fieldKey: "accessoryCompatibility",
+        prompt: "Uyumlu olması gereken cihaz / model var mı?",
+        summaryLabel: "Cihaz uyumu",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["prefabrike mutfak", "modüler mutfak", "moduler mutfak"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "kitchenLayout",
+      "cabinetMaterial",
+      "installation",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "300 × 60 × 220 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "kitchenLayout",
+        prompt: "Mutfak yerleşimi nasıl olmalı?",
+        summaryLabel: "Yerleşim",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Düz hat", value: "Düz hat" },
+          { label: "L tipi", value: "L tipi" },
+          { label: "U tipi", value: "U tipi" },
+          { label: "Ada mutfak", value: "Ada mutfak" },
+        ],
+      },
+      {
+        fieldKey: "cabinetMaterial",
+        prompt: "Dolap kapağı / gövde malzemesi tercihiniz var mı?",
+        summaryLabel: "Dolap malzemesi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "MDFLAM", value: "MDFLAM" },
+          { label: "Lake", value: "Lake" },
+          { label: "Membran", value: "Membran" },
+          { label: "Ahşap kaplama", value: "Ahşap kaplama" },
+        ],
+      },
+      {
+        fieldKey: "installation",
+        prompt: "Montaj dahil olsun mu?",
+        summaryLabel: "Montaj",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Montaj dahil", value: "Montaj dahil" },
+          { label: "Sadece ürün", value: "Sadece ürün" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["eviye", "lavabo", "ankastre eviye"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "sinkMountType",
+      "fixtureMaterial",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth"],
+        unit: "cm",
+        example: "80 × 50 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "sinkMountType",
+        prompt: "Montaj tipi tercihiniz nedir?",
+        summaryLabel: "Montaj tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tezgâh üstü", value: "Tezgâh üstü" },
+          { label: "Tezgâh altı", value: "Tezgâh altı" },
+          { label: "Gömme", value: "Gömme" },
+        ],
+      },
+      {
+        fieldKey: "fixtureMaterial",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Paslanmaz çelik", value: "Paslanmaz çelik" },
+          { label: "Granit", value: "Granit" },
+          { label: "Seramik", value: "Seramik" },
+          { label: "Kompozit", value: "Kompozit" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["batarya", "musluk", "duş bataryası", "dus bataryasi"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "faucetType",
+      "fixtureFinish",
+      "installation",
+    ],
+    questions: [
+      {
+        fieldKey: "faucetType",
+        prompt: "Nasıl bir batarya / musluk arıyorsunuz?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Eviye bataryası", value: "Eviye bataryası" },
+          { label: "Lavabo bataryası", value: "Lavabo bataryası" },
+          { label: "Duş bataryası", value: "Duş bataryası" },
+          { label: "Çekilebilir spiralli", value: "Çekilebilir spiralli" },
+        ],
+      },
+      {
+        fieldKey: "fixtureFinish",
+        prompt: "Renk / yüzey tercihiniz var mı?",
+        summaryLabel: "Yüzey",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Krom", value: "Krom" },
+          { label: "Mat siyah", value: "Mat siyah" },
+          { label: "Altın", value: "Altın" },
+          { label: "Nikel", value: "Nikel" },
+        ],
+      },
+      {
+        fieldKey: "installation",
+        prompt: "Montaj dahil olsun mu?",
+        summaryLabel: "Montaj",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Montaj dahil", value: "Montaj dahil" },
+          { label: "Sadece ürün", value: "Sadece ürün" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["klozet", "duşakabin", "dusakabin", "lavabo dolabı", "lavabo dolabi"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "bathroomFixtureType",
+      "installation",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "90 × 90 × 190 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "bathroomFixtureType",
+        prompt: "Hangi banyo ürünü / formu gerekli?",
+        summaryLabel: "Banyo ürünü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Duşakabin", value: "Duşakabin" },
+          { label: "Klozet", value: "Klozet" },
+          { label: "Lavabo dolabı", value: "Lavabo dolabı" },
+          { label: "Set", value: "Set" },
+        ],
+      },
+      {
+        fieldKey: "installation",
+        prompt: "Montaj dahil olsun mu?",
+        summaryLabel: "Montaj",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Montaj dahil", value: "Montaj dahil" },
+          { label: "Sadece ürün", value: "Sadece ürün" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["sunum tabağı", "sunum tabagi", "servis / tepsi", "kesme tahtası", "kesme tahtasi"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "pieceCount",
+      "dishwasherSafe",
+    ],
+    questions: [
+      {
+        fieldKey: "pieceCount",
+        prompt: "Kaç parça servis / sunum ürünü gerekli?",
+        summaryLabel: "Parça sayısı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1 parça", value: "1 parça" },
+          { label: "2–4 parça", value: "2-4 parça" },
+          { label: "6 parça", value: "6 parça" },
+          { label: "12+ parça", value: "12+ parça" },
+        ],
+      },
+      {
+        fieldKey: "material",
+        prompt: "Malzeme tercihiniz nedir?",
+        summaryLabel: "Malzeme",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ahşap / bambu", value: "Ahşap / bambu" },
+          { label: "Porselen", value: "Porselen" },
+          { label: "Cam", value: "Cam" },
+          { label: "Çelik", value: "Çelik" },
+        ],
+      },
+      {
+        fieldKey: "dishwasherSafe",
+        prompt: "Bulaşık makinesinde yıkanabilmesi gerekli mi?",
+        summaryLabel: "Bulaşık makinesi uyumu",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["duvar kağıdı", "duvar kagidi", "pencere dekor", "çıkartma", "cikartma", "kapı numarası", "kapi numarasi"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "coverageArea",
+      "installation",
+      "decorStyle",
+    ],
+    questions: [
+      {
+        fieldKey: "coverageArea",
+        prompt: "Uygulanacak alanın yaklaşık ölçüsü nedir?",
+        summaryLabel: "Uygulama alanı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "decorStyle",
+        prompt: "Stil / desen tercihiniz var mı?",
+        summaryLabel: "Stil / desen",
+        importance: "optional",
+        rank: 42,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+      {
+        fieldKey: "installation",
+        prompt: "Montaj / uygulama dahil olsun mu?",
+        summaryLabel: "Uygulama",
+        importance: "optional",
+        rank: 38,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dahil olsun", value: "Dahil" },
+          { label: "Sadece ürün", value: "Sadece ürün" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["kilim", "kırlent", "kirlent", "yastık", "yastik", "koltuk kılıf", "koltuk kilif", "paspas", "minder"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "homeTextileMaterial",
+      "decorStyle",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "cm",
+        example: "80 × 150 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "homeTextileMaterial",
+        prompt: "Kumaş / doku tercihiniz nedir?",
+        summaryLabel: "Kumaş / doku",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Pamuk", value: "Pamuk" },
+          { label: "Yün", value: "Yün" },
+          { label: "Polyester", value: "Polyester" },
+          { label: "Kadife", value: "Kadife" },
+        ],
+      },
+      {
+        fieldKey: "decorStyle",
+        prompt: "Renk / stil tercihiniz var mı?",
+        summaryLabel: "Renk / stil",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["vazo", "dekoratif", "mum", "çerçeve", "cerceve", "heykel", "kar küre", "kar kure", "saat"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "decorStyle",
+      "displayLocation",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "cm",
+        example: "20 × 35 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "decorStyle",
+        prompt: "Dekorasyon stili tercihiniz nedir?",
+        summaryLabel: "Stil",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Modern", value: "Modern" },
+          { label: "Klasik", value: "Klasik" },
+          { label: "Rustik", value: "Rustik" },
+          { label: "Minimal", value: "Minimal" },
+        ],
+      },
+      {
+        fieldKey: "displayLocation",
+        prompt: "Nerede kullanılacak?",
+        summaryLabel: "Kullanım yeri",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "İç mekân", value: "İç mekân" },
+          { label: "Dış mekân", value: "Dış mekân" },
+          { label: "Hediye", value: "Hediye" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["bahçe", "bahce", "kuş", "kus", "fıskiye", "fiskiye", "havuz", "rüzgar", "ruzgar", "çim", "cim", "yağmur", "yagmur", "çatı", "cati"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "outdoorUse",
+      "weatherResistance",
+      "dimensions",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "cm",
+        example: "50 × 80 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "outdoorUse",
+        prompt: "Nerede kullanılacak?",
+        summaryLabel: "Kullanım alanı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bahçe", value: "Bahçe" },
+          { label: "Balkon / teras", value: "Balkon / teras" },
+          { label: "Çatı", value: "Çatı" },
+          { label: "İç mekân", value: "İç mekân" },
+        ],
+      },
+      {
+        fieldKey: "weatherResistance",
+        prompt: "Hava koşullarına dayanıklılık gerekli mi?",
+        summaryLabel: "Dış ortam dayanımı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "UV ve yağmur dayanımı", value: "UV ve yağmur dayanımı" },
+          { label: "Suya dayanıklı", value: "Suya dayanıklı" },
+          { label: "Temel kullanım", value: "Temel kullanım" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["temizlik", "çöp", "cop", "çamaşırhane", "camasirhane", "haşere", "hasere", "nem emici", "ayakkabı bakım", "ayakkabi bakim"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "careProductPurpose",
+      "packageSize",
+      "scentPreference",
+    ],
+    questions: [
+      {
+        fieldKey: "careProductPurpose",
+        prompt: "Ürünün öncelikli kullanım amacı nedir?",
+        summaryLabel: "Kullanım amacı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Temizlik", value: "Temizlik" },
+          { label: "Koku / nem kontrolü", value: "Koku / nem kontrolü" },
+          { label: "Haşere kontrolü", value: "Haşere kontrolü" },
+          { label: "Atık / çöp yönetimi", value: "Atık yönetimi" },
+        ],
+      },
+      {
+        fieldKey: "packageSize",
+        prompt: "Paket / kullanım miktarı tercihiniz var mı?",
+        summaryLabel: "Paket miktarı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tekli", value: "Tekli" },
+          { label: "Ekonomik paket", value: "Ekonomik paket" },
+          { label: "Toplu / işletme paketi", value: "Toplu paket" },
+        ],
+      },
+      {
+        fieldKey: "scentPreference",
+        prompt: "Koku tercihiniz var mı?",
+        summaryLabel: "Koku tercihi",
+        importance: "optional",
+        rank: 36,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kokusuz", value: "Kokusuz" },
+          { label: "Hafif kokulu", value: "Hafif kokulu" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["düzenleme", "duzenleme", "çekmece", "cekmece", "raf kaplama", "zemin koruma", "kaydırmaz", "kaydirmaz", "halı altlık", "hali altlik"],
+    allowedCandidateFieldKeys: [
+      ...HOME_KITCHEN_COMMON_CANDIDATE_KEYS,
+      "organizationPurpose",
+      "dimensions",
+      "protectionSurface",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "cm",
+        example: "50 × 120 cm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "organizationPurpose",
+        prompt: "Hangi alan için çözüm arıyorsunuz?",
+        summaryLabel: "Kullanım alanı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Çekmece / raf", value: "Çekmece / raf" },
+          { label: "Zemin", value: "Zemin" },
+          { label: "Mobilya koruması", value: "Mobilya koruması" },
+          { label: "Genel düzenleme", value: "Genel düzenleme" },
+        ],
+      },
+      {
+        fieldKey: "protectionSurface",
+        prompt: "Korunacak yüzey nedir?",
+        summaryLabel: "Korunacak yüzey",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Ahşap", value: "Ahşap" },
+          { label: "Seramik / taş", value: "Seramik / taş" },
+          { label: "Halı / kilim", value: "Halı / kilim" },
+          { label: "Metal", value: "Metal" },
+        ],
+      },
+    ],
+  },
+];
+
+const AUTOMOTIVE_COMMON_CANDIDATE_KEYS = [
+  "needType",
+  "brand",
+  "condition",
+  "warranty",
+  "city",
+  "budget",
+];
+
+const AUTOMOTIVE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenNeedTypes: ["vehicle"],
+    allowedCandidateFieldKeys: [
+      ...AUTOMOTIVE_COMMON_CANDIDATE_KEYS,
+      "model",
+      "generation",
+      "modelYear",
+      "engine",
+      "fuel",
+      "transmission",
+      "mileage",
+      "bodyType",
+      "driveType",
+      "color",
+      "bodyCondition",
+    ],
+    questions: [
+      {
+        fieldKey: "condition",
+        prompt: "Araç durumu tercihiniz nedir?",
+        summaryLabel: "Araç durumu",
+        importance: "quote_critical",
+        rank: 80,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sıfır", value: "Sıfır" },
+          { label: "İkinci el", value: "İkinci el" },
+          { label: "Hasar kayıtlı", value: "Hasar kayıtlı" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "modelYear",
+        prompt: "Hangi model yılı ve üzeri olsun?",
+        summaryLabel: "Yıl",
+        importance: "quote_critical",
+        rank: 78,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "mileage",
+        prompt: "Kilometre üst sınırı var mı?",
+        summaryLabel: "Kilometre",
+        importance: "optional",
+        rank: 46,
+        inputHint: "number",
+        allowDontCare: true,
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "fuel",
+        prompt: "Yakıt tercihiniz nedir?",
+        summaryLabel: "Yakıt",
+        importance: "optional",
+        rank: 44,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Benzin", value: "Benzin" },
+          { label: "Dizel", value: "Dizel" },
+          { label: "Hibrit", value: "Hibrit" },
+          { label: "Elektrik", value: "Elektrik" },
+          { label: "LPG", value: "LPG" },
+        ],
+      },
+      {
+        fieldKey: "transmission",
+        prompt: "Vites tercihiniz nedir?",
+        summaryLabel: "Vites",
+        importance: "optional",
+        rank: 43,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Otomatik", value: "Otomatik" },
+          { label: "Manuel", value: "Manuel" },
+          { label: "Yarı otomatik", value: "Yarı otomatik" },
+        ],
+      },
+      {
+        fieldKey: "bodyType",
+        prompt: "Kasa tipi için tercihiniz var mı?",
+        summaryLabel: "Kasa tipi",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sedan", value: "Sedan" },
+          { label: "Hatchback", value: "Hatchback" },
+          { label: "SUV", value: "SUV" },
+          { label: "Station wagon", value: "Station wagon" },
+          { label: "Coupe", value: "Coupe" },
+          { label: "Pickup", value: "Pickup" },
+        ],
+      },
+      {
+        fieldKey: "color",
+        prompt: "Renk tercihiniz var mı?",
+        summaryLabel: "Renk",
+        importance: "optional",
+        rank: 38,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["part"],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "brand",
+      "model",
+      "part",
+      "partPreference",
+      "partVehicleYear",
+      "city",
+      "budget",
+    ],
+    questions: [
+      {
+        fieldKey: "brand",
+        prompt: "Aracın markası nedir?",
+        summaryLabel: "Araç markası",
+        importance: "quote_critical",
+        rank: 82,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "model",
+        prompt: "Aracın modeli nedir?",
+        summaryLabel: "Araç modeli",
+        importance: "quote_critical",
+        rank: 80,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "part",
+        prompt: "Hangi yedek parçayı arıyorsunuz? (Motor, şanzıman, aydınlatma gibi)",
+        summaryLabel: "Parça",
+        importance: "quote_critical",
+        rank: 76,
+        inputHint: "text",
+        allowUnknown: false,
+      },
+      {
+        fieldKey: "partPreference",
+        prompt: "Parça tercihiniz nedir?",
+        summaryLabel: "Parça tercihi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sıfır / OEM", value: "Sıfır / OEM" },
+          { label: "Çıkma / ikinci el", value: "Çıkma / ikinci el" },
+        ],
+      },
+      {
+        fieldKey: "partVehicleYear",
+        prompt: "Parçanın uyacağı araç yılı nedir?",
+        summaryLabel: "Uyumlu araç yılı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["tire"],
+    allowedCandidateFieldKeys: [
+      ...AUTOMOTIVE_COMMON_CANDIDATE_KEYS,
+      "tireItemType",
+      "tireSize",
+      "tireSeason",
+      "tireQuantity",
+    ],
+    questions: [
+      {
+        fieldKey: "tireItemType",
+        prompt: "Lastik mi, jant mı arıyorsunuz?",
+        summaryLabel: "Ürün tipi",
+        importance: "quote_critical",
+        rank: 74,
+        inputHint: "select",
+        allowDontCare: false,
+        quickChoices: [
+          { label: "Lastik", value: "Lastik" },
+          { label: "Jant", value: "Jant" },
+          { label: "Lastik + jant", value: "Lastik + jant" },
+        ],
+      },
+      {
+        fieldKey: "tireSize",
+        prompt: "Lastik / jant ebadı nedir?",
+        summaryLabel: "Ebat",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "tireSeason",
+        prompt: "Mevsim tercihiniz nedir?",
+        summaryLabel: "Mevsim",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yaz", value: "Yaz" },
+          { label: "Kış", value: "Kış" },
+          { label: "Dört mevsim", value: "Dört mevsim" },
+        ],
+      },
+      {
+        fieldKey: "tireQuantity",
+        prompt: "Kaç adet gerekli?",
+        summaryLabel: "Adet",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1 adet", value: "1" },
+          { label: "2 adet", value: "2" },
+          { label: "4 adet", value: "4" },
+          { label: "4+ adet", value: "4+" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["tire"],
+    whenProductTypes: [
+      "jant",
+      "çelik jant",
+      "alaşım jant",
+      "forged jant",
+      "celik jant",
+      "alasim jant",
+    ],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "tireSize",
+      "tireQuantity",
+      "condition",
+      "city",
+      "budget",
+    ],
+    questions: [
+      {
+        fieldKey: "tireSize",
+        prompt: "Jant çapı nedir?",
+        summaryLabel: "Jant çapı",
+        importance: "quote_critical",
+        rank: 76,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "tireQuantity",
+        prompt: "Kaç adet jant gerekli?",
+        summaryLabel: "Adet",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1 adet", value: "1" },
+          { label: "2 adet", value: "2" },
+          { label: "4 adet", value: "4" },
+          { label: "4+ adet", value: "4+" },
+        ],
+      },
+      {
+        fieldKey: "condition",
+        prompt: "Jant sıfır mı, ikinci el mi olsun?",
+        summaryLabel: "Durum",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sıfır", value: "Sıfır" },
+          { label: "İkinci el", value: "İkinci el" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["service"],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "serviceType",
+      "brand",
+      "model",
+      "mileage",
+      "city",
+      "budget",
+    ],
+    questions: [
+      {
+        fieldKey: "brand",
+        prompt: "Aracın markası nedir?",
+        summaryLabel: "Araç markası",
+        importance: "quote_critical",
+        rank: 80,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "model",
+        prompt: "Aracın modeli nedir?",
+        summaryLabel: "Araç modeli",
+        importance: "quote_critical",
+        rank: 78,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "mileage",
+        prompt: "Araç kaç kilometrede?",
+        summaryLabel: "Kilometre",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["tire"],
+    whenProductTypes: [
+      "lastik değişimi",
+      "rot ayarı",
+      "balans",
+      "lastik otel",
+      "lastik saklama",
+      "rot balans",
+    ],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "serviceType",
+      "tireQuantity",
+      "serviceDate",
+      "city",
+      "budget",
+    ],
+    questions: [
+      {
+        fieldKey: "tireQuantity",
+        prompt: "Kaç lastik için işlem yapılacak?",
+        summaryLabel: "Lastik adedi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "serviceDate",
+        prompt: "İşlem için tahmini tarih nedir?",
+        summaryLabel: "Tahmini tarih",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["koruma filmi", "kaplama", "ppf", "wrapping"],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "brand",
+      "model",
+      "color",
+      "city",
+      "budget",
+    ],
+    questions: [
+      {
+        fieldKey: "brand",
+        prompt: "Aracın markası nedir?",
+        summaryLabel: "Araç markası",
+        importance: "quote_critical",
+        rank: 80,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "model",
+        prompt: "Aracın modeli nedir?",
+        summaryLabel: "Araç modeli",
+        importance: "quote_critical",
+        rank: 78,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "color",
+        prompt: "Renk / şeffaflık tercihiniz nedir?",
+        summaryLabel: "Renk / şeffaflık",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["aksesuar", "oto aksesuar", "çeki demiri", "tavan", "bagaj sistemleri"],
+    restrictStandardProfiles: true,
+    omitDeliveryQuestion: true,
+    allowedCandidateFieldKeys: ["needType", "brand", "model", "city", "budget"],
+    questions: [
+      {
+        fieldKey: "brand",
+        prompt: "Aracın markası nedir?",
+        summaryLabel: "Araç markası",
+        importance: "quote_critical",
+        rank: 80,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "model",
+        prompt: "Aracın modeli nedir?",
+        summaryLabel: "Araç modeli",
+        importance: "quote_critical",
+        rank: 78,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+];
+
+const MACHINERY_COMMON_CANDIDATE_KEYS = [
+  "needType",
+  "machineType",
+  "brand",
+  "condition",
+  "quantity",
+  "city",
+  "delivery",
+  "budget",
+];
+
+/**
+ * Makine sözleşmeleri yalnız ürün ailesinin teknik gerçeklerini sorar.
+ * Yedek parça niyeti ayrı sözleşmeye bırakılır: bir forklift yedek parçası
+ * kaldırma kapasitesi görmemelidir.
+ */
+const MACHINERY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    // Protective consumables share the hardware category, not machine specs.
+    whenProductTypes: ["koruyucu eldiven"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: ["quantity", "city", "delivery", "budget"],
+    questions: [],
+  },
+  {
+    // Makine yedek parçasında teknik sınıflandırmayı talep metnine ve
+    // serbest forma bırakıyoruz. Kullanıcıyı CNC ekseni, kaldırma kapasitesi
+    // ya da voltaj gibi parça için çoğu kez yanıltıcı sorularla yormuyoruz.
+    whenNeedTypes: ["part"],
+    allowedCandidateFieldKeys: ["needType", "partPreference"],
+    questions: [
+      {
+        fieldKey: "partPreference",
+        prompt: "Orijinal mi, muadil parça mı arıyorsunuz?",
+        summaryLabel: "Parça tercihi",
+        importance: "quote_critical",
+        rank: 76,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Orijinal", value: "Orijinal" },
+          { label: "Muadil", value: "Muadil" },
+        ],
+      },
+    ],
+  },
+  {
+    // Jeneratör için fiyat/eşleşmeyi belirleyen iki teknik eksen kVA ve
+    // yakıttır. Faz, ATS ve ses seviyesi gibi detaylar serbest forma kalır.
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["jeneratör", "jenerator", "generator"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "generatorPower",
+      "generatorFuel",
+    ],
+    questions: [
+      {
+        fieldKey: "generatorFuel",
+        prompt: "Hangi yakıt türünü tercih ediyorsunuz?",
+        summaryLabel: "Yakıt türü",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dizel", value: "Dizel" },
+          { label: "Benzin", value: "Benzin" },
+          { label: "LPG / doğalgaz", value: "LPG / doğalgaz" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "mini ekskavatör",
+      "mini ekskavator",
+      "mini excavator",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "excavatorWeightClass",
+      "excavatorAttachment",
+      "miniExcavatorDigDepth",
+      "miniExcavatorCabin",
+      "operatingHours",
+    ],
+    questions: [
+      {
+        fieldKey: "excavatorWeightClass",
+        prompt: "Hangi çalışma ağırlığı sınıfı gerekli?",
+        summaryLabel: "Makine sınıfı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "3 tona kadar", value: "≤3 ton" },
+          { label: "3–6 ton", value: "3-6 ton" },
+          { label: "6–10 ton", value: "6-10 ton" },
+          { label: "10 ton üzeri", value: "10+ ton" },
+        ],
+      },
+      {
+        fieldKey: "excavatorAttachment",
+        prompt: "Öncelikli ataşman ihtiyacınız nedir?",
+        summaryLabel: "Ataşman",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Standart kepçe", value: "Standart kepçe" },
+          { label: "Kırıcı", value: "Kırıcı" },
+          { label: "Burgu", value: "Burgu" },
+          { label: "Ataşman gerekmiyor", value: "Gerekmiyor" },
+        ],
+      },
+      {
+        fieldKey: "miniExcavatorDigDepth",
+        prompt: "Minimum kazı derinliği ihtiyacınız nedir?",
+        summaryLabel: "Kazı derinliği",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "2,5 metreye kadar", value: "≤2,5 m" },
+          { label: "2,5–3,5 metre", value: "2,5-3,5 m" },
+          { label: "3,5 metre üzeri", value: "3,5+ m" },
+        ],
+      },
+      {
+        fieldKey: "miniExcavatorCabin",
+        prompt: "Kabin tercihiniz nedir?",
+        summaryLabel: "Kabin",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kapalı kabin", value: "Kapalı kabin" },
+          { label: "Açık kabin yeterli", value: "Açık kabin" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "ekskavatör",
+      "ekskavator",
+      "excavator",
+      "paletli ekskavatör",
+      "paletli ekskavator",
+      "lastikli ekskavatör",
+      "lastikli ekskavator",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "fullExcavatorWeightClass",
+      "fullExcavatorAttachment",
+      "excavatorUndercarriage",
+      "fullExcavatorDigDepth",
+      "operatingHours",
+    ],
+    questions: [
+      {
+        fieldKey: "fullExcavatorWeightClass",
+        prompt: "Hangi çalışma ağırlığı sınıfı gerekli?",
+        summaryLabel: "Makine sınıfı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "10–20 ton", value: "10-20 ton" },
+          { label: "20–30 ton", value: "20-30 ton" },
+          { label: "30–45 ton", value: "30-45 ton" },
+          { label: "45 ton üzeri", value: "45+ ton" },
+        ],
+      },
+      {
+        fieldKey: "fullExcavatorAttachment",
+        prompt: "Öncelikli ataşman ihtiyacınız nedir?",
+        summaryLabel: "Ataşman",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Standart kepçe", value: "Standart kepçe" },
+          { label: "Hidrolik kırıcı", value: "Hidrolik kırıcı" },
+          { label: "Kıskaç / grapple", value: "Kıskaç / grapple" },
+          { label: "Riper", value: "Riper" },
+        ],
+      },
+      {
+        fieldKey: "excavatorUndercarriage",
+        prompt: "Paletli mi, lastikli mi gerekli?",
+        summaryLabel: "Yürüyüş takımı",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Paletli", value: "Paletli" },
+          { label: "Lastikli", value: "Lastikli" },
+        ],
+      },
+      {
+        fieldKey: "fullExcavatorDigDepth",
+        prompt: "Minimum kazı derinliği ihtiyacınız nedir?",
+        summaryLabel: "Kazı derinliği",
+        importance: "quote_critical",
+        rank: 58,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "5 metreye kadar", value: "≤5 m" },
+          { label: "5–7 metre", value: "5-7 m" },
+          { label: "7 metre üzeri", value: "7+ m" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "yükleyici",
+      "yukleyici",
+      "loder",
+      "loader",
+      "beko loder",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "loaderCapacity",
+      "loaderAttachment",
+      "loaderMachineType",
+      "loaderLiftHeight",
+      "operatingHours",
+    ],
+    questions: [
+      {
+        fieldKey: "loaderCapacity",
+        prompt: "Hangi yükleme kapasitesi sınıfı gerekli?",
+        summaryLabel: "Yükleme kapasitesi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "2 tona kadar", value: "≤2 ton" },
+          { label: "2–3 ton", value: "2-3 ton" },
+          { label: "3–5 ton", value: "3-5 ton" },
+          { label: "5 ton üzeri", value: "5+ ton" },
+        ],
+      },
+      {
+        fieldKey: "loaderAttachment",
+        prompt: "Öncelikli ataşman ihtiyacınız nedir?",
+        summaryLabel: "Ataşman",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Standart kepçe", value: "Standart kepçe" },
+          { label: "Palet çatalı", value: "Palet çatalı" },
+          { label: "Kıskaç / grapple", value: "Kıskaç / grapple" },
+          { label: "Ataşman gerekmiyor", value: "Gerekmiyor" },
+        ],
+      },
+      {
+        fieldKey: "loaderMachineType",
+        prompt: "Hangi yükleyici düzeni gerekli?",
+        summaryLabel: "Yükleyici tipi",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tekerlekli yükleyici", value: "Tekerlekli" },
+          { label: "Beko loder", value: "Beko loder" },
+          { label: "Paletli yükleyici", value: "Paletli" },
+        ],
+      },
+      {
+        fieldKey: "loaderLiftHeight",
+        prompt: "Minimum kaldırma yüksekliği ihtiyacınız nedir?",
+        summaryLabel: "Kaldırma yüksekliği",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "3 metreye kadar", value: "≤3 m" },
+          { label: "3–4,5 metre", value: "3-4,5 m" },
+          { label: "4,5 metre üzeri", value: "4,5+ m" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["beton santrali", "hazır beton santrali"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "concretePlantType",
+      "concretePlantCapacity",
+    ],
+    questions: [
+      {
+        fieldKey: "concretePlantType",
+        prompt: "Hangi santral tipine ihtiyacınız var?",
+        summaryLabel: "Santral tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sabit santral", value: "Sabit" },
+          { label: "Mobil santral", value: "Mobil" },
+          { label: "Tercihim yok", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "concretePlantCapacity",
+        prompt: "Hangi saatlik üretim kapasitesi gerekli?",
+        summaryLabel: "Saatlik kapasite",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "30 m³/saat'e kadar", value: "≤30 m³/saat" },
+          { label: "30–60 m³/saat", value: "30-60 m³/saat" },
+          { label: "60–120 m³/saat", value: "60-120 m³/saat" },
+          { label: "120 m³/saat üzeri", value: "120+ m³/saat" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["beton pompası", "beton pompasi"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "concretePumpType",
+      "concretePumpReach",
+    ],
+    questions: [
+      {
+        fieldKey: "concretePumpType",
+        prompt: "Hangi pompa tipine ihtiyacınız var?",
+        summaryLabel: "Pompa tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Bomlu pompa", value: "Bomlu" },
+          { label: "Sabit hat pompası", value: "Sabit hat" },
+          { label: "Tercihim yok", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "concretePumpReach",
+        prompt: "Hangi erişim / bom uzunluğu sınıfı gerekli?",
+        summaryLabel: "Erişim sınıfı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "28 metreye kadar", value: "≤28 m" },
+          { label: "28–42 metre", value: "28-42 m" },
+          { label: "42 metre üzeri", value: "42+ m" },
+          { label: "Erişim sınıfı fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["kule vinç", "kule vinc", "tower crane"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "towerCraneCapacity",
+      "towerCraneJibLength",
+      "towerCraneHookHeight",
+      "towerCraneMounting",
+    ],
+    questions: [
+      {
+        fieldKey: "towerCraneCapacity",
+        prompt: "Hangi kaldırma kapasitesi sınıfı gerekli?",
+        summaryLabel: "Kaldırma kapasitesi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "5 tona kadar", value: "≤5 ton" },
+          { label: "5–10 ton", value: "5-10 ton" },
+          { label: "10–16 ton", value: "10-16 ton" },
+          { label: "16 ton üzeri", value: "16+ ton" },
+        ],
+      },
+      {
+        fieldKey: "towerCraneJibLength",
+        prompt: "Hangi bom / jib uzunluğu sınıfı gerekli?",
+        summaryLabel: "Bom uzunluğu",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "40 metreye kadar", value: "≤40 m" },
+          { label: "40–60 metre", value: "40-60 m" },
+          { label: "60 metre üzeri", value: "60+ m" },
+          { label: "Uzunluk fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "towerCraneHookHeight",
+        prompt: "Minimum kanca yüksekliği ihtiyacınız nedir?",
+        summaryLabel: "Kanca yüksekliği",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "40 metreye kadar", value: "≤40 m" },
+          { label: "40–70 metre", value: "40-70 m" },
+          { label: "70 metre üzeri", value: "70+ m" },
+        ],
+      },
+      {
+        fieldKey: "towerCraneMounting",
+        prompt: "Kurulum tipi tercihiniz nedir?",
+        summaryLabel: "Kurulum tipi",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sabit temel", value: "Sabit temel" },
+          { label: "Raylı", value: "Raylı" },
+          { label: "İç tırmanır", value: "İç tırmanır" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["mobil vinç", "mobil vinc", "mobile crane"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "mobileCraneCapacity",
+      "mobileCraneReach",
+      "mobileCraneSiteAccess",
+    ],
+    questions: [
+      {
+        fieldKey: "mobileCraneCapacity",
+        prompt: "Hangi kaldırma kapasitesi sınıfı gerekli?",
+        summaryLabel: "Kaldırma kapasitesi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "25 tona kadar", value: "≤25 ton" },
+          { label: "25–50 ton", value: "25-50 ton" },
+          { label: "50–100 ton", value: "50-100 ton" },
+          { label: "100 ton üzeri", value: "100+ ton" },
+        ],
+      },
+      {
+        fieldKey: "mobileCraneReach",
+        prompt: "Hangi erişim / bom uzunluğu sınıfı gerekli?",
+        summaryLabel: "Erişim sınıfı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "30 metreye kadar", value: "≤30 m" },
+          { label: "30–50 metre", value: "30-50 m" },
+          { label: "50 metre üzeri", value: "50+ m" },
+          { label: "Erişim fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "mobileCraneSiteAccess",
+        prompt: "Dar veya zorlu sahada çalışma gerekli mi?",
+        summaryLabel: "Saha erişimi",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dar şehir içi saha", value: "Dar saha" },
+          { label: "Arazi / şantiye", value: "Arazi / şantiye" },
+          { label: "Özel gereksinim yok", value: "Yok" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "silindir (kompaktör)",
+      "silindir (kompaktor)",
+      "kompaktör",
+      "kompaktor",
+      "road roller",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "compactorType",
+      "compactorWeightClass",
+    ],
+    questions: [
+      {
+        fieldKey: "compactorType",
+        prompt: "Hangi silindir / kompaktör tipi gerekli?",
+        summaryLabel: "Makine tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tek tamburlu", value: "Tek tamburlu" },
+          { label: "Çift tamburlu", value: "Çift tamburlu" },
+          { label: "Lastik tekerlekli", value: "Lastik tekerlekli" },
+          { label: "El kompaktörü", value: "El kompaktörü" },
+        ],
+      },
+      {
+        fieldKey: "compactorWeightClass",
+        prompt: "Hangi çalışma ağırlığı sınıfı gerekli?",
+        summaryLabel: "Makine sınıfı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "3 tona kadar", value: "≤3 ton" },
+          { label: "3–7 ton", value: "3-7 ton" },
+          { label: "7–12 ton", value: "7-12 ton" },
+          { label: "12 ton üzeri", value: "12+ ton" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "ağaç yonga makineleri",
+      "ağaç yonga makinesi",
+      "agac yonga makineleri",
+      "agac yonga makinesi",
+      "dal öğütücü",
+      "dal ogutucu",
+      "wood chipper",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "woodChipperFeedDiameter",
+      "woodChipperDriveType",
+    ],
+    questions: [
+      {
+        fieldKey: "woodChipperFeedDiameter",
+        prompt: "Maksimum dal / odun çapı ne olmalı?",
+        summaryLabel: "Besleme çapı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "10 cm'ye kadar", value: "≤10 cm" },
+          { label: "10–20 cm", value: "10-20 cm" },
+          { label: "20–30 cm", value: "20-30 cm" },
+          { label: "30 cm üzeri", value: "30+ cm" },
+        ],
+      },
+      {
+        fieldKey: "woodChipperDriveType",
+        prompt: "Hangi tahrik tipi gerekli?",
+        summaryLabel: "Tahrik tipi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Elektrikli", value: "Elektrikli" },
+          { label: "Benzinli / dizel", value: "Yakıtlı" },
+          { label: "Traktör PTO", value: "Traktör PTO" },
+          { label: "Tahrik fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "arazi ölçümü",
+      "arazi olcumu",
+      "arazi ölçüm cihazı",
+      "arazi olcum cihazi",
+      "gnss",
+      "gps rtk",
+      "total station",
+      "teodolit",
+      "nivelman",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "surveyEquipmentType",
+      "surveyAccuracyLevel",
+      "surveyCorrectionSource",
+      "surveyDataExport",
+    ],
+    questions: [
+      {
+        fieldKey: "surveyEquipmentType",
+        prompt: "Hangi arazi ölçüm cihazı türü gerekli?",
+        summaryLabel: "Cihaz türü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "GNSS / RTK", value: "GNSS / RTK" },
+          { label: "Total station", value: "Total station" },
+          { label: "Nivo / teodolit", value: "Nivo / teodolit" },
+          { label: "Cihaz türü fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "surveyAccuracyLevel",
+        prompt: "Hangi ölçüm hassasiyeti gerekli?",
+        summaryLabel: "Hassasiyet",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Santimetre düzeyi", value: "Santimetre" },
+          { label: "Milimetre düzeyi", value: "Milimetre" },
+          { label: "Temel ölçüm yeterli", value: "Temel" },
+          { label: "Hassasiyet fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "surveyCorrectionSource",
+        prompt: "RTK düzeltme bağlantısı gerekli mi?",
+        summaryLabel: "RTK bağlantısı",
+        importance: "quote_critical",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "CORS / network RTK", value: "CORS / network" },
+          { label: "Kendi base-rover seti", value: "Base-rover" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+      {
+        fieldKey: "surveyDataExport",
+        prompt: "CAD veya GIS veri çıktısı gerekli mi?",
+        summaryLabel: "Veri çıktısı",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "CAD / DXF gerekli", value: "CAD / DXF" },
+          { label: "GIS gerekli", value: "GIS" },
+          { label: "Temel çıktı yeterli", value: "Temel çıktı" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["traktör", "traktor", "tractor"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "brand",
+      "tractorPowerClass",
+      "tractorDriveType",
+      "tractorCabinType",
+      "tractorLoaderNeed",
+    ],
+    questions: [
+      {
+        fieldKey: "tractorPowerClass",
+        prompt: "Hangi motor gücü sınıfı gerekli?",
+        summaryLabel: "Motor gücü",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "50 HP'ye kadar", value: "≤50 HP" },
+          { label: "50–75 HP", value: "50-75 HP" },
+          { label: "75–110 HP", value: "75-110 HP" },
+          { label: "110 HP üzeri", value: "110+ HP" },
+        ],
+      },
+      {
+        fieldKey: "tractorDriveType",
+        prompt: "Hangi çekiş tipi gerekli?",
+        summaryLabel: "Çekiş tipi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "2 çeker", value: "2WD" },
+          { label: "4 çeker", value: "4WD" },
+          { label: "Çekiş tipi fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "tractorCabinType",
+        prompt: "Kabin tercihiniz nedir?",
+        summaryLabel: "Kabin",
+        importance: "optional",
+        rank: 60,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kapalı kabin", value: "Kapalı kabin" },
+          { label: "Açık kabin yeterli", value: "Açık kabin" },
+        ],
+      },
+      {
+        fieldKey: "tractorLoaderNeed",
+        prompt: "Ön yükleyici gerekli mi?",
+        summaryLabel: "Ön yükleyici",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["balya makinesi", "balya", "baler"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "balerForm",
+      "balerCropType",
+    ],
+    questions: [
+      {
+        fieldKey: "balerForm",
+        prompt: "Hangi balya formu gerekli?",
+        summaryLabel: "Balya formu",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yuvarlak balya", value: "Yuvarlak" },
+          { label: "Kare / dikdörtgen balya", value: "Kare / dikdörtgen" },
+          { label: "Balya formu fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "balerCropType",
+        prompt: "En çok hangi materyal için kullanılacak?",
+        summaryLabel: "Materyal",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Saman", value: "Saman" },
+          { label: "Yonca / ot", value: "Yonca / ot" },
+          { label: "Sap / hasat artığı", value: "Sap / hasat artığı" },
+          { label: "Materyal fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "mibzer",
+      "ekim makinesi",
+      "pnömatik ekim",
+      "pnomatik ekim",
+      "seeder",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "seederMethod",
+      "seederWorkingWidth",
+    ],
+    questions: [
+      {
+        fieldKey: "seederMethod",
+        prompt: "Ekim makinesi (mibzer) hangi ekim yöntemi için gerekli?",
+        summaryLabel: "Ekim yöntemi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tahıl ekimi", value: "Tahıl" },
+          { label: "Hassas ekim (mısır / ayçiçeği)", value: "Hassas ekim" },
+          { label: "Üniversal", value: "Üniversal" },
+          { label: "Ekim yöntemi fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "seederWorkingWidth",
+        prompt: "Hangi çalışma genişliği gerekli?",
+        summaryLabel: "Çalışma genişliği",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "3 metreye kadar", value: "≤3 m" },
+          { label: "3–4 metre", value: "3-4 m" },
+          { label: "4 metre üzeri", value: "4+ m" },
+          { label: "Genişlik fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: ["pulluk", "plow"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "plowType",
+      "plowFurrowCount",
+    ],
+    questions: [
+      {
+        fieldKey: "plowType",
+        prompt: "Hangi pulluk tipi gerekli?",
+        summaryLabel: "Pulluk tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sabit kulaklı", value: "Sabit kulaklı" },
+          { label: "Dönerli", value: "Dönerli" },
+          { label: "Diskli", value: "Diskli" },
+          { label: "Tip fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "plowFurrowCount",
+        prompt: "Kaç kulaklı pulluk gerekli?",
+        summaryLabel: "Kulak sayısı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "2 kulak", value: "2" },
+          { label: "3 kulak", value: "3" },
+          { label: "4 kulak", value: "4" },
+          { label: "5 kulak ve üzeri", value: "5+" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "süt sağım makinesi",
+      "sut sagim makinesi",
+      "süt sağım",
+      "sut sagim",
+      "milking machine",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "milkingSystemType",
+      "milkingUnitCount",
+    ],
+    questions: [
+      {
+        fieldKey: "milkingSystemType",
+        prompt: "Hangi sağım sistemi gerekli?",
+        summaryLabel: "Sistem tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Taşınabilir", value: "Taşınabilir" },
+          { label: "Sabit / boru hatlı", value: "Sabit" },
+          { label: "Sistem tipi fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "milkingUnitCount",
+        prompt: "Aynı anda kaç hayvan için sağım ünitesi gerekli?",
+        summaryLabel: "Sağım ünitesi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "1 ünite", value: "1" },
+          { label: "2 ünite", value: "2" },
+          { label: "4 ünite", value: "4" },
+          { label: "6 ünite ve üzeri", value: "6+" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "yem karma makinesi",
+      "yem karma",
+      "yem mikseri",
+      "feed mixer",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "condition",
+      "feedMixerType",
+      "feedMixerCapacity",
+    ],
+    questions: [
+      {
+        fieldKey: "feedMixerType",
+        prompt: "Hangi karıştırıcı düzeni gerekli?",
+        summaryLabel: "Karıştırıcı tipi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Dikey", value: "Dikey" },
+          { label: "Yatay", value: "Yatay" },
+          { label: "Karıştırıcı tipi fark etmez", value: "Fark etmez" },
+        ],
+      },
+      {
+        fieldKey: "feedMixerCapacity",
+        prompt: "Hangi hazne kapasitesi gerekli?",
+        summaryLabel: "Hazne kapasitesi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "5 m³'e kadar", value: "≤5 m³" },
+          { label: "5–10 m³", value: "5-10 m³" },
+          { label: "10–20 m³", value: "10-20 m³" },
+          { label: "20 m³ üzeri", value: "20+ m³" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "paketleme makinesi",
+      "paketleme hattı",
+      "paketleme hatti",
+      "shrink paketleme",
+      "shrink tunnel",
+      "flowpack",
+      "yatay paketleme",
+      "dikey form-fill-seal",
+      "vffs",
+      "karton doldurma",
+      "cartoner",
+      "palet streç",
+      "palet strec",
+      "pallet wrapper",
+      "etiketleme makinesi",
+      "labeler",
+      "dozaj",
+      "dolum makinesi",
+      "filler",
+      "kapak kapama",
+      "capper",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "packagingProcess",
+      "packagingFormat",
+      "packagingThroughput",
+      "packagingAutomation",
+    ],
+    questions: [
+      {
+        fieldKey: "packagingProcess",
+        prompt: "Hangi paketleme işlemi gerekli?",
+        summaryLabel: "Paketleme işlemi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Shrink / streç", value: "Shrink / streç" },
+          { label: "Flowpack / poşetleme", value: "Flowpack" },
+          { label: "Dikey dolum / VFFS", value: "VFFS" },
+          { label: "Kartonlama", value: "Kartonlama" },
+          { label: "Etiketleme / kapaklama", value: "Etiketleme / kapaklama" },
+        ],
+      },
+      {
+        fieldKey: "packagingFormat",
+        prompt: "Hangi ambalaj formatı işlenecek?",
+        summaryLabel: "Ambalaj formatı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Poşet / film", value: "Poşet / film" },
+          { label: "Şişe / kavanoz", value: "Şişe / kavanoz" },
+          { label: "Kutu / karton", value: "Kutu / karton" },
+          { label: "Palet", value: "Palet" },
+          { label: "Etiketli ürün", value: "Etiketli ürün" },
+        ],
+      },
+      {
+        fieldKey: "packagingThroughput",
+        prompt: "Hedef üretim hızı nedir?",
+        summaryLabel: "Hat hızı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "30 adede kadar / dk", value: "≤30 adet/dk" },
+          { label: "30–80 adet / dk", value: "30-80 adet/dk" },
+          { label: "80–150 adet / dk", value: "80-150 adet/dk" },
+          { label: "150+ adet / dk", value: "150+ adet/dk" },
+        ],
+      },
+      {
+        fieldKey: "packagingAutomation",
+        prompt: "Otomasyon seviyesi tercihiniz nedir?",
+        summaryLabel: "Otomasyon",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Manuel destekli", value: "Manuel destekli" },
+          { label: "Yarı otomatik", value: "Yarı otomatik" },
+          { label: "Tam otomatik hat", value: "Tam otomatik" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "kesim teknolojisi",
+      "lazer kesim",
+      "fiber lazer",
+      "laser cutter",
+      "plazma kesim",
+      "oksijen kesim",
+      "su jeti",
+      "waterjet",
+      "giyotin kesim",
+      "şerit testere",
+      "serit testere",
+      "disk testere",
+      "cnc router",
+      "ahşap kesim",
+      "ahsap kesim",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "cuttingTechnology",
+      "cuttingMaterial",
+      "dimensions",
+      "cuttingThickness",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "mm",
+        example: "1.500 × 3.000 mm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "cuttingTechnology",
+        prompt: "Hangi kesim teknolojisi gerekli?",
+        summaryLabel: "Kesim yöntemi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Fiber lazer", value: "Fiber lazer" },
+          { label: "Plazma", value: "Plazma" },
+          { label: "Oksijen", value: "Oksijen" },
+          { label: "Su jeti", value: "Su jeti" },
+          { label: "Testere / router", value: "Testere / router" },
+        ],
+      },
+      {
+        fieldKey: "cuttingMaterial",
+        prompt: "Başlıca hangi malzeme kesilecek?",
+        summaryLabel: "İşlenecek malzeme",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sac / metal", value: "Metal" },
+          { label: "Paslanmaz", value: "Paslanmaz" },
+          { label: "Ahşap / MDF", value: "Ahşap / MDF" },
+          { label: "Plastik / kompozit", value: "Plastik / kompozit" },
+          { label: "Taş / cam", value: "Taş / cam" },
+        ],
+      },
+      {
+        fieldKey: "dimensions",
+        prompt: "Gerekli kesim tablası / çalışma alanı nedir?",
+        summaryLabel: "Kesim alanı",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "cuttingThickness",
+        prompt: "Hedef malzeme kalınlığı nedir?",
+        summaryLabel: "Malzeme kalınlığı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "cnc",
+      "torna",
+      "freze",
+      "işleme merkezi",
+      "isleme merkezi",
+      "taşlama",
+      "taslama",
+      "edm",
+      "elektroerozyon",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "dimensions",
+      "machiningControl",
+      "machiningPrecision",
+    ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "mm",
+        example: "800 × 500 × 500 mm",
+      },
+    },
+    questions: [
+      {
+        fieldKey: "machiningControl",
+        prompt: "Kontrol / çalışma tipi nasıl olmalı?",
+        summaryLabel: "Kontrol tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "CNC kontrollü", value: "CNC" },
+          { label: "Manuel / universal", value: "Manuel" },
+          { label: "Otomatik takım değiştiricili", value: "Otomatik takım değiştirici" },
+        ],
+      },
+      {
+        fieldKey: "dimensions",
+        prompt: "Gerekli işleme alanı / strok ölçüsü nedir?",
+        summaryLabel: "İşleme alanı",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "machiningPrecision",
+        prompt: "Hassasiyet veya işleme önceliğiniz var mı?",
+        summaryLabel: "Hassasiyet",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Genel imalat", value: "Genel imalat" },
+          { label: "Hassas parça", value: "Hassas" },
+          { label: "Seri üretim", value: "Seri üretim" },
+          { label: "Kalıp / takım işi", value: "Kalıp / takım" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "pres",
+      "abkant",
+      "giyotin",
+      "punch",
+      "punç",
+      "punc",
+      "rulo açıcı",
+      "rulo acici",
+      "straightener",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "formingMachineType",
+      "pressCapacity",
+      "formingControl",
+    ],
+    questions: [
+      {
+        fieldKey: "formingMachineType",
+        prompt: "Hangi şekillendirme işlemi için makine gerekli?",
+        summaryLabel: "İşlem tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kesme / giyotin", value: "Kesme" },
+          { label: "Büküm / abkant", value: "Büküm" },
+          { label: "Presleme", value: "Presleme" },
+          { label: "Rulo açma / doğrultma", value: "Rulo" },
+        ],
+      },
+      {
+        fieldKey: "pressCapacity",
+        prompt: "Gerekli presleme kapasitesi nedir?",
+        summaryLabel: "Pres kapasitesi",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "50 ton altı", value: "<50 ton" },
+          { label: "50–150 ton", value: "50-150 ton" },
+          { label: "150–300 ton", value: "150-300 ton" },
+          { label: "300 ton üzeri", value: "300+ ton" },
+        ],
+      },
+      {
+        fieldKey: "formingControl",
+        prompt: "Kontrol / otomasyon tercihiniz nedir?",
+        summaryLabel: "Kontrol / otomasyon",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Manuel", value: "Manuel" },
+          { label: "NC / CNC", value: "NC / CNC" },
+          { label: "Servo kontrollü", value: "Servo" },
+          { label: "Otomatik beslemeli", value: "Otomatik besleme" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "plastik enjeksiyon",
+      "enjeksiyon makinesi",
+      "şişirme makinesi",
+      "sisirme makinesi",
+      "ekstruder",
+      "extruder",
+      "extrusion",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "plasticProcess",
+      "plasticThroughput",
+      "plasticMaterial",
+    ],
+    questions: [
+      {
+        fieldKey: "plasticProcess",
+        prompt: "Hangi plastik işleme yöntemi gerekli?",
+        summaryLabel: "İşleme yöntemi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Enjeksiyon", value: "Enjeksiyon" },
+          { label: "Şişirme", value: "Şişirme" },
+          { label: "Ekstrüzyon", value: "Ekstrüzyon" },
+        ],
+      },
+      {
+        fieldKey: "plasticThroughput",
+        prompt: "Hedef üretim kapasitesi nedir?",
+        summaryLabel: "Üretim kapasitesi",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Düşük / pilot üretim", value: "Düşük" },
+          { label: "Orta kapasite", value: "Orta" },
+          { label: "Yüksek / seri üretim", value: "Yüksek" },
+        ],
+      },
+      {
+        fieldKey: "plasticMaterial",
+        prompt: "İşlenecek plastik türü belli mi?",
+        summaryLabel: "Malzeme",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "PP / PE", value: "PP / PE" },
+          { label: "ABS / PS", value: "ABS / PS" },
+          { label: "PET", value: "PET" },
+          { label: "Mühendislik plastiği", value: "Mühendislik plastiği" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "mig",
+      "mıg",
+      "mag",
+      "gazaltı",
+      "gazalti",
+      "tig",
+      "tıg",
+      "robot kaynak",
+      "spot kaynak",
+      "nokta kaynak",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "weldingProcess",
+      "weldingPower",
+      "weldingAutomation",
+    ],
+    questions: [
+      {
+        fieldKey: "weldingProcess",
+        prompt: "Hangi kaynak işlemi gerekli?",
+        summaryLabel: "Kaynak tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "MIG / MAG", value: "MIG / MAG" },
+          { label: "TIG", value: "TIG" },
+          { label: "Spot / nokta kaynak", value: "Spot" },
+          { label: "Robotik hücre", value: "Robotik" },
+        ],
+      },
+      {
+        fieldKey: "weldingPower",
+        prompt: "Gerekli kaynak akımı / güç aralığı nedir?",
+        summaryLabel: "Kaynak gücü",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "200 A altı", value: "<200 A" },
+          { label: "200–350 A", value: "200-350 A" },
+          { label: "350 A üzeri", value: "350+ A" },
+        ],
+      },
+      {
+        fieldKey: "weldingAutomation",
+        prompt: "Otomasyon seviyesi tercihiniz nedir?",
+        summaryLabel: "Otomasyon",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Manuel", value: "Manuel" },
+          { label: "Yarı otomatik", value: "Yarı otomatik" },
+          { label: "Robotik / otomatik", value: "Robotik" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "kompresör",
+      "kompresor",
+      "vakum pompası",
+      "vakum pompasi",
+      "chiller",
+      "soğutma grubu",
+      "sogutma grubu",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "compressorType",
+      "fluidMachineType",
+      "fluidCapacity",
+      "fluidOperation",
+    ],
+    questions: [
+      {
+        fieldKey: "fluidMachineType",
+        prompt: "Hangi akışkan / iklimlendirme makinesi gerekli?",
+        summaryLabel: "Makine tipi",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Hava kompresörü", value: "Kompresör" },
+          { label: "Vakum pompası", value: "Vakum pompası" },
+          { label: "Endüstriyel chiller", value: "Chiller" },
+        ],
+      },
+      {
+        fieldKey: "fluidCapacity",
+        prompt: "Gerekli debi / kapasite aralığı nedir?",
+        summaryLabel: "Debi / kapasite",
+        importance: "quote_critical",
+        rank: 66,
+        inputHint: "text",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "fluidOperation",
+        prompt: "Çalışma önceliğiniz nedir?",
+        summaryLabel: "Çalışma önceliği",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kesintisiz çalışma", value: "Kesintisiz" },
+          { label: "Düşük ses", value: "Düşük ses" },
+          { label: "Enerji verimliliği", value: "Enerji verimliliği" },
+          { label: "Taşınabilir", value: "Taşınabilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenNeedTypes: ["machine"],
+    whenProductTypes: [
+      "forklift",
+      "reach truck",
+      "transpalet",
+      "vinç",
+      "vinc",
+      "monoray",
+      "konveyör",
+      "konveyor",
+    ],
+    allowedCandidateFieldKeys: [
+      ...MACHINERY_COMMON_CANDIDATE_KEYS,
+      "liftCapacity",
+      "liftingPowerDrive",
+      "liftingOperation",
+    ],
+    questions: [
+      {
+        fieldKey: "liftCapacity",
+        prompt: "Gerekli kaldırma / taşıma kapasitesi nedir?",
+        summaryLabel: "Kapasite",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1,5–2 ton", value: "1.5-2 ton" },
+          { label: "2,5–3 ton", value: "2.5-3 ton" },
+          { label: "3–5 ton", value: "3-5 ton" },
+          { label: "5 ton üzeri", value: "5+ ton" },
+        ],
+      },
+      {
+        fieldKey: "liftingPowerDrive",
+        prompt: "Tahrik / güç tipi tercihiniz nedir?",
+        summaryLabel: "Tahrik tipi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Elektrikli", value: "Elektrikli" },
+          { label: "Dizel", value: "Dizel" },
+          { label: "Manuel", value: "Manuel" },
+          { label: "Farklı / uygun olan", value: "Uygun olan" },
+        ],
+      },
+      {
+        fieldKey: "liftingOperation",
+        prompt: "Ana kullanım alanı nedir?",
+        summaryLabel: "Kullanım alanı",
+        importance: "optional",
+        rank: 40,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Depo içi", value: "Depo içi" },
+          { label: "Yükleme / boşaltma", value: "Yükleme / boşaltma" },
+          { label: "Üretim hattı", value: "Üretim hattı" },
+          { label: "Açık saha", value: "Açık saha" },
+        ],
+      },
+    ],
+  },
+];
+
+/**
+ * Konut sözleşmeleri satış ve kiralama için aynı fiziksel ihtiyacı taşır;
+ * ayrım işlem türü/bütçe çekirdeğinde kalır. Daire katı ile villa katı
+ * aynı soru değildir, bu yüzden iki aile bilinçli olarak ayrıdır.
+ */
+const RESIDENTIAL_COMMON_CANDIDATE_KEYS = [
+  "listingType",
+  "propertyType",
+  "roomCount",
+  "area",
+  "buildingAge",
+  "newBuildPreference",
+  "city",
+  "budget",
+];
+
+const DETACHED_RESIDENTIAL_CANDIDATE_KEYS = [
+  ...RESIDENTIAL_COMMON_CANDIDATE_KEYS,
+  "totalFloors",
+];
+
+/**
+ * Arsa aileleri yapı değil arazidir. İmar türü ürün tipinde seçilir; burada
+ * yalnız her arazi aramasında anlamlı olan büyüklük ve tapu tercihi kalır.
+ */
+const LAND_CANDIDATE_KEYS = [
+  "listingType",
+  "propertyType",
+  "area",
+  "deedStatus",
+  "city",
+  "budget",
+];
+
+const COMMERCIAL_PROPERTY_CANDIDATE_KEYS = [
+  "listingType",
+  "propertyType",
+  "area",
+  "newBuildPreference",
+  "city",
+  "budget",
+];
+
+const OTHER_REAL_ESTATE_CANDIDATE_KEYS = [
+  "listingType",
+  "propertyType",
+  "newBuildPreference",
+  "city",
+  "budget",
+];
+
+const REAL_ESTATE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  {
+    whenProductTypes: [
+      "daire",
+      "rezidans",
+      "yalı dairesi",
+      "yali dairesi",
+      "stüdyo",
+      "studyo",
+      "dubleks",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...RESIDENTIAL_COMMON_CANDIDATE_KEYS,
+      "floor",
+    ],
+    questions: [
+      {
+        fieldKey: "roomCount",
+        prompt: "Oda sayısı tercihiniz nedir?",
+        summaryLabel: "Oda",
+        importance: "quote_critical",
+        rank: 76,
+        inputHint: "select",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "area",
+        prompt: "Minimum metrekare beklentiniz nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "floor",
+        prompt: "Kat tercihiniz nedir?",
+        summaryLabel: "Kat",
+        importance: "optional",
+        rank: 48,
+        inputHint: "text",
+        allowDontCare: true,
+      },
+      {
+        fieldKey: "buildingAge",
+        prompt: "Bina yaşı için bir tercihiniz var mı?",
+        summaryLabel: "Bina yaşı",
+        importance: "optional",
+        rank: 44,
+        inputHint: "number",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "müstakil ev",
+      "mustakil ev",
+      "villa",
+      "çiftlik evi",
+      "ciftlik evi",
+      "köşk",
+      "kosk",
+      "yalı",
+      "yali",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: DETACHED_RESIDENTIAL_CANDIDATE_KEYS,
+    questions: [
+      {
+        fieldKey: "roomCount",
+        prompt: "Oda sayısı tercihiniz nedir?",
+        summaryLabel: "Oda",
+        importance: "quote_critical",
+        rank: 76,
+        inputHint: "select",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "area",
+        prompt: "Minimum metrekare beklentiniz nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 70,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "totalFloors",
+        prompt: "Yapı kaç katlı olsun?",
+        summaryLabel: "Kat sayısı",
+        importance: "optional",
+        rank: 50,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tek katlı", value: "1" },
+          { label: "2 katlı", value: "2" },
+          { label: "3 katlı", value: "3" },
+          { label: "4 kat ve üzeri", value: "4+" },
+        ],
+      },
+      {
+        fieldKey: "buildingAge",
+        prompt: "Bina yaşı için bir tercihiniz var mı?",
+        summaryLabel: "Bina yaşı",
+        importance: "optional",
+        rank: 44,
+        inputHint: "number",
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "arsa",
+      "imarlı arsa",
+      "imarli arsa",
+      "konut imarlı arsa",
+      "konut imarli arsa",
+      "ticari arsa",
+      "sanayi arsası",
+      "sanayi arsasi",
+      "tarla",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: LAND_CANDIDATE_KEYS,
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum arazi büyüklüğü ne olsun?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "deedStatus",
+        prompt: "Tapu tercihiniz var mı?",
+        summaryLabel: "Tapu",
+        importance: "optional",
+        rank: 44,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Müstakil tapu", value: "Müstakil tapu" },
+          { label: "Hisseli tapu", value: "Hisseli tapu" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["iş yeri", "is yeri", "isyeri"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum ticari alan ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["ofis", "plaza ofisi"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+      "floor",
+      "parking",
+    ],
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum ofis alanı ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "floor",
+        prompt: "Kat tercihiniz var mı?",
+        summaryLabel: "Kat",
+        importance: "optional",
+        rank: 46,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "1–5. kat", value: "1-5. kat" },
+          { label: "6. kat ve üzeri", value: "6+ kat" },
+        ],
+      },
+      {
+        fieldKey: "parking",
+        prompt: "Otopark gerekli mi?",
+        summaryLabel: "Otopark",
+        importance: "optional",
+        rank: 42,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: [
+      "dükkan / mağaza",
+      "dükkan",
+      "mağaza",
+      "dukkan / magaza",
+      "avm ünitesi",
+      "avm unitesi",
+    ],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+      "floor",
+      "storefrontNeed",
+    ],
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum mağaza alanı ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "floor",
+        prompt: "Zemin kat tercihiniz var mı?",
+        summaryLabel: "Kat",
+        importance: "optional",
+        rank: 46,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Zemin kat şart", value: "Zemin kat" },
+          { label: "Üst kat da olur", value: "Üst kat olur" },
+        ],
+      },
+      {
+        fieldKey: "storefrontNeed",
+        prompt: "Vitrin veya cadde cephesi gerekli mi?",
+        summaryLabel: "Vitrin / cephe",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Vitrin / cadde cephesi şart", value: "Şart" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["depo / antrepo"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+      "loadingAccess",
+      "ceilingHeight",
+    ],
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum depo / üretim alanı ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "loadingAccess",
+        prompt: "Tır veya kamyon erişimi gerekli mi?",
+        summaryLabel: "Yükleme erişimi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tır / kamyon girişi şart", value: "Giriş şart" },
+          { label: "Yükleme alanı yeterli", value: "Yükleme alanı" },
+        ],
+      },
+      {
+        fieldKey: "ceilingHeight",
+        prompt: "Minimum tavan yüksekliği ihtiyacınız nedir?",
+        summaryLabel: "Tavan yüksekliği",
+        importance: "optional",
+        rank: 48,
+        inputHint: "number",
+        allowUnknown: true,
+        allowDontCare: true,
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["fabrika / imalathane"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+      "loadingAccess",
+      "ceilingHeight",
+      "industrialPower",
+    ],
+    questions: [
+      {
+        fieldKey: "area",
+        prompt: "Minimum üretim alanı ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "loadingAccess",
+        prompt: "Tır veya kamyon erişimi gerekli mi?",
+        summaryLabel: "Yükleme erişimi",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tır / kamyon girişi şart", value: "Giriş şart" },
+          { label: "Yükleme alanı yeterli", value: "Yükleme alanı" },
+        ],
+      },
+      {
+        fieldKey: "ceilingHeight",
+        prompt: "Minimum tavan yüksekliği ihtiyacınız nedir?",
+        summaryLabel: "Tavan yüksekliği",
+        importance: "quote_critical",
+        rank: 58,
+        inputHint: "number",
+        allowUnknown: true,
+        allowDontCare: true,
+      },
+      {
+        fieldKey: "industrialPower",
+        prompt: "Sanayi elektriği / üç faz gerekli mi?",
+        summaryLabel: "Elektrik altyapısı",
+        importance: "quote_critical",
+        rank: 56,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Üç faz gerekli", value: "Üç faz gerekli" },
+          { label: "Standart elektrik yeterli", value: "Standart yeterli" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["otel / apart"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...COMMERCIAL_PROPERTY_CANDIDATE_KEYS,
+      "roomCount",
+      "lodgingPermit",
+    ],
+    questions: [
+      {
+        fieldKey: "roomCount",
+        prompt: "En az kaç oda olsun?",
+        summaryLabel: "Oda",
+        importance: "quote_critical",
+        rank: 74,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "area",
+        prompt: "Minimum işletme alanı ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "lodgingPermit",
+        prompt: "Konaklama işletmesi ruhsatı gerekli mi?",
+        summaryLabel: "Ruhsat",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Mevcut ruhsat gerekli", value: "Mevcut ruhsat gerekli" },
+          { label: "Ruhsat süreci yürütülebilir", value: "Süreç yürütülebilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["devren işyeri"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...OTHER_REAL_ESTATE_CANDIDATE_KEYS,
+      "businessActivity",
+      "transferScope",
+      "businessPermitStatus",
+    ],
+    questions: [
+      {
+        fieldKey: "businessActivity",
+        prompt: "Hangi faaliyet alanındaki işletmeyi arıyorsunuz?",
+        summaryLabel: "Faaliyet alanı",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kafe / restoran", value: "Kafe / restoran" },
+          { label: "Perakende", value: "Perakende" },
+          { label: "Hizmet işletmesi", value: "Hizmet" },
+          { label: "Atölye / üretim", value: "Atölye / üretim" },
+        ],
+      },
+      {
+        fieldKey: "transferScope",
+        prompt: "Devir kapsamı ne olsun?",
+        summaryLabel: "Devir kapsamı",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Sadece işletme hakkı", value: "İşletme hakkı" },
+          { label: "Demirbaşlar dahil", value: "Demirbaş dahil" },
+          { label: "Demirbaş ve stok dahil", value: "Demirbaş + stok" },
+        ],
+      },
+      {
+        fieldKey: "businessPermitStatus",
+        prompt: "Mevcut ruhsat ve izinlerin devre uygun olması gerekli mi?",
+        summaryLabel: "Ruhsat / izin",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Mevcut izinler devre uygun olmalı", value: "Devre uygun olmalı" },
+          { label: "Süreci ben yürütebilirim", value: "Süreç yürütülebilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["müştemilat", "mustemilat"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...OTHER_REAL_ESTATE_CANDIDATE_KEYS,
+      "outbuildingUsage",
+      "area",
+      "independentAccess",
+      "utilityInfrastructure",
+    ],
+    questions: [
+      {
+        fieldKey: "outbuildingUsage",
+        prompt: "Müştemilatı hangi amaçla kullanacaksınız?",
+        summaryLabel: "Kullanım amacı",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Depolama", value: "Depolama" },
+          { label: "Konaklama / misafir alanı", value: "Konaklama" },
+          { label: "Atölye", value: "Atölye" },
+          { label: "Tarım amaçlı", value: "Tarım" },
+        ],
+      },
+      {
+        fieldKey: "area",
+        prompt: "Minimum kapalı alan ihtiyacınız nedir?",
+        summaryLabel: "m²",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "independentAccess",
+        prompt: "Bağımsız giriş gerekli mi?",
+        summaryLabel: "Bağımsız giriş",
+        importance: "optional",
+        rank: 48,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+      {
+        fieldKey: "utilityInfrastructure",
+        prompt: "Su ve elektrik altyapısı gerekli mi?",
+        summaryLabel: "Altyapı",
+        importance: "optional",
+        rank: 44,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "İkisi de gerekli", value: "Su + elektrik" },
+          { label: "Elektrik yeterli", value: "Elektrik" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["kooperatif hissesi"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...OTHER_REAL_ESTATE_CANDIDATE_KEYS,
+      "cooperativePurpose",
+      "cooperativeStage",
+      "cooperativeShareCount",
+      "cooperativePaymentPlan",
+    ],
+    questions: [
+      {
+        fieldKey: "cooperativePurpose",
+        prompt: "Kooperatif projesi hangi amaçla olsun?",
+        summaryLabel: "Proje amacı",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Konut", value: "Konut" },
+          { label: "Arsa", value: "Arsa" },
+          { label: "Ticari proje", value: "Ticari" },
+        ],
+      },
+      {
+        fieldKey: "cooperativeStage",
+        prompt: "Projenin hangi aşamada olmasını tercih edersiniz?",
+        summaryLabel: "Proje aşaması",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Başlangıç / planlama", value: "Başlangıç" },
+          { label: "İnşaat aşaması", value: "İnşaat" },
+          { label: "Teslime yakın", value: "Teslime yakın" },
+          { label: "Tamamlanmış", value: "Tamamlanmış" },
+        ],
+      },
+      {
+        fieldKey: "cooperativeShareCount",
+        prompt: "Kaç hisse arıyorsunuz?",
+        summaryLabel: "Hisse adedi",
+        importance: "optional",
+        rank: 48,
+        inputHint: "number",
+        allowUnknown: true,
+        allowDontCare: true,
+      },
+      {
+        fieldKey: "cooperativePaymentPlan",
+        prompt: "Devam eden ödeme planı kabul eder misiniz?",
+        summaryLabel: "Ödeme planı",
+        importance: "optional",
+        rank: 44,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Kabul ederim", value: "Kabul ederim" },
+          { label: "Sadece borçsuz hisse", value: "Borçsuz" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["turistik tesis"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...OTHER_REAL_ESTATE_CANDIDATE_KEYS,
+      "tourismFacilityType",
+      "roomCount",
+      "lodgingPermit",
+      "tourismOperationStatus",
+    ],
+    questions: [
+      {
+        fieldKey: "tourismFacilityType",
+        prompt: "Hangi turistik tesis türünü arıyorsunuz?",
+        summaryLabel: "Tesis türü",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Otel", value: "Otel" },
+          { label: "Pansiyon", value: "Pansiyon" },
+          { label: "Bungalov tesisi", value: "Bungalov" },
+          { label: "Kamp / glamping", value: "Kamp / glamping" },
+        ],
+      },
+      {
+        fieldKey: "roomCount",
+        prompt: "En az kaç oda veya ünite olsun?",
+        summaryLabel: "Oda / ünite",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "number",
+        allowUnknown: true,
+      },
+      {
+        fieldKey: "lodgingPermit",
+        prompt: "Mevcut turizm / konaklama ruhsatı gerekli mi?",
+        summaryLabel: "Ruhsat",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Mevcut ruhsat gerekli", value: "Mevcut ruhsat gerekli" },
+          { label: "Ruhsat süreci yürütülebilir", value: "Süreç yürütülebilir" },
+        ],
+      },
+      {
+        fieldKey: "tourismOperationStatus",
+        prompt: "Tesisi hangi işletme durumunda arıyorsunuz?",
+        summaryLabel: "İşletme durumu",
+        importance: "optional",
+        rank: 44,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Hemen işletmeye hazır", value: "Hazır" },
+          { label: "Tadilat / dönüşüm olabilir", value: "Dönüşüm olabilir" },
+        ],
+      },
+    ],
+  },
+  {
+    whenProductTypes: ["devre mülk", "devre mulk"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      ...OTHER_REAL_ESTATE_CANDIDATE_KEYS,
+      "timeshareFacilityType",
+      "timesharePeriod",
+      "timeshareSeason",
+    ],
+    questions: [
+      {
+        fieldKey: "timeshareFacilityType",
+        prompt: "Hangi tesis türündeki devre mülkü arıyorsunuz?",
+        summaryLabel: "Tesis türü",
+        importance: "quote_critical",
+        rank: 72,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Tatil köyü", value: "Tatil köyü" },
+          { label: "Otel", value: "Otel" },
+          { label: "Apart / rezidans", value: "Apart / rezidans" },
+          { label: "Termal tesis", value: "Termal tesis" },
+        ],
+      },
+      {
+        fieldKey: "timesharePeriod",
+        prompt: "Kullanım süresi tercihiniz nedir?",
+        summaryLabel: "Kullanım süresi",
+        importance: "quote_critical",
+        rank: 68,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "1 hafta", value: "1 hafta" },
+          { label: "2 hafta", value: "2 hafta" },
+          { label: "3 hafta ve üzeri", value: "3+ hafta" },
+        ],
+      },
+      {
+        fieldKey: "timeshareSeason",
+        prompt: "Hangi dönem tercihiniz var?",
+        summaryLabel: "Dönem",
+        importance: "quote_critical",
+        rank: 64,
+        inputHint: "select",
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yaz dönemi", value: "Yaz" },
+          { label: "Kış / termal dönemi", value: "Kış / termal" },
+          { label: "Bayram dönemi", value: "Bayram" },
+          { label: "Dönem fark etmez", value: "Fark etmez" },
+        ],
+      },
+    ],
+  },
+];
+
+const PRINTING_COMMON_CANDIDATE_KEYS = ["quantity", "city", "delivery", "budget"];
+
+function printingQuestionContract(
+  whenProductTypes: string[],
+  fieldKeys: string[],
+  questions: ProductQuestionContractQuestion[],
+): ProductQuestionContract {
+  return {
+    whenProductTypes,
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [...PRINTING_COMMON_CANDIDATE_KEYS, ...fieldKeys],
+    questions,
+  };
+}
+
+const PRINTING_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  printingQuestionContract(
+    ["karton kutu", "mikro oluklu kutu", "tek oluklu kutu", "çift oluklu kutu", "üç oluklu kutu", "kilitli taban kutu", "teleskopik kutu", "pizza kutusu", "şekerleme kutusu", "parfüm kutusu", "e-ticaret kolisi", "display / stand kutu", "separatörlü kutu"],
+    ["boxDimensions", "boxMaterial", "boxPrintCoverage", "boxDieLine", "boxDesignReady"],
+    [
+      { fieldKey: "boxDimensions", prompt: "Kutunun en × boy × yükseklik ölçüsü nedir?", summaryLabel: "Kutu ölçüsü", importance: "quote_critical", rank: 78, inputHint: "text", allowUnknown: true },
+      { fieldKey: "boxMaterial", prompt: "Kutu malzemesi ve dayanımı nasıl olmalı?", summaryLabel: "Malzeme", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kraft karton", value: "Kraft" }, { label: "Karton / bristol", value: "Karton" }, { label: "Mikro oluklu", value: "Mikro oluklu" }, { label: "Çift oluklu", value: "Çift oluklu" }] },
+      { fieldKey: "boxPrintCoverage", prompt: "Baskı kapsamı nedir?", summaryLabel: "Baskı", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskısız", value: "Baskısız" }, { label: "Tek renk", value: "Tek renk" }, { label: "Çok renkli", value: "Çok renkli" }, { label: "İç ve dış baskı", value: "İç / dış baskı" }] },
+      { fieldKey: "boxDieLine", prompt: "Bıçak izi / kesim kalıbı hazır mı?", summaryLabel: "Bıçak izi", importance: "quote_critical", rank: 60, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hazır", value: "Hazır" }, { label: "Hazırlanacak", value: "Hazırlanacak" }, { label: "Standart kutu yeterli", value: "Standart" }] },
+      { fieldKey: "boxDesignReady", prompt: "Baskı tasarım dosyanız hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["rulo etiket", "yaprak etiket", "şeffaf etiket", "barkod etiketi", "gıda etiketi", "ilaç etiketi", "tekstil etiket", "care label", "güvenlik", "hologram etiket", "termal etiket", "transfer termal etiket"],
+    ["labelDimensions", "labelMaterial", "labelAdhesive", "labelFormat", "labelDesignReady"],
+    [
+      { fieldKey: "labelDimensions", prompt: "Etiketin en × boy ölçüsü nedir?", summaryLabel: "Etiket ölçüsü", importance: "quote_critical", rank: 78, inputHint: "text", allowUnknown: true },
+      { fieldKey: "labelMaterial", prompt: "Etiket malzemesi nedir?", summaryLabel: "Malzeme", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kuşe", value: "Kuşe" }, { label: "PP / plastik", value: "PP" }, { label: "Şeffaf", value: "Şeffaf" }, { label: "Termal", value: "Termal" }, { label: "Tekstil", value: "Tekstil" }] },
+      { fieldKey: "labelAdhesive", prompt: "Yapışkan özelliği nasıl olmalı?", summaryLabel: "Yapışkan", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Standart", value: "Standart" }, { label: "Güçlü", value: "Güçlü" }, { label: "Sökülebilir", value: "Sökülebilir" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "labelFormat", prompt: "Etiket teslim şekli nasıl olsun?", summaryLabel: "Teslim şekli", importance: "optional", rank: 52, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Rulo", value: "Rulo" }, { label: "Yaprak", value: "Yaprak" }, { label: "Tek tek kesilmiş", value: "Tekli" }] },
+      { fieldKey: "labelDesignReady", prompt: "Etiket tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["katalog", "kitapçık", "kitapcik", "dergi"],
+    ["publicationFormat", "publicationPageCount", "publicationBinding", "publicationPaper", "publicationDesignReady"],
+    [
+      { fieldKey: "publicationFormat", prompt: "Yayın formatı nedir?", summaryLabel: "Format", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "A4", value: "A4" }, { label: "A5", value: "A5" }, { label: "Kare", value: "Kare" }, { label: "Özel ölçü", value: "Özel ölçü" }] },
+      { fieldKey: "publicationPageCount", prompt: "Yaklaşık kaç iç sayfa olacak?", summaryLabel: "Sayfa sayısı", importance: "quote_critical", rank: 70, inputHint: "text", allowUnknown: true },
+      { fieldKey: "publicationBinding", prompt: "Cilt tercihiniz nedir?", summaryLabel: "Cilt", importance: "quote_critical", rank: 64, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tel dikiş", value: "Tel dikiş" }, { label: "Amerikan cilt", value: "Amerikan cilt" }, { label: "İplik dikiş", value: "İplik dikiş" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "publicationPaper", prompt: "İç sayfa / kapak kâğıdı tercihiniz var mı?", summaryLabel: "Kâğıt", importance: "optional", rank: 50, inputHint: "text", allowDontCare: true },
+      { fieldKey: "publicationDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["broşür", "brosur", "antetli kağıt", "antetli kagit", "poster / afiş", "poster / afis"],
+    ["flatPrintFormat", "flatPrintSides", "flatPrintPaperWeight", "flatPrintFold", "flatPrintDesignReady"],
+    [
+      { fieldKey: "flatPrintFormat", prompt: "Baskı ölçüsü nedir?", summaryLabel: "Format", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "A4", value: "A4" }, { label: "A5", value: "A5" }, { label: "A6", value: "A6" }, { label: "Özel ölçü", value: "Özel ölçü" }] },
+      { fieldKey: "flatPrintSides", prompt: "Baskı tek yüz mü çift yüz mü?", summaryLabel: "Yüz", importance: "quote_critical", rank: 70, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek yüz", value: "Tek yüz" }, { label: "Çift yüz", value: "Çift yüz" }] },
+      { fieldKey: "flatPrintPaperWeight", prompt: "Kâğıt gramajı tercihiniz var mı?", summaryLabel: "Gramaj", importance: "optional", rank: 54, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "90–115 gr", value: "90–115 gr" }, { label: "130–170 gr", value: "130–170 gr" }, { label: "200–300 gr", value: "200–300 gr" }] },
+      { fieldKey: "flatPrintFold", prompt: "Katlama gerekli mi?", summaryLabel: "Katlama", importance: "optional", rank: 48, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli değil", value: "Yok" }, { label: "Tek kırımlı", value: "Tek kırımlı" }, { label: "Çift kırımlı", value: "Çift kırımlı" }] },
+      { fieldKey: "flatPrintDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["kartvizit", "davetiye", "kapak / klasör"],
+    ["cardFormat", "cardStock", "cardFinish", "cardDesignReady"],
+    [
+      { fieldKey: "cardFormat", prompt: "Ölçü veya kart tipi nedir?", summaryLabel: "Kart tipi", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Standart kartvizit", value: "Standart kartvizit" }, { label: "Özel kartvizit", value: "Özel kartvizit" }, { label: "Davetiye", value: "Davetiye" }, { label: "Klasör / kapak", value: "Klasör / kapak" }] },
+      { fieldKey: "cardStock", prompt: "Kâğıt / karton tercihiniz nedir?", summaryLabel: "Malzeme", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kuşe", value: "Kuşe" }, { label: "Bristol", value: "Bristol" }, { label: "Dokulu kâğıt", value: "Dokulu" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "cardFinish", prompt: "Özel yüzey işlemi ister misiniz?", summaryLabel: "Yüzey işlemi", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yok", value: "Yok" }, { label: "Mat / parlak selefon", value: "Selefon" }, { label: "Kabartma lak", value: "Lak" }, { label: "Yaldız", value: "Yaldız" }] },
+      { fieldKey: "cardDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["tişört baskı", "tisort baski", "çanta baskı", "canta baski", "şapka", "sapka", "tekstil aksesuar"],
+    ["promoTextilePrintMethod", "promoTextileSizing", "promoTextilePlacement", "promoDesignReady"],
+    [
+      { fieldKey: "promoTextilePrintMethod", prompt: "Baskı / uygulama yöntemi tercihiniz var mı?", summaryLabel: "Uygulama", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "DTF", value: "DTF" }, { label: "Serigrafi", value: "Serigrafi" }, { label: "Nakış", value: "Nakış" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "promoTextileSizing", prompt: "Beden veya ürün dağılımı nasıl olacak?", summaryLabel: "Beden / dağılım", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "promoTextilePlacement", prompt: "Baskı hangi bölgede olacak?", summaryLabel: "Baskı konumu", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Ön", value: "Ön" }, { label: "Arka", value: "Arka" }, { label: "Ön ve arka", value: "Ön / arka" }, { label: "Kol / yan", value: "Kol / yan" }] },
+      { fieldKey: "promoDesignReady", prompt: "Logo / tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["kalem baskı", "kupa", "usb", "powerbank", "ajanda", "defter", "magnet", "rozet", "takvim", "anahtarlık", "anahtarlik"],
+    ["promoObjectPrintMethod", "promoObjectBrandingArea", "promoObjectPackaging", "promoDesignReady"],
+    [
+      { fieldKey: "promoObjectPrintMethod", prompt: "Baskı yöntemi tercihiniz var mı?", summaryLabel: "Baskı yöntemi", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "UV baskı", value: "UV" }, { label: "Lazer kazıma", value: "Lazer" }, { label: "Tampon baskı", value: "Tampon" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "promoObjectBrandingArea", prompt: "Logo / baskı alanı nasıl olsun?", summaryLabel: "Baskı alanı", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek yüz", value: "Tek yüz" }, { label: "Çift yüz", value: "Çift yüz" }, { label: "Ürüne göre önerilsin", value: "Öneri" }] },
+      { fieldKey: "promoObjectPackaging", prompt: "Tekli kutu veya özel paketleme gerekli mi?", summaryLabel: "Paketleme", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli değil", value: "Yok" }, { label: "Tekli kutu", value: "Tekli kutu" }, { label: "Özel paketleme", value: "Özel paketleme" }] },
+      { fieldKey: "promoDesignReady", prompt: "Logo / tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["büyük format baskı", "afiş", "afis", "branda baskı", "branda baski", "roll-up banner", "fuar standı", "fuar standi", "fuar standları", "fuar stantları", "numune / prototip baskı"],
+    ["largeFormatDimensions", "largeFormatPlacement", "largeFormatInstall", "largeFormatDesignReady"],
+    [
+      { fieldKey: "largeFormatDimensions", prompt: "Baskının en × boy ölçüsü nedir?", summaryLabel: "Ölçü", importance: "quote_critical", rank: 76, inputHint: "text", allowUnknown: true },
+      { fieldKey: "largeFormatPlacement", prompt: "Nerede kullanılacak?", summaryLabel: "Kullanım alanı", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "İç mekân", value: "İç mekân" }, { label: "Dış mekân", value: "Dış mekân" }, { label: "Fuar / etkinlik", value: "Fuar / etkinlik" }] },
+      { fieldKey: "largeFormatInstall", prompt: "Montaj / kurulum gerekli mi?", summaryLabel: "Montaj", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli değil", value: "Yok" }, { label: "Gerekli", value: "Gerekli" }, { label: "Teklifte belirtin", value: "Belirtin" }] },
+      { fieldKey: "largeFormatDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["poşet / torba baskı", "poset / torba baski", "streç / shrink etiket", "strec / shrink etiket", "karton askı / hang tag", "karton aski / hang tag", "sertifika", "kaşe", "kase", "bloknot"],
+    ["customPrintSpecs", "customPrintMaterial", "customPrintDesignReady"],
+    [
+      { fieldKey: "customPrintSpecs", prompt: "Ürün ölçüsü ve istediğiniz temel özellikler nelerdir?", summaryLabel: "Ölçü / özellik", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "customPrintMaterial", prompt: "Malzeme veya üretim tercihiniz var mı?", summaryLabel: "Malzeme", importance: "quote_critical", rank: 64, inputHint: "text", allowDontCare: true },
+      { fieldKey: "customPrintDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+];
+
+const HEALTH_COMMON_CANDIDATE_KEYS = [
+  "healthProductType", "productName", "usageArea", "certification", "features",
+  "condition", "quantity", "city", "delivery", "budget",
+];
+
+function healthQuestionContract(
+  whenProductTypes: string[],
+  fieldKeys: string[],
+  questions: ProductQuestionContractQuestion[],
+): ProductQuestionContract {
+  return {
+    whenProductTypes,
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [...HEALTH_COMMON_CANDIDATE_KEYS, ...fieldKeys],
+    questions,
+  };
+}
+
+/** Sağlıkta yalnız tedarik ve kullanım bağlamı toplanır; teşhis/tedavi yoktur. */
+const HEALTH_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  healthQuestionContract(
+    ["hasta monitörü", "ventilatör", "ventilator", "defibrilatör", "ultrason cihazı", "ekg cihazı", "infüzyon pompası", "oksijen konsantratörü", "nebulizatör", "tansiyon aleti", "tansiyon ölçer", "tansiyon olcer", "pulse oksimetre"],
+    ["medicalDeviceSetting", "medicalDeviceCondition", "medicalDeviceSpec", "medicalDeviceService"],
+    [
+      { fieldKey: "medicalDeviceSetting", prompt: "Cihaz hangi kullanım ortamı için?", summaryLabel: "Kullanım ortamı", importance: "quote_critical", rank: 74, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hastane", value: "Hastane" }, { label: "Klinik", value: "Klinik" }, { label: "Evde bakım", value: "Evde bakım" }] },
+      { fieldKey: "medicalDeviceCondition", prompt: "Sıfır, yenilenmiş veya ikinci el mi arıyorsunuz?", summaryLabel: "Durum", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Sıfır", value: "Sıfır" }, { label: "Yenilenmiş", value: "Yenilenmiş" }, { label: "İkinci el", value: "İkinci el" }] },
+      { fieldKey: "medicalDeviceSpec", prompt: "Zorunlu teknik özellik veya kapasite nedir?", summaryLabel: "Teknik gereksinim", importance: "quote_critical", rank: 60, inputHint: "text", allowUnknown: true },
+      { fieldKey: "medicalDeviceService", prompt: "Kurulum, eğitim veya kalibrasyon gerekli mi?", summaryLabel: "Hizmet ihtiyacı", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli", value: "Gerekli" }, { label: "Gerekli değil", value: "Gerekli değil" }, { label: "Teklifte belirtin", value: "Belirtin" }] },
+    ],
+  ),
+  healthQuestionContract(
+    ["muayene masası", "hasta yatağı", "sedye", "tıbbi dolap", "ecza dolabı", "muayene lambası", "sterilizatör", "otoklav"],
+    ["clinicalEquipmentMode", "clinicalDimensions", "clinicalAccessories", "clinicalCondition"],
+    [
+      { fieldKey: "clinicalEquipmentMode", prompt: "Manuel mi elektrikli / motorlu mu olmalı?", summaryLabel: "Çalışma tipi", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Manuel", value: "Manuel" }, { label: "Elektrikli / motorlu", value: "Elektrikli" }, { label: "Ürüne göre", value: "Ürüne göre" }] },
+      { fieldKey: "clinicalDimensions", prompt: "Ölçü, taşıma kapasitesi veya sterilizasyon hacmi nedir?", summaryLabel: "Kapasite / ölçü", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "clinicalAccessories", prompt: "Aksesuar veya ek donanım gerekli mi?", summaryLabel: "Aksesuar", importance: "optional", rank: 50, inputHint: "text", allowDontCare: true },
+      { fieldKey: "clinicalCondition", prompt: "Sıfır, yenilenmiş veya ikinci el mi arıyorsunuz?", summaryLabel: "Durum", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Sıfır", value: "Sıfır" }, { label: "Yenilenmiş", value: "Yenilenmiş" }, { label: "İkinci el", value: "İkinci el" }] },
+    ],
+  ),
+  healthQuestionContract(
+    ["diş üniti", "apex locator", "kavitron", "scaler", "diş hekimi sandalyesi", "santrifüj", "santrifuj", "mikroskop", "analizör", "analizor"],
+    ["labUseCase", "labDeviceSpec", "labCalibration", "labCondition"],
+    [
+      { fieldKey: "labUseCase", prompt: "Hangi klinik veya laboratuvar kullanımı için?", summaryLabel: "Kullanım", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Diş kliniği", value: "Diş kliniği" }, { label: "Tıbbi laboratuvar", value: "Laboratuvar" }, { label: "Eğitim / araştırma", value: "Eğitim" }] },
+      { fieldKey: "labDeviceSpec", prompt: "Zorunlu teknik özellik, kapasite veya uyumluluk nedir?", summaryLabel: "Teknik gereksinim", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "labCalibration", prompt: "Kalibrasyon veya bakım kaydı gerekli mi?", summaryLabel: "Kalibrasyon", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli", value: "Gerekli" }, { label: "Gerekli değil", value: "Gerekli değil" }, { label: "Teklifte belirtin", value: "Belirtin" }] },
+      { fieldKey: "labCondition", prompt: "Sıfır, yenilenmiş veya ikinci el mi arıyorsunuz?", summaryLabel: "Durum", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Sıfır", value: "Sıfır" }, { label: "Yenilenmiş", value: "Yenilenmiş" }, { label: "İkinci el", value: "İkinci el" }] },
+    ],
+  ),
+  healthQuestionContract(
+    ["ortopedi ürünleri", "işitme cihazı", "evde bakım cihazı", "medikal mobilya"],
+    ["supportProductUsage", "supportProductFit", "supportProductCondition", "supportProductRequirement"],
+    [
+      { fieldKey: "supportProductUsage", prompt: "Ürün hangi kullanım ortamı için?", summaryLabel: "Kullanım ortamı", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Evde kullanım", value: "Ev" }, { label: "Klinik / kurum", value: "Kurum" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "supportProductFit", prompt: "Beden, ölçü veya kişiye özel uyum gereksinimi var mı?", summaryLabel: "Ölçü / uyum", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "supportProductCondition", prompt: "Sıfır veya ikinci el tercihiniz nedir?", summaryLabel: "Durum", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Sıfır", value: "Sıfır" }, { label: "İkinci el", value: "İkinci el" }] },
+      { fieldKey: "supportProductRequirement", prompt: "Özellikle gerekli bir özellik var mı?", summaryLabel: "Özel gereksinim", importance: "optional", rank: 44, inputHint: "text", allowDontCare: true },
+    ],
+  ),
+];
+
+const SERVICE_COMMON_CANDIDATE_KEYS = ["serviceType", "city", "budget"];
+
+function serviceQuestionContract(
+  whenProductTypes: string[],
+  fieldKeys: string[],
+  questions: ProductQuestionContractQuestion[],
+): ProductQuestionContract {
+  return {
+    whenProductTypes,
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [...SERVICE_COMMON_CANDIDATE_KEYS, ...fieldKeys],
+    questions,
+  };
+}
+
+const SERVICES_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  /* Grafik/logo talepleri şu an bilinçli olarak kısa tutulur: hizmet türü,
+     konum ve bütçe yeterlidir; yaratıcı kapsam serbest metinde bırakılır. */
+  serviceQuestionContract(
+    ["grafik ve logo tasarımı", "grafik ve logo tasarimi", "logo tasarımı", "logo tasarimi", "grafik tasarım", "grafik tasarim"],
+    [],
+    [],
+  ),
+  serviceQuestionContract(
+    ["evde bakım desteği", "evde bakim destegi", "evde bakım", "evde bakim", "hasta refakati", "yaşlı bakım", "yasli bakim", "hasta bakım", "hasta bakim", "yaşlı bakıcı", "yasli bakici", "hasta bakıcı", "hasta bakici"],
+    ["homeCareSupportScope", "homeCareSchedule", "homeCareDuration", "homeCareStart"],
+    [
+      { fieldKey: "homeCareSupportScope", prompt: "Hangi tür evde bakım / destek hizmetine ihtiyacınız var?", summaryLabel: "Destek türü", importance: "quote_critical", rank: 74, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Günlük yaşam desteği", value: "Günlük yaşam" }, { label: "Refakat", value: "Refakat" }, { label: "Hareket / ulaşım desteği", value: "Hareket / ulaşım" }, { label: "Ev içi destek", value: "Ev içi destek" }] },
+      { fieldKey: "homeCareSchedule", prompt: "Hizmet ne sıklıkta gerekli?", summaryLabel: "Sıklık", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek sefer", value: "Tek sefer" }, { label: "Haftada birkaç gün", value: "Haftalık" }, { label: "Her gün", value: "Her gün" }, { label: "Yatılı", value: "Yatılı" }] },
+      { fieldKey: "homeCareDuration", prompt: "Bir günde yaklaşık kaç saat destek gerekli?", summaryLabel: "Süre", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "1–3 saat", value: "1–3 saat" }, { label: "4–8 saat", value: "4–8 saat" }, { label: "8 saatten fazla", value: "8+ saat" }] },
+      { fieldKey: "homeCareStart", prompt: "Hizmet ne zaman başlamalı?", summaryLabel: "Başlangıç", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hemen", value: "Hemen" }, { label: "Bu hafta", value: "Bu hafta" }, { label: "Tarih esnek", value: "Esnek" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    [
+      "ev yardımcısı / ev hizmetlisi",
+      "ev yardimcisi / ev hizmetlisi",
+      "ev yardımcısı",
+      "ev yardimcisi",
+      "evde yardımcı",
+      "evde yardimci",
+      "ev hizmetlisi",
+      "evde hizmetli",
+      "ev işleri yardımcısı",
+      "ev isleri yardimcisi",
+    ],
+    ["homeHelperScope", "homeHelperSchedule", "homeHelperDuration", "homeHelperStart"],
+    [
+      { fieldKey: "homeHelperScope", prompt: "Ev yardımcısı hangi işleri yapmalı?", summaryLabel: "Destek kapsamı", importance: "quote_critical", rank: 74, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Temizlik", value: "Temizlik" }, { label: "Yemek", value: "Yemek" }, { label: "Çamaşır / ütü", value: "Çamaşır / ütü" }, { label: "Alışveriş ve günlük işler", value: "Alışveriş ve günlük işler" }, { label: "Birden fazla iş", value: "Birden fazla iş" }] },
+      { fieldKey: "homeHelperSchedule", prompt: "Çalışma düzeni nasıl olmalı?", summaryLabel: "Çalışma düzeni", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek sefer", value: "Tek sefer" }, { label: "Haftada birkaç gün", value: "Haftalık" }, { label: "Her gün", value: "Her gün" }, { label: "Yatılı", value: "Yatılı" }] },
+      { fieldKey: "homeHelperDuration", prompt: "Bir günde yaklaşık kaç saat çalışmalı?", summaryLabel: "Günlük süre", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "1–3 saat", value: "1–3 saat" }, { label: "4–8 saat", value: "4–8 saat" }, { label: "8 saatten fazla", value: "8+ saat" }] },
+      { fieldKey: "homeHelperStart", prompt: "Hizmet ne zaman başlamalı?", summaryLabel: "Başlangıç", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hemen", value: "Hemen" }, { label: "Bu hafta", value: "Bu hafta" }, { label: "Tarih esnek", value: "Esnek" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["boş ev temizliği", "bos ev temizligi"],
+    ["emptyHomeSize", "emptyHomeCondition", "emptyHomeSupplies"],
+    [
+      { fieldKey: "emptyHomeSize", prompt: "Evin büyüklüğü nedir?", summaryLabel: "Ev büyüklüğü", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "1+0 / 1+1", value: "1+0 / 1+1" }, { label: "2+1", value: "2+1" }, { label: "3+1", value: "3+1" }, { label: "4+1 ve üzeri", value: "4+1+" }] },
+      { fieldKey: "emptyHomeCondition", prompt: "Evin temizlik durumu nasıl?", summaryLabel: "Temizlik durumu", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Normal boş ev temizliği", value: "Normal" }, { label: "Yoğun kir / uzun süre boş", value: "Yoğun" }, { label: "Tadilat sonrası", value: "Tadilat sonrası" }] },
+      { fieldKey: "emptyHomeSupplies", prompt: "Temizlik malzemesini kim sağlayacak?", summaryLabel: "Malzeme", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hizmet veren getirsin", value: "Hizmet veren" }, { label: "Ben sağlayacağım", value: "Müşteri" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["boya badana", "boya", "badana"],
+    ["paintArea", "paintPrep", "paintSupply"],
+    [
+      { fieldKey: "paintArea", prompt: "Boyanacak yaklaşık alan ne kadar?", summaryLabel: "Alan", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek oda / küçük alan", value: "Küçük alan" }, { label: "1–2 oda", value: "1–2 oda" }, { label: "Tüm ev", value: "Tüm ev" }, { label: "Ofis / geniş alan", value: "Geniş alan" }] },
+      { fieldKey: "paintPrep", prompt: "Alçı, çatlak onarımı veya zımpara gerekli mi?", summaryLabel: "Yüzey hazırlığı", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Sadece boya", value: "Sadece boya" }, { label: "Küçük onarım gerekli", value: "Küçük onarım" }, { label: "Kapsamlı hazırlık gerekli", value: "Kapsamlı hazırlık" }] },
+      { fieldKey: "paintSupply", prompt: "Boyayı kim sağlayacak?", summaryLabel: "Boya malzemesi", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Usta sağlasın", value: "Hizmet veren" }, { label: "Ben sağlayacağım", value: "Müşteri" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["cam balkon"],
+    ["balconySize", "balconySystem", "balconyGlass"],
+    [
+      { fieldKey: "balconySize", prompt: "Balkonun yaklaşık ölçüsü nedir?", summaryLabel: "Balkon ölçüsü", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "balconySystem", prompt: "Hangi cam balkon sistemi olsun?", summaryLabel: "Sistem", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Katlanır", value: "Katlanır" }, { label: "Sürgülü", value: "Sürgülü" }, { label: "Giyotin", value: "Giyotin" }] },
+      { fieldKey: "balconyGlass", prompt: "Cam tercihiniz var mı?", summaryLabel: "Cam tercihi", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Isıcamlı", value: "Isıcamlı" }, { label: "Temperli", value: "Temperli" }, { label: "Standart", value: "Standart" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["kombi servisi"],
+    ["boilerBrand", "boilerServiceNeed", "boilerIssue", "boilerUrgency"],
+    [
+      { fieldKey: "boilerBrand", prompt: "Kombinizin markası nedir?", summaryLabel: "Kombi markası", importance: "quote_critical", rank: 76, inputHint: "select", allowUnknown: true, quickChoices: [{ label: "Arçelik", value: "Arçelik" }, { label: "Baymak", value: "Baymak" }, { label: "Bosch", value: "Bosch" }, { label: "Buderus", value: "Buderus" }, { label: "Demirdöküm", value: "Demirdöküm" }, { label: "E.C.A.", value: "E.C.A." }, { label: "Vaillant", value: "Vaillant" }, { label: "Viessmann", value: "Viessmann" }] },
+      { fieldKey: "boilerServiceNeed", prompt: "Kombi için hangi hizmete ihtiyacınız var?", summaryLabel: "Hizmet ihtiyacı", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Periyodik bakım", value: "Bakım" }, { label: "Arıza tespiti / onarım", value: "Arıza / onarım" }, { label: "Montaj", value: "Montaj" }] },
+      { fieldKey: "boilerIssue", prompt: "Belirgin bir arıza veya sorun var mı?", summaryLabel: "Arıza", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Isıtmıyor / sıcak su yok", value: "Isıtma / sıcak su" }, { label: "Su basıncı / sızıntı", value: "Basınç / sızıntı" }, { label: "Hata kodu var", value: "Hata kodu" }, { label: "Sadece bakım", value: "Sadece bakım" }] },
+      { fieldKey: "boilerUrgency", prompt: "Ne kadar acil?", summaryLabel: "Aciliyet", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Bugün", value: "Bugün" }, { label: "1–3 gün içinde", value: "1–3 gün" }, { label: "Tarih esnek", value: "Esnek" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["klima servisi"],
+    ["airConditionerBrand", "airConditionerNeed", "airConditionerIssue", "airConditionerType"],
+    [
+      { fieldKey: "airConditionerBrand", prompt: "Klima markası nedir?", summaryLabel: "Klima markası", importance: "quote_critical", rank: 76, inputHint: "select", allowUnknown: true, quickChoices: [{ label: "Arçelik", value: "Arçelik" }, { label: "Baymak", value: "Baymak" }, { label: "Bosch", value: "Bosch" }, { label: "Daikin", value: "Daikin" }, { label: "Mitsubishi Electric", value: "Mitsubishi Electric" }, { label: "Vestel", value: "Vestel" }] },
+      { fieldKey: "airConditionerNeed", prompt: "Klima için hangi hizmete ihtiyacınız var?", summaryLabel: "Hizmet ihtiyacı", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Periyodik bakım", value: "Bakım" }, { label: "Arıza tespiti / onarım", value: "Arıza / onarım" }, { label: "Montaj / söküm", value: "Montaj / söküm" }] },
+      { fieldKey: "airConditionerIssue", prompt: "Belirgin bir sorun var mı?", summaryLabel: "Sorun", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Soğutmuyor / ısıtmıyor", value: "Soğutma / ısıtma" }, { label: "Su akıtıyor", value: "Su akıtma" }, { label: "Ses / koku / hata kodu", value: "Diğer arıza" }, { label: "Sadece bakım", value: "Sadece bakım" }] },
+      { fieldKey: "airConditionerType", prompt: "Klima tipi nedir?", summaryLabel: "Klima tipi", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Split klima", value: "Split" }, { label: "Salon tipi", value: "Salon tipi" }, { label: "Multi sistem", value: "Multi sistem" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["direksiyon dersi"],
+    ["drivingLicenseClass", "drivingLevel", "drivingSchedule"],
+    [
+      { fieldKey: "drivingLicenseClass", prompt: "Hangi ehliyet sınıfı için ders istiyorsunuz?", summaryLabel: "Ehliyet sınıfı", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "B sınıfı", value: "B" }, { label: "Otomatik vites", value: "B otomatik" }, { label: "Diğer sınıf", value: "Diğer" }] },
+      { fieldKey: "drivingLevel", prompt: "Mevcut sürüş seviyeniz nedir?", summaryLabel: "Seviye", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yeni başlıyorum", value: "Başlangıç" }, { label: "Trafik pratiği istiyorum", value: "Trafik pratiği" }, { label: "Sınav hazırlığı", value: "Sınav hazırlığı" }] },
+      { fieldKey: "drivingSchedule", prompt: "Ders zamanınız için tercihiniz var mı?", summaryLabel: "Ders zamanı", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hafta içi", value: "Hafta içi" }, { label: "Hafta sonu", value: "Hafta sonu" }, { label: "Esnek", value: "Esnek" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["duvar dekorasyon"],
+    ["wallDecorArea", "wallDecorType", "wallDecorPrep"],
+    [
+      { fieldKey: "wallDecorArea", prompt: "Uygulama yapılacak alan ne kadar?", summaryLabel: "Uygulama alanı", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "wallDecorType", prompt: "Hangi duvar dekorasyonu istiyorsunuz?", summaryLabel: "Dekor türü", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Duvar kâğıdı", value: "Duvar kâğıdı" }, { label: "Panel / çıta", value: "Panel / çıta" }, { label: "Dekoratif boya", value: "Dekoratif boya" }] },
+      { fieldKey: "wallDecorPrep", prompt: "Mevcut kaplama sökülecek mi?", summaryLabel: "Hazırlık", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Evet, söküm gerekli", value: "Söküm gerekli" }, { label: "Hayır, yüzey hazır", value: "Yüzey hazır" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["elektrikçi", "elektrikci"],
+    ["electricalWork", "electricalPlace", "electricalUrgency"],
+    [
+      { fieldKey: "electricalWork", prompt: "Hangi elektrik işine ihtiyacınız var?", summaryLabel: "Elektrik işi", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Arıza tespiti", value: "Arıza" }, { label: "Priz / anahtar / aydınlatma", value: "Montaj" }, { label: "Tesisat yenileme", value: "Tesisat" }] },
+      { fieldKey: "electricalPlace", prompt: "Hizmet nerede yapılacak?", summaryLabel: "Mekân", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Ev", value: "Ev" }, { label: "Ofis / iş yeri", value: "İş yeri" }, { label: "Ortak alan", value: "Ortak alan" }] },
+      { fieldKey: "electricalUrgency", prompt: "Ne kadar acil?", summaryLabel: "Aciliyet", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Bugün", value: "Bugün" }, { label: "1–3 gün içinde", value: "1–3 gün" }, { label: "Tarih esnek", value: "Esnek" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["parça eşya taşıma", "parca esya tasima"],
+    ["partialMoveItems", "partialMoveFloors", "partialMoveDate"],
+    [
+      { fieldKey: "partialMoveItems", prompt: "Taşınacak eşyalar nelerdir?", summaryLabel: "Eşya", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "partialMoveFloors", prompt: "Alış ve teslim katlarında asansör var mı?", summaryLabel: "Kat / asansör", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "İkisinde de var", value: "İki tarafta var" }, { label: "Bir tarafta var", value: "Tek tarafta var" }, { label: "Yok", value: "Yok" }] },
+      { fieldKey: "partialMoveDate", prompt: "Taşıma için ne zaman uygunsunuz?", summaryLabel: "Taşıma zamanı", importance: "optional", rank: 44, inputHint: "text", allowDontCare: true },
+    ],
+  ),
+  serviceQuestionContract(
+    ["ev dekorasyon"],
+    ["homeDecorScope", "homeDecorArea", "homeDecorDelivery"],
+    [
+      { fieldKey: "homeDecorScope", prompt: "Hangi alanlar için dekorasyon istiyorsunuz?", summaryLabel: "Kapsam", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek oda", value: "Tek oda" }, { label: "Birden fazla oda", value: "Birden fazla oda" }, { label: "Tüm ev", value: "Tüm ev" }] },
+      { fieldKey: "homeDecorArea", prompt: "Yaklaşık alan ne kadar?", summaryLabel: "Alan", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "homeDecorDelivery", prompt: "Yalnız tasarım mı, uygulama dahil mi?", summaryLabel: "Teslim modeli", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yalnız tasarım", value: "Yalnız tasarım" }, { label: "Tasarım + uygulama", value: "Tasarım + uygulama" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["ev temizliği", "ev temizligi"],
+    ["homeCleaningSize", "homeCleaningFrequency", "homeCleaningSupplies"],
+    [
+      { fieldKey: "homeCleaningSize", prompt: "Evin büyüklüğü nedir?", summaryLabel: "Ev büyüklüğü", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "1+0 / 1+1", value: "1+0 / 1+1" }, { label: "2+1", value: "2+1" }, { label: "3+1", value: "3+1" }, { label: "4+1 ve üzeri", value: "4+1+" }] },
+      { fieldKey: "homeCleaningFrequency", prompt: "Hizmeti ne sıklıkla istiyorsunuz?", summaryLabel: "Sıklık", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek seferlik", value: "Tek seferlik" }, { label: "Haftalık", value: "Haftalık" }, { label: "Aylık", value: "Aylık" }] },
+      { fieldKey: "homeCleaningSupplies", prompt: "Temizlik malzemesini kim sağlayacak?", summaryLabel: "Malzeme", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Hizmet veren getirsin", value: "Hizmet veren" }, { label: "Ben sağlayacağım", value: "Müşteri" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["evden eve nakliyat"],
+    ["movingHomeSize", "movingFloors", "movingPacking", "movingDate"],
+    [
+      { fieldKey: "movingHomeSize", prompt: "Kaç odalı ev taşınacak?", summaryLabel: "Ev büyüklüğü", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "1+1", value: "1+1" }, { label: "2+1", value: "2+1" }, { label: "3+1", value: "3+1" }, { label: "4+1 ve üzeri", value: "4+1+" }] },
+      { fieldKey: "movingFloors", prompt: "Alış ve teslim katlarında asansör var mı?", summaryLabel: "Kat / asansör", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "İkisinde de var", value: "İki tarafta var" }, { label: "Bir tarafta var", value: "Tek tarafta var" }, { label: "Yok", value: "Yok" }] },
+      { fieldKey: "movingPacking", prompt: "Paketleme hizmeti gerekli mi?", summaryLabel: "Paketleme", importance: "optional", rank: 48, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Gerekli", value: "Gerekli" }, { label: "Kendim paketleyeceğim", value: "Gerekli değil" }] },
+      { fieldKey: "movingDate", prompt: "Taşınma için ne zaman uygunsunuz?", summaryLabel: "Taşınma zamanı", importance: "optional", rank: 44, inputHint: "text", allowDontCare: true },
+    ],
+  ),
+  serviceQuestionContract(
+    ["fayans döşeme", "fayans doseme"],
+    ["tileArea", "tileSpace", "tileRemoval", "tileSupply"],
+    [
+      { fieldKey: "tileArea", prompt: "Fayans döşenecek alan ne kadar?", summaryLabel: "Alan", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "tileSpace", prompt: "Uygulama hangi alanda yapılacak?", summaryLabel: "Uygulama alanı", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Banyo", value: "Banyo" }, { label: "Mutfak", value: "Mutfak" }, { label: "Balkon / teras", value: "Balkon / teras" }, { label: "Diğer", value: "Diğer" }] },
+      { fieldKey: "tileRemoval", prompt: "Mevcut fayans sökülecek mi?", summaryLabel: "Söküm", importance: "optional", rank: 48, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Evet", value: "Söküm gerekli" }, { label: "Hayır", value: "Söküm gerekmiyor" }] },
+      { fieldKey: "tileSupply", prompt: "Fayans malzemesini kim sağlayacak?", summaryLabel: "Malzeme", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Usta sağlasın", value: "Hizmet veren" }, { label: "Ben sağlayacağım", value: "Müşteri" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["halı yıkama / temizleme", "hali yikama / temizleme", "halı yıkama", "hali yikama"],
+    ["carpetLoad", "carpetPickup", "carpetIssue"],
+    [
+      { fieldKey: "carpetLoad", prompt: "Kaç halı ve yaklaşık hangi ölçülerde?", summaryLabel: "Halı miktarı", importance: "quote_critical", rank: 72, inputHint: "text", allowUnknown: true },
+      { fieldKey: "carpetPickup", prompt: "Adresten alma ve teslim gerekli mi?", summaryLabel: "Alma / teslim", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Alma ve teslim gerekli", value: "Gerekli" }, { label: "Kendim bırakacağım", value: "Gerekli değil" }] },
+      { fieldKey: "carpetIssue", prompt: "Özel leke veya koku sorunu var mı?", summaryLabel: "Özel durum", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yok", value: "Yok" }, { label: "Leke", value: "Leke" }, { label: "Koku", value: "Koku" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["koltuk yıkama / temizleme", "koltuk yikama / temizleme", "koltuk yıkama", "koltuk yikama"],
+    ["upholsterySeatCount", "upholsteryOnSite", "upholsteryIssue", "upholsteryFabric"],
+    [
+      { fieldKey: "upholsterySeatCount", prompt: "Kaç parça koltuk yıkanacak?", summaryLabel: "Koltuk miktarı", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tekli / ikili koltuk", value: "1–2 parça" }, { label: "3'lü koltuk takımı", value: "3 parça" }, { label: "Koltuk takımı", value: "4+ parça" }] },
+      { fieldKey: "upholsteryOnSite", prompt: "Yıkama nerede yapılsın?", summaryLabel: "Hizmet yeri", importance: "quote_critical", rank: 66, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Evde yerinde yıkama", value: "Yerinde" }, { label: "Alınıp tesiste yıkansın", value: "Tesiste" }] },
+      { fieldKey: "upholsteryIssue", prompt: "Özel leke veya koku sorunu var mı?", summaryLabel: "Özel durum", importance: "optional", rank: 48, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yok", value: "Yok" }, { label: "Leke", value: "Leke" }, { label: "Koku", value: "Koku" }, { label: "Evcil hayvan tüyü", value: "Evcil hayvan tüyü" }] },
+      { fieldKey: "upholsteryFabric", prompt: "Kumaş türünü biliyor musunuz?", summaryLabel: "Kumaş", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kumaş", value: "Kumaş" }, { label: "Deri / suni deri", value: "Deri" }, { label: "Kadife", value: "Kadife" }] },
+    ],
+  ),
+  serviceQuestionContract(
+    ["iç mimar", "ic mimar"],
+    ["interiorDesignScope", "interiorDesignArea", "interiorDesignDelivery", "interiorDesignStyle"],
+    [
+      { fieldKey: "interiorDesignScope", prompt: "Hangi alanlar için iç mimarlık istiyorsunuz?", summaryLabel: "Kapsam", importance: "quote_critical", rank: 72, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek oda", value: "Tek oda" }, { label: "Birden fazla oda", value: "Birden fazla oda" }, { label: "Tüm ev / iş yeri", value: "Tüm alan" }] },
+      { fieldKey: "interiorDesignArea", prompt: "Yaklaşık alan ne kadar?", summaryLabel: "Alan", importance: "quote_critical", rank: 66, inputHint: "text", allowUnknown: true },
+      { fieldKey: "interiorDesignDelivery", prompt: "Hangi teslim modelini istiyorsunuz?", summaryLabel: "Teslim modeli", importance: "quote_critical", rank: 60, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Konsept / proje", value: "Proje" }, { label: "3D görselleştirme", value: "3D görselleştirme" }, { label: "Anahtar teslim uygulama", value: "Anahtar teslim" }] },
+      { fieldKey: "interiorDesignStyle", prompt: "Tarz tercihiniz var mı?", summaryLabel: "Tarz", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Modern", value: "Modern" }, { label: "Klasik", value: "Klasik" }, { label: "Minimal", value: "Minimal" }] },
+    ],
+  ),
+];
 
 /** Field is shown (and can be required) only when another field matches. */
 export type FieldWhen = {
@@ -108,6 +7319,18 @@ function normalizeWhenValue(fieldKey: string, value: string): string {
     if (fold === "yalı dairesi" || fold === "yali dairesi") return "Yalı Dairesi";
     if (fold === "çiftlik evi" || fold === "ciftlik evi") return "Çiftlik Evi";
     if (fold === "köşk & konak" || fold === "kosk & konak") return "Köşk & Konak";
+    if (fold === "dükkan / mağaza" || fold === "dukkan / magaza" || fold === "dükkan" || fold === "dukkan" || fold === "mağaza" || fold === "magaza") return "Dükkan / mağaza";
+    if (fold === "ofis") return "Ofis";
+    if (fold === "plaza ofisi") return "Plaza ofisi";
+    if (fold === "depo / antrepo" || fold === "depo" || fold === "antrepo") return "Depo / antrepo";
+    if (fold === "fabrika / imalathane" || fold === "fabrika" || fold === "imalathane") return "Fabrika / imalathane";
+    if (fold === "avm ünitesi" || fold === "avm unitesi") return "AVM ünitesi";
+    if (fold === "otel / apart" || fold === "otel") return "Otel / apart";
+    if (fold === "devren işyeri" || fold === "devren isyeri") return "Devren işyeri";
+    if (fold === "müştemilat" || fold === "mustemilat") return "Müştemilat";
+    if (fold === "kooperatif hissesi") return "Kooperatif hissesi";
+    if (fold === "turistik tesis") return "Turistik tesis";
+    if (fold === "devre mülk" || fold === "devre mulk") return "Devre mülk";
     if (fold === "iş yeri" || fold === "is yeri" || fold === "işyeri") {
       return "İş yeri";
     }
@@ -274,6 +7497,8 @@ function foldProductContext(value: string): string {
   return value
     .replace(/[çÇğĞıİöÖşŞüÜ]/g, (m) => PRODUCT_FOLD_MAP[m] ?? m)
     .toLowerCase()
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -364,13 +7589,24 @@ export function getVisibleCategoryFields(
   // Real estate: propertyType (Daire / İmarlı arsa / İş yeri) is the context.
   const productContext = foldProductContext(
     resolved.productType ||
+      resolved.solutionType ||
       resolved.applianceType ||
+      resolved.furnitureType ||
+      resolved.babyProductType ||
       resolved.kitchenProductType ||
       resolved.propertyType ||
       resolved.serviceType ||
       resolved.machineType ||
+      resolved.tireItemType ||
       "",
   );
+  const productQuestionContract = categoryId
+    ? resolveCategoryQuestionContract({
+        categoryId,
+        productType: productContext,
+        needType: resolved.needType,
+      })
+    : null;
   visible = visible.filter((field) => {
     if (!field.whenProductTypes?.length) return true;
     if (!productContext) return false;
@@ -378,6 +7614,17 @@ export function getVisibleCategoryFields(
       productContext.includes(foldProductContext(p)),
     );
   });
+
+  // Bir ürün/niyet sözleşmesi eşleştiğinde, legacy form alanları da aynı
+  // izin listesinden geçer. Örn. lastikte araç model/yıl alanı gösterilmez;
+  // lastik ebatı ve mevsimi sorulur.
+  if (productQuestionContract) {
+    visible = visible.filter(
+      (field) =>
+        field.key === "needType" ||
+        productQuestionContract.allowedCandidateFieldKeys.includes(field.key),
+    );
+  }
 
   /**
    * Kullanıcının SEÇTİĞİ konu: "Araç mı, parça mı?" bir daha sorulmaz.
@@ -540,6 +7787,13 @@ export type RequestCategory = {
   subcategories: string[];
   commonFields: CommonFieldConfig[];
   fields: DynamicField[];
+  /**
+   * Category-owned measurement contracts. They also cover knowledge-only
+   * fields that are not rendered as a legacy DynamicField.
+   */
+  measurementContracts?: Record<string, MeasurementContract>;
+  /** Category-owned product contracts used by the question scheduler. */
+  questionContracts?: ProductQuestionContract[];
 };
 
 /**
@@ -615,9 +7869,14 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "antetli",
       "promosyon",
       "roll up",
+      "roll-up",
       "branda",
       "tabela",
       "selefon",
+      "kaşe",
+      "kase",
+      "bloknot",
+      "prototip baskı",
     ],
     subcategories: [
       "Karton Kutu",
@@ -633,6 +7892,35 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery" },
       { key: "budget" },
     ],
+    measurementContracts: {
+      dimensions: {
+        kind: "print_format",
+        example: "A4 veya 21 × 29,7 cm",
+        variants: [
+          {
+            whenProductTypes: [
+              "karton kutu",
+              "kutu",
+              "etiket",
+              "label",
+            ],
+            kind: "physical_dimensions",
+            axes: ["width", "height", "depth"],
+            unit: "mm",
+            example: "350 × 250 × 80 mm",
+          },
+        ],
+      },
+      size: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "mm",
+        example: "100 × 50 mm",
+      },
+      printSize: { kind: "print_format", example: "A4 veya 21 × 29,7 cm" },
+      paperSize: { kind: "print_format", example: "A4 veya 21 × 29,7 cm" },
+    },
+    questionContracts: PRINTING_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "dimensions",
@@ -731,6 +8019,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "city", placeholder: "Örn. İstanbul" },
       { key: "budget", placeholder: "Örn. ₺850.000" },
     ],
+    questionContracts: AUTOMOTIVE_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "needType",
@@ -750,6 +8039,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         type: "text",
         placeholder: "Örn. Mercedes",
         required: true,
+        when: { field: "needType", in: ["vehicle", "part", "service", "tire"] },
       },
       {
         key: "model",
@@ -757,13 +8047,14 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         type: "text",
         placeholder: "Örn. C180",
         required: true,
+        when: { field: "needType", in: ["vehicle", "part", "service"] },
       },
       {
         key: "generation",
         label: "Nesil",
         type: "text",
         placeholder: "Örn. Golf VII",
-        when: { field: "needType", in: ["vehicle", "part"] },
+        when: { field: "needType", in: ["vehicle"] },
       },
       {
         key: "modelYear",
@@ -778,7 +8069,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         label: "Motor",
         type: "text",
         placeholder: "Örn. 1.6 benzin",
-        when: { field: "needType", in: ["vehicle", "part"] },
+        when: { field: "needType", in: ["vehicle"] },
       },
       {
         key: "fuel",
@@ -821,6 +8112,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         options: [
           { label: "Sıfır", value: "Sıfır" },
           { label: "İkinci el", value: "İkinci el" },
+          { label: "Hasar kayıtlı", value: "Hasar kayıtlı" },
           { label: "Fark etmez", value: "Fark etmez" },
         ],
       },
@@ -837,7 +8129,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         type: "text",
         placeholder: "Örn. Ön tampon",
         required: true,
-        when: { field: "needType", in: ["part", "tire"] },
+        when: { field: "needType", in: ["part"] },
       },
       {
         key: "partPreference",
@@ -845,25 +8137,28 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         type: "select",
         when: { field: "needType", in: ["part"] },
         options: [
-          { label: "Orijinal", value: "Orijinal" },
-          { label: "Muadil", value: "Muadil" },
-          { label: "Fark etmez", value: "Fark etmez" },
+          { label: "Sıfır / OEM", value: "Sıfır / OEM" },
+          { label: "Çıkma / ikinci el", value: "Çıkma / ikinci el" },
         ],
       },
       {
         key: "serviceType",
         label: "Servis / bakım ihtiyacı",
-        type: "text",
-        placeholder: "Örn. Periyodik bakım, yağ değişimi",
+        type: "select",
         required: true,
         when: { field: "needType", in: ["service"] },
-      },
-      {
-        key: "vin",
-        label: "Şasi numarası",
-        type: "text",
-        placeholder: "Opsiyonel — parça uyumu için",
-        when: { field: "needType", in: ["part"] },
+        options: [
+          { label: "Periyodik bakım", value: "Periyodik bakım" },
+          { label: "Triger değişimi", value: "Triger değişimi" },
+          { label: "Fren bakımı", value: "Fren bakımı" },
+          { label: "Klima gaz dolumu", value: "Klima gaz dolumu" },
+          { label: "Rot balans", value: "Rot balans" },
+          { label: "Detaylı ekspertiz", value: "Detaylı ekspertiz" },
+          { label: "Kaporta / boya", value: "Kaporta / boya" },
+          { label: "Mekanik onarım", value: "Mekanik onarım" },
+          { label: "Elektrik arıza", value: "Elektrik arıza" },
+          { label: "Yazılım / beyin güncelleme", value: "Yazılım / beyin güncelleme" },
+        ],
       },
     ],
   },
@@ -897,6 +8192,15 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery" },
       { key: "budget" },
     ],
+    measurementContracts: {
+      bedSize: {
+        kind: "physical_dimensions",
+        axes: ["width", "height"],
+        unit: "mm",
+        example: "1.500 × 3.000 mm",
+      },
+    },
+    questionContracts: MACHINERY_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "needType",
@@ -906,7 +8210,6 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         options: [
           { label: "Makine (satın alma)", value: "machine" },
           { label: "Yedek parça / ekipman", value: "part" },
-          { label: "Servis / bakım", value: "service" },
         ],
       },
       {
@@ -923,14 +8226,6 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         placeholder: "Örn. Bıçak seti, rulman",
         required: true,
         when: { field: "needType", in: ["part"] },
-      },
-      {
-        key: "serviceType",
-        label: "Servis ihtiyacı",
-        type: "text",
-        placeholder: "Örn. Kurulum, periyodik bakım",
-        required: true,
-        when: { field: "needType", in: ["service"] },
       },
       {
         key: "capacity",
@@ -1014,6 +8309,15 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery", placeholder: "Örn. 2 hafta" },
       { key: "budget", placeholder: "Örn. ₺150.000" },
     ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "180 × 80 × 75 cm",
+      },
+    },
+    questionContracts: FURNITURE_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "furnitureType",
@@ -1130,6 +8434,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       },
       { key: "budget" },
     ],
+    questionContracts: TECHNOLOGY_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "needType",
@@ -1232,6 +8537,12 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "rezidans",
       "residans",
       "arsa",
+      "tarla",
+      "imarlı",
+      "imarli",
+      "ticari arsa",
+      "sanayi arsası",
+      "sanayi arsasi",
       "apart",
       "stüdyo",
       "studyo",
@@ -1246,6 +8557,16 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "işyeri",
       "isyeri",
       "ofis",
+      "plaza ofisi",
+      "mağaza",
+      "magaza",
+      "depo",
+      "antrepo",
+      "fabrika",
+      "imalathane",
+      "avm ünitesi",
+      "avm unitesi",
+      "otel",
       "bina",
       "site",
       "mahalle",
@@ -1285,7 +8606,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       },
       {
         key: "propertyType",
-        label: "Konut türü",
+        label: "Gayrimenkul türü",
         type: "select",
         required: true,
         options: [
@@ -1300,7 +8621,24 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
           { label: "Stüdyo", value: "Stüdyo" },
           { label: "Dubleks", value: "Dubleks" },
           { label: "İş yeri", value: "İş yeri" },
+          { label: "Dükkan / mağaza", value: "Dükkan / mağaza" },
+          { label: "Ofis", value: "Ofis" },
+          { label: "Plaza ofisi", value: "Plaza ofisi" },
+          { label: "Depo / antrepo", value: "Depo / antrepo" },
+          { label: "Fabrika / imalathane", value: "Fabrika / imalathane" },
+          { label: "AVM ünitesi", value: "AVM ünitesi" },
+          { label: "Otel / apart", value: "Otel / apart" },
+          { label: "Devren işyeri", value: "Devren işyeri" },
+          { label: "Müştemilat", value: "Müştemilat" },
+          { label: "Kooperatif hissesi", value: "Kooperatif hissesi" },
+          { label: "Turistik tesis", value: "Turistik tesis" },
+          { label: "Devre mülk", value: "Devre mülk" },
           { label: "Arsa", value: "Arsa" },
+          { label: "İmarlı arsa", value: "İmarlı arsa" },
+          { label: "Konut imarlı arsa", value: "Konut imarlı arsa" },
+          { label: "Ticari arsa", value: "Ticari arsa" },
+          { label: "Sanayi arsası", value: "Sanayi arsası" },
+          { label: "Tarla", value: "Tarla" },
         ],
       },
       {
@@ -1391,7 +8729,44 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
           ],
         },
       },
+      {
+        key: "newBuildPreference",
+        label: "Bina durumu",
+        type: "select",
+        when: {
+          field: "propertyType",
+          in: [
+            "Daire",
+            "Villa",
+            "Rezidans",
+            "Müstakil Ev",
+            "Çiftlik Evi",
+            "Köşk & Konak",
+            "Yalı",
+            "Yalı Dairesi",
+            "Stüdyo",
+            "Dubleks",
+            "İş yeri",
+            "Dükkan / mağaza",
+            "Ofis",
+            "Plaza ofisi",
+            "Depo / antrepo",
+            "Fabrika / imalathane",
+            "AVM ünitesi",
+            "Otel / apart",
+            "Müştemilat",
+            "Turistik tesis",
+            "Devre mülk",
+          ],
+        },
+        options: [
+          { label: "Sıfır / yeni bina şart", value: "Yeni bina şart" },
+          { label: "Yeni veya yakın tarihli", value: "Yeni / yakın tarihli" },
+          { label: "Fark etmez", value: "Fark etmez" },
+        ],
+      },
     ],
+    questionContracts: REAL_ESTATE_PRODUCT_QUESTION_CONTRACTS,
   },
   {
     id: "appliances",
@@ -1445,6 +8820,15 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery", placeholder: "Örn. 1 hafta" },
       { key: "budget", placeholder: "Örn. ₺250.000" },
     ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "90 × 60 × 180 cm",
+      },
+    },
+    questionContracts: APPLIANCE_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         // Free text so taxonomy leaves (Blender, Robot Süpürge, …) persist & match explore
@@ -1531,17 +8915,15 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "laboratuvar",
       "stetoskop",
       "tansiyon aleti",
+      "tansiyon ölçer",
+      "tansiyon olcer",
       "oksijen konsantratör",
       "hasta yatağı",
       "hasta yatagi",
       "tekerlekli sandalye",
-      "maske",
-      "eldiven",
-      "dezenfektan",
     ],
     subcategories: [
       "Medikal Cihaz",
-      "Sarf Malzeme",
       "Klinik Donanım",
       "Diş / Laboratuvar",
       "Diğer",
@@ -1553,6 +8935,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery", placeholder: "Örn. 10 gün" },
       { key: "budget" },
     ],
+    questionContracts: HEALTH_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "healthProductType",
@@ -1561,7 +8944,6 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         required: true,
         options: [
           { label: "Medikal cihaz", value: "Medikal cihaz" },
-          { label: "Sarf malzeme", value: "Sarf malzeme" },
           { label: "Hasta bakım ekipmanı", value: "Hasta bakım ekipmanı" },
           { label: "Diş / laboratuvar", value: "Diş / laboratuvar" },
           { label: "Koruyucu ekipman", value: "Koruyucu ekipman" },
@@ -1660,6 +9042,7 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery" },
       { key: "budget" },
     ],
+    questionContracts: BABY_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "babyProductType",
@@ -1668,8 +9051,34 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
         required: true,
         options: [
           { label: "Bebek arabası / puset", value: "Bebek arabası / puset" },
+          { label: "Oto koltuğu / ana kucağı", value: "Oto koltuğu / ana kucağı" },
+          { label: "Kanguru / bebek taşıyıcı", value: "Kanguru / bebek taşıyıcı" },
+          { label: "Portbebe", value: "Portbebe" },
+          { label: "Bebek arabası aksesuarı", value: "Bebek arabası aksesuarı" },
+          { label: "Oto koltuğu aksesuarı", value: "Oto koltuğu aksesuarı" },
+          { label: "Kanguru aksesuarı", value: "Kanguru aksesuarı" },
+          { label: "Bebek bezi / alt değiştirme", value: "Bebek bezi / alt değiştirme" },
+          { label: "Bez saklama / atık yönetimi", value: "Bez saklama / atık yönetimi" },
+          { label: "Islak mendil / pişik bakımı", value: "Islak mendil / pişik bakımı" },
+          { label: "Bebek banyo ürünü", value: "Bebek banyo ürünü" },
+          { label: "Bebek sağlık / bakım ürünü", value: "Bebek sağlık / bakım ürünü" },
+          { label: "Emzik aksesuarı / temizliği", value: "Emzik aksesuarı / temizliği" },
+          { label: "Lazımlık / tuvalet eğitimi", value: "Lazımlık / tuvalet eğitimi" },
+          { label: "Bebek güvenlik ürünü", value: "Bebek güvenlik ürünü" },
+          { label: "Oyun / gezi ürünü", value: "Oyun / gezi ürünü" },
+          { label: "Oyuncak", value: "Oyuncak" },
+          { label: "Diğer bebek ürünü", value: "Diğer bebek ürünü" },
           { label: "Mama sandalyesi", value: "Mama sandalyesi" },
           { label: "Beşik / park yatak", value: "Beşik / park yatak" },
+          { label: "Uyku tulumu", value: "Uyku tulumu" },
+          { label: "Bebek battaniyesi / kundak", value: "Bebek battaniyesi / kundak" },
+          { label: "Bebek odası mobilyası", value: "Bebek odası mobilyası" },
+          { label: "Yatak koruyucu / nest", value: "Yatak koruyucu / nest" },
+          { label: "Biberon / suluk", value: "Biberon / suluk" },
+          { label: "Emzik / diş kaşıyıcı", value: "Emzik / diş kaşıyıcı" },
+          { label: "Sterilizatör / mama hazırlama", value: "Sterilizatör / mama hazırlama" },
+          { label: "Göğüs pompası / süt saklama", value: "Göğüs pompası / süt saklama" },
+          { label: "Bebek / çocuk gıdası", value: "Bebek / çocuk gıdası" },
           { label: "Beslenme ürünleri", value: "Beslenme ürünleri" },
           { label: "Bebek bezi / bakım", value: "Bebek bezi / bakım" },
           { label: "Oyuncak / gelişim", value: "Oyuncak / gelişim" },
@@ -1761,6 +9170,15 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       { key: "delivery" },
       { key: "budget" },
     ],
+    measurementContracts: {
+      dimensions: {
+        kind: "physical_dimensions",
+        axes: ["width", "depth", "height"],
+        unit: "cm",
+        example: "60 × 45 × 20 cm",
+      },
+    },
+    questionContracts: HOME_KITCHEN_PRODUCT_QUESTION_CONTRACTS,
     fields: [
       {
         key: "kitchenProductType",
@@ -1771,9 +9189,14 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
           { label: "Yemek / tabak takımı", value: "Yemek / tabak takımı" },
           { label: "Kahve seti", value: "Kahve seti" },
           { label: "Çay seti", value: "Çay seti" },
+          { label: "Tencere / tava", value: "Tencere / tava" },
           { label: "Çatal-bıçak takımı", value: "Çatal-bıçak takımı" },
           { label: "Bardak / kadeh", value: "Bardak / kadeh" },
           { label: "Servis / tepsi", value: "Servis / tepsi" },
+          { label: "Mutfak gereçleri", value: "Mutfak gereçleri" },
+          { label: "Mutfak / banyo armatürü", value: "Mutfak / banyo armatürü" },
+          { label: "Ev dekorasyonu", value: "Ev dekorasyonu" },
+          { label: "Ev bakım / düzen", value: "Ev bakım / düzen" },
           { label: "Diğer mutfak eşyası", value: "Diğer mutfak eşyası" },
         ],
       },
@@ -1843,13 +9266,60 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "tasima",
       "bakım",
       "bakim",
+      "boş ev temizliği",
+      "bos ev temizligi",
+      "ev temizliği",
+      "ev temizligi",
+      "halı yıkama",
+      "hali yikama",
+      "koltuk yıkama",
+      "koltuk yikama",
+      "cam balkon",
+      "boya badana",
+      "boya",
+      "badana",
+      "demirdöküm kombi",
+      "demirdokum kombi",
+      "eca kombi",
+      "kombi servisi",
+      "klima servisi",
+      "direksiyon dersi",
+      "duvar dekorasyon",
+      "ev dekorasyon",
+      "fayans döşeme",
+      "fayans doseme",
+      "iç mimar",
+      "ic mimar",
+      "elektrikçi",
+      "elektrikci",
+      "parça eşya taşıma",
+      "parca esya tasima",
+      "logo tasarımı",
+      "logo tasarimi",
+      "grafik tasarım",
+      "grafik tasarim",
+      "evde bakım desteği",
+      "evde bakim destegi",
+      "evde bakım",
+      "evde bakim",
+      "hasta refakati",
+      "ev yardımcısı",
+      "ev yardimcisi",
+      "evde yardımcı",
+      "evde yardimci",
+      "ev hizmetlisi",
+      "evde hizmetli",
+      "ev işleri yardımcısı",
+      "ev isleri yardimcisi",
     ],
     subcategories: [
-      "Danışmanlık",
-      "Bakım ve Onarım",
       "Temizlik",
+      "Ev Tadilat ve Dekorasyon",
+      "Teknik Servis",
       "Nakliye",
-      "Diğer",
+      "Eğitim",
+      "Grafik ve Tasarım",
+      "Evde Bakım ve Destek",
     ],
     commonFields: [
       { key: "title" },
@@ -1860,49 +9330,32 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       {
         key: "serviceType",
         label: "Hizmet türü",
-        type: "text",
-        placeholder: "Örn. Periyodik bakım",
-        required: true,
-      },
-      {
-        key: "frequency",
-        label: "Sıklık",
         type: "select",
-        // Sıklık yalnız tekrarlayan hizmetlerde anlamlı — logo/web gibi tek
-        // seferlik işlere sorulmaz (kurucu denetimi, 2026-08-23).
-        whenProductTypes: [
-          "temizlik",
-          "bakım",
-          "bakim",
-          "güvenlik",
-          "guvenlik",
-          "danışman",
-          "danisman",
-          "muhasebe",
-          "ilaçlama",
-          "ilaclama",
-          "peyzaj",
-        ],
+        required: true,
         options: [
-          { label: "Tek seferlik", value: "Tek seferlik" },
-          { label: "Haftalık", value: "Haftalık" },
-          { label: "Aylık", value: "Aylık" },
-          { label: "Yıllık", value: "Yıllık" },
+          { label: "Boş ev temizliği", value: "Boş ev temizliği" },
+          { label: "Boya badana", value: "Boya badana" },
+          { label: "Cam balkon", value: "Cam balkon" },
+          { label: "Kombi servisi", value: "Kombi servisi" },
+          { label: "Direksiyon dersi", value: "Direksiyon dersi" },
+          { label: "Duvar dekorasyon", value: "Duvar dekorasyon" },
+          { label: "Klima servisi", value: "Klima servisi" },
+          { label: "Elektrikçi", value: "Elektrikçi" },
+          { label: "Parça eşya taşıma", value: "Parça eşya taşıma" },
+          { label: "Ev dekorasyon", value: "Ev dekorasyon" },
+          { label: "Ev temizliği", value: "Ev temizliği" },
+          { label: "Evden eve nakliyat", value: "Evden eve nakliyat" },
+          { label: "Fayans döşeme", value: "Fayans döşeme" },
+          { label: "Halı yıkama / temizleme", value: "Halı yıkama / temizleme" },
+          { label: "Koltuk yıkama / temizleme", value: "Koltuk yıkama / temizleme" },
+          { label: "İç mimar", value: "İç mimar" },
+          { label: "Grafik ve logo tasarımı", value: "Grafik ve logo tasarımı" },
+          { label: "Evde bakım desteği", value: "Evde bakım desteği" },
+          { label: "Ev yardımcısı / ev hizmetlisi", value: "Ev yardımcısı / ev hizmetlisi" },
         ],
-      },
-      {
-        key: "serviceLocation",
-        label: "Hizmet yeri",
-        type: "text",
-        placeholder: "Örn. Zeytinburnu / İstanbul",
-      },
-      {
-        key: "duration",
-        label: "Tahmini süre",
-        type: "text",
-        placeholder: "Örn. 3 gün",
       },
     ],
+    questionContracts: SERVICES_PRODUCT_QUESTION_CONTRACTS,
   },
 ];
 
@@ -2164,6 +9617,61 @@ export function getCategoryById(id: string): RequestCategory | null {
   return REQUEST_CATEGORIES.find((category) => category.id === trimmed) ?? null;
 }
 
+/**
+ * Ürün bağlamına uyan kategori sözleşmesini döndürür. Eşleşme yoksa `null`
+ * dönmek kasıtlıdır: ürün türü belirsizken dar bir soru kümesi uydurulmaz.
+ */
+export function resolveCategoryQuestionContract(input: {
+  categoryId: string;
+  productType?: string | null;
+  needType?: string | null;
+}): ProductQuestionContract | null {
+  const productType = foldProductContext(input.productType ?? "");
+  const alias = input.productType ? resolveTaxonomyAlias(input.productType, input.categoryId) : null;
+  const productForms = [productType];
+  if (alias && (!alias.ambiguous || alias.canonicalNameUnambiguous)) {
+    productForms.push(foldProductContext(alias.node.canonicalName));
+  }
+  const needType = (input.needType ?? "").trim();
+  const contracts = getCategoryById(input.categoryId)?.questionContracts ?? [];
+  let selected: ProductQuestionContract | null = null;
+  let selectedScore = -1;
+
+  for (const contract of contracts) {
+    const matchesNeed =
+      !contract.whenNeedTypes?.length ||
+      (Boolean(needType) && contract.whenNeedTypes.includes(needType));
+    if (!matchesNeed) continue;
+
+    const matchingProductTokens = (contract.whenProductTypes ?? []).filter(
+      (value) => productForms.some((form) => form.includes(foldProductContext(value))),
+    );
+    const matchesProduct =
+      !contract.whenProductTypes?.length ||
+      (Boolean(productType) && matchingProductTokens.length > 0);
+    if (!matchesProduct) continue;
+
+    /**
+     * "Biberon ucu" gibi dar ürünler, "biberon" gibi üst ailelerle de
+     * eşleşebilir. Sıra bağımlılığı yerine en uzun ürün işaretini seçmek,
+     * ürünün kendi sözleşmesini her zaman üstün kılar.
+     */
+    const productSpecificity = Math.max(
+      0,
+      ...matchingProductTokens.map((value) => foldProductContext(value).length),
+    );
+    const needSpecificity = contract.whenNeedTypes?.length ? 1 : 0;
+    const directMatch = matchingProductTokens.some((value) => productType.includes(foldProductContext(value)));
+    const score = (directMatch ? 10000 : 0) + productSpecificity * 10 + needSpecificity;
+    if (score > selectedScore) {
+      selected = contract;
+      selectedScore = score;
+    }
+  }
+
+  return selected;
+}
+
 /** UI-safe resolve: unknown ids become UNKNOWN shell, never an unrelated category. */
 export function resolveRequestCategory(
   id: string | null | undefined,
@@ -2390,14 +9898,29 @@ export function parseDynamicValues(
 
   if ("serviceType" in values) {
     const services = [
-      "temizlik",
-      "nakliye",
-      "danışmanlık",
-      "bakım",
-      "onarım",
+      { value: "Boş ev temizliği", terms: ["boş ev temizliği", "bos ev temizligi"] },
+      { value: "Grafik ve logo tasarımı", terms: ["logo tasarımı", "logo tasarimi", "grafik tasarım", "grafik tasarim"] },
+      { value: "Boya badana", terms: ["boya badana", "boya", "badana", "boyat"] },
+      { value: "Cam balkon", terms: ["cam balkon"] },
+      { value: "Koltuk yıkama / temizleme", terms: ["koltuk yıkama", "koltuk yikama"] },
+      { value: "Evde bakım desteği", terms: ["evde bakım desteği", "evde bakim destegi", "evde bakım", "evde bakim", "hasta refakati", "yaşlı bakım", "yasli bakim", "hasta bakım", "hasta bakim", "yaşlı bakıcı", "yasli bakici", "hasta bakıcı", "hasta bakici"] },
+      { value: "Ev yardımcısı / ev hizmetlisi", terms: ["ev yardımcısı", "ev yardimcisi", "evde yardımcı", "evde yardimci", "ev hizmetlisi", "evde hizmetli", "ev işleri yardımcısı", "ev isleri yardimcisi"] },
+      { value: "Kombi servisi", terms: ["kombi servisi", "demirdöküm kombi", "demirdokum kombi", "eca kombi"] },
+      { value: "Klima servisi", terms: ["klima servisi", "klima bakım", "klima bakim"] },
+      { value: "Direksiyon dersi", terms: ["direksiyon dersi"] },
+      { value: "Duvar dekorasyon", terms: ["duvar dekorasyon"] },
+      { value: "Elektrikçi", terms: ["elektrikçi", "elektrikci"] },
+      { value: "Parça eşya taşıma", terms: ["parça eşya taşıma", "parca esya tasima"] },
+      { value: "Ev dekorasyon", terms: ["ev dekorasyon"] },
+      { value: "Ev temizliği", terms: ["ev temizliği", "ev temizligi"] },
+      { value: "Evden eve nakliyat", terms: ["evden eve nakliyat", "evden eve nakliye"] },
+      { value: "Fayans döşeme", terms: ["fayans döşeme", "fayans doseme"] },
+      { value: "Halı yıkama / temizleme", terms: ["halı yıkama", "hali yikama"] },
+      { value: "İç mimar", terms: ["iç mimar", "ic mimar"] },
     ];
     values.serviceType =
-      services.find((item) => normalized.includes(item)) ?? "";
+      services.find((service) => service.terms.some((term) => normalized.includes(term)))
+        ?.value ?? "";
   }
 
   if ("listingType" in values) {
@@ -2409,7 +9932,41 @@ export function parseDynamicValues(
   }
 
   if ("propertyType" in values) {
-    if (normalized.includes("villa")) values.propertyType = "Villa";
+    if (normalized.includes("devre mülk") || normalized.includes("devre mulk")) {
+      values.propertyType = "Devre mülk";
+    } else if (normalized.includes("devren işyeri") || normalized.includes("devren isyeri")) {
+      values.propertyType = "Devren işyeri";
+    } else if (normalized.includes("müştemilat") || normalized.includes("mustemilat")) {
+      values.propertyType = "Müştemilat";
+    } else if (normalized.includes("kooperatif hissesi")) {
+      values.propertyType = "Kooperatif hissesi";
+    } else if (normalized.includes("turistik tesis")) {
+      values.propertyType = "Turistik tesis";
+    } else if (normalized.includes("konut imarlı arsa") || normalized.includes("konut imarli arsa")) {
+      values.propertyType = "Konut imarlı arsa";
+    } else if (normalized.includes("ticari arsa")) {
+      values.propertyType = "Ticari arsa";
+    } else if (normalized.includes("sanayi arsası") || normalized.includes("sanayi arsasi")) {
+      values.propertyType = "Sanayi arsası";
+    } else if (normalized.includes("imarlı arsa") || normalized.includes("imarli arsa")) {
+      values.propertyType = "İmarlı arsa";
+    } else if (normalized.includes("tarla")) {
+      values.propertyType = "Tarla";
+    } else if (normalized.includes("plaza ofisi")) {
+      values.propertyType = "Plaza ofisi";
+    } else if (normalized.includes("dükkan") || normalized.includes("dukkan") || normalized.includes("mağaza") || normalized.includes("magaza")) {
+      values.propertyType = "Dükkan / mağaza";
+    } else if (normalized.includes("depo") || normalized.includes("antrepo")) {
+      values.propertyType = "Depo / antrepo";
+    } else if (normalized.includes("fabrika") || normalized.includes("imalathane")) {
+      values.propertyType = "Fabrika / imalathane";
+    } else if (normalized.includes("avm ünitesi") || normalized.includes("avm unitesi")) {
+      values.propertyType = "AVM ünitesi";
+    } else if (normalized.includes("otel") || /(?:öğrenci|ogrenci)\s+apart\b|\bapart\s*otel\b/i.test(normalized)) {
+      values.propertyType = "Otel / apart";
+    } else if (normalized.includes("ofis")) {
+      values.propertyType = "Ofis";
+    } else if (normalized.includes("villa")) values.propertyType = "Villa";
     else if (normalized.includes("stüdyo") || normalized.includes("studyo"))
       values.propertyType = "Stüdyo";
     else if (normalized.includes("dubleks")) values.propertyType = "Dubleks";
@@ -2417,8 +9974,6 @@ export function parseDynamicValues(
       values.propertyType = "Rezidans";
     else if (normalized.includes("arsa")) values.propertyType = "Arsa";
     else if (
-      normalized.includes("dükkan") ||
-      normalized.includes("dukkan") ||
       normalized.includes("işyeri") ||
       normalized.includes("isyeri")
     )
@@ -2466,6 +10021,12 @@ export function parseDynamicValues(
   if ("buildingAge" in values) {
     const ageMatch = text.match(/(\d{1,2})\s*yıllık/i);
     if (ageMatch) values.buildingAge = ageMatch[1];
+  }
+
+  if ("newBuildPreference" in values) {
+    if (/\b(sıfır|sifir|yeni)\s+(bina|yapı|yapi|ev|konut|daire|villa|mülk|mulk)\b/i.test(text)) {
+      values.newBuildPreference = "Yeni bina şart";
+    }
   }
 
   return values;

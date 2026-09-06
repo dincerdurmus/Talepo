@@ -39,7 +39,7 @@ export type CorpusExpected = {
   /** ANY beklenen alanlar (ANY eki uygulanınca doldurulur). */
   anyFields: readonly string[];
   /** Beklenen talep kapsamı. */
-  scope: "SUPPORTED" | "UNSUPPORTED_SUPPLY" | "UNSUPPORTED_MEDICAL_ADVICE";
+  scope: "SUPPORTED" | "UNSUPPORTED_SUPPLY" | "UNSUPPORTED_MEDICAL_ADVICE" | "UNSUPPORTED_REMOVED_SCOPE";
   /** Kullanıcı zaten söylediği için SORULMAMASI gereken soru anahtarları. */
   answeredKeys: readonly string[];
   /** Ürün türü zemin gerçeği: envelope product kanalı bu jetonlardan en az

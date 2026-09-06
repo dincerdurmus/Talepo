@@ -105,7 +105,7 @@ const PRODUCT_HINTS: Array<{
 
 export function extractScreenSize(raw: string): string | null {
   const m = raw.match(
-    /\b(\d{2,3})\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)\b/i,
+    /\b(\d{2,3}(?:[.,]\d)?)\s*(?:["”']|inç|inc|inch|ekran(?:lı|li)?)(?=$|[^\p{L}\p{N}])/iu,
   );
   if (m?.[1]) return m[1];
   // "105 ekran" / "140'lık ekran"
@@ -172,6 +172,8 @@ export function extractProductTypeHint(raw: string): {
   categoryId?: string | null;
 } | null {
   ensureTaxonomyLoaded();
+  const specificPhrase = extractTaxonomyProductHint(raw, 2);
+  if (specificPhrase) return specificPhrase;
   for (const hint of PRODUCT_HINTS) {
     if (!hint.keys.test(raw)) continue;
     const hit = resolveTaxonomyAlias(hint.taxonomyQuery, hint.categoryId);
@@ -194,13 +196,17 @@ export function extractProductTypeHint(raw: string): {
   const fromKnownDevice = taxonomyHintFromKnownTechProduct(raw);
   if (fromKnownDevice) return fromKnownDevice;
 
+  return extractTaxonomyProductHint(raw);
+}
+
+function extractTaxonomyProductHint(raw: string, minWords = 1) {
+
   // Free-text product leaves: longer phrases beat single tokens
   // (so "ofis koltuğu" is furniture, not a bare "ofis" real-estate leaf).
-  const stop = /^(arıyorum|ariyorum|istiyorum|almak|satın|bir|ve|için|lütfen)$/i;
   const tokens = raw
     .split(/[\s,.;:!?]+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 2 && !stop.test(t));
+    .filter(Boolean);
 
   const LOCATION_USE_CONTEXT = new Set([
     "ofis",
@@ -218,7 +224,9 @@ export function extractProductTypeHint(raw: string): {
       hit.node.nodeType === "PRODUCT_TYPE" ||
       hit.node.nodeType === "SERVICE_TYPE" ||
       hit.node.nodeType === "COMMODITY_TYPE" ||
-      hit.node.nodeType === "PART_TYPE";
+      hit.node.nodeType === "PART_TYPE" ||
+      (["GROUP", "SUBCATEGORY"].includes(hit.node.nodeType) && phrase.includes(" ") &&
+        hit.node.aliases.some((alias) => alias.toLocaleLowerCase("tr-TR") === phrase.toLocaleLowerCase("tr-TR")));
     if (!typeOk) return null;
     /**
      * BELİRSİZ DÜĞÜM ≠ BELİRSİZ AD (KB-15).
@@ -250,6 +258,7 @@ export function extractProductTypeHint(raw: string): {
     return {
       productType: phraseIsCanonicalName ? hit.node.canonicalName : phrase,
       taxonomyNodeId: hit.ambiguous ? null : hit.node.id,
+      canonicalExact: phraseIsCanonicalName,
       /**
        * Düğüm kimliği belirsiz olsa bile ALANI bilinir. Aşağı akıştaki
        * kategori-özel köprüler (mobilya/beyaz eşya tür alanları) düğüm
@@ -261,13 +270,23 @@ export function extractProductTypeHint(raw: string): {
     };
   };
 
-  for (let n = Math.min(3, tokens.length); n >= 1; n--) {
+  for (let n = Math.min(7, tokens.length); n >= minWords; n--) {
+    let aliasFallback: ReturnType<typeof tryAlias> = null;
     for (let i = 0; i + n <= tokens.length; i++) {
       const phrase = tokens.slice(i, i + n).join(" ");
       if (n === 1 && phrase.length < 4) continue;
       const hit = tryAlias(phrase);
-      if (hit) return hit;
+      if (!hit) continue;
+      /**
+       * Aynı uzunluktaki n-gramlarda kanonik ad, bağlamlı alias'tan üstündür:
+       * "kiralık yalı" alias'ı "Yalı"na giderken, hemen ardından gelen
+       * "yalı dairesi" kendi yaprağıdır. İlk eşleşmeye dönmek kısa ürün
+       * ailesinin uzun ürünü ezmesine neden olur.
+       */
+      if (hit.canonicalExact) return hit;
+      aliasFallback ??= hit;
     }
+    if (aliasFallback) return aliasFallback;
   }
   return null;
 }
