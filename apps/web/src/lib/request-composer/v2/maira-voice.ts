@@ -35,14 +35,11 @@ const BY_CATEGORY_KEY: Record<string, string> = {
   "real-estate:budget":
     "Kira ya da fiyat olarak aklında ne var? Aşağı yukarı bir rakam yeter.",
   "real-estate:city": "Hangi il ve ilçede bakıyorsun?",
-  "real-estate:delivery": "Ne zamana kadar taşınmayı düşünüyorsun?",
   "real-estate:listingType": "Kiralık mı bakıyorsun, satılık mı?",
   "real-estate:propertyType": "Nasıl bir yer arıyorsun; daire mi, müstakil mi, dükkân mı?",
   "real-estate:roomCount": "Kaç oda olsun istersin?",
   "real-estate:area": "Aşağı yukarı kaç metrekare düşünüyorsun?",
-  "services:city": "Hizmeti nerede alacaksın; hangi il, hangi ilçe?",
   "services:delivery": "Ne zamana kadar halledilmesi lazım?",
-  "health:city": "Hizmeti nerede alacaksın; hangi il, hangi ilçe?",
   "automotive:condition": "Sıfır mı olsun, ikinci el de olur mu?",
   "automotive:needType": "Aracın kendisini mi arıyorsun, yoksa bir parça mı lazım?",
   "automotive:modelYear": "En eski kaç model olabilir senin için?",
@@ -53,7 +50,10 @@ const BY_CATEGORY_KEY: Record<string, string> = {
 };
 
 /* 2. Form cümlesi sözlüğü: ortak çekirdek aynı alanı bağlama göre başka
-   sorar (teslimat / hizmet / emlak); söyleyiş o bağlamı korur. */
+   sorar (teslimat / hizmet / emlak); söyleyiş o bağlamı korur. Konum ve
+   teslim soruları BURADAN geçer, alan sözlüğünden değil: "Hizmet nerede
+   verilecek?" ile "Nereye teslim edilecek?" aynı alan olsa da aynı soru
+   değildir (kurucu, 2026-09-12). */
 const BY_PROMPT: Record<string, string> = {
   "Hizmet nerede verilecek?": "Hizmeti nerede alacaksın; hangi il, hangi ilçe?",
   "Nereye teslim edilecek?": "Nereye gönderelim; hangi il, hangi ilçe?",
@@ -61,6 +61,7 @@ const BY_PROMPT: Record<string, string> = {
   "Teslimat adresi neresi? Türkiye geneli veya il ve ilçe seçin.":
     "Nereye gönderelim; Türkiye geneli mi, belli bir il ve ilçe mi?",
   "Ne zamana kadar taşınmak istiyorsunuz?": "Ne zamana kadar taşınmayı düşünüyorsun?",
+  "Aylık kira bütçeniz nedir?": "Aylık kira olarak ne düşünüyorsun? Aşağı yukarı yeter.",
 };
 
 /* 3. Alan sözlüğü: en sık sorulan alanlar, sen diliyle. */

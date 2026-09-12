@@ -383,9 +383,15 @@ export function scheduleNextQuestions(input: {
     input.values.listingType?.trim() ||
     input.fieldStates?.listingType?.value?.trim() ||
     null;
+  const propertyTypeFromValues =
+    input.values.propertyType?.trim() ||
+    input.fieldStates?.propertyType?.value?.trim() ||
+    (input.categoryId === "real-estate" ? (input.productType ?? "") : "") ||
+    null;
   const globalCore = globalCoreQuestionProfiles(input.categoryId, {
     listingType: listingFromValues,
     needType: needTypeContext,
+    propertyType: propertyTypeFromValues,
   });
   const profileByKey = new Map<string, (typeof globalCore)[number]>();
   for (const p of categoryProfiles) profileByKey.set(p.fieldKey, p);
