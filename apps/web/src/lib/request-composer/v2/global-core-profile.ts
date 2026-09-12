@@ -37,11 +37,16 @@ export function globalCoreQuestionProfiles(
   const isServiceLike =
     categoryId === "services" || categoryId === "health";
 
+  /* Yazılım / web projesi teslim edilen bir koli değildir; konum sorusu
+     hizmet diliyle sorulur ve "Uzaktan" kaçışı zamanlayıcıda açılır
+     (kurucu, 2026-09-12). */
+  const isSoftwareProject =
+    categoryId === "technology" && extras?.needType === "software";
   const locationPrompt = isRealEstate
     ? "Hangi il ve ilçede arıyorsunuz?"
     : categoryId === "machinery" && extras?.needType === "part"
       ? "Teslimat adresi neresi? Türkiye geneli veya il ve ilçe seçin."
-      : isServiceLike
+      : isServiceLike || isSoftwareProject
         ? "Hizmet nerede verilecek?"
         : "Nereye teslim edilecek?";
 

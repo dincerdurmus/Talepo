@@ -221,13 +221,19 @@ function escapesFor(input: {
   allowDontCare: boolean;
   importance: QuestionImportance;
   categoryId?: string;
+  needType?: string | null;
   remoteEligible?: boolean;
 }): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
   const isRealEstate = input.categoryId === "real-estate";
+  /* Yazılım / web projesi her zaman uzaktan yapılabilir (kurucu,
+     2026-09-12); ürün sözcüğü imzasına bağlı değildir. */
+  const isSoftwareProject =
+    input.categoryId === "technology" && input.needType === "software";
   const isServiceLike =
-    (input.categoryId === "services" || input.categoryId === "health") &&
-    input.remoteEligible !== false;
+    isSoftwareProject ||
+    ((input.categoryId === "services" || input.categoryId === "health") &&
+      input.remoteEligible !== false);
 
   if (input.fieldKey === "budget") {
     // Tek kaçış: teklifleri görmek — bilmiyorum/farketmez bütçede yok (kurucu).
@@ -584,6 +590,7 @@ export function scheduleNextQuestions(input: {
         allowDontCare: Boolean(profile.allowDontCare),
         importance,
         categoryId: input.categoryId,
+        needType: needTypeContext,
         remoteEligible: isRemoteEligibleService(productTypeContext),
       }),
       placeholder:

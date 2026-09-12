@@ -2167,7 +2167,21 @@ export function deriveExplicitNeedType(
   ]);
   const iv = String(intentObj.value);
   let candidates: string[] = [];
-  if (iv === "SERVICE" || kindVal === "SERVICE") candidates = ["service"];
+  /**
+   * TEKNOLOJİDE YAZILIM PROJESİ "service" DEĞİL "software"DIR (kurucu,
+   * 2026-09-12). Ölçüldü: "Kurumsal web sitesi yaptırmak istiyorum" SERVICE
+   * özneyle "service" (Bakım / destek) alt türüne kapanıyor, donanım ve bakım
+   * soruları geliyordu. Kanonik yazılım sinyali varsa ve donanım sinyali
+   * yoksa talep bir yazılım projesidir; "service" yalnız yazılım sinyali
+   * taşımayan teknik destek talebine (sunucu bakımı gibi) kalır.
+   */
+  const isSoftwareProject =
+    categoryId === "technology" &&
+    (iv === "SERVICE" || iv === "MANUFACTURE" || kindVal === "SERVICE" || kindVal === "SOFTWARE") &&
+    TECH_SOFTWARE_SIGNAL.test(String(result.rawInput ?? "")) &&
+    !TECH_HARDWARE_SIGNAL.test(String(result.rawInput ?? ""));
+  if (isSoftwareProject) candidates = ["software"];
+  else if (iv === "SERVICE" || kindVal === "SERVICE") candidates = ["service"];
   else if (iv === "PART" || kindVal === "PART" || kindVal === "ACCESSORY")
     candidates = ["part"];
   else if (kindVal === "VEHICLE" && (iv === "BUY" || iv === "RENT"))

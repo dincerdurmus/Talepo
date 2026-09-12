@@ -551,6 +551,93 @@ const TECHNOLOGY_COMMON_CANDIDATE_KEYS = [
 ];
 
 const TECHNOLOGY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  /**
+   * YAZILIM / WEB PROJESİ KENDİ SÖZLEŞMESİYLE SORULUR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: "Kurumsal web sitesi yaptırmak istiyorum" için marka, adet,
+   * ürün durumu ve model soruluyordu; donanım profilleri yazılım akışına
+   * sızıyordu. Bu sözleşme donanım sorularını kapatır, yazılımın kendi dört
+   * sorusunu seçenekli sorar. Konum sorusu küresel çekirdekten hizmet
+   * diliyle gelir ve "Uzaktan" kaçışı açıktır; bütçe ve zaman aynen kalır.
+   */
+  {
+    whenNeedTypes: ["software"],
+    restrictStandardProfiles: true,
+    allowedCandidateFieldKeys: [
+      "needType",
+      "solutionType",
+      "platform",
+      "userCount",
+      "integration",
+      "support",
+      "city",
+      "budget",
+      "delivery",
+    ],
+    questions: [
+      {
+        fieldKey: "platform",
+        prompt: "Hangi platformda çalışacak?",
+        summaryLabel: "Platform",
+        importance: "quote_critical",
+        rank: 74,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Web", value: "Web" },
+          { label: "iOS", value: "iOS" },
+          { label: "Android", value: "Android" },
+          { label: "Masaüstü", value: "Masaüstü" },
+          { label: "Çoklu platform", value: "Çoklu platform" },
+        ],
+      },
+      {
+        fieldKey: "userCount",
+        prompt: "Yaklaşık kaç kullanıcı olacak?",
+        summaryLabel: "Kullanıcı sayısı",
+        importance: "optional",
+        rank: 60,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "1-10", value: "1-10" },
+          { label: "10-100", value: "10-100" },
+          { label: "100-1000", value: "100-1000" },
+          { label: "1000+", value: "1000+" },
+        ],
+      },
+      {
+        fieldKey: "integration",
+        prompt: "Bağlanması gereken bir sistem var mı?",
+        summaryLabel: "Entegrasyon",
+        importance: "optional",
+        rank: 55,
+        inputHint: "select",
+        allowUnknown: true,
+        allowDontCare: true,
+        quickChoices: [
+          { label: "Yok", value: "Yok" },
+          { label: "ERP / muhasebe", value: "ERP / muhasebe" },
+          { label: "Ödeme sistemi", value: "Ödeme sistemi" },
+          { label: "Kargo", value: "Kargo" },
+          { label: "Pazaryeri", value: "Pazaryeri" },
+        ],
+      },
+      {
+        fieldKey: "support",
+        prompt: "Teslim sonrası bakım ve destek gerekli mi?",
+        summaryLabel: "Bakım ve destek",
+        importance: "optional",
+        rank: 50,
+        inputHint: "select",
+        allowUnknown: true,
+        quickChoices: [
+          { label: "Gerekli", value: "Gerekli" },
+          { label: "Gerekli değil", value: "Gerekli değil" },
+        ],
+      },
+    ],
+  },
   {
     whenNeedTypes: ["hardware"],
     whenProductTypes: ["televizyon", "tv", "monitor", "monitör"],

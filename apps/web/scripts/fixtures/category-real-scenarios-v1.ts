@@ -29,7 +29,7 @@ export const categoryScenarios: CategoryScenario[] = [
    * konum) — yazılan şey ikinci kez sorulmaz.
    */
   ...cases("automotive", `
-2019 Renault Clio arıyorum|condition|brand,model,modelYear,quantity,part,partPreference,tireSize,area
+2019 Renault Clio arıyorum|condition,driveType,warranty|brand,model,modelYear,quantity,part,partPreference,tireSize,area
 Hatasız ikinci el SUV arıyorum 800 bine kadar|modelYear|condition,budget,quantity,bodyType,part,tireSize
 Mercedes C180 veya C200 otomatik olsun|modelYear,condition|brand,transmission,quantity,part,tireSize
 2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin|condition|brand,model,modelYear,city,budget,quantity
@@ -63,8 +63,8 @@ Dizüstü bilgisayar arıyorum|usagePurpose,processor,ram,storage|panelType,mobi
 Masaüstü bilgisayar arıyorum|processor,ram,storage,graphics|tabletAccessory,mobileNetwork
 Cep telefonu arıyorum|storageCapacity,mobileNetwork,cameraPriority|processor,tabletAccessory
 Tablet arıyorum|storageCapacity,tabletConnectivity,tabletAccessory|mobileNetwork,graphics
-Kurumsal web sitesi yaptırmak istiyorum||fridgeCapacity,carSeatGroup
-Stok takip yazılımı yaptırmak istiyorum||screenSize,panelType
+Kurumsal web sitesi yaptırmak istiyorum|platform|brand,model,condition,quantity,screenSize,specs,fridgeCapacity,carSeatGroup
+Stok takip yazılımı yaptırmak istiyorum||brand,model,condition,quantity,screenSize,panelType
 Sunucu arıyorum||roomCount,fridgeType
 `),
   ...cases("appliances", `
@@ -135,7 +135,7 @@ Bebek arabası aksesuarı arıyorum|strollerAccessoryType,strollerAccessoryCompa
 Oto koltuğu aksesuarı arıyorum|carSeatAccessoryType,carSeatAccessoryCompatibility|carSeatGroup
 Bebek alt açma örtüsü arıyorum|diaperCareProduct,diaperCareMaterial|babyBathStage
 Bebek bezi çöp kovası arıyorum|diaperDisposalProduct,diaperDisposalCapacity|feedingBottleMaterial
-Bebek için ıslak mendil arıyorum|skinCareProduct,skinCareSensitivity,skinCarePackSize|babyBathStage
+Bebek için ıslak mendil arıyorum|skinCareProduct,skinCareSensitivity,skinCarePackSize|babyBathStage,condition,model
 Bebek banyo küveti arıyorum|babyBathProduct,babyBathStage,babyBathFeature|feedingBottleCapacity
 Bebek sağlık bakım ürünü arıyorum|babyHealthProduct,babyHealthOperation|babyBathStage
 Emzik aksesuarı arıyorum|pacifierAccessoryProduct,pacifierAccessoryMaterial|feedingBottleCapacity

@@ -268,10 +268,24 @@ check("automotive: owned vehicle with fault language routes to automotive servic
 function drainSchedule(text: string): { keys: string[]; prompts: string[] } {
   const { state } = syncFromText(null, text);
   const hybrid = resolveHybridQuestions(state);
+  /* Sayfa ile aynı bağlam: kanonik alanlar (ürün tipi dâhil) zamanlayıcıya
+     gider; harness ürün bağlamını gizleyip profilleri susturmasın. */
   const values: Record<string, string> = {
+    ...toResolverFieldBag(state),
     budget: "25000",
     city: "İstanbul / Kadıköy",
   };
+  const fieldStates: Record<string, { kind: string; value: string | null; provenance: string | null }> =
+    Object.fromEntries(
+      Object.entries(state.fields).map(([key, field]) => [
+        key,
+        {
+          kind: field.kind,
+          value: field.kind === "VALUE" ? String(field.value ?? "") : null,
+          provenance: field.provenance ?? null,
+        },
+      ]),
+    );
   const answered: string[] = [];
   const keys: string[] = [];
   const prompts: string[] = [];
@@ -284,6 +298,7 @@ function drainSchedule(text: string): { keys: string[]; prompts: string[] } {
           : null,
       candidates: hybrid.candidates,
       values,
+      fieldStates,
       answeredKeys: answered,
     });
     const next = schedule.visible[0];
@@ -291,6 +306,7 @@ function drainSchedule(text: string): { keys: string[]; prompts: string[] } {
     keys.push(next.fieldKey);
     prompts.push(next.prompt);
     values[next.fieldKey] = "x";
+    fieldStates[next.fieldKey] = { kind: "VALUE", value: "x", provenance: "EXPLICIT_BROWSE" };
     answered.push(next.fieldKey);
   }
   return { keys, prompts };
@@ -324,6 +340,59 @@ check("category common fields without a profile still ask with a real sentence",
   const at = keys.indexOf("quantity");
   assert.ok(at >= 0, `makine adet sorusu düştü: ${keys.join(",")}`);
   assert.equal(prompts[at], "Kaç adet gerekli?");
+});
+
+check("automotive vehicle: drive type and warranty stay as optional selects", () => {
+  const { keys } = drainSchedule("2019 Renault Clio arıyorum");
+  assert.ok(keys.includes("driveType"), keys.join(","));
+  assert.ok(keys.includes("warranty"), keys.join(","));
+  for (const gone of ["generation", "engine", "bodyCondition"]) {
+    assert.ok(!keys.includes(gone), `${gone} hâlâ soruluyor: ${keys.join(",")}`);
+  }
+});
+
+check("consumables are not asked for second-hand or model", () => {
+  for (const text of [
+    "Bebek için ıslak mendil arıyorum",
+    "Bebek gıdası arıyorum",
+    "Yemek takımı arıyorum",
+    "Ev temizlik malzemeleri arıyorum",
+  ]) {
+    const { keys } = drainSchedule(text);
+    assert.ok(!keys.includes("condition"), `${text}: condition soruldu (${keys.join(",")})`);
+    assert.ok(!keys.includes("model"), `${text}: model soruldu (${keys.join(",")})`);
+  }
+  const durable = drainSchedule("Bebek arabası arıyorum").keys;
+  assert.ok(durable.includes("condition"), `bebek arabası: condition düştü (${durable.join(",")})`);
+});
+
+check("software project uses its own contract, not hardware questions", () => {
+  const { state } = syncFromText(null, "Kurumsal web sitesi yaptırmak istiyorum");
+  assert.equal(state.categoryId, "technology");
+  assert.equal(
+    String(state.fields.needType?.value ?? ""),
+    "software",
+    `needType=${JSON.stringify(state.fields.needType)}`,
+  );
+  const { keys, prompts } = drainSchedule("Kurumsal web sitesi yaptırmak istiyorum");
+  for (const gone of ["brand", "quantity", "condition", "model", "screenSize", "specs"]) {
+    assert.ok(!keys.includes(gone), `${gone} soruldu: ${keys.join(",")}`);
+  }
+  /* Platform metinden çözüldüyse ("web sitesi" → Web) sorulmaz; çözülmediyse
+     sözleşmenin ilk sorusudur. İkisi de kuralın gereğidir. */
+  const known = toResolverFieldBag(state).platform;
+  assert.ok(
+    keys.includes("platform") || Boolean(known),
+    `platform ne soruldu ne metinden geldi: ${keys.join(",")}`,
+  );
+  const schedule = scheduleFor("Kurumsal web sitesi yaptırmak istiyorum");
+  const city = schedule.visible.find((q) => q.fieldKey === "city");
+  assert.ok(city, `konum sorusu yok: ${schedule.visible.map((q) => q.fieldKey).join(",")}`);
+  assert.equal(city.prompt, "Hizmet nerede verilecek?");
+  assert.ok(
+    city.escapeChoices.some((c) => c.value === "remote"),
+    `uzaktan kaçışı yok: ${JSON.stringify(city.escapeChoices)} / ${prompts.join(" | ")}`,
+  );
 });
 
 check("scheduler: RE without city cannot review", () => {
