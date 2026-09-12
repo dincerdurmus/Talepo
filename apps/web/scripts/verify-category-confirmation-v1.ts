@@ -19,6 +19,7 @@ import { ensureAutomotiveCatalogRegistered } from "../src/lib/catalog";
 import { ensureTaxonomyLoaded } from "../src/lib/taxonomy";
 import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
 import {
+  buildCategoryChoice,
   buildCategoryConfirmation,
   categoryConfirmationPrompt,
   categoryConfirmationToGuidanceSelection,
@@ -218,6 +219,70 @@ for (const c of CONFIDENT_CASES) {
   }
 }
 
+/* G — belirsiz durum: aynı adım, "choose" modu */
+{
+  const guidance = {
+    candidates: [
+      { slug: "automotive", label: "Otomotiv", description: "Araç ve parça" },
+      { slug: "machinery", label: "Makine", description: "Sanayi makineleri" },
+    ],
+  };
+  const model = buildCategoryChoice({ guidance, categoryId: "automotive" });
+  check("G1 belirsizde adım var", model !== null);
+  if (model) {
+    check("G2 mod choose", model.mode === "choose", model.mode);
+    check("G3 adaylar kanonik listeden taşınır", model.candidates.map((c) => c.id).join("|") === "automotive|machinery");
+    check("G4 zayıf tahmin işaretli", model.candidates.filter((c) => c.current).map((c) => c.id).join() === "automotive");
+    check("G5 kök listesi yine 11", model.rootChoices.length === 11);
+    check("G6 'hiçbiri' etiketi var", model.rejectLabel.trim().length > 0 && model.rejectLabel !== model.confirmLabel);
+    check(
+      "G7 choose modunda uydurma onay yok",
+      categoryConfirmationToGuidanceSelection(model, { kind: "confirm" }) === null,
+    );
+    const picked = categoryConfirmationToGuidanceSelection(model, {
+      kind: "pick_root",
+      categoryId: "machinery",
+    });
+    check(
+      "G8 aday seçimi picked_candidate",
+      picked?.kind === "candidate" &&
+        picked.slug === "machinery" &&
+        categoryGuidanceToUserChoice(picked) === "picked_candidate",
+      JSON.stringify(picked),
+    );
+    check(
+      "G9 listede olmayan slug reddedilir",
+      categoryConfirmationToGuidanceSelection(model, { kind: "pick_root", categoryId: "unresolved" }) === null,
+    );
+  }
+  check("G10 aday yoksa adım da yok", buildCategoryChoice({ guidance: { candidates: [] } }) === null);
+  check(
+    "G11 sistem slug'ı aday olamaz",
+    buildCategoryChoice({
+      guidance: { candidates: [{ slug: "unresolved", label: "Belirsiz", description: "-" }] },
+    }) === null,
+  );
+  const confirmModel = buildCategoryConfirmation(inputFor("no-frost buzdolabı arıyorum"));
+  check("G12 confirm modunda aday listesi boş", confirmModel?.candidates.length === 0);
+}
+
+/* H — YAYIN KAPISI DEĞİŞMEZ: kategori onayı zorunlu değil (kurucu) */
+{
+  const src = readFileSync("src/lib/request-composer/v2/publish-readiness.ts", "utf8");
+  check(
+    "H1 yayın hazırlığı kategori onayını okumaz",
+    !/categoryUserChoice|categoryConfirmation|categoryLockedByUser/.test(src),
+    "publish-readiness kategori onayına bakıyor",
+  );
+  const page = readFileSync("src/app/talep/page.tsx", "utf8");
+  const call = /computeComposerPublishReadiness\(\{[\s\S]*?\}\)/.exec(page)?.[0] ?? "";
+  check(
+    "H2 sayfa yayın hazırlığına kategori onayı geçirmez",
+    call.length > 0 && !/categoryUserChoice|categoryConfirmation/.test(call),
+    call.slice(0, 200),
+  );
+}
+
 /* F — kaynak kapıları: tek beyin, iki yüzey */
 {
   const read = (p: string) => {
@@ -247,7 +312,8 @@ for (const c of CONFIDENT_CASES) {
     );
     check(
       "F2 iki yüzey aynı modeli alır",
-      /categoryStep=\{categoryConfirmation\}/.test(page) &&
+      /categoryStep=\{categoryStepForMaira\}/.test(page) &&
+        /categoryStepForMaira = categoryConfirmation \?\? categoryChoice/.test(page) &&
         /<CategoryConfirmationCard[\s\S]*?model=\{categoryConfirmation\}/.test(page),
     );
     check(
@@ -287,6 +353,16 @@ for (const c of CONFIDENT_CASES) {
     check(
       "F9 Maira 11 kökü modelden çizer",
       /categoryStep\.rootChoices/.test(maira) && !/REQUEST_CATEGORIES/.test(maira),
+    );
+    check(
+      "F13 Maira adayları modelden çizer",
+      /categoryStep\.candidates/.test(maira) && !/buildCategoryGuidance/.test(maira),
+    );
+    check(
+      "F14 belirsiz adım da aynı işleyiciye gider",
+      /categoryChoice = useMemo/.test(page) &&
+        /buildCategoryChoice\(/.test(page) &&
+        (page.match(/onCategoryAction=\{applyCategoryConfirmation\}/g) ?? []).length === 1,
     );
     check(
       "F10 Maira onay/ret etiketlerini modelden okur",

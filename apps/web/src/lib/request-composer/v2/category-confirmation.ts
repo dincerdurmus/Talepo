@@ -13,8 +13,16 @@
  * hâlâ `understandRequest()`'tir; bu dosya karar ÜRETMEZ, kararı kullanıcıya
  * sunar ve kullanıcının dokunuşunu mevcut rehberlik seçimine çevirir.
  *
+ * İKİ MOD, TEK ADIM.
+ *   confirm  motor emin: "Bunu X olarak değerlendiriyorum, doğru mu?"
+ *   choose   motor emin değil: "Hangi alanda arayalım?" + kanonik adaylar
+ * Her iki modda da "Bu değil / Bunlardan hiçbiri" aynı yere çıkar: kullanıcı
+ * 11 kök kategoriden birini kendi eliyle seçer.
+ *
  * Adım cevap vermeyi ENGELLEMEZ: kart açıkken sorular akmaya devam eder.
- * Yayın kapısı bu dilimde değişmez (kurucu ayrı karar verecek).
+ * Yayın kapısı bu dilimde DEĞİŞMEZ — kategori onayı yayın için zorunlu
+ * değildir (kurucu kararı, 2026-09-12). Onay bir kolaylıktır, bir bariyer
+ * değil; yayın hâlâ yalnız bütçe ve konumla kapanır.
  */
 
 import {
@@ -34,7 +42,14 @@ export type CategoryRootChoice = {
   current: boolean;
 };
 
+/**
+ * `confirm` motorun kararını onaylatır; `choose` motor emin olmadığında
+ * kanonik adayları sorar. İkisi de aynı dokunuş sözleşmesini kullanır.
+ */
+export type CategoryStepMode = "confirm" | "choose";
+
 export type CategoryConfirmationModel = {
+  mode: CategoryStepMode;
   categoryId: string;
   categoryLabel: string;
   subcategoryLabel: string | null;
@@ -52,6 +67,11 @@ export type CategoryConfirmationModel = {
   /** Kök listesinde motorun şu anki tahmininin yanına yazılan not. */
   currentHint: string;
   rootChoices: CategoryRootChoice[];
+  /**
+   * `choose` modunda motorun eşit gördüğü adaylar (2-4). `confirm` modunda
+   * boştur — orada tek bir karar vardır ve o da `pathLabel`'dir.
+   */
+  candidates: CategoryRootChoice[];
 };
 
 export type CategoryConfirmationAction =
@@ -70,6 +90,10 @@ export const CATEGORY_CONFIRMATION_COPY = {
     "Yanlışsa \"Bu değil\" de, alanı kendin seç. Bu arada sorulara cevap vermeye devam edebilirsin.",
   pickPrompt: "Peki hangi alan? Kök kategoriyi sen seç.",
   pickHelper: "Talepo ikinci bir tahmin yapmaz; seçim senin.",
+  choosePrompt: "Hangi alanda arayalım?",
+  chooseHelper:
+    "Metinden net çıkaramadım. Doğru alanı seçersen soruları ona göre sorarım.",
+  chooseRejectLabel: "Bunlardan hiçbiri",
 } as const;
 
 export function categoryConfirmationPrompt(pathLabel: string): string {
@@ -132,6 +156,7 @@ export function buildCategoryConfirmation(
     : known.label;
 
   return {
+    mode: "confirm",
     categoryId: id,
     categoryLabel: known.label,
     subcategoryLabel,
@@ -146,6 +171,57 @@ export function buildCategoryConfirmation(
     backLabel: CATEGORY_CONFIRMATION_COPY.backLabel,
     currentHint: CATEGORY_CONFIRMATION_COPY.currentHint,
     rootChoices: listRootCategoryChoices(id),
+    candidates: [],
+  };
+}
+
+/**
+ * BELİRSİZ DURUM — AYNI ADIM, BAŞKA MOD (kurucu, 2026-09-12).
+ *
+ * Motor emin olmadığında standart form kanonik rehberlik kartını gösterir;
+ * Maira da aynı kararı göstermeli, çünkü "Maira başka bir şey değil".
+ * Adaylar BURADA ÜRETİLMEZ: `buildCategoryGuidance` ne verdiyse o taşınır.
+ * Kullanıcı "Bunlardan hiçbiri" derse yine 11 kök listesi açılır.
+ */
+export function buildCategoryChoice(input: {
+  guidance: {
+    candidates: Array<{ slug: string; label: string; description: string }>;
+  } | null;
+  /** Motorun zayıf tahmini — listede işaretlenir, gizlenmez. */
+  categoryId?: string | null;
+}): CategoryConfirmationModel | null {
+  const raw = input.guidance?.candidates ?? [];
+  const candidates: CategoryRootChoice[] = [];
+  for (const c of raw) {
+    const slug = c.slug?.trim();
+    if (!slug || isSystemCategorySlug(slug) || slug === "unknown") continue;
+    if (candidates.some((x) => x.id === slug)) continue;
+    candidates.push({
+      id: slug,
+      label: c.label,
+      description: c.description,
+      current: slug === (input.categoryId ?? null),
+    });
+  }
+  if (candidates.length === 0) return null;
+
+  return {
+    mode: "choose",
+    categoryId: input.categoryId?.trim() || "",
+    categoryLabel: "",
+    subcategoryLabel: null,
+    pathLabel: "",
+    eyebrow: CATEGORY_CONFIRMATION_COPY.eyebrow,
+    prompt: CATEGORY_CONFIRMATION_COPY.choosePrompt,
+    helper: CATEGORY_CONFIRMATION_COPY.chooseHelper,
+    confirmLabel: CATEGORY_CONFIRMATION_COPY.confirmLabel,
+    rejectLabel: CATEGORY_CONFIRMATION_COPY.chooseRejectLabel,
+    pickPrompt: CATEGORY_CONFIRMATION_COPY.pickPrompt,
+    pickHelper: CATEGORY_CONFIRMATION_COPY.pickHelper,
+    backLabel: CATEGORY_CONFIRMATION_COPY.backLabel,
+    currentHint: CATEGORY_CONFIRMATION_COPY.currentHint,
+    rootChoices: listRootCategoryChoices(input.categoryId ?? null),
+    candidates,
   };
 }
 
@@ -160,10 +236,16 @@ export function categoryConfirmationToGuidanceSelection(
 ): CategoryGuidanceSelection | null {
   switch (action.kind) {
     case "confirm":
+      /* `choose` modunda onaylanacak tek bir karar yoktur: kullanıcı ya bir
+         aday ya da bir kök seçer. Uydurma kategori döndürülmez. */
+      if (model.mode !== "confirm" || !model.categoryId) return null;
       return { kind: "candidate", slug: model.categoryId };
     case "pick_root": {
       const slug = action.categoryId.trim();
-      if (!model.rootChoices.some((c) => c.id === slug)) return null;
+      const known =
+        model.rootChoices.some((c) => c.id === slug) ||
+        model.candidates.some((c) => c.id === slug);
+      if (!known) return null;
       return { kind: "candidate", slug };
     }
     case "reject":

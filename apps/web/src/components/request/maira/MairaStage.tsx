@@ -190,8 +190,8 @@ export function MairaStage({
    * Görünen seçenekler KANONİK kontrolden gelir: önce değer seçenekleri,
    * sonra kanonik kaçışlar. İlk üçü görünür, kalanı "Diğer seçenekler"
    * aynı yüzeyde açar — Showcase'in alt sıra düzeni budur. Kategori
-   * adımında seçenekler yine kanonik modelden gelir: onay/ret ikilisi ya da
-   * "Bu değil" sonrası 11 kök kategori.
+   * adımında seçenekler yine kanonik modelden gelir: onay/ret ikilisi,
+   * belirsiz durumda kanonik adaylar, "Bu değil" sonrası 11 kök kategori.
    */
   const allOptions: { label: string; value: string }[] =
     categoryActive && categoryStep
@@ -202,10 +202,18 @@ export function MairaStage({
               : c.label,
             value: c.id,
           }))
-        : [
-            { label: categoryStep.confirmLabel, value: "__confirm__" },
-            { label: categoryStep.rejectLabel, value: "__reject__" },
-          ]
+        : categoryStep.mode === "choose"
+          ? [
+              ...categoryStep.candidates.map((c) => ({
+                label: c.label,
+                value: c.id,
+              })),
+              { label: categoryStep.rejectLabel, value: "__reject__" },
+            ]
+          : [
+              { label: categoryStep.confirmLabel, value: "__confirm__" },
+              { label: categoryStep.rejectLabel, value: "__reject__" },
+            ]
       : [
           ...(control?.options ?? []),
           ...(control?.softOptions ?? []),
@@ -253,7 +261,9 @@ export function MairaStage({
   const optionsTitle = categoryActive
     ? categoryRejected
       ? "Kök kategoriyi seç"
-      : "Doğru mu?"
+      : categoryStep?.mode === "choose"
+        ? "Bir alan seç"
+        : "Doğru mu?"
     : active
       ? "Bir yanıt seç"
       : "Şu an bekleyen soru yok";

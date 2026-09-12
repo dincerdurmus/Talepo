@@ -65,6 +65,7 @@ import {
   toHumanQuestions,
 } from "@/lib/request-brain/human-question-layer";
 import {
+  buildCategoryChoice,
   buildCategoryConfirmation,
   categoryConfirmationToGuidanceSelection,
   type CategoryConfirmationAction,
@@ -1838,9 +1839,31 @@ function TalepOlusturForm() {
     selectedCategory.subcategories,
     understanding.rawInput,
   ]);
+  /**
+   * MAIRA'DA BELİRSİZ DURUM (kurucu, 2026-09-12). Standart form kanonik
+   * rehberlik kartını çizer; Maira aynı kararı kendi sahnesinde gösterir —
+   * "Maira başka bir şey değil". Adaylar `categoryGuidance`'tan taşınır,
+   * ikinci bir aday üretimi yoktur.
+   */
+  const categoryChoice = useMemo(() => {
+    if (categoryConfirmation) return null;
+    if (categoryUserChoice) return null;
+    if (!categoryGuidance) return null;
+    return buildCategoryChoice({
+      guidance: categoryGuidance,
+      categoryId: activeCategoryId,
+    });
+  }, [
+    activeCategoryId,
+    categoryConfirmation,
+    categoryGuidance,
+    categoryUserChoice,
+  ]);
+  /** Maira'nın gördüğü TEK adım: onay ya da seçim. */
+  const categoryStepForMaira = categoryConfirmation ?? categoryChoice;
   const categoryRejected =
-    categoryConfirmation !== null &&
-    categoryRejectedFor === categoryConfirmation.categoryId;
+    categoryStepForMaira !== null &&
+    categoryRejectedFor === (categoryStepForMaira.categoryId || "__choose__");
 
   const editableUnderstoodFacts = useMemo(() => {
     const live = understandingMatchesComposerText({
@@ -2065,11 +2088,13 @@ function TalepOlusturForm() {
    * "Bu değil" / "Vazgeç" yalnız görünümü değiştirir.
    */
   function applyCategoryConfirmation(action: CategoryConfirmationAction) {
-    if (!categoryConfirmation) return;
+    const step = categoryStepForMaira;
+    if (!step) return;
     if (action.kind === "reject") {
-      setCategoryRejectedFor(categoryConfirmation.categoryId);
+      setCategoryRejectedFor(step.categoryId || "__choose__");
       trackComposerEvent("category_confirmation_rejected", {
-        categoryId: categoryConfirmation.categoryId,
+        categoryId: step.categoryId,
+        mode: step.mode,
       });
       return;
     }
@@ -2077,17 +2102,15 @@ function TalepOlusturForm() {
       setCategoryRejectedFor(null);
       return;
     }
-    const selection = categoryConfirmationToGuidanceSelection(
-      categoryConfirmation,
-      action,
-    );
+    const selection = categoryConfirmationToGuidanceSelection(step, action);
     if (!selection) return;
     trackComposerEvent(
       action.kind === "confirm"
         ? "category_confirmation_confirmed"
         : "category_root_picked",
       {
-        categoryId: categoryConfirmation.categoryId,
+        categoryId: step.categoryId,
+        mode: step.mode,
         pickedCategoryId:
           selection.kind === "candidate" ? selection.slug : undefined,
       },
@@ -3227,7 +3250,7 @@ function TalepOlusturForm() {
           remainingCriticalCount={composerReadiness.remainingCriticalCount}
           answers={userAnswerRows}
           subtitle={readinessLabel}
-          categoryStep={categoryConfirmation}
+          categoryStep={categoryStepForMaira}
           categoryRejected={categoryRejected}
           onCategoryAction={applyCategoryConfirmation}
           phaseHeading={focusedQuestionSchedule.phaseHeading}
