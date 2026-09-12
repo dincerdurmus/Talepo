@@ -124,6 +124,7 @@ import {
 import {
   isSoftEscapeValue,
   scheduleComposerQuestions,
+  resolveEditQuestion,
   scheduledToFocusedQuestion,
 } from "@/lib/request-composer/v2/focused-questions";
 import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
@@ -1763,6 +1764,78 @@ function TalepOlusturForm() {
     understanding,
   ]);
 
+  /**
+   * DÜZELTME BAĞLAMI — soru üretimiyle AYNI kanonik okuma (D3g).
+   *
+   * Normal soru üretimi ile düzeltme sorusu aynı bağlamı okumak
+   * zorundadır; ayrı bir türetme, iki yüzeyin sessizce farklı seçenek
+   * göstermesine yol açardı.
+   */
+  const questionContext = useMemo(() => {
+    const valueOf = (key: string) => {
+      const f = hybrid.state?.fields[key];
+      return f?.kind === "VALUE" ? String(f.value ?? "") : null;
+    };
+    return {
+      productType: valueOf("productType") ?? valueOf("applianceType"),
+      needType: valueOf("needType"),
+      listingType: valueOf("listingType"),
+      isRemoteService:
+        /\buzaktan\b/i.test(requestText) ||
+        (manualValues.locationMode ?? "").toLocaleLowerCase("tr-TR") ===
+          "remote",
+    };
+  }, [hybrid.state?.fields, manualValues.locationMode, requestText]);
+
+  /**
+   * CEVAP DÜZELTME (D3g, 2026-08-30).
+   *
+   * Düzeltme kipi normal aktif soruyu DEĞİŞTİRMEZ: zamanlayıcı ve
+   * bastırma kuralları aynen çalışır, düzeltme yalnız ek bir yüzey
+   * açar. Kaydet ya da vazgeç sonrası kip kapanır ve kullanıcı
+   * bıraktığı aktif soruya döner.
+   */
+  const [correctionFieldKey, setCorrectionFieldKey] = useState<string | null>(
+    null,
+  );
+  const correction = useMemo(() => {
+    if (!correctionFieldKey) return null;
+    return resolveEditQuestion({
+      state: hybrid.state ?? null,
+      fieldKey: correctionFieldKey,
+      categoryId: activeCategoryId,
+      needType: questionContext.needType,
+      productType: questionContext.productType,
+      isRemoteService: questionContext.isRemoteService,
+      listingType: questionContext.listingType,
+    });
+  }, [activeCategoryId, correctionFieldKey, hybrid.state, questionContext]);
+
+  /**
+   * Kalem düğmesinin serbest metin yerine kanonik kontrolü açacağı
+   * alanlar. Karar burada verilmez — kanonik kapıya sorulur.
+   */
+  const canonicalEditKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const fact of editableUnderstoodFacts) {
+      const r = resolveEditQuestion({
+        state: hybrid.state ?? null,
+        fieldKey: fact.key,
+        categoryId: activeCategoryId,
+        needType: questionContext.needType,
+        productType: questionContext.productType,
+        isRemoteService: questionContext.isRemoteService,
+        listingType: questionContext.listingType,
+      });
+      if (r.status === "ready") keys.add(fact.key);
+    }
+    return keys;
+  }, [
+    activeCategoryId,
+    editableUnderstoodFacts,
+    hybrid.state,
+    questionContext,
+  ]);
   const publishReviewModel = useMemo(() => {
     const reviewLocation = locationDisplayLabel(
       mergedCommonDraft.city.trim() || null,
@@ -2332,6 +2405,83 @@ function TalepOlusturForm() {
     updateDynamicField(field, typed);
   }
 
+  /**
+   * TEK KANONİK CEVAP KAPISI (D3g, 2026-08-30).
+   *
+   * Bu gövde daha önce JSX içinde isimsiz bir kapanıştı ve sorusunu
+   * yalnızca aday listelerinde arıyordu. Cevaplanmış bir alan o
+   * listelerden bilinçli olarak düştüğü için düzeltme hiçbir zaman
+   * applyBrainQuestion'a ulaşamıyordu. Kapı artık adlandırıldı ve
+   * çağıranın kanonik otoriteden çözdüğü soruyu kabul ediyor —
+   * davranış aynı, ulaşılabilirlik farklı. Zamanlayıcı ve bastırma
+   * kuralları DEĞİŞMEDİ.
+   */
+  function handleFocusedAnswer(
+    fieldKey: string,
+    value: string,
+    explicitQuestion?: QuestionCandidate,
+  ) {
+    if (value === "skip" || value === "skip_optional") {
+      setSkippedQuestionKeys((keys) =>
+        keys.includes(fieldKey) ? keys : [...keys, fieldKey],
+      );
+      trackComposerEvent("focused_question_skipped", { fieldKey });
+      return;
+    }
+    const question =
+      explicitQuestion ??
+      enrichmentCandidates.find((q) => q.fieldKey === fieldKey) ??
+      focusedQuestions.find((q) => q.fieldKey === fieldKey);
+    if (question) {
+      applyBrainQuestion(question, value);
+    }
+    /**
+     * KULLANICI METNİ OTORİTESİ (kurucu, 2026-08-26).
+     *
+     * Verilen cevap ARTIK serbest metne yazılmaz. Bu, 2026-08-23
+     * tarihli "cevap metne de işlenir" kararının YERİNE GEÇER. Gerekçe
+     * ölçülmüş bir zarardır: bestecinin metne yazdığı sözcük bir
+     * sonraki okumada BAŞKA bir alanın kullanıcı kanıtı sayılabiliyordu
+     * ve kullanıcı kendi cümlesinde makine slug'ı ("Talep türü:
+     * vehicle.") görüyordu.
+     *
+     * Cevap kaybolmaz: `applyBrainQuestion` zaten her cevabı
+     * `hybrid.applyQuickOption` üzerinden kanonik duruma
+     * EXPLICIT_BROWSE kaynağıyla yazar ve o yol rawInput'u bilerek
+     * korur. `rawInput` kullanıcının yazdığı metin olarak değişmeden
+     * kalır.
+     */
+    setAnsweredQuestionKeys((keys) =>
+      keys.includes(fieldKey) ? keys : [...keys, fieldKey],
+    );
+    setConfirmedFactKeys((keys) =>
+      keys.includes(fieldKey) ? keys : [...keys, fieldKey],
+    );
+    trackComposerEvent(
+      isSoftEscapeValue(value)
+        ? "focused_question_skipped"
+        : "focused_question_answered",
+      { fieldKey },
+    );
+  }
+
+  /**
+   * ASIL SORU PANELİ (D3g, 2026-08-30).
+   *
+   * Düzeltme yüzeyi de aynı paneli kullandığı için DOM'da iki
+   * "composer-questions" bulunabilir. Kaydırma her zaman ASIL soru
+   * paneline gitmelidir; düzeltme yüzeyi hedef değildir.
+   */
+  function scrollToComposerQuestions() {
+    const nodes = Array.from(
+      document.querySelectorAll('[data-testid="composer-questions"]'),
+    );
+    const main = nodes.find(
+      (n) => !n.closest('[data-testid="answer-correction"]'),
+    );
+    main?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   const filterCityValue = isRealEstate
     ? realEstateLocation.il
     : mergedCommonDraft.city.trim();
@@ -2885,9 +3035,7 @@ function TalepOlusturForm() {
       }
       onNextStep={() => {
         setAiCompanionOpen(false);
-        document
-          .querySelector('[data-testid="composer-questions"]')
-          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+        scrollToComposerQuestions();
       }}
       professionalDraftApplied={brain.professionalDraftApplied}
       professionalPreviewOpen={brain.professionalPreviewOpen}
@@ -3251,7 +3399,51 @@ function TalepOlusturForm() {
                             keys.includes(key) ? keys : [...keys, key],
                           );
                         }}
+                        canonicalEditKeys={canonicalEditKeys}
+                        onCanonicalEdit={setCorrectionFieldKey}
                       />
+
+                      {/*
+                        CEVAP DÜZELTME YÜZEYİ (D3g, 2026-08-30).
+
+                        Yeni bir soru motoru değildir: kanonik kapıdan
+                        (`resolveEditQuestion`) çözülen tek soruyu, normal
+                        akışın KULLANDIĞI panelin aynısıyla gösterir ve
+                        cevabı aynı `handleFocusedAnswer` kapısına verir.
+                        Aktif soru bu sırada değişmez; kaydet veya vazgeç
+                        sonrası kullanıcı bıraktığı soruya döner.
+                      */}
+                      {correction?.status === "ready" ? (
+                        <div data-testid="answer-correction">
+                          <FocusedQuestionsPanel
+                            questions={[correction.question]}
+                            draftByKey={focusedDraftByKey}
+                            onDraftChange={(fieldKey, value) =>
+                              setFocusedDraftByKey((current) => ({
+                                ...current,
+                                [fieldKey]: value,
+                              }))
+                            }
+                            onAnswer={(fieldKey, value) => {
+                              handleFocusedAnswer(
+                                fieldKey,
+                                value,
+                                correction.question,
+                              );
+                              setCorrectionFieldKey(null);
+                            }}
+                            onSkip={() => setCorrectionFieldKey(null)}
+                          />
+                          <button
+                            type="button"
+                            data-testid="answer-correction-cancel"
+                            className="mt-2 min-h-10 text-xs font-medium text-[#0f766e]"
+                            onClick={() => setCorrectionFieldKey(null)}
+                          >
+                            Vazgeç
+                          </button>
+                        </div>
+                      ) : null}
 
                       {categoryGuidance && !categoryUserChoice ? (
                         <CategoryGuidanceCard
@@ -3306,66 +3498,7 @@ function TalepOlusturForm() {
                               [fieldKey]: value,
                             }))
                           }
-                          onAnswer={(fieldKey, value) => {
-                            if (
-                              value === "skip" ||
-                              value === "skip_optional"
-                            ) {
-                              setSkippedQuestionKeys((keys) =>
-                                keys.includes(fieldKey)
-                                  ? keys
-                                  : [...keys, fieldKey],
-                              );
-                              trackComposerEvent("focused_question_skipped", {
-                                fieldKey,
-                              });
-                              return;
-                            }
-                            const question =
-                              enrichmentCandidates.find(
-                                (q) => q.fieldKey === fieldKey,
-                              ) ??
-                              focusedQuestions.find(
-                                (q) => q.fieldKey === fieldKey,
-                              );
-                            if (question) {
-                              applyBrainQuestion(question, value);
-                            }
-                            /**
-                             * KULLANICI METNİ OTORİTESİ (kurucu, 2026-08-26).
-                             *
-                             * Verilen cevap ARTIK serbest metne yazılmaz. Bu,
-                             * 2026-08-23 tarihli "cevap metne de işlenir"
-                             * kararının YERİNE GEÇER. Gerekçe ölçülmüş bir
-                             * zarardır: bestecinin metne yazdığı sözcük bir
-                             * sonraki okumada BAŞKA bir alanın kullanıcı kanıtı
-                             * sayılabiliyordu ve kullanıcı kendi cümlesinde
-                             * makine slug'ı ("Talep türü: vehicle.") görüyordu.
-                             *
-                             * Cevap kaybolmaz: `applyBrainQuestion` zaten her
-                             * cevabı `hybrid.applyQuickOption` üzerinden
-                             * kanonik duruma EXPLICIT_BROWSE kaynağıyla yazar
-                             * ve o yol rawInput'u bilerek korur. `rawInput`
-                             * kullanıcının yazdığı metin olarak değişmeden
-                             * kalır.
-                             */
-                            setAnsweredQuestionKeys((keys) =>
-                              keys.includes(fieldKey)
-                                ? keys
-                                : [...keys, fieldKey],
-                            );
-                            setConfirmedFactKeys((keys) =>
-                              keys.includes(fieldKey)
-                                ? keys
-                                : [...keys, fieldKey],
-                            );
-                            trackComposerEvent(
-                              isSoftEscapeValue(value)
-                                ? "focused_question_skipped"
-                                : "focused_question_answered",
-                              { fieldKey },
-                            );
-                          }}
+                          onAnswer={handleFocusedAnswer}
                           onSkip={(fieldKey) => {
                             const importance = focusedQuestions.find(
                               (q) => q.fieldKey === fieldKey,
@@ -3448,9 +3581,7 @@ function TalepOlusturForm() {
                           data-testid="composer-continue-hint"
                           className="mt-3 min-h-12 w-full cursor-pointer rounded-xl border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-semibold text-[#0f5f59] transition hover:border-[#0f766e]/45"
                           onClick={() => {
-                            document
-                              .querySelector('[data-testid="composer-questions"]')
-                              ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            scrollToComposerQuestions();
                           }}
                         >
                           Yayın için son adım:{" "}

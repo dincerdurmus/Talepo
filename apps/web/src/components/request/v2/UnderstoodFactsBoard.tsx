@@ -26,6 +26,17 @@ type Props = {
   onDismissFact: (key: string) => void;
   onEditFact: (key: string, value: string) => void;
   onDontCareFact: (key: string) => void;
+  /**
+   * KANONİK DÜZELTME KAPISI (D3g, 2026-08-30).
+   *
+   * Bir alanın kanonik düzenleme sorusu çözülebiliyorsa kalem düğmesi
+   * ARTIK serbest metin kutusu açmaz; düzeltmeyi kanonik kontrole
+   * devreder. Serbest kutu yalnız kanonik kontrolü olmayan alanlarda
+   * kalır — böylece seçenekleri olan bir alanda kullanıcının yazdığı
+   * metin kanonik cevabın yerine geçmez.
+   */
+  canonicalEditKeys?: ReadonlySet<string>;
+  onCanonicalEdit?: (key: string) => void;
 };
 
 export function UnderstoodFactsBoard({
@@ -41,6 +52,8 @@ export function UnderstoodFactsBoard({
   onDismissFact,
   onEditFact,
   onDontCareFact,
+  canonicalEditKeys,
+  onCanonicalEdit,
 }: Props) {
   const baseId = useId();
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -148,6 +161,11 @@ export function UnderstoodFactsBoard({
               onConfirmFact={onConfirmFact}
               onDismissFact={onDismissFact}
               onEditFact={onEditFact}
+              canonicalEdit={
+                canonicalEditKeys && onCanonicalEdit
+                  ? { keys: canonicalEditKeys, open: onCanonicalEdit }
+                  : undefined
+              }
               onDontCareFact={onDontCareFact}
             />
           ))}
@@ -171,6 +189,11 @@ export function UnderstoodFactsBoard({
               onConfirmFact={onConfirmFact}
               onDismissFact={onDismissFact}
               onEditFact={onEditFact}
+              canonicalEdit={
+                canonicalEditKeys && onCanonicalEdit
+                  ? { keys: canonicalEditKeys, open: onCanonicalEdit }
+                  : undefined
+              }
               onDontCareFact={onDontCareFact}
             />
           ))}
@@ -194,6 +217,7 @@ function FactRow({
   onDismissFact,
   onEditFact,
   onDontCareFact,
+  canonicalEdit,
 }: {
   fact: EditableUnderstoodFact;
   baseId: string;
@@ -208,6 +232,7 @@ function FactRow({
   onDismissFact: (key: string) => void;
   onEditFact: (key: string, value: string) => void;
   onDontCareFact: (key: string) => void;
+  canonicalEdit?: { keys: ReadonlySet<string>; open: (key: string) => void };
 }) {
   const editId = `${baseId}-edit-${fact.key}`;
   const isEditing = editingKey === fact.key;
@@ -321,9 +346,13 @@ function FactRow({
               aria-label={`${fact.label} düzenle`}
               className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-teal-950/55 hover:bg-teal-950/[0.04]"
               onClick={() => {
+                setMenuKey(null);
+                if (canonicalEdit?.keys.has(fact.key)) {
+                  canonicalEdit.open(fact.key);
+                  return;
+                }
                 setEditingKey(fact.key);
                 setDraft(fact.displayValue);
-                setMenuKey(null);
               }}
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden />

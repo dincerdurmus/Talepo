@@ -17,7 +17,11 @@ import {
   scheduleNextQuestions,
   type FieldAnswerState,
 } from "./question-scheduler";
-import { resolveQuestionControl } from "./question-control-registry";
+import {
+  assertCriticalControlNotTextFallback,
+  resolveQuestionControl,
+} from "./question-control-registry";
+import { resolveProfileForField } from "./question-profiles";
 import type { QuestionControlDef } from "./question-control-types";
 
 export type FocusedQuestion = HumanizedQuestion & {
@@ -343,3 +347,132 @@ export function scheduleComposerQuestions(input: {
 }
 
 export type { ScheduleResult };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CEVAP DÜZELTME KAPISI (D3g, 2026-08-30)
+
+   NEDEN VAR. `enrichmentCandidates` / zamanlayıcı, cevaplanmış bir alanı
+   bilinçli olarak gizler — soru sormayı durduran doğru davranış budur ve
+   burada GEVŞETİLMEZ. Ancak "bu alanı bir daha sorma" ile "bu alanı
+   düzeltemezsin" aynı şey değildir. Kullanıcı verdiği cevabı değiştirmek
+   istediğinde, o alanın kanonik sorusu YENİDEN çözülmek zorundadır.
+
+   NEDEN HAFIZA YOK. Sorunun daha önce gösterilmiş hâlini bir yerde
+   saklamak (React state, DOM, önbellek) sessiz bir ikinci otorite
+   yaratır: profil ya da kontrol kaydı değiştiğinde kullanıcı eski
+   seçenekleri görmeye devam eder. Bu yüzden soru, kontrol tipi ve
+   seçenekler HER ÇAĞRIDA `resolveProfileForField` ve
+   `resolveQuestionControl` otoritelerinden yeniden üretilir; bu modül
+   kendi eşleme tablosunu TUTMAZ.
+
+   NEDEN FAIL-CLOSED. Kanonik kontrol çözülemiyorsa (profil yok ya da
+   kritik bir alan `text_fallback`'e düşüyorsa) uydurma bir metin kutusu
+   açmak, kullanıcının serbest yazdığı metni kanonik bir cevapmış gibi
+   kaydeder ve eşleşmeyi bozar. Kapı o durumda KAPALI döner ve arayüz
+   düzenleme eylemini hiç göstermez.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+export type EditQuestionUnavailableReason =
+  | "no_profile"
+  | "critical_text_fallback";
+
+export type EditQuestionResolution =
+  | {
+      status: "ready";
+      /** Mevcut `FocusedQuestion` sözleşmesine uygun kanonik düzenleme sorusu. */
+      question: FocusedQuestion;
+      /** Kanonik durumdaki mevcut değer — yalnız gösterim içindir. */
+      currentValue: string | null;
+      /** Kanonik merdivendeki mevcut mod (VALUE / ANY / UNKNOWN / …). */
+      currentKind: string | null;
+    }
+  | {
+      status: "unavailable";
+      fieldKey: string;
+      reason: EditQuestionUnavailableReason;
+    };
+
+export function resolveEditQuestion(input: {
+  /** Besteci kanonik durumu — yalnız mevcut değeri okumak için. */
+  state: { fields?: Record<string, CanonicalFieldLike | undefined> } | null;
+  fieldKey: string;
+  categoryId: string;
+  needType?: string | null;
+  productType?: string | null;
+  isRemoteService?: boolean;
+  listingType?: string | null;
+}): EditQuestionResolution {
+  const { fieldKey, categoryId } = input;
+
+  const profile = resolveProfileForField({
+    fieldKey,
+    categoryId,
+    needType: input.needType,
+    productType: input.productType,
+  });
+  if (!profile) {
+    return { status: "unavailable", fieldKey, reason: "no_profile" };
+  }
+
+  /**
+   * Kritik bir alanın serbest metne düşmesi ürünün KENDİ kuralına göre
+   * geçersizdir; bu kararı burada yeniden tanımlamıyoruz, mevcut
+   * otoriteye soruyoruz.
+   */
+  const canonicalControl = assertCriticalControlNotTextFallback({
+    categoryId,
+    fieldKey,
+    needType: input.needType,
+    productType: input.productType,
+    importance: profile.importance,
+    allowUnknown: profile.allowUnknown,
+    allowDontCare: profile.allowDontCare,
+    isRemoteService: input.isRemoteService,
+    isRealEstate: categoryId === "real-estate",
+    listingType: input.listingType,
+  });
+  if (!canonicalControl.ok) {
+    return { status: "unavailable", fieldKey, reason: "critical_text_fallback" };
+  }
+
+  /**
+   * Zamanlayıcının ürettiğiyle AYNI ara sözleşme. `escapeChoices` boş
+   * bırakılır çünkü ANY / UNKNOWN kaçışlarını kontrol kaydı zaten
+   * `softOptions` içinde taşır; ikinci bir kaçış listesi üretmek aynı
+   * bilginin iki kopyasını yaratırdı.
+   */
+  const scheduled: ScheduledQuestion = {
+    fieldKey,
+    prompt: profile.prompt,
+    summaryLabel: profile.summaryLabel,
+    importance: profile.importance,
+    allowUnknown: Boolean(profile.allowUnknown),
+    allowDontCare: Boolean(profile.allowDontCare),
+    inputHint: profile.inputHint ?? "text",
+    budgetBasis: profile.budgetBasis,
+    priorityScore: profile.rank ?? 0.5,
+    quickChoices: profile.quickChoices,
+    escapeChoices: [],
+    categoryId,
+  };
+
+  const question = scheduledToFocusedQuestion(scheduled, undefined, {
+    productType: input.productType,
+    needType: input.needType,
+    isRemoteService: input.isRemoteService,
+    listingType: input.listingType,
+  });
+
+  const field = input.state?.fields?.[fieldKey] ?? null;
+  return {
+    status: "ready",
+    question,
+    currentValue:
+      field && field.kind === "VALUE" && typeof field.value === "string"
+        ? field.value
+        : null,
+    currentKind: field ? (field.kind ?? null) : null,
+  };
+}
+
+type CanonicalFieldLike = { kind?: string; value?: string | null };
