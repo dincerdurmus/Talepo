@@ -242,7 +242,7 @@ export function MairaStage({
         ? categoryStep.pickPrompt
         : categoryStep.prompt
       : active
-        ? (active.humanPrompt ?? active.label)
+        ? (active.mairaPrompt ?? active.humanPrompt ?? active.label)
         : subtitle;
   const leadHelper =
     categoryActive && categoryStep
@@ -369,7 +369,7 @@ export function MairaStage({
                 {allowCustom ? (
                   <>
                     <label className="sr-only" htmlFor="maira-free-answer">
-                      {active.humanPrompt ?? active.label}
+                      {active.mairaPrompt ?? active.humanPrompt ?? active.label}
                     </label>
                     <input
                       id="maira-free-answer"
