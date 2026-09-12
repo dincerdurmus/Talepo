@@ -35,9 +35,9 @@ Mercedes C180 veya C200 otomatik olsun|modelYear,condition|brand,transmission,qu
 2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin|condition|brand,model,modelYear,city,budget,quantity
 Renault Clio 2015 arka tampon arıyorum|partPreference|brand,model,part,partVehicleYear,modelYear,condition,fuel,transmission,quantity,tireSize
 Passat için far arıyorum|partVehicleYear,partPreference|model,part,modelYear,condition,tireSize
-Araba lastiği arıyorum|tireSize,tireSeason,tireQuantity|modelYear,condition,partPreference,part,fuel,transmission
-205/55 R16 kışlık 4 adet lastik arıyorum||tireSize,tireSeason,tireQuantity,tireItemType,modelYear,condition,part
-Kamyon lastiği arıyorum|tireSize|modelYear,condition,part,partPreference
+Araba lastiği arıyorum|tireSize,tireSeason,tireQuantity|modelYear,condition,model,partPreference,part,fuel,transmission
+205/55 R16 kışlık 4 adet lastik arıyorum||tireSize,tireSeason,tireQuantity,tireItemType,modelYear,condition,model,part
+Kamyon lastiği arıyorum|tireSize|modelYear,condition,model,part,partPreference
 Fiat Egea periyodik bakım yaptırmak istiyorum||brand,model,serviceType,quantity,listingType,part,partPreference,tireSize
 Aracım çalışmıyor arıza var|serviceType,brand,model|quantity,partPreference,tireSize,listingType
 `),

@@ -996,6 +996,25 @@ export function mapUnderstandingToFields(
   const subjectKind = result.requestSubject.kind.value;
   const isPartSubject = subjectKind === "PART" || subjectKind === "ACCESSORY";
 
+  /**
+   * PARÇA TALEBİNDE YIL, PARÇANIN UYACAĞI ARACIN YILIDIR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: "Renault Clio 2015 arka tampon arıyorum" yazan kullanıcıya
+   * "Parçanın uyacağı araç yılı nedir?" yeniden soruluyordu. Yıl metinden
+   * `modelYear` olarak çıkıyor, yedek parça sözleşmesi ise `partVehicleYear`
+   * soruyor; iki anahtar iki soru oluyordu. Köprü yalnız otomotiv parça
+   * öznesinde ve yalnız alan boşken kurulur; kaynak ve kanıt aynen taşınır,
+   * çıkarım kullanıcı beyanına yükseltilmez.
+   */
+  if (
+    result.category.value === "automotive" &&
+    isPartSubject &&
+    fields.modelYear?.kind === "VALUE" &&
+    !fields.partVehicleYear
+  ) {
+    fields.partVehicleYear = { ...fields.modelYear };
+  }
+
   // Real-estate subject name → propertyType (concrete types only; not "gayrimenkul")
   if (
     subjectKind === "REAL_ESTATE" &&

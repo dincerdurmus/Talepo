@@ -4224,8 +4224,23 @@ const AUTOMOTIVE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
   },
   {
     whenNeedTypes: ["tire"],
+    /**
+     * LASTİK AKIŞINA GENEL ÜRÜN SORULARI SIZMAZ (kurucu, 2026-09-12).
+     *
+     * Ölçüldü: "Araba lastiği arıyorum" akışında kategori geneli `condition`
+     * ("Ürün durumu") ve `model` ("Model tercihi") profilleri soruluyordu;
+     * lastik için ikisi de anlamsız. Jant ve lastik-servis sözleşmeleri bu
+     * kapıyı zaten taşıyordu, lastik sözleşmesi taşımıyordu. Aday anahtar
+     * listesi de ortak automotive listesinden ayrıldı: `condition` ve
+     * `warranty` lastikte sorulmaz. Bütçe, konum ve zaman küresel çekirdekten
+     * gelmeye devam eder.
+     */
+    restrictStandardProfiles: true,
     allowedCandidateFieldKeys: [
-      ...AUTOMOTIVE_COMMON_CANDIDATE_KEYS,
+      "needType",
+      "brand",
+      "city",
+      "budget",
       "tireItemType",
       "tireSize",
       "tireSeason",

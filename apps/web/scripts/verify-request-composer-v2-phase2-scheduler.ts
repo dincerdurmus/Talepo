@@ -17,6 +17,7 @@ import {
 } from "../src/lib/request-composer/v2/entity-roles";
 import { computeComposerPublishReadiness } from "../src/lib/request-composer/v2/publish-readiness";
 import { isFieldSatisfied } from "../src/lib/request-composer/v2/question-scheduler";
+import { listProfilesForCategory } from "../src/lib/request-composer/v2/question-profiles";
 
 function factsMap(text: string) {
   const { state } = syncFromText(null, text);
@@ -153,6 +154,55 @@ check("scheduler: city written in the text (budget answered) skips the essential
   assert.ok(!schedule.visible.some((q) => q.fieldKey === "budget"));
   assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"));
   assert.equal(schedule.phase, "detail");
+});
+
+/**
+ * YAZDIĞINI SORMA — otomotiv (kurucu, 2026-09-12). Metindeki mevsim ve
+ * parça-araç yılı kanonik alana bağlanır; lastik akışına genel ürün
+ * soruları girmez.
+ */
+check("automotive: 'kışlık' binds tireSeason from text", () => {
+  const { state } = syncFromText(null, "205/55 R16 kışlık 4 adet lastik arıyorum");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(state.fields.tireSeason?.kind, "VALUE");
+  assert.equal(String(state.fields.tireSeason?.value), "Kış");
+  assert.equal(state.fields.tireSeason?.provenance, "EXPLICIT_TEXT");
+  const summer = syncFromText(null, "Yazlık lastik arıyorum 195/65 R15").state;
+  assert.equal(String(summer.fields.tireSeason?.value), "Yaz");
+  const all = syncFromText(null, "Dört mevsim lastik arıyorum").state;
+  assert.equal(String(all.fields.tireSeason?.value), "Dört mevsim");
+});
+
+check("automotive: part request year becomes partVehicleYear", () => {
+  const { state } = syncFromText(null, "Renault Clio 2015 arka tampon arıyorum");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(state.fields.partVehicleYear?.kind, "VALUE");
+  assert.equal(String(state.fields.partVehicleYear?.value), "2015");
+  assert.equal(state.fields.partVehicleYear?.provenance, "EXPLICIT_TEXT");
+  const schedule = scheduleFor("Renault Clio 2015 arka tampon arıyorum", {
+    budget: "5000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "partVehicleYear"));
+});
+
+check("automotive: tire flow does not ask product condition or model", () => {
+  const schedule = scheduleFor("Araba lastiği arıyorum", {
+    budget: "5000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.equal(schedule.phase, "detail");
+  const keys = schedule.visible.map((q) => q.fieldKey);
+  assert.ok(!keys.includes("condition"), `condition soruldu: ${keys.join(",")}`);
+  assert.ok(!keys.includes("model"), `model soruldu: ${keys.join(",")}`);
+  const profileKeys = listProfilesForCategory({
+    categoryId: "automotive",
+    needType: "tire",
+    productType: "Lastik",
+  }).map((p) => p.fieldKey);
+  assert.ok(!profileKeys.includes("condition"), profileKeys.join(","));
+  assert.ok(!profileKeys.includes("model"), profileKeys.join(","));
+  assert.ok(profileKeys.includes("tireSize"), profileKeys.join(","));
 });
 
 check("scheduler: RE without city cannot review", () => {
