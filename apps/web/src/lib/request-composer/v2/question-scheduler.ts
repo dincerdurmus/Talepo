@@ -275,6 +275,9 @@ function escapesFor(input: {
 
 function defaultPrompt(fieldKey: string, fallback?: string): string {
   if (fallback) return fallback;
+  /* Ortak alanın kendi cümlesi vardır; "Adet bilgisini ekleyelim." gibi
+     yedek etiket kullanıcıya gösterilmez (kurucu, 2026-09-12). */
+  if (fieldKey === "quantity") return "Kaç adet gerekli?";
   /* Ham İngilizce anahtar kullanıcıya ASLA gösterilmez; Türkçe etiket
      kanonik haritadan gelir, o da yoksa nötr bir cümleye düşülür. */
   const label = fieldDisplayLabel(fieldKey);
@@ -411,6 +414,29 @@ export function scheduleNextQuestions(input: {
     hybridCandidates.map((c) => [c.fieldKey, c]),
   );
 
+  /**
+   * SORU OLMAK İÇİN PROFİL GEREKİR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü (156 senaryo): ürün sözleşmesi olmayan kategorilerde eski form
+   * alanları ("Özellikler", "Teknik özellikler", "Kullanım alanı", "Ölçüler",
+   * "Uyumlu ürün kimlikleri") aday soru olarak akışa doluyordu. Beyaz eşya,
+   * mobilya, ev-mutfak ve sağlıkta senaryo başına 5-7 soru bu sınıftandı;
+   * kahve makinesine kurulum, sunucuya ekran boyutu soruluyor, profil
+   * sorusu ham alanla iki kez geliyordu (kaç kişilik + kapasite). Kurucu
+   * kuralı: sürekli serbest metin yazdırma, her kategoride aynı soru setini
+   * kullanma. Karar: yalnız aday listesinden gelen ve hiçbir profil
+   * çözmeyen anahtar soru olarak zamanlanmaz; alan düzenleme ekranında
+   * kalır. Küresel çekirdek, kategori profilleri ve kategorinin kendi ortak
+   * alanları (ör. makinede adet) bu kapıdan etkilenmez. Kategori
+   * çözülmemişken ("needDescription" kaçışı) eski davranış korunur.
+   */
+  const declaredKeys = new Set<string>([
+    ...globalCore.map((p) => p.fieldKey),
+    ...categoryProfiles.map((p) => p.fieldKey),
+    ...commonKeys,
+  ]);
+  const legacyFieldGate = Boolean(category);
+
   // Location already answered via mode or soft status
   const currentValue = (key: string) => {
     const canonical = input.fieldStates?.[key];
@@ -446,14 +472,19 @@ export function scheduleNextQuestions(input: {
       continue;
     }
 
-    const profile =
+    const resolvedProfile =
       profileByKey.get(fieldKey) ??
       resolveProfileForField({
         fieldKey,
         categoryId: input.categoryId,
         needType: needTypeContext,
         productType: productTypeContext,
-      }) ??
+      });
+    if (!resolvedProfile && legacyFieldGate && !declaredKeys.has(fieldKey)) {
+      continue;
+    }
+    const profile =
+      resolvedProfile ??
       ({
         fieldKey,
         prompt: hybridByKey.get(fieldKey)?.label ?? defaultPrompt(fieldKey),

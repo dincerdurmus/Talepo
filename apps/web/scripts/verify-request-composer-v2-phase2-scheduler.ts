@@ -260,6 +260,72 @@ check("automotive: owned vehicle with fault language routes to automotive servic
   assert.equal(helper.categoryId, "services");
 });
 
+/**
+ * SORU OLMAK İÇİN PROFİL GEREKİR (kurucu, 2026-09-12). Akış sonuna kadar
+ * boşaltılır; hiçbir soru ham form etiketi taşımaz, ürüne yabancı eski
+ * alan (sunucuya ekran boyutu, kahve makinesine kurulum) sorulmaz.
+ */
+function drainSchedule(text: string): { keys: string[]; prompts: string[] } {
+  const { state } = syncFromText(null, text);
+  const hybrid = resolveHybridQuestions(state);
+  const values: Record<string, string> = {
+    budget: "25000",
+    city: "İstanbul / Kadıköy",
+  };
+  const answered: string[] = [];
+  const keys: string[] = [];
+  const prompts: string[] = [];
+  for (let i = 0; i < 40; i++) {
+    const schedule = scheduleComposerQuestions({
+      categoryId: state.categoryId ?? "technology",
+      needType:
+        state.fields.needType?.kind === "VALUE"
+          ? String(state.fields.needType.value ?? "")
+          : null,
+      candidates: hybrid.candidates,
+      values,
+      answeredKeys: answered,
+    });
+    const next = schedule.visible[0];
+    if (!next) break;
+    keys.push(next.fieldKey);
+    prompts.push(next.prompt);
+    values[next.fieldKey] = "x";
+    answered.push(next.fieldKey);
+  }
+  return { keys, prompts };
+}
+
+check("legacy form fields are not scheduled as questions", () => {
+  const cases: Array<{ text: string; forbidden: string[] }> = [
+    { text: "Sunucu arıyorum", forbidden: ["screenSize"] },
+    { text: "Kahve makinesi arıyorum", forbidden: [] },
+    { text: "Yemek takımı arıyorum", forbidden: [] },
+    { text: "Köşe koltuk arıyorum", forbidden: [] },
+    { text: "Hasta monitörü arıyorum", forbidden: [] },
+    { text: "Bebek arabası arıyorum", forbidden: [] },
+  ];
+  for (const c of cases) {
+    const { keys, prompts } = drainSchedule(c.text);
+    for (const key of c.forbidden) {
+      assert.ok(!keys.includes(key), `${c.text}: ${key} soruldu (${keys.join(",")})`);
+    }
+    for (const prompt of prompts) {
+      assert.ok(
+        prompt.trim().endsWith("?"),
+        `${c.text}: ham etiket soru oldu → "${prompt}" (${keys.join(",")})`,
+      );
+    }
+  }
+});
+
+check("category common fields without a profile still ask with a real sentence", () => {
+  const { keys, prompts } = drainSchedule("Elektrikli forklift arıyorum");
+  const at = keys.indexOf("quantity");
+  assert.ok(at >= 0, `makine adet sorusu düştü: ${keys.join(",")}`);
+  assert.equal(prompts[at], "Kaç adet gerekli?");
+});
+
 check("scheduler: RE without city cannot review", () => {
   const schedule = scheduleFor("Kiralık 3+1 daire arıyorum");
   const readiness = computeComposerPublishReadiness({
