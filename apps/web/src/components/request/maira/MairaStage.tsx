@@ -27,6 +27,10 @@ import { useEffect, useState } from "react";
 
 import type { FocusedQuestion } from "@/lib/request-composer/v2/focused-questions";
 import type { UserAnswerRow } from "@/lib/request-composer/v2/answer-apply-plan";
+import type {
+  CategoryConfirmationAction,
+  CategoryConfirmationModel,
+} from "@/lib/request-composer/v2/category-confirmation";
 import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
 
 import { MairaAnswers } from "./MairaAnswers";
@@ -58,6 +62,22 @@ type Props = {
   editControl: (fieldKey: string) => QuestionControlDef | null;
   /** Düzenlenen cevap mevcut kanonik işleyiciye gider. */
   onEditAnswer: (fieldKey: string, value: string) => void;
+  /**
+   * KATEGORİ ONAY ADIMI (kurucu, 2026-09-12) — kanonik model, sayfa kurar.
+   * Varken sorulardan ÖNCE gelir: "Bunu X olarak değerlendiriyorum, doğru
+   * mu?" Maira cümleyi ve kök listesini buradan okur; kendi kategori
+   * mantığı yoktur. Standart formdaki kartla aynı modeldir.
+   */
+  categoryStep?: CategoryConfirmationModel | null;
+  /** "Bu değil" denildi; kök kategori listesi açık (sayfa state'i). */
+  categoryRejected?: boolean;
+  onCategoryAction?: (action: CategoryConfirmationAction) => void;
+  /**
+   * Soru aşamasının kanonik başlığı (`ScheduleResult.phaseHeading`): "Teklif
+   * için iki bilgi yeterli" / "Talebi detaylandır, daha gerçek teklif al".
+   * Formla aynı sözü söyler; Maira metin uydurmaz.
+   */
+  phaseHeading?: string;
 };
 
 /**
@@ -142,40 +162,101 @@ export function MairaStage({
   onExitToStandard,
   editControl,
   onEditAnswer,
+  categoryStep = null,
+  categoryRejected = false,
+  onCategoryAction,
+  phaseHeading,
 }: Props) {
   /* Yalnız görünüm durumu — cevap değil. */
   const [answersOpen, setAnswersOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const active = questions[0] ?? null;
+  /*
+   * Kategori adımı açıkken soru yerine o adım aktiftir. Sorular kaybolmaz;
+   * kullanıcı "Evet" ya da bir kök seçince aynı yerden sürerler. Adım
+   * bir soru DEĞİLDİR: cevap deposuna yazılmaz, sayfa kanonik kategori
+   * seçimine çevirir.
+   */
+  const categoryActive = Boolean(categoryStep && onCategoryAction);
+  const active = categoryActive ? null : (questions[0] ?? null);
   const control = active?.control ?? null;
 
   /* Soru değişince "diğer seçenekler" kapanır; taslak sayfanın state'idir. */
   useEffect(() => {
     setMoreOpen(false);
-  }, [active?.fieldKey]);
+  }, [active?.fieldKey, categoryActive, categoryRejected]);
 
   /**
    * Görünen seçenekler KANONİK kontrolden gelir: önce değer seçenekleri,
    * sonra kanonik kaçışlar. İlk üçü görünür, kalanı "Diğer seçenekler"
-   * aynı yüzeyde açar — Showcase'in alt sıra düzeni budur.
+   * aynı yüzeyde açar — Showcase'in alt sıra düzeni budur. Kategori
+   * adımında seçenekler yine kanonik modelden gelir: onay/ret ikilisi ya da
+   * "Bu değil" sonrası 11 kök kategori.
    */
-  const allOptions = [
-    ...(control?.options ?? []),
-    ...(control?.softOptions ?? []),
-  ].filter((o) => o.value && o.value !== "__custom__");
+  const allOptions: { label: string; value: string }[] =
+    categoryActive && categoryStep
+      ? categoryRejected
+        ? categoryStep.rootChoices.map((c) => ({
+            label: c.current
+              ? `${c.label} (${categoryStep.currentHint})`
+              : c.label,
+            value: c.id,
+          }))
+        : [
+            { label: categoryStep.confirmLabel, value: "__confirm__" },
+            { label: categoryStep.rejectLabel, value: "__reject__" },
+          ]
+      : [
+          ...(control?.options ?? []),
+          ...(control?.softOptions ?? []),
+        ].filter((o) => o.value && o.value !== "__custom__");
   const visibleOptions = allOptions.slice(0, 3);
   const hasMore = allOptions.length > 3;
 
   const draft = active ? (draftByKey[active.fieldKey] ?? "") : "";
-  const allowCustom = Boolean(control?.allowCustom) || allOptions.length === 0;
+  const allowCustom =
+    !categoryActive &&
+    (Boolean(control?.allowCustom) || allOptions.length === 0);
 
   const commit = (value: string) => {
-    if (!active) return;
     const trimmed = value.trim();
     if (!trimmed) return;
+    if (categoryActive && categoryStep && onCategoryAction) {
+      if (trimmed === "__confirm__") onCategoryAction({ kind: "confirm" });
+      else if (trimmed === "__reject__") onCategoryAction({ kind: "reject" });
+      else onCategoryAction({ kind: "pick_root", categoryId: trimmed });
+      return;
+    }
+    if (!active) return;
     onAnswer(active.fieldKey, trimmed);
   };
+
+  const leadEyebrow = categoryActive
+    ? "Maira soruyor"
+    : active
+      ? (phaseHeading ?? "Maira soruyor")
+      : "Maira";
+  const leadText =
+    categoryActive && categoryStep
+      ? categoryRejected
+        ? categoryStep.pickPrompt
+        : categoryStep.prompt
+      : active
+        ? (active.humanPrompt ?? active.label)
+        : subtitle;
+  const leadHelper =
+    categoryActive && categoryStep
+      ? categoryRejected
+        ? categoryStep.pickHelper
+        : categoryStep.helper
+      : null;
+  const optionsTitle = categoryActive
+    ? categoryRejected
+      ? "Kök kategoriyi seç"
+      : "Doğru mu?"
+    : active
+      ? "Bir yanıt seç"
+      : "Şu an bekleyen soru yok";
 
   return (
     <section
@@ -241,8 +322,11 @@ export function MairaStage({
         <div className="sc-bottom flex h-[var(--sc-card-h)] flex-none items-stretch gap-[var(--sc-card-gap)]">
           <div className="sc-lead flex min-w-0 flex-1 flex-col items-end justify-between gap-6">
             <div className="w-full max-w-[var(--sc-lead-w)]">
-              <p className="maira-eyebrow text-[14px] uppercase tracking-[0.14em] text-[#f2f2f2]/60">
-                {active ? "Maira soruyor" : "Maira"}
+              <p
+                className="maira-eyebrow text-[14px] uppercase tracking-[0.14em] text-[#f2f2f2]/60"
+                data-testid="maira-eyebrow"
+              >
+                {leadEyebrow}
               </p>
               <p
                 className="sc-para mt-2 text-[length:var(--sc-text)] leading-tight"
@@ -250,8 +334,16 @@ export function MairaStage({
                 role="status"
                 data-testid="maira-question-prompt"
               >
-                {active ? (active.humanPrompt ?? active.label) : subtitle}
+                {leadText}
               </p>
+              {leadHelper ? (
+                <p
+                  className="mt-2 text-[13px] text-[#f2f2f2]/45"
+                  data-testid="maira-category-helper"
+                >
+                  {leadHelper}
+                </p>
+              ) : null}
               {typeof remainingCriticalCount === "number" &&
               remainingCriticalCount > 0 ? (
                 <p className="mt-2 text-[13px] text-[#f2f2f2]/45">
@@ -260,6 +352,18 @@ export function MairaStage({
               ) : null}
             </div>
 
+            {categoryActive && categoryRejected && onCategoryAction && categoryStep ? (
+              <div className="sc-cta flex w-full max-w-[var(--sc-lead-w)] gap-[var(--sc-btn-gap)]">
+                <button
+                  type="button"
+                  data-testid="maira-category-back"
+                  onClick={() => onCategoryAction({ kind: "back" })}
+                  className="sc-btn sc-btn-ghost min-h-[52px] rounded-[81px] border border-[#f2f2f2]/45 px-6 text-[15px]"
+                >
+                  {categoryStep.backLabel}
+                </button>
+              </div>
+            ) : null}
             {active ? (
               <div className="sc-cta flex w-full max-w-[var(--sc-lead-w)] gap-[var(--sc-btn-gap)]">
                 {allowCustom ? (
@@ -316,14 +420,18 @@ export function MairaStage({
 
           <div className="sc-card sc-card-tags maira-options relative flex w-[var(--sc-card2-w)] flex-none flex-col gap-3 rounded-[var(--sc-radius)] bg-[#171717] p-[var(--sc-card-pad)]">
             <p className="sc-cardtitle text-[length:var(--sc-text)] font-medium leading-tight">
-              {active ? "Bir yanıt seç" : "Şu an bekleyen soru yok"}
+              {optionsTitle}
             </p>
             <div className="maira-option-list flex min-h-0 shrink flex-col gap-1.5 overflow-y-auto">
               {visibleOptions.map((opt) => (
                 <button
                   key={opt.value}
                   type="button"
-                  data-testid={`maira-option-${opt.value}`}
+                  data-testid={
+                    categoryActive
+                      ? `maira-category-${opt.value.replace(/^__|__$/g, "")}`
+                      : `maira-option-${opt.value}`
+                  }
                   onClick={() => commit(opt.value)}
                   className="maira-option flex h-10 w-full flex-none items-center overflow-hidden text-ellipsis whitespace-nowrap rounded-xl bg-[#242424] px-[18px] text-left text-[15px] text-[#f2f2f2] transition hover:bg-[#2e2e2e]"
                 >
@@ -372,7 +480,11 @@ export function MairaStage({
                     <button
                       key={opt.value}
                       type="button"
-                      data-testid={`maira-option-${opt.value}`}
+                      data-testid={
+                        categoryActive
+                          ? `maira-category-${opt.value.replace(/^__|__$/g, "")}`
+                          : `maira-option-${opt.value}`
+                      }
                       onClick={() => {
                         setMoreOpen(false);
                         commit(opt.value);

@@ -34,6 +34,7 @@ import {
   TalepoAiPanel,
   type ClarificationOption,
 } from "@/components/request/TalepoAiPanel";
+import { CategoryConfirmationCard } from "@/components/request/v2/CategoryConfirmationCard";
 import { CategoryGuidanceCard } from "@/components/request/v2/CategoryGuidanceCard";
 import { CategoryGuidanceSummary } from "@/components/request/v2/CategoryGuidanceSummary";
 import { FocusedQuestionsPanel } from "@/components/request/v2/FocusedQuestionsPanel";
@@ -63,6 +64,11 @@ import {
   budgetPromptForStrategy,
   toHumanQuestions,
 } from "@/lib/request-brain/human-question-layer";
+import {
+  buildCategoryConfirmation,
+  categoryConfirmationToGuidanceSelection,
+  type CategoryConfirmationAction,
+} from "@/lib/request-composer/v2/category-confirmation";
 import {
   buildCategoryGuidance,
   categoryGuidanceToUserChoice,
@@ -385,6 +391,15 @@ function TalepOlusturForm() {
   const [categoryLockedByUser, setCategoryLockedByUser] = useState(false);
   const [categoryUserChoice, setCategoryUserChoice] =
     useState<CategoryUserChoice>(null);
+  /**
+   * KATEGORİ ONAY ADIMI — "Bu değil" görünümü (kurucu, 2026-09-12). Hangi
+   * kategori tahmini için reddedildiği tutulur; tahmin değişince görünüm
+   * kendiliğinden kapanır. Sayfa state'idir ki form ile Maira arasında
+   * geçişte kaybolmasın. Kategoriye DOKUNMAZ; yalnız görünüm.
+   */
+  const [categoryRejectedFor, setCategoryRejectedFor] = useState<
+    string | null
+  >(null);
   const [confirmedFactKeys, setConfirmedFactKeys] = useState<string[]>([]);
   const [dismissedFactKeys, setDismissedFactKeys] = useState<string[]>([]);
   const [skippedQuestionKeys, setSkippedQuestionKeys] = useState<string[]>([]);
@@ -556,6 +571,7 @@ function TalepOlusturForm() {
     setCategoryLockedByUser(false);
     setCategoryOverride(null);
     setCategoryUserChoice(null);
+    setCategoryRejectedFor(null);
     setConfirmedFactKeys([]);
     setDismissedFactKeys([]);
     setOtherDomainNote("");
@@ -1781,6 +1797,51 @@ function TalepOlusturForm() {
     understanding,
   ]);
 
+  /**
+   * KATEGORİ ONAY ADIMI (kurucu, 2026-09-12). Motor güvenle karar verdiğinde
+   * bile önce sorulur: "Bunu X olarak değerlendiriyorum, doğru mu?" Model tek
+   * yerden kurulur; standart kart da Maira da AYNI nesneyi çizer. Belirsiz
+   * durumda bu adım yoktur, rehberlik kartı (`categoryGuidance`) sürer.
+   */
+  const categoryConfirmation = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    if (!live) return null;
+    const slug = hybrid.state?.subcategorySlug ?? null;
+    const subLabel = slug
+      ? selectedCategory.subcategories.find(
+          (label) => subcategorySlug(label) === slug,
+        ) ?? null
+      : null;
+    return buildCategoryConfirmation({
+      rawText: requestText,
+      isSyncing: hybrid.isSyncing,
+      categoryConfident: schemaCategory.confident,
+      categoryLockedByUser,
+      categoryUserChoice,
+      categoryId: activeCategoryId,
+      displayLabelSafe: schemaCategory.displayLabelSafe,
+      subcategoryLabel: subLabel,
+    });
+  }, [
+    activeCategoryId,
+    categoryLockedByUser,
+    categoryUserChoice,
+    hybrid.isSyncing,
+    hybrid.state?.subcategorySlug,
+    requestText,
+    schemaCategory.confident,
+    schemaCategory.displayLabelSafe,
+    selectedCategory.subcategories,
+    understanding.rawInput,
+  ]);
+  const categoryRejected =
+    categoryConfirmation !== null &&
+    categoryRejectedFor === categoryConfirmation.categoryId;
+
   const editableUnderstoodFacts = useMemo(() => {
     const live = understandingMatchesComposerText({
       composerText: requestText,
@@ -1913,6 +1974,14 @@ function TalepOlusturForm() {
   }, [categoryGuidance]);
 
   useEffect(() => {
+    if (!categoryConfirmation) return;
+    trackComposerEvent("category_confirmation_shown", {
+      categoryId: categoryConfirmation.categoryId,
+      hasSubcategory: categoryConfirmation.subcategoryLabel !== null,
+    });
+  }, [categoryConfirmation]);
+
+  useEffect(() => {
     if (!requestText.trim()) {
       // GEREKLI ASAMA SIFIRLAMASI. Kullanici metni tamamen sildiginde asama
       // compose'a donmek ZORUNDA: aksi halde bos bir talep uzerinde review
@@ -1929,11 +1998,13 @@ function TalepOlusturForm() {
       !hybrid.isSyncing &&
       (editableUnderstoodFacts.length > 0 ||
         categoryGuidance ||
+        categoryConfirmation ||
         focusedQuestions.length > 0)
     ) {
       setUxStage("clarify");
     }
   }, [
+    categoryConfirmation,
     categoryGuidance,
     editableUnderstoodFacts.length,
     focusedQuestions.length,
@@ -1986,6 +2057,43 @@ function TalepOlusturForm() {
       setCategoryLockedByUser(false);
       setShowOtherDomainInput(true);
     }
+  }
+
+  /**
+   * Kategori onay dokunuşu — TEK işleyici, iki yüzey. "Evet" ve kök seçimi
+   * mevcut `applyCategoryGuidance` yolundan geçer (picked_candidate + kilit);
+   * "Bu değil" / "Vazgeç" yalnız görünümü değiştirir.
+   */
+  function applyCategoryConfirmation(action: CategoryConfirmationAction) {
+    if (!categoryConfirmation) return;
+    if (action.kind === "reject") {
+      setCategoryRejectedFor(categoryConfirmation.categoryId);
+      trackComposerEvent("category_confirmation_rejected", {
+        categoryId: categoryConfirmation.categoryId,
+      });
+      return;
+    }
+    if (action.kind === "back") {
+      setCategoryRejectedFor(null);
+      return;
+    }
+    const selection = categoryConfirmationToGuidanceSelection(
+      categoryConfirmation,
+      action,
+    );
+    if (!selection) return;
+    trackComposerEvent(
+      action.kind === "confirm"
+        ? "category_confirmation_confirmed"
+        : "category_root_picked",
+      {
+        categoryId: categoryConfirmation.categoryId,
+        pickedCategoryId:
+          selection.kind === "candidate" ? selection.slug : undefined,
+      },
+    );
+    setCategoryRejectedFor(null);
+    applyCategoryGuidance(selection);
   }
 
   function applyClarification(option: ClarificationOption) {
@@ -3119,6 +3227,10 @@ function TalepOlusturForm() {
           remainingCriticalCount={composerReadiness.remainingCriticalCount}
           answers={userAnswerRows}
           subtitle={readinessLabel}
+          categoryStep={categoryConfirmation}
+          categoryRejected={categoryRejected}
+          onCategoryAction={applyCategoryConfirmation}
+          phaseHeading={focusedQuestionSchedule.phaseHeading}
           onExitToStandard={() => {
             setViewMode("standard");
             setMairaSummonInstant(false);
@@ -3501,6 +3613,14 @@ function TalepOlusturForm() {
                           );
                         }}
                       />
+
+                      {categoryConfirmation ? (
+                        <CategoryConfirmationCard
+                          model={categoryConfirmation}
+                          rejected={categoryRejected}
+                          onAction={applyCategoryConfirmation}
+                        />
+                      ) : null}
 
                       {categoryGuidance && !categoryUserChoice ? (
                         <CategoryGuidanceCard
