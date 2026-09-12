@@ -25,6 +25,7 @@ import {
 } from "./question-profiles";
 import type {
   QuestionImportance,
+  QuestionPhase,
   ScheduleResult,
   ScheduledQuestion,
   SoftAnswerStatus,
@@ -37,6 +38,31 @@ import {
 } from "./global-core-profile";
 
 const MAX_VISIBLE = 3;
+
+/**
+ * AŞAMA BAŞLIKLARI — TEK YETKİLİ (kurucu, 2026-09-12).
+ *
+ * `/talep` formu ve Maira bu metni buradan okur; iki yüzey ayrı cümle
+ * kurmaz. Başlık bir cevap alanı değildir, hiçbir yüzeye değer olarak
+ * yazılmaz.
+ */
+export const PHASE_HEADINGS: Record<QuestionPhase, string> = {
+  essentials: "Teklif için iki bilgi yeterli",
+  detail: "Talebi detaylandır, daha gerçek teklif al",
+};
+
+/**
+ * Görünen kümenin aşamasını seçer. Bütçe / konum (`publish_required`)
+ * açıkken yalnız onlar görünür; kapanınca kalan sorular olduğu gibi gelir.
+ * Sıralama değişmez, yalnız görünürlük kapısı eklenir.
+ */
+export function resolveQuestionPhase(
+  pending: ReadonlyArray<Pick<ScheduledQuestion, "importance">>,
+): QuestionPhase {
+  return pending.some((q) => q.importance === "publish_required")
+    ? "essentials"
+    : "detail";
+}
 
 export type FieldAnswerState = {
   kind?: "VALUE" | "ANY" | "NOT_APPLICABLE" | "UNKNOWN" | string;
@@ -576,7 +602,19 @@ export function scheduleNextQuestions(input: {
     ),
   ];
 
-  const visible = pending.slice(0, MAX_VISIBLE).map((item) => {
+  /**
+   * ÖNCE BÜTÇE VE KONUM, SONRA DETAY (kurucu, 2026-09-12).
+   *
+   * Bütçe ya da il/ilçe açıkken başka soru ekrana çıkmaz: kullanıcı önce
+   * teklif için şart olan iki bilgiyi verir, sonra "Talebi detaylandır"
+   * başlığı altında kategori soruları gelir. Metinde yazılmış bütçe/konum
+   * zaten `isFieldSatisfied` ile kapalıdır; o durumda ilk aşama hiç
+   * görünmez. Sıralama puanı değişmedi; yalnız görünürlük kapısı eklendi,
+   * `pending`, `blocking` ve sayaçlar aynen hesaplanır.
+   */
+  const phase = resolveQuestionPhase(pending);
+  const visibleSource = phase === "essentials" ? publishRequired : pending;
+  const visible = visibleSource.slice(0, MAX_VISIBLE).map((item) => {
     const { sortScore: _score, ...q } = item;
     void _score;
     return q;
@@ -592,6 +630,8 @@ export function scheduleNextQuestions(input: {
     canEnterReview,
     blockingFieldKeys: blocking,
     blockingLabels: blockingCritical.map((c) => c.summaryLabel),
+    phase,
+    phaseHeading: PHASE_HEADINGS[phase],
   };
 }
 

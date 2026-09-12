@@ -21,6 +21,26 @@ function cases(categoryId: string, rows: string): CategoryScenario[] {
 }
 
 export const categoryScenarios: CategoryScenario[] = [
+  /**
+   * OTOMOTİV — kurucu onaylı satırlar (2026-09-12). Dört alt tür dört ayrı
+   * soru seti: araç / yedek parça / lastik-jant / bakım-servis. Yasak
+   * sütunu iki sınıfı birlikte taşır: (a) o alt türe ait olmayan soru,
+   * (b) kullanıcının METİNDE ZATEN YAZDIĞI bilgi (marka, model, yıl, bütçe,
+   * konum) — yazılan şey ikinci kez sorulmaz.
+   */
+  ...cases("automotive", `
+2019 Renault Clio arıyorum|condition|brand,model,modelYear,quantity,part,partPreference,tireSize,area
+Hatasız ikinci el SUV arıyorum 800 bine kadar|modelYear|condition,budget,quantity,bodyType,part,tireSize
+Mercedes C180 veya C200 otomatik olsun|modelYear,condition|brand,transmission,quantity,part,tireSize
+2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin|condition|brand,model,modelYear,city,budget,quantity
+Renault Clio 2015 arka tampon arıyorum|partPreference|brand,model,part,partVehicleYear,modelYear,condition,fuel,transmission,quantity,tireSize
+Passat için far arıyorum|partVehicleYear,partPreference|model,part,modelYear,condition,tireSize
+Araba lastiği arıyorum|tireSize,tireSeason,tireQuantity|modelYear,condition,partPreference,part,fuel,transmission
+205/55 R16 kışlık 4 adet lastik arıyorum||tireSize,tireSeason,tireQuantity,tireItemType,modelYear,condition,part
+Kamyon lastiği arıyorum|tireSize|modelYear,condition,part,partPreference
+Fiat Egea periyodik bakım yaptırmak istiyorum||brand,model,serviceType,quantity,listingType,part,partPreference,tireSize
+Aracım çalışmıyor arıza var|serviceType,brand,model|quantity,partPreference,tireSize,listingType
+`),
   ...cases("real-estate", `
 Kiralık daire arıyorum|roomCount,area,floor,buildingAge|condition,deedStatus,transferScope
 Satılık müstakil ev arıyorum|roomCount,area,totalFloors,buildingAge|condition,cooperativeStage

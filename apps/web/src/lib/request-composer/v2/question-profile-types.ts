@@ -94,6 +94,19 @@ export type ScheduledQuestion = {
   suggestedValueAuthority?: "INFERENCE_ONLY";
 };
 
+/**
+ * SORU AŞAMASI — KURUCU KARARI (2026-09-12).
+ *
+ * Her kategoride önce yalnız iki şey sorulur: bütçe ve il/ilçe. İkisi de
+ * kapanmadan başka hiçbir soru görünmez. İkisi kapanınca kategori soruları
+ * "Talebi detaylandır" başlığı altında gelir. Kullanıcı bütçeyi ya da
+ * konumu metinde yazdıysa o soru zaten kapalıdır ve bu aşama atlanır.
+ *
+ *   essentials  bütçe / konum açık; görünen küme yalnız onlardır
+ *   detail      bütçe / konum kapalı; kategoriye özel sorular görünür
+ */
+export type QuestionPhase = "essentials" | "detail";
+
 export type ScheduleResult = {
   visible: ScheduledQuestion[];
   remainingCriticalCount: number;
@@ -101,4 +114,11 @@ export type ScheduleResult = {
   canEnterReview: boolean;
   blockingFieldKeys: string[];
   blockingLabels: string[];
+  /** Görünen kümenin hangi aşamadan geldiği (bkz. `QuestionPhase`). */
+  phase: QuestionPhase;
+  /**
+   * Aşamanın kullanıcıya gösterilen başlığı. Tek yerden gelir ki `/talep`
+   * formu ile Maira aynı sözü söylesin; arayüz kendi metnini uydurmaz.
+   */
+  phaseHeading: string;
 };

@@ -138,7 +138,10 @@ import {
   scheduledToFocusedQuestion,
 } from "@/lib/request-composer/v2/focused-questions";
 import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
-import { softStatusFromAnswerValue } from "@/lib/request-composer/v2/question-scheduler";
+import {
+  PHASE_HEADINGS,
+  softStatusFromAnswerValue,
+} from "@/lib/request-composer/v2/question-scheduler";
 import {
   budgetDisplayLabel,
   filterReviewPreferences,
@@ -1393,6 +1396,8 @@ function TalepOlusturForm() {
         canEnterReview: false,
         blockingFieldKeys: [],
         blockingLabels: [],
+        phase: "detail" as const,
+        phaseHeading: PHASE_HEADINGS.detail,
       };
     }
     const live = understandingMatchesComposerText({
@@ -3550,6 +3555,8 @@ function TalepOlusturForm() {
                           remainingCriticalCount={
                             composerReadiness.remainingCriticalCount
                           }
+                          phase={focusedQuestionSchedule.phase}
+                          phaseHeading={focusedQuestionSchedule.phaseHeading}
                           onExpand={() => setUxStage("clarify")}
                           onDraftChange={(fieldKey, value) =>
                             setFocusedDraftByKey((current) => ({

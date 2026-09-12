@@ -116,6 +116,45 @@ check("scheduler: answered quantity not re-asked (printing)", () => {
   );
 });
 
+/**
+ * ÖNCE BÜTÇE + KONUM, SONRA DETAY (kurucu, 2026-09-12).
+ * Bütçe/konum açıkken görünen küme yalnız onlardır; kapanınca kategori
+ * soruları "Talebi detaylandır" başlığıyla gelir. Metinde yazılmış konum
+ * ilk aşamayı atlatır.
+ */
+check("scheduler: essentials phase shows only budget/city while they are open", () => {
+  const schedule = scheduleFor("Arçelik 55 inç televizyon arıyorum");
+  assert.equal(schedule.phase, "essentials");
+  assert.ok(schedule.visible.length >= 1);
+  assert.ok(
+    schedule.visible.every((q) => q.importance === "publish_required"),
+    `beklenen yalnız publish_required, alınan ${schedule.visible.map((q) => q.fieldKey).join(",")}`,
+  );
+  assert.ok(schedule.visible.some((q) => q.fieldKey === "budget"));
+  assert.ok(schedule.visible.some((q) => q.fieldKey === "city"));
+  assert.equal(schedule.phaseHeading, "Teklif için iki bilgi yeterli");
+});
+
+check("scheduler: detail phase opens after budget and city are answered", () => {
+  const schedule = scheduleFor("Arçelik 55 inç televizyon arıyorum", {
+    budget: "25000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.equal(schedule.phase, "detail");
+  assert.ok(!schedule.visible.some((q) => q.importance === "publish_required"));
+  assert.equal(schedule.phaseHeading, "Talebi detaylandır, daha gerçek teklif al");
+});
+
+check("scheduler: city written in the text (budget answered) skips the essentials phase", () => {
+  const schedule = scheduleFor(
+    "Arçelik 55 inç televizyon arıyorum, İstanbul Kadıköy, bütçem 25 bin",
+    { budget: "25000" },
+  );
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "budget"));
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"));
+  assert.equal(schedule.phase, "detail");
+});
+
 check("scheduler: RE without city cannot review", () => {
   const schedule = scheduleFor("Kiralık 3+1 daire arıyorum");
   const readiness = computeComposerPublishReadiness({
