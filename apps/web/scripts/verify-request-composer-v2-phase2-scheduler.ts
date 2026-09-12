@@ -242,6 +242,24 @@ check("automotive: 'İzmir Bornova' written without a comma is the location", ()
   assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"), schedule.visible.map((q) => q.fieldKey).join(","));
 });
 
+check("automotive: owned vehicle with fault language routes to automotive service", () => {
+  for (const text of [
+    "Aracım çalışmıyor arıza var",
+    "Arabam bozuldu, tamir lazım",
+    "Otomobilimin bakımı gerekiyor",
+  ]) {
+    const { state } = syncFromText(null, text);
+    assert.equal(state.categoryId, "automotive", `${text} → ${state.categoryId}`);
+    assert.equal(String(state.fields.needType?.value ?? ""), "service", `${text} needType`);
+  }
+  /* Yalın "araç" bu kuralın dışındadır: kiralama ve satın alma dokunulmaz. */
+  const rental = syncFromText(null, "Araç kiralamak istiyorum, İstanbul, 3 gün").state;
+  assert.notEqual(String(rental.fields.needType?.value ?? ""), "service", "araç kiralama service oldu");
+  /* Ev yardımcısı kuralı önce gelir; "aracım" geçmeyen hizmet metni değişmez. */
+  const helper = syncFromText(null, "ev yardımcısı arıyorum").state;
+  assert.equal(helper.categoryId, "services");
+});
+
 check("scheduler: RE without city cannot review", () => {
   const schedule = scheduleFor("Kiralık 3+1 daire arıyorum");
   const readiness = computeComposerPublishReadiness({

@@ -221,6 +221,37 @@ function gateCategory(
     };
   }
 
+  /**
+   * SAHİPLİ ARAÇ + ARIZA/BAKIM DİLİ OTOMOTİV SERVİSİDİR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: "Aracım çalışmıyor arıza var" Hizmetler › Teknik Servis'e
+   * gidiyordu. Skorlayıcı "aracım" iyelik biçimini araç kanıtı saymıyor
+   * (anahtar kelime "araç"), "arıza" ise Hizmetler'e puan yazıyordu. Aracın
+   * kendi servis akışı vardır (kurucu istisnası, 2026-08-23, ürün→hizmet
+   * yönlendirmesi otomotivi zaten dışarıda tutar); iyelikli araç adı ile
+   * servis/arıza dili aynı cümlede geçince talep otomotive gider, alt tür
+   * intent-signals'ın SERVICE kararıyla "service" olur. Yalnız iyelik
+   * biçimi aranır ("aracım", "arabamız", "otomobilimin"); yalın "araç"
+   * eskisi gibi skorlayıcıya kalır ki "araç kiralama" gibi cümleler bu
+   * kuralın dışında kalsın.
+   */
+  const ownedVehicle =
+    /(?<![a-z])(?:arac|araba|otomobil|kamyon|kamyonet|minibus|motosiklet|motor|tir)(?:[iua])?m(?:iz)?(?:[iua]n?|d[ae]n?)?(?![a-z])/u.test(
+      foldedInput,
+    );
+  const vehicleFaultOrService =
+    /(?<![a-z])(?:calismiyor|bozuldu|bozuk|ariza|arizali|tamir|bakim|servis|onarim|muayene|ekspertiz|kaza|hasar|ses geliyor|isik yaniyor|yag degisimi|calismiyor)(?![a-z])/u.test(
+      foldedInput,
+    );
+  if (ownedVehicle && vehicleFaultOrService) {
+    return {
+      value: "automotive",
+      confidence: 0.9,
+      status: "CONFIDENT",
+      evidence: ["owned-vehicle-service"],
+    };
+  }
+
   const detected = detectCategoryResult(rawInput);
   const scoreConf = clamp01(detected.score / 6);
 
