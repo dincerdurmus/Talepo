@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 
 import { syncFromText } from "../src/lib/request-composer/sync";
+import { toResolverFieldBag } from "../src/lib/request-composer/build-state";
 import { buildUnderstoodFacts } from "../src/lib/request-composer/ui-helpers";
 import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import {
@@ -17,6 +18,7 @@ import {
 } from "../src/lib/request-composer/v2/entity-roles";
 import { computeComposerPublishReadiness } from "../src/lib/request-composer/v2/publish-readiness";
 import { isFieldSatisfied } from "../src/lib/request-composer/v2/question-scheduler";
+import { listProfilesForCategory } from "../src/lib/request-composer/v2/question-profiles";
 
 function factsMap(text: string) {
   const { state } = syncFromText(null, text);
@@ -113,6 +115,283 @@ check("scheduler: answered quantity not re-asked (printing)", () => {
   assert.ok(
     !schedule.blockingFieldKeys.includes("quantity") ||
       schedule.blockingFieldKeys.filter((k) => k === "quantity").length === 0,
+  );
+});
+
+/**
+ * ÖNCE BÜTÇE + KONUM, SONRA DETAY (kurucu, 2026-09-12).
+ * Bütçe/konum açıkken görünen küme yalnız onlardır; kapanınca kategori
+ * soruları "Talebi detaylandır" başlığıyla gelir. Metinde yazılmış konum
+ * ilk aşamayı atlatır.
+ */
+check("scheduler: essentials phase shows only budget/city while they are open", () => {
+  const schedule = scheduleFor("Arçelik 55 inç televizyon arıyorum");
+  assert.equal(schedule.phase, "essentials");
+  assert.ok(schedule.visible.length >= 1);
+  assert.ok(
+    schedule.visible.every((q) => q.importance === "publish_required"),
+    `beklenen yalnız publish_required, alınan ${schedule.visible.map((q) => q.fieldKey).join(",")}`,
+  );
+  assert.ok(schedule.visible.some((q) => q.fieldKey === "budget"));
+  assert.ok(schedule.visible.some((q) => q.fieldKey === "city"));
+  assert.equal(schedule.phaseHeading, "Teklif için iki bilgi yeterli");
+});
+
+check("scheduler: detail phase opens after budget and city are answered", () => {
+  const schedule = scheduleFor("Arçelik 55 inç televizyon arıyorum", {
+    budget: "25000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.equal(schedule.phase, "detail");
+  assert.ok(!schedule.visible.some((q) => q.importance === "publish_required"));
+  assert.equal(schedule.phaseHeading, "Talebi detaylandır, daha gerçek teklif al");
+});
+
+check("scheduler: city written in the text (budget answered) skips the essentials phase", () => {
+  const schedule = scheduleFor(
+    "Arçelik 55 inç televizyon arıyorum, İstanbul Kadıköy, bütçem 25 bin",
+    { budget: "25000" },
+  );
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "budget"));
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"));
+  assert.equal(schedule.phase, "detail");
+});
+
+/**
+ * YAZDIĞINI SORMA — otomotiv (kurucu, 2026-09-12). Metindeki mevsim ve
+ * parça-araç yılı kanonik alana bağlanır; lastik akışına genel ürün
+ * soruları girmez.
+ */
+check("automotive: 'kışlık' binds tireSeason from text", () => {
+  const { state } = syncFromText(null, "205/55 R16 kışlık 4 adet lastik arıyorum");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(state.fields.tireSeason?.kind, "VALUE");
+  assert.equal(String(state.fields.tireSeason?.value), "Kış");
+  assert.equal(state.fields.tireSeason?.provenance, "EXPLICIT_TEXT");
+  const summer = syncFromText(null, "Yazlık lastik arıyorum 195/65 R15").state;
+  assert.equal(String(summer.fields.tireSeason?.value), "Yaz");
+  const all = syncFromText(null, "Dört mevsim lastik arıyorum").state;
+  assert.equal(String(all.fields.tireSeason?.value), "Dört mevsim");
+});
+
+check("automotive: part request year becomes partVehicleYear", () => {
+  const { state } = syncFromText(null, "Renault Clio 2015 arka tampon arıyorum");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(state.fields.partVehicleYear?.kind, "VALUE");
+  assert.equal(String(state.fields.partVehicleYear?.value), "2015");
+  assert.equal(state.fields.partVehicleYear?.provenance, "EXPLICIT_TEXT");
+  const schedule = scheduleFor("Renault Clio 2015 arka tampon arıyorum", {
+    budget: "5000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "partVehicleYear"));
+});
+
+check("automotive: tire flow does not ask product condition or model", () => {
+  const schedule = scheduleFor("Araba lastiği arıyorum", {
+    budget: "5000",
+    city: "İstanbul / Kadıköy",
+  });
+  assert.equal(schedule.phase, "detail");
+  const keys = schedule.visible.map((q) => q.fieldKey);
+  assert.ok(!keys.includes("condition"), `condition soruldu: ${keys.join(",")}`);
+  assert.ok(!keys.includes("model"), `model soruldu: ${keys.join(",")}`);
+  const profileKeys = listProfilesForCategory({
+    categoryId: "automotive",
+    needType: "tire",
+    productType: "Lastik",
+  }).map((p) => p.fieldKey);
+  assert.ok(!profileKeys.includes("condition"), profileKeys.join(","));
+  assert.ok(!profileKeys.includes("model"), profileKeys.join(","));
+  assert.ok(profileKeys.includes("tireSize"), profileKeys.join(","));
+});
+
+check("automotive: '800 bine kadar' is a written budget and is not re-asked", () => {
+  const { state } = syncFromText(null, "Hatasız ikinci el SUV arıyorum 800 bine kadar");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(
+    state.fields.budget?.kind,
+    "VALUE",
+    `budget alanı yok: ${JSON.stringify(state.understanding.budget)}`,
+  );
+  assert.equal(state.fields.budget?.provenance, "EXPLICIT_TEXT");
+  const bag = toResolverFieldBag(state);
+  assert.ok(bag.budget, `bag.budget boş: ${JSON.stringify(bag)}`);
+  const kgOnly = syncFromText(null, "Oto koltuğu arıyorum 9-36 kg").state;
+  assert.notEqual(kgOnly.fields.budget?.kind, "VALUE", "kg aralığı bütçe sayıldı");
+});
+
+check("automotive: 'İzmir Bornova' written without a comma is the location", () => {
+  const { state } = syncFromText(
+    null,
+    "2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin",
+  );
+  const city = state.understanding.location?.city?.value;
+  assert.equal(
+    String(city ?? ""),
+    "İzmir / Bornova",
+    `understanding city=${JSON.stringify(state.understanding.location)}`,
+  );
+  /* Konum kanonik alan olarak yazılmaz (dokunulmamış ortak alan sunucuya
+     sızmamalı kuralı); sayfa onu anlama katmanından okur. Ölçüt sayfa
+     yoludur: soru görünmez. */
+  const schedule = scheduleFor(
+    "2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin",
+    { budget: "700000" },
+  );
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"), schedule.visible.map((q) => q.fieldKey).join(","));
+});
+
+check("automotive: owned vehicle with fault language routes to automotive service", () => {
+  for (const text of [
+    "Aracım çalışmıyor arıza var",
+    "Arabam bozuldu, tamir lazım",
+    "Otomobilimin bakımı gerekiyor",
+  ]) {
+    const { state } = syncFromText(null, text);
+    assert.equal(state.categoryId, "automotive", `${text} → ${state.categoryId}`);
+    assert.equal(String(state.fields.needType?.value ?? ""), "service", `${text} needType`);
+  }
+  /* Yalın "araç" bu kuralın dışındadır: kiralama ve satın alma dokunulmaz. */
+  const rental = syncFromText(null, "Araç kiralamak istiyorum, İstanbul, 3 gün").state;
+  assert.notEqual(String(rental.fields.needType?.value ?? ""), "service", "araç kiralama service oldu");
+  /* Ev yardımcısı kuralı önce gelir; "aracım" geçmeyen hizmet metni değişmez. */
+  const helper = syncFromText(null, "ev yardımcısı arıyorum").state;
+  assert.equal(helper.categoryId, "services");
+});
+
+/**
+ * SORU OLMAK İÇİN PROFİL GEREKİR (kurucu, 2026-09-12). Akış sonuna kadar
+ * boşaltılır; hiçbir soru ham form etiketi taşımaz, ürüne yabancı eski
+ * alan (sunucuya ekran boyutu, kahve makinesine kurulum) sorulmaz.
+ */
+function drainSchedule(text: string): { keys: string[]; prompts: string[] } {
+  const { state } = syncFromText(null, text);
+  const hybrid = resolveHybridQuestions(state);
+  /* Sayfa ile aynı bağlam: kanonik alanlar (ürün tipi dâhil) zamanlayıcıya
+     gider; harness ürün bağlamını gizleyip profilleri susturmasın. */
+  const values: Record<string, string> = {
+    ...toResolverFieldBag(state),
+    budget: "25000",
+    city: "İstanbul / Kadıköy",
+  };
+  const fieldStates: Record<string, { kind: string; value: string | null; provenance: string | null }> =
+    Object.fromEntries(
+      Object.entries(state.fields).map(([key, field]) => [
+        key,
+        {
+          kind: field.kind,
+          value: field.kind === "VALUE" ? String(field.value ?? "") : null,
+          provenance: field.provenance ?? null,
+        },
+      ]),
+    );
+  const answered: string[] = [];
+  const keys: string[] = [];
+  const prompts: string[] = [];
+  for (let i = 0; i < 40; i++) {
+    const schedule = scheduleComposerQuestions({
+      categoryId: state.categoryId ?? "technology",
+      needType:
+        state.fields.needType?.kind === "VALUE"
+          ? String(state.fields.needType.value ?? "")
+          : null,
+      candidates: hybrid.candidates,
+      values,
+      fieldStates,
+      answeredKeys: answered,
+    });
+    const next = schedule.visible[0];
+    if (!next) break;
+    keys.push(next.fieldKey);
+    prompts.push(next.prompt);
+    values[next.fieldKey] = "x";
+    fieldStates[next.fieldKey] = { kind: "VALUE", value: "x", provenance: "EXPLICIT_BROWSE" };
+    answered.push(next.fieldKey);
+  }
+  return { keys, prompts };
+}
+
+check("legacy form fields are not scheduled as questions", () => {
+  const cases: Array<{ text: string; forbidden: string[] }> = [
+    { text: "Sunucu arıyorum", forbidden: ["screenSize"] },
+    { text: "Kahve makinesi arıyorum", forbidden: [] },
+    { text: "Yemek takımı arıyorum", forbidden: [] },
+    { text: "Köşe koltuk arıyorum", forbidden: [] },
+    { text: "Hasta monitörü arıyorum", forbidden: [] },
+    { text: "Bebek arabası arıyorum", forbidden: [] },
+  ];
+  for (const c of cases) {
+    const { keys, prompts } = drainSchedule(c.text);
+    for (const key of c.forbidden) {
+      assert.ok(!keys.includes(key), `${c.text}: ${key} soruldu (${keys.join(",")})`);
+    }
+    for (const prompt of prompts) {
+      assert.ok(
+        prompt.trim().endsWith("?"),
+        `${c.text}: ham etiket soru oldu → "${prompt}" (${keys.join(",")})`,
+      );
+    }
+  }
+});
+
+check("category common fields without a profile still ask with a real sentence", () => {
+  const { keys, prompts } = drainSchedule("Elektrikli forklift arıyorum");
+  const at = keys.indexOf("quantity");
+  assert.ok(at >= 0, `makine adet sorusu düştü: ${keys.join(",")}`);
+  assert.equal(prompts[at], "Kaç adet gerekli?");
+});
+
+check("automotive vehicle: drive type and warranty stay as optional selects", () => {
+  const { keys } = drainSchedule("2019 Renault Clio arıyorum");
+  assert.ok(keys.includes("driveType"), keys.join(","));
+  assert.ok(keys.includes("warranty"), keys.join(","));
+  for (const gone of ["generation", "engine", "bodyCondition"]) {
+    assert.ok(!keys.includes(gone), `${gone} hâlâ soruluyor: ${keys.join(",")}`);
+  }
+});
+
+check("consumables are not asked for second-hand or model", () => {
+  for (const text of [
+    "Bebek için ıslak mendil arıyorum",
+    "Bebek gıdası arıyorum",
+    "Yemek takımı arıyorum",
+    "Ev temizlik malzemeleri arıyorum",
+  ]) {
+    const { keys } = drainSchedule(text);
+    assert.ok(!keys.includes("condition"), `${text}: condition soruldu (${keys.join(",")})`);
+    assert.ok(!keys.includes("model"), `${text}: model soruldu (${keys.join(",")})`);
+  }
+  const durable = drainSchedule("Bebek arabası arıyorum").keys;
+  assert.ok(durable.includes("condition"), `bebek arabası: condition düştü (${durable.join(",")})`);
+});
+
+check("software project uses its own contract, not hardware questions", () => {
+  const { state } = syncFromText(null, "Kurumsal web sitesi yaptırmak istiyorum");
+  assert.equal(state.categoryId, "technology");
+  assert.equal(
+    String(state.fields.needType?.value ?? ""),
+    "software",
+    `needType=${JSON.stringify(state.fields.needType)}`,
+  );
+  const { keys, prompts } = drainSchedule("Kurumsal web sitesi yaptırmak istiyorum");
+  for (const gone of ["brand", "quantity", "condition", "model", "screenSize", "specs"]) {
+    assert.ok(!keys.includes(gone), `${gone} soruldu: ${keys.join(",")}`);
+  }
+  /* Platform metinden çözüldüyse ("web sitesi" → Web) sorulmaz; çözülmediyse
+     sözleşmenin ilk sorusudur. İkisi de kuralın gereğidir. */
+  const known = toResolverFieldBag(state).platform;
+  assert.ok(
+    keys.includes("platform") || Boolean(known),
+    `platform ne soruldu ne metinden geldi: ${keys.join(",")}`,
+  );
+  const schedule = scheduleFor("Kurumsal web sitesi yaptırmak istiyorum");
+  const city = schedule.visible.find((q) => q.fieldKey === "city");
+  assert.ok(city, `konum sorusu yok: ${schedule.visible.map((q) => q.fieldKey).join(",")}`);
+  assert.equal(city.prompt, "Hizmet nerede verilecek?");
+  assert.ok(
+    city.escapeChoices.some((c) => c.value === "remote"),
+    `uzaktan kaçışı yok: ${JSON.stringify(city.escapeChoices)} / ${prompts.join(" | ")}`,
   );
 });
 

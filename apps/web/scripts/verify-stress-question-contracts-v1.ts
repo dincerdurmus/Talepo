@@ -33,7 +33,7 @@ const scenarios: Scenario[] = [
   { name: "machine repair", text: "CNC makine tamiri yaptırmak istiyorum", forbidden: machinery },
   { name: "phone screen", text: "iPhone 15 için ekran arıyorum", forbidden: screen },
   { name: "explicit phone replacement screen", text: "iPhone 15 için yedek ekran parçası arıyorum", forbidden: screen },
-  { name: "diaper pail", text: "Bebek bezi çöp kovası arıyorum", forbidden: ["diaperSize"], required: ["diaperDisposalProduct", "diaperDisposalCapacity", "diaperDisposalCompatibility", "model"] },
+  { name: "diaper pail", text: "Bebek bezi çöp kovası arıyorum", forbidden: ["diaperSize", "model"], required: ["diaperDisposalProduct", "diaperDisposalCapacity", "diaperDisposalCompatibility"] },
   // Positive controls prove parent purchasing and specific accessory contracts
   // keep their existing questions; a global keyword blacklist cannot pass.
   { name: "whole washer", text: "Çamaşır makinesi arıyorum", forbidden: [], required: washer },

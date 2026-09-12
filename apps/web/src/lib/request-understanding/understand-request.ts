@@ -63,7 +63,6 @@ import {
 import { buildProductIdentity } from "@/lib/product-identity/identity-builder";
 
 import {
-  classifyRequestedTargetRole,
   requestedTargetBlocksVehicle,
   isRequestedItemNotModel,
   SERVICE_LEMMAS,
@@ -220,6 +219,37 @@ function gateCategory(
       confidence: 0.55,
       status: "TENTATIVE",
       evidence: ["ambiguous-helper-service-clarification"],
+    };
+  }
+
+  /**
+   * SAHİPLİ ARAÇ + ARIZA/BAKIM DİLİ OTOMOTİV SERVİSİDİR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: "Aracım çalışmıyor arıza var" Hizmetler › Teknik Servis'e
+   * gidiyordu. Skorlayıcı "aracım" iyelik biçimini araç kanıtı saymıyor
+   * (anahtar kelime "araç"), "arıza" ise Hizmetler'e puan yazıyordu. Aracın
+   * kendi servis akışı vardır (kurucu istisnası, 2026-08-23, ürün→hizmet
+   * yönlendirmesi otomotivi zaten dışarıda tutar); iyelikli araç adı ile
+   * servis/arıza dili aynı cümlede geçince talep otomotive gider, alt tür
+   * intent-signals'ın SERVICE kararıyla "service" olur. Yalnız iyelik
+   * biçimi aranır ("aracım", "arabamız", "otomobilimin"); yalın "araç"
+   * eskisi gibi skorlayıcıya kalır ki "araç kiralama" gibi cümleler bu
+   * kuralın dışında kalsın.
+   */
+  const ownedVehicle =
+    /(?<![a-z])(?:arac|araba|otomobil|kamyon|kamyonet|minibus|motosiklet|motor|tir)(?:[iua])?m(?:iz)?(?:[iua]n?|d[ae]n?)?(?![a-z])/u.test(
+      foldedInput,
+    );
+  const vehicleFaultOrService =
+    /(?<![a-z])(?:calismiyor|bozuldu|bozuk|ariza|arizali|tamir|bakim|servis|onarim|muayene|ekspertiz|kaza|hasar|ses geliyor|isik yaniyor|yag degisimi|calismiyor)(?![a-z])/u.test(
+      foldedInput,
+    );
+  if (ownedVehicle && vehicleFaultOrService) {
+    return {
+      value: "automotive",
+      confidence: 0.9,
+      status: "CONFIDENT",
+      evidence: ["owned-vehicle-service"],
     };
   }
 
@@ -833,6 +863,21 @@ export function emptyRequestUnderstanding(): RequestUnderstandingResult {
  * Canonical Request Understanding entry point.
  * Orchestrates existing engines — does not rewrite them.
  */
+/**
+ * Lastik mevsimi: sözcük sınırlı, ek toleranslı. "yaz" tek başına başka
+ * sözcüklerin içinde geçebilir ("yazılım"); bu yüzden harf sınırı aranır ve
+ * yalnız lastik bağlamında çağrılır.
+ */
+function readTireSeason(text: string): { value: string; evidence: string } | null {
+  const winter = text.match(/(?<![\p{L}])(k[ıi][şs](?:l[ıi]k)?|winter)(?![\p{L}])/iu);
+  if (winter) return { value: "Kış", evidence: winter[1] };
+  const allSeason = text.match(/(?<![\p{L}])((?:d[öo]rt|4)\s*mevsim(?:lik)?|all\s*season)(?![\p{L}])/iu);
+  if (allSeason) return { value: "Dört mevsim", evidence: allSeason[1] };
+  const summer = text.match(/(?<![\p{L}])(yaz(?:l[ıi]k)?|summer)(?![\p{L}])/iu);
+  if (summer) return { value: "Yaz", evidence: summer[1] };
+  return null;
+}
+
 function lastikWheelOrServiceSignal(text: string): boolean {
   return readTireRequestContext(text)?.isTireRequest ?? false;
 }
@@ -1565,6 +1610,21 @@ export function understandRequest(
           evidence: ["automotive-tire-or-wheel"],
         },
       );
+    }
+    /**
+     * MEVSİM METİNDEN OKUNUR (kurucu, 2026-09-12): "kışlık lastik" yazan
+     * kullanıcıya "Mevsim tercihiniz nedir?" yeniden sorulmaz. Kanonik
+     * seçenek kaydı (Yaz / Kış / Dört mevsim) yalnız tam sözcüğü bağlar;
+     * Türkçe sıfat eki ("kışlık", "yazlık") ve yaygın yazımlar burada aynı
+     * kanonik değere indirgenir. Yeni bir seçenek üretilmez.
+     */
+    const tireSeason = readTireSeason(normalizedInput);
+    if (tireSeason) {
+      attributes.tireSeason = uv(tireSeason.value, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: [tireSeason.evidence],
+      });
     }
   }
   // Accessory leaves already identify the commercial need. Use the existing

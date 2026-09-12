@@ -65,6 +65,34 @@ export function isRemoteEligibleService(
   );
 }
 
+/**
+ * Bebekte ikinci el pazarı ve model ayrımı olan dayanıklı ürünler
+ * (katlanmış alt dize eşleşmesi, `whenProductTypes` sözleşmesi).
+ */
+const BABY_DURABLE_PRODUCT_TYPES = [
+  "bebek arabası",
+  "bebek arabasi",
+  "puset",
+  "oto koltuğu",
+  "oto koltugu",
+  "beşik",
+  "besik",
+  "park yatak",
+  "mama sandalyesi",
+  "portbebe",
+  "kanguru",
+  "bebek odası",
+  "bebek odasi",
+  "salıncak",
+  "salincak",
+  "ana kucağı",
+  "ana kucagi",
+  "yürüteç",
+  "yurutec",
+  "oyun parkı",
+  "oyun parki",
+];
+
 const STANDARD: QuestionProfileDef[] = [
   {
     fieldKey: "needType",
@@ -202,19 +230,33 @@ const STANDARD: QuestionProfileDef[] = [
     allowUnknown: true,
     allowDontCare: true,
   },
+  /**
+   * İKİNCİ EL SORUSU YALNIZ İKİNCİ EL PAZARI OLAN ÜRÜNE (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: ıslak mendil, bebek gıdası, biberon ucu, ev temizlik
+   * malzemesi ve yemek takımı için "Ürün durumu (sıfır / ikinci el)?"
+   * soruluyordu. Ev-mutfak listeden çıktı; bebekte yalnız dayanıklı
+   * ürünler (araba, oto koltuğu, beşik, mama sandalyesi, mobilya, portbebe,
+   * kanguru, park yatak, salıncak, yürüteç) ayrı ve ürün kapılı bir
+   * profille sorulur. `model` için aynı ayrım aşağıda.
+   */
   {
     fieldKey: "condition",
     prompt: "Ürün durumu tercihiniz var mı?",
     summaryLabel: "Durum",
     importance: "optional",
-    categories: [
-      "technology",
-      "appliances",
-      "automotive",
-      "furniture",
-      "baby",
-      "home-kitchen",
-    ],
+    categories: ["technology", "appliances", "automotive", "furniture"],
+    rank: 50,
+    allowDontCare: true,
+    allowUnknown: true,
+  },
+  {
+    fieldKey: "condition",
+    prompt: "Ürün durumu tercihiniz var mı?",
+    summaryLabel: "Durum",
+    importance: "optional",
+    categories: ["baby"],
+    whenProductTypes: BABY_DURABLE_PRODUCT_TYPES,
     rank: 50,
     allowDontCare: true,
     allowUnknown: true,
@@ -376,17 +418,59 @@ const STANDARD: QuestionProfileDef[] = [
     prompt: "Model tercihiniz var mı?",
     summaryLabel: "Model",
     importance: "optional",
-    categories: [
-      "technology",
-      "appliances",
-      "home-kitchen",
-      "furniture",
-      "baby",
-      "automotive",
-    ],
+    categories: ["technology", "appliances", "furniture", "automotive"],
     rank: 46,
     allowDontCare: true,
     allowUnknown: true,
+  },
+  {
+    fieldKey: "model",
+    prompt: "Model tercihiniz var mı?",
+    summaryLabel: "Model",
+    importance: "optional",
+    categories: ["baby"],
+    whenProductTypes: BABY_DURABLE_PRODUCT_TYPES,
+    rank: 46,
+    allowDontCare: true,
+    allowUnknown: true,
+  },
+  /**
+   * ARAÇ: ÇEKİŞ VE GARANTİ SEÇENEKLİ OPSİYONEL SORU OLARAK KALIR (kurucu,
+   * 2026-09-12). Eski form alanları profil kapısıyla düştü; kurucu bu ikisini
+   * geri istedi. Nesil, motor ve kasa/hasar durumu bilinçli olarak dışarıda:
+   * ilk ikisi serbest metin kutusu, üçüncüsü "Araç durumu" ile tekrar.
+   */
+  {
+    fieldKey: "driveType",
+    prompt: "Çekiş tercihiniz var mı?",
+    summaryLabel: "Çekiş",
+    importance: "optional",
+    categories: ["automotive"],
+    whenNeedTypes: ["vehicle"],
+    rank: 30,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Önden çekiş", value: "Önden çekiş" },
+      { label: "Arkadan itiş", value: "Arkadan itiş" },
+      { label: "4x4", value: "4x4" },
+    ],
+    allowDontCare: true,
+    allowUnknown: false,
+  },
+  {
+    fieldKey: "warranty",
+    prompt: "Garanti şartınız var mı?",
+    summaryLabel: "Garanti",
+    importance: "optional",
+    categories: ["automotive"],
+    whenNeedTypes: ["vehicle"],
+    rank: 28,
+    inputHint: "select",
+    quickChoices: [
+      { label: "Garantili olsun", value: "Garantili" },
+    ],
+    allowDontCare: true,
+    allowUnknown: false,
   },
   {
     fieldKey: "model",

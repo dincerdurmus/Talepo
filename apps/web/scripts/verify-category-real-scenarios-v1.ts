@@ -30,11 +30,21 @@ type Result = {
 export function schedule(state: CanonicalRequestState, answeredKeys: string[] = [], draft: Record<string, string> = {}) {
   const bag = toResolverFieldBag(state);
   if (isUnsupportedRequestScope(state.understanding.requestScope?.value)) return null;
+  /* Sayfa ile aynı yol: metinden okunan konum kanonik alan değildir, anlama
+     katmanından değer olarak geçirilir (`/talep` `understandingCity`). Harness
+     bunu geçirmeyince "İzmir Bornova" yazan kullanıcıya konum yeniden
+     soruluyordu; bu bir ürün kusuru değil, harness boşluğuydu (ölçüldü,
+     otomotiv senaryo 4, 2026-09-12). */
+  const understandingCity = state.understanding.location?.city?.value;
   return scheduleComposerQuestions({
     categoryId: state.categoryId ?? "",
     needType: bag.needType,
     candidates: resolveHybridQuestions(state).candidates,
-    values: { ...bag, ...draft },
+    values: {
+      ...bag,
+      ...(understandingCity && !bag.city ? { city: String(understandingCity) } : {}),
+      ...draft,
+    },
     fieldStates: state.fields,
     answeredKeys: [...answeredKeys, ...Object.entries(state.fields).filter(([, field]) =>
       isDeliberateNonValueAnswer(field) || mayCloseQuestion(classifyAnswerAuthority(field)),
@@ -59,10 +69,11 @@ function answerFor(q: ScheduledQuestion, scenario: CategoryScenario, state: Cano
     labDeviceSpec: "Masaüstü model", supportProductRequirement: "Katlanabilir model",
   };
   const needTypes: Record<string, string> = {
-    machinery: "machine", technology: "hardware", services: "service",
+    machinery: "machine", technology: "hardware", services: "service", automotive: "vehicle",
   };
   if (q.fieldKey === "needType" && needTypes[categoryId]) {
-    const value = /yedek parça/iu.test(scenario.text) ? "part"
+    const value = categoryId === "automotive" ? automotiveNeedType(scenario.text, state)
+      : /yedek parça/iu.test(scenario.text) ? "part"
       : state.fields.needType?.kind === "VALUE" ? String(state.fields.needType.value)
       : needTypes[categoryId];
     if (q.quickChoices?.some((choice) => choice.value === value)) return { key: q.fieldKey, value };
@@ -81,12 +92,38 @@ function answerFor(q: ScheduledQuestion, scenario: CategoryScenario, state: Cano
   if ((q.fieldKey === "brand" || q.fieldKey === "model") && q.allowDontCare) {
     return { key: q.fieldKey, value: "Fark etmez", kind: "ANY" };
   }
+  // Otomotiv alt türleri: harness gerçek bir araç/parça cevabı verir ki
+  // soru zinciri "örnek cevap yok" diye kırılmasın; değer ürün kararı değildir.
+  if (categoryId === "automotive" && automotiveAnswers[q.fieldKey]) {
+    return { key: q.fieldKey, value: automotiveAnswers[q.fieldKey] };
+  }
   const choice = q.quickChoices?.find((candidate) => !/fark|bilmi|unknown|skip|no_preference/i.test(candidate.value));
   if (choice) return { key: q.fieldKey, value: choice.value };
   if (q.allowUnknown) return { key: q.fieldKey, value: "Henüz bilmiyorum", kind: "UNKNOWN" };
   if (q.allowDontCare) return { key: q.fieldKey, value: "Fark etmez", kind: "ANY" };
   return null;
 }
+
+/**
+ * Otomotiv senaryolarında alt tür metinden okunur: lastik/jant → tire,
+ * parça adı → part, bakım/arıza → service, aksi hâlde araç. Anlama katmanı
+ * zaten bir needType koyduysa o kazanır; harness ikinci bir router değildir.
+ */
+function automotiveNeedType(text: string, state: CanonicalRequestState): string {
+  const existing = state.fields.needType;
+  if (existing?.kind === "VALUE" && existing.value) return String(existing.value);
+  const fold = text.toLocaleLowerCase("tr-TR");
+  if (/lastik|jant/u.test(fold)) return "tire";
+  if (/yedek parça|tampon|\bfar\b|balata|debriyaj|amortisör|parça/u.test(fold)) return "part";
+  if (/bakım|servis|arıza|ekspertiz|tamir|onarım/u.test(fold)) return "service";
+  return "vehicle";
+}
+
+const automotiveAnswers: Record<string, string> = {
+  brand: "Renault", model: "Clio", modelYear: "2019", partVehicleYear: "2015",
+  part: "arka tampon", tireSize: "205/55 R16", tireQuantity: "4", mileage: "150000",
+  color: "Beyaz", engine: "1.0 TCe", generation: "5. nesil", bodyCondition: "Hasarsız",
+};
 
 function known(state: CanonicalRequestState, key: string) {
   return mayCloseQuestion(classifyAnswerAuthority(state.fields[key])) ||

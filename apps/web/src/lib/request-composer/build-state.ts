@@ -38,7 +38,7 @@ import {
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 // Kategori alanlarının kanonik değer kaydı — KB-15 seçenek bağlayıcısı bunu okur.
-import { getCategoryById, REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+import { getCategoryById } from "@/lib/request-category-engine";
 import { listProfilesForCategory, isRemoteEligibleService } from "./v2/question-profiles";
 import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/activation-bridge";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
@@ -399,7 +399,18 @@ function qualifierNear(raw: string, writtenSpan: string): boolean {
  * Anlama katmanındaki asıl kusur (kg aralığını para sanması) ayrı bir dilim
  * konusudur; burada yalnız yükseltme kapısı kapatılır.
  */
-const MONEY_SIGNAL_RE = /(₺|\b(?:tl|try|lira)\b|bütçe|butce)/i;
+/**
+ * PARA İŞARETİ GENİŞLETİLDİ (kurucu, 2026-09-12): "800 bine kadar" bir tavan
+ * bütçedir ve `budget.ts` onu 88 puanla zaten çıkarıyordu; ama metinde ne
+ * para birimi ne "bütçe" sözcüğü geçtiği için yükseltme kapısı kapalı
+ * kalıyor ve kullanıcıya bütçe yeniden soruluyordu (ölçüldü, otomotiv
+ * senaryo 2). Kapı artık `budget.ts` ile aynı sözcük dağarcığını okur:
+ * bütçe/fiyat/bedel/ücret/tutar/maliyet/maks/en fazla anahtarları ve
+ * "sayı + bin|milyon + kadar" tavan biçimi. Çıplak "5 bin adet" gibi
+ * miktar ifadeleri işaret sayılmaz; kg aralığı vakası (9-36 kg) kapalı kalır.
+ */
+const MONEY_SIGNAL_RE =
+  /(₺|\b(?:tl|try|lira)\b|bütçe|butce|fiyat|bedel|ücret|ucret|tutar|maliyet|maksimum|\bmaks\b|\bmax\b|en\s+(?:fazla|çok|cok)|\d[\d.,]*\s*(?:bin|milyon)(?:e|a|'e|'a|’e|’a)?\s*kadar\b)/i;
 function budgetLooksLikeMoneyInText(raw: string): boolean {
   return MONEY_SIGNAL_RE.test(String(raw ?? ""));
 }
@@ -1023,6 +1034,25 @@ export function mapUnderstandingToFields(
   // part / position only for spare-part subjects — never dump vehicle name into part
   const subjectKind = result.requestSubject.kind.value;
   const isPartSubject = subjectKind === "PART" || subjectKind === "ACCESSORY";
+
+  /**
+   * PARÇA TALEBİNDE YIL, PARÇANIN UYACAĞI ARACIN YILIDIR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü: "Renault Clio 2015 arka tampon arıyorum" yazan kullanıcıya
+   * "Parçanın uyacağı araç yılı nedir?" yeniden soruluyordu. Yıl metinden
+   * `modelYear` olarak çıkıyor, yedek parça sözleşmesi ise `partVehicleYear`
+   * soruyor; iki anahtar iki soru oluyordu. Köprü yalnız otomotiv parça
+   * öznesinde ve yalnız alan boşken kurulur; kaynak ve kanıt aynen taşınır,
+   * çıkarım kullanıcı beyanına yükseltilmez.
+   */
+  if (
+    result.category.value === "automotive" &&
+    isPartSubject &&
+    fields.modelYear?.kind === "VALUE" &&
+    !fields.partVehicleYear
+  ) {
+    fields.partVehicleYear = { ...fields.modelYear };
+  }
 
   // Real-estate subject name → propertyType (concrete types only; not "gayrimenkul")
   if (
@@ -2190,7 +2220,21 @@ export function deriveExplicitNeedType(
   ]);
   const iv = String(intentObj.value);
   let candidates: string[] = [];
-  if (iv === "SERVICE" || kindVal === "SERVICE") candidates = ["service"];
+  /**
+   * TEKNOLOJİDE YAZILIM PROJESİ "service" DEĞİL "software"DIR (kurucu,
+   * 2026-09-12). Ölçüldü: "Kurumsal web sitesi yaptırmak istiyorum" SERVICE
+   * özneyle "service" (Bakım / destek) alt türüne kapanıyor, donanım ve bakım
+   * soruları geliyordu. Kanonik yazılım sinyali varsa ve donanım sinyali
+   * yoksa talep bir yazılım projesidir; "service" yalnız yazılım sinyali
+   * taşımayan teknik destek talebine (sunucu bakımı gibi) kalır.
+   */
+  const isSoftwareProject =
+    categoryId === "technology" &&
+    (iv === "SERVICE" || iv === "MANUFACTURE" || kindVal === "SERVICE" || kindVal === "SOFTWARE") &&
+    TECH_SOFTWARE_SIGNAL.test(String(result.rawInput ?? "")) &&
+    !TECH_HARDWARE_SIGNAL.test(String(result.rawInput ?? ""));
+  if (isSoftwareProject) candidates = ["software"];
+  else if (iv === "SERVICE" || kindVal === "SERVICE") candidates = ["service"];
   else if (iv === "PART" || kindVal === "PART" || kindVal === "ACCESSORY")
     candidates = ["part"];
   else if (kindVal === "VEHICLE" && (iv === "BUY" || iv === "RENT"))

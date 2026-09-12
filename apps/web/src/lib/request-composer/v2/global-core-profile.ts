@@ -29,19 +29,57 @@ export type GlobalBudgetStatus =
   | "no_preference"
   | "missing";
 
+/** Taşınılmayan gayrimenkul türleri: arsa, tarla, fabrika, depo, tesis. */
+function isNonResidentialProperty(value?: string | null): boolean {
+  const folded = (value ?? "")
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ı/g, "i")
+    .replace(/ş/g, "s")
+    .replace(/ğ/g, "g")
+    .replace(/ç/g, "c")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u");
+  if (!folded.trim()) return false;
+  return /(arsa|tarla|bag|bahce|fabrika|depo|antrepo|tesis|santiye|maden|imalathane)/.test(
+    folded,
+  );
+}
+
 export function globalCoreQuestionProfiles(
   categoryId: string,
-  extras?: { listingType?: string | null; needType?: string | null },
+  extras?: {
+    listingType?: string | null;
+    needType?: string | null;
+    /** Emlakta gayrimenkul türü — teslim/taşınma dilini belirler. */
+    propertyType?: string | null;
+  },
 ): QuestionProfileDef[] {
   const isRealEstate = categoryId === "real-estate";
+  /**
+   * SAĞLIK HER ZAMAN HİZMET DEĞİLDİR (kurucu, 2026-09-12). Sağlık
+   * kategorisinin alanları ürün alanlarıdır (cihaz, sarf, ürün adı); tekerlekli
+   * sandalye arayan birine "Hizmet nerede verilecek?" diye sormak yanlıştı.
+   * Hizmet dili YALNIZ ihtiyaç türü hizmete işaret ettiğinde açılır.
+   */
+  const needTypeRaw = (extras?.needType ?? "").toLocaleLowerCase("tr-TR");
+  const isServiceNeed =
+    needTypeRaw === "service" ||
+    needTypeRaw === "repair" ||
+    needTypeRaw === "maintenance" ||
+    needTypeRaw === "installation";
   const isServiceLike =
-    categoryId === "services" || categoryId === "health";
+    categoryId === "services" || (categoryId === "health" && isServiceNeed);
 
+  /* Yazılım / web projesi teslim edilen bir koli değildir; konum sorusu
+     hizmet diliyle sorulur ve "Uzaktan" kaçışı zamanlayıcıda açılır
+     (kurucu, 2026-09-12). */
+  const isSoftwareProject =
+    categoryId === "technology" && extras?.needType === "software";
   const locationPrompt = isRealEstate
     ? "Hangi il ve ilçede arıyorsunuz?"
     : categoryId === "machinery" && extras?.needType === "part"
       ? "Teslimat adresi neresi? Türkiye geneli veya il ve ilçe seçin."
-      : isServiceLike
+      : isServiceLike || isSoftwareProject
         ? "Hizmet nerede verilecek?"
         : "Nereye teslim edilecek?";
 
@@ -78,9 +116,13 @@ export function globalCoreQuestionProfiles(
     },
     {
       fieldKey: "delivery",
-      prompt: isRealEstate
-        ? "Ne zamana kadar taşınmak istiyorsunuz?"
-        : "Ne zamana kadar ihtiyacınız var?",
+      /* Taşınma dili YALNIZ oturulacak / kullanılacak bir yer içindir:
+         arsa, tarla, fabrika ya da depo için "taşınmak" yanlış düşüyordu
+         (kurucu, 2026-09-12). */
+      prompt:
+        isRealEstate && !isNonResidentialProperty(extras?.propertyType)
+          ? "Ne zamana kadar taşınmak istiyorsunuz?"
+          : "Ne zamana kadar ihtiyacınız var?",
       summaryLabel: "Zaman",
       importance: "quote_critical",
       rank: 55,

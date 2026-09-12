@@ -11,6 +11,7 @@ import {
 } from "@/components/panel/profile/ProfileSignal";
 import type { FocusedQuestion } from "@/lib/request-composer/v2/focused-questions";
 import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
+import type { QuestionPhase } from "@/lib/request-composer/v2/question-profile-types";
 import {
   getDistrictsForProvince,
   TURKEY_IL_NAMES,
@@ -26,6 +27,13 @@ type Props = {
   collapsed?: boolean;
   onExpand?: () => void;
   remainingCriticalCount?: number;
+  /**
+   * Soru aşaması ve başlığı zamanlayıcıdan gelir (kurucu, 2026-09-12):
+   * önce bütçe + il/ilçe, sonra "Talebi detaylandır". Verilmezse eski
+   * başlık korunur; panel kendi cümlesini uydurmaz.
+   */
+  phase?: QuestionPhase;
+  phaseHeading?: string;
 };
 
 /**
@@ -716,6 +724,8 @@ export function FocusedQuestionsPanel({
   collapsed = false,
   onExpand,
   remainingCriticalCount,
+  phase,
+  phaseHeading,
 }: Props) {
   const baseId = useId();
   const questionKey = questions.map((q) => q.fieldKey).join("|");
@@ -781,7 +791,7 @@ export function FocusedQuestionsPanel({
           id={`${baseId}-heading`}
           className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/80"
         >
-          Son birkaç detay
+          {phaseHeading ?? "Son birkaç detay"}
         </h2>
         {typeof remainingCriticalCount === "number" &&
         remainingCriticalCount > 0 ? (
@@ -795,7 +805,9 @@ export function FocusedQuestionsPanel({
         )}
       </div>
       <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/45">
-        Cevapladıkça teklifler isabetli gelir. İstemediğini atlayabilirsin.
+        {phase === "essentials"
+          ? "Bütçe ve konum olmadan teklif gelmez; gerisi sonra."
+          : "Cevapladıkça teklifler isabetli gelir. İstemediğini atlayabilirsin."}
       </p>
 
       {healthNotice ? (

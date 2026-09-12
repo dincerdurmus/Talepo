@@ -34,6 +34,7 @@ import {
   TalepoAiPanel,
   type ClarificationOption,
 } from "@/components/request/TalepoAiPanel";
+import { CategoryConfirmationCard } from "@/components/request/v2/CategoryConfirmationCard";
 import { CategoryGuidanceCard } from "@/components/request/v2/CategoryGuidanceCard";
 import { CategoryGuidanceSummary } from "@/components/request/v2/CategoryGuidanceSummary";
 import { FocusedQuestionsPanel } from "@/components/request/v2/FocusedQuestionsPanel";
@@ -64,6 +65,12 @@ import {
   budgetPromptForStrategy,
   toHumanQuestions,
 } from "@/lib/request-brain/human-question-layer";
+import {
+  buildCategoryChoice,
+  buildCategoryConfirmation,
+  categoryConfirmationToGuidanceSelection,
+  type CategoryConfirmationAction,
+} from "@/lib/request-composer/v2/category-confirmation";
 import {
   buildCategoryGuidance,
   categoryGuidanceToUserChoice,
@@ -138,7 +145,10 @@ import {
   scheduledToFocusedQuestion,
 } from "@/lib/request-composer/v2/focused-questions";
 import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
-import { softStatusFromAnswerValue } from "@/lib/request-composer/v2/question-scheduler";
+import {
+  PHASE_HEADINGS,
+  softStatusFromAnswerValue,
+} from "@/lib/request-composer/v2/question-scheduler";
 import {
   budgetDisplayLabel,
   filterReviewPreferences,
@@ -388,6 +398,15 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   const requestText = hybrid.text;
   const [categoryUserChoice, setCategoryUserChoice] =
     useState<CategoryUserChoice>(null);
+  /**
+   * KATEGORİ ONAY ADIMI — "Bu değil" görünümü (kurucu, 2026-09-12). Hangi
+   * kategori tahmini için reddedildiği tutulur; tahmin değişince görünüm
+   * kendiliğinden kapanır. Sayfa state'idir ki form ile Maira arasında
+   * geçişte kaybolmasın. Kategoriye DOKUNMAZ; yalnız görünüm.
+   */
+  const [categoryRejectedFor, setCategoryRejectedFor] = useState<
+    string | null
+  >(null);
   const [confirmedFactKeys, setConfirmedFactKeys] = useState<string[]>([]);
   const [dismissedFactKeys, setDismissedFactKeys] = useState<string[]>([]);
   const [skippedQuestionKeys, setSkippedQuestionKeys] = useState<string[]>([]);
@@ -560,6 +579,7 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     setCategoryLockedByUser(false);
     setCategoryOverride(null);
     setCategoryUserChoice(null);
+    setCategoryRejectedFor(null);
     setConfirmedFactKeys([]);
     setDismissedFactKeys([]);
     setOtherDomainNote("");
@@ -1401,6 +1421,8 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
         canEnterReview: false,
         blockingFieldKeys: [],
         blockingLabels: [],
+        phase: "detail" as const,
+        phaseHeading: PHASE_HEADINGS.detail,
       };
     }
     const live = understandingMatchesComposerText({
@@ -1788,6 +1810,73 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     understanding,
   ]);
 
+  /**
+   * KATEGORİ ONAY ADIMI (kurucu, 2026-09-12). Motor güvenle karar verdiğinde
+   * bile önce sorulur: "Bunu X olarak değerlendiriyorum, doğru mu?" Model tek
+   * yerden kurulur; standart kart da Maira da AYNI nesneyi çizer. Belirsiz
+   * durumda bu adım yoktur, rehberlik kartı (`categoryGuidance`) sürer.
+   */
+  const categoryConfirmation = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    if (!live) return null;
+    const slug = hybrid.state?.subcategorySlug ?? null;
+    const subLabel = slug
+      ? selectedCategory.subcategories.find(
+          (label) => subcategorySlug(label) === slug,
+        ) ?? null
+      : null;
+    return buildCategoryConfirmation({
+      rawText: requestText,
+      isSyncing: hybrid.isSyncing,
+      categoryConfident: schemaCategory.confident,
+      categoryLockedByUser,
+      categoryUserChoice,
+      categoryId: activeCategoryId,
+      displayLabelSafe: schemaCategory.displayLabelSafe,
+      subcategoryLabel: subLabel,
+    });
+  }, [
+    activeCategoryId,
+    categoryLockedByUser,
+    categoryUserChoice,
+    hybrid.isSyncing,
+    hybrid.state?.subcategorySlug,
+    requestText,
+    schemaCategory.confident,
+    schemaCategory.displayLabelSafe,
+    selectedCategory.subcategories,
+    understanding.rawInput,
+  ]);
+  /**
+   * MAIRA'DA BELİRSİZ DURUM (kurucu, 2026-09-12). Standart form kanonik
+   * rehberlik kartını çizer; Maira aynı kararı kendi sahnesinde gösterir —
+   * "Maira başka bir şey değil". Adaylar `categoryGuidance`'tan taşınır,
+   * ikinci bir aday üretimi yoktur.
+   */
+  const categoryChoice = useMemo(() => {
+    if (categoryConfirmation) return null;
+    if (categoryUserChoice) return null;
+    if (!categoryGuidance) return null;
+    return buildCategoryChoice({
+      guidance: categoryGuidance,
+      categoryId: activeCategoryId,
+    });
+  }, [
+    activeCategoryId,
+    categoryConfirmation,
+    categoryGuidance,
+    categoryUserChoice,
+  ]);
+  /** Maira'nın gördüğü TEK adım: onay ya da seçim. */
+  const categoryStepForMaira = categoryConfirmation ?? categoryChoice;
+  const categoryRejected =
+    categoryStepForMaira !== null &&
+    categoryRejectedFor === (categoryStepForMaira.categoryId || "__choose__");
+
   const editableUnderstoodFacts = useMemo(() => {
     const live = understandingMatchesComposerText({
       composerText: requestText,
@@ -1920,6 +2009,14 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   }, [categoryGuidance]);
 
   useEffect(() => {
+    if (!categoryConfirmation) return;
+    trackComposerEvent("category_confirmation_shown", {
+      categoryId: categoryConfirmation.categoryId,
+      hasSubcategory: categoryConfirmation.subcategoryLabel !== null,
+    });
+  }, [categoryConfirmation]);
+
+  useEffect(() => {
     if (!requestText.trim()) {
       // GEREKLI ASAMA SIFIRLAMASI. Kullanici metni tamamen sildiginde asama
       // compose'a donmek ZORUNDA: aksi halde bos bir talep uzerinde review
@@ -1936,11 +2033,13 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       !hybrid.isSyncing &&
       (editableUnderstoodFacts.length > 0 ||
         categoryGuidance ||
+        categoryConfirmation ||
         focusedQuestions.length > 0)
     ) {
       setUxStage("clarify");
     }
   }, [
+    categoryConfirmation,
     categoryGuidance,
     editableUnderstoodFacts.length,
     focusedQuestions.length,
@@ -1993,6 +2092,43 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       setCategoryLockedByUser(false);
       setShowOtherDomainInput(true);
     }
+  }
+
+  /**
+   * Kategori onay dokunuşu — TEK işleyici, iki yüzey. "Evet" ve kök seçimi
+   * mevcut `applyCategoryGuidance` yolundan geçer (picked_candidate + kilit);
+   * "Bu değil" / "Vazgeç" yalnız görünümü değiştirir.
+   */
+  function applyCategoryConfirmation(action: CategoryConfirmationAction) {
+    const step = categoryStepForMaira;
+    if (!step) return;
+    if (action.kind === "reject") {
+      setCategoryRejectedFor(step.categoryId || "__choose__");
+      trackComposerEvent("category_confirmation_rejected", {
+        categoryId: step.categoryId,
+        mode: step.mode,
+      });
+      return;
+    }
+    if (action.kind === "back") {
+      setCategoryRejectedFor(null);
+      return;
+    }
+    const selection = categoryConfirmationToGuidanceSelection(step, action);
+    if (!selection) return;
+    trackComposerEvent(
+      action.kind === "confirm"
+        ? "category_confirmation_confirmed"
+        : "category_root_picked",
+      {
+        categoryId: step.categoryId,
+        mode: step.mode,
+        pickedCategoryId:
+          selection.kind === "candidate" ? selection.slug : undefined,
+      },
+    );
+    setCategoryRejectedFor(null);
+    applyCategoryGuidance(selection);
   }
 
   function applyClarification(option: ClarificationOption) {
@@ -3136,6 +3272,10 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
           remainingCriticalCount={composerReadiness.remainingCriticalCount}
           answers={userAnswerRows}
           subtitle={readinessLabel}
+          categoryStep={categoryStepForMaira}
+          categoryRejected={categoryRejected}
+          onCategoryAction={applyCategoryConfirmation}
+          phaseHeading={focusedQuestionSchedule.phaseHeading}
           onExitToStandard={() => {
             setViewMode("standard");
             setMairaSummonInstant(false);
@@ -3519,6 +3659,14 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                         }}
                       />
 
+                      {categoryConfirmation ? (
+                        <CategoryConfirmationCard
+                          model={categoryConfirmation}
+                          rejected={categoryRejected}
+                          onAction={applyCategoryConfirmation}
+                        />
+                      ) : null}
+
                       {categoryGuidance && !categoryUserChoice ? (
                         <CategoryGuidanceCard
                           model={categoryGuidance}
@@ -3572,6 +3720,8 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                           remainingCriticalCount={
                             composerReadiness.remainingCriticalCount
                           }
+                          phase={focusedQuestionSchedule.phase}
+                          phaseHeading={focusedQuestionSchedule.phaseHeading}
                           onExpand={() => setUxStage("clarify")}
                           onDraftChange={(fieldKey, value) =>
                             setFocusedDraftByKey((current) => ({

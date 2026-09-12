@@ -3583,3 +3583,160 @@ tek `Serializable` transaction + exact count mutabakatı + tam rollback, ve
 `NEW_MESSAGE` bildiriminin talebe bağlanarak sahiplik kazanması. Bunlar
 paylaşılan/staging bir veritabanına ya da gerçek veriye geçilmeden **önce**
 gereklidir.
+
+---
+
+## ÖLÇÜM TABANI — 2026-09-12, `d738ae9` (soru aşaması · kategori onayı · Maira sesi)
+
+Commit: `d738ae9` — *fix(questions): saglikta teslim dili, arsa ve fabrikada
+tasinma dili*. Bugünkü zincir: `7505241 → abbbb1c → 97eed4f → e575077 →
+ac09b8a → a17a4a9 → d8ab03a → 18998e7 → c1782c7 → de89bec → 2f9c3e7 →
+d738ae9`. Bu bölüm daha eski tabanları **silmez**; onlar başka eksenleri
+ölçer. Buradaki tek iddia şudur: **bu tarihte hangi doğrulayıcı kırmızıydı ve
+neden taşınıyor.**
+
+`main` bu tabanla **birleştirilmedi**. Kurucu kuralı: kırmızı varken `main`'e
+alınmaz. Kırmızılar burada yazılı olduğu için artık "sessizce geçilen" bir
+kırmızı yoktur; `main` kararı yine de ayrı bir karardır.
+
+### Nasıl ölçüldü
+
+```
+cd apps/web
+npx --yes tsx scripts/<ad>.ts      # aşağıdaki her satır için
+npx --yes tsc --noEmit -p tsconfig.json
+```
+
+Çalışma dizini `Talepo-maira-view-state-v1` worktree'si, HEAD `d738ae9`,
+çalışma ağacı temiz (yalnız izlenmeyen `reports/`).
+
+### Yeşil (bu turda ölçüldü)
+
+| Doğrulayıcı | Sonuç |
+| --- | --- |
+| `verify-request-authority-v1` | 14 PASS |
+| `verify-taxonomy-drift-v1` | exit 0 |
+| `verify-master-taxonomy-v1` | 76 passed |
+| `verify-request-composer-v2-slice1` | 13 PASS |
+| `verify-request-composer-v2-controls` | 2295 passed |
+| `verify-request-composer-v2-entity-global-core` | 28 passed |
+| `verify-request-composer-v2-re-semantics` | 6 passed |
+| `verify-request-composer-v2-review-display` | 3 passed |
+| `verify-request-composer-v2-phase2-scheduler` | 30 passed |
+| `verify-matching-v3-shadow` | 117 passed |
+| `verify-phase4a-observability-v1` | 24 passed |
+| `verify-browse-semantic-closure-v1` | 39 passed |
+| `verify-talep-hybrid-ui-v1` | 97 passed |
+| `verify-category-real-scenarios-v1` | 11 kategori, 0 bulgu |
+| `verify-category-answer-retention-v1` | 20 passed |
+| `verify-category-edit-scenarios-v1` | 60 passed |
+| `verify-request-target-regressions-v1` | 38 passed |
+| `verify-brain-adversarial-corpus-v1` | exit 0 |
+| `verify-request-routing-matrix-v1` | routing 5944/5944, question 1866/933 |
+| `verify-maira-answer-contract-v1` | 2648 kapı, 0 sorun |
+| `verify-maira-scene-boundary-v1` | 49 kapı, 0 sorun |
+| `verify-maira-voice-v1` (yeni) | 84 passed |
+| `verify-category-confirmation-v1` (yeni) | 75 passed |
+| `tsc --noEmit` | temiz |
+
+### Kırmızı — taşınıyor, sahibi ve nedeni yazılı
+
+**1. `verify-understanding-invariants-v1` — 121 passed, 8 failed, 1 known_fail.**
+Açık satırlar: `I9` (her ürün ailesi yalnız kendi sorularını alır), `I10`
+(motor alanları ürün kapsamlı), `I21` (katalog dışı parça istenen şey olarak
+korunur — KB-12 açık dünya), `I29` (kanonik üst üründe parça adı eksiksiz
+korunur), `I31` (kanonik üst ürün span'i aynı anda marka/model olamaz), `I49b`
+(kategori kaydındaki seçeneği yazan kullanıcıya o alan sorulmaz), `I50h` (iki
+çelişkili vaka: kanonik karşılık varsa bağlanır, yoksa sorulur), `I51a`
+(gizlenen soru sonrası ürün kimliği routing envelope'a ulaşır). `I25d` zaten
+`known_fail` olarak kayıtlıdır. **Ne zamandan beri:** bu sekiz satır
+2026-09-12 günü boyunca hiç değişmedi; bugünün on iki commit'i bunlara
+dokunmadı, yeni kırmızı eklemedi. **Sahibi:** anlama katmanı
+(`understand-request.ts` + kategori motoru sözleşmeleri). **Neden şimdi
+kapatılmadı:** her biri kanonik ürün kimliği ve alan kapsamı ekseninde ayrı
+birer karar ister; soru aşaması dilimlerinin kapsamı dışındadır.
+
+**2. `verify-knowledge-engine-v1` — 53 passed, 1 failed.**
+`subcategory profiles cover tree`: `services` kategorisinde beş alt ağaç
+profilsiz — *Ev Tadilat ve Dekorasyon*, *Teknik Servis*, *Eğitim*, *Grafik ve
+Tasarım*, *Evde Bakım ve Destek*. **Sonucu:** bu alt dallarda soru evreni
+ortak çekirdek + hizmet sözleşmesiyle sınırlı kalır; yanlış soru sorulmaz,
+eksik soru sorulur. **Sahibi:** bilgi şeması / hizmet profilleri.
+
+**3. `verify-request-composer-v2-phase2` — 8 passed, 1 failed.**
+`55'' Smart TV` vakası `product` beklerken başka bir sınıfa düşüyor.
+**Ne zamandan beri:** bugünden önce açıktı, bugün değişmedi.
+
+**4. `verify-fanout-telemetry-v1` — 65 passed, 4 failed.**
+Açık satırlar: span'in bir kez açılıp terminalleriyle bölünmesi,
+`RequestMatch`/`Notification` yazımlarının değişmemiş olması, prisma çağrı
+yüzeyinin şekil ve sayısının değişmemiş olması, şirket/üye/talep satırı başına
+olay yayılmaması. **Sahibi:** dağıtım telemetrisi. Talep alma akışıyla
+ilgisizdir; bu dilimlerde dokunulmadı.
+
+**5. `verify-category-coverage-v1` — TOTAL=108 PASS=100 KNOWN_FAIL=0 FAIL=8.**
+Düşen senaryolar: `auto-05` ve `auto-06` (araç kiralama niyeti — KB-16
+ekseni), `furn-04` (masa bağlantı aparatı `ACCESSORY` sanılıyor), `health-04`
+(steril eldiven `printing` kategorisine düşüyor), `health-07` (test çubuğu
+kategori bulamıyor), `home-06` (kürek sapı), `print-01` (`dimensions` sorusu
+beklenirken sorulmuyor), `svc-01` (`frequency` sorusu beklenirken
+sorulmuyor). **Dikkat:** 2026-08-28 tabanında bu corpus `PASS=99
+KNOWN_FAIL=9 FAIL=0` olarak kayıtlıydı; bugün `known_fail` etiketleri
+görünmüyor ve aynı sınıf artık düz `FAIL` sayılıyor. Etiketin nerede
+düştüğü **teşhis edilmedi**. `print-01` ve `svc-01` için ölçülen durum şu:
+kartvizit sözleşmesi ölçüyü `cardFormat` ile sorar (`dimensions` o
+sözleşmenin izinli anahtarlarında yoktur) ve `frequency` diye bir soru
+profili hiç yoktur. Bu ikisi bugünün "yalnız profili olan alan sorulur"
+kapısından doğmadı — ikisi de o kapıdan bağımsız sözleşme kararlarıdır;
+yine de fixture ile sözleşme arasındaki bu ayrışma açık bir borçtur.
+
+**6. `verify-readiness-brand-authority-v1` — 1 ihlal.**
+`G6 kapsam doğrulayıcısı koşturulamadı`: bu doğrulayıcı
+`verify-category-coverage-v1`'i alt süreç olarak çağırır ve o süreç (5.
+maddedeki sekiz düşüş yüzünden) sıfırdan farklı çıkış kodu döndürdüğü için
+çağrı hata fırlatır. Marka otoritesi merdiveninin kendisi sağlamdır:
+`BRAND_ROUTABLE_TRUSTED=15/108`, `missing=0`, `unexpected=0`,
+`BRAND_EVIDENCE_UNKNOWN=0`, `BRAND_EVIDENCE_INFERRED=0`. Yani kırmızı,
+ölçülen marka ekseninden değil, alt sürecin çıkış kodundan gelir.
+
+**Not — bu kırmızıların hiçbiri bugünün dilimlerinden doğmadı.** Anlama
+katmanının sekizi ve telemetrinin dördü günün ilk ölçümünde de aynıydı; soru
+aşaması, kategori onayı ve Maira sesi dilimleri bu sayıları ne artırdı ne
+azalttı.
+
+### Bugün KAPANAN kırmızı
+
+`verify-maira-answer-contract-v1` sabah **2646 kapı / 9 sorun** ile
+kırmızıydı; akşam **2648 kapı / 0 sorun**. Kapanış iki parçaydı.
+
+Gerçek kusur (kod düzeltildi): "No-frost buzdolabı arıyorum" yazan kullanıcıda
+`No-frost` marka ADAYI olarak kaydediliyordu (`attributes.brandCandidate`).
+Ürün özelliği marka ekseninde hiç görünmemeli; dar bir özellik sözlüğü
+(`nofrost`, `inverter`, `ankastre`, `statik`, `oled`, `qled`, `uhd`, `hepa`,
+`dokunmatik`, `kablosuz`, `sarjli`, `akulu`, `otomatik`, `manuel`, `dijital`)
+`classifyBrandEvidence` içinde `NONE` sınıfına alındı. Katalog doğrulaması bu
+kontrolden ÖNCE çalışır, yani gerçek bir katalog markası bu listeden asla
+etkilenmez (ölçüldü: Mercedes-Benz, Apple, Arçelik, Bosch, Heidelberg hâlâ
+`VERIFIED_CATALOG`).
+
+Bayat beklentiler (doğrulayıcı bugünün kanonik modeline çekildi, kod
+değişmedi): `T8` ailesi "no-frost"u `fridgeType` alanında arıyordu — bugünkü
+modelde gövde tipi `fridgeType`, soğutma teknolojisi `fridgeCoolingSystem`'dir
+ve metin oraya bağlanır (ölçüldü). `P11b`/`V10b` eski dört seçenekli listeyi
+bekliyordu. `P0`/`P6`/`P7` drift sayaçlarının tabanı profil evreni 37 alanken
+yazılmıştı; evren bugün 521 profil / 414 seçenekli alan, yeni taban
+414/409/412. `K3a` yalnız oturum defterine bakıyordu; zamanlayıcının açık
+kuralı ise "defter bir cevap deposu değildir" — kapı bugünün kuralını ölçecek
+şekilde güncellendi ve defterin tek başına soruyu KAPATMADIĞINI doğrulayan
+yeni bir kapı eklendi.
+
+### Bu tabanda kapatılan şeyler (kayıt için)
+
+Bütçe ve il/ilçe her kategoride ilk iki soru oldu; kategori soruları "Talebi
+detaylandır, daha gerçek teklif al" aşamasına alındı ve hiçbiri yayın için
+zorunlu değil. Profil karşılığı olmayan eski alanlar zamanlayıcıdan düştü
+(ölçülen düşüş: beyaz eşya 15,0 → 9,9 soru/senaryo, mobilya 14,1 → 8,1, ev ve
+mutfak 15,1 → 9,7, sağlık 13,8 → 8,0, teknoloji 11,8 → 9,5; ham etiket her
+kategoride 0). Kategori onayı iki modlu tek adım olarak geldi ve aynı adımı
+standart form ile Maira birlikte çiziyor. Maira soruları sohbet diliyle
+soruyor; alan, sıra ve seçenekler formla birebir aynı.

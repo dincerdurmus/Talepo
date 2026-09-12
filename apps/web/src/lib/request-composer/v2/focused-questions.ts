@@ -18,6 +18,7 @@ import {
   type FieldAnswerState,
 } from "./question-scheduler";
 import { resolveQuestionControl } from "./question-control-registry";
+import { toMairaVoice } from "./maira-voice";
 import { resolveProfileForField } from "./question-profiles";
 import type { QuestionControlDef } from "./question-control-types";
 
@@ -41,6 +42,12 @@ export type FocusedQuestion = HumanizedQuestion & {
    */
   suggestedLabel?: string;
   suggestedValueAuthority?: ScheduledQuestion["suggestedValueAuthority"];
+  /**
+   * MAIRA'NIN SÖYLEYİŞİ (kurucu, 2026-09-12): aynı soru, sohbet diliyle.
+   * Alan, sıra ve seçenekler `humanPrompt` ile birebir aynıdır; yalnız
+   * cümle değişir. Tek yerden (`maira-voice.ts`) üretilir, Maira okur.
+   */
+  mairaPrompt?: string;
 };
 
 /**
@@ -145,6 +152,12 @@ export function scheduledToFocusedQuestion(
           : hybrid?.quickChoices,
     options: hybrid?.options,
     humanPrompt: q.prompt,
+    mairaPrompt: toMairaVoice({
+      fieldKey: q.fieldKey,
+      prompt: q.prompt,
+      categoryId,
+      importance: q.importance,
+    }),
     fieldClass:
       q.importance === "publish_required"
         ? "REQUIRED_TO_PUBLISH"

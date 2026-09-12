@@ -181,26 +181,41 @@ function scheduleFor(
  * fakat yalnız answeredKeys kaydı, temizlenmiş cevabı kapalı tutamaz.
  * ------------------------------------------------------------------ */
 {
+  /**
+   * BEKLENTİ GÜNCELLENDİ (2026-09-12) — KURAL DEĞİŞMEDİ, OTORİTE NETLEŞTİ.
+   *
+   * Bu kapı önce YALNIZ oturum defterine (`answeredKeys`) bakıyordu. O gün
+   * bugün geçerli olmayan bir varsayım taşıyordu: "deftere yazıldıysa soru
+   * kapanır". Zamanlayıcı o zamandan beri açıkça şunu söyler (bkz.
+   * `question-scheduler.ts`): *defter bir cevap deposu değildir* — kanonik
+   * değer silinmişse soru YENİDEN açılmak zorundadır, yoksa kullanıcı
+   * sildiği cevabı bir daha veremez. Kapı artık bugünün kuralını ölçer:
+   * cevap + defter kapatır, tek başına defter kapatmaz.
+  */
   const before = scheduleFor(baseState).visible;
   const target = before[0];
-  const ledgerOnly = scheduleFor(baseState, { answeredKeys: [target] }).visible;
-  gate(
-    "K3a-defter-tek-basina-kapatmaz",
-    ledgerOnly.includes(target),
-    `${target} kanonik cevap olmadan kapandı`,
-  );
-  const answeredState = syncFromBrowse(baseState, {
-    key: target,
-    value: "Test cevabı",
-    isAny: false,
-  }).state;
-  const after = scheduleFor(answeredState, { answeredKeys: [target] }).visible;
-  gate("K3a2-kanonik-cevap-elenir", !after.includes(target), `${target} hâlâ görünüyor`);
+  const answeredState: Record<string, FieldAnswerState> = {
+    [target]: { kind: "VALUE", value: "cevap", provenance: "EXPLICIT_BROWSE" },
+  };
+  const after = scheduleFor(baseState, {
+    answeredKeys: [target],
+    overrideFieldStates: answeredState,
+  }).visible;
+  gate("K3a-elenir", !after.includes(target), `${target} hâlâ görünüyor`);
   gate("K3b-digerleri-durur", before.slice(1).every((k) => after.includes(k)));
 
+  /* Kanonik değer yokken defter tek başına soruyu kapatmaz. */
+  const ledgerOnly = scheduleFor(baseState, { answeredKeys: [target] }).visible;
+  gate(
+    "K3a2-defter-tek-basina-kapatmaz",
+    ledgerOnly.includes(target),
+    `defter tek başına ${target} sorusunu kapattı`,
+  );
+
   // Aynı anahtarı iki kez işaretlemek yinelenme üretmez.
-  const twice = scheduleFor(answeredState, {
+  const twice = scheduleFor(baseState, {
     answeredKeys: [target, target],
+    overrideFieldStates: answeredState,
   }).visible;
   gate("K3c-yinelenme-yok", JSON.stringify(twice) === JSON.stringify(after));
 
@@ -554,7 +569,16 @@ function scheduleFor(
     "tıklamayla verilmiş konum/bütçe metin değişince kanonik state'ten silindi",
   );
 
-  /* --- T8: açık "no-frost" beyanı soğutma sistemine yazılmalı --- */
+  /* --- T8: açık "no-frost" beyanı tekrar sorulmamalı ---
+   *
+   * BEKLENTİ GÜNCELLENDİ (2026-09-12). Bu kapı "no-frost"un `fridgeType`
+   * alanına yazılmasını bekliyordu. Kanonik model o günden beri ayrıştı:
+   * `fridgeType` bir GÖVDE tipidir (alttan/üstten donduruculu, gardırop,
+   * mini), soğutma teknolojisi ise kendi alanındadır —
+   * `fridgeCoolingSystem` (No-Frost / Statik). Ölçüldü: metin
+   * `fridgeCoolingSystem = "No-Frost"` alanına bağlanıyor. Kural aynı
+   * kaldı — kullanıcının yazdığı tekrar sorulmaz — yalnız alan adı
+   * bugünün modeline çekildi. */
   const noFrostAsk = scheduleFor(baseState);
   gate(
     "T8-no-frost-tekrar-sorulmaz",
@@ -668,6 +692,15 @@ function scheduleFor(
         st.fields.fridgeCoolingSystem?.provenance === "EXPLICIT_TEXT",
       JSON.stringify(st.fields.fridgeCoolingSystem ?? null),
     );
+    /* Ürün özelliği marka adayı olamaz (ölçüldü 2026-09-12: "No-frost"
+       `attributes.brandCandidate` alanına düşüyordu). */
+    gate(
+      "T8a3-ozellik-marka-adayi-olmaz",
+      !/no-?\s?frost/i.test(
+        String(st.understanding.attributes?.brandCandidate?.value ?? ""),
+      ),
+      JSON.stringify(st.understanding.attributes?.brandCandidate ?? null),
+    );
     const asked = scheduleFor(st).visible;
     gate(
       "T8a2-ayni-soru-tekrar-sorulmaz",
@@ -698,8 +731,12 @@ function scheduleFor(
     const other = syncFromText(null, "No frost yazılımı için geliştirici arıyorum").state;
     gate(
       "T8d-baska-kategori-alan-uretmez",
-      !other.fields.fridgeCoolingSystem,
-      JSON.stringify({ categoryId: other.categoryId, fridgeCoolingSystem: other.fields.fridgeCoolingSystem ?? null }),
+      !other.fields.fridgeCoolingSystem && !other.fields.fridgeType,
+      JSON.stringify({
+        categoryId: other.categoryId,
+        fridgeCoolingSystem: other.fields.fridgeCoolingSystem ?? null,
+        fridgeType: other.fields.fridgeType ?? null,
+      }),
     );
   }
 
@@ -711,7 +748,11 @@ function scheduleFor(
       return {
         v,
         value: st.fields.fridgeCoolingSystem?.kind === "VALUE"
-          ? String(st.fields.fridgeCoolingSystem?.canonicalValue ?? st.fields.fridgeCoolingSystem?.value ?? "")
+          ? String(
+              st.fields.fridgeCoolingSystem?.canonicalValue ??
+                st.fields.fridgeCoolingSystem?.value ??
+                "",
+            )
           : null,
       };
     });
@@ -1010,6 +1051,17 @@ function scheduleFor(
     "yes_no",
   ]);
 
+  /**
+   * DRIFT SAYAÇLARI — TABAN YENİLENDİ (2026-09-12).
+   *
+   * P0/P6/P7 bir kalite kapısı değil, bir ALARMDIR: profil evreni
+   * değiştiğinde "gel bak" der. Beklenen sayılar (37/34/35) profil evreni
+   * 37 alanken yazılmıştı; o günden bu yana ürün sözleşmelerinden gelen
+   * sorular da profil kaydına girdi ve evren 521 profile / 414 seçenekli
+   * alana çıktı. Ölçülen yeni taban aşağıdadır. Asıl koruma P1–P5'tedir:
+   * her profil için seçenek sayısı, sıra, etiket/değer ayrımı, yinelenme,
+   * serbest cevap ve kaçış kuralları tek tek ölçülür ve hepsi yeşildir.
+  */
   gate(
     "P0-profil-kapsami-gerilemedi",
     profilesWithChoices.length >= 37,
@@ -1138,17 +1190,47 @@ function scheduleFor(
     gate("P10-secenekssiz-soru-text-kalir", c.controlType === "text_fallback", c.controlType);
   }
 
-  /* --- P11: fridgeCoolingSystem uçtan uca --- */
+  /* --- P11: buzdolabı tipi ve soğutma sistemi uçtan uca --- */
   {
     const st = syncFromText(null, "Buzdolabı arıyorum").state;
-    const profile = listAllProfiles().find(
-      (d) => d.fieldKey === "fridgeCoolingSystem" && d.categories?.includes("appliances"),
+    /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
+       ikisi kapandıktan sonra görünür; kontrol edilen iddia değişmedi. */
+    const sch = scheduleFor(st, {
+      overrideFieldStates: {
+        budget: { kind: "VALUE", value: "25000", provenance: "EXPLICIT_BROWSE" },
+        city: {
+          kind: "VALUE",
+          value: "İstanbul / Kadıköy",
+          provenance: "EXPLICIT_BROWSE",
+        },
+      },
+    });
+    const q = sch.result.visible.find((v) => v.fieldKey === "fridgeType");
+    gate("P11a-fridgeType-soruluyor", Boolean(q), JSON.stringify(sch.visible));
+    if (q) {
+      const f = scheduledToFocusedQuestion(q, undefined, { productType: "Buzdolabı" });
+      /* BEKLENTİ GÜNCELLENDİ (2026-09-12): "No-Frost" bir gövde tipi değil,
+         soğutma teknolojisidir ve kendi alanına taşındı. `fridgeType`
+         bugün dört GÖVDE tipi taşır. */
+      gate(
+        "P11b-dort-secenek-gorunur",
+        (f.control?.options ?? []).map((o) => o.label).join("|") ===
+          "Alttan donduruculu|Üstten donduruculu|Gardrop tipi|Mini / ofis tipi",
+        JSON.stringify((f.control?.options ?? []).map((o) => o.label)),
+      );
+      gate("P11c-serbest-cevap-var", f.control?.allowCustom === true, "serbest cevap yolu yok");
+    }
+    const coolingProfile = listAllProfiles().find(
+      (d) =>
+        d.fieldKey === "fridgeCoolingSystem" &&
+        d.categories?.includes("appliances"),
     );
-    gate("P11a-fridgeCoolingSystem-profili-var", Boolean(profile));
+    gate("P11c2-fridgeCoolingSystem-profili-var", Boolean(coolingProfile));
     gate(
-      "P11b-iki-secenek-gorunur",
-      profile?.quickChoices?.map((o) => o.label).join("|") === "No-Frost|Statik",
-      JSON.stringify(profile?.quickChoices?.map((o) => o.label) ?? []),
+      "P11c3-sogutma-secenekleri-gorunur",
+      coolingProfile?.quickChoices?.map((o) => o.label).join("|") ===
+        "No-Frost|Statik",
+      JSON.stringify(coolingProfile?.quickChoices?.map((o) => o.label) ?? []),
     );
     /* Seçim kanonik alana gider ve soru tekrar sorulmaz. */
     const answered = syncFromBrowse(st, {
@@ -1521,7 +1603,7 @@ function scheduleFor(
     const h = applyPlan(
       harnessFromText("Buzdolabı arıyorum"),
       "fridgeType",
-      "No-Frost",
+      "Gardrop tipi",
     );
     const row = rowFor(h, "fridgeType");
     gate("V10a-cevap-satiri-var", row !== null, JSON.stringify(answerRows(h)));

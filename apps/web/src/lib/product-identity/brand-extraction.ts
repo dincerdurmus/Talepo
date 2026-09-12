@@ -33,6 +33,34 @@ const QUALIFIER_TOKENS = new Set([
   "hybrid", "dream", "premium", "standard", "cordless", "wireless",
 ]);
 
+/**
+ * ÜRÜN ÖZELLİĞİ MARKA DEĞİLDİR (ölçüldü 2026-09-12).
+ *
+ * "No-frost buzdolabı arıyorum" yazan kullanıcıda "No-frost" marka ADAYI
+ * olarak kaydediliyordu (`attributes.brandCandidate`). Bu jetonlar bir
+ * teknoloji ya da gövde özelliğidir; kanonik alanlarına bağlanırlar
+ * (ölçüldü: `fridgeCoolingSystem` = "No-Frost") ve marka eksenine hiç
+ * girmezler. Liste kapalı ve dar tutulur: burada pazar verisi değil, dil
+ * bilgisi vardır.
+ */
+const PRODUCT_FEATURE_TOKENS = new Set([
+  "nofrost",
+  "inverter",
+  "ankastre",
+  "statik",
+  "oled",
+  "qled",
+  "uhd",
+  "hepa",
+  "dokunmatik",
+  "kablosuz",
+  "sarjli",
+  "akulu",
+  "otomatik",
+  "manuel",
+  "dijital",
+]);
+
 export type BrandExtractionResult = {
   brand: string | null;
   remainder: string;
@@ -247,6 +275,11 @@ export function classifyBrandEvidence(
   // NONE (a): sayı komşuluğu — teknik özellik bağlamı.
   if ([prev1, prev2].some((w) => w && /\d/.test(w))) {
     return { status: "NONE", reason: "spec-context" };
+  }
+
+  // NONE (a2): jeton bir ürün özelliği / teknoloji adı.
+  if (PRODUCT_FEATURE_TOKENS.has(foldTr(value).replace(/[^a-z0-9]/g, ""))) {
+    return { status: "NONE", reason: "product-feature" };
   }
 
   // NONE (b): jetonu talep fiili izliyor — aranan şeyin kendisi.

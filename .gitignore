@@ -20,3 +20,9 @@ apps/web/TALEPO-GLOBAL-PRODUCT-IDENTITY-V1-TEST-OUTPUT.txt
 
 # GetLayers lisanslı sahne varlıkları repoya girmez (lisans sınırı).
 apps/web/public/planet/
+
+# Kategori senaryo denetiminin cikti klasoru (olcum artigi, commit edilmez).
+reports/
+
+# Tek seferlik olcum betikleri (kayda girmez).
+apps/web/scripts/probe-*.ts

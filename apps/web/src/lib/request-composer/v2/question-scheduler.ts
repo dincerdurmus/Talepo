@@ -25,6 +25,7 @@ import {
 } from "./question-profiles";
 import type {
   QuestionImportance,
+  QuestionPhase,
   ScheduleResult,
   ScheduledQuestion,
   SoftAnswerStatus,
@@ -37,6 +38,31 @@ import {
 } from "./global-core-profile";
 
 const MAX_VISIBLE = 3;
+
+/**
+ * AŞAMA BAŞLIKLARI — TEK YETKİLİ (kurucu, 2026-09-12).
+ *
+ * `/talep` formu ve Maira bu metni buradan okur; iki yüzey ayrı cümle
+ * kurmaz. Başlık bir cevap alanı değildir, hiçbir yüzeye değer olarak
+ * yazılmaz.
+ */
+export const PHASE_HEADINGS: Record<QuestionPhase, string> = {
+  essentials: "Teklif için iki bilgi yeterli",
+  detail: "Talebi detaylandır, daha gerçek teklif al",
+};
+
+/**
+ * Görünen kümenin aşamasını seçer. Bütçe / konum (`publish_required`)
+ * açıkken yalnız onlar görünür; kapanınca kalan sorular olduğu gibi gelir.
+ * Sıralama değişmez, yalnız görünürlük kapısı eklenir.
+ */
+export function resolveQuestionPhase(
+  pending: ReadonlyArray<Pick<ScheduledQuestion, "importance">>,
+): QuestionPhase {
+  return pending.some((q) => q.importance === "publish_required")
+    ? "essentials"
+    : "detail";
+}
 
 export type FieldAnswerState = {
   kind?: "VALUE" | "ANY" | "NOT_APPLICABLE" | "UNKNOWN" | string;
@@ -195,13 +221,19 @@ function escapesFor(input: {
   allowDontCare: boolean;
   importance: QuestionImportance;
   categoryId?: string;
+  needType?: string | null;
   remoteEligible?: boolean;
 }): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = [];
   const isRealEstate = input.categoryId === "real-estate";
+  /* Yazılım / web projesi her zaman uzaktan yapılabilir (kurucu,
+     2026-09-12); ürün sözcüğü imzasına bağlı değildir. */
+  const isSoftwareProject =
+    input.categoryId === "technology" && input.needType === "software";
   const isServiceLike =
-    (input.categoryId === "services" || input.categoryId === "health") &&
-    input.remoteEligible !== false;
+    isSoftwareProject ||
+    ((input.categoryId === "services" || input.categoryId === "health") &&
+      input.remoteEligible !== false);
 
   if (input.fieldKey === "budget") {
     // Tek kaçış: teklifleri görmek — bilmiyorum/farketmez bütçede yok (kurucu).
@@ -249,6 +281,9 @@ function escapesFor(input: {
 
 function defaultPrompt(fieldKey: string, fallback?: string): string {
   if (fallback) return fallback;
+  /* Ortak alanın kendi cümlesi vardır; "Adet bilgisini ekleyelim." gibi
+     yedek etiket kullanıcıya gösterilmez (kurucu, 2026-09-12). */
+  if (fieldKey === "quantity") return "Kaç adet gerekli?";
   /* Ham İngilizce anahtar kullanıcıya ASLA gösterilmez; Türkçe etiket
      kanonik haritadan gelir, o da yoksa nötr bir cümleye düşülür. */
   const label = fieldDisplayLabel(fieldKey);
@@ -352,9 +387,15 @@ export function scheduleNextQuestions(input: {
     input.values.listingType?.trim() ||
     input.fieldStates?.listingType?.value?.trim() ||
     null;
+  const propertyTypeFromValues =
+    input.values.propertyType?.trim() ||
+    input.fieldStates?.propertyType?.value?.trim() ||
+    (input.categoryId === "real-estate" ? (input.productType ?? "") : "") ||
+    null;
   const globalCore = globalCoreQuestionProfiles(input.categoryId, {
     listingType: listingFromValues,
     needType: needTypeContext,
+    propertyType: propertyTypeFromValues,
   });
   const profileByKey = new Map<string, (typeof globalCore)[number]>();
   for (const p of categoryProfiles) profileByKey.set(p.fieldKey, p);
@@ -388,6 +429,29 @@ export function scheduleNextQuestions(input: {
   const hybridByKey = new Map(
     hybridCandidates.map((c) => [c.fieldKey, c]),
   );
+
+  /**
+   * SORU OLMAK İÇİN PROFİL GEREKİR (kurucu, 2026-09-12).
+   *
+   * Ölçüldü (156 senaryo): ürün sözleşmesi olmayan kategorilerde eski form
+   * alanları ("Özellikler", "Teknik özellikler", "Kullanım alanı", "Ölçüler",
+   * "Uyumlu ürün kimlikleri") aday soru olarak akışa doluyordu. Beyaz eşya,
+   * mobilya, ev-mutfak ve sağlıkta senaryo başına 5-7 soru bu sınıftandı;
+   * kahve makinesine kurulum, sunucuya ekran boyutu soruluyor, profil
+   * sorusu ham alanla iki kez geliyordu (kaç kişilik + kapasite). Kurucu
+   * kuralı: sürekli serbest metin yazdırma, her kategoride aynı soru setini
+   * kullanma. Karar: yalnız aday listesinden gelen ve hiçbir profil
+   * çözmeyen anahtar soru olarak zamanlanmaz; alan düzenleme ekranında
+   * kalır. Küresel çekirdek, kategori profilleri ve kategorinin kendi ortak
+   * alanları (ör. makinede adet) bu kapıdan etkilenmez. Kategori
+   * çözülmemişken ("needDescription" kaçışı) eski davranış korunur.
+   */
+  const declaredKeys = new Set<string>([
+    ...globalCore.map((p) => p.fieldKey),
+    ...categoryProfiles.map((p) => p.fieldKey),
+    ...commonKeys,
+  ]);
+  const legacyFieldGate = Boolean(category);
 
   // Location already answered via mode or soft status
   const currentValue = (key: string) => {
@@ -424,14 +488,19 @@ export function scheduleNextQuestions(input: {
       continue;
     }
 
-    const profile =
+    const resolvedProfile =
       profileByKey.get(fieldKey) ??
       resolveProfileForField({
         fieldKey,
         categoryId: input.categoryId,
         needType: needTypeContext,
         productType: productTypeContext,
-      }) ??
+      });
+    if (!resolvedProfile && legacyFieldGate && !declaredKeys.has(fieldKey)) {
+      continue;
+    }
+    const profile =
+      resolvedProfile ??
       ({
         fieldKey,
         prompt: hybridByKey.get(fieldKey)?.label ?? defaultPrompt(fieldKey),
@@ -531,6 +600,7 @@ export function scheduleNextQuestions(input: {
         allowDontCare: Boolean(profile.allowDontCare),
         importance,
         categoryId: input.categoryId,
+        needType: needTypeContext,
         remoteEligible: isRemoteEligibleService(productTypeContext),
       }),
       placeholder:
@@ -580,7 +650,19 @@ export function scheduleNextQuestions(input: {
     ),
   ];
 
-  const visible = pending.slice(0, MAX_VISIBLE).map((item) => {
+  /**
+   * ÖNCE BÜTÇE VE KONUM, SONRA DETAY (kurucu, 2026-09-12).
+   *
+   * Bütçe ya da il/ilçe açıkken başka soru ekrana çıkmaz: kullanıcı önce
+   * teklif için şart olan iki bilgiyi verir, sonra "Talebi detaylandır"
+   * başlığı altında kategori soruları gelir. Metinde yazılmış bütçe/konum
+   * zaten `isFieldSatisfied` ile kapalıdır; o durumda ilk aşama hiç
+   * görünmez. Sıralama puanı değişmedi; yalnız görünürlük kapısı eklendi,
+   * `pending`, `blocking` ve sayaçlar aynen hesaplanır.
+   */
+  const phase = resolveQuestionPhase(pending);
+  const visibleSource = phase === "essentials" ? publishRequired : pending;
+  const visible = visibleSource.slice(0, MAX_VISIBLE).map((item) => {
     const { sortScore: _score, ...q } = item;
     void _score;
     return q;
@@ -596,6 +678,8 @@ export function scheduleNextQuestions(input: {
     canEnterReview,
     blockingFieldKeys: blocking,
     blockingLabels: blockingCritical.map((c) => c.summaryLabel),
+    phase,
+    phaseHeading: PHASE_HEADINGS[phase],
   };
 }
 
