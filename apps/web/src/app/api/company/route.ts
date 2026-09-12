@@ -17,6 +17,7 @@ import {
 } from "@/server/company/create-company";
 import {
   normalizeCategorySlugs,
+  CategorySelectionError,
   syncCompanyCategories,
 } from "@/server/company/sync-company-categories";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
         { status: error.status },
       );
     }
-    if (error instanceof CompanyValidationError) {
+    if (error instanceof CompanyValidationError || error instanceof CategorySelectionError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
     }
 
@@ -174,7 +175,7 @@ export async function PATCH(request: Request) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
-    if (error instanceof CompanyUpdateError) {
+    if (error instanceof CompanyUpdateError || error instanceof CategorySelectionError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
     }
     console.error("[company] patch failed", error);

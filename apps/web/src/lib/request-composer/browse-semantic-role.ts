@@ -69,6 +69,19 @@ const AUTOMOTIVE_BY_SUB: Record<string, BrowseSemanticRole> = {
   },
 };
 
+/** These service leaves share the tire question contract even when taxonomy
+ * places them under general vehicle maintenance. */
+export function isAutomotiveTireServiceProduct(value: string): boolean {
+  return /^(?:lastik (?:değişimi|degisimi|otel(?:\s*\/?\s*saklama)?|saklama)|rot (?:ayarı|ayari|balans)|balans)$/iu.test(value.trim());
+}
+
+const AUTOMOTIVE_TIRE_SERVICE_ROLE: BrowseSemanticRole = {
+  needType: "tire",
+  subjectKind: "SERVICE",
+  compositionMode: "compatibility_part",
+  subjectNounTr: "lastik hizmeti",
+};
+
 /** Machinery / industrial spare vs whole — when taxonomy uses these slugs */
 const MACHINERY_BY_SUB: Record<string, BrowseSemanticRole> = {
   "makine-satin-alma": {
@@ -155,6 +168,8 @@ export function resolveBrowseSemanticRole(input: {
   if (!categoryId) return EMPTY_ROLE;
 
   if (categoryId === "automotive") {
+    const productContext = product || taxId.split(":").at(-1)?.replace(/-/g, " ") || "";
+    if (isAutomotiveTireServiceProduct(productContext)) return AUTOMOTIVE_TIRE_SERVICE_ROLE;
     if (slug && AUTOMOTIVE_BY_SUB[slug]) return AUTOMOTIVE_BY_SUB[slug]!;
     return EMPTY_ROLE;
   }

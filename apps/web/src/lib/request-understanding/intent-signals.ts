@@ -112,6 +112,7 @@ const LEXICON: Lexicon[] = [
     intent: "SERVICE",
     weight: 1.15,
     patterns: [
+      /(?:motor\s+)?ya[ğg][ıi]\s+de[ğg]i[şs]imi/iu,
       /\byaptır(?:acağım|acagim|cam|acağız|acagiz)?\b/i,
       /\byaptir(?:acagim|cam)?\b/i,
       /\bboyat(?:acağım|acagim|acam|acağız)?\b/i,

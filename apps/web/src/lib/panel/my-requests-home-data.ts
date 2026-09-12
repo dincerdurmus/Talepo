@@ -8,6 +8,7 @@ import { filterOffersByArchiveView } from "@/lib/offer/offer-archive";
 import { currentPendingNegotiation } from "@/lib/offer/outgoing-offer-inbox";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
+import { requestPublicationState } from "@/server/request/public-visibility";
 import {
   sortMyRequests,
   toMyRequestCardModel,
@@ -85,9 +86,12 @@ export async function loadMyRequestsHome(
         isUrgent: true,
         urgentOfferNudgeAt: true,
         publishedAt: true,
+        expiresAt: true,
+        categoryPausedAt: true,
+        isModerationHidden: true,
         createdAt: true,
         updatedAt: true,
-        category: { select: { name: true, slug: true } },
+        category: { select: { name: true, slug: true, isActive: true } },
         _count: { select: { offers: true } },
       },
     }),
@@ -116,6 +120,7 @@ export async function loadMyRequestsHome(
 
   const cards = sortMyRequests(
     requests.map((request) => {
+      const publication = requestPublicationState(request);
       const group = groupByRequestId.get(request.id);
       const offerCount = group?.totalOffers ?? request._count.offers;
       const lastActivityAt =
@@ -123,10 +128,10 @@ export async function loadMyRequestsHome(
         request.updatedAt ??
         request.publishedAt ??
         request.createdAt;
-      return toMyRequestCardModel({
+      const card = toMyRequestCardModel({
         id: request.id,
         title: request.title,
-        status: request.status,
+        status: publication.status,
         categoryName: request.category.name,
         categorySlug: request.category.slug,
         coverImageUrl: request.coverImageUrl,
@@ -144,10 +149,11 @@ export async function loadMyRequestsHome(
           group,
           incoming.offers,
           request.id,
-          request.status,
+          publication.status,
           offerCount,
         ),
       });
+      return publication.label ? { ...card, statusLabel: publication.label } : card;
     }),
   );
 
@@ -155,7 +161,7 @@ export async function loadMyRequestsHome(
     (request) =>
       request.isUrgent &&
       !request.urgentOfferNudgeAt &&
-      (request.status === "PUBLISHED" || request.status === "RECEIVING_OFFERS") &&
+      requestPublicationState(request).isPublished &&
       request._count.offers === 0,
   );
 

@@ -869,7 +869,8 @@ function escapeRegex(value: string) {
 }
 
 function aliasMatches(normalized: string, alias: string): boolean {
-  const needle = alias.toLocaleLowerCase("tr-TR");
+  const needle = alias.toLocaleLowerCase("tr-TR").replace(/ı/g, "i");
+  normalized = normalized.replace(/ı/g, "i");
   if (!needle) return false;
 
   /**

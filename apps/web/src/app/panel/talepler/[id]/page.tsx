@@ -32,6 +32,7 @@ import {
   getCategoryVisual,
 } from "@/lib/visuals/category-visuals";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
 import { getRequestOfferIntelligence } from "@/server/monetization/offer-intelligence";
@@ -64,6 +65,8 @@ export default async function ExploreRequestDetailPage({
       id,
       deletedAt: null,
       isModerationHidden: false,
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],
       },

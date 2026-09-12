@@ -18,6 +18,7 @@ import type { OfferCompleteness } from "@/lib/offer/offer-completeness";
 import type { TrustSummary } from "@/lib/offer/deal-review";
 
 export type IncomingRequestSummaryData = {
+  isPublished?: boolean;
   id: string;
   title: string;
   city: string | null;
@@ -70,12 +71,13 @@ function IncomingRequestSummary({
           categorySlug={request.categorySlug}
           categoryName={request.categoryName}
           requestTitle={request.title}
+          isPublished={request.isPublished}
         />
       </div>
       <h2 className="mt-3 text-lg font-semibold tracking-tight text-[#0f1f1d]">
         {request.title}
       </h2>
-      {REQUEST_STATUS[request.status] ? (
+      {request.isPublished === false ? <p className="mt-1 text-[11px] font-medium text-black/40">Talep yayında değil</p> : REQUEST_STATUS[request.status] ? (
         <p className="mt-1 text-[11px] font-medium text-black/40">
           {REQUEST_STATUS[request.status]}
         </p>
@@ -107,13 +109,13 @@ function IncomingRequestSummary({
           </div>
         </div>
       </dl>
-      <Link
+      {request.isPublished !== false ? <Link
         href={href}
         className="mt-4 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-[#0f766e] hover:underline"
       >
         {detailLabel}
         <ArrowRight className="h-4 w-4" />
-      </Link>
+      </Link> : null}
     </aside>
   );
 }

@@ -7,6 +7,7 @@ import {
 import { classifyBrandEvidence } from "@/lib/product-identity/brand-extraction";
 import { stripTrailingPartNouns } from "@/lib/ai/parser/part-nouns";
 import { looksLikeYearToken } from "@/lib/request-understanding/number-role";
+import { withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
 import {
   enrichAutomotiveSubject,
@@ -102,7 +103,7 @@ export function applyCatalogEnrichment(
       result.subject.kind.value === "PART";
 
     const enrichment = enrichAutomotiveSubject({
-      rawText: result.rawInput,
+      rawText: withoutRejectedRequestClauses(result.rawInput),
       automotiveContext,
     });
 
@@ -144,7 +145,8 @@ export function applyCatalogEnrichment(
        */
       classifyBrandEvidence(next.rawInput, enrichment.brand.name).status !== "NONE"
     ) {
-      identity.brand = uv(enrichment.brand.name, {
+      identity.brand = identity.brand?.provenance === "EXPLICIT" && fold(String(identity.brand.value)) === fold(enrichment.brand.name)
+        ? identity.brand : uv(enrichment.brand.name, {
         provenance: "INFERRED",
         source: "FUTURE_KNOWLEDGE",
         confidence: catalogNumericConfidence(enrichment.brand.confidence),
@@ -165,7 +167,8 @@ export function applyCatalogEnrichment(
       FILLABLE.includes(enrichment.model.confidence) &&
       mayOverwrite(identity.model, enrichment.model.name, "model", next.rawInput)
     ) {
-      identity.model = uv(enrichment.model.name, {
+      identity.model = identity.model?.provenance === "EXPLICIT" && fold(String(identity.model.value)) === fold(enrichment.model.name)
+        ? identity.model : uv(enrichment.model.name, {
         provenance: "INFERRED",
         source: "FUTURE_KNOWLEDGE",
         confidence: catalogNumericConfidence(enrichment.model.confidence),

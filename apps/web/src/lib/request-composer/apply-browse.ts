@@ -249,6 +249,8 @@ export function applyBrowseSelectionToState(
   const role = resolveBrowseSemanticRole({
     categoryId,
     subcategorySlug,
+    taxonomyNodeId,
+    productType: fields.productType?.value ?? fields.serviceType?.value ?? null,
   });
   if (role.needType) {
     const existingNeed = fields.needType;
@@ -259,7 +261,27 @@ export function applyBrowseSelectionToState(
       confidence: 1,
       evidence: [`browse-role:${subcategorySlug}`],
     };
-    if (canApplyField(existingNeed, pinNeed, "browse")) {
+    // A common answer (budget, city, delivery, …) must not re-apply the
+    // subcategory's default role over an explicit text intent.  The role is
+    // established by a semantic browse selection itself; after that, ordinary
+    // answers only update their own field.
+    const semanticSelection = new Set([
+      "needType",
+      "productType",
+      "machineType",
+      "applianceType",
+      "furnitureType",
+      "babyProductType",
+      "kitchenProductType",
+      "tireItemType",
+      "serviceType",
+    ]).has(selection.key);
+    const canPinRole =
+      semanticSelection ||
+      !existingNeed ||
+      existingNeed.provenance === "INFERRED" ||
+      existingNeed.provenance === "CATALOG_ENRICHED";
+    if (canPinRole && canApplyField(existingNeed, pinNeed, "browse")) {
       fields.needType = pinNeed;
     }
   }
@@ -334,7 +356,8 @@ export function applyBrowseSelectionToState(
     subcategorySlug,
     taxonomyNodeId,
     fields: stripIncompatibleDomainFields(fields, categoryId, {
-      automotiveFamilyTransition: false,
+      automotiveFamilyTransition: selection.key === "serviceType",
+      previousFields: state.fields,
     }),
     lastUserAction: "browse",
     naturalTextDirty: true,

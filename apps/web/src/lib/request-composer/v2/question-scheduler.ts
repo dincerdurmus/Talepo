@@ -300,7 +300,11 @@ export function scheduleNextQuestions(input: {
   // question no matter which wrapper invoked the scheduler.
   const productTypeContext =
     input.productType ??
-    input.values.productType ??
+    (input.categoryId === "automotive" &&
+      ((input.needType ?? input.values.needType ?? input.fieldStates?.needType?.value) === "service" ||
+      (input.needType ?? input.values.needType ?? input.fieldStates?.needType?.value) === "tire")
+      ? input.values.serviceType ?? input.values.productType
+      : input.values.productType) ??
     input.values.solutionType ??
     input.values.applianceType ??
     input.values.furnitureType ??

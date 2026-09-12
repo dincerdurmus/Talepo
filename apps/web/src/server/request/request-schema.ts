@@ -5,7 +5,7 @@ import {
   parseRealEstateCity,
 } from "@/lib/geo/turkey-districts";
 import { isValidNeighborhoodSelection } from "@/lib/geo/turkey-neighborhoods";
-import { getCategoryById } from "@/lib/request-category-engine";
+import { getCategoryById, type RequestCategory } from "@/lib/request-category-engine";
 import {
   isFieldValueKind,
   type FieldValueKind,
@@ -121,7 +121,7 @@ export function parseJsonObject(raw: string): unknown {
 export function resolvePersistCategorySlug(input: {
   slug: string;
   name: string;
-}): { slug: string; name: string } {
+}, availableCategories?: readonly RequestCategory[]): { slug: string; name: string } {
   const slug = input.slug.trim();
   const name = input.name.trim();
   if (!slug || slug === "unknown") {
@@ -133,17 +133,17 @@ export function resolvePersistCategorySlug(input: {
   if (slug === UNRESOLVED_CATEGORY_SLUG) {
     return { slug, name: UNRESOLVED_CATEGORY_NAME };
   }
-  const known = getCategoryById(slug);
+  const known = availableCategories ? availableCategories.find((category) => category.id === slug) : getCategoryById(slug);
   if (!known?.id) {
     return {
       slug: UNRESOLVED_CATEGORY_SLUG,
       name: UNRESOLVED_CATEGORY_NAME,
     };
   }
-  return { slug: known.id, name: name || known.label };
+  return { slug: known.id, name: availableCategories ? known.label : name || known.label };
 }
 
-export function parseCreateRequestInput(value: unknown): CreateRequestInput {
+export function parseCreateRequestInput(value: unknown, availableCategories?: readonly RequestCategory[]): CreateRequestInput {
   if (!value || typeof value !== "object") {
     throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
   }
@@ -178,7 +178,7 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   const persisted = resolvePersistCategorySlug({
     slug: categorySlug,
     name: categoryName,
-  });
+  }, availableCategories);
   categorySlug = persisted.slug;
   categoryName = persisted.name;
 

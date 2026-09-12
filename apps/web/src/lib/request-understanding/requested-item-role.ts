@@ -138,6 +138,15 @@ export const PART_LEMMAS = [
   "sarj adaptoru",
   "şarj adaptoru",
   "sarj adaptörü",
+  "conta",
+  "rezistans",
+  "kulp",
+  "kulp",
+  "zincir",
+  "röle",
+  "role",
+  "yağmurluk",
+  "yagmurluk",
 ] as const;
 
 export const ACCESSORY_LEMMAS = [
@@ -161,6 +170,9 @@ export const ACCESSORY_LEMMAS = [
   "tavan bagaj",
   "tavan / bagaj",
   "bagaj sistemi",
+  "yağmurluk",
+  "yagmurluk",
+  "zincir",
 ] as const;
 
 export const SERVICE_LEMMAS = [

@@ -3,7 +3,7 @@
  * Short Turkish; no IDs / confidence.
  */
 
-import { resolveBrowseSemanticRole } from "./browse-semantic-role";
+import { isAutomotiveTireServiceProduct, resolveBrowseSemanticRole } from "./browse-semantic-role";
 import type { CanonicalRequestState } from "./types";
 import {
   isGenericCompatibilityNoun,
@@ -12,6 +12,7 @@ import {
 import { resolveDomainEntity } from "@/lib/catalog";
 import { getCategoryById } from "@/lib/request-category-engine";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
+import { withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
 import {
   readRelationContext,
   readRequestedTarget,
@@ -33,6 +34,12 @@ function understandingValue(state: CanonicalRequestState, key: string): string |
 
 function fieldAny(state: CanonicalRequestState, key: string): boolean {
   return state.fields[key]?.kind === "ANY";
+}
+
+/** Raw-text fallback paths share the parser's affirmative view. The original
+ * user text remains on understanding for editing and exclusion semantics. */
+function affirmativeText(state: CanonicalRequestState): string {
+  return withoutRejectedRequestClauses(state.understanding.rawInput ?? "");
 }
 
 function automotiveNeedType(state: CanonicalRequestState): string | null {
@@ -72,7 +79,7 @@ function hasCompatibilityPartSubject(state: CanonicalRequestState): boolean {
 
 function isTv(state: CanonicalRequestState): boolean {
   const pt = fieldValue(state, "productType")?.toLocaleLowerCase("tr-TR") ?? "";
-  const raw = (state.understanding.rawInput ?? "").toLocaleLowerCase("tr-TR");
+  const raw = affirmativeText(state).toLocaleLowerCase("tr-TR");
   return (
     pt.includes("televizyon") ||
     pt === "television" ||
@@ -84,7 +91,7 @@ function isTv(state: CanonicalRequestState): boolean {
 
 function isVacuum(state: CanonicalRequestState): boolean {
   const pt = fieldValue(state, "productType")?.toLocaleLowerCase("tr-TR") ?? "";
-  const raw = (state.understanding.rawInput ?? "").toLocaleLowerCase("tr-TR");
+  const raw = affirmativeText(state).toLocaleLowerCase("tr-TR");
   const brand = fieldValue(state, "brand")?.toLocaleLowerCase("tr-TR") ?? "";
   return (
     pt.includes("supurge") ||
@@ -341,9 +348,7 @@ function composeAutoPart(state: CanonicalRequestState): string {
     fieldValue(state, "productType") ?? fieldValue(state, "serviceType") ?? "";
   if (
     need === "tire" &&
-    /lastik değişimi|lastik degisimi|rot ayarı|rot ayari|balans|lastik otel|lastik saklama|rot balans/iu.test(
-      productContext,
-    )
+    isAutomotiveTireServiceProduct(productContext)
   ) {
     const target = planIdentityPhrase(
       fieldValue(state, "brand"),
@@ -504,7 +509,7 @@ function compatibilityParentProduct(
 
   /* Şemada alanı olmayan kanonik üst ürünler (örn. torna tezgâhı) de
      güvenli X için Y ayrımından özetlenmelidir. */
-  const split = splitCompatibilityPhrase(state.understanding.rawInput ?? "");
+  const split = splitCompatibilityPhrase(affirmativeText(state));
   return split ? readRelationContext(split.parent) : null;
 }
 
@@ -765,7 +770,7 @@ function preserveRequestedTarget(
    * Bu kural yalnız kategori gövdesine düşen taleplerin kurtarma ağıdır.
    */
   const kind = state.understanding.requestSubject?.kind?.value;
-  const raw = String(state.understanding.rawInput ?? "");
+  const raw = affirmativeText(state);
   const split = splitCompatibilityPhrase(raw);
   /**
    * TİPLİ PLATFORM İSTİSNASI (1J).
@@ -781,6 +786,16 @@ function preserveRequestedTarget(
   const typedPlatformContext = Boolean(
     typedContext && typedContext.status !== "NONE" && typedContext.entityType && typedContext.entityType !== "BRAND",
   );
+  // Wheels and roof racks can be classified as PRODUCT while their canonical
+  // automotive need is still a compatibility request. The automotive composer
+  // already carries the live vehicle identity; rewriting only the raw target
+  // would erase it (and could restore a stale size or quantity after an edit).
+  if (
+    isAutomotiveDomain(state) &&
+    (automotiveNeedType(state) === "part" || automotiveNeedType(state) === "tire")
+  ) {
+    return sentence;
+  }
   if ((kind === "PART" || kind === "ACCESSORY") && !typedPlatformContext) {
     return sentence;
   }
@@ -827,7 +842,7 @@ function preserveResolvedEntity(
   state: CanonicalRequestState,
   sentence: string,
 ): string {
-  const raw = String(state.understanding.rawInput ?? "");
+  const raw = affirmativeText(state);
   const lower = (v: string) => v.toLocaleLowerCase("tr-TR");
   /**
    * ÇAPA LİSTESİ (RC_BRAND takip dilimi): tipli varlıklar + marka ADAYI.

@@ -151,6 +151,7 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   ],
   furniture: [
     "mobilya",
+    "karyola",
     "ofis sandalyesi",
     "çalışma masası",
     "calisma masasi",
@@ -418,6 +419,8 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "tansiyon aleti",
     "tansiyon ölçer",
     "tansiyon olcer",
+    "tansiyon ölçüm cihazı",
+    "tansiyon olcum cihazi",
     "oksijen",
     "hasta yatağı",
     "hasta yatagi",
@@ -460,6 +463,14 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "uyku tulumu",
     "bebek bakım",
     "bebek bakim",
+    "süt saklama poşeti",
+    "sut saklama poseti",
+    "süt saklama",
+    "sut saklama",
+    "bebek arabası yağmurluğu",
+    "bebek arabasi yagmurlugu",
+    "yağmurluk",
+    "yagmurluk",
     ...brandKeywordList(BABY_BRANDS),
   ],
   "home-kitchen": [
@@ -507,6 +518,11 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
     "saklama kabı",
     "saklama kabi",
     "mutfak gereci",
+    "eviye",
+    "mutfak bataryası",
+    "mutfak bataryasi",
+    "bulaşık deterjanı",
+    "bulasik deterjani",
     ...HOME_KITCHEN_BRAND_KEYWORDS,
   ],
   services: [
@@ -691,7 +707,7 @@ function hasAny(normalized: string, terms: string[]) {
 export function hasFurnitureObjectNoun(text: string): boolean {
   const n = text.toLocaleLowerCase("tr-TR");
   if (
-    /(?:koltuk|sandalye|kitaplık|kitaplik|sehpa|berjer|kanepe|gardırop|gardrop|vestiyer|dolap)/i.test(
+    /(?:koltuk|sandalye|kitaplık|kitaplik|sehpa|berjer|kanepe|karyola|gardırop|gardrop|vestiyer|dolap)/i.test(
       n,
     )
   ) {
@@ -789,9 +805,24 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       ) {
         score += 4;
       }
+      if (
+        normalized.includes("eviye") ||
+        normalized.includes("mutfak bataryası") ||
+        normalized.includes("mutfak bataryasi") ||
+        normalized.includes("bulaşık deterjanı") ||
+        normalized.includes("bulasik deterjani")
+      ) {
+        score += 4;
+      }
     }
 
     if (categoryId === "appliances") {
+      if (
+        normalized.includes("bulaşık deterjanı") ||
+        normalized.includes("bulasik deterjani")
+      ) {
+        score = Math.max(0, score - 6);
+      }
       if (
         normalized.includes("makine") &&
         (normalized.includes("çamaşır") ||

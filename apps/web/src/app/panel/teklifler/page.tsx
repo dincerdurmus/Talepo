@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requestPublicationState } from "@/server/request/public-visibility";
 import { redirect } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 
@@ -101,11 +102,16 @@ export default async function OffersPage({
           city: true,
           status: true,
           isUrgent: true,
+          expiresAt: true,
+          publishedAt: true,
+          categoryPausedAt: true,
+          isModerationHidden: true,
+          deletedAt: true,
           coverImageUrl: true,
           budgetMin: true,
           budgetMax: true,
           currency: true,
-          category: { select: { name: true, slug: true } },
+          category: { select: { name: true, slug: true, isActive: true } },
           fieldValues: {
             where: { field: { key: { in: ["quantity", "commonQuantity"] } } },
             take: 1,
@@ -331,7 +337,8 @@ export default async function OffersPage({
       ) : (
         <section className="grid gap-3" aria-label="Tekliflerim listesi">
           {listed.map((offer) => {
-            const canRevise = ["SUBMITTED", "VIEWED"].includes(offer.status);
+            const publication = requestPublicationState(offer.request);
+            const canRevise = publication.isPublished && ["SUBMITTED", "VIEWED"].includes(offer.status);
             const completeness = scoreOfferCompleteness({
               amount: offer.amount,
               deliveryDays: offer.deliveryDays,
@@ -343,6 +350,7 @@ export default async function OffersPage({
             const budgetMin = toNumber(offer.request.budgetMin);
             const budgetMax = toNumber(offer.request.budgetMax);
             const request: IncomingRequestSummaryData = {
+              isPublished: publication.isPublished,
               id: offer.request.id,
               title: offer.request.title,
               city: offer.request.city,

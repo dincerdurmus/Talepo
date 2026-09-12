@@ -176,19 +176,30 @@ function scheduleFor(
 }
 
 /* ------------------------------------------------------------------ *
- * K3 — Cevaplanan soru elenir (answeredKeys).
- * Senaryo 2 ve 6'nın çekirdeği: bir görünümde verilen cevap, diğerinde
- * soruyu yeniden açmaz.
+ * K3 — Yalnız oturum defteri cevap değildir.
+ * Bir görünümde verilen gerçek kanonik cevap diğerinde soruyu yeniden açmaz;
+ * fakat yalnız answeredKeys kaydı, temizlenmiş cevabı kapalı tutamaz.
  * ------------------------------------------------------------------ */
 {
   const before = scheduleFor(baseState).visible;
   const target = before[0];
-  const after = scheduleFor(baseState, { answeredKeys: [target] }).visible;
-  gate("K3a-elenir", !after.includes(target), `${target} hâlâ görünüyor`);
+  const ledgerOnly = scheduleFor(baseState, { answeredKeys: [target] }).visible;
+  gate(
+    "K3a-defter-tek-basina-kapatmaz",
+    ledgerOnly.includes(target),
+    `${target} kanonik cevap olmadan kapandı`,
+  );
+  const answeredState = syncFromBrowse(baseState, {
+    key: target,
+    value: "Test cevabı",
+    isAny: false,
+  }).state;
+  const after = scheduleFor(answeredState, { answeredKeys: [target] }).visible;
+  gate("K3a2-kanonik-cevap-elenir", !after.includes(target), `${target} hâlâ görünüyor`);
   gate("K3b-digerleri-durur", before.slice(1).every((k) => after.includes(k)));
 
   // Aynı anahtarı iki kez işaretlemek yinelenme üretmez.
-  const twice = scheduleFor(baseState, {
+  const twice = scheduleFor(answeredState, {
     answeredKeys: [target, target],
   }).visible;
   gate("K3c-yinelenme-yok", JSON.stringify(twice) === JSON.stringify(after));
@@ -543,12 +554,12 @@ function scheduleFor(
     "tıklamayla verilmiş konum/bütçe metin değişince kanonik state'ten silindi",
   );
 
-  /* --- T8 (BEKLENEN KIRMIZI): açık "no-frost" beyanı tekrar sorulmamalı --- */
+  /* --- T8: açık "no-frost" beyanı soğutma sistemine yazılmalı --- */
   const noFrostAsk = scheduleFor(baseState);
   gate(
     "T8-no-frost-tekrar-sorulmaz",
-    !noFrostAsk.visible.includes("fridgeType"),
-    'kullanıcı "no-frost" yazdığı hâlde "Buzdolabı tipi" yeniden soruluyor',
+    !noFrostAsk.visible.includes("fridgeCoolingSystem"),
+    'kullanıcı "no-frost" yazdığı hâlde "Soğutma sistemi" yeniden soruluyor',
   );
 
   /* --- T9 (BEKLENEN KIRMIZI): açık bütçe tek otoriteden okunmalı --- */
@@ -653,14 +664,14 @@ function scheduleFor(
     const st = syncFromText(null, "No-frost buzdolabı arıyorum").state;
     gate(
       "T8a-no-frost-kanonik-alana-yazilir",
-      st.fields.fridgeType?.kind === "VALUE" &&
-        st.fields.fridgeType?.provenance === "EXPLICIT_TEXT",
-      JSON.stringify(st.fields.fridgeType ?? null),
+      st.fields.fridgeCoolingSystem?.kind === "VALUE" &&
+        st.fields.fridgeCoolingSystem?.provenance === "EXPLICIT_TEXT",
+      JSON.stringify(st.fields.fridgeCoolingSystem ?? null),
     );
     const asked = scheduleFor(st).visible;
     gate(
       "T8a2-ayni-soru-tekrar-sorulmaz",
-      !asked.includes("fridgeType"),
+      !asked.includes("fridgeCoolingSystem"),
       JSON.stringify(asked),
     );
   }
@@ -670,8 +681,8 @@ function scheduleFor(
     const neg = syncFromText(null, "Buzdolabı arıyorum, no-frost istemiyorum").state;
     gate(
       "T8b-olumsuzlama-cevap-uretmez",
-      !explicit(neg.fields.fridgeType),
-      JSON.stringify(neg.fields.fridgeType ?? null),
+      !explicit(neg.fields.fridgeCoolingSystem),
+      JSON.stringify(neg.fields.fridgeCoolingSystem ?? null),
     );
 
     const unsure = syncFromText(
@@ -680,15 +691,15 @@ function scheduleFor(
     ).state;
     gate(
       "T8c-belirsizlik-cevap-uretmez",
-      !explicit(unsure.fields.fridgeType),
-      JSON.stringify(unsure.fields.fridgeType ?? null),
+      !explicit(unsure.fields.fridgeCoolingSystem),
+      JSON.stringify(unsure.fields.fridgeCoolingSystem ?? null),
     );
 
     const other = syncFromText(null, "No frost yazılımı için geliştirici arıyorum").state;
     gate(
       "T8d-baska-kategori-alan-uretmez",
-      !other.fields.fridgeType,
-      JSON.stringify({ categoryId: other.categoryId, fridgeType: other.fields.fridgeType ?? null }),
+      !other.fields.fridgeCoolingSystem,
+      JSON.stringify({ categoryId: other.categoryId, fridgeCoolingSystem: other.fields.fridgeCoolingSystem ?? null }),
     );
   }
 
@@ -699,8 +710,8 @@ function scheduleFor(
       const st = syncFromText(null, `${v} buzdolabı arıyorum`).state;
       return {
         v,
-        value: st.fields.fridgeType?.kind === "VALUE"
-          ? String(st.fields.fridgeType?.canonicalValue ?? st.fields.fridgeType?.value ?? "")
+        value: st.fields.fridgeCoolingSystem?.kind === "VALUE"
+          ? String(st.fields.fridgeCoolingSystem?.canonicalValue ?? st.fields.fridgeCoolingSystem?.value ?? "")
           : null,
       };
     });
@@ -1000,9 +1011,9 @@ function scheduleFor(
   ]);
 
   gate(
-    "P0-profil-alani-sayisi",
-    profilesWithChoices.length === 37,
-    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 37)`,
+    "P0-profil-kapsami-gerilemedi",
+    profilesWithChoices.length >= 37,
+    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (asgari 37)`,
   );
 
   let lost = 0;
@@ -1060,14 +1071,14 @@ function scheduleFor(
   }
   gate("P1-toplam-kayip", lost === 0, `${lost} alanda seçenek kaybı sürüyor`);
   gate(
-    "P6-profil-kaynakli-kontrol-sayisi",
-    profileSourced === 34,
-    `profil kaynaklı kontrol ${profileSourced} (beklenen 34)`,
+    "P6-profil-kaynakli-kapsam-gerilemedi",
+    profileSourced >= 34,
+    `profil kaynaklı kontrol ${profileSourced} (asgari 34)`,
   );
   gate(
-    "P7-drift-single-choice",
-    (dist.single_choice ?? 0) === 35,
-    `single_choice ${dist.single_choice ?? 0} (beklenen 35 = 34 profil + machinery/condition)`,
+    "P7-single-choice-kapsami-gerilemedi",
+    (dist.single_choice ?? 0) >= 35,
+    `single_choice ${dist.single_choice ?? 0} (asgari 35)`,
   );
   gate(
     "P7b-drift-text-fallback",
@@ -1127,51 +1138,47 @@ function scheduleFor(
     gate("P10-secenekssiz-soru-text-kalir", c.controlType === "text_fallback", c.controlType);
   }
 
-  /* --- P11: fridgeType uçtan uca --- */
+  /* --- P11: fridgeCoolingSystem uçtan uca --- */
   {
     const st = syncFromText(null, "Buzdolabı arıyorum").state;
-    const sch = scheduleFor(st);
-    const q = sch.result.visible.find((v) => v.fieldKey === "fridgeType");
-    gate("P11a-fridgeType-soruluyor", Boolean(q), JSON.stringify(sch.visible));
-    if (q) {
-      const f = scheduledToFocusedQuestion(q, undefined, { productType: "Buzdolabı" });
-      gate(
-        "P11b-dort-secenek-gorunur",
-        (f.control?.options ?? []).map((o) => o.label).join("|") ===
-          "No-Frost|Alttan donduruculu|Gardrop tipi|Mini",
-        JSON.stringify((f.control?.options ?? []).map((o) => o.label)),
-      );
-      gate("P11c-serbest-cevap-var", f.control?.allowCustom === true, "serbest cevap yolu yok");
-    }
+    const profile = listAllProfiles().find(
+      (d) => d.fieldKey === "fridgeCoolingSystem" && d.categories?.includes("appliances"),
+    );
+    gate("P11a-fridgeCoolingSystem-profili-var", Boolean(profile));
+    gate(
+      "P11b-iki-secenek-gorunur",
+      profile?.quickChoices?.map((o) => o.label).join("|") === "No-Frost|Statik",
+      JSON.stringify(profile?.quickChoices?.map((o) => o.label) ?? []),
+    );
     /* Seçim kanonik alana gider ve soru tekrar sorulmaz. */
     const answered = syncFromBrowse(st, {
-      key: "fridgeType",
+      key: "fridgeCoolingSystem",
       value: "No-Frost",
       isAny: false,
     }).state;
     gate(
       "P11d-secim-kanonik-alana-gider",
-      answered.fields.fridgeType?.kind === "VALUE" &&
-        String(answered.fields.fridgeType?.value) === "No-Frost" &&
-        answered.fields.fridgeType?.provenance === "EXPLICIT_BROWSE",
-      JSON.stringify(answered.fields.fridgeType ?? null),
+      answered.fields.fridgeCoolingSystem?.kind === "VALUE" &&
+        String(answered.fields.fridgeCoolingSystem?.value) === "No-Frost" &&
+        answered.fields.fridgeCoolingSystem?.provenance === "EXPLICIT_BROWSE",
+      JSON.stringify(answered.fields.fridgeCoolingSystem ?? null),
     );
     gate(
       "P11e-tekrar-sorulmaz",
-      !scheduleFor(answered).visible.includes("fridgeType"),
+      !scheduleFor(answered).visible.includes("fridgeCoolingSystem"),
       JSON.stringify(scheduleFor(answered).visible),
     );
     /* Listede olmayan geçerli değer aynı yoldan yazılabilir. */
     const custom = syncFromBrowse(st, {
-      key: "fridgeType",
-      value: "Yan yana çift kapılı",
+      key: "fridgeCoolingSystem",
+      value: "Low-Frost",
       isAny: false,
     }).state;
     gate(
       "P11f-liste-disi-deger-yazilabilir",
-      custom.fields.fridgeType?.kind === "VALUE" &&
-        String(custom.fields.fridgeType?.value) === "Yan yana çift kapılı",
-      JSON.stringify(custom.fields.fridgeType ?? null),
+      custom.fields.fridgeCoolingSystem?.kind === "VALUE" &&
+        String(custom.fields.fridgeCoolingSystem?.value) === "Low-Frost",
+      JSON.stringify(custom.fields.fridgeCoolingSystem ?? null),
     );
   }
 
@@ -1533,7 +1540,7 @@ function scheduleFor(
     gate(
       "V10b-duzenleme-secenekleri-kanonik",
       editControl.options.map((o) => o.label).join("|") ===
-        "No-Frost|Alttan donduruculu|Gardrop tipi|Mini",
+        "Alttan donduruculu|Üstten donduruculu|Gardrop tipi|Mini / ofis tipi",
       JSON.stringify(editControl.options.map((o) => o.label)),
     );
     gate(

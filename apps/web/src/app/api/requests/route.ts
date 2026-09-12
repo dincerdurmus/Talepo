@@ -16,8 +16,8 @@ import {
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import { createRequest } from "@/server/request/create-request";
+import { parseAvailableRequestInput } from "@/server/request/parse-available-request";
 import {
-  parseCreateRequestInput,
   parseJsonObject,
   RequestValidationError,
 } from "@/server/request/request-schema";
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       });
 
       const body = parseJsonObject(rawBody);
-      const input = parseCreateRequestInput(body);
+      const input = await parseAvailableRequestInput(body);
       const headerKey = readIdempotencyKeyFromRequest(request);
       const createdRequest = await createRequest(user.id, {
         ...input,

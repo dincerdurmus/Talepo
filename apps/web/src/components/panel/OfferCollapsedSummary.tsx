@@ -41,6 +41,7 @@ export function OfferCollapsedSummary({
   city?: string | null;
   isUnread: boolean;
   thumbnail?: {
+    isPublished?: boolean;
     coverImageUrl?: string | null;
     categorySlug?: string | null;
     categoryName?: string | null;
@@ -82,6 +83,7 @@ export function OfferCollapsedSummary({
             categorySlug={thumbnail.categorySlug ?? null}
             categoryName={thumbnail.categoryName ?? null}
             requestTitle={thumbnail.requestTitle ?? title}
+            isPublished={thumbnail.isPublished}
             compact
           />
         ) : (

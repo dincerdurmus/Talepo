@@ -3,6 +3,7 @@ import { hasGroundedPersonalMatch } from "@/lib/panel/opportunity-recommended-el
 import { parseDiscoveryProjection } from "@/lib/discovery";
 import { OFFER_INTELLIGENCE_STATUSES } from "@/lib/monetization/offer-intelligence";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 import { evaluateBudgetOpportunity } from "./budget-opportunity";
@@ -100,6 +101,8 @@ export async function buildOpportunitiesFeed(
   const openWhere = {
     deletedAt: null,
     status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] as ("PUBLISHED" | "RECEIVING_OFFERS")[] },
+    categoryPausedAt: null, category: { isActive: true },
+    AND: [publicRequestExpiryFilter()],
     // Opportunity Center is for evaluating other parties' demand — never the
     // viewer's own buy-side request (mirrors /panel/talepler). Company workspace
     // also skips requests published under the same company.

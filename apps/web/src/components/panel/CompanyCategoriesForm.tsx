@@ -1,9 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { LoaderCircle, Tags } from "lucide-react";
 
-import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
 
 type CompanyCategoriesFormProps = {
   initialSlugs?: string[];
@@ -20,6 +20,13 @@ export function CompanyCategoryPicker({
   value: string[];
   onChange: (slugs: string[]) => void;
 }) {
+  const categories = usePublicCategories();
+  useEffect(() => {
+    if (!categories) return;
+    const activeSlugs = new Set(categories.map((category) => category.id));
+    const next = value.filter((slug) => activeSlugs.has(slug));
+    if (next.length !== value.length) onChange(next);
+  }, [categories, value, onChange]);
   function toggle(slug: string) {
     if (value.includes(slug)) {
       onChange(value.filter((item) => item !== slug));
@@ -30,7 +37,7 @@ export function CompanyCategoryPicker({
 
   return (
     <div className="flex flex-wrap gap-2">
-      {REQUEST_CATEGORIES.map((category) => {
+      {(categories ?? []).map((category) => {
         const active = value.includes(category.id);
         return (
           <button

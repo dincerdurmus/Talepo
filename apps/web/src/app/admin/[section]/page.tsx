@@ -9,6 +9,7 @@ import { PlatformAuthorizationError, requirePlatformAdmin } from "@/server/auth/
 import { AuthenticationError } from "@/server/auth/require-user";
 import { RequestOffersDrawer } from "@/components/admin/RequestOffersDrawer";
 import { formatRequestNumber, parseRequestNumber } from "@/lib/request-number";
+import { requestPublicationState } from "@/server/request/public-visibility";
 
 const sections = ["users", "companies", "requests", "offers", "notifications", "curation"] as const;
 type Section = (typeof sections)[number];
@@ -27,7 +28,14 @@ export default async function AdminDataPage({ params, searchParams }: { params: 
   if (!hasAdminPermission(admin.platformRole, sectionPermission)) notFound();
   const filters: UserFilters = { time: query.time ?? "all", role: query.role ?? "", plan: query.plan ?? "", company: query.company ?? "", requestNumber: query.requestNumber ?? "", page: Math.max(1, Number(query.page ?? "1") || 1) };
   const title = { users: "Tüm kullanıcılar", companies: "Kayıtlı şirketler", requests: "Tüm talepler", offers: "Tüm teklifler", notifications: "Bildirim akışı (debug)", curation: "Varlık kürasyonu" }[section as Section];
-  const rows = await loadRows(section as Section, permissions.includes("sensitive.view"), filters);
+  let rows = await loadRows(section as Section, permissions.includes("sensitive.view"), filters);
+  if (section === "requests" && rows.length) {
+    const requestIds = rows.map((row) => String(row.id));
+    const stateRows = await prisma.request.findMany({ where: { id: { in: requestIds } }, select: { id: true, status: true, isModerationHidden: true, categoryPausedAt: true, expiresAt: true, publishedAt: true, createdAt: true, category: { select: { isActive: true } } } });
+    const now = new Date();
+    const stateById = new Map(stateRows.map((row) => [row.id, requestPublicationState(row, now).isPublished ? "Yayında" : "Yayında değil"] as const));
+    rows = rows.map((row) => ({ ...row, visibility: stateById.get(String(row.id)) ?? "Yayında değil" }));
+  }
   const activeFilterLabels = section === "users" ? [
     filters.time !== "all" ? `Zaman: Son ${filters.time} gün` : null,
     filters.role ? `Rol: ${roleLabels[filters.role] ?? filters.role}` : null,

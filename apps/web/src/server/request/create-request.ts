@@ -17,6 +17,7 @@ import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist";
 import { prisma } from "@/lib/prisma";
+import { addOneCalendarMonth } from "./public-visibility";
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -28,7 +29,7 @@ import {
   resolveDedicatedCity,
   resolveDedicatedDeadline,
 } from "./mapper";
-import type { CreateRequestInput } from "./request-schema";
+import { RequestValidationError, type CreateRequestInput } from "./request-schema";
 import {
   isSystemCategorySlug,
   UNRESOLVED_CATEGORY_NAME,
@@ -133,7 +134,6 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       update: {
         name: categoryName,
         description: input.category.description,
-        isActive: true,
       },
       create: {
         slug: input.category.slug,
@@ -141,8 +141,11 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         description: input.category.description,
         isActive: true,
       },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
+    if (!category.isActive) {
+      throw new RequestValidationError(["Bu kategori şu anda arşivlenmiş. Lütfen aktif bir kategori seçin."]);
+    }
 
     const form = await tx.requestForm.upsert({
       where: {
@@ -248,6 +251,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         budgetMax: budget.max,
         deadlineAt: resolveDedicatedDeadline(input),
         publishedAt: now,
+        expiresAt: addOneCalendarMonth(now),
         isUrgent: input.isUrgent ?? false,
         isFeatured,
         featuredUntil,

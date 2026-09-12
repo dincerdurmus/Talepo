@@ -1,26 +1,15 @@
+"use client";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
 
 /** Homepage grid: popular marketplace categories with photo cards. */
-const HOME_CATEGORY_SLUGS = [
-  "real-estate",
-  "furniture",
-  "automotive",
-  "printing",
-  "technology",
-  "appliances",
-  "home-kitchen",
-  "machinery",
-  "health",
-  "baby",
-  "services",
-] as const;
 
 export function PopularCategories() {
-  const categories = HOME_CATEGORY_SLUGS.map((slug) => {
-    const meta = REQUEST_CATEGORIES.find((c) => c.id === slug);
+  const available = usePublicCategories();
+  const categories = (available ?? []).map((meta) => {
+    const slug = meta.id;
     const look = getCategoryVisual(slug);
     return {
       slug,

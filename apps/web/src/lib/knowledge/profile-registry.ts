@@ -3,7 +3,7 @@
  * Subcategory overrides parent domain profile.
  */
 
-import { REQUEST_CATEGORIES, getCategoryById } from "@/lib/request-category-engine";
+import { REQUEST_CATEGORIES, getCategoryById, getBuiltInCategoryById } from "@/lib/request-category-engine";
 
 import {
   ALL_KNOWLEDGE_PROFILES,
@@ -49,6 +49,12 @@ export function resolveKnowledgeProfile(
     DOMAIN_KNOWLEDGE_PROFILES.find((p) => p.categoryId === input.categoryId);
 
   if (!domain) {
+    if (category && !getBuiltInCategoryById(category.id)) {
+      return {
+        id: category.id, categoryId: category.id, label: category.label,
+        capabilities: [], externalPolicy: "DISABLED", browseHierarchy: ["category"],
+      };
+    }
     throw new Error(
       `No knowledge profile for categoryId=${input.categoryId}. Add DOMAIN_KNOWLEDGE_PROFILES entry.`,
     );

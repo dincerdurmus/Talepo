@@ -72,6 +72,7 @@ export function OutgoingOfferCompareGroup({
           isUnread={isUnread}
           photoCount={offer.mediaIds.length}
           thumbnail={{
+            isPublished: request.isPublished,
             coverImageUrl: request.coverImageUrl,
             categorySlug: request.categorySlug,
             categoryName: request.categoryName,

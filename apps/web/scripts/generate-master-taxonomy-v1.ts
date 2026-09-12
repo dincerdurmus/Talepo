@@ -1886,7 +1886,7 @@ function healthTree(): TaxonomyNode[] {
           { name: "İnfüzyon pompası" },
           { name: "Oksijen konsantratörü" },
           { name: "Nebulizatör" },
-          { name: "Tansiyon aleti", aliases: ["tansiyon ölçer", "tansiyon olcer", "sphygmomanometer"] },
+          { name: "Tansiyon aleti", aliases: ["tansiyon ölçer", "tansiyon olcer", "tansiyon ölçüm cihazı", "tansiyon olcum cihazi", "sphygmomanometer"] },
           { name: "Pulse oksimetre" },
         ],
       },

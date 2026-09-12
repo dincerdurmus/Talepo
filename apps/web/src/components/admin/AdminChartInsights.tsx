@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { RefreshCw } from "lucide-react";
+import { fetchAdminHealth } from "@/lib/admin-health-client";
 
 const metrics = { newUsers: "Yeni kullanıcı", companyRegistrations: "Firma kayıtları", companyClosures: "Firma kapatmaları", published: "Yayınlanan talep", offers: "Teklif", accepted: "Kabul edilen teklif", failedBilling: "Başarısız ödeme" };
 type Metric = keyof typeof metrics; type Point = { date: string; [key: string]: number | string };
@@ -12,8 +13,8 @@ const store = (key: string, value: string) => { localStorage.setItem(key, value)
 export function AdminChartInsights() {
   const storedDays = useSyncExternalStore(subscribe, readDays, () => 30 as 7 | 30 | 90); const storedMetric = useSyncExternalStore(subscribe, readMetric, () => "offers" as Metric);
   const [days, setDays] = useState<7 | 30 | 90>(storedDays); const [metric, setMetric] = useState<Metric>(storedMetric); const [points, setPoints] = useState<Point[]>([]); const [busy, setBusy] = useState(true); const [error, setError] = useState("");
-  const fetchInsights = useCallback(async (signal?: AbortSignal) => { try { const response = await fetch(`/api/admin/health?days=${days}`, { cache: "no-store", signal }); const value = await response.json(); if (!response.ok) throw new Error(value.message); if (!signal?.aborted) { setPoints(value.trend ?? []); setError(""); setBusy(false); } } catch (reason) { if (!signal?.aborted && (reason as DOMException).name !== "AbortError") { setError(reason instanceof Error ? reason.message : "Veriler alınamadı."); setBusy(false); } } }, [days]);
-  const refreshInsights = useCallback(() => { setBusy(true); setError(""); void fetchInsights(); }, [fetchInsights]);
+  const fetchInsights = useCallback(async (signal?: AbortSignal, force=false) => { try { const value=await fetchAdminHealth<{trend?:Point[]}>(`/api/admin/health?days=${days}`,{force}); if (!signal?.aborted) { setPoints(value.trend ?? []); setError(""); setBusy(false); } } catch (reason) { if (!signal?.aborted) { setError(reason instanceof Error?reason.message:"Veriler alınamadı."); setBusy(false); } } }, [days]);
+  const refreshInsights = useCallback(() => { setBusy(true); setError(""); void fetchInsights(undefined,true); }, [fetchInsights]);
   useEffect(() => { const controller = new AbortController(); const task = Promise.resolve().then(() => fetchInsights(controller.signal)); return () => { void task; controller.abort(); }; }, [fetchInsights]);
   const values = useMemo(() => points.map(point => Number(point[metric] ?? 0)), [points, metric]); const total = values.reduce((a, b) => a + b, 0); const average = values.length ? Math.round(total / values.length * 10) / 10 : 0; const high = values.length ? Math.max(...values) : 0; const low = values.length ? Math.min(...values) : 0;
   const chooseDays = (value: 7 | 30 | 90) => { setBusy(true); setError(""); setDays(value); store("talepo-admin-trend-days", String(value)); }; const chooseMetric = (value: Metric) => { setMetric(value); store("talepo-admin-trend-metric", value); };

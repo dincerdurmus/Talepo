@@ -13,6 +13,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
@@ -42,6 +43,8 @@ export default async function OfferRequestPage({
       id,
       deletedAt: null,
       isModerationHidden: false,
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       createdById: { not: user.id },
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],

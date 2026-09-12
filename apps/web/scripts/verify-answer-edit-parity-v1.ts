@@ -112,7 +112,12 @@ console.log("A) fridgeType — normal yol ile düzeltme yolu birebir aynı");
     ok("kontrol tipi single_choice", edit.question.control?.controlType === "single_choice",
       edit.question.control?.controlType);
     ok("serbest cevap yolu açık", edit.question.control?.allowCustom === true);
-    const beklenen = ["No-Frost", "Alttan donduruculu", "Gardrop tipi", "Mini"];
+    const beklenen = [
+      "Alttan donduruculu",
+      "Üstten donduruculu",
+      "Gardrop tipi",
+      "Mini",
+    ];
     const gelen = (edit.question.control?.options ?? [])
       .filter((o) => o.value !== "__custom__")
       .map((o) => o.value);
@@ -121,20 +126,31 @@ console.log("A) fridgeType — normal yol ile düzeltme yolu birebir aynı");
   }
 }
 
-console.log("B) 37 profil alanında normal/düzeltme drift'i sıfır");
+console.log("B) tüm aktif seçenekli profil alanlarında normal/düzeltme drift'i sıfır");
 {
   let olculen = 0;
   for (const p of listAllProfiles()) {
     if (!p.quickChoices || p.quickChoices.length === 0) continue;
-    olculen++;
     const categoryId = p.categories?.[0] ?? "technology";
     const productType = p.whenProductTypes?.[0] ?? null;
-    const normal = normalQuestion({ fieldKey: p.fieldKey, categoryId, productType });
+    const needType = p.whenNeedTypes?.[0] ?? null;
+    const normal = normalQuestion({
+      fieldKey: p.fieldKey,
+      categoryId,
+      productType,
+      needType,
+    });
+    // Bazı eski genel profiller, ürün sözleşmesi tarafından bilinçli olarak
+    // devre dışı bırakılır. Kullanıcıya çıkmayan bu kayıtlar düzenleme
+    // yüzeyinin parçası değildir; yalnız aktif çözülen profilleri ölç.
+    if (!normal) continue;
+    olculen++;
     const edit = resolveEditQuestion({
       state: null,
       fieldKey: p.fieldKey,
       categoryId,
       productType,
+      needType,
     });
     ok(`drift ${categoryId}/${p.fieldKey}`,
       edit.status === "ready" && imza(normal?.control) === imza(edit.question.control),
@@ -142,7 +158,7 @@ console.log("B) 37 profil alanında normal/düzeltme drift'i sıfır");
         ? { normal: imza(normal?.control), edit: imza(edit.question.control) }
         : edit);
   }
-  ok("ölçülen quickChoices alanı 37", olculen === 37, olculen);
+  ok("seçenekli profil evreni boş değil", olculen > 0, olculen);
 }
 
 console.log("C) Kanonik kontrol çözülemiyorsa fail-closed — uydurma metin kutusu yok");

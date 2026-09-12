@@ -16,6 +16,7 @@ import {
   OFFER_NO_LONGER_EDITABLE_MESSAGE,
 } from "@/lib/offer/submitted-commercial-lock";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import { LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE } from "@/lib/offer/offer-negotiation";
 import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
@@ -250,6 +251,8 @@ export async function createOffer(userId: string, input: CreateOfferInput) {
       id: input.requestId,
       deletedAt: null,
       isModerationHidden: false,
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       createdById: { not: userId },
       status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
     },
@@ -511,6 +514,8 @@ export async function updateOffer(
       request: {
         deletedAt: null,
         isModerationHidden: false,
+        categoryPausedAt: null, category: { isActive: true },
+        AND: [publicRequestExpiryFilter()],
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
     },
@@ -558,6 +563,8 @@ export async function updateOffer(
       request: {
         deletedAt: null,
         isModerationHidden: false,
+        categoryPausedAt: null, category: { isActive: true },
+        AND: [publicRequestExpiryFilter()],
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
     },
@@ -767,6 +774,8 @@ export async function acceptOffer(
         createdById: offer.request.createdById,
         deletedAt: null,
         isModerationHidden: false,
+        categoryPausedAt: null, category: { isActive: true },
+        AND: [publicRequestExpiryFilter()],
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
       },
       data: { status: "OFFER_SELECTED" },

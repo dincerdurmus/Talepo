@@ -10,6 +10,7 @@ import {
   compareRadarItems,
 } from "@/lib/monetization/talepo-radar";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 
 import type { OpportunityFeedItem } from "./opportunities-feed";
 import type { OpportunityIntelligence } from "./opportunity-intelligence";
@@ -72,6 +73,8 @@ export async function loadTalepoRadarFeed(input: {
     where: {
       deletedAt: null,
       status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       createdById: { not: input.userId },
       offerCount: { gte: RADAR_MIN_ELIGIBLE_OFFERS },
       ...visibility,

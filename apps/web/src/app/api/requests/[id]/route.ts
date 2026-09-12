@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { parseAvailableRequestInput } from "@/server/request/parse-available-request";
 
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
@@ -6,7 +7,6 @@ import {
   RequestDeleteNotAllowedError,
 } from "@/server/request/delete-request";
 import {
-  parseCreateRequestInput,
   RequestValidationError,
 } from "@/server/request/request-schema";
 import { updateRequest } from "@/server/request/update-request";
@@ -19,7 +19,7 @@ export async function PATCH(
     const user = await requireUser();
     const { id } = await context.params;
     const body = await request.json();
-    const input = parseCreateRequestInput(body);
+    const input = await parseAvailableRequestInput(body);
     const updated = await updateRequest(user.id, id, input);
 
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import { resolveUpdateProjection } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
+import { addOneCalendarMonth } from "./public-visibility";
 import {
   isSystemCategorySlug,
   UNRESOLVED_CATEGORY_NAME,
@@ -50,6 +51,9 @@ export async function updateRequest(
         budgetMax: true,
         isUrgent: true,
         deadlineAt: true,
+        publishedAt: true,
+        expiresAt: true,
+        createdAt: true,
         /* Otorite türetimi sunucunun KENDİ metnini okur — payload'da
          * `rawInput` yoksa (D3d) buradan gelir. */
         rawInput: true,
@@ -74,7 +78,6 @@ export async function updateRequest(
       update: {
         name: categoryName,
         description: input.category.description,
-        isActive: true,
       },
       create: {
         slug: input.category.slug,
@@ -82,8 +85,15 @@ export async function updateRequest(
         description: input.category.description,
         isActive: true,
       },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
+    if (!category.isActive) {
+      throw new RequestValidationError(["Bu kategori şu anda arşivlenmiş. Lütfen aktif bir kategori seçin."]);
+    }
+    const effectiveExpiry = existing.expiresAt ?? addOneCalendarMonth(existing.publishedAt ?? existing.createdAt);
+    if (existing.status !== "DRAFT" && effectiveExpiry <= new Date()) {
+      throw new RequestValidationError(["Bu talebin yayın süresi doldu. Yeni bir talep oluşturabilirsiniz."]);
+    }
 
     const form = await tx.requestForm.upsert({
       where: {
@@ -157,6 +167,7 @@ export async function updateRequest(
       existing.rawInput,
     );
 
+    const draftPublishedAt = existing.status === "DRAFT" ? new Date() : null;
     const updated = await tx.request.update({
       where: { id: existing.id },
       data: {
@@ -183,7 +194,8 @@ export async function updateRequest(
         status:
           existing.status === "DRAFT" ? "PUBLISHED" : existing.status,
         publishedAt:
-          existing.status === "DRAFT" ? new Date() : undefined,
+          draftPublishedAt ?? undefined,
+        expiresAt: draftPublishedAt ? addOneCalendarMonth(draftPublishedAt) : undefined,
         fieldValues: {
           create: input.fields.flatMap((field) => {
             const fieldId = formFields.get(field.key);

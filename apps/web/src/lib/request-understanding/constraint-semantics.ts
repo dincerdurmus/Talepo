@@ -15,6 +15,7 @@ import {
 import {
   isNegatedMention,
   isNegatedWindow,
+  withoutRejectedRequestClauses,
 } from "@/lib/ai/parser/negation";
 import { classifyNumbers } from "./number-role";
 import type {
@@ -364,7 +365,7 @@ function extractScreenSize(text: string): string | null {
    * kararından doğar. Eski yerel regex birimi opsiyonel bıraktığı için
    * "100 kutu", "9-36 kg" ve "SM 74" gibi span'leri ekran boyutu sanıyordu.
    */
-  const hit = classifyNumbers(text).find(
+  const hit = classifyNumbers(withoutRejectedRequestClauses(text)).find(
     (n) => n.role === "SCREEN_SIZE" && n.value != null,
   );
   return hit ? String(hit.value) : null;

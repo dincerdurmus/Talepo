@@ -10,6 +10,7 @@ import { scoreOpportunity } from "@/server/monetization/opportunity-score";
 import { getCompetitionSignals } from "@/server/monetization/competition-signals";
 import { evaluateBudgetOpportunity } from "@/server/monetization/budget-opportunity";
 import { buildOpportunityIntelligence } from "@/server/monetization/opportunity-intelligence";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 
 export async function GET(request: Request) {
   try {
@@ -19,8 +20,8 @@ export async function GET(request: Request) {
     const requestId = searchParams.get("requestId");
 
     if (requestId) {
-      const req = await prisma.request.findUnique({
-        where: { id: requestId },
+      const req = await prisma.request.findFirst({
+        where: { id: requestId, categoryPausedAt: null, category: { isActive: true }, AND: [publicRequestExpiryFilter()] },
         select: {
           id: true,
           aiScore: true,
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
     }
 
     const matches = await prisma.opportunityMatch.findMany({
-      where: { companyId: ctx.companyId },
+      where: { companyId: ctx.companyId, request: { deletedAt: null, isModerationHidden: false, status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] }, categoryPausedAt: null, category: { isActive: true }, AND: [publicRequestExpiryFilter()] } },
       orderBy: [{ score: "desc" }, { createdAt: "desc" }],
       take: 50,
       include: {

@@ -19,6 +19,7 @@ import {
 } from "./requested-item-role";
 import {
   containsPhraseToken,
+  classifyRequestedRelationTarget,
   coversRequestedTokens,
   readRequestedTarget,
   readUsageContextSplit,
@@ -698,7 +699,14 @@ function resolveSemanticSubjectCore(
   // tr-TR lowercase up front: the regex `i` flag does NOT fold Turkish İ/I
   // (/yaptır/iu never matches "YAPTIRMAK"), so all-caps input used to blind
   // every Turkish pattern in this resolver.
-  const text = input.normalizedInput.toLocaleLowerCase("tr-TR");
+  const rawText = input.normalizedInput.toLocaleLowerCase("tr-TR");
+  // "24 parça yemek takımı" counts set contents. Its unit must not enter
+  // the spare-part lexicon; numeric authority remains on the original text.
+  const contentCounts = classifyNumbers(rawText).filter((n) => n.role === "PIECE_COUNT");
+  const text = [...contentCounts].sort((a, b) => b.index - a.index).reduce(
+    (current, n) => current.slice(0, n.index) + " ".repeat(n.raw.length) + current.slice(n.index + n.raw.length),
+    rawText,
+  );
   const evidence: string[] = [];
   const alternatives: SemanticRequestSubject["alternatives"] = [];
 
@@ -897,7 +905,7 @@ function resolveSemanticSubjectCore(
     if (!split) return null;
     const target = readRequestedTarget(split.requested).value;
     if (!target) return null;
-    return classifyRequestedTargetRole(target).role === "WHOLE_PRODUCT"
+    return classifyRequestedRelationTarget(split.parent, target).role === "WHOLE_PRODUCT"
       ? target
       : null;
   })();
@@ -937,7 +945,7 @@ function resolveSemanticSubjectCore(
 
     if (effectiveLemma) {
       const pos = extractPositions(text, partHit.index);
-      const name =
+      const baseName =
         effectiveLemma === "parça" || effectiveLemma === "parca"
           ? "parça"
           : effectiveLemma === "şarj adaptörü" ||
@@ -946,6 +954,21 @@ function resolveSemanticSubjectCore(
               effectiveLemma === "sarj adaptörü"
             ? "şarj adaptörü"
             : effectiveLemma;
+      // When two component heads form one noun phrase ("kapak kulpu"), keep
+      // the complete user target. The first lemma alone would collapse the
+      // request to the parent part and lose the commercially relevant head.
+      const laterPart = findLemmaHit(
+        text.slice(partHit.index + partHit.raw.length),
+        PART_LEMMAS,
+      );
+      const compoundCandidate = text
+        .slice(partHit.index)
+        .replace(/\s+(?:arıyorum|ariyorum|lazım|lazim|istiyorum|istiyom)\b[\s\S]*$/iu, "")
+        .trim();
+      const name =
+        laterPart && compoundCandidate.length > baseName.length
+          ? compoundCandidate
+          : baseName;
       // Position tokens already in the noun must not be re-prefixed
       const nameLower = name.toLocaleLowerCase("tr-TR");
       const posSafe =
@@ -1082,7 +1105,7 @@ function resolveSemanticSubjectCore(
      * okur. `UNKNOWN` bir RET DEĞİLDİR — talep düşmez, yalnız kesinlik
      * iddia edilmez.
      */
-    const requestedRole = classifyRequestedTargetRole(
+    const requestedRole = classifyRequestedRelationTarget(forPart[1] ?? "",
       readRequestedTarget(requested).value ?? requested,
     ).role;
     const requestedIsCompatible =
@@ -1389,6 +1412,22 @@ function resolveSemanticSubjectCore(
           : /\bmontaj|kurulum/i.test(text)
             ? "montaj"
             : "servis");
+    // Generic heads ("hizmeti", "danışmanlığı") retain their specialty.
+    // Reuse the same request-phrase boundary as products, without carrying
+    // location/mode modifiers into the service's name.
+    const servicePhrase = userProductPhrase(text, input.identity)
+      ?.replace(/^(?:(?:uzaktan|yerinde)\s+)+/iu, "");
+    // A location or audience prefix can make the whole user phrase longer
+    // than the conservative product-phrase window ("Ankara'da yerinde web
+    // tasarım hizmeti"). Keep the explicitly named service specialty while
+    // dropping that context; this preserves the user's existing service
+    // contract without inventing a new question.
+    const specialtyService = text.match(
+      /\b(?:web\s+tasarım|web\s+tasarim|yazılım(?:\s+geliştirme)?|yazilim(?:\s+gelistirme)?|logo\s+tasarımı|logo\s+tasarimi|grafik(?:\s+ve\s+logo)?\s+tasarımı|grafik(?:\s+ve\s+logo)?\s+tasarim)(?:\s+(?:hizmeti|danışmanlığı|danismanligi|danışmanlık|danismanlik))?/iu,
+    )?.[0] ?? null;
+    const serviceName = specialtyService ?? (servicePhrase &&
+      /(?:hizmet(?:i)?|danışmanl[ıi][kğ][ıi]?|danismanli[kğ]i?)$/iu.test(servicePhrase)
+      ? servicePhrase : serviceLemma);
     const target = detectServiceTarget(text);
     evidence.push(serviceLemma);
     if (target) evidence.push(target);
@@ -1403,14 +1442,14 @@ function resolveSemanticSubjectCore(
 
     return {
       kind: decision("SERVICE", 0.86, evidence),
-      name: uv(serviceLemma, {
+      name: uv(serviceName, {
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
         confidence: 0.85,
         evidence: [serviceLemma],
       }),
       displayPhrase: uv(
-        target ? `${target} ${serviceLemma}` : serviceLemma,
+        target && !serviceName.includes(target) ? `${target} ${serviceName}` : serviceName,
         {
           provenance: "EXPLICIT",
           source: "NORMALIZED_EXPLICIT",
@@ -1418,7 +1457,7 @@ function resolveSemanticSubjectCore(
           evidence,
         },
       ),
-      serviceType: uv(serviceLemma, {
+      serviceType: uv(serviceName, {
         provenance: "EXPLICIT",
         source: "USER_EXPLICIT",
         confidence: 0.85,
@@ -1597,8 +1636,8 @@ function resolveSemanticSubjectCore(
     return {
       kind: decision("INDUSTRIAL_EQUIPMENT", 0.85, ["machinery"]),
       name: uv(
-        [input.identity.brand, input.identity.model].filter(Boolean).join(" ") ||
-          userProductPhrase(text, input.identity) ||
+        userProductPhrase(text, input.identity) ||
+          [input.identity.brand, input.identity.model].filter(Boolean).join(" ") ||
           "makine",
         {
           provenance: "EXPLICIT",
@@ -1755,7 +1794,7 @@ function userProductPhrase(
   identity: IdentityLite,
 ): string | null {
   const clauses = String(text ?? "")
-    .split(/[,;:!?]/)
+    .split(/[,;:.!?]/)
     .map((x) => x.trim())
     .filter(Boolean);
   /* İstek fiili taşıyan İLK yan cümle ürün öbeğini taşır ("Buzdolabı

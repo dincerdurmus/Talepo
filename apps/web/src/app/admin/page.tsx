@@ -19,6 +19,7 @@ import { DateRangeComparison } from "@/components/admin/DateRangeComparison";
 import { AdminHealthMeta } from "@/components/admin/AdminHealthMeta";
 import { AdminChartInsights } from "@/components/admin/AdminChartInsights";
 import { AdminPrivacyNotice } from "@/components/admin/AdminPrivacyNotice";
+import { CategoryManagement } from "@/components/admin/CategoryManagement";
 import { Header } from "@/components/layout/Header";
 import { prisma } from "@/lib/prisma";
 import {
@@ -28,6 +29,7 @@ import {
 import { AuthenticationError } from "@/server/auth/require-user";
 import { ADMIN_MFA_COOKIE, verifyMfaSession } from "@/server/admin/mfa";
 import { adminPermissions, hasAdminPermission } from "@/lib/auth/platform-admin";
+import { getBuiltInCategoryById } from "@/lib/request-category-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -52,8 +54,9 @@ export default async function AdminPage() {
   const canSeeSensitive = hasAdminPermission(admin.platformRole, "sensitive.view");
   const canManageBilling = hasAdminPermission(admin.platformRole, "billing.manage");
   const canViewBilling = hasAdminPermission(admin.platformRole, "billing.view") || canManageBilling;
+  const canManageCategories = hasAdminPermission(admin.platformRole, "categories.manage");
 
-  const [users, counts, billingSubscriptions] = await Promise.all([
+  const [users, counts, billingSubscriptions, categories] = await Promise.all([
     prisma.user.findMany({
       where: { deletedAt: null, ...(admin.platformRole !== "SUPER_ADMIN" ? { platformRole: { not: "SUPER_ADMIN" as const } } : {}) },
       orderBy: { createdAt: "desc" },
@@ -73,6 +76,7 @@ export default async function AdminPage() {
     }),
     loadDashboardCounts(),
     canViewBilling ? prisma.billingSubscription.findMany({ where: { subjectType: "USER" }, select: { subjectId: true, status: true, currentPeriodEnd: true } }) : Promise.resolve([]),
+    canManageCategories ? prisma.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true, description: true, isActive: true, sortOrder: true, _count: { select: { requests: true, companyCategories: true, forms: true, suggestions: true, alertRules: true, inventoryItems: true, priceObservations: true } } } }) : Promise.resolve([]),
   ]);
 
   const { userCount, companyCount, requestCount, offerCount } = counts;
@@ -123,6 +127,8 @@ export default async function AdminPage() {
         </section>
 
         <AdminUsersTable initialUsers={serializedUsers} permissions={permissions} currentUserId={admin.id} />
+
+        {canManageCategories ? <CategoryManagement initialCategories={categories.map((category) => ({ ...category, isBuiltIn: Boolean(getBuiltInCategoryById(category.slug)) }))} canDeleteCategories={admin.platformRole === "SUPER_ADMIN"} /> : null}
 
         <AdminOperationsCenter permissions={permissions} />
         {hasAdminPermission(admin.platformRole, "analytics.view") ? <DateRangeComparison /> : null}

@@ -1,5 +1,6 @@
 import { getPlanDefinition } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
+import { publicRequestWhere } from "./public-visibility";
 import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
 import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
@@ -93,6 +94,7 @@ export async function distributeRequestToCompanies(
         id: requestId,
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+        ...publicRequestWhere(),
       },
       select: {
         id: true,
@@ -566,6 +568,7 @@ export async function backfillMatchesForCompany(
       where: {
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+        ...publicRequestWhere(),
         requestMatches: { none: { companyId } },
         ...(memberUserIds.length
           ? { createdById: { notIn: memberUserIds } }
@@ -737,7 +740,7 @@ export async function countMatchingCompanies(input: {
 
   try {
     const category = await prisma.category.findUnique({
-      where: { slug: input.categorySlug },
+      where: { slug: input.categorySlug, isActive: true },
       select: { id: true },
     });
 
