@@ -2569,7 +2569,14 @@ check("switching from tire to jant clears stale tire-only answers", () => {
     categoryId: "automotive",
     needType: "tire",
     productType: "Jant",
-    values: { needType: "tire", productType: "Jant" },
+    /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
+       ikisi kapandıktan sonra görünür; kontrol edilen iddia değişmedi. */
+    values: {
+      needType: "tire",
+      productType: "Jant",
+      budget: "25000",
+      city: "İstanbul / Kadıköy",
+    },
     candidates: [],
     answeredKeys: [],
   });
@@ -2791,7 +2798,9 @@ check("automotive final summaries keep the selected family and explicit constrai
   const clarification = scheduleComposerQuestions({
     categoryId: "automotive",
     needType: null,
-    values: ambiguousValues,
+    /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
+       ikisi kapandıktan sonra görünür; kontrol edilen iddia değişmedi. */
+    values: { ...ambiguousValues, budget: "25000", city: "İstanbul / Kadıköy" },
     candidates: [],
     answeredKeys: [],
   });
@@ -3038,7 +3047,9 @@ check("home support requests stay in services and ask the right four questions",
   const clarification = scheduleComposerQuestions({
     categoryId: "services",
     needType: "service",
-    values,
+    /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
+       ikisi kapandıktan sonra görünür; kontrol edilen iddia değişmedi. */
+    values: { ...values, budget: "25000", city: "İstanbul / Kadıköy" },
     fieldStates: ambiguous.fields,
     candidates: [],
     answeredKeys: [],
