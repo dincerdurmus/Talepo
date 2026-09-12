@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 
 import { syncFromText } from "../src/lib/request-composer/sync";
+import { toResolverFieldBag } from "../src/lib/request-composer/build-state";
 import { buildUnderstoodFacts } from "../src/lib/request-composer/ui-helpers";
 import { resolveHybridQuestions } from "../src/lib/request-composer/questions";
 import {
@@ -203,6 +204,42 @@ check("automotive: tire flow does not ask product condition or model", () => {
   assert.ok(!profileKeys.includes("condition"), profileKeys.join(","));
   assert.ok(!profileKeys.includes("model"), profileKeys.join(","));
   assert.ok(profileKeys.includes("tireSize"), profileKeys.join(","));
+});
+
+check("automotive: '800 bine kadar' is a written budget and is not re-asked", () => {
+  const { state } = syncFromText(null, "Hatasız ikinci el SUV arıyorum 800 bine kadar");
+  assert.equal(state.categoryId, "automotive");
+  assert.equal(
+    state.fields.budget?.kind,
+    "VALUE",
+    `budget alanı yok: ${JSON.stringify(state.understanding.budget)}`,
+  );
+  assert.equal(state.fields.budget?.provenance, "EXPLICIT_TEXT");
+  const bag = toResolverFieldBag(state);
+  assert.ok(bag.budget, `bag.budget boş: ${JSON.stringify(bag)}`);
+  const kgOnly = syncFromText(null, "Oto koltuğu arıyorum 9-36 kg").state;
+  assert.notEqual(kgOnly.fields.budget?.kind, "VALUE", "kg aralığı bütçe sayıldı");
+});
+
+check("automotive: 'İzmir Bornova' written without a comma is the location", () => {
+  const { state } = syncFromText(
+    null,
+    "2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin",
+  );
+  const city = state.understanding.location?.city?.value;
+  assert.equal(
+    String(city ?? ""),
+    "İzmir / Bornova",
+    `understanding city=${JSON.stringify(state.understanding.location)}`,
+  );
+  /* Konum kanonik alan olarak yazılmaz (dokunulmamış ortak alan sunucuya
+     sızmamalı kuralı); sayfa onu anlama katmanından okur. Ölçüt sayfa
+     yoludur: soru görünmez. */
+  const schedule = scheduleFor(
+    "2019 Renault Clio arıyorum, İzmir Bornova, bütçem 700 bin",
+    { budget: "700000" },
+  );
+  assert.ok(!schedule.visible.some((q) => q.fieldKey === "city"), schedule.visible.map((q) => q.fieldKey).join(","));
 });
 
 check("scheduler: RE without city cannot review", () => {

@@ -30,11 +30,21 @@ type Result = {
 export function schedule(state: CanonicalRequestState, answeredKeys: string[] = [], draft: Record<string, string> = {}) {
   const bag = toResolverFieldBag(state);
   if (isUnsupportedRequestScope(state.understanding.requestScope?.value)) return null;
+  /* Sayfa ile aynı yol: metinden okunan konum kanonik alan değildir, anlama
+     katmanından değer olarak geçirilir (`/talep` `understandingCity`). Harness
+     bunu geçirmeyince "İzmir Bornova" yazan kullanıcıya konum yeniden
+     soruluyordu; bu bir ürün kusuru değil, harness boşluğuydu (ölçüldü,
+     otomotiv senaryo 4, 2026-09-12). */
+  const understandingCity = state.understanding.location?.city?.value;
   return scheduleComposerQuestions({
     categoryId: state.categoryId ?? "",
     needType: bag.needType,
     candidates: resolveHybridQuestions(state).candidates,
-    values: { ...bag, ...draft },
+    values: {
+      ...bag,
+      ...(understandingCity && !bag.city ? { city: String(understandingCity) } : {}),
+      ...draft,
+    },
     fieldStates: state.fields,
     answeredKeys: [...answeredKeys, ...Object.entries(state.fields).filter(([, field]) =>
       isDeliberateNonValueAnswer(field) || mayCloseQuestion(classifyAnswerAuthority(field)),

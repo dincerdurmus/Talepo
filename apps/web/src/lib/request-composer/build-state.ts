@@ -398,7 +398,18 @@ function qualifierNear(raw: string, writtenSpan: string): boolean {
  * Anlama katmanındaki asıl kusur (kg aralığını para sanması) ayrı bir dilim
  * konusudur; burada yalnız yükseltme kapısı kapatılır.
  */
-const MONEY_SIGNAL_RE = /(₺|\b(?:tl|try|lira)\b|bütçe|butce)/i;
+/**
+ * PARA İŞARETİ GENİŞLETİLDİ (kurucu, 2026-09-12): "800 bine kadar" bir tavan
+ * bütçedir ve `budget.ts` onu 88 puanla zaten çıkarıyordu; ama metinde ne
+ * para birimi ne "bütçe" sözcüğü geçtiği için yükseltme kapısı kapalı
+ * kalıyor ve kullanıcıya bütçe yeniden soruluyordu (ölçüldü, otomotiv
+ * senaryo 2). Kapı artık `budget.ts` ile aynı sözcük dağarcığını okur:
+ * bütçe/fiyat/bedel/ücret/tutar/maliyet/maks/en fazla anahtarları ve
+ * "sayı + bin|milyon + kadar" tavan biçimi. Çıplak "5 bin adet" gibi
+ * miktar ifadeleri işaret sayılmaz; kg aralığı vakası (9-36 kg) kapalı kalır.
+ */
+const MONEY_SIGNAL_RE =
+  /(₺|\b(?:tl|try|lira)\b|bütçe|butce|fiyat|bedel|ücret|ucret|tutar|maliyet|maksimum|\bmaks\b|\bmax\b|en\s+(?:fazla|çok|cok)|\d[\d.,]*\s*(?:bin|milyon)(?:e|a|'e|'a|’e|’a)?\s*kadar\b)/i;
 function budgetLooksLikeMoneyInText(raw: string): boolean {
   return MONEY_SIGNAL_RE.test(String(raw ?? ""));
 }
