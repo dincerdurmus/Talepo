@@ -1130,7 +1130,18 @@ function scheduleFor(
   /* --- P11: fridgeType uçtan uca --- */
   {
     const st = syncFromText(null, "Buzdolabı arıyorum").state;
-    const sch = scheduleFor(st);
+    /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
+       ikisi kapandıktan sonra görünür; kontrol edilen iddia değişmedi. */
+    const sch = scheduleFor(st, {
+      overrideFieldStates: {
+        budget: { kind: "VALUE", value: "25000", provenance: "EXPLICIT_BROWSE" },
+        city: {
+          kind: "VALUE",
+          value: "İstanbul / Kadıköy",
+          provenance: "EXPLICIT_BROWSE",
+        },
+      },
+    });
     const q = sch.result.visible.find((v) => v.fieldKey === "fridgeType");
     gate("P11a-fridgeType-soruluyor", Boolean(q), JSON.stringify(sch.visible));
     if (q) {
