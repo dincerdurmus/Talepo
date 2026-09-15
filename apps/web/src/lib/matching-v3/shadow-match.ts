@@ -1,6 +1,46 @@
 /**
  * Shadow relevance orchestrator.
  * Never emits notifications. Never reads plan for scoring.
+ *
+ * ────────────────────────────────────────────────────────────────────────
+ * NEDEN HÂLÂ GÖLGEDE — ve açmadan önce ne gerekiyor (ölçüldü 2026-09-15)
+ *
+ * Karar kaydı 2026-08-22 (Karar A): Dilim 2a (legacy fanout
+ * gözlemlenebilirliği) `466436b` ile UYGULANDI; Dilim 2b (shadow wiring +
+ * persist + compare) "yalnız GERÇEK legacy taban ölçümü oluştuğunda" ele
+ * alınacak. Yani cutover'ın ön koşulu bir ÖLÇÜM, bir kod değil.
+ *
+ * O taban ölçümü bugün OLUŞAMIYOR. Zincir tek yerde kopuk:
+ *   fanout-telemetry 14 olay üretiyor  →  logger'a gidiyor  →  logger'da
+ *   KAYITLI SINK YOK (`addLogSink` çağıran yok, ölçüldü)  →  olaylar yalnız
+ *   stdout'a düşüyor  →  sorgulanabilir taban yok  →  2b başlayamaz.
+ *
+ * TUZAK: `verify-log-sink-chain-v1` "üretim sink kaydı VAR: 1 dosya" yazar
+ * ve bu YANILTICIDIR. Betik iki ayrı kanalı tek regex'te arıyor
+ * (`addLogSink(` VEYA `addProductEventSink(`); bulduğu tek dosya
+ * `lib/market-intelligence/bridge.ts:44` ve o ÜRÜN OLAYI kanalına
+ * kaydoluyor. Fanout telemetrisi ise OPERASYONEL kanalı kullanıyor
+ * (`createSubsystemLogger`), onun sink'i hâlâ sıfır. Satırı okuyup
+ * "engel kalktı" sanma (ölçüldü 2026-09-15).
+ *
+ * Ayrıca bu motoru bugün açmak ya da bugünkü veriyle kıyaslamak YANILTICI
+ * sonuç verir: on eşleşme kanalının yarısı tedarikçi tarafında karşılığı
+ * olmayan alanları okur (`taxonomyNodeIds`, `products`, `brands`, `models`,
+ * `aliases`, `keywords` — hiçbiri yüklenmiyor; şemada taksonomi kolonu yok).
+ * Kanallar boş torbada arar, V3 hak etmediği yerde kaybeder ve eşikler
+ * bozuk resme göre ayarlanır.
+ *
+ * AÇMADAN ÖNCE SIRASIYLA:
+ *   1) Tedarikçi tarafına taksonomi derinliği (kolon + panel) — kanalların
+ *      yakıtı budur.
+ *   2) Logger'a gerçek bir sink — taban ölçümü ancak o zaman birikir.
+ *   3) Gerçek trafik — sıfır talep üzerinde kıyaslama sıfır bilgi verir.
+ *   4) Sonra 2b: aynı talebi iki motora ver, sonucu yaz, karşılaştır.
+ *   5) En son: eşik kalibrasyonu ve cutover kararı.
+ *
+ * Bu sıra bozulursa risk: "yeni motor daha iyi değilmiş" sonucu YANLIŞ
+ * ölçümden çıkar ve iyi bir motor gereksiz yere emekliye ayrılır.
+ * ────────────────────────────────────────────────────────────────────────
  */
 
 import {
