@@ -87,13 +87,21 @@ export const AMBIGUITY_RULES: readonly AmbiguityRule[] = [
     categoryIds: ["machinery", "automotive"],
     reason: "Cam işleme makinesi ile araç camı aynı sözcüktür.",
   },
-  {
-    phrase: "ev",
-    policy: "ALLOWED_CLARIFICATION",
-    categoryIds: ["real-estate", "automotive"],
-    reason:
-      "Tek başına 'ev' emlaktır; araç dünyasında yalnız karavan/mobil ev bağlamında geçer.",
-  },
+  /**
+   * SUPERSEDED (2026-09-15) — "ev" kaydı kaldırıldı. Eski kayıt:
+   *   { phrase: "ev", policy: "ALLOWED_CLARIFICATION",
+   *     categoryIds: ["real-estate", "automotive"],
+   *     reason: "Tek başına 'ev' emlaktır; araç dünyasında yalnız
+   *             karavan/mobil ev bağlamında geçer." }
+   * Kaydın kendi gerekçesi bile çıplak "ev"in emlak olduğunu söylüyor;
+   * otomotiv tarafı yalnız "EV" (elektrikli araç) kısaltmasından
+   * geliyordu ve o yol kısaltma korumasıyla (phrase-classification)
+   * zaten kapandı. Kayıt, politikanın taksonomi kapsamından önce
+   * okunmaya başlamasıyla (2026-09-15) ilk kez etkili oldu ve doğrulanmış
+   * davranışı bozdu: I25b "Ev arıyorum gerçek emlak talebi kalmalı" ve
+   * kapsama senaryosu re-06 kırmızıya döndü. Ölçülmüş invariant tablo
+   * kaydından üstündür; kayıt kaldırıldı, geçmişi burada durur.
+   */
   {
     phrase: "salincak",
     policy: "ALLOWED_CLARIFICATION",

@@ -2070,9 +2070,18 @@ function TalepOlusturForm() {
       return;
     }
     if (selection.action === "none_of_these") {
+      /**
+       * "BUNLARDAN HİÇBİRİ" KÖKLERİ AÇAR (2026-09-15). Maira'da "Bu değil"
+       * 11 kök kategoriyi açıyordu; formda aynı dokunuş kartı kapatıp
+       * kullanıcıyı kategorisiz bırakıyordu (ölçüldü). İki yüzey aynı
+       * adımı yaşar: seçim kaydedilmez, kart kök ızgarasına döner;
+       * "Vazgeç" adayları geri getirir.
+       */
+      setCategoryUserChoice(null);
       setCategoryOverride(null);
       setCategoryLockedByUser(false);
       setShowOtherDomainInput(false);
+      setCategoryRejectedFor(categoryChoice?.categoryId || "__choose__");
       return;
     }
     if (selection.action === "other_domain") {
@@ -3645,7 +3654,16 @@ function TalepOlusturForm() {
                         />
                       ) : null}
 
-                      {categoryGuidance && !categoryUserChoice ? (
+                      {categoryGuidance &&
+                      !categoryUserChoice &&
+                      categoryChoice &&
+                      categoryRejected ? (
+                        <CategoryConfirmationCard
+                          model={categoryChoice}
+                          rejected
+                          onAction={applyCategoryConfirmation}
+                        />
+                      ) : categoryGuidance && !categoryUserChoice ? (
                         <CategoryGuidanceCard
                           model={categoryGuidance}
                           selectedSlugs={guidanceSelectedSlugs}

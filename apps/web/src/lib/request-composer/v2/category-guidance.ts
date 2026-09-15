@@ -32,6 +32,11 @@ export type CategoryGuidanceModel = {
   candidates: CategoryGuidanceCandidate[];
   /** True when two near-tied candidates make multi-select useful. */
   allowMultiSelect: boolean;
+  /**
+   * `candidates`: motorun kanıtlı 1–4 adayı. `roots`: hiç kanıt yok, 11 kök
+   * kategori açık soru olarak listelenir ("Hangi alanda arıyorsun?").
+   */
+  mode: "candidates" | "roots";
 };
 
 export type CategoryGuidanceSelection =
@@ -74,10 +79,11 @@ function pushCandidate(
 }
 
 /** Fallback when AI returns fewer than 2 product candidates. */
+/** Döner: hiç kanıt bulunamayıp BÜTÜN kök kategoriler açıldı mı. */
 function seedFallbackCandidates(
   map: Map<string, CategoryGuidanceCandidate>,
   rawText: string,
-) {
+): boolean {
   const text = rawText.toLocaleLowerCase("tr-TR");
   const hints: Array<{ slug: string; score: number; test: RegExp }> = [
     { slug: "real-estate", score: 0.55, test: /daire|ev|kiralık|satılık|konut|ofis\b/ },
@@ -99,7 +105,7 @@ function seedFallbackCandidates(
     }
   }
 
-  if (map.size >= MIN_CANDIDATES) return;
+  if (map.size >= MIN_CANDIDATES) return false;
 
   /**
    * DOLGU ADAYI UYDURULMAZ (2026-08-30).
@@ -111,13 +117,22 @@ function seedFallbackCandidates(
    * dizinin ilk kategorisi oydu. Nötr tohumlar yalnız HİÇBİR kanıt
    * yokken meşrudur; o zaman kart gerçek bir "hangi alan?" sorusudur.
    */
-  if (map.size >= 1) return;
+  if (map.size >= 1) return false;
 
-  // Neutral product-domain seeds — never invent browse leaves.
+  /**
+   * HİÇ KANIT YOKSA İKİ RASTGELE KATEGORİ DEĞİL, HEPSİ AÇILIR (2026-09-15).
+   *
+   * Ölçüldü: "Matkap ucu arıyorum", "Filtre arıyorum", "Kablo arıyorum"
+   * kartta "Emlak | Otomotiv" gösteriyordu — dizinin ilk iki kategorisi,
+   * ikisi de alakasız. Kurucu: "emin değilsen hangi kategoride olabilirdi,
+   * kategoriler açılabilir". Sıfır kanıtta kart bir tahmin değil açık bir
+   * sorudur; 11 kök kategori eşit ağırlıkla listelenir, çoklu seçim
+   * kapalıdır, "bunlardan hiçbiri" eylemi anlamsızdır (hepsi burada).
+   */
   for (const cat of REQUEST_CATEGORIES) {
-    if (map.size >= MIN_CANDIDATES) break;
     pushCandidate(map, cat.id, 0.35);
   }
+  return true;
 }
 
 export function buildCategoryGuidance(input: {
@@ -145,27 +160,50 @@ export function buildCategoryGuidance(input: {
     pushCandidate(map, String(alt.value), alt.confidence);
   }
 
-  if (map.size < MIN_CANDIDATES) {
-    seedFallbackCandidates(map, input.rawText);
-  }
+  const rootsOpened =
+    map.size < MIN_CANDIDATES
+      ? seedFallbackCandidates(map, input.rawText)
+      : false;
 
-  const candidates = [...map.values()]
-    .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, MAX_CANDIDATES);
+  const sorted = [...map.values()].sort((a, b) => b.confidence - a.confidence);
+  const candidates = rootsOpened ? sorted : sorted.slice(0, MAX_CANDIDATES);
 
   if (candidates.length === 0) return null;
+
+  if (rootsOpened) {
+    return {
+      title: "Hangi alanda arıyorsun?",
+      helper:
+        "Yazdığından hangi alan olduğunu çıkaramadık. Alanı sen seç, gerisini biz soralım.",
+      candidates,
+      allowMultiSelect: false,
+      mode: "roots",
+    };
+  }
 
   const top = candidates[0]?.confidence ?? 0;
   const second = candidates[1]?.confidence ?? 0;
   const allowMultiSelect =
     candidates.length >= 2 && Math.abs(top - second) <= MULTI_SELECT_GAP;
 
+  /**
+   * TEK ADAYLI KART BİR SORU DEĞİL, BİR ONAYDIR (2026-09-15). "Araba
+   * arıyorum" → yalnız Otomotiv listeleniyordu; başlık yine "hangi alan?"
+   * diye soruyordu. Tek adayda başlık adayı söyler, kullanıcı ya onaylar
+   * ya alttaki eylemlerle başka alana gider.
+   */
+  const single = candidates.length === 1 ? candidates[0]! : null;
+
   return {
-    title: "Talebinizi doğru uzmanlara yönlendirelim",
-    helper:
-      "Bu ürünün veya ihtiyacın hangi alanla daha ilgili olduğunu seçebilirsiniz.",
+    title: single
+      ? `${single.label} gibi görünüyor, doğru mu?`
+      : "Talebinizi doğru uzmanlara yönlendirelim",
+    helper: single
+      ? "Doğruysa seç; değilse aşağıdan başka bir alan açabilirsin."
+      : "Bu ürünün veya ihtiyacın hangi alanla daha ilgili olduğunu seçebilirsiniz.",
     candidates,
     allowMultiSelect,
+    mode: "candidates",
   };
 }
 

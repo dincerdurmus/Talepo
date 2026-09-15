@@ -392,6 +392,49 @@ function gateCategory(
       !claimIsService &&
       !categoryOwnsServiceLeaves(claim.categoryId);
     if (!productServiceRedirect) {
+      /**
+       * KISMİ İDDİA + KARARSIZ SKORLAYICI = KESİN DEĞİL (2026-09-15).
+       *
+       * Ölçüldü: "Klima dış ünite fan motoru arıyorum" — "fan motoru"
+       * yalnız otomotiv yaprağında var diye beş sözcüklük cümle otomotive
+       * CONFIDENT bağlanıyor, beyaz eşya tedarikçisi talebi hiç görmüyordu.
+       * ("Klima İÇİN dış ünite fan motoru" bağlaç yoluyla zaten
+       * korunuyordu; bağlaçsız yazım korunmuyordu.) Yaprak adı cümlenin
+       * yalnız bir PARÇASIYSA, token skorlayıcı emin DEĞİLSE ve
+       * skorlayıcının kazananı ya da ikincisi BAŞKA bir kategoriyse karar
+       * TENTATIVE'dir; iki aday da netleştirme kartına gider. Çekirdeği
+       * tamamen kapsayan iddia ("Klima gaz dolumu", "Buz makinesi") ve
+       * skorlayıcının zaten emin olduğu iddia değişmez.
+       */
+      const contestant =
+        detected.categoryId !== claim.categoryId && detected.score > 0
+          ? detected.categoryId
+          : detected.runnerUpId &&
+              detected.runnerUpId !== claim.categoryId &&
+              detected.runnerUpScore > 0
+            ? detected.runnerUpId
+            : null;
+      if (!claim.coversCore && !detected.confident && contestant) {
+        return {
+          value: claim.categoryId,
+          confidence: 0.5,
+          status: "TENTATIVE",
+          evidence: [
+            "canonical-claim-partial",
+            `phrase=${claim.phrase}`,
+            `node=${claim.node.id}`,
+            `span=${claim.span}`,
+            `contested-by=${contestant}`,
+          ],
+          alternatives: [
+            {
+              value: contestant,
+              confidence: 0.45,
+              evidence: [`detector=${detected.categoryId}`, `score=${detected.score}`],
+            },
+          ],
+        };
+      }
       return {
         value: claim.categoryId,
         confidence: Math.max(0.85, scoreConf),

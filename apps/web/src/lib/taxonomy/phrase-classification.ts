@@ -230,12 +230,19 @@ export type CanonicalCategoryClaim =
       phrase: string;
       /** Eşleşen sözcük sayısı — kanıt gücü raporlaması için. */
       span: number;
+      /**
+       * İddia çekirdek metnin TAMAMI mı (kuyruk sözcükleri hariç)? Kısmi
+       * iddia ("Klima dış ünite fan motoru" içinde "fan motoru") cümlenin
+       * geri kalanının başka yeri işaret edebileceğini bilmelidir.
+       */
+      coversCore: boolean;
     }
   | {
       kind: "ambiguous";
       categoryIds: readonly string[];
       phrase: string;
       span: number;
+      coversCore: boolean;
     };
 
 /** İstek kuyruğu — iddia taraması bu sözcükleri hiç değerlendirmez. */
@@ -345,6 +352,29 @@ export function findCanonicalCategoryClaim(
        */
       const claimCoversCore = size === core.length;
       if (size === 1 && !claimCoversCore) continue;
+      /**
+       * POLİTİKA, TAKSONOMİ KAPSAMINI YENER (2026-09-15).
+       *
+       * Ölçüldü: "Cam arıyorum" → machinery CONFIDENT, "Yedek parça
+       * arıyorum" → appliances CONFIDENT, "Klima arıyorum" → appliances
+       * CONFIDENT. Üçü de kurucunun belirsizlik tablosunda
+       * ALLOWED_CLARIFICATION iken tek sahipli çıkıyordu, çünkü tek-sahip
+       * denetimi politikadan ÖNCE koşuyordu ve taksonomide o sözcüğün
+       * yalnız bir yaprağı olması "belirsiz değil" sayılıyordu. Taksonomi
+       * kapsamı tesadüftür (otomotivde "cam" yaprağı yok diye cam
+       * makine olmaz); tablo ise karardır. İfade çekirdeğin tamamıysa ve
+       * tabloda netleştirme kararı varsa, sahip sayısına bakılmaksızın
+       * belirsiz döner ve kart tablodaki kategorileri gösterir.
+       */
+      if (rule?.policy === "ALLOWED_CLARIFICATION" && claimCoversCore) {
+        return {
+          kind: "ambiguous",
+          categoryIds: rule.categoryIds,
+          phrase,
+          span: size,
+          coversCore: true,
+        };
+      }
       if (cats.length === 1) {
         const resolved = resolveTaxonomyAlias(phrase)?.node ?? null;
         const node =
@@ -357,14 +387,7 @@ export function findCanonicalCategoryClaim(
           node,
           phrase,
           span: size,
-        };
-      }
-      if (rule?.policy === "ALLOWED_CLARIFICATION" && claimCoversCore) {
-        return {
-          kind: "ambiguous",
-          categoryIds: rule.categoryIds,
-          phrase,
-          span: size,
+          coversCore: claimCoversCore,
         };
       }
       /* Çok sahipli ve politikasız: bu ifade karar üretemez. Daha kısa bir

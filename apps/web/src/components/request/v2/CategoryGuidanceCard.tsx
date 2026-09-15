@@ -117,7 +117,10 @@ export function CategoryGuidanceCard({
       ) : null}
 
       <div className="mt-4 space-y-2 border-t border-teal-900/8 pt-3">
-        {CATEGORY_GUIDANCE_ACTIONS.map((action) => (
+        {CATEGORY_GUIDANCE_ACTIONS.filter(
+          /* Kökler zaten listedeyken "bunlardan hiçbiri" anlamsızdır. */
+          (action) => model.mode !== "roots" || action.id !== "none_of_these",
+        ).map((action) => (
           <ActionRow
             key={action.id}
             id={`${baseId}-${action.id}`}
