@@ -1058,14 +1058,19 @@ function scheduleFor(
    * değiştiğinde "gel bak" der. Beklenen sayılar (37/34/35) profil evreni
    * 37 alanken yazılmıştı; o günden bu yana ürün sözleşmelerinden gelen
    * sorular da profil kaydına girdi ve evren 521 profile / 414 seçenekli
-   * alana çıktı. Ölçülen yeni taban aşağıdadır. Asıl koruma P1–P5'tedir:
+   * alana çıktı. Ölçülen yeni taban aşağıdadır.
+   *
+   * TABAN +1 (2026-09-14): `technology/screenSize` soru profili eklendi —
+   * motorda tanımlı olduğu hâlde profili olmadığı için televizyonda ekran
+   * boyutu hiç sorulmuyordu (I9 `must`). Kapı bu bilinçli eklemeyi doğru
+   * şekilde yakaladı; taban 414→415 / 409→410 / 412→413 olarak yenilendi. Asıl koruma P1–P5'tedir:
    * her profil için seçenek sayısı, sıra, etiket/değer ayrımı, yinelenme,
    * serbest cevap ve kaçış kuralları tek tek ölçülür ve hepsi yeşildir.
    */
   gate(
     "P0-profil-alani-sayisi",
-    profilesWithChoices.length === 414,
-    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 414)`,
+    profilesWithChoices.length === 415,
+    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 415)`,
   );
 
   let lost = 0;
@@ -1124,13 +1129,13 @@ function scheduleFor(
   gate("P1-toplam-kayip", lost === 0, `${lost} alanda seçenek kaybı sürüyor`);
   gate(
     "P6-profil-kaynakli-kontrol-sayisi",
-    profileSourced === 409,
-    `profil kaynaklı kontrol ${profileSourced} (beklenen 409)`,
+    profileSourced === 410,
+    `profil kaynaklı kontrol ${profileSourced} (beklenen 410)`,
   );
   gate(
     "P7-drift-single-choice",
-    (dist.single_choice ?? 0) === 412,
-    `single_choice ${dist.single_choice ?? 0} (beklenen 412 = 409 profil + machinery/condition ailesi)`,
+    (dist.single_choice ?? 0) === 413,
+    `single_choice ${dist.single_choice ?? 0} (beklenen 413 = 410 profil + machinery/condition ailesi)`,
   );
   gate(
     "P7b-drift-text-fallback",

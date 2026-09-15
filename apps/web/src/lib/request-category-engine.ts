@@ -6200,6 +6200,17 @@ const RESIDENTIAL_COMMON_CANDIDATE_KEYS = [
   "area",
   "buildingAge",
   "newBuildPreference",
+  /**
+   * ÖLÇÜLDÜ (2026-09-14): bu üç alan `whenProductTypes: BUILDING_PROPERTY_TYPES`
+   * ile tanımlıydı ama hiçbir konut sözleşmesinin izin listesinde yoktu —
+   * 19 emlak alanından 7'si hiçbir üründe sorulamıyordu. Isıtma, banyo ve
+   * eşya durumu konut aramasının çekirdek sorularıdır; I10 zaten Daire için
+   * `heating` bekliyordu (DECIDED-NOT-IMPLEMENTED). Arsa ve ticari aileler
+   * ayrı izin listeleri kullandığı için oralara SIZMAZ.
+   */
+  "heating",
+  "bathroomCount",
+  "furnished",
   "city",
   "budget",
 ];
@@ -6254,6 +6265,8 @@ const REAL_ESTATE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
     allowedCandidateFieldKeys: [
       ...RESIDENTIAL_COMMON_CANDIDATE_KEYS,
       "floor",
+      // Asansör yalnız apartman ailesinde anlamlı; müstakil/villa listesine girmez.
+      "elevator",
     ],
     questions: [
       {
@@ -9597,7 +9610,13 @@ const MARKETPLACE_FILTER_PARITY_V1: Partial<
     { key: "ram", label: "RAM", type: "text", placeholder: "Örn. 16 GB ve üzeri", when: { field: "needType", in: ["hardware"] }, whenProductTypes: [...COMPUTER_PRODUCT_TYPES, "tablet"] },
     { key: "storage", label: "Depolama", type: "text", placeholder: "Örn. 512 GB SSD", when: { field: "needType", in: ["hardware"] }, whenProductTypes: [...COMPUTER_PRODUCT_TYPES, "tablet", "telefon"] },
     { key: "graphics", label: "Ekran kartı", type: "text", placeholder: "Örn. RTX 4060 veya fark etmez", when: { field: "needType", in: ["hardware"] }, whenProductTypes: COMPUTER_PRODUCT_TYPES },
-    { key: "screenSize", label: "Ekran boyutu", type: "text", placeholder: "Örn. 14–16 inç", when: { field: "needType", in: ["hardware"] } },
+    /**
+     * ÖLÇÜLDÜ (2026-09-14): `screenSize` ürün kapsamı taşımadığı için
+     * kulaklık, fotoğraf makinesi ve hatta ürünsüz akışta da görünüyordu.
+     * I9 sözleşmesi bunu açıkça yasaklar (Laptop / Kulaklık / Fotoğraf
+     * Makinesi → never: screenSize) ve yalnız Televizyon için ister.
+     */
+    { key: "screenSize", label: "Ekran boyutu", type: "text", placeholder: "Örn. 55 inç", whenProductTypes: ["televizyon", "tv", "monitör", "monitor"], when: { field: "needType", in: ["hardware"] } },
     {
       key: "warranty",
       label: "Garanti",

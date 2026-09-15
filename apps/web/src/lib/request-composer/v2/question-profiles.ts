@@ -555,6 +555,28 @@ const STANDARD: QuestionProfileDef[] = [
   /* here until it is migrated with an equivalent contract.             */
   /* ------------------------------------------------------------------ */
   // —— kulaklık ——
+  /**
+   * ÖLÇÜLDÜ (2026-09-14): `screenSize` motorda tanımlıydı ama soru profili
+   * yoktu → televizyon talebinde ekran boyutu HİÇ sorulmuyordu (I9 `must`).
+   * Ürün kapsamı motordaki alanla birebir aynı tutulur.
+   */
+  {
+    fieldKey: "screenSize",
+    prompt: "Ekran boyutu tercihin var mı?",
+    summaryLabel: "Ekran boyutu",
+    importance: "quote_critical",
+    categories: ["technology"],
+    whenProductTypes: ["televizyon", "tv", "monitör", "monitor"],
+    rank: 70,
+    allowUnknown: true,
+    inputHint: "select",
+    quickChoices: [
+      { label: "32-43 inç", value: "32-43 inç" },
+      { label: "43-55 inç", value: "43-55 inç" },
+      { label: "55-65 inç", value: "55-65 inç" },
+      { label: "65 inç ve üzeri", value: "65 inç ve üzeri" },
+    ],
+  },
   {
     fieldKey: "headphoneType",
     prompt: "Nasıl bir kulaklık?",
