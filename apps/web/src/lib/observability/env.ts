@@ -159,6 +159,20 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     serverOnly: true,
     description: "Print product events to stdout.",
   },
+  {
+    name: "OFFER_MEDIA_DIR",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "Offer photo directory for fs storage mode. Default .data/offer-media.",
+  },
+  {
+    name: "OFFER_MEDIA_STORAGE",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "fs (default, local disk) | inline (bytes live in the DB row). Serverless deployments must set inline: disk files do not survive a deploy.",
+  },
 ];
 
 export type EnvValidationResult = {

@@ -90,14 +90,18 @@ export async function attachOfferMedia(
   }
 
   const mediaId = newMediaId();
-  const storageKey = buildOfferMediaStorageKey(
+  const requestedKey = buildOfferMediaStorageKey(
     offer.id,
     mediaId,
     validated.mimeType,
   );
   const originalName = sanitizeOriginalName(input.originalName);
 
-  await writeOfferMediaFile(storageKey, input.bytes);
+  /**
+   * Kayda YAZILACAK anahtarı depo katmanı döndürür: `fs` kipinde istenen
+   * anahtarın kendisi, `inline` kipinde baytı taşıyan `data:` URL.
+   */
+  const storageKey = await writeOfferMediaFile(requestedKey, input.bytes);
 
   try {
     const created = await prisma.offerMedia.create({

@@ -10,6 +10,63 @@ function resolveRoot() {
   return fromEnv && fromEnv.length > 0 ? fromEnv : DEFAULT_DIR;
 }
 
+/**
+ * DEPOLAMA KİPİ — KALICILIK SÖZLEŞMESİ.
+ *
+ * `fs` (varsayılan, davranış değişmez): bayt diske yazılır. Tek sunuculu
+ * kurulumda doğrudur; sunucusuz (Vercel) kurulumda YANLIŞTIR — dosya her
+ * deploy'da ve örnekler arasında kaybolur, yani ücretli tedarikçinin
+ * yüklediği ürün fotoğrafı sessizce yok olur.
+ *
+ * `inline`: bayt `data:` URL olarak kaydın kendi `storageKey` kolonunda
+ * taşınır, yani veritabanında yaşar. Mesaj görselleri bu depoda zaten
+ * böyle saklanıyor (`send-image-message.ts` → `fileUrl: dataUrl`), bu
+ * yüzden yeni bir kalıcılık modeli icat edilmiyor, var olanı kullanıyor.
+ *
+ * OKUMA HER İKİ KİPTE DE ÇALIŞIR: `data:` ile başlayan anahtar çözülür,
+ * diğerleri diskten okunur. Bu yüzden kip değiştiğinde eski kayıtlar
+ * bozulmaz ve geri dönüş tek env değişkeni kadar uzaktır.
+ */
+export type OfferMediaStorageMode = "fs" | "inline";
+
+export function resolveOfferMediaStorageMode(): OfferMediaStorageMode {
+  return process.env.OFFER_MEDIA_STORAGE?.trim().toLowerCase() === "inline"
+    ? "inline"
+    : "fs";
+}
+
+const INLINE_PREFIX = "data:";
+
+/** `data:image/jpeg;base64,…` — mime beyaz listeye karşı doğrulanır. */
+const INLINE_KEY_RE =
+  /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]+={0,2})$/;
+
+export function isInlineOfferMediaKey(storageKey: string): boolean {
+  return storageKey.startsWith(INLINE_PREFIX);
+}
+
+function mimeForExt(storageKey: string): AllowedImageMime {
+  const lower = storageKey.toLowerCase();
+  if (lower.endsWith(".png")) return "image/png" as AllowedImageMime;
+  if (lower.endsWith(".webp")) return "image/webp" as AllowedImageMime;
+  return "image/jpeg" as AllowedImageMime;
+}
+
+function buildInlineStorageKey(
+  mime: AllowedImageMime,
+  bytes: Buffer,
+): string {
+  return `${INLINE_PREFIX}${mime};base64,${bytes.toString("base64")}`;
+}
+
+function decodeInlineStorageKey(storageKey: string): Buffer {
+  const match = INLINE_KEY_RE.exec(storageKey);
+  if (!match) {
+    throw new Error("Geçersiz medya anahtarı.");
+  }
+  return Buffer.from(match[2], "base64");
+}
+
 const SAFE_ID_RE = /^[a-z0-9_-]{8,64}$/i;
 
 function extForMime(mime: AllowedImageMime) {
@@ -49,20 +106,40 @@ function resolveSafePath(storageKey: string) {
   return full;
 }
 
+/**
+ * Baytı saklar ve KAYDA YAZILACAK anahtarı döndürür.
+ *
+ * `fs` kipinde dönen değer verilen anahtardır (eski davranış birebir aynı).
+ * `inline` kipinde diske hiçbir şey yazılmaz ve dönen değer baytı taşıyan
+ * `data:` URL'dir. Çağıran, kayda DÖNEN anahtarı yazmalıdır.
+ */
 export async function writeOfferMediaFile(
   storageKey: string,
   bytes: Buffer,
-) {
+): Promise<string> {
+  if (resolveOfferMediaStorageMode() === "inline") {
+    // Anahtar biçimi yine doğrulansın: geçersiz id ile buraya gelinmesin.
+    resolveSafePath(storageKey);
+    return buildInlineStorageKey(mimeForExt(storageKey), bytes);
+  }
   const full = resolveSafePath(storageKey);
   await mkdir(path.dirname(full), { recursive: true });
   await writeFile(full, bytes);
+  return storageKey;
 }
 
 export async function readOfferMediaFile(storageKey: string) {
+  if (isInlineOfferMediaKey(storageKey)) {
+    return decodeInlineStorageKey(storageKey);
+  }
   return readFile(resolveSafePath(storageKey));
 }
 
 export async function deleteOfferMediaFile(storageKey: string) {
+  if (isInlineOfferMediaKey(storageKey)) {
+    // Bayt kaydın kendi içinde; kayıt silinince bayt da gider.
+    return;
+  }
   try {
     await unlink(resolveSafePath(storageKey));
   } catch (error) {
