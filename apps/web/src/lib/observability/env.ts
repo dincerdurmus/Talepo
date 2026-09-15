@@ -73,7 +73,38 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     classification: "OPTIONAL",
     serverOnly: true,
     description:
-      "Outbound email provider id (kritik bildirim aileleri). Boşsa teslim dürüstçe 'unconfigured' sayılır; sahte başarı üretilmez.",
+      "Outbound email provider id: 'resend' | 'brevo'. Boşsa teslim dürüstçe 'unconfigured' sayılır; sahte başarı üretilmez. ŞİFRE SIFIRLAMA BUNA BAĞLIDIR — boşsa kullanıcı sıfırlama bağlantısını alamaz.",
+  },
+  {
+    /**
+     * Üçü BİRLİKTE olmalıdır; yarım yapılandırma sessizce çalışmaz duruma
+     * düşmesin diye `resolveEmailTransportConfig` eksik sayar (2026-09-15).
+     */
+    name: "EMAIL_API_KEY",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "API key for EMAIL_PROVIDER. Required together with EMAIL_PROVIDER and EMAIL_FROM; without all three no email is sent at all.",
+  },
+  {
+    name: "EMAIL_FROM",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "Verified sender address for outbound email (must be verified at the provider, otherwise every send is rejected).",
+  },
+  {
+    name: "EMAIL_FROM_NAME",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description: "Display name on outbound email. Defaults to 'Talepo'.",
+  },
+  {
+    name: "APP_BASE_URL",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "Absolute public origin used to build links inside emails (password reset, notifications). Falls back to NEXTAUTH_URL, then VERCEL_URL, then localhost — a wrong value sends users to the wrong host.",
   },
   {
     name: "ALLOW_MOCK_UPGRADE",

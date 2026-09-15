@@ -1,5 +1,7 @@
 import { createSubsystemLogger } from "@/lib/observability/logger";
 
+import { resolveAppBaseUrl, sendEmail } from "./email-transport";
+
 /**
  * E-POSTA TESLİM SINIRI (Launch Hardening, 2026-09-01).
  *
@@ -85,13 +87,39 @@ export async function deliverNotificationEmail(
   }
 
   /**
-   * Gerçek sağlayıcı dalı — EXTERNAL AKTİVASYON noktası. Anahtarlar prod
-   * ortamına girildiğinde buraya tek adapter eklenir; sözleşme (dönüş tipi,
-   * non-blocking çağrım, PII loglamama) değişmez.
+   * GERÇEK TESLİM (2026-09-15). Bu dal boştu ve her çağrı
+   * `provider_not_implemented` yazıp başarısız dönüyordu; kritik
+   * bildirimlerin hiçbiri e-postaya çıkmıyordu. Taşıyıcı
+   * `email-transport.ts` içinde yaşar, sözleşme değişmedi: PII loglanmaz,
+   * sessiz başarı uydurulmaz, çağıran non-blocking çağırmaya devam eder.
    */
-  log.error("email.delivery.provider_not_implemented", {
-    outcome: "failure",
-    context: { provider, notificationType: input.notificationType },
+  const actionUrl = input.actionPath
+    ? `${resolveAppBaseUrl()}${input.actionPath.startsWith("/") ? "" : "/"}${input.actionPath}`
+    : null;
+
+  const text = [
+    input.message,
+    actionUrl ? `\nGörüntülemek için: ${actionUrl}` : null,
+    "\n—\nTalepo",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const result = await sendEmail({
+    to: recipient,
+    subject: input.title,
+    text,
   });
-  return { delivered: false, reason: "PROVIDER_ERROR" };
+
+  if (!result.sent) {
+    return {
+      delivered: false,
+      reason:
+        result.reason === "UNCONFIGURED"
+          ? "EMAIL_PROVIDER_UNCONFIGURED"
+          : "PROVIDER_ERROR",
+    };
+  }
+
+  return { delivered: true, provider: result.provider };
 }

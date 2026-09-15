@@ -251,6 +251,15 @@ function GirisPageContent() {
                   {emailError || authError}
                 </p>
               )}
+              {/* Şifresini unutan kullanıcının tek self-servis çıkışı (2026-09-15). */}
+              <div className="flex justify-end">
+                <Link
+                  href="/sifremi-unuttum"
+                  className="text-[11px] font-medium text-teal-800 transition hover:text-teal-950"
+                >
+                  Şifremi unuttum
+                </Link>
+              </div>
               <button
                 type="submit"
                 disabled={emailBusy}
