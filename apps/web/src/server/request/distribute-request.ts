@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
 import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
+import { notifyZeroReach } from "@/server/request/zero-reach-rescue";
 import {
   deriveZeroMatchReason,
   executedScan,
@@ -251,12 +252,14 @@ export async function distributeRequestToCompanies(
 
     const matches = [...scored.values()].sort((a, b) => b.score - a.score);
     if (matches.length === 0) {
+      const zeroReason = deriveZeroMatchReason({
+        categorySkipped: skipCategoryFanout,
+        hasCityInput,
+      });
+
       logFanoutZeroMatch({
         requestId: request.id,
-        reason: deriveZeroMatchReason({
-          categorySkipped: skipCategoryFanout,
-          hasCityInput,
-        }),
+        reason: zeroReason,
         categorySkipped: skipCategoryFanout,
         categoryLinkedCount: categoryLinked.length,
         cityCandidateCount: cityLinked.length,
@@ -276,6 +279,22 @@ export async function distributeRequestToCompanies(
       void deliverAlertRuleNotifications(request.id).catch((error) => {
         console.error("[distribute] alert notifications failed:", error);
       });
+
+      /**
+       * SIFIR ULAŞIM ALICIYA SÖYLENİR (2026-09-15).
+       *
+       * Bu dal, sistemin "bu talep kimseye gitmedi" bilgisini TAM OLARAK
+       * bildiği yer. Eskiden yalnız loglanıyor ve alıcı hiçbir şey
+       * bilmeden teklif bekliyordu. Teslim non-blocking'dir ve kendi
+       * hatasını yutar; bir bildirim yazılamadı diye yayımlama düşmez.
+       */
+      void notifyZeroReach({
+        requestId: request.id,
+        buyerUserId: request.createdById,
+        requestTitle: request.title,
+        reason: zeroReason,
+      });
+
       return { matchedCompanyCount: 0, notifiedUserCount: 0 };
     }
 
