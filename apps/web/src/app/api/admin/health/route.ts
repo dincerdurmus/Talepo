@@ -28,7 +28,7 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
   const stale = new Date(Date.now() - DAY);
   const range = { gte: from, lte: to };
   const scope = requestScope(filters);
-  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling] = await Promise.all([
+  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling, zeroReach] = await Promise.all([
     prisma.user.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { deletedAt: range } }),
@@ -40,8 +40,34 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
     prisma.offer.groupBy({ by: ["submittedById"], where: { createdAt: range, request: scope } }),
     prisma.moderationCase.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
     prisma.billingEvent.count({ where: { status: "FAILED", createdAt: range } }),
+    /**
+     * HİÇ TEDARİKÇİYE ULAŞMAYAN TALEP (2026-09-15).
+     *
+     * Bir talep iki ayrı yoldan sıfır tedarikçiye gidebilir. Birincisi
+     * deterministik: kategori çözülmemiş ya da o kategoride firma yok —
+     * alıcıya söyleniyor (zero-reach-rescue). İkincisi kaza: dağıtım
+     * fırlatarak düşüyor, `create-request` hatayı yutup talebi yayımlanmış
+     * sayıyor ve akış sıfır-eşleşme dalına HİÇ varmadığı için kimse
+     * haberdar olmuyor. İkinci yol bugün görünmezdi.
+     *
+     * Bu sayı ikisini birden ölçüyor ve bilerek öyle: pazaryeri için önemli
+     * olan sebep değil sonuçtur — yayımlanmış ama kimseye ulaşmamış talep.
+     * On dakikalık tolerans, dağıtımı hâlâ koşan yeni talepleri dışarıda
+     * tutmak içindir.
+     */
+    prisma.request.count({
+      where: {
+        ...scope,
+        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+        publishedAt: {
+          gte: from,
+          lte: new Date(Math.min(to.getTime(), Date.now() - 10 * 60_000)),
+        },
+        matches: { none: {} },
+      },
+    }),
   ]);
-  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling };
+  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling, zeroReach };
 }
 
 async function getTrend(from: Date, to: Date, filters: RequestFilters) {

@@ -480,6 +480,38 @@ async function main() {
     );
   });
 
+  await check(
+    "kaza sonucu sıfır ulaşım da ölçülür (kurtarmanın göremediği ikinci yol)",
+    () => {
+      /* Kurtarma bildirimi yalnız DETERMİNİSTİK sıfır-eşleşme dalına bağlı.
+         Dağıtım fırlatarak düştüğünde `create-request` hatayı yutuyor, talep
+         yayımlanmış sayılıyor ve akış o dala hiç varmıyor: alıcı yine sessiz
+         kalıyor, üstelik bu kez kimse bilmiyor. Sebep ne olursa olsun sonuç
+         ölçülebilir olmalı — yayımlanmış ama hiç eşleşmesi olmayan talep. */
+      const ROUTE = readFileSync(
+        join(__dirname, "..", "src", "app", "api", "admin", "health", "route.ts"),
+        "utf8",
+      );
+      assert.ok(
+        /matches:\s*\{\s*none:\s*\{\}\s*\}/.test(ROUTE),
+        "hiç eşleşmesi olmayan talep sayılmıyor — kaza yolu görünmez kalıyor",
+      );
+      assert.ok(
+        ROUTE.includes("zeroReach"),
+        "sayı metriklere yazılmıyor",
+      );
+      const UI = readFileSync(
+        join(__dirname, "..", "src", "components", "admin", "HealthCenter.tsx"),
+        "utf8",
+      );
+      assert.ok(
+        UI.includes('key==="zeroReach"'),
+        "sayı uyarı listesine düşmüyor — sayı var, kimse görmüyor",
+      );
+      assert.ok(UI.includes('zeroReach:"'), "metrik panelde adsız");
+    },
+  );
+
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
 }
