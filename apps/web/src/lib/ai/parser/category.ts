@@ -602,13 +602,26 @@ function keywordScore(normalized: string, keyword: string) {
    * anlatır, aradığı şeyi değil; oy kullanırsa POS cihazı talebi emlağa
    * düşüyordu (ölçüldü). Böyle geçişler kategori oyu ÜRETMEZ; talebin
    * gerçek hedefi kendi sözcükleriyle oy verir.
+   *
+   * PARADİGMA TAMAMLANDI (ölçüldü 2026-09-15). Kural yalnız iyelikte
+   * duruyordu; iyelik ÜSTÜNE hâl eki gelen biçimler dışarıda kalıyordu ve
+   * aynı hatayı üretiyordu: "evimin salonuna halı" emlağa düşüyordu, çünkü
+   * "evimin" (iyelik + ilgi hâli) desene uymuyordu. Türkçede iyelikten sonra
+   * gelen ilgi (-in), yönelme (-e), bulunma (-de/-te) ve ayrılma
+   * (-den/-ten) hâlleri sahipliği DEĞİŞTİRMEZ; hepsi aynı şeyi söyler:
+   * sözcük kullanıcının kendi yeri/nesnesidir, aradığı şey değildir.
+   * Kapsam yalnız İYELİK TAŞIYAN biçimlerdir — çıplak "evde", "daireye"
+   * dokunulmaz, çünkü onlar hâlâ aranan şeyin kendisi olabilir.
    */
   {
     let i = at;
     let hasNonPossessive = false;
     while (i >= 0) {
       const rest = normalized.slice(i + keyword.length);
-      const possessive = /^[ıiuü]?m(?:[ıiuüae]|[ıiuü]z[ae]?)?(?![a-zçğıöşü])/.test(rest);
+      const possessive =
+        /^[ıiuü]?m(?:[ıiuü]z)?(?:[ıiuüae]|[ıiuü]n|d[ae]n?|t[ae]n?)?(?![a-zçğıöşü])/.test(
+          rest,
+        );
       if (!possessive) { hasNonPossessive = true; break; }
       i = normalized.indexOf(keyword, i + 1);
     }
@@ -874,6 +887,54 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         );
       if (hasPropertyAnchor) {
         score += 2;
+      }
+
+      /**
+       * ÖLÇÜ BİRİMİ MÜLK DEĞİLDİR (ölçüldü 2026-09-15).
+       *
+       * "metrekare" / "m2" emlak anahtar kelimesiydi ve tek başına oy
+       * veriyordu. Ölçülen sonuç: "50 metrekare laminat parke" ve
+       * "120 metrekare için parke döşeme" EMİN olarak emlağa düşüyordu —
+       * yani kart bile çıkmıyordu, parke ustası talebi hiç görmüyordu,
+       * emlakçı görüyordu. "80 m2 seramik" kartta tek seçenek olarak
+       * emlak gösteriyordu.
+       *
+       * Metrekare bir NİCELİKTİR. Mülkü niteleyen bir mülk çıpası ya da
+       * oda deseni varsa emlak kanıtıdır ("120 metrekare daire",
+       * "3+1 140 m2"); tek başına değildir.
+       */
+      if (!hasPropertyAnchor && !/\b[1-9]\s*\+\s*[0-9]\b/.test(normalized)) {
+        const olcuOyu =
+          keywordScore(normalized, "metrekare") +
+          keywordScore(normalized, "m2") +
+          keywordScore(normalized, "m²");
+        score = Math.max(0, score - olcuOyu);
+      }
+
+      /**
+       * "X İÇİN Y" YAPISINDA X BAĞLAMDIR, ARANAN ŞEY Y'DİR
+       * (ölçüldü 2026-09-15).
+       *
+       * "daire için mobilya", "villa bahçesi için çim biçme makinesi",
+       * "apartman girişi için kamera sistemi" — üçünde de soldaki yer
+       * sözcüğü ürünün NEREDE kullanılacağını söyler. Emlak oyu soldan
+       * geliyorsa ve sağda emlak sinyali yoksa, o oy aranan şeyi
+       * anlatmıyordur ve sayılmaz.
+       *
+       * FAİL-CLOSED: sağda da emlak sinyali varsa ("daire için emlak
+       * danışmanı") hiçbir şey düşülmez. Metin "için" içermiyorsa kural
+       * hiç çalışmaz.
+       */
+      const icinAt = normalized.search(/(?:^|[^\p{L}])i[çc]in(?:[^\p{L}]|$)/u);
+      if (icinAt > 0) {
+        const sol = normalized.slice(0, icinAt);
+        const sag = normalized.slice(icinAt);
+        const oy = (part: string) =>
+          keywords.reduce((total, k) => total + keywordScore(part, k), 0);
+        const solOy = oy(sol);
+        if (solOy > 0 && oy(sag) === 0) {
+          score = Math.max(0, score - solOy);
+        }
       }
       /**
        * KB-16: ilan sıfatı emlağa YALNIZ bir emlak nesnesi varken puan verir.
