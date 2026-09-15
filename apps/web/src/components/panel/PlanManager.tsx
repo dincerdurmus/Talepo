@@ -41,6 +41,20 @@ import { PRO_FEATURE_PRESENTATION } from "@/lib/membership/feature-presentation"
 
 import { PersonalPlanMismatchBanner } from "./PersonalPlanMismatchBanner";
 
+/**
+ * Ham enum kullanıcıya gösterilmez (2026-09-15). "PAST_DUE" yazan bir satır,
+ * ödeme sorunu yaşayan kullanıcının anlaması gereken TEK satırdı.
+ */
+const SUBSCRIPTION_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Aktif",
+  PENDING: "Ödeme doğrulanıyor",
+  PAST_DUE: "Ödeme alınamadı",
+  CANCEL_AT_PERIOD_END: "Dönem sonunda sona erecek",
+  CANCELED: "İptal edildi",
+  EXPIRED: "Süresi doldu",
+  INACTIVE: "Pasif",
+};
+
 export type CompanyOption = {
   id: string;
   name: string;
@@ -295,6 +309,58 @@ export function PlanManager({
     }
   }
 
+  /**
+   * ABONELİK İPTALİ — DÖNEM SONU (2026-09-15).
+   *
+   * Bu düğüm hiç yoktu: iptal fonksiyonu sağlayıcı katmanında yazılıydı ama
+   * çağıranı olmadığı için ödeme yapan kullanıcı uygulama içinden iptal
+   * edemiyordu. Politika kullanıcıya ONAYDAN ÖNCE aynen gösterilir; sürpriz
+   * bırakmamak iptalin kendisi kadar önemlidir.
+   */
+  async function cancelSubscription(action: "cancel" | "resume") {
+    if (action === "cancel") {
+      const confirmed = window.confirm(
+        [
+          "Aboneliğinizi iptal etmek istediğinize emin misiniz?",
+          "",
+          "· İptal, içinde bulunduğunuz dönemin sonunda geçerli olur.",
+          "· Tahsil edilmiş dönem ücreti iade edilmez.",
+          "· Dönem sonuna kadar tüm ücretli özellikler açık kalır.",
+          "· Dönem sonunda plan ücretsize döner, yeni tahsilat yapılmaz.",
+        ].join("\n"),
+      );
+      if (!confirmed) return;
+    }
+
+    setLoadingKey(`billing-${action}`);
+    setMessage(null);
+    setError(null);
+    try {
+      const response = await fetch("/api/billing/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const result = (await response.json()) as {
+        ok?: boolean;
+        message?: string;
+      };
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message || "İşlem tamamlanamadı.");
+      }
+      setMessage(result.message || "İşlem başarılı.");
+      router.refresh();
+    } catch (actionError) {
+      setError(
+        actionError instanceof Error
+          ? actionError.message
+          : "İşlem sırasında bir hata oluştu.",
+      );
+    } finally {
+      setLoadingKey(null);
+    }
+  }
+
   async function runAction(key: string, body: Record<string, unknown>) {
     setLoadingKey(key);
     setMessage(null);
@@ -363,13 +429,41 @@ export function PlanManager({
       )}
 
       {billing?.subscriptionStatus && billing.subscriptionStatus !== "INACTIVE" && (
-        <p className="text-sm text-teal-950/48">
-          Abonelik durumu: <strong className="font-semibold text-[#0f1f1d]">{billing.subscriptionStatus}</strong>
-          {billing.currentPeriodEnd
-            ? ` · dönem sonu: ${formatDate(billing.currentPeriodEnd)}`
-            : ""}
-          {billing.cancelAtPeriodEnd ? " · dönem sonunda iptal" : ""}
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-teal-950/48">
+            Abonelik durumu:{" "}
+            <strong className="font-semibold text-[#0f1f1d]">
+              {SUBSCRIPTION_STATUS_LABELS[billing.subscriptionStatus] ??
+                billing.subscriptionStatus}
+            </strong>
+            {billing.currentPeriodEnd
+              ? ` · dönem sonu: ${formatDate(billing.currentPeriodEnd)}`
+              : ""}
+          </p>
+
+          {canMutateBilling &&
+            (billing.cancelAtPeriodEnd ? (
+              <p className="text-sm text-teal-950/60">
+                Aboneliğiniz
+                {billing.currentPeriodEnd
+                  ? ` ${formatDate(billing.currentPeriodEnd)} tarihinde`
+                  : " dönem sonunda"}{" "}
+                sona erecek. O tarihe kadar tüm özellikler açık kalır ve yeni
+                tahsilat yapılmaz.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => cancelSubscription("cancel")}
+                disabled={loadingKey === "billing-cancel"}
+                className="text-sm font-medium text-teal-950/55 underline underline-offset-4 transition hover:text-[#8b352b] disabled:opacity-60"
+              >
+                {loadingKey === "billing-cancel"
+                  ? "İptal ediliyor…"
+                  : "Aboneliği iptal et"}
+              </button>
+            ))}
+        </div>
       )}
 
       {(message || error) && (
