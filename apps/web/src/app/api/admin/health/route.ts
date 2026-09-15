@@ -28,7 +28,7 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
   const stale = new Date(Date.now() - DAY);
   const range = { gte: from, lte: to };
   const scope = requestScope(filters);
-  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling, billingDrift] = await Promise.all([
+  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling] = await Promise.all([
     prisma.user.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { deletedAt: range } }),
@@ -40,13 +40,8 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
     prisma.offer.groupBy({ by: ["submittedById"], where: { createdAt: range, request: scope } }),
     prisma.moderationCase.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
     prisma.billingEvent.count({ where: { status: "FAILED", createdAt: range } }),
-    /* ÖDEME/ÜYELİK AYRIŞMASI ARALIKTAN BAĞIMSIZDIR (2026-09-15).
-       Bu bir eğilim değil ŞU ANKİ durumdur: bugün kaç hesabın parası ile
-       yetkisi birbirini tutmuyor. Bu yüzden `range` uygulanmaz. Teşhis
-       hiçbir planı düzeltmez; düzeltme ayrı ve onaylı bir iştir. */
-    countBillingEntitlementDrift(),
   ]);
-  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling, billingDrift: billingDrift.drifting };
+  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling };
 }
 
 async function getTrend(from: Date, to: Date, filters: RequestFilters) {
@@ -93,11 +88,32 @@ export async function GET(request: Request) {
       requestStatus: REQUEST_STATUSES.includes(requestStatus as typeof REQUEST_STATUSES[number]) ? requestStatus as typeof REQUEST_STATUSES[number] : null,
     };
     const scope = requestScope(filters);
-    const [metrics, previousMetrics, trend, categories] = await Promise.all([
+    /**
+     * ÖDEME/ÜYELİK AYRIŞMASI AYRI KOŞAR (2026-09-15'te düzeltildi).
+     *
+     * Bu sayım bir EĞİLİM değil ŞU ANKİ durumdur — bugün kaç hesabın parası
+     * ile yetkisi birbirini tutmuyor — bu yüzden tarih aralığı uygulanmaz.
+     * `getMetrics` içinde durduğu ilk hâlde iki kez koşuyordu (bu dönem ve
+     * önceki dönem için) ve "önceki dönem" değeri bugünün kopyasıydı: hem
+     * israf hem yanıltıcı.
+     *
+     * KENDİ HATASINI YUTAR. Ölçüm aracı ölçtüğü paneli düşüremez: aynı
+     * `Promise.all` kolunda olsaydı bu sorgunun bir zaman aşımı bütün sağlık
+     * metriklerini (kullanıcı, teklif, açık vaka, başarısız ödeme) yok edip
+     * yönetim panelini bir olay anında kör bırakırdı. Ölçülemediğinde sayı
+     * null döner ve panel "ölçülemedi" gösterir.
+     */
+    const driftPromise = countBillingEntitlementDrift().catch((error) => {
+      console.error("[admin/health] billing drift scan failed:", error);
+      return null;
+    });
+
+    const [metrics, previousMetrics, trend, categories, drift] = await Promise.all([
       getMetrics(from, to, filters),
       getMetrics(previousFrom, previousTo, filters),
       getTrend(from, to, filters),
       prisma.request.groupBy({ by: ["categoryId"], where: { publishedAt: { gte: from, lte: to }, ...scope }, _count: { _all: true }, _sum: { offerCount: true }, orderBy: { _count: { categoryId: "desc" } }, take: 8 }),
+      driftPromise,
     ]);
     const categoryRecords = await prisma.category.findMany({ where: { id: { in: categories.map((item) => item.categoryId) } }, select: { id: true, name: true } });
     const categoryNames = new Map(categoryRecords.map((category) => [category.id, category.name]));
@@ -108,7 +124,16 @@ export async function GET(request: Request) {
       period: { from: from.toISOString(), to: to.toISOString() },
       previousPeriod: { from: previousFrom.toISOString(), to: previousTo.toISOString() },
       filters,
-      metrics,
+      metrics: {
+        ...metrics,
+        /* Ölçülemediyse sayı UYDURULMAZ: -1, panelde "ölçülemedi" demektir.
+           Sıfır göstermek "her şey yolunda" demek olurdu ve bu bir yalandır. */
+        billingDrift: drift ? drift.drifting : -1,
+        billingDriftScanned: drift ? drift.scanned : -1,
+        /* Tarama üst sınıra dayandıysa sayı EKSİKTİR; bunu panele taşımazsak
+           kesilmiş bir tarama tam sayı gibi okunur. */
+        billingDriftTruncated: drift && drift.truncated ? 1 : 0,
+      },
       previousMetrics,
       trend,
       categoryGaps: categories.map((item) => ({ categoryId: item.categoryId, categoryName: categoryNames.get(item.categoryId) ?? "Bilinmeyen kategori", requests: item._count._all, offers: item._sum.offerCount ?? 0, gap: Math.max(0, item._count._all - (item._sum.offerCount ?? 0)) })),

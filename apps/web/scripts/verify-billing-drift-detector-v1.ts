@@ -62,6 +62,7 @@ function check(name: string, fn: () => void | Promise<void>) {
 
 const NOW = new Date("2026-09-15T12:00:00.000Z");
 const GELECEK = new Date("2026-12-31T00:00:00.000Z");
+const GECMIS = new Date("2026-08-01T00:00:00.000Z");
 const WEB = join(__dirname, "..");
 
 async function main() {
@@ -76,6 +77,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: "ACTIVE",
       subscriptionPlanTier: "PROFESSIONAL",
+      subscriptionPeriodEnd: GELECEK,
       storedPlan: "STANDARD",
       planExpiresAt: null,
       now: NOW,
@@ -89,6 +91,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: null,
       subscriptionPlanTier: null,
+      subscriptionPeriodEnd: null,
       storedPlan: "PROFESSIONAL",
       planExpiresAt: null,
       now: NOW,
@@ -101,6 +104,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: null,
       subscriptionPlanTier: null,
+      subscriptionPeriodEnd: null,
       storedPlan: "PROFESSIONAL",
       planExpiresAt: GELECEK,
       now: NOW,
@@ -116,6 +120,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: "ACTIVE",
       subscriptionPlanTier: "PROFESSIONAL",
+      subscriptionPeriodEnd: GELECEK,
       storedPlan: "PROFESSIONAL",
       planExpiresAt: GELECEK,
       now: NOW,
@@ -127,6 +132,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: "CANCELED",
       subscriptionPlanTier: "PROFESSIONAL",
+      subscriptionPeriodEnd: GELECEK,
       storedPlan: "STANDARD",
       planExpiresAt: null,
       now: NOW,
@@ -145,6 +151,7 @@ async function main() {
         const v = decideBillingDrift({
           subscriptionStatus: status,
           subscriptionPlanTier: "PREMIUM",
+          subscriptionPeriodEnd: GELECEK,
           storedPlan: "PREMIUM",
           planExpiresAt: GELECEK,
           now: NOW,
@@ -162,6 +169,7 @@ async function main() {
         const v = decideBillingDrift({
           subscriptionStatus: status,
           subscriptionPlanTier: "PREMIUM",
+          subscriptionPeriodEnd: GECMIS,
           storedPlan: "STANDARD",
           planExpiresAt: null,
           now: NOW,
@@ -172,6 +180,65 @@ async function main() {
           `${status}: bitmiş abonelik hâlâ hak veriyor`,
         );
       }
+    },
+  );
+
+  await check(
+    "dönem sonu GEÇMİŞ iptal ve gecikmiş ödeme ayrışma sayılmaz",
+    () => {
+      /* apply-billing-event `planExpiresAt`'e tam olarak `currentPeriodEnd`
+         yazar. İki durum süresiz yürürlükte sayılsaydı dönem sonu geçmiş her
+         iptal ve her ödenmemiş abonelik SONSUZA KADAR ayrışmış görünürdü;
+         panel hiç kapanmayan ve büyüyen bir uyarı gösterirdi. */
+      for (const status of ["CANCEL_AT_PERIOD_END", "PAST_DUE"]) {
+        const v = decideBillingDrift({
+          subscriptionStatus: status,
+          subscriptionPlanTier: "PROFESSIONAL",
+          subscriptionPeriodEnd: GECMIS,
+          storedPlan: "PROFESSIONAL",
+          planExpiresAt: GECMIS,
+          now: NOW,
+        });
+        assert.equal(
+          v.membershipEffectivePlan,
+          "STANDARD",
+          `${status}: üyelik tarafı düşmemiş — kurgu yanlış`,
+        );
+        assert.equal(
+          v.drift,
+          false,
+          `${status}: dönem sonu geçmiş abonelik kalıcı yalancı pozitif üretiyor`,
+        );
+      }
+      /* Dönem sonu YOK sayılamaz: bilinmiyorsa hak sürüyor varsayılamaz. */
+      const belirsiz = decideBillingDrift({
+        subscriptionStatus: "PAST_DUE",
+        subscriptionPlanTier: "PROFESSIONAL",
+        subscriptionPeriodEnd: null,
+        storedPlan: "STANDARD",
+        planExpiresAt: null,
+        now: NOW,
+      });
+      assert.equal(belirsiz.expectedTier, "STANDARD");
+      assert.equal(belirsiz.drift, false);
+    },
+  );
+
+  await check(
+    "dönem sonu geçmiş ACTIVE abonelik GERÇEK ayrışmadır (gecikmiş yenileme)",
+    () => {
+      /* ACTIVE, dönem sonuna bakılmadan yürürlüktedir: burada üyelik düşmüş
+         ama abonelik canlı görünüyor — para veren müşteri kapıda kalmıştır
+         ve görülmesi gereken tam olarak budur. */
+      const v = decideBillingDrift({
+        subscriptionStatus: "ACTIVE",
+        subscriptionPlanTier: "PROFESSIONAL",
+        subscriptionPeriodEnd: GECMIS,
+        storedPlan: "PROFESSIONAL",
+        planExpiresAt: GECMIS,
+        now: NOW,
+      });
+      assert.equal(v.drift, true);
     },
   );
 
@@ -187,6 +254,7 @@ async function main() {
         const v = decideBillingDrift({
           subscriptionStatus: "ACTIVE",
           subscriptionPlanTier: sub,
+          subscriptionPeriodEnd: GELECEK,
           storedPlan: stored,
           planExpiresAt: GELECEK,
           now: NOW,
@@ -204,6 +272,7 @@ async function main() {
     const v = decideBillingDrift({
       subscriptionStatus: "ACTIVE",
       subscriptionPlanTier: "GOLD_TIER_X",
+      subscriptionPeriodEnd: GELECEK,
       storedPlan: "STANDARD",
       planExpiresAt: null,
       now: NOW,
@@ -256,19 +325,22 @@ async function main() {
             takeGorulen = args.take;
             return [
               /* ödeyen ama düşürülmüş firma → ayrışma */
-              { subjectType: "COMPANY", subjectId: "c1", status: "ACTIVE", planTier: "PROFESSIONAL" },
+              { subjectType: "COMPANY", subjectId: "c1", status: "ACTIVE", planTier: "PROFESSIONAL", currentPeriodEnd: GELECEK },
               /* temiz firma */
-              { subjectType: "COMPANY", subjectId: "c2", status: "ACTIVE", planTier: "PREMIUM" },
+              { subjectType: "COMPANY", subjectId: "c2", status: "ACTIVE", planTier: "PREMIUM", currentPeriodEnd: GELECEK },
               /* ödemesi bitmiş ama süresiz yükseltilmiş kullanıcı → ayrışma */
-              { subjectType: "USER", subjectId: "u1", status: "CANCELED", planTier: "PREMIUM" },
+              { subjectType: "USER", subjectId: "u1", status: "CANCELED", planTier: "PREMIUM", currentPeriodEnd: GECMIS },
               /* ödemesi bitmiş, süreli hakkı olan kullanıcı → ayrışma değil */
-              { subjectType: "USER", subjectId: "u2", status: "CANCELED", planTier: "PREMIUM" },
+              { subjectType: "USER", subjectId: "u2", status: "CANCELED", planTier: "PREMIUM", currentPeriodEnd: GECMIS },
             ];
           },
         },
         company: {
-          findMany: async () => {
+          findMany: async (args: { where?: Record<string, unknown> }) => {
             sorgu++;
+            /* İki ayrı amaç: abonelik konularının üyeliğini okumak ve
+               ABONELİĞİ HİÇ OLMAYAN süresiz yükseltmeleri bulmak. */
+            if (args.where && "planTier" in args.where) return [];
             return [
               { id: "c1", planTier: "STANDARD", planExpiresAt: null },
               { id: "c2", planTier: "PREMIUM", planExpiresAt: GELECEK },
@@ -276,8 +348,13 @@ async function main() {
           },
         },
         user: {
-          findMany: async () => {
+          findMany: async (args: { where?: Record<string, unknown> }) => {
             sorgu++;
+            if (args.where && "planTier" in args.where) {
+              /* u1'in zaten abonelik satırı var: ikinci kez sayılmamalı.
+                 u9'un hiç aboneliği yok ve süresiz PROFESSIONAL: ayrışma. */
+              return [{ id: "u1" }, { id: "u9" }];
+            }
             return [
               { id: "u1", planTier: "PREMIUM", planExpiresAt: null },
               { id: "u2", planTier: "PREMIUM", planExpiresAt: GELECEK },
@@ -287,12 +364,18 @@ async function main() {
       });
       try {
         const out = await countBillingEntitlementDrift(NOW);
-        assert.equal(out.scanned, 4);
-        assert.equal(out.drifting, 2, "ayrışma sayısı yanlış");
+        /* 4 abonelik + abonelisiz 1 yetim (u9). u1 iki listede de var ama
+           bir kez sayılır. */
+        assert.equal(out.scanned, 5);
+        assert.equal(
+          out.drifting,
+          3,
+          "ayrışma sayısı yanlış (c1 düşürülmüş, u1 süresiz, u9 abonelisiz)",
+        );
         assert.equal(out.truncated, false);
         assert.equal(
           sorgu,
-          3,
+          5,
           `tarama ${sorgu} sorgu açtı — hesap başına sorgu paneli yavaşlatır`,
         );
         assert.equal(
@@ -315,6 +398,7 @@ async function main() {
             subjectId: `u${i}`,
             status: "CANCELED",
             planTier: "PREMIUM",
+            currentPeriodEnd: GECMIS,
           })),
       },
       company: { findMany: async () => [] },
@@ -328,30 +412,57 @@ async function main() {
     }
   });
 
-  await check("abonelik yoksa tarama boş sorguya girmez", async () => {
-    let cagrildi = 0;
+  await check("hiç abonelik yokken bile abonelisiz yükseltmeler görülür", async () => {
+    /* Erken dönüş buraya konulsaydı teşhisin İKİNCİ yönü — ürünün bedavaya
+       dağıtıldığı yön — hiç görülmezdi: o hesapların abonelik satırı yoktur. */
+    let uyelikSorgusu = 0;
     const restore = stub({
       billingSubscription: { findMany: async () => [] },
       company: {
-        findMany: async () => {
-          cagrildi++;
+        findMany: async (args: { where?: Record<string, unknown> }) => {
+          if (args.where && "planTier" in args.where) return [{ id: "c9" }];
+          uyelikSorgusu++;
           return [];
         },
       },
       user: {
-        findMany: async () => {
-          cagrildi++;
+        findMany: async (args: { where?: Record<string, unknown> }) => {
+          if (args.where && "planTier" in args.where) return [];
+          uyelikSorgusu++;
           return [];
         },
       },
     });
     try {
       const out = await countBillingEntitlementDrift(NOW);
-      assert.deepEqual(out, { scanned: 0, drifting: 0, truncated: false });
-      assert.equal(cagrildi, 0, "boş listede de üyelik sorguları açılıyor");
+      assert.equal(out.drifting, 1, "abonelisiz süresiz yükseltme sayılmıyor");
+      assert.equal(out.scanned, 1);
+      assert.equal(
+        uyelikSorgusu,
+        0,
+        "boş abonelik listesinde de kimlik toplu sorgusu açılıyor",
+      );
     } finally {
       restore();
     }
+  });
+
+  await check("yetim taraması SÜRESİZ yükseltmeyle sınırlıdır", () => {
+    const SRC = readFileSync(
+      join(WEB, "src", "server", "billing", "reconcile.ts"),
+      "utf8",
+    );
+    /* Süreli olarak elle verilen hak ayrışma değildir; koşul düşerse her
+       süreli yükseltme ayrışma sayılır ve panel gürültüye boğulur. */
+    const yetim = SRC.slice(SRC.indexOf("orphanUsers"));
+    assert.ok(
+      (yetim.match(/planExpiresAt:\s*null/g) ?? []).length >= 2,
+      "yetim taraması süreli hakları da kapsıyor",
+    );
+    assert.ok(
+      (yetim.match(/deletedAt:\s*null/g) ?? []).length >= 2,
+      "silinmiş hesaplar da ayrışma sayılıyor",
+    );
   });
 
   /* ------------------------------------------------------------------ */
@@ -392,8 +503,36 @@ async function main() {
       "tarama hiçbir yerden çağrılmıyor — teşhis yine hiç koşmaz",
     );
     assert.ok(
-      /billingDrift:\s*billingDrift\.drifting/.test(ROUTE),
+      /billingDrift:\s*drift\s*\?/.test(ROUTE),
       "sayı metriklere yazılmıyor",
+    );
+    assert.equal(
+      (ROUTE.match(/countBillingEntitlementDrift\(/g) ?? []).length,
+      1,
+      "ağır tarama tek istekte birden çok kez koşuyor",
+    );
+    assert.ok(
+      /countBillingEntitlementDrift\(\)\.catch\(/.test(ROUTE),
+      "tarama kendi hatasını yutmuyor — bir zaman aşımı bütün sağlık metriklerini düşürür",
+    );
+  });
+
+  await check("kesilen tarama panele KESİK olarak ulaşır", () => {
+    const ROUTE = readFileSync(
+      join(WEB, "src", "app", "api", "admin", "health", "route.ts"),
+      "utf8",
+    );
+    assert.ok(
+      ROUTE.includes("billingDriftTruncated"),
+      "üst sınıra dayanıldığı panele hiç ulaşmıyor — eksik sayı tam sanılır",
+    );
+    const UI = readFileSync(
+      join(WEB, "src", "components", "admin", "HealthCenter.tsx"),
+      "utf8",
+    );
+    assert.ok(
+      UI.includes('key==="billingDriftTruncated"'),
+      "kesilme uyarı listesine düşmüyor",
     );
   });
 

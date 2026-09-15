@@ -37,12 +37,29 @@ import type { BillingSubjectRef } from "@/lib/billing/types";
  * "ücretli plan" sayılamıyor.
  */
 
-/** Ödemesi hâlâ yürürlükte sayılan abonelik durumları. */
-const ACTIVE_BILLING_STATUSES = new Set([
-  "ACTIVE",
-  "CANCEL_AT_PERIOD_END",
-  "PAST_DUE",
-]);
+/**
+ * Ödemesi koşulsuz yürürlükte sayılan durum. Dönem sonu geçmiş bir ACTIVE
+ * abonelik, gecikmiş bir yenileme demektir: üyelik düşmüşken abonelik canlı
+ * görünür ve bu GERÇEK bir ayrışmadır — para veren müşteri kapıda kalmıştır.
+ * Bu yüzden ACTIVE dönem sonuna bakılmadan yürürlükte sayılır.
+ */
+const ALWAYS_ACTIVE_STATUS = "ACTIVE";
+
+/**
+ * Dönem sonuna KADAR yürürlükte sayılan durumlar. İkisinde de hakkın dönem
+ * sonunda bitmesi BEKLENEN sonuçtur: iptal dönem sonunda geçerli olur
+ * (alıcı o dönemi kullanır, bir sonraki ay çekilmez) ve ödemesi düzelmeyen
+ * hesabın hakkı da dönem sonunda biter.
+ *
+ * BAĞLARKEN BULUNAN İKİNCİ KUSUR (2026-09-15): bu iki durum önce SÜRESİZ
+ * yürürlükte sayılıyordu. Üyelik tarafı `planExpiresAt` ile — ki
+ * `apply-billing-event` oraya tam olarak `currentPeriodEnd` yazar — dönem
+ * geçince doğru biçimde STANDARD'a düşüyordu. Sonuç: dönem sonu geçmiş her
+ * iptal ve her ödenmemiş abonelik SONSUZA KADAR "ayrışmış" sayılacaktı.
+ * Panel hiç kapanmayan ve zamanla büyüyen bir uyarı gösterir, gerçek ayrışma
+ * bu gürültünün içinde kaybolurdu.
+ */
+const ACTIVE_UNTIL_PERIOD_END = new Set(["CANCEL_AT_PERIOD_END", "PAST_DUE"]);
 
 export type BillingDriftVerdict = {
   billingStatus: string;
@@ -66,6 +83,7 @@ export type BillingDriftVerdict = {
 export function decideBillingDrift(input: {
   subscriptionStatus: string | null;
   subscriptionPlanTier: string | null;
+  subscriptionPeriodEnd: Date | null;
   storedPlan: PlanTierId;
   planExpiresAt: Date | null;
   now: Date;
@@ -77,8 +95,11 @@ export function decideBillingDrift(input: {
   );
 
   const billingActive =
-    input.subscriptionStatus !== null &&
-    ACTIVE_BILLING_STATUSES.has(input.subscriptionStatus);
+    input.subscriptionStatus === ALWAYS_ACTIVE_STATUS ||
+    (input.subscriptionStatus !== null &&
+      ACTIVE_UNTIL_PERIOD_END.has(input.subscriptionStatus) &&
+      input.subscriptionPeriodEnd !== null &&
+      input.subscriptionPeriodEnd.getTime() > input.now.getTime());
 
   /* Karşılaştırma AYNI ölçekte yapılır: üyelik tarafı zaten
      `resolveEffectivePlanTier` içinde kanonikleşiyor, abonelik tarafı da
@@ -112,7 +133,7 @@ export async function reconcileBillingEntitlement(subject: BillingSubjectRef) {
         subjectId: subject.id,
       },
     },
-    select: { status: true, planTier: true },
+    select: { status: true, planTier: true, currentPeriodEnd: true },
   });
 
   let storedPlan: PlanTierId = "STANDARD";
@@ -136,6 +157,7 @@ export async function reconcileBillingEntitlement(subject: BillingSubjectRef) {
   const verdict = decideBillingDrift({
     subscriptionStatus: sub?.status ?? null,
     subscriptionPlanTier: sub?.planTier ?? null,
+    subscriptionPeriodEnd: sub?.currentPeriodEnd ?? null,
     storedPlan,
     planExpiresAt: expiresAt,
     now: new Date(),
@@ -163,12 +185,16 @@ export async function countBillingEntitlementDrift(
   now: Date = new Date(),
 ): Promise<{ scanned: number; drifting: number; truncated: boolean }> {
   const subs = await prisma.billingSubscription.findMany({
-    select: { subjectType: true, subjectId: true, status: true, planTier: true },
+    select: {
+      subjectType: true,
+      subjectId: true,
+      status: true,
+      planTier: true,
+      currentPeriodEnd: true,
+    },
     orderBy: { subjectId: "asc" },
     take: BILLING_DRIFT_SCAN_LIMIT,
   });
-  if (subs.length === 0) return { scanned: 0, drifting: 0, truncated: false };
-
   const companyIds = subs
     .filter((s) => s.subjectType === "COMPANY")
     .map((s) => s.subjectId);
@@ -209,12 +235,15 @@ export async function countBillingEntitlementDrift(
   }
 
   let drifting = 0;
+  const seen = new Set<string>();
   for (const sub of subs) {
     const key = `${sub.subjectType === "COMPANY" ? "COMPANY" : "USER"}:${sub.subjectId}`;
+    seen.add(key);
     const membership = byId.get(key);
     const verdict = decideBillingDrift({
       subscriptionStatus: sub.status,
       subscriptionPlanTier: sub.planTier,
+      subscriptionPeriodEnd: sub.currentPeriodEnd,
       storedPlan: normalizeStoredPlanTier(membership?.planTier),
       planExpiresAt: membership?.planExpiresAt ?? null,
       now,
@@ -222,9 +251,59 @@ export async function countBillingEntitlementDrift(
     if (verdict.drift) drifting += 1;
   }
 
+  /**
+   * AYRIŞMANIN İKİNCİ YÖNÜ ABONELİK TABLOSUNDA GÖRÜNMEZ (2026-09-15).
+   *
+   * Tarama yalnız `BillingSubscription` satırından başlasaydı, "arkasında
+   * hiç ödeme olmayan süresiz yükseltme" yapısal olarak sayıma giremezdi:
+   * o hesabın abonelik satırı yoktur. Oysa teşhisin iki yönünden biri tam
+   * olarak budur ve ürünün bedavaya dağıtıldığı yön odur. Elle yükseltme
+   * yolları (`api/admin/users`) `planExpiresAt`'e dokunmadığı için bu durum
+   * gerçekten oluşabilir.
+   *
+   * SÜRELİ elle verilen hak burada da ayrışma değildir: koşul
+   * `planExpiresAt: null`. Abonelik satırı olanlar yukarıda zaten
+   * değerlendirildi, ikinci kez sayılmaz.
+   */
+  const [orphanUsers, orphanCompanies] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        planTier: { not: "STANDARD" },
+        planExpiresAt: null,
+        deletedAt: null,
+      },
+      select: { id: true },
+      take: BILLING_DRIFT_SCAN_LIMIT,
+    }),
+    prisma.company.findMany({
+      where: {
+        planTier: { not: "STANDARD" },
+        planExpiresAt: null,
+        deletedAt: null,
+      },
+      select: { id: true },
+      take: BILLING_DRIFT_SCAN_LIMIT,
+    }),
+  ]);
+
+  let orphanScanned = 0;
+  for (const [prefix, rows] of [
+    ["USER", orphanUsers],
+    ["COMPANY", orphanCompanies],
+  ] as [string, { id: string }[]][]) {
+    for (const row of rows) {
+      if (seen.has(`${prefix}:${row.id}`)) continue;
+      orphanScanned += 1;
+      drifting += 1;
+    }
+  }
+
   return {
-    scanned: subs.length,
+    scanned: subs.length + orphanScanned,
     drifting,
-    truncated: subs.length === BILLING_DRIFT_SCAN_LIMIT,
+    truncated:
+      subs.length === BILLING_DRIFT_SCAN_LIMIT ||
+      orphanUsers.length === BILLING_DRIFT_SCAN_LIMIT ||
+      orphanCompanies.length === BILLING_DRIFT_SCAN_LIMIT,
   };
 }
