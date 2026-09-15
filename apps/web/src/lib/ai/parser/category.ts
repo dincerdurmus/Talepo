@@ -592,6 +592,34 @@ function keywordHits(normalized: string, keyword: string): boolean {
   return keywordScore(normalized, keyword) > 0;
 }
 
+/**
+ * YER SÖZCÜKLERİ — bağlam eki genişletmesinin kapsamı (2026-09-15).
+ *
+ * Bir talepte bu sözcükler neredeyse her zaman ürünün NEREDE kullanılacağını
+ * söyler, aranan şeyin kendisini değil. Nesne adları (buzdolabı, araba,
+ * bilgisayar) bu kümede DEĞİLDİR: onlarda dar iyelik kuralı yeterlidir ve
+ * geniş kural ölçülen zarar veriyordu.
+ */
+const PLACE_CONTEXT_WORDS = new Set([
+  "ev",
+  "daire",
+  "villa",
+  "konut",
+  "ofis",
+  "dükkan",
+  "dukkan",
+  "mağaza",
+  "magaza",
+  "apart",
+  "arsa",
+  "tarla",
+  "depo",
+  "rezidans",
+  "residans",
+  "dubleks",
+  "tripleks",
+]);
+
 function keywordScore(normalized: string, keyword: string) {
   const at = normalized.indexOf(keyword);
   if (at < 0) return 0;
@@ -603,26 +631,33 @@ function keywordScore(normalized: string, keyword: string) {
    * düşüyordu (ölçüldü). Böyle geçişler kategori oyu ÜRETMEZ; talebin
    * gerçek hedefi kendi sözcükleriyle oy verir.
    *
-   * PARADİGMA TAMAMLANDI (ölçüldü 2026-09-15). Kural yalnız iyelikte
-   * duruyordu; iyelik ÜSTÜNE hâl eki gelen biçimler dışarıda kalıyordu ve
-   * aynı hatayı üretiyordu: "evimin salonuna halı" emlağa düşüyordu, çünkü
-   * "evimin" (iyelik + ilgi hâli) desene uymuyordu. Türkçede iyelikten sonra
-   * gelen ilgi (-in), yönelme (-e), bulunma (-de/-te) ve ayrılma
-   * (-den/-ten) hâlleri sahipliği DEĞİŞTİRMEZ; hepsi aynı şeyi söyler:
-   * sözcük kullanıcının kendi yeri/nesnesidir, aradığı şey değildir.
-   * Kapsam yalnız İYELİK TAŞIYAN biçimlerdir — çıplak "evde", "daireye"
-   * dokunulmaz, çünkü onlar hâlâ aranan şeyin kendisi olabilir.
+   * PARADİGMA YALNIZ YER SÖZCÜKLERİNDE GENİŞLETİLDİ (2026-09-15, kod
+   * incelemesinde daraltıldı).
+   *
+   * Kural iyelik ekinde duruyordu; iyelik ÜSTÜNE hâl eki gelen biçimler
+   * dışarıda kalıyordu ve aynı hatayı üretiyordu: "evimin salonuna halı"
+   * emlağa düşüyordu, çünkü "evimin" (iyelik + ilgi hâli) desene uymuyordu.
+   *
+   * İLK YAZIMDA GENİŞLETME BÜTÜN ANAHTARLARA UYGULANMIŞTI VE BU ÖLÇÜLMEMİŞTİ.
+   * Ölçülen yan etki: "buzdolabımın kapağı bozuldu" ve "arabamın camı kırıldı"
+   * gibi NESNE bildirileri de oyunu kaybediyordu; beyaz eşya ve otomotiv
+   * tedarikçisi o talepleri kategoriden hiç görmeyecekti. Çözülmek istenen
+   * sorun YER bağlamıydı, nesne bağlamı değil — nesne için zaten var olan
+   * iyelik kuralı yeterliydi.
+   *
+   * Bu yüzden genişletilmiş hâl eki kümesi YALNIZ yer sözcüklerinde geçerli.
+   * Nesne adları eski, dar davranışını korur.
    */
   {
+    const place = PLACE_CONTEXT_WORDS.has(keyword);
+    const pattern = place
+      ? /^[ıiuü]?m(?:[ıiuü]z)?(?:[ıiuüae]|[ıiuü]n|d[ae]n?|t[ae]n?)?(?![a-zçğıöşü])/
+      : /^[ıiuü]?m(?:[ıiuüae]|[ıiuü]z[ae]?)?(?![a-zçğıöşü])/;
     let i = at;
     let hasNonPossessive = false;
     while (i >= 0) {
       const rest = normalized.slice(i + keyword.length);
-      const possessive =
-        /^[ıiuü]?m(?:[ıiuü]z)?(?:[ıiuüae]|[ıiuü]n|d[ae]n?|t[ae]n?)?(?![a-zçğıöşü])/.test(
-          rest,
-        );
-      if (!possessive) { hasNonPossessive = true; break; }
+      if (!pattern.test(rest)) { hasNonPossessive = true; break; }
       i = normalized.indexOf(keyword, i + 1);
     }
     if (!hasNonPossessive) return 0;
@@ -925,15 +960,36 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
        * danışmanı") hiçbir şey düşülmez. Metin "için" içermiyorsa kural
        * hiç çalışmaz.
        */
-      const icinAt = normalized.search(/(?:^|[^\p{L}])i[çc]in(?:[^\p{L}]|$)/u);
+      /**
+       * KURAL YALNIZ "için"in SAĞINDA BİR ŞEY VARKEN ÇALIŞIR
+       * (daraltıldı 2026-09-15, kod incelemesinde yakalandı).
+       *
+       * İlk yazım Türkçenin diğer yaygın dizilişini kesiyordu: "kiralık ev
+       * lazım ÖĞRENCİ İÇİN" ve "ev arıyorum AİLEM İÇİN" cümlelerinde "için"
+       * SONDADIR ve aranan şey SOLDADIR. Kural sol taraftan gelen bütün emlak
+       * oyunu düşürüyor, gerçek emlak talebi kategoriden sıfır tedarikçiye
+       * gidiyordu (ölçüldü: ikisi de real-estate → services/0).
+       *
+       * Premis şudur: "X için Y" yapısında aranan şey Y'dir. Y yoksa premis
+       * de yoktur. Bu yüzden sağda anlamlı içerik aranır; yoksa kural hiç
+       * çalışmaz ve eski davranış aynen korunur.
+       */
+      const icinMatch = normalized.match(
+        /(?:^|[^\p{L}])i[çc]in(?:[^\p{L}]|$)/u,
+      );
+      const icinAt = icinMatch?.index ?? -1;
       if (icinAt > 0) {
         const sol = normalized.slice(0, icinAt);
-        const sag = normalized.slice(icinAt);
-        const oy = (part: string) =>
-          keywords.reduce((total, k) => total + keywordScore(part, k), 0);
-        const solOy = oy(sol);
-        if (solOy > 0 && oy(sag) === 0) {
-          score = Math.max(0, score - solOy);
+        const sag = normalized.slice(icinAt + (icinMatch?.[0].length ?? 0));
+        /* Sağda aranan şeyi adlandırabilecek kadar içerik var mı? */
+        const sagAnlamli = /[\p{L}]{3}/u.test(sag);
+        if (sagAnlamli) {
+          const oy = (part: string) =>
+            keywords.reduce((total, k) => total + keywordScore(part, k), 0);
+          const solOy = oy(sol);
+          if (solOy > 0 && oy(sag) === 0) {
+            score = Math.max(0, score - solOy);
+          }
         }
       }
       /**
