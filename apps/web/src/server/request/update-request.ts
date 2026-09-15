@@ -1,4 +1,5 @@
 import { resolveUpdateProjection } from "@/lib/discovery";
+import { createSubsystemLogger } from "@/lib/observability/logger";
 import { prisma } from "@/lib/prisma";
 import {
   isSystemCategorySlug,
@@ -20,6 +21,8 @@ import {
   RequestValidationError,
   type CreateRequestInput,
 } from "./request-schema";
+
+const log = createSubsystemLogger("request.update");
 
 const EDITABLE_STATUSES = new Set([
   "DRAFT",
@@ -289,7 +292,23 @@ export async function updateRequest(
         skipAlreadyNotifiedUsers: true,
       });
     } catch (error) {
-      console.error("[update-request] dağıtım başarısız:", error);
+      /**
+       * KANONİK KANALA YAZILIR (2026-09-15, kod incelemesinde düzeltildi).
+       *
+       * İlk yazım `console.error` kullanıyordu; oluşturma yolu ise aynı hatayı
+       * `log.warn("request.distribute.failed", …)` ile yapılandırılmış
+       * operasyonel kanala yazıyor. İki yol aynı olayı iki ayrı yere yazınca,
+       * "yayına geçti ama tek tedarikçiye ulaşmadı" durumu sorgulanabilir
+       * kanalda görünmez oluyordu — telemetrinin tam da yakalaması gereken şey.
+       */
+      log.warn("request.distribute.failed", {
+        outcome: "failure",
+        requestId: updated.id,
+        context: {
+          stage: "update",
+          errorName: error instanceof Error ? error.name : "unknown",
+        },
+      });
     }
   }
 

@@ -88,20 +88,45 @@ export async function recoverPendingSubscription(
       return { recovered: false, reason: `provider_status_${remote.status}` };
     }
 
+    /**
+     * GERÇEK DÖNEM SONU YOKSA KURTARMA ÇALIŞMAZ (2026-09-15, kod
+     * incelemesinde yakalandı).
+     *
+     * İlk yazımda dönem sonu yoksa olay kimliğine sabit bir dize konuyordu.
+     * İki şey birden bozuluyordu. Bir: kimlik abonelik başına SABİT oluyordu,
+     * yani ikinci bir dönemin kurtarması `duplicate` dönüp sessizce hiç
+     * uygulanmıyordu — "aynı dönem iki kez uygulanmaz" güvencesi "bu abonelik
+     * için kurtarma yalnız bir kez çalışır"a dönüşüyordu. İki:
+     * `applyCanonicalBillingEvent` dönem sonu gelmediğinde onu
+     * `addMonth(new Date())` ile UYDURUYOR ve `planExpiresAt` sağlayıcıdan
+     * değil tahminden yazılıyordu — kullanıcının hakkı bir tahmine bağlanıyordu.
+     *
+     * Kurtarmanın tek işi sağlayıcının GERÇEĞİNİ geri getirmektir. Gerçek
+     * eksikse geri getirilecek bir şey yoktur: fail-closed durur ve webhook'u
+     * ya da bir sonraki denemeyi bekler.
+     */
     const periodEnd = remote.currentPeriodEnd ?? null;
+    if (!periodEnd) {
+      log.warn("billing.recover.no_period_end", {
+        outcome: "skipped",
+        context: { subjectType: subject.type },
+      });
+      return { recovered: false, reason: "provider_period_end_missing" };
+    }
+
     const result = await applyCanonicalBillingEvent({
       provider: (sub.provider as BillingProviderId) ?? "iyzico",
       /* Dönemden türeyen deterministik kimlik — aynı dönem iki kez uygulanmaz. */
-      providerEventId: `recovery:${sub.providerSubscriptionId}:${
-        periodEnd ? periodEnd.toISOString() : "nope"
-      }`,
+      /* Dönemden türeyen deterministik kimlik — aynı dönem iki kez uygulanmaz,
+         yeni dönem yeni kimlik alır. */
+      providerEventId: `recovery:${sub.providerSubscriptionId}:${periodEnd.toISOString()}`,
       eventType: "SUBSCRIPTION_ACTIVATED",
       occurredAt: new Date(),
       subject,
       planTier: sub.planTier,
       providerSubscriptionId: sub.providerSubscriptionId,
       providerCustomerId: sub.providerCustomerId ?? undefined,
-      currentPeriodEnd: periodEnd ?? undefined,
+      currentPeriodEnd: periodEnd,
       safeMetadata: { source: "recovery" },
     });
 
