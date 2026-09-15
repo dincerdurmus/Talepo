@@ -21,7 +21,9 @@
     "verify-supplier-page-no-provisioning-v1",
     "verify-urgent-nudge-boundary-v1",
     "verify-panel-render-no-write-v1",
-    "verify-p0-entitlement-architecture"
+    "verify-p0-entitlement-architecture",
+    "verify-context-vs-subject-v1",
+    "verify-password-reset-token-v1"
   ],
   "knownRed": [
     {
