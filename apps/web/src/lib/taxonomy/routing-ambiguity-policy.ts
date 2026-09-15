@@ -35,13 +35,23 @@ export type RoutingAmbiguityPolicy =
 export type AmbiguityRule = {
   /** Katlanmış (küçük harf, aksansız) ifade — taksonomideki yazımıyla. */
   phrase: string;
-  policy: Exclude<RoutingAmbiguityPolicy, "EXACT_ROUTE">;
+  policy: RoutingAmbiguityPolicy;
   /**
-   * ALLOWED_CLARIFICATION için: netleştirme kartının gösterebileceği
-   * kategoriler. FORBIDDEN_ROUTE için: ifadenin ASLA gidemeyeceği
-   * kategoriler.
+   * ÇAKIŞMANIN TAMAMI — hangi karar verilmiş olursa olsun, ifadenin
+   * taksonomide gittiği bütün kategoriler burada listelenir; routing
+   * denetimi (verify-request-routing-matrix-v1) bu listeyi "bu ifade
+   * meşru olarak şuralara düşebilir" diye okur.
+   *
+   * ALLOWED_CLARIFICATION için ayrıca: netleştirme kartının
+   * gösterebileceği kategoriler. FORBIDDEN_ROUTE için: ifadenin ASLA
+   * gidemeyeceği kategoriler.
    */
   categoryIds: readonly string[];
+  /**
+   * EXACT_ROUTE için ZORUNLU: çakışma biliniyor ama karar verilmiş —
+   * ifade soru sorulmadan bu kategoriye gider.
+   */
+  routeTo?: string;
   /** Kararın tek cümlelik gerekçesi — tablo okunabilir kalsın. */
   reason: string;
 };
@@ -70,10 +80,20 @@ export const AMBIGUITY_RULES: readonly AmbiguityRule[] = [
     reason: "Mutfak davlumbazı ile araç parçası aynı adı taşır.",
   },
   {
+    /**
+     * KURUCU KARARI (2026-09-15): çakışma gerçek ama karar verildi —
+     * çıplak "klima" ev klimasıdır, soru sorulmaz. Araç kliması arayan
+     * "oto klima" / "araç kliması" yazar. Kayıt SİLİNMEZ: taksonomide
+     * çakışma sürdüğü için routing denetimi bu ifade için yazılı bir
+     * karar ister (policy/eksik-kayit). Eski politika değeri
+     * ALLOWED_CLARIFICATION idi; SUPERSEDED, gerekçe bu satırdadır.
+     */
     phrase: "klima",
-    policy: "ALLOWED_CLARIFICATION",
+    policy: "EXACT_ROUTE",
+    routeTo: "appliances",
     categoryIds: ["appliances", "automotive"],
-    reason: "Ev kliması da araç klima parçası da kataloktadır.",
+    reason:
+      "Ev kliması da araç klima parçası da katalogta; kurucu kararı: çıplak yazım ev klimasıdır.",
   },
   {
     phrase: "vakum pompasi",
@@ -87,21 +107,24 @@ export const AMBIGUITY_RULES: readonly AmbiguityRule[] = [
     categoryIds: ["machinery", "automotive"],
     reason: "Cam işleme makinesi ile araç camı aynı sözcüktür.",
   },
-  /**
-   * SUPERSEDED (2026-09-15) — "ev" kaydı kaldırıldı. Eski kayıt:
-   *   { phrase: "ev", policy: "ALLOWED_CLARIFICATION",
-   *     categoryIds: ["real-estate", "automotive"],
-   *     reason: "Tek başına 'ev' emlaktır; araç dünyasında yalnız
-   *             karavan/mobil ev bağlamında geçer." }
-   * Kaydın kendi gerekçesi bile çıplak "ev"in emlak olduğunu söylüyor;
-   * otomotiv tarafı yalnız "EV" (elektrikli araç) kısaltmasından
-   * geliyordu ve o yol kısaltma korumasıyla (phrase-classification)
-   * zaten kapandı. Kayıt, politikanın taksonomi kapsamından önce
-   * okunmaya başlamasıyla (2026-09-15) ilk kez etkili oldu ve doğrulanmış
-   * davranışı bozdu: I25b "Ev arıyorum gerçek emlak talebi kalmalı" ve
-   * kapsama senaryosu re-06 kırmızıya döndü. Ölçülmüş invariant tablo
-   * kaydından üstündür; kayıt kaldırıldı, geçmişi burada durur.
-   */
+  {
+    /**
+     * KARAR (2026-09-15): kaydın kendi gerekçesi çıplak "ev"in emlak
+     * olduğunu söylüyordu; otomotiv tarafı yalnız "EV" (elektrikli araç)
+     * kısaltmasından geliyor ve o yol kısaltma korumasıyla zaten yalnız
+     * BÜYÜK harf yazımda açılıyor. Politika taksonomi kapsamından önce
+     * okunmaya başlayınca (2026-09-15) eski ALLOWED_CLARIFICATION değeri
+     * ilk kez etkili oldu ve doğrulanmış davranışı bozdu: I25b ve kapsama
+     * senaryosu re-06 kırmızıya döndü. Karar EXACT_ROUTE'a çevrildi;
+     * kayıt silinmedi, çünkü taksonomi çakışması sürüyor.
+     */
+    phrase: "ev",
+    policy: "EXACT_ROUTE",
+    routeTo: "real-estate",
+    categoryIds: ["real-estate", "automotive"],
+    reason:
+      "Tek başına 'ev' emlaktır; otomotiv yalnız BÜYÜK harf 'EV' kısaltmasıyla gelir.",
+  },
   {
     phrase: "salincak",
     policy: "ALLOWED_CLARIFICATION",
@@ -152,8 +175,9 @@ export function ambiguityRuleFor(phrase: string): AmbiguityRule | null {
 }
 
 /**
- * Bir netleştirme kartının bu ifade için gösterebileceği kategoriler.
- * Kayıt yoksa ifade EXACT_ROUTE'tur: yalnız kanonik kategorisi gösterilir.
+ * Bir netleştirme KARTININ bu ifade için gösterebileceği kategoriler.
+ * Yalnız ALLOWED_CLARIFICATION kartı doldurur; EXACT_ROUTE'ta karar
+ * verilmiştir, kart açılmaz.
  */
 export function allowedClarificationCategories(
   phrase: string,
@@ -161,5 +185,21 @@ export function allowedClarificationCategories(
 ): readonly string[] {
   const rule = ambiguityRuleFor(phrase);
   if (rule && rule.policy === "ALLOWED_CLARIFICATION") return rule.categoryIds;
+  return [canonicalCategoryId];
+}
+
+/**
+ * Bu ifadenin MEŞRU olarak düşebileceği kategoriler — kart sorusu değil,
+ * denetim sorusu. Yazılı bir karar varsa (ister netleştirme ister
+ * EXACT_ROUTE) çakışmanın tamamı meşrudur; kayıt yoksa yalnız kanonik
+ * kategori. Routing matrisi bunu okur (2026-09-15): EXACT_ROUTE kararı
+ * çakışmanın var olduğunu inkâr etmez, hangi tarafa gidileceğini söyler.
+ */
+export function recordedCollisionCategories(
+  phrase: string,
+  canonicalCategoryId: string,
+): readonly string[] {
+  const rule = ambiguityRuleFor(phrase);
+  if (rule && rule.policy !== "FORBIDDEN_ROUTE") return rule.categoryIds;
   return [canonicalCategoryId];
 }

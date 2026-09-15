@@ -34,7 +34,7 @@ import {
 import type { TaxonomyNode } from "../src/lib/taxonomy";
 import {
   AMBIGUITY_RULES,
-  allowedClarificationCategories,
+  recordedCollisionCategories,
   foldAmbiguityPhrase,
 } from "../src/lib/taxonomy/routing-ambiguity-policy";
 import { REQUEST_CATEGORIES } from "../src/lib/request-category-engine";
@@ -146,7 +146,7 @@ for (const [phrase, cats] of collisions) {
       sinif: "POLICY",
       kume: "policy/eksik-kayit",
       ornek: phrase,
-      detay: `çakışan kategoriler: ${[...cats].sort().join(",")} — ALLOWED_CLARIFICATION kararı yok`,
+      detay: `çakışan kategoriler: ${[...cats].sort().join(",")} — yazılı politika kararı yok (ALLOWED_CLARIFICATION veya EXACT_ROUTE)`,
     });
     continue;
   }
@@ -281,7 +281,9 @@ for (const c of cases) {
     diagnostics?: { categoryConfident?: boolean };
   };
   const gotCat = u.category?.value ?? null;
-  const allowed = allowedClarificationCategories(c.phrase, c.node.categoryId);
+  /* Kart sorusu değil denetim sorusu: yazılı kararı olan çakışmanın her
+     iki tarafı da meşru iniştir (2026-09-15). */
+  const allowed = recordedCollisionCategories(c.phrase, c.node.categoryId);
   const needType = String(u.attributes?.needType?.value ?? "");
   const subjectKind = u.requestSubject?.kind?.value ?? "";
 
