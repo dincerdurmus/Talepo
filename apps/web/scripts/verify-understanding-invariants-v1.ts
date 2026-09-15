@@ -1594,6 +1594,22 @@ function surfacesFor(raw: string, fieldValues?: Record<string, string>) {
       (resolveHybridQuestions(state) as unknown as { next?: Array<{ key: string }> })
         .next ?? []
     ).map((f) => f.key),
+    /**
+     * Kategori netleştirme kartı açık mı (2026-09-15): motor kategoriyi
+     * UNKNOWN bırakıp ≥2 aday taşıyorsa formda ve Maira'da ilk soru bu
+     * karttır; alan sorusu ancak alan seçilince gelir. Bu da bir "sonraki
+     * soru"dur, yalnız scheduler anahtarı değildir.
+     */
+    categoryClarificationOpen: (() => {
+      const c = (understanding as unknown as {
+        category?: { status?: unknown; alternatives?: unknown[] };
+      }).category;
+      return (
+        c?.status === "UNKNOWN" &&
+        Array.isArray(c?.alternatives) &&
+        c.alternatives.length >= 2
+      );
+    })(),
     ambiguityMessages: (
       (understanding as unknown as {
         ambiguities?: Array<{ kind?: string; message?: string }>;
@@ -3960,9 +3976,19 @@ check("I38: kullanıcının doğruladığı ROL ile üst ürün GÜVENİ ayrı �
     !bare.nextQuestionKeys.includes("needType"),
     `rol tekrar sorulamaz → ${bare.nextQuestionKeys.join(",")}`,
   );
+  /**
+   * BEKLENTİ GÜNCELLENDİ (2026-09-15). Çıplak "yedek parça" kurucunun
+   * belirsizlik tablosunda üç dünyaya açıktır (automotive | machinery |
+   * appliances); politika artık taksonomi kapsamından önce okunduğu için
+   * kategori UNKNOWN kalır ve ilk soru KATEGORİ KARTIDIR. Eski ölçümde bu
+   * satır yeşildi çünkü "yedek parça" küçük ev aletleri yaprağına tesadüfen
+   * tek sahipli bağlanıp appliances soruları üretiyordu — yanlış nedenle
+   * yeşil. Üst ürünü netleştiren soru ya bir alan sorusu ya da kategori
+   * kartıdır; ikisi de kabul.
+   */
   assert.ok(
-    bare.nextQuestionKeys.length > 0,
-    "üst ürünü netleştirecek soru sorulmalı",
+    bare.nextQuestionKeys.length > 0 || bare.categoryClarificationOpen,
+    "üst ürünü netleştirecek soru sorulmalı (alan sorusu ya da kategori kartı)",
   );
 
   // (2) Rol seçildi VE doğrulanmış üst ürün yazıldı → ilişki kesinleşebilir.
