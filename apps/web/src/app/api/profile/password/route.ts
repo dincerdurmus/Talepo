@@ -37,8 +37,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      /* Metin 2026-09-15'te gerçeğe uyduruldu: eskiden "diğer açık oturumlar
+         geçerli kalabilir" diyordu ve bu doğruydu — hiçbir şey onları
+         kapatmıyordu. Şifre dönemi damgası geldiğinden beri şifre değişince
+         BÜTÜN oturumlar düşüyor; söz artık tutuluyor. */
       message:
-        "Şifreniz güncellendi. Bu cihazdaki oturumunuz kapatılacaktır. Diğer açık oturumlar geçerli kalabilir.",
+        "Şifreniz güncellendi. Güvenliğiniz için tüm cihazlardaki oturumlarınız kapatıldı; yeni şifrenizle tekrar giriş yapın.",
       requiresReLogin: result.requiresReLogin,
     });
   } catch (error) {

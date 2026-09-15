@@ -1,6 +1,10 @@
 import type { NextAuthOptions } from "next-auth";
 
 import { getAuthProviders } from "@/lib/auth/providers";
+import {
+  checkPasswordEpoch,
+  readPasswordEpoch,
+} from "@/lib/auth/session-password-epoch";
 import { resolveSessionUser, syncOAuthUser } from "@/lib/auth/sync-google-user";
 
 function oauthEmailFallback(
@@ -52,6 +56,13 @@ export const authOptions: NextAuthOptions = {
         if (account?.provider === "credentials" && user.id) {
           token.sub = user.id;
           token.dbUnavailable = false;
+          /**
+           * ŞİFRE DÖNEMİ DAMGALANIR (2026-09-15). Yalnız şifreyle girişte,
+           * yalnız bir kez. Bu damga sayesinde şifre sonradan değiştiğinde
+           * bu jeton geçersizleşir; ayrıntı `session-password-epoch.ts`.
+           */
+          const epoch = await readPasswordEpoch(user.id);
+          if (epoch && epoch !== "unavailable") token.pwe = epoch;
         } else {
           const synced = await syncOAuthUser({
             email,
@@ -62,6 +73,26 @@ export const authOptions: NextAuthOptions = {
 
           token.sub = synced.userId;
           token.dbUnavailable = synced.dbUnavailable;
+        }
+      }
+
+      /**
+       * ŞİFRE DEĞİŞTİYSE OTURUM ÖLÜR (2026-09-15).
+       *
+       * Şifre sıfırlamanın var oluş sebebi "hesabım ele geçirildi"
+       * senaryosudur. Oturumları düşürmeyen bir sıfırlama o senaryoda işe
+       * yaramaz: kullanıcı saldırganı kilitlediğini sanır, kilitlemez.
+       * Kontrol yalnız şifreli hesaplarda çalışır ve veritabanı okunamazsa
+       * oturumu DÜŞÜRMEZ (gerekçe: `session-password-epoch.ts`).
+       */
+      if (token.pwe && token.sub) {
+        const epochCheck = await checkPasswordEpoch({
+          userId: token.sub,
+          tokenEpoch: token.pwe,
+        });
+        if (epochCheck.state === "mismatch") {
+          token.revoked = true;
+          return token;
         }
       }
 
@@ -100,6 +131,23 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
+      /**
+       * Geçersizleşmiş jeton hiçbir kimlik taşımaz. `requireUser` kimlik ve
+       * e-posta ikisi de boşken `AuthenticationError` atar; panel de kullanıcıyı
+       * giriş ekranına gönderir. Böylece çalınmış oturum, şifre değiştiği anda
+       * kapanır.
+       */
+      if (token.revoked) {
+        session.user = {
+          id: "",
+          name: null,
+          email: null,
+          image: null,
+          platformRole: "USER",
+        };
+        return session;
+      }
+
       if (session.user) {
         session.user.id = token.sub ?? "";
         if (token.name) session.user.name = token.name as string;

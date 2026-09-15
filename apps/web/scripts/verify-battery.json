@@ -23,7 +23,8 @@
     "verify-panel-render-no-write-v1",
     "verify-p0-entitlement-architecture",
     "verify-context-vs-subject-v1",
-    "verify-password-reset-token-v1"
+    "verify-password-reset-token-v1",
+    "verify-session-password-epoch-v1"
   ],
   "knownRed": [
     {
