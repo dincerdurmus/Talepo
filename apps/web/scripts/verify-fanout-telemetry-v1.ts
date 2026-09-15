@@ -1042,9 +1042,20 @@ check("scores and ordering are untouched", () => {
 });
 
 check("RequestMatch and Notification writes are unchanged", () => {
-  assert.equal(countSquashed("prisma.requestMatch.createMany"), 2);
+  /**
+   * İSTEMCİ TUTAMACI DEĞİL, YAZIM SAYILIR (2026-09-15).
+   *
+   * Bu kontrol eskiden `prisma.requestMatch.createMany` metnini iki kez
+   * arıyordu. KB-22 Dilim 2 backfill'i enjekte edilebilir istemciye taşıyınca
+   * o çağrılardan biri `db.requestMatch.createMany` oldu ve kontrol BAYATLADI:
+   * kırmızı kaldığı sürece bu yazım yüzeyinde GERÇEK bir değişiklik de
+   * fark edilmeden geçebilirdi. Sayım artık tutamaçtan bağımsızdır — korunan
+   * sözleşme "iki RequestMatch yazımı, bir Notification yazımı", hangi
+   * değişkenin üzerinden yazıldığı değil.
+   */
+  assert.equal(countSquashed("requestMatch.createMany"), 2);
   assert.equal(countSquashed("skipDuplicates: true"), 2);
-  assert.equal(countSquashed("prisma.notification.createMany"), 1);
+  assert.equal(countSquashed("notification.createMany"), 1);
   assert.ok(
     includesSquashed(
       "if (notifications.length > 0) { await prisma.notification.createMany({ data: notifications }); }",
@@ -1052,30 +1063,70 @@ check("RequestMatch and Notification writes are unchanged", () => {
   );
 });
 
-check("the prisma call surface is unchanged in shape and count", () => {
-  const calls = (DISTRIBUTE_SRC.match(/prisma\.[a-zA-Z]+\.[a-zA-Z]+\(/g) ?? [])
-    .map((c) => c.replace(/\($/, ""))
+/**
+ * VERİ ERİŞİM YÜZEYİ — TUTAMAÇ ADINDAN AYRI (2026-09-15).
+ *
+ * Tek bir donmuş `prisma.*` listesi iki işi birden yapmaya çalışıyordu ve
+ * ikisinde de başarısız oldu. KB-22 Dilim 2 backfill'i enjekte edilebilir
+ * istemciye (`db`) taşıdığında liste bayatladı; o günden beri kırmızıydı, yani
+ * yüzeyde gerçek bir değişiklik olsa da bu kontrol haber vermezdi.
+ *
+ * Yüzey artık İKİ ayrı sözleşmeye bölünür:
+ *   1. HANGİ TABLOYA HANGİ İŞLEM — davranış sözleşmesi. Tutamaç adı silinir,
+ *      bu yüzden bir istemci enjeksiyonu refactor'u bu kontrolü bayatlatamaz.
+ *   2. HANGİ TUTAMAÇ ÜZERİNDEN — test edilebilirlik sözleşmesi. Backfill
+ *      yalnız enjekte edilen `db` üzerinden yazar; oraya tekil `prisma`
+ *      kaçarsa backfill gerçek veritabanı olmadan ölçülemez hale gelir.
+ *
+ * `requestMatch.findMany` LİSTEDE YOKTUR ve bu bilinçlidir: KB-22 Dilim 2
+ * sınırsız `id: { notIn: matchedIds }` listesini `requestMatches: { none: ... }`
+ * ilişki yüklemiyle değiştirdi. `company.findMany` bir artmıştır; yeni sorgu
+ * `backfillMatchesForAllCompanies` turunun şirket taramasıdır.
+ */
+check("the data-access surface is unchanged in shape and count", () => {
+  const calls = (
+    DISTRIBUTE_SRC.match(/\b(?:prisma|db|tx)\.[a-zA-Z]+\.[a-zA-Z]+\(/g) ?? []
+  )
+    .map((c) => c.replace(/\($/, "").replace(/^(?:prisma|db|tx)\./, ""))
     .sort();
   assert.deepEqual(calls, [
-    "prisma.category.findUnique",
-    "prisma.company.count",
-    "prisma.company.findFirst",
-    "prisma.company.findMany",
-    "prisma.company.findMany",
-    "prisma.company.findMany",
-    "prisma.companyMember.findMany",
-    "prisma.companyMember.findMany",
-    "prisma.companyMember.findMany",
-    "prisma.companyMember.findMany",
-    "prisma.notification.createMany",
-    "prisma.notification.findMany",
-    "prisma.notification.findMany",
-    "prisma.request.findFirst",
-    "prisma.request.findMany",
-    "prisma.requestMatch.createMany",
-    "prisma.requestMatch.createMany",
-    "prisma.requestMatch.findMany",
+    "category.findUnique",
+    "company.count",
+    "company.findFirst",
+    "company.findMany",
+    "company.findMany",
+    "company.findMany",
+    "company.findMany",
+    "companyMember.findMany",
+    "companyMember.findMany",
+    "companyMember.findMany",
+    "companyMember.findMany",
+    "notification.createMany",
+    "notification.findMany",
+    "notification.findMany",
+    "request.findFirst",
+    "request.findMany",
+    "requestMatch.createMany",
+    "requestMatch.createMany",
   ]);
+});
+
+check("backfill writes only through the injected client, never the singleton", () => {
+  const backfillStart = DISTRIBUTE_SRC.indexOf(
+    "export async function backfillMatchesForCompany",
+  );
+  const backfillEnd = DISTRIBUTE_SRC.indexOf(
+    "export async function countMatchingCompanies",
+  );
+  assert.ok(backfillStart > 0 && backfillEnd > backfillStart);
+  const backfillSrc = stripComments(
+    DISTRIBUTE_SRC.slice(backfillStart, backfillEnd),
+  );
+  assert.deepEqual(
+    (backfillSrc.match(/\bprisma\.[a-zA-Z]+\.[a-zA-Z]+\(/g) ?? []),
+    [],
+    "backfill reached for the prisma singleton — it is no longer testable without a database",
+  );
 });
 
 check("return values are unchanged", () => {

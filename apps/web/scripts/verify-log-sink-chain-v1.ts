@@ -9,10 +9,20 @@
  *     KIRAMAZ ve diğer sink'leri açlığa mahkûm edemez; düşen teslim
  *     sayaçla görünür (sessiz kayıp yok).
  *  C) Hiç sink yokken varsayılan stdout davranışı korunur (regresyon değil).
- *  D) Üretim kaydı DÜRÜSTLÜĞÜ: `addLogSink`/`addProductEventSink` çağıran
- *     üretim kodu var mı ölçülür ve olduğu gibi raporlanır — bu kapı üretim
- *     sink'i "var" diye YEŞİLE BOYAMAZ; yokluğu da kırmızı saymaz (provision
- *     DW-3'e bağlı). Ölçülmeyen, sıfır değildir.
+ *  D) Üretim kaydı DÜRÜSTLÜĞÜ — KANAL BAŞINA ve TANIM/KAYIT AYRIMIYLA
+ *     (düzeltildi 2026-09-15). Eski sürüm iki ayrı kanalı tek regex'te arayıp
+ *     tek bir "sink kaydı VAR: N dosya" satırı yazıyordu. Üç yerde yanıltıcıydı:
+ *       1. İKİ KANAL BİR SAYI. Operasyonel kanalda (fanout telemetrisi) sink
+ *          olup olmaması ile ürün olayı kanalındaki durum ayrı gerçeklerdir;
+ *          birinde bulunan bir çağrı diğeri hakkında hiçbir şey söylemez.
+ *       2. TANIMI KAYIT SANIYORDU. Bulduğu tek dosya bir sink KAYDETMİYOR;
+ *          kaydeden bir fonksiyon TANIMLIYOR. O fonksiyonu `src` altında
+ *          çağıran yoksa üretimde kurulu sink yoktur.
+ *       3. HÜKÜM VERMEYEN BİR KONTROL. `check(..., true)` hiçbir koşulda
+ *          kırmızıya dönemezdi; ölçüm değil süstü.
+ *     Yeni sürüm kanal başına KURULU sink sayar ve bu sayı belgelenen
+ *     durumdan (PRODUCTION-SINK-NOT-VERIFIED = her iki kanalda 0) saparsa
+ *     KIRMIZI verir — sink kurmak serbesttir, sessizce kurmak değil.
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -126,11 +136,30 @@ function check(name: string, ok: boolean, detail?: string) {
   offBad();
 }
 
-// D. Üretim kaydı dürüstlüğü — src altında (observability modülleri hariç)
-//    sink KAYDEDEN üretim kodu var mı? Rapor: bilgi, hüküm değil.
+// D. Üretim kaydı dürüstlüğü — KANAL BAŞINA, tanım ile kayıt ayrı.
 {
-  const roots = [join(__dirname, "..", "src")];
-  const callers: string[] = [];
+  /**
+   * BELGELENEN DURUM. Bu iki sayı `KNOWN-RISKS #23` / PRODUCTION-SINK-NOT-VERIFIED
+   * ile aynı gerçeği söyler: bugün hiçbir kanalda kurulu üretim sink'i yoktur.
+   * Bir sink kurulduğunda bu kapı kırmızıya döner; doğru hamle sayıyı burada
+   * güncellemek VE durumu belgede kapatmaktır.
+   */
+  const DOCUMENTED_INSTALLED = { operational: 0, product: 0 } as const;
+
+  type Channel = "operational" | "product";
+  type Site = {
+    file: string;
+    channel: Channel;
+    /** Modül gövdesinde mi (import anında koşar) yoksa bir fonksiyonun içinde mi. */
+    moduleScope: boolean;
+    /** Fonksiyon içindeyse: onu saran export'un adı (bulunabildiyse). */
+    enclosing: string | null;
+  };
+
+  const stripForScan = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+
+  const files: string[] = [];
   const walk = (dir: string) => {
     for (const name of readdirSync(dir)) {
       const p = join(dir, name);
@@ -140,18 +169,98 @@ function check(name: string, ok: boolean, detail?: string) {
         walk(p);
       } else if (/\.(ts|tsx)$/.test(name)) {
         if (p.includes(join("lib", "observability"))) continue;
-        const src = readFileSync(p, "utf8");
-        if (/addLogSink\s*\(|addProductEventSink\s*\(/.test(src)) callers.push(p);
+        files.push(p);
       }
     }
   };
-  for (const r of roots) walk(r);
+  walk(join(__dirname, "..", "src"));
+
+  const sources = new Map(files.map((f) => [f, readFileSync(f, "utf8")]));
+  const sites: Site[] = [];
+
+  for (const [file, raw] of sources) {
+    const src = stripForScan(raw);
+    for (const [channel, re] of [
+      ["operational", /\baddLogSink\s*\(/g],
+      ["product", /\baddProductEventSink\s*\(/g],
+    ] as [Channel, RegExp][]) {
+      for (const m of src.matchAll(re)) {
+        /**
+         * KAPSAM, SÜSLÜ PARANTEZ DERİNLİĞİYLE BELİRLENİR. Bir tokenizer değildir
+         * ve string içindeki süslü parantez sayımı şaşırtabilir; bu yüzden
+         * belirsizlik KAYIT LEHİNE değil, RAPOR LEHİNE çözülür — şüpheli her
+         * çağrı yerel olarak yazdırılır, sessizce elenmez.
+         */
+        const before = src.slice(0, m.index);
+        const depth =
+          (before.match(/\{/g) ?? []).length - (before.match(/\}/g) ?? []).length;
+        let enclosing: string | null = null;
+        if (depth > 0) {
+          const decls = [
+            ...before.matchAll(
+              /\bexport\s+(?:async\s+)?function\s+([A-Za-z0-9_$]+)|\bexport\s+const\s+([A-Za-z0-9_$]+)\s*=/g,
+            ),
+          ];
+          const last = decls[decls.length - 1];
+          enclosing = last ? (last[1] ?? last[2] ?? null) : null;
+        }
+        sites.push({ file, channel, moduleScope: depth === 0, enclosing });
+      }
+    }
+  }
+
+  /** Saran export'u `src` altında BAŞKA bir dosya çağırıyor mu. */
+  const hasProductionCaller = (name: string, ownFile: string) => {
+    const re = new RegExp(`\\b${name}\\s*\\(`);
+    for (const [file, raw] of sources) {
+      if (file === ownFile) continue;
+      if (re.test(stripForScan(raw))) return true;
+    }
+    return false;
+  };
+
+  const installedBy: Record<Channel, string[]> = { operational: [], product: [] };
+  const dormantBy: Record<Channel, string[]> = { operational: [], product: [] };
+
+  for (const site of sites) {
+    const rel = site.file.slice(site.file.indexOf(join("src", "")));
+    if (site.moduleScope) {
+      installedBy[site.channel].push(`${rel} (modül gövdesi)`);
+      continue;
+    }
+    const name = site.enclosing;
+    if (name && hasProductionCaller(name, site.file)) {
+      installedBy[site.channel].push(`${rel} → ${name}() çağrılıyor`);
+    } else {
+      dormantBy[site.channel].push(
+        `${rel} → ${name ?? "adsız fonksiyon"}() — src altında çağıran yok`,
+      );
+    }
+  }
+
+  for (const channel of ["operational", "product"] as Channel[]) {
+    const label = channel === "operational" ? "operasyonel log" : "ürün olayı";
+    const installed = installedBy[channel];
+    const dormant = dormantBy[channel];
+    console.log(
+      `BİLGİ — ${label} kanalı: KURULU sink ${installed.length}, uyuyan tanım ${dormant.length}`,
+    );
+    for (const line of installed) console.log(`         kurulu:  ${line}`);
+    for (const line of dormant) console.log(`         uyuyan:  ${line}`);
+    check(
+      `D-${channel} kurulu sink sayısı belgelenen durumla uyuşuyor`,
+      installed.length === DOCUMENTED_INSTALLED[channel],
+      `kurulu ${installed.length}, belgelenen ${DOCUMENTED_INSTALLED[channel]} — sink durumu yeniden doğrulanmalı ve belge güncellenmeli`,
+    );
+  }
+
+  const totalInstalled =
+    installedBy.operational.length + installedBy.product.length;
   console.log(
-    callers.length
-      ? `BİLGİ — üretim sink kaydı VAR: ${callers.length} dosya`
-      : "BİLGİ — üretim sink kaydı YOK: olaylar yalnız stdout (PRODUCTION-SINK-NOT-VERIFIED sürüyor; kapanışı DW-3 provision'a bağlı)",
+    totalInstalled === 0
+      ? "BİLGİ — iki kanalda da kurulu üretim sink'i YOK: olaylar yalnız stdout'a düşer (PRODUCTION-SINK-NOT-VERIFIED sürüyor; kapanışı DW-3 provision'a bağlı). Bir tanımın var olması kayıt değildir."
+      : `BİLGİ — kurulu üretim sink'i VAR: ${totalInstalled}`,
   );
-  check("D1 üretim sink durumu ölçüldü ve raporlandı", true);
 }
 
 console.log(`\nLog sink chain: ${pass} PASS / ${fail} FAIL`);

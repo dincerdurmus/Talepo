@@ -12,12 +12,12 @@
  *
  * O taban ölçümü bugün OLUŞAMIYOR. Zincir tek yerde kopuk:
  *   fanout-telemetry 14 olay üretiyor  →  logger'a gidiyor  →  logger'da
- *   KAYITLI SINK YOK (`addLogSink` çağıran yok, ölçüldü)  →  olaylar yalnız
+ *   KAYITLI SINK YOK (sink kaydeden çağıran yok, ölçüldü)  →  olaylar yalnız
  *   stdout'a düşüyor  →  sorgulanabilir taban yok  →  2b başlayamaz.
  *
  * TUZAK: `verify-log-sink-chain-v1` "üretim sink kaydı VAR: 1 dosya" yazar
- * ve bu YANILTICIDIR. Betik iki ayrı kanalı tek regex'te arıyor
- * (`addLogSink(` VEYA `addProductEventSink(`); bulduğu tek dosya
+ * ve bu YANILTICIDIR. Betik iki ayrı kanalın kayıt fonksiyonunu tek regex'te
+ * arıyor (operasyonel kanal VEYA ürün olayı kanalı); bulduğu tek dosya
  * `lib/market-intelligence/bridge.ts:44`. Orası ÜRÜN OLAYI kanalıdır,
  * fanout telemetrisinin kullandığı OPERASYONEL kanal değildir
  * (`createSubsystemLogger`).
