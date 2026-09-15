@@ -1,0 +1,49 @@
+# TALEPO — ÜRETİM DERLEMESİ
+#
+# `tsc --noEmit` sayfaların tip hatasını yakalar ama Next'in kendi derlemesini
+# yakalamaz: sunucu/istemci sınırı ihlalleri, eksik export'lar ve prerender
+# hataları yalnız gerçek build'de çıkar. Bu iş bilerek AYRIDIR — doğrulama
+# bataryası hızlı dönmeli, build ise yavaş ve ağırdır.
+
+name: Build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - run: npm ci
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+
+      # Build gerçek bir veritabanına BAĞLANMAZ; değişkenler yalnız istemci
+      # üretimi ve ortam doğrulaması için sahte değerlerdir.
+      - name: next build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          NEXTAUTH_SECRET: ci-only-not-a-real-secret-0123456789
+          NEXTAUTH_URL: http://localhost:3000

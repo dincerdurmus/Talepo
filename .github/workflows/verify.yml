@@ -1,0 +1,69 @@
+# TALEPO — DOĞRULAMA KAPISI
+#
+# Neden var (ölçüldü 2026-09-15): depoda hiç CI yoktu. 183 doğrulayıcı
+# yazılmıştı ve hiçbirini hiçbir şey otomatik koşmuyordu. Somut sonucu:
+# iki kontrol bir refactor'dan beri bayat kalmış, kırmızı oldukları için
+# kimse bakmamış, ve o kırmızının ARKASINDA gerçek bir yüzey değişikliği
+# fark edilmeden geçmişti. Kırmızı kalan bir kapı, kapı değildir.
+#
+# ÜÇÜNCÜ TARAF KOD ÇALIŞTIRMAZ. Yalnız GitHub'ın kendi resmi action'ları
+# (checkout, setup-node) ve deponun KENDİ script'leri koşar. Hiçbir sır
+# gerekmez, hiçbir kod dışarı gitmez, hiçbir LLM çağrılmaz.
+#
+# VERİTABANI GEREKMEZ. Cetveldeki doğrulayıcıların hepsi saf mantık ya da
+# kendi stub istemcisiyle koşar.
+
+name: Doğrulama
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      # `npm ci` lockfile'a sadık kalır; CI'da bağımlılık sürümü sürüklenmez.
+      # `postinstall` prisma generate koşar, bu yüzden şema tipleri hazır olur.
+      - name: Bağımlılıklar
+        run: npm ci
+        env:
+          # prisma generate bağlantı kurmaz, ama istemci yapılandırması
+          # değişkeni okur. Gerçek bir veritabanına DOKUNULMAZ.
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+
+      - name: Tip kontrolü
+        run: npx tsc --noEmit -p tsconfig.json
+
+      - name: Lint
+        run: npx eslint .
+
+      # Asıl kapı. Cetvel `scripts/verify-battery.json` içinde yaşar:
+      # yeşil olması gerekenler + bilinen kırmızıların SAYISI. Sayı artarsa
+      # regresyon, azalırsa cetvel güncellenmeli — ikisi de kırmızı verir.
+      - name: Doğrulama bataryası
+        run: node scripts/run-verify-battery.mjs
+        env:
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DIRECT_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          NEXTAUTH_SECRET: ci-only-not-a-real-secret-0123456789

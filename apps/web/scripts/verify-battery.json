@@ -1,0 +1,42 @@
+{
+  "_not": "Bu dosya Talepo'nun DOĞRULAMA CETVELİDİR. CI bunu okur. Bir doğrulayıcı buraya yazılmadıysa hiç koşmaz; yeşil sanılan şey ölçülmemiş şeydir.",
+  "_ratchet": "Bilinen kırmızılar SİLİNMEZ, SAYIYLA tutulur. Sayı artarsa CI kırmızı verir (yeni regresyon). Sayı azalırsa CI yine uyarır — cetvel güncellenmeli, yoksa kazanılan zemin sessizce geri verilebilir.",
+  "green": [
+    "verify-request-routing-matrix-v1",
+    "verify-fanout-telemetry-v1",
+    "verify-log-sink-chain-v1",
+    "verify-offer-media-v1",
+    "verify-phase4a-observability-v1",
+    "verify-phase4c-billing-v1",
+    "verify-phase4d-iyzico-v1",
+    "verify-request-state-transition-v1",
+    "verify-notifications-v1",
+    "verify-matching-v3-shadow",
+    "verify-talep-hybrid-ui-v1",
+    "verify-category-confirmation-v1",
+    "verify-maira-voice-v1",
+    "verify-public-home-v1",
+    "verify-p1-closed-beta-closure-v1",
+    "verify-corporate-pricing-seat-policy-v1",
+    "verify-supplier-page-no-provisioning-v1",
+    "verify-urgent-nudge-boundary-v1",
+    "verify-panel-render-no-write-v1",
+    "verify-p0-entitlement-architecture"
+  ],
+  "knownRed": [
+    {
+      "script": "verify-understanding-invariants-v1",
+      "maxFailures": 6,
+      "pattern": "(\\d+) passed, (\\d+) failed",
+      "group": 2,
+      "why": "Parça/katalog kaynaklı 6 açık invariant. Ölçüldü 2026-09-15; parça yapraklarının %92'si otomotivde olduğu için kapanmadı."
+    },
+    {
+      "script": "verify-category-coverage-v1",
+      "maxFailures": 8,
+      "pattern": "(\\d+) pass, (\\d+) known_fail, (\\d+) fail",
+      "group": 3,
+      "why": "8 kategori kapsam açığı. Ölçüldü 2026-09-15."
+    }
+  ]
+}
