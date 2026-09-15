@@ -25,7 +25,9 @@
     "verify-context-vs-subject-v1",
     "verify-password-reset-token-v1",
     "verify-session-password-epoch-v1",
-    "verify-zero-reach-rescue-v1"
+    "verify-zero-reach-rescue-v1",
+    "verify-feature-expiry-v1",
+    "verify-billing-drift-detector-v1"
   ],
   "knownRed": [
     {

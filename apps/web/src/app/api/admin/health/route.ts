@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { assertMfaSession } from "@/server/admin/mfa";
 import { requirePlatformAdmin } from "@/server/auth/require-platform-admin";
+import { countBillingEntitlementDrift } from "@/server/billing/reconcile";
 
 const DAY = 86_400_000;
 const REQUEST_STATUSES = ["DRAFT", "PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "EXPIRED"] as const;
@@ -27,7 +28,7 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
   const stale = new Date(Date.now() - DAY);
   const range = { gte: from, lte: to };
   const scope = requestScope(filters);
-  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling] = await Promise.all([
+  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling, billingDrift] = await Promise.all([
     prisma.user.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { createdAt: range, deletedAt: null } }),
     prisma.company.count({ where: { deletedAt: range } }),
@@ -39,8 +40,13 @@ async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
     prisma.offer.groupBy({ by: ["submittedById"], where: { createdAt: range, request: scope } }),
     prisma.moderationCase.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
     prisma.billingEvent.count({ where: { status: "FAILED", createdAt: range } }),
+    /* ÖDEME/ÜYELİK AYRIŞMASI ARALIKTAN BAĞIMSIZDIR (2026-09-15).
+       Bu bir eğilim değil ŞU ANKİ durumdur: bugün kaç hesabın parası ile
+       yetkisi birbirini tutmuyor. Bu yüzden `range` uygulanmaz. Teşhis
+       hiçbir planı düzeltmez; düzeltme ayrı ve onaylı bir iştir. */
+    countBillingEntitlementDrift(),
   ]);
-  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling };
+  return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling, billingDrift: billingDrift.drifting };
 }
 
 async function getTrend(from: Date, to: Date, filters: RequestFilters) {
