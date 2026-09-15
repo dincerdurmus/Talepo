@@ -2,6 +2,7 @@ import type { BillingSubjectRef } from "@/lib/billing/types";
 import { createSubsystemLogger } from "@/lib/observability/logger";
 import { prisma } from "@/lib/prisma";
 
+import { assertCanMutateBilling } from "./assert-billing-permission";
 import { getBillingProvider } from "./get-provider";
 
 /**
@@ -66,7 +67,24 @@ async function loadSubscription(subject: BillingSubjectRef) {
 
 export async function cancelSubscriptionAtPeriodEnd(
   subject: BillingSubjectRef,
+  actorUserId: string,
 ): Promise<CancelOutcome> {
+  /**
+   * ROL KAPISI — SUNUCUDA (eklendi 2026-09-15, kod incelemesinde yakalandı).
+   *
+   * İlk yazımda bu satır YOKTU ve kusur şuydu: `resolveBillingSubjectForUser`
+   * özneyi firma bağlam çerezinden çözüyor ve yalnız ACTIVE üyelik arıyor,
+   * ROLE bakmıyor. Yani firmadaki en düşük yetkili üye — hatta ayrılmış ama
+   * üyeliği silinmemiş eski bir çalışan — çereze firma kimliğini koyup tek
+   * istekle firmanın ödediği aboneliği iptal edebiliyordu. Sağlayıcı tarafında
+   * iptal ANINDA olduğu için de uygulama içinden geri alınamıyordu.
+   *
+   * Panel düğmeyi `canMutateBilling` ile gizliyordu, ama o İSTEMCİ tarafıdır;
+   * kapı değildir. Kardeş para mutasyonlarının hepsi (checkout, kredi
+   * checkout, membership) zaten bu kapıdan geçiyordu — yalnız iptal unutulmuştu.
+   */
+  await assertCanMutateBilling({ actorUserId, subject });
+
   const sub = await loadSubscription(subject);
   if (!sub) {
     throw new SubscriptionCancelError("İptal edilecek bir aboneliğiniz yok.", 404);
@@ -149,7 +167,11 @@ export async function cancelSubscriptionAtPeriodEnd(
  */
 export async function resumeSubscription(
   subject: BillingSubjectRef,
+  actorUserId: string,
 ): Promise<CancelOutcome> {
+  /* İptali geri almak da bir para mutasyonudur; aynı kapıdan geçer. */
+  await assertCanMutateBilling({ actorUserId, subject });
+
   const sub = await loadSubscription(subject);
   if (!sub) {
     throw new SubscriptionCancelError("Aboneliğiniz bulunamadı.", 404);

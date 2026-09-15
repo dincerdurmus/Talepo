@@ -30,8 +30,8 @@ export async function POST(request: Request) {
     const subject = await resolveBillingSubjectForUser(user.id);
     const outcome =
       action === "resume"
-        ? await resumeSubscription(subject)
-        : await cancelSubscriptionAtPeriodEnd(subject);
+        ? await resumeSubscription(subject, user.id)
+        : await cancelSubscriptionAtPeriodEnd(subject, user.id);
 
     return NextResponse.json({
       ok: true,
