@@ -6,6 +6,7 @@ import {
 } from "@/lib/request/raw-input";
 
 import { recordRequestChanges } from "@/server/monetization/request-changes";
+import { distributeRequestToCompanies } from "@/server/request/distribute-request";
 
 import {
   buildAiSummary,
@@ -30,12 +31,22 @@ export function canEditRequestStatus(status: string) {
   return EDITABLE_STATUSES.has(status);
 }
 
+/**
+ * DAĞITILABİLİR DURUMLAR — DÜZENLENEBİLİR DURUMLARDAN AYRI.
+ *
+ * `DRAFT` düzenlenebilir ama dağıtılamaz. İki kümeyi tek yüklemle okumak,
+ * taslağı tedarikçiye açma riskini davetiye çıkarır; bu yüzden ayrı tanımlıdır
+ * ve `distributeRequestToCompanies`'in kendi `status` filtresiyle aynı gerçeği
+ * söyler.
+ */
+const DISTRIBUTABLE_STATUSES = new Set(["PUBLISHED", "RECEIVING_OFFERS"]);
+
 export async function updateRequest(
   userId: string,
   requestId: string,
   input: CreateRequestInput,
 ) {
-  return prisma.$transaction(async (tx) => {
+  const { updated, shouldDistribute } = await prisma.$transaction(async (tx) => {
     const existing = await tx.request.findFirst({
       where: {
         id: requestId,
@@ -46,6 +57,8 @@ export async function updateRequest(
         id: true,
         status: true,
         formId: true,
+        /* Kategori DEĞİŞTİ Mİ — dağıtım kararının girdisi (aşağıya bak). */
+        categoryId: true,
         budgetMin: true,
         budgetMax: true,
         isUrgent: true,
@@ -229,6 +242,56 @@ export async function updateRequest(
       },
     });
 
-    return updated;
+    /**
+     * DAĞITIM KARARI İŞLEMİN İÇİNDE ALINIR, DIŞINDA KOŞAR (2026-09-15).
+     *
+     * Karar girdileri (`existing.status`, `existing.categoryId`) yalnız burada
+     * elde; dağıtımın KENDİSİ kendi yazımlarını yapar ve bu işlemi açık
+     * tutmamalıdır — `create-request` de aynı ayrımı kullanır.
+     */
+    const publishedNow = existing.status === "DRAFT";
+    const categoryChanged = existing.categoryId !== category.id;
+
+    return { updated, shouldDistribute: publishedNow || categoryChanged };
   });
+
+  /**
+   * DÜZENLEME YOLUNDA FİRMA DAĞITIMI (ölçüldü 2026-09-15, sonda:
+   * `probe-update-fanout-v1`).
+   *
+   * Ölçülen kusur: `distributeRequestToCompanies` yalnız OLUŞTURMA yolundan ve
+   * acil hatırlatmadan çağrılıyordu. Düzenleme yolunda hiç koşmuyordu, bu
+   * yüzden iki durum sessizce kimseye ulaşmıyordu:
+   *
+   *   1. DRAFT bir talep DÜZENLEMEYLE yayınlanınca (`status` burada
+   *      `PUBLISHED` oluyor) hiçbir `RequestMatch` yazılmıyor, hiçbir
+   *      tedarikçi bildirimi çıkmıyordu. Talep canlıydı ve görünmezdi.
+   *   2. Kategorisi düzeltilen talep — özellikle motorun çözemeyip
+   *      `unresolved` bıraktığı ve şehir de girilmemiş talep — doğru
+   *      kategorideki tedarikçilere HİÇ ulaşmıyordu. Ölçümde ikisi de
+   *      0 eşleşme / 0 bildirim veriyordu.
+   *
+   * KAPSAM DAR TUTULUR: her düzenlemede değil, yalnız yayına geçişte ya da
+   * kategori gerçekten değiştiğinde koşar; başlık düzeltmesi tedarikçiye
+   * ikinci bir dalga göndermez.
+   *
+   * TEKRAR BİLDİRİM YOK: `skipAlreadyNotifiedUsers` sayesinde bu talep için
+   * zaten haber almış kullanıcı yeniden bildirilmez; `RequestMatch` yazımı
+   * `skipDuplicates` ile idempotenttir. Aynı düzenleme iki kez koşarsa ikinci
+   * tur yeni bildirim üretmez.
+   *
+   * DÜZENLEMEYİ DÜŞÜRMEZ: dağıtım yumuşak başarısız olur — kullanıcının
+   * kaydettiği değişiklik zaten işlenmiştir ve geri alınamaz.
+   */
+  if (shouldDistribute && DISTRIBUTABLE_STATUSES.has(updated.status)) {
+    try {
+      await distributeRequestToCompanies(updated.id, {
+        skipAlreadyNotifiedUsers: true,
+      });
+    } catch (error) {
+      console.error("[update-request] dağıtım başarısız:", error);
+    }
+  }
+
+  return updated;
 }
