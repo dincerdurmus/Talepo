@@ -171,7 +171,29 @@ export const ENV_CATALOG: EnvVarSpec[] = [
     classification: "OPTIONAL",
     serverOnly: true,
     description:
-      "fs (default, local disk) | inline (bytes live in the DB row). Serverless deployments must set inline: disk files do not survive a deploy.",
+      "fs (local disk) | inline (bytes live in the DB row). Default is inline on serverless (VERCEL / AWS_LAMBDA_FUNCTION_NAME), fs otherwise; set explicitly to override.",
+  },
+  {
+    /**
+     * ZAMANLANMIŞ İŞLERİN TEK ANAHTARI — KATALOGDA YOKTU (2026-09-15).
+     *
+     * `vercel.json` dört cron tanımlar ve dördü de `CRON_SECRET` yoksa 401 ile
+     * fail-closed düşer: kategori sağlama, eşleşme backfill'i, acil teklif
+     * hatırlatması, şikayet eskalasyonu. Doğru davranış, ama değişken
+     * katalogda olmadığı için `/api/ready` yokluğunu HİÇ göstermiyordu:
+     * üretimde unutulursa dört iş de sessizce hiç çalışmaz ve hiçbir sağlık
+     * kontrolü bunu söylemez. Sessiz durma, bozuk çalışmaktan daha zor
+     * fark edilir.
+     *
+     * OPSİYONEL olarak kaydedilir çünkü yokluğu uygulamayı çökertmez —
+     * yalnız zamanlanmış işleri durdurur; hazırlık raporunda görünmesi
+     * yeterlidir.
+     */
+    name: "CRON_SECRET",
+    classification: "OPTIONAL",
+    serverOnly: true,
+    description:
+      "Shared secret for the four vercel.json cron routes (category-provisioning, match-backfill, urgent-nudge, overdue-complaints). Missing: every scheduled job fails closed with 401 and never runs.",
   },
 ];
 

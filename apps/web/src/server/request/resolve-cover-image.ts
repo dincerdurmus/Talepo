@@ -8,6 +8,9 @@ import {
   findAutomotiveModel,
 } from "@/lib/ai/parser/brand-catalog";
 
+/** Kapak araması süstür: bu süreyi aşarsa kapaksız devam edilir. */
+const COVER_LOOKUP_TIMEOUT_MS = 4000;
+
 type FieldLike = { key: string; value: string };
 
 function fieldValue(fields: FieldLike[], key: string) {
@@ -99,11 +102,22 @@ async function searchWikimediaImage(query: string): Promise<string | null> {
   // Wide enough for preview/cards without pulling full-resolution originals.
   url.searchParams.set("iiurlwidth", "800");
 
+  /**
+   * ZAMAN AŞIMI ZORUNLU (2026-09-15).
+   *
+   * Bu çağrı `/api/requests/cover-preview` üzerinden ulaşılabilir ve o uç
+   * nokta kimlik doğrulaması istemez. Zaman aşımı olmadan, dış servis
+   * yavaşladığında talep formundaki kapak önizlemesi platform zaman aşımına
+   * kadar asılı kalır; alıcı talebini gönderemediğini sanır. Kapak görseli
+   * SÜSTÜR — gecikmesi talebin kendisini bekletemez. Depoda desen zaten var
+   * (`dataforseo.ts` → `AbortSignal.timeout`), burada uygulanmamıştı.
+   */
   const response = await fetch(url.toString(), {
     headers: {
       "User-Agent": "Talepo/1.0 (request-cover; https://talepo.local)",
       Accept: "application/json",
     },
+    signal: AbortSignal.timeout(COVER_LOOKUP_TIMEOUT_MS),
     next: { revalidate: 60 * 60 * 24 },
   });
 

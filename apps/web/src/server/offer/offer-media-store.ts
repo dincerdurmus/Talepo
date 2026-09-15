@@ -29,10 +29,31 @@ function resolveRoot() {
  */
 export type OfferMediaStorageMode = "fs" | "inline";
 
+/**
+ * SUNUCUSUZ ORTAMDA VARSAYILAN GÜVENLİ TARAFA DÜŞER (2026-09-15).
+ *
+ * Ölçülen risk: varsayılan `fs` idi ve `OFFER_MEDIA_STORAGE` yalnız OPSİYONEL
+ * ortam değişkeniydi — `/api/ready` onu denetlemiyor. Vercel'e bu değişken
+ * yazılmadan çıkılırsa tedarikçinin yüklediği ürün fotoğrafı ya yazma hatası
+ * verir ya ilk deploy'da sessizce kaybolur. Sessiz kayıp, ücretli tedarikçinin
+ * teklifinin kanıtını yok eder; unutulması çok kolay, fark edilmesi çok zor
+ * bir ayardır.
+ *
+ * Bu yüzden kip artık ortamdan da okunur: sunucusuz platform değişkeni
+ * (`VERCEL`) varsa varsayılan `inline`'dır. AÇIK BEYAN HER ZAMAN KAZANIR —
+ * `OFFER_MEDIA_STORAGE` yazılmışsa o kullanılır, yani kalıcı disk bağlayan
+ * bir kurulum `fs` diyerek eski davranışa döner. Ortam tespiti bir tahmin
+ * değil, platformun kendi enjekte ettiği değişkendir.
+ */
 export function resolveOfferMediaStorageMode(): OfferMediaStorageMode {
-  return process.env.OFFER_MEDIA_STORAGE?.trim().toLowerCase() === "inline"
-    ? "inline"
-    : "fs";
+  const declared = process.env.OFFER_MEDIA_STORAGE?.trim().toLowerCase();
+  if (declared === "inline") return "inline";
+  if (declared === "fs") return "fs";
+
+  const serverless =
+    Boolean(process.env.VERCEL?.trim()) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME?.trim());
+  return serverless ? "inline" : "fs";
 }
 
 const INLINE_PREFIX = "data:";

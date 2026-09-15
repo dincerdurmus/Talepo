@@ -9,6 +9,9 @@ import { buildIyzicoAuthorization } from "./auth";
 import { resolveIyzicoAuthorizationPath } from "./authorization-path";
 import type { IyzicoConfig } from "./config";
 
+/** Ödeme sağlayıcısı bu süre içinde cevap vermezse ağ hatası sayılır. */
+const IYZICO_REQUEST_TIMEOUT_MS = 20000;
+
 const log = createSubsystemLogger("billing.iyzico");
 
 const telemetrySamples: ProviderSample[] = [];
@@ -66,6 +69,15 @@ export async function iyzicoRequest<T>(input: {
 
   const started = Date.now();
   try {
+    /**
+     * ZAMAN AŞIMI ZORUNLU (2026-09-15).
+     *
+     * Zaman aşımı yoktu: sağlayıcı asılırsa `/api/billing/checkout` de asılır
+     * ve kullanıcı ödeme düğmesinde dönen bir göstergeye bakar — ne hata alır
+     * ne sonuç. Para yolunda sessiz asılma, kullanıcının "ödedim mi?" diye
+     * tekrar denemesine ve çift ödeme şüphesine yol açar. Zaman aşımı,
+     * çağıranın zaten ele aldığı bir ağ hatasına dönüşür.
+     */
     const response = await fetch(`${input.config.baseUrl}${path}`, {
       method: input.method,
       headers: {
@@ -74,6 +86,7 @@ export async function iyzicoRequest<T>(input: {
         "x-iyzi-rnd": randomKey,
       },
       body: bodyText || undefined,
+      signal: AbortSignal.timeout(IYZICO_REQUEST_TIMEOUT_MS),
     });
 
     const text = await response.text();
