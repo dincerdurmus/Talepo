@@ -18,10 +18,19 @@
  * TUZAK: `verify-log-sink-chain-v1` "üretim sink kaydı VAR: 1 dosya" yazar
  * ve bu YANILTICIDIR. Betik iki ayrı kanalı tek regex'te arıyor
  * (`addLogSink(` VEYA `addProductEventSink(`); bulduğu tek dosya
- * `lib/market-intelligence/bridge.ts:44` ve o ÜRÜN OLAYI kanalına
- * kaydoluyor. Fanout telemetrisi ise OPERASYONEL kanalı kullanıyor
- * (`createSubsystemLogger`), onun sink'i hâlâ sıfır. Satırı okuyup
- * "engel kalktı" sanma (ölçüldü 2026-09-15).
+ * `lib/market-intelligence/bridge.ts:44`. Orası ÜRÜN OLAYI kanalıdır,
+ * fanout telemetrisinin kullandığı OPERASYONEL kanal değildir
+ * (`createSubsystemLogger`).
+ *
+ * DAHASI (düzeltme, 2026-09-15 · Codex incelemesi + yeniden ölçüm):
+ * o dosya bir sink KAYDETMİYOR, kaydeden bir FONKSİYON tanımlıyor
+ * (`registerMarketIntelligenceBridge`) ve o fonksiyonun src altında
+ * hiçbir çağıranı yok. Yani iki kanalda da kurulu sink SIFIR.
+ * Doğrulayıcının "VAR: 1 dosya" satırı bir tanımı kayıt sanıyor.
+ *
+ * Not: "stdout'a düşüyor" = olay kaybolur DEMEK DEĞİL; barındırma
+ * ortamı konsol kaydını bir süre tutabilir. Eksik olan şey kaydın
+ * varlığı değil, SORGULANABİLİR bir tabanın olmaması.
  *
  * Ayrıca bu motoru bugün açmak ya da bugünkü veriyle kıyaslamak YANILTICI
  * sonuç verir: on eşleşme kanalının yarısı tedarikçi tarafında karşılığı
