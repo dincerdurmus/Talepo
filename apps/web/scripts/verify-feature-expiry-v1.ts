@@ -58,6 +58,11 @@ function check(name: string, fn: () => void | Promise<void>) {
     });
 }
 
+/** Yorumları çıkarır: yorumda geçen bir ad, o kodun var olduğunu kanıtlamaz. */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+}
+
 const WEB = join(__dirname, "..");
 const ROOT = join(WEB, "..", "..");
 
@@ -254,23 +259,43 @@ async function main() {
   /* ------------------------------------------------------------------ */
   /* E. featuredUntil artık üretimde okunuyor                            */
   /* ------------------------------------------------------------------ */
-  await check("featuredUntil yalnız-yazılır alan değil", () => {
-    const EXPIRY = readFileSync(
-      join(WEB, "src", "server", "request", "feature-expiry.ts"),
-      "utf8",
+  await check("featuredUntil yalnız-yazılır alan değil (yorumlar sayılmaz)", () => {
+    /* İlk hâlde bu kontrol düz metin arıyordu ve her iki dosyada da alan adı
+       YORUMLARDA geçtiği için sorgu tamamen silinse bile yeşil kalıyordu.
+       Yorumlar çıkarılmadan yapılan metin araması ölçüm değildir. */
+    const EXPIRY = stripComments(
+      readFileSync(join(WEB, "src", "server", "request", "feature-expiry.ts"), "utf8"),
     );
-    assert.ok(
-      EXPIRY.includes("featuredUntil"),
+    assert.match(
+      EXPIRY,
+      /featuredUntil:\s*\{[^}]*lte:/,
       "süre alanı hiçbir sorguda okunmuyor — satılan süre yine sonsuz",
     );
-    const CREATE = readFileSync(
-      join(WEB, "src", "server", "request", "create-request.ts"),
-      "utf8",
+    const CREATE = stripComments(
+      readFileSync(join(WEB, "src", "server", "request", "create-request.ts"), "utf8"),
     );
     assert.ok(
-      CREATE.includes("featuredUntil"),
-      "yazım tarafı kayboldu — doğrulayıcı yanlış şeyi koruyor",
+      /^\s*featuredUntil,\s*$/m.test(CREATE) ||
+        /featuredUntil:\s*featuredUntil/.test(CREATE),
+      "yazım tarafı create data nesnesinden düşmüş — süre hiç yazılmıyor",
     );
+  });
+
+  await check("öne çıkarma satın alınınca gerçekten bir bitiş tarihi yazılır", async () => {
+    /* Metin araması yazımın KOŞTUĞUNU kanıtlamaz. `create-request`'in tamamı
+       burada koşturulamaz (çok sayıda bağımlılık), ama süre hesabının
+       kendisi sözleşmedir: her paket için bitiş tarihi ŞİMDİden sonra ve
+       paketin saatine eşit olmalıdır. */
+    const now = new Date("2026-09-15T00:00:00.000Z");
+    for (const [key, boost] of Object.entries(FEATURE_BOOST_OPTIONS)) {
+      const until = new Date(now.getTime() + boost.hours * 60 * 60 * 1000);
+      assert.ok(until.getTime() > now.getTime(), `${key}: bitiş geçmişte`);
+      assert.equal(
+        (until.getTime() - now.getTime()) / (60 * 60 * 1000),
+        boost.hours,
+        `${key}: satılan süre ile yazılan süre tutmuyor`,
+      );
+    }
   });
 
   /* ------------------------------------------------------------------ */

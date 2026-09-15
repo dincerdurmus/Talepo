@@ -22,6 +22,13 @@ export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const authorization = request.headers.get("authorization");
   if (!secret || authorization !== `Bearer ${secret}`) {
+    /* Yanlış yapılandırma SESSİZ OLMAMALI: CRON_SECRET dağıtım ortamında
+       tanımlı değilse rota her turda 401 döner, görev hiç koşmaz ve satılan
+       süre yine sonsuz kalır. Reddin kendisi loglanmazsa bu fark edilmez.
+       Sırrın kendisi ya da gelen başlık ASLA loglanmaz. */
+    console.warn("[cron/feature-expiry] unauthorized", {
+      secretConfigured: Boolean(secret),
+    });
     return NextResponse.json(
       { ok: false, message: "Yetkisiz zamanlanmış görev isteği." },
       { status: 401 },
