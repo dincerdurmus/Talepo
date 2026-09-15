@@ -1013,7 +1013,7 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "kartvizit"
       ],
       "requiredQuestionKeys": [
-        "dimensions"
+        "cardFormat"
       ]
     },
     "notMeasured": [
@@ -2430,7 +2430,7 @@ export const CATEGORY_COVERAGE_V1: readonly CoverageScenario[] = [
         "SERVICE"
       ],
       "requiredQuestionKeys": [
-        "frequency"
+        "homeCleaningFrequency"
       ]
     },
     "notMeasured": [

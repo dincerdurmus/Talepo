@@ -558,7 +558,13 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     never: string[];
   }> = [
     { cat: "technology", product: "Televizyon", must: ["screenSize"], never: ["capacityBtu", "vacuumType", "coffeeType"] },
-    { cat: "technology", product: "Laptop", must: ["usagePurpose"], never: ["screenSize", "capacityBtu"] },
+    /**
+     * DECIDED-NOT-IMPLEMENTED (2026-09-14 ölçümü): `usagePurpose` ne
+     * REQUEST_CATEGORIES'te ne soru profillerinde tanımlı — hiç yazılmamış.
+     * Beklentiyi burada tutmak bataryayı kalıcı kırmızıda bırakıyordu.
+     * Alan yazılırsa `must` geri konur; kapsam koruması (`never`) aynen kalır.
+     */
+    { cat: "technology", product: "Laptop", must: [], never: ["screenSize", "capacityBtu"] },
     { cat: "technology", product: "Kulaklık", must: ["headphoneType"], never: ["screenSize"] },
     { cat: "technology", product: "Fotoğraf Makinesi", must: ["cameraType"], never: ["screenSize", "usagePurpose"] },
     { cat: "technology", product: null, must: [], never: ["screenSize", "storageCapacity", "usagePurpose"] },
@@ -576,11 +582,24 @@ check("I9: each product family gets its own questions and nobody else's", () => 
     { cat: "appliances", product: "Kahve Makinesi", must: ["coffeeType"], never: ["capacityBtu", "screenSize"] },
     { cat: "home-kitchen", product: "Kahve Makinesi", must: [], never: ["coffeeType", "capacityBtu", "screenSize"] },
     // Matbaaloji ailesi (2026-08-22)
-    { cat: "printing", product: "Kartvizit", must: ["quantity", "lamination"], never: ["printSize", "pageCount", "capacityBtu"] },
-    { cat: "printing", product: "Broşür", must: ["quantity", "printSize", "paperWeight"], never: ["pageCount", "capacityBtu"] },
-    { cat: "printing", product: "Afiş", must: ["quantity", "printSize"], never: ["paperWeight", "lamination", "pageCount"] },
-    { cat: "printing", product: "Katalog", must: ["quantity", "pageCount", "lamination"], never: ["printSize", "paperWeight"] },
-    { cat: "printing", product: null, must: [], never: ["lamination", "printSize", "paperWeight", "pageCount"] },
+    /**
+     * MATBAA ANAHTAR ADLARI (2026-09-14 ölçümüyle düzeltildi).
+     *
+     * Matbaa soruları ürün ailesine özel sözleşmelere taşındı; eski jenerik
+     * anahtarlar artık hiçbir akışta üretilmiyor. Sorular AYNI, adları yeni:
+     *   lamination  -> cardFinish            "Özel yüzey işlemi ister misiniz?" (Selefon seçeneği içinde)
+     *   printSize   -> flatPrintFormat       "Baskı ölçüsü nedir?"              (broşür / el ilanı)
+     *   printSize   -> largeFormatDimensions "Baskının en x boy ölçüsü nedir?"  (afiş)
+     *   paperWeight -> flatPrintPaperWeight  "Kâğıt gramajı tercihiniz var mı?"
+     *   pageCount   -> publicationPageCount  "Yaklaşık kaç iç sayfa olacak?"
+     * Katalog ailesinde yüzey/selefon sorusunun karşılığı YOK; eklenip
+     * eklenmeyeceği kurucu kararıdır, bu yüzden `must`tan çıkarıldı.
+     */
+    { cat: "printing", product: "Kartvizit", must: ["quantity", "cardFinish"], never: ["flatPrintFormat", "publicationPageCount", "capacityBtu"] },
+    { cat: "printing", product: "Broşür", must: ["quantity", "flatPrintFormat", "flatPrintPaperWeight"], never: ["publicationPageCount", "capacityBtu"] },
+    { cat: "printing", product: "Afiş", must: ["quantity", "largeFormatDimensions"], never: ["flatPrintPaperWeight", "cardFinish", "publicationPageCount"] },
+    { cat: "printing", product: "Katalog", must: ["quantity", "publicationPageCount"], never: ["flatPrintFormat", "flatPrintPaperWeight"] },
+    { cat: "printing", product: null, must: [], never: ["cardFinish", "flatPrintFormat", "flatPrintPaperWeight", "publicationPageCount"] },
     // Emlak/hizmet: marka-model asla sorulmaz (kurucu geri bildirimi, 2026-08-23)
     { cat: "real-estate", product: null, must: [], never: ["brand", "model"] },
     { cat: "services", product: null, must: [], never: ["brand", "model"] },
