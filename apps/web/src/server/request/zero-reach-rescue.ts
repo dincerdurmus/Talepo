@@ -76,18 +76,30 @@ export async function notifyZeroReach(input: {
   reason: ZeroMatchReason;
 }): Promise<{ notified: boolean; reason: string }> {
   try {
+    const copy = copyForReason(input.reason, input.requestTitle);
+
+    /**
+     * TEKRAR ENGELİ SEBEBE BAĞLIDIR, YALNIZ BAŞLIĞA DEĞİL (2026-09-15).
+     *
+     * İlk hâlde engel sabit başlığa dayanıyordu ve bir talep için ömür boyu
+     * tek bildirim yazılabiliyordu. Oysa sebep düzenlemeyle gerçekten
+     * değişir: alıcı "kategoriyi seçin" denileni yapar, kategori çözülür ama
+     * o kategoride tedarikçi yoktur; artık doğru tavsiye başkadır ve alıcı
+     * hâlâ yaptığı işi yapmasını söyleyen eski bildirime bakar. Metin sebebe
+     * birebir bağlı olduğu için METNİN KENDİSİ tekrar anahtarıdır: aynı
+     * sebep ikinci kez yazılmaz, değişen sebep yazılır.
+     */
     const existing = await prisma.notification.findFirst({
       where: {
         requestId: input.requestId,
         userId: input.buyerUserId,
         type: "GENERAL",
         title: ZERO_REACH_TITLE,
+        message: copy.message,
       },
       select: { id: true },
     });
     if (existing) return { notified: false, reason: "already_notified" };
-
-    const copy = copyForReason(input.reason, input.requestTitle);
 
     await prisma.notification.create({
       data: {

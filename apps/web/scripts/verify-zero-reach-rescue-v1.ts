@@ -271,6 +271,10 @@ async function main() {
           ZERO_REACH_NOTIFICATION_TITLE,
           "tekrar sorgusu başlığa dayanmıyor — başka bildirimleri de bastırır",
         );
+        assert.ok(
+          typeof args.where.message === "string" && args.where.message.length > 0,
+          "tekrar sorgusu SEBEBE dayanmıyor: sebep değişse de alıcı eski tavsiyeye bakar",
+        );
         return { id: "mevcut" };
       },
       create: async () => {
@@ -288,6 +292,48 @@ async function main() {
       assert.equal(out.notified, false);
       assert.equal(out.reason, "already_notified");
       assert.equal(createCalls, 0, "ikinci bildirim yazıldı");
+    } finally {
+      restore();
+    }
+  });
+
+  await check("sebep değişince ikinci bildirim yazılır", async () => {
+    /* Alıcı "kategoriyi seçin" denileni yapar, kategori çözülür ama o
+       kategoride tedarikçi yoktur: doğru tavsiye artık başkadır. Engel yalnız
+       sabit başlığa dayansaydı alıcı ömür boyu ilk metne bakardı — yani
+       kapatılmak istenen kusurun aynısı. */
+    const yazilanlar: CreatedRow[] = [];
+    const restore = stubNotification({
+      findFirst: async (args: { where: { message?: string } }) =>
+        yazilanlar.some((r) => r.message === args.where.message)
+          ? { id: "mevcut" }
+          : null,
+      create: async (args: { data: CreatedRow }) => {
+        yazilanlar.push(args.data);
+        return { id: `n${yazilanlar.length}` };
+      },
+    });
+    try {
+      const ilk = await notifyZeroReach({
+        requestId: REQ, buyerUserId: BUYER, requestTitle: BASLIK,
+        reason: "system_category_and_no_city_match",
+      });
+      assert.equal(ilk.notified, true);
+      const ayni = await notifyZeroReach({
+        requestId: REQ, buyerUserId: BUYER, requestTitle: BASLIK,
+        reason: "system_category_and_no_city_match",
+      });
+      assert.equal(ayni.notified, false, "aynı sebep ikinci kez yazıldı");
+      const yeni = await notifyZeroReach({
+        requestId: REQ, buyerUserId: BUYER, requestTitle: BASLIK,
+        reason: "no_category_companies_and_no_city_input",
+      });
+      assert.equal(
+        yeni.notified,
+        true,
+        "sebep değişti ama alıcı hâlâ eski tavsiyeye bakıyor",
+      );
+      assert.equal(yazilanlar.length, 2);
     } finally {
       restore();
     }
@@ -395,6 +441,35 @@ async function main() {
       "log, türetilen sebep değişkenini kullanmıyor",
     );
   });
+
+  await check(
+    "bildirimin istediği düzeltme dağıtımı GERÇEKTEN yeniden koşturur",
+    () => {
+      /* Ölçülen kusur: metin "talebe şehir ekleyin" diyordu ama düzenleme
+         yolundaki yeniden dağıtım koşulu yalnız yayımlama ve KATEGORİ
+         değişimine bakıyordu. Alıcı denileni yapıyor, hiçbir şey olmuyordu.
+         Şehir dağıtımın ikinci kanalının tek girdisidir. */
+      const UPD = readFileSync(
+        join(__dirname, "..", "src", "server", "request", "update-request.ts"),
+        "utf8",
+      );
+      const karar = UPD.slice(UPD.indexOf("const publishedNow"));
+      assert.ok(
+        /shouldDistribute:\s*\n?\s*publishedNow \|\| categoryChanged \|\| locationChanged/.test(
+          karar.replace(/\s+/g, " ").replace(/ /g, " "),
+        ) || /locationChanged/.test(karar.slice(0, karar.indexOf("});"))),
+        "konum değişimi yeniden dağıtımı tetiklemiyor — bildirim tutulmayan bir söz veriyor",
+      );
+      assert.ok(
+        /existing\.city/.test(karar) && /existing\.district/.test(karar),
+        "karar eski konumu okumuyor — değişimi göremez",
+      );
+      assert.ok(
+        /city:\s*true/.test(UPD) && /district:\s*true/.test(UPD),
+        "eski konum select'e alınmamış",
+      );
+    },
+  );
 
   await check("kurtarma alarm teslimini geciktirmez veya bastırmaz", () => {
     const dal = zeroBranch(DIST);

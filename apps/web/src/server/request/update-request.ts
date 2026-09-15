@@ -62,6 +62,9 @@ export async function updateRequest(
         formId: true,
         /* Kategori DEĞİŞTİ Mİ — dağıtım kararının girdisi (aşağıya bak). */
         categoryId: true,
+        /* Şehir/ilçe DEĞİŞTİ Mİ — dağıtımın ikinci kanalı bunlara dayanır. */
+        city: true,
+        district: true,
         budgetMin: true,
         budgetMax: true,
         isUrgent: true,
@@ -173,6 +176,11 @@ export async function updateRequest(
       existing.rawInput,
     );
 
+    /* Yazılan konum değerleri dağıtım kararında da okunuyor (aşağıya bak),
+       bu yüzden bir kez hesaplanır. */
+    const nextCity = resolveDedicatedCity(input);
+    const nextDistrict = input.district;
+
     const updated = await tx.request.update({
       where: { id: existing.id },
       data: {
@@ -190,8 +198,8 @@ export async function updateRequest(
         ...(serverNormalizedProjection
           ? { discoveryProjection: serverNormalizedProjection }
           : {}),
-        city: resolveDedicatedCity(input),
-        district: input.district,
+        city: nextCity,
+        district: nextDistrict,
         budgetMin: budget.min,
         budgetMax: budget.max,
         deadlineAt,
@@ -254,8 +262,32 @@ export async function updateRequest(
      */
     const publishedNow = existing.status === "DRAFT";
     const categoryChanged = existing.categoryId !== category.id;
+    /**
+     * KONUM DEĞİŞİMİ DE DAĞITIMI TETİKLER (2026-09-15).
+     *
+     * Ölçülen kusur: sıfır-ulaşım kurtarma bildirimi alıcıya "talebe şehir
+     * ekleyin, yakınınızdaki firmalara ulaştıralım" diyor. Alıcı tam olarak
+     * bunu yapıyordu ve HİÇBİR ŞEY OLMUYORDU: talep zaten PUBLISHED olduğu
+     * ve kategori değişmediği için dağıtım yeniden koşmuyordu. Şehir ise
+     * dağıtımın ikinci kanalının tek girdisidir. Yani sistem alıcıya
+     * tutulmayan bir söz veriyordu — kurtarmanın kapatmak istediği kusurun
+     * ta kendisi, başka kapıdan.
+     *
+     * Tedarikçiye tekrar bildirim riski yok: çağrı `skipAlreadyNotifiedUsers`
+     * ile koşuyor ve eşleşme yazımı `skipDuplicates` taşıyor.
+     */
+    /* `undefined` Prisma'da "dokunma" demektir; o alan değişmemiş sayılır. */
+    const effectiveCity = nextCity === undefined ? existing.city : nextCity;
+    const effectiveDistrict =
+      nextDistrict === undefined ? existing.district : nextDistrict;
+    const locationChanged =
+      (existing.city ?? null) !== (effectiveCity ?? null) ||
+      (existing.district ?? null) !== (effectiveDistrict ?? null);
 
-    return { updated, shouldDistribute: publishedNow || categoryChanged };
+    return {
+      updated,
+      shouldDistribute: publishedNow || categoryChanged || locationChanged,
+    };
   });
 
   /**
