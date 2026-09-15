@@ -681,12 +681,13 @@ export async function backfillMatchesForCompany(
  * eşleşme" yüklemiyle sınırlıdır, bu yüzden eşleşmesi tam olan bir şirket tek
  * ucuz sorguya mal olur.
  *
- * Bir şirketin hatası TURU DÜŞÜRMEZ: hata görünür biçimde loglanır ve tarama
- * sonraki şirketle devam eder.
+ * Bir şirketin hatası TURU DÜŞÜRMEZ: hatanın kanonik kaydını şirket span'i
+ * kendi `catch` bloğunda yazar (`request.backfill.failed`, gerçek aşamasıyla),
+ * tarama sonraki şirketle devam eder ve tur düşen şirket sayısını döndürür.
  */
 export async function backfillMatchesForAllCompanies(
   options: BackfillOptions = {},
-): Promise<{ companies: number; created: number }> {
+): Promise<{ companies: number; created: number; failed: number }> {
   const db = options.db ?? (prisma as unknown as BackfillClient);
 
   const companies = await db.company.findMany({
@@ -699,21 +700,32 @@ export async function backfillMatchesForAllCompanies(
   });
 
   let created = 0;
+  let failed = 0;
   for (const company of companies) {
     try {
       const result = await backfillMatchesForCompany(company.id, { db });
       created += result.created;
-    } catch (error) {
-      logBackfillFailed({
-        companyId: company.id,
-        failureStage: "scan_candidates",
-        errorName: safeErrorName(error),
-        durationMs: 0,
-      });
+    } catch {
+      /**
+       * AYNI HATA İKİNCİ KEZ KAYDEDİLMEZ (2026-09-15).
+       *
+       * Olculen kusur: `backfillMatchesForCompany` kendi `catch` blogunda
+       * `request.backfill.failed` olayini GERCEK asamasiyla zaten yaziyor ve
+       * hatayi yeniden firlatiyor. Bu dongu ayni hatayi bir kez daha yaziyordu
+       * ve `failureStage` degerini sabit `"scan_candidates"` diye TAHMIN
+       * ediyordu: `load_company` asamasinda dusen bir sirket ikinci kayitta
+       * taramada dusmus gibi gorunuyordu. Iki sonuc birden bozuluyordu — span
+       * sozlesmesi (`started` = `completed` + `failed`) tek sirket icin 1'e 2
+       * kiriliyordu, ve hata asamasi dagilimi yanlis sayiliyordu.
+       *
+       * SIRKET BASINA OLAY YAZILMAZ. Tur, kendi sayisini dondurur; hatanin
+       * kanonik kaydi sirket span'inin icindedir.
+       */
+      failed += 1;
     }
   }
 
-  return { companies: companies.length, created };
+  return { companies: companies.length, created, failed };
 }
 
 /**
