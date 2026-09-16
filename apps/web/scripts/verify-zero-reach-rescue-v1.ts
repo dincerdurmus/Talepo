@@ -277,29 +277,34 @@ async function main() {
     }
   });
 
-  await check("tedarikçi tarafına giden bildirim panel içidir (e-posta değil)", () => {
-    /* Bu kapı metnin DAYANDIĞI gerçeği mühürler: teslim yüzeyi değişirse
-       (NEW_REQUEST_MATCH e-postaya bağlanırsa) metin de yeniden yazılmalı,
-       yoksa bu kez ters yönde yanlış olur — vaat edilebilecekken edilmiyor. */
+  await check("teslim sınırı metinle tutarlı: e-posta yolu var ama sağlayıcıya bağlı", () => {
+    /* 2026-09-16: NEW_REQUEST_MATCH e-postaya bağlandı (fanout-match-emails).
+       Bu, metnin dayandığı gerçeği DEĞİŞTİRMEZ: e-posta yalnız EMAIL_PROVIDER
+       yapılandırıldığında gider ve alıcının kurtarma metni tedarikçiye ne
+       gittiğini değil kendi talebinin nerede göründüğünü anlatır. Metin bu
+       yüzden hâlâ görünürlük diliyle yazılır ve gönderim vaat etmez. Bu kapı
+       iki şeyi birlikte mühürler: e-posta yolunun var olduğu ve dağıtımın onu
+       çağırdığı; metnin ise buna rağmen vaat etmediği (yukarıdaki kapı). */
     const EMAIL = readFileSync(
       join(__dirname, "..", "src", "server", "email", "deliver-notification-email.ts"),
       "utf8",
     );
     const kritik = EMAIL.slice(
-      EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES"),
-      EMAIL.indexOf("]);", EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES")),
+      EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES = new Set"),
+      EMAIL.indexOf("]);", EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES = new Set")),
     );
     assert.ok(
-      !kritik.includes("NEW_REQUEST_MATCH"),
-      "tedarikçi bildirimi artık e-postaya bağlı — kurtarma metinleri buna göre güncellenmeli",
+      kritik.includes("NEW_REQUEST_MATCH"),
+      "tedarikçi bildirimi e-posta kritik listesinden düşmüş — dışarı çıkan kanal yine yok",
     );
     const DIST = readFileSync(
       join(__dirname, "..", "src", "server", "request", "distribute-request.ts"),
       "utf8",
     );
     assert.ok(
-      DIST.includes("prisma.notification.createMany"),
-      "dağıtım bildirim yazma yolunu değiştirmiş — teslim sınırı yeniden okunmalı",
+      DIST.includes("prisma.notification.createMany") &&
+        DIST.includes("deliverMatchEmails("),
+      "dağıtım bildirimi yazıyor ama e-posta yayılımını çağırmıyor",
     );
   });
 

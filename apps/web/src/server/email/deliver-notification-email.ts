@@ -45,11 +45,20 @@ export type NotificationEmailInput = {
   actionPath?: string | null;
 };
 
-/** Kritik aile listesi — e-postaya bağlanan tek küme (gürültü sözleşmesi). */
+/**
+ * Kritik aile listesi — e-postaya bağlanan tek küme (gürültü sözleşmesi).
+ *
+ * NEW_REQUEST_MATCH EKLENDİ (2026-09-16, Dinçer'in kararı). Tedarikçi için
+ * eşleşen bir talep gürültü değil ürünün kendisidir; paneli açmayan bir
+ * tedarikçiye başka hiçbir kanal ulaşmıyordu. Teslim `fanout-match-emails`
+ * üzerinden yapılır; dağıtım `createMany` kullandığı için `createNotification`
+ * kancası bu tipe hiç uğramaz.
+ */
 export const EMAIL_CRITICAL_NOTIFICATION_TYPES = new Set([
   "OFFER_ACCEPTED",
   "COMPANY_INVITATION",
   "DEAL_COMPLETED",
+  "NEW_REQUEST_MATCH",
 ]);
 
 function emailProviderId(): string | null {

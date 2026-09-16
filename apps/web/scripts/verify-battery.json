@@ -27,7 +27,8 @@
     "verify-session-password-epoch-v1",
     "verify-zero-reach-rescue-v1",
     "verify-feature-expiry-v1",
-    "verify-billing-drift-detector-v1"
+    "verify-billing-drift-detector-v1",
+    "verify-match-email-fanout-v1"
   ],
   "knownRed": [
     {

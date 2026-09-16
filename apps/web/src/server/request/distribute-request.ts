@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
 import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
+import { deliverMatchEmails } from "@/server/email/fanout-match-emails";
 import { notifyZeroReach } from "@/server/request/zero-reach-rescue";
 import {
   deriveZeroMatchReason,
@@ -404,6 +405,21 @@ export async function distributeRequestToCompanies(
     failureStage = "write_notifications";
     if (notifications.length > 0) {
       await prisma.notification.createMany({ data: notifications });
+    }
+
+    /**
+     * E-POSTA GÖRÜNÜMÜ (2026-09-16). Panel içi bildirim kanonik kayıttır;
+     * aynı satırlar e-posta olarak da denenir. Non-blocking ve asla
+     * fırlatmaz: sağlayıcı yoksa tek satır "skipped" yazar, hata tek
+     * alıcıyı düşürür. Alıcı adresleri o modülde okunur; bu dosyanın
+     * veri erişim yüzeyi değişmez. Yazma bloğunun DIŞINDA durur, çünkü o
+     * blok verify-fanout-telemetry-v1 ile bayt bayt mühürlüdür.
+     */
+    if (notifications.length > 0) {
+      void deliverMatchEmails({
+        requestId: request.id,
+        notifications,
+      });
     }
 
     logFanoutNotificationsWritten({
