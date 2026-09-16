@@ -28,7 +28,8 @@
     "verify-zero-reach-rescue-v1",
     "verify-feature-expiry-v1",
     "verify-billing-drift-detector-v1",
-    "verify-match-email-fanout-v1"
+    "verify-match-email-fanout-v1",
+    "verify-next-build-boundaries-v1"
   ],
   "knownRed": [
     {
