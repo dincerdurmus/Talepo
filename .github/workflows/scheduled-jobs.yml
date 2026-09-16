@@ -1,0 +1,102 @@
+# TALEPO — ZAMANLANMIŞ İŞLER
+#
+# Neden burada (ölçüldü 2026-09-16): depoda beş cron rotası var ve tek kayıt
+# yeri `vercel.json` idi. Proje Vercel'e hiç kurulmadı, bu yüzden beşinin de
+# hiçbiri bugüne kadar HİÇ koşmadı: acil talep uyarısı yazılmadı, paneli
+# açmayan firmalar eski talepler için eşleşme almadı, süresi geçen şikâyetler
+# öne çıkmadı, kategori sağlama turu işlemedi ve satılan öne çıkarma süresi
+# hiç bitmedi. Kayıtlı ama koşmayan bir iş, yazılmış ama okunmayan bir alanla
+# aynı şeydir.
+#
+# Bu iş HOST'TAN BAĞIMSIZDIR: siteyi kim barındırırsa barındırsın, rotalara
+# HTTPS ile ulaşılabildiği sürece koşar. Host'un kendi zamanlayıcısı varsa O
+# DAHA İYİDİR ve bu dosya kapatılmalıdır (aşağıdaki sınıra bakın).
+#
+# BİLİNEN SINIR. GitHub Actions cron'u en sık BEŞ dakikada bir tetiklenir ve
+# yoğunlukta gecikebilir. `urgent-nudge` planda dakikada bir koşuyordu; bu
+# yolla en iyi ihtimalle beş dakikada bir koşar. Acil talep uyarısı için beş
+# dakikalık gecikme kabul edilebilir, ama bu bir TAVİZDİR ve host
+# zamanlayıcısı bağlandığında geri alınmalıdır.
+#
+# FAIL-CLOSED VE SESSİZ DEĞİL. Secret'lar tanımlı değilse iş hiçbir istek
+# atmaz ve neden atmadığını yazar. Bir rota 200 dışında bir şey dönerse iş
+# KIRMIZI verir; sessizce başarı uydurulmaz.
+#
+# SIR LOGLANMAZ. `CRON_SECRET` yalnız Authorization başlığına girer; hiçbir
+# adımda yazdırılmaz ve yanıt gövdesi de basılmaz.
+#
+# KURULUM. Depo ayarlarında iki secret gerekir:
+#   TALEPO_BASE_URL  — örn. https://talepo.example.com (sonda / olmadan)
+#   CRON_SECRET      — uygulamadaki `CRON_SECRET` ile AYNI değer
+# İkisi de tanımlanana kadar bu iş hiçbir şey yapmaz.
+
+name: Zamanlanmış işler
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # urgent-nudge (planda dakikada bir — bkz. sınır)
+    - cron: "*/15 * * * *" # match-backfill, feature-expiry
+    - cron: "0 * * * *" # overdue-complaints
+    - cron: "0 3 * * *" # category-provisioning
+  workflow_dispatch:
+    inputs:
+      route:
+        description: "Elle koşturulacak rota (boş bırakılırsa hepsi)"
+        required: false
+        default: ""
+
+concurrency:
+  group: scheduled-jobs-${{ github.event.schedule || 'manual' }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Hangi rotalar koşacak
+        id: plan
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_ROUTE: ${{ github.event.inputs.route }}
+        run: |
+          case "$SCHEDULE" in
+            "*/5 * * * *")  ROUTES="urgent-nudge" ;;
+            "*/15 * * * *") ROUTES="match-backfill feature-expiry" ;;
+            "0 * * * *")    ROUTES="overdue-complaints" ;;
+            "0 3 * * *")    ROUTES="category-provisioning" ;;
+            *)              ROUTES="${MANUAL_ROUTE:-urgent-nudge match-backfill feature-expiry overdue-complaints category-provisioning}" ;;
+          esac
+          echo "routes=$ROUTES" >> "$GITHUB_OUTPUT"
+          echo "Koşacak rotalar: $ROUTES"
+
+      - name: Rotaları çağır
+        env:
+          BASE_URL: ${{ secrets.TALEPO_BASE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ROUTES: ${{ steps.plan.outputs.routes }}
+        run: |
+          set -u
+          if [ -z "${BASE_URL}" ] || [ -z "${CRON_SECRET}" ]; then
+            echo "TALEPO_BASE_URL veya CRON_SECRET tanımlı değil; hiçbir istek atılmadı."
+            echo "Kurulum için .github/workflows/scheduled-jobs.yml başındaki nota bakın."
+            exit 0
+          fi
+          FAILED=0
+          for route in $ROUTES; do
+            # Yanıt GÖVDESİ basılmaz; yalnız HTTP kodu okunur.
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+                     --max-time 120 --retry 2 --retry-connrefused \
+                     -H "Authorization: Bearer ${CRON_SECRET}" \
+                     "${BASE_URL}/api/cron/${route}") || code="000"
+            echo "${route}: HTTP ${code}"
+            if [ "$code" != "200" ]; then
+              FAILED=1
+              if [ "$code" = "401" ]; then
+                echo "::error::${route} 401 döndü — CRON_SECRET uygulamadaki değerle aynı değil."
+              else
+                echo "::error::${route} ${code} döndü."
+              fi
+            fi
+          done
+          exit $FAILED

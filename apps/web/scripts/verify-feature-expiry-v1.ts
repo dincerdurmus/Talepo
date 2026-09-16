@@ -243,16 +243,62 @@ async function main() {
   /* ------------------------------------------------------------------ */
   /* D. Görev gerçekten planlanmış                                       */
   /* ------------------------------------------------------------------ */
-  await check("görev vercel.json'da planlanmış (yazılmamış cron hiç koşmaz)", () => {
+  await check("görev KOŞABİLEN bir zamanlayıcıya kayıtlı", () => {
+    /* Ölçüldü 2026-09-16: tek kayıt yeri `vercel.json`'du ve proje Vercel'e
+       hiç kurulmadı, yani beş cron rotasının hiçbiri hiç koşmadı. Bir cron
+       ifadesinin bir dosyada durması onu koşturmaz. Bu yüzden kapı artık
+       HOST'TAN BAĞIMSIZ zamanlayıcıyı — GitHub Actions işini — arıyor ve iki
+       kaydın aynı rotaları taşıdığını doğruluyor. */
     const cfg = JSON.parse(readFileSync(join(ROOT, "vercel.json"), "utf8")) as {
       crons: { path: string; schedule: string }[];
     };
     const entry = cfg.crons.find((c) => c.path === "/api/cron/feature-expiry");
-    assert.ok(entry, "cron vercel.json'a yazılmamış — rota var ama hiç çağrılmaz");
+    assert.ok(entry, "cron vercel.json planından düşmüş");
     assert.match(
       entry.schedule,
       /^\S+ \S+ \S+ \S+ \S+$/,
       `geçersiz cron ifadesi: ${entry.schedule}`,
+    );
+
+    const WF = readFileSync(
+      join(ROOT, ".github", "workflows", "scheduled-jobs.yml"),
+      "utf8",
+    );
+    assert.ok(
+      WF.includes("feature-expiry"),
+      "görev zamanlanmış işler akışına yazılmamış — rota var ama hiçbir şey çağırmıyor",
+    );
+    /* İki kayıt ayrışmamalı: vercel.json'daki her rota akışta da olmalı,
+       yoksa host değiştiğinde sessizce bir iş düşer. */
+    for (const cron of cfg.crons) {
+      const ad = cron.path.replace("/api/cron/", "");
+      assert.ok(
+        WF.includes(ad),
+        `${ad} vercel.json'da var ama zamanlanmış işler akışında yok`,
+      );
+    }
+  });
+
+  await check("zamanlayıcı yapılandırılmadıysa sessizce başarı uydurmaz", () => {
+    const WF = readFileSync(
+      join(ROOT, ".github", "workflows", "scheduled-jobs.yml"),
+      "utf8",
+    );
+    assert.ok(
+      WF.includes("secrets.CRON_SECRET"),
+      "iş sırrı secret'tan okumuyor",
+    );
+    assert.ok(
+      !/echo[^\n]*\$\{?CRON_SECRET/.test(WF),
+      "iş sırrı yazdırıyor",
+    );
+    assert.ok(
+      WF.includes("::error::"),
+      "başarısız çağrı kırmızı vermiyor — sessizce başarı uydurulur",
+    );
+    assert.ok(
+      /-o \/dev\/null/.test(WF),
+      "yanıt gövdesi loga basılıyor",
     );
   });
 
