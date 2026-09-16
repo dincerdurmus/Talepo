@@ -33,12 +33,29 @@ import type { ZeroMatchReason } from "@/server/request/fanout-telemetry";
  * ANA AKIŞI KIRAMAZ. Çağıran non-blocking çağırır ve bu fonksiyon asla
  * fırlatmaz: talebin yayımlanması bir bildirim yazılamadı diye başarısız
  * olamaz.
+ *
+ * TESLİM SINIRI — METİN BUNA GÖRE YAZILIR (2026-09-16, Dinçer'in düzeltmesi).
+ *
+ * Talepo'da tedarikçiye talep GÖNDERİLMEZ. Dağıtımın yaptığı iki şey var:
+ * `RequestMatch` satırı yazar (talep o firmanın `panel/talepler` listesinde
+ * görünür hale gelir) ve panel içi `NEW_REQUEST_MATCH` bildirimi yazar.
+ * Dışarı çıkan hiçbir kanal yoktur: `NEW_REQUEST_MATCH`
+ * `EMAIL_CRITICAL_NOTIFICATION_TYPES` listesinde değildir, dağıtım zaten
+ * `createNotification` yerine doğrudan `notification.createMany` kullanır ve
+ * `EMAIL_PROVIDER` de tanımlı değildir. SMS ve push hiç yoktur.
+ *
+ * Bu yüzden buradaki metinler "iletiriz", "ulaştırırız", "göndeririz"
+ * DEMEZ — o fiiller olmayan bir kanalı vaat eder ve bu modülün kapatmak
+ * için yazıldığı kusurun ta kendisidir. Doğru ifade görünürlüktür:
+ * talep firmaların listesine düşer, firma paneli açtığında görür.
+ * Aynı sınır bu bildirimin KENDİSİ için de geçerlidir: alıcı da bunu ancak
+ * panele girdiğinde okur.
  */
 
 const log = createSubsystemLogger("request.zero-reach");
 
 /** Aynı talep için ikinci kez yazılmasını engelleyen sabit başlık. */
-const ZERO_REACH_TITLE = "Talebiniz henüz tedarikçilere ulaşmadı";
+const ZERO_REACH_TITLE = "Talebiniz henüz tedarikçilere görünmüyor";
 
 type RescueCopy = { message: string; fixable: boolean };
 
@@ -47,24 +64,27 @@ function copyForReason(reason: ZeroMatchReason, title: string): RescueCopy {
     case "system_category_and_no_city_input":
       return {
         fixable: true,
-        message: `“${title}” talebiniz yayımlandı ama hangi alanda olduğunu netleştiremediğimiz için henüz hiçbir tedarikçiye ulaşmadı. Talebi düzenleyip kategoriyi seçin ve şehir ekleyin; doğru tedarikçilere hemen iletelim.`,
+        message: `“${title}” talebiniz yayımlandı ama hangi alanda olduğunu netleştiremediğimiz için henüz hiçbir tedarikçinin talep listesinde görünmüyor. Talebi düzenleyip kategoriyi seçin ve şehir ekleyin; o alandaki firmaların listesine düşsün.`,
       };
     case "system_category_and_no_city_match":
       return {
         fixable: true,
-        message: `“${title}” talebiniz yayımlandı ama hangi alanda olduğunu netleştiremediğimiz için henüz hiçbir tedarikçiye ulaşmadı. Talebi düzenleyip kategoriyi seçin; doğru tedarikçilere hemen iletelim.`,
+        message: `“${title}” talebiniz yayımlandı ama hangi alanda olduğunu netleştiremediğimiz için henüz hiçbir tedarikçinin talep listesinde görünmüyor. Talebi düzenleyip kategoriyi seçin; o alandaki firmaların listesine düşsün.`,
       };
     case "no_category_companies_and_no_city_input":
       return {
         fixable: true,
-        message: `“${title}” talebiniz yayımlandı ama bu alanda henüz eşleşen tedarikçi bulamadık. Talebe şehir eklerseniz yakınınızdaki firmalara da ulaştırabiliriz.`,
+        message: `“${title}” talebiniz yayımlandı ama bu alanda kayıtlı tedarikçi bulamadık; bu yüzden henüz kimsenin talep listesinde görünmüyor. Talebe şehir eklerseniz aynı şehirdeki firmaların listesinde de aranır.`,
       };
     case "no_category_companies_and_no_city_match":
       /* Alıcının elinde bir şey yok: bu kategoride henüz tedarikçi yok.
-         Suçlayıcı bir dil kullanılmaz ve yanlış bir eylem önerilmez. */
+         Suçlayıcı bir dil kullanılmaz ve yanlış bir eylem önerilmez.
+         "Yeni firma katılınca iletilecek" CÜMLESİ KALDIRILDI (2026-09-16):
+         o işi yapacak tur (`match-backfill`) bugün hiçbir zamanlayıcı
+         tarafından koşturulmuyor — bkz. aşağıdaki TESLİM SINIRI notu. */
       return {
         fixable: false,
-        message: `“${title}” talebiniz yayımlandı. Bu alanda henüz uygun tedarikçi bulamadık; aramaya devam ediyoruz ve yeni bir firma katıldığında talebiniz otomatik olarak ona da iletilecek.`,
+        message: `“${title}” talebiniz yayımlandı. Bu alanda ve bu bölgede kayıtlı tedarikçi bulamadık; bu yüzden talebiniz henüz hiçbir firmanın talep listesinde görünmüyor.`,
       };
   }
 }

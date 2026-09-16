@@ -249,6 +249,60 @@ async function main() {
     },
   );
 
+  await check("metin OLMAYAN bir teslim kanalını vaat etmez", () => {
+    /* Talepo'da tedarikçiye talep GÖNDERİLMEZ: dağıtım `RequestMatch` satırı
+       ve panel içi bildirim yazar, o kadar. `NEW_REQUEST_MATCH` e-posta
+       kritik listesinde değil, dağıtım zaten e-posta katmanından geçmiyor,
+       SMS ve push hiç yok. "İletiriz / ulaştırırız / göndeririz" demek
+       olmayan bir kanalı vaat etmektir — bu modülün kapatmak için yazıldığı
+       kusurun aynısı. Doğru ifade görünürlüktür. */
+    const VAAT_EDEN = [
+      "iletil",
+      "iletec",
+      "iletel",
+      "ulaştır",
+      "gönderil",
+      "gönderec",
+      "haber ver",
+      "bildirec",
+    ];
+    for (const [reason, row] of yazilan) {
+      const dusuk = row.message.toLocaleLowerCase("tr");
+      for (const fiil of VAAT_EDEN) {
+        assert.ok(
+          !dusuk.includes(fiil),
+          `${reason}: metin olmayan bir teslim kanalını vaat ediyor ("${fiil}")`,
+        );
+      }
+    }
+  });
+
+  await check("tedarikçi tarafına giden bildirim panel içidir (e-posta değil)", () => {
+    /* Bu kapı metnin DAYANDIĞI gerçeği mühürler: teslim yüzeyi değişirse
+       (NEW_REQUEST_MATCH e-postaya bağlanırsa) metin de yeniden yazılmalı,
+       yoksa bu kez ters yönde yanlış olur — vaat edilebilecekken edilmiyor. */
+    const EMAIL = readFileSync(
+      join(__dirname, "..", "src", "server", "email", "deliver-notification-email.ts"),
+      "utf8",
+    );
+    const kritik = EMAIL.slice(
+      EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES"),
+      EMAIL.indexOf("]);", EMAIL.indexOf("EMAIL_CRITICAL_NOTIFICATION_TYPES")),
+    );
+    assert.ok(
+      !kritik.includes("NEW_REQUEST_MATCH"),
+      "tedarikçi bildirimi artık e-postaya bağlı — kurtarma metinleri buna göre güncellenmeli",
+    );
+    const DIST = readFileSync(
+      join(__dirname, "..", "src", "server", "request", "distribute-request.ts"),
+      "utf8",
+    );
+    assert.ok(
+      DIST.includes("prisma.notification.createMany"),
+      "dağıtım bildirim yazma yolunu değiştirmiş — teslim sınırı yeniden okunmalı",
+    );
+  });
+
   await check("her sebep kendi metnini taşır (kopyala-yapıştır tek metin değil)", () => {
     const mesajlar = new Set([...yazilan.values()].map((r) => r.message));
     assert.ok(
