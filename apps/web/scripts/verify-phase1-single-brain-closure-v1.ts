@@ -203,7 +203,7 @@ const webSrc = join(__dirname, "../src");
 
 // --- 11 stale inference cleanup ---
 {
-  let state = createTextOnlyState("Samsung televizyon arıyorum");
+  const state = createTextOnlyState("Samsung televizyon arıyorum");
   const hadSamsung =
     state.fields.brand?.kind === "VALUE" &&
     (state.fields.brand.value ?? "")
@@ -226,7 +226,7 @@ const webSrc = join(__dirname, "../src");
 
 // --- 12 no merge loop ---
 {
-  let state = createTextOnlyState("Televizyon arıyorum 140 ekran");
+  const state = createTextOnlyState("Televizyon arıyorum 140 ekran");
   const browsed = syncFromBrowse(state, { key: "brand", value: "Arçelik" });
   const echo = syncFromText(browsed.state, browsed.composedText);
   check("12 no merge loop skipped", echo.skipped === true);

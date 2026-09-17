@@ -188,7 +188,7 @@ ensureTaxonomyLoaded();
 
 // --- 12 bidirectional update ---
 {
-  let state = createTextOnlyState("Televizyon arıyorum 140 ekran marka önemli değil");
+  const state = createTextOnlyState("Televizyon arıyorum 140 ekran marka önemli değil");
   const r = syncFromBrowse(state, { key: "brand", value: "Arçelik" });
   check("12 bidirectional brand VALUE", r.state.fields.brand?.kind === "VALUE");
   check(
@@ -204,7 +204,7 @@ ensureTaxonomyLoaded();
 
 // --- 13 no sync loop ---
 {
-  let state = createTextOnlyState("Televizyon arıyorum 140 ekran marka önemli değil");
+  const state = createTextOnlyState("Televizyon arıyorum 140 ekran marka önemli değil");
   const browsed = syncFromBrowse(state, { key: "resolution", value: "4K" });
   const echo = syncFromText(browsed.state, browsed.composedText);
   check("13 no sync loop skipped", echo.skipped === true);

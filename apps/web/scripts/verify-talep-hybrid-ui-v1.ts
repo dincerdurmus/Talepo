@@ -265,7 +265,7 @@ ensureTaxonomyLoaded();
 
 // 20 Dyson + V15
 {
-  let state = createTextOnlyState("Dyson süpürge almak istiyorum");
+  const state = createTextOnlyState("Dyson süpürge almak istiyorum");
   const browsed = syncFromBrowse(state, { key: "model", value: "V15 Detect" });
   check(
     "20 Dyson brand",

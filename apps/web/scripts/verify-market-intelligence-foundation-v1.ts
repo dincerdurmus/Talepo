@@ -122,7 +122,7 @@ async function sinkChecks() {
   );
   check("D2 transport'suz düşen olay SAYILIR", bare.status().droppedNoTransport === 1);
 
-  let delivered: number[] = [];
+  const delivered: number[] = [];
   let failNext = true;
   const transport: WarehouseTransport = {
     name: "test-batch",

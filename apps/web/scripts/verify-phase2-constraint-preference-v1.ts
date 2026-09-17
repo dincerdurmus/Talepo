@@ -304,7 +304,7 @@ ensureTaxonomyLoaded();
 
 // --- 17 stale preference cleanup ---
 {
-  let state = createTextOnlyState("Samsung veya LG televizyon olabilir");
+  const state = createTextOnlyState("Samsung veya LG televizyon olabilir");
   check(
     "17 initial preferred",
     (state.fields.brand?.preferredValues?.length ?? 0) >= 2,
