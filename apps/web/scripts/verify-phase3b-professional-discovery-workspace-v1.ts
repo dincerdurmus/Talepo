@@ -316,7 +316,11 @@ const root = join(__dirname, "..");
 
 // --- 23 leaf follow exact ---
 {
-  const far = resolveTaxonomyAlias("ön far", "automotive")?.node?.id!;
+  const farNode = resolveTaxonomyAlias("ön far", "automotive")?.node;
+  // Opsiyonel zincire `!` koymak, alias kaybolursa doğrulayıcıyı sessizce
+  // undefined ile çalıştırırdı — ölçmeyen bir ölçüm. Açıkça düşsün.
+  if (!farNode) throw new Error('resolveTaxonomyAlias("ön far", "automotive") düğüm döndürmedi');
+  const far = farNode.id;
   const followed = followCategoryToSavedSearch({
     nodeId: far,
     leafExact: true,
