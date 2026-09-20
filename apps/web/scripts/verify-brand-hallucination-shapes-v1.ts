@@ -4,8 +4,10 @@
  * NEDEN VAR. 1077 korpusun halüsinasyon kapıları yalnız korpustaki girdi
  * şekillerini görür; İngilizce öbek teşhisi korpusta hiç olmayan üç canlı
  * halüsinasyon buldu (SMART markası, FORD + VEHICLE, iPhone 17 VEHICLE).
- * Bu kapı o sınıfın kalıcı ölçümüdür: 67 girdilik şekil × kategori
- * ızgarası (fixtures/brand-hallucination-shapes-v1) canlı beyinden geçer.
+ * Bu kapı o sınıfın kalıcı ölçümüdür: şekil × kategori ızgarası
+ * (fixtures/brand-hallucination-shapes-v1) canlı beyinden geçer; girdi
+ * sayısı burada tekrarlanmaz, her koşuda fixture uzunluğundan basılır
+ * (bayat sayı dersi: başlıkta 67 yazıyordu, gerçek 57 idi).
  *
  * SERT KURALLAR
  *   H1 — beklenen marka yokken (null) herhangi bir marka dönerse, ya da
@@ -58,14 +60,26 @@ function judge(c: HallucinationShapeCase): void {
   const kind = u.subject.kind.value;
   const local: Violation[] = [];
 
+  /**
+   * Fold sonrası TAM eşitlik; kabul edilen adlar = beklenen + açık alias
+   * listesi. Eski iki yönlü includes "Mi" ⊂ "Mini" türü kazara geçişe
+   * açıktı (ölçülen tek gerçek bağımlılık D05 Mercedes-Benz idi; o artık
+   * alias olarak yazılı).
+   */
+  const acceptedBrands =
+    c.expectedBrand == null
+      ? []
+      : [c.expectedBrand, ...(c.brandAliases ?? [])].map((b) => foldTr(b));
+  const matchesExpected = (value: string): boolean =>
+    acceptedBrands.includes(foldTr(value));
+
   if (brand != null) {
     if (c.expectedBrand == null) {
       local.push({
         id: c.id, axis: c.axis, rule: "H1",
         detail: `markasız girdide marka üretildi: "${brand}"`,
       });
-    } else if (!foldTr(brand).includes(foldTr(c.expectedBrand)) &&
-      !foldTr(c.expectedBrand).includes(foldTr(brand))) {
+    } else if (!matchesExpected(brand)) {
       local.push({
         id: c.id, axis: c.axis, rule: "H1",
         detail: `yanlış marka: beklenen "${c.expectedBrand}", dönen "${brand}"`,
@@ -74,15 +88,10 @@ function judge(c: HallucinationShapeCase): void {
   }
 
   if (c.brandRule === "MUST" && c.expectedBrand != null) {
-    const brandMatches =
-      brand != null &&
-      (foldTr(brand).includes(foldTr(c.expectedBrand)) ||
-        foldTr(c.expectedBrand).includes(foldTr(brand)));
+    const brandMatches = brand != null && matchesExpected(brand);
     if (!brandMatches) {
       const inCandidate =
-        typeof candidate === "string" &&
-        (foldTr(candidate).includes(foldTr(c.expectedBrand)) ||
-          foldTr(c.expectedBrand).includes(foldTr(candidate)));
+        typeof candidate === "string" && matchesExpected(candidate);
       if (inCandidate) h4InCandidate += 1;
       else h4Absent += 1;
       local.push({

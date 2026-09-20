@@ -55,6 +55,14 @@ export type HallucinationShapeCase = {
    * yazımlar ONLY kalır — o disiplin H4 ile bozulmaz.
    */
   brandRule?: "MUST" | "ONLY";
+  /**
+   * Kanonik ad eşleşmesinin meşru varyantları (örn. Mercedes →
+   * Mercedes-Benz). Kapı fold sonrası TAM eşitlikle karşılaştırır; eski
+   * iki yönlü includes "Mi" ⊂ "Mini" türü kazara geçişe açıktı ve
+   * kaldırıldı. Varyant bir karar olarak buraya yazılır, gevşeklikle
+   * kazanılmaz.
+   */
+  brandAliases?: readonly string[];
   vehicle: VehicleRule;
   /** Bilgi alanı (kapı kuralı değil): beklenen ürün türü çekirdeği ya da null=bilinmiyor. */
   productTypeHint?: string | null;
@@ -111,7 +119,7 @@ export const BRAND_HALLUCINATION_SHAPES_V1: readonly HallucinationShapeCase[] = 
   { id: "D02", axis: "gercek-arac-tuzagi", input: "Fiat Egea arıyorum", expectedBrand: "Fiat", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D03", axis: "gercek-arac-tuzagi", input: "Ford Transit arıyorum", expectedBrand: "Ford", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D04", axis: "gercek-arac-tuzagi", input: "İkinci el araba arıyorum", expectedBrand: null, vehicle: "MUST", productTypeHint: null },
-  { id: "D05", axis: "gercek-arac-tuzagi", input: "Mercedes C200 arıyorum", expectedBrand: "Mercedes", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D05", axis: "gercek-arac-tuzagi", input: "Mercedes C200 arıyorum", expectedBrand: "Mercedes", brandRule: "MUST", brandAliases: ["Mercedes-Benz"], vehicle: "MUST", productTypeHint: null },
   { id: "D06", axis: "gercek-arac-tuzagi", input: "Smart araba arıyorum", expectedBrand: "Smart", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D07", axis: "gercek-arac-tuzagi", input: "Mini Cooper arıyorum", expectedBrand: "Mini", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D08", axis: "gercek-arac-tuzagi", input: "Seat Leon arıyorum", expectedBrand: "Seat", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
