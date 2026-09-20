@@ -150,6 +150,12 @@ export const AUTOMOTIVE_MODEL_TOKENS = [
   "Puma",
   "Courier",
   "Transit",
+  /* Mini Cooper: marka alias'ı (brand_mini) zaten "mini cooper" taşıyor ve
+     katalog verisinde model_mini_cooper + nesilleri var; model adı bu
+     listede yoktu, "Mini Cooper arıyorum" araç öznesi üretemiyordu
+     (ölçüldü: H-kapısı D07, 2026-09-20). Kaynak: mevcut katalog verisi
+     (data/catalogs/automotive), tahmin değil. */
+  "Cooper",
   // Hyundai / Kia / Opel / Peugeot / Citroen
   "i10",
   "i20",
