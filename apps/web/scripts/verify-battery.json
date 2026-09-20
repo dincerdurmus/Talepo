@@ -172,6 +172,13 @@
       "why": "8 kategori kapsam açığı. Ölçüldü 2026-09-15."
     },
     {
+      "script": "verify-brand-hallucination-shapes-v1",
+      "maxFailures": 16,
+      "pattern": "(\\d+) passed, (\\d+) failed",
+      "group": 2,
+      "why": "Korpusun gormedigi sekillerin halusinasyon kapisi (2026-09-20, dogusunda kirmizi): 57 girdilik sekil x kategori izgarasinda 16 dusen vaka — H1=10 yanlis marka (Galaxy->Ford x3, Smart TV->Smart x4, Mini firin/buzdolabi->MINI x3), H2=8 sahte VEHICLE (iPhone/iPad/Surface sayi tokenlari + Galaxy), H3=1 tuzak kaybi (Mini Cooper araci gorulmuyor). Duzeltme dilimleri ayri is; sayi dusunce cetvel guncellenir."
+    },
+    {
       "script": "verify-projection-authority-v1",
       "maxFailures": 108,
       "pattern": "KIRMIZI — (\\d+) ihlal",
