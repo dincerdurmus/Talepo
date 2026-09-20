@@ -11,6 +11,7 @@
     "verify-any-answer-authority-v1",
     "verify-authority-ladder-v1",
     "verify-billing-drift-detector-v1",
+    "verify-brain-adversarial-corpus-v1",
     "verify-browse-semantic-closure-v1",
     "verify-canonical-request-flow",
     "verify-catalog-automotive",
@@ -35,6 +36,7 @@
     "verify-curated-entity-consumption-v1",
     "verify-deal-completion-v1",
     "verify-deal-review-v1",
+    "verify-discovery-quality-v1",
     "verify-explore-paid-filters-v1",
     "verify-explore-visual-v1",
     "verify-external-price-intelligence",
@@ -160,5 +162,6 @@
       "why": "8 kategori kapsam açığı. Ölçüldü 2026-09-15."
     }
   ],
-  "_eklendi_2026_09_18": "114 dogrulayici 2026-09-17'de tek tek kosuldu ve yesil olculdu; 113'u buraya eklendi. Disarida birakilan tek isim: verify-three-tier-plan-packaging-v1 — 5 satirlik bir kabuk, verify-two-plan-packaging-v1'i import etmekten baska bir sey yapmiyor ve adi artik var olmayan uc katmanli plan modelini anlatiyor. Cetvele girseydi ayni iddialar iki kez, biri yanlis adla kosardi."
+  "_eklendi_2026_09_18": "114 dogrulayici 2026-09-17'de tek tek kosuldu ve yesil olculdu; 113'u buraya eklendi. Disarida birakilan tek isim: verify-three-tier-plan-packaging-v1 — 5 satirlik bir kabuk, verify-two-plan-packaging-v1'i import etmekten baska bir sey yapmiyor ve adi artik var olmayan uc katmanli plan modelini anlatiyor. Cetvele girseydi ayni iddialar iki kez, biri yanlis adla kosardi.",
+  "_eklendi_2026_09_20": "1077 vakalik korpusun iki dogrulayicisi (brain-adversarial-corpus, discovery-quality) eklendi. 2026-09-17 olcumunde disarida kalmalarinin tek sebebi o oturumun 60 saniyelik zaman siniriydi (rc=124); 2026-09-20'de tam kosu ikisinde de rc=0, sureler 144 ve 140 saniye. Batarya script basina sure siniri koymaz ve paralel kostugu icin duvar saatine etkileri havuzda erir; talep beyninin en guclu kalite kapisinin elle kosulan script olarak kalmasi kabul edilmedi."
 }
