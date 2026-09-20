@@ -431,10 +431,16 @@ function measureCorpus(): {
   ok("G1", scenarios === 108, `senaryo sayısı değişti → ${scenarios}`);
   /* 98+ Faz I (2026-09-01) sayılı rebase: 13 senaryoluk davranış deltası — appl-02 inverter parça sızıntısı kapandı (-part,-partSystem), auto-11 lastik ürünleşti (-needType=vehicle, araç soruları düştü), tech-04/tech-11 RC ayrışması kapandı (state kategorisi beyni izler), tech-12 SERVICE kind (+needType,+serviceType), mach-05 machinery claim (+productType), baby-08/furn-04/home-07 kullanıcı parça beyanı korunuyor (+part), health-06 hint kategoriyi ezemiyor. Kimlik-düzeyi tam liste: fixtures/projection-authority-v1.ts */
   /* 98+ Part II (2026-09-01) sayılı rebase: kullanıcı ürün ad-öbeği ekseninin sonucu — 11 senaryo productType/propertyType kazandı (kimlik listesi: fixtures/projection-authority-v1.ts PART II notu). */
-  ok("G2", fields === 1282, `kanonik alan sayısı değişti → ${fields}`);
-  ok("G3", unknown === 972, `varsayılan UNKNOWN değişti → ${unknown}`);
-  ok("G4", attributes === 276, `attributes tabanı kaydı → ${attributes}`);
-  ok("G5", constraints === 276, `constraints tabanı kaydı → ${constraints}`);
+  /**
+   * TABAN TAZELENDİ (OL-0011, 2026-09-20): 1282→1302, 972→975, 276→291.
+   * Delta satır satır sayıldı ve tek yerde belgelendi —
+   * verify-common-field-response-v1.ts measureCorpus bloğu. Üç doğrulayıcı
+   * AYNI korpusu ölçer; enumerasyon çoğaltılmaz.
+   */
+  ok("G2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  ok("G3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
+  ok("G4", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
+  ok("G5", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
   ok("G6", responses === 0, `varsayılan cevap yüzeyi → ${responses}`);
 
   return { scenarios, fields, unknown, attributes, constraints, responses };

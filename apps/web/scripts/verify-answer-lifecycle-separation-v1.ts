@@ -683,10 +683,22 @@ function confirmedFor(input: string[]): string[] {
    */
   const FROZEN_MIN_IDENTITIES = 119;
   console.log(`ANY kimliği: ${identities}`);
+  /**
+   * TABAN TAZELENDİ (OL-0011, 2026-09-20): 151→504. Büyümeyi taşıyan şey
+   * kurucu QA dalgasının profil genişlemesidir (25ce816 2026-09-06 +
+   * 18998e7/d738ae9/210b6fc 2026-09-12); kategori başına profil anahtarı
+   * ölçümü (3d23dbf ağacına karşı aynı sonda): real-estate 7→33,
+   * automotive 11→23, technology 14→28, appliances 16→26, furniture 11→17,
+   * printing 12→50, machinery 13→87, baby 10→95, home-kitchen 9→48,
+   * health 4→20, services 5→68. Bu doğrulayıcının ASIL konusu olan üç
+   * durum ayrımı (görünmeyen / kaldırılan / geçersiz) bu tarihte SIFIR
+   * sorunla yeşildi; kırmızı yalnız bu sayaçtaydı. Alt sınır 119 aynen
+   * durur: evren daralırsa sayaç sessizce düşmez, KIRMIZI olur.
+   */
   ok(
     "P:kimlik-sayisi",
-    identities === 151,
-    `beklenen 151 kimlik, ölçülen ${identities}`,
+    identities === 504,
+    `beklenen 504 kimlik, ölçülen ${identities}`,
   );
   ok(
     "P:kimlik-taban-korunur",

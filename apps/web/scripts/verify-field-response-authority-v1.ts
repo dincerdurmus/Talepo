@@ -581,15 +581,21 @@ function measureCorpus(): {
    */
   /* 98+ Faz I (2026-09-01) sayılı rebase — kimlik listesi: fixtures/projection-authority-v1.ts */
   /* 98+ Part II (2026-09-01) sayılı rebase: kullanıcı ürün ad-öbeği ekseninin sonucu — 11 senaryo productType/propertyType kazandı (kimlik listesi: fixtures/projection-authority-v1.ts PART II notu). */
-  ok("F2", fields === 1282, `kanonik alan sayısı değişti → ${fields}`);
-  ok("F3", unknown === 972, `varsayılan UNKNOWN değişti → ${unknown}`);
+  ok("F2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  /**
+   * TABAN TAZELENDİ (OL-0011, 2026-09-20): 1282→1302, 972→975, 276→291.
+   * Delta satır satır sayıldı ve tek yerde belgelendi —
+   * verify-common-field-response-v1.ts measureCorpus bloğu. Üç doğrulayıcı
+   * AYNI korpusu ölçer; enumerasyon çoğaltılmaz.
+   */
+  ok("F3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok(
     "F4",
     responses === 0,
     `varsayılan UNKNOWN cevap yüzeyi üretti → ${responses}`,
   );
-  ok("F5", attributes === 276, `attributes tabanı kaydı → ${attributes}`);
-  ok("F6", constraints === 276, `constraints tabanı kaydı → ${constraints}`);
+  ok("F5", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
+  ok("F6", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
 
   return { scenarios, fields, unknown, responses, attributes, constraints };
 }

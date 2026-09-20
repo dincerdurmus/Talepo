@@ -566,12 +566,54 @@ function measureCorpus(): {
    */
   /* 98+ Faz I (2026-09-01) sayılı rebase: 13 senaryoluk davranış deltası — appl-02 inverter parça sızıntısı kapandı (-part,-partSystem), auto-11 lastik ürünleşti (-needType=vehicle, araç soruları düştü), tech-04/tech-11 RC ayrışması kapandı (state kategorisi beyni izler), tech-12 SERVICE kind (+needType,+serviceType), mach-05 machinery claim (+productType), baby-08/furn-04/home-07 kullanıcı parça beyanı korunuyor (+part), health-06 hint kategoriyi ezemiyor. Kimlik-düzeyi tam liste: fixtures/projection-authority-v1.ts */
   /* 98+ Part II (2026-09-01) sayılı rebase: kullanıcı ürün ad-öbeği ekseninin sonucu — 11 senaryo productType/propertyType kazandı (kimlik listesi: fixtures/projection-authority-v1.ts PART II notu). */
-  ok("E2", fields === 1282, `kanonik alan sayısı değişti → ${fields}`);
-  ok("E3", unknown === 972, `varsayılan UNKNOWN değişti → ${unknown}`);
+  /**
+   * TABAN TAZELENDİ (OL-0011, 2026-09-20) — delta satır satır ölçüldü
+   * (3d23dbf ağacına karşı aynı sonda; sayılar birebir yeniden üretildi:
+   * attributes/constraints 276→291, unknown 972→975).
+   *
+   * YENİ attr+cons çifti (26 kimlik) — kurucu QA dalgasının profil ve
+   * needType kapanışı işi (9a53aa3 2026-09-02, 25ce816 2026-09-06,
+   * 69248b6 + d738ae9 + 18998e7 2026-09-12):
+   *   appl-02 inverterPreference · appl-03 fridgeCoolingSystem ·
+   *   auto-11 needType, tireItemType · baby-02 babyProductType ·
+   *   baby-06 needType · health-04 needType, part · home-01 cookwareSetType ·
+   *   home-02 serviceCount · home-07 kitchenProductType ·
+   *   mach-01 machiningControl · mach-04 needType · mach-06 generatorPower,
+   *   needType · mach-07 machiningControl · mach-08 fluidMachineType ·
+   *   print-04 boxMaterial · print-06 needType · re-06 propertyType ·
+   *   re-08 propertyType · re-09 needType · svc-01 productType ·
+   *   tech-01 ram · tech-02 needType · tech-04 needType
+   *
+   * DÜŞEN attr+cons çifti (11 kimlik) — eski tabanda düpedüz yanlış olan
+   * değerler temizlendi (değer düzeyi ölçüldü):
+   *   appl-03 fridgeType ("No-Frost" soğutma sistemidir → fridgeCoolingSystem)
+   *   ve installation (değeri "olsun" idi — kanıt değil dolgu) ·
+   *   auto-05/auto-06 needType (araç senaryosu yeniden ifade kapanışına
+   *   taşındı) · health-03 usageArea (değeri "Ev" idi — kullanıcı yazmadı,
+   *   halüsinasyon) · health-04 productType ("Eldiven") + usageArea
+   *   ("Klinik" kullanım bağlamıdır) · health-07/home-06/mach-05/svc-07
+   *   productType (parça/servis/ebeveyn adı ürün kanalından çıktı; part
+   *   kanalı taşıyor, örn. health-04 part="steril eldiven").
+   *
+   * unknown 972→975: +5 (health-04, health-07, home-06, mach-05, svc-07
+   * productType artık UNKNOWN) −2 (svc-01 productType "Ev temizliği",
+   * tech-02 needType "hardware" değere kapandı). Kalite karşılığı: 1077
+   * korpusta ③ ürün türü %100, WRONG=0 (verify-discovery-quality-v1,
+   * 2026-09-20 CI'da yeşil).
+   *
+   * Kanonik alan evreni 1282→1302 (+26/−6, anahtar bazında sayıldı):
+   * +needType×8 (yeniden-ifade kapanışı) · +16 yeni profil anahtarı
+   * (yukarıdaki liste) · +brandCandidate×2 (home-06, tech-04 — bu çift
+   * snapshot-internal-evidence'ta AÇIK ŞÜPHE olarak kayıtlı, bilinen
+   * kırmızı cetvelinde sayıyla tutulur; buradaki sayım onu aklamaz) ·
+   * −usageArea×2, −needType×2 (auto-05/06), −installation, −fridgeType.
+   */
+  ok("E2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  ok("E3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
-  ok("E6", attributes === 276, `attributes tabanı kaydı → ${attributes}`);
-  ok("E7", constraints === 276, `constraints tabanı kaydı → ${constraints}`);
+  ok("E6", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
+  ok("E7", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
 
   return {
     scenarios,

@@ -447,8 +447,16 @@ ensureTaxonomyLoaded();
   // Pin updated 2026-08-23: Google TR overlay (+762 leaf, +41 GROUP) —
   // kurucu kararı, tüm dallar "Al".
   // RC rebase (2026-09-01): FD-7 kurucu kürasyonu +1 SERVICE_TYPE yaprağı ekledi (grafik-ve-logo-tasarimi).
-  check("29 taxonomy nodes 2152", report.nodeCount === 2152);
-  check("29 taxonomy leaves 1863", report.leafCount === 1863);
+  /**
+   * TABAN TAZELENDİ (OL-0011, 2026-09-20): 2152/1863 → 2098/1807.
+   * Eski sayıyı 6fb051e (2026-09-01) dondurdu; 25ce816 (2026-09-06, kurucu
+   * QA dalgası) taksonomiyi bilinçli budadı — health/products.json 1068
+   * satır kısaldı, services yeniden yapılandı (kapsam dışı kalan akışlar,
+   * UNSUPPORTED_REMOVED_SCOPE kararlarıyla aynı dalga). Sayı yine iki yönde
+   * kilitli: büyüme de küçülme de sayılmış delta ister.
+   */
+  check("29 taxonomy nodes 2098", report.nodeCount === 2098);
+  check("29 taxonomy leaves 1807", report.leafCount === 1807);
   check("29 taxonomy empty parents 0", report.emptyParents.length === 0);
   check("29 taxonomy orphans 0", report.orphans.length === 0);
   check("29 taxonomy cycles 0", report.cycles.length === 0);

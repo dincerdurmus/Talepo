@@ -214,9 +214,19 @@ check(
   "escape closes activity panel",
   activity.includes('event.key === "Escape"'),
 );
+/**
+ * BEKLENTİ TAZELENDİ (OL-0011, 2026-09-20). Eski satır yönlendirme
+ * sayfasının render'ında markNotificationAsRead çağrısı arıyordu; o çağrı
+ * c2d127d (2026-08-28, Karar L: RSC/GET render salt-okunurdur) ile bilinçli
+ * kaldırıldı — "okundu" bir kullanıcı eylemidir ve yazım artık ekran
+ * açıldıktan sonra istemciden çağrılan yetkili POST'ta yürür. Sınırın tam
+ * sözleşmesinin sahibi verify-read-receipt-boundary-v1'dir; burada yalnız
+ * bu sayfanın render'da yazmadığı ve toplu okundu kestirmesine kaçmadığı
+ * korunur.
+ */
 check(
-  "click-through marks only one notification",
-  notificationRedirect.includes("markNotificationAsRead(user.id, notification.id)") &&
+  "notification redirect render does not write read receipts",
+  !notificationRedirect.includes("markNotificationAsRead(") &&
     !notificationRedirect.includes("markAllNotificationsAsRead"),
 );
 check(
