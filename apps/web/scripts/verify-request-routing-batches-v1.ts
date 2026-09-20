@@ -7,7 +7,7 @@
  * ve bir dilim başarısız olursa toplam koşum başarısız olur.
  */
 import { spawnSync } from "node:child_process";
-import { existsSync, readdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 type Batch = {
@@ -32,19 +32,19 @@ const batches: readonly Batch[] = [
 
 const cwd = process.cwd();
 const matrixScript = resolve(cwd, "scripts/verify-request-routing-matrix-v1.ts");
-const directJitiCli = resolve(cwd, "node_modules/jiti/lib/jiti-cli.mjs");
-const pnpmJitiClis = existsSync(resolve(cwd, "node_modules/.pnpm"))
-  ? readdirSync(resolve(cwd, "node_modules/.pnpm"))
-      .filter((entry) => entry.startsWith("jiti@"))
-      .map((entry) =>
-        resolve(cwd, "node_modules/.pnpm", entry, "node_modules/jiti/lib/jiti-cli.mjs"),
-      )
-  : [];
-const jitiCli = [directJitiCli, ...pnpmJitiClis].find(existsSync);
+/**
+ * ÇOCUK KOŞUCU JITI DEĞİL TSX'TİR (OL-0011, 2026-09-20). jiti `@/` takma
+ * adını tsconfig'ten okumaz; registry.ts `@/lib/knowledge/slug` import'unu
+ * alınca ALTI dilimin altısı daha modül yüklerken MODULE_NOT_FOUND ile
+ * ölüyordu — matrisin kendisi tsx altında aynı gün yeşildi (services-health
+ * 262/262, real-estate 122/122, automotive 1592/1592). Ölçmeyen koşucu
+ * kaldırıldı; filonun geri kalanı gibi depoya sabitlenmiş tsx kullanılır.
+ */
+const tsxCli = resolve(cwd, "node_modules/tsx/dist/cli.mjs");
 
-if (!jitiCli) {
+if (!existsSync(tsxCli)) {
   throw new Error(
-    "Bu koşucu jiti üzerinden çalıştırılmalı: jiti scripts/verify-request-routing-batches-v1.ts",
+    "tsx bulunamadı: npm ci sonrası node_modules/tsx/dist/cli.mjs beklenir.",
   );
 }
 
@@ -52,7 +52,7 @@ let failed = false;
 for (const batch of batches) {
   const categoryFilter = batch.categories.join(",");
   console.log(`\n=== BATCH ${batch.name}: ${categoryFilter} ===`);
-  const result = spawnSync(process.execPath, [jitiCli, matrixScript], {
+  const result = spawnSync(process.execPath, [tsxCli, matrixScript], {
     cwd,
     env: {
       ...process.env,
