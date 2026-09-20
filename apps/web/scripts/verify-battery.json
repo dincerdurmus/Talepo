@@ -114,6 +114,7 @@
     "verify-provider-routing",
     "verify-public-home-v1",
     "verify-publish-resume-v1",
+    "verify-readiness-brand-authority-v1",
     "verify-request-authority-v1",
     "verify-request-composer-v2-controls",
     "verify-request-composer-v2-entity-global-core",

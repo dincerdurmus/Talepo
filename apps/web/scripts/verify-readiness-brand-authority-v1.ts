@@ -28,6 +28,7 @@
  */
 import assert from "node:assert";
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join as pathJoin } from "node:path";
 
 import {
@@ -407,12 +408,28 @@ function main(): void {
   /**
    * Aynı TypeScript koşucusuyla yeniden çalıştırılır: `process.execArgv`
    * tsx kaydını taşır, böylece burada ikinci bir koşucu varsayımı kurulmaz.
+   *
+   * ÇIKIŞ KODU BURADA HÜKÜM DEĞİLDİR (OL-0011, 2026-09-20). Kapsam
+   * doğrulayıcısı cetvelde BİLİNEN KIRMIZIDIR (8 kapsam açığı, sayıyla
+   * tutulur) ve tasarımı gereği 1 ile çıkar. Bu ölçümün konusu çocuğun
+   * hükmü değil YAYINLADIĞI SAYAÇLARDIR; eski hâli exit 1 görünce stdout'u
+   * çöpe atıyor ve hiçbir şey ölçmeden kırmızı düşüyordu (ölçmeyen ölçüm).
+   * Şimdi stdout her iki durumda da okunur; süreç hiç çıktı üretmediyse
+   * (gerçek koşturulamama) kırmızı aynen kalır.
    */
-  const runCoverage = (): string =>
-    execFileSync(process.execPath, [...process.execArgv, coverageScript], {
-      cwd: pathJoin(__dirname, ".."),
-      encoding: "utf8",
-    });
+  const runCoverage = (): string => {
+    try {
+      return execFileSync(process.execPath, [...process.execArgv, coverageScript], {
+        cwd: pathJoin(__dirname, ".."),
+        encoding: "utf8",
+      });
+    } catch (err) {
+      const stdout = (err as { stdout?: string | Buffer }).stdout;
+      const text = typeof stdout === "string" ? stdout : stdout?.toString("utf8") ?? "";
+      if (text.trim()) return text;
+      throw err;
+    }
+  };
   let outA = "";
   let outB = "";
   try {
@@ -446,10 +463,31 @@ function main(): void {
         `G7 coverage çıktısında ${key} yayınlanmıyor.`,
       );
     }
+    /**
+     * G8 SAYIYI ARTIK KENDİSİ DONDURMAZ (OL-0011, 2026-09-20). Eski satır
+     * 108/0/0 bekliyordu (98+ Faz I, 2026-09-01); kapsam sayısının kanonik
+     * evi o tarihten beri değişti: CI cetveli verify-battery.json,
+     * verify-category-coverage-v1'i BİLİNEN KIRMIZI olarak sayıyla tutuyor
+     * (8, ölçüm 2026-09-15). Aynı ölçümün iki bağımsız dondurulmuş kopyası
+     * sessizce ayrışır — burada yaşandı. G8 artık cetvelden TÜRETİLİR:
+     * toplam senaryo 108 ve known_fail 0 kalır, fail sayısı cetveldeki
+     * ratchet ile birebir aynı olmak zorundadır. Cetvel değişirse burası
+     * kendiliğinden izler; çelişki yine kırmızı verir.
+     */
+    const coverageSummary = /(\d+) pass, (\d+) known_fail, (\d+) fail/.exec(outA);
+    const ledger = JSON.parse(
+      readFileSync(pathJoin(__dirname, "verify-battery.json"), "utf8"),
+    ) as { knownRed?: Array<{ script: string; maxFailures: number }> };
+    const coverageRatchet = ledger.knownRed?.find(
+      (e) => e.script === "verify-category-coverage-v1",
+    );
     check(
-      // Wave L (2026-08-31): FD-8/FD-10 kürasyonu health-07 ve home-06 senaryolarını çözdü — 99/9 → 100/8 (sayılı delta ledger LG-59l).
-      /108 pass, 0 known_fail, 0 fail/.test(outA), // 98+ Faz I: 8 tarihsel known_fail eksen düzeltmeleriyle kapandı (ledger)
-      "G8 coverage senaryo sonucu 108 PASS / 0 known_fail / 0 fail değil.",
+      Boolean(coverageSummary) &&
+        Boolean(coverageRatchet) &&
+        Number(coverageSummary![1]) + Number(coverageSummary![3]) === 108 &&
+        Number(coverageSummary![2]) === 0 &&
+        Number(coverageSummary![3]) === coverageRatchet!.maxFailures,
+      `G8 coverage özeti cetvelle uyuşmuyor: ölçülen ${coverageSummary?.[0] ?? "yok"}, cetvel maxFailures=${coverageRatchet?.maxFailures ?? "yok"}.`,
     );
   }
 
