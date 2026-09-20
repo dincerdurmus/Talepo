@@ -1373,3 +1373,27 @@ korunur.
 
 **Kapsam sınırı.** Matching SHADOW'da kalmıştır; bu karar eşleşme yayınlama,
 bildirim veya fanout yetkisi vermez.
+
+---
+
+## D-2026-09-20 — Maira, Decision Layer işinin kapsamı DIŞINDADIR (kurucu kararı)
+
+**Bağlam.** Decision Layer temeli kuruldu (talep kararları sözleşme arkasına
+alındı; `src/lib/request-decisions/`). Bu iş sırasında Maira'ya dokunulmadı ve
+dokunulmayacağı kurucu kararıyla kayda geçti. Bugünkü Maira 16 dosyalık bir
+sunum/ses katmanıdır (`src/components/request/maira/*`, `src/lib/maira/*`,
+`src/lib/request-composer/v2/maira-voice.ts`); model çağrısı, tool, hafıza ve
+izin yüzeyi taşımaz, deterministik soru zamanlayıcısının seçtiği soruya yalnız
+söyleyiş ekler (D-0026 ölçümü, 2026-09-19).
+
+> Maira today: presentation / voice layer over deterministic question
+> scheduling.
+> Maira future: human-facing Talepo assistant/coprocessor.
+> Current decision: Do not implement future Maira agent architecture as part
+> of the Decision Layer/Jev preparation work. Future Maira must consume shared
+> Talepo domain services and Decision Layer rather than creating its own
+> parallel brain.
+
+**Değişirse risk.** Maira kendi karar beynini kurarsa aynı talep iki ayrı
+otoriteden iki farklı anlayış alır; tek beyin sözleşmesi (Single Brain) ve
+ödenen Pro filtre kalitesi sessizce bölünür.

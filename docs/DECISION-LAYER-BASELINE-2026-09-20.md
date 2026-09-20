@@ -91,3 +91,20 @@ ile 458 sn, 8 paralel).
 Decision Layer davranış değiştirmemeyi taahhüt eder. AFTER koşusunda yukarıdaki
 her satır aynı kalmalıdır; herhangi bir sapma ya bilinçli, açıklanmış ve kendi
 commit'inde ölçülmüş bir davranış değişikliğidir ya da regresyondur.
+
+## AFTER — ölçüldü 2026-09-20, sınır taşındıktan sonra (`7b505a7` ağacı)
+
+İki doğrulayıcı da sınır taşınmış ağaçta yeniden koşuldu:
+
+- brain-adversarial: 11 boyutun 11'i BEFORE ile birebir aynı (category
+  ok=1023, kind ok=1027, brand 145/125, model 106, number 0/209, quantity
+  62/62, budget 34/34, ANY 34/34, scope 1077/1077, questions 223/223; tüm
+  sert kapılar 0 ihlal). HARD_GATES=GREEN.
+- discovery-quality: dört bileşen BEFORE ile birebir aynı (1027/145/586/62
+  CORRECT, WRONG=MISSING=0), aynı iki lossy sapma (`hlth-b~typo`,
+  `hlth-b~typo-ascii`). QUALITY_GATES=GREEN.
+
+Davranış farkı: YOK. Sınırın kendisi ayrıca kapıya bağlandı:
+`verify-decision-layer-boundary-v1` (cetvelde; dört mutasyonla kırmızı
+verebildiği kanıtlı — sağlayıcı kararı çarpıtma, beynin doğrudan import'a
+dönmesi, yüzey büyümesi, sağlayıcıya mantık sızması).
