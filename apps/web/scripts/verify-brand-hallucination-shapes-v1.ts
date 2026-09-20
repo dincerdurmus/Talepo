@@ -14,6 +14,13 @@
  *   H2 — araç olmayan girdi (MUST_NOT) VEHICLE öznesi dönerse: sahte araç.
  *   H3 — gerçek araç girdisi (MUST) VEHICLE dönmezse: tuzak kaybı — bu
  *        kapı otomotiv kataloğunu cezalandırma bahanesi olamaz.
+ *   H4 — marka girdide AÇIKÇA yazılıyken (brandRule=MUST) kesin marka
+ *        alanı boş ya da yanlışsa: MARKA KAYBI (2026-09-2x eki). Kapı tek
+ *        yönlüydü: uydurmayı görüyor, çalmayı görmüyordu — alan-uyumu
+ *        indirgemesi (9934f8a c maddesi) tam bu yönde risk taşır. Kesin
+ *        alan boşken adayda (brandCandidate) duran marka AYRI raporlanır:
+ *        "adayda var" ile "hiç yok" aynı sayıya katılmaz — ikisi farklı
+ *        şiddettir ama ikisi de H4'tür (ödenen filtre adayı görmez).
  *
  * Çıktı ratchet'e bağlanabilir: "N passed, M failed" + eksen kırılımı.
  * Doğuşunda KIRMIZI olması beklenir (teşhiste en az üç ihlal canlı
@@ -35,14 +42,19 @@ function foldTr(value: string): string {
     .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u");
 }
 
-type Violation = { id: string; axis: string; rule: "H1" | "H2" | "H3"; detail: string };
+type Violation = { id: string; axis: string; rule: "H1" | "H2" | "H3" | "H4"; detail: string };
 
 const violations: Violation[] = [];
 let passed = 0;
+let h4InCandidate = 0;
+let h4Absent = 0;
 
 function judge(c: HallucinationShapeCase): void {
   const u = understandRequest(c.input);
   const brand = u.identity.brand?.value ?? null;
+  const candidate =
+    (u.attributes.brandCandidate as { value?: unknown } | undefined)?.value ??
+    null;
   const kind = u.subject.kind.value;
   const local: Violation[] = [];
 
@@ -57,6 +69,25 @@ function judge(c: HallucinationShapeCase): void {
       local.push({
         id: c.id, axis: c.axis, rule: "H1",
         detail: `yanlış marka: beklenen "${c.expectedBrand}", dönen "${brand}"`,
+      });
+    }
+  }
+
+  if (c.brandRule === "MUST" && c.expectedBrand != null) {
+    const brandMatches =
+      brand != null &&
+      (foldTr(brand).includes(foldTr(c.expectedBrand)) ||
+        foldTr(c.expectedBrand).includes(foldTr(brand)));
+    if (!brandMatches) {
+      const inCandidate =
+        typeof candidate === "string" &&
+        (foldTr(candidate).includes(foldTr(c.expectedBrand)) ||
+          foldTr(c.expectedBrand).includes(foldTr(candidate)));
+      if (inCandidate) h4InCandidate += 1;
+      else h4Absent += 1;
+      local.push({
+        id: c.id, axis: c.axis, rule: "H4",
+        detail: `marka kaybı: beklenen "${c.expectedBrand}", kesin alan ${brand == null ? "boş" : `"${brand}"`}${inCandidate ? ` (adayda duruyor: "${String(candidate)}")` : " (adayda da yok)"}`,
       });
     }
   }
@@ -92,6 +123,9 @@ for (const v of violations) {
 for (const [rule, n] of [...byRule.entries()].sort()) {
   console.log(`${rule}: ${n} ihlal`);
 }
+console.log(
+  `H4 kırılımı — kesin alanda yok, adayda var: ${h4InCandidate} · hiç yok: ${h4Absent}`,
+);
 for (const [axis, n] of [...byAxis.entries()].sort()) {
   console.log(`  eksen ${axis}: ${n}`);
 }

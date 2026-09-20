@@ -46,6 +46,15 @@ export type HallucinationShapeCase = {
    *          başka marka dönerse H1.
    */
   expectedBrand: string | null;
+  /**
+   * MUST → marka girdide AÇIKÇA yazılıdır; kesin marka alanında dönmek
+   * ZORUNDADIR, dönmezse H4 (marka kaybı). ONLY (varsayılan) → doğru marka
+   * ya da hiç marka; bilmemek halüsinasyon değildir. MUST yalnız markası
+   * metinde geçen satırlara verilir (C ekseni tamamı, D'nin markalı 9
+   * satırı, A'da adı metinde geçen A03/A09); "Galaxy S25" gibi markasız
+   * yazımlar ONLY kalır — o disiplin H4 ile bozulmaz.
+   */
+  brandRule?: "MUST" | "ONLY";
   vehicle: VehicleRule;
   /** Bilgi alanı (kapı kuralı değil): beklenen ürün türü çekirdeği ya da null=bilinmiyor. */
   productTypeHint?: string | null;
@@ -55,13 +64,13 @@ export const BRAND_HALLUCINATION_SHAPES_V1: readonly HallucinationShapeCase[] = 
   /* ---- A. İngilizce marka-seri öbeği ---- */
   { id: "A01", axis: "ingilizce-marka-seri", input: "Xbox Series X arıyorum", expectedBrand: "Microsoft", vehicle: "MUST_NOT", productTypeHint: "konsol" },
   { id: "A02", axis: "ingilizce-marka-seri", input: "PlayStation 5 arıyorum", expectedBrand: "Sony", vehicle: "MUST_NOT", productTypeHint: "konsol" },
-  { id: "A03", axis: "ingilizce-marka-seri", input: "Nintendo Switch arıyorum", expectedBrand: "Nintendo", vehicle: "MUST_NOT", productTypeHint: "konsol" },
+  { id: "A03", axis: "ingilizce-marka-seri", input: "Nintendo Switch arıyorum", expectedBrand: "Nintendo", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "konsol" },
   { id: "A04", axis: "ingilizce-marka-seri", input: "Galaxy S25 arıyorum", expectedBrand: "Samsung", vehicle: "MUST_NOT", productTypeHint: "telefon" },
   { id: "A05", axis: "ingilizce-marka-seri", input: "Galaxy S25 Ultra arıyorum", expectedBrand: "Samsung", vehicle: "MUST_NOT", productTypeHint: "telefon" },
   { id: "A06", axis: "ingilizce-marka-seri", input: "iPhone 17 arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "telefon" },
   { id: "A07", axis: "ingilizce-marka-seri", input: "iPhone 17 Pro arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "telefon" },
   { id: "A08", axis: "ingilizce-marka-seri", input: "MacBook Air M4 arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "dizüstü" },
-  { id: "A09", axis: "ingilizce-marka-seri", input: "Apple Watch Ultra arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "saat" },
+  { id: "A09", axis: "ingilizce-marka-seri", input: "Apple Watch Ultra arıyorum", expectedBrand: "Apple", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "saat" },
   { id: "A10", axis: "ingilizce-marka-seri", input: "iPad Pro 13 arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "tablet" },
   { id: "A11", axis: "ingilizce-marka-seri", input: "Surface Pro 11 arıyorum", expectedBrand: "Microsoft", vehicle: "MUST_NOT", productTypeHint: "tablet" },
   { id: "A12", axis: "ingilizce-marka-seri", input: "AirPods Pro 2 arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "kulaklık" },
@@ -86,29 +95,29 @@ export const BRAND_HALLUCINATION_SHAPES_V1: readonly HallucinationShapeCase[] = 
   { id: "B13", axis: "jenerik-ingilizce-tur", input: "air fryer ariyorum", expectedBrand: null, vehicle: "MUST_NOT", productTypeHint: "fritöz" },
 
   /* ---- C. Türkçe yaprak + açık İngilizce/yabancı marka ---- */
-  { id: "C01", axis: "tr-yaprak-en-marka", input: "Samsung buzdolabı arıyorum", expectedBrand: "Samsung", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
-  { id: "C02", axis: "tr-yaprak-en-marka", input: "Bosch bulaşık makinesi arıyorum", expectedBrand: "Bosch", vehicle: "MUST_NOT", productTypeHint: "bulaşık makinesi" },
-  { id: "C03", axis: "tr-yaprak-en-marka", input: "Sony kulaklık arıyorum", expectedBrand: "Sony", vehicle: "MUST_NOT", productTypeHint: "kulaklık" },
-  { id: "C04", axis: "tr-yaprak-en-marka", input: "LG çamaşır makinesi arıyorum", expectedBrand: "LG", vehicle: "MUST_NOT", productTypeHint: "çamaşır makinesi" },
-  { id: "C05", axis: "tr-yaprak-en-marka", input: "Apple dizüstü bilgisayar arıyorum", expectedBrand: "Apple", vehicle: "MUST_NOT", productTypeHint: "dizüstü" },
-  { id: "C06", axis: "tr-yaprak-en-marka", input: "Philips süpürge arıyorum", expectedBrand: "Philips", vehicle: "MUST_NOT", productTypeHint: "süpürge" },
-  { id: "C07", axis: "tr-yaprak-en-marka", input: "Arçelik buzdolabı arıyorum", expectedBrand: "Arçelik", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
-  { id: "C08", axis: "tr-yaprak-en-marka", input: "Samsung televizyon arıyorum", expectedBrand: "Samsung", vehicle: "MUST_NOT", productTypeHint: "televizyon" },
-  { id: "C09", axis: "tr-yaprak-en-marka", input: "Xiaomi robot süpürge arıyorum", expectedBrand: "Xiaomi", vehicle: "MUST_NOT", productTypeHint: "robot süpürge" },
-  { id: "C10", axis: "tr-yaprak-en-marka", input: "samsung buzdolabi ariyorum", expectedBrand: "Samsung", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
+  { id: "C01", axis: "tr-yaprak-en-marka", input: "Samsung buzdolabı arıyorum", expectedBrand: "Samsung", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
+  { id: "C02", axis: "tr-yaprak-en-marka", input: "Bosch bulaşık makinesi arıyorum", expectedBrand: "Bosch", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "bulaşık makinesi" },
+  { id: "C03", axis: "tr-yaprak-en-marka", input: "Sony kulaklık arıyorum", expectedBrand: "Sony", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "kulaklık" },
+  { id: "C04", axis: "tr-yaprak-en-marka", input: "LG çamaşır makinesi arıyorum", expectedBrand: "LG", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "çamaşır makinesi" },
+  { id: "C05", axis: "tr-yaprak-en-marka", input: "Apple dizüstü bilgisayar arıyorum", expectedBrand: "Apple", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "dizüstü" },
+  { id: "C06", axis: "tr-yaprak-en-marka", input: "Philips süpürge arıyorum", expectedBrand: "Philips", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "süpürge" },
+  { id: "C07", axis: "tr-yaprak-en-marka", input: "Arçelik buzdolabı arıyorum", expectedBrand: "Arçelik", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
+  { id: "C08", axis: "tr-yaprak-en-marka", input: "Samsung televizyon arıyorum", expectedBrand: "Samsung", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "televizyon" },
+  { id: "C09", axis: "tr-yaprak-en-marka", input: "Xiaomi robot süpürge arıyorum", expectedBrand: "Xiaomi", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "robot süpürge" },
+  { id: "C10", axis: "tr-yaprak-en-marka", input: "samsung buzdolabi ariyorum", expectedBrand: "Samsung", brandRule: "MUST", vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
 
   /* ---- D. Gerçek araç tuzağı — otomotiv kataloğu burada DOĞRUDUR ---- */
-  { id: "D01", axis: "gercek-arac-tuzagi", input: "Ford Focus arıyorum", expectedBrand: "Ford", vehicle: "MUST", productTypeHint: null },
-  { id: "D02", axis: "gercek-arac-tuzagi", input: "Fiat Egea arıyorum", expectedBrand: "Fiat", vehicle: "MUST", productTypeHint: null },
-  { id: "D03", axis: "gercek-arac-tuzagi", input: "Ford Transit arıyorum", expectedBrand: "Ford", vehicle: "MUST", productTypeHint: null },
+  { id: "D01", axis: "gercek-arac-tuzagi", input: "Ford Focus arıyorum", expectedBrand: "Ford", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D02", axis: "gercek-arac-tuzagi", input: "Fiat Egea arıyorum", expectedBrand: "Fiat", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D03", axis: "gercek-arac-tuzagi", input: "Ford Transit arıyorum", expectedBrand: "Ford", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D04", axis: "gercek-arac-tuzagi", input: "İkinci el araba arıyorum", expectedBrand: null, vehicle: "MUST", productTypeHint: null },
-  { id: "D05", axis: "gercek-arac-tuzagi", input: "Mercedes C200 arıyorum", expectedBrand: "Mercedes", vehicle: "MUST", productTypeHint: null },
-  { id: "D06", axis: "gercek-arac-tuzagi", input: "Smart araba arıyorum", expectedBrand: "Smart", vehicle: "MUST", productTypeHint: null },
-  { id: "D07", axis: "gercek-arac-tuzagi", input: "Mini Cooper arıyorum", expectedBrand: "Mini", vehicle: "MUST", productTypeHint: null },
-  { id: "D08", axis: "gercek-arac-tuzagi", input: "Seat Leon arıyorum", expectedBrand: "Seat", vehicle: "MUST", productTypeHint: null },
-  { id: "D09", axis: "gercek-arac-tuzagi", input: "Renault Clio arıyorum", expectedBrand: "Renault", vehicle: "MUST", productTypeHint: null },
+  { id: "D05", axis: "gercek-arac-tuzagi", input: "Mercedes C200 arıyorum", expectedBrand: "Mercedes", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D06", axis: "gercek-arac-tuzagi", input: "Smart araba arıyorum", expectedBrand: "Smart", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D07", axis: "gercek-arac-tuzagi", input: "Mini Cooper arıyorum", expectedBrand: "Mini", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D08", axis: "gercek-arac-tuzagi", input: "Seat Leon arıyorum", expectedBrand: "Seat", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
+  { id: "D09", axis: "gercek-arac-tuzagi", input: "Renault Clio arıyorum", expectedBrand: "Renault", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
   { id: "D10", axis: "gercek-arac-tuzagi", input: "2020 model dizel SUV arıyorum", expectedBrand: null, vehicle: "MUST", productTypeHint: null },
-  { id: "D11", axis: "gercek-arac-tuzagi", input: "ford focus ariyorum", expectedBrand: "Ford", vehicle: "MUST", productTypeHint: null },
+  { id: "D11", axis: "gercek-arac-tuzagi", input: "ford focus ariyorum", expectedBrand: "Ford", brandRule: "MUST", vehicle: "MUST", productTypeHint: null },
 
   /* ---- E. Marka-benzeri sözcük, araç dışı bağlam ---- */
   { id: "E01", axis: "marka-benzeri-sozcuk", input: "Mini buzdolabı arıyorum", expectedBrand: null, vehicle: "MUST_NOT", productTypeHint: "buzdolabı" },
