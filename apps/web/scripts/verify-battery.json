@@ -36,6 +36,7 @@
     "verify-curated-entity-consumption-v1",
     "verify-deal-completion-v1",
     "verify-deal-review-v1",
+    "verify-decision-layer-boundary-v1",
     "verify-discovery-quality-v1",
     "verify-explore-paid-filters-v1",
     "verify-explore-visual-v1",

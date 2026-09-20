@@ -1,4 +1,5 @@
 /** Central thresholds for Request Understanding Confidence (0..1). */
+import type { DecisionStatus } from "./types";
 
 export const UNDERSTANDING_CONFIDENCE_WEIGHTS = {
   intent: 0.28,
@@ -24,6 +25,29 @@ export const CATEGORY_DECISION = {
   /** Below this → TENTATIVE even if detector marked confident */
   tentativeBelow: 0.55,
 } as const;
+
+/**
+ * Güven → karar statüsü eşlemesi. Daha önce understand-request.ts içinde
+ * modül-yereldi; kategori kapısı kendi modülüne taşınınca iki tüketici
+ * oluştu ve eşik mantığı eşiklerin tanımlandığı bu dosyaya TAŞINDI
+ * (kopyalanmadı). Eşikler CATEGORY_DECISION'dan okunur; ikinci bir eşik
+ * tablosu yoktur.
+ */
+export function decisionStatus(
+  confidence: number,
+  opts?: { forceUnknown?: boolean; detectorConfident?: boolean },
+): DecisionStatus {
+  if (opts?.forceUnknown || confidence < CATEGORY_DECISION.unknownBelow) {
+    return "UNKNOWN";
+  }
+  if (
+    confidence < CATEGORY_DECISION.tentativeBelow ||
+    opts?.detectorConfident === false
+  ) {
+    return "TENTATIVE";
+  }
+  return "CONFIDENT";
+}
 
 /** Attribute acceptance */
 export const ATTRIBUTE_CONFIDENCE = {
