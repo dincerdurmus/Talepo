@@ -133,6 +133,14 @@ export function applyCatalogEnrichment(
 
     if (
       enrichment.brand &&
+      /**
+       * ALAN UYUMU (γ, 2026-09-20 — H-kapısı ölçümü): otomotiv kataloğunun
+       * markası yalnız otomotiv bağlamında dolar. Ölçülen kusur: "Smart TV"
+       * → SMART, "Mini fırın" → MINI — kategori kesin teknoloji/beyaz eşya
+       * iken kamyon/otomobil markası yazılıyordu. automotiveContext zaten
+       * yukarıda hesaplanıyordu; marka dolumu onu okumuyordu.
+       */
+      automotiveContext &&
       FILLABLE.includes(enrichment.brand.confidence) &&
       mayOverwrite(identity.brand, enrichment.brand.name, "brand", next.rawInput) &&
       /**

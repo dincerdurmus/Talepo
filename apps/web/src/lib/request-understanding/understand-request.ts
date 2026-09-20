@@ -76,7 +76,18 @@ import {
   readRequestedTarget,
 } from "@/lib/request-understanding/part-relation";
 
-import { findAutomotiveModel, findTechnologyProduct } from "@/lib/ai/parser/brand-catalog";
+import {
+  APPLIANCE_BRANDS,
+  AUTOMOTIVE_BRANDS,
+  BABY_BRANDS,
+  findAutomotiveModel,
+  findBrand,
+  findTechnologyProduct,
+  FURNITURE_BRANDS,
+  HOME_KITCHEN_BRANDS,
+  MACHINERY_BRANDS,
+  TECHNOLOGY_BRANDS,
+} from "@/lib/ai/parser/brand-catalog";
 
 import { applyCatalogEnrichment } from "@/lib/catalog/apply-enrichment";
 import { ensureAutomotiveCatalogRegistered } from "@/lib/catalog/automotive/provider";
@@ -483,6 +494,14 @@ function readTireSeason(text: string): { value: string; evidence: string } | nul
   return null;
 }
 
+/**
+ * Araç gövde adı — tek yetkili tanım. Daha önce hasVehicleRequestSignals
+ * içinde satır-içiydi; γ dilimi (2026-09-20) aynı kanıtı özne indirgeme ve
+ * marka alan-uyumu kapılarında da okuduğu için modül sabitine çıkarıldı.
+ */
+const VEHICLE_BODY_NOUN_RE =
+  /\b(araba|otomobil|suv|sedan|hatchback|station\s+wagon|pickup|kamyonet|kamyon)\b/i;
+
 export function understandRequest(
   input: UnderstandRequestInput | string,
 ): RequestUnderstandingResult {
@@ -517,8 +536,19 @@ export function understandRequest(
   const techProduct = looksLikeTelevisionScreenContext(normalizedInput)
     ? null
     : findTechnologyProduct(normalizedInput);
+  /**
+   * ÇIPLAK SAYI ARAÇ MODELİ DEĞİLDİR (γ, 2026-09-20 — H-kapısı ölçümü).
+   *
+   * Eski desen `[a-z]?\d{2,3}` harfi OPSİYONEL tutuyordu; "iPhone 17",
+   * "iPad Pro 13", "Surface Pro 11" cümlelerindeki çıplak sayı tek başına
+   * araç-modeli kanıtı sayılıp özneyi VEHICLE'a çeviriyordu (ölçüldü:
+   * verify-brand-hallucination-shapes-v1 H2, 5 vaka). Harf artık zorunlu:
+   * C200/A45/S25 biçimleri araç kanıtı olmayı sürdürür, çıplak sayı olmaz.
+   * Gerçek araç talepleri zaten ya model adıyla (autoModel) ya araç
+   * gövde adıyla gelir; H3 tuzak ekseni bunu ölçmeye devam eder.
+   */
   const hasVehicleModel = Boolean(autoModel) || modelTokens.some((t) =>
-    /^[a-z]?\d{2,3}[a-z]?$/i.test(t.raw.replace(/\s/g, "")) ||
+    /^[a-z]\d{2,3}[a-z]?$/i.test(t.raw.replace(/\s/g, "")) ||
     /^[cesagl]\d{2,3}/i.test(t.raw),
   );
   /**
@@ -531,9 +561,7 @@ export function understandRequest(
   const hasVehicleRequestSignals =
     !requestedTargetBlocksVehicle(normalizedInput) &&
     !requestedTargetBlocksVehicle(readRequestedTarget(splitCompatibilityPhrase(normalizedInput)?.requested ?? normalizedInput).value ?? "") && (hasVehicleModel ||
-    /\b(araba|otomobil|suv|sedan|hatchback|station\s+wagon|pickup|kamyonet|kamyon)\b/i.test(
-      normalizedInput,
-    ));
+    VEHICLE_BODY_NOUN_RE.test(normalizedInput));
 
   const hasPropertySignals =
     (/\b(ev|daire|dükkan|dukkan|mağaza|magaza|villa|konut|arsa|tarla|imarli|imarlı|ofis|depo|antrepo|fabrika|imalathane|otel|devren|müştemilat|mustemilat|kooperatif|turistik|2\s*\+\s*1|3\s*\+\s*1)\b|\bdevre\s+(mülk|mulk)\b/i.test(
@@ -860,6 +888,33 @@ export function understandRequest(
           ]
         : category.alternatives,
     };
+  }
+
+  /**
+   * ARAÇ ÖZNESİ ALAN KANITI İSTER (γ, 2026-09-20 — H-kapısı ölçümü).
+   *
+   * Ölçülen kusur: "Galaxy S25 arıyorum" — otomotiv model kataloğundaki
+   * Ford Galaxy çarpışması özneyi VEHICLE'a çeviriyordu; kategori kararı
+   * ise CONFIDENT technology idi. Sözlük çarpışması alan kanıtını yenemez:
+   * kategori kararı KESİN ve otomotiv-dışıysa, cümlede araç gövde adı ve
+   * lastik bağlamı da yoksa, yalnız ad/sayı çarpışmasından gelen VEHICLE
+   * öznesi PRODUCT'a indirilir. Gerçek araç talepleri (gövde adı, otomotiv
+   * kategorisi, lastik bağlamı) bu kuralın dışında kalır ve H3 tuzak
+   * ekseni bunu her koşuda ölçer.
+   */
+  if (
+    subjectDecision.value === "VEHICLE" &&
+    category.value != null &&
+    category.value !== "automotive" &&
+    category.status === "CONFIDENT" &&
+    !VEHICLE_BODY_NOUN_RE.test(normalizedInput) &&
+    !lastikWheelOrServiceSignal(normalizedInput)
+  ) {
+    subjectDecision.value = "PRODUCT";
+    subjectDecision.evidence = [
+      ...(subjectDecision.evidence ?? []),
+      `vehicle-downgrade:non-automotive-category=${category.value}`,
+    ];
   }
 
   // Product identity (reuse V1.1) — use gated category or empty slug
@@ -1424,7 +1479,40 @@ export function understandRequest(
   ) {
     const evidence = classifyBrandEvidence(normalizedInput, identity.brand);
     brandEvidenceStatus = evidence.status;
-    if (evidence.status === "VERIFIED_CATALOG" || evidence.status === "USER_ASSERTED") {
+    /**
+     * KATALOG DOĞRULAMASI ALAN UYUMU İSTER (γ, 2026-09-20 — H-kapısı).
+     *
+     * Ölçülen kusur: "Smart TV 55 inç" → marka SMART, "Mini fırın" → marka
+     * MINI, "Galaxy S25" → marka FORD. Üçünde de katalog doğrulaması gerçek
+     * (Smart/MINI/Ford otomotiv markasıdır) ama ALAN yanlış: talep kesin
+     * olarak otomotiv-dışı bir kategoriye çözülmüşken cümlede araç kanıtı
+     * yok. Yalnız otomotiv kataloğunda yaşayan bir markanın doğrulaması,
+     * otomotiv bağlamı olmadan kesin marka yazamaz; aday statüsüne düşer
+     * (brandCandidate) ve kürasyon/soru motoru için korunur. Açık kullanıcı
+     * beyanı (USER_ASSERTED, "Smart marka ...") bu kuralın ÜSTÜNDEDİR.
+     */
+    const automotiveOnlyBrand =
+      Boolean(findBrand(identity.brand, AUTOMOTIVE_BRANDS)) &&
+      !findBrand(identity.brand, TECHNOLOGY_BRANDS) &&
+      !findBrand(identity.brand, APPLIANCE_BRANDS) &&
+      !findBrand(identity.brand, HOME_KITCHEN_BRANDS) &&
+      !findBrand(identity.brand, MACHINERY_BRANDS) &&
+      !findBrand(identity.brand, FURNITURE_BRANDS) &&
+      !findBrand(identity.brand, BABY_BRANDS);
+    const automotiveDomainAgreement =
+      category.value === "automotive" ||
+      category.value == null ||
+      subjectDecision.value === "VEHICLE" ||
+      VEHICLE_BODY_NOUN_RE.test(normalizedInput) ||
+      lastikWheelOrServiceSignal(normalizedInput);
+    const catalogBrandDomainMismatch =
+      evidence.status === "VERIFIED_CATALOG" &&
+      automotiveOnlyBrand &&
+      !automotiveDomainAgreement;
+    if (
+      (evidence.status === "VERIFIED_CATALOG" && !catalogBrandDomainMismatch) ||
+      evidence.status === "USER_ASSERTED"
+    ) {
       const explicitBrand = textIncludes(normalizedInput, identity.brand);
       identityBlock.brand = uv(identity.brand, {
         provenance: explicitBrand ? "EXPLICIT" : "INFERRED",
@@ -1441,13 +1529,18 @@ export function understandRequest(
         ],
       });
     } else {
-      if (evidence.status === "CANDIDATE") {
+      if (evidence.status === "CANDIDATE" || catalogBrandDomainMismatch) {
         // Aday korunur ama kesinleşmez; soru motoru/kürasyon için kalıcıdır.
         attributes.brandCandidate = uv(identity.brand, {
           provenance: "INFERRED",
           source: "DETERMINISTIC_INFERENCE",
           confidence: 0.3,
-          evidence: ["brand-candidate", evidence.reason],
+          evidence: [
+            "brand-candidate",
+            catalogBrandDomainMismatch
+              ? "automotive-brand-without-vehicle-context"
+              : evidence.reason,
+          ],
         });
       }
       // Reddedilen aday yan kapıdan dönemez (1B/1H deseni).
