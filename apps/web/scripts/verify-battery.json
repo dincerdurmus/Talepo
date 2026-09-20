@@ -13,6 +13,7 @@
     "verify-authority-ladder-v1",
     "verify-billing-drift-detector-v1",
     "verify-brain-adversarial-corpus-v1",
+    "verify-brand-hallucination-shapes-v1",
     "verify-browse-semantic-closure-v1",
     "verify-canonical-request-flow",
     "verify-catalog-automotive",
@@ -172,13 +173,6 @@
       "why": "8 kategori kapsam açığı. Ölçüldü 2026-09-15."
     },
     {
-      "script": "verify-brand-hallucination-shapes-v1",
-      "maxFailures": 16,
-      "pattern": "(\\d+) passed, (\\d+) failed",
-      "group": 2,
-      "why": "Korpusun gormedigi sekillerin halusinasyon kapisi (2026-09-20, dogusunda kirmizi): 57 girdilik sekil x kategori izgarasinda 16 dusen vaka — H1=10 yanlis marka (Galaxy->Ford x3, Smart TV->Smart x4, Mini firin/buzdolabi->MINI x3), H2=8 sahte VEHICLE (iPhone/iPad/Surface sayi tokenlari + Galaxy), H3=1 tuzak kaybi (Mini Cooper araci gorulmuyor). Duzeltme dilimleri ayri is; sayi dusunce cetvel guncellenir."
-    },
-    {
       "script": "verify-projection-authority-v1",
       "maxFailures": 108,
       "pattern": "KIRMIZI — (\\d+) ihlal",
@@ -236,6 +230,7 @@
     }
   ],
   "_eklendi_2026_09_18": "114 dogrulayici 2026-09-17'de tek tek kosuldu ve yesil olculdu; 113'u buraya eklendi. Disarida birakilan tek isim: verify-three-tier-plan-packaging-v1 — 5 satirlik bir kabuk, verify-two-plan-packaging-v1'i import etmekten baska bir sey yapmiyor ve adi artik var olmayan uc katmanli plan modelini anlatiyor. Cetvele girseydi ayni iddialar iki kez, biri yanlis adla kosardi.",
+  "_eklendi_2026_09_20_hkapi": "verify-brand-hallucination-shapes-v1 dogusunda bilinen kirmiziydi (16); ayni gun alan-uyumu duzeltmeleri (9934f8a) ve Cooper katalog gercegi (9a80923) 16'yi sifira indirdi, kapi yesil listeye tasindi. 57 girdilik izgara her push'ta kosuyor; korpusun gormedigi sekiller artik olculuyor.",
   "_eklendi_2026_09_20_ol11": "20 olculmus kirmizi uc sinifa ayrildi (OL-0011). 8'i bayat tabandi, sayilari satir satir sayilmis deltayla tazelendi ve yesile eklendi (answer-lifecycle, common/field/generated/nonvalue dortlusu, hybrid, pro-feature-tooltips, sayfam-home). readiness-brand iki olcum kusuru duzeltilerek yesile eklendi. request-routing-batches duzeltildi ama cetvele GIRMEDI: olcum sahibi verify-request-routing-matrix-v1 zaten yesil cetvelde, ayni olcum iki kez kosulmaz. 8'i bilinen kirmiziya sayiyla baglandi (yukarida). Cetvel disi kalan 2: answer-edit-parity ve inference-question-authority-v2 (ayrim bilgisi OL-0011 raporunda).",
   "_eklendi_2026_09_20": "1077 vakalik korpusun iki dogrulayicisi (brain-adversarial-corpus, discovery-quality) eklendi. 2026-09-17 olcumunde disarida kalmalarinin tek sebebi o oturumun 60 saniyelik zaman siniriydi (rc=124); 2026-09-20'de tam kosu ikisinde de rc=0, sureler 144 ve 140 saniye. Batarya script basina sure siniri koymaz ve paralel kostugu icin duvar saatine etkileri havuzda erir; talep beyninin en guclu kalite kapisinin elle kosulan script olarak kalmasi kabul edilmedi."
 }
