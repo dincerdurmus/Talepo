@@ -106,7 +106,12 @@ const BASES: BaseTemplate[] = [
   { id: "tech-b", input: "Oyun bilgisayarı arıyorum 32 GB RAM olsun", allowAnyBrand: true, allowBudgetSuffix: true, expected: { productTokens: ["bilgisayar"], categories: ["technology"], kinds: ["PRODUCT"], forbiddenNumbers: [32] } },
   { id: "tech-c", input: "Muhasebe yazılımı lisansı arıyorum", expected: { productTokens: ["yazılım", "yazilim"], categories: ["technology"], kinds: ["PRODUCT"] } },
   { id: "tech-d", input: "Samsung televizyon arıyorum 55 inç", expected: { productTokens: ["televizyon"], categories: ["technology"], kinds: ["PRODUCT"], brand: "samsung", forbiddenNumbers: [55], answeredKeys: ["brand", "screenSize"] } },
-  { id: "tech-e", input: "Sunucu bakım hizmeti arıyorum", expected: { categories: ["technology"], kinds: ["SERVICE"] } },
+  // Kurucu kararı 2026-09-21: bir ürün/sistem İÇİN yaptırılan iş hem o ürünün
+  // kökünü hem hizmeti kabul eder. Aynı şekildeki dört taban (ent-a, ent-d,
+  // tech-k, tech-h) zaten iki kökü de kabul ediyordu; tech-e sınıfın tek
+  // istisnasıydı — korpus kusuru, model hatası değil.
+  // Kayıt: Veyra/memory/KARAR-TECH-E-2026-09-21.md
+  { id: "tech-e", input: "Sunucu bakım hizmeti arıyorum", expected: { categories: ["technology", "services"], kinds: ["SERVICE"] } },
   { id: "tech-f", input: "Laptop lazım acil", allowAnyBrand: true, allowBudgetSuffix: true, expected: { productTokens: ["laptop"], categories: ["technology"], kinds: ["PRODUCT"] } },
   { id: "tech-g", input: "Logo muhasebe programı arıyorum", expected: { categories: ["technology"], kinds: ["PRODUCT"] } },
   { id: "tech-h", input: "Web sitesi yaptırmak istiyorum", expected: { categories: ["services", "technology"], kinds: ["SERVICE", "MANUFACTURED_ITEM", "PRODUCT"] } },
