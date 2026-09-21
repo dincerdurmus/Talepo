@@ -36,9 +36,28 @@ const config = JSON.parse(
   readFileSync(path.join(here, "verify-battery.json"), "utf8"),
 );
 
-const only = process.argv.includes("--only")
-  ? process.argv[process.argv.indexOf("--only") + 1]
-  : null;
+/**
+ * `--only` SESSİZCE HİÇBİR ŞEY KOŞMAMALI (2026-09-22, mutasyonla ölçüldü).
+ *
+ * Kusur buydu: cetvelde OLMAYAN bir ad verildiğinde (yazım hatası, silinmiş
+ * ya da yeniden adlandırılmış bir doğrulayıcı) iki liste de boş kalıyor,
+ * hiçbir süreç başlamıyor ve koşucu "BATARYA GEÇTİ" basıp **0** dönüyordu.
+ * Ölçüldü: `--only verify-bu-isimde-dogrulayici-yok` → koşan: 0, çıkış 0.
+ * CI için bu, cetveldeki bütün kapıların sessizce silahsız kalması demektir;
+ * yeşil görünen şey ölçülmemiş şeydir — bu dosyanın var oluş nedeninin tam
+ * tersi.
+ *
+ * KURAL: SIFIR KOŞU BAŞARI DEĞİLDİR. Ad cetvelde çözülemezse koşucu kırmızı
+ * döner ve adı söyler. Değer verilmeyen `--only` da sessizce "hepsini koş"a
+ * düşmez: filtrelemek isteyen birinin yanlışlıkla her şeyi koşması da, hiç
+ * koşmaması kadar yanlış bir sonuçtur.
+ */
+const onlyIndex = process.argv.indexOf("--only");
+const only = onlyIndex === -1 ? null : (process.argv[onlyIndex + 1] ?? null);
+if (onlyIndex !== -1 && (!only || only.startsWith("--"))) {
+  console.error("[koşucu] --only bir doğrulayıcı adı ister; ad verilmedi.");
+  process.exit(1);
+}
 
 /**
  * TS KOŞUCUSU SABİT DEĞİLDİR. CI `npx tsx` kullanır; farklı bir ortamda
@@ -121,6 +140,15 @@ let ran = 0;
 const greenList = config.green.filter((script) => !only || script === only);
 const redList = config.knownRed.filter((entry) => !only || entry.script === only);
 
+/* Ad cetvelde yoksa burada durulur: koşu başlamadan, açık gerekçeyle. */
+if (only && greenList.length === 0 && redList.length === 0) {
+  console.error(
+    `[koşucu] --only "${only}": bu ad cetvelde yok (scripts/verify-battery.json). ` +
+      "Sıfır koşu başarı değildir.",
+  );
+  process.exit(1);
+}
+
 const wallStarted = Date.now();
 const { results: greenResults, limit } = await runAll(greenList, "yeşil");
 const redRun = await runAll(redList.map((entry) => entry.script), "bilinen-kırmızı");
@@ -176,6 +204,13 @@ if (failures.length) {
 }
 
 if (failures.length || drifted.length) {
+  process.exit(1);
+}
+/* Son emniyet: hiç koşu olmadıysa geçme hükmü verilemez (cetvel boşalsa da). */
+if (ran === 0) {
+  console.error(
+    "[koşucu] hiçbir doğrulayıcı koşmadı — sıfır koşu başarı değildir.",
+  );
   process.exit(1);
 }
 console.log("\nBATARYA GEÇTİ.");
