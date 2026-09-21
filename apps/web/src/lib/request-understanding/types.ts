@@ -90,8 +90,21 @@ export type RequestIntent =
  * danışmanlık sorusudur, marketplace talebi değildir; yayınlanamaz,
  * eşleştirilmez, bildirim üretmez. GERÇEK satın alma niyeti bu karara
  * GİRMEZ: "Ağrı kesici arıyorum" bir ürün talebidir ve DEMAND kalır.
- * OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları ayrı bir kurucu kararıdır
- * ve burada verilmemiştir.
+ *   UNSUPPORTED_PHARMACY — kurucu kararı 2026-09-21 (D-0028). Yukarıdaki
+ * satır "OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları ayrı bir kurucu
+ * kararıdır ve burada verilmemiştir" diyordu; o karar VERİLDİ: **ilaç ve
+ * eczane ürünü Talepo'nun kapsamı değildir.** Dolayısıyla "Ağrı kesici
+ * arıyorum" artık DEMAND DEĞİLDİR — bu satırın eski hâli SUPERSEDED'dir.
+ *
+ * AYRIM ÜRÜNDEDİR, SÖZCÜKTE DEĞİL: ilacın kendisi kapsam dışıdır, ilacı
+ * saklayan/taşıyan ürün Sağlık'ta DEMAND kalır — taksonomide "İlaç Kutuları"
+ * ve "Doğum Kontrol Hapı Muhafazaları" zaten Sağlık yaprağıdır. Tıbbi tavsiye
+ * kapısıyla da karışmaz: o kapı SORU BİÇİMİ arar, bu kapı ÜRÜN ADI.
+ *
+ * Sebep ölçümle örtüştü (Veyra, 2026-09-21): Talepo taksonomisinde `health` =
+ * "Medikal Cihaz, Klinik Donanım, Diş/Laboratuvar" — ilaç zaten yok. Korpus
+ * `hlth-e`'de `health` bekliyordu; korpus taksonomiyle çelişiyordu.
+ * Kayıt: `Veyra/memory/KARAR-HLTH-E-2026-09-21.md`.
  *
  *   UNSUPPORTED_REMOVED_SCOPE — Talepo'da artık aktif bir kategori/akış
  * bulunmayan kapsam (ör. tıbbi test yaptırma). Metindeki hizmet fiili bu
@@ -102,6 +115,7 @@ export type RequestScope =
   | "DEMAND"
   | "UNSUPPORTED_SUPPLY"
   | "UNSUPPORTED_MEDICAL_ADVICE"
+  | "UNSUPPORTED_PHARMACY"
   | "UNSUPPORTED_REMOVED_SCOPE";
 
 /**
@@ -115,6 +129,7 @@ export function isUnsupportedRequestScope(
   return (
     scope === "UNSUPPORTED_SUPPLY" ||
     scope === "UNSUPPORTED_MEDICAL_ADVICE" ||
+    scope === "UNSUPPORTED_PHARMACY" ||
     scope === "UNSUPPORTED_REMOVED_SCOPE"
   );
 }

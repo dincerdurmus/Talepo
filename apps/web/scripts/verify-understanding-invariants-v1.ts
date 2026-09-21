@@ -5266,9 +5266,21 @@ check("I52d: sunucu yayın kapısı tavsiye sorusunu Request oluşmadan reddeder
   );
 });
 
+/**
+ * I52e — FIXTURE D-0028 ILE GUNCELLENDI (2026-09-21).
+ *
+ * Bu koruma FD-9 (tibbi tavsiye) donemine aitti ve o gun dogruydu: tavsiye
+ * kapisi gercek satin alma niyetini yutmamaliydi, "Agri kesici ariyorum" da
+ * o zaman gecerli bir urun talebiydi. Kurucu karari D-0028 tam olarak o vakayi
+ * tersine cevirdi: ilacin KENDISI Talepo'nun kapsami disidir.
+ *
+ * Fixture'in AMACI degismedi, yalnizca sinir tasindi: tavsiye kapisi hala
+ * satin alma niyetini yutmamali, ama ilac artik "satin alma niyeti" ornegi
+ * degil. Ilac vakasi asagida KENDI adiyla ve kendi beklentisiyle olculur —
+ * listeden silinip gorunmez olmaz.
+ */
 check("I52e: gerçek satın alma niyeti ASLA bu karara takılmaz (koruma)", () => {
   const CASES = [
-    "Ağrı kesici arıyorum",
     "Tansiyon aleti arıyorum",
     "Şeker ölçüm cihazı için test çubuğu arıyorum",
     "İlaç kutusu arıyorum",
@@ -5283,6 +5295,19 @@ check("I52e: gerçek satın alma niyeti ASLA bu karara takılmaz (koruma)", () =
   }
   // Arz kararı da değişmedi (öncelik: supply > medical).
   assert.equal(scopeOf("Aracımı satmak istiyorum"), "UNSUPPORTED_SUPPLY");
+});
+
+check("I52f: ilacın KENDİSİ kapsam dışıdır (D-0028), etrafındaki ürün değil", () => {
+  assert.equal(
+    scopeOf("Ağrı kesici arıyorum"),
+    "UNSUPPORTED_PHARMACY",
+    "kurucu kararı D-0028: ilaç ve eczane ürünü Talepo'nun kapsamı değildir",
+  );
+  assert.equal(
+    scopeOf("İlaç dolabı arıyorum"),
+    "DEMAND",
+    "ayrım ÜRÜN düzeyindedir: saklama ürünü Sağlık'ta geçerli taleptir",
+  );
 });
 
 /* ------------------------------------------------------------------------ *

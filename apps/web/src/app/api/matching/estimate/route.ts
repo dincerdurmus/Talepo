@@ -2,6 +2,8 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/auth";
+import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 import { toMatchingEstimateInput } from "@/lib/request-understanding/consumer-adapters";
 import { countMatchingCompanies } from "@/server/request/distribute-request";
@@ -37,6 +39,39 @@ export async function GET(request: Request) {
           city: cityParam,
         },
       });
+      /**
+       * KAPSAM KAPISI — ARAMA/İLERLETME YÜZEYİ (2026-09-21).
+       *
+       * Kurucunun cümlesi "ilaç arayan kişi bunu arayamamalı ve site
+       * ilerletmemeli" yalnız yayın kapısını değil, kullanıcıya "kaç firma
+       * bulunur" diyen bu yüzeyi de kapsar: bir sayı göstermek talebi
+       * ilerletmektir.
+       *
+       * Bugün ilaç metni tesadüfen duruyordu (kategori çözülemediği için
+       * `INSUFFICIENT_UNDERSTANDING`). TESADÜF KAPI DEĞİLDİR: istemci
+       * `categoryLocked=1` ile kategori dayatabildiği için kapsam kararı
+       * burada AÇIKÇA okunur ve kapsam dışı metin hiçbir sayı üretmez.
+       * Durum kendi adını taşır — "anlaşılmadı" demek yanlış olurdu, metin
+       * gayet iyi anlaşıldı; kapsam dışı olduğu için durduruldu.
+       */
+      if (isUnsupportedRequestScope(understanding.requestScope.value)) {
+        return NextResponse.json({
+          ok: true,
+          estimatedCompanyCount: 0,
+          expectedOfferCount: 0,
+          byCategory: 0,
+          byCity: 0,
+          status: "OUT_OF_SCOPE",
+          requestScope: understanding.requestScope.value,
+          reasons: ["request scope is outside Talepo"],
+          strategy: null,
+          intent: null,
+          categorySlug: null,
+          explanation: outOfScopeNoticeFor(understanding.requestScope.value),
+          canonicalUnderstandingVersion: understanding.version,
+        });
+      }
+
       const matchingInput = toMatchingEstimateInput(understanding, {
         cityOverride: cityParam,
         categoryLocked: categoryLocked && Boolean(legacyCategory),

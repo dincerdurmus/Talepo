@@ -186,10 +186,20 @@ export function useRequestBrain(input: UseRequestBrainInput): UseRequestBrainRes
 
       const data = (await response.json()) as PricePreviewResponse & {
         understandingStrategy?: string;
+        outOfScope?: boolean;
+        message?: string;
       };
 
       if (!response.ok || !data.ok || !data.intelligence) {
-        setPreviewError("Piyasa analizi şu anda kullanılamıyor.");
+        /* Kapsam dışı talep bir ARIZA DEĞİLDİR: "şu anda kullanılamıyor"
+         * demek kullanıcıya tekrar denemesini söyler. Sunucu kapsam kapısını
+         * kapattığında kendi kanonik metnini gönderir; onu olduğu gibi
+         * gösteririz. */
+        setPreviewError(
+          data.outOfScope && data.message
+            ? data.message
+            : "Piyasa analizi şu anda kullanılamıyor.",
+        );
         setAnalysisStatus("PRICE_ERROR");
         return;
       }

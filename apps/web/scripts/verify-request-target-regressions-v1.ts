@@ -39,7 +39,11 @@ const cases: TargetCase[] = [
   { id:'negative-wheel-car', text:'Jant değil araba arıyorum', category:'automotive', need:'vehicle', summary:/araç|araba/iu, forbidden:['tireSize','tireSeason'] },
   { id:'negative-wheel-and-tire-car', text:'Golf arıyorum, lastik ve jant istemiyorum', category:'automotive', need:'vehicle', summary:/Golf/iu, forbidden:['tireSize','tireSeason'] },
   { id:'negative-tire-wheel-diameter', text:'205/55 R16 lastik değil 17 inç jant arıyorum', category:'automotive', tireFamily:'Jant', fields:{tireSize:'17'}, forbidden:['tireSeason'] },
-  { id:'medicine-product', text:'Ağrı kesici arıyorum', category:'health', scope:'DEMAND' },
+  // Kurucu kararı D-0028 (2026-09-21) bu vakayı tersine çevirdi: ilacın
+  // kendisi kapsam dışıdır. Beklenti I52f ve korpus hlth-e ile aynı sınırı
+  // ölçer; vaka silinmez, KENDİ adıyla yeni beklentisini taşır. Kategori
+  // iddiası kalktı: kapsam dışı metin kategoriye bağlanmaz.
+  { id:'medicine-product', text:'Ağrı kesici arıyorum', scope:'UNSUPPORTED_PHARMACY' },
   { id:'ppf-restrictions', text:'SUV için PPF kaplama yaptırmak istiyorum', category:'automotive', kind:['SERVICE'], allowed:['needType','brand','model','city','color','budget'] },
   { id:'part-restrictions', text:'Toyota Corolla 2018 için çıkma motor arıyorum', category:'automotive', allowed:['needType','brand','model','part','city','partPreference','partVehicleYear','budget'] },
   { id:'maintenance-restrictions', text:'Periyodik bakım yaptırmak istiyorum', category:'automotive', allowed:['needType','brand','model','city','mileage','budget'] },

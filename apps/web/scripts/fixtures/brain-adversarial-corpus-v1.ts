@@ -39,7 +39,12 @@ export type CorpusExpected = {
   /** ANY beklenen alanlar (ANY eki uygulanınca doldurulur). */
   anyFields: readonly string[];
   /** Beklenen talep kapsamı. */
-  scope: "SUPPORTED" | "UNSUPPORTED_SUPPLY" | "UNSUPPORTED_MEDICAL_ADVICE" | "UNSUPPORTED_REMOVED_SCOPE";
+  scope:
+    | "SUPPORTED"
+    | "UNSUPPORTED_SUPPLY"
+    | "UNSUPPORTED_MEDICAL_ADVICE"
+    | "UNSUPPORTED_PHARMACY"
+    | "UNSUPPORTED_REMOVED_SCOPE";
   /** Kullanıcı zaten söylediği için SORULMAMASI gereken soru anahtarları. */
   answeredKeys: readonly string[];
   /** Ürün türü zemin gerçeği: envelope product kanalı bu jetonlardan en az
@@ -144,7 +149,12 @@ const BASES: BaseTemplate[] = [
   { id: "hlth-b", input: "Tekerlekli sandalye arıyorum", allowAnyBrand: true, expected: { productTokens: ["sandalye"], categories: ["health"], kinds: ["PRODUCT", "MEDICAL_DEVICE"] } },
   { id: "hlth-c", input: "Hasta yatağı kiralamak istiyorum", expected: { productTokens: ["yatak", "yatağı", "yatagi"], categories: ["health"], kinds: ["PRODUCT", "MEDICAL_DEVICE"] } },
   { id: "hlth-d", input: "Hangi tansiyon ilacını kullanmalıyım", expected: { categories: [], kinds: [], scope: "UNSUPPORTED_MEDICAL_ADVICE" } },
-  { id: "hlth-e", input: "Ağrı kesici arıyorum", expected: { categories: ["health"], kinds: ["PRODUCT"] } },
+  // Kurucu kararı 2026-09-21 (D-0028): "İlaç, eczane işimiz değil."
+  // Taksonomide `health` = Medikal Cihaz / Klinik Donanım / Diş-Laboratuvar —
+  // ilaç zaten yok; korpus taksonomiyle çelişiyordu. Beklenti GEVŞİYOR
+  // (kategori iddiası serbest), mevcut motor bu değişiklikle kırmızıya düşemez.
+  // Kayıt: Veyra/memory/KARAR-HLTH-E-2026-09-21.md
+  { id: "hlth-e", input: "Ağrı kesici arıyorum", expected: { categories: [], kinds: [], scope: "UNSUPPORTED_PHARMACY" } },
   // REAL-ESTATE
   { id: "re-a", input: "Kiralık daire arıyorum 2+1", expected: { categories: ["real-estate"], kinds: ["REAL_ESTATE", "PROPERTY"], productTokens: ["daire"], forbiddenNumbers: [2, 1, 3], answeredKeys: ["roomCount", "listingType"] } },
   { id: "re-b", input: "Satılık arsa arıyorum", allowBudgetSuffix: true, expected: { categories: ["real-estate"], kinds: ["REAL_ESTATE", "PROPERTY"], productTokens: ["arsa"], answeredKeys: ["listingType"] } },

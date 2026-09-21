@@ -137,12 +137,17 @@ export type RequestUnderstandingSnapshot = {
   /**
    * TALEPO KAPSAMI (kurucu kararı, 2026-08-25) — additive ve OPSİYONEL.
    *
-   * `"UNSUPPORTED_SUPPLY"` bir arz ilanıdır, `"UNSUPPORTED_MEDICAL_ADVICE"`
-   * kişiye özel tıbbi tavsiye sorusudur (kurucu kararı 2026-08-31, FD-9):
-   * ikisi de yayınlanamaz, eşleştirilmez,
-   * bildirim üretmez. Alan yoksa eski snapshot'lar `"DEMAND"` gibi okunur
-   * (geriye uyumlu). `discoveryProjection` bir JSON kolonu olduğu için
-   * migration GEREKMEZ — yeni Prisma kolonu açılmadı.
+   * Kapsam-dışı değerlerin listesi BURADA SAYILMAZ: tek yetkili kaynak
+   * `RequestScope` tipi ve onun tek yardımcı okuyucusudur. Bu yorum önceden iki
+   * değeri adıyla anıyordu ve sonradan eklenen ilaç/eczane kapsamını hiç
+   * görmediği için sessizce eskidi — aynı listenin ikinci bir kopyası, kodda
+   * da yorumda da kaçınılan şeydir. Kapsam-dışı her talep yayınlanamaz, eşleştirilmez,
+   * bildirim üretmez.
+   *
+   * Buradaki kayıt DENETİM İÇİNDİR, yetkinin kendisi değildir: yayın kapısı
+   * kararı sunucuda metinden yeniden türetir. Alan yoksa eski snapshot'lar
+   * `"DEMAND"` gibi okunur (geriye uyumlu). `discoveryProjection` bir JSON
+   * kolonu olduğu için migration GEREKMEZ — yeni Prisma kolonu açılmadı.
    */
   requestScope?: RequestScope;
   unresolvedExpressions: string[];

@@ -5,6 +5,9 @@ import {
   assertRateLimit,
   clientKeyFromRequest,
 } from "@/lib/observability/rate-limit";
+import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
+import { understandRequest } from "@/lib/request-understanding/understand-request";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { runPriceIntelligencePreview } from "@/server/price-intelligence/run-price-intelligence-preview";
 
@@ -58,6 +61,33 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { ok: false, message: "title en az 3 karakter olmalı." },
         { status: 400 },
+      );
+    }
+
+    /**
+     * KAPSAM KAPISI — FİYAT/İLERLETME YÜZEYİ (2026-09-21).
+     *
+     * Piyasa analizi de bir ilerletmedir: "ağrı kesici" için bir fiyat aralığı
+     * göstermek, talebin Talepo'da yürüdüğünü söylemektir. Kapı API sınırında
+     * durur, yani analiz motoru ve dış sağlayıcı HİÇ ÇAĞRILMAZ — engelleme
+     * yapısaldır, sonucun filtrelenmesi değildir.
+     *
+     * Kapsam kararı istemciden gelen bir bayraktan değil, kullanıcının kendi
+     * metninden burada yeniden türetilir; `structuredOverrides.categoryId` ile
+     * kategori dayatmak kapıyı açmaz.
+     */
+    const scope = understandRequest({
+      rawInput: rawInput ?? title,
+    }).requestScope;
+    if (isUnsupportedRequestScope(scope.value)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          outOfScope: true,
+          requestScope: scope.value,
+          message: outOfScopeNoticeFor(scope.value),
+        },
+        { status: 422 },
       );
     }
 

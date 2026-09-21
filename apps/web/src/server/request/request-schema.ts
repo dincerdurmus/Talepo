@@ -15,6 +15,8 @@ import {
   UNRESOLVED_CATEGORY_SLUG,
   sanitizeRawInput,
 } from "@/lib/request/raw-input";
+import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
+import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 
 export type RequestFieldInput = {
@@ -214,20 +216,24 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
   const scopeText = rawInputExplicit ?? description;
   if (scopeText.length >= 3) {
     const scope = understandRequest({ rawInput: scopeText }).requestScope;
-    if (scope.value === "UNSUPPORTED_MEDICAL_ADVICE") {
-      issues.push(
-        "Talepo yalnız ihtiyaç taleplerini yayınlar. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; lütfen bir eczacıya veya hekime başvurun. Bir sağlık ürünü satın almak istiyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"ağrı kesici arıyorum\".",
-      );
-    }
-    if (scope.value === "UNSUPPORTED_SUPPLY") {
-      issues.push(
-        "Talepo yalnız ihtiyaç taleplerini yayınlar: ürün satın alma, kiralama, hizmet alma veya üretim yaptırma. Kendi ürününüzü satmak ya da kiraya vermek için ilan veremezsiniz. Aradığınız hizmeti yazarsanız yayınlayabilirsiniz — örneğin \"aracımı satmak için ekspertiz hizmeti arıyorum\".",
-      );
-    }
-    if (scope.value === "UNSUPPORTED_REMOVED_SCOPE") {
-      issues.push(
-        "Bu tıbbi test / tahlil hizmeti şu an Talepo'da aktif bir kategori olarak sunulmuyor; bu kapsam Teknik Servis'e veya başka bir aktif kategoriye yönlendirilemez.",
-      );
+    /**
+     * KAPSAM DEĞERLERİ BURADA ELLE SAYILMAZ (2026-09-21).
+     *
+     * Önceki hâli üç ayrı `scope.value === "..."` dalıydı ve listede olmayan
+     * her yeni kapsam değeri bu kapıdan SESSİZCE GEÇİYORDU. Ölçüldü:
+     * `UNSUPPORTED_PHARMACY` eklendiğinde "Ağrı kesici arıyorum" sunucu
+     * kapısında hiçbir `issue` üretmiyordu — yani ilaç talebi Request satırı
+     * oluşturabiliyor, oradan eşleştirme/fanout/bildirim yollarına
+     * ulaşabiliyordu. Güvenlik sınırı olarak ele alınan bir kararın en
+     * yetkili kapısında açık kalması, kapının hiç olmamasıyla aynı şeydir.
+     *
+     * Artık tek yardımcı (`isUnsupportedRequestScope`) sorar, metni de tek
+     * kanonik eşleme (`outOfScopeNoticeFor`) verir: kullanıcıya gösterilen
+     * cümle composer ile sunucuda AYNIDIR ve `RequestScope`'a eklenen yeni
+     * bir değer bu kapıyı kendiliğinden kapatır.
+     */
+    if (isUnsupportedRequestScope(scope.value)) {
+      issues.push(outOfScopeNoticeFor(scope.value));
     }
   }
 

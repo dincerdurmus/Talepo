@@ -3,6 +3,7 @@
  */
 
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
+import type { RequestScope } from "@/lib/request-understanding/types";
 import type { ScheduleResult } from "./question-profile-types";
 import {
   isBudgetSatisfiedForPublish,
@@ -49,10 +50,56 @@ export const OUT_OF_SCOPE_EDIT_ACTION = "Metnimi düzenle";
  * SATIN ALMA niyeti varsa onu yazması yeterlidir.
  */
 export const OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE =
-  "Talepo, ürün veya hizmet arayanların talep oluşturduğu bir platformdur. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; bunun için lütfen bir eczacıya veya hekime başvurun. Bir sağlık ürünü satın almak istiyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"ağrı kesici arıyorum\".";
+  "Talepo, ürün veya hizmet arayanların talep oluşturduğu bir platformdur. Hangi ilacın ya da tedavinin kullanılacağı sorusu tıbbi danışmanlık gerektirir; bunun için lütfen bir eczacıya veya hekime başvurun. Bir sağlık CİHAZI ya da klinik donanımı arıyorsanız ihtiyacınızı yazabilirsiniz — örneğin \"tansiyon aleti arıyorum\".";
+
+/**
+ * İLAÇ / ECZANE ÜRÜNÜ (kurucu kararı, 2026-09-21 — D-0028).
+ *
+ * Aynı ilkeler: kısa, suçlayıcı değil, yol gösterir. AMA bu metin diğerlerinden
+ * bir yönüyle ayrılır: burada neden bir tercih değil bir SINIRDIR. İlaç satışı
+ * mevzuata tabidir ve Talepo o alanda aracılık etmez; kullanıcı "biraz daha
+ * doğru yazarsam geçer" diye denemeye itilmemeli. Bu yüzden metin bir düzeltme
+ * önerisi vermez, doğru mercii söyler.
+ *
+ * Ayrım ürün düzeyindedir, onu da söyler: ilacın kendisi kapsam dışı, ilacın
+ * etrafındaki ürün (kutu, dolap, cihaz) Sağlık kategorisinde geçerli talep.
+ * Kullanıcının gerçekten aradığı şey buysa çıkış yolu açık kalır.
+ */
+export const OUT_OF_SCOPE_PHARMACY_NOTICE =
+  "İlaç ve eczane ürünleri Talepo'nun kapsamı dışındadır — ilaç satışı mevzuata tabidir ve bu talep güvenlik gereği aranamaz, yayınlanamaz. İlaç için lütfen eczanenize ya da hekiminize başvurun. Sağlık tarafında aradığınız şey bir CİHAZ, klinik donanımı veya saklama ürünüyse onu yazabilirsiniz — örneğin \"tansiyon aleti arıyorum\" ya da \"ilaç dolabı arıyorum\".";
 
 export const OUT_OF_SCOPE_REMOVED_NOTICE =
   "Bu tıbbi test / tahlil hizmeti şu an Talepo'da aktif bir kategori olarak sunulmuyor. Talep Teknik Servis'e veya başka bir aktif kategoriye yönlendirilmez.";
+
+/**
+ * KAPSAM → METİN EŞLEMESİ, VARSAYILANA DÜŞMEDEN (2026-09-21).
+ *
+ * Önceki hâli bir ternary zinciriydi ve SON DALI varsayılandı: tanımadığı her
+ * kapsam değeri sessizce "satış ilanı yayınlayamazsınız" metnini alıyordu.
+ * Ölçüldü: `UNSUPPORTED_PHARMACY` eklenince "Ağrı kesici arıyorum" yazan
+ * kullanıcıya satış ilanı açmaya çalıştığı söyleniyordu — susmaktan daha kötü,
+ * çünkü yanlış bilgi veriyor.
+ *
+ * `Record<...>` tam eşlemedir: `RequestScope`'a yeni bir kapsam-dışı değer
+ * eklendiği gün BU DOSYA DERLENMEZ ve metni yazmak zorunda kalırsınız.
+ * Kapsam listesini elle sayan bir dal kalmaz.
+ */
+const OUT_OF_SCOPE_NOTICES: Record<
+  Exclude<RequestScope, "DEMAND">,
+  string
+> = {
+  UNSUPPORTED_SUPPLY: OUT_OF_SCOPE_SUPPLY_NOTICE,
+  UNSUPPORTED_MEDICAL_ADVICE: OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE,
+  UNSUPPORTED_PHARMACY: OUT_OF_SCOPE_PHARMACY_NOTICE,
+  UNSUPPORTED_REMOVED_SCOPE: OUT_OF_SCOPE_REMOVED_NOTICE,
+};
+
+export function outOfScopeNoticeFor(scope: string | null | undefined): string {
+  return (
+    OUT_OF_SCOPE_NOTICES[scope as Exclude<RequestScope, "DEMAND">] ??
+    OUT_OF_SCOPE_SUPPLY_NOTICE
+  );
+}
 
 export function computeComposerPublishReadiness(input: {
   hasUsableText: boolean;
@@ -81,12 +128,7 @@ export function computeComposerPublishReadiness(input: {
       remainingCriticalCount: 0,
       primaryCta: "continue",
       primaryCtaLabel: "Talebini düzenle",
-      outOfScopeNotice:
-        input.requestScope === "UNSUPPORTED_MEDICAL_ADVICE"
-          ? OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE
-          : input.requestScope === "UNSUPPORTED_REMOVED_SCOPE"
-            ? OUT_OF_SCOPE_REMOVED_NOTICE
-            : OUT_OF_SCOPE_SUPPLY_NOTICE,
+      outOfScopeNotice: outOfScopeNoticeFor(input.requestScope),
       editActionLabel: OUT_OF_SCOPE_EDIT_ACTION,
     };
   }

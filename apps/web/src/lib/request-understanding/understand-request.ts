@@ -107,6 +107,7 @@ import type {
   ResolvedDomainEntityFact,
   SemanticRequestSubject,
 } from "./types";
+import { isUnsupportedRequestScope } from "./types";
 
 export type UnderstandRequestInput = {
   rawInput: string;
@@ -2826,6 +2827,56 @@ export function understandRequest(
   const isMedicalAdviceQuestion =
     !isUnsupportedSupply && adviceQuestionForm && medicalTreatmentContext;
   /**
+   * KAPSAM DIŞI: İLAÇ / ECZANE ÜRÜNÜ (kurucu kararı, 2026-09-21 — D-0028).
+   *
+   * "İlaç, eczane işimiz değil." Bu, types.ts'te AÇIKÇA askıda bırakılmış
+   * kararın ta kendisidir ("OTC/reçeteli ilaç ÜRÜN taleplerinin koşulları
+   * ayrı bir kurucu kararıdır ve burada verilmemiştir"). Karar verildi;
+   * o satır SUPERSEDED.
+   *
+   * EKSEN ÜRÜNDÜR, SÖZCÜK DEĞİL. İlacın KENDİSİ kapsam dışıdır; ilacı
+   * saklayan/taşıyan ürün Sağlık kategorisinde DEMAND olarak kalır —
+   * taksonomide "İlaç Kutuları" ve "Doğum Kontrol Hapı Muhafazaları" zaten
+   * Sağlık yaprağıdır. Bu yüzden saklama/cihaz sözcüğü kapıyı KAPATIR:
+   * "ilaç kutusu arıyorum" DEMAND, "ağrı kesici arıyorum" kapsam dışı.
+   *
+   * Tıbbi tavsiye kapısıyla karışmaz: o kapı SORU BİÇİMİ arar ("hangi ilacı
+   * almalıyım"), bu kapı ÜRÜN ADI arar. İkisi birden açılırsa tavsiye kararı
+   * önce gelir — daha dar ve daha eski karardır.
+   *
+   * Yazım biçiminden bağımsızdır: aynı `scopeHay` (tr-katlanmış, küçük harf)
+   * üstünde aranır, yani "AĞRI KESİCİ" ve "agri kesici" aynı kapıdan geçer.
+   * Ölçüldü (Veyra 2026-09-21): diyakritiksiz yazım model tabanlı kapsam
+   * sinyalinin en zayıf ekseniydi (0.80 üstü kesinlik 21/25'e karşı 4/12);
+   * deterministik kapı o ekseni tamamen kapatır.
+   */
+  /**
+   * ÜNSÜZ YUMUŞAMASI (2026-09-21, kapı kırmızısından öğrenildi).
+   *
+   * Türkçede p/ç/t/k ekten önce b/c/d/g olur: "şurup" → "şurub-u",
+   * "antibiyotik" → "antibiyoti-ği". Kalıbın kökü sert biçimde sabitlenirse
+   * ekli yazım HİÇ eşleşmez — "Öksürük şurubu arıyorum" DEMAND'e sızıyordu.
+   * Bu yüzden yumuşayabilen kökler İKİ HARFLİ sınıfla yazılır: `suru[pb]`,
+   * `antibiyoti[kg]`, `poma[td]`. Yumuşamayan kökler (aspirin, merhem,
+   * parasetamol) olduğu gibi kalır — gereksiz sınıf yanlış eşleşme üretir.
+   * `ilaç` zaten scopeHay'de ç→c katlandığı için tek biçimdedir.
+   */
+  const pharmacyProductNoun =
+    /(?:^|[^a-z0-9])(agri\s*kesici[a-z]*|ates\s*dusurucu[a-z]*|antibiyoti[kg][a-z]*|antidepresan[a-z]*|antihistamin[a-z]*|ilac[a-z]*|hap[a-z]*|suru[pb][a-z]*|merhem[a-z]*|poma[td][a-z]*|aspirin[a-z]*|parasetamol[a-z]*|ibuprofen[a-z]*|recete[a-z]*|vitamin\s*hap[a-z]*)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
+    );
+  /** Saklama/taşıma/cihaz ürünü ilacın kendisi değildir — Sağlık'ta kalır. */
+  const pharmacyContainerOrDevice =
+    /(?:^|[^a-z0-9])(kutu[a-z]*|muhafaza[a-z]*|dolab[a-z]*|dolap|raf[a-z]*|kab[a-z]*|kap|sehpa[a-z]*|cihaz[a-z]*|alet[a-z]*|kiti?|makine[a-z]*|otomat[a-z]*|tasiyici[a-z]*|saklama|organizer[a-z]*|canta[a-z]*|sepet[a-z]*|etiket[a-z]*|yazilim[a-z]*|program[a-z]*|stok[a-z]*|sise[a-z]*|ambalaj[a-z]*)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
+    );
+  const isPharmacyProductRequest =
+    !isUnsupportedSupply &&
+    !isMedicalAdviceQuestion &&
+    pharmacyProductNoun &&
+    !pharmacyContainerOrDevice;
+
+  /**
    * KAPSAM DIŞI: kaldırılan tıbbi test / tahlil hizmeti.
    *
    * "Tıbbi test yaptırmak istiyorum" içindeki "yaptırmak" meşru bir hizmet
@@ -2841,6 +2892,7 @@ export function understandRequest(
   const isRemovedMedicalTestingScope =
     !isUnsupportedSupply &&
     !isMedicalAdviceQuestion &&
+    !isPharmacyProductRequest &&
     medicalTestingPhrase &&
     !medicalTestingProductSignal;
 
@@ -2849,16 +2901,20 @@ export function understandRequest(
       ? "UNSUPPORTED_SUPPLY"
       : isMedicalAdviceQuestion
         ? "UNSUPPORTED_MEDICAL_ADVICE"
-        : isRemovedMedicalTestingScope
-          ? "UNSUPPORTED_REMOVED_SCOPE"
-          : "DEMAND",
+        : isPharmacyProductRequest
+          ? "UNSUPPORTED_PHARMACY"
+          : isRemovedMedicalTestingScope
+            ? "UNSUPPORTED_REMOVED_SCOPE"
+            : "DEMAND",
     confidence: isUnsupportedSupply
       ? reconciled.intent.confidence
       : isMedicalAdviceQuestion
         ? 0.85
-        : isRemovedMedicalTestingScope
+        : isPharmacyProductRequest
           ? 0.95
-          : 0.9,
+          : isRemovedMedicalTestingScope
+            ? 0.95
+            : 0.9,
     status: "CONFIDENT",
     evidence: isUnsupportedSupply
       ? [
@@ -2868,9 +2924,11 @@ export function understandRequest(
         ]
       : isMedicalAdviceQuestion
         ? ["medical-advice-question", "treatment-choice-form"]
-        : isRemovedMedicalTestingScope
-          ? ["removed-medical-testing-scope", "service-intent"]
-          : ["demand"],
+        : isPharmacyProductRequest
+          ? ["pharmacy-product-request", "medicine-noun-without-container"]
+          : isRemovedMedicalTestingScope
+            ? ["removed-medical-testing-scope", "service-intent"]
+            : ["demand"],
   };
 
   /**
@@ -2880,17 +2938,26 @@ export function understandRequest(
    * bir talep yoktur. Kararı sessizce silmek yerine UNKNOWN'a çekip kanıtı
    * kaydediyoruz — "ölçemedim" ile "ölçtüm, yok" ayrımı korunur (I14).
    */
-  if (isUnsupportedSupply || isMedicalAdviceQuestion || isRemovedMedicalTestingScope) {
+  if (
+    isUnsupportedSupply ||
+    isMedicalAdviceQuestion ||
+    isPharmacyProductRequest ||
+    isRemovedMedicalTestingScope
+  ) {
     const noCategoryTag = isUnsupportedSupply
       ? "unsupported-supply-no-category"
       : isMedicalAdviceQuestion
         ? "medical-advice-no-category"
-        : "removed-medical-testing-no-category";
+        : isPharmacyProductRequest
+          ? "pharmacy-no-category"
+          : "removed-medical-testing-no-category";
     const noSubjectTag = isUnsupportedSupply
       ? "unsupported-supply-no-subject"
       : isMedicalAdviceQuestion
         ? "medical-advice-no-subject"
-        : "removed-medical-testing-no-subject";
+        : isPharmacyProductRequest
+          ? "pharmacy-no-subject"
+          : "removed-medical-testing-no-subject";
     reconciled.category = {
       value: null,
       confidence: 0,
@@ -3009,6 +3076,30 @@ export function understandRequest(
         reasons: ["empty input"],
       };
     }
+    /**
+     * KAPSAM DIŞI TALEP YAYIN AKIŞINA GİREMEZ — SERT DURUŞ (2026-09-21).
+     *
+     * Bu blok bugüne kadar kapsam kararını HİÇ okumuyordu: yalnız boş girdi,
+     * zayıf anlama ve eksik alanlara bakıyordu. Yani arz ilanı, tıbbi tavsiye
+     * ve (yeni) ilaç talebi buradan `READY` ya da `ENRICHABLE` olarak
+     * çıkabiliyordu — kapı başka katmanlara bırakılmıştı. Bırakılamaz:
+     * kurucu kararı (2026-09-21) ilaç için "site ilerletmemeli" diyor ve
+     * ilerletmeme kararı ANLAMA KATMANININ kendi çıktısında durmalı ki her
+     * tüketici (yayın, soru motoru, snapshot, arama) aynı tek gerçeği görsün.
+     *
+     * `ENRICHABLE` değil `BLOCKED`: "eksik, tamamlanabilir" ile "bu talebi
+     * hiç almıyoruz" aynı şey değildir. Zenginleştirme bir ilaç talebini
+     * geçerli yapmaz.
+     *
+     * Tek yardımcıdan okunur: yeni bir kapsam-dışı değer eklendiğinde bu kapı
+     * da otomatik kapanır, liste burada ikinci kez sayılmaz.
+     */
+    if (isUnsupportedRequestScope(requestScope.value)) {
+      return {
+        status: "BLOCKED" as const,
+        reasons: [`kapsam disi: ${String(requestScope.value)}`],
+      };
+    }
     if (
       reconciled.intent.status === "UNKNOWN" &&
       reconciled.category.status === "UNKNOWN" &&
@@ -3049,13 +3140,36 @@ export function understandRequest(
     return { status: "READY" as const, reasons: [] };
   })();
 
-  const recommendedQuestions = unknownFields
-    .filter((f) =>
-      ["budget", "city", "modelYear", "condition", "mileage", "brand"].includes(
-        f,
-      ),
-    )
-    .slice(0, 5);
+  /**
+   * KAPSAM DIŞI TALEBE SORU SORULMAZ — SERT DURUŞUN İKİNCİ YARISI (2026-09-21).
+   *
+   * Ölçüldü (verify-pharmacy-scope-v1, ilk koşu): "Ağrı kesici arıyorum"
+   * kapsam dışı işaretleniyor, kategori uydurulmuyor, yayın akışı BLOCKED —
+   * ama motor yine de 3 soru öneriyordu. Aynı kusur arz ilanında (2 soru) ve
+   * tıbbi tavsiyede (3 soru) de vardı, yani bu ilaçla gelmedi, ilaçla GÖRÜLDÜ.
+   *
+   * Kullanıcıya soru sormak ilerletmektir: form açılır, alan dolar, talep
+   * tamamlanmaya çalışılır. Almayacağımız bir talebi zenginleştirmek için
+   * kullanıcının vaktini istemek hem yanlış vaat hem gereksiz veri toplamadır.
+   *
+   * `unknownFields` SUSTURULMAZ: "şu alanlar boş" hâlâ doğru bir olgudur ve
+   * başka tüketiciler onu okur. Susturulan şey BUYRUK olan taraftır —
+   * "şunları sor". Olgu kalır, tavsiye gider.
+   */
+  const recommendedQuestions = isUnsupportedRequestScope(requestScope.value)
+    ? []
+    : unknownFields
+        .filter((f) =>
+          [
+            "budget",
+            "city",
+            "modelYear",
+            "condition",
+            "mileage",
+            "brand",
+          ].includes(f),
+        )
+        .slice(0, 5);
 
   const detectedCat = detectCategoryResult(rawInput);
 
