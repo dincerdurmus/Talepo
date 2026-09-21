@@ -9,6 +9,7 @@ import {
   parseCreateRequestInput,
   RequestValidationError,
 } from "@/server/request/request-schema";
+import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
 import { updateRequest } from "@/server/request/update-request";
 
 export async function PATCH(
@@ -19,7 +20,14 @@ export async function PATCH(
     const user = await requireUser();
     const { id } = await context.params;
     const body = await request.json();
-    const input = parseCreateRequestInput(body);
+    /* Güncelleme de bir yazma yoludur: aynı demet burada da bir kez çekilir. */
+    const decisionBundle = await resolveJevBundle(
+      typeof body === "object" && body !== null
+        ? ((body as Record<string, unknown>).rawInput as string | undefined) ??
+            ((body as Record<string, unknown>).description as string | undefined)
+        : null,
+    );
+    const input = parseCreateRequestInput(body, { decisionBundle });
     const updated = await updateRequest(user.id, id, input);
 
     return NextResponse.json({

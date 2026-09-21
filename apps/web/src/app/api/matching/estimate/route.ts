@@ -6,6 +6,7 @@ import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 import { toMatchingEstimateInput } from "@/lib/request-understanding/consumer-adapters";
+import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
 import { countMatchingCompanies } from "@/server/request/distribute-request";
 
 /**
@@ -32,8 +33,11 @@ export async function GET(request: Request) {
     let intent: string | null = null;
 
     if (rawInput) {
+      /* Karar demeti istek basina BIR KEZ, senkron beyne verilmeden once. */
+      const decisionBundle = await resolveJevBundle(rawInput);
       const understanding = understandRequest({
         rawInput,
+        decisionBundle,
         structured: {
           categoryId: categoryLocked && legacyCategory ? legacyCategory : null,
           city: cityParam,

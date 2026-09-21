@@ -17,6 +17,7 @@ import {
 } from "@/lib/request/raw-input";
 import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
+import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 
 export type RequestFieldInput = {
@@ -145,7 +146,18 @@ export function resolvePersistCategorySlug(input: {
   return { slug: known.id, name: name || known.label };
 }
 
-export function parseCreateRequestInput(value: unknown): CreateRequestInput {
+/**
+ * İSTEK BAŞINA KARAR DEMETİ (2026-09-21) — opsiyonel ikinci argüman.
+ *
+ * Kapsam kararı bu kapıda kullanıcının kendi metninden YENİDEN türetilir;
+ * karar sağlayıcısı geçişi açıldığında o türetmenin de aynı demeti okuması
+ * gerekir, yoksa yayın kapısı ile akışın geri kalanı iki ayrı beyinden karar
+ * almış olur. Argüman verilmezse davranış birebir eskisidir.
+ */
+export function parseCreateRequestInput(
+  value: unknown,
+  options?: { decisionBundle?: JevDecisionBundle | null },
+): CreateRequestInput {
   if (!value || typeof value !== "object") {
     throw new RequestValidationError(["Geçerli bir talep verisi gönderilmedi."]);
   }
@@ -215,7 +227,10 @@ export function parseCreateRequestInput(value: unknown): CreateRequestInput {
    */
   const scopeText = rawInputExplicit ?? description;
   if (scopeText.length >= 3) {
-    const scope = understandRequest({ rawInput: scopeText }).requestScope;
+    const scope = understandRequest({
+      rawInput: scopeText,
+      decisionBundle: options?.decisionBundle ?? null,
+    }).requestScope;
     /**
      * KAPSAM DEĞERLERİ BURADA ELLE SAYILMAZ (2026-09-21).
      *

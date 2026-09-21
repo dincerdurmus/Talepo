@@ -9,6 +9,7 @@ import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
+import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
 import { runPriceIntelligencePreview } from "@/server/price-intelligence/run-price-intelligence-preview";
 
 type PreviewBody = {
@@ -76,8 +77,12 @@ export async function POST(request: Request) {
      * metninden burada yeniden türetilir; `structuredOverrides.categoryId` ile
      * kategori dayatmak kapıyı açmaz.
      */
+    /* Karar demeti istek basina BIR KEZ: hem kapsam kapisi hem analiz ayni
+     * demeti okur, iki ayri beyinden karar alinmaz. */
+    const decisionBundle = await resolveJevBundle(rawInput ?? title);
     const scope = understandRequest({
       rawInput: rawInput ?? title,
+      decisionBundle,
     }).requestScope;
     if (isUnsupportedRequestScope(scope.value)) {
       return NextResponse.json(
@@ -102,6 +107,7 @@ export async function POST(request: Request) {
       district: body.district,
       includeExternal: body.includeExternal ?? true,
       windowDays: body.windowDays,
+      decisionBundle,
       structuredOverrides: body.structuredOverrides ?? {
         categoryId: null,
         city: body.city,

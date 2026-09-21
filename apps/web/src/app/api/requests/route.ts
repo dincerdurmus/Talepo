@@ -16,6 +16,7 @@ import {
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import { createRequest } from "@/server/request/create-request";
+import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
 import {
   parseCreateRequestInput,
   parseJsonObject,
@@ -54,7 +55,19 @@ export async function POST(request: Request) {
       });
 
       const body = parseJsonObject(rawBody);
-      const input = parseCreateRequestInput(body);
+      /**
+       * KARAR DEMETİ BİR KEZ, EN DIŞTA (2026-09-21). Sözleşme senkron olduğu
+       * için ağ çağrısı yalnız burada yapılır; kapsam kapısı da, akışın geri
+       * kalanı da aynı demeti okur. Geçiş kapalıyken ya da anahtar yokken
+       * `null` döner ve yerleşik motor karar verir.
+       */
+      const decisionBundle = await resolveJevBundle(
+        typeof body === "object" && body !== null
+          ? ((body as Record<string, unknown>).rawInput as string | undefined) ??
+              ((body as Record<string, unknown>).description as string | undefined)
+          : null,
+      );
+      const input = parseCreateRequestInput(body, { decisionBundle });
       const headerKey = readIdempotencyKeyFromRequest(request);
       const createdRequest = await createRequest(user.id, {
         ...input,

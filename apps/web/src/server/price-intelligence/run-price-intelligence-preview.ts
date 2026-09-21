@@ -1,6 +1,7 @@
 import { resolvePreviewCategorySync, mergePreviewCategoryWithDbId } from "@/lib/price-intelligence/resolve-preview-category";
 import { prisma } from "@/lib/prisma";
 import { sanitizePreviewIntelligence } from "@/lib/price-intelligence/preview-sanitize";
+import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
 import { toLegacyFormHints } from "@/lib/request-understanding/adapters";
 import { toPriceCanonicalHints } from "@/lib/request-understanding/consumer-adapters";
@@ -20,6 +21,11 @@ export type DraftPreviewInput = {
   windowDays?: number;
   /** Canonical brain activation — preferred over client categorySlug */
   rawInput?: string | null;
+  /**
+   * API sınırında BİR KEZ çekilmiş karar demeti (2026-09-21). Bu fonksiyon
+   * kendi ağ çağrısını yapmaz; senkron karar sözleşmesinin gereği budur.
+   */
+  decisionBundle?: JevDecisionBundle | null;
   structuredOverrides?: {
     categoryId?: string | null;
     city?: string | null;
@@ -116,6 +122,7 @@ export async function runPriceIntelligencePreview(
 
   const understanding = understandRequest({
     rawInput: rawForBrain,
+    decisionBundle: input.decisionBundle ?? null,
     structured: {
       categoryId:
         input.structuredOverrides?.categoryId?.trim() || null,

@@ -5,7 +5,11 @@ import {
 } from "@/lib/request-understanding/confidence-config";
 import { foldTr } from "./tr-fold";
 import { lastikWheelOrServiceSignal } from "./category-gate";
-import { getRequestDecisionProvider } from "@/lib/request-decisions/get-provider";
+import {
+  getRequestDecisionProvider,
+  getRequestDecisionProviderForRequest,
+} from "@/lib/request-decisions/get-provider";
+import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
 import {
   collectIntentSignals,
   needTypeForIntent,
@@ -118,6 +122,17 @@ export type UnderstandRequestInput = {
     district?: string | null;
     fieldValues?: Record<string, string | null | undefined>;
   };
+  /**
+   * İSTEK BAŞINA KARAR DEMETİ (2026-09-21) — additive ve OPSİYONEL.
+   *
+   * Karar sözleşmesi senkrondur; ağ üzerinden karar veren bir sağlayıcı bu
+   * yüzden sonucunu ÖNCEDEN çekilmiş bir demet olarak alır (bkz.
+   * `server/request-decisions/resolve-jev-bundle.ts`). Alan verilmezse
+   * davranış birebir eskisidir: yerleşik motor karar verir. Demet verilse
+   * bile sağlayıcı geçişi kapalıyken (`USE_JEV_IN_PRODUCTION`) yine yerleşik
+   * motor kullanılır — bu alan yolu kurar, anahtarı çevirmez.
+   */
+  decisionBundle?: JevDecisionBundle | null;
 };
 
 /**
@@ -512,8 +527,17 @@ export function understandRequest(
    * kararları sözleşme üzerinden alınır (request-decisions). Bugünkü tek
    * sağlayıcı mevcut motorların kendisidir; davranış değişmez, sınır değişir.
    */
-  const decisions = getRequestDecisionProvider();
   const rawInput = typeof input === "string" ? input : input.rawInput;
+  /**
+   * İstek başına sağlayıcı (2026-09-21): demet verilmemişse ve geçiş kapalıysa
+   * dönen şey yerleşik motorun ta kendisidir, yani bu satır bugün davranışı
+   * değiştirmez — yalnız yolu kurar.
+   */
+  const decisionBundle =
+    typeof input === "string" ? null : (input.decisionBundle ?? null);
+  const decisions = decisionBundle
+    ? getRequestDecisionProviderForRequest(decisionBundle)
+    : getRequestDecisionProvider();
   const structured = typeof input === "string" ? undefined : input.structured;
   const normalizedInput = normalizeUnderstandingInput(withoutRejectedTireMentions(rawInput));
 
