@@ -111,12 +111,22 @@ export type RequestIntent =
  * ifadeyi genel Hizmetler veya Teknik Servis'e taşıyamaz; talep açıklama
  * olarak kalır ve yayın akışına girmez.
  */
+/**
+ *   NEEDS_SCOPE_CLARIFICATION — kapsam KARARSIZ (2026-09-23, D-0028'in
+ * yapısal sürümü). İlaç sinyali ile kap/cihaz sözcüğü bir arada ama yapı
+ * çözülemedi ("ağrı kesici kutu"). Bu bir kapsam-dışı HÜKMÜ değildir; karar
+ * verilememiştir. Belirsizlikte kapalı kalınır: talep bu hâliyle yayınlanmaz,
+ * kullanıcıya netleştirme sorulur. Yayın kapıları bu yüzden — B5'te
+ * inceleme kuyruğu açılana kadar — onu kapsam-dışıyla aynı sertlikte kapatır;
+ * DEMAND'e düşmesi, düzeltilen P0'ın ta kendisi olurdu.
+ */
 export type RequestScope =
   | "DEMAND"
   | "UNSUPPORTED_SUPPLY"
   | "UNSUPPORTED_MEDICAL_ADVICE"
   | "UNSUPPORTED_PHARMACY"
-  | "UNSUPPORTED_REMOVED_SCOPE";
+  | "UNSUPPORTED_REMOVED_SCOPE"
+  | "NEEDS_SCOPE_CLARIFICATION";
 
 /**
  * Kapsam kapılarının TEK yardımcısı. Yeni bir kapsam-dışı değer
@@ -130,7 +140,10 @@ export function isUnsupportedRequestScope(
     scope === "UNSUPPORTED_SUPPLY" ||
     scope === "UNSUPPORTED_MEDICAL_ADVICE" ||
     scope === "UNSUPPORTED_PHARMACY" ||
-    scope === "UNSUPPORTED_REMOVED_SCOPE"
+    scope === "UNSUPPORTED_REMOVED_SCOPE" ||
+    // Karar verilememiş kapsam da kapıyı kapatır. "Emin değilsek geçir"
+    // düzeltilen kusurun kendisiydi; fail-closed tek güvenli varsayılandır.
+    scope === "NEEDS_SCOPE_CLARIFICATION"
   );
 }
 

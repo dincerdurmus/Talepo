@@ -68,6 +68,15 @@ export const OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE =
 export const OUT_OF_SCOPE_PHARMACY_NOTICE =
   "İlaç ve eczane ürünleri Talepo'nun kapsamı dışındadır — ilaç satışı mevzuata tabidir ve bu talep güvenlik gereği aranamaz, yayınlanamaz. İlaç için lütfen eczanenize ya da hekiminize başvurun. Sağlık tarafında aradığınız şey bir CİHAZ, klinik donanımı veya saklama ürünüyse onu yazabilirsiniz — örneğin \"tansiyon aleti arıyorum\" ya da \"ilaç dolabı arıyorum\".";
 
+/**
+ * NETLEŞTİRME (2026-09-23). Bu metin bir RET değildir — kapı kararsız kaldı.
+ * Kullanıcıya suç yüklemez, iki okumayı yan yana koyar ve hangisini istediğini
+ * sorar. İlacın kendisini istiyorsa oradan kapsam-dışı metni devreye girer;
+ * saklama/taşıma ürününü istiyorsa cümlesini netleştirmesi yeter.
+ */
+export const SCOPE_CLARIFICATION_PHARMACY_NOTICE =
+  "Talebinizi iki türlü okuyabiliyoruz: ilacın KENDİSİNİ mi arıyorsunuz, yoksa ilacı saklayan/taşıyan bir ÜRÜNÜ mü (kutu, dolap, çanta, cihaz)? İlaç ve eczane ürünleri Talepo kapsamı dışında; saklama ve cihaz talepleri Sağlık kategorisinde geçerli. Emin olamadığımız için talebi bu hâliyle yayına almıyoruz — lütfen tek cümleyle netleştirin, örneğin \"ilaç dolabı arıyorum\" ya da \"ilaç saklama kabı arıyorum\".";
+
 export const OUT_OF_SCOPE_REMOVED_NOTICE =
   "Bu tıbbi test / tahlil hizmeti şu an Talepo'da aktif bir kategori olarak sunulmuyor. Talep Teknik Servis'e veya başka bir aktif kategoriye yönlendirilmez.";
 
@@ -92,6 +101,7 @@ const OUT_OF_SCOPE_NOTICES: Record<
   UNSUPPORTED_MEDICAL_ADVICE: OUT_OF_SCOPE_MEDICAL_ADVICE_NOTICE,
   UNSUPPORTED_PHARMACY: OUT_OF_SCOPE_PHARMACY_NOTICE,
   UNSUPPORTED_REMOVED_SCOPE: OUT_OF_SCOPE_REMOVED_NOTICE,
+  NEEDS_SCOPE_CLARIFICATION: SCOPE_CLARIFICATION_PHARMACY_NOTICE,
 };
 
 export function outOfScopeNoticeFor(scope: string | null | undefined): string {
@@ -124,7 +134,11 @@ export function computeComposerPublishReadiness(input: {
     return {
       canReview: false,
       canPublish: false,
-      blockingLabels: ["Talepo kapsamı dışında"],
+      blockingLabels: [
+        input.requestScope === "NEEDS_SCOPE_CLARIFICATION"
+          ? "Talebin netleştirilmeli"
+          : "Talepo kapsamı dışında",
+      ],
       remainingCriticalCount: 0,
       primaryCta: "continue",
       primaryCtaLabel: "Talebini düzenle",

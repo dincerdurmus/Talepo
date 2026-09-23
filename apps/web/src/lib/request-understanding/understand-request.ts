@@ -4,6 +4,10 @@ import {
   UNDERSTANDING_PENALTIES,
 } from "@/lib/request-understanding/confidence-config";
 import { foldTr } from "./tr-fold";
+import {
+  isRemovedMedicalTestingRequest,
+  readPharmacyScope,
+} from "./pharmacy-scope-gate";
 import { lastikWheelOrServiceSignal } from "./category-gate";
 import {
   getRequestDecisionProvider,
@@ -2833,10 +2837,7 @@ export function understandRequest(
    * yazımda ekli "ilacini" hiç eşleşmiyor, tavsiye sorusu DEMAND'e
    * sızıyordu. "ilaç" hâlâ tek başına karar VEREMEZ — iki koşul birlikte.
    */
-  const scopeHay = normalizedInput
-    .toLocaleLowerCase("tr-TR")
-    .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
-    .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u");
+  const scopeHay = foldTr(normalizedInput);
   const adviceQuestionForm =
     /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz)(?:[^a-z0-9]|$)/.test(
       scopeHay,
@@ -2846,6 +2847,18 @@ export function understandRequest(
       scopeHay,
     ) ||
     /(?:^|[^a-z0-9])(agrim|agrisi|belirti(?:m|lerim)?)(?:[^a-z0-9]|$)/.test(
+      scopeHay,
+    ) ||
+    /**
+     * BELİRTİ ADLARI (2026-09-23, metamorfik kapının ilk kırmızısı).
+     *
+     * "Öksürük için ne içmeliyim" soru biçimini taşıyordu ama tedavi bağlamı
+     * yalnız "ilaç/hap/merhem/tedavi" ya da "ağrım/belirtim" arıyordu; bir
+     * belirtinin ADI listede yoktu ve tavsiye sorusu DEMAND'e sızıyordu.
+     * Eksen aynı: soru biçimi + tıbbi bağlam. Eksik olan şey bağlamın ikinci
+     * yarısıydı.
+     */
+    /(?:^|[^a-z0-9])(oksuruk[a-z]*|ates[a-z]*|grip[a-z]*|nezle[a-z]*|bulanti[a-z]*|ishal[a-z]*|kasinti[a-z]*|mide\s*bulantisi|bas\s*donmesi|hapsirik[a-z]*|bogaz\s*agrisi|migren[a-z]*|alerji[a-z]*|enfeksiyon[a-z]*)(?:[^a-z0-9]|$)/.test(
       scopeHay,
     );
   const isMedicalAdviceQuestion =
@@ -2885,20 +2898,20 @@ export function understandRequest(
    * parasetamol) olduğu gibi kalır — gereksiz sınıf yanlış eşleşme üretir.
    * `ilaç` zaten scopeHay'de ç→c katlandığı için tek biçimdedir.
    */
-  const pharmacyProductNoun =
-    /(?:^|[^a-z0-9])(agri\s*kesici[a-z]*|ates\s*dusurucu[a-z]*|antibiyoti[kg][a-z]*|antidepresan[a-z]*|antihistamin[a-z]*|ilac[a-z]*|hap[a-z]*|suru[pb][a-z]*|merhem[a-z]*|poma[td][a-z]*|aspirin[a-z]*|parasetamol[a-z]*|ibuprofen[a-z]*|recete[a-z]*|vitamin\s*hap[a-z]*)(?:[^a-z0-9]|$)/.test(
-      scopeHay,
-    );
-  /** Saklama/taşıma/cihaz ürünü ilacın kendisi değildir — Sağlık'ta kalır. */
-  const pharmacyContainerOrDevice =
-    /(?:^|[^a-z0-9])(kutu[a-z]*|muhafaza[a-z]*|dolab[a-z]*|dolap|raf[a-z]*|kab[a-z]*|kap|sehpa[a-z]*|cihaz[a-z]*|alet[a-z]*|kiti?|makine[a-z]*|otomat[a-z]*|tasiyici[a-z]*|saklama|organizer[a-z]*|canta[a-z]*|sepet[a-z]*|etiket[a-z]*|yazilim[a-z]*|program[a-z]*|stok[a-z]*|sise[a-z]*|ambalaj[a-z]*)(?:[^a-z0-9]|$)/.test(
-      scopeHay,
-    );
+  /**
+   * Kapı artık `pharmacy-scope-gate.ts` içindeki YAPISAL okumadan gelir.
+   * Burada bir kelime listesi daha tutulmaz: istenen baş ad ile ölçü birimi
+   * ayrımı o modülün tek işidir ve metamorfik kapı onu ölçer.
+   */
+  const pharmacyReading = readPharmacyScope(scopeHay);
   const isPharmacyProductRequest =
     !isUnsupportedSupply &&
     !isMedicalAdviceQuestion &&
-    pharmacyProductNoun &&
-    !pharmacyContainerOrDevice;
+    pharmacyReading.kind === "MEDICINE_ITSELF";
+  const needsPharmacyClarification =
+    !isUnsupportedSupply &&
+    !isMedicalAdviceQuestion &&
+    pharmacyReading.kind === "AMBIGUOUS";
 
   /**
    * KAPSAM DIŞI: kaldırılan tıbbi test / tahlil hizmeti.
@@ -2909,16 +2922,12 @@ export function understandRequest(
    * adlandırması kapıyı açar; "tıbbi test cihazı" veya "tıbbi test kiti"
    * gibi açık ürün talepleri bu kapıya girmez.
    */
-  const medicalTestingPhrase =
-    /\b(?:tibbi|medikal)\s+(?:test|tahlil|analiz)\b/.test(scopeHay);
-  const medicalTestingProductSignal =
-    /\b(?:cihaz(?:ı|i)?|kit(?:i)?|alet(?:i)?|set(?:i)?)\b/.test(scopeHay);
   const isRemovedMedicalTestingScope =
     !isUnsupportedSupply &&
     !isMedicalAdviceQuestion &&
     !isPharmacyProductRequest &&
-    medicalTestingPhrase &&
-    !medicalTestingProductSignal;
+    !needsPharmacyClarification &&
+    isRemovedMedicalTestingRequest(scopeHay);
 
   const requestScope: UnderstandingDecision<RequestScope> = {
     value: isUnsupportedSupply
@@ -2927,18 +2936,24 @@ export function understandRequest(
         ? "UNSUPPORTED_MEDICAL_ADVICE"
         : isPharmacyProductRequest
           ? "UNSUPPORTED_PHARMACY"
-          : isRemovedMedicalTestingScope
-            ? "UNSUPPORTED_REMOVED_SCOPE"
-            : "DEMAND",
+          : needsPharmacyClarification
+            ? "NEEDS_SCOPE_CLARIFICATION"
+            : isRemovedMedicalTestingScope
+              ? "UNSUPPORTED_REMOVED_SCOPE"
+              : "DEMAND",
     confidence: isUnsupportedSupply
       ? reconciled.intent.confidence
       : isMedicalAdviceQuestion
         ? 0.85
         : isPharmacyProductRequest
           ? 0.95
-          : isRemovedMedicalTestingScope
-            ? 0.95
-            : 0.9,
+          : needsPharmacyClarification
+            ? // Kararsızlığın kendisi düşük güvendir; B5 bunu inceleme
+              // kuyruğunun eşiği olarak okuyacak.
+              0.5
+            : isRemovedMedicalTestingScope
+              ? 0.95
+              : 0.9,
     status: "CONFIDENT",
     evidence: isUnsupportedSupply
       ? [
@@ -2949,10 +2964,12 @@ export function understandRequest(
       : isMedicalAdviceQuestion
         ? ["medical-advice-question", "treatment-choice-form"]
         : isPharmacyProductRequest
-          ? ["pharmacy-product-request", "medicine-noun-without-container"]
-          : isRemovedMedicalTestingScope
-            ? ["removed-medical-testing-scope", "service-intent"]
-            : ["demand"],
+          ? ["pharmacy-product-request", ...pharmacyReading.evidence]
+          : needsPharmacyClarification
+            ? ["pharmacy-scope-unresolved", ...pharmacyReading.evidence]
+            : isRemovedMedicalTestingScope
+              ? ["removed-medical-testing-scope", "service-intent"]
+              : ["demand"],
   };
 
   /**
@@ -2962,26 +2979,33 @@ export function understandRequest(
    * bir talep yoktur. Kararı sessizce silmek yerine UNKNOWN'a çekip kanıtı
    * kaydediyoruz — "ölçemedim" ile "ölçtüm, yok" ayrımı korunur (I14).
    */
-  if (
-    isUnsupportedSupply ||
-    isMedicalAdviceQuestion ||
-    isPharmacyProductRequest ||
-    isRemovedMedicalTestingScope
-  ) {
+  /**
+   * KOŞUL TEK OTORİTEDEN OKUNUR (2026-09-23). Burası bayrakları elle
+   * sayıyordu; `NEEDS_SCOPE_CLARIFICATION` eklenince liste sessizce eksik
+   * kaldı ve "ağrı kesici kutu" hâlâ `printing` kategorisi alıyordu — yani
+   * kategori motoru bir ilaç metnini taşımaya devam ediyordu. Koşul artık
+   * `isUnsupportedRequestScope` ile aynı yerden gelir; kapsam listesine yeni
+   * bir değer eklendiği gün bu blok da otomatik kapanır.
+   */
+  if (isUnsupportedRequestScope(requestScope.value)) {
     const noCategoryTag = isUnsupportedSupply
       ? "unsupported-supply-no-category"
       : isMedicalAdviceQuestion
         ? "medical-advice-no-category"
         : isPharmacyProductRequest
           ? "pharmacy-no-category"
-          : "removed-medical-testing-no-category";
+          : needsPharmacyClarification
+            ? "scope-unresolved-no-category"
+            : "removed-medical-testing-no-category";
     const noSubjectTag = isUnsupportedSupply
       ? "unsupported-supply-no-subject"
       : isMedicalAdviceQuestion
         ? "medical-advice-no-subject"
         : isPharmacyProductRequest
           ? "pharmacy-no-subject"
-          : "removed-medical-testing-no-subject";
+          : needsPharmacyClarification
+            ? "scope-unresolved-no-subject"
+            : "removed-medical-testing-no-subject";
     reconciled.category = {
       value: null,
       confidence: 0,
