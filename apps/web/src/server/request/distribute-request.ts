@@ -1,5 +1,7 @@
+import { COMPANY_STORED_WRITE_ROLES } from "@/lib/membership/company-permissions";
 import { getPlanDefinition } from "@/lib/membership/plans";
 import { prisma } from "@/lib/prisma";
+import { publicRequestWhere } from "./public-visibility";
 import { isSystemCategorySlug } from "@/lib/request/raw-input";
 import { runAutomaticOpportunityHunter } from "@/server/monetization/opportunity-hunter";
 import { deliverAlertRuleNotifications } from "@/server/monetization/alert-notifications";
@@ -68,7 +70,7 @@ export type DistributeOptions = {
 
 /**
  * Match published request to ACTIVE companies by category (preferred) and city,
- * persist RequestMatch rows, and notify OWNER/ADMIN/MANAGER members.
+ * persist RequestMatch rows, and notify the owner and operating members.
  *
  * Slice 2a note: the body is wrapped so that an unexpected error still closes
  * the telemetry span (`request.fanout.failed`) before the SAME error is
@@ -95,6 +97,7 @@ export async function distributeRequestToCompanies(
         id: requestId,
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+        ...publicRequestWhere(),
       },
       select: {
         id: true,
@@ -318,7 +321,7 @@ export async function distributeRequestToCompanies(
       where: {
         companyId: { in: matches.map((m) => m.companyId) },
         status: "ACTIVE",
-        role: { in: ["OWNER", "ADMIN", "MANAGER"] },
+        role: { in: [...COMPANY_STORED_WRITE_ROLES] },
         userId: { not: request.createdById },
       },
       select: {
@@ -601,6 +604,7 @@ export async function backfillMatchesForCompany(
       where: {
         deletedAt: null,
         status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+        ...publicRequestWhere(),
         requestMatches: { none: { companyId } },
         ...(memberUserIds.length
           ? { createdById: { notIn: memberUserIds } }
@@ -784,7 +788,7 @@ export async function countMatchingCompanies(input: {
 
   try {
     const category = await prisma.category.findUnique({
-      where: { slug: input.categorySlug },
+      where: { slug: input.categorySlug, isActive: true },
       select: { id: true },
     });
 

@@ -1,3 +1,4 @@
+import { normalizeCompanyRole } from "@/lib/membership/company-permissions";
 import { prisma } from "@/lib/prisma";
 import { assertCanActivateCompanySeat } from "@/server/company/assert-company-seat";
 import { createNotification } from "@/server/notifications/create-notification";
@@ -65,6 +66,7 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
 
     await assertCanActivateCompanySeat({
       companyId,
+      role: membership.role,
       db: tx,
     });
 
@@ -72,6 +74,7 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
       where: { id: membership.id },
       data: {
         status: "ACTIVE",
+        role: normalizeCompanyRole(membership.role)!,
         joinedAt: new Date(),
         removedAt: null,
       },
@@ -95,20 +98,20 @@ export async function acceptCompanyInvite(userId: string, companyId: string) {
     return { membership: outcome.membership, alreadyActive: true as const };
   }
 
-  const managers = await prisma.companyMember.findMany({
+  const owners = await prisma.companyMember.findMany({
     where: {
       companyId,
       status: "ACTIVE",
-      role: { in: ["OWNER", "ADMIN", "MANAGER"] },
+      role: "OWNER",
       userId: { not: userId },
     },
     select: { userId: true },
   });
 
   await Promise.all(
-    managers.map((manager) =>
+    owners.map((owner) =>
       createNotification({
-        userId: manager.userId,
+        userId: owner.userId,
         type: "COMPANY_MEMBER_JOINED",
         title: "Ekibe katılım",
         message: `${outcome.inviteeLabel} ${outcome.companyName} ekibine katıldı.`,

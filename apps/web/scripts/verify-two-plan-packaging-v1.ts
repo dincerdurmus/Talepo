@@ -82,8 +82,10 @@ assert.equal(PLAN_FEATURES.CORPORATE, PLAN_FEATURES.PROFESSIONAL);
 assert.ok(PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Talepo Radar"));
 assert.ok(PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Teklif Zekâsı"));
 assert.ok(!PUBLIC_FEATURE_MATRIX.some((row) => "corporate" in row));
-assert.ok(!PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Offer Copilot"));
-assert.ok(!PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Price Intelligence"));
+// Use runtime labels to detect removed features without impossible-literal comparisons.
+const featureLabels: readonly string[] = PUBLIC_FEATURE_MATRIX.map((row) => row.label);
+assert.ok(!featureLabels.includes("Offer Copilot"));
+assert.ok(!featureLabels.includes("Price Intelligence"));
 
 const livePro = featuresForPlan(
   resolveEffectivePlanTier("PREMIUM", null, new Date()).effectivePlanTier,

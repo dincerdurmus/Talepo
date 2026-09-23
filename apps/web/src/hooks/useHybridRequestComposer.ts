@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { BrowseNode } from "@/lib/knowledge/types";
+import type { RequestCategory } from "@/lib/request-category-engine";
+import { applyCategoryAvailability } from "@/lib/request-composer/category-availability";
 import {
   type BrowseSelectionInput,
   type BrowsePathStep,
@@ -35,6 +37,8 @@ import {
 const DEBOUNCE_MS = 250;
 
 export type UseHybridRequestComposerOptions = {
+  categories?: readonly RequestCategory[];
+  selectedCategoryId?: string | null;
   initialText?: string;
   debounceMs?: number;
 };
@@ -92,7 +96,7 @@ export function useHybridRequestComposer(
   useEffect(() => {
     textRef.current = text;
   }, [text]);
-  const [state, setState] = useState<CanonicalRequestState | null>(() => {
+  const [rawState, setState] = useState<CanonicalRequestState | null>(() => {
     const initial = options.initialText?.trim();
     if (!initial) return null;
     try {
@@ -101,6 +105,7 @@ export function useHybridRequestComposer(
       return null;
     }
   });
+  const state = useMemo(() => applyCategoryAvailability(rawState, options.categories, options.selectedCategoryId), [rawState, options.categories, options.selectedCategoryId]);
   const [composerError, setComposerError] = useState(false);
   const [browseDegraded, setBrowseDegraded] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -546,9 +551,28 @@ export function useHybridRequestComposer(
     [state],
   );
 
+  const availableBrowseWalk = useMemo(() =>
+    options.categories && browseWalk.categoryId && !options.categories.some((category) => category.id === browseWalk.categoryId)
+      ? createBrowseWalkState() : browseWalk,
+  [browseWalk, options.categories]);
+
   const browseColumns = useMemo(
-    () => listBrowseCascadeColumns(browseWalk),
-    [browseWalk],
+    () => {
+      const columns = listBrowseCascadeColumns(availableBrowseWalk);
+      if (!options.categories) return columns;
+      const allowed = new Set(options.categories.map((category) => category.id));
+      return columns.map((column, index) => {
+        const visible = column.filter((node) => allowed.has(node.categoryId || node.id));
+        if (index !== 0) return visible;
+        return options.categories!.map((category): BrowseNode => ({
+          ...(visible.find((node) => node.categoryId === category.id) ?? {
+            id: category.id, kind: "category", categoryId: category.id, hasChildren: false,
+          }),
+          label: category.label,
+        }));
+      });
+    },
+    [availableBrowseWalk, options.categories],
   );
 
   return {
@@ -567,7 +591,7 @@ export function useHybridRequestComposer(
     retrySync,
     applyBrowseSelection,
     applyQuickOption,
-    browseWalk,
+    browseWalk: availableBrowseWalk,
     browseColumns,
     openBrowsePanel,
     setOpenBrowsePanel,

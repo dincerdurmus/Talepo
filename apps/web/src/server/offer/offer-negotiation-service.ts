@@ -17,7 +17,7 @@ import {
 import { DomainError, DomainErrorCode } from "@/lib/observability/errors";
 import { prisma } from "@/lib/prisma";
 import { acceptOffer, OfferValidationError } from "@/server/offer/offer-service";
-import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import { assertNegotiationWriteAccess, resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 import {
   notifyNegotiationAccepted,
   notifyNegotiationProposed,
@@ -56,6 +56,7 @@ async function loadNegotiableOffer(offerId: string) {
           id: true,
           title: true,
           createdById: true,
+          companyId: true,
           deletedAt: true,
           status: true,
         },
@@ -97,6 +98,7 @@ export async function proposeOfferNegotiation(
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
 
+  await assertNegotiationWriteAccess(offer, userId);
   const side = await resolveNegotiationActorSide(offer, userId);
   if (!side) {
     throw new DomainError({
@@ -200,6 +202,7 @@ export async function rejectPendingNegotiation(userId: string, offerId: string) 
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
 
+  await assertNegotiationWriteAccess(offer, userId);
   const side = await resolveNegotiationActorSide(offer, userId);
   if (!side) {
     throw new DomainError({
@@ -251,6 +254,7 @@ export async function acceptPendingNegotiation(userId: string, offerId: string) 
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
 
+  await assertNegotiationWriteAccess(offer, userId);
   const side = await resolveNegotiationActorSide(offer, userId);
   if (!side) {
     throw new DomainError({

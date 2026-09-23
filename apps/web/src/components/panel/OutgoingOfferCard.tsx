@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -42,7 +44,7 @@ export type OutgoingOfferCardData = {
 export function OutgoingOfferCard({
   offer,
   completeness,
-  canMutate,
+  canMutate: suppliedCanMutate,
   highlightNegotiationId,
   isUnread: isUnreadProp = false,
   compareStripLayout = false,
@@ -59,6 +61,7 @@ export function OutgoingOfferCard({
   isArchived?: boolean;
 }) {
   const router = useRouter();
+  const canMutate = useCompanyCanWrite() && suppliedCanMutate;
   const isUnread = useOfferGroupLiveUnread(isUnreadProp);
   const [composerOpen, setComposerOpen] = useState(false);
   const [panelBusy, setPanelBusy] = useState<string | null>(null);

@@ -1,3 +1,4 @@
+import { COMPANY_STORED_WRITE_ROLES } from "@/lib/membership/company-permissions";
 import type { OpportunityMatchSource } from "@/generated/prisma/client";
 import {
   evaluateDiscoveryFilter,
@@ -159,7 +160,7 @@ export async function runAutomaticOpportunityHunter(
 
 /**
  * Assign / unassign opportunity to an active company member.
- * Company-scoped. Assigner role should be OWNER|ADMIN|MANAGER (enforced by caller).
+ * Company-scoped. Assigner role must be OWNER (enforced by caller).
  */
 export async function assignOpportunity(
   opportunityId: string,
@@ -172,6 +173,7 @@ export async function assignOpportunity(
         id: memberId,
         companyId,
         status: "ACTIVE",
+        role: { in: [...COMPANY_STORED_WRITE_ROLES] },
       },
       select: { id: true },
     });

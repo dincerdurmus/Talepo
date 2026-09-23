@@ -1,0 +1,14 @@
+PASS — Concurrent acceptance: owner + exactly 3 operators + 1 analyst
+PASS — Replaying an accepted invitation is idempotent
+PASS — A removed analyst releases only the reserved analysis position
+PASS — An unrelated user cannot accept an invitation
+PASS — Concurrent owner activations permit exactly one owner
+PASS — Pending ADMIN invitations activate as MEMBER
+PASS — Pending MANAGER invitations activate as MEMBER
+PASS — Analyst sees explanation instead of offer-send controls
+PASS — Analyst can read a conversation without seeing a message form
+PASS — Analyst cannot archive or restore shared offers
+PASS — Team screen explains the reserved analysis seat and disables a fifth operator
+PASS — Members, analysts and legacy managers never see invite or removal controls
+
+12 passed, 0 failed; isolated records only.

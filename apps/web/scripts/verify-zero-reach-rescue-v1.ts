@@ -34,6 +34,7 @@ process.env.DATABASE_URL ??=
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { ADMIN_HEALTH_LABELS, healthMetricSummary } from "../src/lib/admin-health-presentation";
 
 import {
   addLogSink,
@@ -564,10 +565,11 @@ async function main() {
         "utf8",
       );
       assert.ok(
-        UI.includes('key==="zeroReach"'),
+        UI.includes("healthMetricSummary") && healthMetricSummary({ zeroReach: 3 }).alerts.some(([key]) => key === "zeroReach"),
         "sayı uyarı listesine düşmüyor — sayı var, kimse görmüyor",
       );
-      assert.ok(UI.includes('zeroReach:"'), "metrik panelde adsız");
+      assert.ok(UI.includes("ADMIN_HEALTH_LABELS") && ADMIN_HEALTH_LABELS.zeroReach === "Hiç tedarikçiye ulaşmayan talep", "metrik panelde adsız");
+      assert.deepEqual(healthMetricSummary({ zeroReach: 0 }).alerts, []);
     },
   );
 

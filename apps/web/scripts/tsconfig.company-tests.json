@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true,
+    "types": ["node", "react", "next", "next/image-types/global"]
+  },
+  "include": [
+    "../src/types/**/*.d.ts",
+    "verify-phase4c-billing-v1.ts",
+    "verify-p1-closed-beta-closure-v1.ts",
+    "verify-standard-pro-packaging-v1.ts",
+    "verify-two-plan-packaging-v1.ts",
+    "verify-global-panel-visual-system-v1.ts"
+  ],
+  "exclude": []
+}

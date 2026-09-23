@@ -1,0 +1,153 @@
+▲ Next.js 16.2.10 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.8s
+  Running TypeScript ...
+  Finished TypeScript in 13.3s ...
+  Collecting page data using 19 workers ...
+  Generating static pages using 19 workers (0/79) ...
+  Generating static pages using 19 workers (19/79) 
+  Generating static pages using 19 workers (39/79) 
+  Generating static pages using 19 workers (59/79) 
+✓ Generating static pages using 19 workers (79/79) in 341ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /admin
+├ ƒ /admin/[section]
+├ ƒ /admin/[section]/[id]
+├ ƒ /admin/health
+├ ƒ /admin/notlar
+├ ƒ /admin/requests/[id]
+├ ƒ /api/admin/audit
+├ ƒ /api/admin/audit/export
+├ ƒ /api/admin/categories
+├ ƒ /api/admin/categories/[id]
+├ ƒ /api/admin/companies/[id]
+├ ƒ /api/admin/complaints/request-lookup
+├ ƒ /api/admin/health
+├ ƒ /api/admin/mfa
+├ ƒ /api/admin/moderation
+├ ƒ /api/admin/moderation/contact
+├ ƒ /api/admin/role-notes
+├ ƒ /api/admin/users
+├ ƒ /api/admin/users/[id]
+├ ƒ /api/ai/offer-assistant
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/password/forgot
+├ ƒ /api/auth/password/reset
+├ ƒ /api/auth/providers-status
+├ ƒ /api/auth/register
+├ ƒ /api/billing/callback
+├ ƒ /api/billing/cancel
+├ ƒ /api/billing/checkout
+├ ƒ /api/billing/credits/checkout
+├ ƒ /api/billing/status
+├ ƒ /api/billing/webhook
+├ ƒ /api/categories/active
+├ ƒ /api/company
+├ ƒ /api/company/inventory
+├ ƒ /api/company/inventory/[id]
+├ ƒ /api/company/invites
+├ ƒ /api/company/team
+├ ƒ /api/complaints
+├ ƒ /api/conversations/[id]/messages
+├ ƒ /api/conversations/[id]/participant-profile
+├ ƒ /api/cron/category-provisioning
+├ ƒ /api/cron/feature-expiry
+├ ƒ /api/cron/match-backfill
+├ ƒ /api/cron/overdue-complaints
+├ ƒ /api/cron/request-expiry
+├ ƒ /api/cron/urgent-nudge
+├ ƒ /api/deal-outcomes
+├ ƒ /api/deal-reviews
+├ ƒ /api/explore/interests
+├ ƒ /api/geo/neighborhoods
+├ ƒ /api/health
+├ ƒ /api/matching/estimate
+├ ƒ /api/membership
+├ ƒ /api/messages/[id]/read
+├ ƒ /api/monetization/alerts
+├ ƒ /api/monetization/analytics
+├ ƒ /api/monetization/follow-up
+├ ƒ /api/monetization/inventory
+├ ƒ /api/monetization/offer-assistant
+├ ƒ /api/monetization/offer-copilot
+├ ƒ /api/monetization/offer-intelligence
+├ ƒ /api/monetization/offer-intelligence/exposure
+├ ƒ /api/monetization/opportunities
+├ ƒ /api/monetization/saved-searches
+├ ƒ /api/monetization/watchlist
+├ ƒ /api/notifications/[id]/read
+├ ƒ /api/notifications/read-all
+├ ƒ /api/notifications/urgent-nudge
+├ ƒ /api/offers
+├ ƒ /api/offers/[id]
+├ ƒ /api/offers/[id]/archive
+├ ƒ /api/offers/[id]/media
+├ ƒ /api/offers/[id]/media/[mediaId]
+├ ƒ /api/offers/[id]/media/finalize
+├ ƒ /api/offers/[id]/negotiations
+├ ƒ /api/offers/[id]/seen
+├ ƒ /api/offers/[id]/unarchive
+├ ƒ /api/offers/inbox/read-all
+├ ƒ /api/price-intelligence
+├ ƒ /api/price-intelligence/preview
+├ ƒ /api/profile
+├ ƒ /api/profile/password
+├ ƒ /api/ready
+├ ƒ /api/requests
+├ ƒ /api/requests/[id]
+├ ƒ /api/requests/[id]/clone-draft
+├ ƒ /api/requests/[id]/urgent-broadcast
+├ ƒ /api/requests/cover-preview
+├ ○ /giris
+├ ○ /gizlilik-politikasi
+├ ○ /kayit
+├ ○ /kullanim-kosullari
+├ ○ /mesajlar
+├ ○ /onizleme/kurumsal-panel
+├ ○ /onizleme/teklif-akisi
+├ ƒ /panel
+├ ƒ /panel/analiz
+├ ƒ /panel/asistan
+├ ƒ /panel/bildirimler
+├ ƒ /panel/bildirimler/r/[id]
+├ ƒ /panel/ekip
+├ ƒ /panel/envanter
+├ ƒ /panel/firma
+├ ƒ /panel/firma-profil/[id]
+├ ƒ /panel/firma/yeni
+├ ƒ /panel/firsatlar
+├ ƒ /panel/gelen-teklifler
+├ ƒ /panel/gelen-teklifler/[requestId]
+├ ƒ /panel/kayitli-aramalar
+├ ƒ /panel/mesajlar
+├ ƒ /panel/mesajlar/[id]
+├ ƒ /panel/plan
+├ ƒ /panel/plan/odeme
+├ ƒ /panel/plan/premium
+├ ƒ /panel/profil
+├ ƒ /panel/profil/[userId]
+├ ƒ /panel/takiplerim
+├ ƒ /panel/talepler
+├ ƒ /panel/talepler/[id]
+├ ƒ /panel/talepler/[id]/teklif
+├ ƒ /panel/taleplerim
+├ ƒ /panel/taleplerim/[id]
+├ ƒ /panel/taleplerim/[id]/duzenle
+├ ƒ /panel/teklifler
+├ ƒ /panel/uyarilar
+├ ○ /profil
+├ ○ /sifre-sifirla
+├ ○ /sifremi-unuttum
+├ ƒ /talep
+├ ○ /talepler
+└ ○ /taleplerim
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

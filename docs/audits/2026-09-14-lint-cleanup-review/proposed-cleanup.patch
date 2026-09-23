@@ -1,0 +1,41 @@
+diff --git a/apps/web/src/lib/membership/product-packaging.ts b/apps/web/src/lib/membership/product-packaging.ts
+--- a/apps/web/src/lib/membership/product-packaging.ts
++++ b/apps/web/src/lib/membership/product-packaging.ts
+@@ -39,17 +39,15 @@
+     .label;
+ }
+ 
+-export function getPublicProduct(
+-  tier: PlanTierId,
+-  _context: ProductContext = "PERSONAL",
+-): PublicProduct {
+-  return toPublicPlanId(tier);
+-}
+-
+-export function getPublicProductLabel(
+-  tier: PlanTierId,
+-  _context: ProductContext = "PERSONAL",
+-) {
++// Keep the optional legacy context argument; public names depend only on tier.
++export function getPublicProduct(tier: PlanTierId, context?: ProductContext): PublicProduct;
++export function getPublicProduct(tier: PlanTierId): PublicProduct {
++  return toPublicPlanId(tier);
++}
++
++// Keep the optional legacy context argument; public names depend only on tier.
++export function getPublicProductLabel(tier: PlanTierId, context?: ProductContext): string;
++export function getPublicProductLabel(tier: PlanTierId): string {
+   return PLAN_DEFINITIONS[toPublicPlanId(tier)].label;
+ }
+ 
+diff --git a/apps/web/scripts/verify-p1-closed-beta-closure-v1.ts b/apps/web/scripts/verify-p1-closed-beta-closure-v1.ts
+--- a/apps/web/scripts/verify-p1-closed-beta-closure-v1.ts
++++ b/apps/web/scripts/verify-p1-closed-beta-closure-v1.ts
+@@ -21,7 +21,6 @@
+   composeTextFromBrowseStack,
+   createBrowseWalkState,
+   createTextOnlyState,
+-  pinBrowseSemanticContext,
+   resolveHybridQuestions,
+ } from "../src/lib/request-composer";
+ import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";

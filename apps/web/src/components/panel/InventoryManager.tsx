@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import { FormEvent, useState } from "react";
 import { Boxes, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -25,6 +27,7 @@ export function InventoryManager({
   /** Corporate inventory_import entitlement */
   canImport?: boolean;
 }) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
   const [open, setOpen] = useState(false);
@@ -160,7 +163,7 @@ export function InventoryManager({
           {companyName} stokları · talep eşleştirmesinde kullanılır
         </p>
         <div className="flex flex-wrap gap-2">
-          {canImport ? (
+          {canWrite && canImport ? (
             <button
               type="button"
               onClick={() => setImportOpen((v) => !v)}
@@ -171,6 +174,7 @@ export function InventoryManager({
           ) : null}
           <button
             type="button"
+            disabled={!canWrite}
             onClick={() => setOpen((value) => !value)}
             className="inline-flex items-center gap-2 rounded-full bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white"
           >
@@ -201,7 +205,7 @@ export function InventoryManager({
           />
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || !canWrite}
             className="mt-3 inline-flex rounded-full bg-teal-800 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
             İçe aktar
@@ -281,7 +285,7 @@ export function InventoryManager({
           <div className="mt-4 flex gap-2">
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || !canWrite}
               className="rounded-full bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
               Kaydet
@@ -333,7 +337,7 @@ export function InventoryManager({
                   </p>
                   <button
                     type="button"
-                    disabled={busy}
+                    disabled={busy || !canWrite}
                     onClick={() => void onRemove(item.id)}
                     className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-600"
                   >

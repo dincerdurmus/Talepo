@@ -25,13 +25,13 @@ import { detectCategoryResult } from "@/lib/ai/parser/category";
 import { findCanonicalCategoryClaim } from "@/lib/taxonomy/phrase-classification";
 import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import {
-  classifyRequestedTargetRole,
   SERVICE_LEMMAS,
 } from "@/lib/request-understanding/requested-item-role";
 import {
   resolveRelationDomain,
   splitCompatibilityPhrase,
   readRequestedTarget,
+  classifyRequestedRelationTarget,
 } from "@/lib/request-understanding/part-relation";
 
 /**
@@ -126,7 +126,8 @@ export function gateCategory(
   const tireSignalOwnsRouting =
     !canonicalClaimBeforeTireRouting ||
     canonicalClaimBeforeTireRouting.kind !== "unique" ||
-    canonicalClaimBeforeTireRouting.categoryId === "automotive";
+    canonicalClaimBeforeTireRouting.categoryId === "automotive" ||
+    (tireContext?.serviceType && canonicalClaimBeforeTireRouting.categoryId === "services");
   if (lastikWheelOrServiceSignal(rawInput) && tireSignalOwnsRouting) {
     return {
       value: "automotive",
@@ -155,7 +156,7 @@ export function gateCategory(
         evidence: ["canonical-claim", `phrase=${targetClaim.phrase}`, `node=${targetClaim.node.id}`, "accessory-target"],
       };
     }
-    const targetRole = classifyRequestedTargetRole(compatibility.requested).role;
+    const targetRole = classifyRequestedRelationTarget(compatibility.parent, compatibility.requested).role;
     if (targetRole === "COMPONENT_OR_ACCESSORY") {
       const relationDomain = resolveRelationDomain(rawInput);
       if (relationDomain?.categoryId) {

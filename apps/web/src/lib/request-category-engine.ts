@@ -57,6 +57,8 @@ export type ProductQuestionContractQuestion = {
 export type ProductQuestionContract = {
   whenProductTypes?: string[];
   whenNeedTypes?: string[];
+  /** A parent product's purchasing questions do not describe its part or repair. */
+  excludeNeedTypes?: string[];
   allowedCandidateFieldKeys: string[];
   /**
    * Dar ailelerde standart kategori profillerini de bu sözleşmenin anahtar
@@ -70,6 +72,43 @@ export type ProductQuestionContract = {
   measurementContracts?: Record<string, MeasurementContract>;
   questions: ProductQuestionContractQuestion[];
 };
+
+/** Keep the existing shared/identity questions when the requested object is a
+ * component. This declares no new questions; product specifications stay with
+ * the whole-product contracts instead of leaking through their parent names. */
+const COMPONENT_QUESTION_CONTRACT: ProductQuestionContract = {
+  whenNeedTypes: ["part", "accessory"],
+  restrictStandardProfiles: true,
+  allowedCandidateFieldKeys: [
+    "brand", "model", "condition", "quantity", "city", "delivery", "budget",
+  ],
+  questions: [],
+};
+
+const GENERIC_APPLIANCE_PRODUCT_CONTRACT: ProductQuestionContract = {
+  restrictStandardProfiles: true,
+  allowedCandidateFieldKeys: [
+    "brand", "model", "condition", "quantity", "city", "delivery", "budget",
+  ],
+  questions: [],
+};
+
+const GENERIC_BABY_PRODUCT_CONTRACT: ProductQuestionContract = {
+  restrictStandardProfiles: true,
+  allowedCandidateFieldKeys: [
+    "brand", "model", "condition", "quantity", "city", "delivery", "budget",
+  ],
+  questions: [],
+};
+
+const PRODUCT_SERVICE_QUESTION_CONTRACT: ProductQuestionContract = {
+  whenNeedTypes: ["service"],
+  restrictStandardProfiles: true,
+  allowedCandidateFieldKeys: ["serviceType", "brand", "model", "city", "delivery", "budget"],
+  questions: [],
+};
+
+const NON_PURCHASE_NEED_TYPES = ["part", "accessory", "service"];
 
 export type DynamicFieldOption = {
   label: string;
@@ -92,6 +131,7 @@ const FURNITURE_COMMON_CANDIDATE_KEYS = [
 ];
 
 const FURNITURE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  COMPONENT_QUESTION_CONTRACT,
   {
     whenProductTypes: [
       "makam odası",
@@ -241,8 +281,12 @@ const APPLIANCE_COMMON_CANDIDATE_KEYS = [
 ];
 
 const APPLIANCE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  COMPONENT_QUESTION_CONTRACT,
+  PRODUCT_SERVICE_QUESTION_CONTRACT,
+  GENERIC_APPLIANCE_PRODUCT_CONTRACT,
   {
     whenProductTypes: ["buzdolabı", "buzdolabi"],
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     allowedCandidateFieldKeys: [
       ...APPLIANCE_COMMON_CANDIDATE_KEYS,
       "fridgeType",
@@ -320,6 +364,7 @@ const APPLIANCE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
   },
   {
     whenProductTypes: ["çamaşır makinesi", "camasir makinesi"],
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     allowedCandidateFieldKeys: [
       ...APPLIANCE_COMMON_CANDIDATE_KEYS,
       "capacityKg",
@@ -412,6 +457,7 @@ const APPLIANCE_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
   },
   {
     whenProductTypes: ["klima"],
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     allowedCandidateFieldKeys: [
       ...APPLIANCE_COMMON_CANDIDATE_KEYS,
       "airConditionerType",
@@ -551,6 +597,8 @@ const TECHNOLOGY_COMMON_CANDIDATE_KEYS = [
 ];
 
 const TECHNOLOGY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  COMPONENT_QUESTION_CONTRACT,
+  PRODUCT_SERVICE_QUESTION_CONTRACT,
   /**
    * YAZILIM / WEB PROJESİ KENDİ SÖZLEŞMESİYLE SORULUR (kurucu, 2026-09-12).
    *
@@ -1051,7 +1099,10 @@ const BABY_COMMON_CANDIDATE_KEYS = [
 ];
 
 const BABY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  COMPONENT_QUESTION_CONTRACT,
+  GENERIC_BABY_PRODUCT_CONTRACT,
   {
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     whenProductTypes: [
       "bebek arabası",
       "bebek arabasi",
@@ -1119,6 +1170,7 @@ const BABY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
     ],
   },
   {
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     whenProductTypes: [
       "oto koltuğu",
       "oto koltugu",
@@ -1526,8 +1578,10 @@ const BABY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
       "kirli bebek bezi canta",
       "diaper pail",
     ],
+    restrictStandardProfiles: true,
     allowedCandidateFieldKeys: [
       ...BABY_COMMON_CANDIDATE_KEYS,
+      "model",
       "diaperDisposalProduct",
       "diaperDisposalCapacity",
       "diaperDisposalCompatibility",
@@ -2348,6 +2402,7 @@ const BABY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
     ],
   },
   {
+    excludeNeedTypes: NON_PURCHASE_NEED_TYPES,
     whenProductTypes: [
       "biberon ucu",
       "biberon uç",
@@ -4620,6 +4675,7 @@ const MACHINERY_COMMON_CANDIDATE_KEYS = [
  * kaldırma kapasitesi görmemelidir.
  */
 const MACHINERY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
+  PRODUCT_SERVICE_QUESTION_CONTRACT,
   {
     // Protective consumables share the hardware category, not machine specs.
     whenProductTypes: ["koruyucu eldiven"],
@@ -4632,6 +4688,7 @@ const MACHINERY_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
     // serbest forma bırakıyoruz. Kullanıcıyı CNC ekseni, kaldırma kapasitesi
     // ya da voltaj gibi parça için çoğu kez yanıltıcı sorularla yormuyoruz.
     whenNeedTypes: ["part"],
+    restrictStandardProfiles: true,
     allowedCandidateFieldKeys: ["needType", "partPreference"],
     questions: [
       {
@@ -7703,7 +7760,8 @@ export function getVisibleCategoryFields(
   // Product-scoped fields: only when the detected product matches.
   // Real estate: propertyType (Daire / İmarlı arsa / İş yeri) is the context.
   const productContext = foldProductContext(
-    resolved.productType ||
+    (categoryId === "automotive" && (resolved.needType === "service" || resolved.needType === "tire") && resolved.serviceType) ||
+      resolved.productType ||
       resolved.solutionType ||
       resolved.applianceType ||
       resolved.furnitureType ||
@@ -9504,6 +9562,53 @@ export const REQUEST_CATEGORIES: RequestCategory[] = [...CATEGORY_DEFINITIONS].s
 );
 
 /**
+ * Admin tarafından veritabanından eklenen kategoriler için istemci çalışma
+ * zamanı kaydı. Bunlar statik beyin sözleşmelerinin yerine geçmez; yalnızca
+ * seçilebilir bir kategori ve ortak, güvenli talep akışı sağlar. Kategoriye
+ * özel sorular ileride ayrı bir sözleşmeyle tanımlanır.
+ */
+const RUNTIME_CATEGORIES = new Map<string, RequestCategory>();
+
+export type RuntimeCategoryInput = {
+  name: string;
+  slug: string;
+  description?: string | null;
+  sortOrder?: number;
+};
+
+export function registerRuntimeCategories(
+  categories: RuntimeCategoryInput[],
+): RequestCategory[] {
+  RUNTIME_CATEGORIES.clear();
+  const staticIds = new Set(REQUEST_CATEGORIES.map((category) => category.id));
+  for (const category of categories) {
+    const slug = category.slug.trim();
+    if (!slug || staticIds.has(slug)) continue;
+    RUNTIME_CATEGORIES.set(slug, {
+      id: slug,
+      label: category.name.trim() || slug,
+      description: category.description?.trim() || "Talep kategorisi",
+      keywords: [],
+      subcategories: [],
+      commonFields: [{ key: "title" }, { key: "city" }, { key: "budget" }],
+      fields: [],
+    });
+  }
+  return [...RUNTIME_CATEGORIES.values()].sort(
+    (a, b) => a.label.localeCompare(b.label, "tr-TR"),
+  );
+}
+
+export function getRuntimeCategories(): RequestCategory[] {
+  return [...RUNTIME_CATEGORIES.values()];
+}
+
+export function getBuiltInCategoryById(id: string): RequestCategory | null {
+  const trimmed = id?.trim() ?? "";
+  return REQUEST_CATEGORIES.find((category) => category.id === trimmed) ?? null;
+}
+
+/**
  * Sahibinden-style marketplace filter parity, adapted for Talepo's reverse
  * marketplace. Keep this isolated so the experiment can be rolled back by
  * changing one flag; none of these fields becomes a publishing requirement.
@@ -9735,7 +9840,9 @@ export function getCategoryById(id: string): RequestCategory | null {
   if (!trimmed || trimmed === "unknown" || trimmed === "unresolved") {
     return UNKNOWN_REQUEST_CATEGORY;
   }
-  return REQUEST_CATEGORIES.find((category) => category.id === trimmed) ?? null;
+  return getBuiltInCategoryById(trimmed) ??
+    RUNTIME_CATEGORIES.get(trimmed) ??
+    null;
 }
 
 /**
@@ -9759,6 +9866,7 @@ export function resolveCategoryQuestionContract(input: {
   let selectedScore = -1;
 
   for (const contract of contracts) {
+    if (contract.excludeNeedTypes?.includes(needType)) continue;
     const matchesNeed =
       !contract.whenNeedTypes?.length ||
       (Boolean(needType) && contract.whenNeedTypes.includes(needType));
@@ -9796,8 +9904,10 @@ export function resolveCategoryQuestionContract(input: {
 /** UI-safe resolve: unknown ids become UNKNOWN shell, never an unrelated category. */
 export function resolveRequestCategory(
   id: string | null | undefined,
+  availableCategories?: readonly RequestCategory[],
 ): RequestCategory {
   if (id == null) return UNKNOWN_REQUEST_CATEGORY;
+  if (availableCategories) return availableCategories.find((category) => category.id === id) ?? UNKNOWN_REQUEST_CATEGORY;
   return getCategoryById(id) ?? UNKNOWN_REQUEST_CATEGORY;
 }
 

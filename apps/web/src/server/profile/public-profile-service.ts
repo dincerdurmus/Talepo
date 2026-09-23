@@ -29,6 +29,7 @@ async function loadUserCategories(userId: string): Promise<string[]> {
       submittedById: userId,
       companyId: null,
       status: { in: ["SUBMITTED", "VIEWED", "ACCEPTED"] },
+      request: { category: { isActive: true } },
     },
     include: {
       request: { select: { category: { select: { name: true } } } },
@@ -44,7 +45,7 @@ async function loadUserCategories(userId: string): Promise<string[]> {
 
 async function loadCompanyCategories(companyId: string): Promise<string[]> {
   const rows = await prisma.companyCategory.findMany({
-    where: { companyId },
+    where: { companyId, category: { isActive: true } },
     select: { category: { select: { name: true } } },
     take: 8,
   });

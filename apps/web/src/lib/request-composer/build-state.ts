@@ -38,8 +38,8 @@ import {
 } from "./attribute-hints";
 import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 // Kategori alanlarının kanonik değer kaydı — KB-15 seçenek bağlayıcısı bunu okur.
-import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
-import { listProfilesForCategory } from "./v2/question-profiles";
+import { getCategoryById } from "@/lib/request-category-engine";
+import { listProfilesForCategory, isRemoteEligibleService } from "./v2/question-profiles";
 import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/activation-bridge";
 import { readStatedDeadline } from "@/lib/request-understanding/stated-deadline";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
@@ -47,6 +47,7 @@ import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { inferenceOnlyMarkerKey } from "@/lib/knowledge/inference-marker";
 import { isProductTypePhrase } from "@/lib/product-identity/identity-candidates";
 import { withoutRejectedTireMentions } from "@/lib/request-understanding/tire-request-context";
+import { withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
 import {
   classifyRequestedTargetRole,
   isRequestedItemNotModel,
@@ -420,6 +421,7 @@ function bindWrittenOptionValues(
   categoryId: string,
   raw: string,
 ): void {
+  raw = withoutRejectedRequestClauses(raw);
   const text = foldPartToken(String(raw ?? ""));
   if (!text.trim()) return;
   /** Ayraçları seçenek biçimleriyle aynı şekilde boşluğa indirger. */
@@ -449,7 +451,7 @@ function bindWrittenOptionValues(
     /** Yalnız seçeneğin TAMAMI yazılmışsa bağlanır (parça sözcük kabul edilmez). */
     wholeOnly?: boolean;
   }> = [];
-  const category = REQUEST_CATEGORIES.find((c) => c.id === categoryId);
+  const category = getCategoryById(categoryId);
   for (const def of category?.fields ?? []) {
     if (def.type === "select" && def.options?.length) {
       optionDefs.push({ key: def.key, options: def.options });
@@ -501,6 +503,29 @@ function bindWrittenOptionValues(
     productType: boundProductType,
     needType: boundNeedType,
   });
+  const profileKeys = new Set(boundProfiles.map((profile) => profile.fieldKey));
+  // Map existing typed facts onto the active product's existing questions.
+  // A generic measurement does not answer another family's dimensions.
+  const dimensionKeys = [...profileKeys].filter((key) => /Dimensions$/.test(key));
+  if (dimensionKeys.length === 1 && fields.dimensions?.kind === "VALUE") {
+    const key = dimensionKeys[0]!;
+    if (!fields[key] || fields[key].kind === "UNKNOWN") fields[key] = { ...fields.dimensions };
+  }
+  if (profileKeys.has("publicationPageCount")) {
+    const pages = [...raw.matchAll(/(?<!\d)(\d+)\s*sayfa(?![\p{L}])/giu)].at(-1);
+    if (pages && !qualifierNear(raw, pages[0]) && (!fields.publicationPageCount || fields.publicationPageCount.kind === "UNKNOWN")) {
+      fields.publicationPageCount = valueField(pages[1], "EXPLICIT_TEXT", 0.95, [pages[0]]);
+    }
+  }
+  if (profileKeys.has("feedingBottleCapacity")) {
+    const volume = [...raw.matchAll(/(?<!\d)(\d+)\s*ml\b/gi)].at(-1);
+    if (volume && !qualifierNear(raw, volume[0]) && (!fields.feedingBottleCapacity || fields.feedingBottleCapacity.kind === "UNKNOWN")) {
+      fields.feedingBottleCapacity = valueField(`${volume[1]} ml`, "EXPLICIT_TEXT", 0.95, [volume[0]]);
+    }
+  }
+  if (profileKeys.has("partVehicleYear") && fields.modelYear?.kind === "VALUE" && fields.modelYear.provenance === "EXPLICIT_TEXT" && (!fields.partVehicleYear || fields.partVehicleYear.kind === "UNKNOWN")) {
+    fields.partVehicleYear = { ...fields.modelYear };
+  }
   if (boundProfiles.some((profile) => profile.fieldKey === "generatorPower")) {
     const powers = [...raw.matchAll(/\b(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?)\s*kva\b/gi)]
       .filter((match) => !qualifierNear(raw, match[0]));
@@ -549,6 +574,9 @@ function bindWrittenOptionValues(
     let value: string | null = null;
     let canonicalSlug: string | null = null;
     let evidence: string | null = null;
+    const fieldText = def.key === "propertyType"
+      ? foldPartToken(readUsageContextSplit(raw)?.target ?? raw) : text;
+    const fieldTextLoose = fieldText.replace(/[^a-z0-9]+/g, " ");
 
     /**
      * "Yalı" ile "Yalı Dairesi" gibi iç içe kanonik seçeneklerde kısa
@@ -586,8 +614,8 @@ function bindWrittenOptionValues(
        * yalnız iki yedek eklenir.
        */
       const whole =
-        forms.find((f) => f.length >= 3 && foldedHasWord(text, f)) ??
-        forms.find((f) => f.length >= 3 && foldedHasWord(textLoose, f)) ??
+        forms.find((f) => (f.length >= 3 || /^[a-z]\d$/i.test(f)) && foldedHasWord(fieldText, f)) ??
+        forms.find((f) => (f.length >= 3 || /^[a-z]\d$/i.test(f)) && foldedHasWord(fieldTextLoose, f)) ??
         forms.find(
           (f) =>
             f.replace(/ /g, "").length >= 6 &&
@@ -621,7 +649,7 @@ function bindWrittenOptionValues(
          * bunlardan etkilenmez.
          */
         if (AUX_DESIRE_TOKEN_RE.test(token)) continue;
-        if (!foldedHasWord(text, token)) continue;
+        if (!foldedHasWord(fieldText, token)) continue;
         value = originalSpelling(raw, token) ?? token;
         evidence = token;
         break;
@@ -723,7 +751,7 @@ function isCleanEnrichedPartLabel(
 function resolveProductHint(
   input: string,
 ): ReturnType<typeof extractProductTypeHint> {
-  const raw = withoutRejectedTireMentions(input);
+  const raw = withoutRejectedTireMentions(withoutRejectedRequestClauses(input));
   const usage = readUsageContextSplit(raw);
   if (!usage) return extractProductTypeHint(raw);
   const hint = extractProductTypeHint(usage.target);
@@ -747,7 +775,7 @@ export function mapUnderstandingToFields(
   result: RequestUnderstandingResult,
 ): Record<string, CanonicalFieldState> {
   const fields: Record<string, CanonicalFieldState> = {};
-  const raw = result.rawInput ?? "";
+  const raw = withoutRejectedRequestClauses(result.rawInput ?? "");
 
   const screenSize = extractScreenSize(raw);
   const resolution = extractResolution(raw);
@@ -1606,6 +1634,9 @@ function taxonomyFromUnderstanding(
     );
   if (
     !serviceRoutedToServices &&
+    (!result.category.value ||
+      result.category.value === "appliances" ||
+      productHint?.taxonomyNodeId?.startsWith(`tax:${result.category.value}:`)) &&
     (productHint?.taxonomyNodeId?.startsWith("tax:appliances:") ||
       productHint?.productType === "supurge")
   ) {
@@ -1895,7 +1926,7 @@ export function preserveValidCommonBrowseAnswers(
    */
   const commonKeys = (id: string | null | undefined) =>
     new Set<string>(
-      (REQUEST_CATEGORIES.find((cat) => cat.id === id)?.commonFields ?? []).map(
+      (getCategoryById(id ?? "")?.commonFields ?? []).map(
         (f) => f.key,
       ),
     );
@@ -1945,21 +1976,29 @@ function previousFieldsForProduct(
   if (previous.categoryId === "automotive") return previous.fields;
   const categoryId = taxonomyFromUnderstanding(understanding, fresh).categoryId;
   if (!categoryId || categoryId !== previous.categoryId) return previous.fields;
-  const profiles = (fields: Record<string, CanonicalFieldState>) => {
-    const value = (key: string) => fields[key]?.kind === "VALUE" ? fields[key].value : null;
+  const profiles = (fields: Record<string, CanonicalFieldState>, result: RequestUnderstandingResult) => {
+    const seeded = seedFieldValuesFromUnderstanding(result);
+    const value = (key: string) => fields[key]?.kind === "VALUE" ? fields[key].value : isDeliberateNonValueAnswer(fields[key]) ? null : seeded[key] ?? null;
     const productType = (categoryId === "services" ? value("serviceType") : null) ||
       value("productType") || value("propertyType") || value("applianceType") ||
       value("furnitureType") || value("machineType") || value("babyProductType") || value("kitchenProductType");
     return productType ? listProfilesForCategory({ categoryId, productType, needType: value("needType") }) : null;
   };
-  const before = profiles(previous.fields);
-  const after = profiles(fresh);
-  if (!before || !after) return previous.fields;
+  const serviceContext = `${fresh.serviceType?.value ?? ""} ${fresh.productType?.value ?? ""} ${understanding.requestSubject.name?.value ?? ""} ${withoutRejectedRequestClauses(understanding.rawInput)}`;
+  const physicalService = categoryId === "services" && !isRemoteEligibleService(serviceContext);
+  const explicitOnsite = /\byerinde\b/i.test(withoutRejectedRequestClauses(understanding.rawInput));
+  const previousRemote = previous.fields.city?.value === "Uzaktan" || previous.fields.locationMode?.value === "remote";
+  const previousFields = previousRemote && (physicalService || explicitOnsite)
+    ? Object.fromEntries(Object.entries(previous.fields).filter(([key]) => key !== "city" && key !== "locationMode"))
+    : previous.fields;
+  const before = profiles(previousFields, previous.understanding);
+  const after = profiles(fresh, understanding);
+  if (!before || !after) return previousFields;
   const signature = (items: typeof before) => items.map((item) => item.fieldKey).sort().join("|");
-  if (signature(before) === signature(after)) return previous.fields;
-  const common = new Set<string>((REQUEST_CATEGORIES.find((category) => category.id === categoryId)?.commonFields ?? []).map((field) => field.key));
+  if (signature(before) === signature(after)) return previousFields;
+  const common = new Set<string>((getCategoryById(categoryId)?.commonFields ?? []).map((field) => field.key));
   const scoped = new Set(before.map((profile) => profile.fieldKey).filter((key) => !common.has(key)));
-  return Object.fromEntries(Object.entries(previous.fields).filter(([key]) => !scoped.has(key)));
+  return Object.fromEntries(Object.entries(previousFields).filter(([key]) => !scoped.has(key) || (key === "locationMode" && previousRemote && !physicalService && !explicitOnsite)));
 }
 
 export function buildCanonicalRequestState(input: {
@@ -1980,6 +2019,20 @@ export function buildCanonicalRequestState(input: {
   // understanding pass (e.g. a generator preceded by its kVA rating). Apply
   // the same need-type authority against that resolved category before merge.
   const mappedCategory = taxonomyFromUnderstanding(input.understanding, mapped).categoryId;
+  const currentRaw = withoutRejectedRequestClauses(input.understanding.rawInput);
+  const serviceRequest = mappedCategory === "services" || input.understanding.requestSubject.kind.value === "SERVICE";
+  if (serviceRequest && isRemoteEligibleService(currentRaw) && /\b(?:uzaktan|online)\b/i.test(currentRaw) && !/\byerinde\b/i.test(currentRaw)) {
+    mapped.city = valueField("Uzaktan", "EXPLICIT_TEXT", 0.95, ["uzaktan hizmet"]);
+    mapped.locationMode = valueField("remote", "EXPLICIT_TEXT", 0.95, ["uzaktan hizmet"]);
+  } else if (serviceRequest && input.previous?.fields.city?.value === "Uzaktan") {
+    const city = input.understanding.location?.city;
+    if (city?.value && (city.provenance === "EXPLICIT" || city.source === "USER_EXPLICIT")) {
+      mapped.city = valueField(String(city.value), "EXPLICIT_TEXT", city.confidence, city.evidence);
+    }
+  }
+  if (serviceRequest && /\byerinde\b/i.test(currentRaw)) {
+    mapped.locationMode = valueField("onsite", "EXPLICIT_TEXT", 0.95, ["yerinde hizmet"]);
+  }
   if (mappedCategory && (!mapped.needType || mapped.needType.kind === "UNKNOWN")) {
     const seed = deriveExplicitNeedType(input.understanding, mappedCategory);
     if (seed) mapped.needType = valueField(seed.value, "EXPLICIT_TEXT", 0.85, seed.evidence);
@@ -2177,7 +2230,7 @@ export function deriveExplicitNeedType(
      Belirsiz dallar 0.4-0.6 bandındadır; niyet kapısı (CONFIDENT) ayrıca durur. */
   if (!intentConfident || kindConf < 0.7) return null;
   const schemaVals = new Set(
-    (REQUEST_CATEGORIES.find((c) => c.id === categoryId)?.fields ?? [])
+    (getCategoryById(categoryId ?? "")?.fields ?? [])
       .filter((f) => f.key === "needType")
       .flatMap((f) => f.options ?? [])
       .map((o) => String(o.value ?? "")),

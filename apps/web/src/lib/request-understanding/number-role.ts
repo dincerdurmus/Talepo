@@ -9,6 +9,7 @@ export type NumberRole =
   | "MODEL_IDENTIFIER"
   | "MODEL_YEAR"
   | "QUANTITY"
+  | "PIECE_COUNT"
   | "WEIGHT"
   | "DIMENSION"
   | "ROOM_LAYOUT"
@@ -261,7 +262,7 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     claim(stm.index, stm[0].length);
   }
 
-  const areaRe = /(\d+(?:[.,]\d+)?)\s*(m2|m²|metre\s*kare|metrekare)\b/gi;
+  const areaRe = /(\d+(?:[.,]\d+)?)\s*(m2|m²|metre\s*kare|metrekare)(?=$|[^\p{L}\p{N}])/giu;
   let arm: RegExpExecArray | null;
   while ((arm = areaRe.exec(text)) !== null) {
     if (isClaimed(arm.index, arm[0].length)) continue;
@@ -481,44 +482,29 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
     claim(bm.index, bm[0].length);
   }
 
-  /**
-   * ÖLÇÜ BİRİMİ LİSTESİ ADET'TEN İBARET DEĞİLDİR (P2-12, 2026-09-23).
-   *
-   * Ölçüldü (A-Z koşusu, 34 vaka): "4 çuval kedi maması", "2 koli A4 kağıt",
-   * "3 düzine bardak", "5 ton çimento" gibi taleplerde adet HİÇ taşınmıyordu
-   * — liste yalnız `adet|tane|kutu|paket|takım` tanıyordu. Kullanıcı miktarı
-   * yazmışken profesyonelin ödediği filtre onu göremiyordu.
-   *
-   * Birim `unit` alanında AYNEN korunur; "çuval" adete ÇEVRİLMEZ — bir
-   * çuvalın kaç adet olduğu ürüne göre değişir ve uydurulamaz.
-   *
-   * SAYILABİLİR AMBALAJ BİRİMİ ile ÖLÇÜ BİRİMİ AYRI EKSENLERDİR. `litre`,
-   * `kg`, `ton`, `metre` listeye BİLEREK girmez: onlar çoğu zaman ürünün
-   * KENDİ ÖZELLİĞİDİR. Korpus kapısı bunu anında ölçtü — "500 litre
-   * kompresör arıyorum" cümlesinde 500, kompresörün hava tankı hacmidir ve
-   * adet kanalına yazılması cümleyi "500 kompresör" yapardı. Dökme malzeme
-   * için ton/kg'ın sipariş miktarı olduğu doğrudur ama o ayrım ürüne
-   * bakmayı gerektirir; ölçülmeden eklenmez.
-   */
+  // A set's contents are neither an order quantity nor a product model.
+  // Keep standalone spare-part requests outside this rule.
+  if (/(?:^|[^\p{L}\p{N}])(?:tak[ıi]m[ıi]?|seti?)(?=$|[^\p{L}\p{N}])/iu.test(text)) {
+    const pieceRe = /(?<![\p{L}\p{N}])(\d+)\s*par[çc]a(?=$|[^\p{L}\p{N}])/giu;
+    for (const m of text.matchAll(pieceRe)) {
+      if (isClaimed(m.index, m[0].length)) continue;
+      results.push({ raw: m[0], role: "PIECE_COUNT", value: Number(m[1]), unit: "parça",
+        evidence: [m[0], "set-content-count"], index: m.index });
+      claim(m.index, m[0].length);
+    }
+  }
+
+  const quantityWords: Record<string, number> = {
+    bir: 1, iki: 2, üç: 3, uc: 3, dört: 4, dort: 4, beş: 5, bes: 5,
+    altı: 6, alti: 6, yedi: 7, sekiz: 8, dokuz: 9, on: 10,
+  };
   const qtyRe =
-    /\b(bir|iki|üç|uc|dört|dort|beş|bes|altı|alti|1|2|3|\d+(?:[.,]\d+)*)\s*(adet|tane|kutu|paket|takım|takim|araçlık|araclik|koli|çuval|cuval|düzine|duzine|rulo|torba|şişe|sise|tüp|tup|sandık|sandik|palet|bidon)\b/gi;
+    /(?<![\p{L}\p{N}])(bir|iki|üç|uc|dört|dort|beş|bes|altı|alti|yedi|sekiz|dokuz|on|\d+(?:[.,]\d+)*)\s*(adet|tane|kutu|paket|takım|takim|araçlık|araclik|koli|çuval|cuval|düzine|duzine|rulo|torba|şişe|sise|tüp|tup|sandık|sandik|palet|bidon)(?=$|[^\p{L}\p{N}])/giu;
   let qm: RegExpExecArray | null;
   while ((qm = qtyRe.exec(text)) !== null) {
     if (isClaimed(qm.index, qm[0].length)) continue;
     const word = qm[1]!.toLocaleLowerCase("tr-TR");
-    const map: Record<string, number> = {
-      bir: 1,
-      iki: 2,
-      üç: 3,
-      uc: 3,
-      dört: 4,
-      dort: 4,
-      beş: 5,
-      bes: 5,
-      altı: 6,
-      alti: 6,
-    };
-    const value = map[word] ?? parseTrInt(word);
+    const value = quantityWords[word] ?? parseTrInt(word);
     if (!Number.isFinite(value)) continue;
     results.push({
       raw: qm[0],
@@ -529,6 +515,15 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
       index: qm.index,
     });
     claim(qm.index, qm[0].length);
+  }
+
+  // Explicit field-label syntax: "Adet: 2" / "Adet 2 olacak".
+  const quantityLabelRe = /(?<![\p{L}\p{N}])adet\s*[:=]?\s*(\d+)(?=$|[^\p{L}\p{N}])/giu;
+  for (const m of text.matchAll(quantityLabelRe)) {
+    if (isClaimed(m.index, m[0].length)) continue;
+    results.push({ raw: m[0], role: "QUANTITY", value: Number(m[1]), unit: "adet",
+      evidence: [m[0], "quantity-label"], index: m.index });
+    claim(m.index, m[0].length);
   }
 
   // Print / packing: "5000 broşür", "2000 kartvizit" (unit implied by product noun)
@@ -753,6 +748,7 @@ const NON_MODEL_CLAIM_ROLES: ReadonlySet<string> = new Set([
   "MODEL_YEAR",
   "ROOM_LAYOUT",
   "QUANTITY",
+  "PIECE_COUNT",
   "WEIGHT",
   "DIMENSION",
   "MILEAGE",

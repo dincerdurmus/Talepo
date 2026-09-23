@@ -1,0 +1,255 @@
+PASS  I8: MediaMarkt-sourced brands resolve with correct category
+PASS  I1: no verb/conversation token survives as brand/model/product
+PASS  I2: no product-type phrase is labeled as a model
+PASS  I2c: composer fields.model never carries a product-type phrase
+PASS  I2b: instrument-noun morphology counts as product type
+PASS  I3: printed goods with 'yaptırmak' stay in printing, services stay services
+PASS  I4: ALL-CAPS and ASCII spellings resolve to the same category
+PASS  I4b: user-typed brand is EXPLICIT regardless of spelling
+PASS  I5: brand values are canonical catalog spellings
+PASS  I6: board never renders duplicate label+value rows
+PASS  I6b: displayed values keep Turkish diacritics for known words
+PASS  I7: unchanged text phrase cannot clobber an explicit answer
+PASS  I7b: merge helper honors rawInputs contract directly
+PASS  I9: each product family gets its own questions and nobody else's
+PASS  I9b: product-scoped questions ship one-tap options
+PASS  I10: engine fields are product-scoped — a TV is never asked computer specs
+PASS  I11: browse — Donanım hoisted out, brand columns product-relevant
+PASS  I11b: her kategori kendi marka kaynağından beslenir
+PASS  I11c: aksesuar/kılıf/örtü/kutu/çanta yaprağı marka kolonu AÇMAZ
+PASS  I11d: ünsüz yumuşaması olan ve olmayan kardeş yapraklar aynı davranır
+PASS  I11e: marka kolonu açılma oranı ölçülen değerden sapmıyor
+PASS  I11g: mobilya kolonu tek liste değil — segmentine göre marka
+PASS  I11h: baş ismi ürün pazarıyla çakışan hizmet yaprağı marka kolonu açmaz
+PASS  I11f: kolonun kaynağı işaretli — küratörlü liste pazar verisi gibi durmaz
+PASS  I14: 'ölçemedim' ile 'ölçtüm, bozuk' aynı renge boyanmaz
+PASS  I15: DB'ye yazan doğrulayıcı allowlist dışı host'a asla yazmaya kalkışmaz
+PASS  I15b: doğrulanmış acceptance hedefi FD-5 sözleşmesiyle açılır, gerisi fail-closed
+PASS  I16: üretilen cümlede hedef ifade birden fazla kez geçemez
+PASS  I17: otomotiv dışı uyumluluk parçasında üst ürün cümleden düşemez
+PASS  I18: uyumluluk bağlacı çok kelimeli parça adını kısaltamaz (KB-11)
+PASS  I19: istenen parça, üst ürünün MODELİ olarak atanamaz (KB-12)
+PASS  I20: kullanıcının yazmadığı marka başlıkta kesin gerçek gibi görünemez (KB-13)
+FAIL  I21: katalog dışı parça da istenen şey olarak korunur (KB-12 açık dünya)
+AssertionError [ERR_ASSERTION]: Klima için dış ünite fan motoru arıyorum: üst ürün 'klima' yok (Fan motoru)
+    at assertCompatCase (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:2105:12)
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:2160:33)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:2150:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+PASS  I22: başlık zenginleştirilmiş parça adını kaybetmez (KB-11 başlık)
+PASS  I23: konum belirteci parça adına iki kez eklenemez
+PASS  I25: kullanım bağlamı talep konusunu, kategorisini ve markasını ezemez
+PASS  I25b: gerçek emlak talepleri kullanım bağlamı sanılamaz
+PASS  I25c: bileşen talebinde sol taraf gerçek üst üründür
+KNOWN_FAIL  I25d: bağlaçsız serbest metinde kullanıcı ifadesi profesyonel metinde durur
+PASS  I26: uzmanlık alanı ile ihtiyaç türü ayrı eksenlerdir
+PASS  I26b: tipli alan varlığı — platform ve makine türü marka değildir
+PASS  I26d: ad çakışmaları yanlış tipli varlık üretmez
+PASS  I26e: kürasyon durumu çalışma zamanında okunur — onaysız kayıt kesinlik üretemez
+PASS  I26f: tipli varlık otoritesi tek kapıdan okunur ve çakışma sessizce çözülmez
+PASS  I26g: anlaşılan tipli varlık canonical snapshot'ta yaşar
+PASS  I26h: tipli varlık profesyonel metinden ve niyetten düşmez
+PASS  I43: marka kanıt sınıflandırıcısı — truth table
+PASS  I43b: kanıtsız jeton kesin markaya, snapshot'a ve envelope'a giremez
+PASS  I43c: doğrulanmış ve beyan edilmiş marka korunur; aday kalıcı ama kesin değil
+PASS  I43d: marka temizliği kullanıcının ürün ifadesini profesyonel metinden silemez
+PASS  I43e: küçük harfli açık marka beyanı da USER_ASSERTED markadır
+PASS  I43f: envelope'a kanıtsız marka çıkaran hiçbir yol kalmadı
+PASS  I26c: platform/ürün bilgisi hizmet talebinden silinemez
+PASS  I27: SPLIT-BRAIN yasağı — konu, kanonik alanlar ve metin aynı gerçeği anlatır
+PASS  I28: kanıt yetersizken talep kaybolmaz — aday/unresolved korunur
+FAIL  I29: kanonik üst üründe parça adı EKSİKSİZ korunur
+AssertionError [ERR_ASSERTION]: Klima için dış ünite fan motoru arıyorum: üst ürün 'klima' yok (Fan motoru)
+    at assertCompatCase (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:2105:12)
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:3496:26)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:3486:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+PASS  I30: kısa/çakışabilir alias yüksek güvenli üst ürün kanıtı üretmez
+FAIL  I31: kanonik üst ürün span'i aynı anda marka/model olamaz
+AssertionError [ERR_ASSERTION]: Klima için dış ünite fan motoru arıyorum: üst ürün 'klima' yok (Fan motoru)
+    at assertCompatCase (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:2105:12)
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:3543:29)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:3527:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+PASS  I32: PART_BEARING alan toplamasıyla değil, düğüm bazında bildirilir
+PASS  I33: kürasyonsuz fiziksel ürün 'parça taşıyamaz' sayılmaz
+PASS  I34: CONFIDENT uyumluluk kararı yalnız doğrulanmış parent kanıtıyla verilir
+PASS  I35: aynı parent, farklı bilinirlilik — kesinlik sözlüğe göre değişemez
+PASS  I36: üretim niyeti AÇIK kanıt ister — ilişki yapısı üretim değildir
+PASS  I37: istenen şey kategori şemasından BAĞIMSIZ olarak canonical konuda durur
+PASS  I38: kullanıcının doğruladığı ROL ile üst ürün GÜVENİ ayrı şeylerdir
+PASS  I39: kullanım yeri ve hizmet cümlesi parça ilişkisi kurmaz
+PASS  I40: dijital hedefin rolü — ürün, bileşen ve hizmet ayrı ayrı korunur
+PASS  I41: hizmet sözcüğü niteleyici konumdayken talebi hizmete çeviremez
+PASS  I42: ifade koruma yalnız ayrıştırılmış hedefi taşır, ham cümleyi değil
+PASS  I12: browsing a whole-product leaf clears stale part/accessory context
+PASS  I13: audit classes — Faz, servis niyeti, uzaktan, nakliye, donanım sinyali
+PASS  I44a: sayı-birim truth table — rol bağlam ve birimden gelir
+PASS  I44b: aynı sayı span'i iki çelişen exact role yazılamaz
+PASS  I44c: miktar/ölçü span'i model olamaz — publish yüzeyleri temiz
+PASS  I44d: gerçek modeller model kanıt kapısından geçer (koruma)
+PASS  I44g: katalog markasını izleyen ürün/parça adı model olamaz
+PASS  I44e: negatif kanaryalar — çıplak sayı model/screen üretemez
+PASS  I44f: miktar birimi üretim nesnesi sayılamaz (100 kutu sınıfı)
+PASS  I45a: kullanım bağlamı üretilen nesnenin kategorisini ezemez (print-04)
+PASS  I45b: bağlam bölünmesi istenen nesneyi parça sanamaz (print-12)
+PASS  I45c: gerçek uyumluluk/parça ilişkileri PART kalır (koruma)
+PASS  I45e: bağlam bölünmesi mevcut kategoriyi yönlendirilemez hâle getiremez
+PASS  I45d: gerçek teknoloji/hizmet hedefleri kendi alanında kalır (koruma)
+PASS  I46a: açık kiralama ifadesi genel arama fiiline yenilemez (KB-16)
+PASS  I46b: işlem türü konu türünü üretemez — kiralamak emlak değildir (KB-16)
+PASS  I46c: ilan sıfatı arayan kullanıcıyı TALEP tarafına koyar (KB-16)
+PASS  I46d: çelişkili ve arz yönlü ifadeler yanlışlıkla RENT olmaz (KB-16)
+PASS  I46e: kanıt yokken RENT uydurulmaz (koruma)
+PASS  I46f: gerçek emlak kiralama/satış davranışı korunur (koruma)
+PASS  I47a: kendi nesnesini elden çıkarma talebi kapsam dışıdır
+PASS  I47b: kapsam dışında kategori ve konu uydurulmaz
+PASS  I47c: kapsam dışında soru motoru başlamaz
+PASS  I47d: kapsam dışında review/publish açılmaz ve yönlendirme gösterilir
+PASS  I47e: sunucu yayın kapısı arz ilanını Request oluşmadan reddeder
+PASS  I47f: hizmet talebi içeren 'satmak için ... arıyorum' ASLA engellenmez
+PASS  I47g: alıcı/kiracı tarafı kapsam içindedir (koruma)
+PASS  I52a: tıbbi tavsiye sorusu kapsam dışıdır
+PASS  I52b: kapsam dışında soru motoru başlamaz ve gerekçe kayıtlıdır
+PASS  I52c: review/publish açılmaz, tıbbi yönlendirme metni gösterilir
+PASS  I52d: sunucu yayın kapısı tavsiye sorusunu Request oluşmadan reddeder
+PASS  I52e: gerçek satın alma niyeti ASLA bu karara takılmaz (koruma)
+PASS  I52f: ilacın KENDİSİ kapsam dışıdır (D-0028), etrafındaki ürün değil
+PASS  I48a: geçerli hizmet talebi satılan nesnenin kategorisine yönelmez
+PASS  I48b: hizmet talebinde tedarikçi zarfı istenen hizmeti taşır
+PASS  I48c: create — açık rawInput arz metniyse reddedilir
+PASS  I48d: legacy create — arz metni yalnız description'da olsa da kapı aşılamaz
+PASS  I48e: istemcinin DEMAND diyen snapshot verisi kapıyı açamaz
+PASS  I48f: update — rawInput arz metnine çevrilmek istenirse reddedilir
+PASS  I48g: update — rawInput gönderilmediyse mevcut değer değişmez
+PASS  I48h: geçerli hizmet talebi create ve update yollarında reddedilmez
+PASS  I48i: kapsam dışında kullanıcı boş ekranda kalmaz
+PASS  I48j: /talep sayfası kapsam dışı açıklamayı gerçekten render eder
+PASS  I49a: KB-15 — kullanıcının yazdığı değer alana bağlanır ve tekrar sorulmaz
+FAIL  I49b: kategori kaydındaki seçeneği yazan kullanıcıya o alan sorulmaz
+AssertionError [ERR_ASSERTION]: Mama sandalyesi arıyorum katlanabilir: 'babyProductType' değeri yazılanı taşımalı → 'Mama'
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:5699:12)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:5677:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:372:15) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+PASS  I49c: mevcut doğru bastırmalar korunur (koruma)
+PASS  I49d: çekinceli ifade kesin yazılmış değerle aynı statüyü alamaz (KB-15)
+PASS  I49e: kanıtsız değer uydurulmaz — soru kaybolmaz (koruma)
+PASS  I49f: küresel bütçe ve konum kapısı bozulmaz (koruma)
+PASS  I49g: kapsam dışı talepte hiçbir soru yeniden açılmaz (koruma)
+PASS  I49h: bağlama rawInput'u değiştirmez (koruma)
+PASS  I50a: yazılan ölçü SONRAKİ dalgalarda da eksen sorusu açtırmaz (KB-15)
+PASS  I50b: iki bileşenli ölçü en/boy'u karşılar, derinliği uydurmaz
+PASS  I50c: eksen değerleri sessizce uydurulmaz (koruma)
+PASS  I50d: yazılmış birim korunur, yazılmamış birim uydurulmaz
+PASS  I50e: malzeme kanonik karşılığı varsa tekrar sorulmaz, yoksa uydurulmaz
+PASS  I50g: açık provenance ile dolan HİÇBİR alan hiçbir dalgada tekrar sorulamaz
+FAIL  I50h: iki çelişkili vaka — kanonik karşılık varsa bağlanır, yoksa sorulur
+AssertionError [ERR_ASSERTION]: kullanıcıya etiket gösterilmeli → 'Karton Kutu'
++ actual - expected
+
++ 'Karton Kutu'
+- 'Karton kutu'
+          ^
+
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6043:10)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6009:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:372:15) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'Karton Kutu',
+  expected: 'Karton kutu',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+FAIL  I51a: gizlenen soru sonrası ürün kimliği routing envelope'a ulaşır
+AssertionError [ERR_ASSERTION]: Koltuk takımı arıyorum: envelope ürün kimliği → 'Koltuk Takımı'
++ actual - expected
+
++ 'Koltuk Takımı'
+- 'koltuk takımı'
+
+    at <anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6118:12)
+    at check (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:156:5)
+    at assert (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6086:1)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\baseline-integration-84fb9fa\apps\web\scripts\verify-understanding-invariants-v1.ts:6245:31)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object.transformer (C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\node_modules\tsx\dist\register-OY9cqBEN.cjs:9:3619)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:372:15) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'Koltuk Takımı',
+  expected: 'koltuk takımı',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+PASS  I51b: parça talebinde ürün/marka/model/parça rolleri karışmaz (koruma)
+PASS  I51c: aynı bilgi kullanıcıya iki kez gösterilemez (sunum tekilliği)
+PASS  I51d: uyumluluk alanı kalıcılıkta ve Pro filtresinde yaşamaya devam eder
+
+KNOWN_FAIL (bilinen açık — PASS sayılmaz, bataryayı kırmızıya çevirmez):
+  - I25d: bağlaçsız serbest metinde kullanıcı ifadesi profesyonel metinde durur → koltuk destek mekanizması arıyorum: 'destek mekanizmasi' profesyonel metinde yok → 'Koltuk arıyorum.'
+
+124 passed, 6 failed, 1 known_fail

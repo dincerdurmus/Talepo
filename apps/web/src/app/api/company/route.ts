@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { canManageCompany } from "@/lib/membership/company-permissions";
 import { COMPANY_CONTEXT_COOKIE } from "@/lib/membership/company-context";
 import { EntitlementError } from "@/lib/membership/types";
 import {
@@ -17,6 +18,7 @@ import {
 } from "@/server/company/create-company";
 import {
   normalizeCategorySlugs,
+  CategorySelectionError,
   syncCompanyCategories,
 } from "@/server/company/sync-company-categories";
 import { backfillMatchesForCompany } from "@/server/request/distribute-request";
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
         { status: error.status },
       );
     }
-    if (error instanceof CompanyValidationError) {
+    if (error instanceof CompanyValidationError || error instanceof CategorySelectionError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
     }
 
@@ -104,7 +106,7 @@ export async function POST(request: Request) {
   }
 }
 
-/** Update active company profile and/or categories (OWNER/ADMIN). */
+/** Update active company profile and/or categories (OWNER only). */
 export async function PATCH(request: Request) {
   try {
     const user = await requireUser();
@@ -117,7 +119,7 @@ export async function PATCH(request: Request) {
     }
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
-    if (!membership || !["OWNER", "ADMIN"].includes(membership.role)) {
+    if (!membership || !canManageCompany(membership.role)) {
       return NextResponse.json(
         { ok: false, message: "Firma ayarlarını güncellemek için yetkiniz yok." },
         { status: 403 },
@@ -174,7 +176,7 @@ export async function PATCH(request: Request) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
     }
-    if (error instanceof CompanyUpdateError) {
+    if (error instanceof CompanyUpdateError || error instanceof CategorySelectionError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 400 });
     }
     console.error("[company] patch failed", error);

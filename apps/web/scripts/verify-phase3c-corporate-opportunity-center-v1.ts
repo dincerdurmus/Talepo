@@ -146,7 +146,7 @@ check(
   "15 team members scoped",
   read("src/server/monetization/corporate-opportunity-center.ts").includes(
     'status: "ACTIVE"',
-  ) && canAssignOpportunities("MANAGER") && !canAssignOpportunities("VIEWER"),
+  ) && canAssignOpportunities("OWNER") && !canAssignOpportunities("MANAGER") && !canAssignOpportunities("ADMIN") && !canAssignOpportunities("MEMBER") && !canAssignOpportunities("VIEWER"),
 );
 
 // 16-18 reuse

@@ -34,6 +34,7 @@ enum AdminAuditAction {
   MODERATION_CASE_CREATED
   MODERATION_CASE_UPDATED
   DATA_EXPORTED
+  CATEGORY_STATUS_CHANGED
 }
 
 enum ModerationCaseStatus {
@@ -915,6 +916,10 @@ model Request {
   moderationHiddenById String?
   moderationReason   String?   @db.Text
 
+  /// Kategori arşivlendiğinde talep pasifleşir; kategori yeniden açıldığında
+  /// yayın tarihi ve sona erme tarihi korunarak yalnızca süresi kalanlar açılır.
+  categoryPausedAt DateTime?
+
   country  String  @default("Türkiye")
   city     String?
   district String?
@@ -983,6 +988,7 @@ model Request {
   @@index([status])
   @@index([city, district])
   @@index([publishedAt])
+  @@index([categoryPausedAt])
   @@index([createdAt])
   @@index([isFeatured, featuredUntil])
   @@index([isUrgent])

@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -234,7 +236,7 @@ export function OfferActions({
   showBargain = false,
   onBargain,
   bargainDisabled = false,
-  locked = false,
+  locked: suppliedLocked = false,
   layout = "footer",
   pendingCounter,
   negotiationSent = false,
@@ -246,6 +248,7 @@ export function OfferActions({
   waitingHint,
 }: OfferActionsProps) {
   const router = useRouter();
+  const locked = !useCompanyCanWrite() || suppliedLocked;
   const [phase, setPhase] = useState<OfferDecisionPhase>("idle");
   const [sentStage, setSentStage] = useState<"result" | "waiting">("result");
   const [error, setError] = useState<string | null>(null);

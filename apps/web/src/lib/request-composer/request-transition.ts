@@ -8,6 +8,7 @@
  */
 
 import type { RequestUnderstandingResult } from "@/lib/request-understanding/types";
+import { isAutomotiveTireServiceProduct } from "./browse-semantic-role";
 
 import type {
   BrowsePathStep,
@@ -283,6 +284,18 @@ export function isMaterialRequestTransition(
 
   const prevKind = previous.understanding.requestSubject.kind.value ?? null;
   const nextKind = native.requestSubject.kind.value ?? null;
+  // An explicit part/accessory target replaces vehicle shopping. Keeping the
+  // vehicle pin here would reparse "Civic için fren balatası" as a vehicle
+  // request and carry mileage/fuel/transmission into the spare-part form.
+  // The reverse direction still allows a part flow to be enriched with a
+  // vehicle identity without treating that identity alone as a new purchase.
+  if (
+    prevCat === "automotive" && nextCat === "automotive" && nextOk &&
+    previous.fields.needType?.value === "vehicle" &&
+    (nextKind === "PART" || nextKind === "ACCESSORY")
+  ) {
+    return true;
+  }
   if (
     isResolvedKind(prevKind) &&
     isResolvedKind(nextKind) &&
@@ -370,10 +383,8 @@ function isJantProduct(value: string): boolean {
   );
 }
 
-function isTireServiceProduct(value: string): boolean {
-  return /lastik değişimi|lastik degisimi|rot ayarı|rot ayari|balans|lastik otel|lastik saklama|rot balans/iu.test(
-    value,
-  );
+function isAutomotivePpfProduct(value: string): boolean {
+  return /koruma filmi|kaplama|ppf|wrapping/iu.test(value);
 }
 
 /**
@@ -461,11 +472,17 @@ export function stripIncompatibleDomainFields(
     const previousProduct = previousFields
       ? fieldValue(previousFields, "productType") || fieldValue(previousFields, "tireItemType")
       : "";
+    if (
+      product && resolvedNeed === "service" &&
+      isAutomotivePpfProduct(previousProduct) && !isAutomotivePpfProduct(product)
+    ) {
+      clearFamilyField("color", "cleared-on-ppf-to-maintenance-switch");
+    }
     if (resolvedNeed !== "tire") {
       for (const key of ["tireItemType", "tireSize", "tireSeason", "tireQuantity", "serviceDate"]) {
         clearFamilyField(key, `cleared-on-automotive-family-switch:${resolvedNeed || "unknown"}`);
       }
-    } else if (isTireServiceProduct(product)) {
+    } else if (isAutomotiveTireServiceProduct(product)) {
       for (const key of ["tireItemType", "tireSize", "tireSeason"]) {
         clearFamilyField(key, "cleared-on-tire-service-family-switch");
       }

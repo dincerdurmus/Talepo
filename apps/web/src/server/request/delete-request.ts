@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { prisma } from "@/lib/prisma";
 
 import { RequestValidationError } from "./request-schema";
@@ -21,18 +22,21 @@ export class RequestDeleteNotAllowedError extends Error {
 }
 
 export async function deleteRequest(userId: string, requestId: string) {
+  await assertSelectedCompanyWriteAccess(userId);
   const existing = await prisma.request.findFirst({
     where: {
       id: requestId,
       createdById: userId,
       deletedAt: null,
     },
-    select: { id: true, title: true, status: true },
+    select: { id: true, title: true, status: true, companyId: true },
   });
 
   if (!existing) {
     throw new RequestValidationError(["Talep bulunamadı."]);
   }
+
+  await assertCompanyWriteAccess(userId, existing.companyId);
 
   if (!canDeleteRequestStatus(existing.status)) {
     throw new RequestDeleteNotAllowedError();

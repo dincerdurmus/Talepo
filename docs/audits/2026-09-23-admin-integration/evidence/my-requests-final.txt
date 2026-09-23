@@ -1,0 +1,75 @@
+PASS — ownership scope uses current user and excludes soft-deleted
+PASS — visible product name is Taleplerim
+PASS — Talepleri keşfet and Taleplerim stay distinct destinations
+PASS — PanelBackLink shows frost Geri to /panel on Taleplerim list
+PASS — detail route keeps Taleplerim back link
+PASS — detail hands offer decisions to Gelen Teklifler workspace
+PASS — legacy /taleplerim still redirects to panel
+PASS — edit and publish lifecycle files stay wired
+PASS — editable statuses match update-request authority
+PASS — lifecycle filters use official active statuses and split expired
+PASS — filter URL persistence uses durum query
+PASS — action-required outranks new offer on the same request
+PASS — new offer lane
+PASS — negotiating includes waiting for counterparty
+PASS — awaiting offers lane
+PASS — draft lane
+PASS — concluded lane
+PASS — in-progress lane
+PASS — draft lifecycle
+PASS — concluded lifecycle
+PASS — cancelled stays concluded, not expired
+PASS — expired lifecycle is exclusive
+PASS — offer signals do not move expired or concluded requests
+PASS — active requests sort before draft, expired, and concluded
+PASS — filter counts are request lifecycle counts, unique per filter
+PASS — a request belongs to exactly one lifecycle filter
+PASS — same request is not double-counted inside a filter
+PASS — CTA matrix uses real routes
+PASS — no invented list-level Yayınla CTA
+PASS — delete stays on existing soft-delete API and confirmation
+PASS — terminal requests cannot be deleted in UI or server policy
+PASS — empty all-state CTA goes to /talep
+PASS — request media uses CategoryVisualThumb fallback
+PASS — budget and location nulls stay off the card
+PASS — Standard/Professional parity: no plan branching on Taleplerim
+PASS — mobile CTA and overflow stay 44px and in-viewport
+PASS — filter chips expose aria-current and Escape closes disclosure
+PASS — page does not copy Sayfam dark hero or Talepler slate banner
+PASS — no email, phone, or internal id dump on the list surface
+PASS — incoming offer signals reuse buyer loader, not a new API
+PASS — loading and error states exist
+PASS — banner metrics use exclusive lifecycle counts
+PASS — zero expired is omitted, empty copy stays calm
+PASS — command header copy and CTA stay request lifecycle, not offer inbox
+PASS — Signal Rail talep-teklif order is marketplace first
+PASS — segment-safe active matching separates talepler and taleplerim
+PASS — visible expired copy is Süresi dolan, internal EXPIRED and suresi stay
+PASS — concluded clone CTA on card model
+PASS — cancelled clone CTA on card model
+PASS — expired cannot clone as draft
+PASS — draft cannot clone as draft
+PASS — active cannot clone as draft
+PASS — clone status policy COMPLETED/CANCELLED only
+PASS — clone service creates DRAFT without updating source
+PASS — clone API uses owner session
+PASS — clone copy uses recommended confirmation
+PASS — clone has idempotency and loading lock
+PASS — overflow menu portals through collision-aware popover
+PASS — concluded overflow keeps clone and drops duplicate process CTA
+PASS — near-bottom overflow flips above the trigger and stays in viewport
+PASS — overflow opens below when there is room
+PASS — mobile overflow stays above the bottom nav
+PASS — card wires canCloneAsDraft
+PASS — detail uses cloneRequestAsDraft gate
+PASS — edit shows clone success
+PASS — authz documents clone endpoint
+PASS — clone copies safe fields and skips process relations
+PASS — company clone reuses workspace write authority and stays fail-closed
+PASS — process history shows only evidenced events in chronological order
+PASS — process history UI stays owner-detail and private-data free
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+FAIL — live clone skipped (no DATABASE_URL): env missing
+
+1 failed, 70 passed

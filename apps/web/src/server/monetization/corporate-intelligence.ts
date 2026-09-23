@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 
 export type DemandIntelligenceResult = {
   matchingRequestCount: number;
@@ -39,6 +40,8 @@ export async function getDemandIntelligence(
     where: {
       deletedAt: null,
       status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       publishedAt: { gte: from, lte: to },
       ...(categoryIds.length > 0
         ? { categoryId: { in: categoryIds } }

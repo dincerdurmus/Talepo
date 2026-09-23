@@ -521,6 +521,7 @@ void (async () => {
   const schema = resolveRequestSchema({
     categoryId: "appliances",
     subcategoryLabel: "Buzdolabı",
+    values: { applianceType: "Buzdolabı", productType: "Buzdolabı" },
   });
   check(
     "request schema compatibility appliances fields",

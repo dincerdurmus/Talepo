@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
@@ -10,6 +11,7 @@ import { scoreOpportunity } from "@/server/monetization/opportunity-score";
 import { getCompetitionSignals } from "@/server/monetization/competition-signals";
 import { evaluateBudgetOpportunity } from "@/server/monetization/budget-opportunity";
 import { buildOpportunityIntelligence } from "@/server/monetization/opportunity-intelligence";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 
 export async function GET(request: Request) {
   try {
@@ -19,8 +21,8 @@ export async function GET(request: Request) {
     const requestId = searchParams.get("requestId");
 
     if (requestId) {
-      const req = await prisma.request.findUnique({
-        where: { id: requestId },
+      const req = await prisma.request.findFirst({
+        where: { id: requestId, categoryPausedAt: null, category: { isActive: true }, AND: [publicRequestExpiryFilter()] },
         select: {
           id: true,
           aiScore: true,
@@ -79,7 +81,7 @@ export async function GET(request: Request) {
     }
 
     const matches = await prisma.opportunityMatch.findMany({
-      where: { companyId: ctx.companyId },
+      where: { companyId: ctx.companyId, request: { deletedAt: null, isModerationHidden: false, status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] }, categoryPausedAt: null, category: { isActive: true }, AND: [publicRequestExpiryFilter()] } },
       orderBy: [{ score: "desc" }, { createdAt: "desc" }],
       take: 50,
       include: {
@@ -109,6 +111,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    await assertSelectedCompanyWriteAccess(user.id);
     const ctx = await requireCompanyFeature(user.id, "lead_distribution");
     const body = (await request.json()) as {
       action?: string;
@@ -125,7 +128,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             ok: false,
-            message: "Atama için OWNER, ADMIN veya MANAGER rolü gerekir.",
+            message: "Görev atamasını yalnızca firma sahibi yapabilir.",
           },
           { status: 403 },
         );

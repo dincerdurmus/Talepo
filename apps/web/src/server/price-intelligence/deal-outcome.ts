@@ -10,7 +10,7 @@ import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist
 import { prisma } from "@/lib/prisma";
 import type { TransactionConfirmationLevel } from "@/lib/price-intelligence/types";
 import { createNotification } from "@/server/notifications/create-notification";
-import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import { assertNegotiationWriteAccess, resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 
 import { recordConfirmedTransactionObservation } from "./record-observation";
 
@@ -146,6 +146,7 @@ export async function confirmDealCompletion(userId: string, dealOutcomeId: strin
             select: {
               id: true,
               createdById: true,
+              companyId: true,
               status: true,
               deletedAt: true,
               // DW-2 köprüsü: kategori + il (il yalnız kanonik çözümleyiciden).
@@ -165,6 +166,7 @@ export async function confirmDealCompletion(userId: string, dealOutcomeId: strin
     });
   }
 
+  await assertNegotiationWriteAccess(deal.offer, userId);
   const side = await assertCanAccessDealOutcome(userId, deal);
   if (deal.offer.status !== "ACCEPTED" || deal.offer.request.deletedAt) {
     throw new DomainError({

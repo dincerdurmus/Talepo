@@ -1,0 +1,23 @@
+=== ÖDEME/ÜYELİK AYRIŞMASI ===
+
+  ok   ödeyen ama üyeliği düşürülmüş hesap ayrışma sayılır
+  ok   ödemesi yokken süresiz yükseltilmiş hesap ayrışma sayılır
+  ok   elle verilmiş SÜRELİ hak ayrışma sayılmaz
+  ok   ödeme ile üyelik uyuşuyorsa ayrışma yoktur
+  ok   aboneliği bitmiş ve üyeliği de düşmüş hesap ayrışma değildir
+  ok   iptal-dönem-sonu ve gecikmiş ödeme HÂLÂ yürürlüktedir (parası alınmış müşteri)
+  ok   dönem sonu GEÇMİŞ iptal ve gecikmiş ödeme ayrışma sayılmaz
+  ok   dönem sonu geçmiş ACTIVE abonelik GERÇEK ayrışmadır (gecikmiş yenileme)
+  ok   PREMIUM ve CORPORATE abonelikler uyumluyken ayrışma sayılmaz
+  ok   bozuk plan metni ücretli plan sayılmaz
+  ok   tarama hesap başına sorgu açmaz ve ayrışanları doğru sayar
+  ok   sınıra dayanıldığında bu gizlenmez
+  ok   hiç abonelik yokken bile abonelisiz yükseltmeler görülür
+  ok   yetim taraması SÜRESİZ yükseltmeyle sınırlıdır
+  ok   teşhis hiçbir plan yazmaz
+  ok   teşhis /admin/health metriklerine bağlı (çağıransız export değil)
+  ok   kesilen tarama panele KESİK olarak ulaşır
+  ok   ayrışma sıfırdan büyükse panelde uyarı olur
+  ok   ölçülemeyen ayrışma sıfır veya sağlıklı sayılmaz
+
+19 passed, 0 failed

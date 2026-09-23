@@ -1,7 +1,8 @@
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
 import { prisma } from "@/lib/prisma";
+import { isSystemCategorySlug } from "@/lib/request/raw-input";
 
-const ALLOWED_SLUGS = new Set(REQUEST_CATEGORIES.map((c) => c.id));
+export class CategorySelectionError extends Error {}
 
 export function normalizeCategorySlugs(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
@@ -9,7 +10,7 @@ export function normalizeCategorySlugs(input: unknown): string[] {
   for (const item of input) {
     if (typeof item !== "string") continue;
     const slug = item.trim();
-    if (ALLOWED_SLUGS.has(slug)) unique.add(slug);
+    if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && slug.length <= 80) unique.add(slug);
   }
   return [...unique].slice(0, 12);
 }
@@ -18,7 +19,7 @@ export function normalizeCategorySlugs(input: unknown): string[] {
 export type CategoryProvisioningClient = {
   category: {
     findMany: (args?: unknown) => Promise<
-      { slug: string; isActive: boolean }[]
+      { slug: string; isActive: boolean; id?: string }[]
     >;
     create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
     update: (args: {
@@ -91,46 +92,36 @@ export async function ensureEngineCategories(
 }
 
 /**
- * Upsert Category rows from engine slugs and replace CompanyCategory links.
+ * Replace CompanyCategory links using the currently active database categories.
  *
  * `isActive` BURADA DA YAZILMAZ (KB-22 Dilim 2): bir şirketin kategori
  * seçimi, admin tarafından kapatılmış bir kategoriyi yan etkiyle
  * aktifleştiremez.
  */
+export async function activeCompanyCategoryIds(
+  categorySlugs: string[],
+  db: Pick<CategoryProvisioningClient, "category">,
+) {
+  const slugs = normalizeCategorySlugs(categorySlugs);
+  if (slugs.some(isSystemCategorySlug)) throw new CategorySelectionError("Sistem kategorisi seçilemez.");
+  const categories = await db.category.findMany({ where: { slug: { in: slugs }, isActive: true }, select: { id: true, slug: true, isActive: true } });
+  const ids = categories.filter((row) => row.isActive && row.id).map((row) => row.id!);
+  if (ids.length !== slugs.length) throw new CategorySelectionError("Seçilen kategorilerden biri artık kullanılamıyor. Kategori listesini yenileyin.");
+  return ids;
+}
+
 export async function syncCompanyCategories(
   companyId: string,
   categorySlugs: string[],
   db: CategoryProvisioningClient = prisma as unknown as CategoryProvisioningClient,
 ) {
-  const slugs = normalizeCategorySlugs(categorySlugs);
-
-  const categoryIds: string[] = [];
-  for (const slug of slugs) {
-    const meta = REQUEST_CATEGORIES.find((c) => c.id === slug);
-    if (!meta) continue;
-
-    const category = await db.category.upsert({
-      where: { slug },
-      update: { name: meta.label, description: meta.description },
-      create: {
-        slug,
-        name: meta.label,
-        description: meta.description,
-        isActive: true,
-      },
-      select: { id: true },
-    });
-    categoryIds.push(category.id);
-  }
-
-  await db.$transaction(async (tx) => {
+  return db.$transaction(async (tx) => {
+    const categoryIds = await activeCompanyCategoryIds(categorySlugs, tx);
     await tx.companyCategory.deleteMany({ where: { companyId } });
-    if (categoryIds.length === 0) return;
-    await tx.companyCategory.createMany({
+    if (categoryIds.length > 0) await tx.companyCategory.createMany({
       data: categoryIds.map((categoryId) => ({ companyId, categoryId })),
       skipDuplicates: true,
     });
+    return categoryIds;
   });
-
-  return categoryIds;
 }

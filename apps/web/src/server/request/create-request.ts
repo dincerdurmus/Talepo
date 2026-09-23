@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import {
   resolveCreateProjection,
   type RequestDiscoveryProjection,
@@ -19,6 +20,7 @@ import { createSubsystemLogger } from "@/lib/observability/logger";
 import { ProductEventName, trackProductEvent } from "@/lib/observability/product-events";
 import { resolveProvinceTelemetry } from "@/lib/observability/province-allowlist";
 import { prisma } from "@/lib/prisma";
+import { addOneCalendarMonth } from "./public-visibility";
 
 import { distributeRequestToCompanies } from "./distribute-request";
 import { recordRequestPriceObservation } from "../price-intelligence/record-observation";
@@ -30,7 +32,7 @@ import {
   resolveDedicatedCity,
   resolveDedicatedDeadline,
 } from "./mapper";
-import type { CreateRequestInput } from "./request-schema";
+import { RequestValidationError, type CreateRequestInput } from "./request-schema";
 import {
   isSystemCategorySlug,
   UNRESOLVED_CATEGORY_NAME,
@@ -61,6 +63,7 @@ function resolveDiscoveryProjection(
 }
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
+  const companyId = await assertSelectedCompanyWriteAccess(userId);
   const started = Date.now();
   /**
    * Hüküm SUNUCUDA türetilmiştir (`parseCreateRequestInput`). Burada yeniden
@@ -141,7 +144,6 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       update: {
         name: categoryName,
         description: input.category.description,
-        isActive: true,
       },
       create: {
         slug: input.category.slug,
@@ -149,8 +151,11 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         description: input.category.description,
         isActive: true,
       },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
+    if (!category.isActive) {
+      throw new RequestValidationError(["Bu kategori şu anda arşivlenmiş. Lütfen aktif bir kategori seçin."]);
+    }
 
     const form = await tx.requestForm.upsert({
       where: {
@@ -239,6 +244,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
     const request = await tx.request.create({
       data: {
         createdById: userId,
+        companyId,
         categoryId: category.id,
         formId: form.id,
         title: input.title,
@@ -265,6 +271,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
          * okuduğunu sayar; biri açık kalırsa kırmızı verir.
          */
         publishedAt: holdForReview ? null : now,
+        expiresAt: holdForReview ? null : addOneCalendarMonth(now),
         isModerationHidden: holdForReview,
         isUrgent: input.isUrgent ?? false,
         isFeatured,

@@ -69,7 +69,9 @@ check(
   "4 no seat quantity to iyzico",
   !bootstrap.includes("includedSeats") &&
     bootstrap.includes("seats are Talepo-side only") &&
-    getIncludedSeats("CORPORATE") === 1,
+    // Approved workspace capacity is 4 operating + 1 analyst, still never
+    // sent as a payment-provider quantity.
+    getIncludedSeats("CORPORATE") === 5 && getIncludedSeats("PROFESSIONAL") === 5,
 );
 check(
   "5 no checkout/payment",

@@ -1,0 +1,24 @@
+=== ÖNE ÇIKARMA SÜRESİ ===
+
+{"timestamp":"2026-09-23T19:33:49.786Z","level":"info","event":"request.feature_expiry.completed","service":"request.feature-expiry","outcome":"success","context":{"expired":3}}
+  ok   yalnız süresi geçmiş ve hâlâ öne çıkan satırlar hedeflenir
+  ok   bayrak düşer, satın alınan süre kaydı silinmez
+{"timestamp":"2026-09-23T19:33:49.787Z","level":"info","event":"request.feature_expiry.completed","service":"request.feature-expiry","outcome":"success","context":{"expired":0}}
+  ok   tekrar koşmak zararsızdır (aynı sorgu, sıfır satır)
+[cron/feature-expiry] unauthorized { secretConfigured: false }
+  ok   CRON_SECRET tanımsızsa 401 ve iş koşmaz
+[cron/feature-expiry] unauthorized { secretConfigured: true }
+[cron/feature-expiry] unauthorized { secretConfigured: true }
+[cron/feature-expiry] unauthorized { secretConfigured: true }
+  ok   yanlış ya da eksik başlık 401 ve iş koşmaz
+{"timestamp":"2026-09-23T19:33:49.834Z","level":"info","event":"request.feature_expiry.completed","service":"request.feature-expiry","outcome":"success","context":{"expired":1}}
+  ok   doğru sır ile iş koşar ve sayı döner
+  ok   rota gövde ya da sorgu okumaz (çağıran hedef seçemez)
+  FAIL görev KOŞABİLEN bir zamanlayıcıya kayıtlı
+       request-expiry vercel.json'da var ama zamanlanmış işler akışında yok
+  ok   zamanlayıcı yapılandırılmadıysa sessizce başarı uydurmaz
+  ok   featuredUntil yalnız-yazılır alan değil (yorumlar sayılmaz)
+  ok   öne çıkarma satın alınınca gerçekten bir bitiş tarihi yazılır
+  ok   üç öne çıkarma süresi birbirinden farklı
+
+11 passed, 1 failed

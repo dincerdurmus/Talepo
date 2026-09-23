@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { requireCompanyFeature } from "@/lib/membership/require-company-feature";
+import { canInviteCompanyRole, canManageCompany, canViewTeamOffers, isCompanyInviteRole, normalizeCompanyRole } from "@/lib/membership/company-permissions";
 import {
   assertCompanyMembership,
 } from "@/lib/panel/company-workspace";
@@ -13,10 +14,6 @@ import {
 import { prisma } from "@/lib/prisma";
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 
-const MANAGER_ROLES = new Set(["OWNER", "ADMIN", "MANAGER"]);
-const REMOVE_ROLES = new Set(["OWNER", "ADMIN"]);
-const OFFER_VIEW_ROLES = new Set(["OWNER", "ADMIN"]);
-
 export async function GET() {
   try {
     const user = await requireUser();
@@ -25,7 +22,7 @@ export async function GET() {
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
     const canViewOffers =
-      !!membership && OFFER_VIEW_ROLES.has(membership.role);
+      !!membership && canViewTeamOffers(membership.role);
 
     const members = await prisma.companyMember.findMany({
       where: {
@@ -94,8 +91,8 @@ export async function GET() {
     return NextResponse.json({
       ok: true,
       companyName: workspace.companyName,
-      members,
-      canRemove: !!membership && REMOVE_ROLES.has(membership.role),
+      members: members.map((member) => ({ ...member, role: normalizeCompanyRole(member.role) })),
+      canRemove: !!membership && canManageCompany(membership.role),
       canViewOffers,
       offersByUserId: canViewOffers ? offersByUserId : undefined,
     });
@@ -118,20 +115,18 @@ export async function POST(request: Request) {
     const workspace = await requireCompanyFeature(user.id, "team_management");
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
-    if (!membership || !MANAGER_ROLES.has(membership.role)) {
+    if (!membership || !canManageCompany(membership.role)) {
       return NextResponse.json(
         { ok: false, message: "Davet gönderme yetkiniz yok." },
         { status: 403 },
       );
     }
 
-    await assertCanActivateCompanySeat({ companyId: workspace.companyId });
-
     const body = (await request.json()) as {
       email?: string;
       invite?: string;
       membershipNumber?: string;
-      role?: "ADMIN" | "MANAGER" | "MEMBER" | "VIEWER";
+      role?: unknown;
     };
 
     const rawInvite =
@@ -147,6 +142,13 @@ export async function POST(request: Request) {
     }
 
     const role = body.role ?? "MEMBER";
+    if (!isCompanyInviteRole(role)) {
+      return NextResponse.json({ ok: false, message: "Geçersiz ekip rolü." }, { status: 400 });
+    }
+    if (!canInviteCompanyRole(membership.role, role)) {
+      return NextResponse.json({ ok: false, message: "Bu rol ile davet gönderme yetkiniz yok." }, { status: 403 });
+    }
+    await assertCanActivateCompanySeat({ companyId: workspace.companyId, role });
 
     let invitee: {
       id: string;
@@ -306,7 +308,7 @@ export async function DELETE(request: Request) {
     const workspace = await requireCompanyFeature(user.id, "team_management");
 
     const membership = await assertCompanyMembership(user.id, workspace.companyId);
-    if (!membership || !REMOVE_ROLES.has(membership.role)) {
+    if (!membership || !canManageCompany(membership.role)) {
       return NextResponse.json(
         { ok: false, message: "Üye çıkarma yetkiniz yok." },
         { status: 403 },
@@ -355,27 +357,11 @@ export async function DELETE(request: Request) {
       );
     }
 
-    if (target.role === "OWNER" && membership.role !== "OWNER") {
+    if (target.role === "OWNER") {
       return NextResponse.json(
-        { ok: false, message: "Sahibi yalnızca başka bir sahip çıkarabilir." },
-        { status: 403 },
+        { ok: false, message: "Firma sahibi ekipten çıkarılamaz." },
+        { status: 400 },
       );
-    }
-
-    if (target.role === "OWNER" && target.status === "ACTIVE") {
-      const ownerCount = await prisma.companyMember.count({
-        where: {
-          companyId: workspace.companyId,
-          role: "OWNER",
-          status: "ACTIVE",
-        },
-      });
-      if (ownerCount <= 1) {
-        return NextResponse.json(
-          { ok: false, message: "Son sahip ekipten çıkarılamaz." },
-          { status: 400 },
-        );
-      }
     }
 
     await prisma.companyMember.update({

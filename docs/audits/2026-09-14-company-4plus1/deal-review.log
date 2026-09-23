@@ -1,0 +1,94 @@
+
+=== ELIGIBILITY ===
+
+PASS — accepted but not completed denied
+PASS — buyer confirmed only denied
+PASS — provider confirmed only denied
+PASS — bilateral completed eligible
+PASS — pending deal denied
+PASS — create uses bilateral where
+
+=== CREATE / DUPLICATE / TARGET ===
+
+PASS — buyer create path
+PASS — provider create path
+PASS — unique duplicate
+PASS — company two members share provider side
+PASS — rating 1 pass
+PASS — rating 5 pass
+PASS — rating 0 reject
+PASS — rating 6 reject
+PASS — decimal reject
+PASS — comment max 800
+PASS — contact blocker reused
+PASS — target spoof ignored
+PASS — company target correct
+PASS — personal provider target correct
+PASS — buyer target correct
+
+=== REVIEW WINDOW / AUTO REVEAL ===
+
+PASS — 1 window is 14 days
+PASS — 2 deadline = completedAt + 14d
+PASS — 3 buyer-only day 1 hidden
+PASS — 4 buyer-only day 13 hidden
+PASS — 5 buyer-only after deadline visible
+PASS — 6 provider-only same behavior
+PASS — 7 pair day 2 immediate visible
+PASS — 8 pair day 13 immediate visible
+PASS — 9 create day 13 allowed
+PASS — 10 create after deadline rejected policy
+PASS — 11 create gate uses completedAt not review.createdAt
+PASS — 12 no reviews after deadline nothing to count
+PASS — 13 window open exclusive of deadline
+PASS — 14 reveal at deadline inclusive
+PASS — 15 cutoff for SQL matches window
+PASS — 16 revealedReviewWhere has pair OR deadline
+PASS — 17 trust uses revealedReviewWhere
+PASS — 18 legacy expired single visible
+PASS — 19 legacy unexpired single hidden
+PASS — 20 format deadline label
+PASS — 21 single policy constant
+PASS — 22 no cron/job
+PASS — 23 no revealedAt column on DealReview
+PASS — 24 no timeout notification
+
+=== TRUST / UI / NOTIFICATIONS ===
+
+PASS — completed count unchanged
+PASS — averageRating arithmetic
+PASS — low sample no fake label
+PASS — immutable
+PASS — pair reveal notification
+PASS — first review notification NO
+PASS — UI window hint
+PASS — UI expired state
+PASS — conversation wires window props
+PASS — conversation state uses completedAt reveal
+PASS — blind hint present
+PASS — notify type still registered
+PASS — destination still sanitizes
+
+=== MODEL / REGRESSION GUARDS ===
+
+PASS — additive DealReview model
+PASS — no generic Review model
+PASS — DealOutcome not rewritten
+PASS — completion panel still has no stars
+PASS — min 44px stars
+PASS — standard can review
+PASS — no plan gate
+PASS — no radar coupling
+PASS — no offer intelligence coupling
+PASS — no opportunity coupling
+PASS — analiz no review metrics
+PASS — completion still bilateral
+PASS — negotiation unique still present
+PASS — offer lifecycle lock still present
+PASS — media route untouched
+PASS — Takiplerim no review ranking
+PASS — OC no review ranking
+PASS — FOR UPDATE race safety
+PASS — alreadyPublished dedupe
+
+OK 77/77 — deal review V1.2 auto-reveal

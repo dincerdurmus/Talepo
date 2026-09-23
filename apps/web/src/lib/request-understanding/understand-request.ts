@@ -29,6 +29,7 @@ import {
 import { isNonBrandDomainEntity } from "@/lib/catalog";
 import { normalizeUnderstandingInput } from "@/lib/request-understanding/normalize";
 import { readTireRequestContext, withoutRejectedTireMentions } from "./tire-request-context";
+import { withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
 import {
   classifyModelTokenEvidence,
   classifyNumbers,
@@ -543,7 +544,7 @@ export function understandRequest(
     ? getRequestDecisionProviderForRequest(decisionBundle)
     : getRequestDecisionProvider();
   const structured = typeof input === "string" ? undefined : input.structured;
-  const normalizedInput = normalizeUnderstandingInput(withoutRejectedTireMentions(rawInput));
+  const normalizedInput = normalizeUnderstandingInput(withoutRejectedTireMentions(withoutRejectedRequestClauses(rawInput)));
 
   const numbers = classifyNumbers(normalizedInput);
   /**
@@ -719,7 +720,9 @@ export function understandRequest(
    */
   const relationDomain = structuredCategoryId
     ? null
-    : resolveRelationDomain(normalizedInput);
+    : /bulaşık\s+deterjanı|bulasik\s+deterjani/iu.test(normalizedInput)
+      ? null
+      : resolveRelationDomain(normalizedInput);
   /**
    * Talepte geçen tipli alan varlıkları — kategori kararından BAĞIMSIZ
    * olarak kaydedilir. Kullanıcı kategoriyi kilitlemiş olsa bile talebin
@@ -957,7 +960,7 @@ export function understandRequest(
   const identity = decisions.buildProductIdentity({
     categoryId: categorySlugForIdentity,
     categorySlug: categorySlugForIdentity,
-    title: rawInput,
+    title: normalizedInput,
     fieldValues: structured?.fieldValues
       ? Object.entries(structured.fieldValues)
           .filter(([, v]) => v != null && String(v).trim())
@@ -1048,6 +1051,9 @@ export function understandRequest(
   }
 
   for (const n of numbers) {
+    if (n.role === "PIECE_COUNT" && n.value != null) {
+      attributes.pieceCount = uv(n.value, { provenance: "EXPLICIT", source: "USER_EXPLICIT", evidence: n.evidence });
+    }
     if (n.role === "WEIGHT" && n.value != null) {
       attributes.weight = uv(
         { value: n.value, unit: n.unit },
@@ -1196,6 +1202,27 @@ export function understandRequest(
       evidence: intentResolved.evidence,
     });
   }
+  // A component-looking noun can still be the object of an automotive
+  // service ("motor yağı değişimi", "fren tamiri"). Resolve that concrete
+  // service phrase before the generic PART attribute becomes authoritative.
+  if (category.value === "automotive") {
+    const specificService = normalizedInput.match(
+      /(?:^|[^\p{L}\p{N}])((?:[\p{L}][\p{L}ığüşöçİĞÜŞÖÇ]*\s+){1,2})(tamiri|tamir|bakımı|bakimi|onarımı|onarimi|değişimi|degisimi)(?=[^\p{L}\p{N}]|$)/iu,
+    );
+    if (specificService?.[1] && specificService[2]) {
+      const target = specificService[1].trim().replace(/\s+/g, " ");
+      attributes.needType = uv("service", {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: ["automotive-specific-service-target"],
+      });
+      attributes.serviceType = uv(`${target} ${specificService[2]}`, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: ["automotive-specific-service-target"],
+      });
+    }
+  }
   // Controlled service leaves may be written as a noun phrase ("cam balkon
   // istiyorum") without an explicit service verb. Category evidence is enough
   // to enter the same service path; otherwise the exact leaf would be lost to
@@ -1223,6 +1250,23 @@ export function understandRequest(
         evidence: [popularService.evidence],
       });
     }
+    // Preserve the concrete automotive service target in phrases such as
+    // "motor yağı değişimi" and "fren tamiri".  The generic semantic head
+    // ("motor" / "tamir") otherwise routes the request through the spare-part
+    // lane or produces the target-less summary "tamir arıyorum".
+    if (category.value === "automotive") {
+      const specificService = normalizedInput.match(
+        /(?:^|[^\p{L}\p{N}])((?:[\p{L}][\p{L}ığüşöçİĞÜŞÖÇ]*\s+){1,2})(tamiri|tamir|bakımı|bakimi|onarımı|onarimi|değişimi|degisimi)(?=[^\p{L}\p{N}]|$)/iu,
+      );
+      if (specificService?.[1] && specificService[2]) {
+        const target = specificService[1].trim().replace(/\s+/g, " ");
+        attributes.serviceType = uv(`${target} ${specificService[2]}`, {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          evidence: ["automotive-specific-service-target"],
+        });
+      }
+    }
   }
   // Automotive lastik/jant is a product purchase, not a generic PART or
   // whole-vehicle request. Keep the wheel/tire family as a first-class
@@ -1240,7 +1284,25 @@ export function understandRequest(
       confidence: 0.95,
       evidence: ["automotive-tire-or-wheel"],
     });
-    const tireFamily = readTireRequestContext(normalizedInput)?.family;
+    const tireContext = readTireRequestContext(normalizedInput);
+    const tireFamily = tireContext?.family;
+    if (tireContext?.serviceType) {
+      attributes.serviceType = uv(tireContext.serviceType, { provenance: "EXPLICIT", source: "USER_EXPLICIT", evidence: [tireContext.serviceType] });
+      // Service leaves share the tire domain but have a distinct question
+      // contract. Keep the product context aligned with that leaf so profile
+      // resolution cannot fall back to tire-purchase questions.
+      attributes.productType = uv(tireContext.serviceType, {
+        provenance: "EXPLICIT",
+        source: "USER_EXPLICIT",
+        evidence: ["automotive-tire-service"],
+      });
+    }
+    if (qty?.value != null) attributes.tireQuantity = uv(qty.value, { provenance: "EXPLICIT", source: "USER_EXPLICIT", evidence: qty.evidence });
+    const season = normalizedInput.match(/(?<![\p{L}])(?:dört\s+mevsim|dort\s+mevsim|4\s+mevsim|yazlık|yazlik|kışlık|kislik)(?![\p{L}])/iu);
+    if (season) {
+      const value = /^yaz/iu.test(season[0]) ? "Yaz" : /^k/iu.test(season[0]) ? "Kış" : "Dört mevsim";
+      attributes.tireSeason = uv(value, { provenance: "EXPLICIT", source: "USER_EXPLICIT", evidence: [season[0]] });
+    }
     if (tireFamily) {
       attributes.tireItemType = uv(
         tireFamily,
@@ -1736,7 +1798,7 @@ export function understandRequest(
   }
 
   // Phase 2 constraints — Single Brain authority (before subject reconcile)
-  const constraintBundle = extractConstraintSemantics(normalizedInput);
+  const constraintBundle = extractConstraintSemantics(normalizeUnderstandingInput(rawInput));
 
   // Brands only in "olmasın" windows must not become positive identity
   const exclusionOnlyBrands = brandsOnlyInExclusion(normalizedInput);
@@ -2062,7 +2124,13 @@ export function understandRequest(
     requestSubject.kind.status === "CONFIDENT" ||
     requestSubject.kind.status === "TENTATIVE";
 
-  if (semConfident && (semKind === "PART" || semKind === "ACCESSORY")) {
+  if (
+    semConfident &&
+    (semKind === "PART" || semKind === "ACCESSORY") &&
+    // A concrete automotive service phrase (e.g. motor yağı değişimi) may
+    // contain a component noun; it must keep the service lane selected above.
+    !attributes.serviceType
+  ) {
     intentResolved = {
       intent: "PART",
       confidence: Math.max(intentResolved.confidence, requestSubject.kind.confidence),
@@ -2719,8 +2787,20 @@ export function understandRequest(
     }
   }
 
+  const explicitAttributeProductType =
+    attributes.productType?.provenance === "EXPLICIT"
+      ? (attributes.productType as UnderstandingValue<string>)
+      : undefined;
+
   const productType =
-    identity.productType
+    explicitAttributeProductType ??
+    (/bulaşık\s+deterjanı|bulasik\s+deterjani/iu.test(normalizedInput)
+      ? uv("Bulaşık deterjanı", {
+          provenance: "EXPLICIT",
+          source: "USER_EXPLICIT",
+          evidence: ["household-consumable-product"],
+        })
+      : identity.productType
       ? uv(identity.productType, {
           provenance: textIncludes(normalizedInput, identity.productType)
             ? "EXPLICIT"
@@ -2795,7 +2875,7 @@ export function understandRequest(
                 source: "USER_EXPLICIT",
                 evidence: ["araç"],
               })
-            : undefined;
+            : undefined);
 
   const reconciled = reconcileUnderstanding({
     intent: intentDecision,
@@ -2841,7 +2921,7 @@ export function understandRequest(
    */
   const scopeHay = foldTr(normalizedInput);
   const adviceQuestionForm =
-    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz)(?:[^a-z0-9]|$)/.test(
+    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz|vereyim|vermeliyim)(?:[^a-z0-9]|$)/.test(
       scopeHay,
     );
   const medicalTreatmentContext =

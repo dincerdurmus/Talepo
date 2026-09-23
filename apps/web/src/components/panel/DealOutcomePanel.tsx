@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { isBilateralDealCompleted } from "@/lib/offer/deal-completion";
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
 
 type DealOutcomeState = {
   id: string;
@@ -56,6 +57,7 @@ export function DealOutcomePanel({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const canWrite = useCompanyCanWrite();
   const panelId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -75,7 +77,7 @@ export function DealOutcomePanel({
   const summary = statusSummary(local, role);
 
   async function confirm() {
-    if (submitting || mineConfirmed || completed) return;
+    if (!canWrite || submitting || mineConfirmed || completed) return;
     setSubmitting(true);
     setMessage(null);
     try {
@@ -228,6 +230,7 @@ function DetailBody({
   message: string | null;
   onConfirm: () => void;
 }) {
+  const canWrite = useCompanyCanWrite();
   if (completed) {
     return (
       <>
@@ -265,7 +268,7 @@ function DetailBody({
       ) : (
         <button
           type="button"
-          disabled={submitting}
+          disabled={submitting || !canWrite}
           onClick={onConfirm}
           className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-[#0f1f1d] px-4 text-sm font-semibold text-white disabled:opacity-50"
         >

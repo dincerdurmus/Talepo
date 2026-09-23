@@ -1,0 +1,77 @@
+===== PROJECTION OTORITESI V1 =====
+SCENARIOS=108
+FROZEN_IDENTITIES=564
+MEASURED_IDENTITIES=590
+IDENTITY_MISSING=22
+IDENTITY_UNEXPECTED=48
+IDENTITY_DUPLICATE=0
+AUTHORITY_MISMATCH=16
+SURFACE_ATTRIBUTES=UNKNOWN:0 INFERRED:30 VERIFIED:9 USER_EXPLICIT:256
+SURFACE_CONSTRAINTS=UNKNOWN:0 INFERRED:30 VERIFIED:9 USER_EXPLICIT:256
+CROSS_SURFACE_DISAGREEMENT=0
+PAYLOAD_SIGNATURE_DRIFT=48
+INTERNAL_EVIDENCE_LEAK=0
+
+===== HUKUM =====
+KIRMIZI — 140 ihlal:
+  - taban: appl-03/fridgeType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: appl-03/fridgeType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: appl-10/ovenType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: appl-10/ovenType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: auto-05/needType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: auto-05/needType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: auto-06/needType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: auto-06/needType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-03/usageArea/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-03/usageArea/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-04/productType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-04/productType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-04/usageArea/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-04/usageArea/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-07/productType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: health-07/productType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: home-06/needType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: home-06/needType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: home-06/productType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: home-06/productType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: svc-07/productType/attributes ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - taban: svc-07/productType/constraints ölçüm evreninden KAYBOLDU — kimlik kaybı "yanlış otorite 0" hükmünü sahte yeşile çevirir
+  - otorite: auto-01/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-01/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-02/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-02/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-03/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-03/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-04/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-04/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-07/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-07/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-10/model/attributes: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: auto-10/model/constraints: beklenen VERIFIED, ölçülen USER_EXPLICIT
+  - otorite: mach-02/needType/attributes: beklenen USER_EXPLICIT, ölçülen INFERRED
+  - otorite: mach-02/needType/constraints: beklenen USER_EXPLICIT, ölçülen INFERRED
+  - otorite: mach-03/needType/attributes: beklenen USER_EXPLICIT, ölçülen INFERRED
+  - otorite: mach-03/needType/constraints: beklenen USER_EXPLICIT, ölçülen INFERRED
+  - taban: appl-02/inverterPreference/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: appl-02/inverterPreference/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: appl-03/fridgeCoolingSystem/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: appl-03/fridgeCoolingSystem/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: auto-11/needType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: auto-11/needType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: auto-11/tireItemType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: auto-11/tireItemType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: baby-02/babyProductType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: baby-02/babyProductType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: health-04/needType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: health-04/needType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: health-04/part/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: health-04/part/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-01/cookwareSetType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-01/cookwareSetType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-02/serviceCount/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-02/serviceCount/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-07/kitchenProductType/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: home-07/kitchenProductType/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: mach-01/machiningControl/attributes dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  - taban: mach-01/machiningControl/constraints dondurulmuş tabanda YOK — açıklanamayan yeni kimlik
+  ... ve 80 ihlal daha

@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowRight, Send } from "lucide-react";
@@ -14,6 +16,7 @@ type OfferSendCtaProps = {
 };
 
 export function OfferSendCta({ href }: OfferSendCtaProps) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const [sending, setSending] = useState(false);
 
@@ -24,6 +27,8 @@ export function OfferSendCta({ href }: OfferSendCtaProps) {
       router.push(href);
     }, LETTER_SEND_DURATION_MS);
   }
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   return (
     <section className="rounded-[18px] border border-teal-900/10 bg-[linear-gradient(145deg,#fcfdfc_0%,#f4f8f7_55%,#eef5f3_100%)] p-4 shadow-[0_12px_32px_rgba(15,31,29,0.045)] sm:flex sm:items-center sm:gap-5 sm:p-5">

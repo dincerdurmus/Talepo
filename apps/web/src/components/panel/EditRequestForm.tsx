@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -125,6 +127,7 @@ export function EditRequestForm({
   initial: EditRequestInitial;
   cloneSuccess?: boolean;
 }) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const [requestText, setRequestText] = useState(
     initial.rawInput ||
@@ -593,6 +596,8 @@ export function EditRequestForm({
       setIsSaving(false);
     }
   }
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   return (
     <div className="relative space-y-5 overflow-hidden">

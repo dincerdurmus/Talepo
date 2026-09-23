@@ -35,11 +35,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { PlanTierId } from "../src/lib/membership/plans";
-import {
-  BILLING_DRIFT_SCAN_LIMIT,
-  countBillingEntitlementDrift,
-  decideBillingDrift,
-} from "../src/server/billing/reconcile";
+import { ADMIN_HEALTH_LABELS, healthMetricDisplay, healthMetricSummary } from "../src/lib/admin-health-presentation";
 
 type PrismaLike = Record<string, unknown>;
 
@@ -66,6 +62,9 @@ const GECMIS = new Date("2026-08-01T00:00:00.000Z");
 const WEB = join(__dirname, "..");
 
 async function main() {
+  // The dummy URL must exist before Prisma's module is evaluated. All queries
+  // below are stubbed; importing first made an environment-free run abort.
+  const { BILLING_DRIFT_SCAN_LIMIT, countBillingEntitlementDrift, decideBillingDrift } = await import("../src/server/billing/reconcile");
   const { prisma } = await import("../src/lib/prisma");
 
   console.log("=== ÖDEME/ÜYELİK AYRIŞMASI ===\n");
@@ -531,7 +530,7 @@ async function main() {
       "utf8",
     );
     assert.ok(
-      UI.includes('key==="billingDriftTruncated"'),
+      UI.includes("healthMetricSummary") && healthMetricSummary({ billingDriftTruncated: 1 }).alerts.some(([key]) => key === "billingDriftTruncated"),
       "kesilme uyarı listesine düşmüyor",
     );
   });
@@ -542,15 +541,20 @@ async function main() {
       "utf8",
     );
     assert.ok(
-      UI.includes('billingDrift:"'),
+      UI.includes("ADMIN_HEALTH_LABELS") && ADMIN_HEALTH_LABELS.billingDrift === "Ödeme/üyelik ayrışması",
       "metrik panelde adsız — kimse ne olduğunu anlamaz",
     );
     assert.ok(
-      UI.includes('key==="billingDrift"'),
+      UI.includes("healthMetricSummary") && healthMetricSummary({ billingDrift: 2 }).alerts.some(([key]) => key === "billingDrift"),
       "ayrışma uyarı listesine düşmüyor — sayı var, kimse görmüyor",
     );
   });
 
+  await check("ölçülemeyen ayrışma sıfır veya sağlıklı sayılmaz", () => {
+    assert.equal(healthMetricDisplay("billingDrift", -1), "Ölçülemedi");
+    assert.deepEqual(healthMetricSummary({ billingDrift: -1 }).unknown, [["billingDrift", -1]]);
+    assert.deepEqual(healthMetricSummary({ billingDrift: 0 }).alerts, []);
+  });
   console.log(`\n${passed} passed, ${failed} failed`);
   if (failed > 0) process.exit(1);
 }

@@ -1,3 +1,4 @@
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { NextResponse } from "next/server";
 
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
@@ -29,6 +30,8 @@ export async function POST(
             : "Eşleşen tedarikçi bulunamadı.",
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },

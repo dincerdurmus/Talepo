@@ -34,6 +34,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { assessCompanyProfileReadiness } from "@/lib/monetization/company-profile-readiness";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { requireUser } from "@/server/auth/require-user";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 import { batchMatchCompanyRequests } from "@/server/monetization/batch-matching";
@@ -256,6 +257,8 @@ export default async function ExploreRequestsPage({
     isModerationHidden: false,
     createdById: { not: user.id },
     status: { in: OPEN_STATUSES },
+    categoryPausedAt: null, category: { isActive: true },
+    AND: [publicRequestExpiryFilter()],
     ...visibilityFilter,
   };
 

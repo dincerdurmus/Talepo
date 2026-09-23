@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Archive, ArchiveRestore } from "lucide-react";
@@ -15,12 +17,13 @@ export function OfferArchiveActions({
   canArchive: boolean;
   isArchived: boolean;
 }) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!canArchive && !isArchived) return null;
+  if (!canWrite || (!canArchive && !isArchived)) return null;
 
   const run = async (action: "archive" | "unarchive") => {
     if (busy) return;

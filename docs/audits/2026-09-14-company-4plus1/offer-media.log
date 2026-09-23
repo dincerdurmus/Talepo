@@ -1,0 +1,77 @@
+
+=== LIMITS / TYPES ===
+
+PASS — 1 max 5
+PASS — 2 min 0 implied (photos optional)
+PASS — 3 JPEG allowed
+PASS — 4 PNG allowed
+PASS — 5 WebP allowed
+PASS — 6 SVG not allowed
+PASS — 7 GIF not allowed
+PASS — 8 PDF not allowed
+PASS — 9 server size reuses 2.5MB
+PASS — 10 allowlist is jpeg/png/webp only
+
+=== MAGIC-BYTE VALIDATION ===
+
+PASS — 11 JPEG buffer PASS
+PASS — 12 PNG buffer PASS
+PASS — 13 WebP buffer PASS
+PASS — 14 SVG rejected
+PASS — 15 unsupported document rejected
+PASS — 16 GIF rejected
+PASS — 17 too-large rejected
+PASS — 18 .svg filename blocked
+PASS — 19 .exe filename blocked
+PASS — 20 jpeg name allowed
+PASS — 21 detect jpeg
+
+=== SOURCE: MODEL / STORAGE / FLOW ===
+
+PASS — 22 OfferMedia model exists
+PASS — 23 no photo1 columns on Offer
+PASS — 24 additive migration
+PASS — 25 no base64 column for offer media
+PASS — 26 private filesystem store
+PASS — 27 path traversal rejected
+PASS — 28 default create locks empty media
+PASS — 29 JSON create can defer finalize
+PASS — 30 attach uses validateImageBuffer
+PASS — 31 count limit enforced
+PASS — 32 post-submit attach rejected
+PASS — 33 write is submitter only
+PASS — 34 read: request owner + submitter + company member
+PASS — 35 GET is authenticated
+PASS — 36 GET is private no-store
+PASS — 37 POST attach uses formData file
+PASS — 38 form copy
+PASS — 39 photos optional on form
+PASS — 40 retry keeps created offer
+PASS — 41 Gelen teklifler include media ids
+PASS — 42 Tekliflerim include media ids
+PASS — 43 request detail include media
+PASS — 44 list include is ids only (no bytes)
+PASS — 45 acceptOffer does not delete media
+PASS — 46 no message-attachment conversion
+PASS — 47 Offer Intelligence unchanged (no photo score)
+PASS — 48 Radar unchanged
+PASS — 49 Analytics unchanged
+PASS — 50 amount/delivery lock file unchanged API
+PASS — 51 not a Pro upsell (no feature gate on attach)
+PASS — 52 Standard still has submit_offer
+PASS — 53 Professional still has submit_offer
+PASS — 54 .data gitignored
+PASS — 55 JPEG client compress reused
+PASS — 56 SVG client reject
+PASS — 57 6th photo client limit message
+PASS — 58 immutable copy on revise
+PASS — 59 no public bucket URL
+PASS — 60 signed access via auth GET, not public CDN
+
+=== POLICY CONSTANTS ===
+
+PASS — 61 limit message set
+PASS — 62 type message mentions SVG
+PASS — 63 immutable message set
+
+63 passed, 0 failed

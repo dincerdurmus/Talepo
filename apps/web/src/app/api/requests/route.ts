@@ -17,8 +17,8 @@ import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import { assertUserCanAct } from "@/server/auth/assert-user-can-act";
 import { createRequest } from "@/server/request/create-request";
 import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
+import { parseAvailableRequestInput } from "@/server/request/parse-available-request";
 import {
-  parseCreateRequestInput,
   parseJsonObject,
   RequestValidationError,
 } from "@/server/request/request-schema";
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
               ((body as Record<string, unknown>).description as string | undefined)
           : null,
       );
-      const input = parseCreateRequestInput(body, { decisionBundle });
+      const input = await parseAvailableRequestInput(body, { decisionBundle });
       const headerKey = readIdempotencyKeyFromRequest(request);
       const createdRequest = await createRequest(user.id, {
         ...input,

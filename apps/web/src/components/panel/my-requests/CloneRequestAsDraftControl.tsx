@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import { useEffect, useId, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
@@ -11,6 +13,7 @@ export function CloneRequestAsDraftControl({
   requestId: string;
   variant?: "menu" | "header";
 }) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const titleId = useId();
   const [confirming, setConfirming] = useState(false);
@@ -67,6 +70,8 @@ export function CloneRequestAsDraftControl({
       setLoading(false);
     }
   }
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   if (!confirming) {
     return (

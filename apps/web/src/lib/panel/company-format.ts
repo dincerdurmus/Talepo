@@ -1,3 +1,5 @@
+import { normalizeCompanyRole } from "@/lib/membership/company-permissions";
+
 export function formatOfferStatus(
   status: string,
   options?: {
@@ -32,17 +34,13 @@ export function formatOfferStatus(
 }
 
 export function formatMemberRole(role: string) {
-  switch (role) {
+  switch (normalizeCompanyRole(role)) {
     case "OWNER":
-      return "Sahip";
-    case "ADMIN":
-      return "Yönetici";
-    case "MANAGER":
-      return "Müdür";
+      return "Sahip (Owner)";
     case "MEMBER":
       return "Üye";
     case "VIEWER":
-      return "İzleyici";
+      return "Analist";
     default:
       return role;
   }

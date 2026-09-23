@@ -1,10 +1,11 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { assertCompanyMembership } from "@/lib/panel/company-workspace";
 
 export type NegotiationOfferAccess = {
   id: string;
   submittedById: string;
   companyId: string | null;
-  request: { createdById: string };
+  request: { createdById: string; companyId?: string | null };
 };
 
 export function isNegotiationBuyer(
@@ -45,4 +46,10 @@ export async function resolveNegotiationActorSide(
   if (isNegotiationBuyer(offer, userId)) return "BUYER";
   if (await isNegotiationProvider(offer, userId)) return "PROVIDER";
   return null;
+}
+
+/** Mutation authority is separate from readable participation/history. */
+export async function assertNegotiationWriteAccess(offer: NegotiationOfferAccess, userId: string) {
+  await assertSelectedCompanyWriteAccess(userId);
+  await assertCompanyWriteAccess(userId, isNegotiationBuyer(offer, userId) ? offer.request.companyId : offer.companyId);
 }

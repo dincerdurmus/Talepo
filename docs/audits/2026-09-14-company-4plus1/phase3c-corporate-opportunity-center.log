@@ -1,0 +1,45 @@
+PASS — 1 Corporate Opportunity Center loads
+PASS — 2 Corporate entitlement server gate
+PASS — 3 non-Corporate blocked/upsell
+PASS — 4 company scoping
+PASS — 5 taxonomy discovery reuse
+PASS — 6 canonical projection consume
+PASS — 7 no request reparse
+PASS — 8 Opportunity list
+PASS — 9 unassigned filter
+PASS — 10 assigned filter
+PASS — 11 assigned-to-me filter
+PASS — 12 assignment action
+PASS — 13 reassignment
+PASS — 14 remove assignment
+PASS — 15 team members scoped
+PASS — 16 taxonomy follow
+PASS — 17 saved search reuse
+PASS — 18 alert reuse
+PASS — 19 hunter canonical filters
+PASS — 20 MUST hard reject path exists
+PASS — 21 EXCLUDED hard reject
+PASS — 22 PREFERRED soft
+PASS — 23 ANY neutral
+PASS — 24 structured match reasons
+PASS — 25 no fake percent score
+PASS — 26 offer status derive
+PASS — 27 offer CTA uses existing flow
+PASS — 28 watchlist distinct
+PASS — 29 inventory reason if supported
+PASS — 30 zero-config / empty state
+PASS — 31 empty state CTAs
+PASS — 32 summary metrics real
+PASS — 33 Corporate nav
+PASS — 34 Professional regression surface
+PASS — 35 Premium regression surfaces
+PASS — 36 Standard regression explore
+PASS — 37 desktop smoke
+PASS — 38 mobile smoke
+PASS — 39 tenancy isolation
+PASS — 40 no duplicate taxonomy/filter authority
+PASS — inventory import UI
+PASS — assignment audit proxy
+
+========================================
+Phase 3C verify: 42 passed, 0 failed

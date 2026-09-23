@@ -61,6 +61,7 @@ import {
 } from "@/lib/request-composer/v2/answer-apply-plan";
 import { mergeAnswersIntoUnderstoodFacts } from "./ui-helpers";
 import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
 import {
   budgetPlaceholderForStrategy,
@@ -116,7 +117,6 @@ import {
 import {
   getVisibleCategoryFields,
   isFieldRequired,
-  REQUEST_CATEGORIES,
   resolveCommonField,
   resolveRequestCategory,
   withCategoryFieldDefaults,
@@ -314,19 +314,23 @@ export default function TalepOlusturPage() {
 }
 
 function TalepOlusturForm() {
+  const categories = usePublicCategories();
+  if (!categories) return <p className="p-8 text-center" role="status">Kategoriler yükleniyor. Bağlantı kurulunca devam edebilirsiniz.</p>;
+  return <AvailableCategoryForm categories={categories} />;
+}
+
+function AvailableCategoryForm({ categories }: { categories: import("@/lib/request-category-engine").RequestCategory[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryFromHome = formatBudgetNumbersInText(
     searchParams.get("query")?.trim() ?? "",
   );
   const categoryFromHome = searchParams.get("category")?.trim() ?? "";
-  const validCategoryFromHome = REQUEST_CATEGORIES.some(
+  const validCategoryFromHome = categories.some(
     (category) => category.id === categoryFromHome,
   )
     ? categoryFromHome
     : null;
-  const hybrid = useHybridRequestComposer({ initialText: queryFromHome });
-  const requestText = hybrid.text;
   const [manualValues, setManualValues] = useState<Record<string, string>>({});
   const [commonDraft, setCommonDraft] = useState<CommonDraft>({
     title: "",
@@ -398,6 +402,8 @@ function TalepOlusturForm() {
     validCategoryFromHome,
   );
   const [categoryLockedByUser, setCategoryLockedByUser] = useState(false);
+  const hybrid = useHybridRequestComposer({ initialText: queryFromHome, categories, selectedCategoryId: categoryOverride });
+  const requestText = hybrid.text;
   const [categoryUserChoice, setCategoryUserChoice] =
     useState<CategoryUserChoice>(null);
   /**
@@ -544,7 +550,7 @@ function TalepOlusturForm() {
    * TENTATIVE must not override a resolved canonical categoryId (e.g. web
    * service leaf vs a weak real-estate "site" substring).
    */
-  const activeCategoryId = (() => {
+  const proposedCategoryId = (() => {
     if (categoryLockedByUser && categoryOverride) return categoryOverride;
     if (
       understanding.category.status === "CONFIDENT" &&
@@ -564,7 +570,8 @@ function TalepOlusturForm() {
     }
     return detectedCategoryId;
   })();
-  const selectedCategory = resolveRequestCategory(activeCategoryId);
+  const activeCategoryId = categories.some((category) => category.id === proposedCategoryId) ? proposedCategoryId : "";
+  const selectedCategory = resolveRequestCategory(activeCategoryId, categories);
   const visibleCommonFields = useMemo(
     () => selectedCategory.commonFields.map(resolveCommonField),
     [selectedCategory],
@@ -662,7 +669,7 @@ function TalepOlusturForm() {
     : suggestedRealEstateLocation;
 
   const dynamicValues = useMemo(() => {
-    const category = resolveRequestCategory(activeCategoryId);
+    const category = resolveRequestCategory(activeCategoryId, categories);
     const values: Record<string, string> = {};
     const composerFill = hybrid.softFillFields;
 
@@ -689,7 +696,7 @@ function TalepOlusturForm() {
     }
 
     return withCategoryFieldDefaults(activeCategoryId, values);
-  }, [activeCategoryId, hybrid.softFillFields, seededFields, manualValues]);
+  }, [activeCategoryId, categories, hybrid.softFillFields, seededFields, manualValues]);
 
   const categoryFilterDefs = useMemo(
     () => getExploreFilterDefs(activeCategoryId, dynamicValues),
@@ -697,7 +704,7 @@ function TalepOlusturForm() {
   );
 
   const autoTitle = useMemo(() => {
-    const category = resolveRequestCategory(activeCategoryId);
+    const category = resolveRequestCategory(activeCategoryId, categories);
     return composeRequestTitle({
       categoryId: activeCategoryId,
       rawText: requestText,
@@ -715,6 +722,7 @@ function TalepOlusturForm() {
   }, [
     activeCategoryId,
     requestText,
+    categories,
     seededFields,
     understandingCity,
     understandingQuantity,
@@ -1811,13 +1819,17 @@ function TalepOlusturForm() {
       isSyncing: hybrid.isSyncing,
     });
     if (!live) return null;
-    return buildCategoryGuidance({
+    const guidance = buildCategoryGuidance({
       understanding,
       rawText: requestText,
       categoryConfident,
       userLocked: categoryLockedByUser,
     });
+    if (!guidance) return null;
+    const candidates = guidance.candidates.filter((candidate) => categories.some((category) => category.id === candidate.slug));
+    return { ...guidance, candidates, allowMultiSelect: guidance.allowMultiSelect && candidates.length > 1 };
   }, [
+    categories,
     categoryConfident,
     categoryLockedByUser,
     hybrid.isSyncing,
@@ -2620,6 +2632,11 @@ function TalepOlusturForm() {
   function requestPublish(version: "manual" | "ai") {
     if (isPublishing) return;
 
+    if (!categories.length || (proposedCategoryId && !activeCategoryId)) {
+      surfacePublishFailure("Seçilen kategori şu anda kullanılamıyor. Lütfen aktif bir kategori seçin.");
+      return;
+    }
+
     if (!mergedCommonDraft.title.trim()) {
       surfacePublishFailure("Talebinizi yayınlamak için bir başlık gerekli.");
       return;
@@ -2715,6 +2732,11 @@ function TalepOlusturForm() {
     isUrgent: boolean,
   ) {
     if (isPublishing) return;
+
+    if (!categories.length || (proposedCategoryId && !activeCategoryId)) {
+      surfacePublishFailure("Seçilen kategori şu anda kullanılamıyor. Lütfen aktif bir kategori seçin.");
+      return;
+    }
 
     if (isRealEstate) {
       const locationError = realEstateLocationError(realEstateLocation);
@@ -4043,7 +4065,8 @@ function TalepOlusturForm() {
                           aria-label="Kategori"
                           className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
                         >
-                          {REQUEST_CATEGORIES.map((category) => (
+                          <option value="" disabled>Kategori seçin</option>
+                          {categories.map((category) => (
                             <option key={category.id} value={category.id}>
                               {category.label}
                             </option>

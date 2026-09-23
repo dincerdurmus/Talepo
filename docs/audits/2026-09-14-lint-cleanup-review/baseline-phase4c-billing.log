@@ -1,0 +1,39 @@
+PASS — 1 provider adapter
+PASS — 2 plan mapping
+PASS — 3 checkout server plan validation
+FAIL — 4 checkout permission
+PASS — 5 checkout rate limit
+PASS — 6 webhook signature
+PASS — 7 webhook invalid signature path
+PASS — 8 webhook idempotency
+PASS — 9 duplicate event
+PASS — 10 active plan status
+PASS — 11 Premium activation wiring
+PASS — 12 Corporate activation company subject
+PASS — 13 company tenancy
+FAIL — 14 member cannot billing mutate
+PASS — 15 renewal
+PASS — 16 cancel period end
+PASS — 17 canceled
+PASS — 18 past due
+PASS — 19 failed payment
+PASS — 20 out-of-order event
+PASS — 21 credit checkout
+PASS — 22 credit grant
+PASS — 23 duplicate credit event
+PASS — 24 failed credit payment no grant path
+PASS — 25 client tampering
+PASS — 26 pending state
+PASS — 27 dev mock production blocked
+PASS — 28 entitlement sync
+PASS — 29 billing errors safe
+PASS — 30 telemetry/redaction
+PASS — 31 no card storage
+PASS — 32 legacy Standard behavior
+PASS — provider status foundation
+PASS — migration additive
+PASS — membership buy-credits still payment gated
+
+Phase 4C billing: 33 passed, 2 failed
+4 checkout permission
+14 member cannot billing mutate

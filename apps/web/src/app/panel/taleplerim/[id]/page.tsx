@@ -33,9 +33,11 @@ import { requireUser } from "@/server/auth/require-user";
 import { canCloneRequestAsDraft } from "@/server/request/clone-request-as-draft";
 import { canEditRequestStatus } from "@/server/request/update-request";
 import { canDeleteRequestStatus } from "@/server/request/delete-request";
+import { requestPublicationState } from "@/server/request/public-visibility";
 
 const statusLabels: Record<string, string> = {
   DRAFT: "Taslak",
+  PENDING_REVIEW: "İncelemede",
   PUBLISHED: "Yayınlandı",
   RECEIVING_OFFERS: "Teklif alıyor",
   OFFER_SELECTED: "Teklif seçildi",
@@ -80,7 +82,7 @@ export default async function RequestDetailPage({
       deletedAt: null,
     },
     include: {
-      category: { select: { name: true, slug: true } },
+      category: { select: { name: true, slug: true, isActive: true } },
       fieldValues: {
         orderBy: { field: { sortOrder: "asc" } },
         include: { field: true },
@@ -122,10 +124,12 @@ export default async function RequestDetailPage({
 
   if (!request) notFound();
 
-  const editable = canEditRequestStatus(request.status);
-  const deletable = canDeleteRequestStatus(request.status);
-  const cloneable = canCloneRequestAsDraft(request.status);
-  const concluded = MY_REQUEST_CONCLUDED_STATUSES.has(request.status);
+  const publication = requestPublicationState(request);
+  const effectiveStatus = publication.status;
+  const editable = canEditRequestStatus(effectiveStatus);
+  const deletable = canDeleteRequestStatus(effectiveStatus);
+  const cloneable = canCloneRequestAsDraft(effectiveStatus);
+  const concluded = MY_REQUEST_CONCLUDED_STATUSES.has(effectiveStatus) || effectiveStatus === "EXPIRED";
   const processHistory = concluded
     ? buildConcludedProcessHistory({
         status: request.status,
@@ -163,9 +167,10 @@ export default async function RequestDetailPage({
     : null;
   const matchedCompanyCount = request._count.matches;
   const categorySlug = request.category.slug;
-  const statusLabel = statusLabels[request.status] ?? request.status;
+  const reviewRejected = request.status === "PENDING_REVIEW" && Boolean(request.moderationHiddenById);
+  const statusLabel = reviewRejected ? "Yayınlanmadı" : publication.label ?? statusLabels[effectiveStatus] ?? effectiveStatus;
   const statusChipClass =
-    statusStyles[request.status] ?? "border-black/10 bg-black/[0.04] text-black/55";
+    statusStyles[effectiveStatus] ?? "border-black/10 bg-black/[0.04] text-black/55";
   const offerCount = request.offers.length;
   const incomingOffersHref = buildIncomingRequestWorkspacePath({
     requestId: request.id,
@@ -202,6 +207,11 @@ export default async function RequestDetailPage({
           ) : null}
         </div>
       </header>
+
+      {request.status === "PENDING_REVIEW" && <div role="status" className={`mt-5 rounded-2xl border p-4 text-sm ${reviewRejected ? "border-rose-200 bg-rose-50 text-rose-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+        <p className="font-semibold">{reviewRejected ? "Talebiniz inceleme sonucunda yayınlanmadı." : "Talebiniz yayın öncesi inceleniyor."}</p>
+        <p className="mt-2">{reviewRejected ? request.moderationReason ?? "Kararın ayrıntılarını bildirimlerinizden inceleyebilirsiniz." : "Sonuçlandığında size bildirim göndereceğiz. Talebiniz şu anda tedarikçilere görünmüyor."}</p>
+      </div>}
 
       <section className="relative mt-5 overflow-hidden rounded-[26px] border border-black/[0.05] bg-[linear-gradient(135deg,#FAFCFB_0%,#F2F7F6_52%,#E8F4F1_100%)] px-5 py-5 shadow-[0_10px_32px_rgba(15,31,29,0.035)] sm:px-6 sm:py-5">
         <div

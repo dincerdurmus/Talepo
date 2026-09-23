@@ -1,0 +1,28 @@
+PASS — Analysis blocked: request creation
+PASS — Analysis blocked: request editing
+PASS — Analysis blocked: request deletion
+PASS — Analysis blocked: offer creation
+PASS — Analysis blocked: offer editing
+PASS — Analysis blocked: offer acceptance
+PASS — Analysis blocked: offer rejection
+PASS — Analysis blocked: counter offer
+PASS — Analysis blocked: counter acceptance
+PASS — Analysis blocked: counter rejection
+PASS — Analysis blocked: message send
+PASS — Analysis blocked: photo attachment
+PASS — Analysis blocked: photo finalization
+PASS — Personal switch cannot bypass: company request editing
+PASS — Personal switch cannot bypass: company request deletion
+PASS — Personal switch cannot bypass: original submitter's counter offer
+PASS — Personal switch cannot bypass: original submitter's message
+PASS — Personal switch cannot bypass: original submitter's offer photo
+PASS — Former buyer cannot modify their company deal after becoming an analyst
+PASS — Blocked attempts never reach business writes
+PASS — OWNER retains operating authority and inherited Professional features
+PASS — ADMIN retains operating authority and inherited Professional features
+PASS — MANAGER retains operating authority and inherited Professional features
+PASS — MEMBER retains operating authority and inherited Professional features
+PASS — Analysis retains company analytics and offer intelligence
+PASS — Personal operations do not inherit the firm's read-only restriction
+
+26 passed, 0 failed; 0 database writes.

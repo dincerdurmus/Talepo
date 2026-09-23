@@ -176,9 +176,9 @@ function scheduleFor(
 }
 
 /* ------------------------------------------------------------------ *
- * K3 — Cevaplanan soru elenir (answeredKeys).
- * Senaryo 2 ve 6'nın çekirdeği: bir görünümde verilen cevap, diğerinde
- * soruyu yeniden açmaz.
+ * K3 — Yalnız oturum defteri cevap değildir.
+ * Bir görünümde verilen gerçek kanonik cevap diğerinde soruyu yeniden açmaz;
+ * fakat yalnız answeredKeys kaydı, temizlenmiş cevabı kapalı tutamaz.
  * ------------------------------------------------------------------ */
 {
   /**
@@ -191,7 +191,7 @@ function scheduleFor(
    * değer silinmişse soru YENİDEN açılmak zorundadır, yoksa kullanıcı
    * sildiği cevabı bir daha veremez. Kapı artık bugünün kuralını ölçer:
    * cevap + defter kapatır, tek başına defter kapatmaz.
-   */
+  */
   const before = scheduleFor(baseState).visible;
   const target = before[0];
   const answeredState: Record<string, FieldAnswerState> = {
@@ -1066,7 +1066,7 @@ function scheduleFor(
    * şekilde yakaladı; taban 414→415 / 409→410 / 412→413 olarak yenilendi. Asıl koruma P1–P5'tedir:
    * her profil için seçenek sayısı, sıra, etiket/değer ayrımı, yinelenme,
    * serbest cevap ve kaçış kuralları tek tek ölçülür ve hepsi yeşildir.
-   */
+  */
   gate(
     "P0-profil-alani-sayisi",
     profilesWithChoices.length === 415,
@@ -1195,7 +1195,7 @@ function scheduleFor(
     gate("P10-secenekssiz-soru-text-kalir", c.controlType === "text_fallback", c.controlType);
   }
 
-  /* --- P11: fridgeType uçtan uca --- */
+  /* --- P11: buzdolabı tipi ve soğutma sistemi uçtan uca --- */
   {
     const st = syncFromText(null, "Buzdolabı arıyorum").state;
     /* Bütçe + konum önce gelir (kurucu, 2026-09-12): kategori sorusu ancak
@@ -1225,35 +1225,47 @@ function scheduleFor(
       );
       gate("P11c-serbest-cevap-var", f.control?.allowCustom === true, "serbest cevap yolu yok");
     }
+    const coolingProfile = listAllProfiles().find(
+      (d) =>
+        d.fieldKey === "fridgeCoolingSystem" &&
+        d.categories?.includes("appliances"),
+    );
+    gate("P11c2-fridgeCoolingSystem-profili-var", Boolean(coolingProfile));
+    gate(
+      "P11c3-sogutma-secenekleri-gorunur",
+      coolingProfile?.quickChoices?.map((o) => o.label).join("|") ===
+        "No-Frost|Statik",
+      JSON.stringify(coolingProfile?.quickChoices?.map((o) => o.label) ?? []),
+    );
     /* Seçim kanonik alana gider ve soru tekrar sorulmaz. */
     const answered = syncFromBrowse(st, {
-      key: "fridgeType",
+      key: "fridgeCoolingSystem",
       value: "No-Frost",
       isAny: false,
     }).state;
     gate(
       "P11d-secim-kanonik-alana-gider",
-      answered.fields.fridgeType?.kind === "VALUE" &&
-        String(answered.fields.fridgeType?.value) === "No-Frost" &&
-        answered.fields.fridgeType?.provenance === "EXPLICIT_BROWSE",
-      JSON.stringify(answered.fields.fridgeType ?? null),
+      answered.fields.fridgeCoolingSystem?.kind === "VALUE" &&
+        String(answered.fields.fridgeCoolingSystem?.value) === "No-Frost" &&
+        answered.fields.fridgeCoolingSystem?.provenance === "EXPLICIT_BROWSE",
+      JSON.stringify(answered.fields.fridgeCoolingSystem ?? null),
     );
     gate(
       "P11e-tekrar-sorulmaz",
-      !scheduleFor(answered).visible.includes("fridgeType"),
+      !scheduleFor(answered).visible.includes("fridgeCoolingSystem"),
       JSON.stringify(scheduleFor(answered).visible),
     );
     /* Listede olmayan geçerli değer aynı yoldan yazılabilir. */
     const custom = syncFromBrowse(st, {
-      key: "fridgeType",
-      value: "Yan yana çift kapılı",
+      key: "fridgeCoolingSystem",
+      value: "Low-Frost",
       isAny: false,
     }).state;
     gate(
       "P11f-liste-disi-deger-yazilabilir",
-      custom.fields.fridgeType?.kind === "VALUE" &&
-        String(custom.fields.fridgeType?.value) === "Yan yana çift kapılı",
-      JSON.stringify(custom.fields.fridgeType ?? null),
+      custom.fields.fridgeCoolingSystem?.kind === "VALUE" &&
+        String(custom.fields.fridgeCoolingSystem?.value) === "Low-Frost",
+      JSON.stringify(custom.fields.fridgeCoolingSystem ?? null),
     );
   }
 

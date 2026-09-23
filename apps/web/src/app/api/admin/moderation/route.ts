@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { REVIEW_HOLD_STATUS } from "@/lib/request/review-hold";
-import { approveHeldRequest, rejectHeldRequest } from "@/server/request/review-hold-decision";
+import { REQUEST_REVIEW_MODERATION_CATEGORY } from "@/lib/request-understanding/publish-disposition";
+import { approveHeldRequest, rejectHeldRequest, ReviewHoldDecisionError } from "@/server/request/review-hold-decision";
 import { requirePlatformAdmin } from "@/server/auth/require-platform-admin";
 import { writeAdminAudit } from "@/server/admin/audit";
 import { moderationSla } from "@/server/admin/moderation-sla";
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
     const offerIds = items.filter((item) => item.subjectType === "OFFER").map((item) => item.subjectId);
     const targetUserIds = [...new Set(items.map((item) => item.targetUserId).filter((id): id is string => Boolean(id)))];
     const [requests, offers, targetHistory] = await Promise.all([
-      requestIds.length ? prisma.request.findMany({ where: { id: { in: requestIds } }, select: { id: true, isModerationHidden: true, moderationReason: true } }) : Promise.resolve([]),
+      requestIds.length ? prisma.request.findMany({ where: { id: { in: requestIds } }, select: { id: true, title: true, status: true, isModerationHidden: true, moderationReason: true, moderationHiddenById: true } }) : Promise.resolve([]),
       offerIds.length ? prisma.offer.findMany({ where: { id: { in: offerIds } }, select: { id: true, isModerationHidden: true, moderationReason: true } }) : Promise.resolve([]),
       targetUserIds.length ? prisma.adminAuditLog.findMany({ where: { targetUserId: { in: targetUserIds }, action: "MODERATION_CASE_UPDATED" }, orderBy: { createdAt: "desc" }, take: 100, select: { id: true, targetUserId: true, reason: true, createdAt: true, metadata: true, actor: { select: { name: true, email: true } } } }) : Promise.resolve([]),
     ]);
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const admin = await requirePlatformAdmin("moderation.manage");
-    const body = await request.json() as { id?: string; status?: string; priority?: string; resolutionNote?: string; internalNote?: string; assigneeId?: string | null; enforcement?: string };
+    const body = await request.json() as { id?: string; status?: string; priority?: string; resolutionNote?: string; internalNote?: string; assigneeId?: string | null; enforcement?: string; reviewDecision?: string };
     if (!body.id) return NextResponse.json({ ok: false, message: "Kayıt seçilmedi." }, { status: 400 });
     if (admin.platformRole === "SUPPORT" && body.assigneeId !== undefined && body.assigneeId !== "self" && body.assigneeId !== admin.id) return NextResponse.json({ ok: false, message: "Support yalnızca kaydı kendisine atabilir." }, { status: 403 });
     const current = await prisma.moderationCase.findUnique({ where: { id: body.id }, include: { targetUser: { select: { id: true, name: true, moderationRestrictedUntil: true } } } });
@@ -63,6 +64,21 @@ export async function PATCH(request: Request) {
     if (enforcement && reason.length < 5) return NextResponse.json({ ok: false, message: "Yaptırım gerekçesi en az 5 karakter olmalı." }, { status: 400 });
     if (enforcement && !current.targetUserId) return NextResponse.json({ ok: false, message: "Bu kayıtta yaptırım uygulanacak kullanıcı bulunamadı." }, { status: 400 });
     if (["HIDE_CONTENT", "RESTORE_CONTENT"].includes(enforcement ?? "") && !["REQUEST", "OFFER"].includes(current.subjectType)) return NextResponse.json({ ok: false, message: "Bu kayıt için içerik yaptırımı uygulanamaz." }, { status: 400 });
+    if (body.reviewDecision !== undefined && !["APPROVE", "REJECT"].includes(body.reviewDecision)) return NextResponse.json({ ok: false, message: "Geçerli bir inceleme kararı seçin." }, { status: 400 });
+    const held = current.subjectType === "REQUEST" && (body.reviewDecision || ["HIDE_CONTENT", "RESTORE_CONTENT"].includes(enforcement ?? "") || ["RESOLVED", "DISMISSED"].includes(body.status ?? ""))
+      ? await prisma.request.findFirst({ where: { id: current.subjectId, status: REVIEW_HOLD_STATUS, deletedAt: null }, select: { id: true, moderationHiddenById: true } })
+      : null;
+    const reviewCase = current.subjectType === "REQUEST" && (current.category === REQUEST_REVIEW_MODERATION_CATEGORY || Boolean(held));
+    const reviewDecision = body.reviewDecision ?? (reviewCase && enforcement === "RESTORE_CONTENT" ? "APPROVE" : reviewCase && enforcement === "HIDE_CONTENT" ? "REJECT" : null);
+    if (reviewDecision) {
+      if (admin.platformRole === "SUPPORT") return NextResponse.json({ ok: false, message: "Support yayın kararı veremez." }, { status: 403 });
+      if (current.subjectType !== "REQUEST") return NextResponse.json({ ok: false, message: "Yayın kararı yalnız talepler için verilebilir." }, { status: 400 });
+      const input = { requestId: current.subjectId, adminUserId: admin.id, caseId: current.id, reason, request };
+      const outcome = reviewDecision === "APPROVE" ? await approveHeldRequest(input) : await rejectHeldRequest(input);
+      if (!outcome.applied) return NextResponse.json({ ok: false, message: "Bu talep için karar zaten verilmiş veya kayıt değişmiş. Listeyi yenileyin." }, { status: 409 });
+      return NextResponse.json({ ok: true, reviewDecision, item: { id: current.id, status: "RESOLVED" }, outcome });
+    }
+    if (held && !held.moderationHiddenById && ["RESOLVED", "DISMISSED"].includes(body.status ?? "")) return NextResponse.json({ ok: false, message: "İnceleme bekleyen talebi kapatmak için Onayla veya Reddet seçin." }, { status: 400 });
     const status = STATUSES.includes(body.status as typeof STATUSES[number]) ? body.status as typeof STATUSES[number] : current.status;
     const priority = PRIORITIES.includes(body.priority as typeof PRIORITIES[number]) ? body.priority as typeof PRIORITIES[number] : current.priority;
     const assigneeId = body.assigneeId === "self" ? admin.id : body.assigneeId === undefined ? current.assigneeId : body.assigneeId;
@@ -71,27 +87,11 @@ export async function PATCH(request: Request) {
       const allowedRoles = admin.platformRole === "SUPER_ADMIN" ? ["SUPPORT", "ADMIN", "SUPER_ADMIN"] : ["SUPPORT"];
       if (!assignee || assignee.status !== "ACTIVE" || assignee.deletedAt || !allowedRoles.includes(assignee.platformRole)) return NextResponse.json({ ok: false, message: "Bu kullanıcı şikayet takibine atanamaz." }, { status: 403 });
     }
-    let reviewHoldAction: "APPROVE" | "REJECT" | null = null;
     const item = await prisma.$transaction(async (tx) => {
       if (enforcement === "HIDE_CONTENT" || enforcement === "RESTORE_CONTENT") {
         const hidden = enforcement === "HIDE_CONTENT";
         const data = hidden ? { isModerationHidden: true, moderationHiddenAt: new Date(), moderationHiddenById: admin.id, moderationReason: reason } : { isModerationHidden: false, moderationHiddenAt: null, moderationHiddenById: null, moderationReason: null };
-        /**
-         * D-0032: İNCELEME KUYRUĞUNDAKİ TALEP AYRI KARARDIR.
-         *
-         * Genel "içeriği gizle / geri yükle" yaptırımı bir talebi yalnız
-         * görünür/görünmez yapar. Kuyruktaki talep HİÇ YAYINLANMAMIŞTIR:
-         * onaylamak durumu, yayın anını, tedarikçi görünürlüğünü açmak ve
-         * eşleştirmeyi O AN tetiklemek demektir. İkisini tek `update` ile
-         * geçiştirmek, onaylanmış talebi kimsenin görmediği bir yerde
-         * bırakırdı. Karar `review-hold-decision.ts`de, burada yalnız
-         * hangisinin çalışacağı seçilir.
-         */
-        if (current.subjectType === "REQUEST") {
-          const held = await tx.request.findFirst({ where: { id: current.subjectId, status: REVIEW_HOLD_STATUS }, select: { id: true } });
-          if (held) reviewHoldAction = hidden ? "REJECT" : "APPROVE";
-          else await tx.request.update({ where: { id: current.subjectId }, data });
-        }
+        if (current.subjectType === "REQUEST") await tx.request.update({ where: { id: current.subjectId }, data });
         if (current.subjectType !== "REQUEST") await tx.offer.update({ where: { id: current.subjectId }, data });
       }
       if (enforcement === "RESTRICT_24H" || enforcement === "RESTRICT_7D") {
@@ -113,14 +113,10 @@ export async function PATCH(request: Request) {
       await writeAdminAudit(tx, { actorId: admin.id, targetUserId: current.targetUserId, action: "MODERATION_CASE_UPDATED", reason: reason || `Moderasyon durumu ${status} olarak güncellendi`, before: { status: current.status, priority: current.priority, assigneeId: current.assigneeId, restrictionUntil: current.targetUser?.moderationRestrictedUntil?.toISOString() ?? null }, after: { status, priority, assigneeId }, metadata: { caseId: current.id, enforcement, subjectType: current.subjectType, subjectId: current.subjectId }, request });
       return updated;
     });
-    /**
-     * Kuyruk kararı İŞLEM DIŞINDA uygulanır: onay eşleştirme ve bildirim
-     * tetikler, ikisi de uzun süren ve dış hataya açık işlerdir. Moderasyon
-     * kaydının güncellenmesi onlara bağlı kalırsa admin ekranı bir fanout
-     * hatası yüzünden kilitlenirdi.
-     */
-    if (reviewHoldAction === "APPROVE") await approveHeldRequest({ requestId: current.subjectId, adminUserId: admin.id });
-    if (reviewHoldAction === "REJECT") await rejectHeldRequest({ requestId: current.subjectId, adminUserId: admin.id, reason });
     return NextResponse.json({ ok: true, item });
-  } catch { return NextResponse.json({ ok: false, message: "Moderasyon kaydı güncellenemedi." }, { status: 403 }); }
+  } catch (error) {
+    if (error instanceof ReviewHoldDecisionError) return NextResponse.json({ ok: false, message: error.message }, { status: error.status });
+    const unauthorized = error instanceof Error && ["AuthenticationError", "PlatformAuthorizationError"].includes(error.name);
+    return NextResponse.json({ ok: false, message: unauthorized ? "Moderasyon için yönetici doğrulaması gerekiyor." : "Karar kaydedilemedi. Lütfen tekrar deneyin." }, { status: unauthorized ? 403 : 500 });
+  }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
 import { useEffect, useId, useRef, useState } from "react";
 import { LoaderCircle, Star, X } from "lucide-react";
 
@@ -30,7 +31,7 @@ export function DealReviewPanel({
   dealOutcomeId,
   existingReview,
   oppositeReview = null,
-  canCreateReview = true,
+  canCreateReview: suppliedCanCreateReview = true,
   windowExpired = false,
   reviewDeadlineLabel = null,
   compact = false,
@@ -44,6 +45,8 @@ export function DealReviewPanel({
   compact?: boolean;
 }) {
   const router = useRouter();
+  const canWrite = useCompanyCanWrite();
+  const canCreateReview = canWrite && suppliedCanCreateReview;
   const panelId = useId();
   const openRef = useRef<HTMLButtonElement>(null);
   const dismissKey = `talepo-review-dismiss:${dealOutcomeId}`;
@@ -132,6 +135,7 @@ export function DealReviewPanel({
   }
 
   if (windowExpired || !canCreateReview) {
+    if (!canWrite) return <CompanyReadOnlyNotice />;
     if (compact) return null;
     return (
       <div className="mt-3 rounded-xl border border-teal-900/10 bg-white px-4 py-3.5">

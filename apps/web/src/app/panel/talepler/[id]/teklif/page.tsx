@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
 import { ComplaintForm } from "@/components/panel/ComplaintForm";
 import { OfferForm } from "@/components/panel/OfferForm";
+import { CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+import { canMutateCompanyWorkspace } from "@/lib/membership/company-permissions";
 import { OfferRequestPreview } from "@/components/panel/OfferRequestPreview";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
@@ -13,6 +15,7 @@ import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { toEntitlementDTO } from "@/lib/membership/serialize";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { formatListingBudget } from "@/lib/visuals/category-visuals";
 import { requireUser } from "@/server/auth/require-user";
 import { findSupplierOfferOnRequest } from "@/server/offer/offer-service";
@@ -30,6 +33,9 @@ export default async function OfferRequestPage({
     await getCompanyContextOptions(),
   );
   const entitlementDto = toEntitlementDTO(entitlements);
+  if (entitlements.subject.type === "company" && !canMutateCompanyWorkspace(entitlements.companyRole)) {
+    return <CompanyReadOnlyNotice />;
+  }
   const { id } = await params;
   const query = await searchParams;
   const attributionTouch =
@@ -42,6 +48,8 @@ export default async function OfferRequestPage({
       id,
       deletedAt: null,
       isModerationHidden: false,
+      categoryPausedAt: null, category: { isActive: true },
+      AND: [publicRequestExpiryFilter()],
       createdById: { not: user.id },
       status: {
         in: ["PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS"],

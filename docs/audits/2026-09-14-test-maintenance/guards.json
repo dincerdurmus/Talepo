@@ -1,0 +1,32 @@
+[
+  {
+    "id": "owner-denied",
+    "detected": true,
+    "expectedFailure": "FAIL — 4 OWNER can mutate company billing"
+  },
+  {
+    "id": "legacy-admin-allowed",
+    "detected": true,
+    "expectedFailure": "FAIL — 14 members, analysts and legacy managers cannot mutate company billing"
+  },
+  {
+    "id": "copilot-standard",
+    "detected": true,
+    "expectedFailure": "!featureLabels.includes(\"Offer Copilot\")"
+  },
+  {
+    "id": "copilot-two-plan",
+    "detected": true,
+    "expectedFailure": "!featureLabels.includes(\"Offer Copilot\")"
+  },
+  {
+    "id": "price-intelligence",
+    "detected": true,
+    "expectedFailure": "!featureLabels.includes(\"Price Intelligence\")"
+  },
+  {
+    "id": "missing-category",
+    "detected": true,
+    "expectedFailure": "Automotive category fixture is missing."
+  }
+]

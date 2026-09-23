@@ -1,9 +1,17 @@
+import { countBillingEntitlementDrift } from "@/server/billing/reconcile";
 import { NextResponse } from "next/server";
 
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { assertMfaSession } from "@/server/admin/mfa";
-import { requirePlatformAdmin } from "@/server/auth/require-platform-admin";
-import { countBillingEntitlementDrift } from "@/server/billing/reconcile";
+import {
+  PlatformAuthorizationError,
+  requirePlatformAdmin,
+} from "@/server/auth/require-platform-admin";
+import {
+  AuthenticationError,
+  DatabaseUnavailableError,
+} from "@/server/auth/require-user";
 
 const DAY = 86_400_000;
 const REQUEST_STATUSES = ["DRAFT", "PUBLISHED", "RECEIVING_OFFERS", "OFFER_SELECTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "EXPIRED"] as const;
@@ -24,53 +32,35 @@ function requestScope(filters: RequestFilters) {
   };
 }
 
-async function getMetrics(from: Date, to: Date, filters: RequestFilters) {
+async function getMetrics(db: Prisma.TransactionClient, from: Date, to: Date, filters: RequestFilters) {
   const stale = new Date(Date.now() - DAY);
   const range = { gte: from, lte: to };
   const scope = requestScope(filters);
-  const [newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, noOffer, activeSellers, openCases, failedBilling, zeroReach] = await Promise.all([
-    prisma.user.count({ where: { createdAt: range, deletedAt: null } }),
-    prisma.company.count({ where: { createdAt: range, deletedAt: null } }),
-    prisma.company.count({ where: { deletedAt: range } }),
-    prisma.request.count({ where: { createdAt: range, ...scope } }),
-    prisma.request.count({ where: { publishedAt: range, ...scope } }),
-    prisma.offer.count({ where: { createdAt: range, request: scope } }),
-    prisma.offer.count({ where: { acceptedAt: range, request: scope } }),
-    prisma.request.count({ where: { ...scope, publishedAt: { lte: new Date(Math.min(to.getTime(), stale.getTime())), gte: from }, offerCount: 0, status: filters.requestStatus ?? { in: ["PUBLISHED", "RECEIVING_OFFERS"] } } }),
-    prisma.offer.groupBy({ by: ["submittedById"], where: { createdAt: range, request: scope } }),
-    prisma.moderationCase.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } }),
-    prisma.billingEvent.count({ where: { status: "FAILED", createdAt: range } }),
-    /**
-     * HİÇ TEDARİKÇİYE ULAŞMAYAN TALEP (2026-09-15).
-     *
-     * Bir talep iki ayrı yoldan sıfır tedarikçiye gidebilir. Birincisi
-     * deterministik: kategori çözülmemiş ya da o kategoride firma yok —
-     * alıcıya söyleniyor (zero-reach-rescue). İkincisi kaza: dağıtım
-     * fırlatarak düşüyor, `create-request` hatayı yutup talebi yayımlanmış
-     * sayıyor ve akış sıfır-eşleşme dalına HİÇ varmadığı için kimse
-     * haberdar olmuyor. İkinci yol bugün görünmezdi.
-     *
-     * Bu sayı ikisini birden ölçüyor ve bilerek öyle: pazaryeri için önemli
-     * olan sebep değil sonuçtur — yayımlanmış ama kimseye ulaşmamış talep.
-     * On dakikalık tolerans, dağıtımı hâlâ koşan yeni talepleri dışarıda
-     * tutmak içindir.
-     */
-    prisma.request.count({
-      where: {
-        ...scope,
-        status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
-        publishedAt: {
-          gte: from,
-          lte: new Date(Math.min(to.getTime(), Date.now() - 10 * 60_000)),
-        },
-        matches: { none: {} },
-      },
-    }),
-  ]);
+  // Keep the read workload on one transaction connection. The deployment uses
+  // a deliberately small direct-DB pool and a wide Promise.all can starve writes.
+  const newUsers = await db.user.count({ where: { createdAt: range, deletedAt: null } });
+  const companyRegistrations = await db.company.count({ where: { createdAt: range, deletedAt: null } });
+  const companyClosures = await db.company.count({ where: { deletedAt: range } });
+  const requests = await db.request.count({ where: { createdAt: range, ...scope } });
+  const published = await db.request.count({ where: { publishedAt: range, ...scope } });
+  const offers = await db.offer.count({ where: { createdAt: range, request: scope } });
+  const accepted = await db.offer.count({ where: { acceptedAt: range, request: scope } });
+  const noOffer = await db.request.count({ where: { ...scope, publishedAt: { lte: new Date(Math.min(to.getTime(), stale.getTime())), gte: from }, offerCount: 0, status: filters.requestStatus ?? { in: ["PUBLISHED", "RECEIVING_OFFERS"] } } });
+  const activeSellers = await db.offer.groupBy({ by: ["submittedById"], where: { createdAt: range, request: scope } });
+  const openCases = await db.moderationCase.count({ where: { status: { in: ["OPEN", "INVESTIGATING"] } } });
+  const failedBilling = await db.billingEvent.count({ where: { status: "FAILED", createdAt: range } });
+  const zeroReach = await db.request.count({
+    where: {
+      ...scope,
+      status: { in: ["PUBLISHED", "RECEIVING_OFFERS"] },
+      publishedAt: { gte: from, lte: new Date(Math.min(to.getTime(), Date.now() - 10 * 60_000)) },
+      matches: { none: {} },
+    },
+  });
   return { newUsers, companyRegistrations, companyClosures, requests, published, offers, accepted, acceptanceRate: offers ? Math.round((accepted / offers) * 1000) / 10 : 0, offerCoverage: published ? Math.round(((published - noOffer) / published) * 1000) / 10 : 100, noOffer, activeSellers: activeSellers.length, openCases, failedBilling, zeroReach };
 }
 
-async function getTrend(from: Date, to: Date, filters: RequestFilters) {
+async function getTrend(db: Prisma.TransactionClient, from: Date, to: Date, filters: RequestFilters) {
   const totalDays = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / DAY));
   const bucketDays = totalDays > 90 ? 7 : 1;
   const scope = requestScope(filters);
@@ -79,19 +69,42 @@ async function getTrend(from: Date, to: Date, filters: RequestFilters) {
     const end = new Date(Math.min(to.getTime(), start.getTime() + bucketDays * DAY - 1));
     return { start, end };
   });
-  return Promise.all(buckets.map(async ({ start, end }) => {
-    const range = { gte: start, lte: end };
-    const [newUsers, companyRegistrations, companyClosures, published, offers, accepted, failedBilling] = await Promise.all([
-      prisma.user.count({ where: { createdAt: range, deletedAt: null } }),
-      prisma.company.count({ where: { createdAt: range, deletedAt: null } }),
-      prisma.company.count({ where: { deletedAt: range } }),
-      prisma.request.count({ where: { publishedAt: range, ...scope } }),
-      prisma.offer.count({ where: { createdAt: range, request: scope } }),
-      prisma.offer.count({ where: { acceptedAt: range, request: scope } }),
-      prisma.billingEvent.count({ where: { status: "FAILED", createdAt: range } }),
-    ]);
-    return { date: start.toISOString(), newUsers, companyRegistrations, companyClosures, published, offers, accepted, failedBilling };
+  const points = buckets.map(({ start }) => ({
+    date: start.toISOString(),
+    newUsers: 0,
+    companyRegistrations: 0,
+    companyClosures: 0,
+    published: 0,
+    offers: 0,
+    accepted: 0,
+    failedBilling: 0,
   }));
+  const range = { gte: from, lte: to };
+  const users = await db.user.findMany({ where: { createdAt: range, deletedAt: null }, select: { createdAt: true } });
+  const companyRegistrations = await db.company.findMany({ where: { createdAt: range, deletedAt: null }, select: { createdAt: true } });
+  const companyClosures = await db.company.findMany({ where: { deletedAt: range }, select: { deletedAt: true } });
+  const requests = await db.request.findMany({ where: { publishedAt: range, ...scope }, select: { publishedAt: true } });
+  const offers = await db.offer.findMany({
+    where: { request: scope, OR: [{ createdAt: range }, { acceptedAt: range }] },
+    select: { createdAt: true, acceptedAt: true },
+  });
+  const failedBilling = await db.billingEvent.findMany({ where: { status: "FAILED", createdAt: range }, select: { createdAt: true } });
+
+  const increment = (date: Date | null, key: Exclude<keyof (typeof points)[number], "date">) => {
+    if (!date || date < from || date > to) return;
+    const index = Math.min(points.length - 1, Math.max(0, Math.floor((date.getTime() - from.getTime()) / (bucketDays * DAY))));
+    points[index][key] += 1;
+  };
+  users.forEach((item) => increment(item.createdAt, "newUsers"));
+  companyRegistrations.forEach((item) => increment(item.createdAt, "companyRegistrations"));
+  companyClosures.forEach((item) => increment(item.deletedAt, "companyClosures"));
+  requests.forEach((item) => increment(item.publishedAt, "published"));
+  offers.forEach((item) => {
+    increment(item.createdAt, "offers");
+    increment(item.acceptedAt, "accepted");
+  });
+  failedBilling.forEach((item) => increment(item.createdAt, "failedBilling"));
+  return points;
 }
 
 export async function GET(request: Request) {
@@ -113,36 +126,22 @@ export async function GET(request: Request) {
       city: (url.searchParams.get("city") ?? "").trim().slice(0, 80),
       requestStatus: REQUEST_STATUSES.includes(requestStatus as typeof REQUEST_STATUSES[number]) ? requestStatus as typeof REQUEST_STATUSES[number] : null,
     };
-    const scope = requestScope(filters);
-    /**
-     * ÖDEME/ÜYELİK AYRIŞMASI AYRI KOŞAR (2026-09-15'te düzeltildi).
-     *
-     * Bu sayım bir EĞİLİM değil ŞU ANKİ durumdur — bugün kaç hesabın parası
-     * ile yetkisi birbirini tutmuyor — bu yüzden tarih aralığı uygulanmaz.
-     * `getMetrics` içinde durduğu ilk hâlde iki kez koşuyordu (bu dönem ve
-     * önceki dönem için) ve "önceki dönem" değeri bugünün kopyasıydı: hem
-     * israf hem yanıltıcı.
-     *
-     * KENDİ HATASINI YUTAR. Ölçüm aracı ölçtüğü paneli düşüremez: aynı
-     * `Promise.all` kolunda olsaydı bu sorgunun bir zaman aşımı bütün sağlık
-     * metriklerini (kullanıcı, teklif, açık vaka, başarısız ödeme) yok edip
-     * yönetim panelini bir olay anında kör bırakırdı. Ölçülemediğinde sayı
-     * null döner ve panel "ölçülemedi" gösterir.
-     */
-    const driftPromise = countBillingEntitlementDrift().catch((error) => {
+    const result = await prisma.$transaction(async (tx) => {
+      const scope = requestScope(filters);
+      const metrics = await getMetrics(tx, from, to, filters);
+      const previousMetrics = await getMetrics(tx, previousFrom, previousTo, filters);
+      const trend = await getTrend(tx, from, to, filters);
+      const categories = await tx.request.groupBy({ by: ["categoryId"], where: { publishedAt: { gte: from, lte: to }, ...scope }, _count: { _all: true }, _sum: { offerCount: true }, orderBy: { _count: { categoryId: "desc" } }, take: 8 });
+      const categoryRecords = await tx.category.findMany({ where: { id: { in: categories.map((item) => item.categoryId) } }, select: { id: true, name: true } });
+      return { metrics, previousMetrics, trend, categories, categoryRecords };
+    }, { isolationLevel: "ReadCommitted", maxWait: 5_000, timeout: 20_000 });
+    // Current billing drift is measured once, outside the historical snapshot.
+    // A failed scan must not remove the other health metrics or imply zero drift.
+    const drift = await countBillingEntitlementDrift().catch((error) => {
       console.error("[admin/health] billing drift scan failed:", error);
       return null;
     });
-
-    const [metrics, previousMetrics, trend, categories, drift] = await Promise.all([
-      getMetrics(from, to, filters),
-      getMetrics(previousFrom, previousTo, filters),
-      getTrend(from, to, filters),
-      prisma.request.groupBy({ by: ["categoryId"], where: { publishedAt: { gte: from, lte: to }, ...scope }, _count: { _all: true }, _sum: { offerCount: true }, orderBy: { _count: { categoryId: "desc" } }, take: 8 }),
-      driftPromise,
-    ]);
-    const categoryRecords = await prisma.category.findMany({ where: { id: { in: categories.map((item) => item.categoryId) } }, select: { id: true, name: true } });
-    const categoryNames = new Map(categoryRecords.map((category) => [category.id, category.name]));
+    const categoryNames = new Map(result.categoryRecords.map((category) => [category.id, category.name]));
     return NextResponse.json({
       ok: true,
       lastUpdatedAt: new Date().toISOString(),
@@ -151,21 +150,38 @@ export async function GET(request: Request) {
       previousPeriod: { from: previousFrom.toISOString(), to: previousTo.toISOString() },
       filters,
       metrics: {
-        ...metrics,
-        /* Ölçülemediyse sayı UYDURULMAZ: -1, panelde "ölçülemedi" demektir.
-           Sıfır göstermek "her şey yolunda" demek olurdu ve bu bir yalandır. */
+        ...result.metrics,
         billingDrift: drift ? drift.drifting : -1,
         billingDriftScanned: drift ? drift.scanned : -1,
-        /* Tarama üst sınıra dayandıysa sayı EKSİKTİR; bunu panele taşımazsak
-           kesilmiş bir tarama tam sayı gibi okunur. */
-        billingDriftTruncated: drift && drift.truncated ? 1 : 0,
+        billingDriftTruncated: drift ? (drift.truncated ? 1 : 0) : -1,
       },
-      previousMetrics,
-      trend,
-      categoryGaps: categories.map((item) => ({ categoryId: item.categoryId, categoryName: categoryNames.get(item.categoryId) ?? "Bilinmeyen kategori", requests: item._count._all, offers: item._sum.offerCount ?? 0, gap: Math.max(0, item._count._all - (item._sum.offerCount ?? 0)) })),
+      previousMetrics: result.previousMetrics,
+      trend: result.trend,
+      categoryGaps: result.categories.map((item) => ({ categoryId: item.categoryId, categoryName: categoryNames.get(item.categoryId) ?? "Bilinmeyen kategori", requests: item._count._all, offers: item._sum.offerCount ?? 0, gap: Math.max(0, item._count._all - (item._sum.offerCount ?? 0)) })),
     });
   } catch (error) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ ok: false, message: error.message }, { status: 401 });
+    }
+    if (error instanceof PlatformAuthorizationError || (error instanceof Error && error.message === "ADMIN_MFA_REQUIRED")) {
+      return NextResponse.json({ ok: false, message: "Sağlık metrikleri için yönetici doğrulaması gerekiyor." }, { status: 403 });
+    }
+    if (error instanceof DatabaseUnavailableError || isDatabaseCapacityError(error)) {
+      console.warn("[admin/health] database capacity temporarily unavailable");
+      return NextResponse.json(
+        { ok: false, message: "Sağlık metrikleri geçici olarak kullanılamıyor. Lütfen tekrar deneyin." },
+        { status: 503, headers: { "Retry-After": "3" } },
+      );
+    }
     console.error("[admin/health]", error);
-    return NextResponse.json({ ok: false, message: "Sağlık metrikleri alınamadı." }, { status: 403 });
+    return NextResponse.json({ ok: false, message: "Sağlık metrikleri alınamadı." }, { status: 500 });
   }
+}
+
+function isDatabaseCapacityError(error: unknown) {
+  const code = typeof error === "object" && error !== null && "code" in error
+    ? (error as { code?: unknown }).code
+    : null;
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  return code === "P2024" || code === "P2028" || message.includes("timeout exceeded when trying to connect");
 }

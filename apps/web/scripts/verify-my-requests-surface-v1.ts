@@ -4,6 +4,7 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { canMutateCompanyWorkspace } from "../src/lib/membership/company-permissions";
 
 import {
   isPanelNavActive,
@@ -815,8 +816,9 @@ check(
     cloneService.includes("isCloneUniqueConflict") &&
     !cloneService.includes("COMPANY_REQUEST_CLONE_ROLES") &&
     !cloneService.includes("saveIdempotentResource") &&
-    companyWorkspace.includes("export function canMutateCompanyWorkspace") &&
-    companyWorkspace.includes('role !== "VIEWER"') &&
+    companyWorkspace.includes('export { canMutateCompanyWorkspace } from "@/lib/membership/company-permissions"') &&
+    ["OWNER", "MEMBER"].every((role) => canMutateCompanyWorkspace(role)) &&
+    ["VIEWER", "ANALYST", "unknown"].every((role) => !canMutateCompanyWorkspace(role)) &&
     cloneApi.includes("Body companyId/userId/status are ignored"),
 );
 

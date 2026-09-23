@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -212,6 +214,7 @@ export function OfferForm({
   existingOffer = null,
   attributionTouch: attributionTouchProp = null,
 }: OfferFormProps) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const searchParams = useSearchParams();
   const applyDraftFromQuery =
@@ -434,6 +437,8 @@ export function OfferForm({
     ...completeness.missing,
     ...(photos.length === 0 && !isRevise ? ["Fotoğraf"] : []),
   ];
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   if (step === "preview") {
     return (

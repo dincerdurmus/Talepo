@@ -1,4 +1,5 @@
 import type { PlanTierId } from "@/lib/membership/plans";
+import { WORKSPACE_BASE_INCLUDED_SEATS } from "@/lib/membership/seat-policy";
 
 export type PriceBookProductKey = "STANDARD" | "PRO_PERSONAL" | "PRO_WORKSPACE";
 export type BillingInterval = "MONTHLY" | "ANNUAL";
@@ -9,8 +10,8 @@ export const PRICE_BOOK: readonly PriceBookEntry[] = [
   { productKey: "STANDARD", context: "PERSONAL", interval: "MONTHLY", country: "TR", currency: "TRY", amount: null, includedSeats: null, annualDiscount: null, active: true, checkoutEnabled: false, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: null },
   { productKey: "PRO_PERSONAL", context: "PERSONAL", interval: "MONTHLY", country: "TR", currency: "TRY", amount: 2490, includedSeats: null, annualDiscount: null, active: true, checkoutEnabled: true, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
   { productKey: "PRO_PERSONAL", context: "PERSONAL", interval: "ANNUAL", country: "TR", currency: "TRY", amount: Math.round(2490 * 12 * 0.85), includedSeats: null, annualDiscount: 0.15, active: true, checkoutEnabled: false, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
-  { productKey: "PRO_WORKSPACE", context: "WORKSPACE", interval: "MONTHLY", country: "TR", currency: "TRY", amount: 2490, includedSeats: 5, annualDiscount: null, active: true, checkoutEnabled: true, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
-  { productKey: "PRO_WORKSPACE", context: "WORKSPACE", interval: "ANNUAL", country: "TR", currency: "TRY", amount: Math.round(2490 * 12 * 0.85), includedSeats: 5, annualDiscount: 0.15, active: true, checkoutEnabled: false, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
+  { productKey: "PRO_WORKSPACE", context: "WORKSPACE", interval: "MONTHLY", country: "TR", currency: "TRY", amount: 2490, includedSeats: WORKSPACE_BASE_INCLUDED_SEATS, annualDiscount: null, active: true, checkoutEnabled: true, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
+  { productKey: "PRO_WORKSPACE", context: "WORKSPACE", interval: "ANNUAL", country: "TR", currency: "TRY", amount: Math.round(2490 * 12 * 0.85), includedSeats: WORKSPACE_BASE_INCLUDED_SEATS, annualDiscount: 0.15, active: true, checkoutEnabled: false, additionalSeatPrice: null, additionalSeatBillingEnabled: false, taxMode: "UNKNOWN", providerMappingKey: "PROFESSIONAL" },
 ];
 
 export function getPriceBookEntry(productKey: PriceBookProductKey, interval: BillingInterval, country = "TR") {

@@ -46,6 +46,8 @@ export type PersonalPlanSnapshot = {
 
 export type EntitlementContext = {
   userId: string;
+  /** Role in the explicitly selected company; never inherited from a plan. */
+  companyRole?: string;
   subject: EntitlementSubject;
   /** Plan tier stored on the subject (may still be paid after expiry). */
   storedPlanTier: PlanTierId;

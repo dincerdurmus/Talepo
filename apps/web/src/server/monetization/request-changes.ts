@@ -1,3 +1,4 @@
+import { COMPANY_STORED_WRITE_ROLES } from "@/lib/membership/company-permissions";
 import { featuresForPlan } from "@/lib/membership/entitlements";
 import { prisma } from "@/lib/prisma";
 import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
@@ -64,7 +65,7 @@ export async function recordRequestChanges(
   return rows.length;
 }
 
-const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
+const NOTIFY_ROLES = COMPANY_STORED_WRITE_ROLES;
 
 function formatBudgetValue(value: string | null): string {
   if (!value) return "—";

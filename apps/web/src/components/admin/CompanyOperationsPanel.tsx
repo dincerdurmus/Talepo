@@ -30,26 +30,26 @@ export function CompanyOperationsPanel({ company }: { company: Company }) {
     } finally { setBusy(null); }
   }
 
-  return <section className="mt-6 rounded-[26px] border border-amber-200/15 bg-amber-200/[.04] p-5">
-    <p className="text-xs font-semibold uppercase tracking-[.18em] text-amber-200/70">Firma operasyonları</p>
+  return <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+    <p className="text-xs font-semibold uppercase tracking-[.18em] text-amber-700">Firma operasyonları</p>
     <h2 className="mt-2 text-lg font-semibold">{company.name} için üyelik ve erişim işlemleri</h2>
-    <p className="mt-2 text-sm text-white/55">Firma üyeliklerini değiştirmek, kişilerin bireysel hesabını veya diğer firmalardaki üyeliklerini etkilemez.</p>
+    <p className="mt-2 text-sm text-muted-foreground">Firma üyeliklerini değiştirmek, kişilerin bireysel hesabını veya diğer firmalardaki üyeliklerini etkilemez.</p>
     <div className="mt-5 grid gap-3 sm:grid-cols-2">
-      <label className="grid gap-1 text-xs text-white/55">Firma durumu
-        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-white/10 bg-[#102421] px-3 py-2.5 text-sm text-white"><option value="ACTIVE">Aktif</option><option value="SUSPENDED">Askıya alındı</option></select>
+      <label className="grid gap-1 text-xs text-muted-foreground">Firma durumu
+        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"><option value="ACTIVE">Aktif</option><option value="SUSPENDED">Askıya alındı</option></select>
       </label>
-      <label className="grid gap-1 text-xs text-white/55">Firma planı
-        <select value={planTier} onChange={(event) => setPlanTier(event.target.value)} className="rounded-xl border border-white/10 bg-[#102421] px-3 py-2.5 text-sm text-white"><option value="STANDARD">Standart</option><option value="PREMIUM">Premium</option><option value="PROFESSIONAL">Profesyonel</option><option value="CORPORATE">Kurumsal</option></select>
+      <label className="grid gap-1 text-xs text-muted-foreground">Firma planı
+        <select value={planTier} onChange={(event) => setPlanTier(event.target.value)} className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground"><option value="STANDARD">Standart</option><option value="PREMIUM">Premium</option><option value="PROFESSIONAL">Profesyonel</option><option value="CORPORATE">Kurumsal</option></select>
       </label>
     </div>
-    <label className="mt-3 grid gap-1 text-xs text-white/55">İşlem gerekçesi
-      <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Örn. ödeme ve sözleşme incelemesi" className="rounded-xl border border-white/10 bg-[#102421] px-3 py-2.5 text-sm text-white placeholder:text-white/25" />
+    <label className="mt-3 grid gap-1 text-xs text-muted-foreground">İşlem gerekçesi
+      <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Örn. ödeme ve sözleşme incelemesi" className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground" />
     </label>
     <div className="mt-4 flex flex-wrap gap-2">
-      <button type="button" disabled={busy !== null} onClick={() => void save("company")} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-bold text-[#071310] transition hover:-translate-y-0.5 hover:bg-emerald-200 disabled:cursor-wait disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${busy === "company" ? "animate-spin" : ""}`} />Firma ayarlarını kaydet</button>
-      <button type="button" disabled={busy !== null} onClick={() => void save("members", "REMOVED")} className="cursor-pointer rounded-xl border border-amber-200/35 px-4 py-2.5 text-sm font-semibold text-amber-100 transition hover:-translate-y-0.5 hover:bg-amber-200/10 disabled:cursor-wait disabled:opacity-60">Tüm aktif firma üyelerini pasife al</button>
-      <button type="button" disabled={busy !== null} onClick={() => void save("members", "ACTIVE")} className="cursor-pointer rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white/75 transition hover:-translate-y-0.5 hover:bg-white/[.06] disabled:cursor-wait disabled:opacity-60">Çıkarılmış firma üyelerini etkinleştir</button>
+      <button type="button" disabled={busy !== null} onClick={() => void save("company")} className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:-translate-y-0.5 hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${busy === "company" ? "animate-spin" : ""}`} />Firma ayarlarını kaydet</button>
+      <button type="button" disabled={busy !== null} onClick={() => void save("members", "REMOVED")} className="cursor-pointer rounded-xl border border-amber-200 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:-translate-y-0.5 hover:bg-amber-50 disabled:cursor-wait disabled:opacity-60">Tüm aktif firma üyelerini pasife al</button>
+      <button type="button" disabled={busy !== null} onClick={() => void save("members", "ACTIVE")} className="cursor-pointer rounded-xl border border-border px-4 py-2.5 text-sm font-semibold text-foreground transition hover:-translate-y-0.5 hover:bg-accent disabled:cursor-wait disabled:opacity-60">Çıkarılmış firma üyelerini etkinleştir</button>
     </div>
-    {message ? <p role="status" className="mt-3 text-sm text-emerald-100">{message}</p> : null}
+    {message ? <p role="status" className="mt-3 text-sm text-primary">{message}</p> : null}
   </section>;
 }

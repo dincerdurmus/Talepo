@@ -7,6 +7,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { BillingErrorCode } from "../src/lib/billing/errors";
+import { canMutateCompanyBilling } from "../src/lib/billing/billing-authority";
 import {
   assertCheckoutPlan,
   getPlanPriceMapping,
@@ -100,11 +101,10 @@ try {
 }
 check("3 checkout server plan validation", invalidOk);
 
-// 4 checkout permission
+// 4 company billing belongs to the owner; wording is not an authority check.
 check(
-  "4 checkout permission",
-  read("src/server/billing/assert-billing-permission.ts").includes("OWNER") &&
-    read("src/server/billing/assert-billing-permission.ts").includes("ADMIN"),
+  "4 OWNER can mutate company billing",
+  canMutateCompanyBilling("OWNER"),
 );
 
 // 5 checkout rate limit
@@ -173,10 +173,9 @@ check(
   read("src/server/billing/assert-billing-permission.ts").includes("companyId"),
 );
 check(
-  "14 member cannot billing mutate",
-  read("src/server/billing/assert-billing-permission.ts").includes(
-    "OWNER veya ADMIN",
-  ),
+  "14 members, analysts and legacy managers cannot mutate company billing",
+  ["MEMBER", "VIEWER", "ADMIN", "MANAGER", "SUPER_ADMIN", "", null, undefined]
+    .every((role) => !canMutateCompanyBilling(role)),
 );
 
 // 15-18 lifecycle

@@ -3,7 +3,7 @@
  * Entity children for automotive reuse CatalogRegistry indexes (no second authority).
  */
 
-import { REQUEST_CATEGORIES, getCategoryById } from "@/lib/request-category-engine";
+import { REQUEST_CATEGORIES, getCategoryById, getRuntimeCategories } from "@/lib/request-category-engine";
 import {
   ensureAutomotiveCatalogRegistered,
   getAutomotiveIndexes,
@@ -344,7 +344,7 @@ function node(partial: BrowseNode): BrowseNode {
 
 /** Root marketplace categories (canonical Talepo IDs). */
 export function getRootCategories(): BrowseNode[] {
-  return REQUEST_CATEGORIES.map((c) =>
+  return [...REQUEST_CATEGORIES, ...getRuntimeCategories()].map((c) =>
     node({
       id: c.id,
       kind: "category",
@@ -776,7 +776,7 @@ export function getBrowseChildren(
 ): BrowseNode[] {
   if (!parentId) return getRootCategories();
 
-  if (REQUEST_CATEGORIES.some((c) => c.id === parentId)) {
+  if (getCategoryById(parentId) || parentId === context.categoryId) {
     return getCategoryChildren(parentId);
   }
 

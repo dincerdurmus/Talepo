@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { CompanyReadOnlyNotice, CompanyWriteScope } from "@/components/panel/CompanyWriteScope";
+import { canMutateCompanyWorkspace } from "@/lib/membership/company-permissions";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -64,6 +66,7 @@ export type PanelWorkspace = {
   companyId?: string | null;
   companyName?: string | null;
   companyLogoUrl?: string | null;
+  companyRole?: string;
   planTier: PlanTierId;
   planLabel: string;
   quotaUnlimited: boolean;
@@ -281,6 +284,7 @@ export function PanelShell({
   const onToggleSidebar = () => setCollapsed((value) => !value);
 
   return (
+    <CompanyWriteScope canWrite={!isCorporate || canMutateCompanyWorkspace(workspace?.companyRole)}>
     <main
       className="talepo-plan-theme min-h-screen bg-[#edf3f1] text-[#0b2522]"
       style={planThemeStyle}
@@ -400,6 +404,7 @@ export function PanelShell({
 
             <div className="mt-4">
               <PanelBackLink pathname={pathname} />
+              {isCorporate && !canMutateCompanyWorkspace(workspace?.companyRole) && <CompanyReadOnlyNotice />}
               {children}
             </div>
           </div>
@@ -483,6 +488,7 @@ export function PanelShell({
         </div>
       </nav>
     </main>
+    </CompanyWriteScope>
   );
 }
 

@@ -1,0 +1,61 @@
+=== P1-1 BUYER OFFER COPY ===
+
+PASS — buyer incoming cards do not print Eksik:
+PASS — buyer compare table does not print Eksik:
+PASS — buyer incoming uses scope in details accordion not main card
+PASS — seller OfferForm still has completeness guidance
+
+=== P1-2 COMPOSE DEDUPE ===
+
+PASS — Bosch pump single pompa / single için
+PASS — Bosch headline no duplicate için pompa
+PASS — Golf engine no duplicate motor/için/yedek
+PASS — Alfa browse PART natural
+PASS — browse-only PART no yedek için yedek parça
+PASS — dedupe is semantic compose planning not post-hoc replace
+
+=== P1-3 STALE FLASH ===
+
+PASS — text change sets isSyncing immediately
+PASS — questions/facts empty while syncing
+PASS — updating copy present
+PASS — category root does not seed vehicle-purchase text
+PASS — automotive needType is not defaulted to vehicle
+
+=== P1-4 BILLING RBAC ===
+
+PASS — OWNER allow
+PASS — legacy company ADMIN denies billing
+PASS — MANAGER deny
+PASS — MEMBER deny
+PASS — VIEWER deny
+PASS — null deny
+PASS — assertCanMutateBilling uses role helper
+PASS — plan checkout calls assertCanMutateBilling
+PASS — credit checkout calls assertCanMutateBilling
+PASS — membership upgrade/credits call assertCanMutateBilling
+PASS — plan page computes canMutateBilling from company role
+PASS — PlanManager gates checkout UI
+PASS — offer submit has no MEMBER role block
+PASS — authz matrix documents MEMBER billing DENY + offer ALLOW
+
+=== P1-5 PART QUESTIONS + GOLF ROLES ===
+
+PASS — automotive root does not require modelYear
+PASS — PART schema modelYear not visible/required
+PASS — Golf PART subject
+PASS — Golf questions do not require modelYear
+PASS — Golf brand=Volkswagen model=Golf
+PASS — Golf generation VII/7 when resolved
+PASS — Corolla brand stays Toyota
+PASS — Alfa PART not vehicle-purchase
+
+=== P1-6 HYDRATION ===
+
+PASS — PanelShell does not read localStorage in useState initializer
+PASS — browse walk initial categoryId is empty not appliances
+PASS — createBrowseWalkState source is deterministic empty
+PASS — suite source has no env credential blobs
+
+=== P1 CLOSURE SUMMARY pass=41 fail=0 ===
+

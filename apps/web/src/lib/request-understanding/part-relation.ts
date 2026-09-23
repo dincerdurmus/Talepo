@@ -44,7 +44,8 @@ import {
   foldRoleToken,
 } from "./requested-item-role";
 import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
-import type { RequestedTargetRole } from "./requested-item-role";
+import type { RequestedTargetRole, RequestedTargetRoleVerdict } from "./requested-item-role";
+import { classifyNumbers } from "./number-role";
 
 /** Uyumluluk bağlacı — kelime sınırında. */
 const CONNECTIVE_RE = /(?:^|[^\p{L}\p{N}])(?:için|icin)(?=[^\p{L}\p{N}]|$)/iu;
@@ -80,11 +81,23 @@ export type CompatibilitySplit = {
   requested: string;
 };
 
-/** "X için Y" yapısını iki yakaya böler. Bağlaç yoksa null. */
+/** Açık uyumluluk ya da "X yedek parçası" yapısını iki yakaya böler. */
 export function splitCompatibilityPhrase(text: string): CompatibilitySplit | null {
-  const match = text.match(/^(.+?)\s+(?:için|icin)\s+(.+)$/iu);
-  if (!match?.[1] || !match[2]) return null;
-  return { parent: match[1].trim(), requested: match[2].trim() };
+  const connective = text.match(/^(.+?)\s+(?:için|icin)\s+(.+)$/iu);
+  if (connective?.[1] && connective[2]) {
+    return { parent: connective[1].trim(), requested: connective[2].trim() };
+  }
+  const vehicle = text.match(/^(.+?)\s+arac[ıi]ma\s+uygun\s+(.+)$/iu);
+  if (vehicle?.[1] && vehicle[2]) {
+    return {
+      parent: vehicle[1].replace(/\s+model$/iu, "").trim(),
+      requested: vehicle[2].trim(),
+    };
+  }
+  const spare = text.match(/^(.+?)\s+(yedek\s+par[çc]a(?:s[ıi])?(?:\s+.*)?)$/iu);
+  return spare?.[1] && spare[2]
+    ? { parent: spare[1].trim(), requested: spare[2].trim() }
+    : null;
 }
 
 export type RequestedTargetReason = "multi-connective" | "no-content" | "too-long";
@@ -109,7 +122,11 @@ export type RequestedTarget = {
 export function readRequestedTarget(requested: string): RequestedTarget {
   const raw = requested.trim();
   const firstClause = raw.split(/[,;:.!?()/]|\s+(?:ve|veya|ile)\s+/iu)[0] ?? "";
-  const t = firstClause.replace(REQUEST_TAIL_RE, " ").replace(MAKE_VERB_RE, " ").replace(/\s+/g, " ").trim();
+  const phrase = firstClause.replace(REQUEST_TAIL_RE, " ").replace(MAKE_VERB_RE, " ").replace(/\s+/g, " ").trim();
+  // The quantity belongs to the order, not to the requested object's name.
+  // Strip only an explicit leading count span; model digits remain untouched.
+  const leadingQuantity = classifyNumbers(phrase).find((n) => n.role === "QUANTITY" && n.index === 0);
+  const t = (leadingQuantity ? phrase.slice(leadingQuantity.raw.length) : phrase).trim();
   if (!t || !/\p{L}/u.test(t)) return { value: null, raw, reason: "no-content" };
   // İkinci bir "için" varsa ilişki tek hedefe indirgenememiştir.
   if (CONNECTIVE_RE.test(t)) return { value: null, raw, reason: "multi-connective" };
@@ -277,7 +294,7 @@ export function readUsageContextSplit(rawInput: string): UsageContextSplit | nul
   if (!split) return null;
   const target = readRequestedTarget(split.requested).value;
   if (!target) return null;
-  const role = classifyRequestedTargetRole(target).role;
+  const role = classifyRequestedRelationTarget(split.parent, target).role;
   if (role === "WHOLE_PRODUCT" || role === "SERVICE") {
     return { context: split.parent, target, role };
   }
@@ -307,6 +324,34 @@ export function readUsageContextSplit(rawInput: string): UsageContextSplit | nul
     return { context: split.parent, target, role };
   }
   return null;
+}
+
+/**
+ * The same display noun can mean a monitor or a device replacement screen.
+ * Resolve that ambiguity only when the left side names a catalogued device
+ * (or explicitly says phone); an external monitor keeps its whole-product role.
+ */
+export function classifyRequestedRelationTarget(
+  parent: string,
+  target: string,
+): RequestedTargetRoleVerdict {
+  const generic = classifyRequestedTargetRole(target);
+  // A catalog's generic "Yedek parça" browse leaf does not turn a spare
+  // part named in a parent relationship into a complete product.
+  if (/^yedek\s+par[çc]a(?:s[ıi])?$/iu.test(target.trim())) {
+    return { role: "COMPONENT_OR_ACCESSORY", domain: null, head: "yedek parça",
+      confidence: 0.95, provenance: "ROLE_HEAD_VOCABULARY",
+      evidence: [target, "explicit-spare-part"] };
+  }
+  const screen = /^(?:dokunmatik\s+)?ekran[ıi]?$/iu.test(target.trim());
+  const device = findTechnologyProduct(parent);
+  const explicitPhone = /(?:^|[^\p{L}\p{N}])(?:cep\s+)?telefon(?:u|um|umun)?(?=$|[^\p{L}\p{N}])/iu.test(parent);
+  if (screen && (device || explicitPhone)) {
+    return { role: "COMPONENT_OR_ACCESSORY", domain: "technology", head: "ekran",
+      confidence: 0.85, provenance: "ROLE_HEAD_VOCABULARY",
+      evidence: [target, "device-display-replacement"] };
+  }
+  return generic;
 }
 
 /**
@@ -405,6 +450,7 @@ export type RelationDomainEvidence = {
   categoryId: string;
   code:
     | "domain:taxonomy-part-bearing"
+    | "domain:taxonomy-product"
     | "domain:service-object"
     | "domain:taxonomy-area"
     | "domain:catalog-brand"
@@ -494,6 +540,24 @@ export function resolveRelationDomain(
     // (1) Sol taraf: hizmetin/parçanın uygulandığı ürün ya da platform.
     const fromContext = domainFromSpan(split.parent);
     if (fromContext) return fromContext;
+    // An explicit spare-part request can name a catalog product whose
+    // PART_BEARING capability has not been curated yet. Its category is
+    // still known; compatibility confidence remains a separate decision.
+    if (target && classifyRequestedRelationTarget(split.parent, target).role === "COMPONENT_OR_ACCESSORY") {
+      const products = listTaxonomyAliasCandidates(split.parent).nodes.filter(
+        (node) => node.nodeType === "PRODUCT_TYPE" &&
+          !node.applicableCapabilities.includes("NOT_PART_BEARING"),
+      );
+      const categories = new Set(products.map((node) => node.categoryId).filter(Boolean));
+      if (categories.size === 1 && products[0]?.categoryId) {
+        return {
+          categoryId: products[0].categoryId,
+          code: "domain:taxonomy-product",
+          span: split.parent,
+          verified: true,
+        };
+      }
+    }
     // (2) İstenen hedefin içindeki ürün.
     const fromTarget = target ? domainFromSpan(target) : null;
     if (fromTarget) return fromTarget;
@@ -857,7 +921,7 @@ export function findUnresolvedCompatibilityTarget(
    * yeniden verilmez, tek yetkili rol sınıflandırıcısından okunur.
    */
   if (target.value) {
-    const role = classifyRequestedTargetRole(target.value).role;
+    const role = classifyRequestedRelationTarget(split.parent, target.value).role;
     if (role === "WHOLE_PRODUCT" || role === "SERVICE") return null;
   }
   const parentEvidence = resolvePartBearingParent(split.parent, identity);

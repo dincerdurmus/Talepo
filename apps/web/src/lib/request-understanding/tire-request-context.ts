@@ -1,9 +1,9 @@
-import { isNegatedMention } from "@/lib/ai/parser/negation";
+import { isNegatedMention, withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
 import { classifyTaxonomyPhrase } from "@/lib/taxonomy/phrase-classification";
 import { classifyRequestedTargetRole } from "./requested-item-role";
 import { readRequestedTarget } from "./part-relation";
 
-const TIRE_NOUN = /(?<![\p{L}\p{N}])(?:lastik|lastiği|lastigi|jant(?:ı|i)?|stepne)(?![\p{L}\p{N}])/giu;
+const TIRE_NOUN = /(?<![\p{L}\p{N}])(?:lasti(?:k|ğ|g)[\p{L}]*|jant(?:ı|i|ları|lari)?|stepne)(?![\p{L}\p{N}])/giu;
 const TIRE_SERVICE = /lastik\s+değişimi|lastik\s+degisimi|rot\s+ayarı|rot\s+ayari|\bbalans\b|lastik\s+otel|lastik\s+saklama/iu;
 
 /** Only the rejected product mentions are masked; raw user text stays intact. */
@@ -21,9 +21,15 @@ export function withoutRejectedTireMentions(text: string): string {
 }
 
 export function readTireRequestContext(text: string) {
-  const affirmedText = withoutRejectedTireMentions(text);
+  const affirmedText = withoutRejectedTireMentions(withoutRejectedRequestClauses(text));
   const mentions = [...affirmedText.matchAll(TIRE_NOUN)];
   const service = TIRE_SERVICE.test(affirmedText);
+  const tireAction = mentions.length > 0 && /değişim|degisim|değiştir|degistir|sökme\s+takma|sokme\s+takma/iu.test(affirmedText);
+  const serviceType = service || tireAction
+    ? /saklama|otel/iu.test(affirmedText) ? "Lastik otel / saklama"
+      : /değiş|degis|sökme|sokme/iu.test(affirmedText) ? "Lastik değişimi"
+        : /rot/iu.test(affirmedText) ? "Rot balans" : "Balans"
+    : null;
   if (!mentions.length && !service) return null;
   const fullRole = classifyRequestedTargetRole(affirmedText);
   const role = fullRole.role === "UNKNOWN"
@@ -31,10 +37,11 @@ export function readTireRequestContext(text: string) {
   const head = classifyTaxonomyPhrase(role.head ?? role.evidence[0] ?? "");
   // In "lastik deposu" / "lastik eldiven", the head names the requested
   // product. A material or storage-use modifier cannot start a tire flow.
-  const competingCategory = head && head.categoryId !== "automotive" ? head.categoryId : null;
+  const competingCategory = head && head.categoryId !== "automotive" && !(serviceType && head.categoryId === "services") ? head.categoryId : null;
   return {
     competingCategory,
     head,
+    serviceType,
     family: competingCategory || !mentions.length ? null :
       mentions.some((match) => /^jant/iu.test(match[0])) ? "Jant" as const : "Lastik" as const,
     isTireRequest: !competingCategory && Boolean(mentions.length || service),

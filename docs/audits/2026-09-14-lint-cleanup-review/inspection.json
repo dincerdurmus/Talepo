@@ -1,0 +1,16 @@
+{
+  "lint": {
+    "baseline": {
+      "errors": 0,
+      "warnings": 3
+    },
+    "proposed": {
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  "comparisons": 32,
+  "exportsUnchanged": true,
+  "functionArityUnchanged": true,
+  "testEmittedJavaScriptIdentical": true
+}

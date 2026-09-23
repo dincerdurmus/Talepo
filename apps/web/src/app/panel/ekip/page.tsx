@@ -3,15 +3,14 @@ import { ArrowRight, Users } from "lucide-react";
 
 import { TeamManager } from "@/components/panel/TeamManager";
 import { getCompanySeatUsage } from "@/server/company/assert-company-seat";
+import { canManageCompany, canViewTeamOffers, normalizeCompanyRole } from "@/lib/membership/company-permissions";
+import { WORKSPACE_SEAT_DESCRIPTION } from "@/lib/membership/seat-policy";
 import {
   assertCompanyMembership,
   getCompanyWorkspace,
 } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/server/auth/require-user";
-
-const REMOVE_ROLES = new Set(["OWNER", "ADMIN"]);
-const OFFER_VIEW_ROLES = new Set(["OWNER", "ADMIN"]);
 
 export default async function TeamPage() {
   const user = await requireUser();
@@ -95,10 +94,10 @@ export default async function TeamPage() {
 
   const membership = await assertCompanyMembership(user.id, workspace.companyId);
   const canInvite =
-    !!membership && ["OWNER", "ADMIN", "MANAGER"].includes(membership.role);
-  const canRemove = !!membership && REMOVE_ROLES.has(membership.role);
+    !!membership && canManageCompany(membership.role);
+  const canRemove = !!membership && canManageCompany(membership.role);
   const canViewOffers =
-    !!membership && OFFER_VIEW_ROLES.has(membership.role);
+    !!membership && canViewTeamOffers(membership.role);
 
   const members = await prisma.companyMember.findMany({
     where: {
@@ -184,13 +183,15 @@ export default async function TeamPage() {
             ? {
                 activeSeats: seatUsage.activeSeats,
                 includedSeats: seatUsage.includedSeats,
+                memberLimit: seatUsage.memberSeats.limit!,
+                analysisLimit: seatUsage.analysisSeats.limit!,
                 extraSeatPurchaseReady: false,
               }
             : null
         }
         initialMembers={members.map((member) => ({
           id: member.id,
-          role: member.role,
+          role: normalizeCompanyRole(member.role) ?? member.role,
           status: member.status,
           invitedAt: member.invitedAt,
           joinedAt: member.joinedAt,
@@ -211,8 +212,9 @@ function PageHeader({ companyName }: { companyName?: string }) {
         Ekip
       </h1>
       <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-        Firma üyelerini görün, davet gönderin, yetkili roller üye çıkarabilir.
-        Sahip ve yönetici her üyenin verdiği teklifleri görebilir.
+        {WORKSPACE_SEAT_DESCRIPTION} Sahip ve üyeler firma adına talep ve teklif gönderebilir.
+        Ekip, firma ayarları ve ödeme yönetimi yalnızca sahibindedir.
+        Analist firma verilerini ve teklifleri görüntüler; değişiklik yapamaz.
       </p>
     </section>
   );

@@ -8,7 +8,8 @@ import { backfillMatchesForCompany } from "@/server/request/distribute-request";
 import { slugifyCompanyName } from "./slug";
 import {
   normalizeCategorySlugs,
-  syncCompanyCategories,
+  activeCompanyCategoryIds,
+  type CategoryProvisioningClient,
 } from "./sync-company-categories";
 
 export type CreateCompanyInput = {
@@ -79,6 +80,9 @@ export async function createCompanyForUser(input: CreateCompanyInput) {
   const categorySlugs = normalizeCategorySlugs(input.categorySlugs);
 
   const company = await prisma.$transaction(async (tx) => {
+    const categoryIds = categorySlugs.length
+      ? await activeCompanyCategoryIds(categorySlugs, tx as unknown as CategoryProvisioningClient)
+      : [];
     return tx.company.create({
       data: {
         name,
@@ -94,6 +98,7 @@ export async function createCompanyForUser(input: CreateCompanyInput) {
         planExpiresAt: null,
         bonusOfferCredits: 0,
         createdById: input.userId,
+        categories: { create: categoryIds.map((categoryId) => ({ categoryId })) },
         members: {
           create: {
             userId: input.userId,
@@ -115,10 +120,6 @@ export async function createCompanyForUser(input: CreateCompanyInput) {
       },
     });
   });
-
-  if (categorySlugs.length > 0) {
-    await syncCompanyCategories(company.id, categorySlugs);
-  }
 
   /**
    * YENİ ŞİRKET ESKİ UYGUN TALEPLER İÇİN EŞLEŞME ALIR (KB-22 Dilim 2).

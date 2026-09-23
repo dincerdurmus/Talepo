@@ -272,8 +272,8 @@ console.log("\n=== OFFER FORM UX ===\n");
       /canMutate=\{canMutate\}/.test(outgoingCompareGroup),
   );
   check(
-    "teklifler revise gate is SUBMITTED|VIEWED",
-    /const canRevise = \["SUBMITTED", "VIEWED"\]\.includes\(offer\.status\)/.test(
+    "teklifler revise gate requires active request and SUBMITTED|VIEWED",
+    /const canRevise = publication\.isPublished && \["SUBMITTED", "VIEWED"\]\.includes\(offer\.status\)/.test(
       tekliflerPage,
     ),
   );

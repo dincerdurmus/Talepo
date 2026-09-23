@@ -134,6 +134,7 @@ export default async function PanelLayout({
           ? entitlements.subject.name
           : null,
         companyLogoUrl,
+        companyRole: entitlements.companyRole,
         planTier: entitlements.effectivePlanTier,
         planLabel: entitlements.planLabel,
         quotaUnlimited: entitlements.quota.isUnlimited,

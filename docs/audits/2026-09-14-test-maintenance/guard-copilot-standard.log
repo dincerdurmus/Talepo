@@ -1,0 +1,27 @@
+node:internal/assert/utils:77
+    throw err;
+    ^
+
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  ok(!featureLabels.includes("Offer Copilot"))
+
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-standard-pro-packaging-v1.ts:23:18
+    at load (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:47:5)
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:50:24
+    at runFault (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\docs\audits\2026-09-14-test-maintenance\verify-guards.cjs:38:22)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\docs\audits\2026-09-14-test-maintenance\verify-guards.cjs:56:22)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.19.0

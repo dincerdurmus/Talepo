@@ -14,12 +14,14 @@ export function IncomingRequestCover({
   categoryName,
   requestTitle,
   compact = false,
+  isPublished = true,
 }: {
   coverImageUrl?: string | null;
   categorySlug?: string | null;
   categoryName?: string | null;
   requestTitle?: string | null;
   compact?: boolean;
+  isPublished?: boolean;
 }) {
   const look = getCategoryVisual(categorySlug);
   const Icon = look.icon;
@@ -73,6 +75,7 @@ export function IncomingRequestCover({
           />
         </div>
       )}
+      {!isPublished ? <span className={`absolute inset-0 flex items-center justify-center bg-black/60 px-1 text-center font-semibold text-white ${compact ? "text-[8px] leading-tight" : "text-sm"}`}>Talep yayında değil</span> : null}
     </div>
   );
 }

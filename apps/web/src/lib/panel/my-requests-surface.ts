@@ -109,6 +109,7 @@ export const MY_REQUEST_CONCLUDED_STATUSES = new Set(["COMPLETED", "CANCELLED"])
 
 export const MY_REQUEST_STATUS_LABEL: Record<string, string> = {
   DRAFT: "Taslak",
+  PENDING_REVIEW: "İncelemede",
   PUBLISHED: "Yayında",
   RECEIVING_OFFERS: "Teklif alıyor",
   OFFER_SELECTED: "Süreç devam ediyor",

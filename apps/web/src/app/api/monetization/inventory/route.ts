@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
@@ -12,6 +13,7 @@ import { matchRequestToInventory } from "@/server/monetization/inventory-matchin
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    await assertSelectedCompanyWriteAccess(user.id);
     const body = (await request.json()) as {
       action?: string;
       csv?: string;

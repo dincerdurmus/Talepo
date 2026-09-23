@@ -15,6 +15,7 @@ import {
   type DiscoveryReasonCode,
 } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
+import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import {
   attributedOfferFormHref,
   attributedRequestDetailHref,
@@ -93,6 +94,8 @@ export async function queryDiscoveryWorkspace(input: {
         | "RECEIVING_OFFERS"
       )[],
     },
+    categoryPausedAt: null, category: { isActive: true },
+    AND: [publicRequestExpiryFilter()],
     ...(input.urgentOnly ? { isUrgent: true } : {}),
     ...(input.excludeCreatedById
       ? { createdById: { not: input.excludeCreatedById } }

@@ -4,7 +4,7 @@
  */
 
 export const NEGATION_TAIL =
-  /\b(olmasın|olmasin|istemiyorum|istemem|olmaz|hariç|haric|değil|degil)\b/i;
+  /\b(olmasın|olmasin|istemiyorum|istemem|aramıyorum|aramiyorum|vazgeçtim|vazgectim|almayacağım|almayacagim|olmaz|hariç|haric|değil|degil)\b/i;
 
 /** Tokens that are never brand/model identity. */
 export const CONVERSATION_STOPWORDS = new Set([
@@ -17,6 +17,10 @@ export const CONVERSATION_STOPWORDS = new Set([
   "ancak",
   "istemiyorum",
   "istemem",
+  "aramıyorum",
+  "aramiyorum",
+  "vazgeçtim",
+  "vazgectim",
   "olmasın",
   "olmasin",
   "olmaz",
@@ -56,6 +60,8 @@ export const CONVERSATION_STOPWORDS = new Set([
   "kiralamak",
   "alacağım",
   "alacagim",
+  "almayacağım",
+  "almayacagim",
   // Commission verbs: "kartvizit yaptırmak" — the verb must never survive as a
   // brand/model token ("Marka: YAPTIRMAK").
   "yaptırmak",
@@ -103,6 +109,9 @@ export function isNegatedMention(
 ): boolean {
   // Only the next 1–2 tokens after THIS mention (not a later clause).
   const after = text.slice(index + len);
+  // A model number belongs to the following model mention: rejecting
+  // PlayStation 4 must not reject the PlayStation/Sony manufacturer.
+  if (/^\s+\d/.test(after)) return false;
   const nextWords = after.trim().split(/\s+/).slice(0, 2).join(" ");
   if (NEGATION_TAIL.test(nextWords)) return true;
   const before = text.slice(Math.max(0, index - 12), index);
@@ -113,6 +122,26 @@ export function isNegatedMention(
 
 export function isNegatedWindow(win: string): boolean {
   return NEGATION_TAIL.test(win);
+}
+
+/** Affirmative parsing view. Preserve offsets and the original user input;
+ * exclusions are still extracted separately from the unmasked text. */
+export function withoutRejectedRequestClauses(text: string): string {
+  const mask = text.split("");
+  const folded = text.toLocaleLowerCase("tr-TR").replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ç/g, "c").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ü/g, "u");
+  const endings = /(?<![\p{L}\p{N}])(?:degil|istemiyorum|istemem|aramiyorum|olmasin|vazgectim|almayacagim|degistirmeyecegim)(?![\p{L}\p{N}])/gu;
+  for (const match of folded.matchAll(endings)) {
+    const prefix = folded.slice(0, match.index);
+    // These are optional/ANY answers, not rejected product statements.
+    if (/(?:şart|sart|önemli|onemli|zorunda)\s*$/iu.test(prefix)) continue;
+    const boundaries = [...prefix.matchAll(/[;!?\n]|(?<!\d)[.,]|[.,](?!\d)|\b(?:ama|fakat|ancak)\b|(?<![\p{L}])(?:arıyorum|ariyorum|istiyorum|lazım|lazim)(?![\p{L}])/giu)];
+    const boundary = boundaries.at(-1);
+    const start = boundary ? boundary.index + boundary[0].length : 0;
+    const rejected = text.slice(start, match.index);
+    if (!/[\p{L}\p{N}]/u.test(rejected)) continue;
+    for (let i = start; i < match.index + match[0].length; i++) mask[i] = " ";
+  }
+  return mask.join("");
 }
 
 /** Drop conversation tokens and trailing exclusion clauses from a remainder. */

@@ -1,0 +1,11 @@
+===== ORTAK ALAN CEVAP KANALI V1 =====
+COMMON_KEYS=quantity,city,delivery,budget (kanonik registry)
+CORPUS scenarios=108 fields=1305 default_unknown=974 extra_field_rows=0 field_responses=0 attributes=295 constraints=295
+KIRMIZI — ortak alan cevaplari sunucuya ulasmiyor:
+PROBLEMS=4
+
+===== HUKUM =====
+  - E2: kanonik alan sayısı değişti → 1305
+  - E3: varsayılan UNKNOWN değişti → 974
+  - E6: attributes tabanı kaydı → 295
+  - E7: constraints tabanı kaydı → 295

@@ -165,7 +165,7 @@ type PlanManagerProps = {
   companies?: CompanyOption[];
   mockUpgradeEnabled?: boolean;
   billing?: BillingStatusProps;
-  /** Company billing mutations: OWNER/ADMIN only. Personal always true. */
+  /** Company billing mutations: OWNER only. Personal always true. */
   canMutateBilling?: boolean;
   showPlanChoices?: boolean;
 };

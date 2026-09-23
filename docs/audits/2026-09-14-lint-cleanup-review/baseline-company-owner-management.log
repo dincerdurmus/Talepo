@@ -1,0 +1,31 @@
+PASS — OWNER company billing permission
+PASS — OWNER company profile and categories HTTP permission
+PASS — OWNER company settings screen exposes edits only for owner
+PASS — OWNER opportunity assignment authority
+PASS — MEMBER company billing permission
+PASS — MEMBER company profile and categories HTTP permission
+PASS — MEMBER company settings screen exposes edits only for owner
+PASS — MEMBER opportunity assignment authority
+PASS — VIEWER company billing permission
+PASS — VIEWER company profile and categories HTTP permission
+PASS — VIEWER company settings screen exposes edits only for owner
+PASS — VIEWER opportunity assignment authority
+PASS — ADMIN company billing permission
+PASS — ADMIN company profile and categories HTTP permission
+PASS — ADMIN company settings screen exposes edits only for owner
+PASS — ADMIN opportunity assignment authority
+PASS — MANAGER company billing permission
+PASS — MANAGER company profile and categories HTTP permission
+PASS — MANAGER company settings screen exposes edits only for owner
+PASS — MANAGER opportunity assignment authority
+PASS — Company members retain their own personal billing access
+PASS — Missing company membership cannot mutate billing
+PASS — OWNER task assignment target respects operating role
+PASS — MEMBER task assignment target respects operating role
+PASS — ADMIN task assignment target respects operating role
+PASS — MANAGER task assignment target respects operating role
+PASS — VIEWER task assignment target respects operating role
+PASS — Task assignment excludes removed and unrelated members
+PASS — Company role labels expose only Owner, Member and Analyst
+
+29 passed, 0 failed; in-memory records only.

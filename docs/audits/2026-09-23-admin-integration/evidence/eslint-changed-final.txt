@@ -1,0 +1,7 @@
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-source-adapters-v1.ts
+   5:22  warning  'readFileSync' is defined but never used  @typescript-eslint/no-unused-vars
+  30:15  warning  'IngestRecord' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (0 errors, 2 warnings)
+

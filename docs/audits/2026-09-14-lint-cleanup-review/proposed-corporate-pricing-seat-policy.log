@@ -1,0 +1,26 @@
+PASS — 1 premium price 990
+PASS — 2 professional price 2490
+PASS — 3 corporate price 5990
+PASS — 4 corporate monthly not custom
+PASS — 5 plans mirror pricing SoT (no drift)
+PASS — 6 corporate not sellable but price readable
+PASS — 6b removed tiers are never checkout-allowed
+PASS — 7 corporate base includedSeats = 5 (4+1)
+PASS — 8 standard uncapped; canonical paid workspaces include 5 (4+1)
+PASS — 9 seat policy separate from featuresForPlan
+PASS — 9b owner counts / pending does not (usage builder)
+PASS — 9c server assert uses ACTIVE count only
+PASS — 10 corporate inherits professional features
+PASS — 11 accept invite gates seats
+PASS — 12 seat error taxonomy
+PASS — 13 invite API maps EntitlementError
+PASS — 14 unique membership prevents double-count
+PASS — 15 invites create INVITED not ACTIVE
+PASS — 16 plan UI is Standard+Professional only, no Corporate checkout
+PASS — 17 team seat usage UI
+PASS — 18 client not price authority
+PASS — 19 no additional-seat billing / seat not in iyzico
+PASS — 20 no Enterprise plan
+PASS — 21 missing iyzico corporate ref fails safely
+
+24 passed, 0 failed

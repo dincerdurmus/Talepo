@@ -1,0 +1,103 @@
+{
+  "createdAt": "2026-09-14T09:23:57.472Z",
+  "base": "cbd187c55bd0d87ef56ae97d06e9b09af939f556",
+  "liveDatabaseUsed": false,
+  "results": [
+    {
+      "id": "company-4plus1",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-4plus1-v1.cjs"
+    },
+    {
+      "id": "company-analysis-access",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-analysis-access-v1.cjs"
+    },
+    {
+      "id": "company-seat-lifecycle",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-seat-lifecycle-v1.cjs"
+    },
+    {
+      "id": "company-invite-api",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-invite-api-v1.cjs"
+    },
+    {
+      "id": "company-owner-management",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-owner-management-v1.cjs"
+    },
+    {
+      "id": "corporate-pricing-seat-policy",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-corporate-pricing-seat-policy-v1.ts"
+    },
+    {
+      "id": "pro-company-monetization",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-pro-company-monetization-v1.ts"
+    },
+    {
+      "id": "corporate-workspace-isolation",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-corporate-workspace-isolation-v1.ts"
+    },
+    {
+      "id": "hidden-inventory-addon",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-hidden-inventory-addon-v1.ts"
+    },
+    {
+      "id": "offer-negotiation",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-offer-negotiation-v1.ts"
+    },
+    {
+      "id": "offer-media",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-offer-media-v1.ts"
+    },
+    {
+      "id": "deal-review",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-deal-review-v1.ts"
+    },
+    {
+      "id": "deal-completion",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-deal-completion-v1.ts"
+    },
+    {
+      "id": "request-publication-lifecycle",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-request-publication-lifecycle-v1.ts"
+    },
+    {
+      "id": "phase3c-corporate-opportunity-center",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-phase3c-corporate-opportunity-center-v1.ts"
+    },
+    {
+      "id": "p1-closed-beta-closure",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-p1-closed-beta-closure-v1.ts"
+    },
+    {
+      "id": "typescript",
+      "exitCode": 0,
+      "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false --types node,react,next,next/image-types/global"
+    },
+    {
+      "id": "eslint",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 3,
+      "files": 86
+    },
+    {
+      "id": "diff-check",
+      "exitCode": 0
+    }
+  ]
+}

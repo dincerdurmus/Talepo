@@ -1,0 +1,209 @@
+PASS — Five included seats, exactly 1 owner + 3 members + 1 analyst
+PASS — PROFESSIONAL canonical seat capacity is five
+PASS — PREMIUM canonical seat capacity is five
+PASS — CORPORATE canonical seat capacity is five
+PASS — MONTHLY sales catalog matches runtime seats
+PASS — ANNUAL sales catalog matches runtime seats
+PASS — 0 owners / 0 members / 0 analysts keep reserved seats
+PASS — 0 owners / 0 members / 1 analysts keep reserved seats
+PASS — 0 owners / 0 members / 2 analysts keep reserved seats
+PASS — 0 owners / 1 members / 0 analysts keep reserved seats
+PASS — 0 owners / 1 members / 1 analysts keep reserved seats
+PASS — 0 owners / 1 members / 2 analysts keep reserved seats
+PASS — 0 owners / 2 members / 0 analysts keep reserved seats
+PASS — 0 owners / 2 members / 1 analysts keep reserved seats
+PASS — 0 owners / 2 members / 2 analysts keep reserved seats
+PASS — 0 owners / 3 members / 0 analysts keep reserved seats
+PASS — 0 owners / 3 members / 1 analysts keep reserved seats
+PASS — 0 owners / 3 members / 2 analysts keep reserved seats
+PASS — 0 owners / 4 members / 0 analysts keep reserved seats
+PASS — 0 owners / 4 members / 1 analysts keep reserved seats
+PASS — 0 owners / 4 members / 2 analysts keep reserved seats
+PASS — 1 owners / 0 members / 0 analysts keep reserved seats
+PASS — 1 owners / 0 members / 1 analysts keep reserved seats
+PASS — 1 owners / 0 members / 2 analysts keep reserved seats
+PASS — 1 owners / 1 members / 0 analysts keep reserved seats
+PASS — 1 owners / 1 members / 1 analysts keep reserved seats
+PASS — 1 owners / 1 members / 2 analysts keep reserved seats
+PASS — 1 owners / 2 members / 0 analysts keep reserved seats
+PASS — 1 owners / 2 members / 1 analysts keep reserved seats
+PASS — 1 owners / 2 members / 2 analysts keep reserved seats
+PASS — 1 owners / 3 members / 0 analysts keep reserved seats
+PASS — 1 owners / 3 members / 1 analysts keep reserved seats
+PASS — 1 owners / 3 members / 2 analysts keep reserved seats
+PASS — 1 owners / 4 members / 0 analysts keep reserved seats
+PASS — 1 owners / 4 members / 1 analysts keep reserved seats
+PASS — 1 owners / 4 members / 2 analysts keep reserved seats
+PASS — 2 owners / 0 members / 0 analysts keep reserved seats
+PASS — 2 owners / 0 members / 1 analysts keep reserved seats
+PASS — 2 owners / 0 members / 2 analysts keep reserved seats
+PASS — 2 owners / 1 members / 0 analysts keep reserved seats
+PASS — 2 owners / 1 members / 1 analysts keep reserved seats
+PASS — 2 owners / 1 members / 2 analysts keep reserved seats
+PASS — 2 owners / 2 members / 0 analysts keep reserved seats
+PASS — 2 owners / 2 members / 1 analysts keep reserved seats
+PASS — 2 owners / 2 members / 2 analysts keep reserved seats
+PASS — 2 owners / 3 members / 0 analysts keep reserved seats
+PASS — 2 owners / 3 members / 1 analysts keep reserved seats
+PASS — 2 owners / 3 members / 2 analysts keep reserved seats
+PASS — 2 owners / 4 members / 0 analysts keep reserved seats
+PASS — 2 owners / 4 members / 1 analysts keep reserved seats
+PASS — 2 owners / 4 members / 2 analysts keep reserved seats
+PASS — Paid extras extend operating capacity only; expiry removes extras
+PASS — OWNER company write authority
+PASS — ADMIN company write authority
+PASS — MANAGER company write authority
+PASS — MEMBER company write authority
+PASS — VIEWER company write authority
+PASS — SUPER_ADMIN company write authority
+PASS —  company write authority
+PASS — null company write authority
+PASS — undefined company write authority
+PASS — Analysis reads team offers but cannot invite or receive operating privileges
+PASS — Analysis workspace returns a readable 403
+PASS — Personal Professional status cannot override VIEWER
+PASS — Switching workspace cannot modify the old firm's resources
+PASS — Personal mode retains personal writes, not company writes
+PASS — Removed membership is denied, even with a stale workspace cookie
+PASS — Four operators block a fifth while still allowing an analyst
+PASS — An active analyst blocks another analyst, irrespective of operating vacancies
+PASS — Removing an analyst frees only the analysis seat
+PASS — Second owner is denied even when member slots are empty
+PASS — Owner vacancy is not a fourth member slot
+PASS — Unknown activation roles fail closed
+PASS — Legacy Standard cannot gain a second owner
+
+74 passed, 0 failed
+PASS — Analysis blocked: request creation
+PASS — Analysis blocked: request editing
+PASS — Analysis blocked: request deletion
+PASS — Analysis blocked: offer creation
+PASS — Analysis blocked: offer editing
+PASS — Analysis blocked: offer acceptance
+PASS — Analysis blocked: offer rejection
+PASS — Analysis blocked: counter offer
+PASS — Analysis blocked: counter acceptance
+PASS — Analysis blocked: counter rejection
+PASS — Analysis blocked: message send
+PASS — Analysis blocked: photo attachment
+PASS — Analysis blocked: photo finalization
+PASS — Personal switch cannot bypass: company request editing
+PASS — Personal switch cannot bypass: company request deletion
+PASS — Personal switch cannot bypass: original submitter's counter offer
+PASS — Personal switch cannot bypass: original submitter's message
+PASS — Personal switch cannot bypass: original submitter's offer photo
+PASS — Former buyer cannot modify their company deal after becoming an analyst
+PASS — Blocked attempts never reach business writes
+PASS — OWNER retains operating authority and inherited Professional features
+PASS — ADMIN retains operating authority and inherited Professional features
+PASS — MANAGER retains operating authority and inherited Professional features
+PASS — MEMBER retains operating authority and inherited Professional features
+PASS — Analysis retains company analytics and offer intelligence
+PASS — Personal operations do not inherit the firm's read-only restriction
+
+26 passed, 0 failed; 0 database writes.
+PASS — Fourth member blocked with analyst seat vacant
+PASS — Reserved analyst invitation still allowed
+PASS — Second analyst invitation blocked
+PASS — Third member slot remains available with analyst present
+PASS — Omitted role defaults to MEMBER
+PASS — Untrusted or removed role rejected: "OWNER"
+PASS — Untrusted or removed role rejected: "ADMIN"
+PASS — Untrusted or removed role rejected: "MANAGER"
+PASS — Untrusted or removed role rejected: "SUPER_ADMIN"
+PASS — Untrusted or removed role rejected: ""
+PASS — Untrusted or removed role rejected: "viewer"
+PASS — Untrusted or removed role rejected: ["VIEWER"]
+PASS — Untrusted or removed role rejected: {"role":"VIEWER"}
+PASS — MEMBER cannot invite accounts
+PASS — MEMBER cannot remove accounts
+PASS — MEMBER receives canonical role labels and owner-only management flags
+PASS — VIEWER cannot invite accounts
+PASS — VIEWER cannot remove accounts
+PASS — VIEWER receives canonical role labels and owner-only management flags
+PASS — ADMIN cannot invite accounts
+PASS — ADMIN cannot remove accounts
+PASS — ADMIN receives canonical role labels and owner-only management flags
+PASS — MANAGER cannot invite accounts
+PASS — MANAGER cannot remove accounts
+PASS — MANAGER receives canonical role labels and owner-only management flags
+PASS — Owner can remove a member
+PASS — Owner can remove an analyst
+PASS — Owner cannot remove another stored owner
+PASS — Missing owner is not a spare member slot
+PASS — Pending invitation responses use canonical roles
+
+30 passed, 0 failed; in-memory invitations only.
+PASS — OWNER company billing permission
+PASS — OWNER company profile and categories HTTP permission
+PASS — OWNER company settings screen exposes edits only for owner
+PASS — OWNER opportunity assignment authority
+PASS — MEMBER company billing permission
+PASS — MEMBER company profile and categories HTTP permission
+PASS — MEMBER company settings screen exposes edits only for owner
+PASS — MEMBER opportunity assignment authority
+PASS — VIEWER company billing permission
+PASS — VIEWER company profile and categories HTTP permission
+PASS — VIEWER company settings screen exposes edits only for owner
+PASS — VIEWER opportunity assignment authority
+PASS — ADMIN company billing permission
+PASS — ADMIN company profile and categories HTTP permission
+PASS — ADMIN company settings screen exposes edits only for owner
+PASS — ADMIN opportunity assignment authority
+PASS — MANAGER company billing permission
+PASS — MANAGER company profile and categories HTTP permission
+PASS — MANAGER company settings screen exposes edits only for owner
+PASS — MANAGER opportunity assignment authority
+PASS — Company members retain their own personal billing access
+PASS — Missing company membership cannot mutate billing
+PASS — OWNER task assignment target respects operating role
+PASS — MEMBER task assignment target respects operating role
+PASS — ADMIN task assignment target respects operating role
+PASS — MANAGER task assignment target respects operating role
+PASS — VIEWER task assignment target respects operating role
+PASS — Task assignment excludes removed and unrelated members
+PASS — Company role labels expose only Owner, Member and Analyst
+
+29 passed, 0 failed; in-memory records only.
+PASS — Concurrent acceptance: owner + exactly 3 operators + 1 analyst
+PASS — Replaying an accepted invitation is idempotent
+PASS — A removed analyst releases only the reserved analysis position
+PASS — An unrelated user cannot accept an invitation
+PASS — Concurrent owner activations permit exactly one owner
+PASS — Pending ADMIN invitations activate as MEMBER
+PASS — Pending MANAGER invitations activate as MEMBER
+PASS — Analyst sees explanation instead of offer-send controls
+PASS — Analyst can read a conversation without seeing a message form
+PASS — Analyst cannot archive or restore shared offers
+PASS — Team screen explains the reserved analysis seat and disables a fifth operator
+PASS — Members, analysts and legacy managers never see invite or removal controls
+
+12 passed, 0 failed; isolated records only.
+Admin İmza access: 37 passed, 0 failed; no database or network access.
+PASS — Approval commits publication, expiry, case closure, audit and one owner notification before fanout
+PASS — Rejection stays invisible, closes its case and delivers the reason once
+PASS — Repeated and opposite decisions after approve do not write or notify again
+PASS — Repeated and opposite decisions after reject do not write or notify again
+PASS — Competing admins produce a single decision in the serialized transaction adapter
+PASS — failNotification rolls back request, case and all notifications
+PASS — failAudit rolls back request, case and all notifications
+PASS — Fanout failure preserves the committed approval for backfill
+PASS — Closed category prevents publication but permits rejection
+PASS — closed case cannot publish its request
+PASS — other-subject case cannot publish its request
+PASS — SUPPORT cannot approve through HTTP
+PASS — ANALYST cannot approve through HTTP
+PASS — USER cannot approve through HTTP
+PASS — MFA denial stops the HTTP mutation
+PASS — HTTP approval succeeds and a second submission returns a conflict
+PASS — HTTP rejects an empty rejection reason
+PASS — HTTP cannot close a pending case without a publication decision
+PASS — HTTP reports storage failure as failure without a partial approval
+PASS — Legacy restore of a held request uses the same atomic decision
+PASS — Normal published content retains hide/restore behavior
+PASS — GET exposes request state and title for the dedicated review queue
+PASS — Queue hides completed/rejected requests and published content
+PASS — Unknown billing drift is not rendered as zero or healthy
+
+24 passed, 0 failed; isolated transactions, no external database or notifications.
+Admin integration gates: 7 passed, 0 failed

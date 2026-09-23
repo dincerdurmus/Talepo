@@ -315,7 +315,9 @@ function categoryDb(rows: CategoryRow[]) {
   const deletes: string[] = [];
   const client = {
     category: {
-      findMany: async () => state.map((row) => ({ ...row })),
+      findMany: async (args?: { where?: { slug?: { in?: string[] }; isActive?: boolean } }) => state
+        .filter((row) => (!args?.where?.slug?.in || args.where.slug.in.includes(row.slug)) && (args?.where?.isActive === undefined || row.isActive === args.where.isActive))
+        .map((row) => ({ ...row, id: row.slug })),
       create: async (args: { data: CategoryRow }) => {
         state.push({ ...args.data });
         return args.data;
@@ -421,7 +423,10 @@ async function measureCategoryProvisioning(): Promise<void> {
   );
 
   /* `syncCompanyCategories` devre dışı kategoriyi AKTİFLEŞTİRMEZ. */
-  await syncCompanyCategories("c1", [second.id], fake.client);
+  let rejected = false;
+  try { await syncCompanyCategories("c1", [second.id], fake.client); }
+  catch { rejected = true; }
+  ok("P4-sync-pasif-reddedilir", rejected, "pasif kategori firma seçimi olarak kabul edildi");
   ok(
     "P4-sync-aktiflestirmez",
     fake.state.find((row) => row.slug === second.id)?.isActive === false,

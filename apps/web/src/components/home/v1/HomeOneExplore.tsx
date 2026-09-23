@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import { usePublicCategories } from "@/hooks/usePublicCategories";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 
@@ -23,7 +25,6 @@ const GRID_SECONDARY = [
   { slug: "appliances", tag: "Beyaz eşya · klima" },
 ] as const;
 
-const MORE = ["home-kitchen", "machinery", "health", "baby", "services"] as const;
 
 const CINEMATIC_CROP: Record<string, string> = {
   "real-estate": "object-[center_38%]",
@@ -67,7 +68,7 @@ function CategoryImage({
   if (cat.image) {
     return (
       <Image
-        src={homeCategoryImage(slug)}
+        src={REQUEST_CATEGORIES.some((category) => category.id === slug) ? homeCategoryImage(slug) : cat.image}
         alt=""
         fill
         sizes={sizes}
@@ -83,8 +84,15 @@ function CategoryImage({
 }
 
 export function HomeOneExplore() {
-  const spotlight = meta(SPOTLIGHT);
-  const more = MORE.map(meta);
+  const categories = usePublicCategories() ?? [];
+  const available = new Set(categories.map((category) => category.id));
+  const displayMeta = (slug: string) => {
+    const row = categories.find((category) => category.id === slug);
+    return { ...meta(slug), label: row?.label ?? "", description: row?.description ?? "" };
+  };
+  const spotlight = displayMeta(SPOTLIGHT);
+  const featured = new Set<string>([SPOTLIGHT, ...GRID_PRIMARY.map((category) => category.slug), ...GRID_SECONDARY.map((category) => category.slug)]);
+  const more = categories.filter((category) => !featured.has(category.id)).map((category) => displayMeta(category.id));
 
   return (
     <section
@@ -110,7 +118,7 @@ export function HomeOneExplore() {
           </p>
         </div>
 
-        <Link
+        {available.has(SPOTLIGHT) ? <Link
           href={`/talep?category=${encodeURIComponent(SPOTLIGHT)}`}
           className="talepo-home1-card-hover group relative mt-14 block overflow-hidden rounded-[1.75rem] bg-[#0f1f1d] sm:mt-16"
         >
@@ -140,11 +148,11 @@ export function HomeOneExplore() {
               </span>
             </div>
           </div>
-        </Link>
+        </Link> : null}
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {GRID_PRIMARY.map(({ slug, tag }) => {
-            const cat = meta(slug);
+          {GRID_PRIMARY.filter(({ slug }) => available.has(slug)).map(({ slug, tag }) => {
+            const cat = displayMeta(slug);
             return (
               <Link
                 key={slug}
@@ -175,8 +183,8 @@ export function HomeOneExplore() {
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          {GRID_SECONDARY.map(({ slug, tag }) => {
-            const cat = meta(slug);
+          {GRID_SECONDARY.filter(({ slug }) => available.has(slug)).map(({ slug, tag }) => {
+            const cat = displayMeta(slug);
             return (
               <Link
                 key={slug}

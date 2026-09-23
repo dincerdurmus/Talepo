@@ -4,6 +4,7 @@
   "green": [
     "audit-review-hold-v1",
     "verify-acceptance-cleanup-safety-v1",
+    "verify-admin-integration-v1",
     "verify-alfa-identity-closure-v1",
     "verify-analiz-v1",
     "verify-analiz-v2",

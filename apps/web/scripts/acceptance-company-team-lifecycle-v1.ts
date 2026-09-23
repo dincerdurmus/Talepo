@@ -136,10 +136,10 @@ async function main() {
   );
   // Limit doluysa kapı reddetmeli; dolu değilse kapı açık olmalı — iki dal da
   // kanonik atLimit gerçeğine bağlanır (sahte beklenti kurulmaz).
-  const atLimit = Boolean((usage as { atLimit?: boolean }).atLimit);
+  const atLimit = usage.operatingSeats.atLimit;
   let seatGateThrew = false;
   try {
-    await assertCanActivateCompanySeat({ companyId: company.id });
+    await assertCanActivateCompanySeat({ companyId: company.id, role: "MEMBER" });
   } catch {
     seatGateThrew = true;
   }

@@ -1,0 +1,772 @@
+[
+  {
+    "id": "auto-01",
+    "input": "Mercedes C180 satın almak istiyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "C180",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.85,
+            "evidence": [
+              "catalog:model_mercedes-benz_c-serisi",
+              "alias"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "C180",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "C180"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "auto-02",
+    "input": "2020 model dizel otomatik Volkswagen Passat arıyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "Passat",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.95,
+            "evidence": [
+              "catalog:model_volkswagen_passat",
+              "exact"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "Passat",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "Passat"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "auto-03",
+    "input": "Renault Clio için ön far arıyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "Clio",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.95,
+            "evidence": [
+              "catalog:model_renault_clio",
+              "exact"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "Clio",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "Clio"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "auto-04",
+    "input": "Mercedes C180 için su pompası arıyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "C180",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.85,
+            "evidence": [
+              "catalog:model_mercedes-benz_c-serisi",
+              "alias"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "C180",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "C180"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "auto-07",
+    "input": "Renault Clio için bakım arıyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "Clio",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.95,
+            "evidence": [
+              "catalog:model_renault_clio",
+              "exact"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "Clio",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "Clio"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "auto-10",
+    "input": "C200 arıyorum",
+    "diffs": {
+      "fields": {
+        "model": {
+          "before": {
+            "kind": "VALUE",
+            "value": "C200",
+            "provenance": "CATALOG_ENRICHED",
+            "confidence": 0.85,
+            "evidence": [
+              "catalog:model_mercedes-benz_c-serisi",
+              "alias"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "C200",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "C200"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "tech-07",
+    "input": "SAP danışmanlık arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "danışmanlık",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "danışmanlık"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "sap danışmanlık",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "danışmanlık"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "danışmanlık",
+          "after": "sap danışmanlık"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "danışmanlık"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "sap danışmanlık"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "tech-11",
+    "input": "Sunucu bakım hizmeti arıyorum, uzaktan olabilir",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "bakım",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "bakım"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "sunucu bakım hizmeti",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "bakım"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "bakım",
+          "after": "sunucu bakım hizmeti"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "bakım"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "sunucu bakım hizmeti"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "print-02",
+    "input": "Broşür bastırmak istiyorum A5 çift taraflı",
+    "diffs": {
+      "fields": {
+        "flatPrintFormat": {
+          "before": null,
+          "after": {
+            "kind": "VALUE",
+            "value": "A5",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "a5"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "flatPrintFormat": {
+          "before": null,
+          "after": "A5"
+        }
+      },
+      "constraints": {
+        "flatPrintFormat": {
+          "before": null,
+          "after": {
+            "mode": "VALUE",
+            "value": "A5"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "print-08",
+    "input": "Katalog bastırmak istiyorum 32 sayfa",
+    "diffs": {
+      "fields": {
+        "publicationPageCount": {
+          "before": null,
+          "after": {
+            "kind": "VALUE",
+            "value": "32",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.95,
+            "evidence": [
+              "32 sayfa"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "publicationPageCount": {
+          "before": null,
+          "after": "32"
+        }
+      },
+      "constraints": {
+        "publicationPageCount": {
+          "before": null,
+          "after": {
+            "mode": "VALUE",
+            "value": "32"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "appl-06",
+    "input": "Arçelik bulaşık makinesi için rezistans arıyorum",
+    "diffs": {
+      "fields": {
+        "needType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "part",
+            "provenance": "INFERRED",
+            "confidence": 0.7,
+            "evidence": [
+              "open-world-part",
+              "icin-structure",
+              "parent:taxonomy-part-bearing"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "part",
+            "provenance": "INFERRED",
+            "confidence": 0.88,
+            "evidence": [
+              "rezistans",
+              "parent:taxonomy-part-bearing"
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "appl-10",
+    "input": "Ankastre fırın arıyorum",
+    "diffs": {
+      "fields": {
+        "ovenType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "Ankastre",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "ankastre"
+            ]
+          },
+          "after": null
+        }
+      },
+      "attributes": {
+        "ovenType": {
+          "before": "Ankastre",
+          "after": null
+        }
+      },
+      "constraints": {
+        "ovenType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "Ankastre"
+          },
+          "after": null
+        }
+      }
+    }
+  },
+  {
+    "id": "mach-05",
+    "input": "Torna tezgahı için yedek parça arıyorum",
+    "diffs": {
+      "fields": {
+        "productType": {
+          "before": {
+            "kind": "UNKNOWN",
+            "value": null,
+            "provenance": "INFERRED",
+            "confidence": 0
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "Torna tezgahı",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.9,
+            "evidence": [
+              "product-hint"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "productType": {
+          "before": null,
+          "after": "Torna tezgahı"
+        }
+      },
+      "constraints": {
+        "productType": {
+          "before": null,
+          "after": {
+            "mode": "VALUE",
+            "value": "Torna tezgahı"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "furn-02",
+    "input": "Ofis için 50 adet çalışma sandalyesi arıyorum",
+    "diffs": {
+      "fields": {
+        "productType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "50 adet çalışma sandalyesi",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.7
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "çalışma sandalyesi",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.7
+          }
+        }
+      },
+      "attributes": {
+        "productType": {
+          "before": "50 adet çalışma sandalyesi",
+          "after": "çalışma sandalyesi"
+        }
+      },
+      "constraints": {
+        "productType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "50 adet çalışma sandalyesi"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "çalışma sandalyesi"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "furn-05",
+    "input": "Koltuk döşeme hizmeti arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "hizmet",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "koltuk döşeme hizmeti",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "hizmet",
+          "after": "koltuk döşeme hizmeti"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "hizmet"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "koltuk döşeme hizmeti"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "furn-08",
+    "input": "Mobilya montaj hizmeti arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "montaj",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "montaj"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "mobilya montaj hizmeti",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "montaj"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "montaj",
+          "after": "mobilya montaj hizmeti"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "montaj"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "mobilya montaj hizmeti"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "health-06",
+    "input": "Hasta monitörü kalibrasyon hizmeti arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "hizmet",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "hasta monitörü kalibrasyon hizmeti",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "hizmet",
+          "after": "hasta monitörü kalibrasyon hizmeti"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "hizmet"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "hasta monitörü kalibrasyon hizmeti"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "svc-02",
+    "input": "Ofis taşıma hizmeti arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "hizmet",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "ofis taşıma hizmeti",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "hizmet"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "hizmet",
+          "after": "ofis taşıma hizmeti"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "hizmet"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "ofis taşıma hizmeti"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "svc-06",
+    "input": "Uzaktan İngilizce dersi arıyorum",
+    "diffs": {
+      "fields": {
+        "city": {
+          "before": null,
+          "after": {
+            "kind": "VALUE",
+            "value": "Uzaktan",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.95,
+            "evidence": [
+              "uzaktan hizmet"
+            ]
+          }
+        },
+        "locationMode": {
+          "before": null,
+          "after": {
+            "kind": "VALUE",
+            "value": "remote",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.95,
+            "evidence": [
+              "uzaktan hizmet"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "city": {
+          "before": null,
+          "after": "Uzaktan"
+        },
+        "locationMode": {
+          "before": null,
+          "after": "remote"
+        }
+      },
+      "constraints": {
+        "city": {
+          "before": null,
+          "after": {
+            "mode": "VALUE",
+            "value": "Uzaktan"
+          }
+        },
+        "locationMode": {
+          "before": null,
+          "after": {
+            "mode": "VALUE",
+            "value": "remote"
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "svc-07",
+    "input": "Genel hukuk danışmanlığı arıyorum",
+    "diffs": {
+      "fields": {
+        "serviceType": {
+          "before": {
+            "kind": "VALUE",
+            "value": "danışmanlık",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "danışmanlık"
+            ]
+          },
+          "after": {
+            "kind": "VALUE",
+            "value": "genel hukuk danışmanlığı",
+            "provenance": "EXPLICIT_TEXT",
+            "confidence": 0.85,
+            "evidence": [
+              "danışmanlık"
+            ]
+          }
+        }
+      },
+      "attributes": {
+        "serviceType": {
+          "before": "danışmanlık",
+          "after": "genel hukuk danışmanlığı"
+        }
+      },
+      "constraints": {
+        "serviceType": {
+          "before": {
+            "mode": "VALUE",
+            "value": "danışmanlık"
+          },
+          "after": {
+            "mode": "VALUE",
+            "value": "genel hukuk danışmanlığı"
+          }
+        }
+      }
+    }
+  }
+]

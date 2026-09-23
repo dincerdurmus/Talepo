@@ -24,6 +24,7 @@ import {
   WORKSPACE_BASE_INCLUDED_SEATS,
   buildSeatUsage,
   getIncludedSeats,
+  seatPoolForRole,
 } from "../src/lib/membership/seat-policy";
 import {
   canCreateCompanyWorkspace,
@@ -61,24 +62,26 @@ const legacyCorp = resolveWorkspaceEffectivePlan({
 assert.equal(legacyCorp.effectivePlanTier, "PROFESSIONAL");
 assert.equal(legacyCorp.inheritedFromOwner, false);
 
-assert.equal(WORKSPACE_BASE_INCLUDED_SEATS, 1);
-assert.equal(getIncludedSeats("PROFESSIONAL"), 1);
+assert.equal(WORKSPACE_BASE_INCLUDED_SEATS, 5);
+assert.equal(getIncludedSeats("PROFESSIONAL"), 5);
 assert.equal(
   buildSeatUsage({
     planTier: "STANDARD",
     workspaceEffectivePlanTier: "PROFESSIONAL",
     activeSeats: 1,
+    activeOwnerSeats: 1,
   }).atLimit,
-  true,
+  false,
 );
 assert.equal(
   buildSeatUsage({
     planTier: "STANDARD",
     workspaceEffectivePlanTier: "PROFESSIONAL",
     activeSeats: 1,
+    activeOwnerSeats: 1,
     extraSeatsPurchased: 2,
   }).includedSeats,
-  3,
+  7,
 );
 
 assert.equal(HIDDEN_INVENTORY_ADDON.checkoutEnabled, false);
@@ -160,7 +163,13 @@ assert.ok(resolver.includes("Company.planTier is never mutated"));
 
 const assertSeat = read("src/server/company/assert-company-seat.ts");
 assert.ok(assertSeat.includes("getCompanyAddonSnapshot"));
-assert.ok(assertSeat.includes("Ek koltuk gerekli"));
+assert.ok(assertSeat.includes("seatPoolForRole"));
+const fullMemberSeats = buildSeatUsage({
+  planTier: "PROFESSIONAL", activeSeats: 4, activeOwnerSeats: 1, activeAnalysisSeats: 0,
+});
+assert.equal(seatPoolForRole(fullMemberSeats, "MEMBER").atLimit, true);
+assert.equal(seatPoolForRole(fullMemberSeats, "OWNER").atLimit, true);
+assert.equal(seatPoolForRole(fullMemberSeats, "VIEWER").atLimit, false);
 
 const teamRoute = read("src/app/api/company/team/route.ts");
 assert.ok(teamRoute.includes("assertCanActivateCompanySeat"));

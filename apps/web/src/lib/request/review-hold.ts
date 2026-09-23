@@ -25,3 +25,12 @@ export const REVIEW_HOLD_GUARD = {
 
 /** Talebin okuma yüzeylerinden saklanması gereken durum değeri. */
 export const REVIEW_HOLD_STATUS = "PENDING_REVIEW" as const;
+
+export function isPendingReviewCase(item: {
+  subjectType: string;
+  status: string;
+  contentModeration: { status?: string; moderationHiddenById?: string | null } | null;
+}) {
+  return item.subjectType === "REQUEST" && ["OPEN", "INVESTIGATING"].includes(item.status)
+    && item.contentModeration?.status === REVIEW_HOLD_STATUS && !item.contentModeration.moderationHiddenById;
+}

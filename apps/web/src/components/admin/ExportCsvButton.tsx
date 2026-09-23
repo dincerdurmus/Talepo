@@ -24,5 +24,5 @@ export function ExportCsvButton({ rows, filename = "admin-kayitlari.csv", onExpo
     URL.revokeObjectURL(url);
   }
 
-  return <button type="button" onClick={exportCsv} disabled={!rows.length} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-white/60 transition hover:bg-white/[.07] disabled:cursor-not-allowed disabled:opacity-40">CSV dışa aktar</button>;
+  return <button type="button" onClick={exportCsv} disabled={!rows.length} className="rounded-xl border border-border px-3 py-2 text-xs text-muted-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40">CSV dışa aktar</button>;
 }

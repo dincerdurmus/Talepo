@@ -4,7 +4,7 @@ import type { Prisma } from "@/generated/prisma/client";
 type AuditInput = {
   actorId: string;
   targetUserId?: string | null;
-  action: "USER_UPDATED" | "ROLE_CHANGED" | "ACCOUNT_STATUS_CHANGED" | "PLAN_CHANGED" | "CREDIT_CHANGED" | "SENSITIVE_DATA_VIEWED" | "MFA_ENABLED" | "MFA_DISABLED" | "MODERATION_CASE_CREATED" | "MODERATION_CASE_UPDATED" | "DATA_EXPORTED";
+  action: "USER_UPDATED" | "ROLE_CHANGED" | "ACCOUNT_STATUS_CHANGED" | "PLAN_CHANGED" | "CREDIT_CHANGED" | "SENSITIVE_DATA_VIEWED" | "MFA_ENABLED" | "MFA_DISABLED" | "MODERATION_CASE_CREATED" | "MODERATION_CASE_UPDATED" | "DATA_EXPORTED" | "CATEGORY_STATUS_CHANGED";
   reason: string;
   before?: Prisma.InputJsonValue;
   after?: Prisma.InputJsonValue;

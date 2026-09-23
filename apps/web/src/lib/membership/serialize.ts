@@ -13,6 +13,7 @@ import type { PlanTierId } from "./plans";
  */
 export type EntitlementDTO = {
   userId: string;
+  companyRole?: string;
   subject: EntitlementSubject;
   storedPlanTier: PlanTierId;
   effectivePlanTier: PlanTierId;
@@ -32,6 +33,7 @@ export type PersonalPlanSnapshotDTO = Omit<PersonalPlanSnapshot, "expiresAt"> & 
 export function toEntitlementDTO(ctx: EntitlementContext): EntitlementDTO {
   return {
     userId: ctx.userId,
+    companyRole: ctx.companyRole,
     subject: ctx.subject,
     storedPlanTier: ctx.storedPlanTier,
     effectivePlanTier: ctx.effectivePlanTier,

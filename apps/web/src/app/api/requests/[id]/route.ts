@@ -1,4 +1,6 @@
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { NextResponse } from "next/server";
+import { parseAvailableRequestInput } from "@/server/request/parse-available-request";
 
 import { AuthenticationError, requireUser } from "@/server/auth/require-user";
 import {
@@ -6,7 +8,6 @@ import {
   RequestDeleteNotAllowedError,
 } from "@/server/request/delete-request";
 import {
-  parseCreateRequestInput,
   RequestValidationError,
 } from "@/server/request/request-schema";
 import { resolveJevBundle } from "@/server/request-decisions/resolve-jev-bundle";
@@ -27,7 +28,7 @@ export async function PATCH(
             ((body as Record<string, unknown>).description as string | undefined)
         : null,
     );
-    const input = parseCreateRequestInput(body, { decisionBundle });
+    const input = await parseAvailableRequestInput(body, { decisionBundle });
     const updated = await updateRequest(user.id, id, input);
 
     return NextResponse.json({
@@ -36,6 +37,8 @@ export async function PATCH(
       redirectTo: `/panel/taleplerim/${updated.id}`,
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },
@@ -78,6 +81,8 @@ export async function DELETE(
       redirectTo: "/panel/taleplerim",
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },

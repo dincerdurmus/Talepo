@@ -1,9 +1,11 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { getCompanyWorkspace } from "@/lib/panel/company-workspace";
 import { prisma } from "@/lib/prisma";
 
 import { MessageValidationError } from "./errors";
 
 export async function getSendableConversation(userId: string, conversationId: string) {
+  await assertSelectedCompanyWriteAccess(userId);
   const workspace = await getCompanyWorkspace(userId);
 
   const participant = await prisma.conversationParticipant.findFirst({
@@ -26,6 +28,7 @@ export async function getSendableConversation(userId: string, conversationId: st
               request: {
                 select: {
                   createdById: true,
+                  companyId: true,
                   title: true,
                   city: true,
                   category: { select: { name: true } },
@@ -47,6 +50,7 @@ export async function getSendableConversation(userId: string, conversationId: st
 
   const offer = participant.conversation.offer;
   const status = offer.status;
+  await assertCompanyWriteAccess(userId, offer.request.createdById === userId ? offer.request.companyId : offer.companyId);
 
   // Messaging is only for agreed deals. Historical pre-accept chats remain
   // readable via the conversation page, but new sends are blocked.
