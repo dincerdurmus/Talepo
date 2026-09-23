@@ -25,6 +25,12 @@ export type ComposerAnalyticsEvent =
   | "attachment_added"
   | "attachment_removed"
   | "attachment_failed"
+  /**
+   * D-0031: talepte iletişim bilgisi uyarısında kullanıcının seçimi.
+   * Yük YALNIZ seçim türü ve bulunan bilgi türüdür; iletişim bilgisinin
+   * kendisi bu olaya ASLA girmez.
+   */
+  | "contact_notice_choice"
   | "publish_summary_opened"
   | "request_published"
   | "composer_abandoned";

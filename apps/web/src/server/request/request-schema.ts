@@ -17,6 +17,12 @@ import {
 } from "@/lib/request/raw-input";
 import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
 import { requestPublishDisposition } from "@/lib/request-understanding/publish-disposition";
+import {
+  describeContactInfo,
+  stripContactInfo,
+  type ContactInfoKind,
+} from "@/lib/membership/contact-filter";
+import { parseContactChoice, type ContactChoice } from "@/lib/request/contact-notice";
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
@@ -94,6 +100,13 @@ export type CreateRequestInput = {
    * olarak görünür.
    */
   publishHold?: { evidence: string[] } | null;
+  /**
+   * D-0031: kullanıcının iletişim bilgisi seçimi. Metin bu seçime göre
+   * sunucuda ZATEN uygulanmıştır; alan analitik ve denetim içindir.
+   */
+  contactChoice?: ContactChoice;
+  /** Bulunan iletişim bilgisinin TÜRLERİ — değerin kendisi asla taşınmaz. */
+  contactKinds?: readonly ContactInfoKind[];
 };
 
 export class RequestValidationError extends Error {
@@ -235,8 +248,30 @@ export function parseCreateRequestInput(
    * varsa o tercih edilir, yoksa gövde metni okunur. Aynı fonksiyon PATCH
    * yolunda da çalıştığı için güncelleme ile arz ilanı yayınlanamaz.
    */
+  /**
+   * İLETİŞİM BİLGİSİ SEÇİMİ SUNUCUDA UYGULANIR (D-0031, 2026-09-23).
+   *
+   * Karar kullanıcınındır ama UYGULAMA sunucunundur: istemci metni
+   * temizlemeyi unutsa da, eski bir istemci seçimi hiç göndermese de
+   * yayınlanan metin seçimle tutarlı olmalıdır. Varsayılan güvenli taraftır
+   * (`parseContactChoice`), yani "bıraktı" yalnız kullanıcı açıkça öyle
+   * dediğinde olur.
+   */
+  const contactChoice = parseContactChoice(raw.contactChoice);
+  const contactKinds = describeContactInfo(
+    `${title} ${description} ${rawInputExplicit ?? ""}`,
+  );
+  const stripContacts = contactKinds.length > 0 && contactChoice === "REMOVED";
+  const publishTitle = stripContacts ? stripContactInfo(title) : title;
+  const publishDescription = stripContacts ? stripContactInfo(description) : description;
+  const publishRawInput =
+    stripContacts && rawInputExplicit ? stripContactInfo(rawInputExplicit) : rawInputExplicit;
+
   let publishHold: { evidence: string[] } | null = null;
-  const scopeText = rawInputExplicit ?? description;
+  // Kapsam kararı da TEMİZLENMİŞ metin üstünde verilir: yayınlanacak metin
+  // hangisiyse kapının okuduğu da o olmalıdır, yoksa iki farklı cümle üstünde
+  // iki farklı karar verilir.
+  const scopeText = publishRawInput ?? publishDescription;
   if (scopeText.length >= 3) {
     const scope = understandRequest({
       rawInput: scopeText,
@@ -354,9 +389,9 @@ export function parseCreateRequestInput(
     useCoverImage && rawCoverUrl.startsWith("https://") ? rawCoverUrl : null;
 
   return {
-    title,
-    description: description || rawInputExplicit || "",
-    rawInput: rawInputExplicit,
+    title: publishTitle,
+    description: publishDescription || publishRawInput || "",
+    rawInput: publishRawInput,
     professionalDescription: professionalDescription || undefined,
     category: {
       slug: categorySlug,
@@ -387,5 +422,7 @@ export function parseCreateRequestInput(
     idempotencyKey:
       typeof raw.idempotencyKey === "string" ? raw.idempotencyKey : null,
     publishHold,
+    contactChoice,
+    contactKinds,
   };
 }

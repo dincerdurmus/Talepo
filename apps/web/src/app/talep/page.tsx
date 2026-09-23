@@ -24,6 +24,14 @@ import {
 } from "lucide-react";
 
 import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
+import { describeContactInfo, stripContactInfo } from "@/lib/membership/contact-filter";
+import {
+  CONTACT_IN_REQUEST_NOTICE,
+  CONTACT_KEEP_ACTION_LABEL,
+  CONTACT_REMOVE_ACTION_LABEL,
+  contactChoiceTelemetry,
+  type ContactChoice,
+} from "@/lib/request/contact-notice";
 import {
   HybridBrowsePath,
   HybridCategoryBrowsePanel,
@@ -1401,6 +1409,25 @@ function TalepOlusturForm() {
    * ölçümde hâlâ soru üretiyor ve panel "Yayına hazır" diyordu. İki otorite
    * de aynı kapsam kararını okur.
    */
+  /**
+   * TALEPTE İLETİŞİM BİLGİSİ (D-0031, 2026-09-23).
+   *
+   * Engel YOK: kullanıcı uyarılır ve seçer. Seçim yapılana kadar `null`
+   * kalır; yayın yolunda gönderilmeyen seçim sunucuda "kaldır"a düşer.
+   * Algılayıcı `contact-filter`ın kendisidir — ikinci bir algılayıcı yok.
+   */
+  const contactKinds = useMemo(
+    () => describeContactInfo(hybrid.text ?? ""),
+    [hybrid.text],
+  );
+  const [contactChoice, setContactChoice] = useState<ContactChoice | null>(null);
+  useEffect(() => {
+    // Metin iletişim bilgisi taşımıyorsa seçim de anlamsızdır: kullanıcı
+    // metni düzenleyip bilgiyi çıkardıysa kart ve seçim birlikte kapanır.
+    if (contactKinds.length === 0 && contactChoice !== null) setContactChoice(null);
+  }, [contactKinds.length, contactChoice]);
+  const showContactNotice = contactKinds.length > 0 && contactChoice === null;
+
   const composerOutOfScope =
     isUnsupportedRequestScope(hybrid.state?.understanding?.requestScope?.value);
 
@@ -2826,6 +2853,9 @@ function TalepOlusturForm() {
           isUrgent,
           featureBoost: featureBoost || null,
           publishVersion: version,
+          /* D-0031: seçim sunucuya gider; sunucu metni ona göre uygular ve
+             seçim gönderilmediyse GÜVENLİ tarafa (kaldır) düşer. */
+          contactChoice: contactChoice ?? "REMOVED",
           // Phase 3A + Phase 1 understanding snapshot
           discoveryProjection: discoveryProjection ?? undefined,
           fields: [
@@ -3728,6 +3758,60 @@ function TalepOlusturForm() {
                           onAnswer={handleFocusedAnswer}
                           onSkip={handleFocusedSkip}
                         />
+                      ) : null}
+
+                      {/*
+                        TALEPTE İLETİŞİM BİLGİSİ — UYARI, ENGEL DEĞİL (D-0031).
+
+                        Kart yayın yolunu KAPATMAZ; kullanıcı seçene kadar
+                        görünür durur ve seçim yapılınca kapanır. Metin
+                        kurucunun yazdığı cümledir, burada yeniden yazılmaz.
+                      */}
+                      {showContactNotice ? (
+                        <div
+                          data-testid="composer-contact-notice"
+                          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
+                        >
+                          <p>{CONTACT_IN_REQUEST_NOTICE}</p>
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              data-testid="composer-contact-remove"
+                              className="min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                              onClick={() => {
+                                const cleaned = stripContactInfo(hybrid.text ?? "");
+                                hybrid.setText(cleaned);
+                                setContactChoice("REMOVED");
+                                trackComposerEvent(
+                                  "contact_notice_choice",
+                                  contactChoiceTelemetry({
+                                    choice: "REMOVED",
+                                    kinds: contactKinds,
+                                  }),
+                                );
+                              }}
+                            >
+                              {CONTACT_REMOVE_ACTION_LABEL}
+                            </button>
+                            <button
+                              type="button"
+                              data-testid="composer-contact-keep"
+                              className="min-h-10 rounded-lg border border-amber-300 bg-white px-3 text-sm font-medium text-amber-950"
+                              onClick={() => {
+                                setContactChoice("KEPT");
+                                trackComposerEvent(
+                                  "contact_notice_choice",
+                                  contactChoiceTelemetry({
+                                    choice: "KEPT",
+                                    kinds: contactKinds,
+                                  }),
+                                );
+                              }}
+                            >
+                              {CONTACT_KEEP_ACTION_LABEL}
+                            </button>
+                          </div>
+                        </div>
                       ) : null}
 
                       {/*

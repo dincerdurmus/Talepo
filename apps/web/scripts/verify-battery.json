@@ -133,6 +133,7 @@
     "verify-request-composer-v2-re-semantics",
     "verify-request-composer-v2-review-display",
     "verify-request-composer-v2-slice1",
+    "verify-request-contact-notice-v1",
     "verify-request-intelligence-p1-closure-v1",
     "verify-request-preview",
     "verify-request-routing-matrix-v1",
@@ -248,5 +249,6 @@
   "_eklendi_2026_09_21_jev_rota": "verify-jev-route-wiring-v1 cetvele eklendi. fetchJevDecisions yazilmisti ama istek yolundan hic cagrilmiyordu; demet artik API sinirinda bir kez cekilip senkron karar saglayicisina veriliyor. Kapi 12 kontrol tasir: USE_JEV_IN_PRODUCTION kapali, gecis kapaliyken anahtar ortamda olsa bile ag cagrisi yok, ve serbest metni beyne veren alti sunucu yolunun hepsi demeti tasiyor. Iki mutasyonla kanitlandi: bir rotadan demet silindi -> 1 KIRMIZI, bayrak kazayla acildi -> 2 KIRMIZI. Jev'in KARAR KALITESI bu kapinin konusu degildir (o verify-jev-decision-provider-v1, ag ister, CI'da kosmaz).",
   "_eklendi_2026_09_23_metamorfik": "verify-scope-metamorphic-v1 (kapsam karari metamorfik kararliligi) ve TITCK marka sozlugu eklendi.",
   "_eklendi_2026_09_23_d0032": "audit-review-hold-v1 (D-0032: inceleme bekleyen talep hicbir okuma yuzeyine sizmaz) eklendi.",
-  "_eklendi_2026_09_23_d0030": "verify-stated-answer-suppression-v1 (D-0030: metinde yazilan cevap sorulmaz) eklendi."
+  "_eklendi_2026_09_23_d0030": "verify-stated-answer-suppression-v1 (D-0030: metinde yazilan cevap sorulmaz) eklendi.",
+  "_eklendi_2026_09_23_d0031": "verify-request-contact-notice-v1 (D-0031: talepte iletisim bilgisi uyarir, engellemez) eklendi."
 }
