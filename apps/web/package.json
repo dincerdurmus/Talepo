@@ -45,7 +45,8 @@
     "verify:request-contact-notice": "npx --yes tsx scripts/verify-request-contact-notice-v1.ts",
     "verify:tire-brand-identity": "npx --yes tsx scripts/verify-tire-brand-identity-v1.ts",
     "verify:service-over-room-layout": "npx --yes tsx scripts/verify-service-over-room-layout-v1.ts",
-    "verify:mixed-language-product": "npx --yes tsx scripts/verify-mixed-language-product-v1.ts"
+    "verify:mixed-language-product": "npx --yes tsx scripts/verify-mixed-language-product-v1.ts",
+    "verify:multi-product-quantity": "npx --yes tsx scripts/verify-multi-product-quantity-v1.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

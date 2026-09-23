@@ -970,7 +970,9 @@ export function understandRequest(
   const attributes: Record<string, UnderstandingValue<unknown>> = {};
   const preferences = extractPreferences(normalizedInput);
 
-  const qty = primaryQuantity(numbers);
+  // Metin de verilir: çok ürünlü cümlede "10 adet lazım" gibi bir İHTİYAÇ
+  // BEYANI, ortadaki ikinci ürüne bağlanmış sayıyı geçer (P1-5).
+  const qty = primaryQuantity(numbers, normalizedInput);
   const quantity = qty
     ? uv(
         { value: qty.value, unit: qty.unit },

@@ -674,10 +674,39 @@ export function classifyNumbers(normalizedText: string): ClassifiedNumber[] {
   return results;
 }
 
+/**
+ * İHTİYAÇ BEYANI: sayıdan sonra ürün adı değil, "lazım/gerekli" gelir.
+ *
+ * "10 adet lazım" cümlesinde 10 hiçbir ürüne bağlı DEĞİLDİR; kullanıcı
+ * talebin tamamı için bir sayı söylemiştir. "3 adet toplantı masası"nda ise
+ * sayı o ürüne bağlıdır ve yalnız onun adedidir.
+ */
+const NEED_DECLARATION_AFTER_QUANTITY =
+  /^[\s,.;:]*(?:lazım|lazim|gerek(?:li|iyor)?|ihtiyac(?:ım|im)\s*var|istiyorum|olsun|alacağım|alacagim)(?:[^\p{L}\p{N}]|$)/iu;
+
+/**
+ * Talebin adedi.
+ *
+ * ÖLÇÜLEN KUSUR (A-Z koşusu, P1-5): "Ofis çalışma sandalyesi ve 3 adet
+ * toplantı masası arıyorum. 10 adet lazım." → adet 3. Fonksiyon ilk QUANTITY
+ * sayısını döndürüyordu; cümlenin SIRASI anlam sanılıyordu.
+ *
+ * `text` verildiğinde karar kanıta göre sıralanır: bir ürüne bağlı olmayan
+ * İHTİYAÇ BEYANI, cümlenin ortasında ikinci bir ürüne bağlanmış sayıyı
+ * geçer. `text` verilmezse davranış AYNEN eskisi gibi kalır — çağıranların
+ * hiçbiri sessizce değişmesin diye.
+ */
 export function primaryQuantity(
   numbers: ClassifiedNumber[],
+  text?: string,
 ): ClassifiedNumber | undefined {
-  return numbers.find((n) => n.role === "QUANTITY" && n.value != null);
+  const candidates = numbers.filter((n) => n.role === "QUANTITY" && n.value != null);
+  if (candidates.length <= 1 || !text) return candidates[0];
+
+  const declared = candidates.find((n) =>
+    NEED_DECLARATION_AFTER_QUANTITY.test(text.slice(n.index + n.raw.length)),
+  );
+  return declared ?? candidates[0];
 }
 
 export function primaryYear(
