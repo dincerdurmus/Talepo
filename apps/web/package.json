@@ -40,7 +40,8 @@
     "verify:scope-metamorphic": "npx --yes tsx scripts/verify-scope-metamorphic-v1.ts",
     "audit:review-hold": "npx --yes tsx scripts/audit-review-hold-v1.ts",
     "acceptance:review-hold": "npx --yes tsx scripts/acceptance-review-hold-v1.ts",
-    "acceptance:migrate-apply-file": "npx --yes tsx scripts/apply-acceptance-migration-v1.ts"
+    "acceptance:migrate-apply-file": "npx --yes tsx scripts/apply-acceptance-migration-v1.ts",
+    "verify:stated-answer-suppression": "npx --yes tsx scripts/verify-stated-answer-suppression-v1.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

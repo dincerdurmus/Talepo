@@ -500,7 +500,18 @@ export function scheduleNextQuestions(input: {
       ({
         fieldKey,
         prompt: hybridByKey.get(fieldKey)?.label ?? defaultPrompt(fieldKey),
-        summaryLabel: hybridByKey.get(fieldKey)?.label ?? fieldKey,
+        /**
+         * HAM ANAHTAR ÖZET ETİKETİ OLARAK GÖSTERİLMEZ (P2-11, 2026-09-23).
+         *
+         * Yedek değer `fieldKey`ti; profili olmayan bir alan ekranda
+         * "quantity" diye görünüyordu (ölçüldü: Sağlık ve Makine'de 8 vaka).
+         * `prompt` aynı durumda zaten kanonik etiket haritasına düşüyordu —
+         * yani doğru cevap iki satır yukarıda vardı ve buraya
+         * uygulanmamıştı. Etiket artık aynı otoriteden gelir; hiçbir yeni
+         * harita eklenmez.
+         */
+        summaryLabel:
+          hybridByKey.get(fieldKey)?.label ?? fieldDisplayLabel(fieldKey) ?? fieldKey,
         importance: "optional" as const,
         rank: 10,
         allowUnknown: true,

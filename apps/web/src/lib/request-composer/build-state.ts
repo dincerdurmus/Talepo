@@ -41,6 +41,7 @@ import { isKnownAutomotiveModelName } from "@/lib/ai/parser/brand-catalog";
 import { REQUEST_CATEGORIES } from "@/lib/request-category-engine";
 import { listProfilesForCategory } from "./v2/question-profiles";
 import { budgetDisplayFromUnderstanding } from "@/lib/request-understanding/activation-bridge";
+import { readStatedDeadline } from "@/lib/request-understanding/stated-deadline";
 // Bilgi şeması ENUM kayıtları (matbaa productType seçenekleri orada yaşar).
 import { resolveRequestSchema } from "@/lib/knowledge/request-schema";
 import { inferenceOnlyMarkerKey } from "@/lib/knowledge/inference-marker";
@@ -1343,6 +1344,28 @@ export function mapUnderstandingToFields(
         budgetSignal.evidence ?? ["budget"],
       );
     }
+  }
+
+  /**
+   * METİNDE YAZILAN ZAMAN KANONİK CEVAPTIR (D-0030, 2026-09-23).
+   *
+   * Bütçeyle tam olarak aynı kural: kullanıcı "iki hafta içinde lazım"
+   * yazdıysa zaman sorusunu CEVAPLAMIŞTIR. Ölçüldü (A-Z koşusu): 240 vakanın
+   * 76'sında bu cevap görülmeyip soru yine soruluyordu.
+   *
+   * Değer `EXPLICIT_TEXT` kanıtıyla yazılır — çıkarım değil, kullanıcının
+   * kendi cümlesidir; bu yüzden soruyu kapatmaya YETKİLİDİR (KB-17) ve özet
+   * kartında düzenlenebilir olarak görünür. Zaten dolu bir alanın üstüne
+   * YAZMAZ: kullanıcı ekranda bir cevap verdiyse o cevap metnin önündedir.
+   */
+  const statedDeadline = readStatedDeadline(raw);
+  if (statedDeadline && (!withAny.delivery || withAny.delivery.kind === "UNKNOWN")) {
+    withAny.delivery = valueField(
+      statedDeadline.display,
+      "EXPLICIT_TEXT",
+      0.9,
+      statedDeadline.evidence,
+    );
   }
 
   /**
