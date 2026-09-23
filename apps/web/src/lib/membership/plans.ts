@@ -129,7 +129,7 @@ export const PLAN_DEFINITIONS: Record<PlanTierId, PlanDefinition> = {
     label: "Profesyonel",
     badge: "Pro",
     description:
-      "Fırsatı bul. Doğru teklifi ver. Performansını geliştir. Radar, Teklif Zekâsı, Fırsatlar, Takiplerim ve Analiz. Firma çalışma alanında ek ekip koltukları ve ücretli Gizli Envanter ile genişletilebilir.",
+      "Fırsatı bul. Doğru teklifi ver. Performansını geliştir. Radar, Teklif Zekâsı, Fırsatlar, Takiplerim ve Analiz. Firma çalışma alanında 1 sahip (Owner) + 3 üye + 1 analist koltuğu. Gizli Envanter ayrı ücretli eklentidir.",
     monthlyOfferQuota: null,
     requestAccessDelayHours: 0,
     instantRequestAccess: true,

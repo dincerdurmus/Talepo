@@ -1,0 +1,69 @@
+{
+  "createdAt": "2026-09-14T18:53:15.655Z",
+  "base": "cbd187c55bd0d87ef56ae97d06e9b09af939f556",
+  "liveDatabaseUsed": false,
+  "results": [
+    {
+      "id": "phase4c-billing",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-phase4c-billing-v1.ts"
+    },
+    {
+      "id": "p1-closed-beta-closure",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-p1-closed-beta-closure-v1.ts"
+    },
+    {
+      "id": "standard-pro-packaging",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-standard-pro-packaging-v1.ts"
+    },
+    {
+      "id": "two-plan-packaging",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-two-plan-packaging-v1.ts"
+    },
+    {
+      "id": "global-panel-visual-system",
+      "exitCode": 0,
+      "command": "node scripts/run-local-verifier.cjs scripts/verify-global-panel-visual-system-v1.ts"
+    },
+    {
+      "id": "company-owner-management",
+      "exitCode": 0,
+      "command": "node scripts/verify-company-owner-management-v1.cjs"
+    },
+    {
+      "id": "test-types",
+      "exitCode": 0,
+      "command": "node node_modules/typescript/bin/tsc -p scripts/tsconfig.company-tests.json"
+    },
+    {
+      "id": "application-types",
+      "exitCode": 0,
+      "command": "node node_modules/typescript/bin/tsc --noEmit --incremental false --types node,react,next,next/image-types/global"
+    },
+    {
+      "id": "deliberate-faults",
+      "exitCode": 0,
+      "command": "node C:\\Users\\USER\\Documents\\Talepo\\worktrees\\company-4plus1-cbd187c\\docs\\audits\\2026-09-14-test-maintenance\\verify-guards.cjs"
+    },
+    {
+      "id": "repaired-test-eslint",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0,
+      "files": 4
+    },
+    {
+      "id": "production-scope",
+      "exitCode": 0,
+      "files": 899,
+      "changes": []
+    },
+    {
+      "id": "diff-check",
+      "exitCode": 0
+    }
+  ]
+}

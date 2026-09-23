@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import {
   resolveCreateProjection,
   type RequestDiscoveryProjection,
@@ -60,6 +61,7 @@ function resolveDiscoveryProjection(
 }
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
+  const companyId = await assertSelectedCompanyWriteAccess(userId);
   const started = Date.now();
   const idempotencyKey = normalizeIdempotencyKey(input.idempotencyKey);
 
@@ -234,6 +236,7 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
     const request = await tx.request.create({
       data: {
         createdById: userId,
+        companyId,
         categoryId: category.id,
         formId: form.id,
         title: input.title,

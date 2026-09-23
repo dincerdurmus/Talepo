@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
+import { normalizeCompanyRole } from "./company-permissions";
 import {
   applyCompanyWorkspaceFeatureOverlay,
   isHiddenInventoryAddonActive,
@@ -117,6 +118,7 @@ export async function resolveEntitlements(
             },
           },
           select: {
+            role: true,
             company: {
               select: {
                 id: true,
@@ -214,6 +216,7 @@ export async function resolveEntitlements(
 
     return {
       userId,
+      companyRole: normalizeCompanyRole(companyMembership!.role) ?? undefined,
       subject,
       storedPlanTier,
       effectivePlanTier,

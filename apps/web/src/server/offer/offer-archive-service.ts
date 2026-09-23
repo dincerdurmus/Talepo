@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import type { OfferInboxRole } from "@/lib/offer/offer-event-unread";
 import {
   canArchiveOffer,
@@ -78,6 +79,7 @@ export async function assertOfferArchiveAuthority(input: {
   offerId: string;
   role: OfferInboxRole;
 }) {
+  await assertSelectedCompanyWriteAccess(input.userId);
   return assertOfferSeenAuthority(input);
 }
 
@@ -137,6 +139,8 @@ export async function archiveOfferForUser(input: {
     };
   }
 
+  await assertSelectedCompanyWriteAccess(input.userId);
+  await assertCompanyWriteAccess(input.userId, input.companyId);
   const scope = resolveArchiveScope({
     userId: input.userId,
     companyId: input.companyId,
@@ -174,6 +178,8 @@ export async function unarchiveOfferForUser(input: {
   offerId: string;
   companyId: string | null;
 }) {
+  await assertSelectedCompanyWriteAccess(input.userId);
+  await assertCompanyWriteAccess(input.userId, input.companyId);
   const scope = resolveArchiveScope({
     userId: input.userId,
     companyId: input.companyId,

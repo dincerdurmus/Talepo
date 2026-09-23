@@ -1,0 +1,11 @@
+
+C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-p1-closed-beta-closure-v1.ts
+  24:3  warning  'pinBrowseSemanticContext' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\src\lib\membership\product-packaging.ts
+  44:3  warning  '_context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  51:3  warning  '_context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 3 problems (0 errors, 3 warnings)
+
+86 files; 0 errors; 3 warnings.

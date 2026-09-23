@@ -12,6 +12,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { ExtraSeatOfferCard } from "@/components/panel/CompanyAddonOfferCard";
+import { canInviteCompanyRole, canManageCompany, type CompanyInviteRole } from "@/lib/membership/company-permissions";
+import { WORKSPACE_SEAT_DESCRIPTION } from "@/lib/membership/seat-policy";
 import {
   formatMemberRole,
   formatMemberStatus,
@@ -67,6 +69,8 @@ export function TeamManager({
   seatUsage?: {
     activeSeats: number;
     includedSeats: number;
+    memberLimit: number;
+    analysisLimit: number;
     extraSeatPurchaseReady?: boolean;
   } | null;
 }) {
@@ -75,7 +79,7 @@ export function TeamManager({
   const [offersByUserId, setOffersByUserId] = useState(initialOffersByUserId);
   const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
   const [inviteInput, setInviteInput] = useState("");
-  const [role, setRole] = useState<"MEMBER" | "MANAGER" | "ADMIN" | "VIEWER">(
+  const [role, setRole] = useState<CompanyInviteRole>(
     "MEMBER",
   );
   const [busy, setBusy] = useState(false);
@@ -85,25 +89,26 @@ export function TeamManager({
 
   const activeSeatCount = members.filter((m) => m.status === "ACTIVE").length;
   const includedSeats = seatUsage?.includedSeats ?? null;
-  const seatAtLimit =
-    includedSeats != null && activeSeatCount >= includedSeats;
+  const analysisCount = members.filter((m) => m.status === "ACTIVE" && m.role === "VIEWER").length;
+  const ownerCount = members.filter((m) => m.status === "ACTIVE" && m.role === "OWNER").length;
+  const memberCount = activeSeatCount - analysisCount - ownerCount;
+  const totalAtLimit = includedSeats != null && activeSeatCount >= includedSeats;
+  const memberAtLimit = totalAtLimit || (seatUsage != null && (memberCount >= seatUsage.memberLimit || memberCount + ownerCount >= seatUsage.memberLimit + 1));
+  const analysisAtLimit = totalAtLimit || (seatUsage != null && analysisCount >= seatUsage.analysisLimit);
+  const seatAtLimit = memberAtLimit && analysisAtLimit;
+  const selectedRoleAtLimit = role === "VIEWER" ? analysisAtLimit : memberAtLimit;
   const extraSeatPurchaseReady = Boolean(seatUsage?.extraSeatPurchaseReady);
 
-  const ownerCount = members.filter(
-    (m) => m.role === "OWNER" && m.status === "ACTIVE",
-  ).length;
-
   function canRemoveMember(member: TeamMemberDTO) {
-    if (!canRemove) return false;
+    if (!canRemove || !canManageCompany(currentUserRole)) return false;
     if (member.user.id === currentUserId) return false;
-    if (member.role === "OWNER" && currentUserRole !== "OWNER") return false;
-    if (member.role === "OWNER" && ownerCount <= 1) return false;
+    if (member.role === "OWNER") return false;
     return true;
   }
 
   async function onInvite(event: FormEvent) {
     event.preventDefault();
-    if (!canInvite) return;
+    if (!canInviteCompanyRole(currentUserRole ?? "", role) || !canInvite || selectedRoleAtLimit) return;
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -197,6 +202,8 @@ export function TeamManager({
             </p>
           </div>
           <p className="mt-1.5 text-xs leading-5 text-black/45">
+            {WORKSPACE_SEAT_DESCRIPTION}{" "}
+            Sahip: {ownerCount}/1 · Üye: {memberCount}/{seatUsage!.memberLimit} · Analist: {analysisCount}/{seatUsage!.analysisLimit}.{" "}
             Yalnız aktif üyeler koltuk tüketir (sahip dahil). Bekleyen davet
             koltuk sayılmaz.
             {seatAtLimit
@@ -208,9 +215,9 @@ export function TeamManager({
         </div>
       )}
 
-      {includedSeats != null ? <ExtraSeatOfferCard /> : null}
+      {includedSeats != null && canManageCompany(currentUserRole) ? <ExtraSeatOfferCard /> : null}
 
-      {canInvite && !seatAtLimit && (
+      {canInvite && canManageCompany(currentUserRole) && (
         <form
           onSubmit={onInvite}
           className="rounded-[24px] border border-black/[0.06] bg-white p-5 shadow-sm"
@@ -240,19 +247,29 @@ export function TeamManager({
               }
               className="rounded-xl border border-black/10 bg-[#f7f8f6] px-3 py-2.5 text-sm outline-none"
             >
-              <option value="MEMBER">Üye</option>
-              <option value="MANAGER">Müdür</option>
-              <option value="ADMIN">Yönetici</option>
-              <option value="VIEWER">İzleyici</option>
+              {([
+                ["MEMBER", "Üye · işlem koltuğu"],
+                ["VIEWER", "Analist · salt okunur"],
+              ] as const).filter(([value]) => canInviteCompanyRole(currentUserRole ?? "", value))
+                .map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || selectedRoleAtLimit}
               className="rounded-xl bg-teal-800 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
               Davet et
             </button>
           </div>
+          <p className="mt-3 text-xs text-black/55">
+            {selectedRoleAtLimit
+              ? role === "VIEWER"
+                ? "Analist koltuğu dolu. Yeni analist için mevcut analisti ekipten çıkarın."
+                : "Üye için koltuk sınırı dolu. Sahip ve analist koltukları ek üye için kullanılamaz."
+              : role === "VIEWER"
+                ? "Firma analizlerini ve teklifleri görebilir; talep, teklif veya mesaj gönderemez."
+                : "Firma adına talep ve teklif gönderebilir. Üç üye koltuğu dahildir; ekip, firma ayarları ve ödeme yönetimi sahibindedir."}
+          </p>
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
           {message && <p className="mt-3 text-sm text-teal-800">{message}</p>}
         </form>

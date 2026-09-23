@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ImagePlus, LoaderCircle, Send, X } from "lucide-react";
@@ -28,9 +30,11 @@ function fingerprintFile(file: File) {
 
 export function MessageComposer({
   conversationId,
-  canSend = true,
+  canSend: suppliedCanSend = true,
   canSendImages = false,
 }: MessageComposerProps) {
+  const canWrite = useCompanyCanWrite();
+  const canSend = canWrite && suppliedCanSend;
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [content, setContent] = useState("");
@@ -147,6 +151,8 @@ export function MessageComposer({
       setIsSending(false);
     }
   }
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   const canSubmit =
     canSend && !isSending && Boolean(content.trim() || images.length > 0);

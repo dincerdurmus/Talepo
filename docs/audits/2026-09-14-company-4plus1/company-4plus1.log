@@ -1,0 +1,76 @@
+PASS — Five included seats, exactly 1 owner + 3 members + 1 analyst
+PASS — PROFESSIONAL canonical seat capacity is five
+PASS — PREMIUM canonical seat capacity is five
+PASS — CORPORATE canonical seat capacity is five
+PASS — MONTHLY sales catalog matches runtime seats
+PASS — ANNUAL sales catalog matches runtime seats
+PASS — 0 owners / 0 members / 0 analysts keep reserved seats
+PASS — 0 owners / 0 members / 1 analysts keep reserved seats
+PASS — 0 owners / 0 members / 2 analysts keep reserved seats
+PASS — 0 owners / 1 members / 0 analysts keep reserved seats
+PASS — 0 owners / 1 members / 1 analysts keep reserved seats
+PASS — 0 owners / 1 members / 2 analysts keep reserved seats
+PASS — 0 owners / 2 members / 0 analysts keep reserved seats
+PASS — 0 owners / 2 members / 1 analysts keep reserved seats
+PASS — 0 owners / 2 members / 2 analysts keep reserved seats
+PASS — 0 owners / 3 members / 0 analysts keep reserved seats
+PASS — 0 owners / 3 members / 1 analysts keep reserved seats
+PASS — 0 owners / 3 members / 2 analysts keep reserved seats
+PASS — 0 owners / 4 members / 0 analysts keep reserved seats
+PASS — 0 owners / 4 members / 1 analysts keep reserved seats
+PASS — 0 owners / 4 members / 2 analysts keep reserved seats
+PASS — 1 owners / 0 members / 0 analysts keep reserved seats
+PASS — 1 owners / 0 members / 1 analysts keep reserved seats
+PASS — 1 owners / 0 members / 2 analysts keep reserved seats
+PASS — 1 owners / 1 members / 0 analysts keep reserved seats
+PASS — 1 owners / 1 members / 1 analysts keep reserved seats
+PASS — 1 owners / 1 members / 2 analysts keep reserved seats
+PASS — 1 owners / 2 members / 0 analysts keep reserved seats
+PASS — 1 owners / 2 members / 1 analysts keep reserved seats
+PASS — 1 owners / 2 members / 2 analysts keep reserved seats
+PASS — 1 owners / 3 members / 0 analysts keep reserved seats
+PASS — 1 owners / 3 members / 1 analysts keep reserved seats
+PASS — 1 owners / 3 members / 2 analysts keep reserved seats
+PASS — 1 owners / 4 members / 0 analysts keep reserved seats
+PASS — 1 owners / 4 members / 1 analysts keep reserved seats
+PASS — 1 owners / 4 members / 2 analysts keep reserved seats
+PASS — 2 owners / 0 members / 0 analysts keep reserved seats
+PASS — 2 owners / 0 members / 1 analysts keep reserved seats
+PASS — 2 owners / 0 members / 2 analysts keep reserved seats
+PASS — 2 owners / 1 members / 0 analysts keep reserved seats
+PASS — 2 owners / 1 members / 1 analysts keep reserved seats
+PASS — 2 owners / 1 members / 2 analysts keep reserved seats
+PASS — 2 owners / 2 members / 0 analysts keep reserved seats
+PASS — 2 owners / 2 members / 1 analysts keep reserved seats
+PASS — 2 owners / 2 members / 2 analysts keep reserved seats
+PASS — 2 owners / 3 members / 0 analysts keep reserved seats
+PASS — 2 owners / 3 members / 1 analysts keep reserved seats
+PASS — 2 owners / 3 members / 2 analysts keep reserved seats
+PASS — 2 owners / 4 members / 0 analysts keep reserved seats
+PASS — 2 owners / 4 members / 1 analysts keep reserved seats
+PASS — 2 owners / 4 members / 2 analysts keep reserved seats
+PASS — Paid extras extend operating capacity only; expiry removes extras
+PASS — OWNER company write authority
+PASS — ADMIN company write authority
+PASS — MANAGER company write authority
+PASS — MEMBER company write authority
+PASS — VIEWER company write authority
+PASS — SUPER_ADMIN company write authority
+PASS —  company write authority
+PASS — null company write authority
+PASS — undefined company write authority
+PASS — Analysis reads team offers but cannot invite or receive operating privileges
+PASS — Analysis workspace returns a readable 403
+PASS — Personal Professional status cannot override VIEWER
+PASS — Switching workspace cannot modify the old firm's resources
+PASS — Personal mode retains personal writes, not company writes
+PASS — Removed membership is denied, even with a stale workspace cookie
+PASS — Four operators block a fifth while still allowing an analyst
+PASS — An active analyst blocks another analyst, irrespective of operating vacancies
+PASS — Removing an analyst frees only the analysis seat
+PASS — Second owner is denied even when member slots are empty
+PASS — Owner vacancy is not a fourth member slot
+PASS — Unknown activation roles fail closed
+PASS — Legacy Standard cannot gain a second owner
+
+74 passed, 0 failed

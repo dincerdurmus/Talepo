@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { normalizeCompanyRole } from "@/lib/membership/company-permissions";
 import { COMPANY_CONTEXT_COOKIE } from "@/lib/membership/company-context";
 import { prisma } from "@/lib/prisma";
 import {
@@ -39,7 +40,10 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ ok: true, invites });
+    return NextResponse.json({
+      ok: true,
+      invites: invites.map((invite) => ({ ...invite, role: normalizeCompanyRole(invite.role) })),
+    });
   } catch (error) {
     if (error instanceof AuthenticationError) {
       return NextResponse.json({ ok: false, message: error.message }, { status: 401 });

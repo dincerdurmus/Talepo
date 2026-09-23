@@ -35,8 +35,8 @@ export const EXTRA_SEAT_ADDON = {
   priceTry: null as number | null,
   sku: null as string | null,
   billingEnabled: false,
-  title: "Ek ekip koltuğu",
-  description: "Ekip büyüdükçe yeni kullanıcı ekleyin.",
+  title: "Ek üye koltuğu",
+  description: "Dahil olan 1 sahip, 3 üye ve 1 analist koltuğuna ek olarak firma adına işlem yapabilen üye ekleyin.",
   displayPriceLabel: ADDON_PRICE_UNSET_DISPLAY,
   purchaseCtaLabel: ADDON_PURCHASE_UNAVAILABLE_CTA,
 };

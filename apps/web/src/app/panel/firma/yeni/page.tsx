@@ -31,7 +31,7 @@ export default async function YeniFirmaPage() {
         <FeatureUpgradeGate
           feature="unlimited_offers"
           title="Firma çalışma alanı"
-          description="Profesyonel üyelik ile firma oluşturun; ekip koltukları ve ücretli Gizli Envanter ile genişletin. Ayrı bir Kurumsal paket yoktur."
+          description="Profesyonel üyelik ile firma oluşturun. 1 sahip (Owner) + 3 üye + 1 salt okunur analist koltuğu bulunur. Gizli Envanter ayrı ücretli eklentidir."
           ctaLabel="Profesyonel'e geç"
         />
       </>

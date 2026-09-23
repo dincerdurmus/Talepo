@@ -5,6 +5,7 @@ import { Building2 } from "lucide-react";
 import { CompanyCategoriesForm } from "@/components/panel/CompanyCategoriesForm";
 import { CompanySettingsForm } from "@/components/panel/CompanySettingsForm";
 import { PersonalPlanMismatchBanner } from "@/components/panel/PersonalPlanMismatchBanner";
+import { canManageCompany } from "@/lib/membership/company-permissions";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
 import {
   formatPersonalPlanMismatchDetail,
@@ -71,8 +72,7 @@ export default async function FirmaAyarlariPage() {
               Firma ayarları
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-black/45">
-              {workspace.companyName} profilini, görsellerini ve hizmet
-              kategorilerini buradan yönetin.
+              {workspace.companyName} profilini ve hizmet kategorilerini yalnızca firma sahibi düzenleyebilir.
             </p>
           </div>
           <Link
@@ -95,7 +95,7 @@ export default async function FirmaAyarlariPage() {
         {TEAM_PLAN_SCOPE_NOTE}
       </p>
 
-      <div className="space-y-5">
+      {canManageCompany(workspace.role) ? <div className="space-y-5">
         <CompanySettingsForm
           initial={{
             name: company.name,
@@ -114,7 +114,14 @@ export default async function FirmaAyarlariPage() {
           }}
         />
         <CompanyCategoriesForm initialSlugs={activeCategorySlugs} />
-      </div>
+      </div> : (
+        <div className="rounded-[24px] border border-black/[0.06] bg-white p-6">
+          <p className="text-sm text-black/60">Firma ayarlarını değiştirmek için firma sahibine başvurun.</p>
+          <Link href={`/panel/firma-profil/${workspace.companyId}`} className="mt-3 inline-block text-sm font-semibold text-teal-800">
+            Firma profilini görüntüle
+          </Link>
+        </div>
+      )}
     </>
   );
 }

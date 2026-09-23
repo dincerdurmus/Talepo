@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite, CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoaderCircle, Trash2 } from "lucide-react";
@@ -13,6 +15,7 @@ export function DeleteRequestButton({
   requestId,
   variant = "header",
 }: DeleteRequestButtonProps) {
+  const canWrite = useCompanyCanWrite();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +60,8 @@ export function DeleteRequestButton({
       : variant === "list"
         ? "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-[14px] border border-black/[0.06] px-3 text-xs font-medium text-black/40 transition hover:border-red-200/70 hover:bg-red-50/50 hover:text-red-700 disabled:opacity-50 sm:h-auto sm:px-4 sm:py-2.5"
         : "inline-flex items-center gap-2 rounded-full border border-[#8b352b]/25 bg-[#fff6f5] px-4 py-2 text-xs font-semibold text-[#8b352b] transition hover:bg-[#ffe9e6] disabled:opacity-50";
+
+  if (!canWrite) return <CompanyReadOnlyNotice />;
 
   return (
     <div

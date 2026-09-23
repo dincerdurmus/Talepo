@@ -26,7 +26,7 @@ import {
   type DealReviewDto,
 } from "@/lib/offer/deal-review";
 import { prisma } from "@/lib/prisma";
-import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import { assertNegotiationWriteAccess, resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 import { BILATERAL_COMPLETED_WHERE } from "@/lib/offer/deal-completion";
 
 function toDto(row: {
@@ -155,7 +155,7 @@ export async function createDealReview(input: {
           id: true,
           submittedById: true,
           companyId: true,
-          request: { select: { createdById: true } },
+          request: { select: { createdById: true, companyId: true } },
         },
       },
     },
@@ -175,6 +175,7 @@ export async function createDealReview(input: {
     });
   }
 
+  await assertNegotiationWriteAccess(deal.offer, input.userId);
   const side = await resolveNegotiationActorSide(
     {
       id: deal.offer.id,

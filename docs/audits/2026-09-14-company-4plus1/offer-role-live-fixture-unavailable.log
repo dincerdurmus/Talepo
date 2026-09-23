@@ -1,0 +1,89 @@
+
+=== ROLE ROUTING ===
+
+PASS — buyer page request owner authority
+PASS — seller page submitter/company authority
+PASS — buyer title
+PASS — buyer tag ALICI
+PASS — seller title
+PASS — seller tag SATICI
+PASS — buyer deep-link route
+PASS — seller deep-link route
+
+=== SAME OFFER NOT IN BOTH ROLE FILTERS ===
+
+PASS — first offer is buyer Yeni, seller Gönderilen
+PASS — buyer-proposed round stays negotiating on both sides
+PASS — buyer page excludes self-submitted personal offers
+
+=== FILTERS ===
+
+PASS — buyer Yeni: first open offer
+PASS — old rejected + new pending is Pazarlıkta
+PASS — past rejected round does not classify as Reddedilen
+PASS — offer REJECTED is Reddedilen
+PASS — ACCEPTED is Kabul edilen
+PASS — WITHDRAWN is not Reddedilen
+PASS — invalid buyer durum -> Tümü
+PASS — buyer durum yeni
+PASS — buyer deep-link keeps teklif+tur
+
+=== CURRENT TURN VS HISTORY ===
+
+PASS — history keeps rejected and pending rounds
+PASS — history includes first offer
+PASS — latest pending drives seller action
+PASS — seller rejection stays in history
+PASS — buyer rejection copy
+PASS — actor labels hide identity
+PASS — deep-link opens target round
+
+=== ACTION-NEEDED BADGES ===
+
+PASS — buyer counts first offer
+PASS — buyer counts seller pending proposal
+PASS — buyer does not count own pending proposal
+PASS — seller counts buyer pending proposal
+PASS — seller does not count own pending proposal
+PASS — seller badge independent of notification READ
+PASS — buyer badge independent of notification READ
+PASS — badge authorities stay distinct
+
+=== PHOTOS ===
+
+PASS — empty gallery skipped
+PASS — compact trigger copy
+PASS — single photo label
+PASS — lightbox escape
+PASS — lightbox prev/next only when many
+PASS — lightbox focus trap
+PASS — lightbox restore focus
+PASS — lightbox above bottom nav
+PASS — media private no-store
+
+=== CARD COPY ===
+
+PASS — buyer Satıcının son önerisi
+PASS — buyer Son öneriniz via caption helper
+PASS — seller Alıcının son önerisi
+PASS — history accordion title
+PASS — turn waiting headers
+PASS — no technical enum in buyer card
+
+=== WIRING ===
+
+PASS — buyer filters wired
+PASS — buyer tur deep-link
+PASS — seller tur deep-link
+PASS — history on both cards
+◇ injected env (0) from .env.local // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+Error: DATABASE_URL veya DIRECT_URL ortam değişkeni bulunamadı.
+    at resolvePrismaConnectionString (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\src\lib\prisma.ts:17:15)
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\src\lib\prisma.ts:34:26
+    at load (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:45:5)
+    at localRequire (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:34:14)
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-offer-role-surfaces-v1.ts:271:72
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async liveFixture (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-offer-role-surfaces-v1.ts:271:24)
+    at async main (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-offer-role-surfaces-v1.ts:324:5)

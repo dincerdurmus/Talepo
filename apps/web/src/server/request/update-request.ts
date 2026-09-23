@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { resolveUpdateProjection } from "@/lib/discovery";
 import { prisma } from "@/lib/prisma";
 import { addOneCalendarMonth } from "./public-visibility";
@@ -36,6 +37,7 @@ export async function updateRequest(
   requestId: string,
   input: CreateRequestInput,
 ) {
+  await assertSelectedCompanyWriteAccess(userId);
   return prisma.$transaction(async (tx) => {
     const existing = await tx.request.findFirst({
       where: {
@@ -47,6 +49,7 @@ export async function updateRequest(
         id: true,
         status: true,
         formId: true,
+        companyId: true,
         budgetMin: true,
         budgetMax: true,
         isUrgent: true,
@@ -63,6 +66,8 @@ export async function updateRequest(
     if (!existing) {
       throw new RequestValidationError(["Talep bulunamadı."]);
     }
+
+    await assertCompanyWriteAccess(userId, existing.companyId);
 
     if (!canEditRequestStatus(existing.status)) {
       throw new RequestValidationError([

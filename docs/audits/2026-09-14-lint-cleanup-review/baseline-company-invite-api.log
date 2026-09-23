@@ -1,0 +1,32 @@
+PASS — Fourth member blocked with analyst seat vacant
+PASS — Reserved analyst invitation still allowed
+PASS — Second analyst invitation blocked
+PASS — Third member slot remains available with analyst present
+PASS — Omitted role defaults to MEMBER
+PASS — Untrusted or removed role rejected: "OWNER"
+PASS — Untrusted or removed role rejected: "ADMIN"
+PASS — Untrusted or removed role rejected: "MANAGER"
+PASS — Untrusted or removed role rejected: "SUPER_ADMIN"
+PASS — Untrusted or removed role rejected: ""
+PASS — Untrusted or removed role rejected: "viewer"
+PASS — Untrusted or removed role rejected: ["VIEWER"]
+PASS — Untrusted or removed role rejected: {"role":"VIEWER"}
+PASS — MEMBER cannot invite accounts
+PASS — MEMBER cannot remove accounts
+PASS — MEMBER receives canonical role labels and owner-only management flags
+PASS — VIEWER cannot invite accounts
+PASS — VIEWER cannot remove accounts
+PASS — VIEWER receives canonical role labels and owner-only management flags
+PASS — ADMIN cannot invite accounts
+PASS — ADMIN cannot remove accounts
+PASS — ADMIN receives canonical role labels and owner-only management flags
+PASS — MANAGER cannot invite accounts
+PASS — MANAGER cannot remove accounts
+PASS — MANAGER receives canonical role labels and owner-only management flags
+PASS — Owner can remove a member
+PASS — Owner can remove an analyst
+PASS — Owner cannot remove another stored owner
+PASS — Missing owner is not a spare member slot
+PASS — Pending invitation responses use canonical roles
+
+30 passed, 0 failed; in-memory invitations only.

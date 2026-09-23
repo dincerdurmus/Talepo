@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { HealthCenter } from "@/components/admin/HealthCenter";
-import { Header } from "@/components/layout/Header";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { ADMIN_MFA_COOKIE, verifyMfaSession } from "@/server/admin/mfa";
 import {
   PlatformAuthorizationError,
@@ -42,9 +42,8 @@ export default async function AdminHealthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#071310]">
-      <Header tone="ink" />
+    <AdminShell name={admin.name} role={admin.platformRole} title="Platform sağlığı">
       <HealthCenter />
-    </div>
+    </AdminShell>
   );
 }

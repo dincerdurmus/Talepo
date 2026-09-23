@@ -1,16 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import {
-  Activity,
-  ArrowLeft,
-  Building2,
-  FileText,
-  HandCoins,
-  ShieldCheck,
-  StickyNote,
-  Users,
-} from "lucide-react";
 
 import { AdminUsersTable } from "@/components/admin/AdminUsersTable";
 import { AdminSecurityGate } from "@/components/admin/AdminSecurityGate";
@@ -20,7 +10,8 @@ import { AdminHealthMeta } from "@/components/admin/AdminHealthMeta";
 import { AdminChartInsights } from "@/components/admin/AdminChartInsights";
 import { AdminPrivacyNotice } from "@/components/admin/AdminPrivacyNotice";
 import { CategoryManagement } from "@/components/admin/CategoryManagement";
-import { Header } from "@/components/layout/Header";
+import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminOverview } from "@/components/admin/AdminOverview";
 import { prisma } from "@/lib/prisma";
 import {
   PlatformAuthorizationError,
@@ -47,7 +38,7 @@ export default async function AdminPage() {
   const mfaState = await prisma.user.findUnique({ where: { id: admin.id }, select: { adminMfaEnabled: true } });
   const cookieStore = await cookies();
   if (!verifyMfaSession(cookieStore.get(ADMIN_MFA_COOKIE)?.value, admin.id)) {
-    return <div className="min-h-screen bg-[#071310] text-white"><Header tone="ink" /><AdminSecurityGate enabled={Boolean(mfaState?.adminMfaEnabled)} allowBypass={process.env.NODE_ENV !== "production"} /></div>;
+    return <div className="admin-signature admin-security-frame"><Link href="/panel" className="admin-security-brand">talepo.</Link><AdminSecurityGate enabled={Boolean(mfaState?.adminMfaEnabled)} allowBypass={process.env.NODE_ENV !== "production"} /></div>;
   }
 
   const permissions = adminPermissions(admin.platformRole);
@@ -79,7 +70,6 @@ export default async function AdminPage() {
     canManageCategories ? prisma.category.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, slug: true, description: true, isActive: true, sortOrder: true, _count: { select: { requests: true, companyCategories: true, forms: true, suggestions: true, alertRules: true, inventoryItems: true, priceObservations: true } } } }) : Promise.resolve([]),
   ]);
 
-  const { userCount, companyCount, requestCount, offerCount } = counts;
   const billingByUser = new Map(billingSubscriptions.map((subscription) => [subscription.subjectId, subscription]));
   const serializedUsers = users.map((user) => ({
     ...user,
@@ -95,52 +85,20 @@ export default async function AdminPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-[#071310] text-white">
-      <Header tone="ink" />
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <Link href="/panel" className="inline-flex items-center gap-2 text-sm text-emerald-100/45 transition hover:text-emerald-100">
-              <ArrowLeft className="h-4 w-4" /> Kullanıcı paneline dön
-            </Link>
-            <div className="mt-6 flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-300 text-[#241a02] shadow-lg shadow-amber-300/10"><ShieldCheck className="h-6 w-6" /></span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-200/65">Talepo yönetim merkezi</p>
-                <h1 className="mt-1 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Admin Panel</h1>
-              </div>
-            </div>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-white/45">Hoş geldin {admin.name}. Üyelikleri, planları ve platformun temel hareketlerini buradan yönetebilirsin.</p>
-          </div>
-          <div className="flex items-center gap-2 rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.07] px-4 py-3 text-sm text-emerald-100"><span className="h-2 w-2 rounded-full bg-emerald-300" /> Sistem aktif</div>
-        </div>
-
-        <AdminPrivacyNotice sensitive={canSeeSensitive} />
-
-        <Link href="/admin/notlar" className="mt-5 inline-flex items-center gap-2 rounded-xl border border-sky-200/25 bg-sky-200/[.07] px-4 py-2.5 text-sm font-semibold text-sky-100 transition hover:-translate-y-0.5 hover:border-sky-200/50 hover:bg-sky-200/[.12] active:translate-y-0"><StickyNote className="h-4 w-4" />İç not kayıtlarını aç</Link>
-
-        <section className="my-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {hasAdminPermission(admin.platformRole, "users.view") ? <Metric href="/admin/users" icon={Users} label="Toplam kullanıcı" value={userCount} tone="emerald" /> : null}
-          {hasAdminPermission(admin.platformRole, "analytics.view") ? <Metric href="/admin/companies" icon={Building2} label="Şirket" value={companyCount} tone="cyan" /> : null}
-          {hasAdminPermission(admin.platformRole, "requests.view") ? <Metric href="/admin/requests" icon={FileText} label="Talep" value={requestCount} tone="amber" /> : null}
-          {hasAdminPermission(admin.platformRole, "offers.view") ? <Metric href="/admin/offers" icon={HandCoins} label="Teklif" value={offerCount} tone="violet" /> : null}
-        </section>
-
+    <AdminShell name={admin.name} role={admin.platformRole} title="Genel bakış">
+      <AdminOverview name={admin.name} role={admin.platformRole} counts={counts} dateLabel={new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Istanbul" }).format(new Date())} />
+      <AdminPrivacyNotice sensitive={canSeeSensitive} />
+      <div id="memberships" className="mt-5">
         <AdminUsersTable initialUsers={serializedUsers} permissions={permissions} currentUserId={admin.id} />
-
-        {canManageCategories ? <CategoryManagement initialCategories={categories.map((category) => ({ ...category, isBuiltIn: Boolean(getBuiltInCategoryById(category.slug)) }))} canDeleteCategories={admin.platformRole === "SUPER_ADMIN"} /> : null}
-
-        <AdminOperationsCenter permissions={permissions} />
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <DateRangeComparison /> : null}
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminHealthMeta /> : null}
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <AdminChartInsights /> : null}
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/notifications" className="mt-5 mr-3 inline-flex items-center rounded-xl border border-amber-300/30 bg-amber-300/10 px-4 py-2.5 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20">Bildirim akışı (debug)</Link> : null}
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/curation" className="mt-5 mr-3 inline-flex items-center rounded-xl border border-violet-300/30 bg-violet-300/10 px-4 py-2.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-300/20">Varlık kürasyonu</Link> : null}
-        {hasAdminPermission(admin.platformRole, "analytics.view") ? <Link href="/admin/health" className="mt-5 inline-flex items-center rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-2.5 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/20">Sağlık merkezini aç</Link> : null}
-
-        <div className="mt-5 flex items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-5 py-4 text-xs text-white/35"><Activity className="h-4 w-4 text-emerald-300/60" /> Değişiklikler yalnızca sunucuda doğrulanan admin oturumuyla uygulanır.</div>
-      </main>
-    </div>
+      </div>
+      {canManageCategories ? <div id="categories"><CategoryManagement initialCategories={categories.map((category) => ({ ...category, isBuiltIn: Boolean(getBuiltInCategoryById(category.slug)) }))} canDeleteCategories={admin.platformRole === "SUPER_ADMIN"} /></div> : null}
+      <div id="operations"><AdminOperationsCenter permissions={permissions} /></div>
+      {hasAdminPermission(admin.platformRole, "analytics.view") ? <>
+        <DateRangeComparison />
+        <AdminHealthMeta />
+        <AdminChartInsights />
+      </> : null}
+    </AdminShell>
   );
 }
 
@@ -170,9 +128,4 @@ async function loadDashboardCounts(): Promise<DashboardCounts> {
   } finally {
     await client.end();
   }
-}
-
-function Metric({ href, icon: Icon, label, value, tone }: { href: string; icon: typeof Users; label: string; value: number; tone: "emerald" | "cyan" | "amber" | "violet" }) {
-  const colors = { emerald: "bg-emerald-300/10 text-emerald-200", cyan: "bg-cyan-300/10 text-cyan-200", amber: "bg-amber-300/10 text-amber-200", violet: "bg-violet-300/10 text-violet-200" };
-  return <Link href={href} className="group rounded-[24px] border border-white/[0.08] bg-white/[0.045] p-5 transition hover:-translate-y-0.5 hover:border-emerald-300/30 hover:bg-white/[0.07]"><div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors[tone]}`}><Icon className="h-5 w-5" /></div><p className="mt-5 text-sm text-white/40 group-hover:text-white/65">{label}</p><p className="mt-1 text-3xl font-semibold tracking-tight">{value}</p></Link>;
 }

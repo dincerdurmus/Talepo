@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    await assertSelectedCompanyWriteAccess(user.id);
     const ctx = await requireCompanyFeature(user.id, "lead_distribution");
     const body = (await request.json()) as {
       action?: string;
@@ -126,7 +128,7 @@ export async function POST(request: Request) {
         return NextResponse.json(
           {
             ok: false,
-            message: "Atama için OWNER, ADMIN veya MANAGER rolü gerekir.",
+            message: "Görev atamasını yalnızca firma sahibi yapabilir.",
           },
           { status: 403 },
         );

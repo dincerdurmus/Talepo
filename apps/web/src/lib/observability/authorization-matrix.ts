@@ -8,8 +8,7 @@ export type AuthzActor =
   | "seller"
   | "professional"
   | "company_member"
-  | "company_manager"
-  | "company_admin_owner"
+  | "company_owner"
   | "system";
 
 export type AuthzResource =
@@ -91,17 +90,17 @@ export const AUTHORIZATION_MATRIX: AuthzRule[] = [
     enforcedBy: "requireCompanyFeature + companyId from membership not body alone",
   },
   {
-    actor: "company_manager",
+    actor: "company_owner",
     resource: "opportunity",
     action: "assign",
-    condition: "role OWNER|ADMIN|MANAGER",
+    condition: "role OWNER",
     enforcedBy: "canAssignOpportunities + opportunities API",
   },
   {
-    actor: "company_admin_owner",
+    actor: "company_owner",
     resource: "team",
     action: "manage",
-    condition: "OWNER|ADMIN",
+    condition: "OWNER",
     enforcedBy: "company team APIs / membership roles",
   },
   {
@@ -133,17 +132,17 @@ export const AUTHORIZATION_MATRIX: AuthzRule[] = [
     enforcedBy: "requireUser on mutating APIs",
   },
   {
-    actor: "company_admin_owner",
+    actor: "company_owner",
     resource: "billing",
     action: "manage",
-    condition: "COMPANY subject + ACTIVE membership role OWNER|ADMIN; plan entitlement is not sufficient",
+    condition: "COMPANY subject + ACTIVE membership role OWNER; plan entitlement is not sufficient",
     enforcedBy: "assertCanMutateBilling + canMutateCompanyBilling + checkout APIs + PlanManager",
   },
   {
     actor: "company_member",
     resource: "billing",
     action: "manage",
-    condition: "DENY company checkout/credits; MEMBER/MANAGER/VIEWER cannot mutate company billing",
+    condition: "DENY company checkout/credits; MEMBER/VIEWER and legacy ADMIN/MANAGER cannot mutate company billing",
     enforcedBy: "assertCanMutateBilling + PlanManager canMutateBilling",
   },
   {

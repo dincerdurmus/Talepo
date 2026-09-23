@@ -26,7 +26,7 @@ export const PERSONAL_PREMIUM_MISMATCH_BODY =
   "Kişisel Profesyonel üyeliğiniz, sahip olduğunuz firma çalışma alanında geçerlidir. Sahip olmadığınız ekiplerde firma planı geçerlidir.";
 
 export const TEAM_PLAN_SCOPE_NOTE =
-  "Firma çalışma alanında Profesyonel sahip üyeliği ekibe yansır. Gizli Envanter ve ekstra koltuklar ayrı ücretli eklentilerdir.";
+  "Profesyonel sahip üyeliği ekibe yansır. 1 sahip (Owner), 3 üye ve 1 salt okunur analist koltuğu bulunur. Gizli Envanter ve ek üye koltukları ayrı ücretli eklentilerdir.";
 
 /**
  * Kişisel plan firma planından yüksekse (ör. User Profesyonel + Company Standart

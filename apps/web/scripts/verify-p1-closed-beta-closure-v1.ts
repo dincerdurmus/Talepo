@@ -21,7 +21,6 @@ import {
   composeTextFromBrowseStack,
   createBrowseWalkState,
   createTextOnlyState,
-  pinBrowseSemanticContext,
   resolveHybridQuestions,
 } from "../src/lib/request-composer";
 import { buildUnderstandingSummary } from "../src/lib/request-understanding/activation-bridge";
@@ -187,7 +186,7 @@ console.log("\n=== P1-3 STALE FLASH ===\n");
 console.log("\n=== P1-4 BILLING RBAC ===\n");
 {
   check("OWNER allow", canMutateCompanyBilling("OWNER") === true);
-  check("ADMIN allow", canMutateCompanyBilling("ADMIN") === true);
+  check("legacy company ADMIN denies billing", canMutateCompanyBilling("ADMIN") === false);
   check("MANAGER deny", canMutateCompanyBilling("MANAGER") === false);
   check("MEMBER deny", canMutateCompanyBilling("MEMBER") === false);
   check("VIEWER deny", canMutateCompanyBilling("VIEWER") === false);
@@ -252,7 +251,9 @@ console.log("\n=== P1-4 BILLING RBAC ===\n");
 
 console.log("\n=== P1-5 PART QUESTIONS + GOLF ROLES ===\n");
 {
-  const autoFields = getCategoryById("automotive").fields;
+  const automotive = getCategoryById("automotive");
+  if (!automotive) throw new Error("Automotive category fixture is missing.");
+  const autoFields = automotive.fields;
   const unknownNeed = getVisibleCategoryFields(autoFields, {}, "automotive");
   check(
     "automotive root does not require modelYear",
@@ -276,7 +277,7 @@ console.log("\n=== P1-5 PART QUESTIONS + GOLF ROLES ===\n");
   check(
     "Golf PART subject",
     golfState.understanding.requestSubject.kind.value === "PART",
-    golfState.understanding.requestSubject.kind.value,
+    golfState.understanding.requestSubject.kind.value ?? "UNRESOLVED",
   );
   check(
     "Golf questions do not require modelYear",
@@ -288,7 +289,7 @@ console.log("\n=== P1-5 PART QUESTIONS + GOLF ROLES ===\n");
   const model = golfState.fields.model?.value ?? "";
   const gen =
     golfState.fields.generation?.value ??
-    golfState.understanding.catalogEnrichment?.generation?.label ??
+    golfState.understanding.catalogEnrichment?.generation?.name ??
     "";
   check(
     "Golf brand=Volkswagen model=Golf",
@@ -316,7 +317,7 @@ console.log("\n=== P1-5 PART QUESTIONS + GOLF ROLES ===\n");
       !resolveHybridQuestions(alfa).candidates.some(
         (c) => c.fieldKey === "condition" || c.fieldKey === "mileage",
       ),
-    alfa.understanding.requestSubject.kind.value,
+    alfa.understanding.requestSubject.kind.value ?? "UNRESOLVED",
   );
 }
 

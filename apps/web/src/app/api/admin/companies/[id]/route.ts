@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { normalizeMembershipNumberInput } from "@/lib/auth/membership-number";
+import { normalizeCompanyRole } from "@/lib/membership/company-permissions";
 import { EntitlementError } from "@/lib/membership/types";
 import { writeAdminAudit } from "@/server/admin/audit";
 import { assertMfaSession } from "@/server/admin/mfa";
@@ -56,9 +57,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         await tx.$queryRaw`SELECT id FROM "Company" WHERE id = ${company.id} FOR UPDATE`;
         const existing = await tx.companyMember.findUnique({ where: { companyId_userId: { companyId: company.id, userId: user.id } }, select: { id: true, role: true, status: true } });
         if (existing?.status === "ACTIVE") return { kind: "alreadyActive" as const, memberId: existing.id };
-        await assertCanActivateCompanySeat({ companyId: company.id, db: tx });
+        await assertCanActivateCompanySeat({ companyId: company.id, role: existing?.role ?? "MEMBER", db: tx });
         const member = existing
-          ? await tx.companyMember.update({ where: { id: existing.id }, data: { status: "ACTIVE", joinedAt: new Date(), removedAt: null }, select: { id: true } })
+          ? await tx.companyMember.update({ where: { id: existing.id }, data: { role: normalizeCompanyRole(existing.role)!, status: "ACTIVE", joinedAt: new Date(), removedAt: null }, select: { id: true } })
           : await tx.companyMember.create({ data: { companyId: company.id, userId: user.id, role: "MEMBER", status: "ACTIVE", joinedAt: new Date() }, select: { id: true } });
         await writeAdminAudit(tx, { actorId: admin.id, targetUserId: user.id, action: "USER_UPDATED", reason, before: { companyId: company.id, membershipNumber, membershipStatus: existing?.status ?? null }, after: { companyId: company.id, membershipNumber, membershipStatus: "ACTIVE", companyMemberId: member.id }, metadata: { resourceType: "COMPANY", companyId: company.id, operation: "ASSIGN_SEAT" }, request });
         return { kind: "assigned" as const, memberId: member.id };
@@ -125,10 +126,26 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
     const memberStatus = body.memberStatus as typeof MEMBER_STATUSES[number];
     const result = await prisma.$transaction(async (tx) => {
-      const members = await tx.companyMember.updateMany({
-        where: { companyId: company.id, status: memberStatus === "REMOVED" ? "ACTIVE" : "REMOVED" },
-        data: memberStatus === "REMOVED" ? { status: "REMOVED", removedAt: new Date() } : { status: "ACTIVE", removedAt: null },
-      });
+      await tx.$queryRaw`SELECT id FROM "Company" WHERE id = ${company.id} FOR UPDATE`;
+      let members: { count: number };
+      if (memberStatus === "ACTIVE") {
+        const removed = await tx.companyMember.findMany({
+          where: { companyId: company.id, status: "REMOVED" },
+          select: { id: true, role: true },
+        });
+        // Restore the owner first so their Professional plan applies to later seats.
+        removed.sort((a, b) => Number(b.role === "OWNER") - Number(a.role === "OWNER"));
+        for (const member of removed) {
+          await assertCanActivateCompanySeat({ companyId: company.id, role: member.role, db: tx });
+          await tx.companyMember.update({ where: { id: member.id }, data: { role: normalizeCompanyRole(member.role)!, status: "ACTIVE", removedAt: null } });
+        }
+        members = { count: removed.length };
+      } else {
+        members = await tx.companyMember.updateMany({
+          where: { companyId: company.id, status: "ACTIVE" },
+          data: { status: "REMOVED", removedAt: new Date() },
+        });
+      }
       await writeAdminAudit(tx, {
         actorId: admin.id,
         targetUserId: company.createdById,

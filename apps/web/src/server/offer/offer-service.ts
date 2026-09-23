@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import type { Prisma } from "@/generated/prisma/client";
 import {
   assertCanAccessRequest,
@@ -19,7 +20,7 @@ import { prisma } from "@/lib/prisma";
 import { publicRequestExpiryFilter } from "@/server/request/public-visibility";
 import { resolveOfferCommercialAmount } from "@/lib/offer/commercial-amount";
 import { LEGACY_CHAT_NEGOTIATE_CLOSED_MESSAGE } from "@/lib/offer/offer-negotiation";
-import { resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
+import { assertNegotiationWriteAccess, resolveNegotiationActorSide } from "@/server/offer/offer-negotiation-access";
 import {
   persistOfferAttribution,
   resolveOfferAttribution,
@@ -222,6 +223,7 @@ async function readBonusCreditsInTx(tx: Tx, ctx: EntitlementContext) {
 }
 
 export async function createOffer(userId: string, input: CreateOfferInput) {
+  await assertSelectedCompanyWriteAccess(userId);
   const started = Date.now();
   const issues: string[] = [];
 
@@ -480,6 +482,7 @@ export async function updateOffer(
   offerId: string,
   input: UpdateOfferInput,
 ) {
+  await assertSelectedCompanyWriteAccess(userId);
   const descriptionIssues: string[] = [];
   if (!input.description || input.description.trim().length < 10) {
     descriptionIssues.push("Teklif açıklaması en az 10 karakter olmalı.");
@@ -537,6 +540,8 @@ export async function updateOffer(
   if (!existing) {
     throw new OfferValidationError([OFFER_NO_LONGER_EDITABLE_MESSAGE]);
   }
+
+  await assertCompanyWriteAccess(userId, existing.companyId);
 
   const commercialIssues = collectSubmittedCommercialLockIssues({
     currentAmount: existing.amount.toString(),
@@ -665,6 +670,7 @@ export async function acceptOffer(
   offerId: string,
   options?: { negotiationId?: string },
 ) {
+  await assertSelectedCompanyWriteAccess(userId);
   const started = Date.now();
 
   // Idempotent replay: already accepted → return conversation for authorized parties
@@ -709,6 +715,7 @@ export async function acceptOffer(
           id: true,
           title: true,
           createdById: true,
+          companyId: true,
           // DW-2 koprusu: kategori + il (yalniz kanonik cozumleyiciden).
           city: true,
           category: { select: { slug: true } },
@@ -724,6 +731,7 @@ export async function acceptOffer(
     throw new OfferValidationError(["Teklif bulunamadı veya kabul edilemez durumda."]);
   }
 
+  await assertNegotiationWriteAccess(offer, userId);
   const actorSide = await resolveNegotiationActorSide(offer, userId);
   if (!actorSide) {
     throw new OfferValidationError(["Teklif bulunamadı veya kabul edilemez durumda."]);
@@ -989,6 +997,7 @@ export async function negotiateOffer(): Promise<{ conversationId: string }> {
 }
 
 export async function rejectOffer(userId: string, offerId: string) {
+  await assertSelectedCompanyWriteAccess(userId);
   const offer = await prisma.offer.findFirst({
     where: {
       id: offerId,
@@ -997,7 +1006,7 @@ export async function rejectOffer(userId: string, offerId: string) {
       request: { createdById: userId, deletedAt: null, isModerationHidden: false },
     },
     include: {
-      request: { select: { id: true, title: true } },
+      request: { select: { id: true, title: true, companyId: true } },
     },
   });
 
@@ -1006,6 +1015,7 @@ export async function rejectOffer(userId: string, offerId: string) {
   }
 
   const now = new Date();
+  await assertCompanyWriteAccess(userId, offer.request.companyId);
   const updated = await prisma.$transaction(async (tx) => {
     await tx.$queryRaw`SELECT id FROM "Offer" WHERE id = ${offerId} FOR UPDATE`;
     const rows = await tx.offer.updateMany({

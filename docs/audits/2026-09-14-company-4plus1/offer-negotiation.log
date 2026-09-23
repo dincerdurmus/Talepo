@@ -1,0 +1,119 @@
+
+=== COMMERCIAL AMOUNT AUTHORITY ===
+
+PASS — direct original accept uses offer.amount
+PASS — accepted negotiation wins
+PASS — empty negotiation keeps original
+PASS — round to cents
+PASS — same amount 75000 vs 75000.00
+PASS — same amount rejected helper
+PASS — single helper is canonical
+
+=== SCHEMA / ONE PENDING ===
+
+PASS — OfferNegotiation model exists
+PASS — BUYER/PROVIDER sides
+PASS — PENDING/ACCEPTED/REJECTED/SUPERSEDED/CANCELLED
+PASS — partial unique pending index
+PASS — Offer.amount not altered in migration
+PASS — migration does not overwrite Offer.amount
+PASS — notification types additive
+
+=== TURN / START POLICY ===
+
+PASS — buyer can start first
+PASS — provider cannot start first
+PASS — cannot respond to own pending
+PASS — provider can counter after buyer
+PASS — same amount rejected
+PASS — amount > 0
+PASS — currency from original offer
+PASS — unique pending maps to user message
+
+=== ACCEPT / REJECT SEMANTICS ===
+
+PASS — direct accept still buyer-only without negotiationId
+PASS — counter accept uses negotiationId
+PASS — offer accept data has no amount overwrite
+PASS — pending cancelled on direct accept
+PASS — conversation via ensureOfferConversation
+PASS — buyerUserId is request owner
+PASS — deal outcome uses commercial amount
+PASS — deal create writes agreedPrice
+PASS — offer reject uses updateMany
+PASS — offer reject cancels pending negotiations
+PASS — counter reject only updates negotiation
+
+=== RACE / ATOMIC GUARDS ===
+
+PASS — propose FOR UPDATE
+PASS — acceptOffer FOR UPDATE
+PASS — rejectOffer FOR UPDATE
+PASS — negotiation claim updateMany PENDING
+PASS — closed offer statuses
+PASS — closed request statuses
+PASS — closed message exists
+PASS — pending exists message
+PASS — turn message
+PASS — same amount message
+
+=== AUTH / ISOLATION ===
+
+PASS — buyer is request.createdById
+PASS — personal provider companyId null
+PASS — company uses assertCompanyMembership
+PASS — ACTIVE membership
+PASS — unrelated side is null
+PASS — propose uses DomainError FORBIDDEN
+
+=== CONVERSATION / NOTIFICATIONS ===
+
+PASS — negotiation route does not create conversation on propose
+PASS — legacy negotiateOffer still exported
+PASS — legacy negotiateOffer does not create conversation
+PASS — legacy negotiateOffer throws closed message
+PASS — offer POST still handles negotiate action
+PASS — buyer UI removed chat pazarlık CTA
+PASS — notifications reuse createNotification
+PASS — COUNTER_OFFER_RECEIVED
+PASS — COUNTER_OFFER_ACCEPTED
+PASS — COUNTER_OFFER_REJECTED
+PASS — buyer propose copy is pazarlık
+PASS — seller inbox deep link includes offer id
+PASS — actor is excluded from recipients
+PASS — company recipients are ACTIVE members
+PASS — idempotent create uses actionUrl
+PASS — destination sanitizer includes counter types
+PASS — actionUrl wins for buyer counter dest
+PASS — counter received without actionUrl does not dump to teklifler
+PASS — counter accepted fallback is mesajlar
+
+=== OFFER INTELLIGENCE / RADAR / ENTITLEMENT ===
+
+PASS — intelligence reads Offer.amount only
+PASS — radar counts Offer rows
+PASS — radar does not query OfferNegotiation
+PASS — standard has no intelligence
+PASS — professional has intelligence
+PASS — negotiation has no plan gate
+
+=== UI SURFACES ===
+
+PASS — reusable panel exists
+PASS — gelen uses panel
+PASS — teklifler uses panel
+PASS — request detail hands off to incoming workspace
+PASS — original amount labelled
+PASS — agreed amount labelled
+PASS — no personal names in timeline
+PASS — min 44px targets
+PASS — TrMoneyInput used
+PASS — V1 price only
+
+=== NO SECOND ENGINES ===
+
+PASS — no second offer engine file
+PASS — accept reuses acceptOffer
+PASS — no JSON history blob
+
+OK 87/87 — structured negotiation V1

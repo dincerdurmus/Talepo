@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -64,7 +66,7 @@ function sellerInitials(name: string) {
 
 export function IncomingOfferCard({
   offer,
-  actionable = false,
+  actionable: suppliedActionable = false,
   completeness,
   rank,
   trust,
@@ -89,6 +91,7 @@ export function IncomingOfferCard({
   isArchived?: boolean;
 }) {
   const router = useRouter();
+  const actionable = useCompanyCanWrite() && suppliedActionable;
   const isUnread = useOfferGroupLiveUnread(isUnreadProp);
   const [composerOpen, setComposerOpen] = useState(false);
   const [panelBusy, setPanelBusy] = useState<string | null>(null);

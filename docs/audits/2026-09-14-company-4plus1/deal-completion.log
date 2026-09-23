@@ -1,0 +1,61 @@
+
+=== ACCEPTED ≠ COMPLETED ===
+
+PASS — 1 SUBMITTED not eligible copy
+PASS — one-sided not completed
+PASS — both confirmed is completed
+PASS — pending not completed
+PASS — trust where requires both timestamps
+PASS — honest count copy
+
+=== AUTHORITY / AGREED PRICE ===
+
+PASS — reuses DealOutcome model
+PASS — no second Transaction model
+PASS — accept still snapshots commercial amount
+PASS — direct accept commercial = offer amount
+PASS — negotiated accept commercial = negotiation
+PASS — completion does not write agreedPrice
+
+=== BILATERAL / ATOMIC ===
+
+PASS — confirm uses FOR UPDATE
+PASS — buyerConfirmedAt null guard
+PASS — supplierConfirmedAt null guard
+PASS — completedAt once
+PASS — request completed only after both
+PASS — offer ACCEPTED required
+PASS — role derived server-side
+PASS — company membership reused
+
+=== COPY / UI ===
+
+PASS — confirm copy
+PASS — completed copy
+PASS — no payment claim
+PASS — waiting copy
+PASS — no star ratings
+PASS — no agreed price input
+PASS — min 44px
+
+=== NOTIFICATIONS / ENTITLEMENT ===
+
+PASS — notification types additive
+PASS — migration additive
+PASS — destination sanitizer
+PASS — actionUrl conversation allowed
+PASS — fallback panel mesajlar
+PASS — no self notify
+PASS — standard can complete
+PASS — no plan gate on confirm
+
+=== TRUST / ANALYTICS / REGRESSION GUARDS ===
+
+PASS — intelligence still Offer.amount
+PASS — radar still Offer groupBy
+PASS — analiz keeps accepted separate
+PASS — completed uses bilateral where
+PASS — no reputation score
+PASS — legacy not auto completed
+
+OK 41/41 — deal completion V1

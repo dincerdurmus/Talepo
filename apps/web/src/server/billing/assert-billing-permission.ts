@@ -6,7 +6,7 @@ import type { BillingSubjectRef } from "@/lib/billing/types";
 /**
  * Billing mutate permission:
  * - USER subject: must be the actor
- * - COMPANY subject: OWNER or ADMIN active membership
+ * - COMPANY subject: OWNER active membership
  */
 export async function assertCanMutateBilling(input: {
   actorUserId: string;
@@ -34,7 +34,7 @@ export async function assertCanMutateBilling(input: {
   if (!membership || !canMutateCompanyBilling(membership.role)) {
     throw new BillingError({
       code: BillingErrorCode.BILLING_FORBIDDEN,
-      userMessage: "Plan/ödeme işlemleri için OWNER veya ADMIN rolü gerekir.",
+      userMessage: "Plan ve ödeme işlemlerini yalnızca firma sahibi yapabilir.",
     });
   }
 }

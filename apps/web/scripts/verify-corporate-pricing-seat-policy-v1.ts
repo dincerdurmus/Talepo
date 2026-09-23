@@ -77,13 +77,13 @@ check(
 );
 
 // --- Seat policy (not entitlements) ---
-check("7 corporate base includedSeats = 1", getIncludedSeats("CORPORATE") === 1);
+check("7 corporate base includedSeats = 5 (4+1)", getIncludedSeats("CORPORATE") === 5);
 check(
-  "8 standard/premium seat caps null; professional/corporate base is 1",
+  "8 standard uncapped; canonical paid workspaces include 5 (4+1)",
   getIncludedSeats("STANDARD") === null &&
-    getIncludedSeats("PREMIUM") === null &&
-    getIncludedSeats("PROFESSIONAL") === 1 &&
-    getIncludedSeats("CORPORATE") === 1,
+    getIncludedSeats("PREMIUM") === 5 &&
+    getIncludedSeats("PROFESSIONAL") === 5 &&
+    getIncludedSeats("CORPORATE") === 5,
 );
 check(
   "9 seat policy separate from featuresForPlan",
@@ -91,7 +91,7 @@ check(
     'from "./entitlements"',
   ) &&
     !read("src/lib/membership/seat-policy.ts").includes("prisma") &&
-    PLAN_SEAT_POLICY.CORPORATE.includedSeats === 1,
+    PLAN_SEAT_POLICY.CORPORATE.includedSeats === 5,
 );
 check(
   "9b owner counts / pending does not (usage builder)",
@@ -99,17 +99,20 @@ check(
     planTier: "PROFESSIONAL",
     workspaceEffectivePlanTier: "PROFESSIONAL",
     activeSeats: 1,
-  }).atLimit === true &&
+    activeOwnerSeats: 1,
+  }).atLimit === false &&
     buildSeatUsage({
       planTier: "PROFESSIONAL",
       workspaceEffectivePlanTier: "PROFESSIONAL",
       activeSeats: 1,
+    activeOwnerSeats: 1,
       extraSeatsPurchased: 1,
-    }).includedSeats === 2 &&
+    }).includedSeats === 6 &&
     buildSeatUsage({
       planTier: "PROFESSIONAL",
       workspaceEffectivePlanTier: "PROFESSIONAL",
       activeSeats: 1,
+    activeOwnerSeats: 1,
     }).activeSeats === 1,
 );
 check(

@@ -1,0 +1,177 @@
+{
+  "createdAt": "2026-09-14T16:18:19.414Z",
+  "liveDatabaseUsed": false,
+  "productionFilesChanged": false,
+  "hashes": [
+    {
+      "file": "apps\\web\\src\\lib\\membership\\product-packaging.ts",
+      "before": "a207aae1d47eec368565c482bc8eab3ac3c084b1a1a919cf3ccdbbf8ddf621de",
+      "after": "a207aae1d47eec368565c482bc8eab3ac3c084b1a1a919cf3ccdbbf8ddf621de"
+    },
+    {
+      "file": "apps\\web\\scripts\\verify-p1-closed-beta-closure-v1.ts",
+      "before": "d3cf93e384b487a1fb373527843eae390c331a7c618593a4464dad98c011a809",
+      "after": "d3cf93e384b487a1fb373527843eae390c331a7c618593a4464dad98c011a809"
+    }
+  ],
+  "results": [
+    {
+      "id": "baseline-types",
+      "exitCode": 1
+    },
+    {
+      "id": "proposed-types",
+      "exitCode": 1
+    },
+    {
+      "id": "naive-types",
+      "exitCode": 1
+    },
+    {
+      "id": "baseline-app-types",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-app-types",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-company-4plus1",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-company-analysis-access",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-company-seat-lifecycle",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-company-invite-api",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-company-owner-management",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-standard-pro-packaging",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-two-plan-packaging",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-global-panel-visual-system",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-p1-closed-beta-closure",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-corporate-workspace-isolation",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-phase4c-billing",
+      "exitCode": 1
+    },
+    {
+      "id": "baseline-pro-company-monetization",
+      "exitCode": 0
+    },
+    {
+      "id": "baseline-corporate-pricing-seat-policy",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-company-4plus1",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-company-analysis-access",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-company-seat-lifecycle",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-company-invite-api",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-company-owner-management",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-standard-pro-packaging",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-two-plan-packaging",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-global-panel-visual-system",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-p1-closed-beta-closure",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-corporate-workspace-isolation",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-phase4c-billing",
+      "exitCode": 1
+    },
+    {
+      "id": "proposed-pro-company-monetization",
+      "exitCode": 0
+    },
+    {
+      "id": "proposed-corporate-pricing-seat-policy",
+      "exitCode": 0
+    }
+  ],
+  "addedTypeErrors": [],
+  "naiveAddedTypeErrors": [
+    {
+      "code": 2554,
+      "file": "apps/web/scripts/verify-global-panel-visual-system-v1.ts",
+      "line": 5,
+      "message": "Expected 1 arguments, but got 2."
+    },
+    {
+      "code": 2554,
+      "file": "apps/web/scripts/verify-global-panel-visual-system-v1.ts",
+      "line": 6,
+      "message": "Expected 1 arguments, but got 2."
+    },
+    {
+      "code": 2554,
+      "file": "apps/web/scripts/verify-global-panel-visual-system-v1.ts",
+      "line": 7,
+      "message": "Expected 1 arguments, but got 2."
+    },
+    {
+      "code": 2554,
+      "file": "apps/web/scripts/verify-standard-pro-packaging-v1.ts",
+      "line": 19,
+      "message": "Expected 1 arguments, but got 2."
+    },
+    {
+      "code": 2554,
+      "file": "apps/web/scripts/verify-two-plan-packaging-v1.ts",
+      "line": 60,
+      "message": "Expected 1 arguments, but got 2."
+    }
+  ],
+  "runtimeRegressions": []
+}

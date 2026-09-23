@@ -1,3 +1,4 @@
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { NextResponse } from "next/server";
 
 import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
@@ -172,6 +173,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await requireUser();
+    await assertSelectedCompanyWriteAccess(user.id);
     const ctx = await requireResourceOwnerFeature(user.id, "smart_alerts");
     const body = (await request.json()) as {
       action?: string;

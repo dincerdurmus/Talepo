@@ -1,4 +1,5 @@
 import type { FeatureKey } from "./entitlements";
+import { WORKSPACE_SEAT_DESCRIPTION } from "./seat-policy";
 import {
   ENABLE_STANDARD_REQUEST_ACCESS_DELAY,
   PLAN_DEFINITIONS,
@@ -64,7 +65,7 @@ export const PUBLIC_PLAN_TAGLINES: Record<PublicPlanId, string> = {
 
 /** Expansion path — not a third plan and not a live add-on checkout claim. */
 export const PROFESSIONAL_WORKSPACE_NOTE =
-  "Firma çalışma alanında ek ekip koltukları ve ücretli Gizli Envanter ile genişletilebilir.";
+  `Firma çalışma alanında ${WORKSPACE_SEAT_DESCRIPTION.toLocaleLowerCase("tr-TR")} Gizli Envanter ayrı ücretli eklentidir.`;
 
 export const PUBLIC_PLAN_CARD_FEATURES: Record<PublicPlanId, string[]> = {
   STANDARD: [
@@ -120,6 +121,11 @@ export const PUBLIC_FEATURE_MATRIX = [
     label: "Teklif Zekâsı",
     standard: "Kilitli önizleme",
     professional: "Anonim aggregate",
+  },
+  {
+    label: "Firma ekibi",
+    standard: "—",
+    professional: "1 sahip (Owner) + 3 üye + 1 analist",
   },
 ] as const;
 

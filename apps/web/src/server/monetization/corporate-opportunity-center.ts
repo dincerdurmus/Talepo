@@ -3,6 +3,7 @@
  * Reuses OpportunityMatch + discoveryProjection — no second matching brain.
  */
 
+import { COMPANY_STORED_WRITE_ROLES, normalizeCompanyRole } from "@/lib/membership/company-permissions";
 import {
   matchBandFromSignals,
   parseDiscoveryProjection,
@@ -249,7 +250,7 @@ export async function buildCorporateOpportunityCenter(input: {
       orderBy: { submittedAt: "desc" },
     }),
     prisma.companyMember.findMany({
-      where: { companyId: input.companyId, status: "ACTIVE" },
+      where: { companyId: input.companyId, status: "ACTIVE", role: { in: [...COMPANY_STORED_WRITE_ROLES] } },
       select: {
         id: true,
         role: true,
@@ -402,7 +403,7 @@ export async function buildCorporateOpportunityCenter(input: {
   const teamMembers: CorporateTeamMemberOption[] = team.map((m) => ({
     id: m.id,
     label: m.user.name?.trim() || m.user.email || "Üye",
-    role: m.role,
+    role: normalizeCompanyRole(m.role) ?? m.role,
     load: m._count.assignedOpportunities,
   }));
 

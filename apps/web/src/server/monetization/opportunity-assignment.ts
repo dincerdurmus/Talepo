@@ -1,7 +1,7 @@
 /** Role gate for Corporate lead distribution (no DB). */
 
-const ASSIGNER_ROLES = new Set(["OWNER", "ADMIN", "MANAGER"]);
+import { canManageCompany } from "@/lib/membership/company-permissions";
 
 export function canAssignOpportunities(role: string): boolean {
-  return ASSIGNER_ROLES.has(role);
+  return canManageCompany(role);
 }

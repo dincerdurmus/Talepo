@@ -1,0 +1,60 @@
+=== P1-1 BUYER OFFER COPY ===
+
+PASS — buyer incoming cards do not print Eksik:
+PASS — buyer compare table does not print Eksik:
+PASS — buyer incoming uses scope in details accordion not main card
+PASS — seller OfferForm still has completeness guidance
+
+=== P1-2 COMPOSE DEDUPE ===
+
+PASS — Bosch pump single pompa / single için
+PASS — Bosch headline no duplicate için pompa
+PASS — Golf engine no duplicate motor/için/yedek
+PASS — Alfa browse PART natural
+PASS — browse-only PART no yedek için yedek parça
+PASS — dedupe is semantic compose planning not post-hoc replace
+
+=== P1-3 STALE FLASH ===
+
+PASS — text change sets isSyncing immediately
+PASS — questions/facts empty while syncing
+PASS — updating copy present
+PASS — category root does not seed vehicle-purchase text
+PASS — automotive needType is not defaulted to vehicle
+
+=== P1-4 BILLING RBAC ===
+
+PASS — OWNER allow
+PASS — legacy company ADMIN denies billing
+PASS — MANAGER deny
+PASS — MEMBER deny
+PASS — VIEWER deny
+PASS — null deny
+PASS — assertCanMutateBilling uses role helper
+PASS — plan checkout calls assertCanMutateBilling
+PASS — credit checkout calls assertCanMutateBilling
+PASS — membership upgrade/credits call assertCanMutateBilling
+PASS — plan page computes canMutateBilling from company role
+PASS — PlanManager gates checkout UI
+PASS — offer submit has no MEMBER role block
+PASS — authz matrix documents MEMBER billing DENY + offer ALLOW
+
+=== P1-5 PART QUESTIONS + GOLF ROLES ===
+
+C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-p1-closed-beta-closure-v1.ts:143
+        throw new Error("Automotive category fixture is missing.");
+        ^
+
+Error: Automotive category fixture is missing.
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\verify-p1-closed-beta-closure-v1.ts:143:15
+    at load (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:47:5)
+    at C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\apps\web\scripts\lib\isolated-typescript-loader.cjs:50:24
+    at runFault (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\docs\audits\2026-09-14-test-maintenance\verify-guards.cjs:38:22)
+    at Object.<anonymous> (C:\Users\USER\Documents\Talepo\worktrees\company-4plus1-cbd187c\docs\audits\2026-09-14-test-maintenance\verify-guards.cjs:56:22)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+
+Node.js v24.19.0

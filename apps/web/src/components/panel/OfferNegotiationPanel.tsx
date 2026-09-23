@@ -1,5 +1,7 @@
 "use client";
 
+import { useCompanyCanWrite } from "@/components/panel/CompanyWriteScope";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -62,7 +64,7 @@ export function OfferNegotiationPanel({
   offerStatus,
   viewer,
   negotiations,
-  canMutate,
+  canMutate: suppliedCanMutate,
   hideTriggers = false,
   composerOpen,
   onComposerOpenChange,
@@ -71,6 +73,7 @@ export function OfferNegotiationPanel({
   bargainCopy = false,
 }: OfferNegotiationPanelProps) {
   const router = useRouter();
+  const canMutate = useCompanyCanWrite() && suppliedCanMutate;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [amount, setAmount] = useState("");

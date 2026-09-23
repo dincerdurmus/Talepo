@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { OfferExistingStatus } from "@/components/panel/OfferExistingStatus";
 import { ComplaintForm } from "@/components/panel/ComplaintForm";
 import { OfferForm } from "@/components/panel/OfferForm";
+import { CompanyReadOnlyNotice } from "@/components/panel/CompanyWriteScope";
+import { canMutateCompanyWorkspace } from "@/lib/membership/company-permissions";
 import { OfferRequestPreview } from "@/components/panel/OfferRequestPreview";
 import { displayRequestFieldValue } from "@/lib/field-display";
 import { canAccessRequest } from "@/lib/membership/assert-entitlement";
@@ -31,6 +33,9 @@ export default async function OfferRequestPage({
     await getCompanyContextOptions(),
   );
   const entitlementDto = toEntitlementDTO(entitlements);
+  if (entitlements.subject.type === "company" && !canMutateCompanyWorkspace(entitlements.companyRole)) {
+    return <CompanyReadOnlyNotice />;
+  }
   const { id } = await params;
   const query = await searchParams;
   const attributionTouch =

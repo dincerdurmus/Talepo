@@ -1,0 +1,28 @@
+PASS — 1 no company → corporate deny (matrix)
+PASS — 2 personal standard corporate feature deny
+PASS — 3 corporate inherits professional
+PASS — 4 corporate hidden inventory allow
+PASS — 5 professional hidden inventory deny
+PASS — 6 premium hidden inventory deny
+PASS — 7 no company-first default
+PASS — 8 preferUserSubject or missing companyId → personal
+PASS — 9 missing cookie → personal
+PASS — 9b webhook activation target company XOR user
+PASS — 10 syncSubjectPlanFromBilling is subject-scoped
+PASS — 11 offer companyId from company subject
+PASS — 12 team API requires team_management
+PASS — 13 company feature requires company subject
+PASS — 14 inventory role gate VIEWER
+PASS — 15 multi-company no leakage (explicit companyId membership)
+PASS — 16 create-request uses company context
+PASS — 17 seat foundation via CompanyMember count (no seat columns)
+PASS — 18 personalPlan always computed
+PASS — 19 corporate-only keys
+PASS — 20 corporate ⊇ professional ⊇ premium
+PASS — 21 membership rules isolation note
+PASS — 22 ekip page plan gate
+PASS — 23 billing resolve subject uses company context
+PASS — 24 no MAX(user, company) merge
+PASS — 25 verify script present
+
+Corporate workspace isolation: 26 passed, 0 failed

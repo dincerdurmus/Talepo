@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { prisma } from "@/lib/prisma";
 import { URGENT_NO_OFFER_NUDGE_MS } from "@/lib/request/urgent-nudge-constants";
 import {
@@ -85,6 +86,7 @@ export async function sendUrgentRequestToSuppliers(
   matchedCompanyCount: number;
   notifiedUserCount: number;
 }> {
+  await assertSelectedCompanyWriteAccess(userId);
   const request = await prisma.request.findFirst({
     where: {
       id: requestId,
@@ -93,13 +95,14 @@ export async function sendUrgentRequestToSuppliers(
       isUrgent: true,
       status: { in: [...OPEN_STATUSES] },
     },
-    select: { id: true },
+    select: { id: true, companyId: true },
   });
 
   if (!request) {
     throw new UrgentNudgeError("Talep bulunamadı veya acil yayın için uygun değil.");
   }
 
+  await assertCompanyWriteAccess(userId, request.companyId);
   return distributeRequestToCompanies(request.id, {
     reminderCopy: true,
     skipAlreadyRemindedUsers: true,

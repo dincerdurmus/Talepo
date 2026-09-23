@@ -20,10 +20,9 @@ assert.equal(getPublicProductLabel("CORPORATE", "WORKSPACE"), "Profesyonel");
 assert.equal(toPublicPlanId("PREMIUM"), "PROFESSIONAL");
 assert.ok(PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Talepo Radar"));
 assert.ok(PUBLIC_FEATURE_MATRIX.some((row) => row.label === "Teklif Zekâsı"));
-assert.equal(
-  PUBLIC_FEATURE_MATRIX.find((row) => row.label === "Offer Copilot"),
-  undefined,
-);
+// Check runtime labels so a removed feature reappearing still fails the test.
+const featureLabels: readonly string[] = PUBLIC_FEATURE_MATRIX.map((row) => row.label);
+assert.ok(!featureLabels.includes("Offer Copilot"));
 const standard = featuresForPlan("STANDARD");
 assert.equal(standard.submit_offer, true);
 assert.equal(standard.ai_offer_assistant, false);

@@ -1,3 +1,5 @@
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
+import { assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { NextResponse } from "next/server";
 
 import { readIdempotencyKeyFromRequest } from "@/lib/observability/idempotency";
@@ -14,6 +16,7 @@ export async function POST(
 ) {
   try {
     const user = await requireUser();
+    await assertSelectedCompanyWriteAccess(user.id);
     const { id } = await context.params;
     const headerKey = readIdempotencyKeyFromRequest(request);
     // Body companyId/userId/status are ignored. Scope comes from the DB row.
@@ -29,6 +32,8 @@ export async function POST(
       redirectTo: `/panel/taleplerim/${cloned.id}/duzenle?yeni=1`,
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },

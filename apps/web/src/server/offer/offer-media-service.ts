@@ -1,3 +1,4 @@
+import { assertCompanyWriteAccess, assertSelectedCompanyWriteAccess } from "@/server/company/company-write-access";
 import { randomBytes } from "node:crypto";
 
 import {
@@ -55,6 +56,9 @@ export async function attachOfferMedia(
   if (!offer) {
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
+
+  await assertSelectedCompanyWriteAccess(userId);
+  await assertCompanyWriteAccess(userId, offer.companyId);
 
   if (!canWriteOfferMedia(offer, userId)) {
     throw new DomainError({
@@ -129,6 +133,9 @@ export async function finalizeOfferMedia(userId: string, offerId: string) {
   if (!offer) {
     throw new OfferValidationError(["Teklif bulunamadı."]);
   }
+
+  await assertSelectedCompanyWriteAccess(userId);
+  await assertCompanyWriteAccess(userId, offer.companyId);
 
   if (!canWriteOfferMedia(offer, userId)) {
     throw new DomainError({

@@ -1,14 +1,15 @@
+import { COMPANY_STORED_WRITE_ROLES } from "@/lib/membership/company-permissions";
 import { prisma } from "@/lib/prisma";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 import { matchRequestToAlertRules } from "./alert-matching";
 
-const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
+const NOTIFY_ROLES = COMPANY_STORED_WRITE_ROLES;
 
 /**
  * Deliver in-app notifications for alert rule matches on publish.
  * USER alerts → target user only (never the request author).
- * COMPANY alerts → company members (OWNER/ADMIN/MANAGER), skipping the publisher.
+ * COMPANY alerts → company members (owner and operating members, including legacy member aliases), skipping the publisher.
  * Action URLs carry a per-user signed FOLLOW attribution touch.
  * Dedupe on user+request+alert name (tokens change; do not key on full actionUrl).
  * Non-blocking — failures must not break request publish.

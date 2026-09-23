@@ -1,3 +1,4 @@
+import { entitlementErrorResponse } from "@/lib/api/entitlement-response";
 import { NextResponse } from "next/server";
 import { parseAvailableRequestInput } from "@/server/request/parse-available-request";
 
@@ -28,6 +29,8 @@ export async function PATCH(
       redirectTo: `/panel/taleplerim/${updated.id}`,
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },
@@ -70,6 +73,8 @@ export async function DELETE(
       redirectTo: "/panel/taleplerim",
     });
   } catch (error) {
+    const entitlementResponse = entitlementErrorResponse(error);
+    if (entitlementResponse) return entitlementResponse;
     if (error instanceof AuthenticationError) {
       return NextResponse.json(
         { ok: false, message: error.message },
