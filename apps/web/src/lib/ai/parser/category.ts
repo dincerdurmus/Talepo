@@ -12,6 +12,7 @@ import {
   TECHNOLOGY_BRANDS,
   technologyProductKeywordList,
 } from "./brand-catalog";
+import { SERVICE_LEMMAS } from "@/lib/request-understanding/requested-item-role";
 
 const AUTOMOTIVE_BRAND_KEYWORDS = brandKeywordList(AUTOMOTIVE_BRANDS);
 const AUTOMOTIVE_MODEL_KEYWORDS = automotiveModelKeywordList();
@@ -717,6 +718,21 @@ const PAINT_SERVICE_PATTERNS = [
 ];
 
 /** Minimum score before we claim a category confidently in UX. */
+
+
+/** Mülk sözcüğü: oda deseni ya da konut/ticari mekân adı. */
+const PROPERTY_WORD_PATTERN =
+  /\b[1-9]\s*\+\s*[0-9]\b|\b(?:ev|daire|villa|konut|arsa|dükkan|dukkan|ofis|depo)\b/i;
+
+/** Emlak İŞLEMİ çıpası: mülkün kendisinin istendiğini söyleyen sözcükler. */
+const REAL_ESTATE_TRANSACTION_PATTERN =
+  /(satılık|satilik|kiralık|kiralik|kiralamak|kiraya|satın\s*al|satin\s*al|emlak|tapu|devren|yatırımlık|yatirimlik)/i;
+
+/** Sözlükten gelen bir sözcüğü düzenli ifadeye güvenle gömer. */
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export const CATEGORY_CONFIDENT_MIN_SCORE = 2;
 
 export type CategoryDetectionResult = {
@@ -775,6 +791,49 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
   let winnerScore = 0;
   let runnerUpId: string | null = null;
   let runnerUpScore = 0;
+
+  /**
+   * YAPI: HİZMET ADI BAŞTA İSE, MÜLK SÖZCÜĞÜ HİZMETİN NESNESİDİR (P2-8).
+   *
+   * Ölçüldü (A-Z koşusu): "nakliyat 3+1 ev bursa" → `real-estate`. Kullanıcı
+   * taşınmak için nakliyeci arıyor; sistem ona m², kat ve bina yaşı soruyor
+   * ve yayın hiç açılmıyor. Aynı cümle "evden eve nakliyat" yazılınca DOĞRU
+   * kalıyordu — yani kusur sözcükte değil AĞIRLIKTAYDI: iki emlak anahtar
+   * kelimesi tek hizmet sözcüğünü eziyordu.
+   *
+   * Kural sözcük saymaz, SIRA okur. Türkçe talep cümlesi baş adla başlar:
+   * "nakliyat 3+1 ev bursa" cümlesinde istenen şey nakliyattır, "3+1 ev"
+   * taşınacak olandır. Tersi de doğrudur: "3+1 daire arıyorum, servise yakın
+   * olsun" cümlesinde mülk baştadır ve hizmet sözcüğü onu NİTELER — orada bu
+   * kural çalışmaz ve emlak oyu korunur.
+   *
+   * Emlak İŞLEMİ çıpası ("satılık", "kiralık", "kiralamak", "emlak") varsa
+   * kural hiç çalışmaz: o çıpa mülkün KENDİSİNİN istendiğini söyler ve hizmet
+   * sözcüğü onu geçemez. Fail-closed taraf budur.
+   *
+   * Hizmet sözlüğü burada YENİDEN YAZILMAZ: `SERVICE_LEMMAS` hizmet dilinin
+   * tek yetkili yeridir. Yarın oraya eklenen her sözcük aynı korumayı kazanır.
+   *
+   * Karar DÖNGÜNÜN ÜSTÜNDE hesaplanır çünkü iki kategoriyi birden ilgilendirir:
+   * emlak oyu düşer, hizmet oyu yükselir. Yalnız birini yapmak ikisini de
+   * kazandırmayan bir berabere üretiyordu (ölçüldü: skor 2-2 kalıyordu).
+   */
+  const serviceLemmaIndex = SERVICE_LEMMAS.reduce((best, lemma) => {
+    const at = normalized.search(
+      new RegExp(`(?:^|[^a-zçğıöşü0-9])${escapeRegexLiteral(lemma)}`, "i"),
+    );
+    if (at < 0) return best;
+    return best < 0 ? at : Math.min(best, at);
+  }, -1);
+  const propertyWordIndex = normalized.search(
+    PROPERTY_WORD_PATTERN,
+  );
+  const hasRealEstateTransaction = REAL_ESTATE_TRANSACTION_PATTERN.test(normalized);
+  const serviceHeadsTheRequest =
+    serviceLemmaIndex >= 0 &&
+    propertyWordIndex >= 0 &&
+    serviceLemmaIndex < propertyWordIndex &&
+    !hasRealEstateTransaction;
 
   for (const [categoryId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
     let score = keywords.reduce(
@@ -922,6 +981,31 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         );
       if (hasPropertyAnchor) {
         score += 2;
+      }
+
+      /**
+       * HİZMET CÜMLESİNDE ODA DESENİ MÜLK TALEBİ DEĞİLDİR (P2-8, 2026-09-23).
+       *
+       * Ölçüldü (A-Z koşusu): "nakliyat 3+1 ev bursa" → `real-estate`.
+       * Kullanıcı taşınmak için nakliyeci arıyor; sistem ona m², kat ve bina
+       * yaşı soruyor ve yayın hiç açılmıyor. Aynı cümle "evden eve nakliyat"
+       * yazılınca DOĞRU kalıyordu — yani kusur sözcükte değil AĞIRLIKTAYDI:
+       * iki emlak anahtar kelimesi ("3+1", "ev") tek hizmet sözcüğünü eziyor.
+       *
+       * EKSEN. Bir hizmet cümlesinde oda deseni ve konut adı, hizmetin
+       * NESNESİDİR: taşınacak, boyanacak, temizlenecek şeyi anlatır. Mülkün
+       * KENDİSİ istendiğinde cümlede bir EMLAK İŞLEMİ çıpası bulunur
+       * ("satılık", "kiralık", "kiralamak", "satın almak", "emlak").
+       *
+       * Hizmet sözlüğü burada YENİDEN YAZILMAZ: `SERVICE_LEMMAS` hizmet
+       * dilinin tek yetkili yeridir ve oradan okunur. Kural kelimeye özel
+       * değildir — sözlüğe yarın eklenen her hizmet sözcüğü de aynı
+       * korumayı kazanır.
+       */
+      if (serviceHeadsTheRequest) {
+        // Oda deseni (+3) ve mülk çıpası (+2) bu cümlede aranan şeyi
+        // anlatmıyor; ikisi de geri alınır.
+        score = Math.max(0, score - 5);
       }
 
       /**
@@ -1087,6 +1171,10 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
     }
 
     if (categoryId === "services") {
+      // Baş addaki hizmet adı, cümlenin ne istediğini söyleyen şeydir.
+      if (serviceHeadsTheRequest) {
+        score += 3;
+      }
       if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
         score += 5;
       }

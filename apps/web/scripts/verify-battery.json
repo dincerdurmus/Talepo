@@ -145,6 +145,7 @@
     "verify-saved-search-nested-form-v1",
     "verify-sayfam-home-v1",
     "verify-semantic-request-subject",
+    "verify-service-over-room-layout-v1",
     "verify-session-password-epoch-v1",
     "verify-signal-rail-sidebar-v1",
     "verify-single-brain-closure",
@@ -252,5 +253,6 @@
   "_eklendi_2026_09_23_d0032": "audit-review-hold-v1 (D-0032: inceleme bekleyen talep hicbir okuma yuzeyine sizmaz) eklendi.",
   "_eklendi_2026_09_23_d0030": "verify-stated-answer-suppression-v1 (D-0030: metinde yazilan cevap sorulmaz) eklendi.",
   "_eklendi_2026_09_23_d0031": "verify-request-contact-notice-v1 (D-0031: talepte iletisim bilgisi uyarir, engellemez) eklendi.",
-  "_eklendi_2026_09_23_p1_4": "verify-tire-brand-identity-v1 (P1-4: lastik markasi kanonik marka alaninda) eklendi."
+  "_eklendi_2026_09_23_p1_4": "verify-tire-brand-identity-v1 (P1-4: lastik markasi kanonik marka alaninda) eklendi.",
+  "_eklendi_2026_09_23_p2_8": "verify-service-over-room-layout-v1 (P2-8: hizmet cumlesinde oda deseni kategoriyi calmaz) eklendi."
 }

@@ -43,7 +43,8 @@
     "acceptance:migrate-apply-file": "npx --yes tsx scripts/apply-acceptance-migration-v1.ts",
     "verify:stated-answer-suppression": "npx --yes tsx scripts/verify-stated-answer-suppression-v1.ts",
     "verify:request-contact-notice": "npx --yes tsx scripts/verify-request-contact-notice-v1.ts",
-    "verify:tire-brand-identity": "npx --yes tsx scripts/verify-tire-brand-identity-v1.ts"
+    "verify:tire-brand-identity": "npx --yes tsx scripts/verify-tire-brand-identity-v1.ts",
+    "verify:service-over-room-layout": "npx --yes tsx scripts/verify-service-over-room-layout-v1.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
