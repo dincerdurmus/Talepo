@@ -1,0 +1,13 @@
+{
+  "name": "talepo-qa-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Talepo A-Z uctan uca tarayici testleri. Uygulamanin bagimliliklarina girmez.",
+  "scripts": {
+    "test": "playwright test",
+    "test:buyer": "playwright test buyer-intake.spec.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
