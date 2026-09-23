@@ -1,3 +1,5 @@
+import { applyEnglishProductLexicon } from "./english-product-lexicon";
+
 /**
  * Cheap casual Turkish normalization for request parsing.
  * Expands common abbreviations / typos and strips conversational slang
@@ -101,7 +103,16 @@ const PHRASE_REPLACEMENTS: Array<[RegExp, string]> = [
 export function normalizeCasualTurkish(text: string): string {
   if (!text?.trim()) return text ?? "";
 
-  let result = text;
+  /**
+   * İKİ DİLLİ ÜRÜN ADI ÖNCE ÇÖZÜLÜR (P1-3, 2026-09-23).
+   *
+   * Kullanıcı ürün adını İngilizce yazabilir ("Akülü wheelchair arıyorum").
+   * Çeviri EN BAŞTA yapılır ki aşağıdaki bütün eksenler — kategori, özne,
+   * ürün türü, sorular — aynı Türkçe adı görsün. Sözlük tek yerde durur;
+   * her kategori listesine ayrı ayrı İngilizce eş anlamlı eklemek dört ayrı
+   * yama olurdu ve dördü sessizce ayrışırdı.
+   */
+  let result = applyEnglishProductLexicon(text);
   for (const [pattern, replacement] of PHRASE_REPLACEMENTS) {
     result = result.replace(pattern, replacement);
   }
