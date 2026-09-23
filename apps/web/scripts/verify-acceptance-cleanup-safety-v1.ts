@@ -96,6 +96,9 @@ const FAKE_MODELS = [
   "conversation",
   "conversationParticipant",
   "message",
+  // D-0032 kuyruk kaydı: model burada yoksa sahte istemci onu hiç tanımaz ve
+  // gerçek koşuda düşen çağrı burada sessizce görünmez kalır.
+  "moderationCase",
 ];
 
 function makeClient(store: Store): FakeClient {
@@ -181,6 +184,12 @@ function buildStore(): Store {
       { id: "acc-part", conversationId: "acc-conv", userId: "acc-user-0" },
       { id: "foreign-part", conversationId: "foreign-conv", userId: "foreign-user-1" },
     ],
+    moderationCase: [
+      { id: "acc-case-1", subjectType: "REQUEST", subjectId: "acc-req-1", category: "REQUEST_REVIEW", targetUserId: "acc-user-0" },
+      { id: "acc-case-2", subjectType: "REQUEST", subjectId: "acc-req-2", category: "REQUEST_REVIEW", targetUserId: "acc-user-0" },
+      { id: "foreign-case", subjectType: "REQUEST", subjectId: "foreign-req", category: "REQUEST_REVIEW", targetUserId: "foreign-user-1" },
+      { id: "foreign-case-other-category", subjectType: "USER", subjectId: "acc-user-0", category: "SPAM", targetUserId: "acc-user-0" },
+    ],
     message: [
       { id: "acc-msg", conversationId: "acc-conv", senderUserId: "acc-user-2" },
       { id: "foreign-msg", conversationId: "foreign-conv", senderUserId: "foreign-user-1" },
@@ -200,6 +209,12 @@ const FOREIGN_IDS: Record<string, string[]> = {
   conversation: ["foreign-conv"],
   conversationParticipant: ["foreign-part"],
   message: ["foreign-msg"],
+  /**
+   * D-0032 kuyruk kaydı (2026-09-23). Yabancı satır iki türlüdür ve ikisi de
+   * hayatta kalmalıdır: başkasının talebini konu alan kayıt ve bizim
+   * personamızı hedef alsa bile BAŞKA kategorideki bir şikâyet kaydı.
+   */
+  moderationCase: ["foreign-case", "foreign-case-other-category"],
 };
 
 function idsOf(store: Store, model: string): string[] {

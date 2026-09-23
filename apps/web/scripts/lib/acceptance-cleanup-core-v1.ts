@@ -14,9 +14,19 @@
  */
 import { ACCEPTANCE_COMPANY, PERSONAS } from "./acceptance-personas-v1.constants";
 import { ACCEPTANCE_FIXTURE_PREFIX } from "./acceptance-fixtures-v1.constants";
+import { REQUEST_REVIEW_MODERATION_CATEGORY as REQUEST_REVIEW_CLEANUP_CATEGORY } from "@/lib/request-understanding/publish-disposition";
 
 /** Dependency order — a model may only be deleted after everything that restricts it. */
 export const ACCEPTANCE_CLEANUP_ORDER = [
+  /**
+   * D-0032 (2026-09-23): şüpheli talep bir `ModerationCase` satırı üretir.
+   * Yeni bir satır türü eklenip temizliğe yazılmazsa kabul veritabanında
+   * açıklanamayan kalıntı birikir — ve o kalıntı, bir sonraki koşuda
+   * "gerçek kuyruk" sanılır. Kayıt talepten ÖNCE silinir: `subjectId` bir
+   * yabancı anahtar değildir, ama silme sırası okunabilir kalsın diye
+   * bağımlılık yönü korunur.
+   */
+  "moderationCase",
   "message",
   "conversationParticipant",
   "conversation",
@@ -135,6 +145,27 @@ export function buildAcceptanceCleanupPlan(scope: CleanupScope): CleanupStep[] {
   }
   if (scope.offerIds.length > 0) {
     byModel.offer = { id: { in: scope.offerIds } };
+  }
+  if (scope.requestIds.length > 0 || scope.userIds.length > 0) {
+    /**
+     * Sahiplik KİMLİKLE kanıtlanır, metinle değil: kayıt ya bizim bir
+     * talebimizi konu alır ya da hedefi bizim bir personamızdır. Kategori
+     * ayrıca daraltır — yabancı bir şikâyet kaydı bu kapıdan geçemez.
+     */
+    const moderationOr: Array<Record<string, unknown>> = [];
+    if (scope.requestIds.length > 0) {
+      moderationOr.push({
+        subjectType: { in: ["REQUEST"] },
+        subjectId: { in: scope.requestIds },
+      });
+    }
+    if (scope.userIds.length > 0) {
+      moderationOr.push({
+        category: { in: [REQUEST_REVIEW_CLEANUP_CATEGORY] },
+        targetUserId: { in: scope.userIds },
+      });
+    }
+    if (moderationOr.length > 0) byModel.moderationCase = { OR: moderationOr };
   }
   if (scope.requestIds.length > 0) {
     byModel.requestMatch = { requestId: { in: scope.requestIds } };
