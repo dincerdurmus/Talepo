@@ -1,5 +1,6 @@
 import { featuresForPlan } from "@/lib/membership/entitlements";
 import { prisma } from "@/lib/prisma";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 const TRACKED_FIELDS = [
   "budgetMin",
@@ -94,7 +95,7 @@ export async function deliverBudgetChangeAlerts(
   }>,
 ): Promise<{ created: number; skipped: number }> {
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: { id: true, title: true, createdById: true },
   });
   if (!request) return { created: 0, skipped: 0 };

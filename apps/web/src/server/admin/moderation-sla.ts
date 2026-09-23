@@ -1,9 +1,7 @@
-const SLA_HOURS = {
-  CRITICAL: 4,
-  HIGH: 24,
-  MEDIUM: 48,
-  LOW: 72,
-} as const;
+import { MODERATION_SLA_HOURS } from "@/lib/moderation/sla-hours";
+
+/** Tablo burada TANIMLANMAZ; tek yetkili tanım `lib/moderation/sla-hours`. */
+const SLA_HOURS = MODERATION_SLA_HOURS;
 
 export function moderationSla(priority: string, createdAt: Date, now = new Date()) {
   const targetHours = SLA_HOURS[priority as keyof typeof SLA_HOURS] ?? SLA_HOURS.MEDIUM;

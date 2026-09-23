@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { REVIEW_HOLD_STATUS } from "@/lib/request/review-hold";
+import { approveHeldRequest, rejectHeldRequest } from "@/server/request/review-hold-decision";
 import { requirePlatformAdmin } from "@/server/auth/require-platform-admin";
 import { writeAdminAudit } from "@/server/admin/audit";
 import { moderationSla } from "@/server/admin/moderation-sla";
@@ -69,12 +71,28 @@ export async function PATCH(request: Request) {
       const allowedRoles = admin.platformRole === "SUPER_ADMIN" ? ["SUPPORT", "ADMIN", "SUPER_ADMIN"] : ["SUPPORT"];
       if (!assignee || assignee.status !== "ACTIVE" || assignee.deletedAt || !allowedRoles.includes(assignee.platformRole)) return NextResponse.json({ ok: false, message: "Bu kullanıcı şikayet takibine atanamaz." }, { status: 403 });
     }
+    let reviewHoldAction: "APPROVE" | "REJECT" | null = null;
     const item = await prisma.$transaction(async (tx) => {
       if (enforcement === "HIDE_CONTENT" || enforcement === "RESTORE_CONTENT") {
         const hidden = enforcement === "HIDE_CONTENT";
         const data = hidden ? { isModerationHidden: true, moderationHiddenAt: new Date(), moderationHiddenById: admin.id, moderationReason: reason } : { isModerationHidden: false, moderationHiddenAt: null, moderationHiddenById: null, moderationReason: null };
-        if (current.subjectType === "REQUEST") await tx.request.update({ where: { id: current.subjectId }, data });
-        else await tx.offer.update({ where: { id: current.subjectId }, data });
+        /**
+         * D-0032: İNCELEME KUYRUĞUNDAKİ TALEP AYRI KARARDIR.
+         *
+         * Genel "içeriği gizle / geri yükle" yaptırımı bir talebi yalnız
+         * görünür/görünmez yapar. Kuyruktaki talep HİÇ YAYINLANMAMIŞTIR:
+         * onaylamak durumu, yayın anını, tedarikçi görünürlüğünü açmak ve
+         * eşleştirmeyi O AN tetiklemek demektir. İkisini tek `update` ile
+         * geçiştirmek, onaylanmış talebi kimsenin görmediği bir yerde
+         * bırakırdı. Karar `review-hold-decision.ts`de, burada yalnız
+         * hangisinin çalışacağı seçilir.
+         */
+        if (current.subjectType === "REQUEST") {
+          const held = await tx.request.findFirst({ where: { id: current.subjectId, status: REVIEW_HOLD_STATUS }, select: { id: true } });
+          if (held) reviewHoldAction = hidden ? "REJECT" : "APPROVE";
+          else await tx.request.update({ where: { id: current.subjectId }, data });
+        }
+        if (current.subjectType !== "REQUEST") await tx.offer.update({ where: { id: current.subjectId }, data });
       }
       if (enforcement === "RESTRICT_24H" || enforcement === "RESTRICT_7D") {
         const hours = enforcement === "RESTRICT_24H" ? 24 : 24 * 7;
@@ -95,6 +113,14 @@ export async function PATCH(request: Request) {
       await writeAdminAudit(tx, { actorId: admin.id, targetUserId: current.targetUserId, action: "MODERATION_CASE_UPDATED", reason: reason || `Moderasyon durumu ${status} olarak güncellendi`, before: { status: current.status, priority: current.priority, assigneeId: current.assigneeId, restrictionUntil: current.targetUser?.moderationRestrictedUntil?.toISOString() ?? null }, after: { status, priority, assigneeId }, metadata: { caseId: current.id, enforcement, subjectType: current.subjectType, subjectId: current.subjectId }, request });
       return updated;
     });
+    /**
+     * Kuyruk kararı İŞLEM DIŞINDA uygulanır: onay eşleştirme ve bildirim
+     * tetikler, ikisi de uzun süren ve dış hataya açık işlerdir. Moderasyon
+     * kaydının güncellenmesi onlara bağlı kalırsa admin ekranı bir fanout
+     * hatası yüzünden kilitlenirdi.
+     */
+    if (reviewHoldAction === "APPROVE") await approveHeldRequest({ requestId: current.subjectId, adminUserId: admin.id });
+    if (reviewHoldAction === "REJECT") await rejectHeldRequest({ requestId: current.subjectId, adminUserId: admin.id, reason });
     return NextResponse.json({ ok: true, item });
   } catch { return NextResponse.json({ ok: false, message: "Moderasyon kaydı güncellenemedi." }, { status: 403 }); }
 }

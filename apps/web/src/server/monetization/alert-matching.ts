@@ -5,6 +5,7 @@ import {
 } from "@/lib/monetization/preference-criteria";
 import { prisma } from "@/lib/prisma";
 import type { ResourceOwnerType } from "@/generated/prisma/client";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 export type AlertRuleMatch = {
   alertRuleId: string;
@@ -31,7 +32,7 @@ export async function matchRequestToAlertRules(
   requestId: string,
 ): Promise<AlertRuleMatch[]> {
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: {
       id: true,
       title: true,

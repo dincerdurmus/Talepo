@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { matchRequestToAlertRules } from "./alert-matching";
 import { matchRequestToInventory } from "./inventory-matching";
 import { matchCompanyToRequest } from "./smart-matching";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 export { canAssignOpportunities } from "./opportunity-assignment";
 
@@ -60,7 +61,7 @@ export async function runAutomaticOpportunityHunter(
 
   // Phase 3C — SavedSearch canonical filters consume discoveryProjection (no re-parse)
   const requestProjection = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: { discoveryProjection: true },
   });
   const projection = parseDiscoveryProjection(

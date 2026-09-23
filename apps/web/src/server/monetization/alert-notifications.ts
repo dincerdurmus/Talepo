@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { attributedRequestDetailHref } from "@/server/offer/attributed-request-href";
 
 import { matchRequestToAlertRules } from "./alert-matching";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 const NOTIFY_ROLES = ["OWNER", "ADMIN", "MANAGER"] as const;
 
@@ -20,7 +21,7 @@ export async function deliverAlertRuleNotifications(
   if (matches.length === 0) return { created: 0, skipped: 0 };
 
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: {
       id: true,
       title: true,

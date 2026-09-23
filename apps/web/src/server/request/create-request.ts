@@ -4,6 +4,8 @@ import {
 } from "@/lib/discovery";
 import { assertEntitlement } from "@/lib/membership/assert-entitlement";
 import { getCompanyContextOptions } from "@/lib/membership/company-context";
+import { REQUEST_REVIEW_MODERATION_CATEGORY } from "@/lib/request-understanding/publish-disposition";
+import { reviewHoldNotice } from "@/lib/request-composer/v2/publish-readiness";
 import { FEATURE_BOOST_OPTIONS, getPlanDefinition } from "@/lib/membership/plans";
 import { resolveEntitlements } from "@/lib/membership/resolve-entitlements";
 import { EntitlementError } from "@/lib/membership/types";
@@ -60,6 +62,12 @@ function resolveDiscoveryProjection(
 
 export async function createRequest(userId: string, input: CreateRequestInput) {
   const started = Date.now();
+  /**
+   * Hüküm SUNUCUDA türetilmiştir (`parseCreateRequestInput`). Burada yeniden
+   * hesaplanmaz ve istemci gövdesinden okunmaz; tek bir yerde verilen karar
+   * burada yalnız UYGULANIR.
+   */
+  const holdForReview = Boolean(input.publishHold);
   const idempotencyKey = normalizeIdempotencyKey(input.idempotencyKey);
 
   if (idempotencyKey) {
@@ -241,17 +249,27 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         aiScore: input.aiScore,
         aiSummary: buildAiSummary(input),
         discoveryProjection: discoveryProjection ?? undefined,
-        status: "PUBLISHED",
+        status: holdForReview ? "PENDING_REVIEW" : "PUBLISHED",
         city: resolveDedicatedCity(input),
         district: input.district,
         budgetMin: budget.min,
         budgetMax: budget.max,
         deadlineAt: resolveDedicatedDeadline(input),
-        publishedAt: now,
+        /**
+         * D-0032 — GÖRÜNMEZLİĞİN ÜÇ AYAĞI.
+         *
+         * İnceleme bekleyen talep hiçbir okuma yüzeyine sızmamalı. Tek bir
+         * bayrağa güvenmiyoruz, çünkü yüzeylerin bir kısmı `publishedAt`e,
+         * bir kısmı `status`a, bir kısmı `isModerationHidden`a bakıyor:
+         * üçü birden kapatılır. `audit-review-hold-v1` hangi yüzeyin hangisini
+         * okuduğunu sayar; biri açık kalırsa kırmızı verir.
+         */
+        publishedAt: holdForReview ? null : now,
+        isModerationHidden: holdForReview,
         isUrgent: input.isUrgent ?? false,
         isFeatured,
         featuredUntil,
-        visibleToSuppliersAt,
+        visibleToSuppliersAt: holdForReview ? null : visibleToSuppliersAt,
         coverImageUrl: input.coverImageUrl ?? null,
         fieldValues: {
           create: input.fields.flatMap((field) => {
@@ -270,6 +288,36 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
         publishedAt: true,
       },
     });
+
+    if (holdForReview) {
+      /**
+       * Kuyruk kaydı MEVCUT moderasyon modeline yazılır; ikinci bir model
+       * kurulmaz. Kanıt etiketleri `details` alanında durur, çünkü moderatör
+       * "neden kuyrukta" sorusunun cevabını göremezse kuyruk bir kara kutudur.
+       */
+      await tx.moderationCase.create({
+        data: {
+          subjectType: "REQUEST",
+          subjectId: request.id,
+          category: REQUEST_REVIEW_MODERATION_CATEGORY,
+          summary: `İnceleme bekleyen talep: ${request.title}`,
+          details: `Şüphe kanıtları: ${input.publishHold?.evidence.join(", ") || "belirtilmedi"}`,
+          priority: "HIGH",
+          targetUserId: userId,
+        },
+      });
+      await tx.notification.create({
+        data: {
+          userId,
+          type: "REQUEST_PUBLISHED",
+          title: "Talebiniz kontrol ediliyor",
+          message: reviewHoldNotice(),
+          actionUrl: `/panel/taleplerim/${request.id}`,
+          requestId: request.id,
+        },
+      });
+      return request;
+    }
 
     await tx.notification.create({
       data: {
@@ -315,6 +363,28 @@ export async function createRequest(userId: string, input: CreateRequestInput) {
       requestId: request.id,
       userId,
     });
+
+    /**
+     * İNCELEME BEKLEYEN TALEP DAĞITILMAZ (D-0032).
+     *
+     * `distributeRequestToCompanies` kendi durum beyaz listesiyle de onu
+     * atlardı; ama o koruma ÇAĞRI SIRASINA bağlıdır. Yayınlanmamış bir
+     * talebin fanout'a hiç GİRMEMESİ gerekir — kapı burada, kararın verildiği
+     * yerde kurulur. Fiyat gözlemi de aynı sebeple ertelenir: henüz yayında
+     * olmayan bir talep piyasa verisi üretemez.
+     */
+    if (holdForReview) {
+      log.info("request.publish.held_for_review", {
+        outcome: "success",
+        requestId: request.id,
+        userId,
+        context: { evidence: input.publishHold?.evidence.join(",") ?? "" },
+      });
+      return {
+        ...request,
+        distribution: { matchedCompanyCount: 0, notifiedUserCount: 0 },
+      };
+    }
 
     // Match + notify suppliers outside the create transaction so publish
     // still succeeds if distribution has a soft failure.

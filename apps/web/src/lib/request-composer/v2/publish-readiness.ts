@@ -2,6 +2,7 @@
  * Composer publish readiness — gates review CTA and hard publish.
  */
 
+import { MODERATION_SLA_HOURS } from "@/lib/moderation/sla-hours";
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import type { RequestScope } from "@/lib/request-understanding/types";
 import type { ScheduleResult } from "./question-profile-types";
@@ -103,6 +104,23 @@ const OUT_OF_SCOPE_NOTICES: Record<
   UNSUPPORTED_REMOVED_SCOPE: OUT_OF_SCOPE_REMOVED_NOTICE,
   NEEDS_SCOPE_CLARIFICATION: SCOPE_CLARIFICATION_PHARMACY_NOTICE,
 };
+
+/**
+ * İNCELEME BEKLEYEN TALEBİN KULLANICIYA GÖRÜNEN METNİ (D-0032).
+ *
+ * Süre uydurulmaz: moderasyon SLA'sının HIGH önceliği tek yetkili kaynaktır
+ * (`server/admin/moderation-sla.ts`). Metne elle "24 saat" yazmak, SLA
+ * değiştiği gün kullanıcıya yalan söylemek olurdu.
+ */
+const REVIEW_HOLD_TARGET_HOURS = MODERATION_SLA_HOURS.HIGH;
+
+export function reviewHoldNotice(targetHours: number = REVIEW_HOLD_TARGET_HOURS): string {
+  return (
+    "Talebiniz kısa bir kontrolden sonra yayınlanacak. Genellikle " +
+    `${targetHours} saat içinde sonuçlanır ve sonuç size bildirilir. ` +
+    "Bu sırada talebiniz kimseye gösterilmez."
+  );
+}
 
 export function outOfScopeNoticeFor(scope: string | null | undefined): string {
   return (

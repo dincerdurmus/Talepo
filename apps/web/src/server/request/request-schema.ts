@@ -16,6 +16,7 @@ import {
   sanitizeRawInput,
 } from "@/lib/request/raw-input";
 import { outOfScopeNoticeFor } from "@/lib/request-composer/v2/publish-readiness";
+import { requestPublishDisposition } from "@/lib/request-understanding/publish-disposition";
 import { isUnsupportedRequestScope } from "@/lib/request-understanding/types";
 import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
 import { understandRequest } from "@/lib/request-understanding/understand-request";
@@ -84,6 +85,15 @@ export type CreateRequestInput = {
   discoveryProjection?: unknown;
   /** Phase 4B — optional client Idempotency-Key (also accepted via header). */
   idempotencyKey?: string | null;
+  /**
+   * D-0032: sunucunun kendi metinden türettiği "incelemeye al" hükmü.
+   *
+   * İstemci gönderemez — `parseCreateRequestInput` onu her zaman yeniden
+   * hesaplar ve gelen değeri kullanmaz. Doluysa talep kaydedilir ama
+   * yayınlanmaz; içindeki kanıt etiketleri admin kuyruğunda "neden kuyrukta"
+   * olarak görünür.
+   */
+  publishHold?: { evidence: string[] } | null;
 };
 
 export class RequestValidationError extends Error {
@@ -225,6 +235,7 @@ export function parseCreateRequestInput(
    * varsa o tercih edilir, yoksa gövde metni okunur. Aynı fonksiyon PATCH
    * yolunda da çalıştığı için güncelleme ile arz ilanı yayınlanamaz.
    */
+  let publishHold: { evidence: string[] } | null = null;
   const scopeText = rawInputExplicit ?? description;
   if (scopeText.length >= 3) {
     const scope = understandRequest({
@@ -247,8 +258,28 @@ export function parseCreateRequestInput(
      * cümle composer ile sunucuda AYNIDIR ve `RequestScope`'a eklenen yeni
      * bir değer bu kapıyı kendiliğinden kapatır.
      */
-    if (isUnsupportedRequestScope(scope.value)) {
+    /**
+     * ÜÇ SONUÇ, TEK OTORİTE (D-0032, 2026-09-23).
+     *
+     * Kapı artık "kapsam dışı mı" değil "bu talep yayınlanmalı mı" sorusunu
+     * sorar ve cevabı `requestPublishDisposition` verir. BLOCK bugünkü
+     * davranıştır. REVIEW reddetmez — kayıt oluşur ama YAYINLANMAZ; kararın
+     * kanıtı `publishHold` ile `createRequest`e taşınır ve oradan admin
+     * kuyruğuna yazılır.
+     *
+     * KANIT İSTEMCİDEN GELMEZ. Hem kapsam hem hüküm burada, kullanıcının
+     * kendi metninden yeniden türetilir; istemcinin gönderdiği hiçbir alan
+     * bir talebi kuyruktan kaçıramaz ya da kuyruğa sokamaz.
+     */
+    const disposition = requestPublishDisposition({
+      requestScope: scope.value,
+      scopeConfidence: scope.confidence,
+      scopeEvidence: scope.evidence,
+    });
+    if (disposition.decision === "BLOCK") {
       issues.push(outOfScopeNoticeFor(scope.value));
+    } else if (disposition.decision === "REVIEW") {
+      publishHold = { evidence: disposition.evidence };
     }
   }
 
@@ -355,5 +386,6 @@ export function parseCreateRequestInput(
     discoveryProjection: parseDiscoveryProjection(raw.discoveryProjection) ?? undefined,
     idempotencyKey:
       typeof raw.idempotencyKey === "string" ? raw.idempotencyKey : null,
+    publishHold,
   };
 }

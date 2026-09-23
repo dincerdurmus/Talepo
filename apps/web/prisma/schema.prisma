@@ -95,6 +95,8 @@ enum CategorySuggestionStatus {
 
 enum RequestStatus {
   DRAFT
+  /// D-0032: supheli talep kaydedilir ama YAYINLANMAZ; admin onayindan sonra PUBLISHED olur.
+  PENDING_REVIEW
   PUBLISHED
   RECEIVING_OFFERS
   OFFER_SELECTED

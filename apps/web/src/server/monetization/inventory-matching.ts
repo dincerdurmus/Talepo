@@ -15,6 +15,7 @@ import { parseDiscoveryProjection } from "@/lib/discovery";
 import type { RequestDiscoveryProjection } from "@/lib/discovery/types";
 import type { MatchResult } from "@/lib/monetization/types";
 import { prisma } from "@/lib/prisma";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 export type InventoryMatch = MatchResult & {
   inventoryItemId: string;
@@ -151,7 +152,7 @@ export async function matchRequestToInventory(
   companyId?: string,
 ): Promise<InventoryMatch[]> {
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: {
       id: true,
       categoryId: true,

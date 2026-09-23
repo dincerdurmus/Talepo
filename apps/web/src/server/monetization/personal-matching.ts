@@ -19,6 +19,7 @@ export {
   type PersonalMatchResult,
   type PersonalPreferenceFilter,
 } from "./personal-matching-core";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 /**
  * Load USER-owned active preference filters once.
@@ -94,7 +95,7 @@ export async function matchPersonalToRequest(
   requestId: string,
 ): Promise<PersonalMatchResult> {
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: {
       discoveryProjection: true,
       title: true,

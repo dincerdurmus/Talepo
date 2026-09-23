@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { MatchResult } from "@/lib/monetization/types";
+import { REVIEW_HOLD_GUARD } from "@/lib/request/review-hold";
 
 type RequestForMatch = {
   id: string;
@@ -114,7 +115,7 @@ export async function matchRequestToCompanies(
   options?: { companyIds?: string[]; minScore?: number },
 ): Promise<MatchResult[]> {
   const request = await prisma.request.findUnique({
-    where: { id: requestId },
+    where: { id: requestId, ...REVIEW_HOLD_GUARD },
     select: {
       id: true,
       categoryId: true,
@@ -186,7 +187,7 @@ export async function matchCompanyToRequest(
       },
     }),
     prisma.request.findUnique({
-      where: { id: requestId },
+      where: { id: requestId, ...REVIEW_HOLD_GUARD },
       select: {
         id: true,
         categoryId: true,

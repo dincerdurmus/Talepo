@@ -2,6 +2,7 @@
   "_not": "Bu dosya Talepo'nun DOĞRULAMA CETVELİDİR. CI bunu okur. Bir doğrulayıcı buraya yazılmadıysa hiç koşmaz; yeşil sanılan şey ölçülmemiş şeydir.",
   "_ratchet": "Bilinen kırmızılar SİLİNMEZ, SAYIYLA tutulur. Sayı artarsa CI kırmızı verir (yeni regresyon). Sayı azalırsa CI yine uyarır — cetvel güncellenmeli, yoksa kazanılan zemin sessizce geri verilebilir.",
   "green": [
+    "audit-review-hold-v1",
     "verify-acceptance-cleanup-safety-v1",
     "verify-alfa-identity-closure-v1",
     "verify-analiz-v1",
@@ -244,5 +245,6 @@
   "_eklendi_2026_09_20": "1077 vakalik korpusun iki dogrulayicisi (brain-adversarial-corpus, discovery-quality) eklendi. 2026-09-17 olcumunde disarida kalmalarinin tek sebebi o oturumun 60 saniyelik zaman siniriydi (rc=124); 2026-09-20'de tam kosu ikisinde de rc=0, sureler 144 ve 140 saniye. Batarya script basina sure siniri koymaz ve paralel kostugu icin duvar saatine etkileri havuzda erir; talep beyninin en guclu kalite kapisinin elle kosulan script olarak kalmasi kabul edilmedi.",
   "_eklendi_2026_09_21_ilac": "verify-pharmacy-scope-v1 cetvele eklendi. Kurucu karari D-0028 (ilac/eczane kapsam disi) bir GUVENLIK SINIRI olarak ele alindi; kapi 32 kontrol tasir: kapsam degeri, kategori uydurulmamasi, yayin akisinin BLOCKED olmasi, kullaniciya gosterilen kanonik metin, SUNUCU yayin kapisi (parseCreateRequestInput dort kapsam degerini de durdurur) ve serbest metni beyne veren her API rotasinin kapsam kapisi tasimasi. Iki mutasyonla kanitlandi: sunucu kapisi devre disi -> 4 KIRMIZI, arama yuzeyi kapisi silindi -> 1 KIRMIZI.",
   "_eklendi_2026_09_21_jev_rota": "verify-jev-route-wiring-v1 cetvele eklendi. fetchJevDecisions yazilmisti ama istek yolundan hic cagrilmiyordu; demet artik API sinirinda bir kez cekilip senkron karar saglayicisina veriliyor. Kapi 12 kontrol tasir: USE_JEV_IN_PRODUCTION kapali, gecis kapaliyken anahtar ortamda olsa bile ag cagrisi yok, ve serbest metni beyne veren alti sunucu yolunun hepsi demeti tasiyor. Iki mutasyonla kanitlandi: bir rotadan demet silindi -> 1 KIRMIZI, bayrak kazayla acildi -> 2 KIRMIZI. Jev'in KARAR KALITESI bu kapinin konusu degildir (o verify-jev-decision-provider-v1, ag ister, CI'da kosmaz).",
-  "_eklendi_2026_09_23_metamorfik": "verify-scope-metamorphic-v1 (kapsam karari metamorfik kararliligi) ve TITCK marka sozlugu eklendi."
+  "_eklendi_2026_09_23_metamorfik": "verify-scope-metamorphic-v1 (kapsam karari metamorfik kararliligi) ve TITCK marka sozlugu eklendi.",
+  "_eklendi_2026_09_23_d0032": "audit-review-hold-v1 (D-0032: inceleme bekleyen talep hicbir okuma yuzeyine sizmaz) eklendi."
 }
