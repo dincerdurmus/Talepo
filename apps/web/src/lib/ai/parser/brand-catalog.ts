@@ -844,6 +844,46 @@ export const FURNITURE_BRANDS: BrandEntry[] = [
   { canonical: "Adore", aliases: ["adore mobilya"] },
 ];
 
+/**
+ * LASTİK MARKALARI — AYRI BİR KATALOG (P1-4, 2026-09-23).
+ *
+ * Neden ayrı: lastik markaları otomobil markalarıyla aynı küme DEĞİLDİR
+ * ("Michelin" bir araç markası değil) ve `AUTOMOTIVE_BRANDS` içine
+ * karıştırılırsa "Michelin arıyorum" bir ARAÇ talebi gibi okunabilir.
+ *
+ * Neden gerekli: ölçüldü (A-Z koşusu, 12 vaka) — lastik markaları hiçbir
+ * katalogda yoktu, bu yüzden `brandEvidence` `no-evidence` çıkıyor ve marka
+ * `brandCandidate`e, 0.30 güvenle ÇIKARIM olarak düşüyordu. Çıkarım KB-17
+ * gereği soruyu kapatmaz ve yayın yükünde açık beyan sayılmaz; yani
+ * kullanıcı markayı yazmışken profesyonelin ödediği filtre onu göremiyordu.
+ *
+ * ETİKET: KÜRE EDİLMİŞ (curated), NEEDS_VERIFICATION. Liste Türkiye'de yaygın
+ * lastik markalarından elle derlendi; kamuya açık bir kaynaktan türetilmedi.
+ * Kapsamı tam DEĞİLDİR ve öyle raporlanmaz.
+ */
+export const TIRE_BRANDS: BrandEntry[] = [
+  { canonical: "Michelin", aliases: ["michelin"] },
+  { canonical: "Bridgestone", aliases: ["bridgestone"] },
+  { canonical: "Goodyear", aliases: ["goodyear", "good year"] },
+  { canonical: "Pirelli", aliases: ["pirelli"] },
+  { canonical: "Continental", aliases: ["continental"] },
+  { canonical: "Lassa", aliases: ["lassa"] },
+  { canonical: "Petlas", aliases: ["petlas"] },
+  { canonical: "Dunlop", aliases: ["dunlop"] },
+  { canonical: "Hankook", aliases: ["hankook"] },
+  { canonical: "Kumho", aliases: ["kumho"] },
+  { canonical: "Yokohama", aliases: ["yokohama"] },
+  { canonical: "Nokian", aliases: ["nokian"] },
+  { canonical: "Falken", aliases: ["falken"] },
+  { canonical: "Toyo", aliases: ["toyo"] },
+  { canonical: "Nexen", aliases: ["nexen"] },
+  { canonical: "Sailun", aliases: ["sailun"] },
+  { canonical: "Starmaxx", aliases: ["starmaxx", "star maxx"] },
+  { canonical: "Kormoran", aliases: ["kormoran"] },
+  { canonical: "Barum", aliases: ["barum"] },
+  { canonical: "Sava", aliases: ["sava"] },
+];
+
 export const BABY_BRANDS: BrandEntry[] = [
   { canonical: "Chicco", aliases: ["chicco"] },
   { canonical: "Joie", aliases: ["joie"] },
@@ -949,6 +989,7 @@ export function findAnyCatalogBrand(text: string): string | undefined {
     findBrand(text, HOME_KITCHEN_BRANDS) ||
     findBrand(text, MACHINERY_BRANDS) ||
     findBrand(text, FURNITURE_BRANDS) ||
+    findBrand(text, TIRE_BRANDS) ||
     findBrand(text, BABY_BRANDS)
   );
 }

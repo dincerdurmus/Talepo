@@ -2,7 +2,7 @@ import {
   isConversationStopword,
   stripConversationRemainder,
 } from "@/lib/ai/parser/negation";
-import { findBrand, TECHNOLOGY_BRANDS, AUTOMOTIVE_BRANDS, APPLIANCE_BRANDS, BABY_BRANDS, FURNITURE_BRANDS, HOME_KITCHEN_BRANDS, MACHINERY_BRANDS } from "@/lib/ai/parser/brand-catalog";
+import { findAnyCatalogBrand, findBrand, TECHNOLOGY_BRANDS, AUTOMOTIVE_BRANDS } from "@/lib/ai/parser/brand-catalog";
 
 import { classifyRequestedTargetRole } from "@/lib/request-understanding/requested-item-role";
 
@@ -304,17 +304,17 @@ export function classifyBrandEvidence(
   return { status: "CANDIDATE", reason: "no-evidence" };
 }
 
+/**
+ * KATALOG LİSTESİ BURADA İKİNCİ KEZ SAYILMAZ (2026-09-23).
+ *
+ * Bu fonksiyon yedi kataloğu elle sıralıyordu; `brand-catalog.ts` içindeki
+ * `findAnyCatalogBrand` de aynı işi yapıyordu. İki liste sessizce ayrıştı:
+ * lastik markaları eklenince yalnız biri onları gördü ve "Michelin kış
+ * lastiği" hâlâ kanıtsız kaldı. Tek otorite okunur; yeni bir katalog
+ * eklendiği gün her iki tüketici de onu kendiliğinden görür.
+ */
 function catalogBrandInText(text: string): string | null {
-  return (
-    findBrand(text, BABY_BRANDS) ??
-    findBrand(text, APPLIANCE_BRANDS) ??
-    findBrand(text, TECHNOLOGY_BRANDS) ??
-    findBrand(text, AUTOMOTIVE_BRANDS) ??
-    findBrand(text, MACHINERY_BRANDS) ??
-    findBrand(text, FURNITURE_BRANDS) ??
-    findBrand(text, HOME_KITCHEN_BRANDS) ??
-    null
-  );
+  return findAnyCatalogBrand(text) ?? null;
 }
 
 function isNoiseModelToken(token: string): boolean {

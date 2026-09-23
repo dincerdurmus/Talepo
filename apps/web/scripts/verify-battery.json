@@ -157,6 +157,7 @@
     "verify-talep-hybrid-ui-v1",
     "verify-talepo-radar-v1",
     "verify-taxonomy-drift-v1",
+    "verify-tire-brand-identity-v1",
     "verify-two-plan-packaging-v1",
     "verify-unified-preference-criteria-v1",
     "verify-urgent-nudge-boundary-v1",
@@ -250,5 +251,6 @@
   "_eklendi_2026_09_23_metamorfik": "verify-scope-metamorphic-v1 (kapsam karari metamorfik kararliligi) ve TITCK marka sozlugu eklendi.",
   "_eklendi_2026_09_23_d0032": "audit-review-hold-v1 (D-0032: inceleme bekleyen talep hicbir okuma yuzeyine sizmaz) eklendi.",
   "_eklendi_2026_09_23_d0030": "verify-stated-answer-suppression-v1 (D-0030: metinde yazilan cevap sorulmaz) eklendi.",
-  "_eklendi_2026_09_23_d0031": "verify-request-contact-notice-v1 (D-0031: talepte iletisim bilgisi uyarir, engellemez) eklendi."
+  "_eklendi_2026_09_23_d0031": "verify-request-contact-notice-v1 (D-0031: talepte iletisim bilgisi uyarir, engellemez) eklendi.",
+  "_eklendi_2026_09_23_p1_4": "verify-tire-brand-identity-v1 (P1-4: lastik markasi kanonik marka alaninda) eklendi."
 }
