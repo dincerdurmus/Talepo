@@ -29,6 +29,8 @@
 #   TALEPO_BASE_URL  — örn. https://talepo.example.com (sonda / olmadan)
 #   CRON_SECRET      — uygulamadaki `CRON_SECRET` ile AYNI değer
 # İkisi de tanımlanana kadar bu iş hiçbir şey yapmaz.
+# `request-expiry` bu aktarımda eklendi. Bu workflow sürümü, ilgili uygulama
+# rotası ve publication/expiry şeması yayına alındıktan sonra etkinleştirilir.
 
 name: Zamanlanmış işler
 
@@ -36,7 +38,7 @@ on:
   schedule:
     - cron: "*/5 * * * *" # urgent-nudge (planda dakikada bir — bkz. sınır)
     - cron: "*/15 * * * *" # match-backfill, feature-expiry
-    - cron: "0 * * * *" # overdue-complaints
+    - cron: "0 * * * *" # overdue-complaints, request-expiry
     - cron: "0 3 * * *" # category-provisioning
   workflow_dispatch:
     inputs:
@@ -63,9 +65,9 @@ jobs:
           case "$SCHEDULE" in
             "*/5 * * * *")  ROUTES="urgent-nudge" ;;
             "*/15 * * * *") ROUTES="match-backfill feature-expiry" ;;
-            "0 * * * *")    ROUTES="overdue-complaints" ;;
+            "0 * * * *")    ROUTES="overdue-complaints request-expiry" ;;
             "0 3 * * *")    ROUTES="category-provisioning" ;;
-            *)              ROUTES="${MANUAL_ROUTE:-urgent-nudge match-backfill feature-expiry overdue-complaints category-provisioning}" ;;
+            *)              ROUTES="${MANUAL_ROUTE:-urgent-nudge match-backfill feature-expiry overdue-complaints request-expiry category-provisioning}" ;;
           esac
           echo "routes=$ROUTES" >> "$GITHUB_OUTPUT"
           echo "Koşacak rotalar: $ROUTES"

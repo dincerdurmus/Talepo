@@ -29,6 +29,11 @@
  * davranışı — Dilim 3. Bu YEŞİL, cevabın sayfa yenilendikten sonra geri
  * geldiğini KAPSAMAZ.
  */
+// 2026-09-24 transfer delta: +flatPrintFormat (print-02),
+// +publicationPageCount (print-08), +city/+locationMode (svc-06).
+// All four are written by the user. UNKNOWN=975 stays unchanged;
+// ovenType was restored and mach-05 parent leakage was fixed first.
+// Per-row evidence: docs/audits/2026-09-24-transfer-fixes.
 
 import { buildDiscoveryProjectionFromState } from "../src/lib/discovery/build-projection";
 import {
@@ -608,12 +613,12 @@ function measureCorpus(): {
    * kırmızı cetvelinde sayıyla tutulur; buradaki sayım onu aklamaz) ·
    * −usageArea×2, −needType×2 (auto-05/06), −installation, −fridgeType.
    */
-  ok("E2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  ok("E2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
   ok("E3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
-  ok("E6", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
-  ok("E7", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
+  ok("E6", attributes === 295, `attributes tabanı kaydı → ${attributes}`);
+  ok("E7", constraints === 295, `constraints tabanı kaydı → ${constraints}`);
 
   return {
     scenarios,

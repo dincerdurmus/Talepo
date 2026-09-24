@@ -1,0 +1,12 @@
+PASS plan: */5 * * * * urgent-nudge
+PASS plan: */15 * * * * match-backfill feature-expiry
+PASS plan: 0 * * * * overdue-complaints request-expiry
+PASS plan: 0 3 * * * category-provisioning
+PASS plan: manual urgent-nudge match-backfill feature-expiry overdue-complaints request-expiry category-provisioning
+PASS plan: manual match-backfill
+PASS plan: manual request-expiry
+PASS call: 200 exit 0 calls 6
+PASS call: 401 exit 1 calls 6
+PASS call: 503 exit 1 calls 6
+PASS call: missing secret exit 0 calls 0
+11 passed; no network, deploy, checkout or migration.

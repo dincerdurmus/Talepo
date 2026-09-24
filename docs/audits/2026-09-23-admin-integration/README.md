@@ -2,6 +2,8 @@
 
 Tarih: 23 Eylül 2026. Bu kayıt yerel entegrasyon dalının durumudur; ortak dala aktarım veya canlı kabul onayı değildir.
 
+24 Eylül güncellemesi: aşağıdaki aktarım farkları için onaylı düzeltme dilimi hazırlandı. Güncel sonuçlar ve satır bazında test kararları [aktarımı tamamlama raporunda](../2026-09-24-transfer-fixes/README.md); bu dosyadaki sayılar 23 Eylül ölçümünü korur.
+
 ## Güvenceye alınan iş
 
 - `wip/tugrul-admin-imza-4plus1-2026-09-23` oluşturuldu; `9189063fe1988d9cb3d3c95e3e2437a1455e950c` commit'i GitHub'a push edildi ve uzak ref ile doğrulandı.

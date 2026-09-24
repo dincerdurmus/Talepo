@@ -13,6 +13,9 @@ import { planAnswerApplication } from "../src/lib/request-composer/v2/answer-app
 import { classifyAnswerAuthority, isDeliberateNonValueAnswer, mayCloseQuestion } from "../src/lib/request-composer/answer-authority";
 import type { CanonicalRequestState } from "../src/lib/request-composer/types";
 import type { ScheduledQuestion } from "../src/lib/request-composer/v2/question-profile-types";
+import { computeComposerPublishReadiness } from "../src/lib/request-composer/v2/publish-readiness";
+import { buildDiscoveryProjectionFromState } from "../src/lib/discovery/build-projection";
+import { projectionAuthorityOf } from "../src/lib/discovery/validate-filter";
 
 type Scenario = {
   name: string;
@@ -44,6 +47,10 @@ const scenarios: Scenario[] = [
   { name: "named car seat accessories", text: "Oto koltuğu aksesuarı arıyorum", forbidden: seat, required: ["carSeatAccessoryType", "carSeatAccessoryCompatibility", "carSeatAccessoryPurpose"] },
   { name: "named stroller accessories", text: "Bebek arabası aksesuarı arıyorum", forbidden: ["strollerType", "strollerUseCase", "strollerFoldPreference"], required: ["strollerAccessoryType", "strollerAccessoryCompatibility", "strollerAccessoryWeatherUse"] },
   { name: "machine spare contract unchanged", text: "CNC tezgahı için yedek parça arıyorum", forbidden: ["capacity", "power", "voltage", "machiningPrecision"], required: ["partPreference"] },
+  { name: "whole vacuum detail", text: "Süpürge arıyorum", forbidden: ["coffeeType", "ovenType"], required: ["vacuumType"] },
+  { name: "whole air purifier detail", text: "Hava temizleme cihazı arıyorum", forbidden: ["vacuumType", "coffeeType"], required: ["usageArea"] },
+  { name: "whole coffee maker detail", text: "Kahve makinesi arıyorum", forbidden: ["vacuumType", "ovenType"], required: ["coffeeType"] },
+  { name: "whole oven detail", text: "Fırın arıyorum", forbidden: ["vacuumType", "coffeeType"], required: ["ovenType"] },
 ];
 
 function context(state: CanonicalRequestState) {
@@ -123,6 +130,10 @@ for (const [categoryId, productType, role, forbidden] of [
   ["appliances", "Çamaşır Makinesi", "service", washer],
   ["baby", "Oto koltuğu", "part", seat],
   ["technology", "ekran", "part", screen],
+  ["appliances", "Süpürge", "part", ["vacuumType"]],
+  ["appliances", "Hava temizleme cihazı", "part", ["usageArea"]],
+  ["appliances", "Kahve makinesi", "service", ["coffeeType"]],
+  ["appliances", "Fırın", "part", ["ovenType"]],
 ] as const) check(`contract role ${categoryId}/${productType}/${role}`, () => {
   const ctx = { categoryId, productType, needType: role };
   const contract = resolveCategoryQuestionContract(ctx);
@@ -140,6 +151,66 @@ check("automotive service limit remains exact", () => {
   const contract = resolveCategoryQuestionContract({ categoryId: "automotive", needType: "service", productType: "Bakım" });
   assert.ok(contract?.omitDeliveryQuestion);
   assert.deepEqual(contract.allowedCandidateFieldKeys, ["needType", "serviceType", "brand", "model", "mileage", "city", "budget"]);
+});
+
+for (const [product, key] of [
+  ["Süpürge", "vacuumType"], ["Hava temizleme cihazı", "usageArea"],
+  ["Kahve makinesi", "coffeeType"], ["Fırın", "ovenType"],
+]) check(`${key} is a detail, not a publication requirement`, () => {
+  const state = syncFromText(null, `${product} arıyorum`).state;
+  const ctx = context(state);
+  const schedule = (values: Record<string, string>) => scheduleComposerQuestions({
+    categoryId: ctx.categoryId, needType: ctx.needType,
+    values: { ...ctx.values, ...values }, fieldStates: state.fields,
+    candidates: resolveHybridQuestions(state).candidates,
+    answeredKeys: Object.keys(state.fields).filter((k) => known(state, k)),
+  });
+  const first = schedule({});
+  assert.equal(first.phase, "essentials");
+  assert.ok(first.visible.every((q) => ["city", "budget"].includes(q.fieldKey)));
+  const detail = schedule({ budget: "25000", city: "İstanbul / Kadıköy" });
+  assert.equal(detail.phase, "detail");
+  assert.ok(!detail.blockingFieldKeys.includes(key!));
+  assert.equal(computeComposerPublishReadiness({
+    hasUsableText: true, categoryId: ctx.categoryId, schedule: detail,
+    budgetValue: "25000", cityValue: "İstanbul / Kadıköy",
+    requestScope: state.understanding.requestScope.value,
+  }).canPublish, true, "unanswered appliance detail blocked publication");
+});
+
+check("explicit oven type survives into discovery", () => {
+  const state = syncFromText(null, "Ankastre fırın arıyorum").state;
+  assert.equal(state.fields.ovenType?.value, "Ankastre");
+  const projection = buildDiscoveryProjectionFromState(state);
+  assert.equal(projection.attributes.ovenType, "Ankastre");
+  assert.deepEqual(projection.constraints.ovenType, { mode: "VALUE", value: "Ankastre" });
+});
+
+for (const [text, expected] of [
+  ["Broşür bastırmak istiyorum A5 çift taraflı", { flatPrintFormat: "A5" }],
+  ["Katalog bastırmak istiyorum 32 sayfa", { publicationPageCount: "32" }],
+  ["Uzaktan İngilizce dersi arıyorum", { city: "Uzaktan", locationMode: "remote" }],
+] as const) check(`reviewed corpus addition: ${text}`, () => {
+  const state = syncFromText(null, text).state;
+  const projection = buildDiscoveryProjectionFromState(state);
+  for (const [key, value] of Object.entries(expected)) {
+    assert.equal(state.fields[key]?.value, value);
+    assert.equal(state.fields[key]?.provenance, "EXPLICIT_TEXT");
+    assert.equal(projection.attributes[key], value);
+    assert.deepEqual(projection.constraints[key], { mode: "VALUE", value });
+    assert.equal(projectionAuthorityOf(projection, key, "attributes"), "USER_EXPLICIT");
+    assert.equal(projectionAuthorityOf(projection, key, "constraints"), "USER_EXPLICIT");
+  }
+});
+
+for (const parent of ["Torna tezgahı", "Jeneratör"]) check(`${parent} is compatibility context for an unspecified spare part`, () => {
+  const state = syncFromText(null, `${parent} için yedek parça arıyorum`).state;
+  assert.equal(state.categoryId, "machinery");
+  assert.equal(state.understanding.requestSubject.kind.value, "PART");
+  assert.equal(state.fields.part?.value, "yedek parça");
+  assert.notEqual(state.fields.productType?.kind, "VALUE");
+  assert.equal(buildDiscoveryProjectionFromState(state).attributes.productType, undefined);
+  assert.ok(state.lastComposedText?.toLocaleLowerCase("tr-TR").includes(parent.toLocaleLowerCase("tr-TR")), "compatibility context lost from summary");
 });
 check("automotive spare limit remains exact", () => {
   const contract = resolveCategoryQuestionContract({ categoryId: "automotive", needType: "part", productType: "yedek parça" });

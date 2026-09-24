@@ -1,0 +1,1351 @@
+{
+  "baseCommit": "84fb9fa20308727c1523fef6a3bdffbd31f5dbe0",
+  "preparedParent": "0ba6c5d2f4bb16aa3a1d5682af105e9a49404862",
+  "before": {
+    "scenarios": 108,
+    "fields": 1302,
+    "unknown": 975,
+    "attributes": 291,
+    "constraints": 291
+  },
+  "after": {
+    "scenarios": 108,
+    "fields": 1306,
+    "unknown": 975,
+    "attributes": 295,
+    "constraints": 295
+  },
+  "changedScenarios": 19,
+  "rows": [
+    {
+      "id": "auto-01",
+      "input": "Mercedes C180 satın almak istiyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "C180",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.85,
+              "evidence": [
+                "catalog:model_mercedes-benz_c-serisi",
+                "alias"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "C180",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "C180"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "d5982e6c12c506f7",
+      "signatureAfter": "d5982e6c12c506f7"
+    },
+    {
+      "id": "auto-02",
+      "input": "2020 model dizel otomatik Volkswagen Passat arıyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "Passat",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.95,
+              "evidence": [
+                "catalog:model_volkswagen_passat",
+                "exact"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "Passat",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "Passat"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "dfa463e042402e22",
+      "signatureAfter": "dfa463e042402e22"
+    },
+    {
+      "id": "auto-03",
+      "input": "Renault Clio için ön far arıyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "Clio",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.95,
+              "evidence": [
+                "catalog:model_renault_clio",
+                "exact"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "Clio",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "Clio"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "a57ccdbfb559b24c",
+      "signatureAfter": "a57ccdbfb559b24c"
+    },
+    {
+      "id": "auto-04",
+      "input": "Mercedes C180 için su pompası arıyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "C180",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.85,
+              "evidence": [
+                "catalog:model_mercedes-benz_c-serisi",
+                "alias"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "C180",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "C180"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "094f495a88036a04",
+      "signatureAfter": "094f495a88036a04"
+    },
+    {
+      "id": "auto-07",
+      "input": "Renault Clio için bakım arıyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "Clio",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.95,
+              "evidence": [
+                "catalog:model_renault_clio",
+                "exact"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "Clio",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "Clio"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "e053f48c3b117971",
+      "signatureAfter": "e053f48c3b117971"
+    },
+    {
+      "id": "auto-10",
+      "input": "C200 arıyorum",
+      "decision": "Model adı kullanıcının cümlesinde açık. Değer ve payload değişmedi; kaynak USER_EXPLICIT. Marka yalnız katalogdan türediyse VERIFIED kaldı.",
+      "differences": {
+        "fields": {
+          "model": {
+            "before": {
+              "kind": "VALUE",
+              "value": "C200",
+              "provenance": "CATALOG_ENRICHED",
+              "confidence": 0.85,
+              "evidence": [
+                "catalog:model_mercedes-benz_c-serisi",
+                "alias"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "C200",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.9,
+              "evidence": [
+                "C200"
+              ]
+            }
+          }
+        },
+        "fieldAuthority": {
+          "model": {
+            "before": {
+              "attributes": "VERIFIED",
+              "constraints": "VERIFIED"
+            },
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        }
+      },
+      "signatureBefore": "8ffb31503f260167",
+      "signatureAfter": "8ffb31503f260167"
+    },
+    {
+      "id": "tech-07",
+      "input": "SAP danışmanlık arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "danışmanlık",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "danışmanlık"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "sap danışmanlık",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "danışmanlık"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "danışmanlık",
+            "after": "sap danışmanlık"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "danışmanlık"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "sap danışmanlık"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "needType": "service",
+              "serviceType": "danışmanlık"
+            },
+            "after": {
+              "needType": "service",
+              "serviceType": "sap danışmanlık"
+            }
+          },
+          "constraints": {
+            "before": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "danışmanlık"
+              }
+            },
+            "after": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "sap danışmanlık"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "b91261e5acc18673",
+      "signatureAfter": "f7771f61fac27dd1"
+    },
+    {
+      "id": "tech-11",
+      "input": "Sunucu bakım hizmeti arıyorum, uzaktan olabilir",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "bakım",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "bakım"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "sunucu bakım hizmeti",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "bakım"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "bakım",
+            "after": "sunucu bakım hizmeti"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "bakım"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "sunucu bakım hizmeti"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Sunucu",
+              "needType": "service",
+              "serviceType": "bakım"
+            },
+            "after": {
+              "productType": "Sunucu",
+              "needType": "service",
+              "serviceType": "sunucu bakım hizmeti"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Sunucu"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "bakım"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Sunucu"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "sunucu bakım hizmeti"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "3e0a9a3362e93b46",
+      "signatureAfter": "ea55234ed790e968"
+    },
+    {
+      "id": "print-02",
+      "input": "Broşür bastırmak istiyorum A5 çift taraflı",
+      "decision": "Kullanıcı A5 yazdı; flatPrintFormat=A5 açık beyan olarak bağlandı.",
+      "differences": {
+        "fields": {
+          "flatPrintFormat": {
+            "before": null,
+            "after": {
+              "kind": "VALUE",
+              "value": "A5",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "a5"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "flatPrintFormat": {
+            "before": null,
+            "after": "A5"
+          }
+        },
+        "constraints": {
+          "flatPrintFormat": {
+            "before": null,
+            "after": {
+              "mode": "VALUE",
+              "value": "A5"
+            }
+          }
+        },
+        "fieldAuthority": {
+          "flatPrintFormat": {
+            "before": null,
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Broşür"
+            },
+            "after": {
+              "productType": "Broşür",
+              "flatPrintFormat": "A5"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Broşür"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Broşür"
+              },
+              "flatPrintFormat": {
+                "mode": "VALUE",
+                "value": "A5"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "0dec6c4e7ead60ca",
+      "signatureAfter": "3333557157f09688"
+    },
+    {
+      "id": "print-08",
+      "input": "Katalog bastırmak istiyorum 32 sayfa",
+      "decision": "Kullanıcı 32 sayfa yazdı; publicationPageCount=32 açık beyan olarak bağlandı.",
+      "differences": {
+        "fields": {
+          "publicationPageCount": {
+            "before": null,
+            "after": {
+              "kind": "VALUE",
+              "value": "32",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.95,
+              "evidence": [
+                "32 sayfa"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "publicationPageCount": {
+            "before": null,
+            "after": "32"
+          }
+        },
+        "constraints": {
+          "publicationPageCount": {
+            "before": null,
+            "after": {
+              "mode": "VALUE",
+              "value": "32"
+            }
+          }
+        },
+        "fieldAuthority": {
+          "publicationPageCount": {
+            "before": null,
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Katalog"
+            },
+            "after": {
+              "productType": "Katalog",
+              "publicationPageCount": "32"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Katalog"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Katalog"
+              },
+              "publicationPageCount": {
+                "mode": "VALUE",
+                "value": "32"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "f3c4b5b4983d56e6",
+      "signatureAfter": "67b91ca7e27ddb30"
+    },
+    {
+      "id": "appl-06",
+      "input": "Arçelik bulaşık makinesi için rezistans arıyorum",
+      "decision": "Parça türü/alan değeri sabit; bağlamdaki rezistans için kanıt ve güven düzeyi daha doğrudan.",
+      "differences": {
+        "fields": {
+          "needType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "part",
+              "provenance": "INFERRED",
+              "confidence": 0.7,
+              "evidence": [
+                "open-world-part",
+                "icin-structure",
+                "parent:taxonomy-part-bearing"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "part",
+              "provenance": "INFERRED",
+              "confidence": 0.88,
+              "evidence": [
+                "rezistans",
+                "parent:taxonomy-part-bearing"
+              ]
+            }
+          }
+        }
+      },
+      "signatureBefore": "54f44f160cc82ae7",
+      "signatureAfter": "54f44f160cc82ae7"
+    },
+    {
+      "id": "mach-05",
+      "input": "Torna tezgahı için yedek parça arıyorum",
+      "decision": "Üst makine productType alanına cevap olmadı. Kategori machinery ve parça rolü korundu; taksonomi makinenin uyumluluk bağlamını taşır. Eski kırmızı payload imzası yenilenmedi.",
+      "differences": {
+        "payload": {
+          "primaryLeafId": {
+            "before": "tax:machinery:yedek-parca",
+            "after": "tax:machinery:diger:el-aletleri-ve-hirdavat:torna-tezgahlari"
+          },
+          "subcategorySlug": {
+            "before": null,
+            "after": "diger"
+          },
+          "taxonomyNodeIds": {
+            "before": [
+              "tax:machinery",
+              "tax:machinery:yedek-parca"
+            ],
+            "after": [
+              "tax:machinery",
+              "tax:machinery:diger",
+              "tax:machinery:diger:el-aletleri-ve-hirdavat",
+              "tax:machinery:diger:el-aletleri-ve-hirdavat:torna-tezgahlari"
+            ]
+          }
+        }
+      },
+      "signatureBefore": "d77a74e9dd58dd54",
+      "signatureAfter": "e442c642e9d7c82b"
+    },
+    {
+      "id": "furn-02",
+      "input": "Ofis için 50 adet çalışma sandalyesi arıyorum",
+      "decision": "Adet ürün adından ayrıldı; quantity=50 aynen korundu.",
+      "differences": {
+        "fields": {
+          "productType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "50 adet çalışma sandalyesi",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.7
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "çalışma sandalyesi",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.7
+            }
+          }
+        },
+        "attributes": {
+          "productType": {
+            "before": "50 adet çalışma sandalyesi",
+            "after": "çalışma sandalyesi"
+          }
+        },
+        "constraints": {
+          "productType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "50 adet çalışma sandalyesi"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "çalışma sandalyesi"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "50 adet çalışma sandalyesi",
+              "usageArea": "Ofis",
+              "quantity": "50"
+            },
+            "after": {
+              "productType": "çalışma sandalyesi",
+              "usageArea": "Ofis",
+              "quantity": "50"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "50 adet çalışma sandalyesi"
+              },
+              "usageArea": {
+                "mode": "VALUE",
+                "value": "Ofis"
+              },
+              "quantity": {
+                "mode": "VALUE",
+                "value": "50"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "çalışma sandalyesi"
+              },
+              "usageArea": {
+                "mode": "VALUE",
+                "value": "Ofis"
+              },
+              "quantity": {
+                "mode": "VALUE",
+                "value": "50"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "eebf4cf9a68db9c0",
+      "signatureAfter": "637e6557c2a2cc96"
+    },
+    {
+      "id": "furn-05",
+      "input": "Koltuk döşeme hizmeti arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "hizmet",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "koltuk döşeme hizmeti",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "hizmet",
+            "after": "koltuk döşeme hizmeti"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "hizmet"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "koltuk döşeme hizmeti"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Koltuk",
+              "needType": "service",
+              "serviceType": "hizmet"
+            },
+            "after": {
+              "productType": "Koltuk",
+              "needType": "service",
+              "serviceType": "koltuk döşeme hizmeti"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Koltuk"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "hizmet"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Koltuk"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "koltuk döşeme hizmeti"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "ab7defb1b325a035",
+      "signatureAfter": "b42830501077ee34"
+    },
+    {
+      "id": "furn-08",
+      "input": "Mobilya montaj hizmeti arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "montaj",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "montaj"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "mobilya montaj hizmeti",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "montaj"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "montaj",
+            "after": "mobilya montaj hizmeti"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "montaj"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "mobilya montaj hizmeti"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "needType": "service",
+              "serviceType": "montaj"
+            },
+            "after": {
+              "needType": "service",
+              "serviceType": "mobilya montaj hizmeti"
+            }
+          },
+          "constraints": {
+            "before": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "montaj"
+              }
+            },
+            "after": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "mobilya montaj hizmeti"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "08b1d3df358d990c",
+      "signatureAfter": "94e73c9875818522"
+    },
+    {
+      "id": "health-06",
+      "input": "Hasta monitörü kalibrasyon hizmeti arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "hizmet",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "hasta monitörü kalibrasyon hizmeti",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "hizmet",
+            "after": "hasta monitörü kalibrasyon hizmeti"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "hizmet"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "hasta monitörü kalibrasyon hizmeti"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Hasta monitörü",
+              "needType": "service",
+              "serviceType": "hizmet",
+              "solutionType": "Hasta monitörü"
+            },
+            "after": {
+              "productType": "Hasta monitörü",
+              "needType": "service",
+              "serviceType": "hasta monitörü kalibrasyon hizmeti",
+              "solutionType": "Hasta monitörü"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Hasta monitörü"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "hizmet"
+              },
+              "solutionType": {
+                "mode": "VALUE",
+                "value": "Hasta monitörü"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Hasta monitörü"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "hasta monitörü kalibrasyon hizmeti"
+              },
+              "solutionType": {
+                "mode": "VALUE",
+                "value": "Hasta monitörü"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "d26a384f67af803a",
+      "signatureAfter": "9013f15af6fb7c29"
+    },
+    {
+      "id": "svc-02",
+      "input": "Ofis taşıma hizmeti arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "hizmet",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "ofis taşıma hizmeti",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "hizmet"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "hizmet",
+            "after": "ofis taşıma hizmeti"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "hizmet"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "ofis taşıma hizmeti"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "productType": "Ofis",
+              "needType": "service",
+              "serviceType": "hizmet",
+              "serviceTarget": "ofis"
+            },
+            "after": {
+              "productType": "Ofis",
+              "needType": "service",
+              "serviceType": "ofis taşıma hizmeti",
+              "serviceTarget": "ofis"
+            }
+          },
+          "constraints": {
+            "before": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Ofis"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "hizmet"
+              },
+              "serviceTarget": {
+                "mode": "VALUE",
+                "value": "ofis"
+              }
+            },
+            "after": {
+              "productType": {
+                "mode": "VALUE",
+                "value": "Ofis"
+              },
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "ofis taşıma hizmeti"
+              },
+              "serviceTarget": {
+                "mode": "VALUE",
+                "value": "ofis"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "cb590a2f7a90430d",
+      "signatureAfter": "4e31f68f0300b0ab"
+    },
+    {
+      "id": "svc-06",
+      "input": "Uzaktan İngilizce dersi arıyorum",
+      "decision": "Kullanıcı Uzaktan yazdı; hizmet konumu Uzaktan ve locationMode=remote. İl uydurulmadı.",
+      "differences": {
+        "fields": {
+          "city": {
+            "before": null,
+            "after": {
+              "kind": "VALUE",
+              "value": "Uzaktan",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.95,
+              "evidence": [
+                "uzaktan hizmet"
+              ]
+            }
+          },
+          "locationMode": {
+            "before": null,
+            "after": {
+              "kind": "VALUE",
+              "value": "remote",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.95,
+              "evidence": [
+                "uzaktan hizmet"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "city": {
+            "before": null,
+            "after": "Uzaktan"
+          },
+          "locationMode": {
+            "before": null,
+            "after": "remote"
+          }
+        },
+        "constraints": {
+          "city": {
+            "before": null,
+            "after": {
+              "mode": "VALUE",
+              "value": "Uzaktan"
+            }
+          },
+          "locationMode": {
+            "before": null,
+            "after": {
+              "mode": "VALUE",
+              "value": "remote"
+            }
+          }
+        },
+        "fieldAuthority": {
+          "city": {
+            "before": null,
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          },
+          "locationMode": {
+            "before": null,
+            "after": {
+              "attributes": "USER_EXPLICIT",
+              "constraints": "USER_EXPLICIT"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "needType": "service",
+              "serviceType": "ders"
+            },
+            "after": {
+              "needType": "service",
+              "serviceType": "ders",
+              "city": "Uzaktan",
+              "locationMode": "remote"
+            }
+          },
+          "constraints": {
+            "before": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "ders"
+              }
+            },
+            "after": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "ders"
+              },
+              "city": {
+                "mode": "VALUE",
+                "value": "Uzaktan"
+              },
+              "locationMode": {
+                "mode": "VALUE",
+                "value": "remote"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "a5ff1aeebc03dc35",
+      "signatureAfter": "e9860fda1eadb80b"
+    },
+    {
+      "id": "svc-07",
+      "input": "Genel hukuk danışmanlığı arıyorum",
+      "decision": "Hizmetin konusu kullanıcı cümlesinden korunuyor; genel hizmet kelimesine indirgenmiyor.",
+      "differences": {
+        "fields": {
+          "serviceType": {
+            "before": {
+              "kind": "VALUE",
+              "value": "danışmanlık",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "danışmanlık"
+              ]
+            },
+            "after": {
+              "kind": "VALUE",
+              "value": "genel hukuk danışmanlığı",
+              "provenance": "EXPLICIT_TEXT",
+              "confidence": 0.85,
+              "evidence": [
+                "danışmanlık"
+              ]
+            }
+          }
+        },
+        "attributes": {
+          "serviceType": {
+            "before": "danışmanlık",
+            "after": "genel hukuk danışmanlığı"
+          }
+        },
+        "constraints": {
+          "serviceType": {
+            "before": {
+              "mode": "VALUE",
+              "value": "danışmanlık"
+            },
+            "after": {
+              "mode": "VALUE",
+              "value": "genel hukuk danışmanlığı"
+            }
+          }
+        },
+        "payload": {
+          "attributes": {
+            "before": {
+              "needType": "service",
+              "serviceType": "danışmanlık"
+            },
+            "after": {
+              "needType": "service",
+              "serviceType": "genel hukuk danışmanlığı"
+            }
+          },
+          "constraints": {
+            "before": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "danışmanlık"
+              }
+            },
+            "after": {
+              "needType": {
+                "mode": "VALUE",
+                "value": "service"
+              },
+              "serviceType": {
+                "mode": "VALUE",
+                "value": "genel hukuk danışmanlığı"
+              }
+            }
+          }
+        }
+      },
+      "signatureBefore": "f5458188dcb3cb28",
+      "signatureAfter": "4c5d01cf0568dd7c"
+    }
+  ]
+}

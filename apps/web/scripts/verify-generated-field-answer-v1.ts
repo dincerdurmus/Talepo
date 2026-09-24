@@ -33,6 +33,11 @@
  * fonksiyonları üzerinden yapılır. GERÇEK DB ve TARAYICI kabulü bu turda
  * NOT-MEASURED'dır.
  */
+// 2026-09-24 transfer delta: +flatPrintFormat (print-02),
+// +publicationPageCount (print-08), +city/+locationMode (svc-06).
+// All four are written by the user. UNKNOWN=975 stays unchanged;
+// ovenType was restored and mach-05 parent leakage was fixed first.
+// Per-row evidence: docs/audits/2026-09-24-transfer-fixes.
 
 import { buildDiscoveryProjectionFromState } from "../src/lib/discovery/build-projection";
 import {
@@ -437,10 +442,10 @@ function measureCorpus(): {
    * verify-common-field-response-v1.ts measureCorpus bloğu. Üç doğrulayıcı
    * AYNI korpusu ölçer; enumerasyon çoğaltılmaz.
    */
-  ok("G2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  ok("G2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
   ok("G3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
-  ok("G4", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
-  ok("G5", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
+  ok("G4", attributes === 295, `attributes tabanı kaydı → ${attributes}`);
+  ok("G5", constraints === 295, `constraints tabanı kaydı → ${constraints}`);
   ok("G6", responses === 0, `varsayılan cevap yüzeyi → ${responses}`);
 
   return { scenarios, fields, unknown, attributes, constraints, responses };

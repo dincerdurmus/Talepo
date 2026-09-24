@@ -1,3 +1,7 @@
+/** 2026-09-24 transfer: S03/S06/S08 read C200 from the stored/raw
+ * user sentence. Their six model surfaces are USER_EXPLICIT, while
+ * the inferred Mercedes brand remains VERIFIED. Other known fixture
+ * drift is unchanged; see docs/audits/2026-09-24-transfer-fixes. */
 /**
  * SUNUCU GÜVEN SINIRI TABANI — D3d (2026-08-27).
  *
@@ -23,9 +27,8 @@
  *   S02 create — istemci metinde hiç geçmeyen bir markaya `USER_EXPLICIT`
  *       damgası vurur, cevap kanalı boştur.
  *   S03 create — istemci HER ŞEYE `UNKNOWN` der; sunucu doğru seviyeleri
- *       yeniden türetir. `model` cevap kanalında da vardır ama katalogdan
- *       gelen `VERIFIED` cevap kanalıyla EZİLMEZ; `needType` ise yalnız
- *       çıkarımdır ve süzülmüş cevap kanalıyla onaylandığı için yükselir.
+ *       yeniden türetir. Yazılı C200 modeli USER_EXPLICIT, yalnız katalogdan
+ *       türeyen değerler VERIFIED kalır; istemcinin etiketi kaynak olmaz.
  *   S04 create — `color` metinde YOKTUR ve `appliances` kategorisinin soru
  *       evreninde de bulunmaz; cevap kanalından gelse bile fail-closed kalır.
  *   S05 create — `attributes.color` değeri değiştirilmiş, `constraints.color`
@@ -73,8 +76,8 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
    * `model` cevap kanalında da var ama katalog doğrulaması korunur. */
   "S03/brand/attributes = USER_EXPLICIT",
   "S03/brand/constraints = USER_EXPLICIT",
-  "S03/model/attributes = VERIFIED",
-  "S03/model/constraints = VERIFIED",
+  "S03/model/attributes = USER_EXPLICIT",
+  "S03/model/constraints = USER_EXPLICIT",
   "S03/productType/attributes = USER_EXPLICIT",
   "S03/productType/constraints = USER_EXPLICIT",
   "S03/needType/attributes = USER_EXPLICIT",
@@ -148,8 +151,8 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
   /* S06 — update, payload'da rawInput yokken sunucunun kendi metnini okur. */
   "S06/brand/attributes = USER_EXPLICIT",
   "S06/brand/constraints = USER_EXPLICIT",
-  "S06/model/attributes = VERIFIED",
-  "S06/model/constraints = VERIFIED",
+  "S06/model/attributes = USER_EXPLICIT",
+  "S06/model/constraints = USER_EXPLICIT",
   "S06/productType/attributes = USER_EXPLICIT",
   "S06/productType/constraints = USER_EXPLICIT",
   "S06/needType/attributes = INFERRED",
@@ -164,8 +167,8 @@ export const FROZEN_SERVER_AUTHORITY_IDENTITIES: readonly string[] = [
   /* S08 — clone kaynağın etiketine değil kaynağın metnine bakar. */
   "S08/brand/attributes = USER_EXPLICIT",
   "S08/brand/constraints = USER_EXPLICIT",
-  "S08/model/attributes = VERIFIED",
-  "S08/model/constraints = VERIFIED",
+  "S08/model/attributes = USER_EXPLICIT",
+  "S08/model/constraints = USER_EXPLICIT",
   "S08/productType/attributes = USER_EXPLICIT",
   "S08/productType/constraints = USER_EXPLICIT",
   "S08/needType/attributes = INFERRED",
@@ -277,8 +280,8 @@ export const SERVER_AUTHORITY_BASELINE = {
   identities: 135,
   UNKNOWN: 14,
   INFERRED: 28,
-  VERIFIED: 18,
-  USER_EXPLICIT: 75,
+  VERIFIED: 12,
+  USER_EXPLICIT: 81,
 } as const;
 
 /**

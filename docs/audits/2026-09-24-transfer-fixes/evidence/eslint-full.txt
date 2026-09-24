@@ -1,0 +1,186 @@
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\acceptance-budget-alert-v1.ts
+  29:9  warning  'mk' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\e2e-a-z\run-phase3-server-v1.ts
+  31:5  warning  'acceptOffer' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\live-stress-test-global-product-identity.ts
+   27:3   warning  'getCachedProviderResults' is defined but never used  @typescript-eslint/no-unused-vars
+   28:3   warning  'buildProviderCacheKey' is defined but never used     @typescript-eslint/no-unused-vars
+   30:10  warning  'queryFingerprint' is defined but never used          @typescript-eslint/no-unused-vars
+  107:9   warning  't' is assigned a value but never used                @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-browse-semantic-closure-v1.ts
+  97:10  warning  'refreshUnderstanding' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-commercial-journey-consolidation-v1.ts
+  47:7  warning  'incomingCard' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  49:7  warning  'outgoingCard' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-dataforseo-live.ts
+  20:30  warning  'providerCacheSize' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-firsatlar-v2.ts
+  57:7  warning  'radarLib' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-global-product-identity.ts
+  10:10  warning  'listCategoryCoverage' is defined but never used         @typescript-eslint/no-unused-vars
+  23:3   warning  'normalizeStorageValue' is defined but never used        @typescript-eslint/no-unused-vars
+  31:3   warning  'computeExternalMatchQuality' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-incoming-offer-compare-v1.ts
+  137:9  warning  'workspace' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-incoming-offer-request-workspace-v1.ts
+  180:13  warning  'source' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-inference-question-authority-v2.ts
+  40:3  warning  'resolveChoiceLabel' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-maira-scene-boundary-v1.ts
+  29:7  warning  'PAGE' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-offer-attribution-v1.ts
+  46:7  warning  'touch' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-offer-entry-routing-v1.ts
+  45:7  warning  'helper' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-offer-media-v1.ts
+  143:9  warning  'incoming' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-offer-role-surfaces-v1.ts
+  351:9  warning  'outgoingCard' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-offer-unread-action-v1.ts
+  24:10  warning  'offer' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-phase1-single-brain-closure-v1.ts
+  22:3  warning  'understandRequest' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-phase2-constraint-preference-v1.ts
+  6:10  warning  'join' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-phase4d-iyzico-v1.ts
+  14:3  warning  'loadIyzicoConfig' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-professional-draft-qa.ts
+  5:8  warning  'assert' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-provider-routing.ts
+  25:3  warning  'buildProviderCacheKey' is defined but never used     @typescript-eslint/no-unused-vars
+  27:3  warning  'getCachedProviderResults' is defined but never used  @typescript-eslint/no-unused-vars
+  28:3  warning  'setCachedProviderResults' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-request-publish-v1.ts
+  6:8  warning  'assert' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-request-state-transition-v1.ts
+  89:10  warning  'hasAny' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-request-ux-state.ts
+  36:9  warning  'detected' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-single-brain-closure.ts
+   5:24  warning  'readdirSync' is defined but never used                          @typescript-eslint/no-unused-vars
+   5:37  warning  'statSync' is defined but never used                             @typescript-eslint/no-unused-vars
+  12:3   warning  'strategyResolutionFromUnderstanding' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-source-adapters-v1.ts
+   5:22  warning  'readFileSync' is defined but never used  @typescript-eslint/no-unused-vars
+  30:15  warning  'IngestRecord' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\scripts\verify-supplier-capability-consumption-v1.ts
+  26:10  warning  'formatAcceptanceError' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\app\panel\gelen-teklifler\[requestId]\page.tsx
+  20:10  warning  'listArchivedOfferIds' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\app\talep\page.tsx
+    18:3   warning  'LoaderCircle' is defined but never used                                                                                                                                                      @typescript-eslint/no-unused-vars
+    20:3   warning  'SlidersHorizontal' is defined but never used                                                                                                                                                 @typescript-eslint/no-unused-vars
+    26:10  warning  'CatalogIdentityPreview' is defined but never used                                                                                                                                            @typescript-eslint/no-unused-vars
+   101:3   warning  'getFilterSelectOptions' is defined but never used                                                                                                                                            @typescript-eslint/no-unused-vars
+   114:3   warning  'TURKEY_IL_NAMES' is defined but never used                                                                                                                                                   @typescript-eslint/no-unused-vars
+   115:3   warning  'TURKEY_PROVINCES' is defined but never used                                                                                                                                                  @typescript-eslint/no-unused-vars
+   158:3   warning  'softStatusFromAnswerValue' is defined but never used                                                                                                                                         @typescript-eslint/no-unused-vars
+   380:10  warning  'publishButtonAttention' is assigned a value but never used                                                                                                                                   @typescript-eslint/no-unused-vars
+   381:10  warning  'publishReadyAnimation' is assigned a value but never used                                                                                                                                    @typescript-eslint/no-unused-vars
+   383:10  warning  'suggestionInputs' is assigned a value but never used                                                                                                                                         @typescript-eslint/no-unused-vars
+   383:28  warning  'setSuggestionInputs' is assigned a value but never used                                                                                                                                      @typescript-eslint/no-unused-vars
+   444:10  warning  'filtersOpen' is assigned a value but never used                                                                                                                                              @typescript-eslint/no-unused-vars
+   450:10  warning  'wizardStep' is assigned a value but never used                                                                                                                                               @typescript-eslint/no-unused-vars
+   964:9   warning  'essentialCommonFields' is assigned a value but never used                                                                                                                                    @typescript-eslint/no-unused-vars
+   980:9   warning  'hasOptionalFields' is assigned a value but never used                                                                                                                                        @typescript-eslint/no-unused-vars
+   995:9   warning  'filledOptionalCount' is assigned a value but never used                                                                                                                                      @typescript-eslint/no-unused-vars
+  1148:9   warning  'publishable' is assigned a value but never used                                                                                                                                              @typescript-eslint/no-unused-vars
+  1543:6   warning  React Hook useMemo has missing dependencies: 'understanding.attributes.listingType.value' and 'understanding.attributes.roomCount.value'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  2189:12  warning  'applyHumanQuestionValue' is defined but never used                                                                                                                                           @typescript-eslint/no-unused-vars
+  2354:12  warning  'updateRealEstateLocation' is defined but never used                                                                                                                                          @typescript-eslint/no-unused-vars
+  2386:12  warning  'applyBudgetPreset' is defined but never used                                                                                                                                                 @typescript-eslint/no-unused-vars
+  2391:12  warning  'clearCreateFilters' is defined but never used                                                                                                                                                @typescript-eslint/no-unused-vars
+  2598:9   warning  'activeFilterCount' is assigned a value but never used                                                                                                                                        @typescript-eslint/no-unused-vars
+  2607:9   warning  'hasMissingQuickFilters' is assigned a value but never used                                                                                                                                   @typescript-eslint/no-unused-vars
+  2611:9   warning  'activeBudgetPresetId' is assigned a value but never used                                                                                                                                     @typescript-eslint/no-unused-vars
+  4505:10  warning  'formatCurrency' is defined but never used                                                                                                                                                    @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\components\panel\IncomingOfferWorkspace.tsx
+  117:6  warning  React Hook useEffect has a missing dependency: 'selected'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\components\panel\OfferDraftSuggestion.tsx
+  21:38  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\components\panel\ParticipantProfileDrawer.tsx
+  141:20  warning  The ref value 'triggerRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'triggerRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\components\visuals\CategoryVisualThumb.tsx
+  57:9  warning  'label' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\hooks\useRequestBrain.ts
+  220:6  warning  React Hook useCallback has missing dependencies: 'input.categoryLockedByUser' and 'input.understanding?.strategy.value'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\ai\parser\entity.ts
+  207:11  warning  'wantsVehicle' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\catalog\apply-enrichment.ts
+  17:15  warning  'AutomotiveSubjectEnrichment' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\catalog\automotive\compatibility.ts
+  8:47  warning  '_input' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\knowledge\gap.ts
+  26:43  warning  '_gap' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\knowledge\ingestion\adapters\automotive-coverage-gap.ts
+  93:12  warning  '_ctx' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\membership\product-packaging.ts
+  44:3  warning  '_context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  51:3  warning  '_context' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\membership\resource-owner.ts
+  30:7  warning  'OWNED_FEATURES' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\price-intelligence\product-suitability.ts
+  17:7  warning  'SERVICE_SIGNAL_KEYS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\product-identity\brand-extraction.ts
+  5:31  warning  'findBrand' is defined but never used          @typescript-eslint/no-unused-vars
+  5:42  warning  'TECHNOLOGY_BRANDS' is defined but never used  @typescript-eslint/no-unused-vars
+  5:61  warning  'AUTOMOTIVE_BRANDS' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\request-composer\v2\measurement-kind.ts
+  43:23  warning  '_variants' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\lib\taxonomy\loader.ts
+  40:38  warning  '_root' is defined but never used  @typescript-eslint/no-unused-vars
+  54:38  warning  '_root' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\server\monetization\inventory-matching.ts
+  115:9  warning  'reasons' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\USER\Documents\Talepo\worktrees\admin-imza-integration-20260923\apps\web\src\server\request\request-schema.ts
+  26:10  warning  'isUnsupportedRequestScope' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 88 problems (0 errors, 88 warnings)

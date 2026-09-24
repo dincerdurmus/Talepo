@@ -54,6 +54,7 @@ import {
 } from "@/lib/request-understanding/requested-item-role";
 import {
   isConsumedAsParentProduct,
+  isUnspecifiedSparePartTarget,
   readRequestedTarget,
   readUsageContextSplit,
   splitCompatibilityPhrase,
@@ -894,9 +895,16 @@ export function mapUnderstandingToFields(
   }
 
   const understoodProduct = String(result.subject.productType?.value ?? "");
-  const moreSpecificProduct = productHint && understoodProduct &&
-    productHint.productType.length > understoodProduct.length &&
-    foldPartToken(productHint.productType).includes(foldPartToken(understoodProduct));
+  // "X için yedek parça" leaves the part family unspecified. Preserve X for
+  // taxonomy/compatibility, but don't turn it into an answered product type.
+  // Named parts keep the existing parent-product context used by their flow.
+  const unspecifiedPart = isUnspecifiedSparePartTarget(
+    String(result.requestSubject.name?.value ?? ""),
+  );
+  const requestedProductHint = unspecifiedPart ? null : productHint;
+  const moreSpecificProduct = requestedProductHint && understoodProduct &&
+    requestedProductHint.productType.length > understoodProduct.length &&
+    foldPartToken(requestedProductHint.productType).includes(foldPartToken(understoodProduct));
   if (result.subject.productType?.value && !moreSpecificProduct) {
     fields.productType = valueField(
       String(result.subject.productType.value),
@@ -905,9 +913,9 @@ export function mapUnderstandingToFields(
         result.subject.productType.source,
       ),
     );
-  } else if (productHint) {
+  } else if (requestedProductHint) {
     fields.productType = valueField(
-      productHint.productType,
+      requestedProductHint.productType,
       "EXPLICIT_TEXT",
       0.9,
       ["product-hint"],

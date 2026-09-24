@@ -155,6 +155,7 @@
     "verify-source-adapters-v1",
     "verify-standard-pro-packaging-v1",
     "verify-stated-answer-suppression-v1",
+    "verify-stress-question-contracts-v1",
     "verify-supplier-page-no-provisioning-v1",
     "verify-takiplerim-v1",
     "verify-talep-companion-contract-v1",
@@ -259,5 +260,6 @@
   "_eklendi_2026_09_23_p1_4": "verify-tire-brand-identity-v1 (P1-4: lastik markasi kanonik marka alaninda) eklendi.",
   "_eklendi_2026_09_23_p2_8": "verify-service-over-room-layout-v1 (P2-8: hizmet cumlesinde oda deseni kategoriyi calmaz) eklendi.",
   "_eklendi_2026_09_23_p1_3": "verify-mixed-language-product-v1 (P1-3: karisik dilde urun adi) eklendi.",
-  "_eklendi_2026_09_23_p1_5": "verify-multi-product-quantity-v1 (P1-5: cok urunlu cumlede adet) eklendi."
+  "_eklendi_2026_09_23_p1_5": "verify-multi-product-quantity-v1 (P1-5: cok urunlu cumlede adet) eklendi.",
+  "_eklendi_2026_09_24_aktarim": "verify-stress-question-contracts-v1 eklendi: mevcut parca/hizmet sinirlari, ev aleti detaylarinin yayin kapisindan bagimsizligi, Ankastre baglamasi, belirsiz yedek parcada ust urunun productType olmamasi ve dort acik korpus degeri. Bilinen kirmizi sayilari degistirilmedi."
 }

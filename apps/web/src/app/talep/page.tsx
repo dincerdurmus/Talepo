@@ -1429,11 +1429,11 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     [hybrid.text],
   );
   const [contactChoice, setContactChoice] = useState<ContactChoice | null>(null);
-  useEffect(() => {
-    // Metin iletişim bilgisi taşımıyorsa seçim de anlamsızdır: kullanıcı
-    // metni düzenleyip bilgiyi çıkardıysa kart ve seçim birlikte kapanır.
-    if (contactKinds.length === 0 && contactChoice !== null) setContactChoice(null);
-  }, [contactKinds.length, contactChoice]);
+  // Reset this component's derived selection before committing a render of
+  // contact-free text. The guard settles after one render; no effect cascade.
+  if (contactKinds.length === 0 && contactChoice !== null) {
+    setContactChoice(null);
+  }
   const showContactNotice = contactKinds.length > 0 && contactChoice === null;
 
   const composerOutOfScope =

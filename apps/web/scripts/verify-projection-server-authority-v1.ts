@@ -262,8 +262,8 @@ function measureIdentities(problems: string[]): Map<string, Authority> {
     );
   }
 
-  /* S03 — istemci her şeye UNKNOWN dedi; katalog VERIFIED'i cevap kanalı
-   * ezmemeli, yalnız çıkarım olan needType süzülmüş cevapla yükselmeli. */
+  /* S03 — istemci her şeye UNKNOWN dedi; yazılı model metinden, kalan
+   * katalog bilgileri kendi otoritesinden yeniden türetilmeli. */
   {
     const tampered = forgeAll(projectionFromText(TEXT_PART), "UNKNOWN");
     add(

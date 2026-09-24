@@ -326,6 +326,11 @@ export function readUsageContextSplit(rawInput: string): UsageContextSplit | nul
   return null;
 }
 
+/** The user named a spare part but has not identified its product family. */
+export function isUnspecifiedSparePartTarget(target: string): boolean {
+  return /^yedek\s+par[çc]a(?:s[ıi])?$/iu.test(target.trim());
+}
+
 /**
  * The same display noun can mean a monitor or a device replacement screen.
  * Resolve that ambiguity only when the left side names a catalogued device
@@ -338,7 +343,7 @@ export function classifyRequestedRelationTarget(
   const generic = classifyRequestedTargetRole(target);
   // A catalog's generic "Yedek parça" browse leaf does not turn a spare
   // part named in a parent relationship into a complete product.
-  if (/^yedek\s+par[çc]a(?:s[ıi])?$/iu.test(target.trim())) {
+  if (isUnspecifiedSparePartTarget(target)) {
     return { role: "COMPONENT_OR_ACCESSORY", domain: null, head: "yedek parça",
       confidence: 0.95, provenance: "ROLE_HEAD_VOCABULARY",
       evidence: [target, "explicit-spare-part"] };

@@ -1,0 +1,1372 @@
+{
+  "generatedAt": "2026-09-24T06:19:04.345Z",
+  "totals": {
+    "checks": 42,
+    "passed": 42,
+    "failed": 0
+  },
+  "results": [
+    {
+      "name": "washer drain pump",
+      "passed": true,
+      "details": {
+        "text": "Çamaşır makinesi tahliye pompası arıyorum",
+        "category": "appliances",
+        "initialSummary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum.",
+        "finalSummary": "2 adet Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Çamaşır Makinesi için çamaşır makinesi tahliye pompası arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "air conditioner inner filter",
+      "passed": true,
+      "details": {
+        "text": "Klima iç ünite filtresi arıyorum",
+        "category": "appliances",
+        "initialSummary": "Klima için iç filtre arıyorum.",
+        "finalSummary": "2 adet Klima için iç filtre arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Klima için iç filtre arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Klima için iç filtre arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Klima için iç filtre arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Klima için iç filtre arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Klima için iç filtre arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Klima için iç filtre arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Klima için iç filtre arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "car seat cover",
+      "passed": true,
+      "details": {
+        "text": "Oto koltuğu kılıfı arıyorum, koltuğun kendisi değil",
+        "category": "baby",
+        "initialSummary": "Oto koltuğu için oto koltuğu kılıfı arıyorum.",
+        "finalSummary": "2 adet Oto koltuğu için kılıf arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Oto koltuğu için kılıf arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Oto koltuğu için kılıf arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Oto koltuğu için kılıf arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Oto koltuğu için kılıf arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Oto koltuğu için kılıf arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Oto koltuğu için kılıf arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Oto koltuğu için kılıf arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "washer repair",
+      "passed": true,
+      "details": {
+        "text": "Çamaşır makinesi tamiri yaptırmak istiyorum",
+        "category": "appliances",
+        "initialSummary": "Çamaşır Makinesi için tamir arıyorum.",
+        "finalSummary": "2 adet Çamaşır Makinesi için tamir arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Çamaşır Makinesi için tamir arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Çamaşır Makinesi için tamir arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi için tamir arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Çamaşır Makinesi için tamir arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi için tamir arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Çamaşır Makinesi için tamir arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "machine repair",
+      "passed": true,
+      "details": {
+        "text": "CNC makine tamiri yaptırmak istiyorum",
+        "category": "machinery",
+        "initialSummary": "CNC makine tamiri arıyorum.",
+        "finalSummary": "2 adet CNC makine tamiri arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "CNC makine tamiri arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "CNC makine tamiri arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "CNC makine tamiri arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet CNC makine tamiri arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "phone screen",
+      "passed": true,
+      "details": {
+        "text": "iPhone 15 için ekran arıyorum",
+        "category": "technology",
+        "initialSummary": "Apple cep telefonu iPhone 15 için ekran arıyorum.",
+        "finalSummary": "Apple cep telefonu iPhone 15 için ekran arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Apple cep telefonu iPhone 15 için ekran arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Apple cep telefonu iPhone 15 için ekran arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "Apple cep telefonu iPhone 15 için ekran arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Apple cep telefonu iPhone 15 için ekran arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Apple cep telefonu iPhone 15 için ekran arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "explicit phone replacement screen",
+      "passed": true,
+      "details": {
+        "text": "iPhone 15 için yedek ekran parçası arıyorum",
+        "category": "technology",
+        "initialSummary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum.",
+        "finalSummary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Apple cep telefonu iPhone 15 için yedek ekran parçası arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "diaper pail",
+      "passed": true,
+      "details": {
+        "text": "Bebek bezi çöp kovası arıyorum",
+        "category": "baby",
+        "initialSummary": "Bebek bezi çöp kovası arıyorum.",
+        "finalSummary": "2 adet Bebek bezi çöp kovası arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Bebek bezi çöp kovası arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperDisposalProduct",
+            "value": "no_preference",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperDisposalCapacity",
+            "value": "no_preference",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperDisposalCompatibility",
+            "value": "unknown",
+            "summary": "Bebek bezi çöp kovası arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Bebek bezi çöp kovası arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole washer",
+      "passed": true,
+      "details": {
+        "text": "Çamaşır makinesi arıyorum",
+        "category": "appliances",
+        "initialSummary": "Çamaşır Makinesi arıyorum.",
+        "finalSummary": "2 adet Çamaşır Makinesi arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Çamaşır Makinesi arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "capacityKg",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "washerDryFeature",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "energyClass",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "washerLoadType",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "spinSpeed",
+            "value": "no_preference",
+            "summary": "Çamaşır Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Çamaşır Makinesi arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole air conditioner",
+      "passed": true,
+      "details": {
+        "text": "Klima arıyorum",
+        "category": "appliances",
+        "initialSummary": "Klima arıyorum.",
+        "finalSummary": "2 adet Klima arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Klima arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "airConditionerType",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "capacityBtu",
+            "value": "unknown",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "climateRoomSize",
+            "value": "unknown",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "energyClass",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "inverterPreference",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "installation",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "heatingFunction",
+            "value": "no_preference",
+            "summary": "Klima arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Klima arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole car seat",
+      "passed": true,
+      "details": {
+        "text": "Bebek oto koltuğu arıyorum",
+        "category": "baby",
+        "initialSummary": "Oto koltuğu arıyorum.",
+        "finalSummary": "2 adet Oto koltuğu arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Oto koltuğu arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatGroup",
+            "value": "unknown",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatMount",
+            "value": "no_preference",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatDirection",
+            "value": "no_preference",
+            "summary": "Oto koltuğu arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Oto koltuğu arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole monitor",
+      "passed": true,
+      "details": {
+        "text": "Monitör arıyorum",
+        "category": "technology",
+        "initialSummary": "Monitör arıyorum.",
+        "finalSummary": "Monitör arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Monitör arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "screenSize",
+            "value": "no_preference",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "resolution",
+            "value": "no_preference",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "panelType",
+            "value": "no_preference",
+            "summary": "Monitör arıyorum, İstanbul."
+          },
+          {
+            "key": "refreshRate",
+            "value": "no_preference",
+            "summary": "Monitör arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "actual diaper",
+      "passed": true,
+      "details": {
+        "text": "Bebek bezi arıyorum",
+        "category": "baby",
+        "initialSummary": "Bebek bezi arıyorum.",
+        "finalSummary": "2 adet Bebek bezi arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Bebek bezi arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperCareProduct",
+            "value": "no_preference",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperCareMaterial",
+            "value": "no_preference",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperSize",
+            "value": "unknown",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "diaperCareUseCase",
+            "value": "no_preference",
+            "summary": "Bebek bezi arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Bebek bezi arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "named car seat accessories",
+      "passed": true,
+      "details": {
+        "text": "Oto koltuğu aksesuarı arıyorum",
+        "category": "baby",
+        "initialSummary": "Oto koltuğu aksesuarı arıyorum.",
+        "finalSummary": "2 adet Oto koltuğu aksesuarı arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Oto koltuğu aksesuarı arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatAccessoryType",
+            "value": "no_preference",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatAccessoryCompatibility",
+            "value": "unknown",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "carSeatAccessoryPurpose",
+            "value": "no_preference",
+            "summary": "Oto koltuğu aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Oto koltuğu aksesuarı arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "named stroller accessories",
+      "passed": true,
+      "details": {
+        "text": "Bebek arabası aksesuarı arıyorum",
+        "category": "baby",
+        "initialSummary": "Bebek arabası aksesuarı arıyorum.",
+        "finalSummary": "2 adet Bebek arabası aksesuarı arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Bebek arabası aksesuarı arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "strollerAccessoryType",
+            "value": "no_preference",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "strollerAccessoryCompatibility",
+            "value": "unknown",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "strollerAccessoryWeatherUse",
+            "value": "no_preference",
+            "summary": "Bebek arabası aksesuarı arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Bebek arabası aksesuarı arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "machine spare contract unchanged",
+      "passed": true,
+      "details": {
+        "text": "CNC tezgahı için yedek parça arıyorum",
+        "category": "machinery",
+        "initialSummary": "CNC tezgahı için yedek parça arıyorum.",
+        "finalSummary": "2 adet CNC tezgahı için yedek parça arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "CNC tezgahı için yedek parça arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "CNC tezgahı için yedek parça arıyorum, İstanbul."
+          },
+          {
+            "key": "needType",
+            "value": "part",
+            "summary": "CNC tezgahı için yedek parça arıyorum, İstanbul."
+          },
+          {
+            "key": "partPreference",
+            "value": "no_preference",
+            "summary": "CNC tezgahı için yedek parça arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "CNC tezgahı için yedek parça arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet CNC tezgahı için yedek parça arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole vacuum detail",
+      "passed": true,
+      "details": {
+        "text": "Süpürge arıyorum",
+        "category": "appliances",
+        "initialSummary": "süpürge arıyorum.",
+        "finalSummary": "2 adet süpürge arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "süpürge arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "vacuumType",
+            "value": "no_preference",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "süpürge arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet süpürge arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole air purifier detail",
+      "passed": true,
+      "details": {
+        "text": "Hava temizleme cihazı arıyorum",
+        "category": "appliances",
+        "initialSummary": "Hava Temizleme Cihazı arıyorum.",
+        "finalSummary": "2 adet Hava Temizleme Cihazı arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Hava Temizleme Cihazı arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "usageArea",
+            "value": "unknown",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Hava Temizleme Cihazı arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Hava Temizleme Cihazı arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole coffee maker detail",
+      "passed": true,
+      "details": {
+        "text": "Kahve makinesi arıyorum",
+        "category": "appliances",
+        "initialSummary": "Kahve Makinesi arıyorum.",
+        "finalSummary": "2 adet Kahve Makinesi arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Kahve Makinesi arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "coffeeType",
+            "value": "no_preference",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Kahve Makinesi arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Kahve Makinesi arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "whole oven detail",
+      "passed": true,
+      "details": {
+        "text": "Fırın arıyorum",
+        "category": "appliances",
+        "initialSummary": "Fırın arıyorum.",
+        "finalSummary": "2 adet Fırın arıyorum, İstanbul.",
+        "steps": [
+          {
+            "key": "budget",
+            "value": "25000",
+            "summary": "Fırın arıyorum."
+          },
+          {
+            "key": "city",
+            "value": "İstanbul",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "brand",
+            "value": "unknown",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "ovenType",
+            "value": "no_preference",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "delivery",
+            "value": "2 hafta",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "condition",
+            "value": "no_preference",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "model",
+            "value": "unknown",
+            "summary": "Fırın arıyorum, İstanbul."
+          },
+          {
+            "key": "quantity",
+            "value": "2",
+            "summary": "2 adet Fırın arıyorum, İstanbul."
+          }
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Çamaşır Makinesi/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Çamaşır Makinesi",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Klima/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Klima",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Çamaşır Makinesi/service",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Çamaşır Makinesi",
+          "needType": "service"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "model"
+        ],
+        "allowed": [
+          "serviceType",
+          "brand",
+          "model",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role baby/Oto koltuğu/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "baby",
+          "productType": "Oto koltuğu",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role technology/ekran/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "technology",
+          "productType": "ekran",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "quantity",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Süpürge/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Süpürge",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Hava temizleme cihazı/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Hava temizleme cihazı",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Kahve makinesi/service",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Kahve makinesi",
+          "needType": "service"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "model"
+        ],
+        "allowed": [
+          "serviceType",
+          "brand",
+          "model",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "contract role appliances/Fırın/part",
+      "passed": true,
+      "details": {
+        "ctx": {
+          "categoryId": "appliances",
+          "productType": "Fırın",
+          "needType": "part"
+        },
+        "profiles": [
+          "brand",
+          "city",
+          "budget",
+          "delivery",
+          "condition",
+          "model",
+          "quantity"
+        ],
+        "allowed": [
+          "brand",
+          "model",
+          "condition",
+          "quantity",
+          "city",
+          "delivery",
+          "budget"
+        ]
+      }
+    },
+    {
+      "name": "automotive service limit remains exact",
+      "passed": true
+    },
+    {
+      "name": "vacuumType is a detail, not a publication requirement",
+      "passed": true
+    },
+    {
+      "name": "usageArea is a detail, not a publication requirement",
+      "passed": true
+    },
+    {
+      "name": "coffeeType is a detail, not a publication requirement",
+      "passed": true
+    },
+    {
+      "name": "ovenType is a detail, not a publication requirement",
+      "passed": true
+    },
+    {
+      "name": "explicit oven type survives into discovery",
+      "passed": true
+    },
+    {
+      "name": "reviewed corpus addition: Broşür bastırmak istiyorum A5 çift taraflı",
+      "passed": true
+    },
+    {
+      "name": "reviewed corpus addition: Katalog bastırmak istiyorum 32 sayfa",
+      "passed": true
+    },
+    {
+      "name": "reviewed corpus addition: Uzaktan İngilizce dersi arıyorum",
+      "passed": true
+    },
+    {
+      "name": "Torna tezgahı is compatibility context for an unspecified spare part",
+      "passed": true
+    },
+    {
+      "name": "Jeneratör is compatibility context for an unspecified spare part",
+      "passed": true
+    },
+    {
+      "name": "automotive spare limit remains exact",
+      "passed": true
+    },
+    {
+      "name": "component role stays stable when preserving answers after an explanation",
+      "passed": true
+    }
+  ]
+}

@@ -22,6 +22,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join as pathJoin, resolve as pathResolve } from "node:path";
+import { containsInflectedTurkishTerm } from "./lib/turkish-surface-expectation";
 
 import {
   getVisibleCategoryFields,
@@ -2503,6 +2504,17 @@ const DOMAIN_KIND_CASES: DomainCase[] = [
 ];
 
 check("I26: uzmanlık alanı ile ihtiyaç türü ayrı eksenlerdir", () => {
+  for (const [surface, term] of [
+    ["genel hukuk danışmanlığı", "danışmanlık"],
+    ["KİTAPLIĞI", "kitaplık"], ["sağlığı", "sağlık"],
+    ["kitabı", "kitap"], ["ağacı", "ağaç"], ["kanadı", "kanat"],
+    ["rengi", "renk"], ["danismanligi", "danışmanlık"],
+  ]) assert.ok(containsInflectedTurkishTerm(surface!, term!), `${surface} / ${term}`);
+  for (const [surface, term] of [
+    ["danışman", "danışmanlık"], ["danismanlig", "danışmanlık"],
+    ["önkitaplığı", "kitaplık"], ["kitaplıkçı", "kitaplık"],
+    ["kitaplar", "kitaplık"], ["gözetim", "göz"],
+  ]) assert.ok(!containsInflectedTurkishTerm(surface!, term!), `${surface} / ${term}`);
   /**
    * SAPMA KAPISI: katalog listelerinin adlandırdığı alan kimlikleri kanonik
    * taksonominin kök kategori kimlikleriyle AYNI olmalıdır. Taksonomi tarafı
@@ -2542,7 +2554,7 @@ check("I26: uzmanlık alanı ile ihtiyaç türü ayrı eksenlerdir", () => {
     // (4) Hizmetin/ürünün bağlı olduğu varlık kullanıcı yüzünde durur.
     for (const k of c.keep) {
       assert.ok(
-        fold(s.text).includes(fold(k)) || fold(s.headline).includes(fold(k)),
+        containsInflectedTurkishTerm(s.text, k) || containsInflectedTurkishTerm(s.headline, k),
         at(`'${k}' kullanıcı yüzünde yok → başlık='${s.headline}' metin='${s.text}'`),
       );
     }

@@ -38,6 +38,11 @@
  * edit/clone sonrası geri yükleme — Dilim 3. Bu YEŞİL, kullanıcının cevabının
  * reload sonrası geri geldiğini KAPSAMAZ.
  */
+// 2026-09-24 transfer delta: +flatPrintFormat (print-02),
+// +publicationPageCount (print-08), +city/+locationMode (svc-06).
+// All four are written by the user. UNKNOWN=975 stays unchanged;
+// ovenType was restored and mach-05 parent leakage was fixed first.
+// Per-row evidence: docs/audits/2026-09-24-transfer-fixes.
 
 import { buildDiscoveryProjectionFromState } from "../src/lib/discovery/build-projection";
 import {
@@ -581,7 +586,7 @@ function measureCorpus(): {
    */
   /* 98+ Faz I (2026-09-01) sayılı rebase — kimlik listesi: fixtures/projection-authority-v1.ts */
   /* 98+ Part II (2026-09-01) sayılı rebase: kullanıcı ürün ad-öbeği ekseninin sonucu — 11 senaryo productType/propertyType kazandı (kimlik listesi: fixtures/projection-authority-v1.ts PART II notu). */
-  ok("F2", fields === 1302, `kanonik alan sayısı değişti → ${fields}`);
+  ok("F2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
   /**
    * TABAN TAZELENDİ (OL-0011, 2026-09-20): 1282→1302, 972→975, 276→291.
    * Delta satır satır sayıldı ve tek yerde belgelendi —
@@ -594,8 +599,8 @@ function measureCorpus(): {
     responses === 0,
     `varsayılan UNKNOWN cevap yüzeyi üretti → ${responses}`,
   );
-  ok("F5", attributes === 291, `attributes tabanı kaydı → ${attributes}`);
-  ok("F6", constraints === 291, `constraints tabanı kaydı → ${constraints}`);
+  ok("F5", attributes === 295, `attributes tabanı kaydı → ${attributes}`);
+  ok("F6", constraints === 295, `constraints tabanı kaydı → ${constraints}`);
 
   return { scenarios, fields, unknown, responses, attributes, constraints };
 }

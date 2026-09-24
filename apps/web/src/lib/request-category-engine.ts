@@ -89,6 +89,9 @@ const GENERIC_APPLIANCE_PRODUCT_CONTRACT: ProductQuestionContract = {
   restrictStandardProfiles: true,
   allowedCandidateFieldKeys: [
     "brand", "model", "condition", "quantity", "city", "delivery", "budget",
+    // Existing product-scoped detail profiles; component/service contracts
+    // remain separate and publication still requires only budget/location.
+    "vacuumType", "usageArea", "ovenType", "coffeeType",
   ],
   questions: [],
 };

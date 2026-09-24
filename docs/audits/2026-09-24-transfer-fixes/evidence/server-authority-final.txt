@@ -1,0 +1,38 @@
+===== SUNUCU GUVEN SINIRI V1 =====
+FROZEN_IDENTITIES=135
+MEASURED_IDENTITIES=135
+IDENTITY_MISSING=0
+IDENTITY_UNEXPECTED=0
+AUTHORITY_MISMATCH=24
+LEVELS=UNKNOWN:14 INFERRED:4 VERIFIED:12 USER_EXPLICIT:105
+EDIT_CHANNEL_DRIFT=0
+EDIT_END_TO_END_DRIFT=0
+
+===== HUKUM =====
+KIRMIZI — 26 ihlal:
+  - otorite: S06/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S06/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S08/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S08/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S20/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S20/solutionType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S20/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S20/solutionType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S21/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S21/solutionType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S21/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S21/solutionType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S22/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S22/solutionType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S22/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S22/solutionType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27a/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27a/solutionType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27a/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27a/solutionType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27b/needType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27b/solutionType/attributes: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27b/needType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - otorite: S27b/solutionType/constraints: beklenen INFERRED, ölçülen USER_EXPLICIT
+  - dağılım INFERRED: ölçüldü 4, taban 28
+  - dağılım USER_EXPLICIT: ölçüldü 105, taban 81
