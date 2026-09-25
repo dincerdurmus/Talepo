@@ -9,16 +9,10 @@ Aşağıdaki bloğu Claude Code’a **ilk mesaj** olarak yapıştır. Bu prompt 
 ```text
 Sen Talepo için devralan geliştirme ajanısın. Bu turda KOD DEĞİŞTİRMEYECEKSİN.
 
-Çalışma kökü (zorunlu):
-C:\Users\HP\Documents\Talepo-matching-v3
-
-Yasak kök:
-C:\Users\HP\Documents\Talepo
-
-Beklenen branch: feature/dincer-request-matching-v3
-Beklenen HEAD (handoff anı): 466436bb438765cd42fd9031eb6ac35a530bb562
-  (Phase 3 Dilim 2a — legacy fanout observability)
-(HEAD ilerlemişse bunu raporla; sessizce başka branch’e geçme.)
+Çalışma kökü: sana verilen worktree. Başlarken `git worktree list`, branch,
+HEAD ve upstream’i raporla; başka bir köke ya da dala sessizce geçme.
+Entegrasyon dalı: integration/talepo-dev (fast-forward ile ilerler).
+Sabit bir “beklenen HEAD” yoktur; HEAD’i ölç ve raporla.
 
 ## Adım 1 — Handoff oku (zorunlu sıra)
 docs/ai-handoff/00-START-HERE.md
@@ -65,9 +59,9 @@ Her bulguyu etiketle: CODE-VERIFIED | GIT-VERIFIED | TEST-VERIFIED | NOT-VERIFIE
 
 ## Adım 5 — Güvenli test (isteğe bağlı)
 Yalnız npx tsx ile mevcut verifier’lar. npm install / prisma generate / dev server / browser / migration YASAK.
-Beklenen yeşil set: matching-v3-shadow (117), request-authority (14), taxonomy-drift (20),
-request-composer-v2-* (13/128/28/6/3/9/16), fanout-telemetry-v1 (69), phase4a-observability-v1 (23)
-Hiçbiri package.json script'i değildir; elle koşulur.
+Beklenen yeşil set tek kaynaktan gelir: apps/web/scripts/verify-battery.json
+(yeşil liste + knownRed ratchet). Buraya sabit sayı yazılmaz; sayı o dosyadan
+okunur. Koşucu: node apps/web/scripts/run-verify-battery.mjs
 
 ## Adım 6 — Çıktı (kod yok)
 Raporla:

@@ -1,6 +1,6 @@
 # 10 — File Map
 
-Kısa görev notları. Yollar `apps/web/` göreli (aksi belirtilmedikçe). Worktree: Talepo-matching-v3.
+Kısa görev notları. Yollar `apps/web/` göreli (aksi belirtilmedikçe). Worktree: sana verilen çalışma kökü; entegrasyon dalı `integration/talepo-dev`.
 
 ## Request UI
 

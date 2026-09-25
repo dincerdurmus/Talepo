@@ -1,6 +1,6 @@
 # Talepo — Collaboration Handoff
 
-**Branch:** `cursor/talepo-web-core-platform`  
+**Branch:** `integration/talepo-dev`  
 **Repo:** https://github.com/dincerdurmus/Talepo
 
 ## Setup
@@ -8,7 +8,7 @@
 ```bash
 git clone https://github.com/dincerdurmus/Talepo.git
 cd Talepo
-git checkout cursor/talepo-web-core-platform
+git checkout integration/talepo-dev
 git pull
 cd apps/web
 npm install
@@ -49,15 +49,15 @@ Open: http://localhost:3000/talep
 
 ## Verify before changing behavior
 
+Deponun tek doğrulama cetveli `apps/web/scripts/verify-battery.json`'dır
+(yeşil set + `knownRed` ratchet). Buraya betik listesi kopyalanmaz; sayı ve
+kapsam o dosyadan okunur.
+
 ```bash
 cd apps/web
-npx tsx scripts/verify-talep-hybrid-ui-v1.ts
-npx tsx scripts/verify-hybrid-request-composer-v1.ts
-npx tsx scripts/verify-master-taxonomy-v1.ts
-npx tsx scripts/verify-single-brain-closure.ts
-npx tsx scripts/verify-canonical-request-flow.ts
-npx tsx scripts/verify-request-understanding-brain.ts
-npx tsx scripts/verify-semantic-request-subject.ts
+node scripts/run-verify-battery.mjs            # tüm cetvel
+node scripts/run-verify-battery.mjs --only <ad> # tek doğrulayıcı
+npm run typecheck
 npm run build
 ```
 
@@ -71,7 +71,7 @@ npm run build
 ## Codex prompt starter
 
 ```text
-Continue on branch cursor/talepo-web-core-platform.
+Continue on branch integration/talepo-dev.
 Read COLLABORATION-HANDOFF.md first.
 Preserve Single Brain (understandRequest). Use existing Hybrid Request Composer.
 No DB/migration. No production catalog apply unless explicitly requested.

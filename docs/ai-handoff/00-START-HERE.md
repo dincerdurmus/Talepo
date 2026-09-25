@@ -27,17 +27,23 @@ Phase 1/2’nin branch lineage’de olması **production deploy kanıtı değild
 
 `DECIDED-NOT-IMPLEMENTED` özellikle tehlikelidir: karar `11-DECISION-LOG.md`’de yazılıdır, fakat kod hâlâ eski davranışı sürdürür. Kararı okuyup “uygulanmış” sanma.
 
-## Doğru çalışma konumu (doğrulanmış)
+## Doğru çalışma konumu (her oturumda yeniden ölçülür)
 
-| Alan | Değer | Etiket |
-|------|--------|--------|
-| Worktree | `C:\Users\HP\Documents\Talepo-matching-v3` | `GIT-VERIFIED` |
-| Branch | `feature/dincer-request-matching-v3` | `GIT-VERIFIED` |
-| HEAD | `466436bb438765cd42fd9031eb6ac35a530bb562` | `GIT-VERIFIED` |
-| Upstream | `origin/feature/dincer-request-matching-v3` | `GIT-VERIFIED` |
-| Local == Remote | **Hayır** — HEAD uzaktan 1 commit ileride (Dilim 2a kodu henüz push edilmedi) | `GIT-VERIFIED` |
+Bu belge sabit bir worktree, branch ya da HEAD dondurmaz — dondurulan her sayı
+bir sonraki commit'te bayatlar. Başlarken kendin ölç ve raporla:
 
-**Dokunma:** `C:\Users\HP\Documents\Talepo` (günlük kirli klasör; başka branch).
+| Alan | Nasıl okunur |
+|------|--------------|
+| Worktree | `git worktree list` — sana verilen kök |
+| Branch | `git branch --show-current` |
+| HEAD | `git rev-parse HEAD` |
+| Upstream | `git rev-parse --abbrev-ref @{u}` |
+| Local == Remote | `git fetch origin` sonrası `git rev-list --left-right --count @{u}...HEAD` |
+
+Entegrasyon dalı `integration/talepo-dev`'dir; yalnız fast-forward ile ilerler
+ve oraya push açık talimat ister.
+
+**Dokunma:** sana verilmeyen worktree'ler ve başka geliştiricinin dalları.
 
 ## Mevcut geliştirme aşaması
 
@@ -62,7 +68,7 @@ Phase 1/2’nin branch lineage’de olması **production deploy kanıtı değild
 
 ## Kesinlikle yapma
 
-- `C:\Users\HP\Documents\Talepo` üzerinde geliştirme
+- Sana verilmeyen bir worktree üzerinde geliştirme
 - Commit / push / merge / rebase (onaysız)
 - Migration, deploy, DB yazma, seed, `prisma generate`
 - `npm install`, lockfile değişikliği
@@ -91,9 +97,9 @@ Phase 1/2’nin branch lineage’de olması **production deploy kanıtı değild
 
 ## Kod yazmadan önce doğrula (checklist)
 
-- [ ] `pwd` = `...\Talepo-matching-v3`
-- [ ] `git branch --show-current` = `feature/dincer-request-matching-v3`
-- [ ] `git rev-parse HEAD` = beklenen HEAD (veya kullanıcı onayıyla güncel Dilim HEAD)
+- [ ] `pwd` = sana verilen worktree kökü (`git worktree list` ile doğrulandı)
+- [ ] `git branch --show-current` raporlandı; sessizce dal değiştirilmedi
+- [ ] `git rev-parse HEAD` ölçüldü ve raporlandı (sabit "beklenen HEAD" yok)
 - [ ] `git status --short` temiz veya yalnız bilinen handoff docs
 - [ ] `package-lock.json` dirty değil
 - [ ] `distribute-request.ts` beklenmedik dirty değil
