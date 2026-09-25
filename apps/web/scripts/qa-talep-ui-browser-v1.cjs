@@ -354,6 +354,12 @@ async function main() {
   await sleep(700);
   s = await snapshot();
   await shot("d-4-kategoriler", "masaüstü 1280 — kategori paneli", { roots: s.sheetRoots.length });
+
+  await click('[data-testid="talep-category-root"]');
+  await sleep(700);
+  s = await snapshot();
+  check("1280: alt kategori listesi açıldı", s.sheetSubs.length > 0, s.sheetSubs.join(","));
+  await shot("d-5-altkategori", "masaüstü 1280 — alt kategori", { subs: s.sheetSubs });
   await evaluate(`document.querySelector('[role="dialog"] button.ml-auto')?.click()`);
   await sleep(400);
 
@@ -364,7 +370,7 @@ async function main() {
     await sleep(1400);
   }
   s = await snapshot();
-  await shot("d-5-hazir", "masaüstü 1280 — hazır", {
+  await shot("d-6-hazir", "masaüstü 1280 — hazır", {
     status: s.status,
     meter: s.meter,
     cta: s.publishCta,
@@ -383,7 +389,7 @@ async function main() {
     Boolean(s.question || s.continueHint || s.publishCta || s.outOfScope),
     JSON.stringify({ q: s.question, hint: s.continueHint, cta: s.publishCta }).slice(0, 160),
   );
-  await shot("d-6-belirsiz", "masaüstü 1280 — belirsiz cümle", {
+  await shot("d-7-belirsiz", "masaüstü 1280 — belirsiz cümle", {
     status: s.status,
     question: s.question,
     hint: s.continueHint,
@@ -403,7 +409,7 @@ async function main() {
     `document.body.innerText.includes("Talebin yayında")`,
   );
   check("ilaç talebinde 'yayında' denmiyor", saysLive === false);
-  await shot("d-7-ilac-kapsam", "masaüstü 1280 — ilaç kapsam kapısı", {
+  await shot("d-8-ilac-kapsam", "masaüstü 1280 — ilaç kapsam kapısı", {
     outOfScope: Boolean(s.outOfScope),
     publishCta: s.publishCta,
   });
