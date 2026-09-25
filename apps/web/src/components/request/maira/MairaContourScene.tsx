@@ -72,11 +72,20 @@ type Props = {
   thinking?: boolean;
   /** Zemin varyantı; /talep beyaz zeminde `light` ister. */
   appearance?: ContourAppearance;
+  /**
+   * Sahne gerçekten çizmeye başladığında haber verir. Çağıran taraf kendi
+   * fallback'ini söndürebilsin diye var: iki katman üst üste durduğunda
+   * yüz, konturların değil iç içe halkaların görüntüsüne dönüşüyordu.
+   * Sahne hiç kurulmazsa bu geri çağrı HİÇ `true` ile çağrılmaz — fallback
+   * görünür kalır.
+   */
+  onReady?: (ready: boolean) => void;
 };
 
 export function MairaContourScene({
   thinking = false,
   appearance = "dark",
+  onReady,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handleRef = useRef<ContourSceneHandle | null>(null);
@@ -107,10 +116,12 @@ export function MairaContourScene({
           maxFps: budget.maxFps,
         });
         setReady(true);
+        onReady?.(true);
       } catch {
         /* Sessiz fallback: çağıranın ışık alanı görünmeye devam eder. */
         handleRef.current = null;
         setReady(false);
+        onReady?.(false);
       }
     })();
 
@@ -122,8 +133,9 @@ export function MairaContourScene({
         /* Temizlik hatası da akışa sızmaz. */
       }
       handleRef.current = null;
+      onReady?.(false);
     };
-  }, [appearance, budget]);
+  }, [appearance, budget, onReady]);
 
   useEffect(() => {
     handleRef.current?.setThinking(thinking);

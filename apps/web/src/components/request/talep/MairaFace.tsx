@@ -13,6 +13,7 @@
  */
 
 import dynamic from "next/dynamic";
+import { useCallback, useState } from "react";
 
 const MairaContourScene = dynamic(
   () => import("../maira/MairaContourScene").then((m) => m.MairaContourScene),
@@ -42,6 +43,15 @@ export function MairaFace({
   scene = true,
   className = "",
 }: Props) {
+  /**
+   * Yer tutucu halkalar sahne çizmeye başlayınca SÖNER. İkisi üst üste
+   * durduğunda yüz, konturların değil iç içe ovallerin görüntüsüne
+   * dönüşüyordu (tarayıcıda ölçüldü). Sahne hiç kurulmazsa halkalar görünür
+   * kalır — akış yüze bağımlı değildir.
+   */
+  const [sceneReady, setSceneReady] = useState(false);
+  const handleReady = useCallback((ready: boolean) => setSceneReady(ready), []);
+
   return (
     <span
       aria-hidden
@@ -63,7 +73,9 @@ export function MairaFace({
       />
       <svg
         viewBox="0 0 100 100"
-        className="absolute inset-0 h-full w-full"
+        className={`absolute inset-0 h-full w-full transition-opacity duration-700 ${
+          sceneReady ? "opacity-0" : "opacity-100"
+        }`}
         fill="none"
       >
         {[0, 1, 2, 3, 4].map((ring) => (
@@ -87,7 +99,11 @@ export function MairaFace({
         />
       </svg>
       {scene ? (
-        <MairaContourScene appearance="light" thinking={thinking} />
+        <MairaContourScene
+          appearance="light"
+          thinking={thinking}
+          onReady={handleReady}
+        />
       ) : null}
     </span>
   );
