@@ -796,6 +796,124 @@ function hasAny(normalized: string, terms: string[]) {
   return terms.some((t) => normalized.includes(t));
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   AMBALAJ SÖZCÜĞÜ İKİ ŞEY ADLANDIRIR — AYRIMI ÜRETİM KANITI YAPAR
+   (2026-09-25 akşam).
+
+   ÖLÇÜLEN KUSUR. Matbaa sözlüğündeki "kutu", "poşet", "etiket", "promosyon",
+   "karton", "kraft" sözcükleri cümlenin her yerinde aranıyordu. Sonuç
+   (`qa/open-set/set-f`, 840 türetilmiş vaka, düzeltme öncesi 322 kaçak):
+
+     "Kedi kumu kutusu arıyorum, kapalı model"   → printing 4, EMİN
+     "Saklama kutusu arıyorum, plastik 20 litre" → printing 4, EMİN
+     "Etiket makinesi arıyorum, termal"          → printing 6, EMİN
+     "Çöp poşeti arıyorum, 50 litre 20 rulo"     → printing, iddia
+     "Buzdolabı için promosyon kodu arıyorum"    → printing 2
+
+   Bir kedi tuvaleti, bir plastik saklama kabı ve bir indirim kodu matbaacının
+   ücretli akışına düşüyordu; matbaacı işine yaramayan talebi görüyor, gerçek
+   satıcı hiç görmüyordu.
+
+   EKSEN SÖZCÜK DEĞİL: bu sözcükler hem bir matbaa/ambalaj ÜRÜNÜNÜ hem sıradan
+   bir perakende nesnesini adlandırır. Türkçede ayrımı yapan şey ÜRETİM
+   kanıtıdır — talep bir şeyin BASILMASINI/ÜRETİLMESİNİ mi istiyor, yoksa raftan
+   bir nesne mi arıyor. O yüzden kural tek tek sözcük yasaklamaz; belirsiz
+   sözcüklerin OY HAKKINI üretim kanıtına bağlar:
+
+     1) açık üretim sözcüğü (matbaa, baskı, bastır, ofset, selefon, logolu…),
+     2) ambalaj üretimi adlandıran ÇOK SÖZCÜKLÜ öbek ("karton kutu", "oluklu
+        kutu", "kraft poşet") — tek sözcüklük "karton" bunu SAĞLAMAZ, yoksa
+        "karton bardak" yeniden matbaa olurdu,
+     3) ya da cümlede belirsiz OLMAYAN bir matbaa sözcüğü ("kartvizit",
+        "broşür", "davetiye", "ambalaj"): o zaman talep zaten matbaadır ve
+        belirsiz sözcük yalnız ayrıntıdır.
+
+   Üçü de yoksa belirsiz sözcük matbaaya OY VERMEZ. Kararı değiştirmez, yalnız
+   dayanaksız oyu düşürür: cümlenin gerçek kökü başka bir dedektörden ya da
+   kanonik iddiadan gelmeye devam eder.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/** Hem matbaa ürünü hem sıradan nesne adlandırabilen sözcükler. */
+const PRINTING_AMBIGUOUS_NOUNS = [
+  "kutu",
+  "poşet",
+  "poset",
+  "etiket",
+  "promosyon",
+  "karton",
+  "kraft",
+  "mukavva",
+];
+
+/** Açık üretim/baskı kanıtı — tek başına yeter. */
+const PRINTING_PRODUCTION_EVIDENCE = [
+  "matbaa",
+  "baskı",
+  "baski",
+  "bastır",
+  "bastir",
+  "basım",
+  "basim",
+  "ofset",
+  "flekso",
+  "serigrafi",
+  "selefon",
+  "kuşe",
+  "kuse",
+  "logolu",
+  "logo baskı",
+  "logo baski",
+  /**
+   * SİPARİŞLE ÜRETTİRME DE ÜRETİM KANITIDIR (2026-09-25, ölçümle eklendi).
+   *
+   * İlk liste yalnız baskı adlarını sayıyordu ve YAZIM HATASI ekseninde
+   * kırılıyordu: ölçüldü (`qa/open-set/set-f`) "Etiket baskısı yaptırmak
+   * istiyorum" cümlesinin tek harflik hata türevinde `baskı` bulunamıyor,
+   * belirsiz "etiket" oyunu kaybediyor ve talep Hizmetler'e düşüyordu. Kanıt
+   * tek bir sözcüğe bağlı kalmasın diye SİPARİŞ dili de eklendi: "yaptırmak",
+   * "üretim", "imalat" bir şeyin ürettirilmesini ister ve ambalaj sözcüğüyle
+   * birlikte geçtiğinde talep gerçekten bir üretim talebidir.
+   */
+  "yaptır",
+  "yaptir",
+  "üretim",
+  "uretim",
+  "imalat",
+];
+
+/**
+ * Ambalaj ÜRETİMİ adlandıran çok sözcüklü öbekler. Bilerek çok sözcüklü:
+ * bir boşluk zaten sözcük sınırıdır ve tek sözcüklük malzeme adı ("karton")
+ * ambalaj kanıtı sayılamaz — "karton bardak" da onu taşır.
+ */
+const PRINTING_PACKAGING_PHRASES = [
+  "karton kutu",
+  "oluklu kutu",
+  "kraft kutu",
+  "mukavva kutu",
+  "kraft poşet",
+  "kraft poset",
+  "karton koli",
+  "oluklu mukavva",
+  "karton ambalaj",
+  "etiket baskı",
+  "etiket baski",
+];
+
+/**
+ * Matbaa oyunun dayanağı var mı? Belirsiz sözcükler bu soruya "hayır"
+ * denirse puanlamaya hiç girmez.
+ */
+function printingProductionProven(normalized: string): boolean {
+  if (hasAny(normalized, PRINTING_PRODUCTION_EVIDENCE)) return true;
+  if (hasAny(normalized, PRINTING_PACKAGING_PHRASES)) return true;
+  return (CATEGORY_KEYWORDS.printing ?? []).some(
+    (keyword) =>
+      !PRINTING_AMBIGUOUS_NOUNS.includes(keyword) &&
+      keywordHits(normalized, keyword),
+  );
+}
+
 /**
  * Furniture *object* nouns beat location/use-context words like "ofis".
  * "masaüstü" / "masaj" are not furniture objects.
@@ -883,8 +1001,19 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
     serviceLemmaIndex < propertyWordIndex &&
     !hasRealEstateTransaction;
 
+  /**
+   * BELİRSİZ AMBALAJ SÖZCÜKLERİNİN OY HAKKI — döngünün ÜSTÜNDE hesaplanır
+   * (2026-09-25). Karar cümlenin tamamına bakar, tek anahtara değil; her
+   * anahtar için yeniden hesaplamak aynı soruyu 8 kez sormak olurdu.
+   */
+  const printingProven = printingProductionProven(normalized);
+
   for (const [categoryId, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-    let score = keywords.reduce(
+    const scoringKeywords =
+      categoryId === "printing" && !printingProven
+        ? keywords.filter((k) => !PRINTING_AMBIGUOUS_NOUNS.includes(k))
+        : keywords;
+    let score = scoringKeywords.reduce(
       (total, keyword) => total + keywordScore(normalized, keyword),
       0,
     );
@@ -1209,7 +1338,21 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         "oluklu kutu",
         "kutu",
       ];
-      if (strongPrintingTerms.some((term) => normalized.includes(term))) {
+      /**
+       * +4 BONUSU DA AYNI KAPIDAN GEÇER (2026-09-25). Liste "güçlü matbaa
+       * terimi" adını taşıyor ama içinde belirsiz ambalaj sözcükleri de vardı
+       * ("etiket", "kutu", "ambalaj"); bonus `includes` ile cümlenin herhangi
+       * bir yerinde arandığı için "Etiket makinesi arıyorum, termal" matbaaya
+       * 6 puanla EMİN bağlanıyordu (ölçüldü). Belirsiz sözcük dayanağı yoksa
+       * bonus da almaz — yoksa anahtar puanını kısıp bonusu bırakmak aynı
+       * kusuru yarı yoldan geri getirirdi.
+       */
+      const bonusTerms = printingProven
+        ? strongPrintingTerms
+        : strongPrintingTerms.filter(
+            (term) => !PRINTING_AMBIGUOUS_NOUNS.includes(term),
+          );
+      if (bonusTerms.some((term) => normalized.includes(term))) {
         score += 4;
       }
       if (

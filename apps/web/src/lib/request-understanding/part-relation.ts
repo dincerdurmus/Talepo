@@ -542,6 +542,90 @@ function domainFromSpan(span: string): RelationDomainEvidence | null {
 }
 
 /**
+ * ÜST ÜRÜN İZİ NİTELEYİCİ OLABİLİR — BAĞLAÇSIZ CÜMLEDE POZİTİF KANIT ŞARTI
+ * (2026-09-25 akşam).
+ *
+ * ÖLÇÜLEN KUSUR. Kanonik "Çamaşır Makinesi" düğümü `çamaşır` ALIAS'ını taşır;
+ * "Bulaşık Makinesi" `bulaşık` alias'ını. Alias yanlış değildir — tek başına
+ * "çamaşır" gündelik Türkçede makineyi adlandırabilir. Yanlış olan, bağlaçsız
+ * cümlede bu izin cümlenin HER YERİNDE aranıp konumuna bakılmamasıydı. Ölçüldü
+ * (`qa/open-set/set-f`, düzeltme öncesi):
+ *
+ *   "Çamaşır deterjanı arıyorum, 10 kg"  → appliances %80 EMİN
+ *   "Çamaşır suyu arıyorum, 5 litre"     → appliances %80 EMİN
+ *   "Bulaşık süngeri arıyorum, 50 adet"  → appliances %80 EMİN
+ *
+ * Bir bidon çamaşır suyu beyaz eşya servisinin ücretli akışına düşüyordu.
+ *
+ * KURAL DİL BİLGİSİNDEN OKUNUR: Türkçe ad tamlamasında baş SONDADIR. "Çamaşır
+ * deterjanı"nda istenen şey DETERJANDIR; "çamaşır" onu niteler, kullanım
+ * alanını söyler. Bu yüzden izin niteleyici konumda kanıt sayılması için
+ * istenen şeyin o üst ürünle GERÇEK bir ilişkisi kanıtlanmalıdır:
+ *
+ *   a) iz, istenen şeyin KENDİSİDİR ("Çamaşır makinesi arıyorum") — bütün ürün
+ *      talebi; alan doğrudan oradan gelir;
+ *   b) ya da istenen şeyin BAŞI bir şeye çözülür: kanonik taksonomide bir
+ *      düğüm ("Buzdolabı rafı" → raf), rol sözlüğünde bir parça/aksesuar
+ *      ("Çamaşır makinesi pompası" → pompa) ya da bir hizmet ("Klima bakımı" →
+ *      bakım). O zaman iz gerçekten üst üründür.
+ *
+ * Baş HİÇBİR ŞEYE çözülmüyorsa (deterjan, sünger, sepet, mandal, ip: hiçbiri
+ * kanonik ağaçta ya da rol sözlüğünde yok) iz yalnız bir kullanım alanıdır ve
+ * alan kanıtı ÜRETMEZ. Bu D-0028/D-0032 çizgilerini gevşetmez: karar kapsam
+ * değil kategoridir ve sonuç "alan yok"tur — talep yayınlanır, kökü kullanıcı
+ * onaylar.
+ *
+ * YENİ ROL OTORİTESİ YAZILMADI: baş çözümü deponun tek yetkilisinden
+ * (`classifyRequestedTargetRole`) sorulur ve yalnız `provenance` okunur —
+ * "çözüldü mü" sorusu "hangi rol" sorusundan ayrıdır.
+ */
+function partBearingSpanNamesTheRequest(
+  text: string,
+  evidence: RelationDomainEvidence,
+): boolean {
+  if (evidence.code !== "domain:taxonomy-part-bearing") return true;
+  /**
+   * KURAL YALNIZ EKSİLTİLİ ALIAS'A UYGULANIR — VE BU SINIR ÖLÇÜMLE ÇİZİLDİ.
+   *
+   * İlk yazımda kural her üst ürün izine uygulanıyordu. Ölçüldü
+   * (`qa/open-set/set-f`): kontrol kaybı 36'dan 58'e çıktı, çünkü kanonik ADIN
+   * kendisi geçtiği hâlde ("Buzdolabı kompresörü", "Bulaşık makinesi bakımı")
+   * baş sözcük Türkçe iyelik ekiyle çözülemiyor ve MEŞRU parça/hizmet talebi
+   * alanını kaybediyordu. Kusurun kökü kanonik ad değil, EKSİLTİLİ ALIAS'tır:
+   * "Çamaşır Makinesi" düğümü `çamaşır` alias'ını taşır ve o alias niteleyici
+   * konumda kanıt sayılıyordu. Kanonik adın kendisi geçiyorsa belirsizlik
+   * yoktur — kanıt olduğu gibi durur.
+   */
+  const bearing = findPartBearingParentSpan(evidence.span);
+  if (!bearing) return true;
+  const foldPhrase = (value: string) =>
+    foldTr(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  if (foldPhrase(bearing.node.canonicalName) === foldPhrase(evidence.span)) {
+    return true;
+  }
+  const requested = readRequestedTarget(text).value?.trim();
+  /* Hedef okunamadıysa eski davranış korunur: bu kural bir kanıt ARAR, kanıt
+     bulunamadığında karar vermez. */
+  if (!requested) return true;
+  /* (a) iz istenen şeyin kendisi. */
+  if (foldPhrase(requested) === foldPhrase(evidence.span)) return true;
+  /**
+   * (b) İstenen şey o üst ürünün PARÇASI ya da ona uygulanan HİZMET mi?
+   *
+   * "Çözülüyor mu" yetmedi — ölçüldü (`qa/open-set/set-f`): "Bulaşık deterjanı
+   * tableti arıyorum, 100 adet" cümlesinde baş sözcük `tablet` kanonik ağaçta
+   * ÇÖZÜLÜYOR (teknoloji) ve kural onu kanıt sayıp talebi beyaz eşyaya
+   * bağlıyordu. Bir kutu bulaşık tableti, beyaz eşya servisinin ücretli
+   * akışına düşüyordu. Sorulacak doğru soru "baş bir şey mi" değil, "baş BU
+   * ÜST ÜRÜNLE parça/hizmet ilişkisi kuruyor mu"dur. Eksiltili alias'ın meşru
+   * kullanımları tam olarak bunlardır: "çamaşır tamiri", "bulaşık makinesi
+   * servisi", "çamaşır pompası".
+   */
+  const role = classifyRequestedTargetRole(requested).role;
+  return role === "COMPONENT_OR_ACCESSORY" || role === "SERVICE";
+}
+
+/**
  * TALEBİN UZMANLIK ALANI — hizmet olmak alanı silmez (1I).
  *
  * Talepo'da iki ayrı eksen vardır: KATEGORİ "hangi uzmanlık alanı?", KIND
@@ -596,7 +680,9 @@ export function resolveRelationDomain(
   } else {
     // (3) Bağlaç yok — cümlenin tamamı taranır.
     const fromText = domainFromSpan(text);
-    if (fromText) return fromText;
+    if (fromText && partBearingSpanNamesTheRequest(text, fromText)) {
+      return fromText;
+    }
   }
 
   // (4) Rol sözcük dağarcığı — kanonik düğümü olmayan dijital ürün adları.

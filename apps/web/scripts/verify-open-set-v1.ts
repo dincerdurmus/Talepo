@@ -39,6 +39,7 @@ import { detectCategoryResult, CATEGORY_CONFIDENT_MIN_SCORE } from "@/lib/ai/par
 import { MEANING_PRESERVING_TRANSFORMS } from "./lib/metamorphic-transforms";
 import { SET_A } from "../../../qa/open-set/set-a-out-of-taxonomy";
 import { SET_B } from "../../../qa/open-set/set-b-in-taxonomy-hard";
+import { SET_F } from "../../../qa/open-set/set-f-modifier-and-packaging";
 import { splitById, type Half } from "../../../qa/open-set/split";
 
 /* ------------------------------------------------------------------ */
@@ -100,6 +101,47 @@ export const SCOPE_BLOCK_BASELINE = { dev: 0, test: 14 };
 /** Kaç puan artış tolere edilir (kurucu görev tanımı). */
 const FALSE_ALARM_TOLERANCE_PCT = 3;
 
+/**
+ * F KÜMESİ — HOLDOUT, DÜZELTMEDEN ÖNCE YAZILDI VE KİLİTLENDİ (2026-09-25 akşam).
+ *
+ * A/B/E kümeleri sabah yazıldı ve test yarıları BİR KEZ koşuldu; onlara satır
+ * eklemek o kilidi kırardı ve ikinci koşu bir sınav değil bir tekrar olurdu. Bu
+ * yüzden akşam bulunan iki kusur sınıfı AYRI bir holdout'a yazıldı
+ * (`qa/open-set/set-f-modifier-and-packaging.ts`). Düzeltmeler bu kümenin
+ * satırlarına bakarak değil, gitignore'daki geliştirme sondaları üzerinde
+ * yazıldı; küme yalnızca SINAV olarak koşuldu.
+ *
+ * BEKLENTİ "ŞU KÖKE BAĞLANMASIN" BİÇİMİNDEDİR. Bir "saklama kutusu"nun doğru
+ * Talepo kökü tartışmalıdır; MATBAA olmadığı tartışmasızdır. Tartışmalı bir
+ * etiketi hüküm gibi yazmak kümeyi zayıflatırdı.
+ *
+ * ÖNCE / SONRA — aynı betikle ölçüldü (60 taban × 14 dönüşüm = 840 vaka):
+ *   yanlış EMİN iddia .......... 322 → 0
+ *   kontrol kaybı ...............  36 → 39
+ *
+ * KAPI 5 (yanlış emin iddia) 0'DIR. Kurucunun ana metriği budur ve bir
+ * holdout'ta "taban kadarına izin ver" demek sınavı hükümsüz kılar.
+ *
+ * KAPI 6 (kontrol kaybı) 39'DUR VE BU BİR KAYIPTIR — süslenmedi. Taban 36'ydı;
+ * düzeltme ÜÇ vaka EKLEDİ ve üçü de aynı sınıftır: yazım-hatası dönüşümü
+ * kanonik adı bozunca ("Çamaşır amkinesi", "Bulaşık mkainesi") geriye yalnız
+ * EKSİLTİLİ alias (`çamaşır`, `bulaşık`) kalıyor, yeni kural onu niteleyici
+ * konumda kanıt saymıyor ve talep kategorisiz kalıyor. Eskiden bu cümleleri
+ * KURTARAN şey, tam olarak kusurun kendisiydi: alias'ın her konumda kanıt
+ * sayılması. Yani kaybedilen şey bir yetenek değil, bir KAZA idi — ama bir
+ * kullanıcı için sonuç yine de "kategorim boş kaldı"dır, o yüzden sayıyla
+ * tutuluyor. Kapatmanın yolu yaklaşık eşleşmeyi harf TRANSPOZİSYONUNA açmaktır;
+ * bu deponun tek yetkili "bir harf hatası" ölçütü (`withinOneEdit`) bir GÜVENLİK
+ * kapısını da (D-0028 eczane) besliyor ve onu bu dilimde genişletmek ayrı bir
+ * karardır. AÇIK İŞ.
+ *
+ * Taban 36'nın kendisi de bu dilimin konusu değildir: çoğu kontrol satırının
+ * TENTATIVE kalması ya da yanlış kök seçmesi ("Buzdolabı kompresörü" →
+ * machinery) daha önce de böyleydi ve ayrı eksendir.
+ */
+export const F_WRONG_CLAIM_BASELINE = 0;
+export const F_CONTROL_LOSS_BASELINE = 39;
+
 /* ------------------------------------------------------------------ */
 /* ÖLÇÜM                                                               */
 /* ------------------------------------------------------------------ */
@@ -139,7 +181,7 @@ function isConfidentClaim(r: CategoryReading): boolean {
 }
 
 type Leak = {
-  set: "A" | "B";
+  set: "A" | "B" | "F";
   id: string;
   seed: string;
   transform: string;
@@ -316,6 +358,92 @@ function runSetB(rows: readonly (typeof SET_B)[number][]): SetBResult {
   };
 }
 
+type SetFResult = {
+  cases: number;
+  wrongClaim: number;
+  controlLoss: number;
+  blockedScope: number;
+  leaks: Leak[];
+};
+
+/**
+ * F KÜMESİ ÖLÇÜMÜ — iki yön aynı koşuda.
+ *
+ * `mustNotClaim` satırı: o kök EMİN biçimde iddia edilirse KAÇAK. Kararsız
+ * (TENTATIVE) iddia kaçak sayılmaz — bedeli fazladan bir soru, yanlış havuza
+ * gitmiş bir talep değil; A kümesindeki "emin" tanımıyla birebir aynı.
+ *
+ * `mustClaim` satırı: beklenen kök EMİN biçimde iddia EDİLMEZSE kontrol kaybı.
+ * Bu ikinci yön olmadan ölçüm işe yaramaz: her şeye "hiçbiri" diyen bir sistem
+ * birinci yönü tam geçer ve ürünü yok eder.
+ */
+function runSetF(rows: readonly (typeof SET_F)[number][]): SetFResult {
+  const leaks: Leak[] = [];
+  let cases = 0;
+  let wrongClaim = 0;
+  let controlLoss = 0;
+  let blockedScope = 0;
+
+  for (const row of rows) {
+    for (const t of MEANING_PRESERVING_TRANSFORMS) {
+      const derived = t.apply(row.text);
+      const r = read(derived);
+      cases += 1;
+
+      if (r.scope !== "DEMAND") {
+        blockedScope += 1;
+        leaks.push({
+          set: "F",
+          id: row.id,
+          seed: row.text,
+          transform: t.name,
+          derived,
+          kind: "MESRU_TALEP_ENGELLENDI",
+          expected: "DEMAND",
+          got: r.scope,
+          evidence: r.evidence.join("|"),
+        });
+        continue;
+      }
+
+      if (row.mustNotClaim) {
+        if (isConfidentClaim(r) && r.root === row.mustNotClaim) {
+          wrongClaim += 1;
+          leaks.push({
+            set: "F",
+            id: row.id,
+            seed: row.text,
+            transform: t.name,
+            derived,
+            kind: "EMIN_AMA_YANLIS",
+            expected: `${row.mustNotClaim} OLMASIN`,
+            got: `${r.root} ${r.confidence.toFixed(2)}`,
+            evidence: r.evidence.join("|"),
+          });
+        }
+        continue;
+      }
+      if (row.mustClaim) {
+        if (!(isConfidentClaim(r) && r.root === row.mustClaim)) {
+          controlLoss += 1;
+          leaks.push({
+            set: "F",
+            id: row.id,
+            seed: row.text,
+            transform: t.name,
+            derived,
+            kind: "KONTROL_KAYBI",
+            expected: row.mustClaim,
+            got: `${r.root ?? "kök yok"} ${r.status}`,
+            evidence: r.evidence.join("|"),
+          });
+        }
+      }
+    }
+  }
+  return { cases, wrongClaim, controlLoss, blockedScope, leaks };
+}
+
 /* ------------------------------------------------------------------ */
 /* MUTASYON KONTROLÜ                                                   */
 /* ------------------------------------------------------------------ */
@@ -366,6 +494,12 @@ function main(): void {
 
   const a = runSetA(aRows);
   const b = runSetB(bRows);
+  /**
+   * F KÜMESİ BÖLÜNMEZ. Holdout'un amacı bir sınavdır; yarıya bölmek sınavı
+   * yarıya indirirdi ve bu küme zaten düzeltmeden sonra bir kez koşulmak üzere
+   * yazıldı. Her koşuda TAMAMI ölçülür.
+   */
+  const f = runSetF(SET_F);
 
   const pct = (n: number, d: number) => (d ? (n * 100) / d : 0);
   const aCatchPct = pct(a.caught, a.cases);
@@ -390,7 +524,17 @@ function main(): void {
   console.log(`  doğru kök kararsız ........... ${b.rightRootTentative}`);
   console.log(`  meşru talep engellendi ....... ${b.blockedScope}`);
 
-  const leaks = [...a.leaks, ...b.leaks];
+  console.log("");
+  console.log(`F — NİTELEYİCİ VE AMBALAJ TUZAKLARI (holdout, ${f.cases} türetilmiş vaka)`);
+  console.log(
+    `  YANLIŞ EMİN İDDİA ............ ${f.wrongClaim}   (kapı: ${F_WRONG_CLAIM_BASELINE})`,
+  );
+  console.log(
+    `  KONTROL KAYBI ................ ${f.controlLoss}   (kapı: ${F_CONTROL_LOSS_BASELINE})`,
+  );
+  console.log(`  meşru talep engellendi ....... ${f.blockedScope}`);
+
+  const leaks = [...a.leaks, ...b.leaks, ...f.leaks];
   const shown = leaks.filter((l) => l.kind.startsWith("EMIN_AMA_YANLIS") || l.kind === "MESRU_TALEP_ENGELLENDI").slice(0, 30);
   if (shown.length) {
     console.log("");
@@ -460,8 +604,18 @@ function main(): void {
       `${scopeOk ? "yesil" : "KIRMIZI"}  (ölçülen ${scopeBlocked})`,
   );
   console.log(`KAPI 4 (mutasyon kontrolü) ............. ${controlOk ? "yesil" : "KIRMIZI"}`);
+  const fWrongOk = f.wrongClaim <= F_WRONG_CLAIM_BASELINE;
+  const fControlOk = f.controlLoss <= F_CONTROL_LOSS_BASELINE;
+  console.log(
+    `KAPI 5 (F yanlış emin iddia ≤ ${F_WRONG_CLAIM_BASELINE}) ..... ` +
+      `${fWrongOk ? "yesil" : "KIRMIZI"}  (ölçülen ${f.wrongClaim})`,
+  );
+  console.log(
+    `KAPI 6 (F kontrol kaybı ≤ ${F_CONTROL_LOSS_BASELINE}) ........ ` +
+      `${fControlOk ? "yesil" : "KIRMIZI"}  (ölçülen ${f.controlLoss})`,
+  );
 
-  if (confidentWrongOk && falseAlarmOk && scopeOk && controlOk) {
+  if (confidentWrongOk && falseAlarmOk && scopeOk && controlOk && fWrongOk && fControlOk) {
     console.log("PASS — acik kume karari dayanaksiz kok iddia etmiyor");
     process.exit(0);
   }
