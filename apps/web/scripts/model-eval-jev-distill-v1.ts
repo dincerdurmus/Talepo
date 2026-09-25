@@ -68,7 +68,10 @@ async function main(): Promise<void> {
       categoryConfidence: bundle?.categoryConfidence ?? 0,
       categoryMargin: bundle?.categoryMargin ?? 0,
       outOfScope: bundle?.outOfScope ?? null,
-      outOfTaxonomy: bundle?.outOfTaxonomy ?? null,
+      /* Taksonomi sorusu 2026-09-25'te noul'den 12 seçenekli choice'a geçti
+         (ölçüldü, bkz. jev-policy); bu kayıt yeni alanı taşır. */
+      taxonomyChoice: bundle?.taxonomyChoice ?? null,
+      taxonomyChoiceConfidence: bundle?.taxonomyChoiceConfidence ?? 0,
       ok: bundle !== null,
     });
     if ((i + 1) % 40 === 0) console.log(`  ${i + 1}/${bases.length} (başarısız ${failed})`);

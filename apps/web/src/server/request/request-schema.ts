@@ -273,10 +273,11 @@ export function parseCreateRequestInput(
   // iki farklı karar verilir.
   const scopeText = publishRawInput ?? publishDescription;
   if (scopeText.length >= 3) {
-    const scope = understandRequest({
+    const understood = understandRequest({
       rawInput: scopeText,
       decisionBundle: options?.decisionBundle ?? null,
-    }).requestScope;
+    });
+    const scope = understood.requestScope;
     /**
      * KAPSAM DEĞERLERİ BURADA ELLE SAYILMAZ (2026-09-21).
      *
@@ -306,10 +307,17 @@ export function parseCreateRequestInput(
      * kendi metninden yeniden türetilir; istemcinin gönderdiği hiçbir alan
      * bir talebi kuyruktan kaçıramaz ya da kuyruğa sokamaz.
      */
+    /**
+     * AYRIŞMA KANITI DA BURADAN OKUNUR (2026-09-25). Kategori kararının kanıtı
+     * istemciden GELMEZ: kullanıcının kendi metninden yeniden türetilir, tıpkı
+     * kapsam gibi. Bugün bu alan yalnız Jev sağlayıcısı devredeyse dolabilir ve
+     * o bayrak kapalıdır.
+     */
     const disposition = requestPublishDisposition({
       requestScope: scope.value,
       scopeConfidence: scope.confidence,
       scopeEvidence: scope.evidence,
+      categoryEvidence: understood.category.evidence,
     });
     if (disposition.decision === "BLOCK") {
       issues.push(outOfScopeNoticeFor(scope.value));

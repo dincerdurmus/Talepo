@@ -52,6 +52,19 @@ export const JEV_REVIEW_BAND_MAX = 0.8;
  */
 export const LOW_SCOPE_CONFIDENCE_THRESHOLD = 0.6;
 
+/**
+ * İKİ BAĞIMSIZ KARARIN AYRIŞMASI — KANIT ETİKETİ (kurucu kararı, 2026-09-25).
+ *
+ * Kural motoru ile Jev farklı kök söylüyorsa ya da biri "kök yok" derken öteki
+ * emin bir kök söylüyorsa otomatik karar yoktur: talep admin kuyruğuna gider.
+ * Etiket TEK yerde tanımlıdır; onu ÜRETEN tek yer Jev sağlayıcısı, OKUYAN tek
+ * yer aşağıdaki hükümdür. Yeni tablo ya da yeni bayrak yoktur.
+ *
+ * BUGÜN ÜRETİMDE HİÇ DOLMAZ: `USE_JEV_IN_PRODUCTION = false` olduğu sürece Jev
+ * sağlayıcısı devreye girmez, dolayısıyla bu yol da açılmaz.
+ */
+export const CATEGORY_DECISION_DIVERGENCE = "category-decision-divergence" as const;
+
 export type PublishDispositionInput = {
   /** Anlama katmanının kapsam kararı (bkz. RequestScope). */
   requestScope?: string | null;
@@ -64,6 +77,12 @@ export type PublishDispositionInput = {
    * açıldığında dolar ve o zaman da yalnız kuyruğa gönderir.
    */
   jevScopeNoul?: number | null;
+  /**
+   * Kategori kararının kanıt etiketleri. Yalnız AYRIŞMA etiketi okunur; hükmün
+   * kategori kararının içine girmesi ("hangi kök" sorusuna karışması) bilerek
+   * engellendi — burada sorulan soru "bu talep yayınlanmalı mı"dır.
+   */
+  categoryEvidence?: readonly string[] | null;
 };
 
 export function requestPublishDisposition(
@@ -96,6 +115,13 @@ export function requestPublishDisposition(
     return {
       decision: "REVIEW",
       evidence: [...evidence, `low-scope-confidence:${confidence.toFixed(2)}`],
+    };
+  }
+
+  if (input.categoryEvidence?.includes(CATEGORY_DECISION_DIVERGENCE)) {
+    return {
+      decision: "REVIEW",
+      evidence: [...evidence, CATEGORY_DECISION_DIVERGENCE],
     };
   }
 

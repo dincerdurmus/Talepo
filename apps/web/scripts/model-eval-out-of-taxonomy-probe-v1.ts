@@ -11,6 +11,13 @@
  * dosyasından okunur. Aynı soruyu ikinci kez sormak bütçe harcar ve hiçbir
  * yeni bilgi vermez.
  *
+ * TARİHSEL SONDA (2026-09-25 itibarıyla). Bu betiğin ölçtüğü Jev tasarımı
+ * TERK EDİLDİ: taksonomi-dışılık artık `noul` değil, 12 seçenekli choice ile
+ * sorulur (ölçüldü — noul yakalama 0/77, choice %90,9; bkz. `jev-policy.ts` ve
+ * `model-eval-jev-taxonomy-gate-v2.ts`). Betik, terk edilen tasarımın
+ * ölçümünü tekrar üretilebilir kılmak için duruyor ve arşivlenmiş ham dosyayı
+ * okur; ürün yolunu artık ölçmez.
+ *
  * Koşum (apps/web):
  *   npx tsx scripts/model-eval-out-of-taxonomy-probe-v1.ts
  */

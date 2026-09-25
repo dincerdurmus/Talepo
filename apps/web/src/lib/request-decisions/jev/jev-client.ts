@@ -19,7 +19,7 @@
  * `jev-olcum/kategoriler-taksonomi.json` olarak koştu) — AÇIK İŞ.
  */
 import CATEGORY_CRITERIA from "./jev-category-criteria.json";
-import { JEV_TIMEOUT_MS } from "./jev-policy";
+import { JEV_OUT_OF_TAXONOMY_CHOICE, JEV_TIMEOUT_MS } from "./jev-policy";
 
 const JEV_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const JEV_MODEL = "jev-latest";
@@ -33,8 +33,12 @@ export type JevDecisionBundle = {
   categoryRunnerUp: string | null;
   /** 0–1: talep Talepo'nun karşılamadığı üç türden biri mi. */
   outOfScope: number;
-  /** 0–1: geçerli talep ama 11 kökten hiçbirinde satılmıyor mu. */
-  outOfTaxonomy: number;
+  /**
+   * Taksonomi seçimi: 11 kökten biri ya da `HICBIRI`. Servis cevap veremediyse
+   * null. Eski `outOfTaxonomy` NOUL'ü ölçüldü ve terk edildi (bkz. jev-policy).
+   */
+  taxonomyChoice: string | null;
+  taxonomyChoiceConfidence: number;
   latencyMs: number;
 };
 
@@ -47,15 +51,41 @@ const OUT_OF_SCOPE_QUESTION =
   "Sıradan bir ürün ya da hizmet arayışı da DOĞRU DEĞİLDİR.";
 
 /**
- * NEEDS_VERIFICATION: bu sorunun eşiği korpusla doğrulanmadı — korpusun 84
- * tabanının tamamı 11 kökün içinde, yani negatif örnek var, pozitif örnek yok.
+ * TAKSONOMİ SEÇİMİ — NOUL'ÜN YERİNİ ALDI (2026-09-25, ölçülerek).
+ *
+ * Eski soru bir `noul`dü ve ölçüldü: 11 kökün dışından 77 gerçek talepte
+ * yakalama 0/77, emin-ama-yanlış 17. Sorun eşikte değildi — soru hiç
+ * ayrışmıyordu. Yerine 12 SEÇENEKLİ tek choice kondu: 11 kök + açıkça tarif
+ * edilmiş `HICBIRI`. Aynı cümlelerde yakalama %90,9'a çıktı ve B kümesinde
+ * doğru kök oranı DÜŞMEDİ (82/84 → 83/84). Ölçüm:
+ * `model-eval-jev-taxonomy-gate-v2`, eşik gerekçesi `jev-policy.ts`.
+ *
+ * `HICBIRI` ÖLÇÜTÜ, SEÇENEĞİN AÇIKLAMASININ KENDİSİDİR. Açıklama elle
+ * yazılmıştır ve bilerek ÖRNEK taşır: ölçüldü (V1→V2, 2026-09-21) — soyut
+ * tarif yetmiyor, sınır örnekle öğreniliyor. 11 kökün açıklamaları ise
+ * taksonomiden ÜRETİLİR ve elle düzenlenmez.
  */
-const OUT_OF_TAXONOMY_QUESTION =
-  "Bu kişi gerçekten bir şey satın almak, kiralamak ya da bir hizmet/üretim yaptırmak " +
-  "istiyor, AMA istediği şey yukarıdaki 11 kategorinin hiçbirinde satılmıyor mu? " +
-  "İstediği şey o 11 kategoriden birine giriyorsa — hangisine girdiğinden emin olmasan " +
-  "bile — bu DOĞRU DEĞİLDİR. Talep belirsiz ya da eksik yazılmış olduğu için de bunu " +
-  "seçme; yalnız istenen şey gerçekten kategori listesinin dışındaysa.";
+const OUT_OF_TAXONOMY_OPTION_CRITERIA =
+  "Kişi gerçekten bir şey satın almak, kiralamak ya da bir hizmet/üretim " +
+  "yaptırmak istiyor AMA istediği şey yukarıdaki kategorilerin HİÇBİRİNDE " +
+  "satılmıyor. Örnekler: zeytinyağı, köpek maması, kuş yemi, gitar, tenis " +
+  "raketi, deri ceket, koşu ayakkabısı, ruj, parfüm, roman, altın yüzük, " +
+  "uçak bileti, çimento, tuğla, güneş paneli, fide, tohum, saman, canlı " +
+  "hayvan, perde, halı, deterjan, yangın tüpü. Sınır: istediği şey " +
+  "kategorilerden birine giriyorsa — hangisine girdiğinden emin olmasan " +
+  "bile — bunu SEÇME. Talep belirsiz ya da eksik yazıldığı için de bunu " +
+  "seçme; yalnız istenen şey gerçekten listenin dışındaysa.";
+
+const TAXONOMY_CHOICE_QUESTION =
+  "Bu metin bir alıcının aradığı şeyi anlatıyor. Aradığı şey hangi kategoride " +
+  "satılır? Aranan ASIL ürüne ya da hizmete bak; metindeki yan sözcüklere " +
+  "(marka adı, ev/oda/model gibi bağlam sözcükleri, ambalaj ve ölçü " +
+  `sözcükleri) değil. Hiçbir kategoride satılmıyorsa "${JEV_OUT_OF_TAXONOMY_CHOICE}" seç.`;
+
+const TAXONOMY_CHOICE_CRITERIA: Record<string, string> = {
+  ...(CATEGORY_CRITERIA as Record<string, string>),
+  [JEV_OUT_OF_TAXONOMY_CHOICE]: OUT_OF_TAXONOMY_OPTION_CRITERIA,
+};
 
 const CATEGORY_QUESTION =
   "Bu metin bir alıcının aradığı şeyi anlatıyor. Aradığı şey hangi kategoride satılır? " +
@@ -101,9 +131,10 @@ export async function fetchJevDecisions(
             criteria: CATEGORY_CRITERIA,
           },
           kapsam_disi_mi: { type: "noul", instructions: OUT_OF_SCOPE_QUESTION },
-          taksonomi_disi_mi: {
-            type: "noul",
-            instructions: OUT_OF_TAXONOMY_QUESTION,
+          taksonomi_secimi: {
+            type: "choice",
+            instructions: TAXONOMY_CHOICE_QUESTION,
+            criteria: TAXONOMY_CHOICE_CRITERIA,
           },
         },
       }),
@@ -122,7 +153,8 @@ export async function fetchJevDecisions(
       categoryMargin: (sorted[0]?.[1] ?? 0) - (sorted[1]?.[1] ?? 0),
       categoryRunnerUp: sorted[1]?.[0] ?? null,
       outOfScope: readNoul(answers.kapsam_disi_mi),
-      outOfTaxonomy: readNoul(answers.taksonomi_disi_mi),
+      taxonomyChoice: answers.taksonomi_secimi?.choice ?? null,
+      taxonomyChoiceConfidence: answers.taksonomi_secimi?.confidence ?? 0,
       latencyMs: Date.now() - started,
     };
   } catch {

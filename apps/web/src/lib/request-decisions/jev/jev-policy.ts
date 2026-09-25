@@ -44,17 +44,54 @@ export const JEV_SCOPE_CERTAIN_MIN = 0.8;
 export const JEV_SCOPE_CLEAR_MAX = 0.4;
 
 /**
- * TAKSONOMİ DIŞI BANDI — aynı desen, HENÜZ ÖLÇÜLMEDİ.
+ * TAKSONOMİ DIŞI — NOUL TASARIMI ÖLÇÜLDÜ VE **TERK EDİLDİ** (2026-09-25).
  *
- * Kapsam sorusunun kazandığı desen (ayrı noul) taksonomi dışı sorusuna da
- * uygulandı, ama bu sorunun kendi eşiği korpusla DOĞRULANMADI: korpusun 84
- * tabanının tamamı 11 kökün içinde, yani "hiçbir köke girmeyen" vaka yok.
- * Başlangıç değerleri kapsam bandından devralındı ve `NEEDS_VERIFICATION`
- * olarak işaretlendi. Doğrulaması: 11 kök dışından gerçek talep cümleleri
- * toplanıp ayrı bir eksen olarak koşulmalı.
+ * Aşağıdaki iki eşik `NEEDS_VERIFICATION` olarak konmuştu ve doğrulama sonucu
+ * olumsuz çıktı: soru HİÇ AYRIŞMIYOR. 11 kökün dışından 77 gerçek talep
+ * cümlesiyle ölçüldü (`qa/open-set` A kümesi, dev yarısı,
+ * `model-eval-jev-taxonomy-gate-v2`):
+ *
+ *   noul tasarımı  →  yakalama 0/77 (%0,0)  ·  emin-ama-yanlış 17
+ *
+ * Yani hiçbir eşik işe yaramıyor; kök İÇİNDEKİ cümleler bu soruda daha yüksek
+ * puan alıyor. Sabitler SİLİNMEDİ çünkü terk edilen tasarımın ölçümünü koşan
+ * tarihsel sonda (`model-eval-out-of-taxonomy-probe-v1`) onları okur; üretim
+ * yolu artık okumaz. Kazanılmamış bir statü taşımamaları için adları
+ * SUPERSEDED olarak işaretlidir.
  */
 export const JEV_OUT_OF_TAXONOMY_CERTAIN_MIN = 0.8;
 export const JEV_OUT_OF_TAXONOMY_CLEAR_MAX = 0.4;
+
+/**
+ * TAKSONOMİ SEÇİMİ EŞİĞİ — ÖLÇÜLDÜ VE SEÇİLDİ (2026-09-25).
+ *
+ * Kazanan tasarım: taksonomi-dışılık ayrı bir noul DEĞİL, 12 SEÇENEKLİ tek
+ * choice'tır — 11 kök + açıkça tarif edilmiş `HICBIRI`. Aynı 161 cümlede
+ * (A dev 77 + B dev 84) ölçülen karşılaştırma:
+ *
+ *   | tasarım                | A yakalama | A emin-ama-yanlış | B yanlış alarm |
+ *   |------------------------|-----------|-------------------|----------------|
+ *   | noul (bugünkü)         | 0/77  %0,0 | 17               | 0/84           |
+ *   | 12 seçenekli choice    | 70/77 %90,9| 1                | 1/84 %1,2      |
+ *   | kural dayanağı reddeder| 76/77 %98,7| 0                | 15/84 %17,9    |
+ *
+ * `choice` kazandı: yakalamayı sıfırdan %90,9'a çıkarırken B kümesinde doğru
+ * kök oranını DÜŞÜRMEDİ (82/84 → 83/84).
+ *
+ * EŞİK 0,5 SEÇİLDİ — süpürme ölçüldü:
+ *   0,0  → yakalama 70/77, B yanlış alarm 1
+ *   0,5  → yakalama 64/77 (%83,1), B yanlış alarm 0   <-- seçilen
+ *   0,8  → yakalama 59/77, B yanlış alarm 0
+ * 0,5 dizin: yanlış alarmı sıfıra indiren en düşük eşik. Daha yükseğe çıkmak
+ * beş vaka daha kaybettiriyor ve karşılığında hiçbir şey kazandırmıyor.
+ *
+ * KATEGORİ SORUSUNA DOKUNULMADI. D-0029 ölçtü: kapsamı 12. seçenek yapmak
+ * kategori dağılımını kirletiyordu. Bu yüzden yeni seçim AYRI bir soru olarak
+ * eklendi; `kategori` sorusunun metni birebir korunur ve 1077 vakalık ölçümü
+ * geçerli kalır.
+ */
+export const JEV_OUT_OF_TAXONOMY_CHOICE = "HICBIRI" as const;
+export const JEV_OUT_OF_TAXONOMY_CHOICE_MIN = 0.5;
 
 /** Ağ bütçesi — tek çağrı, üç soru. Ölçülen p50 317 ms, p95 377 ms. */
 export const JEV_TIMEOUT_MS = 4000;

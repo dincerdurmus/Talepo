@@ -24,11 +24,13 @@ import type {
   CategoryDecisionInput,
 } from "../contract";
 import type { UnderstandingDecision } from "@/lib/request-understanding/types";
-import { markOutOfTaxonomy } from "../out-of-taxonomy";
+import { isOutOfTaxonomy, markOutOfTaxonomy } from "../out-of-taxonomy";
+import { CATEGORY_DECISION_DIVERGENCE } from "@/lib/request-understanding/publish-disposition";
 import type { JevDecisionBundle } from "./jev-client";
 import {
   JEV_CATEGORY_CONFIDENCE_MIN,
-  JEV_OUT_OF_TAXONOMY_CERTAIN_MIN,
+  JEV_OUT_OF_TAXONOMY_CHOICE,
+  JEV_OUT_OF_TAXONOMY_CHOICE_MIN,
   JEV_SCOPE_CERTAIN_MIN,
 } from "./jev-policy";
 
@@ -75,11 +77,68 @@ export function createJevDecisionProvider(
         };
       }
 
-      if (bundle.outOfTaxonomy >= JEV_OUT_OF_TAXONOMY_CERTAIN_MIN) {
-        return markOutOfTaxonomy(bundle.outOfTaxonomy, [
+      if (
+        bundle.taxonomyChoice === JEV_OUT_OF_TAXONOMY_CHOICE &&
+        bundle.taxonomyChoiceConfidence >= JEV_OUT_OF_TAXONOMY_CHOICE_MIN
+      ) {
+        return markOutOfTaxonomy(bundle.taxonomyChoiceConfidence, [
           "jev-out-of-taxonomy",
-          `taxonomy=${bundle.outOfTaxonomy.toFixed(2)}`,
+          `choice=${bundle.taxonomyChoice}`,
+          `confidence=${bundle.taxonomyChoiceConfidence.toFixed(2)}`,
         ]);
+      }
+
+      /**
+       * AYRIŞMA KAPISI — İKİ BAĞIMSIZ KARAR ÇELİŞİRSE OTOMATİK KARAR YOKTUR
+       * (kurucu kararı, 2026-09-25; D-0032 yolu).
+       *
+       * NEDEN. Jev'in taksonomi sorusu ölçüldü ve ÇALIŞMIYOR: 20 gerçek
+       * kategori-dışı talebin 0'ını yakalıyor, 5'ine EMİN biçimde kategori
+       * veriyor ("zeytinyağı → home-kitchen %94"). Eşik ayarı bunu çözmez;
+       * soru hiç ayrışmıyor. Bu yüzden Jev'in kategori kararı tek başına
+       * yeterli sayılmaz: yerleşik motor BAŞKA bir kök söylüyorsa ya da biri
+       * "kök yok" derken öteki emin bir kök söylüyorsa karar İNSANA gider.
+       *
+       * YENİ TABLO YOK. Ayrışma bir KANIT ETİKETİ olarak taşınır; yayın hükmü
+       * (`publish-disposition`) o etiketi okuyup talebi admin kuyruğuna alır.
+       * Karar burada verilmez — bu sağlayıcı kategori kararı üretir, yayın
+       * kararı üretmez.
+       *
+       * BUGÜN ÜRETİMDE ETKİSİZ. `USE_JEV_IN_PRODUCTION = false` olduğu için bu
+       * dal hiç koşmaz; bayrağı açılabilir hâle getirmek bu görevin amacıydı,
+       * açmak ayrı bir kurucu kararıdır.
+       */
+      const ruleDecision = fallback.decideRequestCategory(input);
+      const ruleRoot = ruleDecision.value ?? null;
+      const jevRoot = bundle.category ?? null;
+      const jevConfident =
+        jevRoot != null && bundle.categoryConfidence >= JEV_CATEGORY_CONFIDENCE_MIN;
+      const ruleConfident = ruleRoot != null && ruleDecision.status === "CONFIDENT";
+      const ruleSaysNone = isOutOfTaxonomy(ruleDecision);
+      const diverges =
+        (jevConfident && ruleConfident && jevRoot !== ruleRoot) ||
+        (jevConfident && ruleSaysNone);
+      if (diverges) {
+        return {
+          value: jevRoot,
+          confidence: Math.min(bundle.categoryConfidence, 0.5),
+          status: "TENTATIVE",
+          evidence: [
+            CATEGORY_DECISION_DIVERGENCE,
+            `jev=${jevRoot ?? "yok"}`,
+            `rule=${ruleSaysNone ? "out-of-taxonomy" : (ruleRoot ?? "yok")}`,
+            `confidence=${bundle.categoryConfidence.toFixed(2)}`,
+          ],
+          alternatives: ruleRoot
+            ? [
+                {
+                  value: ruleRoot,
+                  confidence: ruleDecision.confidence,
+                  evidence: ruleDecision.evidence ?? [],
+                },
+              ]
+            : undefined,
+        };
       }
 
       if (
