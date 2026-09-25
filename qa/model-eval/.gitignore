@@ -1,0 +1,9 @@
+# Ölçüm çalışma alanı — yalnız KOD versiyonlanır.
+# Modeller, gömüler ve ham çıktılar depoya girmez: yüzlerce MB'lik ikili
+# dosyalar ve yeniden üretilebilir ara ürünlerdir.
+node_modules/
+models/
+cache/
+data/
+out/
+package-lock.json

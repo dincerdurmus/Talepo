@@ -1,0 +1,16 @@
+{
+  "name": "talepo-model-eval",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Yerel açık model ölçümü — ürün koduna bağlı DEĞİLDİR, apps/web lockfile'ına dokunmaz.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "scripts": {
+    "embed": "node embed.mjs",
+    "train": "node train.mjs",
+    "report": "node report.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "3.7.6"
+  }
+}
