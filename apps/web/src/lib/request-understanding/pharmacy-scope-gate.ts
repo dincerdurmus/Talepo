@@ -81,9 +81,19 @@ export type PharmacyReading = {
  * önce b/c/d/g olur — "şurup" → "şurub-u", "antibiyotik" → "antibiyoti-ği".
  * Yumuşayabilen kökler iki harfli sınıfla yazılır; yumuşamayanlar olduğu gibi
  * kalır, çünkü gereksiz sınıf yanlış eşleşme üretir.
+ *
+ * "İLAÇLAMA" BİR HİZMETTİR, İLAÇ DEĞİLDİR (2026-09-25). `ilac[a-z]*` kalıbı
+ * sözcüğün bütün türevlerini yutuyordu; Türkçede `-lama` eki bir EYLEM adı
+ * üretir. Ölçüldü (`qa/open-set` B kümesi): "Haşere ilaçlama hizmeti arıyorum,
+ * 200 metrekare" — tamamen meşru bir hizmet talebi — `UNSUPPORTED_PHARMACY`
+ * ile ENGELLENİYORDU. Bu D-0028'in gevşetilmesi değil, kapsamının doğru
+ * çizilmesidir: kapsam dışı olan şey ilacın KENDİSİDİR, ondan türeyen bir
+ * hizmet adı değil. Aynı ayrım `boya`/`boyama` için de yapıldı; eksen tek:
+ * ürün adı ile eylem adı ayrı şeylerdir. Ekli biçimler ("ilacı", "ilaçları")
+ * eskisi gibi eşleşir — yalnız `-lam`/`-lat` bacakları dışarıda kalır.
  */
 const MEDICINE_NOUN =
-  /(?:^|[^a-z0-9])(agri\s*kesici[a-z]*|ates\s*dusurucu[a-z]*|antibiyoti[kg][a-z]*|antidepresan[a-z]*|antihistamin[a-z]*|ilac[a-z]*|hap[a-z]*|suru[pb][a-z]*|merhem[a-z]*|poma[td][a-z]*|aspirin[a-z]*|parasetamol[a-z]*|ibuprofen[a-z]*|recete[a-z]*|vitamin\s*hap[a-z]*)(?:[^a-z0-9]|$)/;
+  /(?:^|[^a-z0-9])(agri\s*kesici[a-z]*|ates\s*dusurucu[a-z]*|antibiyoti[kg][a-z]*|antidepresan[a-z]*|antihistamin[a-z]*|ilac(?!lam|lat)[a-z]*|hap[a-z]*|suru[pb][a-z]*|merhem[a-z]*|poma[td][a-z]*|aspirin[a-z]*|parasetamol[a-z]*|ibuprofen[a-z]*|recete[a-z]*|vitamin\s*hap[a-z]*)(?:[^a-z0-9]|$)/;
 
 /**
  * DOZAJ SİNYALLERİ İKİ KATMANDIR — VE BU AYRIM ÖLÇÜMLE GELDİ.
@@ -258,7 +268,13 @@ const NEAR_MISS_PHRASE: Array<[string, string]> = [
  * Kısa sözcüklerde (6 harften az) yalnız AYNI UZUNLUKTA değişim kabul edilir:
  * bir harf silmek "agri"yi "ari"ye (arı) çevirir ve o başka bir sözcüktür.
  */
-function withinOneEdit(word: string, root: string): boolean {
+/**
+ * DIŞA AÇIK: aynı yaklaşık eşleşme ölçütü kapsam FİİLLERİ için de gerekiyor
+ * (`intent-signals`, `understand-request`). Ölçüt kopyalanmadı — tek tanım
+ * burada durur; ikinci bir "bir harf hatası" tanımı iki kapının farklı
+ * toleransla çalışması demekti.
+ */
+export function withinOneEdit(word: string, root: string): boolean {
   if (word === root) return true;
   const shortRoot = root.length < 6;
   if (shortRoot && word.length !== root.length) return false;
@@ -445,9 +461,20 @@ export function readPharmacyScope(foldedText: string): PharmacyReading {
 const MEDICAL_TESTING_PHRASE =
   /(?:^|[^a-z0-9])(?:(?:tibbi|medikal)\s+(?:test|tahlil|analiz)|kan\s+tahlil[a-z]*|idrar\s+tahlil[a-z]*|kan\s+test[a-z]*|hemogram[a-z]*|biyopsi[a-z]*|pcr\s*test[a-z]*|check\s*-?\s*up|tomografi[a-z]*|mamografi[a-z]*|ultrason[a-z]*|rontgen[a-z]*|emar|mr\s+cektir[a-z]*|hormon\s+test[a-z]*|alerji\s+test[a-z]*)(?:[^a-z0-9]|$)/;
 
-/** Ürün sinyali varsa talep hizmet değil, cihaz/kit alımıdır — kapı açılmaz. */
+/**
+ * Ürün sinyali varsa talep hizmet değil, cihaz/kit alımıdır — kapı açılmaz.
+ *
+ * SARF MALZEMESİ DE BİR ÜRÜNDÜR (2026-09-25). Kapının kendi sözleşmesi
+ * "'tıbbi test cihazı' veya 'tıbbi test kiti' gibi açık ürün talepleri bu
+ * kapıya girmez" diyordu; liste yalnız dayanıklı cihaz adlarını sayıyordu.
+ * Ölçüldü (`qa/open-set`, B kümesi): "Ultrason jeli arıyorum, 20 litre" —
+ * meşru bir medikal sarf alımı — anlam koruyan 14 dönüşümün tamamında
+ * `UNSUPPORTED_REMOVED_SCOPE` ile ENGELLENİYORDU. Bu bir gevşetme değil,
+ * kapının zaten yazılı olan niyetinin tamamlanmasıdır: kaldırılan kapsam
+ * tıbbi test HİZMETİDİR, o hizmette kullanılan ürün değil.
+ */
 const MEDICAL_TESTING_PRODUCT_SIGNAL =
-  /(?:^|[^a-z0-9])(?:cihaz[a-z]*|kit[a-z]*|alet[a-z]*|set[a-z]*|makine[a-z]*|ekipman[a-z]*|tarayici[a-z]*|sarf\s*malzeme[a-z]*)(?:[^a-z0-9]|$)/;
+  /(?:^|[^a-z0-9])(?:cihaz[a-z]*|kit[a-z]*|alet[a-z]*|set[a-z]*|makine[a-z]*|ekipman[a-z]*|tarayici[a-z]*|sarf[a-z]*|malzeme[a-z]*|jel[a-z]*|solusyon[a-z]*|reaktif[a-z]*|elektrod[a-z]*)(?:[^a-z0-9]|$)/;
 
 /**
  * Ürün sinyali sözcükleri de yazım hatasına uğrar: "kan tahlili cihaı

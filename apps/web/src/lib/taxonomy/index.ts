@@ -38,5 +38,11 @@ export {
   getTaxonomyDescendantIds,
 } from "./registry";
 
+export {
+  CLAIM_TAIL,
+  findCanonicalCategoryClaim,
+  type CanonicalCategoryClaim,
+} from "./phrase-classification";
+
 export { getRequestSchemaForNode } from "./schema-bridge";
 export { auditTaxonomyCoverage } from "./audit";

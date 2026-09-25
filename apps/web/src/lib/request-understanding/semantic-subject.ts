@@ -1383,13 +1383,30 @@ function resolveSemanticSubjectCore(
    * sonrası "montaj/bakım" eşlik eden spektir; tek yetkili kural
    * requested-item-role'den okunur (fiil bacakları yaptır/boyat muaf).
    */
+  /**
+   * ÇIPLAK HİZMET ADI NİTELEYİCİ DE OLABİLİR (2026-09-25).
+   *
+   * Türkçe ad tamlamasında baş SONDADIR: "bakım fırçası"nda istenen şey
+   * FIRÇADIR, "bakım" onu niteler. Kural konumu okumuyordu ve sözcüğün
+   * varlığını yeterli sayıyordu. Ölçüldü (`qa/open-set`, dev yarısı): "Köpek
+   * için tüy bakım fırçası arıyorum" öznesi SERVICE oluyor, genel hizmet
+   * pazarı talebi EMİN biçimde `services` köküne bağlıyordu — bir fırça
+   * talebini temizlik/bakım ustalarına gönderiyordu.
+   *
+   * Ölçüt İKİNCİ BİR KURAL DEĞİL: baş denetimi bu depoda zaten tek yetkiliye
+   * sahiptir (`requested-item-role` → `serviceLemmaIsPhraseHead`, 1G) ve
+   * "destek ayağı", "koltuk destek mekanizması" için aynı işi yapıyordu.
+   * Çıplak ad bacağı o yetkiliye hiç sormuyordu; artık soruyor.
+   */
   const bareServiceNoun = (() => {
     const m =
       /(?:^|[^\p{L}\p{N}])(montaj|bakım|bakim)(?=[^\p{L}\p{N}]|$)/iu.exec(
         text,
       );
     if (!m) return false;
-    return !serviceNounIsPostVerbAuxiliary(text, m.index);
+    const lemma = m[1] ?? "";
+    const lemmaIndex = m.index + m[0].length - lemma.length;
+    return serviceLemmaIsPhraseHead(text, lemmaIndex, lemma);
   })();
   if (
     !serviceNegated &&

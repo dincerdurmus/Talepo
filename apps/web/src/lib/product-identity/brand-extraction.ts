@@ -235,7 +235,27 @@ export function extractAssertedBrand(rawInput: string): string | null {
     }
     // "X marka(sı/lı)"
     const cand = words[i - 1];
-    if (cand && cand.length >= 2 && !isMarka(cand) && !/^\d+$/.test(cand)) {
+    /**
+     * SOLDAKİ SÖZCÜK KONUŞMA JETONU OLABİLİR (2026-09-25).
+     *
+     * Desen "marka"nın solundaki sözcüğü beyan sayıyor; `fark etmez` ve
+     * `önemli değil` sınıfları zaten atlanıyordu ama SORU biçimi atlanmıyordu.
+     * Ölçüldü (`qa/open-set` E kümesi): "Televizyon arıyorum, hangi marka iyi
+     * bilmiyorum" → marka `"hangi"` olarak USER_ASSERTED yazılıyor, marka
+     * sorusu cevaplanmış sayılıyor ve hiç sorulmuyordu. Kullanıcı tam tersini
+     * söylemişti.
+     *
+     * Ölçüt yeni bir liste değil: konuşma jetonlarının tek yetkilisi
+     * `ai/parser/negation` → `isConversationStopword`tur ve soru sözcükleri de
+     * oraya eklendi.
+     */
+    if (
+      cand &&
+      cand.length >= 2 &&
+      !isMarka(cand) &&
+      !/^\d+$/.test(cand) &&
+      !isConversationStopword(cand)
+    ) {
       return cand;
     }
   }

@@ -245,8 +245,15 @@ export type CanonicalCategoryClaim =
       coversCore: boolean;
     };
 
-/** İstek kuyruğu — iddia taraması bu sözcükleri hiç değerlendirmez. */
-const CLAIM_TAIL = new Set([
+/**
+ * İstek kuyruğu — iddia taraması bu sözcükleri hiç değerlendirmez.
+ *
+ * DIŞA AÇIK: dayanak katmanı (`request-decisions/category-membership-proof`)
+ * talebin ÇEKİRDEĞİNİ aynı kuyruk tanımıyla bulur. İkinci bir kuyruk listesi
+ * yazılsaydı iki katman aynı cümlenin çekirdeğini farklı okur ve "dayanak baş
+ * ada bağlı mı" sorusu iki farklı cevap verirdi.
+ */
+export const CLAIM_TAIL = new Set([
   "ariyorum",
   "arıyorum",
   "lazim",

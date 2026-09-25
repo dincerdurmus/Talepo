@@ -182,7 +182,20 @@ export const SERVICE_LEMMAS = [
   "onarim",
   "tamir",
   "boyama",
-  "boya",
+  /**
+   * "boya" BU LİSTEDEN ÇIKARILDI (2026-09-25).
+   *
+   * Yalın "boya" Türkçede bir ÜRÜNDÜR: akrilik boya, saç boyası, ayakkabı
+   * boyası, kuru boya kalemi, iç cephe boyası. Hizmet olan şey EYLEMDİR —
+   * boyaMA, boyaTMAK, badana. Sözcük hizmet sözlüğünde kaldığı sürece bir boya
+   * ÜRÜNÜ talebinin öznesi SERVICE oluyordu ve genel hizmet pazarı onu EMİN
+   * biçimde `services` köküne bağlıyordu. Ölçüldü (`qa/open-set`, dev yarısı):
+   * "Ayakkabı boyası arıyorum, 50 adet" → services 0.86; boya tedarikçisi o
+   * talebi hiç görmüyor, boyacı ustası ise işine yaramayan bir talep görüyordu.
+   *
+   * Hizmet tarafı kaybolmaz: "boyama" burada, "badana" hemen altta, "boyat"
+   * çekimi ise bu modülün fiil bacağında zaten aranıyor.
+   */
   "badana",
   "montaj",
   "kurulum",

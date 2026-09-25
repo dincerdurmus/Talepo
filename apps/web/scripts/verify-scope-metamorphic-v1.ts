@@ -180,53 +180,22 @@ const SEEDS: Seed[] = [
 /* ANLAM KORUYAN DÖNÜŞÜMLER                                            */
 /* ------------------------------------------------------------------ */
 
-type Transform = { name: string; apply: (text: string) => string };
-
 /**
- * GERÇEKÇİ YAZIM HATASI — VE NEDEN BU BİÇİM.
+ * ÜRETEÇLER BURADA DEĞİL, TEK YETKİLİDE YAŞAR (2026-09-25).
  *
- * İlk sürüm rastgele iki harfi yer değiştiriyordu; bu, tek sözcükte İKİ ayrı
- * değişim demekti ("kesici" → "keoici" değil "reoici") ve insanların yaptığı
- * hataya benzemiyordu. İnsan hatası üç biçimdedir: komşu iki harfin yer
- * değişmesi, bir harfin düşmesi, bir harfin yanlış basılması. Kapı bunları
- * ölçer; uydurulmuş bir bozulmayı değil.
- *
- * İki hata AYRI YARILARA düşürülür ki tek bir ad iki kez bozulmasın —
- * "1–2 yazım hatası" iki farklı sözcükte bir hata demektir.
+ * Yazım hatası / sıra değişimi üreteçleri bu dosyada doğdu ama artık
+ * `scripts/lib/metamorphic-transforms.ts` içinde durur: açık küme kapısı
+ * (`verify-open-set-v1`) aynı dönüşümleri ölçüyor ve iki kopya sessizce
+ * ayrışabilirdi. Taşıma davranışı DEĞİŞTİRMEDİ — aynı korpusta aynı kaçak
+ * sayısı ve aynı dönüşüm dağılımı ölçüldü. Kapsama özel birim önekleri
+ * ("2 kutu") burada kalır; onlar ilaç kapsamının kendi eksenidir.
  */
-function letterPositions(text: string, from: number, to: number): number[] {
-  const out: number[] = [];
-  for (let i = from; i < to && i < text.length; i += 1) {
-    if (/[a-zçğıöşüA-ZÇĞİÖŞÜ]/.test(text[i])) out.push(i);
-  }
-  return out;
-}
-
-/** Komşu iki harfin yer değişmesi — ilk yarıda, deterministik konumda. */
-function typoSwap(text: string): string {
-  const half = Math.floor(text.length / 2);
-  const pos = letterPositions(text, 0, half);
-  if (pos.length < 3) return text;
-  const at = pos[(text.length + 1) % (pos.length - 1)];
-  if (!/[a-zçğıöşüA-ZÇĞİÖŞÜ]/.test(text[at + 1] ?? "")) return text;
-  return text.slice(0, at) + text[at + 1] + text[at] + text.slice(at + 2);
-}
-
-/** Bir harfin düşmesi — ikinci yarıda, deterministik konumda. */
-function typoDrop(text: string): string {
-  const half = Math.floor(text.length / 2);
-  const pos = letterPositions(text, half, text.length);
-  if (pos.length < 2) return text;
-  const at = pos[(text.length + 2) % pos.length];
-  return text.slice(0, at) + text.slice(at + 1);
-}
-
-/** Cümle sırasını değiştir: son sözcüğü başa al (anlam korunur). */
-function reorder(text: string): string {
-  const parts = text.trim().split(/\s+/);
-  if (parts.length < 3) return text;
-  return [parts[parts.length - 1], ...parts.slice(0, -1)].join(" ");
-}
+import {
+  reorder,
+  typoDrop,
+  typoSwap,
+  type Transform,
+} from "./lib/metamorphic-transforms";
 
 const UNIT_PREFIXES = ["2 adet", "2 kutu", "1 şişe", "1 tüp", "3 paket", "2 koli", "1 düzine"];
 

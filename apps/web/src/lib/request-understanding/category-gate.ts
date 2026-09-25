@@ -43,6 +43,24 @@ export function lastikWheelOrServiceSignal(text: string): boolean {
   return readTireRequestContext(text)?.isTireRequest ?? false;
 }
 
+/**
+ * DAYANAK BURADA DENETLENMEZ — VE BU BİR ÖLÇÜM SONUCUDUR (2026-09-25).
+ *
+ * İlk tasarımda bu kapı her token-skorlayıcı kararını bir "dayanak" ölçütünden
+ * geçiriyordu: kanıt aranan şeyin adına bağlanamıyorsa karar kesinleşmiyordu.
+ * Ölçüldü ve REDDEDİLDİ: 1077 vakalık adversarial korpusun kategori doğruluğu
+ * %100'den %85,5'e düştü, 32 taban cümle bozuldu ("Logo muhasebe programı" →
+ * technology, "Matematik özel ders" → services, "Düğün fotoğrafçısı" →
+ * services). Korpus bu deponun mevcut YETKİSİDİR ve kurucunun kararlarını
+ * taşır; onunla çelişen bir ölçüt yeni bir kural değil, bir regresyondur.
+ *
+ * Dayanak ölçümü kaldırılmadı, YERİ değişti: kategori kararı boş kaldığında
+ * "ölçemedim" ile "ölçtüm, yok" ayrımı `understand-request` sonunda TEK yerde
+ * yapılır (bkz. `category-membership-proof` → `hasNoCategoryMembership`).
+ * Orada karar DEĞİŞTİRİLMEZ, yalnız işaretlenir; hiçbir talebin kategorisi
+ * bu yüzden kaybolamaz.
+ */
+
 export function gateCategory(
   rawInput: string,
   intent: RequestIntent,

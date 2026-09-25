@@ -690,7 +690,23 @@ function keywordScore(normalized: string, keyword: string) {
    * başlangıcı değildir ve eşleşme düşer. Uzun anahtarlar eski davranışı
    * korur.
    */
-  if (keyword.length <= 4) {
+  /**
+   * SÖZCÜK BAŞI SINIRI HER UZUNLUKTA ZORUNLUDUR (2026-09-25).
+   *
+   * Eski kural yalnız ≤4 harflik anahtarlarda sınır arıyordu ("Uzun anahtarlar
+   * eski davranışı korur"). Ölçüldü (`qa/open-set`): uzun anahtarlar da başka
+   * sözcüklerin İÇİNDE eşleşiyor — `eviye` ∈ "s-eviye-si" yüzünden
+   * "Kaykay arıyorum, başlangıç seviyesi" home-kitchen'a 5 puanla EMİN
+   * bağlanıyordu. Sınırın uzunluğa bağlı olması bir karar değil, ilk yazımın
+   * kapsamıydı; Türkçe ek SONA gelir, BAŞA gelmez — bu yüzden sözcük başı
+   * sınırı her anahtar için güvenlidir ve dil bilgisinden okunur.
+   *
+   * SON sınırı ise eskisi gibi YALNIZ kısa anahtarlarda aranır: uzun anahtarın
+   * ardına gelen ek ("televizyonumuz", "buzdolabımın") meşrudur ve orada
+   * gevşeklik ölçülmüş bir gerekliliktir.
+   */
+  {
+    const shortKeyword = keyword.length <= 4;
     let ok = false;
     let i = at;
     while (i >= 0) {
@@ -698,6 +714,7 @@ function keywordScore(normalized: string, keyword: string) {
       const afterCh = normalized[i + keyword.length] ?? "";
       const startBoundary = before === "" || !/[a-zçğıöşü0-9]/.test(before);
       const endOk =
+        !shortKeyword ||
         afterCh === "" ||
         !/[a-zçğıöşü0-9]/.test(afterCh) ||
         /[aeıioöuüln]/.test(afterCh); // n: tamlama tamponu ("tavanın")
@@ -725,13 +742,28 @@ const HOUSEHOLD_MACHINE_PATTERNS = [
   "robot supurge",
 ];
 
-const PAINT_SERVICE_PATTERNS = [
-  "boya",
-  "badana",
-  "boyat",
-  "boyama",
-  "tadilat",
-];
+/**
+ * BOYA SÖZCÜĞÜ İKİ ŞEY DEMEK — VE BU AYRIM ÖLÇÜMLE GELDİ (2026-09-25).
+ *
+ * `boya` yalın hâlde bir ÜRÜNDÜR (akrilik boya, saç boyası, ayakkabı boyası,
+ * kuru boya kalemi, iç cephe boyası). Hizmet olan şey eylemdir: boya BADANA,
+ * boyaTMAK, boyaMA, tadilat. Eski liste ikisini aynı kovada tutuyordu ve
+ * `services` puanına +5 yazıyordu; bonus `hasAny` ile cümlenin HERHANGİ bir
+ * yerinde arandığı için bir boya ÜRÜNÜ talebi emin biçimde Hizmetler'e
+ * düşüyordu. Ölçüldü (`qa/open-set`, dev): "Akrilik boya seti arıyorum" →
+ * services 1.00, "Yağlı boya ve tuval seti" → services 1.00.
+ *
+ * İKİ LİSTE, İKİ YETKİ:
+ *   PAINT_SERVICE_INTENT — tek başına hizmet demektir, bonusu o alır.
+ *   PAINT_WORDS          — "boya" dahil; yalnız BAŞKA bir kategoriyi (emlak)
+ *                          yanlış çekmemek için kullanılan bastırma listesidir.
+ * Emlak tarafındaki `-6` bastırması PAINT_WORDS okur: orada amaç "boya"nın
+ * emlağa oy vermesini engellemektir ve o amaç ürün/hizmet ayrımından bağımsız
+ * olarak geçerlidir.
+ */
+const PAINT_SERVICE_INTENT = ["badana", "boyat", "boyama", "tadilat"];
+
+const PAINT_WORDS = ["boya", ...PAINT_SERVICE_INTENT];
 
 /** Minimum score before we claim a category confidently in UX. */
 
@@ -912,8 +944,18 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       ) {
         score += 4;
       }
+      /**
+       * "eviye" SERBEST ALT DİZGİ OLARAK ARANMAZ (2026-09-25).
+       *
+       * Ölçüldü (`qa/open-set`): `includes("eviye")` "s-eviye-si" içinde
+       * eşleşiyor ve "Kaykay arıyorum, başlangıç seviyesi" cümlesini
+       * home-kitchen'a +4 ile EMİN bağlıyordu. Sınır kuralının tek yetkilisi
+       * `keywordHits`tir; bonus bloğu onu atlayarak kendi okumasını kuramaz.
+       * Çok sözcüklü ifadeler ("mutfak bataryası") serbest kalabilir: bir
+       * boşluk zaten sözcük sınırıdır.
+       */
       if (
-        normalized.includes("eviye") ||
+        keywordHits(normalized, "eviye") ||
         normalized.includes("mutfak bataryası") ||
         normalized.includes("mutfak bataryasi") ||
         normalized.includes("bulaşık deterjanı") ||
@@ -1120,7 +1162,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         score += 2;
       }
       // Paint / renovation service verbs must not look like property search
-      if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+      if (hasAny(normalized, PAINT_WORDS)) {
         score = Math.max(0, score - 6);
       }
       if (
@@ -1138,7 +1180,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
         score = Math.max(0, score - 6);
       } else if (hasRealEstateOfficeSignal(normalized)) {
         score += 4;
-      } else if (!hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+      } else if (!hasAny(normalized, PAINT_WORDS)) {
         // Bare "ofis" is too weak to claim real estate
         score = Math.max(0, score - 1);
       }
@@ -1206,7 +1248,13 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
       if (serviceHeadsTheRequest) {
         score += 3;
       }
-      if (hasAny(normalized, PAINT_SERVICE_PATTERNS)) {
+      /**
+       * BONUSU YALNIZ HİZMET EYLEMİ ALIR (2026-09-25). Yalın "boya" bir ürün
+       * adıdır; +5 bonusu ona verilirse boya ÜRÜNÜ talebi emin biçimde
+       * Hizmetler'e düşer (ölçüldü). Eylem sözcüğü ("badana", "boyatmak",
+       * "boyama", "tadilat") varsa istenen şey gerçekten hizmettir.
+       */
+      if (hasAny(normalized, PAINT_SERVICE_INTENT)) {
         score += 5;
       }
       // Bare "hizmet" alone is weak; require actual service signal
@@ -1219,7 +1267,7 @@ export function detectCategoryResult(text: string): CategoryDetectionResult {
           "nakliyat",
           "danışmanlık",
           "danismanlik",
-          ...PAINT_SERVICE_PATTERNS,
+          ...PAINT_WORDS,
         ])
       ) {
         score = Math.max(0, score - 1);

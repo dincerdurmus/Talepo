@@ -46,6 +46,7 @@ import {
 import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import type { RequestedTargetRole, RequestedTargetRoleVerdict } from "./requested-item-role";
 import { classifyNumbers } from "./number-role";
+import { foldTr } from "./tr-fold";
 
 /** Uyumluluk bağlacı — kelime sınırında. */
 const CONNECTIVE_RE = /(?:^|[^\p{L}\p{N}])(?:için|icin)(?=[^\p{L}\p{N}]|$)/iu;
@@ -83,9 +84,35 @@ export type CompatibilitySplit = {
 
 /** Açık uyumluluk ya da "X yedek parçası" yapısını iki yakaya böler. */
 export function splitCompatibilityPhrase(text: string): CompatibilitySplit | null {
-  const connective = text.match(/^(.+?)\s+(?:için|icin)\s+(.+)$/iu);
+  /**
+   * BAĞLAÇ TR-KATLANMIŞ KOPYA ÜSTÜNDE ARANIR (2026-09-25).
+   *
+   * JS `/i` bayrağı Türkçe İ'yi katlamaz: "İÇİN" hiçbir `için|icin` kalıbına
+   * uymaz. Sonuç ÖLÇÜLDÜ (`verify-scope-metamorphic-v1`, büyük-harf ekseni):
+   * "ÜRÜNLERİMİ SATMAK İÇİN E-TİCARET YAZILIMI ARIYORUM" cümlesinde bağlaç
+   * bulunamıyor, "satmak için" kullanım bağlamı olarak ayrılamıyor ve MEŞRU
+   * BİR ALICI `UNSUPPORTED_SUPPLY` ile ENGELLENİYORDU. Küçük harfli aynı cümle
+   * DEMAND'di — yani kusur anlamda değil YAZIM BİÇİMİNDEYDİ.
+   *
+   * Katlama tek yetkiliden gelir (`tr-fold`). Eşleşme katlanmış kopyada
+   * yapılır, KESİT orijinal metinden alınır: kullanıcının yazdığı biçim
+   * korunur. Katlama uzunluğu değiştirirse (beklenmez) eski davranışa düşülür;
+   * kesit güvenliği tahmine bırakılmaz.
+   */
+  const folded = foldTr(text);
+  const sliceable = folded.length === text.length;
+
+  const connective = (sliceable ? folded : text).match(
+    sliceable ? /^(.+?)\s+icin\s+(.+)$/u : /^(.+?)\s+(?:için|icin)\s+(.+)$/iu,
+  );
   if (connective?.[1] && connective[2]) {
-    return { parent: connective[1].trim(), requested: connective[2].trim() };
+    const parent = sliceable
+      ? text.slice(0, connective[1].length)
+      : connective[1];
+    const requested = sliceable
+      ? text.slice(text.length - connective[2].length)
+      : connective[2];
+    return { parent: parent.trim(), requested: requested.trim() };
   }
   const vehicle = text.match(/^(.+?)\s+arac[ıi]ma\s+uygun\s+(.+)$/iu);
   if (vehicle?.[1] && vehicle[2]) {

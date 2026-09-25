@@ -1,5 +1,6 @@
 import type { RequestIntent, SubjectKind } from "./types";
-import { serviceNounIsPostVerbAuxiliary } from "./requested-item-role";
+import { serviceLemmaIsPhraseHead } from "./requested-item-role";
+import { withinOneEdit } from "./pharmacy-scope-gate";
 
 /**
  * Konumsal hizmet demosyonuna tabi ÇIPLAK AD kalıpları. Fiiller (yaptır,
@@ -311,6 +312,56 @@ export type IntentScope = {
   requestedTarget?: string | null;
 };
 
+/**
+ * KAPSAM FİİLLERİNİN YAZIM ONARIMI — NORMALİZASYON KATMANI (2026-09-25).
+ *
+ * ÖLÇÜLEN BOŞLUK. Kural motorunun tek gerçek zaafı yazım hatası eksenidir
+ * (%73,9 — `SONUC-MODEL-OLCUM-2026-09-23`). Kapsam tarafında bedeli çok daha
+ * ağırdır: `verify-scope-metamorphic-v1` koşusunda kalan 12 kaçağın TAMAMI tek
+ * harflik bir hatadan doğuyordu — "Traktörümü satma istiyorum",
+ * "Evimi kiryaa vermek istiyorum". Bir arz ilanı tek eksik harfle yayına
+ * sızıyordu.
+ *
+ * NEDEN BU BİÇİM. Desen listesini gevşetmek (her fiile joker eklemek) yanlış
+ * pozitif üretir. Onun yerine KAPALI bir fiil sözlüğü üstünde YAKLAŞIK
+ * eşleşme yapılır ve sözcük kanonik biçimine geri yazılır; ölçüt bu deponun
+ * tek yetkili "bir harf hatası" tanımıdır (`pharmacy-scope-gate` →
+ * `withinOneEdit`) ve `repairMedicalTestWords` ile aynı desendir — orada da
+ * kapalı sözlük, orada da yalnız o kapı için geçerli onarım.
+ *
+ * DAR TUTULDU. Yalnız ≥6 harfli işlem fiilleri onarılır: kısa sözcüklerde bir
+ * harf başka bir sözcük demektir. Metin genel olarak DEĞİŞTİRİLMEZ; onarım
+ * yalnız niyet taramasının okuduğu kopyada yaşar.
+ */
+const SCOPE_VERB_ROOTS = [
+  "satmak",
+  "satıyorum",
+  "satıyoruz",
+  "satacağım",
+  "kiraya",
+  "vermek",
+  "kiralamak",
+  "kiralama",
+  "istiyorum",
+  "istiyoruz",
+  "arıyorum",
+  "bakıyorum",
+];
+
+function repairScopeVerbs(lowered: string): string {
+  return lowered
+    .split(/([^\p{L}\p{N}]+)/u)
+    .map((piece) => {
+      if (!/^[\p{L}\p{N}]+$/u.test(piece) || piece.length < 5) return piece;
+      for (const root of SCOPE_VERB_ROOTS) {
+        if (piece === root) return piece;
+        if (root.length >= 6 && withinOneEdit(piece, root)) return root;
+      }
+      return piece;
+    })
+    .join("");
+}
+
 export function collectIntentSignals(
   normalizedText: string,
   scope?: IntentScope,
@@ -321,7 +372,7 @@ export function collectIntentSignals(
    * eşleşmiyor, arz talebi DEMAND olarak yayına sızıyordu (ölçüldü).
    * Desenler küçük-harf dilindedir; haystack tek yerde tr-katlanır.
    */
-  normalizedText = normalizedText.toLocaleLowerCase("tr-TR");
+  normalizedText = repairScopeVerbs(normalizedText.toLocaleLowerCase("tr-TR"));
   const hits: IntentSignalHit[] = [];
   const negated = new Set<RequestIntent>();
 
@@ -331,8 +382,24 @@ export function collectIntentSignals(
     }
   }
 
-  const context = scope?.usageContext ?? null;
-  const target = scope?.requestedTarget ?? null;
+  /**
+   * KAPSAM YAKALARI DA AYNI KATLAMADAN GEÇER (2026-09-25).
+   *
+   * `normalizedText` yukarıda tr-küçük harfe katlanıyor ama kullanım bağlamı
+   * ile istenen hedef ÇAĞIRANDAN geldiği gibi kalıyordu. İki tüketici aynı
+   * metni farklı okuyunca kapsamlama sessizce kapanıyor: ölçüldü
+   * (`verify-scope-metamorphic-v1`, büyük-harf ekseni) "ÜRÜNLERİMİ SATMAK İÇİN
+   * E-TİCARET YAZILIMI ARIYORUM" cümlesinde `satmak` deseni BÜYÜK harfli
+   * bağlamda eşleşmiyor, SELL sinyali bağlamda geçtiği hâlde düşürülmüyor ve
+   * MEŞRU BİR ALICI arz ilanı sayılıp ENGELLENİYORDU. Küçük harfli aynı cümle
+   * doğruydu — yani kusur anlamda değil yazım biçimindeydi.
+   */
+  const context = scope?.usageContext
+    ? repairScopeVerbs(scope.usageContext.toLocaleLowerCase("tr-TR"))
+    : null;
+  const target = scope?.requestedTarget
+    ? repairScopeVerbs(scope.requestedTarget.toLocaleLowerCase("tr-TR"))
+    : null;
   const scoped = context != null && target != null;
 
   for (const entry of LEXICON) {
@@ -341,10 +408,18 @@ export function collectIntentSignals(
       const m = normalizedText.match(p);
       if (!m) continue;
       /**
-       * FİİL SONRASI ÇIPLAK HİZMET ADI NİYET SEÇEMEZ (98+ Part IV).
-       * Tek yetkili konum kuralı requested-item-role'dedir; "akvaryum
-       * arıyorum ... kurulum/montaj" sınıfında istek fiilinden sonraki
-       * çıplak hizmet adı eşlik eden spektir, SERVICE kanıtı değildir.
+       * ÇIPLAK HİZMET ADI NİYET SEÇEMEZ — BAŞ DEĞİLSE (98+ Part IV; konum
+       * kuralı 2026-09-25'te tamamlandı).
+       *
+       * Tek yetkili konum kuralı requested-item-role'dedir. Başta yalnız
+       * "fiilden sonra mı" yarısı soruluyordu; "akvaryum arıyorum ... kurulum"
+       * sınıfı kapanmıştı ama NİTELEYİCİ sınıfı açık kalmıştı. Ölçüldü
+       * (`qa/open-set`, dev yarısı): "Köpek için tüy bakım fırçası arıyorum" —
+       * "bakım" fiilden ÖNCE geçtiği için SERVICE niyeti üretiyor, özne SERVICE
+       * oluyor ve genel hizmet pazarı talebi EMİN biçimde `services` köküne
+       * bağlıyordu. Oysa Türkçe ad tamlamasında baş sondadır: istenen şey
+       * FIRÇADIR. Aynı yetkilinin baş denetimi (`serviceLemmaIsPhraseHead`)
+       * artık burada da sorulur; ikinci bir kural yazılmadı.
        */
       if (
         entry.intent === "SERVICE" &&
@@ -352,7 +427,11 @@ export function collectIntentSignals(
         SERVICE_NOUN_EVIDENCE.has(
           m[0].replace(/[^\p{L}]+/gu, "").toLocaleLowerCase("tr-TR"),
         ) &&
-        serviceNounIsPostVerbAuxiliary(normalizedText, m.index)
+        !serviceLemmaIsPhraseHead(
+          normalizedText,
+          m.index + m[0].length - m[0].replace(/^[^\p{L}\p{N}]+/u, "").length,
+          m[0].replace(/^[^\p{L}\p{N}]+/u, ""),
+        )
       ) {
         continue;
       }

@@ -6,6 +6,7 @@ import {
 import { foldTr } from "./tr-fold";
 import {
   isRemovedMedicalTestingRequest,
+  withinOneEdit,
   readPharmacyScope,
 } from "./pharmacy-scope-gate";
 import { lastikWheelOrServiceSignal } from "./category-gate";
@@ -14,6 +15,11 @@ import {
   getRequestDecisionProviderForRequest,
 } from "@/lib/request-decisions/get-provider";
 import type { JevDecisionBundle } from "@/lib/request-decisions/jev";
+import {
+  isOutOfTaxonomy,
+  markOutOfTaxonomy,
+} from "@/lib/request-decisions/out-of-taxonomy";
+import { hasNoCategoryMembership } from "@/lib/request-decisions/category-membership-proof";
 import {
   collectIntentSignals,
   needTypeForIntent,
@@ -1476,7 +1482,25 @@ export function understandRequest(
    * il adları (`istanbulda`, `izmirde`) zaten ham metinde de çözülüyor,
    * çözülemeyenler (`cankayada`) normalize edilmiş metinde de çözülmüyordu.
    */
-  const geoEvidenceInput = rawInput;
+  /**
+   * REDDEDİLEN YAN CÜMLE YER KANITI DEĞİLDİR (2026-09-25).
+   *
+   * Yukarıdaki kural "yer kanıtı yalnız HAM metinden okunur" der ve doğrudur:
+   * NORMALİZASYON (ünsüz yumuşaması geri çevirme) uydurma ilçe üretiyordu.
+   * Ama kullanıcının AÇIKÇA REDDETTİĞİ bir yan cümleyi silmek normalizasyon
+   * değildir; `withoutRejectedRequestClauses` sözcükleri değiştirmez, yalnız
+   * reddedilen aralığı boşlukla maskeler ve OFSETLERİ KORUR — o yüzden bu
+   * kuralın gerekçesine dokunmaz.
+   *
+   * Ölçüldü (`qa/open-set` E kümesi): "Buzdolabı arıyorum, Kadıköy'de değil
+   * Üsküdar'da" cümlesinde ilçe `Kadıköy` olarak EXPLICIT doluyordu — yani
+   * kullanıcının reddettiği ilçe onun beyanı sayılıyor, konum sorusu
+   * atlanıyor ve talep yanlış ilçenin profesyonellerine gidiyordu. Aynı kusur
+   * il ekseninde de vardı ("İstanbul'da değil Ankara'da olsun" → İstanbul).
+   * Masker bu deponun tek yetkili "olumlu görünüm" katmanıdır; marka/model
+   * çıkarımı ve besteci zaten onu okuyor, konum okumuyordu.
+   */
+  const geoEvidenceInput = withoutRejectedRequestClauses(rawInput);
 
   const cityRaw =
     structured?.city?.trim() ||
@@ -2284,6 +2308,17 @@ export function understandRequest(
        istisnası kurucu kuralın kendisidir: araç üzerindeki hizmet
        (arac-bakim) genel pazara sürülmez — "araba bakımı yaptırmak
        istiyorum" otomotivde kalır (ölçüldü). */
+    /**
+     * BU YEDEK BİLEREK GENİŞ KALDI (2026-09-25 ölçümü).
+     *
+     * Yedeğe dayanak şartı eklemek denendi ("11 kökte karşılık yoksa `services`
+     * yazma") ve ÖLÇÜMLE reddedildi: 1077 vakalık korpusta "Matematik özel ders
+     * arıyorum" ve "Düğün fotoğrafçısı arıyorum" gibi 32 taban cümle
+     * kategorisiz kalıyordu. Korpus kurucunun kararını taşıyor: `services`
+     * kökü Talepo'nun GENEL HİZMET PAZARIDIR, hizmet taksonomi dosyasının 20
+     * yaprağıyla sınırlı değil. Bu yüzden bir hizmet talebi taksonomi dışı
+     * sayılmaz; yedek çalışmaya devam eder.
+     */
     if (
       !relationDomain &&
       !categoryFromCanonicalClaim() &&
@@ -2920,10 +2955,52 @@ export function understandRequest(
    * sızıyordu. "ilaç" hâlâ tek başına karar VEREMEZ — iki koşul birlikte.
    */
   const scopeHay = foldTr(normalizedInput);
-  const adviceQuestionForm =
-    /(?:^|[^a-z0-9])(hangi|ne)(?:[^a-z0-9])[\s\S]{0,60}?(almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz|vereyim|vermeliyim)(?:[^a-z0-9]|$)/.test(
-      scopeHay,
+  /**
+   * SORU SÖZCÜĞÜ İLE KİP BİRLİKTE ARANIR, SIRA ARANMAZ (2026-09-25).
+   *
+   * Eski kalıp soru sözcüğünün kipten ÖNCE gelmesini şart koşuyordu. Sıra bir
+   * yazım özelliğidir, anlam değil: ölçüldü (`verify-scope-metamorphic-v1`,
+   * sıra-değişimi ekseni) "kullanmalıyım Belirtilerim için hangi tedaviyi"
+   * cümlesi tavsiye kapısını düşürüp DEMAND'e sızıyordu. Kapının ölçtüğü şey
+   * BİRLİKTELİKTİR: birinci tekil kip + soru sözcüğü + tıbbi bağlam. Üçü aynı
+   * cümlede olduğu sürece hangisinin önce yazıldığı kararı değiştirmez.
+   */
+  /**
+   * KİP FİİLİNİN YAZIM ONARIMI — aynı normalizasyon deseni (2026-09-25).
+   *
+   * Ölçüldü (`verify-scope-metamorphic-v1`, yazım-hatası ekseni): "Öksürük için
+   * ne içmliyim" tek eksik harf yüzünden tavsiye kapısını düşürüp DEMAND'e
+   * sızıyordu. Kapalı sözlük + tek yetkili yaklaşık eşleşme ölçütü
+   * (`withinOneEdit`); metin genel olarak değiştirilmez, onarım yalnız kapsam
+   * kararının okuduğu kopyada yaşar. `repairMedicalTestWords` ile aynı desen.
+   */
+  const ADVICE_MODAL_ROOTS = [
+    "almaliyim",
+    "kullanmaliyim",
+    "kullanaliyim",
+    "icmeliyim",
+    "onerirsiniz",
+    "vermeliyim",
+  ];
+  const adviceHay = scopeHay
+    .split(/([^a-z0-9]+)/)
+    .map((piece) => {
+      if (!/^[a-z0-9]+$/.test(piece) || piece.length < 6) return piece;
+      for (const root of ADVICE_MODAL_ROOTS) {
+        if (piece === root) return piece;
+        if (withinOneEdit(piece, root)) return root;
+      }
+      return piece;
+    })
+    .join("");
+  const adviceQuestionWord = /(?:^|[^a-z0-9])(?:hangi|ne)(?:[^a-z0-9]|$)/.test(
+    adviceHay,
+  );
+  const adviceModalVerb =
+    /(?:^|[^a-z0-9])(?:almaliyim|kullanm?aliyim|icmeliyim|onerirsiniz|vereyim|vermeliyim)(?:[^a-z0-9]|$)/.test(
+      adviceHay,
     );
+  const adviceQuestionForm = adviceQuestionWord && adviceModalVerb;
   const medicalTreatmentContext =
     /(?:^|[^a-z0-9])(ilac[a-z]*|hap[i]?|merhem|tedavi[a-z]*)(?:[^a-z0-9]|$)/.test(
       scopeHay,
@@ -3123,6 +3200,40 @@ export function understandRequest(
     delete attributes.needType;
     delete attributes.serviceType;
     delete attributes.serviceTarget;
+  }
+
+  /**
+   * "ÖLÇEMEDİM" İLE "ÖLÇTÜM, YOK" AYRIMI — TEK YER (2026-09-25).
+   *
+   * `out-of-taxonomy.ts` bu ayrımı 2026-09-21'de tanımladı ama üretimde onu
+   * ÜRETEN tek yol Jev sağlayıcısıydı ve o bayrak kapalıdır. Ölçüldü
+   * (`qa/open-set`, 2026-09-25): kategori dışı 202 meşru talebin anlam koruyan
+   * türevlerinde kural motoru 0 kez "taksonomi dışı" diyordu — kararların
+   * tamamı sıradan `UNKNOWN`du, yani "iki kök arasında kaldım" ile "ölçtüm,
+   * Talepo'nun 11 kökünde bunun satıldığı yer yok" aynı kutuya giriyordu.
+   * Zeytinyağı, köpek maması, tenis raketi: hepsi ölçülmemiş belirsizlik gibi
+   * görünüyordu.
+   *
+   * KARAR DEĞİŞTİRİLMEZ, YALNIZ İŞARETLENİR. Bu blok yalnız kategorisi
+   * ZATEN boş olan kararı etiketler; hiçbir talebin kökü bu yüzden kaybolamaz
+   * ve kullanıcıya gösterilen akış bugünkü davranışla birebir aynı kalır.
+   * Kazanılan şey ölçülebilirliktir: yayın kapısı, soru motoru ve taksonomi
+   * biriktirme kuyruğu artık bulguyu bulgu olarak okuyabilir.
+   *
+   * KAPSAM DIŞI TALEP BU KAPIDAN GEÇMEZ: bir arz ilanının ya da ilaç talebinin
+   * "taksonomide karşılığı yok" denmesi yanlış olur — orada sorun taksonomi
+   * değil, talebin Talepo'ya ait olmamasıdır.
+   */
+  if (
+    !isUnsupportedRequestScope(requestScope.value) &&
+    reconciled.category.value == null &&
+    !isOutOfTaxonomy(reconciled.category) &&
+    hasNoCategoryMembership(normalizedInput)
+  ) {
+    reconciled.category = markOutOfTaxonomy(reconciled.category.confidence, [
+      ...(reconciled.category.evidence ?? []),
+      "no-membership-in-any-root",
+    ]);
   }
 
   const resolvedKeys = new Set<string>();

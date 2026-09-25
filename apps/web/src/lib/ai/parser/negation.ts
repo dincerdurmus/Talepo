@@ -88,15 +88,79 @@ export const CONVERSATION_STOPWORDS = new Set([
   "seri",
   "serisi",
   "kasa",
+  /**
+   * BENZETME BELİRTEÇLERİ KİMLİK JETONU OLAMAZ (2026-09-25).
+   *
+   * "Arçelik gibi bir şey", "MacBook tarzı bir laptop", "iPhone benzeri bir
+   * cihaz" — bu sözcükler bir markayı ya da modeli ADLANDIRMAZ, ona BENZEYEN
+   * bir şey ister. Ölçüldü (`qa/open-set` E kümesi): "Buzdolabı arıyorum,
+   * Arçelik gibi bir şey ama marka önemli değil" cümlesinde model alanı
+   * `"gibi"` değerini USER_EXPLICIT otoriteyle alıyordu — yani kullanıcının
+   * hiç vermediği bir cevap onun beyanı gibi kaydediliyor ve model sorusu
+   * atlanıyordu. Eksen tek bir sözcük değil, benzetme sınıfıdır.
+   */
+  "gibi",
+  "tarzı",
+  "tarzi",
+  "benzeri",
+  "benzer",
+  "civarı",
+  "civari",
+  "kadar",
+  /**
+   * SORU SÖZCÜĞÜ CEVAP DEĞİLDİR (2026-09-25).
+   *
+   * Ölçüldü (`qa/open-set` E kümesi): "Televizyon arıyorum, hangi marka iyi
+   * bilmiyorum" cümlesinde marka alanı `"hangi"` değerini USER_EXPLICIT
+   * otoriteyle alıyordu. Kullanıcı tam tersini söylemişken — bilmediğini —
+   * marka sorusu cevaplanmış sayılıyor ve hiç sorulmuyordu. Eksen sözcük
+   * değil SINIF: soru sözcükleri hiçbir zaman kimlik jetonu olamaz.
+   */
+  "hangi",
+  "nasıl",
+  "nasil",
+  "kaç",
+  "kac",
+  "nerede",
+  "nereden",
+  "bilmiyorum",
+  "bilmem",
 ]);
 
+/**
+ * NOKTALAMA BİR SÖZCÜĞÜ KONUŞMA JETONU OLMAKTAN ÇIKARMAZ (2026-09-25).
+ *
+ * Liste sözcükleri çıplak yazılıdır ("arıyorum") ama kullanıcı noktalamayla
+ * yazar ("arıyorum,"). Karşılaştırma jetonu olduğu gibi aradığı için noktalı
+ * biçim listeye düşmüyor ve kalıntı model değerine sızıyordu. Ölçüldü
+ * (`qa/open-set`, dev yarısı): "Davul seit arıyorum, akustik 5 parça" —
+ * model alanı `"seit arıyorum, akustik 5"` oluyor, bu kalıntı ARAÇ üst
+ * varlığı gibi okunuyor ve talep EMİN biçimde `automotive`e bağlanıyordu.
+ * Bir davul seti otomotiv tedarikçisinin ücretli akışına düşüyordu.
+ */
 export function isConversationStopword(token: string | null | undefined): boolean {
   const t = String(token ?? "")
     .trim()
-    .toLocaleLowerCase("tr-TR");
+    .toLocaleLowerCase("tr-TR")
+    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
   if (!t) return false;
   return CONVERSATION_STOPWORDS.has(t);
 }
+
+/**
+ * BENZETME DE BİR KİMLİK İDDİASI DEĞİLDİR (2026-09-25).
+ *
+ * "Arçelik gibi bir şey", "MacBook tarzı bir laptop", "iPhone benzeri bir
+ * cihaz": marka adı geçer ama kullanıcı o markayı İSTEMEZ, ona BENZEYENİ
+ * ister. Olumsuzlamayla aynı sınıftır — ikisinde de ad, cevabın kendisi değil
+ * referansıdır. Ölçüldü (`qa/open-set` E kümesi): "Laptop arıyorum, MacBook
+ * tarzı bir şey" model alanını `MacBook` ile USER_EXPLICIT dolduruyordu ve
+ * model sorusu hiç sorulmuyordu.
+ *
+ * Kural olumsuzlamanın yanına konuldu çünkü ÖLÇÜT AYNI: bahsin hemen sağındaki
+ * 1–2 jeton. İkinci bir pencere kuralı yazılmadı.
+ */
+const COMPARISON_TAIL = /\b(gibi|tarzı|tarzi|benzeri|benzer|misali)\b/i;
 
 /**
  * Negation must attach to THIS mention — look mostly forward.
@@ -114,6 +178,7 @@ export function isNegatedMention(
   if (/^\s+\d/.test(after)) return false;
   const nextWords = after.trim().split(/\s+/).slice(0, 2).join(" ");
   if (NEGATION_TAIL.test(nextWords)) return true;
+  if (COMPARISON_TAIL.test(nextWords)) return true;
   const before = text.slice(Math.max(0, index - 12), index);
   // "X değil Y" rejects X; the following Y is the replacement.
   if (/\b(hariç|haric)\s*$/i.test(before)) return true;
@@ -144,9 +209,27 @@ export function withoutRejectedRequestClauses(text: string): string {
   return mask.join("");
 }
 
+/**
+ * MODEL ADI NOKTALAMAYI AŞMAZ (2026-09-25).
+ *
+ * Noktalama ad tamlamasını KAPATIR — bu kural depoda zaten yazılıdır
+ * (`requested-item-role` → `serviceLemmaIsPhraseHead`: "Noktalama ad
+ * tamlamasını KAPATIR"). Kalıntı temizleyicisi onu okumuyordu ve virgülün
+ * ötesindeki sözcükleri model adına ekliyordu. Ölçüldü (`qa/open-set` A
+ * kümesi): "Davul seit arıyorum, akustik 5 parça" cümlesinde model
+ * `"seit akustik 5"` oluyor, bu kalıntı ARAÇ üst varlığı gibi okunuyor ve
+ * bir davul seti EMİN biçimde `automotive`e bağlanıyordu.
+ *
+ * Nokta BİLEREK dışarıda: model adları ondalık taşır ("2.0 TDI", "1.6 16V").
+ */
+const REMAINDER_CLAUSE_BREAK = /[,;:!?\n]/u;
+
 /** Drop conversation tokens and trailing exclusion clauses from a remainder. */
 export function stripConversationRemainder(remainder: string): string {
   let s = remainder.trim();
+  if (!s) return "";
+  const cut = s.search(REMAINDER_CLAUSE_BREAK);
+  if (cut > 0) s = s.slice(0, cut).trim();
   if (!s) return "";
   s = s.replace(/\bama\b[\s\S]*$/i, "").trim();
   s = s

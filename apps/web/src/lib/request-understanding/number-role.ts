@@ -61,9 +61,24 @@ export function looksLikeTelevisionScreenContext(text: string): boolean {
   const n = text.toLocaleLowerCase("tr-TR");
   if (APPLIANCE_NOUN_RE.test(n)) return false;
 
-  // Avoid \\b after Turkish "inç" — it often fails in JS and drops TV context.
+  /**
+   * "inç" BİR BİRİMDİR, SERBEST ALT DİZGİ DEĞİL (2026-09-25).
+   *
+   * Eski kalıp `\b` yerine serbest alt dizgi kullanıyordu ("JS'de Türkçe 'inç'
+   * sonrası \b sık başarısız olur"). Doğru gözlem, yanlış çözüm: kalıp
+   * "p-inç" içinde de eşleşiyordu. Ölçüldü (`qa/open-set`): "Pirinç arıyorum,
+   * 50 kg baldo" — `inç` + tipik TV boyutu `50` bir araya gelince talep
+   * televizyon ekranı sanılıyor ve EMİN biçimde `technology`ye bağlanıyordu.
+   * Bir çuval pirinç, bilişim tedarikçisinin ücretli akışına düşüyordu.
+   *
+   * Çözüm sınırı Unicode duyarlı yazar: ÖNCE harf olamaz (ek SONA gelir,
+   * başa gelmez), SONRA yalnız Türkçe boyut eki gelebilir ("50 inçlik").
+   * Böylece "ince" de elenir — orada `inc`den sonra harf vardır.
+   */
   const hasTvNoun =
-    /(?:inç|inc|inch|ekran(?:lı|li)?|\btv\b|televizyon|smart\s*tv)/i.test(n);
+    /(?<![\p{L}])(?:inç|inc|inch)(?:l[iı]k|l[iı])?(?![\p{L}])|ekran(?:lı|li)?|\btv\b|televizyon|smart\s*tv/iu.test(
+      n,
+    );
   const hasExplicitTvProduct = /(?:televizyon|\btv\b|smart\s*tv)/i.test(n);
 
   // Explicit TV product noun wins over phone-catalog false positives (A55 ≠ Galaxy A55).
