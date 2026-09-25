@@ -150,8 +150,7 @@ for (const c of CONFIDENT_CASES) {
  *
  * Tarayıcıda ölçüldü: taksonomide kök adını taşıyan bir alt kategori var ve
  * yol etiketi bunu körü körüne birleştirince kullanıcıya "Bunu Beyaz Eşya ›
- * Beyaz Eşya olarak değerlendiriyorum, doğru mu?" diye soruluyordu — cümle
- * kendi kendini tekrar ediyor ve onay adımını gülünç gösteriyor.
+ * Beyaz Eşya olarak değerlendiriyorum, doğru mu?" diye soruluyordu.
  */
 {
   const same = buildCategoryConfirmation(
@@ -369,13 +368,26 @@ for (const c of CONFIDENT_CASES) {
       "F7 metin değişince görünüm sıfırlanır",
       /function clearCategoryOverridesOnTextEdit\(\) \{[\s\S]*?setCategoryRejectedFor\(null\)/.test(page),
     );
+    /**
+     * F8 — AŞAMA BAŞLIĞI ŞEMADAN GELİR, YÜZEY SAYISI SABİT DEĞİL.
+     *
+     * Eski kural sayfada EN AZ İKİ `phaseHeading=` geçişi arıyordu, çünkü o
+     * gün /talep'te iki soru yüzeyi vardı: standart panel ve MairaStage.
+     * Kurucu 2026-09-25'te akışı tek yüzeye indirdi ("bir anda tek şey",
+     * görünüm anahtarı yok). Ölçülmesi gereken şey yüzey SAYISI değil,
+     * başlığın kaynağı: her soru yüzeyi başlığı zamanlayıcıdan almalı ve
+     * hiçbiri kendi cümlesini yazmamalıdır.
+     */
+    const headingBindings = (
+      page.match(/phaseHeading=\{focusedQuestionSchedule\.phaseHeading\}/g) ?? []
+    ).length;
     check(
-      "F8 Maira aşama başlığını şemadan alır",
-      /phaseHeading=\{focusedQuestionSchedule\.phaseHeading\}/.test(page) &&
-        (page.match(/phaseHeading=\{focusedQuestionSchedule\.phaseHeading\}/g) ?? []).length >= 2 &&
+      "F8 aşama başlığı şemadan gelir (yüzey sayısı serbest)",
+      headingBindings >= 1 &&
         /phaseHeading/.test(maira) &&
-        !/Teklif için iki bilgi yeterli|Talebi detaylandır/.test(maira),
-      "Maira aşama başlığını ya almıyor ya da kendi metnini yazıyor",
+        !/Teklif için iki bilgi yeterli|Talebi detaylandır/.test(maira) &&
+        !/Teklif için iki bilgi yeterli|Talebi detaylandır/.test(panel),
+      `phaseHeading bağlaması: ${headingBindings}`,
     );
     check(
       "F9 Maira 11 kökü modelden çizer",

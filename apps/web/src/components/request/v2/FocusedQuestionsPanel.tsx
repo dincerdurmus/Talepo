@@ -1,13 +1,11 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ArrowUp, ChevronDown } from "lucide-react";
 
 import {
-  signalHelper,
   signalInput,
   signalLabel,
-  signalSurface,
 } from "@/components/panel/profile/ProfileSignal";
 import type { FocusedQuestion } from "@/lib/request-composer/v2/focused-questions";
 import type { QuestionControlDef } from "@/lib/request-composer/v2/question-control-types";
@@ -34,6 +32,14 @@ type Props = {
    */
   phase?: QuestionPhase;
   phaseHeading?: string;
+  /**
+   * BİR ANDA TEK SORU (kurucu, 2026-09-25). Hangi sorunun ekranda olduğuna
+   * artık panel değil SAYFA karar verir: talep kartındaki satıra dokunmak da
+   * aynı alanı açar. Verilmezse panel ilk cevapsız soruyla başlar ve cevap
+   * sonrası kendi içinde ilerler — eski davranış korunur.
+   */
+  activeFieldKey?: string | null;
+  onActiveFieldChange?: (fieldKey: string | null) => void;
 };
 
 /**
@@ -99,6 +105,39 @@ function OptionChip(props: {
           ✓
         </span>
       ) : null}
+      <span className="min-w-0 whitespace-normal break-words">{props.label}</span>
+    </button>
+  );
+}
+
+/**
+ * iOS TARZI SEÇENEK SATIRI (kurucu tasarımı, 2026-09-25).
+ *
+ * Birincil seçenekler artık çip değil, 58px'lik liste satırıdır: solda
+ * radyo dairesi, yanında etiket. Seçenek ÜRETİLMEZ — liste kanonik
+ * kontrolün `options`/`softOptions` alanlarından gelir; burada hiçbir
+ * varsayılan (bütçe aralığı dâhil) yoktur.
+ */
+function OptionRow(props: {
+  label: string;
+  onClick: () => void;
+  soft?: boolean;
+  describedBy?: string;
+  first?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-describedby={props.describedBy}
+      onClick={props.onClick}
+      className={`flex min-h-[58px] w-full items-center gap-3.5 px-[18px] text-left text-[16px] transition-colors hover:bg-[#f5f8f7] ${
+        props.first ? "" : "border-t border-[#0b1917]/[0.08]"
+      } ${props.soft ? "text-[#0f1f1d]/70" : "text-[#0f1f1d]"}`}
+    >
+      <span
+        aria-hidden
+        className="grid h-[22px] w-[22px] flex-none place-items-center rounded-full border-[1.6px] border-[#a0afac]"
+      />
       <span className="min-w-0 whitespace-normal break-words">{props.label}</span>
     </button>
   );
@@ -572,6 +611,39 @@ function ChoiceControl(props: {
 
   const today = new Date().toISOString().slice(0, 10);
 
+  /**
+   * "KENDİN YAZ" SATIRI HER ZAMAN LİSTENİN ALTINDADIR (kurucu, 2026-09-25).
+   *
+   * Serbest cevap yolu kapanmaz: kontrol serbest değere izin veriyorsa ya da
+   * hiç seçenek yoksa, liste bir yazma satırıyla biter.
+   */
+  const freeTextOpen =
+    customOpen ||
+    (props.control.controlType === "text_fallback" && primary.length === 0) ||
+    (props.control.controlType === "searchable_entity" &&
+      primary.length === 0 &&
+      !soft.some((s) => s.opensCustom));
+  const showFreeTextRow =
+    freeTextOpen ||
+    (props.control.allowCustom &&
+      props.control.controlType !== "money_range" &&
+      props.control.controlType !== "location_picker" &&
+      !primary.some((o) => o.opensCustom));
+
+  const commitFreeText = () => {
+    const v = props.draft.trim();
+    if (!v) return;
+    const withUnit =
+      props.control.unit &&
+      props.control.controlType === "number_presets" &&
+      /^\d/.test(v) &&
+      !v.includes(props.control.unit)
+        ? `${v} ${props.control.unit}`
+        : v;
+    props.onAnswer(withUnit);
+    setCustomOpen(false);
+  };
+
   return (
     <div className="mt-3 space-y-3" data-testid={`control-${props.control.controlType}`}>
       <SuggestionBadge
@@ -580,22 +652,13 @@ function ChoiceControl(props: {
         value={props.suggestedValue}
         label={suggestionLabel}
       />
-      {primary.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {allPrimary.length > 10 ? (
-            <button
-              type="button"
-              data-testid="choice-show-all"
-              onClick={() => setAllOptionsOpen((v) => !v)}
-              className="inline-flex min-h-11 items-center rounded-xl border border-dashed border-[#0f766e]/35 px-3.5 text-sm font-medium text-[#0f766e] transition hover:border-[#0f766e]/60 sm:min-h-10"
-            >
-              {allOptionsOpen ? "Daha az göster" : `Tümünü göster (${allPrimary.length})`}
-            </button>
-          ) : null}
-          {primary.map((opt) => (
-            <OptionChip
+      {primary.length > 0 || soft.length > 0 || showFreeTextRow ? (
+        <div className="overflow-hidden rounded-[22px] bg-white shadow-[0_0_0_1px_rgba(11,25,23,0.07)]">
+          {primary.map((opt, index) => (
+            <OptionRow
               key={opt.value}
               label={opt.label}
+              first={index === 0}
               describedBy={describedBy}
               onClick={() => {
                 if (opt.opensCustom || opt.value === "__custom__") {
@@ -612,6 +675,70 @@ function ChoiceControl(props: {
               }}
             />
           ))}
+          {soft.map((opt) => (
+            <OptionRow
+              key={`soft-${opt.value}`}
+              label={opt.label}
+              soft
+              first={false}
+              onClick={() => {
+                if (opt.opensCustom) {
+                  setCustomOpen(true);
+                  return;
+                }
+                props.onAnswer(opt.value);
+              }}
+            />
+          ))}
+          {showFreeTextRow ? (
+            <div className="flex items-center gap-2 border-t border-[#0b1917]/[0.08] py-2.5 pl-[18px] pr-2.5">
+              <label htmlFor={`${props.baseId}-custom`} className="sr-only">
+                {props.control.customLabel ?? "Özel değer"}
+              </label>
+              <input
+                id={`${props.baseId}-custom`}
+                value={props.draft}
+                onChange={(e) => props.onDraftChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitFreeText();
+                  }
+                }}
+                placeholder={
+                  props.control.placeholder ??
+                  props.control.customLabel ??
+                  "Kendin yaz"
+                }
+                inputMode={
+                  props.control.controlType === "number_presets" ||
+                  props.control.unit === "adet"
+                    ? "numeric"
+                    : "text"
+                }
+                className="min-w-0 flex-1 bg-transparent text-[16px] text-[#0f1f1d] outline-none placeholder:text-[#a0afac]"
+              />
+              <button
+                type="button"
+                aria-label="Kaydet"
+                disabled={!props.draft.trim()}
+                onClick={commitFreeText}
+                className="grid h-[38px] w-[38px] flex-none place-items-center rounded-full bg-[#0f766e] text-white transition disabled:opacity-30"
+              >
+                <ArrowUp className="h-[19px] w-[19px]" aria-hidden />
+              </button>
+            </div>
+          ) : null}
+          {allPrimary.length > 10 ? (
+            <button
+              type="button"
+              data-testid="choice-show-all"
+              onClick={() => setAllOptionsOpen((v) => !v)}
+              className="flex min-h-12 w-full items-center border-t border-[#0b1917]/[0.08] px-[18px] text-sm font-medium text-[#0f766e]"
+            >
+              {allOptionsOpen ? "Daha az göster" : `Tümünü göster (${allPrimary.length})`}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -635,81 +762,6 @@ function ChoiceControl(props: {
         </div>
       ) : null}
 
-      {customOpen ||
-      (props.control.controlType === "text_fallback" &&
-        primary.length === 0) ||
-      (props.control.controlType === "searchable_entity" &&
-        primary.length === 0 &&
-        !soft.some((s) => s.opensCustom)) ? (
-        <div>
-          <label className={signalLabel} htmlFor={`${props.baseId}-custom`}>
-            {props.control.customLabel ?? "Özel değer"}
-          </label>
-          <input
-            id={`${props.baseId}-custom`}
-            className={signalInput}
-            value={props.draft}
-            onChange={(e) => props.onDraftChange(e.target.value)}
-            placeholder={props.control.placeholder ?? "Yazın"}
-            inputMode={
-              props.control.controlType === "number_presets" ||
-              props.control.unit === "adet"
-                ? "numeric"
-                : "text"
-            }
-          />
-          <button
-            type="button"
-            className="mt-2 min-h-11 rounded-xl bg-[#0f766e] px-4 text-sm font-medium text-white"
-            onClick={() => {
-              const v = props.draft.trim();
-              if (!v) return;
-              const withUnit =
-                props.control.unit &&
-                props.control.controlType === "number_presets" &&
-                /^\d/.test(v) &&
-                !v.includes(props.control.unit)
-                  ? `${v} ${props.control.unit}`
-                  : v;
-              props.onAnswer(withUnit);
-              setCustomOpen(false);
-            }}
-          >
-            Kaydet
-          </button>
-        </div>
-      ) : props.control.allowCustom &&
-        !customOpen &&
-        props.control.controlType !== "money_range" &&
-        props.control.controlType !== "location_picker" &&
-        !primary.some((o) => o.opensCustom) ? (
-        <button
-          type="button"
-          className="min-h-10 text-xs font-medium text-[#0f766e]"
-          onClick={() => setCustomOpen(true)}
-        >
-          {props.control.customLabel ?? "Listede yok / Özel değer"}
-        </button>
-      ) : null}
-
-      {soft.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5 border-t border-teal-950/[0.06] pt-3">
-          {soft.map((opt) => (
-            <OptionChip
-              key={opt.value}
-              label={opt.label}
-              soft
-              onClick={() => {
-                if (opt.opensCustom) {
-                  setCustomOpen(true);
-                  return;
-                }
-                props.onAnswer(opt.value);
-              }}
-            />
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -726,12 +778,26 @@ export function FocusedQuestionsPanel({
   remainingCriticalCount,
   phase,
   phaseHeading,
+  activeFieldKey,
+  onActiveFieldChange,
 }: Props) {
   const baseId = useId();
   const questionKey = questions.map((q) => q.fieldKey).join("|");
   const [activeBySet, setActiveBySet] = useState({ key: "", index: 0 });
+  /**
+   * Aktif soru DIŞARIDAN gelebilir (talep kartındaki satıra dokunuş). Dışarısı
+   * bir alan söylemediyse panel kendi ilerleyişini sürdürür — iki kaynak
+   * birbirini ezmez, dışarıdaki her zaman önceliklidir.
+   */
+  const controlledIndex = activeFieldKey
+    ? questions.findIndex((q) => q.fieldKey === activeFieldKey)
+    : -1;
   const activeIndex =
-    activeBySet.key === questionKey ? activeBySet.index : 0;
+    controlledIndex >= 0
+      ? controlledIndex
+      : activeBySet.key === questionKey
+        ? activeBySet.index
+        : 0;
 
   if (questions.length === 0) return null;
 
@@ -741,7 +807,7 @@ export function FocusedQuestionsPanel({
         ? "Bilgiler tamam"
         : null;
     return (
-      <section className={`mt-3 ${signalSurface} px-3.5 py-2.5`}>
+      <section className="mt-3 rounded-2xl bg-white px-3.5 py-2.5 shadow-[0_0_0_1px_rgba(11,25,23,0.07)]">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm text-teal-950/70">
             {answeredHint ??
@@ -764,103 +830,78 @@ export function FocusedQuestionsPanel({
     );
   }
 
-  const safeIndex = Math.min(activeIndex, questions.length - 1);
+  const safeIndex = Math.min(Math.max(activeIndex, 0), questions.length - 1);
   const active = questions[safeIndex]!;
   const control = active.control;
 
   function commit(value: string) {
     if (value === "skip" || value === "skip_optional") {
       onSkip(active.fieldKey);
+      onActiveFieldChange?.(null);
       return;
     }
     onAnswer(active.fieldKey, value);
+    onActiveFieldChange?.(null);
     // Advance to next unanswered in this group
-    if (safeIndex < questions.length - 1) {
+    if (controlledIndex < 0 && safeIndex < questions.length - 1) {
       setActiveBySet({ key: questionKey, index: safeIndex + 1 });
     }
   }
 
+  /**
+   * BİR ANDA TEK SORU. Sekme şeridi kaldırıldı: gruptaki diğer sorulara
+   * geçiş talep kartındaki satırlardan yapılır. Ekranda aynı anda tek bir
+   * soru durur (kurucu, 2026-09-25).
+   */
   return (
     <section
       aria-labelledby={`${baseId}-heading`}
       data-testid="composer-questions"
-      className={`mt-3 ${signalSurface} px-3.5 py-3.5 sm:px-4 sm:py-4`}
+      className="mt-2 grid gap-3.5"
     >
-      <div className="flex items-center justify-between gap-2">
-        <h2
-          id={`${baseId}-heading`}
-          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f766e]/80"
-        >
-          {phaseHeading ?? "Son birkaç detay"}
-        </h2>
+      <p
+        className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-[#0f766e]/80"
+        data-testid="composer-question-phase"
+      >
+        {phaseHeading ?? "Son birkaç detay"}
         {typeof remainingCriticalCount === "number" &&
         remainingCriticalCount > 0 ? (
-          <p className="rounded-full bg-[#e3f1f2] px-2.5 py-0.5 text-[11px] font-semibold text-[#0f5f59]">
-            Yayına {remainingCriticalCount} soru
-          </p>
-        ) : (
-          <p className="rounded-full bg-[#e7f5ee] px-2.5 py-0.5 text-[11px] font-semibold text-[#1e7f4f]">
-            ✓ Yayına hazır
-          </p>
-        )}
-      </div>
-      <p className="mt-1 text-xs leading-5 text-[#0f1f1d]/45">
-        {phase === "essentials"
-          ? "Bütçe ve konum olmadan teklif gelmez; gerisi sonra."
-          : "Cevapladıkça teklifler isabetli gelir. İstemediğini atlayabilirsin."}
+          <span className="ml-2 text-[#0f1f1d]/35">
+            · yayına {remainingCriticalCount} soru
+          </span>
+        ) : null}
       </p>
+
+      <h2 id={`${baseId}-heading`} className="sr-only">
+        {phaseHeading ?? "Son birkaç detay"}
+      </h2>
 
       {healthNotice ? (
         <p
           role="note"
-          className="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs leading-5 text-amber-950/80"
+          className="rounded-xl border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs leading-5 text-amber-950/80"
         >
           Sağlık taleplerinde kişisel sağlık bilgisi paylaşmayın.
         </p>
       ) : null}
 
-      {questions.length > 1 ? (
-        <div
-          role="tablist"
-          aria-label="Bu gruptaki sorular"
-          className="mt-2.5 flex flex-wrap gap-1"
-        >
-          {questions.map((q, index) => {
-            const selected = index === safeIndex;
-            return (
-              <button
-                key={q.fieldKey}
-                type="button"
-                role="tab"
-                aria-selected={selected}
-                title={q.summaryLabel ?? q.label}
-                className={`min-h-9 max-w-[9.5rem] truncate rounded-full border px-3 text-[12px] font-medium transition-colors ${
-                  selected
-                    ? "border-transparent bg-[#0f766e] text-white shadow-[0_4px_14px_rgba(15,118,110,0.3)]"
-                    : "border-[#0f1f1d]/10 bg-white text-[#0f1f1d]/55 hover:border-[#0f766e]/30 hover:text-[#0f1f1d]"
-                }`}
-                onClick={() => setActiveBySet({ key: questionKey, index })}
-              >
-                {q.summaryLabel ?? q.label ?? index + 1}
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-
       <div
-        className="mt-3 border-t border-[#0f1f1d]/6 pt-3.5"
+        data-question-phase={phase ?? "detail"}
         data-testid={`composer-question-${active.fieldKey}`}
         data-field-key={active.fieldKey}
         data-control-type={control?.controlType ?? "text_fallback"}
       >
-        <p
-          className="text-[15px] font-semibold leading-6 tracking-[-0.01em] text-[#0f1f1d]"
+        <h3
+          className="m-0 text-[26px] font-semibold leading-[1.12] tracking-[-0.035em] text-[#0f1f1d] sm:text-[30px] lg:text-[32px]"
           data-testid="composer-question-prompt"
         >
           {active.humanPrompt}
-        </p>
-        {active.helper ? <p className={signalHelper}>{active.helper}</p> : null}
+        </h3>
+        {active.helper ? (
+          <p className="mt-1.5 text-[15px] leading-6 text-[#0f1f1d]/50">
+            {active.helper}
+          </p>
+        ) : null}
 
         {/*
           KONTROL BİLEŞENLERİ SORU BAŞINA YENİDEN KURULUR (D2 blokeri B4).

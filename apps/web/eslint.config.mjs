@@ -37,6 +37,17 @@ const eslintConfig = defineConfig([
     files: ["scripts/probe-*.ts"],
     rules: { "@typescript-eslint/no-explicit-any": "off" },
   },
+  /**
+   * `scripts/**\/*.cjs` TARAYICI KOŞUM ARAÇLARIDIR ve bilerek CommonJS'tir:
+   * Node'un kendi `require` çözümüyle, derleme adımı olmadan ve YENİ BİR
+   * BAĞIMLILIK KURMADAN çalışırlar (Chrome'u CDP üzerinden sürerler).
+   * `no-require-imports` bu dosyalarda ürün kalitesi değil, dosya biçimi
+   * ölçer; ürün kodunda kural aynen açık kalır.
+   */
+  {
+    files: ["scripts/**/*.cjs"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

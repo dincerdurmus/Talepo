@@ -95,9 +95,22 @@ ok(
   "reduced-motion sınırı var",
   Boolean(comp && /prefers-reduced-motion/.test(comp)),
 );
+/**
+ * 768 EŞİĞİ ARTIK MOUNT KAPISI DEĞİL, KALİTE KAPISIDIR (kurucu, 2026-09-25).
+ *
+ * Eski kural "dar ekranda sahne HİÇ kurulmaz" diyordu. Yeni /talep tasarımı
+ * Maira'nın yüzünü telefonda da ister; sahne orada düşük piksel oranı ve
+ * düşük kare hızıyla açılır. Kapının adı ölçtüğü şeyi söylemeli: eşik hâlâ
+ * kaynakta durmalı ve dar ekran için AYRI bir bütçe üretmelidir.
+ */
 ok(
-  "genişlik eşiği (>=768) var",
-  Boolean(comp && /768/.test(comp)),
+  "genişlik eşiği (768) dar ekran için ayrı bütçe üretiyor",
+  Boolean(
+    comp &&
+      /768/.test(comp) &&
+      /maxPixelRatio/.test(comp) &&
+      /maxFps/.test(comp),
+  ),
 );
 ok(
   "model adresi yoksa sahne mount edilmiyor",
@@ -219,14 +232,49 @@ ok(
   Boolean(stage && PROPS.every((p) => stage.includes(p))),
   stage ? PROPS.filter((p) => !stage.includes(p)).join(",") : "dosya yok",
 );
-const pageDiff = execFileSync(
-  "git",
-  ["diff", "--name-only", "HEAD", "--", "apps/web/src/app/talep/page.tsx"],
-  { cwd: join(ROOT, "..", "..") },
-)
-  .toString()
-  .trim();
-ok("page.tsx değişmedi", pageDiff === "", pageDiff);
+/**
+ * "page.tsx DEĞİŞMEDİ" KAPISI KALDIRILDI (2026-09-25).
+ *
+ * O satır `git diff HEAD -- .../talep/page.tsx` boş mu diye bakıyordu. Bu
+ * bir SÖZLEŞME değil, tek bir dilimin kapsam notuydu: commit'ten sonra diff
+ * zaten boşaldığı için kapı hiçbir zaman kalıcı bir şey ölçmüyordu — yalnız
+ * "çalışma ağacında bekleyen değişiklik var mı" diyordu. Kurucu 2026-09-25'te
+ * /talep'i yeniden tasarlayınca bu satır, ölçmediği bir şey için kırmızı
+ * verecekti.
+ *
+ * YERİNE GEÇEN GERÇEK SINIR: sahne kütüphanesi sayfadan DOĞRUDAN çağrılamaz.
+ * Sayfa yüzü yalnız kendi bileşeni üzerinden bağlar; böylece WebGL kurulumu,
+ * temizliği ve fallback'i tek yerde kalır.
+ */
+const pageSrc = oku(PAGE);
+ok(
+  "page.tsx sahne kütüphanesini doğrudan çağırmıyor",
+  Boolean(
+    pageSrc &&
+      !/from\s+["']@\/lib\/maira\/contour-scene["']/.test(pageSrc) &&
+      !/mountContourScene/.test(pageSrc),
+  ),
+);
+const FACE = join(ROOT, "src/components/request/talep/MairaFace.tsx");
+const face = oku(FACE);
+ok("MairaFace var", face != null, FACE);
+ok(
+  "MairaFace sahneyi dynamic + ssr:false ile bağlıyor",
+  Boolean(
+    face &&
+      /dynamic\(/.test(face) &&
+      /MairaContourScene/.test(face) &&
+      /ssr:\s*false/.test(face),
+  ),
+);
+ok(
+  "MairaFace ışık alanı fallback'i taşıyor",
+  Boolean(face && /radial-gradient\(circle/.test(face)),
+);
+ok(
+  "MairaFace açık zemin varyantını istiyor",
+  Boolean(face && /appearance="light"/.test(face)),
+);
 /**
  * Soru/cevap YÜZEYLERİ Maira'da durmaya devam eder — ama artık standart
  * beyaz panelle değil, Showcase katmanıyla. Bu iddia F bölümündeki

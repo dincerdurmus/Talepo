@@ -13,15 +13,24 @@
  * `pointer-events: none` ile altındaki soru/cevap yüzeyini kapatmaz.
  *
  * NEDEN KOŞULLU MOUNT. Sahne bir yardımcıdır, bir önkoşul değil. WebGL2
- * yoksa, kullanıcı azaltılmış hareket istiyorsa, ekran dar ise ya da model
- * adresi tanımlı değilse canvas HİÇ kurulmaz ve `MairaStage`'in bugünkü
- * ışık alanı aynen görünür. Kurulum sırasında bir hata olursa sessizce
- * aynı fallback'e dönülür — görsel katman /talep akışını kıramaz.
+ * yoksa, kullanıcı azaltılmış hareket istiyorsa ya da model adresi tanımlı
+ * değilse canvas HİÇ kurulmaz ve çağıranın kendi fallback'i görünür.
+ * Kurulum sırasında bir hata olursa sessizce aynı fallback'e dönülür —
+ * görsel katman /talep akışını kıramaz.
+ *
+ * TELEFON (kurucu, 2026-09-25). 768px eşiği artık MOUNT kapısı değil,
+ * KALİTE kapısıdır: dar ekranda sahne yine açılır ama düşük piksel oranı ve
+ * düşük kare hızıyla. Sahne görünür alandan çıkınca çizim tamamen durur
+ * (bkz. `lib/maira/contour-scene.ts` görünürlük kapıları).
  */
 import { useEffect, useRef, useState } from "react";
 
-import type { ContourSceneHandle } from "@/lib/maira/contour-scene";
+import type {
+  ContourAppearance,
+  ContourSceneHandle,
+} from "@/lib/maira/contour-scene";
 
+/** Altında sahnenin "hafif ayar" ile koştuğu genişlik eşiği. */
 const MIN_WIDTH = 768;
 
 /**
@@ -30,21 +39,28 @@ const MIN_WIDTH = 768;
  */
 const MODEL_URL = process.env.NEXT_PUBLIC_MAIRA_CONTOUR_MODEL_URL ?? "";
 
-function sceneAllowed(): boolean {
-  if (!MODEL_URL) return false;
-  if (typeof window === "undefined") return false;
+type SceneBudget = {
+  maxPixelRatio: number;
+  maxFps: number;
+};
+
+function sceneBudget(): SceneBudget | null {
+  if (!MODEL_URL) return null;
+  if (typeof window === "undefined") return null;
   try {
-    if (window.innerWidth < MIN_WIDTH) return false;
     if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
-      return false;
+      return null;
     }
     const probe = document.createElement("canvas");
     const gl = probe.getContext("webgl2");
-    if (!gl) return false;
+    if (!gl) return null;
     gl.getExtension("WEBGL_lose_context")?.loseContext();
-    return true;
+    const narrow = window.innerWidth < MIN_WIDTH;
+    return narrow
+      ? { maxPixelRatio: 1, maxFps: 24 }
+      : { maxPixelRatio: 1.75, maxFps: 0 };
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -54,15 +70,27 @@ type Props = {
    * değiştirir ve sahne yoksa hiçbir etkisi olmaz.
    */
   thinking?: boolean;
+  /** Zemin varyantı; /talep beyaz zeminde `light` ister. */
+  appearance?: ContourAppearance;
 };
 
-export function MairaContourScene({ thinking = false }: Props) {
+export function MairaContourScene({
+  thinking = false,
+  appearance = "dark",
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handleRef = useRef<ContourSceneHandle | null>(null);
   const [ready, setReady] = useState(false);
+  /**
+   * Yetenek ölçümü BİR KEZ, ilk render'da yapılır. Bileşen yalnız
+   * `dynamic(..., { ssr: false })` ile bağlandığı için bu kod sunucuda hiç
+   * koşmaz; effect içinde ölçüp state'e yazmak gereksiz bir ikinci render
+   * üretirdi.
+   */
+  const [budget] = useState<SceneBudget | null>(() => sceneBudget());
 
   useEffect(() => {
-    if (!sceneAllowed()) return;
+    if (!budget) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     let disposed = false;
@@ -74,10 +102,13 @@ export function MairaContourScene({ thinking = false }: Props) {
         handleRef.current = mod.mountContourScene({
           canvas,
           modelUrl: MODEL_URL,
+          appearance,
+          maxPixelRatio: budget.maxPixelRatio,
+          maxFps: budget.maxFps,
         });
         setReady(true);
       } catch {
-        /* Sessiz fallback: ışık alanı görünmeye devam eder. */
+        /* Sessiz fallback: çağıranın ışık alanı görünmeye devam eder. */
         handleRef.current = null;
         setReady(false);
       }
@@ -92,13 +123,13 @@ export function MairaContourScene({ thinking = false }: Props) {
       }
       handleRef.current = null;
     };
-  }, []);
+  }, [appearance, budget]);
 
   useEffect(() => {
     handleRef.current?.setThinking(thinking);
   }, [thinking]);
 
-  if (!sceneAllowed()) return null;
+  if (!budget) return null;
 
   return (
     <canvas

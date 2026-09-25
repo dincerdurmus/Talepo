@@ -11,19 +11,15 @@ import {
   useState,
 } from "react";
 import {
-  ArrowLeft,
   ArrowRight,
+  Check,
   ChevronDown,
-  ListPlus,
-  LoaderCircle,
+  Clock3,
   Send,
-  SlidersHorizontal,
-  Sparkles,
   TrendingUp,
   Zap,
 } from "lucide-react";
 
-import { CatalogIdentityPreview } from "@/components/request/CatalogIdentityPreview";
 import { describeContactInfo, stripContactInfo } from "@/lib/membership/contact-filter";
 import {
   CONTACT_IN_REQUEST_NOTICE,
@@ -32,11 +28,6 @@ import {
   contactChoiceTelemetry,
   type ContactChoice,
 } from "@/lib/request/contact-notice";
-import {
-  HybridBrowsePath,
-  HybridCategoryBrowsePanel,
-} from "@/components/request/HybridComposerPanels";
-import { PublishSuccessMoment } from "@/components/request/PublishSuccessMoment";
 import { subcategorySlug } from "@/lib/knowledge/slug";
 import {
   TalepoAiPanel,
@@ -44,15 +35,30 @@ import {
 } from "@/components/request/TalepoAiPanel";
 import { CategoryConfirmationCard } from "@/components/request/v2/CategoryConfirmationCard";
 import { CategoryGuidanceCard } from "@/components/request/v2/CategoryGuidanceCard";
-import { CategoryGuidanceSummary } from "@/components/request/v2/CategoryGuidanceSummary";
 import { FocusedQuestionsPanel } from "@/components/request/v2/FocusedQuestionsPanel";
-import { PublishReviewSummary } from "@/components/request/v2/PublishReviewSummary";
-import { UnderstoodFactsBoard } from "@/components/request/v2/UnderstoodFactsBoard";
 import { shouldConfirmYearCondition } from "@/components/request/YearConditionConfirmation";
 import { isImplausibleFutureModelYear } from "@/components/request/FutureModelYearConfirmation";
-import { TrMoneyInput } from "@/components/ui/TrMoneyInput";
-import { MairaHandoffScene } from "@/components/request/maira/MairaHandoffScene";
-import { MairaStage } from "@/components/request/maira/MairaStage";
+import { CategorySheet } from "@/components/request/talep/CategorySheet";
+import {
+  MairaStatusLine,
+  ReadingSentence,
+  readingDurationMs,
+  type MairaStatus,
+} from "@/components/request/talep/MairaVoice";
+import { RequestCardPanel } from "@/components/request/talep/RequestCardPanel";
+import { TalepStartPanel } from "@/components/request/talep/TalepStartPanel";
+import {
+  buildReadingHighlights,
+  toReadingSegments,
+} from "@/lib/request-composer/v2/reading-highlights";
+import { buildRequestCardModel } from "@/lib/request-composer/v2/request-card-model";
+import { publishOutcomeFrom } from "@/lib/request/publish-result-status";
+import {
+  advanceBrowseWalk,
+  createBrowseWalkState,
+  listBrowseOptions,
+} from "@/lib/request-composer/ui-helpers";
+import type { BrowseNode } from "@/lib/knowledge/types";
 import {
   formatBudgetDigits,
   planAnswerApplication,
@@ -64,13 +70,11 @@ import { useHybridRequestComposer } from "@/hooks/useHybridRequestComposer";
 import { usePublicCategories } from "@/hooks/usePublicCategories";
 import { useRequestBrain } from "@/hooks/useRequestBrain";
 import {
-  budgetPlaceholderForStrategy,
   formatBudgetFromMedian,
   isBudgetMeaningfulForStrategy,
   isMarketRangeReliable,
 } from "@/lib/request-brain/budget-actions";
 import {
-  budgetPromptForStrategy,
   toHumanQuestions,
 } from "@/lib/request-brain/human-question-layer";
 import {
@@ -98,7 +102,6 @@ import {
 } from "@/lib/ai/request-text-composer";
 import {
   getExploreFilterDefs,
-  getFilterSelectOptions,
 } from "@/lib/explore/category-filters";
 import {
   neighborhoodsFieldValue,
@@ -111,8 +114,6 @@ import {
   findProvinceAndDistrictInText,
   parseRealEstateCity,
   textMentionsPlace,
-  TURKEY_IL_NAMES,
-  TURKEY_PROVINCES,
 } from "@/lib/geo/turkey-districts";
 import {
   getVisibleCategoryFields,
@@ -120,7 +121,6 @@ import {
   resolveCommonField,
   resolveRequestCategory,
   withCategoryFieldDefaults,
-  type DynamicField,
 } from "@/lib/request-category-engine";
 import {
   CATALOG_PREVIEW_CHIP_KEYS,
@@ -155,7 +155,6 @@ import {
 import { computeComposerPublishReadiness } from "@/lib/request-composer/v2/publish-readiness";
 import {
   PHASE_HEADINGS,
-  softStatusFromAnswerValue,
 } from "@/lib/request-composer/v2/question-scheduler";
 import {
   budgetDisplayLabel,
@@ -270,13 +269,6 @@ function rawTitleFallback(rawText: string): string {
 
 const ESSENTIAL_COMMON_KEYS = new Set(["title", "city"]);
 
-const BUDGET_PRESETS = [
-  { id: "under-10", label: "10 bin altı", value: "10.000 TL'ye kadar" },
-  { id: "10-50", label: "10–50 bin", value: "10.000 – 50.000 TL" },
-  { id: "50-200", label: "50–200 bin", value: "50.000 – 200.000 TL" },
-  { id: "200-plus", label: "200 bin+", value: "200.000 TL üzeri" },
-] as const;
-
 const EXAMPLE_CHIPS = [
   "İstanbul’da 55 inç Arçelik televizyon arıyorum.",
   "Heidelberg SM 74 için nemlendirme pompası lazım.",
@@ -355,7 +347,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
    * döner, böylece kullanıcının açtığı düzenleme alanları kendiliğinden
    * kapanmaz (2026-08-26).
    */
-  const [editDetailsOpen, setEditDetailsOpen] = useState(false);
   const [featureBoost, setFeatureBoost] = useState<
     "" | "FEATURE_24H" | "FEATURE_3D" | "FEATURE_7D"
   >("");
@@ -377,14 +368,10 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   const [budgetTouched, setBudgetTouched] = useState(false);
   const [aiCompanionOpen, setAiCompanionOpen] = useState(false);
   const [publishGuidanceAttempted, setPublishGuidanceAttempted] = useState(false);
-  const [publishButtonAttention, setPublishButtonAttention] = useState(false);
-  const [publishReadyAnimation, setPublishReadyAnimation] = useState(false);
+  const [, setPublishButtonAttention] = useState(false);
+  const [, setPublishReadyAnimation] = useState(false);
   /** Draft values typed in the AI companion suggestion rows (keyed by gap id). */
-  const [suggestionInputs, setSuggestionInputs] = useState<
-    Record<string, string>
-  >({});
-  const [optionalOpen, setOptionalOpen] = useState(false);
-  const [composerFocused, setComposerFocused] = useState(false);
+  const [, setOptionalOpen] = useState(false);
   const [enrichmentFieldKey, setEnrichmentFieldKey] = useState<string | null>(
     null,
   );
@@ -441,42 +428,44 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   const [guidanceSelectedSlugs, setGuidanceSelectedSlugs] = useState<string[]>(
     [],
   );
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [aiPanelScrollOffset, setAiPanelScrollOffset] = useState(0);
+  const [, setFiltersOpen] = useState(false);
+  const [, setAiPanelScrollOffset] = useState(0);
   const aiPanelFollowRef = useRef<HTMLDivElement>(null);
   const aiPanelNaturalTopRef = useRef<number | null>(null);
   const aiPanelOffsetRef = useRef(0);
   /** 1 = ihtiyaç metni, 2 = AI özeti onay / yayın */
-  const [wizardStep, setWizardStep] = useState<1 | 2>(1);
+  const [, setWizardStep] = useState<1 | 2>(1);
   /**
-   * GÖRÜNÜM YALNIZ BİR SUNUM SEÇİMİDİR (2026-08-29).
+   * TEK AKIŞ, ANAHTAR YOK (kurucu, 2026-09-25). "Form" ile "Maira" ayrı
+   * modlar değildir: talep kartı formun kendisi, Maira da sayfanın sesidir.
+   * Tam ekran koyu sahne, giriş sahnesi ve "Maira seni bekliyor" bandı
+   * kaldırıldı; bu yüzden görünüm anahtarı da kaldırıldı.
    *
-   * Maira ve standart görünüm AYNI bileşen örneğinde yaşar: geçiş yalnız bu
-   * değeri değiştirir, bileşen unmount olmaz ve hiçbir cevap yeniden
-   * kurulmaz. İkinci bir state ağacı ya da serileştirme yoktur.
-   */
-  const [viewMode, setViewMode] = useState<"standard" | "maira">("standard");
-  /**
-   * MAIRA GİRİŞ ANI (kurucu talebi, 2026-09-01). Kullanıcı metnini yazıp
-   * Enter'a bastığında "talebini anladım — konuşalım / standart formla
-   * devam" seçimi çıkar; "Konuşalım" Maira görünümünü açar. Bu YALNIZ bir
-   * sunum anıdır: cevap state'ine dokunmaz, kapatınca standart akış aynen
-   * kaldığı yerden sürer. Kategori ağacının yanındaki eski "Maira ile
-   * devam et" düğmesi kaldırıldı — giriş kapısı artık bu an.
-   */
-  const [mairaHandoffOpen, setMairaHandoffOpen] = useState(false);
-  /** Konuşalım geçişi: sahne 0,65 sn'de alttaki Maira katmanına erir. */
-  const [mairaHandoffLeaving, setMairaHandoffLeaving] = useState(false);
-  /** Sahneden gelişte Maira katmanı beliriş animasyonu atlar (altta tam
-   *  opak bekler); yalnız "Maira seni bekliyor" kartından açılışta oynar. */
-  const [mairaSummonInstant, setMairaSummonInstant] = useState(false);
-  /**
-   * YAZARKEN ALT YÜZEYLER GÖRÜNMEZ (kurucu, 2026-09-01): kategori,
-   * sorular ve sağ sütun ancak kullanıcı giriş sahnesinde bir yol
-   * seçtikten sonra açılır. Yazma alanı sakin kalır; "Devam et" (ya da
-   * Enter) sahneyi açar.
+   * `introDecided` KALDI ama artık tek bir şey söyler: kullanıcı cümlesini
+   * gönderdi mi? Gönderene kadar başlangıç ekranı durur.
    */
   const [introDecided, setIntroDecided] = useState(false);
+  /**
+   * "MAIRA OKUYOR" ANI. Cümle gönderildiğinde büyük puntoyla durur ve
+   * anlaşılan parçalar sırayla vurgulanır; süre dolunca alıntıya döner ve
+   * kart belirir. Yalnız bir SUNUM aşamasıdır — hiçbir cevabı etkilemez.
+   */
+  const [readingPhase, setReadingPhase] = useState<"reading" | "quote">("quote");
+  /**
+   * Ekranda duran tek soru. Talep kartındaki satıra dokunmak da burayı
+   * değiştirir; soru otoritesi değişmez, yalnız hangisinin görüneceği.
+   */
+  const [askingFieldKey, setAskingFieldKey] = useState<string | null>(null);
+  /** Alttan açılan kategori paneli: akış ortasında `pick`, başta `browse`. */
+  const [categorySheet, setCategorySheet] = useState<{
+    mode: "pick" | "browse";
+    root: BrowseNode | null;
+  } | null>(null);
+  /** Yayın sonucu: sunucunun döndürdüğü durum (D-0032) burada saklanır. */
+  const [publishStatus, setPublishStatus] = useState<{
+    status: string | null;
+    publishedAt: string | null;
+  } | null>(null);
   const [confirmedYearConditionKey, setConfirmedYearConditionKey] =
     useState<string | null>(null);
   const [confirmedFutureModelYearKey, setConfirmedFutureModelYearKey] =
@@ -698,10 +687,19 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     return withCategoryFieldDefaults(activeCategoryId, values);
   }, [activeCategoryId, categories, hybrid.softFillFields, seededFields, manualValues]);
 
+  /**
+   * KALDI AMA ARTIK ÇİZİLMİYOR (2026-09-25). Eski "hızlı filtre çipleri"
+   * yüzeyi yeni tasarımda yok; bu memo yalnız `verify-talep-companion-
+   * contract-v1`in ölçtüğü `getExploreFilterDefs(activeCategoryId,
+   * dynamicValues)` çağrı sözleşmesini ayakta tutuyor. Sözleşme yeniden
+   * değerlendirilene kadar kullanılmayan bir değer olarak duruyor —
+   * sessizce silinip kapının sahte yeşile düşmesi daha kötü olurdu.
+   */
   const categoryFilterDefs = useMemo(
     () => getExploreFilterDefs(activeCategoryId, dynamicValues),
     [activeCategoryId, dynamicValues],
   );
+  void categoryFilterDefs;
 
   const autoTitle = useMemo(() => {
     const category = resolveRequestCategory(activeCategoryId, categories);
@@ -961,12 +959,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       : Boolean(realEstateLocationError(realEstateLocation))
     : false;
 
-  const essentialCommonFields = visibleCommonFields.filter((field) =>
-    ESSENTIAL_COMMON_KEYS.has(field.key),
-  );
-  const optionalCommonFields = visibleCommonFields.filter(
-    (field) => !ESSENTIAL_COMMON_KEYS.has(field.key),
-  );
   const requiredDynamicFields = visibleDynamicFields.filter((field) =>
     isFieldRequired(field, dynamicValues),
   );
@@ -977,9 +969,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       ),
     [dynamicValues, visibleDynamicFields],
   );
-  const hasOptionalFields =
-    optionalCommonFields.length > 0 || optionalDynamicFields.length > 0;
-
   const isCommonFieldFilled = useCallback(
     (key: keyof CommonDraft) => {
       if (key === "city") {
@@ -991,14 +980,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     },
     [mergedCommonDraft, realEstateLocationMissing],
   );
-
-  const filledOptionalCount =
-    optionalCommonFields.filter((field) =>
-      isCommonFieldFilled(field.key),
-    ).length +
-    optionalDynamicFields.filter((field) =>
-      Boolean(dynamicValues[field.key]?.trim()),
-    ).length;
 
   /**
    * Transparent score: only fields the Step 2 UI exposes.
@@ -1144,15 +1125,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     if (confirmedBudgetConflictKey === key) return null;
     return { textBudget, enteredBudget, key };
   }, [budgetTouched, commonDraft.budget, confirmedBudgetConflictKey, understandingBudgetDisplay]);
-
-  const publishable =
-    Boolean(mergedCommonDraft.title.trim()) &&
-    (!budgetRequired || hasBudget) &&
-    (!visibleCommonFieldKeys.has("city") ||
-      Boolean(mergedCommonDraft.city.trim()) ||
-      !realEstateLocationMissing) &&
-    missingFields.length === 0 &&
-    !realEstateLocationMissing;
 
   const missingPublishLabels = useMemo(() => {
     const labels: string[] = [];
@@ -2075,8 +2047,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     uxStage,
   ]);
 
-  const budgetCopy = budgetPromptForStrategy(brain.strategy?.strategy);
-
   function applyCategoryGuidance(selection: CategoryGuidanceSelection) {
     const choice = categoryGuidanceToUserChoice(selection);
     setCategoryUserChoice(choice);
@@ -2186,52 +2156,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     }
   }
 
-  function applyHumanQuestionValue(
-    question: QuestionCandidate,
-    value?: string,
-  ) {
-    if (value === "bilmiyorum" || value === "fark-etmez") {
-      const isAny = value === "fark-etmez";
-      /**
-       * "BİLMİYORUM" BİR DEĞER DEĞİLDİR (D3f Dilim 1, 2026-08-27).
-       *
-       * Buradan eskiden yerelleştirilmiş etiket (`"Belirtilmedi"`) kanonik
-       * kayda DEĞER olarak yazılıyordu: alan `kind: "VALUE"` oluyor,
-       * projection'ın `attributes` torbasına giriyor ve matching onu bir ürün
-       * özelliği / marka sanıyordu. Kanonik mod taşınır; etiket yalnız
-       * kullanıcının ekranda gördüğü metindir.
-       */
-      hybrid.applyQuickOption(
-        question.fieldKey,
-        isAny ? "Farketmez" : "Belirtilmedi",
-        isAny,
-        isAny ? "ANY" : "UNKNOWN",
-      );
-      setManualValues((current) => ({
-        ...current,
-        [question.fieldKey]:
-          value === "fark-etmez" ? "Fark etmez" : "Belirtilmedi",
-      }));
-      return;
-    }
-    if (value != null && value !== "") {
-      applyBrainQuestion(question, value);
-      return;
-    }
-    setEnrichmentFieldKey(question.fieldKey);
-    setEnrichmentDraft("");
-  }
-
-  const marketHint =
-    brain.marketIntelligence?.marketRange &&
-    isMarketRangeReliable({
-      marketMedian: brain.marketIntelligence.marketRange.median,
-      overallConfidenceLevel:
-        brain.marketIntelligence.overallConfidence?.level,
-    })
-      ? `${formatBudgetFromMedian(brain.marketIntelligence.marketRange.low)} – ${formatBudgetFromMedian(brain.marketIntelligence.marketRange.high)}`
-      : null;
-
   const showBudgetActions =
     visibleCommonFieldKeys.has("budget") &&
     isBudgetMeaningfulForStrategy(brain.strategy?.strategy) &&
@@ -2239,10 +2163,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       marketMedian: brain.marketIntelligence?.marketRange?.median,
       overallConfidenceLevel: brain.marketIntelligence?.overallConfidence?.level,
     });
-
-  const readinessLabel = readiness.message;
-
-  const hasText = requestText.trim().length > 0;
 
   useEffect(() => {
     let frame: number | null = null;
@@ -2351,15 +2271,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     setPublishedVersion(null);
   }
 
-  function updateRealEstateLocation(next: RealEstateLocation) {
-    setRealEstateTouched(true);
-    setRealEstateDraft(next);
-    setManualValues((current) => ({
-      ...current,
-      neighborhoods: neighborhoodsFieldValue(next),
-    }));
-    setPublishedVersion(null);
-  }
 
   function applyCityFilter(city: string) {
     if (isRealEstate) {
@@ -2381,36 +2292,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     }
     setCityTouched(true);
     updateCommonField("city", city);
-  }
-
-  function applyBudgetPreset(value: string) {
-    updateCommonField("budget", value);
-    if (value) setOptionalOpen(true);
-  }
-
-  function clearCreateFilters() {
-    setCategoryOverride(null);
-    setCategoryLockedByUser(false);
-    setCityTouched(true);
-    setBudgetTouched(true);
-    setCommonDraft((current) => ({
-      ...current,
-      city: "",
-      budget: "",
-    }));
-    setRealEstateTouched(true);
-    setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
-    if (categoryFilterDefs.length > 0) {
-      setManualValues((current) => {
-        const next = { ...current };
-        for (const def of categoryFilterDefs) {
-          // Empty string keeps AI from re-filling so cleared filter chips reappear.
-          next[def.fieldKey] = "";
-        }
-        return next;
-      });
-    }
-    setPublishedVersion(null);
   }
 
 
@@ -2516,16 +2397,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     return resolved.status === "ready" ? resolved.question : null;
   }
 
-  function resolveAnswerEditControl(fieldKey: string) {
-    /**
-     * SERBEST-METİN CEVAPLAR DA DÜZENLENEBİLİR (kurucu QA, 2026-09-01).
-     * Eski koşul options+allowCustom olmayan kontrolleri (bütçe, konum
-     * gibi) null'a düşürüyor ve "Yanıtlarım" satırı kilitleniyordu.
-     * Kontrol varsa satır düzenlenebilir; seçenek yoksa düzenleyici
-     * zaten serbest giriş gösterir (MairaAnswers 144. satır koşulu).
-     */
-    return resolveAnswerEditQuestion(fieldKey)?.control ?? null;
-  }
 
   function handleFocusedSkip(fieldKey: string) {
                             const importance = focusedQuestions.find(
@@ -2577,40 +2448,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       }
     }
   }
-
-  const filterCityValue = isRealEstate
-    ? realEstateLocation.il
-    : mergedCommonDraft.city.trim();
-  const filterBudgetValue = mergedCommonDraft.budget.trim();
-  /** AI/need-text already provided city — hide city chips even if form looks empty briefly. */
-  const cityFilledFromAi =
-    !cityTouched && Boolean(understandingCity.trim());
-  const budgetFilledFromAi =
-    !budgetTouched && Boolean(understandingBudgetDisplay.trim());
-  const isCityFilled = Boolean(filterCityValue) || cityFilledFromAi;
-  const isBudgetFilled = Boolean(filterBudgetValue) || budgetFilledFromAi;
-  const missingCategoryFilterDefs = categoryFilterDefs.filter(
-    (def) => !dynamicValues[def.fieldKey]?.trim(),
-  );
-  const activeCategoryFilterCount = categoryFilterDefs.filter((def) =>
-    Boolean(dynamicValues[def.fieldKey]?.trim()),
-  ).length;
-  const activeFilterCount =
-    (categoryLockedByUser && categoryOverride ? 1 : 0) +
-    (filterCityValue ? 1 : 0) +
-    (filterBudgetValue ? 1 : 0) +
-    activeCategoryFilterCount;
-  /** Step-2 quick filters: only fields still empty after need text / AI. */
-  const showCityQuickFilter = !isRealEstate && !isCityFilled;
-  const showBudgetQuickFilter =
-    visibleCommonFieldKeys.has("budget") && !isBudgetFilled;
-  const hasMissingQuickFilters =
-    showCityQuickFilter ||
-    showBudgetQuickFilter ||
-    missingCategoryFilterDefs.length > 0;
-  const activeBudgetPresetId =
-    BUDGET_PRESETS.find((preset) => preset.value === filterBudgetValue)?.id ??
-    null;
 
   /**
    * YAYIN HATASI İÇİN TEK YÜZEY OTORİTESİ (2026-08-26).
@@ -2931,7 +2768,12 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
         message?: string;
         redirectTo?: string;
         id?: string;
-        request?: { id?: string };
+        /**
+         * D-0032: sunucu talebin GERÇEK durumunu döndürür. Şüpheli talep
+         * `PENDING_REVIEW` ile kaydedilir ve `publishedAt` boş kalır; arayüz
+         * bu iki alanı okumadan "yayında" diyemez.
+         */
+        request?: { id?: string; status?: string; publishedAt?: string | null };
       };
 
       if (!response.ok) {
@@ -2978,6 +2820,10 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
         version,
         categoryUnresolved: publishReviewModel.categoryUnresolved,
       });
+      setPublishStatus({
+        status: result.request?.status ?? null,
+        publishedAt: result.request?.publishedAt ?? null,
+      });
       setPublishSuccess({
         title: mergedCommonDraft.title,
         requestId,
@@ -2995,29 +2841,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     }
   }
 
-  function renderCommonField(field: (typeof visibleCommonFields)[number]) {
-    if (field.key === "city") return null;
-
-    return (
-      <CommonField
-        key={`${activeCategoryId}-${field.key}`}
-        label={field.label}
-        value={mergedCommonDraft[field.key]}
-        onChange={(value) => updateCommonField(field.key, value)}
-        placeholder={field.placeholder}
-        wide={field.key === "title"}
-        money={field.key === "budget"}
-        hint={
-          field.key === "title" &&
-          !titleManuallyEdited &&
-          Boolean(autoTitle.trim()) &&
-          autoTitle !== "Yeni talep"
-            ? "Başlık metninize göre hazırlandı, düzenleyebilirsiniz"
-            : undefined
-        }
-      />
-    );
-  }
 
   const aiPanelContent = (
     <TalepoAiPanel
@@ -3285,134 +3108,266 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   });
 
   /**
-   * MAIRA KATMANI (kurucu, 2026-09-01): yeni sayfa DEĞİL — mevcut sayfanın
-   * üstüne çağrılan varlık. Standart yüzey altta kalır; katman yumuşak bir
-   * belirişle gelir, kapanınca sayfa zaten oradadır. State tek ağaçta yaşar.
+   * TALEP KARTININ SATIRLARI. Anlaşılan olgular ile kullanıcının verdiği
+   * cevaplar AYNI birleştirmeden geçer (kör birleştirme yok), eksik satırlar
+   * da zamanlayıcının görünür sorularından gelir. Kart ikinci bir liste
+   * tutmaz; doluluk çubuğu tam olarak bu satırları sayar.
    */
-  const mairaOverlay =
-    viewMode === "maira" ? (
-      <div className={mairaSummonInstant ? "fixed inset-0 z-[60]" : "maira-summon fixed inset-0 z-[60]"}>
-        <style>{`
-          @keyframes maira-summon-in {
-            from { opacity: 0; transform: scale(1.03); }
-            to { opacity: 1; transform: scale(1); }
-          }
-          .maira-summon { animation: maira-summon-in 1.15s cubic-bezier(0.22,0.61,0.36,1) both; }
-          @media (prefers-reduced-motion: reduce) { .maira-summon { animation: none; } }
-        `}</style>
-        <MairaStage
-          questions={focusedQuestions}
-          draftByKey={focusedDraftByKey}
-          onDraftChange={(fieldKey, value) =>
-            setFocusedDraftByKey((current) => ({ ...current, [fieldKey]: value }))
-          }
-          onAnswer={handleFocusedAnswer}
-          onSkip={handleFocusedSkip}
-          remainingCriticalCount={composerReadiness.remainingCriticalCount}
-          answers={userAnswerRows}
-          subtitle={readinessLabel}
-          categoryStep={categoryStepForMaira}
-          categoryRejected={categoryRejected}
-          onCategoryAction={applyCategoryConfirmation}
-          phaseHeading={focusedQuestionSchedule.phaseHeading}
-          onExitToStandard={() => {
-            setViewMode("standard");
-            setMairaSummonInstant(false);
-          }}
-          editControl={resolveAnswerEditControl}
-          onEditAnswer={(fieldKey, value) => {
-            /* Mevcut kanonik cevap işleyicisi — ikinci güncelleme yolu yok. */
-            handleFocusedAnswer(fieldKey, value);
-          }}
-        />
-      </div>
-    ) : null;
+  const cardFacts = mergeAnswersIntoUnderstoodFacts({
+    facts: editableUnderstoodFacts,
+    answers: userAnswerRows,
+  });
+
+  /**
+   * Okuma anının vurguları: kullanıcının cümlesinde YERİ BULUNAN olgular.
+   * Senkron sürerken bayat olgu gösterilmez.
+   */
+  const readingSegments = toReadingSegments(
+    requestText,
+    buildReadingHighlights({
+      text: requestText,
+      facts: hybrid.isSyncing ? [] : cardFacts,
+    }),
+  );
+
+  /**
+   * Kart satırına dokunulan alan görünür sorular arasında değilse, kanonik
+   * düzeltme köprüsü o alanın sorusunu üretir. İkinci bir soru yolu yoktur.
+   */
+  const editQuestion =
+    askingFieldKey &&
+    !focusedQuestions.some((q) => q.fieldKey === askingFieldKey)
+      ? resolveAnswerEditQuestion(askingFieldKey)
+      : null;
+  const questionsForPanel = editQuestion ? [editQuestion] : focusedQuestions;
+  const activeQuestion =
+    questionsForPanel.find((q) => q.fieldKey === askingFieldKey) ??
+    (askingFieldKey ? null : questionsForPanel[0] ?? null);
+
+  /**
+   * KARTTAKİ EKSİK SATIR = ZORUNLU SORU (kurucu, 2026-09-25).
+   *
+   * Opsiyonel sorular "sorulacak" satırı olarak yazılsaydı doluluk çubuğunun
+   * paydası şişer ve kullanıcı yayınlayabildiği hâlde eksik görünürdü.
+   * Opsiyoneller kartın altındaki "İstersen ekle" chip'lerine düşer; ikisi
+   * de AYNI kanonik soru listesinden türer, ikinci bir liste yoktur.
+   */
+  const criticalQuestions = focusedQuestions.filter(
+    (question) => question.importance !== "optional",
+  );
+  const optionalQuestions = focusedQuestions.filter(
+    (question) => question.importance === "optional",
+  );
+  const requestCard = buildRequestCardModel({
+    facts: cardFacts,
+    questions: criticalQuestions,
+    askingFieldKey: activeQuestion?.fieldKey ?? null,
+    optionalFields: [
+      ...optionalQuestions.map((question) => ({
+        key: question.fieldKey,
+        label: question.summaryLabel ?? question.label ?? question.fieldKey,
+      })),
+      ...optionalDynamicFields.map((field) => ({
+        key: field.key,
+        label: field.label,
+      })),
+    ],
+    answeredFieldKeys: [...answeredQuestionKeys, ...skippedQuestionKeys],
+  });
+
+  /**
+   * OKUMA ANI KENDİ KENDİNE KAPANIR. Süre tek yerden (`readingDurationMs`)
+   * gelir; vurgu sayısı değiştikçe yeniden kurulur. Senkron sürerken sayaç
+   * başlamaz — henüz vurgulanacak olgu yoktur.
+   */
+  const readingEntityCount = readingSegments.filter(
+    (segment) => segment.kind === "entity",
+  ).length;
+  useEffect(() => {
+    if (readingPhase !== "reading") return;
+    if (hybrid.isSyncing) return;
+    const timer = window.setTimeout(
+      () => setReadingPhase("quote"),
+      readingDurationMs(readingEntityCount),
+    );
+    return () => window.clearTimeout(timer);
+  }, [hybrid.isSyncing, readingEntityCount, readingPhase]);
+
+  const publishOutcome = publishSuccess
+    ? publishOutcomeFrom({
+        status: publishStatus?.status ?? null,
+        publishedAt: publishStatus?.publishedAt ?? null,
+      })
+    : null;
+
+  const mairaStatus: MairaStatus = publishOutcome
+    ? publishOutcome.kind === "published"
+      ? "YAYINDA"
+      : "İNCELEMEDE"
+    : hybrid.isSyncing || isPublishing
+      ? "DÜŞÜNÜYOR"
+      : readingPhase === "reading"
+        ? "OKUYOR"
+        : activeQuestion
+          ? "SORUYOR"
+          : composerReadiness.canReview
+            ? "HAZIR"
+            : "DÜŞÜNÜYOR";
+  const mairaThinking = hybrid.isSyncing || isPublishing;
+
+  /**
+   * Kartın alt kategori satırı. Etiket kanonik kategori kaydından çözülür;
+   * "Beyaz Eşya › Beyaz Eşya" tekrarını kartın kendisi eler.
+   */
+  const activeSubcategoryLabel = (() => {
+    const slug = hybrid.state?.subcategorySlug ?? null;
+    if (!slug) return null;
+    return (
+      selectedCategory.subcategories.find(
+        (label) => subcategorySlug(label) === slug,
+      ) ?? null
+    );
+  })();
+
+  /** Kategori panelinin kökleri ve çocukları kanonik gezinmeden gelir. */
+  const browseRoots = hybrid.browseColumns[0] ?? [];
+  const browseChildrenOf = (root: BrowseNode) =>
+    listBrowseOptions(advanceBrowseWalk(createBrowseWalkState(), root));
+
+  function startReading() {
+    setIntroDecided(true);
+    setWizardStep(2);
+    setAskingFieldKey(null);
+    setReadingPhase("reading");
+  }
 
   return (
-    <main className={`relative min-h-screen overflow-x-hidden bg-[#f4f7f6] text-[#0f1f1d] ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-screen lg:overflow-hidden" : ""}`}>
-      {/*
-        MAIRA GİRİŞ ANI (kurucu talebi, 2026-09-01). Enter'dan sonra tek
-        soru sorulur: nasıl devam edelim? "Konuşalım" Maira görünümünü
-        açar; "Standart formla devam" bu anı kapatır ve akış hiçbir state
-        kaybı olmadan sürer. Anlama verisi kanonik requestSummary'den
-        okunur — ikinci bir çıkarım yolu yoktur.
-      */}
-      {/*
-        MAIRA GİRİŞ SAHNESİ (kurucu, 2026-09-01) — onaylanan görselin
-        kendisi: contour figürü ışık süzmeleriyle belirir, "Maira hazır /
-        Talebini aldım", iki kapsül. Beyaz kart yüzeyi kaldırıldı.
-      */}
-      {mairaOverlay}
-      {mairaHandoffOpen ? (
-        <MairaHandoffScene
-          leaving={mairaHandoffLeaving}
-          onTalk={() => {
-            /* SERT GEÇİŞ YOK (kurucu, 2026-09-01): Maira katmanı ALTINDA
-               açılır, sahne üstte yumuşakça erir — aynı karanlık dünyada
-               çapraz geçiş. */
-            setIntroDecided(true);
-            setMairaSummonInstant(true);
-            setViewMode("maira");
-            setMairaHandoffLeaving(true);
-            window.setTimeout(() => {
-              setMairaHandoffOpen(false);
-              setMairaHandoffLeaving(false);
-            }, 1180);
-          }}
-          onForm={() => {
-            setMairaHandoffOpen(false);
-            setIntroDecided(true);
-          }}
-        />
-      ) : null}
-      <header className="sticky top-0 z-40 border-b border-[#0f1f1d]/8 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto grid h-14 max-w-[1280px] grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
-          <div className="justify-self-start">
-            <Link
-              href="/panel"
-              className="talepo-cloud-pill px-3 py-2 text-sm font-medium text-[#0f1f1d]/72 transition hover:border-teal-800/15 hover:text-[#0f1f1d] sm:px-3.5"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 shrink-0 opacity-70" />
-              <span className="hidden sm:inline">Panele dön</span>
-            </Link>
-          </div>
-
+    <main className="relative min-h-screen overflow-x-hidden bg-white text-[#0f1f1d]">
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex h-[60px] max-w-[1080px] items-center justify-between px-5">
           <Link href="/" aria-label="Talepo ana sayfa" className="shrink-0">
-            <span className="text-[1.35rem] font-semibold tracking-[-0.05em] text-[#0f1f1d] sm:text-[1.45rem]">
-              tale
-              <span className="text-[#0f766e]">po</span>
+            <span className="text-[21px] font-bold tracking-[-0.04em] text-[#0f1f1d]">
+              tale<span className="text-[#0f766e]">po</span>
             </span>
           </Link>
-
-          <div className="justify-self-end">
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] ${
-                hasText
-                  ? "border-[#0f766e]/12 bg-[#f0fdfa] text-[#115e59]"
-                  : "border-[#0f1f1d]/8 bg-white text-[#0f1f1d]/45"
-              }`}
-            >
-              {hasText ? "Hazırlanıyor" : "Yeni talep"}
-            </span>
-          </div>
+          <nav className="flex items-center gap-4 text-sm text-[#3a4c49]">
+            <Link href="/panel" className="hidden sm:inline">
+              Panele dön
+            </Link>
+            <Link href="/panel/taleplerim">Taleplerim</Link>
+          </nav>
         </div>
       </header>
 
-      <div className={`relative z-10 mx-auto max-w-[1280px] px-4 py-4 sm:px-6 lg:px-8 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-[calc(100vh-4rem)] lg:overflow-hidden" : ""}`}>
-        {publishSuccess ? (
-          <PublishSuccessMoment
-            title={publishSuccess.title}
-            requestId={publishSuccess.requestId}
-            viewHref={publishSuccess.viewHref}
-            onNewRequest={() => {
-              setPublishSuccess(null);
-              setPublishedVersion(null);
-              setPublishError(null);
-              hybrid.resetWithText("");
-              hybrid.setOpenBrowsePanel(true);
-              setWizardStep(1);
-              brain.setAnalysisStatus("IDLE");
+      <div className="mx-auto max-w-[1080px] px-5 pb-[72px] pt-5 lg:pb-20 lg:pt-9">
+        {publishSuccess && publishOutcome ? (
+          /*
+            YAYIN SONU — DURUM SUNUCUDAN GELİR (D-0032). İncelemeye düşen
+            talep "yayında" DEMEZ; metin `publishOutcomeFrom` ile tek yerden
+            çözülür ve burada yeniden yazılmaz.
+          */
+          <section
+            data-testid="talep-published"
+            data-publish-outcome={publishOutcome.kind}
+            className="grid justify-items-start gap-2.5 py-10"
+          >
+            <span
+              aria-hidden
+              className={`grid h-[54px] w-[54px] place-items-center rounded-full text-white shadow-[0_0_0_8px_#e4f1ee] ${
+                publishOutcome.kind === "published"
+                  ? "bg-[#0f766e]"
+                  : "bg-[#a15c07]"
+              }`}
+            >
+              {publishOutcome.kind === "published" ? (
+                <Check className="h-[26px] w-[26px] stroke-[2.4]" />
+              ) : (
+                <Clock3 className="h-[26px] w-[26px] stroke-[2.2]" />
+              )}
+            </span>
+            <p className="m-0 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-[#0f766e]">
+              {publishOutcome.badge}
+            </p>
+            <h1 className="m-0 mt-1 text-[28px] font-semibold tracking-[-0.035em] text-[#0f1f1d]">
+              {publishOutcome.headline}
+            </h1>
+            <p className="m-0 max-w-[46ch] text-[15px] leading-6 text-[#0f1f1d]/55">
+              {publishOutcome.detail}
+            </p>
+            {publishSuccess.title ? (
+              <p className="m-0 mt-2 rounded-2xl bg-[#f5f8f7] px-4 py-3 text-sm font-medium text-[#0f1f1d]">
+                {publishSuccess.title}
+              </p>
+            ) : null}
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href={publishSuccess.viewHref}
+                className="inline-flex h-[52px] items-center justify-center gap-2 rounded-2xl bg-[#0f766e] px-5 text-sm font-semibold text-white"
+              >
+                Talebimi görüntüle
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
+              <button
+                type="button"
+                className="inline-flex h-[52px] items-center justify-center rounded-2xl px-4 text-sm font-medium text-[#0f766e]"
+                onClick={() => {
+                  setPublishSuccess(null);
+                  setPublishStatus(null);
+                  setPublishedVersion(null);
+                  setPublishError(null);
+                  hybrid.resetWithText("");
+                  hybrid.setOpenBrowsePanel(false);
+                  setWizardStep(1);
+                  setIntroDecided(false);
+                  setReadingPhase("quote");
+                  setAskingFieldKey(null);
+                  brain.setAnalysisStatus("IDLE");
+                  setManualValues({});
+                  setCommonDraft({
+                    title: "",
+                    quantity: "",
+                    city: "",
+                    delivery: "",
+                    budget: "",
+                  });
+                  setTitleManuallyEdited(false);
+                  setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+                  setRealEstateTouched(false);
+                  setCityTouched(false);
+                  setBudgetTouched(false);
+                  setOptionalOpen(false);
+                  setAiCompanionOpen(false);
+                  setEnrichmentFieldKey(null);
+                  setEnrichmentDraft("");
+                  setFeatureBoost("");
+                  setCategoryOverride(null);
+                  setCategoryLockedByUser(false);
+                  setCategoryUserChoice(null);
+                  setConfirmedFactKeys([]);
+                  setDismissedFactKeys([]);
+                  setAnsweredQuestionKeys([]);
+                  setSkippedQuestionKeys([]);
+                  setOtherDomainNote("");
+                  setShowOtherDomainInput(false);
+                  setUnresolvedExpressions([]);
+                  setGuidanceSelectedSlugs([]);
+                }}
+              >
+                Yeni talep oluştur
+              </button>
+            </div>
+          </section>
+        ) : !introDecided ? (
+          <TalepStartPanel
+            text={requestText}
+            onTextChange={(value) => {
+              const nextText = formatBudgetNumbersInText(value);
+              // The composer is authoritative. Any field removed from
+              // the text must not survive as a stale manual answer.
               setManualValues({});
+              setAnsweredQuestionKeys([]);
+              setSkippedQuestionKeys([]);
+              setConfirmedFactKeys([]);
               setCommonDraft({
                 title: "",
                 quantity: "",
@@ -3421,356 +3376,209 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                 budget: "",
               });
               setTitleManuallyEdited(false);
-              setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
-              setRealEstateTouched(false);
               setCityTouched(false);
               setBudgetTouched(false);
-              setOptionalOpen(false);
-              setAiCompanionOpen(false);
-              setEnrichmentFieldKey(null);
-              setEnrichmentDraft("");
-              setFeatureBoost("");
-              setCategoryOverride(null);
-              setCategoryLockedByUser(false);
-              setCategoryUserChoice(null);
-              setConfirmedFactKeys([]);
-              setDismissedFactKeys([]);
-              setOtherDomainNote("");
-              setShowOtherDomainInput(false);
-              setUnresolvedExpressions([]);
-              setGuidanceSelectedSlugs([]);
+              setRealEstateTouched(false);
+              setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
+              setConfirmedYearConditionKey(null);
+              setConfirmedFutureModelYearKey(null);
+              setConfirmedBudgetConflictKey(null);
+              setAppliedProfessionalDescription(false);
+              brain.setProfessionalDraftApplied(false);
+              hybrid.setText(nextText);
+              clearCategoryOverridesOnTextEdit();
+              setPublishedVersion(null);
+              setPublishError(null);
             }}
+            onSubmit={startReading}
+            /*
+              Kutunun altındaki etiketler YALNIZ mevcut anlama sonucundan
+              gelir; senkron sürerken bayat olgu gösterilmez.
+            */
+            detected={(hybrid.isSyncing ? [] : cardFacts)
+              .slice(0, 3)
+              .map((fact) => ({
+                key: fact.key,
+                label: fact.label,
+                value: fact.displayValue,
+              }))}
+            examples={EXAMPLE_CHIPS}
+            onPickExample={(example) => {
+              applyExampleChip(example);
+              startReading();
+            }}
+            roots={browseRoots}
+            onOpenCategories={() =>
+              setCategorySheet({ mode: "browse", root: null })
+            }
+            onOpenCategory={(root) =>
+              setCategorySheet({ mode: "browse", root })
+            }
           />
         ) : (
-          <>
-            <section className={`talepo-rise talepo-hero-aurora relative mx-auto mb-5 max-w-3xl overflow-hidden rounded-[1.75rem] px-6 py-8 text-center sm:rounded-[2rem] sm:px-10 sm:py-10 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:hidden" : ""}`}>
-              <div className="talepo-hero-aurora-glow" aria-hidden />
-              <div className="relative">
-                <p className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.05] px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/55">
-                  <Sparkles className="h-3.5 w-3.5 text-[#7cc4ff]" />
-                  Anlat · Netleştir · Yayınla
-                </p>
-                <h1 className="mt-4 text-[2rem] font-semibold tracking-[-0.05em] text-white sm:text-[2.6rem]">
-                  Ne aradığını{" "}
-                  <span className="bg-gradient-to-r from-[#8fd0ff] via-[#c4b5fd] to-[#ffb280] bg-clip-text text-transparent">
-                    anlat.
-                  </span>
-                </h1>
-                <p className="mx-auto mt-2.5 max-w-xl text-sm font-medium leading-6 text-white/55 sm:text-base">
-                  Talepo doğru firmalara ulaşması için gerisini seninle birlikte
-                  tamamlasın. İstersen kategoriden de başlayabilirsin.
-                </p>
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  <span className="rounded-full bg-white px-2.5 py-1 text-[#221a3f]">
-                    1 · Anlat
-                  </span>
-                  <span className="text-white/30">→</span>
-                  <span
-                    className={`rounded-full px-2.5 py-1 ${
-                      hasText
-                        ? "bg-white text-[#221a3f]"
-                        : "bg-white/10 text-white/55"
-                    }`}
-                  >
-                    2 · Kontrol et & tamamla
-                  </span>
-                </div>
-              </div>
-            </section>
+          /*
+            `lg:grid-rows-[auto_1fr]`: kart iki satırı kapsadığı için artan
+            yükseklik ikisi arasında bölünüyor ve alıntı ile soru arasında
+            boş bir koridor açılıyordu (tarayıcıda ölçüldü). Artan yükseklik
+            tek satıra (soru satırına) verilir; `items-start` de içeriği
+            satırın başında tutar.
+          */
+          <div className="grid items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-[26px]">
+            <div className="grid min-w-0 gap-[22px] lg:col-start-1 lg:row-start-1">
+              <MairaStatusLine status={mairaStatus} thinking={mairaThinking} />
+              <ReadingSentence
+                segments={readingSegments}
+                phase={readingPhase}
+              />
+            </div>
 
-            <div
-              className={`mx-auto grid items-start gap-5 ${
-                hasText && introDecided
-                  ? `max-w-[1180px] lg:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.95fr)] lg:gap-7 ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : ""}`
-                  : "max-w-[920px]"
-              }`}
-            >
-              <div className={`flex min-w-0 flex-col gap-4 ${ENABLE_FIXED_DESKTOP_WORKSPACE && hasText ? "lg:h-full lg:overflow-y-auto lg:pr-2" : ""}`}>
-                <div
-                  className={`talepo-rise talepo-rise-delay-1 rounded-[1.35rem] border bg-white p-4 shadow-[0_28px_80px_rgba(11,37,34,0.08)] transition-[border-color,box-shadow] duration-300 sm:p-5 ${
-                    composerFocused
-                      ? "border-[#0f766e]/35 shadow-[0_28px_80px_rgba(11,37,34,0.12)]"
-                      : "border-[#0f1f1d]/8"
-                  }`}
-                >
-                  <label
-                    htmlFor="talep-composer"
-                    className="block text-sm font-semibold text-[#0f1f1d]"
-                  >
-                    İhtiyacını anlat
-                  </label>
-                  <p className="mt-1 text-xs text-[#0f1f1d]/45">
-                    Doğal cümlelerle yaz. Kategori ağacı seni sınırlamaz.
-                  </p>
-
-                  <textarea
-                    id="talep-composer"
-                    value={requestText}
-                    onFocus={() => setComposerFocused(true)}
-                    onBlur={() => setComposerFocused(false)}
-                    onChange={(event) => {
-                      const nextText = formatBudgetNumbersInText(event.target.value);
-                      // The composer is authoritative. Any field removed from
-                      // the text must not survive as a stale manual answer.
-                      setManualValues({});
-                      setAnsweredQuestionKeys([]);
-                      setSkippedQuestionKeys([]);
-                      setConfirmedFactKeys([]);
-                      setCommonDraft({
-                        title: "",
-                        quantity: "",
-                        city: "",
-                        delivery: "",
-                        budget: "",
-                      });
-                      setTitleManuallyEdited(false);
-                      setCityTouched(false);
-                      setBudgetTouched(false);
-                      setRealEstateTouched(false);
-                      setRealEstateDraft({ il: "", ilce: "", mahalleler: [] });
-                      setConfirmedYearConditionKey(null);
-                      setConfirmedFutureModelYearKey(null);
-                      setConfirmedBudgetConflictKey(null);
-                      // Elle düzenleme profesyonel-uygulandı durumunu düşürür
-                      setAppliedProfessionalDescription(false);
-                      brain.setProfessionalDraftApplied(false);
-                      hybrid.setText(nextText);
-                      clearCategoryOverridesOnTextEdit();
-                      setPublishedVersion(null);
-                      setPublishError(null);
-                      if (nextText.trim().length > 0) {
-                        setWizardStep(2);
-                        setAiCompanionOpen(true);
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      /* Enter = "anlat bitti" jesti (kurucu talebi):
-                         Maira giriş anını açar. Shift+Enter satır ekler —
-                         çok satırlı yazma engellenmez. */
-                      if (
-                        event.key === "Enter" &&
-                        !event.shiftKey &&
-                        requestText.trim().length >= 5
-                      ) {
-                        event.preventDefault();
-                        setMairaHandoffOpen(true);
-                      }
-                    }}
-                    className="mt-3 min-h-[120px] w-full resize-y bg-transparent text-[16px] leading-7 text-[#0f1f1d] outline-none placeholder:text-[#0f1f1d]/28 sm:min-h-[140px] sm:text-[17px] sm:leading-8"
-                    placeholder="Örn. İstanbul’da 55 inç Arçelik televizyon arıyorum."
-                  />
-
-                  {introDecided ? (
-                  <HybridCategoryBrowsePanel
-                    open={hybrid.openBrowsePanel}
-                    onToggle={() =>
-                      hybrid.setOpenBrowsePanel(!hybrid.openBrowsePanel)
+            <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-[84px] lg:self-start">
+              {readingPhase === "quote" ? (
+                <RequestCardPanel
+                  model={requestCard}
+                  title={
+                    mergedCommonDraft.title.trim() ||
+                    requestText.trim().slice(0, 60) ||
+                    "Yeni talep"
+                  }
+                  categoryId={
+                    categoryConfident && schemaCategory.displayLabelSafe
+                      ? activeCategoryId
+                      : null
+                  }
+                  categoryLabel={
+                    categoryConfident && schemaCategory.displayLabelSafe
+                      ? selectedCategory.label
+                      : null
+                  }
+                  subcategoryLabel={activeSubcategoryLabel}
+                  updating={hybrid.isSyncing}
+                  locked={Boolean(publishOutcome)}
+                  categoryStep={categoryStepForMaira}
+                  categoryRejected={categoryRejected}
+                  onCategoryAction={applyCategoryConfirmation}
+                  onChangeCategory={() =>
+                    setCategorySheet({ mode: "pick", root: null })
+                  }
+                  onAskField={(fieldKey) => {
+                    setAskingFieldKey(fieldKey);
+                    if (typeof window !== "undefined" && window.innerWidth < 920) {
+                      window.setTimeout(() => {
+                        document
+                          .querySelector('[data-testid="composer-questions"]')
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                      }, 60);
                     }
-                    walk={hybrid.browseWalk}
-                    columns={hybrid.browseColumns}
-                    degraded={hybrid.browseDegraded}
-                    onSelectAtColumn={(columnIndex, node) => {
-                      hybrid.selectBrowseNodeAtColumn(columnIndex, node);
-                      // Yeni bir seçim, önceki "Kaldır" kararlarını geçersiz
-                      // kılar — satır tekrar görünür (kurucu, 2026-08-23).
-                      setDismissedFactKeys([]);
-                      setWizardStep(2);
-                      setAiCompanionOpen(true);
-                    }}
-                    onReset={hybrid.resetBrowseWalk}
-                  />
-                  ) : null}
+                  }}
+                  onAddOptional={(fieldKey) => setAskingFieldKey(fieldKey)}
+                />
+              ) : null}
+            </div>
 
-                  {!introDecided ? (
-                    /* Tek eylem (kurucu, 2026-09-01): "Daha fazla bilgi
-                       ekle" — boşken kilitli durur, en az 5 harf yazılınca
-                       açılır ve Maira giriş sahnesini çağırır. Enter da
-                       aynı sahneyi açar. Kategoriden seç bu aşamada yok. */
-                    <button
-                      type="button"
-                      data-testid="composer-intro-continue"
-                      disabled={requestText.trim().length < 5}
-                      onClick={() => setMairaHandoffOpen(true)}
-                      className="mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59] disabled:cursor-not-allowed disabled:bg-[#0f1f1d]/15 disabled:text-[#0f1f1d]/40 disabled:shadow-none"
+            <div className="grid min-w-0 gap-4 lg:col-start-1 lg:row-start-2">
+              {readingPhase !== "quote" ? null : (
+                <>
+                  {/*
+                    TALEPTE İLETİŞİM BİLGİSİ — UYARI, ENGEL DEĞİL (D-0031).
+                    Kart yayın yolunu KAPATMAZ; kullanıcı seçene kadar görünür
+                    durur ve seçim yapılınca kapanır.
+                  */}
+                  {showContactNotice ? (
+                    <div
+                      data-testid="composer-contact-notice"
+                      className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
                     >
-                      Daha fazla bilgi ekle
-                      <ArrowRight className="h-4 w-4" aria-hidden />
-                    </button>
-                  ) : null}
-
-                  {requestText.trim().length > 0 && introDecided ? (
-                    <>
-                      {/*
-                        MAIRA'YA DÖNÜŞ (kurucu, 2026-09-01): formla devam
-                        eden kullanıcı istediği an Maira'ya geçebilir.
-                        Görünür, tek dokunuş; ikon contour figürünün başını
-                        andıran ışık halkalarıdır.
-                      */}
-                      <button
-                        type="button"
-                        data-testid="composer-enter-maira"
-                        onClick={() => setViewMode("maira")}
-                        className="group flex min-h-14 w-full items-center gap-3.5 rounded-2xl border border-[#0c2f3a]/50 bg-[#04121a] px-4 py-3 text-left shadow-[0_14px_40px_rgba(4,18,26,0.35)] transition hover:border-[#2dd4bf]/40"
-                      >
-                        <span
-                          aria-hidden
-                          className="grid h-10 w-10 flex-none place-items-center rounded-full"
-                          style={{
-                            background:
-                              "radial-gradient(closest-side, rgba(45,212,191,0.85), rgba(45,212,191,0.25) 55%, transparent 75%)",
+                      <p>{CONTACT_IN_REQUEST_NOTICE}</p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          data-testid="composer-contact-remove"
+                          className="min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                          onClick={() => {
+                            const cleaned = stripContactInfo(hybrid.text ?? "");
+                            hybrid.setText(cleaned);
+                            setContactChoice("REMOVED");
+                            trackComposerEvent(
+                              "contact_notice_choice",
+                              contactChoiceTelemetry({
+                                choice: "REMOVED",
+                                kinds: contactKinds,
+                              }),
+                            );
                           }}
                         >
-                          <svg viewBox="0 0 40 40" className="h-9 w-9" fill="none">
-                            <ellipse cx="20" cy="18" rx="9" ry="12" stroke="rgba(230,255,250,0.9)" strokeWidth="1.1" />
-                            <ellipse cx="20" cy="18" rx="6" ry="8.5" stroke="rgba(180,240,228,0.65)" strokeWidth="0.9" />
-                            <ellipse cx="20" cy="18" rx="3.2" ry="5" stroke="rgba(140,225,210,0.5)" strokeWidth="0.8" />
-                            <path d="M11 33c2.5-3 6-4.5 9-4.5s6.5 1.5 9 4.5" stroke="rgba(230,255,250,0.75)" strokeWidth="1.1" strokeLinecap="round" />
-                          </svg>
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-semibold text-[#e6fffa]">
-                            Maira seni bekliyor
-                          </span>
-                          <span className="block text-xs text-[#8ccfc4]/75">
-                            Kalan soruları konuşarak tamamla
-                          </span>
-                        </span>
-                        <ArrowRight className="h-4 w-4 flex-none text-[#2dd4bf] transition group-hover:translate-x-0.5" aria-hidden />
-                      </button>
-                      <UnderstoodFactsBoard
-                        editControl={resolveAnswerEditControl}
-                        hasText
-                        updating={hybrid.isSyncing}
-                        degraded={hybrid.browseDegraded}
-                        /*
-                          Kullanıcının VERDİĞİ cevaplar da bu panoda görünür:
-                          birleştirme kör değildir, kanonik cevap aynı alandaki
-                          eski olguyu yener ve yinelenen satır üretmez.
-                        */
-                        facts={mergeAnswersIntoUnderstoodFacts({
-                          facts: editableUnderstoodFacts,
-                          answers: userAnswerRows,
-                        })}
-                        collapsed={uxStage === "review"}
-                        onExpand={() => setUxStage("clarify")}
-                        categoryLabel={
-                          hybrid.isSyncing
-                            ? null
-                            : categoryConfident &&
-                                schemaCategory.displayLabelSafe
-                              ? selectedCategory.label
-                              : null
-                        }
-                        onConfirmFact={(key) => {
-                          setConfirmedFactKeys((keys) =>
-                            keys.includes(key) ? keys : [...keys, key],
-                          );
-                        }}
-                        onDismissFact={(key) => {
-                          setDismissedFactKeys((keys) =>
-                            keys.includes(key) ? keys : [...keys, key],
-                          );
-                          setManualValues((current) => {
-                            const next = { ...current };
-                            delete next[key];
-                            return next;
-                          });
-                        }}
-                        onEditFact={(key, value) => {
-                          setManualValues((current) => ({
-                            ...current,
-                            [key]: value,
-                          }));
-                          setConfirmedFactKeys((keys) =>
-                            keys.includes(key) ? keys : [...keys, key],
-                          );
-                          hybrid.applyQuickOption(key, value, false);
-                        }}
-                        onDontCareFact={(key) => {
-                          hybrid.applyQuickOption(key, "Farketmez", true);
-                          setManualValues((current) => ({
-                            ...current,
-                            [key]: "Fark etmez",
-                          }));
-                          setConfirmedFactKeys((keys) =>
-                            keys.includes(key) ? keys : [...keys, key],
-                          );
-                        }}
-                      />
-
-                      {categoryConfirmation ? (
-                        <CategoryConfirmationCard
-                          model={categoryConfirmation}
-                          rejected={categoryRejected}
-                          onAction={applyCategoryConfirmation}
-                        />
-                      ) : null}
-
-                      {categoryGuidance &&
-                      !categoryUserChoice &&
-                      categoryChoice &&
-                      categoryRejected ? (
-                        <CategoryConfirmationCard
-                          model={categoryChoice}
-                          rejected
-                          onAction={applyCategoryConfirmation}
-                        />
-                      ) : categoryGuidance && !categoryUserChoice ? (
-                        <CategoryGuidanceCard
-                          model={categoryGuidance}
-                          selectedSlugs={guidanceSelectedSlugs}
-                          selectedAction={null}
-                          showOtherDomainInput={showOtherDomainInput}
-                          otherDomainNote={otherDomainNote}
-                          onOtherDomainNoteChange={(value) => {
-                            setOtherDomainNote(value);
-                            setUnresolvedExpressions((prev) => {
-                              const cleaned = prev.filter(
-                                (item) => !item.startsWith("other_domain:"),
-                              );
-                              const trimmed = value.trim();
-                              return trimmed
-                                ? [
-                                    ...cleaned,
-                                    `other_domain:${trimmed.slice(0, 200)}`,
-                                  ]
-                                : cleaned;
-                            });
+                          {CONTACT_REMOVE_ACTION_LABEL}
+                        </button>
+                        <button
+                          type="button"
+                          data-testid="composer-contact-keep"
+                          className="min-h-10 rounded-lg border border-amber-300 bg-white px-3 text-sm font-medium text-amber-950"
+                          onClick={() => {
+                            setContactChoice("KEPT");
+                            trackComposerEvent(
+                              "contact_notice_choice",
+                              contactChoiceTelemetry({
+                                choice: "KEPT",
+                                kinds: contactKinds,
+                              }),
+                            );
                           }}
-                          onSelect={applyCategoryGuidance}
-                        />
-                      ) : null}
+                        >
+                          {CONTACT_KEEP_ACTION_LABEL}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
-                      <CategoryGuidanceSummary
-                        userChoice={categoryUserChoice}
-                        selectedSlugs={guidanceSelectedSlugs}
-                        otherDomainNote={otherDomainNote}
-                        onChange={() => {
-                          setCategoryUserChoice(null);
-                          setGuidanceSelectedSlugs([]);
-                          setCategoryLockedByUser(false);
+                  {/*
+                    KAPSAM DIŞI (arz ilanı / ilaç) — kurucu kararı. Bu dal
+                    soru ve yayın dallarının ÖNÜNDEDİR; kapsam dışında hiçbir
+                    yayın yolu render edilmez.
+                  */}
+                  {!hybrid.isSyncing && composerReadiness.outOfScopeNotice ? (
+                    <div
+                      data-testid="composer-out-of-scope"
+                      className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
+                    >
+                      <p>{composerReadiness.outOfScopeNotice}</p>
+                      <button
+                        type="button"
+                        data-testid="composer-out-of-scope-edit"
+                        className="mt-2 min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                        onClick={() => {
+                          setIntroDecided(false);
+                          setReadingPhase("quote");
+                          window.setTimeout(() => {
+                            const el =
+                              document.getElementById("talep-composer");
+                            el?.scrollIntoView({
+                              behavior: "smooth",
+                              block: "center",
+                            });
+                            (el as HTMLTextAreaElement | null)?.focus();
+                          }, 60);
                         }}
-                      />
-
-                      {/*
-                        MAIRA GİRİŞİ BURADAN KALDIRILDI (kurucu talebi,
-                        2026-09-01): giriş kapısı artık Enter ile açılan
-                        anlama/seçim anıdır (mairaHandoffOpen). Görünüm
-                        geçişi hâlâ aynı state üzerinde yaşar; yalnız
-                        `viewMode` değişir ve bileşen unmount olmaz.
-                      */}
-                      {focusedQuestions.length > 0 && uxStage !== "compose" ? (
+                      >
+                        {composerReadiness.editActionLabel}
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {activeQuestion ? (
                         <FocusedQuestionsPanel
-                          questions={focusedQuestions}
+                          questions={questionsForPanel}
                           draftByKey={focusedDraftByKey}
                           healthNotice={isHealthCategory}
-                          collapsed={uxStage === "review"}
                           remainingCriticalCount={
                             composerReadiness.remainingCriticalCount
                           }
                           phase={focusedQuestionSchedule.phase}
                           phaseHeading={focusedQuestionSchedule.phaseHeading}
-                          onExpand={() => setUxStage("clarify")}
+                          activeFieldKey={activeQuestion.fieldKey}
+                          onActiveFieldChange={setAskingFieldKey}
                           onDraftChange={(fieldKey, value) =>
                             setFocusedDraftByKey((current) => ({
                               ...current,
@@ -3783,125 +3591,50 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                       ) : null}
 
                       {/*
-                        TALEPTE İLETİŞİM BİLGİSİ — UYARI, ENGEL DEĞİL (D-0031).
-
-                        Kart yayın yolunu KAPATMAZ; kullanıcı seçene kadar
-                        görünür durur ve seçim yapılınca kapanır. Metin
-                        kurucunun yazdığı cümledir, burada yeniden yazılmaz.
+                        ANA EYLEM HEP GÖRÜNÜR (kurucu, 2026-08-23): eksik alan
+                        varsa ne kaldığını söyler ve soruya götürür; yoksa
+                        doğrudan yayınlar. Soru açıkken de kaybolmaz.
                       */}
-                      {showContactNotice ? (
-                        <div
-                          data-testid="composer-contact-notice"
-                          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
-                        >
-                          <p>{CONTACT_IN_REQUEST_NOTICE}</p>
-                          <div className="mt-2 flex gap-2">
-                            <button
-                              type="button"
-                              data-testid="composer-contact-remove"
-                              className="min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
-                              onClick={() => {
-                                const cleaned = stripContactInfo(hybrid.text ?? "");
-                                hybrid.setText(cleaned);
-                                setContactChoice("REMOVED");
-                                trackComposerEvent(
-                                  "contact_notice_choice",
-                                  contactChoiceTelemetry({
-                                    choice: "REMOVED",
-                                    kinds: contactKinds,
-                                  }),
-                                );
-                              }}
+                      {hybrid.isSyncing ? null : composerReadiness.canReview ? (
+                        <div className="grid gap-3.5">
+                          <p className="m-0 max-w-[36ch] text-[15px] leading-6 text-[#0f1f1d]/50">
+                            Satırlara dokunup değiştirebilirsin. Hazırsan
+                            yayınla, teklifler gelmeye başlasın.
+                          </p>
+                          {publishError ? (
+                            <p
+                              role="alert"
+                              data-testid="composer-publish-error"
+                              className="m-0 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-3 text-sm text-orange-950"
                             >
-                              {CONTACT_REMOVE_ACTION_LABEL}
-                            </button>
-                            <button
-                              type="button"
-                              data-testid="composer-contact-keep"
-                              className="min-h-10 rounded-lg border border-amber-300 bg-white px-3 text-sm font-medium text-amber-950"
-                              onClick={() => {
-                                setContactChoice("KEPT");
-                                trackComposerEvent(
-                                  "contact_notice_choice",
-                                  contactChoiceTelemetry({
-                                    choice: "KEPT",
-                                    kinds: contactKinds,
-                                  }),
-                                );
-                              }}
-                            >
-                              {CONTACT_KEEP_ACTION_LABEL}
-                            </button>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {/*
-                        KAPSAM DIŞI (arz ilanı) — kurucu kararı, 2026-08-25.
-                        Kullanıcı boş ekranda bırakılmaz: ne olduğunu söyleyen
-                        kısa bir açıklama ve metnine dönmesi için tek bir eylem
-                        gösterilir. Bu dal review/publish dallarının ÖNÜNDEDİR;
-                        kapsam dışında hiçbir yayın yolu render edilmez.
-                      */}
-                      {!hybrid.isSyncing && composerReadiness.outOfScopeNotice ? (
-                        <div
-                          data-testid="composer-out-of-scope"
-                          className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-amber-950"
-                        >
-                          <p>{composerReadiness.outOfScopeNotice}</p>
+                              {publishError}
+                            </p>
+                          ) : null}
                           <button
                             type="button"
-                            data-testid="composer-out-of-scope-edit"
-                            className="mt-2 min-h-10 rounded-lg bg-[#0f766e] px-3 text-sm font-medium text-white"
+                            data-testid="composer-review-cta"
+                            disabled={isPublishing}
+                            className="flex h-[58px] w-full items-center justify-center rounded-[18px] bg-[#0f766e] text-[16.5px] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(15,118,110,0.8)] transition active:scale-[0.985] disabled:opacity-60"
                             onClick={() => {
-                              const el =
-                                document.getElementById("talep-composer");
-                              el?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "center",
-                              });
-                              (el as HTMLTextAreaElement | null)?.focus();
+                              trackComposerEvent("publish_summary_opened");
+                              handlePublishAttempt();
                             }}
                           >
-                            {composerReadiness.editActionLabel}
+                            {isPublishing ? "Yayınlanıyor…" : "Talebi yayınla"}
                           </button>
                         </div>
-                      ) : !hybrid.isSyncing && uxStage === "review" ? (
-                        <PublishReviewSummary
-                          model={publishReviewModel}
-                          publishing={isPublishing}
-                          publishError={publishError}
-                          onEdit={() => {
-                            setUxStage("clarify");
-                          }}
-                          onPublish={() => {
-                            handlePublishAttempt();
-                          }}
-                        />
-                      ) : !hybrid.isSyncing && composerReadiness.canReview ? (
-                        <button
-                          type="button"
-                          data-testid="composer-review-cta"
-                          className="mt-3 min-h-12 w-full rounded-xl bg-[#0f766e] px-4 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,118,110,0.25)] transition hover:bg-[#115e59]"
-                          onClick={() => {
-                            setUxStage("review");
-                            setWizardStep(2);
-                            trackComposerEvent("publish_summary_opened");
-                          }}
-                        >
-                          Önizle ve yayınla
-                        </button>
-                      ) : !hybrid.isSyncing && !composerReadiness.canReview ? (
-                        /* Ana eylem hep görünür — eksik alanı söyler, tıklayınca
-                           soruya götürür (kurucu, 2026-08-23). */
+                      ) : (
                         <button
                           type="button"
                           data-testid="composer-continue-hint"
-                          className="mt-3 min-h-12 w-full cursor-pointer rounded-xl border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-semibold text-[#0f5f59] transition hover:border-[#0f766e]/45"
+                          className="flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[18px] border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-semibold text-[#0f5f59] transition hover:border-[#0f766e]/45"
                           onClick={() => {
                             document
                               .querySelector('[data-testid="composer-questions"]')
-                              ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "center",
+                              });
                           }}
                         >
                           Yayın için son adım:{" "}
@@ -3909,12 +3642,59 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                             ? composerReadiness.blockingLabels.join(" + ")
                             : "kalan soruları yanıtlayın"}
                         </button>
-                      ) : null}
+                      )}
                     </>
+                  )}
+
+                  {/*
+                    "Bu değil" denince kök seçimi buradan açılır — aynı model,
+                    aynı işleyici; kartla ikinci bir kategori mantığı yoktur.
+                  */}
+                  {categoryConfirmation && categoryRejected ? (
+                    <CategoryConfirmationCard
+                      model={categoryConfirmation}
+                      rejected={categoryRejected}
+                      onAction={applyCategoryConfirmation}
+                    />
+                  ) : null}
+
+                  {categoryGuidance &&
+                  !categoryUserChoice &&
+                  categoryChoice &&
+                  categoryRejected ? (
+                    <CategoryConfirmationCard
+                      model={categoryChoice}
+                      rejected
+                      onAction={applyCategoryConfirmation}
+                    />
+                  ) : categoryGuidance && !categoryUserChoice ? (
+                    <CategoryGuidanceCard
+                      model={categoryGuidance}
+                      selectedSlugs={guidanceSelectedSlugs}
+                      selectedAction={null}
+                      showOtherDomainInput={showOtherDomainInput}
+                      otherDomainNote={otherDomainNote}
+                      onOtherDomainNoteChange={(value) => {
+                        setOtherDomainNote(value);
+                        setUnresolvedExpressions((prev) => {
+                          const cleaned = prev.filter(
+                            (item) => !item.startsWith("other_domain:"),
+                          );
+                          const trimmed = value.trim();
+                          return trimmed
+                            ? [
+                                ...cleaned,
+                                `other_domain:${trimmed.slice(0, 200)}`,
+                              ]
+                            : cleaned;
+                        });
+                      }}
+                      onSelect={applyCategoryGuidance}
+                    />
                   ) : null}
 
                   {hybrid.composerError ? (
-                    <div className="mt-3 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-3 text-sm text-orange-950">
+                    <div className="rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-3 text-sm text-orange-950">
                       <p>
                         Talebinizi okurken bir sorun oluştu. Yazınız korunuyor —
                         kategoriden de devam edebilirsiniz.
@@ -3929,394 +3709,85 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                     </div>
                   ) : null}
 
-                  <HybridBrowsePath
-                    path={hybrid.isSyncing ? [] : hybrid.browsePath}
-                    degraded={hybrid.browseDegraded}
-                    allowBrandEdit
-                    onEditBrandAny={() => {
-                      hybrid.setOpenBrowsePanel(true);
+                  <button
+                    type="button"
+                    className="min-h-10 text-left text-[13px] font-medium text-[#0f766e]"
+                    onClick={() => {
+                      setIntroDecided(false);
+                      setReadingPhase("quote");
                     }}
-                  />
-
-                  <ul className="mt-3 flex flex-col gap-1.5 border-t border-[#0f1f1d]/6 pt-3 text-xs text-[#0f1f1d]/50 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
-                    <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Önce yaz, gerekirse
-                      düzelt
-                    </li>
-                    <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Kategori seni
-                      kilitlemez
-                    </li>
-                    <li className="inline-flex items-center gap-1.5">
-                      <span className="text-[#0f766e]">✓</span> Liste dışı ürün de
-                      kabul
-                    </li>
-                  </ul>
-                </div>
-
-                <div className={`talepo-rise talepo-rise-delay-2 px-0.5 ${hasText ? "hidden" : ""}`}>
-                  <p className="text-xs font-medium text-[#0f1f1d]/40">
-                    Hızlı örnek
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {EXAMPLE_CHIPS.map((example) => (
-                      <button
-                        key={example}
-                        type="button"
-                        onClick={() => applyExampleChip(example)}
-                        className="rounded-full border border-[#0f1f1d]/10 bg-white/80 px-3.5 py-2 text-left text-xs font-medium text-[#0f1f1d]/70 shadow-sm backdrop-blur-sm transition hover:border-[#0f766e]/30 hover:bg-[#ecfdf5] hover:text-[#0f1f1d]"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {hasText && introDecided ? (
-              <section
-                id="talep-finish"
-                className="talepo-rise space-y-4 scroll-mt-20 sm:space-y-5"
-              >
-                {/*
-                  YAYIN HATASI BU AKORDEONU ACAR (2026-08-26). Mobilde AI
-                  companion bu <details> icinde ciziliyor (asagida,
-                  `lg:hidden` sarmalayici). Akordeon varsayilan kapali
-                  oldugu icin, hata kutusu companion'a tasindiginda mobil
-                  kullanici onu yine goremiyordu: setAiCompanionOpen yalniz
-                  ic sarmalayicinin hidden/block sinifini degistiriyor,
-                  kapali bir <details>'i acmiyor. Masaustunde companion bu
-                  agacin disindaki <aside> icinde oldugu icin etkilenmez.
-
-                  ACILMA TEK YONLUDUR. Hata varken akordeon zorla acilir,
-                  ama hata TEMIZLENDIGINDE zorla KAPANMAZ: kullanicinin o an
-                  duzenledigi butce/konum alanlari, "Tekrar dene" basar
-                  basmaz (requestPublish ilk isi olarak publishError'i
-                  sifirlar) gozunun onunde kaybolmamalidir. Native toggle
-                  `editDetailsOpen`'a yazildigi icin, hata gectikten sonra
-                  panel kullanicinin biraktigi durumda kalir.
-                */}
-                <details
-                  open={editDetailsOpen || publishSignalDemandsAttention}
-                  onToggle={(event) =>
-                    setEditDetailsOpen(event.currentTarget.open)
-                  }
-                  className="group rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white open:shadow-[0_10px_30px_rgba(11,37,34,0.06)]"
-                >
-                  <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
-                    <span className="flex items-center justify-between gap-2">
-                      <span>Bilgileri düzenle</span>
-                      <span className="text-xs font-normal text-[#0f1f1d]/45 group-open:hidden">
-                        Başlık, kategori ve ek alanlar
-                      </span>
-                    </span>
-                  </summary>
-                <div className="space-y-4 border-t border-[#0f1f1d]/6 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-                  <div className="rounded-[1.25rem] border border-[#0f766e]/10 bg-[#f7fcfa]/80 p-4 sm:p-5">
-                    <label className="block">
-                      <span className="flex flex-wrap items-center gap-2">
-                        <span className="text-sm font-semibold text-[#0f1f1d]">
-                          Talep başlığın
-                        </span>
-                        {!titleManuallyEdited ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-[#dff6ef] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#0f766e]">
-                            <Sparkles className="h-3 w-3" aria-hidden />
-                            Talepo AI önerisi
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-orange-50 px-2 py-1 text-[10px] font-semibold text-orange-700">
-                            Sen düzenledin
-                          </span>
-                        )}
-                      </span>
-                      <span className="mt-1 block text-xs leading-5 text-[#0f1f1d]/45">
-                        Önerimizi kullanabilir veya kutuya tıklayıp değiştirebilirsin.
-                      </span>
-                      <span className="relative mt-3 block">
-                        <input
-                          value={mergedCommonDraft.title}
-                          onChange={(e) => updateCommonField("title", e.target.value)}
-                          className="h-12 w-full rounded-xl border border-[#0f766e]/20 bg-[#f7fcfa] px-4 pr-24 text-sm font-semibold text-[#0f1f1d] outline-none transition focus:border-[#0f766e]/55 focus:bg-white focus:ring-4 focus:ring-[#0f766e]/8"
-                          placeholder="Talep başlığını yaz"
-                        />
-                        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-[11px] font-medium text-[#0f766e]/60">
-                          Düzenle
-                        </span>
-                      </span>
-                    </label>
-                    <label className="mt-4 block border-t border-[#0f1f1d]/6 pt-4">
-                      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#0f1f1d]/35">
-                        Kategori
-                      </span>
-                      <span className="relative mt-1.5 flex h-11 items-center rounded-lg border border-[#0f1f1d]/8 bg-[#fafcfb] px-3 focus-within:border-[#0f766e]/35">
-                        <select
-                          value={activeCategoryId}
-                          onChange={(event) => {
-                            const next = event.target.value;
-                            if (next === detectedCategoryId) {
-                              setCategoryOverride(null);
-                              setCategoryLockedByUser(false);
-                            } else {
-                              setCategoryOverride(next);
-                              setCategoryLockedByUser(true);
-                            }
-                            setManualValues({});
-                            setPublishedVersion(null);
-                          }}
-                          aria-label="Kategori"
-                          className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-                        >
-                          <option value="" disabled>Kategori seçin</option>
-                          {categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.label}
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm font-medium text-[#0f1f1d]">
-                          {selectedCategory.label}
-                        </span>
-                        {activeCategoryId === detectedCategoryId ? (
-                          <span className="ml-1.5 shrink-0 text-xs font-semibold">
-                            <span className="text-[#0f1f1d]/45">- </span>
-                            <span className="text-[#0f766e]">
-                              Talepo AI Tarafından Seçildi!
-                            </span>
-                          </span>
-                        ) : null}
-                        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-[#0f1f1d]" aria-hidden />
-                      </span>
-                    </label>
-                  </div>
-
-                  {/* Budget — required, natural prompt */}
-                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && budgetRequired ? (
-                    <div className="rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white p-5 sm:p-6">
-                      <h3 className="text-base font-semibold tracking-tight text-[#0f1f1d]">
-                        {budgetCopy.title}
-                      </h3>
-                      {marketHint ? (
-                        <p className="mt-1.5 text-sm text-[#0f1f1d]/50">
-                          Piyasa referansı: {marketHint}
-                        </p>
-                      ) : (
-                        <p className="mt-1.5 text-sm text-[#0f1f1d]/50">
-                          {budgetCopy.helper}
-                        </p>
-                      )}
-                      <div className="mt-4">
-                        <TrMoneyInput
-                          value={mergedCommonDraft.budget}
-                          onValueChange={(value) =>
-                            updateCommonField("budget", value)
-                          }
-                          allowFreeText
-                          placeholder={budgetPlaceholderForStrategy(
-                            brain.strategy?.strategy,
-                          )}
-                          className="h-12 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 text-sm outline-none focus:border-[#0f766e]/35 focus:bg-white"
-                        />
-                      </div>
-                      {showBudgetActions ? (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const median =
-                                brain.marketIntelligence?.marketRange?.median;
-                              if (median == null) return;
-                              setBudgetTouched(true);
-                              updateCommonField(
-                                "budget",
-                                formatBudgetFromMedian(median),
-                              );
-                            }}
-                            className="rounded-full border border-[#0f766e]/20 bg-[#f0fdfa] px-3 py-1.5 text-xs font-medium text-[#115e59]"
-                          >
-                            Piyasa medyanını kullan
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {/* Required dynamic fields still missing — soft blocked prompts */}
-                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS && missingFields.length > 0 ? (
-                    <div className="rounded-[1.35rem] border border-amber-900/10 bg-[#fffbf5] p-5">
-                      <h3 className="text-sm font-semibold text-[#0f1f1d]">
-                        Yayınlamak için bir bilgi daha
-                      </h3>
-                      <div className="mt-3 grid gap-3">
-                        {missingFields.slice(0, 2).map((field) => (
-                          <DynamicFieldInput
-                            key={`${activeCategoryId}-${field.key}`}
-                            field={{ ...field, required: true }}
-                            value={dynamicValues[field.key] ?? ""}
-                            onChange={(value) =>
-                              updateDynamicField(field.key, value)
-                            }
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Advanced: all details */}
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setOptionalOpen((open) => !open)}
-                      className={`flex w-full cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
-                        optionalOpen
-                          ? "border-[#0f766e]/30 bg-[#f0fdfa]"
-                          : "border-[#0f1f1d]/10 bg-white/80 hover:border-[#0f766e]/20"
-                      }`}
-                      aria-expanded={optionalOpen}
-                    >
-                      <span className="flex min-w-0 items-center gap-3">
-                        <ListPlus className="h-4 w-4 shrink-0 text-[#0f766e]" />
-                        <span>
-                          <span className="block text-sm font-semibold text-[#0f1f1d]">
-                            Verdiğim bilgileri düzenle
-                          </span>
-                          <span className="mt-0.5 block text-xs text-[#0f1f1d]/45">
-                            Bütçe, konum ve diğer cevaplarını kontrol et
-                          </span>
-                        </span>
-                      </span>
-                      <ChevronDown
-                        className={`h-4 w-4 text-[#0f1f1d]/40 transition ${
-                          optionalOpen ? "rotate-180" : ""
-                        }`}
-                      />
-                    </button>
-
-                    {optionalOpen ? (
-                      <div className="mt-3 space-y-4 rounded-[1.35rem] border border-[#0f1f1d]/8 bg-white p-4 sm:p-5">
-                        <div className="grid gap-3.5 sm:grid-cols-2">
-                          {requiredDynamicFields.map((field) => (
-                            <DynamicFieldInput
-                              key={`${activeCategoryId}-req-${field.key}`}
-                              field={{ ...field, required: true }}
-                              value={dynamicValues[field.key] ?? ""}
-                              onChange={(value) =>
-                                updateDynamicField(field.key, value)
-                              }
-                            />
-                          ))}
-                          {(ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS
-                            ? visibleCommonFields.filter(
-                                (field) => field.key !== "title",
-                              )
-                            : optionalCommonFields.filter(
-                                (field) => field.key !== "budget",
-                              ))
-                            .map(renderCommonField)}
-                          {optionalDynamicFields.map((field) => (
-                            <DynamicFieldInput
-                              key={`${activeCategoryId}-opt-${field.key}`}
-                              field={{ ...field, required: false }}
-                              value={dynamicValues[field.key] ?? ""}
-                              onChange={(value) =>
-                                updateDynamicField(field.key, value)
-                              }
-                            />
-                          ))}
-                        </div>
-                        <label className="block rounded-2xl border border-[#0f1f1d]/8 bg-[#f7faf9] px-4 py-3">
-                          <span className="text-xs font-semibold text-[#0f1f1d]/55">
-                            Öne çıkarma (isteğe bağlı)
-                          </span>
-                          <select
-                            value={featureBoost}
-                            onChange={(event) =>
-                              setFeatureBoost(
-                                event.target.value as typeof featureBoost,
-                              )
-                            }
-                            className="mt-2 h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-white px-3 text-sm outline-none"
-                          >
-                            <option value="">Öne çıkarma istemiyorum</option>
-                            <option value="FEATURE_24H">24 saat · ₺99</option>
-                            <option value="FEATURE_3D">3 gün · ₺199</option>
-                            <option value="FEATURE_7D">7 gün · ₺349</option>
-                          </select>
-                        </label>
-                      </div>
-                    ) : null}
-                  </div>
+                  >
+                    Cümlemi düzenle
+                  </button>
 
                   {/*
-                    Yayin hatasi KUTUSU BURADAN KALDIRILDI (2026-08-26).
-                    Bu blok varsayilan kapali bir <details> icindeydi:
-                    kullanici akordeonu kendisi acmadan hatayi goremiyordu ve
-                    "Tekrar dene" requestPublish'i dogrudan cagirarak kapsam
-                    kapisini ve eksik alan rehberligini atliyordu. Hata artik
-                    review asamasinda ozette, diger asamalarda AI companion
-                    icinde role="alert" ile gosteriliyor ve tekrar denemesi
-                    kanonik handlePublishAttempt kapisindan geciyor.
+                    TALEP ANALİZİ — İKİNCİL, VARSAYILAN KAPALI (2026-09-25).
+                    Yeni akışta ekranda aynı anda tek şey durur; piyasa /
+                    profesyonel görünüm isteyen kullanıcı için panel burada
+                    açılır ve kanonik companion sözleşmesi korunur.
                   */}
-
-                  {!ENABLE_AI_ONLY_PUBLISH_REQUIREMENTS ? <div
-                    className={`rounded-[1.25rem] border px-4 py-3 ${
-                      missingPublishLabels.length > 0
-                        ? "border-orange-200 bg-orange-50/80"
-                        : "border-[#0f766e]/15 bg-[#ecfdf5]"
-                    }`}
+                  {/*
+                    AKORDEON ZORUNLU SİNYALDE AÇILIR. `open` ifadesi türetilmiş
+                    kararı ADIYLA taşır: yayın hatası, rehberlik ya da kapsam
+                    sinyali varsa panel kullanıcının tercihini geçici olarak
+                    ezer ve mesaj kapalı bir akordeonun ardında kalmaz.
+                  */}
+                  <details
+                    className="group rounded-[1.35rem] border border-[#0b1917]/8 bg-white"
+                    open={aiCompanionOpen || publishSignalDemandsAttention}
+                    onToggle={(event) =>
+                      setAiCompanionOpen(event.currentTarget.open)
+                    }
                   >
-                    {missingPublishLabels.length > 0 ? (
-                      <>
-                        <p className="text-sm font-semibold text-orange-900">
-                          Talebi yayınlamak için şu bilgileri tamamlayın:
-                        </p>
-                        <ul className="mt-2 flex flex-wrap gap-2">
-                          {missingPublishLabels.map((label) => (
-                            <li
-                              key={label}
-                              className="rounded-full border border-orange-200 bg-white px-2.5 py-1 text-xs font-medium text-orange-800"
-                            >
-                              {label}
-                            </li>
-                          ))}
-                        </ul>
-                      </>
-                    ) : (
-                      <p className="text-sm font-semibold text-[#0f766e]">
-                        Gerekli bilgiler tamamlandı. Talebinizi yayınlayabilirsiniz.
-                      </p>
-                    )}
-                  </div> : null}
-
-                  {/* Mobile: AI sits above optional edit */}
-                  <div className="lg:hidden">{aiCompanionShell}</div>
-
-                  <p className="text-center text-xs text-[#0f1f1d]/45">
-                    Yayınlama, yukarıdaki talep özetinden yapılır.
-                  </p>
-                </div>
-                </details>
-              </section>
-                ) : null}
-              </div>
-
-              {hasText && introDecided ? (
-        <aside className={`talepo-rise talepo-rise-delay-2 hidden min-w-0 lg:block ${ENABLE_FIXED_DESKTOP_WORKSPACE ? "lg:h-full lg:min-h-0" : "lg:self-start"}`}>
-                <div
-                  ref={aiPanelFollowRef}
-                  className="lg:will-change-transform"
-                  style={{ transform: `translateY(${aiPanelScrollOffset}px)` }}
-                >
-                  {aiCompanionShell}
-                </div>
-              </aside>
-              ) : null}
+                    <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden">
+                      <span className="flex items-center justify-between gap-2">
+                        <span>Talep analizi</span>
+                        <span className="text-xs font-normal text-[#0f1f1d]/45">
+                          Piyasa & profesyonel görünüm
+                        </span>
+                      </span>
+                    </summary>
+                    <div className="border-t border-[#0b1917]/6 p-3">
+                      {aiCompanionShell}
+                    </div>
+                  </details>
+                </>
+              )}
             </div>
-          </>
+          </div>
         )}
       </div>
 
+      {categorySheet ? (
+      <CategorySheet
+        mode={categorySheet.mode}
+        initialRoot={categorySheet.root}
+        roots={browseRoots}
+        childrenOf={browseChildrenOf}
+        currentCategoryId={activeCategoryId || null}
+        currentSubLabel={activeSubcategoryLabel}
+        onClose={() => setCategorySheet(null)}
+        onEnterRoot={(root) => hybrid.selectBrowseNodeAtColumn(0, root)}
+        onPickRoot={(root) => {
+          hybrid.selectBrowseNodeAtColumn(0, root);
+          setDismissedFactKeys([]);
+          setCategorySheet(null);
+          setAskingFieldKey(null);
+          if (!introDecided) startReading();
+        }}
+        onPickChild={(_root, child) => {
+          hybrid.selectBrowseNodeAtColumn(1, child);
+          setDismissedFactKeys([]);
+          setCategorySheet(null);
+          setAskingFieldKey(null);
+          if (!introDecided) startReading();
+        }}
+      />
+      ) : null}
+
       {urgencyPromptVersion ? (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-[#0f1f1d]/45 px-4 py-6 sm:items-center"
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-[#0f1f1d]/45 px-4 py-6 sm:items-center"
           role="presentation"
           onClick={closeUrgencyPrompt}
         >
@@ -4383,129 +3854,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
           </div>
         </div>
       ) : null}
-
     </main>
   );
-}
-
-function CommonField({
-  label,
-  value,
-  onChange,
-  placeholder,
-  wide = false,
-  money = false,
-  hint,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  wide?: boolean;
-  money?: boolean;
-  hint?: string;
-}) {
-  const fieldClassName =
-    "h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]";
-
-  return (
-    <label className={wide ? "sm:col-span-2" : ""}>
-      <span className="mb-1.5 block text-xs font-medium text-[#0f1f1d]/45">
-        {label}
-      </span>
-
-      {money ? (
-        <TrMoneyInput
-          value={value}
-          onValueChange={onChange}
-          placeholder={placeholder}
-          allowFreeText
-          className={fieldClassName}
-        />
-      ) : (
-        <input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className={fieldClassName}
-        />
-      )}
-
-      {hint ? (
-        <span className="mt-1.5 block text-[11px] leading-4 text-[#0f766e]/75">
-          {hint}
-        </span>
-      ) : null}
-    </label>
-  );
-}
-
-function DynamicFieldInput({
-  field,
-  value,
-  onChange,
-}: {
-  field: DynamicField;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label>
-      <div className="mb-1.5 flex items-center gap-2">
-        <span className="text-xs font-medium text-[#0f1f1d]/45">
-          {field.label}
-        </span>
-
-        {field.required && (
-          <span className="rounded-full bg-[#fff1ee] px-2 py-0.5 text-[10px] font-semibold text-[#a44b3d]">
-            Zorunlu
-          </span>
-        )}
-      </div>
-
-      <div className="relative">
-        {field.type === "select" ? (
-          <>
-            <select
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              className="h-11 w-full appearance-none rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 pr-10 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
-            >
-              <option value="">Seçiniz</option>
-
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#0f1f1d]/30" />
-          </>
-        ) : (
-          <input
-            type={field.type}
-            value={value}
-            onChange={(event) => onChange(event.target.value)}
-            placeholder={field.placeholder}
-            className="h-11 w-full rounded-xl border border-[#0f1f1d]/10 bg-[#fafcfb] px-3.5 pr-12 text-sm outline-none transition focus:border-[#0f766e]/35 focus:bg-white focus:shadow-[0_0_0_3px_rgba(15,118,110,0.08)]"
-          />
-        )}
-
-        {field.unit && (
-          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-[#0f1f1d]/30">
-            {field.unit}
-          </span>
-        )}
-      </div>
-    </label>
-  );
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    maximumFractionDigits: 0,
-  }).format(value);
 }

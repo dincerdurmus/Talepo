@@ -16,6 +16,14 @@
  *
  * Görünüm değerleri (renk, kontur frekansı, bloom, tone-map, kamera)
  * onaylanan prototipten BİREBİR taşındı; burada yeniden tasarlanmaz.
+ *
+ * AÇIK ZEMİN VARYANTI (kurucu, 2026-09-25). Yeni /talep tasarımı beyaz
+ * zeminde, teal tonlarında bir yüz ister. Onaylanmış KOYU değerler
+ * DEĞİŞTİRİLMEDİ: `appearance: "light"` opsiyonel bir varyanttır ve yalnız
+ * üç şeyi kapatıp açar — arka plan düzlemi çizilmez, tuval saydam kalır ve
+ * son geçiş çizgi parlaklığını ALFAYA çevirip teal mürekkeple boyar. Kontur
+ * frekansı, nefes, kamera ve bloom aynı sayılardır; "yeniden tasarım" değil,
+ * aynı sahnenin farklı zemindeki karşılığıdır.
  */
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
@@ -31,12 +39,25 @@ export type ContourSceneHandle = {
   dispose: () => void;
 };
 
+/**
+ * Zemin varyantı. `dark` onaylanan tam ekran sahnenin değerleridir ve
+ * varsayılandır; `light` beyaz sayfa için saydam/teal karşılığıdır.
+ */
+export type ContourAppearance = "dark" | "light";
+
 export type ContourSceneOptions = {
   canvas: HTMLCanvasElement;
   /** Model adresi çağıran taraftan gelir; burada hard-code edilmez. */
   modelUrl: string;
   /** Cihaz piksel oranı üst sınırı — güvenli varsayılan. */
   maxPixelRatio?: number;
+  /** Zemin varyantı; verilmezse onaylanan koyu sahne. */
+  appearance?: ContourAppearance;
+  /**
+   * Saniyedeki kare üst sınırı. Telefonda sahne açık kalsın ama ana iş
+   * parçacığını meşgul etmesin diye verilir; 0/verilmemiş = sınırsız.
+   */
+  maxFps?: number;
 };
 
 const CONFIG = {
@@ -50,6 +71,12 @@ const CONFIG = {
   particleCount:340, particleSize:7.0, particleGlow:0.90, particleDrift:1.00,
   bloomStrength:0.50, bloomRadius:0.62, bloomThreshold:0.00
 }
+
+/**
+ * Açık zemin mürekkebi. Talepo teal tokenlarıyla aynı iki değer: yakın
+ * (koyu) ve uzak (açık). Burada yeni bir palet icat edilmez.
+ */
+const LIGHT_INK = { near: '#0f766e', far: '#5eead4', gain: 1.15 }
 
 const TARGET_H = 1.8;
 
@@ -179,6 +206,9 @@ export function mountContourScene(
   opts: ContourSceneOptions,
 ): ContourSceneHandle {
   const { canvas, modelUrl } = opts;
+  const light = opts.appearance === "light";
+  const minFrameMs =
+    opts.maxFps && opts.maxFps > 0 ? 1000 / opts.maxFps : 0;
   const host = canvas.parentElement ?? canvas;
   const dpr = Math.min(
     window.devicePixelRatio || 1,
@@ -192,15 +222,17 @@ export function mountContourScene(
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
-    powerPreference: "high-performance",
+    alpha: light,
+    powerPreference: light ? "low-power" : "high-performance",
   });
   renderer.setPixelRatio(dpr);
   const first = size();
   renderer.setSize(first.w, first.h, false);
-  renderer.setClearColor(0x000000, 1);
+  renderer.setClearColor(0x000000, light ? 0 : 1);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x000000);
+  /* Açık zeminde sayfanın kendi beyazı görünür; sahne kendi zeminini basmaz. */
+  scene.background = light ? null : new THREE.Color(0x000000);
   const ENTIRE_SCENE = 3;
   const BLOOM_SCENE = 2;
   const camera = new THREE.PerspectiveCamera(
@@ -267,7 +299,8 @@ export function mountContourScene(
   bg.frustumCulled = false;
   bg.renderOrder = -10;
   bg.layers.set(ENTIRE_SCENE);
-  scene.add(bg);
+  /* Açık zeminde arka plan düzlemi hiç sahneye girmez. */
+  if (!light) scene.add(bg);
 
   const pUniforms = {
     iTime: { value: 0 },
@@ -311,7 +344,8 @@ export function mountContourScene(
   const points = new THREE.Points(particleGeometry, particleMaterial);
   points.frustumCulled = false;
   points.layers.set(ENTIRE_SCENE);
-  scene.add(points);
+  /* Zerreler karanlıkta ışıktır; beyaz zeminde kir olur — kapalı kalır. */
+  if (!light) scene.add(points);
 
   let figureGeometry: THREE.BufferGeometry | null = null;
   const loader = new GLTFLoader();
@@ -347,21 +381,46 @@ export function mountContourScene(
     () => {},
   );
 
+/**
+ * SON GEÇİŞ — İKİ ZEMİN, TEK SHADER.
+ *
+ * Koyu yolda hiçbir şey değişmedi: aynı pozlama, vinyet, grain ve siyah
+ * tabanı. Açık yolda ise renk DEĞİL ALFA üretilir — çizginin parlaklığı
+ * saydamlığa çevrilir ve teal mürekkeple boyanır. Böylece sayfanın kendi
+ * beyazı zemin olur; sahne kendi zeminini basmaz.
+ */
 const FinalPass = {
   uniforms: {
     tDiffuse:{ value:null }, uExposure:{ value:CONFIG.exposure }, uVignette:{ value:CONFIG.vignette },
     uGrain:{ value:CONFIG.grain }, uFloor:{ value:CONFIG.blackFloor },
-    uAspect:{ value:innerWidth/innerHeight }, uTime:{ value:0 }
+    uAspect:{ value:innerWidth/innerHeight }, uTime:{ value:0 },
+    uLight:{ value: light ? 1 : 0 },
+    uInkNear:{ value: hexToVec3(LIGHT_INK.near) },
+    uInkFar:{ value: hexToVec3(LIGHT_INK.far) },
+    uInkGain:{ value: LIGHT_INK.gain }
   },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position, 1.0); }`,
   fragmentShader: `
     precision highp float;
     uniform sampler2D tDiffuse;
     uniform float uExposure, uVignette, uGrain, uFloor, uAspect, uTime;
+    uniform float uLight, uInkGain;
+    uniform vec3 uInkNear, uInkFar;
     varying vec2 vUv;
     float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     void main(){
       vec3 c = texture2D(tDiffuse, vUv).rgb;
+      if (uLight > 0.5) {
+        float l = clamp(max(max(c.r, c.g), c.b) * uExposure, 0.0, 1.0);
+        vec2 vgl = vUv - 0.5; vgl.x *= uAspect;
+        l *= 1.0 - smoothstep(0.30, 0.62, length(vgl));
+        vec3 ink = mix(uInkFar, uInkNear, clamp(l * 1.7, 0.0, 1.0));
+        float a = clamp(l * uInkGain, 0.0, 1.0);
+        /* Tuval premultiplied alfa ile bestelenir; renk alfayla çarpılmazsa
+           kenarlar beyaza kaçar. */
+        gl_FragColor = vec4(ink * a, a);
+        return;
+      }
       vec2 vg = vUv - 0.5; vg.x *= uAspect;
       c *= 1.0 - uVignette * dot(vg, vg) * 2.2;
       c = 1.0 - exp(-c * uExposure);
@@ -369,7 +428,8 @@ const FinalPass = {
       c += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
       c += (hash(vUv * vec2(1917.0, 1083.0) + fract(uTime) * 97.0) - 0.5) * uGrain;
       gl_FragColor = vec4(c, 1.0);
-    }`
+    }`,
+  transparent: light
 }
 
   const renderTarget = new THREE.WebGLRenderTarget(first.w, first.h, {
@@ -392,8 +452,28 @@ const FinalPass = {
   let last = start;
   let yaw = 0;
   let raf = 0;
-  let running = true;
+  let tabVisible = true;
+  let inView = true;
+  let contextAlive = true;
   let thinking = false;
+  let lastDrawMs = 0;
+
+  /**
+   * ÇİZİM ÜÇ KAPIYA BAĞLI (2026-09-25). Sekme görünür olmalı, sahne EKRANDA
+   * olmalı ve WebGL bağlamı yaşıyor olmalı. Üçü ayrı sebeple kapanır; tek
+   * bayrağa indirmek, biri kapalıyken diğerinin onu açmasına yol açardı.
+   */
+  const running = () => tabVisible && inView && contextAlive;
+  const kick = () => {
+    if (!running() || raf) return;
+    last = performance.now() / 1000;
+    raf = requestAnimationFrame(frame);
+  };
+  const halt = () => {
+    if (!raf) return;
+    cancelAnimationFrame(raf);
+    raf = 0;
+  };
 
   const applySize = () => {
     const { w, h } = size();
@@ -412,32 +492,41 @@ const FinalPass = {
   const resizeObserver = new ResizeObserver(() => applySize());
   resizeObserver.observe(host);
 
+  /**
+   * GÖRÜNMEYEN SAHNE ÇİZİLMEZ (kurucu ölçütü, 2026-09-25). Sahne artık
+   * telefonda da kurulduğu için sayfa aşağı kaydırıldığında kare üretmeye
+   * devam etmesi doğrudan ana iş parçacığı maliyetidir.
+   */
+  const intersectionObserver =
+    typeof IntersectionObserver === "function"
+      ? new IntersectionObserver(
+          (entries) => {
+            inView = entries.some((entry) => entry.isIntersecting);
+            if (inView) kick();
+            else halt();
+          },
+          { rootMargin: "64px" },
+        )
+      : null;
+  intersectionObserver?.observe(host);
+
   const onVisibility = () => {
-    running = document.visibilityState === "visible";
-    if (running) {
-      last = performance.now() / 1000;
-      raf = requestAnimationFrame(frame);
-    } else if (raf) {
-      cancelAnimationFrame(raf);
-      raf = 0;
-    }
+    tabVisible = document.visibilityState === "visible";
+    if (tabVisible) kick();
+    else halt();
   };
   document.addEventListener("visibilitychange", onVisibility);
 
   /** Bağlam kaybı: döngü durur, sahne sessizce sabit kalır. */
   const onContextLost = (event: Event) => {
     event.preventDefault();
-    running = false;
-    if (raf) {
-      cancelAnimationFrame(raf);
-      raf = 0;
-    }
+    contextAlive = false;
+    halt();
   };
   const onContextRestored = () => {
-    running = true;
-    last = performance.now() / 1000;
+    contextAlive = true;
     applySize();
-    raf = requestAnimationFrame(frame);
+    kick();
   };
   canvas.addEventListener("webglcontextlost", onContextLost as EventListener);
   canvas.addEventListener(
@@ -446,9 +535,16 @@ const FinalPass = {
   );
 
   function frame() {
-    if (!running) return;
+    if (!running()) {
+      raf = 0;
+      return;
+    }
     raf = requestAnimationFrame(frame);
-    const now = performance.now() / 1000;
+    const nowMs = performance.now();
+    /* Kare sınırı: telefonda sahne açık kalır ama her tarama çizmez. */
+    if (minFrameMs > 0 && nowMs - lastDrawMs < minFrameMs) return;
+    lastDrawMs = nowMs;
+    const now = nowMs / 1000;
     let dt = now - last;
     if (dt > 0.1) dt = 0.1;
     last = now;
@@ -486,9 +582,13 @@ const FinalPass = {
       thinking = on;
     },
     dispose: () => {
-      running = false;
+      tabVisible = false;
+      inView = false;
+      contextAlive = false;
       if (raf) cancelAnimationFrame(raf);
+      raf = 0;
       resizeObserver.disconnect();
+      intersectionObserver?.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener(
         "webglcontextlost",
