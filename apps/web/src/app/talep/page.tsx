@@ -3647,10 +3647,20 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   )}
 
                   {/*
+                    KAPSAM DIŞINDA KATEGORİ SORULMAZ (tarayıcıda ölçüldü,
+                    2026-09-25). "Bu talep yayınlanamaz" diyen metnin hemen
+                    altında "Hangi alanda arıyorsun?" sormak kendi kendini
+                    çürütüyordu: kullanıcı yayınlanamayacak bir talebi
+                    sınıflandırmaya davet ediliyordu. Kapsam kapısı açıkken
+                    kategori yüzeylerinin ikisi de susar; tek eylem metne
+                    dönmektir.
+
                     "Bu değil" denince kök seçimi buradan açılır — aynı model,
                     aynı işleyici; kartla ikinci bir kategori mantığı yoktur.
                   */}
-                  {categoryConfirmation && categoryRejected ? (
+                  {!composerReadiness.outOfScopeNotice &&
+                  categoryConfirmation &&
+                  categoryRejected ? (
                     <CategoryConfirmationCard
                       model={categoryConfirmation}
                       rejected={categoryRejected}
@@ -3658,7 +3668,7 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                     />
                   ) : null}
 
-                  {categoryGuidance &&
+                  {composerReadiness.outOfScopeNotice ? null : categoryGuidance &&
                   !categoryUserChoice &&
                   categoryChoice &&
                   categoryRejected ? (

@@ -68,11 +68,23 @@ async function main() {
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  /**
+   * SABİT BEKLEME YETMEZ (ölçüldü: bir koşuda masaüstü karesi boş çıktı ve
+   * beş kapı sahte kırmızı verdi). Yükleme olayından sonra başlangıç ekranı
+   * DOM'a girene kadar yoklanır; kanıt aracı kendi zamanlamasına güvenmez.
+   */
   const goto = async (url) => {
     const loaded = browser.once((m) => m.method === "Page.loadEventFired" && m.sessionId === S);
     await browser.send("Page.navigate", { url }, S);
     await loaded;
-    await sleep(900);
+    for (let i = 0; i < 40; i += 1) {
+      const ready = await evaluate(
+        `Boolean(document.querySelector('[data-testid="talep-start"]') || document.querySelector('[data-testid="talep-request-card"]'))`,
+      );
+      if (ready) break;
+      await sleep(300);
+    }
+    await sleep(600);
   };
 
   const shot = async (name, label, measured) => {
@@ -193,6 +205,7 @@ async function main() {
         extras: [...document.querySelectorAll('[data-testid="talep-card-extras"] button')].map((b) => b.textContent.trim()),
         sheetOpen: Boolean(q('[data-testid="talep-category-sheet"]')),
         sheetRoots: [...document.querySelectorAll('[data-testid="talep-category-root"] b')].map((b) => b.textContent.trim()),
+        categoryAsk: /Hangi alanda arıyorsun|olarak değerlendiriyorum/.test(document.body.innerText),
         sheetSubs: [...document.querySelectorAll('[data-testid="talep-category-sub"]')].map((b) => b.textContent.trim()),
         darkThemeClasses: document.documentElement.outerHTML.includes(' dark:'),
         faceCanvas: Boolean(q('[data-testid="maira-contour-canvas"]')),
@@ -272,6 +285,8 @@ async function main() {
     s.crumbTop,
   );
   check("ana eylem hep görünür", Boolean(s.publishCta || s.continueHint), s.publishCta || s.continueHint);
+  /* Kapsam İÇİNDE kategori adımı DURUR — kapsam dışı susturmasının karşı kontrolü. */
+  check("kapsam içinde kategori adımı görünür", s.categoryAsk === true);
   {
     const ov = await overflow();
     check("390: soru ekranı yatay taşmıyor", ov.scrollW <= ov.inner + 1, JSON.stringify(ov));
@@ -409,6 +424,11 @@ async function main() {
     `document.body.innerText.includes("Talebin yayında")`,
   );
   check("ilaç talebinde 'yayında' denmiyor", saysLive === false);
+  check(
+    "kapsam dışında kategori sorulmuyor",
+    s.categoryAsk === false,
+    "kapsam metninin altında kategori sorusu duruyor",
+  );
   await shot("d-8-ilac-kapsam", "masaüstü 1280 — ilaç kapsam kapısı", {
     outOfScope: Boolean(s.outOfScope),
     publishCta: s.publishCta,
