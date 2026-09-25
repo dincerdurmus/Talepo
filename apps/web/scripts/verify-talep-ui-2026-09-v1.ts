@@ -24,11 +24,16 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { scheduleComposerQuestions } from "../src/lib/request-composer/v2/focused-questions";
+import { computeComposerPublishReadiness } from "../src/lib/request-composer/v2/publish-readiness";
 import {
   buildReadingHighlights,
   toReadingSegments,
 } from "../src/lib/request-composer/v2/reading-highlights";
-import { buildRequestCardModel } from "../src/lib/request-composer/v2/request-card-model";
+import {
+  buildRequestCardModel,
+  composeRequestCardTitle,
+} from "../src/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "../src/lib/request/publish-result-status";
 
 const ROOT = join(__dirname, "..");
@@ -275,6 +280,204 @@ ok(
 );
 
 /* ------------------------------------------------------------------ */
+console.log(
+  "B2) Sayaç yalnız yayın için gerekeni sayar — kanonik zamanlayıcıyla ölçülür",
+);
+
+/*
+ * KURUCU ÖLÇÜMÜ (2026-09-25): "bütçe girilince 3/4 → 4/7 oluyor". Kusur
+ * burada ÜRETİLİR ve düzelmiş hâli ölçülür: kart satırları zamanlayıcının
+ * `blockingFieldKeys` listesinden gelir, görünür sorulardan değil.
+ */
+{
+  const FRIDGE_STATES = {
+    applianceType: {
+      kind: "VALUE",
+      value: "Buzdolabı",
+      provenance: "EXPLICIT_TEXT",
+    },
+    brand: { kind: "VALUE", value: "Arçelik", provenance: "EXPLICIT_TEXT" },
+    city: {
+      kind: "VALUE",
+      value: "İstanbul / Kadıköy",
+      provenance: "EXPLICIT_TEXT",
+    },
+  } as const;
+  const CARD_FACTS = [
+    { key: "brand", label: "Marka", displayValue: "Arçelik" },
+    { key: "applianceType", label: "Ürün", displayValue: "Buzdolabı" },
+    { key: "city", label: "Şehir", displayValue: "Kadıköy, İstanbul" },
+  ];
+
+  const beforeBudget = scheduleComposerQuestions({
+    categoryId: "appliances",
+    needType: "product",
+    candidates: [],
+    values: { city: "İstanbul / Kadıköy" },
+    fieldStates: { ...FRIDGE_STATES },
+  });
+  ok(
+    "bütçe yokken yayını kilitleyen tek alan bütçedir",
+    beforeBudget.blockingFieldKeys.join(",") === "budget",
+    beforeBudget.blockingFieldKeys,
+  );
+  const beforeCard = buildRequestCardModel({
+    facts: CARD_FACTS,
+    questions: beforeBudget.blockingFieldKeys.map((fieldKey, i) => ({
+      fieldKey,
+      summaryLabel: beforeBudget.blockingLabels[i],
+    })),
+    askingFieldKey: "budget",
+  });
+  ok(
+    "eksik bütçede sayaç 3/4 der",
+    beforeCard.filledCount === 3 && beforeCard.totalCount === 4,
+    JSON.stringify({ f: beforeCard.filledCount, t: beforeCard.totalCount }),
+  );
+
+  const afterBudget = scheduleComposerQuestions({
+    categoryId: "appliances",
+    needType: "product",
+    candidates: [],
+    values: { city: "İstanbul / Kadıköy", budget: "32000" },
+    fieldStates: {
+      ...FRIDGE_STATES,
+      budget: { kind: "VALUE", value: "32000", provenance: "EXPLICIT_TEXT" },
+    },
+  });
+  ok(
+    "bütçe girilince yayını kilitleyen alan KALMAZ",
+    afterBudget.blockingFieldKeys.length === 0,
+    afterBudget.blockingFieldKeys,
+  );
+  ok(
+    "buna rağmen Maira sormaya devam eder (atlanabilir sorular durur)",
+    afterBudget.visible.length > 0,
+    afterBudget.visible.map((q) => `${q.fieldKey}:${q.importance}`),
+  );
+  ok(
+    "kalan soruların hiçbiri yayın kapısında değildir",
+    afterBudget.visible.every(
+      (q) => !afterBudget.blockingFieldKeys.includes(q.fieldKey),
+    ),
+  );
+
+  const optional = afterBudget.visible.map((q) => ({
+    key: q.fieldKey,
+    label: q.summaryLabel,
+  }));
+  const readyCard = buildRequestCardModel({
+    facts: [
+      ...CARD_FACTS,
+      { key: "budget", label: "Bütçe", displayValue: "32.000 TL" },
+    ],
+    questions: afterBudget.blockingFieldKeys.map((fieldKey, i) => ({
+      fieldKey,
+      summaryLabel: afterBudget.blockingLabels[i],
+    })),
+    optionalFields: optional,
+  });
+  ok(
+    "zorunlular tamamsa sayaç TAMDIR (4/4)",
+    readyCard.filledCount === readyCard.totalCount &&
+      readyCard.totalCount === 4,
+    JSON.stringify({ f: readyCard.filledCount, t: readyCard.totalCount }),
+  );
+  ok(
+    "atlanabilir sorular kart satırı DEĞİL, chip'tir",
+    readyCard.rows.every((r) => r.value !== null) &&
+      readyCard.extras.length === optional.length &&
+      optional.length > 0,
+    JSON.stringify({
+      rows: readyCard.rows.map((r) => r.key),
+      extras: readyCard.extras.map((e) => e.key),
+    }),
+  );
+  ok(
+    "yayın kapısı bu durumda AÇIKTIR",
+    computeComposerPublishReadiness({
+      hasUsableText: true,
+      schedule: afterBudget,
+      categoryId: "appliances",
+      budgetValue: "32000",
+      cityValue: "İstanbul / Kadıköy",
+    }).canReview === true,
+  );
+
+  /*
+   * MUTASYON KONTROLÜ — KUSURUN KENDİSİ. Eski kural (görünür soruların
+   * "optional" olmayanlarını satır yaz) geri getirilirse payda şişer ve
+   * yayına hazır talep eksik görünür. Kapı bunu görmeli.
+   */
+  const mutated = buildRequestCardModel({
+    facts: [
+      ...CARD_FACTS,
+      { key: "budget", label: "Bütçe", displayValue: "32.000 TL" },
+    ],
+    questions: afterBudget.visible
+      .filter((q) => q.importance !== "optional")
+      .map((q) => ({ fieldKey: q.fieldKey, summaryLabel: q.summaryLabel })),
+  });
+  ok(
+    "mutasyon: eski kural sayacı şişirir (4/7) ve kapı bunu yakalar",
+    mutated.totalCount > mutated.filledCount && mutated.totalCount >= 6,
+    JSON.stringify({ f: mutated.filledCount, t: mutated.totalCount }),
+  );
+}
+
+/* ------------------------------------------------------------------ */
+console.log("B3) Kart başlığı kısadır — marka + ürün");
+
+{
+  const LONG = "Arçelik Buzdolabı arıyorum - Kadıköy, İstanbul";
+  const short = composeRequestCardTitle({
+    brand: "Arçelik",
+    productType: "Buzdolabı",
+    fallbackTitle: LONG,
+  });
+  ok("marka + ürün kısa başlığı verir", short === "Arçelik buzdolabı", short);
+  ok(
+    "kısa başlıkta konum geçmez",
+    !/Kadıköy|İstanbul/.test(short) && !/arıyorum/i.test(short),
+    short,
+  );
+  ok(
+    "marka yoksa ürün adı yazılır",
+    composeRequestCardTitle({ productType: "Buzdolabı", fallbackTitle: LONG }) ===
+      "Buzdolabı",
+  );
+  ok(
+    "ürün bilinmiyorsa mevcut başlığa düşülür (uydurma yok)",
+    composeRequestCardTitle({ brand: "Arçelik", fallbackTitle: LONG }) === LONG,
+  );
+  ok(
+    "kısaltma bozulmaz",
+    composeRequestCardTitle({
+      brand: "Samsung",
+      productType: "LED TV",
+      fallbackTitle: LONG,
+    }) === "Samsung LED TV",
+  );
+  ok(
+    "marka ürün adının içindeyse iki kez yazılmaz",
+    composeRequestCardTitle({
+      brand: "Arçelik",
+      productType: "Arçelik Buzdolabı",
+      fallbackTitle: LONG,
+    }) === "Arçelik Buzdolabı",
+  );
+  /* MUTASYON: ürün boş/boşluk ise kısa başlık uydurulmaz. */
+  ok(
+    "mutasyon: boş ürün kısa başlık üretmez",
+    composeRequestCardTitle({
+      brand: "Arçelik",
+      productType: "   ",
+      fallbackTitle: LONG,
+    }) === LONG,
+  );
+}
+
+/* ------------------------------------------------------------------ */
 console.log("C) Yayın sonucu — PENDING_REVIEW 'yayında' demez (D-0032)");
 
 {
@@ -389,6 +592,96 @@ ok(
 ok(
   "kart satırları kanonik soru köprüsüne bağlanıyor",
   Boolean(page && /onAskField=\{/.test(page) && /resolveAnswerEditQuestion/.test(page)),
+);
+
+/*
+ * ZORUNLULUK KARARI SAYFADA İCAT EDİLMEZ. Kart satırları kanonik
+ * `blockingFieldKeys` listesinden gelir; "importance optional değilse satır
+ * yaz" kuralı geri dönerse bu kapı kırmızıya döner.
+ */
+ok(
+  "kart eksik satırları kanonik engelleyen alan listesinden gelir",
+  Boolean(page && /blockingFieldKeys\.map\(/.test(page)),
+);
+ok(
+  "kart satırı kuralı soru önem derecesine göre yazılmıyor",
+  Boolean(page && !/question\.importance !== "optional"/.test(page)),
+);
+ok(
+  "kart kısa başlığı kanonik türeticiden gelir",
+  Boolean(page && /composeRequestCardTitle\(\{/.test(page)),
+);
+ok(
+  "yayın başlığı üreticisi bu işte DEĞİŞTİRİLMEDİ (kart yalnız gösterir)",
+  Boolean(card && !/composeRequestTitle/.test(card)),
+);
+ok(
+  "kart 'Yayına hazır'ı kanonik readiness'ten okur, kendi hesaplamaz",
+  Boolean(
+    card &&
+      /data-meter-ready/.test(card) &&
+      /complete && ready/.test(card) &&
+      !/canReview|computeComposerPublishReadiness/.test(card),
+  ),
+);
+ok(
+  "'İsteğe bağlı' rozeti kanonik zorunlu alan listesine bağlı",
+  Boolean(
+    questions &&
+      /requiredFieldKeys/.test(questions) &&
+      /composer-question-optional/.test(questions),
+  ),
+);
+
+/* ------------------------------------------------------------------ */
+/*
+ * MAIRA'NIN YÜZÜ — KADRAJ. Küçük kutuda portre kadrajı istenir; onaylanan
+ * KOYU/tam kadrajın değerleri CONFIG'den TÜRER, ikinci bir kopya tutulmaz.
+ */
+const scene = strip(read("src/lib/maira/contour-scene.ts"));
+const sceneView = strip(read("src/components/request/maira/MairaContourScene.tsx"));
+const face = strip(read("src/components/request/talep/MairaFace.tsx"));
+
+ok(
+  "sahne kaynakları okunabiliyor",
+  Boolean(scene && sceneView && face),
+);
+ok(
+  "tam kadraj onaylanan CONFIG değerlerinden TÜRER (kopya sayı yok)",
+  Boolean(
+    scene &&
+      /full:\s*\{\s*camTargetY:\s*CONFIG\.camTargetY,\s*camDist:\s*CONFIG\.camDist\s*\}/.test(
+        scene,
+      ),
+  ),
+);
+ok(
+  "portre kadrajı yalnız bakılan yükseklik + mesafeyi değiştirir",
+  Boolean(
+    scene &&
+      /portrait:\s*\{\s*camTargetY:\s*[\d.]+,\s*camDist:\s*[\d.]+\s*\}/.test(scene),
+  ),
+);
+ok(
+  "varsayılan kadraj tamdır (koyu sahne yolu değişmez)",
+  Boolean(
+    scene &&
+      /opts\.framing \?\? "full"/.test(scene) &&
+      sceneView &&
+      /framing = "full"/.test(sceneView),
+  ),
+);
+ok(
+  "/talep yüzü portre kadrajıyla açık zeminde kurulur",
+  Boolean(face && /framing="portrait"/.test(face) && /appearance="light"/.test(face)),
+);
+ok(
+  "yer tutucu halkalarda gövde/omuz yayı kalmadı",
+  Boolean(face && !/<path/.test(face)),
+);
+ok(
+  "kanıt karesi uygulanan kadrajı kendi söyler",
+  Boolean(sceneView && /dataset\.framing/.test(sceneView)),
 );
 
 console.log(`\nkapi=${kapi} sorun=${sorun}`);

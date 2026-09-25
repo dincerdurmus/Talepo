@@ -51,7 +51,11 @@ import {
   buildReadingHighlights,
   toReadingSegments,
 } from "@/lib/request-composer/v2/reading-highlights";
-import { buildRequestCardModel } from "@/lib/request-composer/v2/request-card-model";
+import {
+  buildRequestCardModel,
+  composeRequestCardTitle,
+  type RequestCardQuestion,
+} from "@/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "@/lib/request/publish-result-status";
 import {
   advanceBrowseWalk,
@@ -3145,18 +3149,40 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     (askingFieldKey ? null : questionsForPanel[0] ?? null);
 
   /**
-   * KARTTAKİ EKSİK SATIR = ZORUNLU SORU (kurucu, 2026-09-25).
+   * KARTTAKİ EKSİK SATIR = YAYINI KİLİTLEYEN SORU (kurucu, 2026-09-25).
    *
-   * Opsiyonel sorular "sorulacak" satırı olarak yazılsaydı doluluk çubuğunun
-   * paydası şişer ve kullanıcı yayınlayabildiği hâlde eksik görünürdü.
-   * Opsiyoneller kartın altındaki "İstersen ekle" chip'lerine düşer; ikisi
-   * de AYNI kanonik soru listesinden türer, ikinci bir liste yoktur.
+   * Ölçüldü (tarayıcıda): bütçe girilince sayaç "3/4" değil "4/7" oluyordu,
+   * çünkü `quote_critical` sorular ("Buzdolabı tipi", "Net hacim", "Zaman")
+   * kart satırı olarak yazılıyordu. Oysa hiçbiri yayını kilitlemez; talep
+   * yayına hazırken eksik görünüyordu.
+   *
+   * Zorunluluk kararı burada İCAT EDİLMEZ: tek otorite zamanlayıcının
+   * `blockingFieldKeys` listesidir — `computeComposerPublishReadiness` de
+   * `canEnterReview`'i aynı listeden okur. Böylece kartın sayacı ile yayın
+   * kapısı yapısal olarak aynı şeyi söyler. Geri kalan her soru atlanabilir
+   * ve kartın altındaki "İstersen ekle" chip'lerine düşer.
    */
-  const criticalQuestions = focusedQuestions.filter(
-    (question) => question.importance !== "optional",
+  const publishBlockingKeys = useMemo(
+    () => new Set(focusedQuestionSchedule.blockingFieldKeys),
+    [focusedQuestionSchedule.blockingFieldKeys],
   );
+  /*
+    Engelleyen alan görünür soru kümesinde olmasa bile (zamanlayıcı en çok üç
+    soru gösterir) karttan DÜŞMEZ: satırı etiketiyle birlikte yine yazılır,
+    aksi hâlde sayaç tamam görünürken yayın kapalı kalırdı.
+  */
+  const criticalQuestions: RequestCardQuestion[] =
+    focusedQuestionSchedule.blockingFieldKeys.map((fieldKey, index) => {
+      const visible = focusedQuestions.find((q) => q.fieldKey === fieldKey);
+      return (
+        visible ?? {
+          fieldKey,
+          summaryLabel: focusedQuestionSchedule.blockingLabels[index],
+        }
+      );
+    });
   const optionalQuestions = focusedQuestions.filter(
-    (question) => question.importance === "optional",
+    (question) => !publishBlockingKeys.has(question.fieldKey),
   );
   const requestCard = buildRequestCardModel({
     facts: cardFacts,
@@ -3436,11 +3462,21 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
               {readingPhase === "quote" ? (
                 <RequestCardPanel
                   model={requestCard}
-                  title={
-                    mergedCommonDraft.title.trim() ||
-                    requestText.trim().slice(0, 60) ||
-                    "Yeni talep"
-                  }
+                  /*
+                    KART BAŞLIĞI KISADIR (kurucu, 2026-09-25): "Arçelik
+                    buzdolabı". Konum ve adet zaten kendi satırlarında durur.
+                    Tedarikçinin gördüğü YAYIN başlığı hâlâ uzun — o
+                    `composeRequestTitle` işidir ve ayrı iş olarak açıktır.
+                  */
+                  title={composeRequestCardTitle({
+                    brand: questionContext.brand,
+                    productType: questionContext.productType,
+                    fallbackTitle:
+                      mergedCommonDraft.title.trim() ||
+                      requestText.trim().slice(0, 60) ||
+                      "Yeni talep",
+                  })}
+                  ready={composerReadiness.canReview}
                   categoryId={
                     categoryConfident && schemaCategory.displayLabelSafe
                       ? activeCategoryId
@@ -3577,6 +3613,14 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                           }
                           phase={focusedQuestionSchedule.phase}
                           phaseHeading={focusedQuestionSchedule.phaseHeading}
+                          /*
+                            "İsteğe bağlı" etiketi de aynı kanonik listeden
+                            gelir: panel bir sorunun zorunlu olup olmadığına
+                            kendi karar vermez.
+                          */
+                          requiredFieldKeys={
+                            focusedQuestionSchedule.blockingFieldKeys
+                          }
                           activeFieldKey={activeQuestion.fieldKey}
                           onActiveFieldChange={setAskingFieldKey}
                           onDraftChange={(fieldKey, value) =>

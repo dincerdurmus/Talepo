@@ -15,7 +15,61 @@
  * olduğuna karar vermez. Girdisi zaten kanonik olan iki listedir: anlaşılan
  * olgular (`buildUnderstoodFacts` → `enrichUnderstoodFacts`) ve zamanlayıcının
  * görünür soruları (`scheduleComposerQuestions`). Soru otoritesi değişmez.
+ *
+ * EKSİK SATIR = YAYINI KİLİTLEYEN SORU (kurucu, 2026-09-25). `questions`
+ * listesine YALNIZ kanonik readiness'in engelleyici bulduğu alanlar verilir
+ * (`ScheduleResult.blockingFieldKeys` → bütçe/konum ve doğrulanmamış çıkarım).
+ * Atlanabilir soru kart satırı DEĞİLDİR: payda şişer, yayınlanabilir talep
+ * eksik görünür. Onlar "İstersen ekle" chip'lerine düşer. Bu modül o ayrımı
+ * KENDİSİ yapmaz — ayrımı yapan otorite zamanlayıcıdır, burada yalnız gelen
+ * liste çizilir.
  */
+
+/**
+ * KARTIN KISA BAŞLIĞI (kurucu, 2026-09-25).
+ *
+ * Kartta duran başlık "Arçelik Buzdolabı arıyorum - Kadıköy, İstanbul" değil
+ * "Arçelik buzdolabı" olmalıdır: konum zaten kendi satırında yazılıdır ve
+ * "arıyorum" kartın tamamının zaten söylediği şeydir.
+ *
+ * SINIR — YAYINLANAN BAŞLIK BURADA ÜRETİLMEZ. Tedarikçinin gördüğü kanonik
+ * başlığı `composeRequestTitle` (request-category-engine) üretir ve bu
+ * fonksiyon oraya dokunmaz; yalnız kart yüzeyinde gösterilecek kısa adı
+ * türetir. İkisi bugün ayrışıyor — açık iş olarak raporlanır.
+ *
+ * Girdi kanonik alanlardan gelir (marka + ürün ailesi); ürün bilinmiyorsa
+ * uydurma yapılmaz, mevcut başlığa düşülür.
+ */
+export function composeRequestCardTitle(input: {
+  brand?: string | null;
+  productType?: string | null;
+  fallbackTitle: string;
+}): string {
+  const fallback = (input.fallbackTitle ?? "").trim();
+  const product = (input.productType ?? "").trim();
+  if (!product) return fallback;
+
+  const brand = (input.brand ?? "").trim();
+  if (!brand) return product;
+  /* Marka zaten ürün adının içindeyse ikinci kez yazılmaz. */
+  if (product.toLocaleLowerCase("tr-TR").includes(brand.toLocaleLowerCase("tr-TR"))) {
+    return product;
+  }
+  return `${brand} ${lowerFirstWord(product)}`;
+}
+
+/**
+ * "Buzdolabı" → "buzdolabı", ama "LED TV" → "LED TV". Kısaltmalar (ilk
+ * kelimesi tümüyle büyük harf olan adlar) bozulmaz; geri kalanda yalnız ilk
+ * harf küçülür, çünkü marka zaten cümlenin başındadır.
+ */
+function lowerFirstWord(value: string): string {
+  const first = value.split(/\s+/u)[0] ?? "";
+  if (first.length >= 2 && first === first.toLocaleUpperCase("tr-TR")) {
+    return value;
+  }
+  return value.charAt(0).toLocaleLowerCase("tr-TR") + value.slice(1);
+}
 
 export type RequestCardFact = {
   key: string;

@@ -23,6 +23,7 @@
 const fs = require("fs");
 const path = require("path");
 const { launch, connect } = require("./lib/qa-cdp-v1.cjs");
+const { decodePng, inkBounds } = require("./lib/qa-png-v1.cjs");
 
 const BASE = process.env.TALEP_QA_URL || "http://localhost:3211";
 const OUT = process.env.TALEP_QA_OUT ||
@@ -73,7 +74,24 @@ async function main() {
    * beş kapı sahte kırmızı verdi). Yükleme olayından sonra başlangıç ekranı
    * DOM'a girene kadar yoklanır; kanıt aracı kendi zamanlamasına güvenmez.
    */
+  /**
+   * BELGE YANITININ DURUMU. Önceki turda sunucu kapalıyken çekilen kareler
+   * "siteye ulaşılamıyor" sayfasını gösteriyordu ve kanıt diye teslim
+   * edilmişti. Artık her gezinmenin HTTP durumu kaydedilir ve kare
+   * kaydedilmeden önce okunur.
+   */
+  let lastDocStatus = null;
+  browser.listeners.push((m) => {
+    if (
+      m.method === "Network.responseReceived" &&
+      m.params?.type === "Document"
+    ) {
+      lastDocStatus = m.params.response.status;
+    }
+  });
+
   const goto = async (url) => {
+    lastDocStatus = null;
     const loaded = browser.once((m) => m.method === "Page.loadEventFired" && m.sessionId === S);
     await browser.send("Page.navigate", { url }, S);
     await loaded;
@@ -85,9 +103,86 @@ async function main() {
       await sleep(300);
     }
     await sleep(600);
+    check(
+      `gezinme 200 döndü (${url})`,
+      lastDocStatus === 200,
+      `status=${lastDocStatus}`,
+    );
+  };
+
+  /**
+   * SAYFA GERÇEKTEN YÜKLENDİ Mİ? Ürün yüzeylerinden en az biri DOM'da
+   * olmalı; yoksa kare KAYDEDİLMEZ ve hata sayılır (kurucu, 2026-09-25).
+   */
+  const pageAlive = async () =>
+    evaluate(`(() => {
+      const hasSurface = Boolean(
+        document.querySelector('[data-testid="talep-start"]') ||
+        document.querySelector('[data-testid="talep-request-card"]') ||
+        document.querySelector('[data-testid="composer-questions"]') ||
+        document.querySelector('[data-testid="composer-out-of-scope"]') ||
+        /* Okuma anında kart henüz yok; ekranda duran şey cümlenin kendisidir. */
+        document.querySelector('[data-testid="maira-reading-sentence"]')
+      );
+      const text = document.body?.innerText || "";
+      return {
+        hasSurface,
+        hasCopy: /Ne arıyorsun|Maira|Talebi yayınla|Talepo/.test(text),
+        title: document.title || "",
+      };
+    })()`);
+
+  /**
+   * MAIRA'NIN YÜZÜNÜ ÖLÇER. Kutunun kırpılmış karesi çözülür ve mürekkebin
+   * kutuyu ne kadar kapladığı sayılır: "yüz seçiliyor mu" sorusu göz kararı
+   * değil, sayı olarak cevaplanır.
+   */
+  const measureFace = async (index = 0) => {
+    /*
+      GÖRÜNEN yüz ölçülür. Masaüstünde telefon yüzü (`lg:hidden`) DOM'da
+      durur ama genişliği sıfırdır; sıralamayı ona göre yapmak ölçümü boşa
+      düşürüyordu.
+    */
+    const box = await evaluate(`(() => {
+      const faces = [...document.querySelectorAll('[data-testid="maira-face"]')]
+        .filter((el) => el.getBoundingClientRect().width > 4);
+      const el = faces[${index}];
+      if (!el) return null;
+      el.scrollIntoView({ block: "center" });
+      const r = el.getBoundingClientRect();
+      const canvas = el.querySelector('[data-testid="maira-contour-canvas"]');
+      return {
+        x: Math.round(r.x), y: Math.round(r.y),
+        w: Math.round(r.width), h: Math.round(r.height),
+        scene: Boolean(canvas),
+        framing: canvas?.dataset.framing ?? null,
+        camTarget: canvas?.dataset.camTarget ?? null,
+        camDist: canvas?.dataset.camDist ?? null,
+      };
+    })()`);
+    if (!box || box.w < 4) return null;
+    const { data } = await browser.send(
+      "Page.captureScreenshot",
+      {
+        format: "png",
+        clip: { x: box.x, y: box.y, width: box.w, height: box.h, scale: 2 },
+      },
+      S,
+    );
+    const ink = inkBounds(decodePng(Buffer.from(data, "base64")));
+    return { box, ink };
   };
 
   const shot = async (name, label, measured) => {
+    const alive = await pageAlive();
+    if (!alive.hasSurface || !alive.hasCopy || lastDocStatus !== 200) {
+      check(
+        `kare kaydedilmedi — sayfa yüklü değil (${name})`,
+        false,
+        JSON.stringify({ ...alive, status: lastDocStatus }),
+      );
+      return;
+    }
     /* Next dev rozeti üründen değildir; kanıt karesine girmesin. */
     await evaluate(`(() => {
       if (!document.getElementById("qa-hide-devtools")) {
@@ -192,6 +287,12 @@ async function main() {
         entities: ents,
         card: Boolean(q('[data-testid="talep-request-card"]')),
         meter: q('[data-testid="talep-card-meter"]')?.textContent?.trim() ?? null,
+        meterReady: q('[data-testid="talep-card-meter"]')?.dataset.meterReady ?? null,
+        meterFilled: q('[data-testid="talep-card-meter"]')?.dataset.meterFilled ?? null,
+        meterTotal: q('[data-testid="talep-card-meter"]')?.dataset.meterTotal ?? null,
+        cardTitle: q('[data-testid="talep-request-card"] h2')?.textContent?.trim() ?? null,
+        optionalBadge: q('[data-testid="composer-question-optional"]')?.textContent?.trim() ?? null,
+        publishCtaDisabled: q('[data-testid="composer-review-cta"]')?.disabled ?? null,
         rows,
         crumbTop: q('[data-testid="talep-request-card"] .font-mono')?.textContent?.trim() ?? null,
         question: q('[data-testid="composer-question-prompt"]')?.textContent?.trim() ?? null,
@@ -237,7 +338,38 @@ async function main() {
     `[...document.querySelectorAll('[data-testid="talep-start-category"] b')].map(b=>b.textContent.trim())`,
   );
   check("390: kategori şeridi fotoğraflı kartlarla dolu", cats.length >= 10, cats.join(","));
-  await shot("m-1-baslangic", "mobil 390 — başlangıç", { start: s.start, categories: cats.length, faces: s.faces });
+
+  /*
+    YÜZ KADRAJI — ÖLÇÜLÜR, GÖZLE KARAR VERİLMEZ. Mürekkep kutunun dikey
+    ortasında ve yüksekliğinin çoğunda durmalı; gövde kadrajında mürekkep
+    kutunun altına yığılıyordu.
+  */
+  const faceMobile = await measureFace(0);
+  check(
+    "132px yüz: sahne portre kadrajında kuruldu",
+    Boolean(faceMobile && faceMobile.box.framing === "portrait"),
+    JSON.stringify(faceMobile?.box),
+  );
+  check(
+    "132px yüz: mürekkep kutunun yüksekliğinin çoğunu kaplıyor",
+    Boolean(faceMobile && faceMobile.ink.heightRatio >= 0.55),
+    JSON.stringify(faceMobile?.ink),
+  );
+  check(
+    "132px yüz: mürekkep dikeyde ortalı (gövdeye kaymıyor)",
+    Boolean(
+      faceMobile &&
+        faceMobile.ink.centerY > 0.3 &&
+        faceMobile.ink.centerY < 0.7,
+    ),
+    JSON.stringify(faceMobile?.ink),
+  );
+  await shot("m-1-baslangic", "mobil 390 — başlangıç", {
+    start: s.start,
+    categories: cats.length,
+    faces: s.faces,
+    face: faceMobile,
+  });
 
   /* 2) OKUMA ANI — Arçelik buzdolabı                                   */
   await typeInto("#talep-composer", "Arçelik buzdolabı arıyorum, İstanbul Kadıköy");
@@ -285,6 +417,32 @@ async function main() {
     s.crumbTop,
   );
   check("ana eylem hep görünür", Boolean(s.publishCta || s.continueHint), s.publishCta || s.continueHint);
+  check(
+    "kart başlığı kısa: marka + ürün, konum yok",
+    Boolean(s.cardTitle) &&
+      !/Kadıköy|İstanbul/.test(s.cardTitle) &&
+      !/arıyorum/i.test(s.cardTitle),
+    s.cardTitle,
+  );
+  check(
+    "ilk soru zorunlu: 'İsteğe bağlı' rozeti YOK",
+    s.optionalBadge === null,
+    s.optionalBadge,
+  );
+  /* 38px durum işaretindeki yüz de portre okunmalı (sahne kurulmaz). */
+  {
+    const small = await measureFace(0);
+    check(
+      "38px durum işareti: mürekkep kutuda ortalı",
+      Boolean(small && small.ink.centerY > 0.3 && small.ink.centerY < 0.7),
+      JSON.stringify(small),
+    );
+    check(
+      "38px durum işareti: gövde silüeti yok (mürekkep alta yığılmıyor)",
+      Boolean(small && small.ink.y + small.ink.h <= small.ink.height * 0.94),
+      JSON.stringify(small?.ink),
+    );
+  }
   /* Kapsam İÇİNDE kategori adımı DURUR — kapsam dışı susturmasının karşı kontrolü. */
   check("kapsam içinde kategori adımı görünür", s.categoryAsk === true);
   {
@@ -316,10 +474,10 @@ async function main() {
   await evaluate(`document.querySelector('[role="dialog"] button.ml-auto')?.click()`);
   await sleep(500);
 
-  /* 5) HAZIR — soruları cevapla                                        */
+  /* 5) HAZIR — YALNIZ ZORUNLULARI cevapla, isteğe bağlı soru AÇIK kalsın   */
   for (let i = 0; i < 6; i += 1) {
     s = await snapshot();
-    if (!s.question) break;
+    if (!s.question || s.publishCta) break;
     const answered = await evaluate(ANSWER_STEP);
     console.log(`  cevap adımı ${i + 1}: ${answered}`);
     await sleep(1400);
@@ -327,9 +485,43 @@ async function main() {
   s = await snapshot();
   check("tüm zorunlu cevaplar sonrası yayın butonu açık", Boolean(s.publishCta), s.publishCta || s.continueHint);
   check("kart doluluk çubuğu tamamlandı", Boolean(s.meter), s.meter);
-  await shot("m-6-hazir", "mobil 390 — hazır", {
+  /*
+    KURUCU ÖLÇÜMÜ: bütçe girilince sayaç "4/7" oluyordu. Doğrusu: zorunlular
+    bitince sayaç TAM ve "Yayına hazır"; isteğe bağlı sorular kart satırı
+    değil chip; soru açıkken bile yayın butonu basılabilir.
+  */
+  check(
+    "zorunlular bitince sayaç 'Yayına hazır' der",
+    s.meterReady === "true" && /Yayına hazır/i.test(s.meter || ""),
+    `${s.meter} (${s.meterFilled}/${s.meterTotal})`,
+  );
+  check(
+    "kartta 'sorulacak' satırı kalmadı",
+    s.rows.every((r) => r.state === "filled"),
+    JSON.stringify(s.rows),
+  );
+  check(
+    "isteğe bağlı alanlar chip olarak duruyor",
+    s.extras.length > 0,
+    s.extras.join(","),
+  );
+  check(
+    "isteğe bağlı soru sorulurken rozeti görünüyor",
+    !s.question || s.optionalBadge === "İsteğe bağlı",
+    `${s.question} / badge=${s.optionalBadge}`,
+  );
+  check(
+    "isteğe bağlı soru açıkken yayın butonu basılabilir",
+    Boolean(s.publishCta) && s.publishCtaDisabled === false,
+    `cta=${s.publishCta} disabled=${s.publishCtaDisabled}`,
+  );
+  await shot("m-6-hazir", "mobil 390 — zorunlular tamam, isteğe bağlı soru açık", {
     status: s.status,
     meter: s.meter,
+    meterReady: s.meterReady,
+    cardTitle: s.cardTitle,
+    question: s.question,
+    optionalBadge: s.optionalBadge,
     cta: s.publishCta,
     rows: s.rows,
     extras: s.extras,
@@ -341,7 +533,30 @@ async function main() {
   s = await snapshot();
   check("1280: başlangıç ekranı", s.start === true);
   check("1280: büyük Maira yüzü var", s.faces >= 1, `faces=${s.faces}`);
-  await shot("d-1-baslangic", "masaüstü 1280 — başlangıç", { faces: s.faces });
+  const faceDesktop = await measureFace(0);
+  check(
+    "380px yüz: sahne portre kadrajında kuruldu",
+    Boolean(faceDesktop && faceDesktop.box.framing === "portrait"),
+    JSON.stringify(faceDesktop?.box),
+  );
+  check(
+    "380px yüz: mürekkep kutunun yüksekliğinin çoğunu kaplıyor",
+    Boolean(faceDesktop && faceDesktop.ink.heightRatio >= 0.55),
+    JSON.stringify(faceDesktop?.ink),
+  );
+  check(
+    "380px yüz: mürekkep dikeyde ortalı (gövdeye kaymıyor)",
+    Boolean(
+      faceDesktop &&
+        faceDesktop.ink.centerY > 0.3 &&
+        faceDesktop.ink.centerY < 0.7,
+    ),
+    JSON.stringify(faceDesktop?.ink),
+  );
+  await shot("d-1-baslangic", "masaüstü 1280 — başlangıç", {
+    faces: s.faces,
+    face: faceDesktop,
+  });
 
   await typeInto("#talep-composer", "1000 adet kartvizit, mat selefonlu, Topkapı");
   await sleep(900);
@@ -380,16 +595,31 @@ async function main() {
 
   for (let i = 0; i < 6; i += 1) {
     s = await snapshot();
-    if (!s.question) break;
+    if (!s.question || s.publishCta) break;
     console.log(`  masaüstü cevap adımı ${i + 1}: ${await evaluate(ANSWER_STEP)}`);
     await sleep(1400);
   }
   s = await snapshot();
-  await shot("d-6-hazir", "masaüstü 1280 — hazır", {
+  check(
+    "1280: zorunlular bitince sayaç 'Yayına hazır' der",
+    s.meterReady === "true",
+    `${s.meter} (${s.meterFilled}/${s.meterTotal})`,
+  );
+  check(
+    "1280: isteğe bağlı soru açıkken yayın butonu duruyor",
+    Boolean(s.publishCta),
+    `${s.question} / ${s.publishCta}`,
+  );
+  await shot("d-6-hazir", "masaüstü 1280 — zorunlular tamam, isteğe bağlı soru açık", {
     status: s.status,
     meter: s.meter,
+    meterReady: s.meterReady,
+    cardTitle: s.cardTitle,
+    question: s.question,
+    optionalBadge: s.optionalBadge,
     cta: s.publishCta,
     rows: s.rows,
+    extras: s.extras,
   });
 
   /* 7) BELİRSİZ CÜMLE                                                   */

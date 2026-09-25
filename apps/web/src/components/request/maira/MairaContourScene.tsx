@@ -27,6 +27,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type {
   ContourAppearance,
+  ContourFraming,
   ContourSceneHandle,
 } from "@/lib/maira/contour-scene";
 
@@ -73,6 +74,11 @@ type Props = {
   /** Zemin varyantı; /talep beyaz zeminde `light` ister. */
   appearance?: ContourAppearance;
   /**
+   * Kadraj; küçük kutularda `portrait` (baş + boyun) istenir. Verilmezse
+   * onaylanan tam kadraj korunur — koyu tam ekran sahne bu yoldan geçer.
+   */
+  framing?: ContourFraming;
+  /**
    * Sahne gerçekten çizmeye başladığında haber verir. Çağıran taraf kendi
    * fallback'ini söndürebilsin diye var: iki katman üst üste durduğunda
    * yüz, konturların değil iç içe halkaların görüntüsüne dönüşüyordu.
@@ -85,6 +91,7 @@ type Props = {
 export function MairaContourScene({
   thinking = false,
   appearance = "dark",
+  framing = "full",
   onReady,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -112,9 +119,18 @@ export function MairaContourScene({
           canvas,
           modelUrl: MODEL_URL,
           appearance,
+          framing,
           maxPixelRatio: budget.maxPixelRatio,
           maxFps: budget.maxFps,
         });
+        /*
+          KANIT KARESİ KENDİ KADRAJINI SÖYLER. Değerler sahnenin uyguladığı
+          hâlinden okunur; burada ikinci bir sayı tablosu tutulmaz.
+        */
+        const applied = handleRef.current.framing;
+        canvas.dataset.framing = applied.name;
+        canvas.dataset.camTarget = String(applied.camTargetY);
+        canvas.dataset.camDist = String(applied.camDist);
         setReady(true);
         onReady?.(true);
       } catch {
@@ -135,7 +151,7 @@ export function MairaContourScene({
       handleRef.current = null;
       onReady?.(false);
     };
-  }, [appearance, budget, onReady]);
+  }, [appearance, budget, framing, onReady]);
 
   useEffect(() => {
     handleRef.current?.setThinking(thinking);

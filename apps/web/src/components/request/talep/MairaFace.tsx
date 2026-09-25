@@ -71,6 +71,12 @@ export function MairaFace({
           filter: "blur(6px)",
         }}
       />
+      {/*
+        YER TUTUCU DA PORTREDİR (kurucu, 2026-09-25). Halkaların altında bir
+        omuz yayı duruyordu: 38px'lik durum işaretinde sahne hiç kurulmadığı
+        için Maira orada bir gövde silüeti olarak görünüyordu. Halkalar artık
+        yalnız başı çizer — üç ölçekte de aynı kadraj.
+      */}
       <svg
         viewBox="0 0 100 100"
         className={`absolute inset-0 h-full w-full transition-opacity duration-700 ${
@@ -82,25 +88,19 @@ export function MairaFace({
           <ellipse
             key={ring}
             cx="50"
-            cy="46"
-            rx={30 - ring * 5.5}
-            ry={38 - ring * 6.5}
+            cy="47"
+            rx={29 - ring * 5.4}
+            ry={35 - ring * 6.2}
             stroke="#0f766e"
             strokeOpacity={0.16 + ring * 0.05}
             strokeWidth="0.9"
           />
         ))}
-        <path
-          d="M24 88c6.5-8 15.5-12 26-12s19.5 4 26 12"
-          stroke="#0f766e"
-          strokeOpacity="0.22"
-          strokeWidth="0.9"
-          strokeLinecap="round"
-        />
       </svg>
       {scene ? (
         <MairaContourScene
           appearance="light"
+          framing="portrait"
           thinking={thinking}
           onReady={handleReady}
         />

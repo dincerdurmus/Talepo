@@ -40,6 +40,15 @@ type Props = {
    */
   activeFieldKey?: string | null;
   onActiveFieldChange?: (fieldKey: string | null) => void;
+  /**
+   * YAYINI KİLİTLEYEN ALANLAR — KANONİK LİSTE (kurucu, 2026-09-25).
+   *
+   * Panel bir sorunun zorunlu olup olmadığına KENDİ karar vermez; listeyi
+   * zamanlayıcının `blockingFieldKeys` çıktısından alır. Listede olmayan bir
+   * soru "İsteğe bağlı" rozetiyle sorulur ve kullanıcı onu cevaplamadan da
+   * yayınlayabilir. Verilmezse rozet hiç çizilmez — eski davranış korunur.
+   */
+  requiredFieldKeys?: readonly string[];
 };
 
 /**
@@ -780,6 +789,7 @@ export function FocusedQuestionsPanel({
   phaseHeading,
   activeFieldKey,
   onActiveFieldChange,
+  requiredFieldKeys,
 }: Props) {
   const baseId = useId();
   const questionKey = questions.map((q) => q.fieldKey).join("|");
@@ -891,6 +901,18 @@ export function FocusedQuestionsPanel({
         data-field-key={active.fieldKey}
         data-control-type={control?.controlType ?? "text_fallback"}
       >
+        {/*
+          İSTEĞE BAĞLI SORU KENDİNİ SÖYLER. Kullanıcı bu soruyu cevaplamadan
+          da yayınlayabilir; rozet olmadan soru bir engel gibi görünüyordu.
+        */}
+        {requiredFieldKeys && !requiredFieldKeys.includes(active.fieldKey) ? (
+          <span
+            data-testid="composer-question-optional"
+            className="mb-1.5 inline-flex items-center rounded-full bg-[#f0fdfa] px-2.5 py-1 font-mono text-[10.5px] font-medium uppercase tracking-[0.1em] text-[#0f766e]"
+          >
+            İsteğe bağlı
+          </span>
+        ) : null}
         <h3
           className="m-0 text-[26px] font-semibold leading-[1.12] tracking-[-0.035em] text-[#0f1f1d] sm:text-[30px] lg:text-[32px]"
           data-testid="composer-question-prompt"

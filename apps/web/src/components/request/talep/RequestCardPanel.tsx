@@ -29,6 +29,13 @@ type Props = {
   subcategoryLabel: string | null;
   /** Metin değişince kart "kontrol ediliyor" der; bayat bilgi göstermez. */
   updating?: boolean;
+  /**
+   * Yayın kapısı AÇIK mı? Kart bunu kendisi hesaplamaz: kanonik
+   * `computeComposerPublishReadiness` sonucunu alır. Sayacın yanındaki
+   * "Yayına hazır" ancak bu doğruyken yazılır — satırlar dolu görünürken
+   * yayının kapalı olduğu bir durumda kart yalan söylemesin diye.
+   */
+  ready?: boolean;
   /** Yayınlandıktan sonra satırlar kilitlenir. */
   locked?: boolean;
   lockedBadge?: string | null;
@@ -84,6 +91,7 @@ export function RequestCardPanel({
   categoryLabel,
   subcategoryLabel,
   updating = false,
+  ready = false,
   locked = false,
   lockedBadge = null,
   onChangeCategory,
@@ -102,6 +110,9 @@ export function RequestCardPanel({
     subcategoryLabel!.trim().toLocaleLowerCase("tr-TR") ===
       (categoryLabel ?? "").trim().toLocaleLowerCase("tr-TR");
   const leafLabel = sameLabel ? null : subcategoryLabel;
+  /** Eksik satır kalmadı: sayaç tam. Yayın kapısı ayrı bir bilgidir. */
+  const complete =
+    model.totalCount > 0 && model.filledCount === model.totalCount;
 
   return (
     <article
@@ -199,11 +210,23 @@ export function RequestCardPanel({
                 />
               ))}
             </div>
+            {/*
+              SAYAÇ YALNIZ YAYIN İÇİN GEREKENİ SAYAR (kurucu, 2026-09-25).
+              Zorunlu bilgi kalmadığında sayı yerine durumu söyler: kullanıcı
+              "4/7" görüp eksik sanmasın diye.
+            */}
             <span
               data-testid="talep-card-meter"
-              className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-[#0f1f1d]/45"
+              data-meter-ready={complete && ready ? "true" : "false"}
+              data-meter-filled={model.filledCount}
+              data-meter-total={model.totalCount}
+              className={`font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] ${
+                complete && ready ? "text-[#0f766e]" : "text-[#0f1f1d]/45"
+              }`}
             >
-              {model.filledCount}/{model.totalCount} bilgi
+              {complete && ready
+                ? "Yayına hazır"
+                : `${model.filledCount}/${model.totalCount} bilgi`}
             </span>
           </div>
 

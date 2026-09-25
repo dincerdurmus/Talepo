@@ -35,6 +35,12 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 export type ContourSceneHandle = {
   /** Dekoratif "düşünüyor" nabzı — davranış değil, yalnız ışık. */
   setThinking: (on: boolean) => void;
+  /**
+   * Uygulanan kadraj değerleri. Sahnenin İÇİNDEN okunur: kadrajın ölçülebilir
+   * olması için çağıran tarafın ikinci bir sayı tablosu tutması gerekmez
+   * (kanıt karesi hangi kadrajı gösterdiğini kendi söyler).
+   */
+  framing: { name: ContourFraming; camTargetY: number; camDist: number };
   /** RAF, renderer, geometry, material, observer ve dinleyicileri kapatır. */
   dispose: () => void;
 };
@@ -45,6 +51,15 @@ export type ContourSceneHandle = {
  */
 export type ContourAppearance = "dark" | "light";
 
+/**
+ * KADRAJ (kurucu, 2026-09-25). `full` onaylanan tam ekran sahnenin kamerasıdır
+ * ve varsayılandır — değerleri DEĞİŞMEDİ. `portrait` yalnız küçük kutular
+ * için vardır: 38/132/380px'lik bir kutuda gövde kadrajı yüzü seçilmez
+ * kılıyordu (tarayıcıda ölçüldü). İkinci bir sahne değil, aynı sahnenin
+ * yaklaşmış kamerası; kontur frekansı, nefes, bloom ve renkler aynı kalır.
+ */
+export type ContourFraming = "full" | "portrait";
+
 export type ContourSceneOptions = {
   canvas: HTMLCanvasElement;
   /** Model adresi çağıran taraftan gelir; burada hard-code edilmez. */
@@ -53,6 +68,8 @@ export type ContourSceneOptions = {
   maxPixelRatio?: number;
   /** Zemin varyantı; verilmezse onaylanan koyu sahne. */
   appearance?: ContourAppearance;
+  /** Kadraj; verilmezse onaylanan tam kadraj. */
+  framing?: ContourFraming;
   /**
    * Saniyedeki kare üst sınırı. Telefonda sahne açık kalsın ama ana iş
    * parçacığını meşgul etmesin diye verilir; 0/verilmemiş = sınırsız.
@@ -79,6 +96,22 @@ const CONFIG = {
 const LIGHT_INK = { near: '#0f766e', far: '#5eead4', gain: 1.15 }
 
 const TARGET_H = 1.8;
+
+/**
+ * KADRAJ TABLOSU — TEK YER. `full` satırı CONFIG'in kendi değerlerinden
+ * TÜRER; ikinci bir kopya tutulmaz, onaylanan sahne değiştiği gün buradaki
+ * varsayılan da onunla birlikte değişir. `portrait` yalnız iki sayıyı
+ * (bakılan yükseklik + mesafe) değiştirir: model 1.8 birim yüksekliğe
+ * ölçeklendiği için başın tepesi ≈ +0.9'dadır; 0.74'e bakan 0.62 birimlik
+ * kamera baş + boyunu kutunun yaklaşık %70'ine oturtur.
+ */
+const FRAMINGS: Record<
+  ContourFraming,
+  { camTargetY: number; camDist: number }
+> = {
+  full: { camTargetY: CONFIG.camTargetY, camDist: CONFIG.camDist },
+  portrait: { camTargetY: 0.74, camDist: 0.62 },
+};
 
 function hexToVec3(hex: string): THREE.Vector3 {
   const h = hex.replace("#", "");
@@ -207,6 +240,8 @@ export function mountContourScene(
 ): ContourSceneHandle {
   const { canvas, modelUrl } = opts;
   const light = opts.appearance === "light";
+  const framingName: ContourFraming = opts.framing ?? "full";
+  const view = FRAMINGS[framingName];
   const minFrameMs =
     opts.maxFps && opts.maxFps > 0 ? 1000 / opts.maxFps : 0;
   const host = canvas.parentElement ?? canvas;
@@ -241,7 +276,7 @@ export function mountContourScene(
     0.1,
     100,
   );
-  camera.position.set(0, 0, CONFIG.camDist);
+  camera.position.set(0, 0, view.camDist);
   camera.layers.enableAll();
   scene.add(camera);
 
@@ -251,7 +286,7 @@ export function mountContourScene(
     iTime: { value: 0 },
     iAlpha: { value: 0 },
     iClickT: { value: -99 },
-    uCamDist: { value: CONFIG.camDist },
+    uCamDist: { value: view.camDist },
     uNear: { value: hexToVec3(CONFIG.nearColor) },
     uFar: { value: hexToVec3(CONFIG.farColor) },
     uRim: { value: hexToVec3(CONFIG.rimColor) },
@@ -554,12 +589,12 @@ const FinalPass = {
     pUniforms.iTime.value = now;
     /* Tam tur yok (kurucu, 2026-09-04): sınırlı sağa-sola salınım. */
     yaw = Math.sin(now * CONFIG.swaySpeed) * CONFIG.swayAmp;
-    uniforms.uCamDist.value = CONFIG.camDist;
-    const ty = CONFIG.camTargetY;
+    uniforms.uCamDist.value = view.camDist;
+    const ty = view.camTargetY;
     camera.position.set(
-      Math.sin(yaw) * CONFIG.camDist,
+      Math.sin(yaw) * view.camDist,
       ty,
-      Math.cos(yaw) * CONFIG.camDist,
+      Math.cos(yaw) * view.camDist,
     );
     camera.lookAt(0, ty, 0);
     /* Dekoratif nabız: yalnız nefes genliğini artırır, davranış taşımaz. */
@@ -581,6 +616,7 @@ const FinalPass = {
     setThinking: (on: boolean) => {
       thinking = on;
     },
+    framing: { name: framingName, ...view },
     dispose: () => {
       tabVisible = false;
       inView = false;
