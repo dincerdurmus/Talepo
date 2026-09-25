@@ -17,17 +17,51 @@ export type ImageModerationResult =
   | { ok: true; mimeType: ParsedImageDataUrl["mimeType"]; byteLength: number; dataUrl: string }
   | {
       ok: false;
-      reason: "invalid" | "obscene" | "irrelevant";
+      reason: "invalid" | "obscene" | "irrelevant" | "unavailable";
       message: string;
     };
+
+/**
+ * FAIL CLOSED (L4, 2026-09-25). Denetlenemeyen görsel yayına çıkmaz.
+ *
+ * Önceki davranış yorumuyla çelişiyordu: başlık "fail closed" diyordu, kod ise
+ * sağlayıcı hatası, zaman aşımı ve beklenmeyen/eksik yanıt yollarının üçünde de
+ * `ok: true` dönüyordu. Sonuç, hiç denetlenmemiş bir görselin denetlenmiş
+ * görselle aynı yoldan mesaja yazılmasıydı. Moderasyon kararı ALINAMADIYSA
+ * karar "uygun" değildir; kullanıcıya nazik bir "şu an kontrol edilemedi"
+ * mesajı döner ve olay loglanır (görsel içeriği ya da data URL'i loglanmaz).
+ */
+const MODERATION_UNAVAILABLE_MESSAGE =
+  "Görsel şu anda kontrol edilemedi. Lütfen biraz sonra tekrar deneyin.";
+
+/**
+ * Tek fail-closed sınırı. `stage` yalnız sabit bir etikettir; görsel, data URL,
+ * dosya adı ve talep metni buraya hiçbir koşulda girmez.
+ */
+function moderationUnavailable(
+  stage: string,
+  detail?: string,
+): Extract<ImageModerationResult, { ok: false }> {
+  console.warn(
+    `[moderate-message-image] fail-closed: ${stage}${detail ? ` (${detail})` : ""}`,
+  );
+  return {
+    ok: false,
+    reason: "unavailable",
+    message: MODERATION_UNAVAILABLE_MESSAGE,
+  };
+}
 
 const EXPLICIT_NAME_PATTERN =
   /(nsfw|porn|xxx|nude|naked|sex|erotik|müstehcen|mustehcen|çıplak|ciplak|seks|porno)/i;
 
 /**
  * Validate + moderate a message image before it is persisted.
- * Uses OpenAI moderation/vision when OPENAI_API_KEY is set; otherwise
- * applies a solid structural gate + filename heuristics (pluggable AI path).
+ *
+ * Yapısal kapı (mime, sihirli bayt, boyut, dosya adı) her koşulda koşar.
+ * Sonrasında karar OpenAI moderation + vision yolundan gelir. Karar
+ * ALINAMAZSA görsel geçmez — bkz. `moderationUnavailable`. `OPENAI_API_KEY`
+ * yoksa yol yapılandırılmamış sayılır ve yine kapalıdır.
  */
 export async function moderateMessageImage(
   dataUrl: string,
@@ -86,8 +120,21 @@ export async function moderateMessageImage(
     const aiResult = await moderateWithOpenAI(aiKey, dataUrl, context);
     if (!aiResult.ok) return aiResult;
   } else {
+    // Yapılandırma eksik. Yerel sezgiseller hâlâ REDDEDEBİLİR, fakat tek
+    // başlarına "denetlendi" anlamına gelmezler: anahtar yoksa görsel yine
+    // kapalı kalır. Üretimde sessizce açılmaması bilinçlidir; geliştirme
+    // ortamında ayrıca neyin eksik olduğunu söyleyen açık bir uyarı basılır.
     const local = moderateLocallyWithoutAi(context);
     if (!local.ok) return local;
+
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "[moderate-message-image] OPENAI_API_KEY tanımlı değil — görsel moderasyonu yapılandırılmamış. " +
+          "Görseller fail-closed reddediliyor; yerel geliştirmede göndermek için anahtarı ayarlayın.",
+      );
+    }
+
+    return moderationUnavailable("configuration_missing");
   }
 
   return {
@@ -127,24 +174,38 @@ async function moderateWithOpenAI(
       },
     );
 
-    if (moderationResponse.ok) {
-      const moderationJson = (await moderationResponse.json()) as {
-        results?: Array<{ flagged?: boolean; categories?: Record<string, boolean> }>;
-      };
-      const result = moderationJson.results?.[0];
-      const categories = result?.categories ?? {};
-      const sexual = Boolean(
-        categories.sexual || categories["sexual/minors"],
+    if (!moderationResponse.ok) {
+      return moderationUnavailable(
+        "moderations_http_error",
+        String(moderationResponse.status),
       );
+    }
 
-      if (result?.flagged && (sexual || categories.violence || categories.hate)) {
-        return {
-          ok: false,
-          reason: "obscene",
-          message:
-            "Görsel uygun bulunmadı (müstehcen veya sakıncalı içerik). Mesaj olarak iletilmedi.",
-        };
-      }
+    let moderationJson: {
+      results?: Array<{ flagged?: boolean; categories?: Record<string, boolean> }>;
+    };
+
+    try {
+      moderationJson = (await moderationResponse.json()) as typeof moderationJson;
+    } catch {
+      return moderationUnavailable("moderations_unparsable_body");
+    }
+
+    const result = moderationJson.results?.[0];
+    if (!result) {
+      return moderationUnavailable("moderations_missing_verdict");
+    }
+
+    const categories = result.categories ?? {};
+    const sexual = Boolean(categories.sexual || categories["sexual/minors"]);
+
+    if (result.flagged && (sexual || categories.violence || categories.hate)) {
+      return {
+        ok: false,
+        reason: "obscene",
+        message:
+          "Görsel uygun bulunmadı (müstehcen veya sakıncalı içerik). Mesaj olarak iletilmedi.",
+      };
     }
 
     const requestSummary = [
@@ -193,19 +254,22 @@ async function moderateWithOpenAI(
     );
 
     if (!visionResponse.ok) {
-      // Fail closed on explicit moderation API failures when key is configured
-      // but network/model errors should not hard-block every upload.
-      console.warn(
-        "[moderate-message-image] vision check failed",
-        visionResponse.status,
-      );
-      return { ok: true };
+      return moderationUnavailable("vision_http_error", String(visionResponse.status));
     }
 
-    const visionJson = (await visionResponse.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-    const raw = visionJson.choices?.[0]?.message?.content ?? "{}";
+    let visionJson: { choices?: Array<{ message?: { content?: string } }> };
+
+    try {
+      visionJson = (await visionResponse.json()) as typeof visionJson;
+    } catch {
+      return moderationUnavailable("vision_unparsable_body");
+    }
+
+    const raw = visionJson.choices?.[0]?.message?.content;
+    if (!raw) {
+      return moderationUnavailable("vision_missing_content");
+    }
+
     let parsed: {
       safe?: boolean;
       relevant?: boolean;
@@ -216,7 +280,11 @@ async function moderateWithOpenAI(
     try {
       parsed = JSON.parse(raw) as typeof parsed;
     } catch {
-      return { ok: true };
+      return moderationUnavailable("vision_unparsable_verdict");
+    }
+
+    if (typeof parsed !== "object" || parsed === null) {
+      return moderationUnavailable("vision_unexpected_verdict_shape");
     }
 
     if (parsed.safe === false || parsed.reason === "obscene") {
@@ -238,10 +306,20 @@ async function moderateWithOpenAI(
       };
     }
 
+    // Olumlu karar AÇIK olmak zorundadır. Eksik alan "uygun" demek değildir:
+    // denetçi iki soruyu da cevaplamadıysa görsel denetlenmemiştir.
+    if (parsed.safe !== true || parsed.relevant !== true) {
+      return moderationUnavailable("vision_incomplete_verdict");
+    }
+
     return { ok: true };
   } catch (error) {
-    console.warn("[moderate-message-image] OpenAI moderation error", error);
-    return { ok: true };
+    // Zaman aşımı, DNS, soket hatası. Yalnız hata TÜRÜ loglanır; görsel,
+    // data URL ve talep metni loglanmaz.
+    return moderationUnavailable(
+      "provider_error",
+      error instanceof Error ? error.name : "unknown",
+    );
   }
 }
 

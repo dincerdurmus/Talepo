@@ -60,6 +60,7 @@
     "verify-hidden-inventory-addon-v1",
     "verify-human-request-understanding",
     "verify-hybrid-request-composer-v1",
+    "verify-image-moderation-fail-closed-v1",
     "verify-incoming-offer-card-v1",
     "verify-incoming-offer-compare-v1",
     "verify-incoming-offer-request-workspace-v1",
