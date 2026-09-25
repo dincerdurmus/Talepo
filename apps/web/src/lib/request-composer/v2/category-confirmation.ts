@@ -150,7 +150,24 @@ export function buildCategoryConfirmation(
   const known = getCategoryById(id);
   if (!known || known.id !== id) return null;
 
-  const subcategoryLabel = input.subcategoryLabel?.trim() || null;
+  /**
+   * "BEYAZ EŞYA › BEYAZ EŞYA" TEKRARI (ölçüldü 2026-09-25, tarayıcıda).
+   *
+   * Taksonomide kök kategoriyle AYNI adı taşıyan bir alt kategori var.
+   * Yol etiketi bunu körü körüne birleştirince kullanıcıya "Bunu Beyaz Eşya ›
+   * Beyaz Eşya olarak değerlendiriyorum, doğru mu?" diye soruluyordu — cümle
+   * kendi kendini tekrar ediyor ve onay adımını gülünç gösteriyor.
+   *
+   * Düzeltme burada, TEK yerde: alt kategori adı kök adının aynısıysa yol
+   * etiketi tek başına kök adıdır. Yüzeyler kendi ayıklamasını yapmaz; iki
+   * yüzey de aynı cümleyi okur.
+   */
+  const rawSubcategoryLabel = input.subcategoryLabel?.trim() || null;
+  const sameAsRoot =
+    rawSubcategoryLabel !== null &&
+    rawSubcategoryLabel.toLocaleLowerCase("tr-TR") ===
+      known.label.trim().toLocaleLowerCase("tr-TR");
+  const subcategoryLabel = sameAsRoot ? null : rawSubcategoryLabel;
   const pathLabel = subcategoryLabel
     ? `${known.label} › ${subcategoryLabel}`
     : known.label;

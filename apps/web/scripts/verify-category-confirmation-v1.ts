@@ -145,6 +145,33 @@ for (const c of CONFIDENT_CASES) {
   );
 }
 
+/*
+ * C4–C5 — KÖK ADIYLA AYNI ALT KATEGORİ YOLU TEKRARLAMAZ (2026-09-25).
+ *
+ * Tarayıcıda ölçüldü: taksonomide kök adını taşıyan bir alt kategori var ve
+ * yol etiketi bunu körü körüne birleştirince kullanıcıya "Bunu Beyaz Eşya ›
+ * Beyaz Eşya olarak değerlendiriyorum, doğru mu?" diye soruluyordu — cümle
+ * kendi kendini tekrar ediyor ve onay adımını gülünç gösteriyor.
+ */
+{
+  const same = buildCategoryConfirmation(
+    inputFor("Arçelik buzdolabı arıyorum, İstanbul Kadıköy", {
+      categoryId: "appliances",
+      subcategoryLabel: "Beyaz Eşya",
+    }),
+  );
+  check(
+    "C4 kök adıyla aynı alt kategori yola eklenmez",
+    same?.pathLabel === "Beyaz Eşya",
+    same?.pathLabel,
+  );
+  check(
+    "C5 onay cümlesi kendini tekrar etmez",
+    same?.prompt.includes("›") === false,
+    same?.prompt,
+  );
+}
+
 /* D — kart kurulmayan durumlar */
 {
   const base = inputFor("Arçelik televizyon arıyorum 55 inç");
