@@ -30,9 +30,10 @@ const subcats = REQUEST_CATEGORIES.reduce(
 );
 
 check("REQUEST_CATEGORIES root count is 11", roots === 11, `got ${roots}`);
+/* 59 → 60: D-0041 Kartvizit, Matbaa ve Ambalaj'ın altıncı alt kategorisi. */
 check(
-  "REQUEST_CATEGORIES subcategory count is 59",
-  subcats === 59,
+  "REQUEST_CATEGORIES subcategory count is 60",
+  subcats === 60,
   `got ${subcats}`,
 );
 

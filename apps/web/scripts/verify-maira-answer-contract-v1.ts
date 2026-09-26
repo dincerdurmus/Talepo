@@ -1066,11 +1066,19 @@ function scheduleFor(
    * şekilde yakaladı; taban 414→415 / 409→410 / 412→413 olarak yenilendi. Asıl koruma P1–P5'tedir:
    * her profil için seçenek sayısı, sıra, etiket/değer ayrımı, yinelenme,
    * serbest cevap ve kaçış kuralları tek tek ölçülür ve hepsi yeşildir.
+   *
+   * TABAN +7 (D-0041, 2026-09-26): kartvizit ayrı alt kategori oldu ve kendi
+   * soru ailesini aldı. Eklenen YEDİ soru da quickChoices taşır; delta tahmin
+   * değil, sözleşmeden tek tek sayıldı: cardFormat, cardStock, cardCoating,
+   * cardPrintSides, cardFinish, cardCorner, cardDesignReady. Kartvizit eskiden
+   * davetiye ve klasörle aynı DÖRT soruyu paylaşıyordu; o ailenin sözleşmesi
+   * yerinde kaldı, yalnız kartvizit kendi ailesine ayrıldı.
+   * 415→422 / 410→417 / 413→420.
   */
   gate(
     "P0-profil-alani-sayisi",
-    profilesWithChoices.length === 415,
-    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 415)`,
+    profilesWithChoices.length === 422,
+    `quickChoices taşıyan alan sayısı ${profilesWithChoices.length} (beklenen 422)`,
   );
 
   let lost = 0;
@@ -1129,13 +1137,13 @@ function scheduleFor(
   gate("P1-toplam-kayip", lost === 0, `${lost} alanda seçenek kaybı sürüyor`);
   gate(
     "P6-profil-kaynakli-kontrol-sayisi",
-    profileSourced === 410,
-    `profil kaynaklı kontrol ${profileSourced} (beklenen 410)`,
+    profileSourced === 417,
+    `profil kaynaklı kontrol ${profileSourced} (beklenen 417)`,
   );
   gate(
     "P7-drift-single-choice",
-    (dist.single_choice ?? 0) === 413,
-    `single_choice ${dist.single_choice ?? 0} (beklenen 413 = 410 profil + machinery/condition ailesi)`,
+    (dist.single_choice ?? 0) === 420,
+    `single_choice ${dist.single_choice ?? 0} (beklenen 420 = 417 profil + machinery/condition ailesi)`,
   );
   gate(
     "P7b-drift-text-fallback",

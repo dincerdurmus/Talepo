@@ -1138,7 +1138,8 @@
       "applicableCapabilities": [
         "ATTRIBUTE_SCHEMA"
       ],
-      "status": "active",
+      "status": "superseded",
+      "supersededBy": "tax:printing:kartvizit:urunler:kartvizit",
       "id": "tax:printing:brosur-ve-katalog:urunler:kartvizit",
       "parentId": "tax:printing:brosur-ve-katalog:urunler",
       "canonicalName": "Kartvizit",
@@ -1148,8 +1149,8 @@
       "depth": 3,
       "requestSchemaId": "printing/brosur-ve-katalog",
       "provenance": {
-        "source": "talepo-master-taxonomy-v1",
-        "note": "Curated Turkish market terminology"
+        "source": "founder-decision",
+        "note": "D-0041 — Kartvizit ayrı alt kategori oldu; bu kayıt yalnız eski kimliği yeni düğüme çözmek için durur."
       }
     },
     {
@@ -1350,6 +1351,71 @@
       "provenance": {
         "source": "talepo-master-taxonomy-v1",
         "note": "Curated Turkish market terminology"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:kartvizit",
+      "parentId": "tax:printing",
+      "canonicalName": "Kartvizit",
+      "nodeType": "SUBCATEGORY",
+      "categoryId": "printing",
+      "subcategoryId": "kartvizit",
+      "depth": 1,
+      "requestSchemaId": "printing/kartvizit",
+      "provenance": {
+        "source": "founder-decision",
+        "note": "D-0041"
+      }
+    },
+    {
+      "aliases": [],
+      "searchTerms": [],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:kartvizit:urunler",
+      "parentId": "tax:printing:kartvizit",
+      "canonicalName": "Ürünler",
+      "nodeType": "GROUP",
+      "categoryId": "printing",
+      "subcategoryId": "kartvizit",
+      "depth": 2,
+      "requestSchemaId": "printing/kartvizit",
+      "provenance": {
+        "source": "founder-decision",
+        "note": "D-0041"
+      }
+    },
+    {
+      "aliases": [
+        "business card",
+        "kart vizit"
+      ],
+      "searchTerms": [
+        "Kartvizit"
+      ],
+      "applicableCapabilities": [
+        "ATTRIBUTE_SCHEMA"
+      ],
+      "status": "active",
+      "id": "tax:printing:kartvizit:urunler:kartvizit",
+      "parentId": "tax:printing:kartvizit:urunler",
+      "canonicalName": "Kartvizit",
+      "nodeType": "PRODUCT_TYPE",
+      "categoryId": "printing",
+      "subcategoryId": "kartvizit",
+      "depth": 3,
+      "requestSchemaId": "printing/kartvizit",
+      "provenance": {
+        "source": "founder-decision",
+        "note": "D-0041 — tax:printing:brosur-ve-katalog:urunler:kartvizit düğümünden devralındı."
       }
     },
     {

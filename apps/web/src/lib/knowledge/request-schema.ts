@@ -522,6 +522,47 @@ const EXTRA_FIELDS: Record<string, KnowledgeField[]> = {
       priority: "required",
     },
   ],
+  /**
+   * D-0041: kartvizit kendi alt kategorisi. Alan kalıbı kardeş matbaa
+   * şemalarıyla aynıdır (ürün tipi + ölçü + adet zorunlu); yeni bir yayın
+   * zorunluluğu eklenmedi.
+   */
+  "printing/kartvizit": [
+    {
+      key: "cardFormat",
+      canonicalLabel: "Ebat",
+      type: "TEXT",
+      priority: "required",
+      aliases: ["ölçü", "ebat", "85x55"],
+    },
+    {
+      key: "cardStock",
+      canonicalLabel: "Kâğıt / gramaj",
+      type: "TEXT",
+      priority: "optional",
+      aliases: ["kuşe", "bristol", "gramaj"],
+    },
+    {
+      key: "cardCoating",
+      canonicalLabel: "Kaplama",
+      type: "TEXT",
+      priority: "optional",
+      aliases: ["selefon", "mat selefon", "parlak selefon"],
+    },
+    {
+      key: "cardPrintSides",
+      canonicalLabel: "Baskı yüzü",
+      type: "TEXT",
+      priority: "optional",
+      aliases: ["tek yüz", "çift yüz"],
+    },
+    {
+      key: "quantity",
+      canonicalLabel: "Adet",
+      type: "NUMBER",
+      priority: "required",
+    },
+  ],
   "printing/etiket-baski": [
     {
       key: "labelType",

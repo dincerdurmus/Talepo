@@ -694,11 +694,20 @@ function confirmedFor(input: string[]): string[] {
    * durum ayrımı (görünmeyen / kaldırılan / geçersiz) bu tarihte SIFIR
    * sorunla yeşildi; kırmızı yalnız bu sayaçtaydı. Alt sınır 119 aynen
    * durur: evren daralırsa sayaç sessizce düşmez, KIRMIZI olur.
+   *
+   * 504 → 507 (D-0041, 2026-09-26). Kartvizit ayrı alt kategori olunca kendi
+   * soru ailesini aldı ve ÜÇ YENİ alan anahtarı doğdu; delta tahmin değil,
+   * tek tek sayıldı ve HEAD'de (9d87fa5) hiçbirinin bulunmadığı doğrulandı:
+   *   + cardCoating     (kaplama: mat selefon / parlak selefon / yok)
+   *   + cardPrintSides  (baskı yüzü: tek / çift)
+   *   + cardCorner      (köşe: düz / oval)
+   * Kartvizitin diğer dört sorusu (cardFormat, cardStock, cardFinish,
+   * cardDesignReady) zaten kart ailesinde vardı; yeni kimlik üretmezler.
    */
   ok(
     "P:kimlik-sayisi",
-    identities === 504,
-    `beklenen 504 kimlik, ölçülen ${identities}`,
+    identities === 507,
+    `beklenen 507 kimlik, ölçülen ${identities}`,
   );
   ok(
     "P:kimlik-taban-korunur",

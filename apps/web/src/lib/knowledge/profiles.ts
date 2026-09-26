@@ -348,7 +348,7 @@ export const SUBCATEGORY_KNOWLEDGE_PROFILES: KnowledgeProfile[] = [
   override("machinery", "Diğer", { externalPolicy: "DISCOVERY_ONLY" }, MACHINERY),
 
   // Printing — all DISABLED product crawl
-  ...["Karton Kutu", "Etiket Baskı", "Broşür ve Katalog", "Promosyon", "Diğer"].map(
+  ...["Karton Kutu", "Etiket Baskı", "Broşür ve Katalog", "Kartvizit", "Promosyon", "Diğer"].map(
     (label) =>
       override(
         "printing",

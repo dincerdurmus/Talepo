@@ -7086,11 +7086,35 @@ const PRINTING_PRODUCT_QUESTION_CONTRACTS: ProductQuestionContract[] = [
       { fieldKey: "flatPrintDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
     ],
   ),
+  /**
+   * KARTVİZİT KENDİ SORU AİLESİ (D-0041, kurucu kararı 2026-09-25).
+   *
+   * Kartvizit "kart ailesi"nin içinde davetiye ve klasörle aynı soruları
+   * paylaşıyordu; ayrı alt kategori olunca teklifi belirleyen şeyler de
+   * ayrıştı: ebat, kâğıt/gramaj, kaplama ve baskı yüzü teklif için kritik;
+   * köşe, özel işlem ve tasarım isteğe bağlı. Teslim zamanı zaten matbaa
+   * kökünün ortak alanıdır (`PRINTING_COMMON_CANDIDATE_KEYS`), burada
+   * ikinci kez tanımlanmaz. Yayın zorunluluğu icat edilmedi: adet, konum ve
+   * bütçe kuralları matbaa kökünde olduğu gibi kalır.
+   */
   printingQuestionContract(
-    ["kartvizit", "davetiye", "kapak / klasör"],
+    ["kartvizit"],
+    ["cardFormat", "cardStock", "cardCoating", "cardPrintSides", "cardFinish", "cardCorner", "cardDesignReady"],
+    [
+      { fieldKey: "cardFormat", prompt: "Kartvizit ebadı ne olsun?", summaryLabel: "Ebat", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Standart (85 × 55 mm)", value: "Standart (85 × 55 mm)" }, { label: "Özel ölçü", value: "Özel ölçü" }] },
+      { fieldKey: "cardStock", prompt: "Kâğıt ve gramaj tercihiniz nedir?", summaryLabel: "Kâğıt / gramaj", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kuşe 300 gr", value: "Kuşe 300 gr" }, { label: "Kuşe 350 gr", value: "Kuşe 350 gr" }, { label: "Bristol 300 gr", value: "Bristol 300 gr" }, { label: "Dokulu kâğıt", value: "Dokulu kâğıt" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
+      { fieldKey: "cardCoating", prompt: "Kaplama isteniyor mu?", summaryLabel: "Kaplama", importance: "quote_critical", rank: 64, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Mat selefon", value: "Mat selefon" }, { label: "Parlak selefon", value: "Parlak selefon" }, { label: "Yok", value: "Yok" }] },
+      { fieldKey: "cardPrintSides", prompt: "Baskı tek yüze mi, çift yüze mi?", summaryLabel: "Baskı yüzü", importance: "quote_critical", rank: 60, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Tek yüz", value: "Tek yüz" }, { label: "Çift yüz", value: "Çift yüz" }] },
+      { fieldKey: "cardFinish", prompt: "Özel işlem ister misiniz?", summaryLabel: "Özel işlem", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yok", value: "Yok" }, { label: "Yaldız", value: "Yaldız" }, { label: "Kabartma", value: "Kabartma" }, { label: "Lak", value: "Lak" }] },
+      { fieldKey: "cardCorner", prompt: "Köşeler nasıl olsun?", summaryLabel: "Köşe", importance: "optional", rank: 46, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Düz", value: "Düz" }, { label: "Oval", value: "Oval" }] },
+      { fieldKey: "cardDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
+    ],
+  ),
+  printingQuestionContract(
+    ["davetiye", "kapak / klasör"],
     ["cardFormat", "cardStock", "cardFinish", "cardDesignReady"],
     [
-      { fieldKey: "cardFormat", prompt: "Ölçü veya kart tipi nedir?", summaryLabel: "Kart tipi", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Standart kartvizit", value: "Standart kartvizit" }, { label: "Özel kartvizit", value: "Özel kartvizit" }, { label: "Davetiye", value: "Davetiye" }, { label: "Klasör / kapak", value: "Klasör / kapak" }] },
+      { fieldKey: "cardFormat", prompt: "Ölçü veya kart tipi nedir?", summaryLabel: "Kart tipi", importance: "quote_critical", rank: 76, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Davetiye", value: "Davetiye" }, { label: "Klasör / kapak", value: "Klasör / kapak" }, { label: "Özel ölçü", value: "Özel ölçü" }] },
       { fieldKey: "cardStock", prompt: "Kâğıt / karton tercihiniz nedir?", summaryLabel: "Malzeme", importance: "quote_critical", rank: 68, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Kuşe", value: "Kuşe" }, { label: "Bristol", value: "Bristol" }, { label: "Dokulu kâğıt", value: "Dokulu" }, { label: "Bilmiyorum", value: "Bilmiyorum" }] },
       { fieldKey: "cardFinish", prompt: "Özel yüzey işlemi ister misiniz?", summaryLabel: "Yüzey işlemi", importance: "optional", rank: 50, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Yok", value: "Yok" }, { label: "Mat / parlak selefon", value: "Selefon" }, { label: "Kabartma lak", value: "Lak" }, { label: "Yaldız", value: "Yaldız" }] },
       { fieldKey: "cardDesignReady", prompt: "Baskı tasarım dosyası hazır mı?", summaryLabel: "Tasarım", importance: "optional", rank: 44, inputHint: "select", allowDontCare: true, quickChoices: [{ label: "Baskıya hazır", value: "Hazır" }, { label: "Tasarım desteği gerekli", value: "Tasarım gerekli" }] },
@@ -8058,6 +8082,9 @@ const CATEGORY_DEFINITIONS: RequestCategory[] = [
       "Karton Kutu",
       "Etiket Baskı",
       "Broşür ve Katalog",
+      // Kurucu kararı D-0041 (2026-09-25): kartvizit artık Broşür ve
+      // Katalog'un altında bir ürün türü değil, kendi alt kategorisi.
+      "Kartvizit",
       "Promosyon",
       "Diğer",
     ],

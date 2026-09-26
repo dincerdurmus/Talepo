@@ -295,6 +295,14 @@ async function main() {
         publishCtaDisabled: q('[data-testid="composer-review-cta"]')?.disabled ?? null,
         rows,
         crumbTop: q('[data-testid="talep-request-card"] .font-mono')?.textContent?.trim() ?? null,
+        /*
+          KARTIN KIRINTISI İKİ SATIRDIR: üstte kök (font-mono satırı), altında
+          alt kategori. crumbTop yalnız kökü okur; alt kategoriyi ona sormak
+          ölçümü yanlış düğüme bağlar (ölçüldü: D-0041 kapısı kök satırında
+          "Kartvizit" arıyordu ve sahte KIRMIZI verdi).
+        */
+        crumbLeaf:
+          q('[data-testid="talep-request-card"] .font-mono ~ span')?.textContent?.trim() ?? null,
         question: q('[data-testid="composer-question-prompt"]')?.textContent?.trim() ?? null,
         questionField: q('[data-field-key]')?.dataset.fieldKey ?? null,
         controlType: q('[data-control-type]')?.dataset.controlType ?? null,
@@ -752,6 +760,113 @@ async function main() {
     ),
     openSetSeen["d-9d-camasir-deterjani"].crumbTop,
   );
+
+  /* 10) KARTVİZİT AYRI ALT KATEGORİ (D-0041) — kurucu kararının ekrandaki hâli */
+  /**
+   * NEDEN BU BÖLÜM VAR. Kurucu "Kartvizit ayrı bir kategori olması lazım"
+   * dedi; harness kapısı bunu üretim fonksiyonlarıyla ölçüyor ama ekranda
+   * görünen şey ayrıca kanıtlanmalı. Her kare ÖLÇÜLEN kimlikle etiketlenir:
+   * kategori kırıntısı, kart satırları, bekleyen sorunun alan anahtarı ve
+   * kategori panelinde Matbaa'nın altındaki alt kategori listesi. Etiketsiz
+   * kare kanıt sayılmaz; alt kategori listesi için Matbaa kökü ADIYLA
+   * tıklanır — ilk kök tıklanırsa kare başka bir kategoriyi gösterir.
+   */
+  const clickRootByLabel = async (label) =>
+    evaluate(`(() => {
+      const el = [...document.querySelectorAll('[data-testid="talep-category-root"]')]
+        .find((b) => (b.querySelector("b")?.textContent || "").trim() === ${JSON.stringify(label)});
+      if (!el) return "no-el";
+      el.scrollIntoView({ block: "center" });
+      el.click();
+      return "ok";
+    })()`);
+
+  await setViewport(1280, 900);
+  await goto(`${BASE}/talep`);
+  await typeInto("#talep-composer", "1000 adet kartvizit, mat selefonlu, Topkapı");
+  await sleep(900);
+  await click('[data-testid="composer-intro-continue"]');
+  await sleep(4500);
+  s = await snapshot();
+  const kartvizitSeen = {
+    crumbTop: s.crumbTop,
+    crumbLeaf: s.crumbLeaf,
+    cardTitle: s.cardTitle,
+    rows: s.rows,
+    question: s.question,
+    questionField: s.questionField,
+    optionRows: s.optionRows,
+    meter: s.meter,
+    outOfScope: Boolean(s.outOfScope),
+  };
+  check(
+    "10a: kartın kırıntısı Matbaa ve Ambalaj › Kartvizit",
+    /Matbaa/i.test(kartvizitSeen.crumbTop ?? "") &&
+      /^Kartvizit$/i.test(kartvizitSeen.crumbLeaf ?? ""),
+    `${kartvizitSeen.crumbTop} › ${kartvizitSeen.crumbLeaf}`,
+  );
+  check(
+    "10a: kartvizit talebi kapsam dışı sayılmıyor",
+    kartvizitSeen.outOfScope === false,
+    JSON.stringify(kartvizitSeen).slice(0, 160),
+  );
+  await shot("d-10a-kartvizit-kirinti", "masaüstü 1280 — Kartvizit alt kategorisi kırıntıda", kartvizitSeen);
+
+  await click('[data-testid="talep-card-change-category"]');
+  await sleep(700);
+  const printingClick = await clickRootByLabel("Matbaa ve Ambalaj");
+  await sleep(800);
+  s = await snapshot();
+  const printingSubs = s.sheetSubs;
+  check(
+    "10b: kategori panelinde Matbaa kökü adıyla açıldı",
+    printingClick === "ok",
+    printingClick,
+  );
+  check(
+    "10b: Matbaa'nın alt kategori listesinde Kartvizit var",
+    printingSubs.some((t) => /Kartvizit/i.test(t)),
+    printingSubs.join(" · "),
+  );
+  await shot("d-10b-kartvizit-panel", "masaüstü 1280 — Matbaa altında Kartvizit alt kategorisi", {
+    root: "Matbaa ve Ambalaj",
+    subs: printingSubs,
+  });
+  await evaluate(`document.querySelector('[role="dialog"] button.ml-auto')?.click()`);
+  await sleep(500);
+
+  /* Kartvizitin KENDİ soruları sorulup yayına hazıra kadar yürütülür. */
+  const kartvizitAskedFields = [];
+  for (let i = 0; i < 8; i += 1) {
+    s = await snapshot();
+    if (s.questionField) kartvizitAskedFields.push(s.questionField);
+    if (!s.question || s.publishCta) break;
+    console.log(`  kartvizit cevap adımı ${i + 1}: ${await evaluate(ANSWER_STEP)}`);
+    await sleep(1400);
+  }
+  s = await snapshot();
+  check(
+    "10c: kartvizit akışı yayına hazıra ulaştı",
+    s.meterReady === "true" && Boolean(s.publishCta),
+    `${s.meter} (${s.meterFilled}/${s.meterTotal}) cta=${s.publishCta}`,
+  );
+  check(
+    "10c: sorulan alanlar kartvizit ailesinden, komşu aileden değil",
+    kartvizitAskedFields.every(
+      (k) => !["publicationPageCount", "publicationBinding", "flatPrintFold", "boxDieLine", "labelAdhesive"].includes(k),
+    ),
+    kartvizitAskedFields.join(","),
+  );
+  await shot("d-10c-kartvizit-hazir", "masaüstü 1280 — kartvizit yayına hazır", {
+    crumbTop: s.crumbTop,
+    cardTitle: s.cardTitle,
+    meter: s.meter,
+    meterReady: s.meterReady,
+    askedFields: kartvizitAskedFields,
+    rows: s.rows,
+    extras: s.extras,
+    cta: s.publishCta,
+  });
 
   fs.writeFileSync(
     path.join(OUT, "olcum-manifest.json"),

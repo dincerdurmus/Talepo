@@ -454,8 +454,16 @@ ensureTaxonomyLoaded();
    * satır kısaldı, services yeniden yapılandı (kapsam dışı kalan akışlar,
    * UNSUPPORTED_REMOVED_SCOPE kararlarıyla aynı dalga). Sayı yine iki yönde
    * kilitli: büyüme de küçülme de sayılmış delta ister.
+   *
+   * 2098 → 2100 (D-0041, 2026-09-26). Delta tek tek sayıldı: dosyaya ÜÇ düğüm
+   * eklendi (tax:printing:kartvizit SUBCATEGORY, :urunler GROUP,
+   * :urunler:kartvizit PRODUCT_TYPE) ve eski yaprak
+   * tax:printing:brosur-ve-katalog:urunler:kartvizit `status: "superseded"`
+   * olduğu için ağaçtan BİR düğüm çıktı (kayıt dosyada durur, indekse
+   * girmez): +3 − 1 = +2. Yaprak sayısı 1807'de SABİT kaldı — kartvizit
+   * yaprağı yer değiştirdi, çoğalmadı; grup düğümü yaprak değildir.
    */
-  check("29 taxonomy nodes 2098", report.nodeCount === 2098);
+  check("29 taxonomy nodes 2100", report.nodeCount === 2100);
   check("29 taxonomy leaves 1807", report.leafCount === 1807);
   check("29 taxonomy empty parents 0", report.emptyParents.length === 0);
   check("29 taxonomy orphans 0", report.orphans.length === 0);
