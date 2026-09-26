@@ -124,4 +124,30 @@ function inkBounds(img, threshold = 34) {
   };
 }
 
-module.exports = { decodePng, inkBounds };
+/**
+ * KARENİN BİR BÖLGESİNİ AYIRIR (2026-09-26).
+ *
+ * NEDEN VAR. "Kaydedilen karede Maira'nın yüzü gerçekten var mı?" sorusu tam
+ * sayfa karesinin tamamına bakarak cevaplanamaz: sayfa dolu olduğu için
+ * `inkBounds` her hâlükârda mürekkep bulur. Soru yalnız YÜZÜN BÖLGESİNDE
+ * sorulabilir, bu yüzden ölçüm aynı modülde bölge alarak yapılır — ikinci bir
+ * PNG okuyucu açılmaz.
+ */
+function cropImage(img, x, y, w, h) {
+  const { width, height, channels, data } = img;
+  const x0 = Math.max(0, Math.round(x));
+  const y0 = Math.max(0, Math.round(y));
+  const x1 = Math.min(width, Math.round(x + w));
+  const y1 = Math.min(height, Math.round(y + h));
+  const cw = Math.max(0, x1 - x0);
+  const chh = Math.max(0, y1 - y0);
+  if (cw === 0 || chh === 0) return null;
+  const out = Buffer.alloc(cw * chh * channels);
+  for (let row = 0; row < chh; row += 1) {
+    const from = ((y0 + row) * width + x0) * channels;
+    data.copy(out, row * cw * channels, from, from + cw * channels);
+  }
+  return { width: cw, height: chh, channels, data: out };
+}
+
+module.exports = { decodePng, inkBounds, cropImage };

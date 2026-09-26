@@ -23,12 +23,12 @@
 const fs = require("fs");
 const path = require("path");
 const { launch, connect } = require("./lib/qa-cdp-v1.cjs");
-const { decodePng, inkBounds } = require("./lib/qa-png-v1.cjs");
+const { decodePng, inkBounds, cropImage } = require("./lib/qa-png-v1.cjs");
 
 const BASE = process.env.TALEP_QA_URL || "http://localhost:3211";
 /* Her turun kareleri kendi klasörüne yazılır; öncekiler ezilmez. */
 const OUT = process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc5";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc6";
 
 const results = [];
 const shots = [];
@@ -192,6 +192,68 @@ async function main() {
   };
 
   /**
+   * BAŞLANGIÇ HİZASI — GERÇEK GEOMETRİDEN (D-0046, 2026-09-26).
+   *
+   * Kurucu kararı: telefonda başlangıç ekranı videodaki gibi ORTALI, masaüstü
+   * DEĞİŞMEZ. Sınıf adına bakmak yetmez (`text-center` bir üst kapsayıcı
+   * tarafından ezilebilir); burada elemanların ekrandaki gerçek kutuları
+   * okunur.
+   *
+   * BAŞLIK KUTUSU DEĞİL METNİ ÖLÇÜLÜR. `<h1>` blok elemandır: kutusu sola da
+   * ortaya da hizalansa hep tam genişliktir. Hizayı yalnız RENDER EDİLEN METİN
+   * gösterir, bu yüzden metin aralığının (Range) kutusu alınır.
+   */
+  const measureStartAlignment = async () =>
+    evaluate(`(() => {
+      const kutu = (el) => {
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        if (r.width < 1) return null;
+        return { x: r.x, w: r.width, merkez: r.x + r.width / 2 };
+      };
+      const metinKutusu = (el) => {
+        if (!el) return null;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const r = range.getBoundingClientRect();
+        range.detach?.();
+        if (r.width < 1) return null;
+        return { x: r.x, w: r.width, merkez: r.x + r.width / 2 };
+      };
+      /*
+        SARMALAYICI DEĞİL YÜZÜN KENDİSİ ÖLÇÜLÜR. Dış ızgara hücresi tam
+        genişliktir; onun merkezi her hâlükârda içerik merkezidir ve kapı
+        önemsiz biçimde yeşil kalırdı (ölçüldü: w=350, sapma=0 — hiza yanlışken
+        bile). Kapı, 240px'lik gerçek yüz kutusunu okur.
+      */
+      const yuzler = [...document.querySelectorAll('[data-testid="talep-start-maira"]')]
+        .filter((el) => el.getBoundingClientRect().width > 4);
+      const sarmal = yuzler[0] ?? null;
+      const yuz = sarmal?.querySelector('[data-testid="maira-face"]') ?? null;
+      const h1 = document.querySelector('[data-testid="talep-start-title"]');
+      return {
+        gorunum: window.innerWidth,
+        gorunumMerkezi: window.innerWidth / 2,
+        yuzSayisi: yuzler.length,
+        yuz: kutu(yuz),
+        yuzHizaProp: sarmal?.dataset.align ?? null,
+        /*
+          GÖRÜNEN ETİKET ÖLÇÜLÜR. Masaüstünde telefon markı (lg:hidden) hâlâ
+          DOM'dadır ve belgedeki İLK talep-start-maira-mark odur; belge geneli
+          bir querySelector orada genişliği sıfır olan gizli etiketi okuyup
+          ölçümü boş bırakıyordu. Etiket, görünen yüzün kendi sarmalayıcısından
+          alınır. (Bu blok bir şablon dizesinin İÇİNDEDİR: ters tırnak yazılmaz,
+          dizeyi kapatır ve dosya derlenmez.)
+        */
+        maira: kutu(sarmal?.querySelector('[data-testid="talep-start-maira-mark"]')),
+        baslikKutusu: kutu(h1),
+        baslikMetni: metinKutusu(h1),
+        baslikHizasi: h1 ? getComputedStyle(h1).textAlign : null,
+        kutu: kutu(document.querySelector("#talep-composer")?.closest("form")),
+      };
+    })()`);
+
+  /**
    * YÜZ İLK EKRANDA GÖRÜNÜR — SABİT BEKLEME İLE KANITLANMAZ (2026-09-26).
    *
    * Önceki turda başlangıç karesi (`sonuc4/m-1-baslangic.png`) yüz yerine
@@ -253,6 +315,13 @@ async function main() {
      * değil, kanıt aracındaydı). Artık görüntü alanı sayfa yüksekliğine
      * gerçekten uzatılır, sahnenin yeniden çizmesi beklenir, kare normal
      * yoldan alınır ve görüntü alanı geri konur.
+     *
+     * SABİT BEKLEME YETMEDİ (2026-09-26, ikinci kez ölçüldü). 450 ms'lik
+     * bekleme bir koşuda yetti, sonraki koşuda yetmedi: `sonuc6`'nın ilk
+     * `m-1-baslangic.png` karesinde yüz yine boş bir ışık lekesiydi — üstelik
+     * ölçüm kapıları yeşildi, çünkü onlar kareden ÖNCE ölçüyor. Kanıt artık
+     * KENDİ KARESİNDEN doğrulanır: kaydedilecek karede yüzün bölgesindeki
+     * mürekkep sayılır, boşsa sahneye yeniden çizdirilip kare yeniden alınır.
      */
     const pageHeight = await evaluate(
       `Math.min(Math.ceil(document.documentElement.scrollHeight), 12000)`,
@@ -268,11 +337,74 @@ async function main() {
       S,
     );
     await sleep(450);
-    const { data } = await browser.send(
-      "Page.captureScreenshot",
-      { format: "png" },
-      S,
-    );
+
+    /** Yüzün SAYFA koordinatındaki kutusu; yoksa null (yüzsüz ekranlar). */
+    const faceRect = await evaluate(`(() => {
+      const el = [...document.querySelectorAll('[data-testid="maira-face"]')]
+        .filter((e) => e.getBoundingClientRect().width > 40)[0];
+      if (!el) return null;
+      if (!el.querySelector('[data-testid="maira-contour-canvas"]')) return null;
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.x + window.scrollX,
+        y: r.y + window.scrollY,
+        w: r.width,
+        h: r.height,
+      };
+    })()`);
+
+    /** Sahneye yeniden çizdirir: resize olayı + birkaç kare bekle. */
+    const yenidenCizdir = async () => {
+      await evaluate(`(async () => {
+        window.dispatchEvent(new Event("resize"));
+        for (let i = 0; i < 6; i += 1) {
+          await new Promise((r) => requestAnimationFrame(() => r()));
+        }
+        return "ok";
+      })()`);
+      await sleep(500);
+    };
+
+    let data = null;
+    let yuzMurekkebi = null;
+    for (let deneme = 1; deneme <= 4; deneme += 1) {
+      ({ data } = await browser.send(
+        "Page.captureScreenshot",
+        { format: "png" },
+        S,
+      ));
+      if (!faceRect) break;
+      const png = decodePng(Buffer.from(data, "base64"));
+      /* Kare 2x çekilir; kutu CSS pikselindedir. */
+      const parca = cropImage(
+        png,
+        faceRect.x * 2,
+        faceRect.y * 2,
+        faceRect.w * 2,
+        faceRect.h * 2,
+      );
+      /*
+        SERT EŞİK ŞART (ölçüldü, 2026-09-26). Yumuşak eşik (12) arkadaki IŞIK
+        ALANINI da mürekkep sayıyor: yüzün hiç çizilmediği karede bile 0.453
+        veriyordu ve kapı sahte yeşil kalıyordu. Aynı iki kare eşik 45'te
+        birbirinden ayrılıyor — çizili yüz 0.370, yalnız ışık lekesi 0.079.
+        Sınır ikisinin ortasındadır.
+      */
+      const olcum = parca ? inkBounds(parca, 45) : null;
+      yuzMurekkebi = olcum
+        ? { coverage: olcum.coverage, empty: olcum.empty, esik: 45, deneme }
+        : { coverage: null, empty: true, esik: 45, deneme };
+      if (!yuzMurekkebi.empty && yuzMurekkebi.coverage >= 0.2) break;
+      if (deneme === 4) break;
+      await yenidenCizdir();
+    }
+    if (faceRect) {
+      check(
+        `kaydedilen karede Maira'nın yüzü GÖRÜNÜYOR (${name})`,
+        Boolean(yuzMurekkebi && !yuzMurekkebi.empty && yuzMurekkebi.coverage >= 0.2),
+        JSON.stringify(yuzMurekkebi),
+      );
+    }
     await browser.send(
       "Emulation.setDeviceMetricsOverride",
       {
@@ -285,7 +417,12 @@ async function main() {
     );
     const file = path.join(OUT, `${name}.png`);
     fs.writeFileSync(file, Buffer.from(data, "base64"));
-    shots.push({ file: `${name}.png`, label, measured });
+    shots.push({
+      file: `${name}.png`,
+      label,
+      /* Kare kendi kanıtını taşır: bu karede yüzün mürekkebi ölçüldü mü. */
+      measured: yuzMurekkebi ? { ...measured, yuzMurekkebi } : measured,
+    });
     console.log(`SHOT ${name}.png — ${label} — ${JSON.stringify(measured)}`);
   };
 
@@ -518,6 +655,56 @@ async function main() {
     s.startMairaMark === "MAIRA",
     s.startMairaMark,
   );
+  /*
+    TELEFON HİZASI (D-0046). Referans `ref-1.png` ölçüldü: yüz %50.8, MAIRA
+    %49.7, başlık %50.0. Eski ürün karesi (sonuc5/m-1) %33.3 / %8.0 / %34.6
+    veriyordu. Tolerans ±%2 — yüzün mürekkebi kutusunun içinde birkaç piksel
+    kaçık olabilir, karar kutunun hizasıdır.
+  */
+  const hizaMobil = await measureStartAlignment();
+  {
+    const sapma = (el) =>
+      el ? Math.abs(el.merkez - hizaMobil.gorunumMerkezi) / hizaMobil.gorunum : null;
+    const TOL = 0.02;
+    check(
+      "390: yazma kutusu yatayda ortalı",
+      sapma(hizaMobil.kutu) !== null && sapma(hizaMobil.kutu) <= TOL,
+      JSON.stringify({ kutu: hizaMobil.kutu, sapma: sapma(hizaMobil.kutu) }),
+    );
+    check(
+      "390: Maira'nın yüzü yatayda ortalı (videodaki ilk an)",
+      sapma(hizaMobil.yuz) !== null && sapma(hizaMobil.yuz) <= TOL,
+      JSON.stringify({ yuz: hizaMobil.yuz, sapma: sapma(hizaMobil.yuz) }),
+    );
+    check(
+      "390: MAIRA etiketi yatayda ortalı",
+      sapma(hizaMobil.maira) !== null && sapma(hizaMobil.maira) <= TOL,
+      JSON.stringify({ maira: hizaMobil.maira, sapma: sapma(hizaMobil.maira) }),
+    );
+    check(
+      "390: 'Tek cümle yaz.' başlığının METNİ ortalı",
+      sapma(hizaMobil.baslikMetni) !== null && sapma(hizaMobil.baslikMetni) <= TOL,
+      JSON.stringify({
+        metin: hizaMobil.baslikMetni,
+        kutu: hizaMobil.baslikKutusu,
+        hiza: hizaMobil.baslikHizasi,
+        sapma: sapma(hizaMobil.baslikMetni),
+      }),
+    );
+    /*
+      BAŞLIK PUNTOSU VİDEODAKİ İLE AYNI ÖLÇEKTE. Ölçek-bağımsız ölçüt:
+      "Tek cümle yaz." metninin genişliği ÷ görünüm genişliği. ref-1'de
+      668/1080 = %61.9. Kapı bu bandı korur; başlık küçültülürse kırmızı olur.
+    */
+    const oran = hizaMobil.baslikMetni
+      ? hizaMobil.baslikMetni.w / hizaMobil.gorunum
+      : null;
+    check(
+      "390: başlık puntosu videodaki ölçekte (metin genişliği %55–%70)",
+      oran !== null && oran >= 0.55 && oran <= 0.7,
+      JSON.stringify({ oran, ref: 0.619 }),
+    );
+  }
   {
     const gone = await evaluate(
       `(() => { const t = document.querySelector('[data-testid="talep-start"]')?.innerText ?? ""; return { desc: /Maira eksik kalanı sorar/.test(t), hint: /Marka, adet, konum yazarsan/.test(t) }; })()`,
@@ -585,6 +772,8 @@ async function main() {
     categories: cats.length,
     faces: s.faces,
     face: faceMobile,
+    /* Kare kendi kanıtını taşır: hangi hizayı gösterdiği ölçülmüş hâliyle. */
+    hiza: hizaMobil,
     /* Kare kendi kanıtını taşır: yüz kaç ms'de tam göründü. */
     faceFirstPaintMs: faceTiming.ms,
     faceDrawn: faceTiming.drawn,
@@ -598,7 +787,23 @@ async function main() {
     `[...document.querySelectorAll('[data-testid="talep-start-detected"] span.inline-flex')].map(e=>e.textContent.trim())`,
   );
   check("yazarken anlaşılan etiketler beliriyor", detected.length > 0, detected.join(" | "));
-  await shot("m-1b-yazarken", "mobil 390 — yazarken anlaşılanlar", { detected });
+  /*
+    YAZARKEN DE ORTALI KALIR. Kutu büyüdükçe hizanın kaymadığı ölçülür; bu kare
+    kendi hiza ölçümünü taşır, yoksa karşılaştırma tuvalinde "ölçüm yok" yazar.
+  */
+  const hizaYazarken = await measureStartAlignment();
+  check(
+    "390: yazarken de yüz ve başlık ortalı kalır",
+    hizaYazarken.yuz != null &&
+      hizaYazarken.baslikMetni != null &&
+      Math.abs(hizaYazarken.yuz.merkez - hizaYazarken.gorunumMerkezi) <= 8 &&
+      Math.abs(hizaYazarken.baslikMetni.merkez - hizaYazarken.gorunumMerkezi) <= 8,
+    JSON.stringify({ yuz: hizaYazarken.yuz, baslik: hizaYazarken.baslikMetni }),
+  );
+  await shot("m-1b-yazarken", "mobil 390 — yazarken anlaşılanlar", {
+    detected,
+    hiza: hizaYazarken,
+  });
 
   await click('[data-testid="composer-intro-continue"]');
   await sleep(500);
@@ -880,9 +1085,36 @@ async function main() {
     ),
     JSON.stringify(faceDesktop?.ink),
   );
+  /*
+    MASAÜSTÜ DEĞİŞMEDİ — İDDİA DEĞİL ÖLÇÜM (D-0046). Telefon hizası değişirken
+    masaüstünün aynı kaldığı, dokunulmayan durumun kendi geometrisiyle
+    kanıtlanır: başlık metni SOL kenarda başlar (ortalanmaz) ve büyük yüz
+    kendi sağ sütununda durur, görünümün ortasında değil.
+  */
+  const hizaMasaustu = await measureStartAlignment();
+  check(
+    "1280: başlık sola hizalı kalır (masaüstü DEĞİŞMEDİ)",
+    hizaMasaustu.baslikHizasi === "left" &&
+      hizaMasaustu.baslikMetni != null &&
+      hizaMasaustu.baslikKutusu != null &&
+      Math.abs(hizaMasaustu.baslikMetni.x - hizaMasaustu.baslikKutusu.x) <= 2,
+    JSON.stringify({
+      hiza: hizaMasaustu.baslikHizasi,
+      metinX: hizaMasaustu.baslikMetni?.x,
+      kutuX: hizaMasaustu.baslikKutusu?.x,
+    }),
+  );
+  check(
+    "1280: büyük yüz sağ sütununda kalır (görünümün ortasında değil)",
+    hizaMasaustu.yuz != null &&
+      hizaMasaustu.yuzHizaProp === "start" &&
+      hizaMasaustu.yuz.merkez > hizaMasaustu.gorunumMerkezi + 40,
+    JSON.stringify({ yuz: hizaMasaustu.yuz, prop: hizaMasaustu.yuzHizaProp }),
+  );
   await shot("d-1-baslangic", "masaüstü 1280 — başlangıç", {
     faces: s.faces,
     face: faceDesktop,
+    hiza: hizaMasaustu,
     faceFirstPaintMs: faceTimingDesktop.ms,
     faceDrawn: faceTimingDesktop.drawn,
     ringOpacity: faceTimingDesktop.ringOpacity,

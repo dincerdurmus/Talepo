@@ -75,14 +75,32 @@ function RailTile({
 /**
  * YÜZ + ADI. Videoda yüzün altında yalnız mono `MAIRA` etiketi durur; başka
  * hiçbir açıklama yoktur. Etiket kimliği söyler, bir eylem önermez.
+ *
+ * HİZA PROP'TUR, SINIF DEĞİL (2026-09-26). `justify-items-*` sınıfını dışarıdan
+ * `className` ile ezmek Tailwind'de güvenilir değil: iki sınıf aynı özgüllükte
+ * olduğu için kazananı sınıf dizisindeki sıra değil, üretilen stil sayfasındaki
+ * sıra belirler. Hiza bu yüzden tek bir prop'tan okunur.
  */
-function MairaMark({ size, className = "" }: { size: number; className?: string }) {
+function MairaMark({
+  size,
+  align = "start",
+  className = "",
+}: {
+  size: number;
+  align?: "start" | "center";
+  className?: string;
+}) {
+  const centered = align === "center";
   return (
-    <span className={`grid justify-items-start gap-2 ${className}`}>
+    <span
+      data-testid="talep-start-maira"
+      data-align={align}
+      className={`grid gap-2 ${centered ? "justify-items-center" : "justify-items-start"} ${className}`}
+    >
       <MairaFace size={size} />
       <span
         data-testid="talep-start-maira-mark"
-        className="pl-0.5 font-mono text-[11px] font-medium tracking-[0.22em] text-[#0f766e]"
+        className={`font-mono text-[11px] font-medium tracking-[0.22em] text-[#0f766e] ${centered ? "" : "pl-0.5"}`}
       >
         MAIRA
       </span>
@@ -120,8 +138,21 @@ export function TalepStartPanel({
           dolduruyordu; videoda ilk anı yüz taşır. Masaüstündeki 380px sağ
           sütunda olduğu gibi kalır.
         */}
-        <MairaMark size={240} className="-ml-3 lg:hidden" />
-        <h1 className="m-0 text-[clamp(36px,9vw,56px)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#0f1f1d]">
+        {/*
+          TELEFONDA BAŞLANGIÇ ORTALIDIR (kurucu kararı D-0046, 2026-09-26;
+          referans `talep-video-ref-2026-09-25/ref-1.png`). Videodaki ilk anda
+          yüz, MAIRA etiketi ve başlık ekranın yatay ortasında durur —
+          ölçüldü: ref-1'de üçünün merkezi %50.8 / %49.7 / %50.0, bizim eski
+          karemizde (sonuc5/m-1) %33.3 / %8.0 / %34.6.
+
+          MASAÜSTÜ DEĞİŞMEZ: orada yüz zaten sağ sütunda durur ve başlık sola
+          hizalı kalır (`lg:text-left`).
+        */}
+        <MairaMark size={240} align="center" className="lg:hidden" />
+        <h1
+          data-testid="talep-start-title"
+          className="m-0 text-center text-[clamp(36px,9vw,56px)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#0f1f1d] lg:text-left"
+        >
           Tek cümle yaz.
         </h1>
 

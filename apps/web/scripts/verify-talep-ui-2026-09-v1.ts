@@ -1252,6 +1252,63 @@ ok(
   "yüzün altında mono MAIRA etiketi var",
   Boolean(start && /talep-start-maira-mark/.test(start)),
 );
+
+/**
+ * TELEFON HİZASI (D-0046, 2026-09-26) — kurucu kararı: telefonda başlangıç
+ * ekranı videodaki gibi ORTALIDIR, masaüstü DEĞİŞMEZ.
+ *
+ * Neden kaynak üzerinden de ölçülüyor: gerçek hiza tarayıcıda geometriyle
+ * ölçülür (`qa-talep-ui-browser-v1.cjs`, 390/1280), ama o geçiş bir sunucu
+ * ister. Burada kararın KENDİSİ kilitlenir; iki ayrı hizayı tek sınıf
+ * dizisine sıkıştıran bir düzenleme sessizce geçemesin.
+ */
+{
+  const mobilMark = start?.match(/<MairaMark[^>]*size=\{240\}[^>]*\/>/)?.[0] ?? null;
+  const masaustuMark =
+    start?.match(/<MairaMark[^>]*size=\{380\}[^>]*\/>/)?.[0] ?? null;
+  const h1 = start?.match(/<h1[\s\S]*?>/)?.[0] ?? null;
+
+  ok(
+    "telefon başlangıcı: yüz + MAIRA etiketi ortalı",
+    Boolean(mobilMark && /align="center"/.test(mobilMark)),
+    mobilMark,
+  );
+  ok(
+    "telefon başlangıcı: yüzde yatay kaydırma sınıfı kalmadı",
+    /* Sınır boşluk DEĞİL tırnak da olabilir: `className="-ml-3 lg:hidden"`. */
+    Boolean(mobilMark && !/(?:^|[\s"'`])-?m[lrx]-/.test(mobilMark)),
+    mobilMark,
+  );
+  ok(
+    "telefon başlangıcı: 'Tek cümle yaz.' başlığı ortalı",
+    Boolean(h1 && /(?:^|\s|")text-center(?:\s|")/.test(h1)),
+    h1,
+  );
+  /* MASAÜSTÜ DEĞİŞMEZ — aynı kapı bunu da kanıtlar. */
+  ok(
+    "masaüstü başlangıcı: başlık sola hizalı kalır",
+    Boolean(h1 && /lg:text-left/.test(h1)),
+    h1,
+  );
+  ok(
+    "masaüstü başlangıcı: sağ sütundaki yüz ortalanmadı",
+    Boolean(masaustuMark && !/align="center"/.test(masaustuMark)),
+    masaustuMark,
+  );
+  /*
+    HİZA TEK PROP'TAN OKUNUR. `justify-items-*` sınıfını dışarıdan `className`
+    ile ezmek Tailwind'de sıra bağımlıdır; kapı, hizanın prop'a bağlı kaldığını
+    ölçer ki "ortalı" iddiası üretimde sessizce bozulmasın.
+  */
+  ok(
+    "hiza prop'tan gelir (className ile ezilmiyor)",
+    Boolean(
+      start &&
+        /align === "center"/.test(start) &&
+        /centered \? "justify-items-center" : "justify-items-start"/.test(start),
+    ),
+  );
+}
 ok(
   "süreler tek tablodan okunur (yüzeyler kendi sayısını tutmaz)",
   Boolean(
