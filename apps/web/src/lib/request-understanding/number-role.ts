@@ -4,6 +4,7 @@ import {
   findTechnologyProduct,
   TECHNOLOGY_BRANDS,
 } from "@/lib/ai/parser/brand-catalog";
+import { isMentionRejectedInText } from "@/lib/ai/parser/negation";
 
 export type NumberRole =
   | "MODEL_IDENTIFIER"
@@ -783,6 +784,20 @@ export function classifyModelTokenEvidence(
 ): ModelTokenEvidence {
   const token = String(candidate ?? "").trim();
   if (!token) return "REJECTED";
+  /**
+   * REDDEDİLMİŞ YA DA BENZETİLMİŞ BAHİS MODEL OLAMAZ (2026-09-25).
+   *
+   * Katalog doğrulaması bağlama HİÇ bakmıyordu — marka kapısındaki kusurun
+   * birebir ikizi. Ölçüldü (`qa/open-set` E kümesi, `verify-answer-authority-
+   * traps-v1` e-model-02): "Laptop arıyorum, MacBook tarzı bir şey" cümlesinde
+   * model `MacBook` / USER_EXPLICIT doluyor ve model sorusu HİÇ sorulmuyordu.
+   * Kullanıcı bir MacBook istemedi, ona benzeyen bir şey istedi.
+   *
+   * Denetim `catalogVerified`ın ÜSTÜNDEDİR: katalog gerçekliği tartışmalı
+   * değil, o bahsin bir BEYAN olup olmadığı tartışmalıdır. Pencere ölçütü
+   * deponun tek yetkilisinden (`isNegatedMention`) okunur.
+   */
+  if (isMentionRejectedInText(normalizedText, token)) return "REJECTED";
   if (opts?.catalogVerified) return "VERIFIED_MODEL";
   if (!/\d/.test(token)) return "REJECTED";
 

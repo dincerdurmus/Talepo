@@ -3,8 +3,14 @@
  * Used by brand/model extraction and Phase 2 EXCLUDED semantics — not a second brain.
  */
 
+/**
+ * KATLANMIŞ METİNDE ARANIR. Yazımlar bilerek diyakritiksizdir: JS `\b` ASCII
+ * olmayan harften sonra sınır görmediği için "hariç" biçimi hiçbir zaman
+ * eşleşmiyordu (bkz. `foldTrAscii` bloğu). Bu deseni tüketen her yer metni
+ * katlar; ikinci bir yazım listesi tutulmaz.
+ */
 export const NEGATION_TAIL =
-  /\b(olmasın|olmasin|istemiyorum|istemem|aramıyorum|aramiyorum|vazgeçtim|vazgectim|almayacağım|almayacagim|olmaz|hariç|haric|değil|degil)\b/i;
+  /\b(olmasin|istemiyorum|istemem|aramiyorum|vazgectim|almayacagim|olmaz|haric|degil)\b/i;
 
 /** Tokens that are never brand/model identity. */
 export const CONVERSATION_STOPWORDS = new Set([
@@ -160,7 +166,44 @@ export function isConversationStopword(token: string | null | undefined): boolea
  * Kural olumsuzlamanın yanına konuldu çünkü ÖLÇÜT AYNI: bahsin hemen sağındaki
  * 1–2 jeton. İkinci bir pencere kuralı yazılmadı.
  */
-const COMPARISON_TAIL = /\b(gibi|tarzı|tarzi|benzeri|benzer|misali)\b/i;
+const COMPARISON_TAIL =
+  /\b(gibi|tarzi|tarzinda|benzeri|benzer|misali)\b/i;
+
+/**
+ * JS `\b` TÜRKÇE HARFTEN SONRA SINIR GÖRMEZ — KUYRUKLAR KATLANMIŞ METİNDE
+ * ARANIR (2026-09-25, ölçümle bulundu).
+ *
+ * ÖLÇÜLEN KUSUR. `\b(...|hariç|...)\b` deseni "Bosch hariç" cümlesinde HİÇ
+ * eşleşmiyordu: JS'in `\w` sınıfı ASCII'dir, `ç` ve `ı` ona dahil değildir, bu
+ * yüzden "hariç"in sonundaki `\b` iki yanı da sözcük-dışı bir konumda arıyor ve
+ * bulamıyor. Aynı sebeple "tarzı" da hiç eşleşmiyordu. Sonuç somut:
+ *
+ *   "Buzdolabı arıyorum, Bosch hariç"        → marka Bosch, USER_EXPLICIT
+ *   "Laptop arıyorum, MacBook tarzı bir şey" → model MacBook, USER_EXPLICIT
+ *
+ * Yani olumsuzlama ve benzetme pencereleri DOĞRU YAZILMIŞ Türkçede sessizce
+ * kapalıydı; yalnız diyakritiksiz yazım ("haric", "tarzi") çalışıyordu. Bu,
+ * deponun 2026-09-23'te kapsam kapılarında kapattığı kusurun ("için bağlacı TR
+ * katlanmamış metinde aranıyordu") birebir aynı sınıfıdır.
+ *
+ * Çözüm desen listesini büyütmek değil: kuyruklar ZATEN her iki yazımı
+ * taşıyordu. Aranan metin katlanır, böylece `ç`→`c`, `ı`→`i` olur ve ASCII
+ * alternatifler eşleşir. Tek bir katlama yardımcısı kullanılır; ikinci bir
+ * olumsuzlama sözlüğü yazılmadı.
+ */
+function foldTrAscii(value: string): string {
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/ç/g, "c")
+    .replace(/ğ/g, "g")
+    .replace(/ı/g, "i")
+    .replace(/ö/g, "o")
+    .replace(/ş/g, "s")
+    .replace(/ü/g, "u")
+    .replace(/â/g, "a")
+    .replace(/î/g, "i")
+    .replace(/û/g, "u");
+}
 
 /**
  * Negation must attach to THIS mention — look mostly forward.
@@ -176,17 +219,69 @@ export function isNegatedMention(
   // A model number belongs to the following model mention: rejecting
   // PlayStation 4 must not reject the PlayStation/Sony manufacturer.
   if (/^\s+\d/.test(after)) return false;
-  const nextWords = after.trim().split(/\s+/).slice(0, 2).join(" ");
+  const nextWords = foldTrAscii(
+    after.trim().split(/\s+/).slice(0, 2).join(" "),
+  );
   if (NEGATION_TAIL.test(nextWords)) return true;
   if (COMPARISON_TAIL.test(nextWords)) return true;
-  const before = text.slice(Math.max(0, index - 12), index);
+  const before = foldTrAscii(text.slice(Math.max(0, index - 12), index));
   // "X değil Y" rejects X; the following Y is the replacement.
-  if (/\b(hariç|haric)\s*$/i.test(before)) return true;
+  if (/\bharic\s*$/i.test(before)) return true;
   return false;
 }
 
+/**
+ * Pencere de KATLANMIŞ okunur — aynı `\b` kusuru burada da vardı ve
+ * tüketicilerin bir kısmı katlanmış, bir kısmı ham metin veriyordu
+ * (`constraint-semantics` beş çağrı, yalnız biri katlıyordu). İki tüketicinin
+ * aynı metni farklı okuması bu deponun en sık kusur sınıfıdır; katlama artık
+ * kuyruğun KENDİSİNDE yapılır ve çağıran ne verirse aynı sonucu alır.
+ */
 export function isNegatedWindow(win: string): boolean {
-  return NEGATION_TAIL.test(win);
+  return NEGATION_TAIL.test(foldTrAscii(win));
+}
+
+/**
+ * BİR JETONUN METİNDEKİ HER GEÇİŞİ REDDEDİLMİŞ Mİ? (2026-09-25)
+ *
+ * NEDEN VAR. `isNegatedMention` bir KONUM alır; kanıt kapıları ise ellerinde
+ * yalnız bir JETON tutar ("Bosch", "MacBook") ve konumu kendileri bulmak
+ * zorundaydı. Bulmadılar: hem marka kanıt kapısı (`classifyBrandEvidence`) hem
+ * model kanıt kapısı (`classifyModelTokenEvidence`) katalog eşleşmesini
+ * bağlama HİÇ bakmadan kesin kanıt sayıyordu. Ölçüldü:
+ *
+ *   "Buzdolabı arıyorum, Bosch hariç"      → marka Bosch, USER_EXPLICIT
+ *   "Laptop arıyorum, MacBook tarzı bir şey" → model MacBook, USER_EXPLICIT
+ *
+ * Birincisinde kullanıcının REDDETTİĞİ marka onun beyanı sayılıyor,
+ * ikincisinde bir BENZETME beyan sayılıyor ve model sorusu hiç sorulmuyordu.
+ *
+ * İKİNCİ BİR PENCERE KURALI YAZILMADI: bu yardımcı yalnız jetonun sözcük
+ * sınırlı geçişlerini bulur ve kararı `isNegatedMention`e sorar. "Hepsi"
+ * ölçütü bilinçli: "Samsung olmasın, Samsung Galaxy olsun" cümlesinde olumlu
+ * bir geçiş varsa jeton hâlâ bir beyandır.
+ *
+ * Jeton metinde HİÇ geçmiyorsa `false` döner — o zaman değer bir ÇIKARIMDIR
+ * ve otoritesi zaten çıkarım katmanında düşüktür; burada karar verilmez.
+ */
+export function isMentionRejectedInText(
+  text: string,
+  token: string | null | undefined,
+): boolean {
+  const raw = String(text ?? "");
+  const needle = String(token ?? "").trim();
+  if (!raw || !needle) return false;
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(
+    `(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`,
+    "giu",
+  );
+  let seen = 0;
+  for (const match of raw.matchAll(pattern)) {
+    seen += 1;
+    if (!isNegatedMention(raw, match.index, match[0].length)) return false;
+  }
+  return seen > 0;
 }
 
 /** Affirmative parsing view. Preserve offsets and the original user input;
@@ -194,7 +289,17 @@ export function isNegatedWindow(win: string): boolean {
 export function withoutRejectedRequestClauses(text: string): string {
   const mask = text.split("");
   const folded = text.toLocaleLowerCase("tr-TR").replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ç/g, "c").replace(/ş/g, "s").replace(/ö/g, "o").replace(/ü/g, "u");
-  const endings = /(?<![\p{L}\p{N}])(?:degil|istemiyorum|istemem|aramiyorum|olmasin|vazgectim|almayacagim|degistirmeyecegim)(?![\p{L}\p{N}])/gu;
+  /**
+   * `haric` DE BİR REDDETME KUYRUĞUDUR (2026-09-25, ölçümle eklendi).
+   *
+   * Maske sekiz kuyruk tanıyordu ama `hariç`i tanımıyordu — oysa aynı
+   * modüldeki `NEGATION_TAIL` onu yıllardır sayıyor. Sonuç somut: "Buzdolabı
+   * arıyorum, Bosch hariç" cümlesi olumlu görünümde AYNEN kalıyor ve yayın
+   * başlığı "Buzdolabı Bosch hariç" oluyordu — tedarikçi, kullanıcının
+   * REDDETTİĞİ markayı başlıkta okuyordu. Kuyruk listesi bu yüzden aynı
+   * modülün kendi olumsuzlama kuyruğuyla hizalandı.
+   */
+  const endings = /(?<![\p{L}\p{N}])(?:degil|istemiyorum|istemem|aramiyorum|olmasin|vazgectim|almayacagim|degistirmeyecegim|haric)(?![\p{L}\p{N}])/gu;
   for (const match of folded.matchAll(endings)) {
     const prefix = folded.slice(0, match.index);
     // These are optional/ANY answers, not rejected product statements.

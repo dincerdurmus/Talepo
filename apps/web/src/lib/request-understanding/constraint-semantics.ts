@@ -100,6 +100,24 @@ const SIMILARITY_MARKERS =
 const UNCERTAINTY_MARKERS =
   /(bilmiyorum|bilmiyoruz|emin\s*değilim|emin\s*degilim|karar\s*veremedim|kararsızım|kararsizim|fikrim\s*yok)/i;
 
+/**
+ * "SÖYLEYEMEM" DE BİR BELİRSİZLİKTİR — SÖZCÜK DEĞİL, EK OKUNUR (2026-09-25).
+ *
+ * ÖLÇÜLEN KUSUR (`verify-answer-authority-traps-v1`, e-butce-10): "Masa
+ * arıyorum, 5000 TL'ye kadar diyemem henüz" cümlesinde bütçe 5.000 TL /
+ * EXPLICIT_TEXT olarak yazılıyor ve bütçe sorusu kapanıyordu. Kullanıcı tam
+ * tersini söylemişti: o rakamı SÖYLEYEMEYECEĞİNİ söylüyor.
+ *
+ * Kalıp listeye bir sözcük eklemek değildir — Türkçenin yetersizlik eki
+ * okunur: `-(y)ama- / -(y)eme-` + 1. kişi ("diyemem", "veremem", "bilemem",
+ * "söyleyemeyiz"). Bu ek zaten "yapamama" anlamının TEK taşıyıcısıdır, o
+ * yüzden yanlış pozitif riski yok: Türkçede bu ekle bitip yetersizlik
+ * anlatmayan bir çekim yok. Tek tek fiil yazmak ise yamadır ve bir sonraki
+ * fiilde yine kaçardı.
+ */
+const INABILITY_SUFFIX =
+  /\b\p{L}{2,}(?:y?ama|y?eme)(?:m|z|y[ıi]z)\b/iu;
+
 const ALTERNATIVE_QUESTION =
   /\b(mu|mü|mi|mı)\b[^.?!]{0,40}?\b(mu|mü|mi|mı)\b/i;
 
@@ -133,7 +151,11 @@ export function isHedgedExpression(text: string, span?: string): boolean {
    * MUST işareti belirsizliği geçersiz kılar ve sıra bozulmaz.
    */
   if (MUST_MARKERS.test(scope)) return false;
-  if (UNCERTAINTY_MARKERS.test(scope) || ALTERNATIVE_QUESTION.test(scope)) {
+  if (
+    UNCERTAINTY_MARKERS.test(scope) ||
+    INABILITY_SUFFIX.test(scope) ||
+    ALTERNATIVE_QUESTION.test(scope)
+  ) {
     return true;
   }
   return (
@@ -141,6 +163,43 @@ export function isHedgedExpression(text: string, span?: string): boolean {
     SIMILARITY_MARKERS.test(scope) ||
     OPTIONAL_MARKERS.test(scope) ||
     PREFERRED_MARKERS.test(scope)
+  );
+}
+
+/**
+ * YAKLAŞIKLIK BİR REDDETME DEĞİLDİR — ÇEKİNCENİN İKİ SORUSU AYRIDIR
+ * (2026-09-25, ölçümle ayrıldı).
+ *
+ * `isHedgedExpression` "bu değer kesin mi" sorusunu cevaplar ve yaklaşıklığı
+ * ("25.000 TL civarı") da çekince sayar. Bu, `select` alanları için doğrudur.
+ * BÜTÇE için değildir: bir bütçe doğası gereği yaklaşıktır ve kurucunun T9
+ * kararı "bütçem 25.000 TL civarı"yı kanonik cevap sayar. Ölçüldü: bütçe
+ * kapısına `isHedgedExpression` bağlandığında `verify-maira-answer-contract-v1`
+ * KIRMIZI verdi ("15.000 lira civarı" kanonik alana yazılmıyor) — yani geniş
+ * çekince ölçütü meşru bir bütçe beyanını siliyordu.
+ *
+ * Bu yüzden ikinci bir SORU eklendi, ikinci bir otorite değil: kullanıcı
+ * değeri REDDETTİ ya da BİLMEDİĞİNİ söyledi mi? Kalıplar aynı modülden okunur;
+ * yaklaşıklık, benzetme ve tercih işaretleri bu soruya dahil DEĞİLDİR.
+ */
+export function isRefusedValueExpression(text: string, span?: string): boolean {
+  const full = String(text ?? "");
+  if (!full) return false;
+  let scope = full;
+  if (span) {
+    const idx = full
+      .toLocaleLowerCase("tr-TR")
+      .indexOf(String(span).toLocaleLowerCase("tr-TR"));
+    if (idx >= 0) {
+      scope = full.slice(Math.max(0, idx - 28), idx + String(span).length + 28);
+    }
+  }
+  if (MUST_MARKERS.test(scope)) return false;
+  return (
+    UNCERTAINTY_MARKERS.test(scope) ||
+    INABILITY_SUFFIX.test(scope) ||
+    ALTERNATIVE_QUESTION.test(scope) ||
+    OPTIONAL_MARKERS.test(scope)
   );
 }
 

@@ -47,32 +47,35 @@ import { splitById, type Half } from "../../../qa/open-set/split";
  * raporda tek tek adlandırıldı (ilçe adının il olmadan çözülememesi, ayın
  * gününün tarih olarak çıkarılmaması).
  */
-const UNNECESSARY_QUESTION_BASELINE = { dev: 1, test: 1 };
+/* 2026-09-25 akşam: dev 1 → 0, test 1 → 0. Ölçülen sonuç sıfırdır ve mandal
+   kazanılan zemine çekildi; slack bırakmak gerilemeyi sessizleştirirdi. */
+const UNNECESSARY_QUESTION_BASELINE = { dev: 0, test: 0 };
 
 /**
- * ATLANAN SORU MANDALI — KURUCUNUN HEDEFİ 0'DIR, BUGÜN DEĞİLDİR.
+ * ATLANAN SORU MANDALI — KURUCUNUN HEDEFİ 0'DIR VE ARTIK 0'DIR.
  *
- * Bu sayı bir hedef değil, KAZANILMAMIŞ YEŞİLİN reddidir: kapı bugün sıfıra
- * inmedi ve inmiş gibi gösterilmiyor. Artarsa kırmızı verir. Kalan sınıflar
- * tek tek adlandırıldı (2026-09-25 ölçümü):
+ * 2026-09-25 akşam: dev 2 → 0, test 1 → 0 (ikisi de bu betikle ölçüldü).
+ * Mandal ölçülen sonuca çekildi; taban kadar slack bırakmak bir gerilemeyi
+ * sessizleştirirdi. Kapanan üç sınıf ve KÖKLERİ:
  *
- *  1. KATALOG ÜRÜN EŞLEŞMESİ BENZETMEYİ GÖRMÜYOR. "MacBook tarzı bir şey"
- *     cümlesinde teknoloji ürün kataloğu `MacBook`u bulup marka/modeli
- *     USER_EXPLICIT yazıyor. Benzetme belirteçleri konuşma jetonu sözlüğüne ve
- *     `isNegatedMention` penceresine eklendi; katalog eşleşmesi o pencereyi
- *     HİÇ sormuyor. Doğru düzeltme değeri silmek değil, OTORİTESİNİ düşürmek:
- *     benzetme bir ÖNERİdir (INFERRED), kullanıcı beyanı değil. Kimlik
- *     katmanı marka kesinliği (100% precision) sert kapısıyla korunuyor ve o
- *     kapı bu dilimde ölçülmeden değiştirilemedi — AYRI DİLİM.
- *  2. BÜTÇE REDDİNİ OKUMUYOR. "5000 TL'ye kadar diyemem henüz" cümlesinde
- *     rakam bütçe olarak yazılıyor; `diyemem/veremem` biçimleri olumsuzlama
- *     kuyruğunda yok ve bütçe çıkarımı olumlu görünüm maskesini okumuyor.
- *  3. "HARİÇ" MARKA REDDİNİ KAPATMIYOR (test yarısı). "Bosch hariç herhangi
- *     biri" cümlesinde marka `Bosch` olarak yazılıyor. `hariç` olumsuzlama
- *     kuyruğunda VARDIR; kusur katalog marka eşleşmesinin o pencereyi hiç
- *     sormamasıdır — 1. sınıfın aynısı, aynı düzeltmeyle kapanır.
+ *  1. KATALOG EŞLEŞMESİ BENZETMEYİ/OLUMSUZLAMAYI HİÇ SORMUYORDU. Hem marka
+ *     (`classifyBrandEvidence`) hem model (`classifyModelTokenEvidence`)
+ *     kanıt kapısı katalog gerçekliğini bağlamdan bağımsız kesin kanıt
+ *     sayıyordu. İkisi de artık `isNegatedMention` penceresini soruyor; marka
+ *     değeri SİLİNMEZ, CANDIDATE'e düşer (benzetme bir ÖNERİdir).
+ *  2. ASIL KÖK: JS `\b` TÜRKÇE HARFTEN SONRA SINIR GÖRMÜYORDU. Ölçüldü:
+ *     `\b(...|hariç|...)\b` deseni "Bosch hariç"te HİÇ eşleşmiyordu, çünkü
+ *     `ç` ASCII `\w` değildir; aynı sebeple "tarzı" da hiç eşleşmiyordu. Yani
+ *     olumsuzlama ve benzetme pencereleri DOĞRU YAZILMIŞ Türkçede sessizce
+ *     kapalıydı ve yalnız diyakritiksiz yazımda çalışıyordu. Kuyruklar artık
+ *     katlanmış metinde aranır (`ai/parser/negation`).
+ *  3. ÇEKİNCELİ RAKAM BEYAN SAYILIYORDU. "5000 TL'ye kadar diyemem henüz" →
+ *     bütçe 5.000 TL / EXPLICIT_TEXT. Besteci bütçe kapısı artık çekince
+ *     otoritesini (`isHedgedExpression`) okuyor ve o otorite Türkçenin
+ *     yetersizlik ekini (`-(y)ama-/-(y)eme-` + 1. kişi) tanıyor — tek tek fiil
+ *     listesi değil, ek okunur.
  */
-const SKIPPED_QUESTION_BASELINE = { dev: 2, test: 1 };
+const SKIPPED_QUESTION_BASELINE = { dev: 0, test: 0 };
 
 type Reading = {
   /** Alan bir DEĞER taşıyor mu? */

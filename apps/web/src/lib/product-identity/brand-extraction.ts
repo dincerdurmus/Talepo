@@ -1,5 +1,6 @@
 import {
   isConversationStopword,
+  isMentionRejectedInText,
   stripConversationRemainder,
 } from "@/lib/ai/parser/negation";
 import { findAnyCatalogBrand, findBrand, TECHNOLOGY_BRANDS, AUTOMOTIVE_BRANDS } from "@/lib/ai/parser/brand-catalog";
@@ -269,6 +270,27 @@ export function classifyBrandEvidence(
   const value = String(token ?? "").trim();
   if (!value) return { status: "NONE", reason: "empty" };
   const raw = String(rawInput ?? "");
+
+  /**
+   * 0) REDDEDİLMİŞ YA DA BENZETİLMİŞ BAHİS KESİN KANIT OLAMAZ (2026-09-25).
+   *
+   * Katalog doğrulaması bağlama HİÇ bakmıyordu. Ölçüldü: "Buzdolabı
+   * arıyorum, Bosch hariç" cümlesinde marka `Bosch` / EXPLICIT /
+   * USER_EXPLICIT doluyordu — kullanıcının REDDETTİĞİ marka onun beyanı
+   * sayılıyor, marka sorusu kapanıyor ve talep tam olarak istemediği markaya
+   * yönlenebiliyordu.
+   *
+   * DEĞER SİLİNMEZ, OTORİTESİ DÜŞER. `CANDIDATE` döndüğünde anlama katmanı
+   * değeri `attributes.brandCandidate` olarak INFERRED / 0.3 ile KORUR; soru
+   * motoru ve kürasyon onu görmeye devam eder. Benzetme bir ÖNERİdir,
+   * kullanıcı beyanı değildir.
+   *
+   * Pencere ölçütü yeni değil: `isNegatedMention` (olumsuzlama + benzetme)
+   * deponun tek yetkilisidir ve burada olduğu gibi tüketilir.
+   */
+  if (isMentionRejectedInText(raw, value)) {
+    return { status: "CANDIDATE", reason: "rejected-or-comparison-mention" };
+  }
 
   // 1) Kanonik katalog doğrulaması.
   if (catalogBrandInText(value)) {

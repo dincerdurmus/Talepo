@@ -22,6 +22,7 @@ import { findProvinceAndDistrictInText } from "@/lib/geo/turkey-districts";
 
 import {
   isHedgedExpression,
+  isRefusedValueExpression,
   type ConstraintBundle,
 } from "@/lib/request-understanding/constraint-semantics";
 
@@ -1362,13 +1363,44 @@ export function mapUnderstandingToFields(
    * açıkça kullanıcı olmasını (`USER_EXPLICIT` / `EXPLICIT`) şart koşar,
    * böylece çıkarım sızıntısı sıfır kalır (KB-17).
    */
+  /**
+   * ÇEKİNCELİ RAKAM BEYAN DEĞİLDİR (2026-09-25, ölçümle eklendi).
+   *
+   * Bu kapı "açık beyan" ile "çıkarım"ı ayırıyordu ama ÜÇÜNCÜ hâli hiç
+   * sormuyordu: kullanıcı rakamı yazıp onu REDDEDİYOR olabilir. Ölçüldü
+   * (`verify-answer-authority-traps-v1`, e-butce-10): "Masa arıyorum, 5000
+   * TL'ye kadar diyemem henüz" cümlesinde bütçe 5.000 TL / EXPLICIT_TEXT
+   * yazılıyor ve bütçe sorusu KAPANIYORDU — oysa cümle tam tersini söylüyor.
+   *
+   * ÖLÇÜT DAR SEÇİLDİ VE BU SINIR ÖLÇÜMLE ÇİZİLDİ. İlk denemede geniş çekince
+   * ölçütü (`isHedgedExpression`) bağlandı ve `verify-maira-answer-contract-v1`
+   * KIRMIZI verdi: "Buzdolabı arıyorum, 15.000 lira civarı" kanonik alana
+   * yazılmıyordu. YAKLAŞIKLIK BİR REDDETME DEĞİLDİR — bir bütçe doğası gereği
+   * yaklaşıktır ve kurucunun T9 kararı "civarı"yı kanonik cevap sayar. Bu
+   * yüzden aynı otoriteye DAR soru soruluyor (`isRefusedValueExpression`:
+   * belirsizlik, yetersizlik eki, seçenekli soru, isteğe bağlılık). Span
+   * olarak kullanıcının yazdığı rakam verilir, böylece cümlenin BAŞKA bir
+   * yerindeki çekince bütçeyi zayıflatmaz.
+   */
   const budgetSignal = result.budget;
+  const budgetSpanInText = (() => {
+    const max = budgetSignal?.value?.max ?? budgetSignal?.value?.min ?? null;
+    if (max == null) return null;
+    const plain = String(max);
+    if (raw.includes(plain)) return plain;
+    const grouped = plain.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return raw.includes(grouped) ? grouped : null;
+  })();
+  const budgetIsRefused = budgetSpanInText
+    ? isRefusedValueExpression(raw, budgetSpanInText)
+    : false;
   if (
     budgetSignal?.value &&
     (budgetSignal.source === "USER_EXPLICIT" ||
       budgetSignal.provenance === "EXPLICIT") &&
     (budgetSignal.value.max != null || budgetSignal.value.min != null) &&
     (!withAny.budget || withAny.budget.kind === "UNKNOWN") &&
+    !budgetIsRefused &&
     budgetLooksLikeMoneyInText(raw)
   ) {
     const display = budgetDisplayFromUnderstanding(result);
