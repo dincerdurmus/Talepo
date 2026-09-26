@@ -28,7 +28,13 @@ import { join } from "node:path";
 import {
   findProvinceAndDistrictInText,
   textMentionsPlace,
+  TURKEY_PROVINCES,
 } from "../src/lib/geo/turkey-districts";
+import {
+  acceptedSemtCount,
+  CURATED_SEMT_INPUT,
+  rejectedSemtRows,
+} from "../src/lib/geo/well-known-semt";
 import { syncFromText } from "../src/lib/request-composer";
 
 type Case = {
@@ -89,6 +95,126 @@ const CASES: readonly Case[] = [
     input: "İzmir'de satılık arsa arıyorum",
     expected: "İzmir",
     why: "yalnız il — ilçe kuralı il adını daraltmaz",
+  },
+
+  /* ═════════════════════════════════════════════════════════════════════
+     2026-09-25 EKİ — YAZILI KONUM SORULMAZ (D-0030) VE SEMT ADI DA BİR
+     CEVAPTIR.
+
+     ÖLÇÜLEN KUSUR. Kurucunun cümlesi: "1000 adet kartvizit, mat selefonlu,
+     Topkapı". Konum metinde AÇIKÇA yazılı ama sistem hiçbir şey çözmüyordu
+     (ölçüldü: `matcher=- city=-`) ve konum publish kapısında soruluyordu.
+     İki eksik: çıplak ad yalnız hâl eki/idari birim sözcüğüyle kanıt
+     sayılıyordu (kendi başına bir virgül bölümü olmak da yer bildirir) ve
+     semt adları hiç bilinmiyordu.
+
+     KÜTÜKTEN TÜRETME ÖLÇÜLDÜ VE REDDEDİLDİ. "Tek anlamlı çözülen semt adı
+     cevaptır" kuralı kanonik mahalle kütüğü üzerinde 15 tanınan semtte
+     3 doğru · 2 SESSİZCE YANLIŞ İL (Nişantaşı→Erzurum, Taksim→Erzincan) ·
+     10 belirsiz verdi. Gerekçe `well-known-semt.ts` başında; kürasyonlu
+     liste bu yüzden var ve kürasyonlu olarak etiketli.
+     ═════════════════════════════════════════════════════════════════════ */
+  {
+    input: "1000 adet kartvizit, mat selefonlu, Topkapı",
+    expected: "İstanbul / Fatih",
+    why: "kurucunun vakası: ad kendi başına bir bölüm ve özel ad biçiminde",
+  },
+  {
+    input: "1000 adet kartvizit istiyorum, mat selefonlu, Topkapı'da",
+    expected: "İstanbul / Fatih",
+    why: "kesme işaretli hâl eki — semt adında da kanıt",
+  },
+  {
+    input: "Topkapı'da matbaa arıyorum",
+    expected: "İstanbul / Fatih",
+    why: "ilk sözcük olsa bile kesme işaretli ek kanıttır",
+  },
+  {
+    input: "Topkapı semtinde matbaa arıyorum",
+    expected: "İstanbul / Fatih",
+    why: "komşu idari birim sözcüğü semt adında da geçerli",
+  },
+  {
+    input: "Buzdolabı arıyorum, Nişantaşı",
+    expected: "İstanbul / Şişli",
+    why: "kütük kuralı burada Erzurum diyordu; kürasyon doğru ilçeyi verir",
+  },
+  {
+    input: "Kartvizit bastırmak istiyorum, Bostancı'da",
+    expected: "İstanbul / Kadıköy",
+    why: "kütükte 5 ilçede geçiyor — kütük kuralı çözemezdi",
+  },
+  {
+    input: "Mobilya arıyorum, Siteler",
+    expected: "Ankara / Altındağ",
+    why: "Talepo için gerçek bir semt: mobilya imalat bölgesi",
+  },
+  {
+    input: "Ofis kirası için Levent'te yer arıyorum",
+    expected: "İstanbul / Beşiktaş",
+    why: "cümle ortasında kesme işaretli ek",
+  },
+  {
+    input: "Klima montajı yaptırmak istiyorum, Kızılay",
+    expected: "Ankara / Çankaya",
+    why: "Ankara semti, son bölüm",
+  },
+  {
+    input: "Broşür baskısı istiyorum, Alsancak",
+    expected: "İzmir / Konak",
+    why: "İzmir semti, son bölüm",
+  },
+  {
+    input: "Buzdolabı arıyorum, Kadıköy",
+    expected: "İstanbul / Kadıköy",
+    why: "İLÇE adı da kendi başına bir bölüm olduğunda kanıttır",
+  },
+  {
+    input: "Tabela yaptırmak istiyorum, İstanbul, Topkapı",
+    expected: "İstanbul / Fatih",
+    why: "il yazılıysa semt ilçeyi TAMAMLAR",
+  },
+  {
+    input: "Ankara'da yer arıyorum, Topkapı",
+    expected: "Ankara",
+    why: "kullanıcının yazdığı il ezilmez; başka ilin semti yok sayılır",
+  },
+
+  /* --- YENİ KURALIN YANLIŞ POZİTİF KONTROLLERİ --- */
+  {
+    input: "Uçak bileti arıyorum",
+    expected: null,
+    why: "'uçak' kütükte tek anlamlı bir mahalle adıdır (Adana/Seyhan) — kürasyonlu listede yok, kanıt da yok",
+  },
+  {
+    input: "Kapıda ödeme ile buzdolabı arıyorum",
+    expected: null,
+    why: "cümle başı büyük harfi özel ad bilgisi taşımaz; 'kapı' Adana'ya çözülemez",
+  },
+  {
+    input: "Ödeme kapıda olsun, buzdolabı arıyorum",
+    expected: null,
+    why: "küçük harfli ek kanıt değildir",
+  },
+  {
+    input: "Buzdolabı arıyorum, parlak",
+    expected: null,
+    why: "nitelik sözcüğü kendi bölümünde ama küçük harfli — kütük kuralı İzmir/Karaburun diyordu",
+  },
+  {
+    input: "Perde arıyorum, ince",
+    expected: null,
+    why: "aynı sınıf — kütük kuralı Adıyaman/Besni diyordu",
+  },
+  {
+    input: "Otomobil arıyorum, araç",
+    expected: null,
+    why: "ilçe adı küçük harfli bölümde — özel ad biçimi yok",
+  },
+  {
+    input: "1000 ADET KARTVİZİT, MAT SELEFONLU, TOPKAPI",
+    expected: null,
+    why: "tamamı büyük harf metinde büyük harf hiçbir şey ayırt etmez; bu bir KAYIP, belgelendi",
   },
 ];
 
@@ -175,6 +301,57 @@ function main(): void {
     true,
     "textMentionsPlace temel davranışı korunmalı",
   );
+
+  /* ---- (5) KÜRASYONLU SEMT LİSTESİ KANONİK YETKİYLE ÇELİŞMİYOR ---- */
+  /**
+   * Kürasyon yalnız "bu semt adı günlük kullanımda hangi ilçeyi kastediyor"
+   * bilgisini katar; il ve ilçe ADLARI kanonik yetkiden doğrulanır. Bir satır
+   * yanlış yazılırsa ya da kanonik veri değişirse satır sessizce yanlış konum
+   * üretmez, reddedilir — ve bu satır o reddi GÖRÜNÜR yapar.
+   */
+  console.log("\n--- kürasyonlu semt listesi ---");
+  console.log(
+    `  ham satır ${CURATED_SEMT_INPUT.length} · kabul ${acceptedSemtCount()} · ` +
+      `red ${rejectedSemtRows().length}`,
+  );
+  for (const { row, why } of rejectedSemtRows()) {
+    problems.push(
+      `kürasyonlu semt satırı reddedildi: ${row.semt} → ${row.il}/${row.ilce} — ${why}`,
+    );
+  }
+
+  /* ---- (6) MUTASYON KONTROLÜ — KAPI KALDIRILSA KAÇ VAKA SIZAR ---- */
+  /**
+   * Kapı "ad metinde geçiyor mu" seviyesine indirilse ne olurdu? Ölçüm bir
+   * karar KOPYASI kurmaz; deponun kendi `textMentionsPlace` fonksiyonunu
+   * (yani kanıt kapısı OLMADAN eşleşme) yanlış-pozitif kontrol satırlarında
+   * koşar. Bu sayı 0 çıkarsa kontrol satırları kapıyı hiç zorlamıyor demektir
+   * ve doğrulayıcı kendi kendini aklıyor olur.
+   */
+  const negatives = CASES.filter((c) => c.expected === null);
+  let wouldLeak = 0;
+  const leakNames: string[] = [];
+  for (const c of negatives) {
+    for (const prov of TURKEY_PROVINCES) {
+      const names = [prov.il, ...prov.ilceler];
+      const hit = names.find((n) => textMentionsPlace(c.input, n));
+      if (hit) {
+        wouldLeak += 1;
+        leakNames.push(`${JSON.stringify(c.input)} → ${hit}`);
+        break;
+      }
+    }
+  }
+  console.log("\n--- mutasyon kontrolü (kanıt kapısı kaldırılsa) ---");
+  console.log(`  yanlış pozitif kontrol satırı ${negatives.length}`);
+  console.log(`  kapı olmasa konum üretecek satır ${wouldLeak}`);
+  for (const l of leakNames) console.log(`    ${l}`);
+  if (wouldLeak === 0) {
+    problems.push(
+      "mutasyon kontrolü boş: hiçbir yanlış-pozitif satırı kapıyı zorlamıyor — " +
+        "kapının kırmızı verebildiği kanıtlanamadı",
+    );
+  }
 
   console.log("\n===== HUKUM =====");
   if (problems.length) {
