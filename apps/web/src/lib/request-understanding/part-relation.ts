@@ -47,6 +47,7 @@ import { categoryOwnsServiceLeaves } from "@/lib/taxonomy";
 import type { RequestedTargetRole, RequestedTargetRoleVerdict } from "./requested-item-role";
 import { classifyNumbers } from "./number-role";
 import { foldTr } from "./tr-fold";
+import { withinOneEdit } from "./pharmacy-scope-gate";
 
 /** Uyumluluk bağlacı — kelime sınırında. */
 const CONNECTIVE_RE = /(?:^|[^\p{L}\p{N}])(?:için|icin)(?=[^\p{L}\p{N}]|$)/iu;
@@ -579,6 +580,39 @@ function domainFromSpan(span: string): RelationDomainEvidence | null {
  * (`classifyRequestedTargetRole`) sorulur ve yalnız `provenance` okunur —
  * "çözüldü mü" sorusu "hangi rol" sorusundan ayrıdır.
  */
+/** Türkçe iyelik/belirtme eki — "makinesi" → "makine", "pompası" → "pompa". */
+const POSSESSIVE_TAIL_RE = /(?:s[iı]n[iı]?|s[iı]|n[iı]n|[iı])$/u;
+
+function stemPossessive(word: string): string {
+  const stripped = word.replace(POSSESSIVE_TAIL_RE, "");
+  return stripped.length >= 4 ? stripped : word;
+}
+
+/**
+ * Kanonik adın iz DIŞINDA kalan sözcükleri metinde yaklaşık olarak geçiyor mu?
+ * Ölçüt `withinOneEdit`tir (deponun tek yetkili "bir harf hatası" tanımı);
+ * burada yalnız TÜKETİLİR, genişletilmez.
+ */
+function canonicalNameApproximatelyInText(
+  text: string,
+  canonicalName: string,
+  span: string,
+): boolean {
+  const fold = (value: string) =>
+    foldTr(value)
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .trim();
+  const spanWords = new Set(fold(span).split(" ").filter(Boolean));
+  const needed = fold(canonicalName)
+    .split(" ")
+    .filter(Boolean)
+    .map(stemPossessive)
+    .filter((w) => w.length >= 5 && !spanWords.has(w));
+  if (!needed.length) return false;
+  const textWords = fold(text).split(" ").filter(Boolean).map(stemPossessive);
+  return needed.every((w) => textWords.some((t) => withinOneEdit(t, w)));
+}
+
 function partBearingSpanNamesTheRequest(
   text: string,
   evidence: RelationDomainEvidence,
@@ -601,6 +635,29 @@ function partBearingSpanNamesTheRequest(
   const foldPhrase = (value: string) =>
     foldTr(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
   if (foldPhrase(bearing.node.canonicalName) === foldPhrase(evidence.span)) {
+    return true;
+  }
+  /**
+   * KANONİK AD BİR HARF HATASIYLA DA GEÇİYOR SAYILIR (ölçümle eklendi,
+   * 2026-09-25 akşam).
+   *
+   * Eşitlik denetimi fazla sertti ve GERÇEK bir gerileme ölçüldü
+   * (`verify-category-edit-scenarios-v1`, context-11): "camasir makinasi
+   * ariyorum" — Türkçede tamamen sıradan bir yazım ("makina" ~ "makine",
+   * diyakritiksiz klavye) — kanonik "Çamaşır Makinesi" adına eşit olmadığı
+   * için belirsiz sayılıyor, geriye yalnız eksiltili `çamaşır` alias'ı kalıyor
+   * ve talep beyaz eşyadan MAKİNE kategorisine kayıyordu. Çamaşır makinesi
+   * arayan kullanıcı iş makinesi satıcısına gidiyordu.
+   *
+   * Ölçüt yeni değil: deponun tek yetkili "bir harf hatası" tanımı
+   * `withinOneEdit`tir ve burada olduğu gibi kullanılır — tolerans
+   * genişletilmedi, ikinci bir tanım yazılmadı. Sorulan soru dar: kanonik adın
+   * İZ DIŞINDA kalan sözcükleri metinde (iyelik eki düşülerek) yaklaşık olarak
+   * var mı? Varsa belirsizlik yoktur, kanıt durur. "Çamaşır deterjanı"nda
+   * `makine` sözcüğünün hiçbir yaklaşık karşılığı yoktur, o yüzden kural
+   * orada aynen işler.
+   */
+  if (canonicalNameApproximatelyInText(text, bearing.node.canonicalName, evidence.span)) {
     return true;
   }
   const requested = readRequestedTarget(text).value?.trim();

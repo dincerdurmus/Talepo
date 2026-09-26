@@ -117,30 +117,27 @@ const FALSE_ALARM_TOLERANCE_PCT = 3;
  *
  * ÖNCE / SONRA — aynı betikle ölçüldü (60 taban × 14 dönüşüm = 840 vaka):
  *   yanlış EMİN iddia .......... 322 → 0
- *   kontrol kaybı ...............  36 → 39
+ *   kontrol kaybı ...............  36 → 36
  *
  * KAPI 5 (yanlış emin iddia) 0'DIR. Kurucunun ana metriği budur ve bir
  * holdout'ta "taban kadarına izin ver" demek sınavı hükümsüz kılar.
  *
- * KAPI 6 (kontrol kaybı) 39'DUR VE BU BİR KAYIPTIR — süslenmedi. Taban 36'ydı;
- * düzeltme ÜÇ vaka EKLEDİ ve üçü de aynı sınıftır: yazım-hatası dönüşümü
- * kanonik adı bozunca ("Çamaşır amkinesi", "Bulaşık mkainesi") geriye yalnız
- * EKSİLTİLİ alias (`çamaşır`, `bulaşık`) kalıyor, yeni kural onu niteleyici
- * konumda kanıt saymıyor ve talep kategorisiz kalıyor. Eskiden bu cümleleri
- * KURTARAN şey, tam olarak kusurun kendisiydi: alias'ın her konumda kanıt
- * sayılması. Yani kaybedilen şey bir yetenek değil, bir KAZA idi — ama bir
- * kullanıcı için sonuç yine de "kategorim boş kaldı"dır, o yüzden sayıyla
- * tutuluyor. Kapatmanın yolu yaklaşık eşleşmeyi harf TRANSPOZİSYONUNA açmaktır;
- * bu deponun tek yetkili "bir harf hatası" ölçütü (`withinOneEdit`) bir GÜVENLİK
- * kapısını da (D-0028 eczane) besliyor ve onu bu dilimde genişletmek ayrı bir
- * karardır. AÇIK İŞ.
+ * KAPI 6 (kontrol kaybı) TABANDA KALDI — AMA ARA BİR ÖLÇÜMDE 39'A ÇIKMIŞTI VE
+ * O ÜÇ VAKA SÜSLENEREK KAPATILMADI. Ara durumda eksiltili alias kuralı fazla
+ * sertti: yazım-hatası dönüşümü kanonik adı bozunca ("Çamaşır amkinesi")
+ * geriye yalnız `çamaşır` alias'ı kalıyor ve kural onu niteleyici konumda
+ * kanıt saymıyordu. Aynı sertlik gerçek bir gerilemeye de yol açtı
+ * (`verify-category-edit-scenarios-v1` context-11: "camasir makinasi
+ * ariyorum" → machinery). Kök çözüm kanonik ad denetimini deponun tek yetkili
+ * "bir harf hatası" ölçütüne (`withinOneEdit`) bağlamak oldu — tolerans
+ * genişletilmedi, var olan ölçüt tüketildi. Sonuç 39 → 36.
  *
- * Taban 36'nın kendisi de bu dilimin konusu değildir: çoğu kontrol satırının
+ * Taban 36'nın kendisi bu dilimin konusu değildir: çoğu kontrol satırının
  * TENTATIVE kalması ya da yanlış kök seçmesi ("Buzdolabı kompresörü" →
  * machinery) daha önce de böyleydi ve ayrı eksendir.
  */
 export const F_WRONG_CLAIM_BASELINE = 0;
-export const F_CONTROL_LOSS_BASELINE = 39;
+export const F_CONTROL_LOSS_BASELINE = 36;
 
 /* ------------------------------------------------------------------ */
 /* ÖLÇÜM                                                               */
