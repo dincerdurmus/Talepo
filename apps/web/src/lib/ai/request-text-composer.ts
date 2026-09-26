@@ -1,6 +1,9 @@
 import { resolveFieldOptionLabel } from "@/lib/field-display";
 import type { DynamicField } from "@/lib/request-category-engine";
 import { normalizeCasualTurkish } from "@/lib/ai/parser/normalize-casual-tr";
+import { withoutRejectedRequestClauses } from "@/lib/ai/parser/negation";
+import { findPlaceEvidenceInText } from "@/lib/geo/turkey-districts";
+import { composeRequestCardTitle } from "@/lib/request-composer/v2/request-card-model";
 
 type CommonDraft = {
   title?: string;
@@ -196,7 +199,38 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
     return capitalizeTurkish(firstDetail);
   }
 
+  /**
+   * KART BAŞLIĞI İLE YAYIN BAŞLIĞI TEK KAYNAKTAN GELİR (2026-09-25).
+   *
+   * ÖLÇÜLEN KUSUR. Kart "Arçelik buzdolabı" gösterirken tedarikçinin gördüğü
+   * yayın başlığı "Arçelik buzdolabı Kadıköy" oluyordu: ham metinden türetilen
+   * kısa başlık cümlenin ilk altı sözcüğünü alıyor ve KONUM da o altıya
+   * giriyordu. İki yüzeyin farklı başlık göstermesi, kullanıcının onayladığı
+   * şeyin yayınlanandan farklı olması demektir.
+   *
+   * Marka + ürün türü biliniyorsa kısa ad deponun TEK yetkili kısa başlık
+   * fonksiyonundan (`composeRequestCardTitle`) okunur — ikinci bir birleştirme
+   * kuralı yazılmadı; kart o fonksiyonu zaten kullanıyor. Bilinmiyorsa ham
+   * metin yedeği devreye girer ve o yedek artık konumu ve reddedilmiş
+   * cümleleri dışarıda bırakır.
+   */
+  const shortBrand = values.brand?.trim() || values.brandPreference?.trim() || "";
+  const shortProduct =
+    values.productType?.trim() ||
+    values.applianceType?.trim() ||
+    values.babyProductType?.trim() ||
+    values.kitchenProductType?.trim() ||
+    values.healthProductType?.trim() ||
+    values.productName?.trim() ||
+    "";
   const fromRaw = deriveShortTitleFromRawText(input.rawText);
+  if (shortProduct) {
+    return composeRequestCardTitle({
+      brand: shortBrand || null,
+      productType: shortProduct,
+      fallbackTitle: fromRaw ?? "Yeni talep",
+    });
+  }
   if (fromRaw) return fromRaw;
 
   return "Yeni talep";
@@ -549,8 +583,37 @@ function composeRealEstateShortTitle(
 }
 
 function deriveShortTitleFromRawText(rawText: string): string | undefined {
+  /**
+   * KONUM VE REDDEDİLMİŞ CÜMLE BAŞLIĞA GİRMEZ (2026-09-25).
+   *
+   * Ölçüldü: "Arçelik buzdolabı arıyorum, Kadıköy" → "Arçelik buzdolabı
+   * Kadıköy" ve "Buzdolabı arıyorum, Bosch hariç" → "Buzdolabı Bosch hariç".
+   * Birincisinde konum başlığı kirletiyor (konum kendi alanında zaten var),
+   * ikincisinde kullanıcının REDDETTİĞİ marka başlıkta duruyor — tedarikçi
+   * tam tersini okuyor.
+   *
+   * İki yetki de mevcut: reddedilmiş cümleleri düşüren tek maske
+   * (`withoutRejectedRequestClauses`) ve konumun tek yetkili okuyucusu
+   * (`findProvinceAndDistrictInText`). Yeni bir liste yazılmadı; çözülen yer
+   * adı (il, ilçe ve varsa semt) metinden çıkarılır.
+   */
+  const affirmative = withoutRejectedRequestClauses(String(rawText ?? ""));
+  const place = findPlaceEvidenceInText(affirmative);
+  let withoutPlace = affirmative;
+  for (const name of [place?.mahalle, place?.ilce, place?.il]) {
+    const value = name?.trim();
+    if (!value) continue;
+    const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    withoutPlace = withoutPlace.replace(
+      new RegExp(
+        `(?<![\\p{L}\\p{N}])${escaped}(?:['’]?(?:da|de|ta|te|dan|den|tan|ten))?(?![\\p{L}\\p{N}])`,
+        "giu",
+      ),
+      " ",
+    );
+  }
   // Always normalize first so slang openers never become the title.
-  const cleaned = normalizeCasualTurkish(rawText)
+  const cleaned = normalizeCasualTurkish(withoutPlace)
     .replace(
       /\b(ben|ne|arıyorum|ariyorum|arıyom|ariyom|arıyorm|lazım|lazim|lazm|istiyorum|istiyom|istiyorm|olsun|lütfen|lutfen|teşekkürler|tesekkurler|acil|uygun|fiyatlı|fiyatli|temiz|durumda|iyi|bütçeye|butceye)\b/gi,
       " ",

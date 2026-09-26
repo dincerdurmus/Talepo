@@ -35,6 +35,7 @@ import {
   composeRequestCardTitle,
 } from "../src/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "../src/lib/request/publish-result-status";
+import { composeRequestTitle } from "../src/lib/ai/request-text-composer";
 
 const ROOT = join(__dirname, "..");
 const read = (p: string) =>
@@ -474,6 +475,65 @@ console.log("B3) Kart başlığı kısadır — marka + ürün");
       productType: "   ",
       fallbackTitle: LONG,
     }) === LONG,
+  );
+}
+
+/* ------------------------------------------------------------------ */
+console.log("B4) Yayın başlığı ile kart başlığı AYNI kaynaktan gelir");
+
+/**
+ * NEDEN BU BÖLÜM VAR (2026-09-25 akşam). B3 yalnız kart yüzeyini ölçüyordu;
+ * TEDARİKÇİNİN gördüğü yayın başlığını `composeRequestTitle` üretiyor ve ikisi
+ * ayrışıyordu. Ölçüldü: "Arçelik buzdolabı arıyorum, Kadıköy" cümlesinde kart
+ * "Arçelik buzdolabı" gösterirken yayın başlığı "Arçelik buzdolabı Kadıköy"
+ * oluyordu — ham metin yedeği ilk altı sözcüğü alıyor ve KONUM da o altıya
+ * giriyordu. "Buzdolabı arıyorum, Bosch hariç" ise "Buzdolabı Bosch hariç"
+ * üretiyordu: kullanıcının REDDETTİĞİ marka başlıkta duruyordu.
+ *
+ * Kullanıcının kartta onayladığı başlık ile yayınlanan başlığın farklı olması
+ * bir görünüm kusuru değil, onayın geçersizleşmesidir.
+ */
+{
+  const titleOf = (rawText: string, values: Record<string, string> = {}) =>
+    composeRequestTitle({
+      categoryId: "",
+      rawText,
+      attributes: values,
+      fieldValues: values,
+    });
+
+  ok(
+    "konum yayın başlığına girmez",
+    titleOf("Arçelik buzdolabı arıyorum, Kadıköy") === "Arçelik buzdolabı",
+    titleOf("Arçelik buzdolabı arıyorum, Kadıköy"),
+  );
+  ok(
+    "semt adı da yayın başlığına girmez",
+    !/Topkapı/i.test(titleOf("Kartvizit arıyorum, Topkapı")),
+    titleOf("Kartvizit arıyorum, Topkapı"),
+  );
+  ok(
+    "reddedilen marka yayın başlığına girmez",
+    !/Bosch/i.test(titleOf("Buzdolabı arıyorum, Bosch hariç")),
+    titleOf("Buzdolabı arıyorum, Bosch hariç"),
+  );
+  /* Marka + ürün biliniyorsa iki yüzey BİREBİR aynı dizeyi verir. */
+  const values = { brand: "Arçelik", productType: "Buzdolabı" };
+  ok(
+    "marka + ürün biliniyorsa iki başlık birebir aynıdır",
+    titleOf("Arçelik buzdolabı arıyorum, Kadıköy", values) ===
+      composeRequestCardTitle({
+        brand: "Arçelik",
+        productType: "Buzdolabı",
+        fallbackTitle: "Arçelik buzdolabı arıyorum, Kadıköy",
+      }),
+    titleOf("Arçelik buzdolabı arıyorum, Kadıköy", values),
+  );
+  /* MUTASYON: hiçbir yapı yoksa başlık uydurulmaz. */
+  ok(
+    "mutasyon: boş metin başlık uydurmaz",
+    titleOf("   ") === "Yeni talep",
+    titleOf("   "),
   );
 }
 
