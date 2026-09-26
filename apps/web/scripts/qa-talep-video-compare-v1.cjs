@@ -10,8 +10,8 @@
  * o sütun ölçülmemiş olduğunu ve nedenini yazan bir not olarak çizilir.
  *
  * Koşum:  node scripts/qa-talep-video-compare-v1.cjs
- * Girdi:  referans klasörü + `TALEP_QA_OUT` (varsayılan sonuc4)
- * Çıktı:  <sonuc4>/karsilastirma.png
+ * Girdi:  referans klasörü + `TALEP_QA_OUT` (varsayılan sonuc5)
+ * Çıktı:  <sonuc5>/karsilastirma.png
  */
 const fs = require("fs");
 const path = require("path");
@@ -22,7 +22,7 @@ const REF =
   "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-video-ref-2026-09-25";
 const OUT =
   process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc4";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc5";
 
 /**
  * SÜTUNLAR. Ürün karesi, videodaki AYNI anı gösteren kareden seçilir; emlak

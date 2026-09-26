@@ -13,7 +13,9 @@
  */
 
 import dynamic from "next/dynamic";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+import { EASE_REVEAL, REVEAL_MS } from "@/lib/motion/talep-motion";
 
 const MairaContourScene = dynamic(
   () => import("../maira/MairaContourScene").then((m) => m.MairaContourScene),
@@ -60,6 +62,28 @@ export function MairaFace({
   const [sceneReady, setSceneReady] = useState(false);
   const handleReady = useCallback((ready: boolean) => setSceneReady(ready), []);
 
+  /**
+   * YÜZ İLK EKRANDA GÖRÜNÜR (kurucu, 2026-09-26).
+   *
+   * ÖLÇÜLEN KUSUR. Telefonda başlangıç karesinde yüz yerine halka yer tutucusu
+   * duruyordu; ilk çizim ortalama 1435 ms sürüyordu (ısınmış sunucu, 3 koşum:
+   * 1836 / 1214 / 1256 ms). Sebep tembel yükleme değil, SERİ yükleme zinciriydi:
+   * hydration → `MairaContourScene` parçası (≈500 ms) → parçanın İÇİNDEN
+   * `contour-scene` (three.js) içe aktarımı → model indirmesi → ilk kare.
+   * İkinci halka birincisi bitmeden hiç başlamıyordu.
+   *
+   * ÇÖZÜM: ağır parça, yüz DOM'a girdiği anda paralel olarak ısıtılır. Karar
+   * değişmez — sahne yine yalnız `MairaContourScene` kendi yetenek kapılarını
+   * (WebGL2, reduced-motion, model adresi) geçerse kurulur; burada yalnız
+   * indirme erkene alınır. Model adresi bu dosyada OKUNMAZ; tek yetkili
+   * hâlâ sahne bileşenidir.
+   */
+  useEffect(() => {
+    if (!scene) return;
+    void import("../maira/MairaContourScene");
+    void import("@/lib/maira/contour-scene");
+  }, [scene]);
+
   return (
     <span
       aria-hidden
@@ -87,9 +111,16 @@ export function MairaFace({
       */}
       <svg
         viewBox="0 0 100 100"
-        className={`absolute inset-0 h-full w-full transition-opacity duration-700 ${
-          sceneReady ? "opacity-0" : "opacity-100"
-        }`}
+        /*
+          YER TUTUCU NAZİK SÖNER. Çapraz geçiş süresi sahnenin belirme
+          süresiyle AYNI tablodan okunur; iki katman birbirini iterken
+          kırpışma olmaz.
+        */
+        style={{
+          opacity: sceneReady ? 0 : 1,
+          transition: `opacity ${REVEAL_MS}ms ${EASE_REVEAL}`,
+        }}
+        className="absolute inset-0 h-full w-full"
         fill="none"
       >
         {[0, 1, 2, 3, 4].map((ring) => (

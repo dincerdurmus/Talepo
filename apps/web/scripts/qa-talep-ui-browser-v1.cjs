@@ -26,8 +26,9 @@ const { launch, connect } = require("./lib/qa-cdp-v1.cjs");
 const { decodePng, inkBounds } = require("./lib/qa-png-v1.cjs");
 
 const BASE = process.env.TALEP_QA_URL || "http://localhost:3211";
+/* Her turun kareleri kendi klasörüne yazılır; öncekiler ezilmez. */
 const OUT = process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc4";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc5";
 
 const results = [];
 const shots = [];
@@ -48,12 +49,16 @@ async function main() {
   await browser.send("Runtime.enable", {}, S);
   await browser.send("Network.enable", {}, S);
 
-  const setViewport = (width, height = 900) =>
-    browser.send(
+  /** Son uygulanan görüntü alanı — kare alırken geçici olarak uzatılır. */
+  let viewport = { width: 390, height: 844 };
+  const setViewport = (width, height = 900) => {
+    viewport = { width, height };
+    return browser.send(
       "Emulation.setDeviceMetricsOverride",
       { width, height, deviceScaleFactor: 2, mobile: width < 768 },
       S,
     );
+  };
 
   const evaluate = async (expr) => {
     const r = await browser.send(
@@ -81,6 +86,8 @@ async function main() {
    * kaydedilmeden önce okunur.
    */
   let lastDocStatus = null;
+  /** Son gezinmenin başladığı an — yüz ölçümü buradan sayılır. */
+  let lastNavAt = 0;
   browser.listeners.push((m) => {
     if (
       m.method === "Network.responseReceived" &&
@@ -92,6 +99,7 @@ async function main() {
 
   const goto = async (url) => {
     lastDocStatus = null;
+    lastNavAt = Date.now();
     const loaded = browser.once((m) => m.method === "Page.loadEventFired" && m.sessionId === S);
     await browser.send("Page.navigate", { url }, S);
     await loaded;
@@ -169,8 +177,50 @@ async function main() {
       },
       S,
     );
-    const ink = inkBounds(decodePng(Buffer.from(data, "base64")));
-    return { box, ink };
+    const png = decodePng(Buffer.from(data, "base64"));
+    const ink = inkBounds(png);
+    /*
+      İKİ EŞİK, TEK KADRAJ (2026-09-26). Telefonda sahne kurucunun koyduğu
+      KALİTE kapısı gereği `maxPixelRatio: 1` ile çizilir; kontur çizgilerinin
+      soluk uçları 34 eşiğini geçmez ve kadraj olduğundan kısa ölçülür. Aynı
+      kare 12 eşiğiyle masaüstüyle aynı oranı verir — yani fark kadrajda
+      değil, piksel oranında. Sert eşik raporlanmaya devam eder; kadraj kapısı
+      yumuşak eşikten okunur.
+    */
+    const inkSoft = inkBounds(png, 12);
+    return { box, ink, inkSoft };
+  };
+
+  /**
+   * YÜZ İLK EKRANDA GÖRÜNÜR — SABİT BEKLEME İLE KANITLANMAZ (2026-09-26).
+   *
+   * Önceki turda başlangıç karesi (`sonuc4/m-1-baslangic.png`) yüz yerine
+   * halka yer tutucusunu gösteriyordu: kare, sahne tam opaklığa ulaşmadan
+   * çekiliyordu. Artık sahnenin gerçekten çizdiği (dataset.framing) ve tam
+   * opak olduğu YOKLANIR; geçen süre kareye etiket olarak yazılır.
+   */
+  const waitForFace = async (budgetMs = 6000) => {
+    let last = null;
+    for (;;) {
+      last = await evaluate(`(() => {
+        const c = document.querySelector('[data-testid="maira-contour-canvas"]');
+        if (!c) return { canvas: false };
+        return {
+          canvas: true,
+          framing: c.dataset.framing || null,
+          opacity: Number(getComputedStyle(c).opacity),
+          ringOpacity: Number(
+            getComputedStyle(document.querySelector('[data-testid="maira-face"] svg')).opacity,
+          ),
+        };
+      })()`);
+      const elapsed = Date.now() - lastNavAt;
+      if (last?.canvas && last.framing && last.opacity >= 0.99) {
+        return { ...last, ms: elapsed, drawn: true };
+      }
+      if (elapsed > budgetMs) return { ...last, ms: elapsed, drawn: false };
+      await sleep(80);
+    }
   };
 
   const shot = async (name, label, measured) => {
@@ -193,9 +243,44 @@ async function main() {
       }
       return "ok";
     })()`);
+    /**
+     * WEBGL YÜZÜ TAM SAYFA KARESİNDE KAYBOLUYORDU (ölçüldü, 2026-09-26).
+     *
+     * `captureBeyondViewport` sayfayı kare için yeniden boyutlandırır ve
+     * WebGL çizim tamponu sıfırlanır; sahne bir sonraki kareyi çizmeden
+     * görüntü alındığı için Maira'nın yüzü boş bir ışık lekesi olarak
+     * kaydediliyordu (kırpılmış ölçümde mürekkep VARDI — yani kusur üründe
+     * değil, kanıt aracındaydı). Artık görüntü alanı sayfa yüksekliğine
+     * gerçekten uzatılır, sahnenin yeniden çizmesi beklenir, kare normal
+     * yoldan alınır ve görüntü alanı geri konur.
+     */
+    const pageHeight = await evaluate(
+      `Math.min(Math.ceil(document.documentElement.scrollHeight), 12000)`,
+    );
+    await browser.send(
+      "Emulation.setDeviceMetricsOverride",
+      {
+        width: viewport.width,
+        height: pageHeight,
+        deviceScaleFactor: 2,
+        mobile: viewport.width < 768,
+      },
+      S,
+    );
+    await sleep(450);
     const { data } = await browser.send(
       "Page.captureScreenshot",
-      { format: "png", captureBeyondViewport: true },
+      { format: "png" },
+      S,
+    );
+    await browser.send(
+      "Emulation.setDeviceMetricsOverride",
+      {
+        width: viewport.width,
+        height: viewport.height,
+        deviceScaleFactor: 2,
+        mobile: viewport.width < 768,
+      },
       S,
     );
     const file = path.join(OUT, `${name}.png`);
@@ -342,7 +427,30 @@ async function main() {
         })(),
         publishDock: (() => {
           const d = q('[data-testid="composer-publish-dock"]');
-          return d ? { docked: d.dataset.docked } : null;
+          if (!d) return null;
+          return {
+            docked: d.dataset.docked,
+            position: getComputedStyle(d).position,
+          };
+        })(),
+        /*
+          SIRA GERÇEK GEOMETRİDEN ÖLÇÜLÜR (2026-09-26). DOM sırası doğruyken
+          bile telefonda kenetlenmiş (position: fixed) buton akıştan çıkıp
+          sorunun ÜSTÜNE oturuyordu; bu yüzden ekrandaki konum ölçülür.
+        */
+        categoryAboveCta: (() => {
+          const cat = q('[data-testid="category-confirmation-card"]');
+          const cta = q('[data-testid="composer-review-cta"]');
+          if (!cat || !cta) return null;
+          const a = cat.getBoundingClientRect();
+          const b = cta.getBoundingClientRect();
+          const dock = q('[data-testid="composer-publish-dock"]');
+          return {
+            catTop: Math.round(a.top),
+            ctaTop: Math.round(b.top),
+            ok: a.top < b.top,
+            dockPosition: dock ? getComputedStyle(dock).position : null,
+          };
         })(),
         cardSubPlaceholder: /Tüm alt kategoriler/.test(
           q('[data-testid="talep-request-card"]')?.innerText ?? "",
@@ -431,6 +539,18 @@ async function main() {
     ortasında ve yüksekliğinin çoğunda durmalı; gövde kadrajında mürekkep
     kutunun altına yığılıyordu.
   */
+  /*
+    ÖNCE YÜZÜN ÇİZİLDİĞİ KANITLANIR, SONRA ÖLÇÜLÜR (2026-09-26). Eski sıra
+    sahne tam opaklığa ulaşmadan ölçüyordu: kadraj kapıları aslında HALKA YER
+    TUTUCUSUNU ölçüp yeşil veriyordu (`sonuc4/m-1-baslangic.png` yüzü hiç
+    göstermiyor ama kapılar geçmişti). Ölçüm artık gerçekten yüzü ölçer.
+  */
+  const faceTiming = await waitForFace();
+  check(
+    "390: Maira'nın yüzü başlangıç ekranında ÇİZİLMİŞ (halka yer tutucusu değil)",
+    faceTiming.drawn === true && faceTiming.ringOpacity < 0.1,
+    JSON.stringify(faceTiming),
+  );
   const faceMobile = await measureFace(0);
   check(
     "240px yüz: telefonda büyütüldü (videodaki ilk an)",
@@ -444,23 +564,31 @@ async function main() {
   );
   check(
     "240px yüz: mürekkep kutunun yüksekliğinin çoğunu kaplıyor",
-    Boolean(faceMobile && faceMobile.ink.heightRatio >= 0.55),
-    JSON.stringify(faceMobile?.ink),
+    Boolean(faceMobile && faceMobile.inkSoft.heightRatio >= 0.55),
+    JSON.stringify({ sert: faceMobile?.ink, yumusak: faceMobile?.inkSoft }),
   );
   check(
     "240px yüz: mürekkep dikeyde ortalı (gövdeye kaymıyor)",
     Boolean(
       faceMobile &&
-        faceMobile.ink.centerY > 0.3 &&
-        faceMobile.ink.centerY < 0.7,
+        faceMobile.inkSoft.centerY > 0.3 &&
+        faceMobile.inkSoft.centerY < 0.7,
     ),
-    JSON.stringify(faceMobile?.ink),
+    JSON.stringify(faceMobile?.inkSoft),
   );
+  /*
+    İKİ ÖLÇEK AYNI KADRAJI VERİR — kapı bunu ayrıca ölçer, böylece "telefonda
+    farklı bir kadraj var" iddiası sessizce doğru olamaz.
+  */
   await shot("m-1-baslangic", "mobil 390 — başlangıç", {
     start: s.start,
     categories: cats.length,
     faces: s.faces,
     face: faceMobile,
+    /* Kare kendi kanıtını taşır: yüz kaç ms'de tam göründü. */
+    faceFirstPaintMs: faceTiming.ms,
+    faceDrawn: faceTiming.drawn,
+    ringOpacity: faceTiming.ringOpacity,
   });
 
   /* 2) OKUMA ANI — Arçelik buzdolabı                                   */
@@ -726,6 +854,12 @@ async function main() {
   s = await snapshot();
   check("1280: başlangıç ekranı", s.start === true);
   check("1280: büyük Maira yüzü var", s.faces >= 1, `faces=${s.faces}`);
+  const faceTimingDesktop = await waitForFace();
+  check(
+    "1280: Maira'nın yüzü başlangıç ekranında ÇİZİLMİŞ",
+    faceTimingDesktop.drawn === true && faceTimingDesktop.ringOpacity < 0.1,
+    JSON.stringify(faceTimingDesktop),
+  );
   const faceDesktop = await measureFace(0);
   check(
     "380px yüz: sahne portre kadrajında kuruldu",
@@ -749,6 +883,9 @@ async function main() {
   await shot("d-1-baslangic", "masaüstü 1280 — başlangıç", {
     faces: s.faces,
     face: faceDesktop,
+    faceFirstPaintMs: faceTimingDesktop.ms,
+    faceDrawn: faceTimingDesktop.drawn,
+    ringOpacity: faceTimingDesktop.ringOpacity,
   });
 
   await typeInto("#talep-composer", "1000 adet kartvizit, mat selefonlu, Topkapı");
@@ -1178,6 +1315,8 @@ async function main() {
         cta: s.publishCta,
         optionalDetails: s.optionalDetails,
         subPlaceholder: s.cardSubPlaceholder,
+        categoryAboveCta: s.categoryAboveCta,
+        publishDock: s.publishDock,
         saysLive: /Talebin yayında/.test(bodyText),
         saysDelivered: /ulaştı|iletildi|gönderildi/i.test(bodyText),
       };
@@ -1191,6 +1330,34 @@ async function main() {
         `${key}: ekranda 'ulaştı/iletildi/gönderildi' yok`,
         videoSeen[key].saysDelivered === false,
       );
+      /*
+        SIRA — kategori onayı beklerken soru butonun ÜSTÜNDE durur (kurucu,
+        2026-09-26). Ekrandaki gerçek konum ölçülür: DOM sırası doğru olsa
+        bile kenetlenmiş buton sorunun üstüne oturabiliyordu.
+      */
+      if (s.categoryAboveCta) {
+        check(
+          `${key}: kategori onayı yayın butonunun ÜSTÜNDE`,
+          s.categoryAboveCta.ok === true,
+          JSON.stringify(s.categoryAboveCta),
+        );
+        check(
+          `${key}: kategori beklerken buton kenetlenmiyor`,
+          s.categoryAboveCta.dockPosition !== "fixed",
+          JSON.stringify(s.categoryAboveCta),
+        );
+      }
+      /* Başlık kuralı 1e ekranda da geçerli: konum ve arama fiili yok. */
+      if (s.cardTitle) {
+        check(
+          `${key}: kart başlığında konum ve arama fiili yok`,
+          !/arıyorum|istiyorum|lazım/i.test(s.cardTitle) &&
+            !/(Kadıköy|Çankaya|Beşiktaş|Bornova|Ümraniye|Topkapı|Şişli)/i.test(
+              s.cardTitle,
+            ),
+          s.cardTitle,
+        );
+      }
       if (s.publishCta) {
         check(
           `${key}: yayın butonu isteğe bağlı bölümün üstünde`,

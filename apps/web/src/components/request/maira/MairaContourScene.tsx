@@ -25,6 +25,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 
+import { EASE_REVEAL, REVEAL_MS } from "@/lib/motion/talep-motion";
 import type {
   ContourAppearance,
   ContourFraming,
@@ -39,6 +40,28 @@ const MIN_WIDTH = 768;
  * adresi takip edilen koda gömülmez. Tanımsızsa sahne çalışmaz.
  */
 const MODEL_URL = process.env.NEXT_PUBLIC_MAIRA_CONTOUR_MODEL_URL ?? "";
+
+/**
+ * MODEL İNDİRMESİ SAHNE KURULUMUNU BEKLEMEZ (2026-09-26).
+ *
+ * Ölçüldü: ilk çizim ortalama 1435 ms sürüyordu ve son halkası model
+ * indirmesiydi — indirme ancak three.js ayrıştırıldıktan ve effect koştuktan
+ * SONRA başlıyordu. Bu parça yüklenir yüklenmez indirmeyi başlatıyoruz;
+ * ayrıştırma ile indirme artık paralel. Karar yine kurulum kapılarında:
+ * adres yoksa hiçbir şey olmaz.
+ */
+if (typeof document !== "undefined" && MODEL_URL) {
+  const id = "maira-contour-model-preload";
+  if (!document.getElementById(id)) {
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "preload";
+    link.as = "fetch";
+    link.crossOrigin = "anonymous";
+    link.href = MODEL_URL;
+    document.head.appendChild(link);
+  }
+}
 
 type SceneBudget = {
   maxPixelRatio: number;
@@ -177,7 +200,17 @@ export function MairaContourScene({
       aria-hidden="true"
       data-testid="maira-contour-canvas"
       className="pointer-events-none absolute inset-0 h-full w-full"
-      style={{ opacity: ready ? 1 : 0, transition: "opacity .6s ease" }}
+      /*
+        YÜZ İLK KARESİNİ ÇİZDİĞİ ANDA GÖRÜNÜR OLMAYA BAŞLAR (2026-09-26).
+        Ölçüldü: sahne ~510 ms'de çizmeye başlıyordu ama 600 ms'lik sabit
+        geçiş yüzden tam opaklığı 1150 ms'ye itiyordu — kullanıcının gördüğü
+        gecikmenin yarısı yüklemede değil, bu geçişteydi. Süre artık /talep
+        hareket tablosundan okunur; yüzey kendi sayısını tutmaz.
+      */
+      style={{
+        opacity: ready ? 1 : 0,
+        transition: `opacity ${REVEAL_MS}ms ${EASE_REVEAL}`,
+      }}
     />
   );
 }
