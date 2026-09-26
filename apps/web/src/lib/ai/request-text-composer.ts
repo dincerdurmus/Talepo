@@ -150,7 +150,16 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
     const target = values.serviceLocation?.trim();
     const subject = rawSubject || [target, serviceType].filter(Boolean).join(" ");
     if (subject) {
-      const alreadyService = /\b(?:hizmet|servis|bakım|bakim)\b/iu.test(subject);
+      /**
+       * "HİZMET" EKİYLE YAZILDIYSA İKİNCİ KEZ EKLENMEZ (2026-09-26).
+       *
+       * Ölçüldü: "Ofis boyama hizmeti arıyorum, Şişli" → "Ofis boyama
+       * hizmeti … hizmeti arıyorum". Sözcük sınırı `hizmet`i yakalıyor ama
+       * `hizmeti`yi yakalamıyordu; başlık kendini tekrar ediyordu.
+       */
+      const alreadyService = /(?:hizmet|servis|bakım|bakim)(?:[iı]|ler[iı]?)?\b/iu.test(
+        subject,
+      );
       return `${capitalizeTurkish(subject)}${alreadyService ? "" : " hizmeti"} arıyorum`;
     }
   }
@@ -234,6 +243,181 @@ export function composeRequestTitle(input: ComposeRequestTextInput): string {
   if (fromRaw) return fromRaw;
 
   return "Yeni talep";
+}
+
+/* ------------------------------------------------------------------ */
+/* KULLANICIYA VE TEDARİKÇİYE GÖSTERİLEN BAŞLIK — TEK YER              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * ÖLÇÜLEN KUSUR (2026-09-26). `/talep` sayfası kendi `aiSuggestedTitle`
+ * sarmalayıcısında üç şeyi ayrıca yapıyordu: (1) üretilmiş doğal cümleyi
+ * başlık olarak seçiyor, (2) "sıfır / ikinci el" gibi durum sözcüklerini
+ * atıyor, (3) SONUNA konumu ekliyordu ("kiralık 3+1 konut arıyorum -
+ * Kadıköy, İstanbul"). Üçüncüsü kural 1e'yi (`4d6d587`) doğrudan çiğniyordu:
+ * konum kartta kendi satırında duruyor, başlığa girmez. İkisinin de kararı
+ * artık burada, deponun başlık yetkisinin yanında yaşıyor; sayfa ikinci bir
+ * kural tutmuyor.
+ *
+ * YENİ ÇIKARIM YOKTUR. Girdiler zaten anlaşılmış alanlardan gelir: üretilmiş
+ * doğal cümle, kategori başlığı (`composeRequestTitle`) ve anlaşılmış model
+ * yılı. Burada hiçbir alan tahmin edilmez.
+ */
+export type SuggestedRequestTitleInput = {
+  categoryId: string;
+  rawText: string;
+  /** Anlama sonucundan üretilmiş doğal cümle (varsa). */
+  composedText?: string;
+  /** `composeRequestTitle` çıktısı — kategori şemasından gelen başlık. */
+  autoTitle: string;
+  /** Zaten anlaşılmış yıl alanları: yearMin / yearMax / modelYear. */
+  yearValues?: Record<string, string | undefined>;
+  /**
+   * Zaten anlaşılmış konum alanı ("İstanbul / Şişli" gibi). Yeni çıkarım
+   * değildir: kullanıcının kartta gördüğü değerdir ve başlıkta durmaz.
+   */
+  resolvedPlace?: string;
+};
+
+export function resolveSuggestedRequestTitle(
+  input: SuggestedRequestTitleInput,
+): string {
+  const composed = (input.composedText ?? "").replace(/[.!\s]+$/u, "");
+  // A generated sentence may only replace the title when it still contains
+  // the subject the user actually wrote. This blocks stale/cross-category
+  // titles such as "konut arıyorum" for an office painting request.
+  let base =
+    input.categoryId !== "services" &&
+    composed &&
+    titlePreservesRequestSubject(composed, input.rawText) &&
+    !titleRepeatsContent(composed)
+      ? composed
+      : input.autoTitle;
+  if (!titleHasMeaningfulSubject(base)) {
+    base = rawTitleFallback(input.rawText) || base;
+  }
+
+  if (input.categoryId === "automotive") {
+    /* Yıl etiketi deponun tek yetkili yıl biçimleyicisinden türetilir. */
+    const preference = formatModelYearPreference({
+      yearMin: input.yearValues?.yearMin?.trim() ?? "",
+      yearMax: input.yearValues?.yearMax?.trim() ?? "",
+      modelYear: input.yearValues?.modelYear?.trim() ?? "",
+    });
+    const yearLabel = preference
+      ? /^\d{4}$/u.test(preference)
+        ? `${preference} model`
+        : preference
+      : "";
+    const numericYear = (
+      input.yearValues?.yearMin?.trim() ||
+      input.yearValues?.yearMax?.trim() ||
+      input.yearValues?.modelYear?.trim() ||
+      ""
+    ).trim();
+    if (yearLabel && numericYear && !base.includes(numericYear)) {
+      base = `${yearLabel} ${base}`.trim();
+    }
+  }
+
+  base = base
+    .replace(/\b(?:sıfır|ikinci\s+el|2\.\s*el)\b/giu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  /**
+   * SON SÜZGEÇ — kural 1e. Konum, reddedilmiş cümle ve arama fiili burada
+   * düşer. Temizlik başlığı anlamsız bırakırsa (yalnız konumdan oluşan bir
+   * cümle gibi) temizlenmemiş hâl korunur; boş başlık uydurmaktan kötüdür.
+   */
+  const trimmed = toRequestTitle(base, {
+    placeSource: input.rawText,
+    placeNames: [input.resolvedPlace],
+  });
+  if (!titleHasMeaningfulSubject(trimmed)) return base;
+  return capitalizeTurkish(trimmed);
+}
+
+const TITLE_OVERLAP_STOP_WORDS = new Set([
+  "arıyorum",
+  "ariyorum",
+  "istiyorum",
+  "lazım",
+  "lazim",
+  "bir",
+  "için",
+  "icin",
+  "ve",
+  "ile",
+  "adet",
+  "tane",
+  "m²",
+  "metrekare",
+  "urun",
+  "ürün",
+  "mobilya",
+  "makine",
+  "hizmet",
+  "servis",
+]);
+
+function titleTokens(value: string): string[] {
+  return (
+    value
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .match(/[a-z0-9çğıöşü²+.-]+/giu)
+      ?.filter(
+        (token) =>
+          token.length >= 2 &&
+          !/^\d[\d.,+²-]*$/u.test(token) &&
+          !TITLE_OVERLAP_STOP_WORDS.has(token),
+      ) ?? []
+  );
+}
+
+export function titlePreservesRequestSubject(
+  candidate: string,
+  rawText: string,
+): boolean {
+  const rawTokens = new Set(titleTokens(rawText));
+  const candidateTokens = titleTokens(candidate);
+  if (rawTokens.size === 0 || candidateTokens.length === 0) return false;
+  return candidateTokens.some((token) => rawTokens.has(token));
+}
+
+export function titleRepeatsContent(candidate: string): boolean {
+  const seen = new Set<string>();
+  for (const token of candidate
+    .toLocaleLowerCase("tr-TR")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .match(/[a-zçğıöşü]{4,}/giu) ?? []) {
+    if (TITLE_OVERLAP_STOP_WORDS.has(token)) continue;
+    if (seen.has(token)) return true;
+    seen.add(token);
+  }
+  return false;
+}
+
+export function titleHasMeaningfulSubject(candidate: string): boolean {
+  return (
+    candidate
+      .toLocaleLowerCase("tr-TR")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .match(/[a-zçğıöşü]{3,}/giu)
+      ?.some((token) => !TITLE_OVERLAP_STOP_WORDS.has(token)) ?? false
+  );
+}
+
+function rawTitleFallback(rawText: string): string {
+  return rawText
+    .replace(/\s+/g, " ")
+    .replace(/[.!?]+$/u, "")
+    .trim()
+    .slice(0, 110);
 }
 
 export function composeProfessionalDescription(
@@ -582,25 +766,59 @@ function composeRealEstateShortTitle(
   return "Emlak talebi";
 }
 
-function deriveShortTitleFromRawText(rawText: string): string | undefined {
-  /**
-   * KONUM VE REDDEDİLMİŞ CÜMLE BAŞLIĞA GİRMEZ (2026-09-25).
-   *
-   * Ölçüldü: "Arçelik buzdolabı arıyorum, Kadıköy" → "Arçelik buzdolabı
-   * Kadıköy" ve "Buzdolabı arıyorum, Bosch hariç" → "Buzdolabı Bosch hariç".
-   * Birincisinde konum başlığı kirletiyor (konum kendi alanında zaten var),
-   * ikincisinde kullanıcının REDDETTİĞİ marka başlıkta duruyor — tedarikçi
-   * tam tersini okuyor.
-   *
-   * İki yetki de mevcut: reddedilmiş cümleleri düşüren tek maske
-   * (`withoutRejectedRequestClauses`) ve konumun tek yetkili okuyucusu
-   * (`findProvinceAndDistrictInText`). Yeni bir liste yazılmadı; çözülen yer
-   * adı (il, ilçe ve varsa semt) metinden çıkarılır.
-   */
-  const affirmative = withoutRejectedRequestClauses(String(rawText ?? ""));
-  const place = findPlaceEvidenceInText(affirmative);
+/**
+ * KURAL 1e'NİN TEK UYGULAYICISI (2026-09-25 / genişletildi 2026-09-26).
+ *
+ * KONUM VE REDDEDİLMİŞ CÜMLE BAŞLIĞA GİRMEZ, ARAMA FİİLİ DÜŞER.
+ *
+ * Ölçüldü: "Arçelik buzdolabı arıyorum, Kadıköy" → "Arçelik buzdolabı
+ * Kadıköy" ve "Buzdolabı arıyorum, Bosch hariç" → "Buzdolabı Bosch hariç".
+ * Birincisinde konum başlığı kirletiyor (konum kendi alanında zaten var),
+ * ikincisinde kullanıcının REDDETTİĞİ marka başlıkta duruyor — tedarikçi
+ * tam tersini okuyor.
+ *
+ * İki yetki de mevcut: reddedilmiş cümleleri düşüren tek maske
+ * (`withoutRejectedRequestClauses`) ve konumun tek yetkili okuyucusu
+ * (`findPlaceEvidenceInText`). Yeni bir liste yazılmadı; çözülen yer adı
+ * (il, ilçe ve varsa semt) metinden çıkarılır.
+ *
+ * 2026-09-26: bu temizlik artık YALNIZ ham metin yedeğinin değil, kullanıcıya
+ * ve tedarikçiye gösterilen HER başlığın geçtiği yer. `/talep` sayfası kendi
+ * konum-ekleme ve fiil-bırakma kurallarını tutuyordu ("kiralık 3+1 konut
+ * arıyorum - Kadıköy, İstanbul"); o ikinci kural silindi, sayfa buradan
+ * okuyor. Sözcük sınırı (altı sözcük) BİLEREK buraya değil yalnız ham metin
+ * yedeğine bağlı: yapılandırılmış bir başlık ("2018 ve üzeri Fiat Egea için
+ * kış lastiği") ortadan kesilmemeli.
+ *
+ * YER ADI KISALTILMIŞ BAŞLIKTAN DEĞİL, İSTEĞİN KENDİSİNDEN ÇÖZÜLÜR
+ * (`placeSource`). Ölçüldü: "Ağrı kesici ilaç arıyorum, İstanbul" başlığı
+ * "Ağrı kesici ilaç" iken, konumu bu kısa başlığın İÇİNDE aramak "Ağrı"yı il
+ * sanıp ürünü yok ediyordu ("Kesici ilaç"). Konum bir kez, isteğin tamamı
+ * üzerinden çözülür; ayrıca zaten anlaşılmış konum alanı `placeNames` ile
+ * verilebilir (çıplak ilçe adı geo yetkisine göre kanıt değildir, ama
+ * kullanıcı onu alan olarak onayladıysa başlıkta durmaz).
+ */
+export function toRequestTitle(
+  text: string,
+  options?: { placeSource?: string; placeNames?: Array<string | undefined | null> },
+): string {
+  const source = String(text ?? "");
+  const affirmative = withoutRejectedRequestClauses(source);
+  const place = findPlaceEvidenceInText(
+    withoutRejectedRequestClauses(String(options?.placeSource ?? source)),
+  );
   let withoutPlace = affirmative;
-  for (const name of [place?.mahalle, place?.ilce, place?.il]) {
+  const placeNames = [
+    place?.mahalle,
+    place?.ilce,
+    place?.il,
+    ...(options?.placeNames ?? []).flatMap((entry) =>
+      String(entry ?? "")
+        .split(/[\/,]/u)
+        .map((part) => part.trim()),
+    ),
+  ];
+  for (const name of placeNames) {
     const value = name?.trim();
     if (!value) continue;
     const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -615,7 +833,7 @@ function deriveShortTitleFromRawText(rawText: string): string | undefined {
   // Always normalize first so slang openers never become the title.
   const cleaned = normalizeCasualTurkish(withoutPlace)
     .replace(
-      /\b(ben|ne|arıyorum|ariyorum|arıyom|ariyom|arıyorm|lazım|lazim|lazm|istiyorum|istiyom|istiyorm|olsun|lütfen|lutfen|teşekkürler|tesekkurler|acil|uygun|fiyatlı|fiyatli|temiz|durumda|iyi|bütçeye|butceye)\b/gi,
+      /\b(ben|ne|arıyorum|ariyorum|arıyom|ariyom|arıyorm|aranıyor|araniyor|lazım|lazim|lazm|istiyorum|istiyom|istiyorm|olsun|lütfen|lutfen|teşekkürler|tesekkurler|acil|uygun|fiyatlı|fiyatli|temiz|durumda|iyi|bütçeye|butceye)\b/gi,
       " ",
     )
     .replace(
@@ -625,7 +843,45 @@ function deriveShortTitleFromRawText(rawText: string): string | undefined {
     .replace(/(?:^|\s)ya(?:\s|$)/gi, " ")
     .replace(/[.,;:!?'"]+/g, " ")
     .replace(/\s+/g, " ")
+    /* Reddedilmiş cümle düştükten sonra başta kalan bağlacı bırakma:
+       "ama Bosch olmasın Buzdolabı" → "Buzdolabı". */
+    .replace(/^(?:ama|ancak|fakat|ve|veya|ya\s+da)\s+/giu, "")
+    /* Konum adı düştükten sonra kalan bağlaç tirelerini bırakma: "Kiralık
+       3+1 konut - " → "Kiralık 3+1 konut". Ortadaki " — " ayracı (matbaa
+       başlığı "Kraft kutu — Kuşe") bilerek korunur. */
+    .replace(/^[-–—\s]+|[\s]*[-–—]+[\s]*$/g, "")
     .trim();
+  return restoreSourceCapitalization(cleaned, source);
+}
+
+/**
+ * TEMİZLİK SÖZCÜK DÜŞÜRÜR, YAZIMI KÜÇÜLTMEZ.
+ *
+ * Ölçüldü: "500 adet Kartvizit" başlığı temizlikten "500 adet kartvizit"
+ * olarak çıkıyordu — gündelik Türkçe normalleştiricisi kanonik yazımı küçük
+ * harfle tutuyor. Büyük harf yalnız kaynakta varsa geri konur; asla
+ * eklenmez, asla silinmez.
+ */
+function restoreSourceCapitalization(cleaned: string, source: string): string {
+  if (!cleaned) return cleaned;
+  const sourceWords = source.split(/\s+/u).filter(Boolean);
+  const upperCount = (value: string) =>
+    (value.match(/\p{Lu}/gu) ?? []).length;
+  return cleaned
+    .split(" ")
+    .map((word) => {
+      const lower = word.toLocaleLowerCase("tr-TR");
+      const match = sourceWords.find(
+        (candidate) => candidate.toLocaleLowerCase("tr-TR") === lower,
+      );
+      if (!match || match === word) return word;
+      return upperCount(match) > upperCount(word) ? match : word;
+    })
+    .join(" ");
+}
+
+function deriveShortTitleFromRawText(rawText: string): string | undefined {
+  const cleaned = toRequestTitle(rawText);
 
   if (cleaned.length < 3) return undefined;
 

@@ -36,7 +36,18 @@ import {
 } from "../src/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "../src/lib/request/publish-result-status";
 import { readingDurationMs } from "../src/lib/motion/talep-motion";
-import { composeRequestTitle } from "../src/lib/ai/request-text-composer";
+import {
+  composeRequestTitle,
+  resolveSuggestedRequestTitle,
+  titleRepeatsContent,
+} from "../src/lib/ai/request-text-composer";
+import { createTextOnlyState } from "../src/lib/request-composer/sync";
+import { composeNaturalRequestText } from "../src/lib/request-composer/compose-text";
+import { resolveRequestCategory } from "../src/lib/request-category-engine";
+import {
+  findProvinceAndDistrictInText,
+  textMentionsPlace,
+} from "../src/lib/geo/turkey-districts";
 
 const ROOT = join(__dirname, "..");
 const read = (p: string) =>
@@ -630,6 +641,192 @@ console.log("B4) Yayın başlığı ile kart başlığı AYNI kaynaktan gelir");
     "mutasyon: boş metin başlık uydurmaz",
     titleOf("   ") === "Yeni talep",
     titleOf("   "),
+  );
+}
+
+/* ------------------------------------------------------------------ */
+console.log(
+  "B5) Kullanıcıya gösterilen başlık kısadır — konum ve arama fiili girmez",
+);
+
+/**
+ * NEDEN BU BÖLÜM VAR (2026-09-26). B4 yalnız `composeRequestTitle`i ölçüyordu;
+ * `/talep` sayfası ise onun ÜSTÜNE kendi kuralını koyuyordu: üretilmiş doğal
+ * cümleyi başlık yapıyor ve sonuna konumu ekliyordu. Ölçülen kusur:
+ *   "Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar"
+ *     → "kiralık 3+1 konut arıyorum - Kadıköy, İstanbul"
+ * Kural 1e (`4d6d587`) konumun ve olumsuzlamanın başlığa girmemesini, arama
+ * fiilinin düşmesini söylüyor. 14 cümlede ölçüldü: konum 12/14, arama fiili
+ * 14/14 başlıkta duruyordu.
+ *
+ * Bu bölüm üretim yolunu ölçer: gerçek anlama sonucundan (`createTextOnlyState`)
+ * üretilmiş doğal cümle + `composeRequestTitle` → `resolveSuggestedRequestTitle`.
+ * Kendi karar kopyası kurulmaz.
+ */
+{
+  const ARAMA_FIILI =
+    /\b(arıyorum|ariyorum|istiyorum|lazım|lazim|aranıyor|bastırmak|bastirmak)\b/iu;
+
+  /** Üretim yolu: sayfanın verdiği girdilerin aynısı. */
+  const uretimBasligi = (rawText: string) => {
+    const state = createTextOnlyState(rawText);
+    const categoryId = state.categoryId ?? "";
+    const category = resolveRequestCategory(categoryId, undefined);
+    const values: Record<string, string> = {};
+    for (const [key, field] of Object.entries(state.fields ?? {})) {
+      const value = (field as { value?: string } | undefined)?.value;
+      if (value) values[key] = value;
+    }
+    const autoTitle = composeRequestTitle({
+      categoryId,
+      rawText,
+      attributes: values,
+      fieldValues: values,
+      city: values.city ?? "",
+      fields: category?.fields,
+    });
+    const composedText = (
+      state.lastComposedText ?? composeNaturalRequestText(state)
+    ).trim();
+    return {
+      title: resolveSuggestedRequestTitle({
+        categoryId,
+        rawText,
+        composedText,
+        autoTitle,
+        yearValues: {
+          yearMin: values.yearMin,
+          yearMax: values.yearMax,
+          modelYear: values.modelYear,
+        },
+        resolvedPlace: values.city ?? values.location ?? "",
+      }),
+      composedText,
+      autoTitle,
+      categoryId,
+    };
+  };
+
+  /** Emlak, otomotiv ve genel — en az on cümle. */
+  const CUMLELER = [
+    "Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar",
+    "Ankara Çankaya'da kiralık 3+1 daire arıyorum",
+    "İstanbul Beşiktaş'ta satılık 2+1 daire arıyorum",
+    "Kadıköy'de kiralık dükkan arıyorum",
+    "İzmir Bornova'da kiralık depo arıyorum",
+    "Egea için 4 kış lastiği, takma dahil, Ümraniye",
+    "2018 ve üzeri Fiat Egea arıyorum, Bursa",
+    "Arçelik buzdolabı arıyorum, İstanbul Kadıköy",
+    "Bosch çamaşır makinesi lazım, Ankara",
+    "500 adet kartvizit bastırmak istiyorum, Topkapı",
+    "Ofis boyama hizmeti arıyorum, Şişli",
+    "Buzdolabı arıyorum, Bosch hariç",
+  ];
+
+  for (const cumle of CUMLELER) {
+    const { title } = uretimBasligi(cumle);
+    const place = findProvinceAndDistrictInText(cumle);
+    const konumVar = Boolean(
+      place &&
+        (textMentionsPlace(title, place.il) ||
+          (place.ilce ? textMentionsPlace(title, place.ilce) : false)),
+    );
+    ok(`konum başlığa girmiyor — "${cumle.slice(0, 34)}"`, !konumVar, title);
+    ok(
+      `arama fiili başlıktan düşüyor — "${cumle.slice(0, 34)}"`,
+      !ARAMA_FIILI.test(title),
+      title,
+    );
+    ok(`başlık boş kalmıyor — "${cumle.slice(0, 34)}"`, title.trim().length >= 3, title);
+    /* Videodaki kısalık: başlık altı sözcüğü geçmez. */
+    ok(
+      `başlık kısa kalıyor — "${cumle.slice(0, 34)}"`,
+      title.split(/\s+/u).filter(Boolean).length <= 6,
+      title,
+    );
+  }
+
+  /* Emlak başlığı kurucunun istediği iki biçimden birine denk gelir. */
+  ok(
+    "emlak başlığı videodaki biçimde",
+    uretimBasligi("Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar").title ===
+      "Kiralık 3+1 konut",
+    uretimBasligi("Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar").title,
+  );
+  /* Reddedilen marka başlıkta durmaz, kalan bağlaç da bırakılmaz. */
+  ok(
+    "reddedilen marka ve artık bağlaç başlıkta kalmıyor",
+    uretimBasligi("Buzdolabı arıyorum, Bosch hariç").title === "Buzdolabı",
+    uretimBasligi("Buzdolabı arıyorum, Bosch hariç").title,
+  );
+  /* Temizlik yazımı küçültmez: kanonik ürün adı büyük harfini korur. */
+  ok(
+    "temizlik kanonik yazımı küçültmüyor",
+    /Kartvizit/.test(
+      uretimBasligi("500 adet kartvizit bastırmak istiyorum, Topkapı").title,
+    ),
+    uretimBasligi("500 adet kartvizit bastırmak istiyorum, Topkapı").title,
+  );
+  /* Başlık kendini tekrar etmez ("… hizmeti … hizmeti"). */
+  ok(
+    "hizmet başlığı kendini tekrar etmiyor",
+    !titleRepeatsContent(uretimBasligi("Ofis boyama hizmeti arıyorum, Şişli").title),
+    uretimBasligi("Ofis boyama hizmeti arıyorum, Şişli").title,
+  );
+  /* İl adıyla çakışan ürün sözcüğü silinmez ("Ağrı kesici"). */
+  ok(
+    "il adıyla çakışan ürün sözcüğü korunuyor",
+    /Ağrı kesici/.test(uretimBasligi("Ağrı kesici ilaç arıyorum, İstanbul").title),
+    uretimBasligi("Ağrı kesici ilaç arıyorum, İstanbul").title,
+  );
+
+  /**
+   * MUTASYON KONTROLÜ — kusurun KENDİSİ üretilir.
+   *
+   * Kaldırılan kural birebir geri konur (son süzgeç atlanır, sonuna konum
+   * eklenir) ve yukarıdaki iki kapının bu çıktıyı REDDETTİĞİ gösterilir.
+   * Reddetmezse kapılar her zaman yeşil olurdu.
+   */
+  {
+    const cumle = "Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar";
+    const { composedText } = uretimBasligi(cumle);
+    const place = findProvinceAndDistrictInText(cumle);
+    const mutant = `${composedText.replace(/[.!\s]+$/u, "")} - ${place?.ilce}, ${place?.il}`;
+    ok(
+      "mutasyon: konum eklenen başlık kapıdan geçmiyor",
+      Boolean(place) && textMentionsPlace(mutant, place!.ilce),
+      mutant,
+    );
+    ok(
+      "mutasyon: arama fiili bırakılan başlık kapıdan geçmiyor",
+      ARAMA_FIILI.test(mutant),
+      mutant,
+    );
+    ok(
+      "mutasyon: uzun başlık kısalık kapısından geçmiyor",
+      mutant.split(/\s+/u).filter(Boolean).length > 6,
+      mutant,
+    );
+  }
+
+  /* Sayfa kendi başlık kuralını TUTMUYOR. */
+  const pageSrc = strip(read("src/app/talep/page.tsx"));
+  ok(
+    "sayfa başlığı tek yetkiliden okuyor",
+    Boolean(pageSrc && /resolveSuggestedRequestTitle\(/.test(pageSrc)),
+  );
+  ok(
+    "sayfa başlığa konum eklemiyor",
+    Boolean(pageSrc && !/locationLabel/.test(pageSrc)),
+  );
+  ok(
+    "sayfa ikinci bir başlık kuralı tutmuyor",
+    Boolean(
+      pageSrc &&
+        !/function\s+title(?:PreservesRequestSubject|RepeatsContent|HasMeaningfulSubject)/.test(
+          pageSrc,
+        ),
+    ),
   );
 }
 

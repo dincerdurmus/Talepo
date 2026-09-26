@@ -109,6 +109,7 @@ import type { QuestionCandidate } from "@/lib/request-brain/types";
 import {
   composeProfessionalDescription,
   composeRequestTitle,
+  resolveSuggestedRequestTitle,
 } from "@/lib/ai/request-text-composer";
 import {
   getExploreFilterDefs,
@@ -120,11 +121,7 @@ import {
   resolveRealEstateLocationFromSources,
   type RealEstateLocation,
 } from "@/lib/geo/real-estate-location";
-import {
-  findProvinceAndDistrictInText,
-  parseRealEstateCity,
-  textMentionsPlace,
-} from "@/lib/geo/turkey-districts";
+import { parseRealEstateCity } from "@/lib/geo/turkey-districts";
 import {
   getVisibleCategoryFields,
   isFieldRequired,
@@ -200,81 +197,6 @@ function formatBudgetNumbersInText(text: string): string {
       /\b(\d[\d.\s]*)\s*adet\b/giu,
       (_match, amount: string) => `${formatBudgetDigits(amount)} adet`,
     );
-}
-
-const TITLE_OVERLAP_STOP_WORDS = new Set([
-  "arıyorum",
-  "ariyorum",
-  "istiyorum",
-  "lazım",
-  "lazim",
-  "bir",
-  "için",
-  "icin",
-  "ve",
-  "ile",
-  "adet",
-  "tane",
-  "m²",
-  "metrekare",
-  "urun",
-  "ürün",
-  "mobilya",
-  "makine",
-  "hizmet",
-  "servis",
-]);
-
-function titlePreservesRequestSubject(candidate: string, rawText: string): boolean {
-  const tokens = (value: string) =>
-    value
-      .toLocaleLowerCase("tr-TR")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .match(/[a-z0-9çğıöşü²+.-]+/giu)
-      ?.filter(
-        (token) =>
-          token.length >= 2 &&
-          !/^\d[\d.,+²-]*$/u.test(token) &&
-          !TITLE_OVERLAP_STOP_WORDS.has(token),
-      ) ?? [];
-  const rawTokens = new Set(tokens(rawText));
-  const candidateTokens = tokens(candidate);
-  if (rawTokens.size === 0 || candidateTokens.length === 0) return false;
-  return candidateTokens.some((token) => rawTokens.has(token));
-}
-
-function titleRepeatsContent(candidate: string): boolean {
-  const seen = new Set<string>();
-  for (const token of candidate
-    .toLocaleLowerCase("tr-TR")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .match(/[a-zçğıöşü]{4,}/giu) ?? []) {
-    if (TITLE_OVERLAP_STOP_WORDS.has(token)) continue;
-    if (seen.has(token)) return true;
-    seen.add(token);
-  }
-  return false;
-}
-
-function titleHasMeaningfulSubject(candidate: string): boolean {
-  return (
-    candidate
-      .toLocaleLowerCase("tr-TR")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .match(/[a-zçğıöşü]{3,}/giu)
-      ?.some((token) => !TITLE_OVERLAP_STOP_WORDS.has(token)) ?? false
-  );
-}
-
-function rawTitleFallback(rawText: string): string {
-  return rawText
-    .replace(/\s+/g, " ")
-    .replace(/[.!?]+$/u, "")
-    .trim()
-    .slice(0, 110);
 }
 
 const ESSENTIAL_COMMON_KEYS = new Set(["title", "city"]);
@@ -763,80 +685,48 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     commonDraft,
   ]);
 
+  /**
+   * BAŞLIK KURALI BU SAYFADA YAŞAMAZ (2026-09-26).
+   *
+   * Burada bir zamanlar ikinci bir başlık kuralı duruyordu ve kural 1e'yi
+   * (`4d6d587`: konum ve olumsuzlama başlığa girmez, arama fiili düşer)
+   * çiğniyordu: sonuna " - Kadıköy, İstanbul" ekliyor ve "arıyorum"u
+   * bırakıyordu ("kiralık 3+1 konut arıyorum - Kadıköy, İstanbul").
+   * Karar tek yetkilide — `resolveSuggestedRequestTitle`. Sayfa yalnız zaten
+   * anlaşılmış girdileri verir; yeni çıkarım yapmaz.
+   */
   const aiSuggestedTitle = useMemo(() => {
-    const composed = (
+    const composedText =
       hybrid.state?.lastComposedText?.trim() ||
-      (hybrid.state ? composeNaturalRequestText(hybrid.state) : "")
-    ).replace(/[.!\s]+$/u, "");
-    // A generated sentence may only replace the title when it still contains
-    // the subject the user actually wrote. This blocks stale/cross-category
-    // titles such as "konut arıyorum" for an office painting request.
-    let base =
-      activeCategoryId !== "services" &&
-      composed &&
-      titlePreservesRequestSubject(composed, requestText) &&
-      !titleRepeatsContent(composed)
-        ? composed
-        : autoTitle;
-    if (!titleHasMeaningfulSubject(base)) {
-      base = rawTitleFallback(requestText) || base;
-    }
-
-    if (activeCategoryId === "automotive") {
-      const yearMin =
-        dynamicValues.yearMin || String(understanding.attributes.yearMin?.value ?? "");
-      const yearMax =
-        dynamicValues.yearMax || String(understanding.attributes.yearMax?.value ?? "");
-      const modelYear =
-        dynamicValues.modelYear ||
-        String(understanding.attributes.modelYear?.value ?? "");
-      const yearLabel = yearMin
-        ? `${yearMin} ve üzeri`
-        : yearMax
-          ? `${yearMax} ve altı`
-          : modelYear
-            ? `${modelYear} model`
-            : "";
-      const numericYear = (yearMin || yearMax || modelYear).trim();
-      if (yearLabel && numericYear && !base.includes(numericYear)) {
-        base = `${yearLabel} ${base}`.trim();
-      }
-    }
-
-    base = base
-      .replace(/\b(?:sıfır|ikinci\s+el|2\.\s*el)\b/giu, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    const location =
-      findProvinceAndDistrictInText(requestText) ??
-      (/\bist\b/iu.test(requestText) ? { il: "İstanbul", ilce: "" } : null);
-    if (!location || !base) return base;
-
-    const alreadyMentionsLocation =
-      textMentionsPlace(base, location.il) ||
-      (location.ilce ? textMentionsPlace(base, location.ilce) : false);
-    if (location.il === "İstanbul") {
-      base = base
-        .replace(/(?:\s*[-,]?\s*)\bist\b/giu, " ")
-        .replace(/\s+/g, " ")
-        .replace(/\s*[-,]\s*$/u, "")
-        .trim();
-    }
-    if (alreadyMentionsLocation && !/\bist\b/iu.test(base)) return base;
-
-    const locationLabel = location.ilce
-      ? `${location.ilce}, ${location.il}`
-      : location.il;
-    return `${base} - ${locationLabel}`;
+      (hybrid.state ? composeNaturalRequestText(hybrid.state) : "");
+    return resolveSuggestedRequestTitle({
+      categoryId: activeCategoryId,
+      rawText: requestText,
+      composedText,
+      autoTitle,
+      yearValues: {
+        yearMin:
+          dynamicValues.yearMin ||
+          String(understanding.attributes.yearMin?.value ?? ""),
+        yearMax:
+          dynamicValues.yearMax ||
+          String(understanding.attributes.yearMax?.value ?? ""),
+        modelYear:
+          dynamicValues.modelYear ||
+          String(understanding.attributes.modelYear?.value ?? ""),
+      },
+      resolvedPlace: commonDraft.city || understandingCity || "",
+    });
   }, [
     activeCategoryId,
     autoTitle,
+    commonDraft.city,
     dynamicValues.modelYear,
     dynamicValues.yearMax,
     dynamicValues.yearMin,
     hybrid.state,
     requestText,
+    understandingCity,
     understanding.attributes.modelYear?.value,
     understanding.attributes.yearMax?.value,
     understanding.attributes.yearMin?.value,
@@ -3590,8 +3480,10 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   /*
                     KART BAŞLIĞI KISADIR (kurucu, 2026-09-25): "Arçelik
                     buzdolabı". Konum ve adet zaten kendi satırlarında durur.
-                    Tedarikçinin gördüğü YAYIN başlığı hâlâ uzun — o
-                    `composeRequestTitle` işidir ve ayrı iş olarak açıktır.
+                    2026-09-26: yedek başlık (`mergedCommonDraft.title`) artık
+                    `resolveSuggestedRequestTitle`ten geliyor, yani konum ve
+                    arama fiili bu yüzeye de girmiyor — kart ile tedarikçinin
+                    gördüğü yayın başlığı aynı kuralı okuyor.
                   */
                   title={composeRequestCardTitle({
                     brand: questionContext.brand,
