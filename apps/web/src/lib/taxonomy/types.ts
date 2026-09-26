@@ -14,7 +14,17 @@ export type TaxonomyNodeType =
   | "COMMODITY_TYPE"
   | "TECHNICAL_TYPE";
 
-export type TaxonomyNodeStatus = "active" | "draft" | "deprecated";
+/**
+ * `superseded`: düğüm ağaçtaki yerini bir BAŞKA düğüme devretti (kurucu
+ * kararıyla taşınan bir ürün türü gibi). Kayıt silinmez — eski kimliği okuyan
+ * her yer `supersededBy` üzerinden yeni düğüme çözülür; düğümün kendisi ise
+ * gezinme, alias indeksi ve kapsam sayımlarının dışında kalır.
+ */
+export type TaxonomyNodeStatus =
+  | "active"
+  | "draft"
+  | "deprecated"
+  | "superseded";
 
 export type TaxonomyProvenance = {
   source: string;
@@ -37,6 +47,8 @@ export type TaxonomyNode = {
   applicableCapabilities: string[];
   requestSchemaId?: string;
   status: TaxonomyNodeStatus;
+  /** `status: "superseded"` düğümlerinde zorunlu: yerine geçen düğümün id'si. */
+  supersededBy?: string;
   provenance?: TaxonomyProvenance;
   /** Align with CatalogRegistry part system / subsystem ids when present. */
   catalogSystemId?: string;

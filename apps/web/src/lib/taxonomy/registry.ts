@@ -3,6 +3,7 @@
  */
 
 import { foldLabel } from "@/lib/knowledge/slug";
+import { withinOneEdit } from "@/lib/text/within-one-edit";
 
 import { loadAllTaxonomyNodes } from "./loader";
 import type { AliasHit, TaxonomyNode } from "./types";
@@ -20,6 +21,13 @@ type RegistryState = {
   byParent: Map<string | null, TaxonomyNode[]>;
   byCategory: Map<string, TaxonomyNode[]>;
   aliasIndex: Map<string, string[]>;
+  /**
+   * Tek sözcüklü alias anahtarları, UZUNLUĞA göre kovalanmış. Yazım hatası
+   * araması yalnız bu kovalarda dolaşır; tüm indeksi taramaz.
+   */
+  singleWordKeysByLength: Map<number, string[]>;
+  /** Devredilmiş kimlik → yerine geçen düğüm kimliği (bkz. `resolveTaxonomyNodeId`). */
+  redirects: Map<string, string>;
   loaded: boolean;
 };
 
@@ -28,8 +36,18 @@ const state: RegistryState = {
   byParent: new Map(),
   byCategory: new Map(),
   aliasIndex: new Map(),
+  singleWordKeysByLength: new Map(),
+  redirects: new Map(),
   loaded: false,
 };
+
+/**
+ * Yazım hatası araması yalnız YETERİNCE UZUN tek sözcükler için açılır.
+ * `withinOneEdit` altı harften kısa kökte silme/ekleme kabul etmez; buna ek
+ * olarak kısa sözcüklerde tek harf değişimi Türkçede çok sık başka bir
+ * sözcük üretir ("kasa"/"masa"). Eşik, o ölçütün kendi eşiğidir.
+ */
+const FUZZY_MIN_LENGTH = 6;
 
 /**
  * Kategorinin yüzü olan ürünler: bulunduğu kolonun başında görünürler.
@@ -87,13 +105,31 @@ export function resetTaxonomyRegistry() {
   state.byParent.clear();
   state.byCategory.clear();
   state.aliasIndex.clear();
+  state.singleWordKeysByLength.clear();
+  state.redirects.clear();
   state.loaded = false;
 }
 
 export function ensureTaxonomyLoaded(nodes?: TaxonomyNode[]): void {
   if (state.loaded && !nodes) return;
   resetTaxonomyRegistry();
-  const list = nodes ?? loadAllTaxonomyNodes();
+  const raw = nodes ?? loadAllTaxonomyNodes();
+
+  /**
+   * DEVREDİLMİŞ DÜĞÜM AĞACIN İÇİNDE DURMAZ (D-0041).
+   *
+   * Kayıt dosyada kalır — hangi kimliğin nereye taşındığı provenance'tır ve
+   * silinmez — ama indekslere girmez. Girseydi eski ve yeni düğüm aynı
+   * alias'ı paylaşır, `resolveTaxonomyAlias` iki adayı da görür ve eşit
+   * derinlikte kimlik alfabetik sıraya düşerdi: kurucunun taşıdığı ürün
+   * sessizce eski yerinden çözülmeye devam ederdi.
+   */
+  const list = raw.filter((node) => {
+    if (node.status !== "superseded") return true;
+    if (node.supersededBy) state.redirects.set(node.id, node.supersededBy);
+    return false;
+  });
+
   for (const node of list) {
     state.byId.set(node.id, node);
     pushChild(node.parentId, node);
@@ -106,6 +142,13 @@ export function ensureTaxonomyLoaded(nodes?: TaxonomyNode[]): void {
     for (const t of node.searchTerms) indexAlias(t, node.id);
     for (const a of node.ambiguousAliases ?? []) indexAlias(a, node.id);
   }
+  for (const key of state.aliasIndex.keys()) {
+    if (key.length < FUZZY_MIN_LENGTH || key.includes(" ")) continue;
+    const bucket = state.singleWordKeysByLength.get(key.length) ?? [];
+    bucket.push(key);
+    state.singleWordKeysByLength.set(key.length, bucket);
+  }
+
   // Kolon sıralaması (kurucu, 2026-08-23):
   //  1) grubun amiral ürünü başta ("TV ve görüntü" → Televizyon),
   //  2) sonra Türk pazarından kürasyonlu ürünler,
@@ -122,16 +165,35 @@ export function ensureTaxonomyLoaded(nodes?: TaxonomyNode[]): void {
   state.loaded = true;
 }
 
+/**
+ * Bir kimliği ağacın BUGÜNKÜ karşılığına çevirir.
+ *
+ * Kayıtlı taleplerde, envanter izdüşümlerinde ve eşleşme kayıtlarında eski
+ * kimlikler yaşamaya devam eder; okuma katmanı onları buradan çözer, veriye
+ * hiçbir şey yazılmaz. Zincir takip edilir (A→B→C) ve döngüye karşı korumalı.
+ */
+export function resolveTaxonomyNodeId(id: string): string {
+  ensureTaxonomyLoaded();
+  let cur = id;
+  const seen = new Set<string>([id]);
+  for (;;) {
+    const next = state.redirects.get(cur);
+    if (!next || seen.has(next)) return cur;
+    seen.add(next);
+    cur = next;
+  }
+}
+
 export function getTaxonomyNode(id: string): TaxonomyNode | undefined {
   ensureTaxonomyLoaded();
-  return state.byId.get(id);
+  return state.byId.get(resolveTaxonomyNodeId(id));
 }
 
 /** Walk parentId chain from node → root (node first). */
 export function getTaxonomyAncestorIds(nodeId: string): string[] {
   ensureTaxonomyLoaded();
   const ids: string[] = [];
-  let cur = state.byId.get(nodeId);
+  let cur = state.byId.get(resolveTaxonomyNodeId(nodeId));
   const seen = new Set<string>();
   while (cur && !seen.has(cur.id)) {
     seen.add(cur.id);
@@ -144,9 +206,10 @@ export function getTaxonomyAncestorIds(nodeId: string): string[] {
 /** BFS descendants including the node itself. */
 export function getTaxonomyDescendantIds(nodeId: string): string[] {
   ensureTaxonomyLoaded();
-  if (!state.byId.has(nodeId)) return [];
+  const rootId = resolveTaxonomyNodeId(nodeId);
+  if (!state.byId.has(rootId)) return [];
   const out: string[] = [];
-  const queue = [nodeId];
+  const queue = [rootId];
   const seen = new Set<string>();
   while (queue.length) {
     const id = queue.shift()!;
@@ -282,6 +345,29 @@ export function listTaxonomyAliasCandidates(term: string): {
   };
 }
 
+/**
+ * YAZIM HATASI İKİNCİ ŞANSTIR, BİRİNCİ DEĞİL.
+ *
+ * Yalnız birebir eşleşme BULUNAMADIĞINDA çalışır ve yalnız TEK bir alias
+ * anahtarı bir harf uzaklıktaysa sonuç döner. İki anahtar birden yakınsa
+ * hangisinin kastedildiği gerçekten bilinmez: sessizce birini seçmek,
+ * kullanıcının yazmadığı bir ürünü onun adına beyan etmek olurdu.
+ *
+ * Ölçüt kopyalanmadı; `withinOneEdit` Talepo'nun tek yazım hatası tanımıdır.
+ */
+function nearMissAliasIds(key: string): string[] {
+  if (key.length < FUZZY_MIN_LENGTH || key.includes(" ")) return [];
+  let matchedKey: string | null = null;
+  for (let len = key.length - 1; len <= key.length + 1; len += 1) {
+    for (const candidateKey of state.singleWordKeysByLength.get(len) ?? []) {
+      if (!withinOneEdit(key, candidateKey)) continue;
+      if (matchedKey && matchedKey !== candidateKey) return [];
+      matchedKey = candidateKey;
+    }
+  }
+  return matchedKey ? (state.aliasIndex.get(matchedKey) ?? []) : [];
+}
+
 export function resolveTaxonomyAlias(
   term: string,
   categoryId?: string,
@@ -289,7 +375,7 @@ export function resolveTaxonomyAlias(
   ensureTaxonomyLoaded();
   const key = foldLabel(term);
   if (!key) return null;
-  const ids = state.aliasIndex.get(key) ?? [];
+  const ids = state.aliasIndex.get(key) ?? nearMissAliasIds(key);
   if (!ids.length) return null;
 
   let candidates = ids
@@ -306,9 +392,25 @@ export function resolveTaxonomyAlias(
   // Prefer longer / more specific canonical match, then deeper nodes
   candidates.sort((a, b) => b.depth - a.depth || a.id.localeCompare(b.id));
   const node = candidates[0]!;
+
+  /**
+   * ATA ADAY BELİRSİZLİK ÜRETMEZ.
+   *
+   * Belirsizlik KARDEŞ adaylar arasındadır: aynı ifade iki ayrı dalda iki
+   * ayrı şeyi gösterdiğinde hangisi olduğu gerçekten bilinmez. Bir aday
+   * diğerinin ATASIYSA ortada iki şey yoktur — aynı şeyin iki ayrıntı
+   * düzeyi vardır ve en derin olan en özel olandır. Ölçüldü (D-0041): bir
+   * alt kategori kendi ürün düğümüyle aynı adı taşıdığında ("Kartvizit"
+   * hem alt kategori hem ürün türü) bu kapı ifadeyi tamamen atıyor,
+   * kullanıcı ürünü yazdığı hâlde talep alt kategorisiz kalıyordu.
+   */
+  const ancestorIds = new Set(getTaxonomyAncestorIds(node.id));
+  const rivals = candidates.filter(
+    (c) => c.id !== node.id && !ancestorIds.has(c.id),
+  );
   const ambiguous =
     (node.ambiguousAliases ?? []).some((a) => foldLabel(a) === key) ||
-    candidates.length > 1;
+    rivals.length > 0;
 
   const matchedAlias =
     [node.canonicalName, ...node.aliases, ...(node.ambiguousAliases ?? [])].find(
@@ -336,7 +438,7 @@ export function resolveTaxonomyAlias(
 /** Nearest requestSchemaId for a node (walks ancestors). */
 export function resolveSchemaIdForNode(nodeId: string): string | null {
   ensureTaxonomyLoaded();
-  const node = state.byId.get(nodeId);
+  const node = state.byId.get(resolveTaxonomyNodeId(nodeId));
   if (!node) return null;
 
   let cur: TaxonomyNode | undefined = node;

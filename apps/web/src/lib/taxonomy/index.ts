@@ -22,6 +22,7 @@ export {
   ensureTaxonomyLoaded,
   resetTaxonomyRegistry,
   getTaxonomyNode,
+  resolveTaxonomyNodeId,
   getRootTaxonomyNodes,
   getTaxonomyChildren,
   getTaxonomyNodesByCategory,
