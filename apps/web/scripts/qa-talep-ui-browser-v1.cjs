@@ -664,6 +664,95 @@ async function main() {
     publishCta: s.publishCta,
   });
 
+  /* 9) AÇIK KÜME DİLİMİNİN DÖRT CÜMLESİ — 2026-09-25 akşam                */
+  /**
+   * NEDEN BU BÖLÜM VAR. Bu dört cümle bu dilimde harness üzerinde ölçüldü;
+   * harness yeşili UI yeşili değildir. Her kare ölçülen kimliklerle
+   * etiketlenir: kart başlığı, kategori kırıntısı, kart satırları ve bekleyen
+   * soru. Etiketsiz kare kanıt sayılmaz.
+   */
+  await setViewport(1280, 900);
+  const OPEN_SET_FLOWS = [
+    {
+      name: "d-9a-arcelik-kadikoy",
+      text: "Arçelik buzdolabı arıyorum, Kadıköy",
+      label: "masaüstü 1280 — marka + ürün + ilçe",
+    },
+    {
+      name: "d-9b-kartvizit-topkapi",
+      text: "1000 adet kartvizit, mat selefonlu, Topkapı",
+      label: "masaüstü 1280 — semt adı konum cevabıdır (D-0030)",
+    },
+    {
+      name: "d-9c-zeytinyagi",
+      text: "Zeytinyağı 5 litre arıyorum",
+      label: "masaüstü 1280 — taksonomi dışı meşru talep",
+    },
+    {
+      name: "d-9d-camasir-deterjani",
+      text: "Çamaşır deterjanı arıyorum, 10 kg",
+      label: "masaüstü 1280 — üst ürün izi niteleyici konumda",
+    },
+  ];
+  const openSetSeen = {};
+  for (const flow of OPEN_SET_FLOWS) {
+    await goto(`${BASE}/talep`);
+    await typeInto("#talep-composer", flow.text);
+    await sleep(900);
+    await click('[data-testid="composer-intro-continue"]');
+    await sleep(4500);
+    s = await snapshot();
+    const bodyText = await evaluate(`document.body.innerText`);
+    openSetSeen[flow.name] = {
+      cardTitle: s.cardTitle,
+      crumbTop: s.crumbTop,
+      rows: s.rows,
+      question: s.questionField,
+      outOfScope: Boolean(s.outOfScope),
+      mentionsKadikoy: /Kadıköy/.test(bodyText),
+      mentionsFatih: /Fatih/.test(bodyText),
+      mentionsIstanbul: /İstanbul/.test(bodyText),
+      /**
+       * KATEGORİ SEÇİCİ EKRANDA BÜTÜN KÖKLERİ LİSTELER; gövde metninde bir kök
+       * adının GEÇMESİ o kökün ATANDIĞI anlamına gelmez. İlk yazımda ölçüt
+       * gövde metniydi ve 9d sahte KIRMIZI verdi (kırıntı "Kategori", yani kök
+       * atanmamış). Ölçüt kırıntının kendisidir.
+       */
+      mentionsBeyazEsya: /Beyaz Eşya/.test(bodyText),
+    };
+    await shot(flow.name, flow.label, openSetSeen[flow.name]);
+  }
+
+  check(
+    "9a: kart başlığında konum ve 'arıyorum' yok",
+    Boolean(openSetSeen["d-9a-arcelik-kadikoy"].cardTitle) &&
+      !/Kadıköy|arıyorum/i.test(openSetSeen["d-9a-arcelik-kadikoy"].cardTitle),
+    openSetSeen["d-9a-arcelik-kadikoy"].cardTitle,
+  );
+  check(
+    "9a: yazılan ilçe ekranda duruyor",
+    openSetSeen["d-9a-arcelik-kadikoy"].mentionsKadikoy === true,
+    JSON.stringify(openSetSeen["d-9a-arcelik-kadikoy"].rows).slice(0, 180),
+  );
+  check(
+    "9b: semt adı konuma çözülüyor (Fatih ya da İstanbul ekranda)",
+    openSetSeen["d-9b-kartvizit-topkapi"].mentionsFatih === true ||
+      openSetSeen["d-9b-kartvizit-topkapi"].mentionsIstanbul === true,
+    JSON.stringify(openSetSeen["d-9b-kartvizit-topkapi"].rows).slice(0, 180),
+  );
+  check(
+    "9c: taksonomi dışı talep engellenmiyor",
+    openSetSeen["d-9c-zeytinyagi"].outOfScope === false,
+    JSON.stringify(openSetSeen["d-9c-zeytinyagi"]).slice(0, 180),
+  );
+  check(
+    "9d: çamaşır deterjanı beyaz eşyaya bağlanmıyor",
+    !/Beyaz Eşya/.test(
+      openSetSeen["d-9d-camasir-deterjani"].crumbTop ?? "",
+    ),
+    openSetSeen["d-9d-camasir-deterjani"].crumbTop,
+  );
+
   fs.writeFileSync(
     path.join(OUT, "olcum-manifest.json"),
     JSON.stringify({ base: BASE, at: new Date().toISOString(), checks: results, shots }, null, 2),
