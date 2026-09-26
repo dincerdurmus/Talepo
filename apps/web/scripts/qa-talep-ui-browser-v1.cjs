@@ -27,7 +27,7 @@ const { decodePng, inkBounds } = require("./lib/qa-png-v1.cjs");
 
 const BASE = process.env.TALEP_QA_URL || "http://localhost:3211";
 const OUT = process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc4";
 
 const results = [];
 const shots = [];
@@ -231,6 +231,14 @@ async function main() {
    * ilk iOS seçenek satırına dokunur. Hiçbir cevabı doğrudan state'e yazmaz.
    */
   const ANSWER_STEP = `(() => {
+    /*
+      KATEGORİ ADIMI SORULARDAN ÖNCE GELİR (kurucu, 2026-09-25). Kartın
+      içinden çıkan doğrulama artık tek soru alanında duruyor; akışı sürdürmek
+      için önce o onaylanır. Kanonik eylem çağrılır, state'e yazılmaz.
+    */
+    const catConfirm = document.querySelector('[data-testid="category-confirmation-confirm"]');
+    if (catConfirm) { catConfirm.click(); return "category:confirm"; }
+
     const box = document.querySelector('[data-testid="composer-questions"]');
     if (!box) return "no-box";
     const setValue = (el, v) => {
@@ -310,6 +318,51 @@ async function main() {
           .map((b) => b.textContent.trim()).filter(Boolean).slice(0, 8),
         publishCta: q('[data-testid="composer-review-cta"]')?.textContent?.trim() ?? null,
         continueHint: q('[data-testid="composer-continue-hint"]')?.textContent?.trim() ?? null,
+        /*
+          VİDEODAKİ SADELİK KAPILARI — EKRANDAN ÖLÇÜLÜR (2026-09-26).
+          Kaynak şekli doğrulayıcıda ölçülüyor; burada gerçekten görünen DOM
+          sorulur: isteğe bağlı bölüm kapalı mı, yayın butonu onun üstünde mi,
+          kartta yer tutucu ya da kalem ikonu kaldı mı.
+        */
+        optionalDetails: (() => {
+          const d = q('[data-testid="composer-optional-details"]');
+          if (!d) return null;
+          const cta = q('[data-testid="composer-review-cta"]');
+          return {
+            open: d.open,
+            summary: d.querySelector("summary")?.textContent?.trim() ?? null,
+            /* DOM sırası: buton bölümden ÖNCE gelmeli. */
+            ctaBefore: cta
+              ? Boolean(
+                  cta.compareDocumentPosition(d) &
+                    Node.DOCUMENT_POSITION_FOLLOWING,
+                )
+              : null,
+          };
+        })(),
+        publishDock: (() => {
+          const d = q('[data-testid="composer-publish-dock"]');
+          return d ? { docked: d.dataset.docked } : null;
+        })(),
+        cardSubPlaceholder: /Tüm alt kategoriler/.test(
+          q('[data-testid="talep-request-card"]')?.innerText ?? "",
+        ),
+        cardRowHint:
+          q('[data-testid="talep-card-row-hint"]')?.textContent?.trim() ?? null,
+        cardHasCategoryConfirm: Boolean(
+          q('[data-testid="talep-card-category-confirm"]'),
+        ),
+        categoryStepSurface: Boolean(
+          q('[data-testid="category-confirmation-card"]'),
+        ),
+        startHeading: q('[data-testid="talep-start"] h1')?.textContent?.trim() ?? null,
+        startPlaceholder: q("#talep-composer")?.getAttribute("placeholder") ?? null,
+        startMairaMark:
+          q('[data-testid="talep-start-maira-mark"]')?.textContent?.trim() ?? null,
+        publishedMono:
+          q('[data-testid="talep-published-mono"]')?.textContent?.trim() ?? null,
+        publishOutcome:
+          q('[data-testid="talep-published"]')?.dataset.publishOutcome ?? null,
         outOfScope: q('[data-testid="composer-out-of-scope"]')?.textContent?.trim()?.slice(0, 140) ?? null,
         extras: [...document.querySelectorAll('[data-testid="talep-card-extras"] button')].map((b) => b.textContent.trim()),
         sheetOpen: Boolean(q('[data-testid="talep-category-sheet"]')),
@@ -341,6 +394,32 @@ async function main() {
   );
   check("390: başlangıç ekranı çiziliyor", s.start === true, JSON.stringify(s).slice(0, 120));
   check("390: Maira yüzü var", s.faces >= 1, `faces=${s.faces}`);
+  /* VİDEODAKİ İLK AN: büyük yüz, mono MAIRA, "Tek cümle yaz." ve kutu. */
+  check(
+    "390: başlık 'Tek cümle yaz.'",
+    s.startHeading === "Tek cümle yaz.",
+    s.startHeading,
+  );
+  check(
+    "390: kutu placeholder'ı 'Ne arıyorsun?'",
+    s.startPlaceholder === "Ne arıyorsun?",
+    s.startPlaceholder,
+  );
+  check(
+    "390: yüzün altında mono MAIRA etiketi",
+    s.startMairaMark === "MAIRA",
+    s.startMairaMark,
+  );
+  {
+    const gone = await evaluate(
+      `(() => { const t = document.querySelector('[data-testid="talep-start"]')?.innerText ?? ""; return { desc: /Maira eksik kalanı sorar/.test(t), hint: /Marka, adet, konum yazarsan/.test(t) }; })()`,
+    );
+    check(
+      "390: açıklama paragrafı ve ipucu satırı kalktı",
+      gone.desc === false && gone.hint === false,
+      JSON.stringify(gone),
+    );
+  }
   check("başlangıçta koyu tema sınıfı yok", s.darkThemeClasses === false);
   const cats = await evaluate(
     `[...document.querySelectorAll('[data-testid="talep-start-category"] b')].map(b=>b.textContent.trim())`,
@@ -354,17 +433,22 @@ async function main() {
   */
   const faceMobile = await measureFace(0);
   check(
-    "132px yüz: sahne portre kadrajında kuruldu",
+    "240px yüz: telefonda büyütüldü (videodaki ilk an)",
+    Boolean(faceMobile && faceMobile.box.w >= 220),
+    JSON.stringify(faceMobile?.box),
+  );
+  check(
+    "240px yüz: sahne portre kadrajında kuruldu",
     Boolean(faceMobile && faceMobile.box.framing === "portrait"),
     JSON.stringify(faceMobile?.box),
   );
   check(
-    "132px yüz: mürekkep kutunun yüksekliğinin çoğunu kaplıyor",
+    "240px yüz: mürekkep kutunun yüksekliğinin çoğunu kaplıyor",
     Boolean(faceMobile && faceMobile.ink.heightRatio >= 0.55),
     JSON.stringify(faceMobile?.ink),
   );
   check(
-    "132px yüz: mürekkep dikeyde ortalı (gövdeye kaymıyor)",
+    "240px yüz: mürekkep dikeyde ortalı (gövdeye kaymıyor)",
     Boolean(
       faceMobile &&
         faceMobile.ink.centerY > 0.3 &&
@@ -405,6 +489,16 @@ async function main() {
     phase: s.readingPhase,
     entities: s.entities,
   });
+  /*
+    KONUM VURGUSU EKRANDAN ÖLÇÜLÜR (kurucu ölçümü, m-2-okuma.png). Metinde
+    yeri bulunan HER alan yanmalı; konum "İstanbul Kadıköy" diye bitişik
+    yazıldığında da vurgu tamamını kapsar.
+  */
+  check(
+    "okuma anında konum da vurgulanıyor",
+    s.entities.some((e) => /konum|şehir/i.test(e.label ?? "")),
+    s.entities.map((e) => `${e.label}:${e.on}`).join(","),
+  );
 
   /* 3) SORU — kart + tek soru                                          */
   await sleep(3200);
@@ -412,25 +506,67 @@ async function main() {
   check("okuma anı alıntıya dönüyor", s.readingPhase === "quote", s.readingPhase);
   check("talep kartı belirdi", s.card === true);
   check("kartta doluluk çubuğu var", Boolean(s.meter), s.meter);
-  check("ekranda tek soru var", Boolean(s.question), s.question);
   check("durum SORUYOR", s.status === "SORUYOR", s.status);
-  check(
-    "kartta 'şimdi soruluyor' satırı sorulan alanla eşleşiyor",
-    s.rows.some((r) => r.state === "asking" && r.key === s.questionField),
-    JSON.stringify(s.rows) + " q=" + s.questionField,
-  );
   check(
     "kategori kırıntısı tekrarlı değil",
     (s.crumbTop || "").length > 0,
     s.crumbTop,
   );
-  check("ana eylem hep görünür", Boolean(s.publishCta || s.continueHint), s.publishCta || s.continueHint);
+  /*
+    "Yayın için son adım: …" bandı kalktı (kurucu, 2026-09-25): kalan zorunlu
+    alan kartta amber "şimdi soruluyor" satırı olarak zaten görünüyor. Ekranda
+    yine tek eylem durur — ya soru ya yayın butonu.
+  */
+  check("eksik alan varken ayrı 'son adım' bandı YOK", s.continueHint === null, s.continueHint);
+  check(
+    "eksik alan kartta 'şimdi soruluyor' olarak görünüyor",
+    s.rows.some((r) => r.state === "asking"),
+    JSON.stringify(s.rows),
+  );
+  check(
+    "ekranda tek eylem var",
+    Boolean(s.question || s.publishCta || s.categoryStepSurface),
+    `${s.question} / ${s.publishCta} / cat=${s.categoryStepSurface}`,
+  );
+  check("kartta 'Tüm alt kategoriler' yer tutucusu yok", s.cardSubPlaceholder === false);
+  check("kartta kategori doğrulama kutusu yok", s.cardHasCategoryConfirm === false);
+  check(
+    "kart altında satır ipucu duruyor",
+    s.cardRowHint === "Satıra dokunup değiştirebilirsin",
+    s.cardRowHint,
+  );
   check(
     "kart başlığı kısa: marka + ürün, konum yok",
     Boolean(s.cardTitle) &&
       !/Kadıköy|İstanbul/.test(s.cardTitle) &&
       !/arıyorum/i.test(s.cardTitle),
     s.cardTitle,
+  );
+  /*
+    KATEGORİ DOĞRULAMASI SORULARDAN ÖNCE, KARTIN ALTINDAKİ TEK ALANDA. Ekranda
+    aynı anda hem doğrulama hem soru durmaz; onaylandıktan sonra soru gelir.
+  */
+  check(
+    "kapsam içinde kategori adımı tek soru alanında görünür",
+    s.categoryStepSurface === true,
+    `categoryAsk=${s.categoryAsk} surface=${s.categoryStepSurface}`,
+  );
+  if (s.categoryStepSurface) {
+    check("doğrulama açıkken ayrıca soru gösterilmiyor", s.question === null, s.question);
+    await shot("m-2b-kategori-onay", "mobil 390 — kategori doğrulaması tek soru alanında", {
+      crumbTop: s.crumbTop,
+      rows: s.rows,
+      cardHasCategoryConfirm: s.cardHasCategoryConfirm,
+    });
+    await click('[data-testid="category-confirmation-confirm"]');
+    await sleep(1400);
+    s = await snapshot();
+  }
+  check("ekranda tek soru var", Boolean(s.question), s.question);
+  check(
+    "kartta 'şimdi soruluyor' satırı sorulan alanla eşleşiyor",
+    s.rows.some((r) => r.state === "asking" && r.key === s.questionField),
+    JSON.stringify(s.rows) + " q=" + s.questionField,
   );
   check(
     "ilk soru zorunlu: 'İsteğe bağlı' rozeti YOK",
@@ -451,8 +587,6 @@ async function main() {
       JSON.stringify(small?.ink),
     );
   }
-  /* Kapsam İÇİNDE kategori adımı DURUR — kapsam dışı susturmasının karşı kontrolü. */
-  check("kapsam içinde kategori adımı görünür", s.categoryAsk === true);
   {
     const ov = await overflow();
     check("390: soru ekranı yatay taşmıyor", ov.scrollW <= ov.inner + 1, JSON.stringify(ov));
@@ -485,7 +619,9 @@ async function main() {
   /* 5) HAZIR — YALNIZ ZORUNLULARI cevapla, isteğe bağlı soru AÇIK kalsın   */
   for (let i = 0; i < 6; i += 1) {
     s = await snapshot();
-    if (!s.question || s.publishCta) break;
+    /* Kategori adımı da bir "bekleyen şey"dir: onaylanmadan soru gelmez. */
+    if (s.publishCta) break;
+    if (!s.question && !s.categoryStepSurface) break;
     const answered = await evaluate(ANSWER_STEP);
     console.log(`  cevap adımı ${i + 1}: ${answered}`);
     await sleep(1400);
@@ -508,31 +644,80 @@ async function main() {
     s.rows.every((r) => r.state === "filled"),
     JSON.stringify(s.rows),
   );
+  /*
+    HAZIR ANI — VİDEODAKİ SIRA (kurucu, 2026-09-25). Yayın butonu kartın
+    hemen altında ve isteğe bağlı bölümün ÜSTÜNDE durur; isteğe bağlı soru
+    kendiliğinden AÇILMAZ.
+  */
   check(
-    "isteğe bağlı alanlar chip olarak duruyor",
-    s.extras.length > 0,
-    s.extras.join(","),
+    "hazır durumda isteğe bağlı soru otomatik açılmıyor",
+    s.question === null,
+    s.question,
   );
   check(
-    "isteğe bağlı soru sorulurken rozeti görünüyor",
-    !s.question || s.optionalBadge === "İsteğe bağlı",
-    `${s.question} / badge=${s.optionalBadge}`,
+    "isteğe bağlı bölüm kapalı doğuyor",
+    s.optionalDetails !== null && s.optionalDetails.open === false,
+    JSON.stringify(s.optionalDetails),
   );
   check(
-    "isteğe bağlı soru açıkken yayın butonu basılabilir",
+    "yayın butonu isteğe bağlı bölümün ÜSTÜNDE",
+    Boolean(s.optionalDetails && s.optionalDetails.ctaBefore === true),
+    JSON.stringify(s.optionalDetails),
+  );
+  check(
+    "kapalı bölümün satırı tek ve isteğe bağlı olduğunu söylüyor",
+    /Detay ekle/.test(s.optionalDetails?.summary ?? "") &&
+      /isteğe bağlı/i.test(s.optionalDetails?.summary ?? ""),
+    s.optionalDetails?.summary,
+  );
+  check(
+    "telefonda yayın butonu ekranın altına sabitlendi",
+    s.publishDock?.docked === "visible",
+    JSON.stringify(s.publishDock),
+  );
+  check(
+    "yayın butonu basılabilir",
     Boolean(s.publishCta) && s.publishCtaDisabled === false,
     `cta=${s.publishCta} disabled=${s.publishCtaDisabled}`,
   );
-  await shot("m-6-hazir", "mobil 390 — zorunlular tamam, isteğe bağlı soru açık", {
+  await shot("m-6-hazir", "mobil 390 — yayına hazır, isteğe bağlı bölüm kapalı", {
     status: s.status,
     meter: s.meter,
     meterReady: s.meterReady,
     cardTitle: s.cardTitle,
     question: s.question,
-    optionalBadge: s.optionalBadge,
+    optionalDetails: s.optionalDetails,
+    publishDock: s.publishDock,
     cta: s.publishCta,
     rows: s.rows,
     extras: s.extras,
+  });
+
+  /* Kapalı bölüm açılınca chip'ler ve isteğe bağlı soru görünür. */
+  await click('[data-testid="composer-optional-details"] summary');
+  await sleep(1200);
+  s = await snapshot();
+  check(
+    "bölüm açılınca ek alan chip'leri görünür",
+    s.extras.length > 0,
+    s.extras.join(","),
+  );
+  check(
+    "bölüm açılınca isteğe bağlı soru rozetiyle gelir",
+    !s.question || s.optionalBadge === "İsteğe bağlı",
+    `${s.question} / badge=${s.optionalBadge}`,
+  );
+  check(
+    "bölüm açıkken de yayın butonu duruyor",
+    Boolean(s.publishCta),
+    s.publishCta,
+  );
+  await shot("m-6b-detay-acik", "mobil 390 — 'Detay ekle' açık", {
+    optionalDetails: s.optionalDetails,
+    question: s.question,
+    optionalBadge: s.optionalBadge,
+    extras: s.extras,
+    cta: s.publishCta,
   });
 
   /* 6) MASAÜSTÜ 1280                                                   */
@@ -579,6 +764,12 @@ async function main() {
   await sleep(3200);
   s = await snapshot();
   check("1280: kart sağ kolonda", s.card === true);
+  /* Kategori adımı sorulardan önce gelir; onaylanınca tek soru kalır. */
+  if (s.categoryStepSurface) {
+    await click('[data-testid="category-confirmation-confirm"]');
+    await sleep(1400);
+    s = await snapshot();
+  }
   check("1280: tek soru", Boolean(s.question), s.question);
   await shot("d-3-soru", "masaüstü 1280 — soru + sticky kart", {
     status: s.status,
@@ -603,7 +794,9 @@ async function main() {
 
   for (let i = 0; i < 6; i += 1) {
     s = await snapshot();
-    if (!s.question || s.publishCta) break;
+    /* Kategori adımı da bir "bekleyen şey"dir: onaylanmadan soru gelmez. */
+    if (s.publishCta) break;
+    if (!s.question && !s.categoryStepSurface) break;
     console.log(`  masaüstü cevap adımı ${i + 1}: ${await evaluate(ANSWER_STEP)}`);
     await sleep(1400);
   }
@@ -614,17 +807,23 @@ async function main() {
     `${s.meter} (${s.meterFilled}/${s.meterTotal})`,
   );
   check(
-    "1280: isteğe bağlı soru açıkken yayın butonu duruyor",
-    Boolean(s.publishCta),
-    `${s.question} / ${s.publishCta}`,
+    "1280: yayın butonu duruyor ve isteğe bağlı bölümün üstünde",
+    Boolean(s.publishCta) && s.optionalDetails?.ctaBefore === true,
+    `${s.publishCta} / ${JSON.stringify(s.optionalDetails)}`,
   );
-  await shot("d-6-hazir", "masaüstü 1280 — zorunlular tamam, isteğe bağlı soru açık", {
+  check(
+    "1280: masaüstünde buton sabitlenmez (akışta durur)",
+    s.publishDock?.docked === "visible",
+    JSON.stringify(s.publishDock),
+  );
+  await shot("d-6-hazir", "masaüstü 1280 — yayına hazır, isteğe bağlı bölüm kapalı", {
     status: s.status,
     meter: s.meter,
     meterReady: s.meterReady,
     cardTitle: s.cardTitle,
     question: s.question,
     optionalBadge: s.optionalBadge,
+    optionalDetails: s.optionalDetails,
     cta: s.publishCta,
     rows: s.rows,
     extras: s.extras,
@@ -639,8 +838,14 @@ async function main() {
   s = await snapshot();
   check(
     "belirsiz cümlede akış kilitlenmiyor",
-    Boolean(s.question || s.continueHint || s.publishCta || s.outOfScope),
-    JSON.stringify({ q: s.question, hint: s.continueHint, cta: s.publishCta }).slice(0, 160),
+    Boolean(
+      s.question || s.categoryStepSurface || s.publishCta || s.outOfScope,
+    ),
+    JSON.stringify({
+      q: s.question,
+      cat: s.categoryStepSurface,
+      cta: s.publishCta,
+    }).slice(0, 160),
   );
   await shot("d-7-belirsiz", "masaüstü 1280 — belirsiz cümle", {
     status: s.status,
@@ -840,7 +1045,9 @@ async function main() {
   for (let i = 0; i < 8; i += 1) {
     s = await snapshot();
     if (s.questionField) kartvizitAskedFields.push(s.questionField);
-    if (!s.question || s.publishCta) break;
+    /* Kategori adımı da bir "bekleyen şey"dir: onaylanmadan soru gelmez. */
+    if (s.publishCta) break;
+    if (!s.question && !s.categoryStepSurface) break;
     console.log(`  kartvizit cevap adımı ${i + 1}: ${await evaluate(ANSWER_STEP)}`);
     await sleep(1400);
   }
@@ -867,6 +1074,163 @@ async function main() {
     extras: s.extras,
     cta: s.publishCta,
   });
+
+  /* 11) VİDEO SADELİĞİ — BEŞ SENARYO, İKİ GENİŞLİK, OKUMA ANI İKİ KAREDE */
+  /**
+   * NEDEN BU BÖLÜM VAR (kurucu, 2026-09-25 tanıtım videosu). Yeni akışın beş
+   * cümlesi 390 ve 1280'de baştan sona sürülür. Okuma anı iki ayrı karede
+   * yakalanır — vurgular YARIDA ve BİTTİĞİNDE — çünkü "sırayla vurgulanıyor"
+   * iddiası tek karede kanıtlanamaz. Her kare ölçülen kimliklerle etiketlenir.
+   */
+  const VIDEO_FLOWS = [
+    { slug: "v1", text: "Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar", label: "emlak — videodaki cümle" },
+    { slug: "v2", text: "Egea için 4 kış lastiği, takma dahil, Ümraniye", label: "otomotiv — parça + hizmet" },
+    { slug: "v3", text: "Arçelik buzdolabı arıyorum, İstanbul Kadıköy", label: "beyaz eşya — bütçe sorusu ve hazır durumu" },
+    { slug: "v4", text: "bir şeyler lazım acil", label: "kategorisiz, belirsiz cümle" },
+    { slug: "v5", text: "Ağrı kesici ilaç arıyorum, İstanbul", label: "ilaç — 'yayında' demez" },
+  ];
+  const VIEWPORTS = [
+    { w: 390, h: 844, tag: "m" },
+    { w: 1280, h: 900, tag: "d" },
+  ];
+  const videoSeen = {};
+
+  for (const vp of VIEWPORTS) {
+    await setViewport(vp.w, vp.h);
+    for (const flow of VIDEO_FLOWS) {
+      const key = `${vp.tag}-11${flow.slug}`;
+      await goto(`${BASE}/talep`);
+      await typeInto("#talep-composer", flow.text);
+      await sleep(900);
+      await click('[data-testid="composer-intro-continue"]');
+
+      /* Okuma anı — YARIDA. Vurguların bir kısmı açık, bir kısmı kapalı. */
+      await sleep(700);
+      let mid = await snapshot();
+      await shot(`${key}-okuma-yarida`, `${vp.w} — ${flow.label} · okuma yarıda`, {
+        phase: mid.readingPhase,
+        status: mid.status,
+        entities: mid.entities,
+      });
+
+      /*
+        Okuma anı — SON VURGU AÇILDIĞINDA. Sabit bekleme yanlış an yakalar:
+        vurgu sayısı cümleden cümleye değişiyor ve sabit süre kimi cümlede
+        okuma bitip alıntıya döndükten SONRA düşüyordu (ölçüldü). Faz hâlâ
+        `reading` iken bütün vurgular açılana kadar yoklanır.
+      */
+      let end = mid;
+      for (let i = 0; i < 24; i += 1) {
+        end = await snapshot();
+        if (end.readingPhase !== "reading") break;
+        if (
+          end.entities.length > 0 &&
+          end.entities.every((e) => e.on === "true")
+        ) {
+          break;
+        }
+        await sleep(120);
+      }
+      await shot(`${key}-okuma-bitti`, `${vp.w} — ${flow.label} · okuma bitti`, {
+        phase: end.readingPhase,
+        status: end.status,
+        entities: end.entities,
+      });
+
+      const revealedMid = mid.entities.filter((e) => e.on === "true").length;
+      const revealedEnd = end.entities.filter((e) => e.on === "true").length;
+      if (end.entities.length > 1) {
+        check(
+          `${key}: vurgular SIRAYLA açılıyor (yarıda ${revealedMid} < bitişte ${revealedEnd})`,
+          revealedMid < revealedEnd || revealedEnd === end.entities.length,
+          `${revealedMid}/${revealedEnd}/${end.entities.length}`,
+        );
+      }
+
+      /* Okuma anı kendi kendine kapanır; kart belirene kadar beklenir. */
+      for (let i = 0; i < 30; i += 1) {
+        s = await snapshot();
+        if (s.readingPhase === "quote" || s.outOfScope) break;
+        await sleep(300);
+      }
+      await sleep(900);
+
+      /* Akışı yürüt: kategori onayı + zorunlu sorular. */
+      for (let i = 0; i < 8; i += 1) {
+        s = await snapshot();
+        if (s.outOfScope) break;
+        if (!s.question && !s.categoryStepSurface) break;
+        if (s.publishCta) break;
+        await evaluate(ANSWER_STEP);
+        await sleep(1400);
+      }
+      s = await snapshot();
+      const bodyText = await evaluate(`document.body.innerText`);
+      videoSeen[key] = {
+        outOfScope: Boolean(s.outOfScope),
+        crumbTop: s.crumbTop,
+        crumbLeaf: s.crumbLeaf,
+        cardTitle: s.cardTitle,
+        meter: s.meter,
+        meterReady: s.meterReady,
+        rows: s.rows,
+        question: s.questionField,
+        cta: s.publishCta,
+        optionalDetails: s.optionalDetails,
+        subPlaceholder: s.cardSubPlaceholder,
+        saysLive: /Talebin yayında/.test(bodyText),
+        saysDelivered: /ulaştı|iletildi|gönderildi/i.test(bodyText),
+      };
+      await shot(`${key}-son`, `${vp.w} — ${flow.label} · akışın son hâli`, videoSeen[key]);
+
+      check(
+        `${key}: hiçbir kartta 'Tüm alt kategoriler' yok`,
+        videoSeen[key].subPlaceholder === false,
+      );
+      check(
+        `${key}: ekranda 'ulaştı/iletildi/gönderildi' yok`,
+        videoSeen[key].saysDelivered === false,
+      );
+      if (s.publishCta) {
+        check(
+          `${key}: yayın butonu isteğe bağlı bölümün üstünde`,
+          s.optionalDetails === null || s.optionalDetails.ctaBefore === true,
+          JSON.stringify(s.optionalDetails),
+        );
+        check(
+          `${key}: isteğe bağlı bölüm kapalı doğdu`,
+          s.optionalDetails === null || s.optionalDetails.open === false,
+          JSON.stringify(s.optionalDetails),
+        );
+      }
+    }
+  }
+
+  check(
+    "11v5: ilaç cümlesi kapsam dışı ve 'yayında' demiyor (390)",
+    videoSeen["m-11v5"].outOfScope === true && videoSeen["m-11v5"].saysLive === false,
+    JSON.stringify(videoSeen["m-11v5"]).slice(0, 200),
+  );
+  check(
+    "11v5: ilaç cümlesi kapsam dışı ve 'yayında' demiyor (1280)",
+    videoSeen["d-11v5"].outOfScope === true && videoSeen["d-11v5"].saysLive === false,
+    JSON.stringify(videoSeen["d-11v5"]).slice(0, 200),
+  );
+  check(
+    "11v4: belirsiz cümlede akış kilitlenmiyor",
+    Boolean(
+      videoSeen["d-11v4"].question ||
+        videoSeen["d-11v4"].cta ||
+        videoSeen["d-11v4"].outOfScope ||
+        videoSeen["d-11v4"].crumbTop,
+    ),
+    JSON.stringify(videoSeen["d-11v4"]).slice(0, 200),
+  );
+  check(
+    "11v3: Arçelik akışı yayına hazıra ulaşıyor (390)",
+    videoSeen["m-11v3"].meterReady === "true" && Boolean(videoSeen["m-11v3"].cta),
+    JSON.stringify(videoSeen["m-11v3"]).slice(0, 200),
+  );
 
   fs.writeFileSync(
     path.join(OUT, "olcum-manifest.json"),
