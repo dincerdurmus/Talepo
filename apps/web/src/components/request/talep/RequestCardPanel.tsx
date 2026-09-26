@@ -49,6 +49,13 @@ type Props = {
   /** Yayınlandıktan sonra satırlar kilitlenir. */
   locked?: boolean;
   lockedBadge?: string | null;
+  /**
+   * KATEGORİ ADIMI ŞU AN AÇIK MI (kurucu, 2026-09-26). "Değiştir" kapanan
+   * kategori bloğunu geri açar; düğme bu yüzden bir aç/kapa denetimidir ve
+   * durumunu ekran okuyucuya `aria-expanded` ile söyler. Kart yine karar
+   * vermez — değeri sayfadan alır.
+   */
+  categoryStepOpen?: boolean;
   onChangeCategory: () => void;
   onAskField: (fieldKey: string) => void;
 };
@@ -92,6 +99,7 @@ export function RequestCardPanel({
   ready = false,
   locked = false,
   lockedBadge = null,
+  categoryStepOpen = false,
   onChangeCategory,
   onAskField,
 }: Props) {
@@ -164,6 +172,7 @@ export function RequestCardPanel({
           <button
             type="button"
             data-testid="talep-card-change-category"
+            aria-expanded={categoryStepOpen}
             onClick={onChangeCategory}
             className="ml-auto min-h-10 px-2.5 text-sm font-medium text-[#0f766e]"
           >

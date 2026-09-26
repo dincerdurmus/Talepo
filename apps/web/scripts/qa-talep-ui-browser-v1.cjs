@@ -13,6 +13,9 @@
  * Koşum (kendi portunda bir dev sunucusu ayakta olmalı):
  *   npx next dev -p 3211
  *   node scripts/qa-talep-ui-browser-v1.cjs
+ * Adres ilk argümandan da verilebilir: `node scripts/qa-talep-ui-browser-v1.cjs
+ * http://localhost:3271` — Windows kabuğunda ortam değişkeni ön eki
+ * kullanılamadığı için eklendi.
  * Değişkenler: TALEP_QA_URL (varsayılan http://localhost:3211),
  * TALEP_QA_OUT (ekran görüntüsü klasörü).
  *
@@ -25,10 +28,11 @@ const path = require("path");
 const { launch, connect } = require("./lib/qa-cdp-v1.cjs");
 const { decodePng, inkBounds, cropImage } = require("./lib/qa-png-v1.cjs");
 
-const BASE = process.env.TALEP_QA_URL || "http://localhost:3211";
+const BASE =
+  process.argv[2] || process.env.TALEP_QA_URL || "http://localhost:3211";
 /* Her turun kareleri kendi klasörüne yazılır; öncekiler ezilmez. */
 const OUT = process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc6";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc7";
 
 const results = [];
 const shots = [];
@@ -594,6 +598,64 @@ async function main() {
         ),
         cardRowHint:
           q('[data-testid="talep-card-row-hint"]')?.textContent?.trim() ?? null,
+        /*
+          D-0047 — CEVAPLANAN ADIM KAPANIR, GERİ DÖNÜŞÜ KALIR. Üç şey ölçülür:
+          kapanan blok GÖRÜNÜR mü (yalnız "DOM'da yok" yetmez: soluk ama duran
+          bir kopya da kapanmış sayılmaz), odak nereye gitti, kapanış ekran
+          okuyucuya ne dedi.
+        */
+        soruBlokGorunur: (() => {
+          const el = q('[data-testid="composer-questions"]');
+          if (!el) return false;
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return r.width > 0 && r.height > 0 && Number(cs.opacity) > 0.01;
+        })(),
+        kategoriBlokGorunur: (() => {
+          const el = q('[data-testid="category-confirmation-card"]');
+          if (!el) return false;
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          return r.width > 0 && r.height > 0 && Number(cs.opacity) > 0.01;
+        })(),
+        softExit: [...document.querySelectorAll('[data-testid="talep-soft-exit"]')].map(
+          (e) => e.dataset.softExit,
+        ),
+        odak: (() => {
+          const a = document.activeElement;
+          if (!a || a === document.body) return null;
+          return {
+            etiket: a.tagName.toLowerCase(),
+            id: a.id || null,
+            testid: a.getAttribute("data-testid"),
+            rowKey: a.getAttribute("data-row-key"),
+            blok: a.closest('[data-testid="talep-request-card"]')
+              ? "kart"
+              : a.closest('[data-testid="composer-questions"]')
+                ? "soruBlok"
+                : a.closest('[data-testid="category-confirmation-card"]')
+                  ? "kategoriBlok"
+                  : "diger",
+          };
+        })(),
+        kapanisDuyurusu:
+          q('[data-testid="talep-step-closed-notice"]')?.textContent?.trim() || null,
+        degistirAriaExpanded:
+          q('[data-testid="talep-card-change-category"]')?.getAttribute(
+            "aria-expanded",
+          ) ?? null,
+        analizKapaliAgirlik: (() => {
+          const d = q('[data-testid="talep-analysis-details"]');
+          if (!d) return null;
+          const su = q('[data-testid="talep-analysis-summary"]');
+          const cs = getComputedStyle(d);
+          return {
+            open: d.dataset.open,
+            cerceve: cs.borderTopWidth,
+            zemin: cs.backgroundColor,
+            punto: su ? getComputedStyle(su).fontSize : null,
+          };
+        })(),
         cardHasCategoryConfirm: Boolean(
           q('[data-testid="talep-card-category-confirm"]'),
         ),
@@ -890,10 +952,76 @@ async function main() {
       crumbTop: s.crumbTop,
       rows: s.rows,
       cardHasCategoryConfirm: s.cardHasCategoryConfirm,
+      degistirAriaExpanded: s.degistirAriaExpanded,
     });
+    check(
+      "D-0047: adım açıkken 'Değiştir' aria-expanded=true",
+      s.degistirAriaExpanded === "true",
+      s.degistirAriaExpanded,
+    );
     await click('[data-testid="category-confirmation-confirm"]');
+    /*
+      D-0047 — YUMUŞAK KAPANIŞ AN İÇİNDE ÖLÇÜLÜR. Yerleşmiş ekranda çekilen
+      kopya zaten yoktur; kapanışın gerçekten kurulduğunu görmek için tıklamadan
+      hemen sonra bakılır. Kopya erişilemez olmalı: aria-hidden + inert +
+      pointer-events yok.
+    */
+    await sleep(140);
+    const kapanisAni = await evaluate(`(() => {
+      const e = document.querySelector('[data-testid="talep-soft-exit"]');
+      if (!e) return null;
+      const cs = getComputedStyle(e);
+      return {
+        ad: e.dataset.softExit,
+        opaklik: Number(cs.opacity),
+        ariaHidden: e.getAttribute("aria-hidden"),
+        inert: e.hasAttribute("inert"),
+        pointerEvents: cs.pointerEvents,
+        animasyon: cs.animationName,
+      };
+    })()`);
+    check(
+      "D-0047: kategori bloğu yumuşak kapanıyor (bir karede yok olmuyor)",
+      Boolean(
+        kapanisAni &&
+          kapanisAni.ad === "kategori" &&
+          kapanisAni.animasyon === "talep-soft-exit" &&
+          kapanisAni.opaklik < 1,
+      ),
+      JSON.stringify(kapanisAni),
+    );
+    check(
+      "D-0047: çekilen kopyaya klavye/ekran okuyucu/fare ulaşamaz",
+      Boolean(
+        kapanisAni &&
+          kapanisAni.ariaHidden === "true" &&
+          kapanisAni.inert === true &&
+          kapanisAni.pointerEvents === "none",
+      ),
+      JSON.stringify(kapanisAni),
+    );
     await sleep(1400);
     s = await snapshot();
+    check(
+      "D-0047: onaylanan kategori bloğu ekranda GÖRÜNÜR değil",
+      s.kategoriBlokGorunur === false && s.softExit.length === 0,
+      `gorunur=${s.kategoriBlokGorunur} cekilen=${s.softExit.join(",")}`,
+    );
+    check(
+      "D-0047: kapanan bloğun odağı karttaki 'Değiştir'e geçti",
+      s.odak?.testid === "talep-card-change-category",
+      JSON.stringify(s.odak),
+    );
+    check(
+      "D-0047: kapanış ekran okuyucuya duyuruldu",
+      /Kategori .+ kaydedildi/.test(s.kapanisDuyurusu ?? ""),
+      s.kapanisDuyurusu,
+    );
+    check(
+      "D-0047: adım kapanınca 'Değiştir' aria-expanded=false",
+      s.degistirAriaExpanded === "false",
+      s.degistirAriaExpanded,
+    );
   }
   check("ekranda tek soru var", Boolean(s.question), s.question);
   check(
@@ -933,8 +1061,33 @@ async function main() {
     rows: s.rows,
   });
 
-  /* 4) KATEGORİ PANELİ + ALT KATEGORİ                                  */
+  /* 4) KARTTAN GERİ AÇMA (D-0047) + KATEGORİ PANELİ + ALT KATEGORİ      */
+  /*
+    KAPANAN BLOĞUN GERİ DÖNÜŞÜ KARTTADIR (kurucu, 2026-09-26). "Değiştir"
+    artık başka bir yüzeye atlamaz; kapanan kategori bloğunu aynı yerde geri
+    açar. Tam ekran panel kaybolmaz — bloğun içindeki "Tüm kategoriler"den
+    açılır ve alt kategori seçimi orada yapılmaya devam eder.
+  */
   await click('[data-testid="talep-card-change-category"]');
+  await sleep(900);
+  s = await snapshot();
+  check(
+    "D-0047: karttaki 'Değiştir' kapanan kategori bloğunu geri açtı",
+    s.kategoriBlokGorunur === true,
+    `gorunur=${s.kategoriBlokGorunur} sheet=${s.sheetOpen}`,
+  );
+  check(
+    "D-0047: geri açılan bloğun ilk denetimi odakta",
+    s.odak?.blok === "kategoriBlok",
+    JSON.stringify(s.odak),
+  );
+  await shot("m-3b-kategori-geri-acildi", "mobil 390 — karttan geri açılan kategori bloğu", {
+    kategoriBlokGorunur: s.kategoriBlokGorunur,
+    odak: s.odak,
+    degistirAriaExpanded: s.degistirAriaExpanded,
+  });
+
+  await click('[data-testid="category-step-open-sheet"]');
   await sleep(700);
   s = await snapshot();
   check("kategori paneli alttan açıldı", s.sheetOpen === true);
@@ -1025,6 +1178,123 @@ async function main() {
     rows: s.rows,
     extras: s.extras,
   });
+
+  /*
+    D-0047 — YAYINA HAZIRKEN GÖRSEL AĞIRLIK. Ekranda kart + "Talebi yayınla" +
+    kapalı "Detay ekle" konuşur; "Cümlemi düzenle" ve "Talep analizi" kalır ama
+    ikincil kalır. Kapalı akordeonun çerçevesi ve zemini ölçülür — daha önce
+    "Detay ekle" ile aynı ağırlıkta beyaz bir kutuydu.
+  */
+  check(
+    "D-0047: hazır ekranda 'Talep analizi' ikincil (kapalıyken çerçevesiz)",
+    Boolean(
+      s.analizKapaliAgirlik &&
+        s.analizKapaliAgirlik.open === "false" &&
+        s.analizKapaliAgirlik.cerceve === "0px" &&
+        /rgba\(0, 0, 0, 0\)|transparent/.test(s.analizKapaliAgirlik.zemin),
+    ),
+    JSON.stringify(s.analizKapaliAgirlik),
+  );
+
+  /*
+    D-0047 — CEVAPLANAN SORU KART SATIRINDAN GERİ AÇILIR. Kurucunun cümlesi:
+    "seçilen şey gidebilir ama geri dönüşü olacak şekilde kalkması lazım."
+    Dolu bir satıra dokunulur, soru geri gelir, yeniden cevaplanır ve blok
+    tekrar kapanır; odak her iki yönde de doğru yere gider.
+  */
+  {
+    /*
+      SÜRÜCÜNÜN CEVAPLAYABİLDİĞİ BİR SATIR SEÇİLİR. `ANSWER_STEP` para ve konum
+      denetimlerini ve iOS seçenek satırlarını sürebiliyor; `brand` çok seçimli
+      bir düğme kümesi olduğu için sürücü onu cevaplayamıyor ve blok haklı
+      olarak açık kalıyor. Kapının ölçtüğü şey KAPANMA; sürücünün sınırı ayrı
+      bir kapı olarak yazılır ki iki durum birbirine karışmasın.
+    */
+    const doluSatirlar = s.rows.filter((r) => r.state === "filled").map((r) => r.key);
+    const doluSatir =
+      doluSatirlar.find((k) => k === "budget") ??
+      doluSatirlar.find((k) => k === "city") ??
+      doluSatirlar[0] ??
+      null;
+    check(
+      "D-0047: kartta geri dönülebilecek dolu satır var",
+      Boolean(doluSatir),
+      doluSatirlar.join(","),
+    );
+    if (doluSatir) {
+      await click(
+        `[data-testid="talep-card-row"][data-row-key="${doluSatir}"]`,
+      );
+      await sleep(1000);
+      s = await snapshot();
+      check(
+        `D-0047: '${doluSatir}' satırı cevaplanan soruyu geri açtı`,
+        s.soruBlokGorunur === true && s.questionField === doluSatir,
+        `gorunur=${s.soruBlokGorunur} alan=${s.questionField}`,
+      );
+      check(
+        "D-0047: geri açılan sorunun ilk denetimi odakta",
+        s.odak?.blok === "soruBlok",
+        JSON.stringify(s.odak),
+      );
+      check(
+        "D-0047: geri açılışta bayat kapanış duyurusu silindi",
+        s.kapanisDuyurusu === null,
+        s.kapanisDuyurusu,
+      );
+      await shot(
+        "m-6c-satirdan-geri-acildi",
+        `mobil 390 — '${doluSatir}' satırından geri açılan soru`,
+        {
+          satir: doluSatir,
+          questionField: s.questionField,
+          odak: s.odak,
+          soruBlokGorunur: s.soruBlokGorunur,
+        },
+      );
+
+      const yeniden = await evaluate(ANSWER_STEP);
+      check(
+        "D-0047: sürücü geri açılan soruyu gerçekten cevapladı",
+        yeniden !== "no-control" && yeniden !== "no-box",
+        yeniden,
+      );
+      await sleep(1500);
+      s = await snapshot();
+      check(
+        `D-0047: yeniden cevaplanan blok GÖRÜNÜR değil (${yeniden})`,
+        s.soruBlokGorunur === false && s.softExit.length === 0,
+        `gorunur=${s.soruBlokGorunur} cekilen=${s.softExit.join(",")}`,
+      );
+      check(
+        "D-0047: odak cevabın düştüğü kart satırına döndü",
+        s.odak?.testid === "talep-card-row" && s.odak?.rowKey === doluSatir,
+        JSON.stringify(s.odak),
+      );
+      check(
+        "D-0047: kapanış ekran okuyucuya duyuruldu ve geri dönüşü söylüyor",
+        /kartta güncellendi/.test(s.kapanisDuyurusu ?? "") &&
+          /satırına dön/.test(s.kapanisDuyurusu ?? ""),
+        s.kapanisDuyurusu,
+      );
+      check(
+        "D-0047: geri dönüş sonrası yayın butonu hâlâ açık",
+        Boolean(s.publishCta) && s.publishCtaDisabled === false,
+        `${s.publishCta} disabled=${s.publishCtaDisabled}`,
+      );
+      await shot(
+        "m-6d-satir-sorusu-kapandi",
+        `mobil 390 — satırdan açılan soru yeniden kapandı (${yeniden})`,
+        {
+          satir: doluSatir,
+          odak: s.odak,
+          duyuru: s.kapanisDuyurusu,
+          soruBlokGorunur: s.soruBlokGorunur,
+          rows: s.rows,
+        },
+      );
+    }
+  }
 
   /* Kapalı bölüm açılınca chip'ler ve isteğe bağlı soru görünür. */
   await click('[data-testid="composer-optional-details"] summary');
@@ -1148,7 +1418,16 @@ async function main() {
     rows: s.rows,
   });
 
+  /* D-0047: masaüstünde de "Değiştir" bloğu geri açar, panel bloktan açılır. */
   await click('[data-testid="talep-card-change-category"]');
+  await sleep(900);
+  s = await snapshot();
+  check(
+    "1280: 'Değiştir' kapanan kategori bloğunu geri açtı",
+    s.kategoriBlokGorunur === true,
+    `gorunur=${s.kategoriBlokGorunur} sheet=${s.sheetOpen}`,
+  );
+  await click('[data-testid="category-step-open-sheet"]');
   await sleep(700);
   s = await snapshot();
   await shot("d-4-kategoriler", "masaüstü 1280 — kategori paneli", { roots: s.sheetRoots.length });
@@ -1386,7 +1665,14 @@ async function main() {
   );
   await shot("d-10a-kartvizit-kirinti", "masaüstü 1280 — Kartvizit alt kategorisi kırıntıda", kartvizitSeen);
 
+  /*
+    D-0041 yolu korunur: "Değiştir" önce bloğu geri açar, tam ekran panel
+    bloktaki "Tüm kategoriler"den gelir. Blok kurulamıyorsa (motor emin değil)
+    "Değiştir" doğrudan paneli açar; iki durumda da panel açılmış olmalı.
+  */
   await click('[data-testid="talep-card-change-category"]');
+  await sleep(800);
+  await click('[data-testid="category-step-open-sheet"]');
   await sleep(700);
   const printingClick = await clickRootByLabel("Matbaa ve Ambalaj");
   await sleep(800);

@@ -18,6 +18,12 @@ export type ComposerAnalyticsEvent =
   | "category_confirmation_shown"
   | "category_confirmation_confirmed"
   | "category_confirmation_rejected"
+  /**
+   * D-0047: kullanıcı karttaki "Değiştir" ile KAPANMIŞ kategori adımını geri
+   * açtı. Kapanan adımın geri dönüşünün gerçekten kullanıldığını ölçer;
+   * paydası `category_confirmation_confirmed`tir.
+   */
+  | "category_step_reopened"
   | "category_root_picked"
   | "focused_question_shown"
   | "focused_question_answered"

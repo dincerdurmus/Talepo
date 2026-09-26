@@ -1053,7 +1053,14 @@ const publishStatusSrc = strip(read("src/lib/request/publish-result-status.ts"))
 const gate = {
   /** (b) Kategori doğrulaması karttan çıktı, tek soru alanında. */
   cardHasNoCategoryQuestion: (cardSrc: string, pageSrc: string) =>
-    !/categoryStep/.test(cardSrc) &&
+    /*
+      Kart kategori SORUSUNU taşımaz. D-0047'de karta tek bir GÖRÜNÜRLÜK
+      bayrağı eklendi (`categoryStepOpen` → "Değiştir" düğmesinin
+      `aria-expanded` değeri); o bayrak adımın kendisi değildir ve kapının
+      ölçtüğü şeyi değiştirmez. Bu yüzden kapı adımın kendisine bakar:
+      modelin taşınması, eylemin çağrılması ya da etiketlerin yazılması.
+    */
+    !/categoryStep(?!Open\b)/.test(cardSrc) &&
     !/onCategoryAction/.test(cardSrc) &&
     !/confirmLabel|rejectLabel/.test(cardSrc) &&
     /<CategoryConfirmationCard[\s\S]*?onAction=\{applyCategoryConfirmation\}/.test(
@@ -1359,6 +1366,288 @@ ok(
     faceSrc &&
       /pulseToken/.test(faceSrc) &&
       !/onAnswer|trackComposerEvent|setManualValues/.test(faceSrc),
+  ),
+);
+
+/* ------------------------------------------------------------------ */
+/**
+ * H) CEVAPLANAN ADIM KAPANIR, KARTTAN GERİ AÇILIR (D-0047, kurucu 2026-09-26).
+ *
+ * Kurucunun cümlesi: "geriye dönük kapanmadığı zaman biraz karışık oluyor;
+ * seçilen şey gidebilir ama geri dönüşü olacak şekilde kalkması lazım."
+ *
+ * Tarayıcıda ölçülen başlangıç durumu (`sonuc7/once-*`): bloklar KALKıyordu
+ * ama (a) bir karede yok oluyordu, (b) kapanışın ardından
+ * `document.activeElement` her seferinde gövdeydi, (c) karttaki "Değiştir"
+ * kapanan bloğu değil BAŞKA bir yüzeyi (tam ekran kategori paneli) açıyordu.
+ * Bu bölümdeki kapılar bu üç kararı kilitler.
+ *
+ * SINIR. Hiçbiri soru otoritesine, sıraya, zorunluluğa, yayın kararına ya da
+ * kategori doğrulama mantığına dokunmaz; ölçülen tek şey görünürlük, yerleşim
+ * ve odak devridir.
+ */
+console.log("H) Cevaplanan adım kapanır, karttan geri açılır (D-0047)");
+
+const softExit = strip(
+  read("src/components/request/talep/SoftExit.tsx"),
+);
+ok(
+  "yumuşak kapanış süresini hareket tablosundan okur",
+  Boolean(
+    softExit &&
+      /@\/lib\/motion\/talep-motion/.test(softExit) &&
+      /REVEAL_MS/.test(softExit) &&
+      /EASE_REVEAL/.test(softExit) &&
+      !/\b(?:300|400|460|500)\s*(?:;|,|\))/.test(
+        softExit.replace(/REVEAL_MS/g, ""),
+      ),
+  ),
+  softExit === null ? "SoftExit.tsx yok" : undefined,
+);
+ok(
+  "azaltılmış harekette kapanış kurulmaz (atlanır, hızlandırılmaz)",
+  Boolean(
+    page &&
+      /function startSoftExit\(name: string, node: ReactNode\) \{/.test(page) &&
+      /if \(!node \|\| prefersReducedMotion\(\)\) \{\s*setClosingBlock\(null\);/.test(
+        page,
+      ),
+  ),
+);
+/*
+  KAPANIŞ SÜRESİ DE TEK TABLODAN. Sayfa kopyayı `REVEAL_MS` kadar tutar;
+  bileşenin çizdiği animasyon aynı süreyi kullanır, iki yer ayrışamaz.
+*/
+ok(
+  "kapanış süresi sayfada da hareket tablosundan okunur",
+  Boolean(
+    page &&
+      /closingTimerRef\.current = window\.setTimeout\([\s\S]{0,200}?\}, REVEAL_MS\);/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "çekilen kopyaya ne klavye ne ekran okuyucu ne fare ulaşır",
+  Boolean(
+    softExit &&
+      /aria-hidden/.test(softExit) &&
+      /\binert\b/.test(softExit) &&
+      /pointer-events-none/.test(softExit),
+  ),
+);
+ok(
+  "yumuşak kapanış karar taşımaz (cevap/telemetri/yayın yok)",
+  Boolean(
+    softExit &&
+      !/trackComposerEvent|onAnswer|applyBrainQuestion|canReview|blockingFieldKeys/.test(
+        softExit,
+      ),
+  ),
+);
+ok(
+  "kategori ve soru blokları yumuşak kapanışla kalkar",
+  Boolean(
+    page &&
+      /startSoftExit\("kategori", categoryStepNode\);/.test(page) &&
+      /startSoftExit\("soru", questionPanel\);/.test(page) &&
+      /<SoftExit closing=\{closingBlock\} \/>/.test(page),
+  ),
+);
+/*
+  ÇEKİLEN KOPYA CANLI BLOĞUN ALTINDA DURUR. Aksi hâlde geri açılan blokla
+  çekilmekte olan kopya aynı `data-testid`'yi taşıdığı için odak ve ölçüm
+  sorgusu yanlış düğümü bulur.
+*/
+ok(
+  "çekilen kopya canlı bloğun ALTINDA çizilir",
+  Boolean(
+    page &&
+      page.indexOf("{categoryStepNode}") <
+        page.indexOf("<SoftExit closing={closingBlock} />"),
+  ),
+);
+ok(
+  "blok geri açılırken bekleyen kopya hemen silinir",
+  Boolean(page && /startSoftExit\("kategori", null\);/.test(page)),
+);
+/*
+  TEK MODEL, TEK BİLEŞEN. Onay, geri açılan onay ve seçim aynı kanonik modeli
+  (`categoryStepForMaira`) çizer; sayfada ikinci bir kategori kartı çağrısı
+  kalmadığı ölçülür — yoksa iki yüzey sessizce ayrışabilir.
+*/
+ok(
+  "kategori adımı tek kanonik modelden çizilir",
+  Boolean(
+    page &&
+      (page.match(/<CategoryConfirmationCard/g) ?? []).length === 1 &&
+      /model=\{categoryStepForMaira\}/.test(page),
+  ),
+  page ? (page.match(/<CategoryConfirmationCard/g) ?? []).length : null,
+);
+/*
+  GERİ AÇILIŞ KANONİK KURUCUYU KULLANIR ve yalnız "davetsiz sorma" kapılarını
+  kaldırır. İkinci bir kategori modeli, ikinci bir kök listesi yoktur.
+*/
+ok(
+  "geri açılan adım kanonik kurucudan gelir, yalnız iki kilit kapısı kalkar",
+  Boolean(
+    page &&
+      /const categoryReopenModel = useMemo\(/.test(page) &&
+      /categoryLockedByUser: false,\s*categoryUserChoice: null,/.test(page) &&
+      /const categoryStepForMaira =\s*categoryConfirmation \?\? categoryReopenStep \?\? categoryChoice;/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "karttaki 'Değiştir' kapanan bloğu geri açar",
+  Boolean(page && /onChangeCategory=\{reopenCategoryStep\}/.test(page)),
+);
+ok(
+  "'Değiştir' bir aç/kapa denetimidir (aria-expanded taşır)",
+  Boolean(
+    card &&
+      /data-testid="talep-card-change-category"/.test(card) &&
+      /aria-expanded=\{categoryStepOpen\}/.test(card),
+  ),
+);
+/*
+  MODEL KURULAMADIĞINDA BOŞLUK OLMAZ: motor emin değilse "Değiştir" bugünkü
+  yolunu sürdürür ve tam ekran paneli açar. Alt kategori yolu her iki durumda
+  da açıktır.
+*/
+ok(
+  "model kurulamazsa 'Değiştir' tam ekran paneli açar (boş tıklama yok)",
+  Boolean(
+    page &&
+      /if \(!categoryReopenAvailable\) \{\s*setCategorySheet\(\{ mode: "pick", root: null \}\);/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "alt kategori paneline giden kapı blokta duruyor",
+  Boolean(page && /data-testid="category-step-open-sheet"/.test(page)),
+);
+/*
+  CEVAPLANAN SORU BLOĞU GERÇEKTEN KAPANIR. `askingFieldKey` temizlenmezse
+  satırdan açılmış soru cevaptan sonra ekranda kalır.
+*/
+ok(
+  "cevaplanan soru bloğu kapanır (askingFieldKey temizlenir)",
+  Boolean(
+    page &&
+      /function closeAnsweredQuestion\(fieldKey: string\) \{/.test(page) &&
+      /setAskingFieldKey\(\(current\) => \(current === fieldKey \? null : current\)\);/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "kapanış hem cevap hem atlama yolundan çağrılır",
+  Boolean(page && (page.match(/closeAnsweredQuestion\(fieldKey\);/g) ?? []).length >= 3),
+  page ? (page.match(/closeAnsweredQuestion\(fieldKey\);/g) ?? []).length : null,
+);
+/*
+  GÖVDE SINIRLA OKUNUR. "Fonksiyondan sonraki 400 karakter" demek kapıyı
+  komşu koda taşırır ve her zaman kırmızı gösterir; gövde kendi kapanış
+  parantezine kadar kesilir.
+*/
+const closeAnsweredBody =
+  page?.match(
+    /function closeAnsweredQuestion\(fieldKey: string\) \{([\s\S]*?)\n {2}\}/,
+  )?.[1] ?? null;
+ok(
+  "kapanış cevabı ya da otoriteyi değiştirmez",
+  Boolean(
+    closeAnsweredBody &&
+      !/applyBrainQuestion|hybrid\.|setAnsweredQuestionKeys|setSkippedQuestionKeys|canReview/.test(
+        closeAnsweredBody,
+      ),
+  ),
+  closeAnsweredBody === null ? "closeAnsweredQuestion gövdesi bulunamadı" : undefined,
+);
+/*
+  ODAK KAPANAN BLOKTAN KARTTAKİ İLGİLİ SATIRA GEÇER. Hedef seçicileri kapıya
+  yazılır; "odağı taşıdım" iddiası bir yorum değil, ölçülen bir dizedir.
+*/
+ok(
+  "kapanan bloğun odağı karttaki ilgili satıra geçer",
+  Boolean(
+    page &&
+      /returnFocusTo === "__category__"/.test(page) &&
+      /\[data-testid="talep-card-change-category"\]/.test(page) &&
+      /\[data-testid="talep-card-row"\]\[data-row-key="\$\{CSS\.escape\(returnFocusTo\)\}"\]/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "satır bulunamazsa odak yine kartta kalır (gövdeye düşmez)",
+  Boolean(page && /\(hedef \?\? yedek\)\?\.focus\(\{ preventScroll: true \}\)/.test(page)),
+);
+ok(
+  "blok içinde kalan geçişlerde odak bloğun içinde kalır",
+  Boolean(
+    page &&
+      /function focusInsideCategoryStep\(selector: string\) \{/.test(page) &&
+      /focusInsideCategoryStep\(\s*'\[data-testid\^="category-root-"\]/.test(page) &&
+      /focusInsideCategoryStep\('\[data-testid="category-confirmation-confirm"\]'\)/.test(
+        page,
+      ),
+  ),
+);
+/*
+  DUYURU TEK CANLI BÖLGEDEN GELİR ve SEÇİLEN kategoriyi söyler. Ölçüldü: kök
+  seçildiğinde cümle ekrandaki eski adımın etiketini okuyordu.
+*/
+ok(
+  "kapanış tek canlı bölgeden duyurulur",
+  Boolean(
+    page &&
+      (page.match(/data-testid="talep-step-closed-notice"/g) ?? []).length === 1 &&
+      /role="status"\s*aria-live="polite"/.test(page),
+  ),
+);
+ok(
+  "duyuru seçilen kategoriyi söyler (ekrandaki eski etiketi değil)",
+  Boolean(
+    page &&
+      /action\.kind === "pick_root"\s*\? \[\.\.\.step\.rootChoices, \.\.\.step\.candidates\]\.find\(/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "satırdan geri açılışta bayat duyuru silinir",
+  Boolean(page && /setClosedStepNotice\(null\);\s*setCategoryStepReopened\(false\);/.test(page)),
+);
+/*
+  YAYINA HAZIR EKRANIN GÖRSEL AĞIRLIĞI. "Talep analizi" kapalıyken çerçevesiz
+  ve sessizdir; açılınca çerçevesini geri alır. Ürün kararı değişmedi: panel
+  kaybolmaz ve zorunlu sinyalde yine kendiliğinden açılır.
+*/
+ok(
+  "'Talep analizi' kapalıyken ikincil görünür, açılınca çerçevelenir",
+  Boolean(
+    page &&
+      /data-testid="talep-analysis-details"/.test(page) &&
+      /aiCompanionOpen \|\| publishSignalDemandsAttention\s*\? "border border-\[#0b1917\]\/8 bg-white"\s*: ""/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "'Talep analizi' zorunlu sinyalde hâlâ kendiliğinden açılır",
+  Boolean(page && /open=\{aiCompanionOpen \|\| publishSignalDemandsAttention\}/.test(page)),
+);
+ok(
+  "ikincil yollar kaybolmadı",
+  Boolean(
+    page &&
+      /data-testid="talep-secondary-edit-sentence"/.test(page) &&
+      /data-testid="talep-analysis-summary"/.test(page),
   ),
 );
 

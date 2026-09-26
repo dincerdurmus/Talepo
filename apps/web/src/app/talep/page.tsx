@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import {
   ArrowRight,
@@ -47,6 +48,7 @@ import {
   type MairaStatus,
 } from "@/components/request/talep/MairaVoice";
 import { RequestCardPanel } from "@/components/request/talep/RequestCardPanel";
+import { SoftExit } from "@/components/request/talep/SoftExit";
 import { TalepStartPanel } from "@/components/request/talep/TalepStartPanel";
 import {
   buildReadingHighlights,
@@ -61,6 +63,7 @@ import { publishOutcomeFrom } from "@/lib/request/publish-result-status";
 import {
   CARD_IN_MS,
   EASE_SPRING,
+  REVEAL_MS,
   prefersReducedMotion,
 } from "@/lib/motion/talep-motion";
 import {
@@ -412,6 +415,45 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
    * değiştirir; soru otoritesi değişmez, yalnız hangisinin görüneceği.
    */
   const [askingFieldKey, setAskingFieldKey] = useState<string | null>(null);
+  /**
+   * CEVAPLANAN ADIM KAPANIR AMA GERİ DÖNÜŞÜ KALIR (kurucu, 2026-09-26):
+   * "seçilen şey gidebilir ama geri dönüşü olacak şekilde kalkması lazım."
+   *
+   * Soru bloğunun geri dönüşü zaten kart satırıdır (`askingFieldKey`).
+   * Kategori adımının yoktu: onaylandıktan sonra blok kalkıyor ve karttaki
+   * "Değiştir" BAŞKA bir yüzeyi (tam ekran kategori paneli) açıyordu
+   * (ölçüldü, `sonuc7/once-a1`). Bu bayrak aynı bloğu geri açar — kategori
+   * KARARINA dokunmaz, yalnız kapanmış adımı yeniden gösterir.
+   */
+  const [categoryStepReopened, setCategoryStepReopened] = useState(false);
+  /**
+   * KAPANAN BLOĞUN ODAĞI KARTA DÖNER. Ölçüldü (`sonuc7/once-*`): her kapanış
+   * sonrası `document.activeElement` gövdeydi — klavye ve ekran okuyucu
+   * kullanan kişi sayfanın başına düşüyordu. Değer, odağın devredileceği kart
+   * satırının alan anahtarıdır; kategori için `__category__`.
+   */
+  const [returnFocusTo, setReturnFocusTo] = useState<string | null>(null);
+  /** Kapanışı ekran okuyucuya duyuran nazik cümle (tek canlı bölge). */
+  const [closedStepNotice, setClosedStepNotice] = useState<string | null>(null);
+  /**
+   * YUMUŞAK KAPANIŞ — KALKAN BLOĞUN DONDURULMUŞ KOPYASI. Kopya sayfada
+   * üretilir çünkü kapanışı başlatan olay (onay dokunuşu, cevap) burada ve
+   * model bloğun kalktığı render'da zaten null oluyor. `SoftExit` yalnız
+   * çizer. Aynı anda tek blok kalkar, bu yüzden tek yuva yeter.
+   */
+  const [closingBlock, setClosingBlock] = useState<{
+    name: string;
+    node: ReactNode;
+  } | null>(null);
+  const closingTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (closingTimerRef.current !== null) {
+        window.clearTimeout(closingTimerRef.current);
+      }
+    },
+    [],
+  );
   /** Alttan açılan kategori paneli: akış ortasında `pick`, başta `browse`. */
   const [categorySheet, setCategorySheet] = useState<{
     mode: "pick" | "browse";
@@ -1794,8 +1836,63 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     categoryGuidance,
     categoryUserChoice,
   ]);
-  /** Maira'nın gördüğü TEK adım: onay ya da seçim. */
-  const categoryStepForMaira = categoryConfirmation ?? categoryChoice;
+  /**
+   * GERİ AÇILAN KATEGORİ ADIMI (kurucu, 2026-09-26).
+   *
+   * `buildCategoryConfirmation` iki kapıyı kilit sayar: kullanıcı kategoriyi
+   * elle seçtiyse (`categoryLockedByUser`) ya da rehberlikte bir karar
+   * verdiyse (`categoryUserChoice`) adım KENDİLİĞİNDEN sorulmaz. O kapılar
+   * "bu soruyu davetsiz sorma" der; kullanıcının karttaki "Değiştir"e
+   * dokunması ise davetin ta kendisidir. Bu yüzden geri açılışta yalnız o iki
+   * kapı kaldırılır — kategori kuralı, metin, kök listesi ve işleyici AYNI
+   * kanonik kaynaktan gelir, ikinci bir kategori modeli kurulmaz.
+   *
+   * Motor emin değilse ya da etiket güvenle gösterilemiyorsa model yine
+   * kurulmaz; o durumda "Değiştir" bugünkü davranışını sürdürür ve tam ekran
+   * kategori panelini açar (bkz. `reopenCategoryStep`).
+   */
+  const categoryReopenModel = useMemo(() => {
+    const live = understandingMatchesComposerText({
+      composerText: requestText,
+      understandingRawInput: understanding.rawInput,
+      isSyncing: hybrid.isSyncing,
+    });
+    if (!live) return null;
+    const slug = hybrid.state?.subcategorySlug ?? null;
+    const subLabel = slug
+      ? selectedCategory.subcategories.find(
+          (label) => subcategorySlug(label) === slug,
+        ) ?? null
+      : null;
+    return buildCategoryConfirmation({
+      rawText: requestText,
+      isSyncing: hybrid.isSyncing,
+      categoryConfident: schemaCategory.confident,
+      categoryLockedByUser: false,
+      categoryUserChoice: null,
+      categoryId: activeCategoryId,
+      displayLabelSafe: schemaCategory.displayLabelSafe,
+      subcategoryLabel: subLabel,
+    });
+  }, [
+    activeCategoryId,
+    hybrid.isSyncing,
+    hybrid.state?.subcategorySlug,
+    requestText,
+    schemaCategory.confident,
+    schemaCategory.displayLabelSafe,
+    selectedCategory.subcategories,
+    understanding.rawInput,
+  ]);
+  /**
+   * "Değiştir" bloğu geri açabilir mi? Model kurulamıyorsa düğme bugünkü
+   * yolunu sürdürür; kullanıcı hiçbir durumda tıkladığı yerde boşluk görmez.
+   */
+  const categoryReopenAvailable = categoryReopenModel !== null;
+  const categoryReopenStep = categoryStepReopened ? categoryReopenModel : null;
+  /** Maira'nın gördüğü TEK adım: onay, geri açılan onay ya da seçim. */
+  const categoryStepForMaira =
+    categoryConfirmation ?? categoryReopenStep ?? categoryChoice;
   const categoryRejected =
     categoryStepForMaira !== null &&
     categoryRejectedFor === (categoryStepForMaira.categoryId || "__choose__");
@@ -2032,16 +2129,25 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   function applyCategoryConfirmation(action: CategoryConfirmationAction) {
     const step = categoryStepForMaira;
     if (!step) return;
+    /*
+      "Bu değil" ve "Vazgeç" bloğu KAPATMAZ, içindeki görünümü değiştirir —
+      bu yüzden odak karta değil, yeni görünümün ilk denetimine geçer. Ölçüldü
+      (`sonuc7/once-b1`): basılan düğme kalkınca odak gövdeye düşüyordu.
+    */
     if (action.kind === "reject") {
       setCategoryRejectedFor(step.categoryId || "__choose__");
       trackComposerEvent("category_confirmation_rejected", {
         categoryId: step.categoryId,
         mode: step.mode,
       });
+      focusInsideCategoryStep(
+        '[data-testid^="category-root-"], [data-testid="category-confirmation-back"]',
+      );
       return;
     }
     if (action.kind === "back") {
       setCategoryRejectedFor(null);
+      focusInsideCategoryStep('[data-testid="category-confirmation-confirm"]');
       return;
     }
     const selection = categoryConfirmationToGuidanceSelection(step, action);
@@ -2059,6 +2165,116 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     );
     setCategoryRejectedFor(null);
     applyCategoryGuidance(selection);
+    /*
+      ADIM KAPANIR, GERİ DÖNÜŞÜ KARTTA KALIR. Onaydan sonra blok kalkar; odak
+      karttaki "Değiştir"e geçer, çünkü bloğu geri açan yer orasıdır.
+
+      DUYURU SEÇİLEN KATEGORİYİ SÖYLER (ölçüldü, `sonuc7/once→sonra` ilk
+      koşum): kök seçildiğinde cümle hâlâ EKRANDAKİ eski adımın etiketini
+      ("Beyaz Eşya") okuyordu, oysa kullanıcı Emlak seçmişti. Etiket, seçilen
+      kökün kanonik listedeki adından çözülür.
+    */
+    const secilenEtiket =
+      action.kind === "pick_root"
+        ? [...step.rootChoices, ...step.candidates].find(
+            (choice) => choice.id === action.categoryId,
+          )?.label ?? null
+        : step.pathLabel || step.categoryLabel || null;
+    closeCategoryStep(secilenEtiket);
+  }
+
+  /**
+   * YUMUŞAK KAPANIŞI BAŞLATIR. Kalkan bloğun o anki çizimi dondurulur ve
+   * hareket tablosundaki süre kadar çekilerek gösterilir. Azaltılmış hareket
+   * isteniyorsa kapanış hiç kurulmaz — blok anında kalkar (hızlandırılmaz,
+   * atlanır). Yalnız olay işleyicilerinden çağrılır.
+   */
+  function startSoftExit(name: string, node: ReactNode) {
+    if (closingTimerRef.current !== null) {
+      window.clearTimeout(closingTimerRef.current);
+      closingTimerRef.current = null;
+    }
+    if (!node || prefersReducedMotion()) {
+      setClosingBlock(null);
+      return;
+    }
+    setClosingBlock({ name, node });
+    closingTimerRef.current = window.setTimeout(() => {
+      closingTimerRef.current = null;
+      setClosingBlock(null);
+    }, REVEAL_MS);
+  }
+
+  /**
+   * KATEGORİ BLOĞU İÇİNDE ODAK. Blok kapanmadığında (yalnız görünümü
+   * değiştiğinde) odak bloğun kendi içinde kalır; kullanıcı listenin başına
+   * düşer, sayfanın başına değil.
+   */
+  function focusInsideCategoryStep(selector: string) {
+    if (typeof window === "undefined") return;
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(
+          '[data-testid="category-confirmation-card"]',
+        )
+        ?.querySelector<HTMLElement>(selector)
+        ?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  /**
+   * KAPANAN KATEGORİ ADIMININ ARDINDAN. Bayrağı indirir, odağı karttaki
+   * "Değiştir"e devreder ve kapanışı ekran okuyucuya duyurur. Kategori
+   * kararına DOKUNMAZ.
+   */
+  function closeCategoryStep(pathLabel: string | null) {
+    startSoftExit("kategori", categoryStepNode);
+    setCategoryStepReopened(false);
+    setReturnFocusTo("__category__");
+    setClosedStepNotice(
+      pathLabel
+        ? `Kategori ${pathLabel} olarak kaydedildi. Değiştirmek için karttaki Değiştir düğmesine dön.`
+        : "Kategori kaydedildi. Değiştirmek için karttaki Değiştir düğmesine dön.",
+    );
+  }
+
+  /**
+   * KARTTAKİ "DEĞİŞTİR" KAPANAN BLOĞU GERİ AÇAR (kurucu, 2026-09-26).
+   *
+   * Kanonik onay modeli kurulabiliyorsa aynı blok yeniden gösterilir; motor
+   * emin değilse ya da etiket güvenli değilse blok kurulamaz ve bugünkü yol
+   * korunur: tam ekran kategori paneli açılır. Alt kategori seçimi her iki
+   * durumda da panelden yapılmaya devam eder.
+   */
+  function reopenCategoryStep() {
+    if (!categoryReopenAvailable) {
+      setCategorySheet({ mode: "pick", root: null });
+      return;
+    }
+    /*
+      Bekleyen kapanış kopyası varsa hemen silinir: aksi hâlde geri açılan
+      blokla çekilmekte olan kopya bir an yan yana durur ve odak/ölçüm
+      sorgusu yanlış düğümü bulabilir.
+    */
+    startSoftExit("kategori", null);
+    setCategoryStepReopened(true);
+    setCategoryRejectedFor(null);
+    setAskingFieldKey(null);
+    setClosedStepNotice(null);
+    trackComposerEvent("category_step_reopened", {
+      categoryId: activeCategoryId,
+    });
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        const el = document.querySelector<HTMLElement>(
+          '[data-testid="category-confirmation-card"]',
+        );
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        el?.querySelector<HTMLElement>(
+          '[data-testid="category-confirmation-confirm"]',
+        )?.focus({ preventScroll: true });
+      }, 80);
+    }
   }
 
   function applyClarification(option: ClarificationOption) {
@@ -2240,6 +2456,7 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                               trackComposerEvent("focused_question_skipped", {
                                 fieldKey,
                               });
+                              closeAnsweredQuestion(fieldKey);
                               return;
                             }
                             /**
@@ -2295,7 +2512,25 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                                 : "focused_question_answered",
                               { fieldKey },
                             );
+                            closeAnsweredQuestion(fieldKey);
                           }
+
+  /**
+   * CEVAPLANAN SORU BLOĞU KAPANIR, GERİ DÖNÜŞÜ KART SATIRIDIR
+   * (kurucu, 2026-09-26).
+   *
+   * İki iş yapar ve ikisi de yalnız GÖRÜNÜRLÜKTÜR. (1) Kart satırına
+   * dokunularak açılmış soruyu kapatır: `askingFieldKey` temizlenmezse blok
+   * cevaptan sonra da ekranda kalır ve kullanıcı aynı soruya bakmaya devam
+   * eder. (2) Odağı, o alanın kart satırına devreder — geri dönüş yolu orası
+   * olduğu için. Cevabın kendisi, zorunluluk ve yayın kararı bu fonksiyonda
+   * DEĞİŞMEZ; cevap zaten `applyBrainQuestion` ile kanonik duruma yazılmıştır.
+   */
+  function closeAnsweredQuestion(fieldKey: string) {
+    startSoftExit("soru", questionPanel);
+    setAskingFieldKey((current) => (current === fieldKey ? null : current));
+    setReturnFocusTo(fieldKey);
+  }
 
   /**
    * DÜZELTME KONTROLÜ — İKİ YÜZEY İÇİN TEK KÖPRÜ (2026-08-30).
@@ -2337,6 +2572,7 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                             trackComposerEvent("focused_question_skipped", {
                               fieldKey,
                             });
+                            closeAnsweredQuestion(fieldKey);
                           }
   /**
    * CEVAP UYGULAMA — KARAR SAF MODÜLDE, ETKİ BURADA.
@@ -3228,6 +3464,17 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       onSkip={handleFocusedSkip}
     />
   ) : null;
+  /**
+   * KATEGORİ ADIMININ ÇİZİMİ — TEK YERDE. Hem ekrandaki blok hem kapanışta
+   * dondurulan kopya bu düğümü kullanır; ikinci bir kategori çizimi yoktur.
+   */
+  const categoryStepNode = categoryStepForMaira ? (
+    <CategoryConfirmationCard
+      model={categoryStepForMaira}
+      rejected={categoryRejected}
+      onAction={applyCategoryConfirmation}
+    />
+  ) : null;
   const showQuestionAboveCta = Boolean(
     questionPanel &&
       !categoryStepActive &&
@@ -3241,10 +3488,57 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       optionalOpen,
   );
 
+  /**
+   * KAPANAN BLOĞUN ODAĞI KARTTAKİ İLGİLİ SATIRA GEÇER (kurucu, 2026-09-26).
+   *
+   * Ölçüm (`sonuc7/once-*`): kategori onayı ya da bir soru kapandıktan sonra
+   * `document.activeElement` her seferinde gövdeydi; klavye kullanan kişi
+   * sayfanın başına düşüyordu. Hedef, geri dönüş yolunun kendisidir: sorunun
+   * kart satırı, kategorinin "Değiştir" düğmesi. Satır etiketi de kartın
+   * kendi modelinden okunur — ikinci bir etiket listesi yoktur.
+   *
+   * Odak devri, çekilen kopya `aria-hidden` olduktan SONRA çalışır; bu yüzden
+   * odak hiçbir an gizlenmiş bir ağacın içinde kalmaz.
+   */
+  useEffect(() => {
+    if (!returnFocusTo) return;
+    const timer = window.setTimeout(() => {
+      const kategori = returnFocusTo === "__category__";
+      const hedef = document.querySelector<HTMLElement>(
+        kategori
+          ? '[data-testid="talep-card-change-category"]'
+          : `[data-testid="talep-card-row"][data-row-key="${CSS.escape(returnFocusTo)}"]`,
+      );
+      /*
+        Satır bulunamazsa (yayınlanmış kart ya da kart satırı olmayan isteğe
+        bağlı alan) odak kartın kategori düğmesine düşer; hiçbir durumda
+        gövdede bırakılmaz.
+      */
+      const yedek = document.querySelector<HTMLElement>(
+        '[data-testid="talep-card-change-category"]',
+      );
+      (hedef ?? yedek)?.focus({ preventScroll: true });
+      if (!kategori) {
+        const satir = requestCard.rows.find((row) => row.key === returnFocusTo);
+        const etiket = satir?.label ?? null;
+        setClosedStepNotice(
+          etiket
+            ? `${etiket} kartta güncellendi. Değiştirmek için ${etiket} satırına dön.`
+            : "Cevabın kartta güncellendi. Değiştirmek için karttaki satıra dön.",
+        );
+      }
+      setReturnFocusTo(null);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [requestCard.rows, returnFocusTo]);
+
   function startReading() {
     setIntroDecided(true);
     setWizardStep(2);
     setAskingFieldKey(null);
+    setCategoryStepReopened(false);
+    setReturnFocusTo(null);
+    setClosedStepNotice(null);
     setReadingPulse(0);
     setOptionalOpen(false);
     setReadingPhase("reading");
@@ -3507,19 +3801,37 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   subcategoryLabel={activeSubcategoryLabel}
                   updating={hybrid.isSyncing}
                   locked={Boolean(publishOutcome)}
-                  onChangeCategory={() =>
-                    setCategorySheet({ mode: "pick", root: null })
-                  }
+                  categoryStepOpen={categoryStepActive}
+                  onChangeCategory={reopenCategoryStep}
                   onAskField={(fieldKey) => {
                     setAskingFieldKey(fieldKey);
-                    if (typeof window !== "undefined" && window.innerWidth < 920) {
+                    /*
+                      SATIRDAN GERİ AÇILAN SORU (kurucu, 2026-09-26).
+                      Bir önceki kapanışın duyurusu silinir — yoksa canlı bölge
+                      "Kategori kaydedildi" derken ekranda bütçe sorusu
+                      duruyordu (ölçüldü, `sonuc7/sonra-a4` ilk koşum). Odak da
+                      açılan bloğun ilk denetimine geçer: geri dönüş yalnız
+                      görünür değil, ulaşılabilir olmalı.
+                    */
+                    setClosedStepNotice(null);
+                    setCategoryStepReopened(false);
+                    startSoftExit("soru", null);
+                    if (typeof window !== "undefined") {
                       window.setTimeout(() => {
-                        document
-                          .querySelector('[data-testid="composer-questions"]')
-                          ?.scrollIntoView({
+                        const blok = document.querySelector<HTMLElement>(
+                          '[data-testid="composer-questions"]',
+                        );
+                        if (window.innerWidth < 920) {
+                          blok?.scrollIntoView({
                             behavior: "smooth",
                             block: "center",
                           });
+                        }
+                        blok
+                          ?.querySelector<HTMLElement>(
+                            'input:not([type="hidden"]), textarea, select, button:not([disabled])',
+                          )
+                          ?.focus({ preventScroll: true });
                       }, 60);
                     }
                   }}
@@ -3530,6 +3842,21 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
             <div className="grid min-w-0 gap-4 lg:col-start-1 lg:row-start-2">
               {readingPhase !== "quote" ? null : (
                 <>
+                  {/*
+                    KAPANIŞIN SESLİ İZİ — TEK CANLI BÖLGE (kurucu, 2026-09-26).
+                    Bir blok kalktığında gören kişi kartın ilgili satırının
+                    odaklandığını görür; görmeyen kişiye aynı şey burada nazikçe
+                    söylenir. Görsel olarak yer kaplamaz, karar taşımaz.
+                  */}
+                  <p
+                    role="status"
+                    aria-live="polite"
+                    data-testid="talep-step-closed-notice"
+                    className="sr-only"
+                  >
+                    {closedStepNotice ?? ""}
+                  </p>
+
                   {/*
                     TALEPTE İLETİŞİM BİLGİSİ — UYARI, ENGEL DEĞİL (D-0031).
                     Kart yayın yolunu KAPATMAZ; kullanıcı seçene kadar görünür
@@ -3622,21 +3949,43 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                         — Maira'nın sorusu olarak. Model, etiketler ve işleyici
                         AYNI kanonik kaynaktan gelir; yalnız yeri değişti.
                       */}
+                      {/*
+                        CEVAPLANAN ADIM YUMUŞAK KAPANIR (kurucu, 2026-09-26).
+                        Blok bir karede yok olmaz; hareket tablosundaki süre
+                        kadar solup çekilir ve sonra DOM'dan kalkar. Çizilen
+                        model TEK yerden gelir (`categoryStepForMaira`): onay,
+                        geri açılan onay ve seçim aynı bileşeni kullanır.
+                      */}
                       {categoryStepActive ? (
-                        categoryConfirmation ? (
-                          <CategoryConfirmationCard
-                            model={categoryConfirmation}
-                            rejected={categoryRejected}
-                            onAction={applyCategoryConfirmation}
-                          />
-                        ) : categoryChoice ? (
-                          <CategoryConfirmationCard
-                            model={categoryChoice}
-                            rejected={categoryRejected}
-                            onAction={applyCategoryConfirmation}
-                          />
-                        ) : null
+                        <>
+                          {categoryStepNode}
+                          {/*
+                            ALT KATEGORİ YOLU KAYBOLMAZ. "Değiştir" artık
+                            bloğu geri açtığı için tam ekran kategori paneline
+                            giden tek kapı burasıdır; kök listesi bloğun kendi
+                            içindedir, alt kategori panelden seçilir.
+                          */}
+                          <button
+                            type="button"
+                            data-testid="category-step-open-sheet"
+                            onClick={() =>
+                              setCategorySheet({ mode: "pick", root: null })
+                            }
+                            className="mt-2 min-h-10 justify-self-start px-1 text-left text-[13px] font-medium text-[#0f766e]/75"
+                          >
+                            Tüm kategoriler
+                          </button>
+                        </>
                       ) : null}
+
+                      {/*
+                        YUMUŞAK KAPANIŞ YUVASI. Kalkan blok bir karede yok
+                        olmaz; dondurulmuş kopyası burada solup çekilir ve
+                        hareket tablosundaki süre dolunca DOM'dan kalkar.
+                        Canlı bloğun ALTINDA durur ki yeniden açılan blok
+                        arama sırasında hep önce gelsin.
+                      */}
+                      <SoftExit closing={closingBlock} />
 
                       {showQuestionAboveCta ? questionPanel : null}
 
@@ -3824,10 +4173,11 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   */}
                   <div
                     data-testid="talep-secondary-zone"
-                    className="mt-3 grid gap-2.5 border-t border-[#0b1917]/[0.08] pt-4"
+                    className="mt-3 grid gap-1 border-t border-[#0b1917]/[0.08] pt-4"
                   >
                     <button
                       type="button"
+                      data-testid="talep-secondary-edit-sentence"
                       className="min-h-10 justify-self-start text-left text-[13px] font-medium text-[#0f1f1d]/50"
                       onClick={() => {
                         setIntroDecided(false);
@@ -3846,18 +4196,43 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                       türetilmiş kararı ADIYLA taşır: yayın hatası, rehberlik
                       ya da kapsam sinyali varsa panel kullanıcının tercihini
                       geçici olarak ezer ve mesaj kapalı kalmaz.
+
+                      GÖRSEL AĞIRLIK KAPALIYKEN DÜŞER (kurucu, 2026-09-26).
+                      Kapalı akordeon beyaz zeminli çerçeveli bir kart olarak
+                      duruyordu; yayına hazır ekranda "Detay ekle" ile aynı
+                      ağırlıkta üçüncü bir kutu gibi görünüyordu. Kapalıyken
+                      artık "Cümlemi düzenle" ile aynı sessiz satır; AÇILINCA
+                      çerçevesini geri alır. Ürün kararı değişmedi: panel
+                      kaybolmuyor, zorunlu sinyalde yine kendiliğinden açılıyor.
                     */}
                     <details
-                      className="group rounded-[1.35rem] border border-[#0b1917]/8 bg-white"
+                      data-testid="talep-analysis-details"
+                      data-open={
+                        aiCompanionOpen || publishSignalDemandsAttention
+                          ? "true"
+                          : "false"
+                      }
+                      className={`group rounded-[1.35rem] ${
+                        aiCompanionOpen || publishSignalDemandsAttention
+                          ? "border border-[#0b1917]/8 bg-white"
+                          : ""
+                      }`}
                       open={aiCompanionOpen || publishSignalDemandsAttention}
                       onToggle={(event) =>
                         setAiCompanionOpen(event.currentTarget.open)
                       }
                     >
-                      <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d]/60 marker:content-none [&::-webkit-details-marker]:hidden">
+                      <summary
+                        data-testid="talep-analysis-summary"
+                        className={`cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden ${
+                          aiCompanionOpen || publishSignalDemandsAttention
+                            ? "px-4 py-3.5 text-sm font-medium text-[#0f1f1d]/60"
+                            : "min-h-10 py-2 text-[13px] font-medium text-[#0f1f1d]/50"
+                        }`}
+                      >
                         <span className="flex items-center justify-between gap-2">
                           <span>Talep analizi</span>
-                          <span className="text-xs font-normal text-[#0f1f1d]/40">
+                          <span className="text-xs font-normal text-[#0f1f1d]/35">
                             Piyasa &amp; profesyonel görünüm
                           </span>
                         </span>

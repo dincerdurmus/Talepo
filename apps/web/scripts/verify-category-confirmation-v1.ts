@@ -350,15 +350,34 @@ for (const c of CONFIDENT_CASES) {
      * işleyiciye gider. Yeni olarak talep kartının kategori sorusu taşımadığı
      * da ölçülür — geri dönerse bu kapı kırmızıya döner.
      */
+    /**
+     * F2 — D-0047 SONRASI ŞEKİL (2026-09-26). Kapanan kategori adımı karttaki
+     * "Değiştir" ile GERİ AÇILABİLİR oldu; geri açılan adım da aynı kanonik
+     * kurucudan gelir (`categoryReopenStep`). Bu yüzden sayfada artık ikisi
+     * ayrı ayrı bağlanan İKİ kart çağrısı yok, tek bir çağrı ve tek bir
+     * birleşik model var.
+     *
+     * ÖLÇÜLEN GARANTİ DEĞİŞMEDİ, DARALDI: önceden "iki bağlama da kanonik
+     * modeli alıyor mu" soruluyordu; şimdi "kart çağrısı TEK mi ve birleşik
+     * kanonik modeli mi alıyor" soruluyor. Tek çağrı, iki yüzeyin sessizce
+     * ayrışmasını yapısal olarak imkânsız kılar.
+     *
+     * Kartın `categoryStepOpen` bayrağı adımın KENDİSİ değildir: "Değiştir"
+     * düğmesinin `aria-expanded` değeridir ve kartta kategori sorusu
+     * bulunmadığı iddiasını çürütmez.
+     */
+    const cardBindings = (page.match(/<CategoryConfirmationCard/g) ?? []).length;
     check(
       "F2 kategori adımı kanonik modeli alır, kart soru taşımaz",
-      /categoryStepForMaira = categoryConfirmation \?\? categoryChoice/.test(page) &&
-        /<CategoryConfirmationCard[\s\S]*?model=\{categoryConfirmation\}/.test(page) &&
-        /<CategoryConfirmationCard[\s\S]*?model=\{categoryChoice\}/.test(page) &&
+      /categoryStepForMaira =\s*categoryConfirmation \?\? categoryReopenStep \?\? categoryChoice/.test(
+        page,
+      ) &&
+        cardBindings === 1 &&
+        /<CategoryConfirmationCard[\s\S]*?model=\{categoryStepForMaira\}/.test(page) &&
         Boolean(requestCard) &&
-        !/categoryStep/.test(requestCard!) &&
+        !/categoryStep(?!Open\b)/.test(requestCard!) &&
         !/onCategoryAction/.test(requestCard!),
-      "kategori adımı kartta ya da model bağlaması eksik",
+      `kategori adımı kartta ya da model bağlaması eksik (kart çağrısı: ${cardBindings})`,
     );
     check(
       "F3 kategori yüzeyi tek işleyiciye gider",
@@ -417,11 +436,20 @@ for (const c of CONFIDENT_CASES) {
       "F13 Maira adayları modelden çizer",
       /categoryStep\.candidates/.test(maira) && !/buildCategoryGuidance/.test(maira),
     );
+    /*
+      F14 — D-0047 sonrası belirsiz adım artık ayrı bir kart çağrısıyla değil,
+      birleşik `categoryStepForMaira` üzerinden çizilir. Ölçülen şey aynı:
+      belirsiz durumun modeli kanonik kurucudan gelir ve TEK işleyiciye
+      bağlanan tek karta düşer.
+    */
     check(
       "F14 belirsiz adım da aynı işleyiciye gider",
       /categoryChoice = useMemo/.test(page) &&
         /buildCategoryChoice\(/.test(page) &&
-        /model=\{categoryChoice\}[\s\S]{0,160}?onAction=\{applyCategoryConfirmation\}/.test(
+        /categoryStepForMaira =\s*categoryConfirmation \?\? categoryReopenStep \?\? categoryChoice/.test(
+          page,
+        ) &&
+        /model=\{categoryStepForMaira\}[\s\S]{0,160}?onAction=\{applyCategoryConfirmation\}/.test(
           page,
         ),
     );
