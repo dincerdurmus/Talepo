@@ -61,6 +61,7 @@ import type {
 import { FIELD_SENTINEL } from "../src/lib/request-composer/types";
 import { isFieldSatisfied } from "../src/lib/request-composer/v2/question-scheduler";
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import { CANONICAL_FIELD_DEFAULT_UNKNOWN } from "./lib/canonical-field-baseline";
 
 const problems: string[] = [];
 
@@ -787,7 +788,12 @@ function measureCorpusDenominator(): {
    * UNKNOWN'a döndü: health-04, health-07, home-06, mach-05, svc-07;
    * −2 değere kapandı: svc-01 productType, tech-02 needType).
    */
-  ok("H2", unknown === 975, `varsayılan UNKNOWN sayısı değişti → ${unknown}`);
+  /* TABAN TEK YERDE (2026-09-25): scripts/lib/canonical-field-baseline.ts */
+  ok(
+    "H2",
+    unknown === CANONICAL_FIELD_DEFAULT_UNKNOWN,
+    `varsayılan UNKNOWN sayısı değişti → ${unknown}`,
+  );
   ok(
     "H3",
     explicitNonValue === 0,

@@ -190,10 +190,10 @@
     },
     {
       "script": "verify-projection-authority-v1",
-      "maxFailures": 108,
+      "maxFailures": 104,
       "pattern": "KIRMIZI — (\\d+) ihlal",
       "group": 1,
-      "why": "Kimlik defteri 09-01 tabanından iki yönde kaydı (kaybolan evren satırları + açıklanamayan yeniler). Ölçüldü 2026-09-20; örneklenen satırlarda davranış İYİLEŞMESİ kanıtlı ama 108 satırın karar gerekçeli fixture rebase'i yapılmadı — evren kaybı hükmü güvensizleştirdiği için sayı bağlandı, rebase ayrı iş (OL-0011 raporu)."
+      "why": "Kimlik defteri 09-01 tabanından iki yönde kaydı (kaybolan evren satırları + açıklanamayan yeniler). Ölçüldü 2026-09-20; örneklenen satırlarda davranış İYİLEŞMESİ kanıtlı ama satırların karar gerekçeli fixture rebase'i yapılmadı — evren kaybı hükmü güvensizleştirdiği için sayı bağlandı, rebase ayrı iş (OL-0011 raporu). 2026-09-25 akşam 108 → 104: dört satır da health-04 ve dördü de DONDURULMUŞ TABANA GERİ DÖNDÜ. Delta tam liste diff'iyle sayıldı (doğrulayıcı 60 satırda kestiği için sınır geçici olarak kaldırıldı, sonra geri kondu): +health-04/usageArea attributes+constraints (evrenden KAYBOLMUŞTU, geri geldi), −health-04/needType attributes+constraints (dondurulmuş tabanda OLMAYAN açıklanamayan yeni kimlikti, düştü). Sebep: 'Klinik için steril eldiven arıyorum, 100 kutu' cümlesi ambalaj sözcüğü düzeltmesinden önce printing/CONFIDENT çözülüyordu; artık health. Yani dondurulmuş taban health-04'te usageArea BEKLİYOR — bu, kürasyonun kendi hükmüdür."
     },
     {
       "script": "verify-projection-server-authority-v1",
@@ -204,10 +204,10 @@
     },
     {
       "script": "verify-publish-inference-authority-v1",
-      "maxFailures": 9,
+      "maxFailures": 8,
       "pattern": "KIRMIZI — (\\d+) ihlal",
       "group": 1,
-      "why": "INFERRED evreni kaydı (2026-09-20): kaybolan satırlar + açıklanamayan yeniler; yenilerden home-06/brandCandidate şüpheli küme (bkz. snapshot-internal-evidence). Fixture karar gerekçesi bekliyor."
+      "why": "INFERRED evreni kaydı (2026-09-20): kaybolan satırlar + açıklanamayan yeniler; yenilerden home-06/brandCandidate şüpheli küme (bkz. snapshot-internal-evidence). Fixture karar gerekçesi bekliyor. 2026-09-25 akşam 9 → 8: kalan sekiz satır tek tek okundu ve HEPSİ önceden bilinen kimliklerdir (health-03/usageArea ×2, home-06/brandCandidate, mach-02/needType ×2, mach-03/needType ×2, tech-04/brandCandidate) — YENİ satır girmedi. Düşen tek satır ayrı ayrı yakalanamadı: 9'luk liste bu oturumdan önce hiç dökülmemişti, o yüzden 'health-04' olduğu VARSAYILMIYOR; yalnız yeni satır olmadığı ölçüldü."
     },
     {
       "script": "verify-snapshot-internal-evidence-v1",

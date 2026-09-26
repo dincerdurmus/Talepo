@@ -69,6 +69,10 @@ import type {
 } from "../src/lib/request-composer/types";
 import { FIELD_SENTINEL } from "../src/lib/request-composer/types";
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import {
+  CANONICAL_FIELD_DEFAULT_UNKNOWN,
+  CANONICAL_FIELD_UNIVERSE,
+} from "./lib/canonical-field-baseline";
 
 const problems: string[] = [];
 
@@ -586,14 +590,23 @@ function measureCorpus(): {
    */
   /* 98+ Faz I (2026-09-01) sayılı rebase — kimlik listesi: fixtures/projection-authority-v1.ts */
   /* 98+ Part II (2026-09-01) sayılı rebase: kullanıcı ürün ad-öbeği ekseninin sonucu — 11 senaryo productType/propertyType kazandı (kimlik listesi: fixtures/projection-authority-v1.ts PART II notu). */
-  ok("F2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
+  /* TABAN TEK YERDE (2026-09-25): scripts/lib/canonical-field-baseline.ts */
+  ok(
+    "F2",
+    fields === CANONICAL_FIELD_UNIVERSE,
+    `kanonik alan sayısı değişti → ${fields}`,
+  );
   /**
    * TABAN TAZELENDİ (OL-0011, 2026-09-20): 1282→1302, 972→975, 276→291.
    * Delta satır satır sayıldı ve tek yerde belgelendi —
    * verify-common-field-response-v1.ts measureCorpus bloğu. Üç doğrulayıcı
    * AYNI korpusu ölçer; enumerasyon çoğaltılmaz.
    */
-  ok("F3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
+  ok(
+    "F3",
+    unknown === CANONICAL_FIELD_DEFAULT_UNKNOWN,
+    `varsayılan UNKNOWN değişti → ${unknown}`,
+  );
   ok(
     "F4",
     responses === 0,

@@ -60,6 +60,10 @@ import { isReconfirmableCommonKey } from "../src/lib/request-composer/answer-aut
 import type { PublishFieldAnswer } from "../src/lib/request-composer/ui-helpers";
 import { cloneAnswerChannel, mapFieldValue } from "../src/server/request/mapper";
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import {
+  CANONICAL_FIELD_DEFAULT_UNKNOWN,
+  CANONICAL_FIELD_UNIVERSE,
+} from "./lib/canonical-field-baseline";
 
 const problems: string[] = [];
 
@@ -442,8 +446,17 @@ function measureCorpus(): {
    * verify-common-field-response-v1.ts measureCorpus bloğu. Üç doğrulayıcı
    * AYNI korpusu ölçer; enumerasyon çoğaltılmaz.
    */
-  ok("G2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
-  ok("G3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
+  /* TABAN TEK YERDE (2026-09-25): scripts/lib/canonical-field-baseline.ts */
+  ok(
+    "G2",
+    fields === CANONICAL_FIELD_UNIVERSE,
+    `kanonik alan sayısı değişti → ${fields}`,
+  );
+  ok(
+    "G3",
+    unknown === CANONICAL_FIELD_DEFAULT_UNKNOWN,
+    `varsayılan UNKNOWN değişti → ${unknown}`,
+  );
   ok("G4", attributes === 295, `attributes tabanı kaydı → ${attributes}`);
   ok("G5", constraints === 295, `constraints tabanı kaydı → ${constraints}`);
   ok("G6", responses === 0, `varsayılan cevap yüzeyi → ${responses}`);

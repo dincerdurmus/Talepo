@@ -56,6 +56,10 @@ import type {
   CanonicalRequestState,
 } from "../src/lib/request-composer/types";
 import { CATEGORY_COVERAGE_V1 } from "./fixtures/category-coverage-v1";
+import {
+  CANONICAL_FIELD_DEFAULT_UNKNOWN,
+  CANONICAL_FIELD_UNIVERSE,
+} from "./lib/canonical-field-baseline";
 
 const problems: string[] = [];
 
@@ -613,8 +617,22 @@ function measureCorpus(): {
    * kırmızı cetvelinde sayıyla tutulur; buradaki sayım onu aklamaz) ·
    * −usageArea×2, −needType×2 (auto-05/06), −installation, −fridgeType.
    */
-  ok("E2", fields === 1306, `kanonik alan sayısı değişti → ${fields}`);
-  ok("E3", unknown === 975, `varsayılan UNKNOWN değişti → ${unknown}`);
+  /**
+   * TABAN ARTIK TEK YERDE (2026-09-25 akşam). Aynı iki sayı dört
+   * doğrulayıcıda elle tutuluyordu; tazeleme günlüğü ve 1306→1307 deltasının
+   * satır satır enumerasyonu `scripts/lib/canonical-field-baseline.ts`
+   * içindedir.
+   */
+  ok(
+    "E2",
+    fields === CANONICAL_FIELD_UNIVERSE,
+    `kanonik alan sayısı değişti → ${fields}`,
+  );
+  ok(
+    "E3",
+    unknown === CANONICAL_FIELD_DEFAULT_UNKNOWN,
+    `varsayılan UNKNOWN değişti → ${unknown}`,
+  );
   ok("E4", extraRows === 0, `varsayılan durumda fields[] kaydı → ${extraRows}`);
   ok("E5", responses === 0, `varsayılan durumda cevap yüzeyi → ${responses}`);
   ok("E6", attributes === 295, `attributes tabanı kaydı → ${attributes}`);
