@@ -183,10 +183,10 @@
     },
     {
       "script": "verify-category-coverage-v1",
-      "maxFailures": 8,
+      "maxFailures": 7,
       "pattern": "(\\d+) pass, (\\d+) known_fail, (\\d+) fail",
       "group": 3,
-      "why": "8 kategori kapsam açığı. Ölçüldü 2026-09-15."
+      "why": "7 kategori kapsam açığı. Ölçüldü 2026-09-26; 8 rakamı 2026-09-15'ten kalmıştı ve HEAD'in (9d87fa5) gerisindeydi. Bu dilim açığı KAPATMADI — kaynak A/B ile kanıtlandı: D-0041 degisikliklerinin ikisi de (alias yazim hatasi yolu, ata aday belirsizlik kurali) tek tek kapatilip olculdugunde sayi 7'de kaldi, yalnız ata kuralı kapalıyken print-01 EKLENEREK 8'e çıktı. Yani düşüş 09-15 sonrası iki commit'in (4d6d587, 9d87fa5) hesabıdır ve cetvele yazılmamıştı. Ayakta kalan yedi: auto-05, auto-06 (kind:null), furn-04 (kind:ACCESSORY), health-04 (kind:PART), health-07 (category+kind null), home-06 (kind:null), svc-01 (questionMissing:homeCleaningFrequency). Aynı bayatlık verify-readiness-brand-authority-v1'i de kırmızı tutuyordu: o kapı bu cetvel satırını okur."
     },
     {
       "script": "verify-projection-authority-v1",
