@@ -1072,6 +1072,28 @@ const gate = {
     );
   },
   /**
+   * (g) SIRA: kategori onayı beklerken yayın butonu ekranın dibine
+   * KENETLENMEZ (2026-09-26). DOM sırası zaten doğruydu; kusur, telefonda
+   * kenetlenmiş (position: fixed) butonun akıştan çıkıp sorunun ÜSTÜNE
+   * oturmasıydı. Kenetleme koşulu bu yüzden kategori adımına bağlıdır ve alt
+   * pay da aynı koşulu okur.
+   */
+  publishDockYieldsToCategory: (pageSrc: string) => {
+    const dock = pageSrc.indexOf('data-testid="composer-publish-dock"');
+    if (dock < 0) return false;
+    const block = pageSrc.slice(dock, dock + 1200);
+    return (
+      /data-docked=\{\s*categoryStepActive\s*\?\s*"inline"/.test(block) &&
+      /categoryStepActive\s*\?\s*""\s*:\s*`max-lg:fixed/.test(block) &&
+      /categoryStepActive \? null : \(\s*<div aria-hidden className="max-lg:h-\[86px\] lg:hidden" \/>/.test(
+        pageSrc,
+      ) &&
+      /* Soru kaynakta da butondan ÖNCE kurulur. */
+      pageSrc.indexOf("<CategoryConfirmationCard") <
+        pageSrc.indexOf('data-testid="composer-review-cta"')
+    );
+  },
+  /**
    * (d) "Yayında" görüntüsü yalnız published durumunda kurulur: onay işareti
    * de, mono satır da aynı koşula bağlıdır ve metin sunucudan gelen kanonik
    * sonuçtan okunur (sayfa kendi cümlesini yazmaz).
@@ -1128,6 +1150,23 @@ ok(
     page &&
       !gate.publishAboveOptional(
         `data-testid="composer-optional-details"\n${page}`,
+      ),
+  ),
+);
+
+ok(
+  "(g) kategori onayı beklerken yayın butonu kenetlenmez, soru üstte kalır",
+  Boolean(page && gate.publishDockYieldsToCategory(page)),
+);
+ok(
+  "mutasyon: buton her durumda kenetlenirse kapı kırmızı olur",
+  Boolean(
+    page &&
+      !gate.publishDockYieldsToCategory(
+        page.replace(
+          /data-docked=\{\s*categoryStepActive\s*\?\s*"inline"[\s\S]*?\}/,
+          'data-docked={keyboardOpen ? "hidden" : "visible"}',
+        ),
       ),
   ),
 );

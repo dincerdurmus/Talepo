@@ -3645,6 +3645,17 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                         ve isteğe bağlı bölümün ÜSTÜNDE durur. Yayını
                         kilitleyen bir alan varken "hazır" zaten oluşmaz, bu
                         yüzden kapalı bölümde asla zorunlu alan saklanmaz.
+
+                        SIRA — KATEGORİ ONAYI BEKLERKEN BUTON ÖNE ÇIKMAZ
+                        (kurucu, 2026-09-26). Ölçülen kusur: talep hazırken
+                        kategori onay sorusu DOM'da butondan önce geldiği
+                        hâlde ekranda ALTINDA kalıyordu, çünkü buton telefonda
+                        kenetlenmiş (position: fixed) olarak ekranın dibine
+                        oturuyor ve akıştan çıkıyordu. Kategori adımı açıkken
+                        buton akışta kalır, böylece soru gerçekten üstte
+                        durur; onaylanınca buton yeniden kenetlenir ve öne
+                        çıkar. YAYIN KARARI VE OTORİTE DEĞİŞMEZ — yalnız
+                        yerleşim.
                       */}
                       {hybrid.isSyncing || !composerReadiness.canReview ? null : (
                         <div className="grid gap-3">
@@ -3664,14 +3675,25 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                           */}
                           <div
                             data-testid="composer-publish-dock"
-                            data-docked={keyboardOpen ? "hidden" : "visible"}
+                            data-docked={
+                              categoryStepActive
+                                ? "inline"
+                                : keyboardOpen
+                                  ? "hidden"
+                                  : "visible"
+                            }
                             style={{
-                              paddingBottom:
-                                "max(env(safe-area-inset-bottom), 0px)",
+                              paddingBottom: categoryStepActive
+                                ? undefined
+                                : "max(env(safe-area-inset-bottom), 0px)",
                             }}
-                            className={`max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:border-[#0b1917]/[0.08] max-lg:bg-white/95 max-lg:px-5 max-lg:py-3 max-lg:backdrop-blur ${
-                              keyboardOpen ? "max-lg:hidden" : ""
-                            }`}
+                            className={
+                              categoryStepActive
+                                ? ""
+                                : `max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:border-[#0b1917]/[0.08] max-lg:bg-white/95 max-lg:px-5 max-lg:py-3 max-lg:backdrop-blur ${
+                                    keyboardOpen ? "max-lg:hidden" : ""
+                                  }`
+                            }
                           >
                             <button
                               type="button"
@@ -3687,7 +3709,9 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                             </button>
                           </div>
                           {/* Sabit butonun altında kalan içerik için pay. */}
-                          <div aria-hidden className="max-lg:h-[86px] lg:hidden" />
+                          {categoryStepActive ? null : (
+                            <div aria-hidden className="max-lg:h-[86px] lg:hidden" />
+                          )}
 
                           {/*
                             İSTEĞE BAĞLI SORU OTOMATİK AÇILMAZ. Kapalı tek
