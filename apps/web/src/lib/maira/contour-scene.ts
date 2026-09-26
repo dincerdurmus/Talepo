@@ -36,6 +36,15 @@ export type ContourSceneHandle = {
   /** Dekoratif "düşünüyor" nabzı — davranış değil, yalnız ışık. */
   setThinking: (on: boolean) => void;
   /**
+   * TEK SEFERLİK IŞIK NABZI — DEKORATİF (kurucu, 2026-09-25).
+   *
+   * Shader'da zaten `iClickT` ile sürülen bir derinlik dalgası var; bu çağrı
+   * yalnız o dalganın başlangıç anını "şimdi" yapar. Hiçbir talep verisi
+   * okumaz, hiçbir cevabı ya da kararı tetiklemez: okuma anında bir vurgu
+   * açıldığında yüzün bir kez parlaması içindir.
+   */
+  pulse: () => void;
+  /**
    * Uygulanan kadraj değerleri. Sahnenin İÇİNDEN okunur: kadrajın ölçülebilir
    * olması için çağıran tarafın ikinci bir sayı tablosu tutması gerekmez
    * (kanıt karesi hangi kadrajı gösterdiğini kendi söyler).
@@ -615,6 +624,10 @@ const FinalPass = {
   return {
     setThinking: (on: boolean) => {
       thinking = on;
+    },
+    /* Shader `iTime` ile aynı saati kullanır; başka bir zaman tabanı yoktur. */
+    pulse: () => {
+      uniforms.iClickT.value = performance.now() / 1000;
     },
     framing: { name: framingName, ...view },
     dispose: () => {

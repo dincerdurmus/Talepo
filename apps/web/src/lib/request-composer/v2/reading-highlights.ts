@@ -71,8 +71,16 @@ function searchable(value: string): string {
 
 /**
  * Bir olgunun cümlede aranacak adayları. SIRA ÖNEMLİ: önce tam değer, sonra
- * sayısal öneki (55 inç → 55), sonra ilk kelimesi. Uydurma eş anlamlı yok;
- * hepsi olgunun KENDİ değerinden türer.
+ * parçaların BİTİŞİK yazılışları, sonra tek tek parçalar, sonra sayısal öneki
+ * (55 inç → 55) ve ilk kelimesi. Uydurma eş anlamlı yok; hepsi olgunun KENDİ
+ * değerinden türer.
+ *
+ * BİTİŞİK YAZILIŞ NEDEN ÖNCE (kurucu ölçümü, 2026-09-25). Anlama konumu "il /
+ * ilçe" diye ayrı tutar; kullanıcı ise "İstanbul Kadıköy" diye bitişik yazar.
+ * Yalnız parçalar aransaydı ilk bulunan ("İstanbul") tek başına vurgulanır,
+ * hemen yanındaki ilçe vurgusuz kalırdı — video karesinde konumun tamamı
+ * yanar. Alan başına tek vurgu kuralı korunduğu için bitişik aday parçalardan
+ * ÖNCE denenir; bulunamazsa davranış eskisi gibi tek parçaya düşer.
  */
 function candidatesFor(displayValue: string): string[] {
   const base = searchable(displayValue);
@@ -80,10 +88,21 @@ function candidatesFor(displayValue: string): string[] {
   const out = [base];
 
   /* "Kadıköy, İstanbul" gibi birleşik konum: parçaları da aranır. */
-  for (const part of base.split(/\s*[,/·]\s*/u)) {
-    const piece = searchable(part);
-    if (piece && piece !== base && piece.length >= 2) out.push(piece);
+  const parts = base
+    .split(/\s*[,/·]\s*/u)
+    .map(searchable)
+    .filter((piece) => piece.length >= 2 && piece !== base);
+
+  /*
+   * İki parçalı değerlerde her iki sıralama da denenir: anlama "Kadıköy,
+   * İstanbul" derken kullanıcı "İstanbul Kadıköy" yazmış olabilir. İkiden
+   * fazla parçada birleşim üretilmez — kombinasyon patlamasının bir karşılığı
+   * yok, çünkü konum dışında çok parçalı değer yazılmıyor.
+   */
+  if (parts.length === 2) {
+    out.push(`${parts[0]} ${parts[1]}`, `${parts[1]} ${parts[0]}`);
   }
+  for (const piece of parts) out.push(piece);
 
   /* "1.000 adet" / "55 inç": sayı kullanıcının yazdığı hâliyle geçebilir. */
   const numeric = base.match(/^\d[\d.\s]*/u)?.[0];
@@ -119,7 +138,12 @@ function escapeRegExp(value: string): string {
  * Tamamı rakamdan oluşan adaylarda düz arama yetmez: anlama "1000" der,
  * kullanıcı "1.000 adet" yazar (ölçüldü 2026-09-25) ve adet vurgulanmadan
  * kalırdı. Bu yüzden rakam dizileri, aralarında binlik ayracı ya da boşluk
- * bulunabilen bir desenle aranır. Harf içeren adaylarda davranış aynıdır.
+ * bulunabilen bir desenle aranır.
+ *
+ * ÇOK KELİMELİ ADAYDA AYRAÇ ESNEKTİR. "İstanbul Kadıköy" ile "İstanbul,
+ * Kadıköy" aynı yazıdır; kelimeler arası boşluk virgül, eğik çizgi ya da tire
+ * de olabilir. Esneklik YALNIZ kelimelerin ARASINDADIR — kelimelerin kendisi
+ * yine harfi harfine aranır, yeni bir eşleştirme serbestliği doğmaz.
  */
 function locate(
   folded: string,
@@ -127,6 +151,20 @@ function locate(
   spans: ReadingSpan[],
 ): { start: number; end: number } | null {
   const digitsOnly = /^\d+$/.test(needle);
+  const words = needle.split(/\s+/u).filter(Boolean);
+  if (!digitsOnly && words.length > 1) {
+    const pattern = new RegExp(
+      words.map(escapeRegExp).join("[\\s,/·-]+"),
+      "g",
+    );
+    for (const match of folded.matchAll(pattern)) {
+      const start = match.index ?? -1;
+      if (start < 0) continue;
+      const end = start + match[0].length;
+      if (!overlaps(spans, start, end)) return { start, end };
+    }
+    return null;
+  }
   if (!digitsOnly) {
     let from = 0;
     while (from <= folded.length) {

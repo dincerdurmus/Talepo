@@ -35,6 +35,7 @@ import {
   composeRequestCardTitle,
 } from "../src/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "../src/lib/request/publish-result-status";
+import { readingDurationMs } from "../src/lib/motion/talep-motion";
 import { composeRequestTitle } from "../src/lib/ai/request-text-composer";
 
 const ROOT = join(__dirname, "..");
@@ -148,6 +149,101 @@ ok(
     facts: [{ key: "brand", label: "Marka", displayValue: "Siemens" }],
   }).length === 0,
 );
+
+/* ------------------------------------------------------------------ */
+/**
+ * KAPI (a) — METİNDE YERİ BULUNAN HER ALAN VURGULANIR, KONUM DAHİL.
+ *
+ * Kurucu ölçümü (2026-09-25, `m-2-okuma.png`): "Arçelik buzdolabı arıyorum,
+ * İstanbul Kadıköy" cümlesinde yalnız MARKA ve ÜRÜN yanıyordu. Anlama konumu
+ * "il / ilçe" diye ayrı tutuyor, cümlede ise ikisi bitişik yazılmış; yalnız
+ * parçalar arandığı için ilk bulunan "İstanbul" tek başına vurgulanıyor ve
+ * ilçe karanlıkta kalıyordu. Vurgu artık konumun TAMAMINI kapsar.
+ */
+console.log("A2) Konum vurgusu — il ve ilçe bitişik de aranır");
+
+{
+  const cityFact = (value: string) => [
+    { key: "city", label: "Konum", displayValue: value },
+  ];
+
+  const joined = buildReadingHighlights({
+    text: SENTENCE,
+    facts: cityFact("İstanbul / Kadıköy"),
+  });
+  ok(
+    "(a) bitişik yazılan il+ilçe TEK vurguda tamamen yanar",
+    joined.length === 1 && joined[0]!.text === "İstanbul Kadıköy",
+    JSON.stringify(joined),
+  );
+  ok(
+    "(a) vurgu ham metnin aynısıdır",
+    joined.length === 1 &&
+      SENTENCE.slice(joined[0]!.start, joined[0]!.end) === joined[0]!.text,
+  );
+
+  /* Ters sıra: anlama "Kadıköy, İstanbul" derken kullanıcı "İstanbul Kadıköy"
+     yazmış olabilir; iki sıralama da denenir. */
+  ok(
+    "(a) ters sıralı değer de bitişik yakalanır",
+    buildReadingHighlights({
+      text: SENTENCE,
+      facts: cityFact("Kadıköy, İstanbul"),
+    })[0]?.text === "İstanbul Kadıköy",
+  );
+
+  /* Ayraç esnektir: "İstanbul, Kadıköy'de" de tek vurgudur. */
+  {
+    const commaText = "İstanbul, Kadıköy'de televizyon arıyorum";
+    const comma = buildReadingHighlights({
+      text: commaText,
+      facts: cityFact("İstanbul / Kadıköy"),
+    });
+    ok(
+      "(a) virgüllü yazılış da tek vurgudur",
+      comma[0]?.text === "İstanbul, Kadıköy",
+      JSON.stringify(comma),
+    );
+  }
+
+  /* EK TOLERANSI: yalnız ilçe yazılmışsa ek vurguyu bozmaz. */
+  {
+    const rentText = "Kadıköy'de kiralık 3+1, eşyasız, 60 bin TL'ye kadar";
+    const rent = buildReadingHighlights({
+      text: rentText,
+      facts: cityFact("İstanbul / Kadıköy"),
+    });
+    ok(
+      "(a) ekli ilçe ('Kadıköy'de') vurgulanır",
+      rent[0]?.text === "Kadıköy",
+      JSON.stringify(rent),
+    );
+  }
+
+  /*
+   * MUTASYON KONTROLÜ — KUSURUN KENDİSİ. Eski davranış "yalnız parçaları ara"
+   * idi; o kural geri gelirse bitişik yazılan konumun ancak YARISI vurgulanır.
+   * Kusuru burada üretip kapının onu ayırt ettiğini gösteriyoruz.
+   */
+  const halfOnly = buildReadingHighlights({
+    text: SENTENCE,
+    facts: cityFact("İstanbul"),
+  });
+  ok(
+    "mutasyon: yalnız il aranırsa vurgu ilçeyi kapsamaz (kapı bunu ayırt eder)",
+    halfOnly[0]?.text === "İstanbul" &&
+      halfOnly[0]!.text !== joined[0]?.text,
+    JSON.stringify(halfOnly),
+  );
+  /* MUTASYON: metinde hiç geçmeyen konum yine vurgulanmaz. */
+  ok(
+    "mutasyon: metinde olmayan konum vurgulanmaz",
+    buildReadingHighlights({
+      text: SENTENCE,
+      facts: cityFact("Ankara / Çankaya"),
+    }).length === 0,
+  );
+}
 
 /* ------------------------------------------------------------------ */
 console.log("B) Talep kartı — çubuk render edilen satırları sayar");
@@ -742,6 +838,235 @@ ok(
 ok(
   "kanıt karesi uygulanan kadrajı kendi söyler",
   Boolean(sceneView && /dataset\.framing/.test(sceneView)),
+);
+
+/* ------------------------------------------------------------------ */
+/**
+ * E) TANITIM VİDEOSUNDAKİ SADELİK — YENİ KAPILAR (kurucu, 2026-09-25).
+ *
+ * Her kapı bir kaynak ŞEKLİNİ ölçer ve hemen ardından kusurun kendisini
+ * üretir: ilgili kaynak dizesi eski hâline "geri döndürülür" ve kapının
+ * kırmızıya döndüğü gösterilir. Böylece hiçbiri her zaman yeşil kalmaz.
+ */
+console.log("E) Videodaki sadelik — kart, soru alanı, yayın anı");
+
+const publishStatusSrc = strip(read("src/lib/request/publish-result-status.ts"));
+
+/** Kapı yordamları: aynı ölçüm hem gerçek kaynağa hem mutasyona uygulanır. */
+const gate = {
+  /** (b) Kategori doğrulaması karttan çıktı, tek soru alanında. */
+  cardHasNoCategoryQuestion: (cardSrc: string, pageSrc: string) =>
+    !/categoryStep/.test(cardSrc) &&
+    !/onCategoryAction/.test(cardSrc) &&
+    !/confirmLabel|rejectLabel/.test(cardSrc) &&
+    /<CategoryConfirmationCard[\s\S]*?onAction=\{applyCategoryConfirmation\}/.test(
+      pageSrc,
+    ),
+  /** (c) Yayın butonu isteğe bağlı bölümün ÜSTÜNDE ve bölüm kapalı doğar. */
+  publishAboveOptional: (pageSrc: string) => {
+    const cta = pageSrc.indexOf('data-testid="composer-review-cta"');
+    const details = pageSrc.indexOf('data-testid="composer-optional-details"');
+    return (
+      cta >= 0 &&
+      details > cta &&
+      /const \[optionalOpen, setOptionalOpen\] = useState\(false\)/.test(pageSrc) &&
+      /open=\{optionalOpen\}/.test(pageSrc) &&
+      /showQuestionInDetails[\s\S]{0,400}?optionalOpen/.test(pageSrc)
+    );
+  },
+  /**
+   * (d) "Yayında" görüntüsü yalnız published durumunda kurulur: onay işareti
+   * de, mono satır da aynı koşula bağlıdır ve metin sunucudan gelen kanonik
+   * sonuçtan okunur (sayfa kendi cümlesini yazmaz).
+   */
+  publishedOnlyWhenPublished: (pageSrc: string) =>
+    /publishOutcome\.kind === "published"[\s\S]{0,400}?<Check/.test(pageSrc) &&
+    /publishOutcome\.kind === "published"\s*\?\s*"Teklif geldikçe burada görünecek"/.test(
+      pageSrc,
+    ) &&
+    /\{publishOutcome\.headline\}/.test(pageSrc),
+  /** (e) Teslim sınırı: gönderim dili yok. */
+  noDeliveryVerbs: (...sources: string[]) =>
+    sources.every((src) => !/ulaştı|iletildi|gönderildi/i.test(src)),
+  /** (f) "Tüm alt kategoriler" yer tutucusu hiçbir yüzeyde yok. */
+  noSubcategoryPlaceholder: (...sources: string[]) =>
+    sources.every((src) => !/Tüm alt kategoriler/.test(src)),
+};
+
+ok(
+  "(b) kart kategori sorusu taşımaz; doğrulama tek soru alanında aynı eylemi çağırır",
+  Boolean(card && page && gate.cardHasNoCategoryQuestion(card, page)),
+);
+ok(
+  "mutasyon: kategori kutusu karta geri konursa kapı kırmızı olur",
+  Boolean(
+    card &&
+      page &&
+      !gate.cardHasNoCategoryQuestion(
+        `${card}\n categoryStep.confirmLabel; onCategoryAction({ kind: "confirm" });`,
+        page,
+      ),
+  ),
+);
+
+ok(
+  "(c) yayın butonu isteğe bağlı bölümün ÜSTÜNDE ve bölüm kapalı doğar",
+  Boolean(page && gate.publishAboveOptional(page)),
+);
+ok(
+  "mutasyon: isteğe bağlı bölüm varsayılan açık olursa kapı kırmızı olur",
+  Boolean(
+    page &&
+      !gate.publishAboveOptional(
+        page.replace(
+          "const [optionalOpen, setOptionalOpen] = useState(false)",
+          "const [optionalOpen, setOptionalOpen] = useState(true)",
+        ),
+      ),
+  ),
+);
+ok(
+  "mutasyon: bölüm butonun ÜSTÜNE alınırsa kapı kırmızı olur",
+  Boolean(
+    page &&
+      !gate.publishAboveOptional(
+        `data-testid="composer-optional-details"\n${page}`,
+      ),
+  ),
+);
+
+ok(
+  "(d) 'yayında' görüntüsü yalnız published durumunda kurulur",
+  Boolean(page && gate.publishedOnlyWhenPublished(page)),
+);
+ok(
+  "mutasyon: onay işareti koşulsuz çizilirse kapı kırmızı olur",
+  Boolean(
+    page &&
+      !gate.publishedOnlyWhenPublished(
+        page.replace(/publishOutcome\.kind === "published"/g, "true"),
+      ),
+  ),
+);
+
+const publishSurfaces = [page, publishStatusSrc].filter(
+  (src): src is string => src != null,
+);
+ok(
+  "(e) yayın sonrası metinde 'ulaştı / iletildi / gönderildi' yok",
+  publishSurfaces.length === 2 && gate.noDeliveryVerbs(...publishSurfaces),
+);
+ok(
+  "mutasyon: gönderim dili geri gelirse kapı kırmızı olur",
+  !gate.noDeliveryVerbs(
+    ...publishSurfaces,
+    "Talebin 42 tedarikçiye iletildi.",
+  ),
+);
+
+const cardSurfaces = [card, page, start].filter(
+  (src): src is string => src != null,
+);
+ok(
+  "(f) 'Tüm alt kategoriler' yer tutucusu hiçbir kartta görünmez",
+  cardSurfaces.length === 3 && gate.noSubcategoryPlaceholder(...cardSurfaces),
+);
+ok(
+  "mutasyon: yer tutucu geri gelirse kapı kırmızı olur",
+  !gate.noSubcategoryPlaceholder(
+    ...cardSurfaces,
+    '{leafLabel ?? "Tüm alt kategoriler"}',
+  ),
+);
+
+/* ------------------------------------------------------------------ */
+/**
+ * E2) BAŞLANGIÇ EKRANI VE HAREKET DİLİ.
+ *
+ * Videodaki ilk an: büyük yüz, mono `MAIRA`, "Tek cümle yaz." ve kutu. Kutunun
+ * altındaki açıklama ile ipucu satırı kalktı. Süreler tek tabloda toplandı.
+ */
+console.log("E2) Başlangıç ekranı ve hareket dili");
+
+const motion = strip(read("src/lib/motion/talep-motion.ts"));
+const voice = strip(read("src/components/request/talep/MairaVoice.tsx"));
+
+ok("hareket tablosu okunabiliyor", motion != null);
+ok(
+  "başlangıç başlığı 'Tek cümle yaz.' ve placeholder 'Ne arıyorsun?'",
+  Boolean(
+    start &&
+      /Tek cümle yaz\./.test(start) &&
+      /placeholder="Ne arıyorsun\?"/.test(start),
+  ),
+);
+ok(
+  "kutunun altındaki açıklama ve ipucu satırı kalktı",
+  Boolean(
+    start &&
+      !/Maira eksik kalanı sorar/.test(start) &&
+      !/Marka, adet, konum yazarsan/.test(start),
+  ),
+);
+ok(
+  "telefonda yüz 240px, masaüstünde 380px",
+  Boolean(start && /size=\{240\}/.test(start) && /size=\{380\}/.test(start)),
+);
+ok(
+  "yüzün altında mono MAIRA etiketi var",
+  Boolean(start && /talep-start-maira-mark/.test(start)),
+);
+ok(
+  "süreler tek tablodan okunur (yüzeyler kendi sayısını tutmaz)",
+  Boolean(
+    voice &&
+      card &&
+      /@\/lib\/motion\/talep-motion/.test(voice) &&
+      /@\/lib\/motion\/talep-motion/.test(card) &&
+      !/const REVEAL_STEP_MS/.test(voice),
+  ),
+);
+ok(
+  "her hareket yüzeyi azaltılmış hareketi sorar",
+  Boolean(
+    voice &&
+      card &&
+      page &&
+      /prefersReducedMotion/.test(voice) &&
+      /prefersReducedMotion/.test(card) &&
+      /prefersReducedMotion\(\)/.test(page),
+  ),
+);
+/* Sınır kaynak metninden değil, kanonik fonksiyondan ölçülür. */
+ok(
+  "okuma anı 3 saniyeyi aşmaz ve vurgu sayısıyla uzar",
+  readingDurationMs(50) <= 3000 &&
+    readingDurationMs(1) > readingDurationMs(0) &&
+    readingDurationMs(1) < 3000,
+  `${readingDurationMs(0)} / ${readingDurationMs(1)} / ${readingDurationMs(50)}`,
+);
+
+/**
+ * NABIZ DEKORATİFTİR. Sahne el tutamağına `pulse()` eklendi; hiçbir karar,
+ * cevap ya da telemetri taşımadığı ölçülür.
+ */
+const sceneSrc = strip(read("src/lib/maira/contour-scene.ts"));
+const faceSrc = strip(read("src/components/request/talep/MairaFace.tsx"));
+ok(
+  "sahne el tutamağında pulse() var ve iClickT'yi sürer",
+  Boolean(
+    sceneSrc &&
+      /pulse: \(\) => \{/.test(sceneSrc) &&
+      /uniforms\.iClickT\.value = performance\.now\(\) \/ 1000/.test(sceneSrc),
+  ),
+);
+ok(
+  "nabız yalnız görünüm taşır (cevap/telemetri değil)",
+  Boolean(
+    faceSrc &&
+      /pulseToken/.test(faceSrc) &&
+      !/onAnswer|trackComposerEvent|setManualValues/.test(faceSrc),
+  ),
 );
 
 console.log(`\nkapi=${kapi} sorun=${sorun}`);

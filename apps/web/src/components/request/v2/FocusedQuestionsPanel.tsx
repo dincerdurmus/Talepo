@@ -387,11 +387,22 @@ function MoneyRangeControl(props: {
 
   const digits = amount.replace(/\D/g, "");
 
+  /*
+    ETİKET PLACEHOLDER'A GÖMÜLÜ (kurucu, 2026-09-25). Soru başlığı zaten
+    "Bütçeniz nedir?" diyor; üstüne bir de "Toplam bütçe (TL)" etiketi
+    koymak aynı şeyi ikinci kez söylüyordu. Etiket kaybolmaz — ekran
+    okuyucular için `sr-only` olarak durur.
+  */
+  const fieldLabel = basisLabel ? `${basisLabel} bütçe (TL)` : "Bütçe (TL)";
+  const fieldPlaceholder = basisLabel
+    ? `${basisLabel} bütçe, örn. 50.000 TL`
+    : "Bütçe, örn. 50.000 TL";
+
   return (
     <div className="mt-3 space-y-3" data-testid="control-money-range-form">
       <div>
-        <label className={signalLabel} htmlFor="budget-amount">
-          {basisLabel ? `${basisLabel} bütçe (TL)` : "Bütçe (TL)"}
+        <label className="sr-only" htmlFor="budget-amount">
+          {fieldLabel}
         </label>
         <input
           id="budget-amount"
@@ -414,10 +425,16 @@ function MoneyRangeControl(props: {
                taşır; Kaydet klavye akışı için durur. */
             if (digits) props.onAnswer(`${formatLive(digits)} TL`);
           }}
-          placeholder="Örn. 50.000"
+          placeholder={fieldPlaceholder}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
+      {/*
+        TEK BİRİNCİL EYLEM. "Kaydet · veya · Teklifleri görmek istiyorum"
+        üçlüsü iki eylemi eşit ağırlıkta gösteriyordu; atlama yolu kaybolmaz
+        ama birincil butonun ALTINDA ikincil metin bağlantısı olur. Çağrılan
+        kanonik değer (`open_to_offers`) aynı kaldı.
+      */}
+      <div className="grid gap-2">
         <button
           type="button"
           disabled={!digits}
@@ -429,16 +446,18 @@ function MoneyRangeControl(props: {
         >
           Kaydet
         </button>
-        <span className="text-xs text-[#0f1f1d]/40">veya</span>
         {props.control.options
           .filter((opt) => opt.value === "open_to_offers")
           .map((opt) => (
-            <OptionChip
+            <button
               key={opt.value}
-              label={opt.label}
-              soft
+              type="button"
+              data-testid={`question-escape-${opt.value}`}
               onClick={() => props.onAnswer(opt.value)}
-            />
+              className="min-h-10 justify-self-start text-[13.5px] font-medium text-[#0f766e] underline underline-offset-4"
+            >
+              {opt.label}
+            </button>
           ))}
       </div>
     </div>
@@ -869,21 +888,20 @@ export function FocusedQuestionsPanel({
       data-testid="composer-questions"
       className="mt-2 grid gap-3.5"
     >
-      <p
-        className="font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-[#0f766e]/80"
-        data-testid="composer-question-phase"
-      >
-        {phaseHeading ?? "Son birkaç detay"}
-        {typeof remainingCriticalCount === "number" &&
-        remainingCriticalCount > 0 ? (
-          <span className="ml-2 text-[#0f1f1d]/35">
-            · yayına {remainingCriticalCount} soru
-          </span>
-        ) : null}
-      </p>
-
+      {/*
+        ÜST SATIR KALKTI (kurucu, 2026-09-25 tanıtım videosu). "TEKLİF İÇİN
+        İKİ BİLGİ YETERLİ · YAYINA 1 SORU" ekranda tek soru dururken ikinci
+        bir konuşmaydı; kalan zorunlu alan zaten talep kartında amber "şimdi
+        soruluyor" satırı olarak görünüyor. Başlığın KAYNAĞI değişmedi: hâlâ
+        zamanlayıcının `phaseHeading` değeri, artık yalnız erişilebilir
+        başlık olarak taşınıyor — panel kendi cümlesini yazmaz.
+      */}
       <h2 id={`${baseId}-heading`} className="sr-only">
         {phaseHeading ?? "Son birkaç detay"}
+        {typeof remainingCriticalCount === "number" &&
+        remainingCriticalCount > 0
+          ? ` · yayına ${remainingCriticalCount} soru`
+          : ""}
       </h2>
 
       {healthNotice ? (

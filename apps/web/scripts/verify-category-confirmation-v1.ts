@@ -327,6 +327,9 @@ for (const c of CONFIDENT_CASES) {
   const maira = stripComments(read("src/components/request/maira/MairaStage.tsx"));
   const card = stripComments(read("src/components/request/v2/CategoryConfirmationCard.tsx"));
   const panel = stripComments(read("src/components/request/v2/FocusedQuestionsPanel.tsx"));
+  const requestCard = stripComments(
+    read("src/components/request/talep/RequestCardPanel.tsx"),
+  );
 
   check("F0 kaynaklar mevcut", Boolean(page && maira && card && panel));
   if (page && maira && card && panel) {
@@ -336,16 +339,33 @@ for (const c of CONFIDENT_CASES) {
         !maira.includes("buildCategoryConfirmation") &&
         !card.includes("buildCategoryConfirmation"),
     );
+    /**
+     * F2/F3/F6/F14 — KATEGORİ ADIMI ARTIK TEK YÜZEYDE (kurucu, 2026-09-25
+     * tanıtım videosu; F8'de olduğu gibi yüzey SAYISI değil, kaynağı ölçülür).
+     *
+     * Eski kural iki yüzey varsayıyordu: doğrulama talep kartının İÇİNDE, kök
+     * seçimi kartın altında. Kurucu "kart = yalnız bilgi" dedi ve doğrulamayı
+     * kartın altındaki TEK soru alanına taşıdı. Ölçülmesi gereken değişmedi:
+     * modeli yalnız sayfa kurar, her yüzey kanonik modeli alır ve TEK
+     * işleyiciye gider. Yeni olarak talep kartının kategori sorusu taşımadığı
+     * da ölçülür — geri dönerse bu kapı kırmızıya döner.
+     */
     check(
-      "F2 iki yüzey aynı modeli alır",
-      /categoryStep=\{categoryStepForMaira\}/.test(page) &&
-        /categoryStepForMaira = categoryConfirmation \?\? categoryChoice/.test(page) &&
-        /<CategoryConfirmationCard[\s\S]*?model=\{categoryConfirmation\}/.test(page),
+      "F2 kategori adımı kanonik modeli alır, kart soru taşımaz",
+      /categoryStepForMaira = categoryConfirmation \?\? categoryChoice/.test(page) &&
+        /<CategoryConfirmationCard[\s\S]*?model=\{categoryConfirmation\}/.test(page) &&
+        /<CategoryConfirmationCard[\s\S]*?model=\{categoryChoice\}/.test(page) &&
+        Boolean(requestCard) &&
+        !/categoryStep/.test(requestCard!) &&
+        !/onCategoryAction/.test(requestCard!),
+      "kategori adımı kartta ya da model bağlaması eksik",
     );
     check(
-      "F3 iki yüzey aynı işleyiciye gider",
-      /onCategoryAction=\{applyCategoryConfirmation\}/.test(page) &&
-        /onAction=\{applyCategoryConfirmation\}/.test(page),
+      "F3 kategori yüzeyi tek işleyiciye gider",
+      /onAction=\{applyCategoryConfirmation\}/.test(page) &&
+        (page.match(/onAction=\{(\w+)\}/g) ?? []).every(
+          (m) => m === "onAction={applyCategoryConfirmation}",
+        ),
     );
     check(
       "F4 Maira kendi kategori mantığı kurmaz",
@@ -361,7 +381,7 @@ for (const c of CONFIDENT_CASES) {
     check(
       "F6 'Bu değil' görünümü sayfa state'i",
       /categoryRejectedFor/.test(page) &&
-        /categoryRejected=\{categoryRejected\}/.test(page) &&
+        /const categoryRejected =/.test(page) &&
         /rejected=\{categoryRejected\}/.test(page),
     );
     check(
@@ -401,7 +421,9 @@ for (const c of CONFIDENT_CASES) {
       "F14 belirsiz adım da aynı işleyiciye gider",
       /categoryChoice = useMemo/.test(page) &&
         /buildCategoryChoice\(/.test(page) &&
-        (page.match(/onCategoryAction=\{applyCategoryConfirmation\}/g) ?? []).length === 1,
+        /model=\{categoryChoice\}[\s\S]{0,160}?onAction=\{applyCategoryConfirmation\}/.test(
+          page,
+        ),
     );
     check(
       "F10 Maira onay/ret etiketlerini modelden okur",

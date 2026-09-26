@@ -72,6 +72,24 @@ function RailTile({
   );
 }
 
+/**
+ * YÜZ + ADI. Videoda yüzün altında yalnız mono `MAIRA` etiketi durur; başka
+ * hiçbir açıklama yoktur. Etiket kimliği söyler, bir eylem önermez.
+ */
+function MairaMark({ size, className = "" }: { size: number; className?: string }) {
+  return (
+    <span className={`grid justify-items-start gap-2 ${className}`}>
+      <MairaFace size={size} />
+      <span
+        data-testid="talep-start-maira-mark"
+        className="pl-0.5 font-mono text-[11px] font-medium tracking-[0.22em] text-[#0f766e]"
+      >
+        MAIRA
+      </span>
+    </span>
+  );
+}
+
 export function TalepStartPanel({
   text,
   onTextChange,
@@ -96,14 +114,16 @@ export function TalepStartPanel({
         sütuna yansıtıyor ve sayfa telefonda taşıyordu (tarayıcıda ölçüldü).
       */}
       <div className="grid min-w-0 gap-[18px] lg:col-start-1">
-        <MairaFace size={132} className="-ml-2.5 lg:hidden" />
+        {/*
+          TELEFONDA YÜZ BÜYÜKTÜR (kurucu, 2026-09-25 tanıtım videosu). 132px'te
+          Maira bir ikona dönüşüyor ve ilk ekranı başlık ile açıklama
+          dolduruyordu; videoda ilk anı yüz taşır. Masaüstündeki 380px sağ
+          sütunda olduğu gibi kalır.
+        */}
+        <MairaMark size={240} className="-ml-3 lg:hidden" />
         <h1 className="m-0 text-[clamp(36px,9vw,56px)] font-semibold leading-[1.02] tracking-[-0.045em] text-[#0f1f1d]">
-          Ne arıyorsun?
+          Tek cümle yaz.
         </h1>
-        <p className="m-0 max-w-[34ch] text-[16.5px] text-[#0f1f1d]/50">
-          Bir cümle yaz. Maira eksik kalanı sorar, tedarikçiler sana teklif
-          verir.
-        </p>
 
         <form
           onSubmit={(event) => {
@@ -126,33 +146,30 @@ export function TalepStartPanel({
                 if (canSubmit) onSubmit();
               }
             }}
-            placeholder="Örn. 1000 adet kartvizit, mat selefonlu"
+            placeholder="Ne arıyorsun?"
             className="min-h-20 resize-none bg-transparent text-[17.5px] leading-[1.45] text-[#0f1f1d] outline-none placeholder:text-[#a0afac]"
           />
           <div className="flex items-center justify-between gap-3">
+            {/*
+              İPUCU SATIRI KALKTI (kurucu, 2026-09-25): kutunun altında hiçbir
+              şey anlatılmaz. Burada yalnız zaten ANLAŞILMIŞ alanların aynası
+              durur; anlaşılan yoksa satır boş kalır.
+            */}
             <div
               data-testid="talep-start-detected"
               className="flex min-h-[26px] flex-wrap items-center gap-1.5"
             >
-              {detected.length > 0 ? (
-                detected.map((chip) => (
-                  <span
-                    key={chip.key}
-                    className="inline-flex h-[26px] items-center gap-1.5 rounded-lg bg-[#e4f1ee] px-2.5 text-[13px] text-[#3a4c49]"
-                  >
-                    <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#0f766e]">
-                      {chip.label}
-                    </span>
-                    {chip.value}
+              {detected.map((chip) => (
+                <span
+                  key={chip.key}
+                  className="inline-flex h-[26px] items-center gap-1.5 rounded-lg bg-[#e4f1ee] px-2.5 text-[13px] text-[#3a4c49]"
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-[#0f766e]">
+                    {chip.label}
                   </span>
-                ))
-              ) : (
-                <span className="text-[13px] text-[#a0afac]">
-                  {text.trim()
-                    ? "Yazmaya devam et"
-                    : "Marka, adet, konum yazarsan tekrar sormayız"}
+                  {chip.value}
                 </span>
-              )}
+              ))}
             </div>
             <button
               type="submit"
@@ -168,7 +185,7 @@ export function TalepStartPanel({
       </div>
 
       <div className="hidden lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:grid lg:justify-self-center">
-        <MairaFace size={380} />
+        <MairaMark size={380} />
       </div>
 
       <div className="min-w-0 lg:col-start-1 lg:row-start-2">

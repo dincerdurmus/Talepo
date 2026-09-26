@@ -18,6 +18,13 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { ReadingSegment } from "@/lib/request-composer/v2/reading-highlights";
+import {
+  EASE_REVEAL,
+  HIGHLIGHT_STEP_MS,
+  READING_LEAD_MS,
+  prefersReducedMotion,
+  readingDurationMs,
+} from "@/lib/motion/talep-motion";
 
 import { MairaFace } from "./MairaFace";
 
@@ -29,26 +36,34 @@ export type MairaStatus =
   | "İNCELEMEDE"
   | "YAYINDA";
 
-/** Vurgular arası gecikme; okuma anının toplam süresi bundan türer. */
-const REVEAL_STEP_MS = 420;
-const REVEAL_LEAD_MS = 320;
-const REVEAL_TAIL_MS = 520;
-
-/** Okuma anının bitip kartın belireceği an — tek yerden hesaplanır. */
-export function readingDurationMs(spanCount: number): number {
-  return REVEAL_LEAD_MS + Math.max(spanCount, 0) * REVEAL_STEP_MS + REVEAL_TAIL_MS;
-}
+/**
+ * Süreler ve yumuşatma değerleri KANONİK HAREKET TABLOSUNDAN gelir
+ * (`lib/motion/talep-motion`); bu dosya kendi zamanlamasını uydurmaz.
+ * `readingDurationMs` geriye dönük uyum için buradan da dışa verilir.
+ */
+export { readingDurationMs };
 
 export function MairaStatusLine({
   status,
   thinking = false,
+  pulseToken = 0,
 }: {
   status: MairaStatus;
   thinking?: boolean;
+  /**
+   * DEKORATİF IŞIK NABZI. Her yeni vurguda artan bir sayaçtır; yüz o anda
+   * bir kez parlar. Davranış taşımaz, hiçbir kararı tetiklemez.
+   */
+  pulseToken?: number;
 }) {
   return (
     <div className="flex items-center gap-2.5" data-testid="maira-status-line">
-      <MairaFace size={38} thinking={thinking} scene={false} />
+      <MairaFace
+        size={38}
+        thinking={thinking}
+        scene={false}
+        pulseToken={pulseToken}
+      />
       <span className="text-[15px] font-semibold text-[#0f1f1d]">Maira</span>
       <span
         data-testid="maira-status"
@@ -63,10 +78,16 @@ export function MairaStatusLine({
 export function ReadingSentence({
   segments,
   phase,
+  onReveal,
 }: {
   segments: ReadingSegment[];
   /** `reading` büyük punto + sırayla vurgu; `quote` küçük alıntı. */
   phase: "reading" | "quote";
+  /**
+   * Her vurgu açıldığında çağrılır (1'den başlayan sıra numarasıyla). Yalnız
+   * dekoratif nabız içindir; cevap, karar ya da telemetri taşımaz.
+   */
+  onReveal?: (index: number) => void;
 }) {
   const entityCount = useMemo(
     () => segments.filter((s) => s.kind === "entity").length,
@@ -78,25 +99,21 @@ export function ReadingSentence({
    * açıktır. Karar ilk render'da bir kez okunur — effect içinde state'e
    * yazmak gereksiz bir ikinci render üretirdi.
    */
-  const [still] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-  );
+  const [still] = useState(prefersReducedMotion);
 
   useEffect(() => {
     if (phase !== "reading" || still || entityCount === 0) return;
     const timers: number[] = [];
     for (let i = 0; i < entityCount; i += 1) {
       timers.push(
-        window.setTimeout(
-          () => setRevealed(i + 1),
-          REVEAL_LEAD_MS + i * REVEAL_STEP_MS,
-        ),
+        window.setTimeout(() => {
+          setRevealed(i + 1);
+          onReveal?.(i + 1);
+        }, READING_LEAD_MS + i * HIGHLIGHT_STEP_MS),
       );
     }
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [entityCount, phase, still]);
+  }, [entityCount, onReveal, phase, still]);
 
   const quote = phase === "quote";
   const allOn = quote || still;
@@ -123,13 +140,13 @@ export function ReadingSentence({
             data-entity-key={segment.key}
             data-entity-label={segment.label}
             data-on={on ? "true" : "false"}
+            /* Yumuşatma kanonik hareket tablosundan; burada eğri uydurulmaz. */
+            style={quote ? undefined : { transitionTimingFunction: EASE_REVEAL }}
             className={
               quote
                 ? "relative mx-0 rounded-md bg-transparent px-0 text-[#0f1f1d] shadow-[inset_0_-1px_0_rgba(15,118,110,0.28)]"
                 : `relative -mx-[3px] rounded-md px-[3px] py-[2px] text-inherit transition-all duration-300 ${
-                    on
-                      ? "bg-[#e4f1ee] shadow-[inset_0_-2px_0_#0d9488]"
-                      : "bg-transparent"
+                    on ? "bg-[#e4f1ee]" : "bg-transparent"
                   }`
             }
           >
@@ -142,6 +159,20 @@ export function ReadingSentence({
               >
                 {segment.label}
               </span>
+            ) : null}
+            {/*
+              VURGU ÇİZGİSİ SOLDAN SAĞA DOLAR (videodaki an). Sabit bir alt
+              gölge yerine ölçeklenen bir çubuk: hareket yönü okuma yönüyle
+              aynı olsun diye kaynak soldadır.
+            */}
+            {!quote ? (
+              <span
+                aria-hidden
+                style={{ transitionTimingFunction: EASE_REVEAL }}
+                className={`pointer-events-none absolute inset-x-0 bottom-0 h-[2px] origin-left rounded-full bg-[#0d9488] transition-transform duration-500 ${
+                  on ? "scale-x-100" : "scale-x-0"
+                }`}
+              />
             ) : null}
             {segment.text}
           </mark>

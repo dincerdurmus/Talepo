@@ -34,6 +34,13 @@ type Props = {
    * ölçek — ikinci bir görsel dil değil.
    */
   scene?: boolean;
+  /**
+   * DEKORATİF IŞIK NABZI. Okuma anında her vurgu açıldığında artan sayaç;
+   * yüz o anda bir kez parlar. Sahne kuruluysa shader'ın kendi `iClickT`
+   * dalgası sürülür, kurulu değilse (38px'lik durum işareti) yer tutucu ışık
+   * alanı parlar — iki ölçekte de aynı an görünür. Hiçbir karar taşımaz.
+   */
+  pulseToken?: number;
   className?: string;
 };
 
@@ -41,6 +48,7 @@ export function MairaFace({
   size,
   thinking = false,
   scene = true,
+  pulseToken = 0,
   className = "",
 }: Props) {
   /**
@@ -97,11 +105,30 @@ export function MairaFace({
           />
         ))}
       </svg>
+      {/*
+        NABIZ SAHNESİZ DE GÖRÜNÜR. Küçük durum işaretinde WebGL sahnesi hiç
+        kurulmaz; nabız yalnız sahneye bağlansaydı okuma anında yüz hiç
+        parlamazdı. Katman `key` ile yeniden kurulur, bir kez söner ve biter.
+      */}
+      {pulseToken > 0 ? (
+        <span
+          key={pulseToken}
+          data-testid="maira-face-pulse"
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 46%, rgba(94,234,212,0.55), transparent 68%)",
+            animation: "maira-face-pulse 900ms cubic-bezier(0.16,1,0.3,1) both",
+          }}
+        />
+      ) : null}
+      <style>{`@keyframes maira-face-pulse{from{opacity:0.9;transform:scale(0.9)}to{opacity:0;transform:scale(1.25)}}`}</style>
       {scene ? (
         <MairaContourScene
           appearance="light"
           framing="portrait"
           thinking={thinking}
+          pulseToken={pulseToken}
           onReady={handleReady}
         />
       ) : null}

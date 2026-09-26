@@ -15,6 +15,7 @@ import {
   Check,
   ChevronDown,
   Clock3,
+  Plus,
   Send,
   TrendingUp,
   Zap,
@@ -57,6 +58,11 @@ import {
   type RequestCardQuestion,
 } from "@/lib/request-composer/v2/request-card-model";
 import { publishOutcomeFrom } from "@/lib/request/publish-result-status";
+import {
+  CARD_IN_MS,
+  EASE_SPRING,
+  prefersReducedMotion,
+} from "@/lib/motion/talep-motion";
 import {
   advanceBrowseWalk,
   createBrowseWalkState,
@@ -374,8 +380,32 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   const [publishGuidanceAttempted, setPublishGuidanceAttempted] = useState(false);
   const [, setPublishButtonAttention] = useState(false);
   const [, setPublishReadyAnimation] = useState(false);
-  /** Draft values typed in the AI companion suggestion rows (keyed by gap id). */
-  const [, setOptionalOpen] = useState(false);
+  /**
+   * İSTEĞE BAĞLI BÖLÜM VARSAYILAN KAPALIDIR (kurucu, 2026-09-25). Talep
+   * yayına hazır olduğunda isteğe bağlı bir soru KENDİLİĞİNDEN açılmaz;
+   * kullanıcı "Detay ekle" bağlantısına dokununca açılır.
+   */
+  const [optionalOpen, setOptionalOpen] = useState(false);
+  /**
+   * OKUMA ANI IŞIK NABZI — DEKORATİF. Her vurgu açıldığında artan sayaç;
+   * yalnız Maira'nın yüzüne gider, hiçbir kararı etkilemez.
+   */
+  const [readingPulse, setReadingPulse] = useState(0);
+  /**
+   * TELEFONDA KLAVYE AÇIK MI. Sabitlenen yayın butonu klavyenin üstünde
+   * yazılan metni kapatmasın diye ölçülür. `visualViewport` yoksa karar
+   * verilmez — buton görünür kalır, çünkü "ölçülmedi" ile "kapalı" aynı şey
+   * değildir.
+   */
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const vv = typeof window === "undefined" ? null : window.visualViewport;
+    if (!vv) return;
+    const read = () => setKeyboardOpen(vv.height < window.innerHeight * 0.75);
+    read();
+    vv.addEventListener("resize", read);
+    return () => vv.removeEventListener("resize", read);
+  }, []);
   const [enrichmentFieldKey, setEnrichmentFieldKey] = useState<string | null>(
     null,
   );
@@ -3212,10 +3242,15 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   useEffect(() => {
     if (readingPhase !== "reading") return;
     if (hybrid.isSyncing) return;
-    const timer = window.setTimeout(
-      () => setReadingPhase("quote"),
-      readingDurationMs(readingEntityCount),
-    );
+    /*
+      AZALTILMIŞ HAREKETTE OKUMA ANI ATLANIR (kurucu, 2026-09-25). Vurgular
+      zaten baştan açık geliyordu ama sayaç yine tam süre bekliyor, kart
+      gereksiz yere geç açılıyordu. Tercih açıksa doğrudan karta geçilir.
+    */
+    const wait = prefersReducedMotion()
+      ? 0
+      : readingDurationMs(readingEntityCount);
+    const timer = window.setTimeout(() => setReadingPhase("quote"), wait);
     return () => window.clearTimeout(timer);
   }, [hybrid.isSyncing, readingEntityCount, readingPhase]);
 
@@ -3260,10 +3295,68 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   const browseChildrenOf = (root: BrowseNode) =>
     listBrowseOptions(advanceBrowseWalk(createBrowseWalkState(), root));
 
+  /**
+   * KATEGORİ ADIMI AKTİF Mİ. Kartın içinden çıkan doğrulama artık tek soru
+   * alanında yaşıyor; hangi durumda sorulacağı kanonik modelden türer, bu
+   * sayfada yeniden karar verilmez.
+   */
+  const categoryStepActive =
+    !composerReadiness.outOfScopeNotice &&
+    categoryStepForMaira !== null &&
+    (categoryRejected ||
+      categoryStepForMaira.mode === "confirm" ||
+      categoryStepForMaira.mode === "choose");
+
+  /**
+   * TEK SORU DÜĞÜMÜ, İKİ OLASI YER. Yayın kapısı kapalıyken ya da kullanıcı
+   * bir kart satırına dokunduğunda soru yayın butonunun ÜSTÜNDE durur; talep
+   * hazırken kendiliğinden açılmaz, yalnız "Detay ekle" açıldığında butonun
+   * altındaki kapalı bölümde görünür. JSX tek yerde kurulur.
+   */
+  const questionPanel = activeQuestion ? (
+    <FocusedQuestionsPanel
+      questions={questionsForPanel}
+      draftByKey={focusedDraftByKey}
+      healthNotice={isHealthCategory}
+      remainingCriticalCount={composerReadiness.remainingCriticalCount}
+      phase={focusedQuestionSchedule.phase}
+      phaseHeading={focusedQuestionSchedule.phaseHeading}
+      /*
+        "İsteğe bağlı" etiketi de aynı kanonik listeden gelir: panel bir
+        sorunun zorunlu olup olmadığına kendi karar vermez.
+      */
+      requiredFieldKeys={focusedQuestionSchedule.blockingFieldKeys}
+      activeFieldKey={activeQuestion.fieldKey}
+      onActiveFieldChange={setAskingFieldKey}
+      onDraftChange={(fieldKey, value) =>
+        setFocusedDraftByKey((current) => ({
+          ...current,
+          [fieldKey]: value,
+        }))
+      }
+      onAnswer={handleFocusedAnswer}
+      onSkip={handleFocusedSkip}
+    />
+  ) : null;
+  const showQuestionAboveCta = Boolean(
+    questionPanel &&
+      !categoryStepActive &&
+      (!composerReadiness.canReview || askingFieldKey),
+  );
+  const showQuestionInDetails = Boolean(
+    questionPanel &&
+      !categoryStepActive &&
+      composerReadiness.canReview &&
+      !askingFieldKey &&
+      optionalOpen,
+  );
+
   function startReading() {
     setIntroDecided(true);
     setWizardStep(2);
     setAskingFieldKey(null);
+    setReadingPulse(0);
+    setOptionalOpen(false);
     setReadingPhase("reading");
   }
 
@@ -3292,32 +3385,59 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
             talep "yayında" DEMEZ; metin `publishOutcomeFrom` ile tek yerden
             çözülür ve burada yeniden yazılmaz.
           */
+          /*
+            YAYIN ANI — VİDEODAKİ KOMPOZİSYON (kurucu, 2026-09-25). Büyük teal
+            daire içinde onay işareti yay hareketiyle gelir, altında tek
+            başlık ve tek mono satır durur. PENDING_REVIEW bu görüntüyü
+            ALMAZ: onay işareti yerine bekleme işareti, "yayında" yerine
+            kanonik inceleme metni.
+          */
           <section
             data-testid="talep-published"
             data-publish-outcome={publishOutcome.kind}
-            className="grid justify-items-start gap-2.5 py-10"
+            className="grid justify-items-center gap-2.5 py-12 text-center"
           >
+            <style>{`@keyframes talep-publish-mark{from{opacity:0;transform:scale(0.72)}to{opacity:1;transform:scale(1)}}`}</style>
             <span
               aria-hidden
-              className={`grid h-[54px] w-[54px] place-items-center rounded-full text-white shadow-[0_0_0_8px_#e4f1ee] ${
+              style={
+                prefersReducedMotion()
+                  ? undefined
+                  : {
+                      animation: `talep-publish-mark ${CARD_IN_MS}ms ${EASE_SPRING} both`,
+                    }
+              }
+              className={`grid h-[104px] w-[104px] place-items-center rounded-full text-white shadow-[0_0_0_14px_#e4f1ee] ${
                 publishOutcome.kind === "published"
                   ? "bg-[#0f766e]"
                   : "bg-[#a15c07]"
               }`}
             >
               {publishOutcome.kind === "published" ? (
-                <Check className="h-[26px] w-[26px] stroke-[2.4]" />
+                <Check className="h-[48px] w-[48px] stroke-[2.4]" />
               ) : (
-                <Clock3 className="h-[26px] w-[26px] stroke-[2.2]" />
+                <Clock3 className="h-[46px] w-[46px] stroke-[2.2]" />
               )}
             </span>
-            <p className="m-0 font-mono text-[11px] font-medium uppercase tracking-[0.12em] text-[#0f766e]">
-              {publishOutcome.badge}
-            </p>
-            <h1 className="m-0 mt-1 text-[28px] font-semibold tracking-[-0.035em] text-[#0f1f1d]">
+            <h1 className="m-0 mt-4 text-[32px] font-semibold tracking-[-0.04em] text-[#0f1f1d]">
               {publishOutcome.headline}
             </h1>
-            <p className="m-0 max-w-[46ch] text-[15px] leading-6 text-[#0f1f1d]/55">
+            {/*
+              MONO SATIR YALNIZ GERÇEK VERİYLE YAZILIR. Eşleşme sayısı
+              `/api/requests` cevabında YOK; uydurmak yerine ne olacağını
+              söyleyen tek cümle kalır. "Ulaştı / iletildi / gönderildi"
+              denmez: Talepo'da tedarikçiye gönderim yoktur, talep eşleşen
+              listeye düşer.
+            */}
+            <p
+              data-testid="talep-published-mono"
+              className="m-0 font-mono text-[11.5px] font-medium uppercase tracking-[0.14em] text-[#0f766e]"
+            >
+              {publishOutcome.kind === "published"
+                ? "Teklif geldikçe burada görünecek"
+                : publishOutcome.badge}
+            </p>
+            <p className="m-0 mt-1 max-w-[46ch] text-[15px] leading-6 text-[#0f1f1d]/55">
               {publishOutcome.detail}
             </p>
             {publishSuccess.title ? (
@@ -3451,10 +3571,15 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
           */
           <div className="grid items-start gap-[22px] lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-[26px]">
             <div className="grid min-w-0 gap-[22px] lg:col-start-1 lg:row-start-1">
-              <MairaStatusLine status={mairaStatus} thinking={mairaThinking} />
+              <MairaStatusLine
+                status={mairaStatus}
+                thinking={mairaThinking}
+                pulseToken={readingPulse}
+              />
               <ReadingSentence
                 segments={readingSegments}
                 phase={readingPhase}
+                onReveal={setReadingPulse}
               />
             </div>
 
@@ -3490,9 +3615,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   subcategoryLabel={activeSubcategoryLabel}
                   updating={hybrid.isSyncing}
                   locked={Boolean(publishOutcome)}
-                  categoryStep={categoryStepForMaira}
-                  categoryRejected={categoryRejected}
-                  onCategoryAction={applyCategoryConfirmation}
                   onChangeCategory={() =>
                     setCategorySheet({ mode: "pick", root: null })
                   }
@@ -3509,7 +3631,6 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                       }, 60);
                     }
                   }}
-                  onAddOptional={(fieldKey) => setAskingFieldKey(fieldKey)}
                 />
               ) : null}
             </div>
@@ -3603,48 +3724,38 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                     </div>
                   ) : (
                     <>
-                      {activeQuestion ? (
-                        <FocusedQuestionsPanel
-                          questions={questionsForPanel}
-                          draftByKey={focusedDraftByKey}
-                          healthNotice={isHealthCategory}
-                          remainingCriticalCount={
-                            composerReadiness.remainingCriticalCount
-                          }
-                          phase={focusedQuestionSchedule.phase}
-                          phaseHeading={focusedQuestionSchedule.phaseHeading}
-                          /*
-                            "İsteğe bağlı" etiketi de aynı kanonik listeden
-                            gelir: panel bir sorunun zorunlu olup olmadığına
-                            kendi karar vermez.
-                          */
-                          requiredFieldKeys={
-                            focusedQuestionSchedule.blockingFieldKeys
-                          }
-                          activeFieldKey={activeQuestion.fieldKey}
-                          onActiveFieldChange={setAskingFieldKey}
-                          onDraftChange={(fieldKey, value) =>
-                            setFocusedDraftByKey((current) => ({
-                              ...current,
-                              [fieldKey]: value,
-                            }))
-                          }
-                          onAnswer={handleFocusedAnswer}
-                          onSkip={handleFocusedSkip}
-                        />
+                      {/*
+                        TEK SORU ALANI (kurucu, 2026-09-25 tanıtım videosu).
+                        Kategori doğrulaması artık kartın içinde değil, burada
+                        — Maira'nın sorusu olarak. Model, etiketler ve işleyici
+                        AYNI kanonik kaynaktan gelir; yalnız yeri değişti.
+                      */}
+                      {categoryStepActive ? (
+                        categoryConfirmation ? (
+                          <CategoryConfirmationCard
+                            model={categoryConfirmation}
+                            rejected={categoryRejected}
+                            onAction={applyCategoryConfirmation}
+                          />
+                        ) : categoryChoice ? (
+                          <CategoryConfirmationCard
+                            model={categoryChoice}
+                            rejected={categoryRejected}
+                            onAction={applyCategoryConfirmation}
+                          />
+                        ) : null
                       ) : null}
 
+                      {showQuestionAboveCta ? questionPanel : null}
+
                       {/*
-                        ANA EYLEM HEP GÖRÜNÜR (kurucu, 2026-08-23): eksik alan
-                        varsa ne kaldığını söyler ve soruya götürür; yoksa
-                        doğrudan yayınlar. Soru açıkken de kaybolmaz.
+                        HAZIR → YAYINLA. Yayın butonu kartın hemen altındadır
+                        ve isteğe bağlı bölümün ÜSTÜNDE durur. Yayını
+                        kilitleyen bir alan varken "hazır" zaten oluşmaz, bu
+                        yüzden kapalı bölümde asla zorunlu alan saklanmaz.
                       */}
-                      {hybrid.isSyncing ? null : composerReadiness.canReview ? (
-                        <div className="grid gap-3.5">
-                          <p className="m-0 max-w-[36ch] text-[15px] leading-6 text-[#0f1f1d]/50">
-                            Satırlara dokunup değiştirebilirsin. Hazırsan
-                            yayınla, teklifler gelmeye başlasın.
-                          </p>
+                      {hybrid.isSyncing || !composerReadiness.canReview ? null : (
+                        <div className="grid gap-3">
                           {publishError ? (
                             <p
                               role="alert"
@@ -3654,38 +3765,81 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                               {publishError}
                             </p>
                           ) : null}
-                          <button
-                            type="button"
-                            data-testid="composer-review-cta"
-                            disabled={isPublishing}
-                            className="flex h-[58px] w-full items-center justify-center rounded-[18px] bg-[#0f766e] text-[16.5px] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(15,118,110,0.8)] transition active:scale-[0.985] disabled:opacity-60"
-                            onClick={() => {
-                              trackComposerEvent("publish_summary_opened");
-                              handlePublishAttempt();
+                          {/*
+                            TELEFONDA BUTON EKRANIN ALTINA SABİTLENİR; klavye
+                            açıkken gizlenir ki yazarken metnin üstüne
+                            binmesin. Masaüstünde akışta durur.
+                          */}
+                          <div
+                            data-testid="composer-publish-dock"
+                            data-docked={keyboardOpen ? "hidden" : "visible"}
+                            style={{
+                              paddingBottom:
+                                "max(env(safe-area-inset-bottom), 0px)",
                             }}
+                            className={`max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:border-t max-lg:border-[#0b1917]/[0.08] max-lg:bg-white/95 max-lg:px-5 max-lg:py-3 max-lg:backdrop-blur ${
+                              keyboardOpen ? "max-lg:hidden" : ""
+                            }`}
                           >
-                            {isPublishing ? "Yayınlanıyor…" : "Talebi yayınla"}
-                          </button>
+                            <button
+                              type="button"
+                              data-testid="composer-review-cta"
+                              disabled={isPublishing}
+                              className="flex h-[58px] w-full items-center justify-center rounded-[18px] bg-[#0f766e] text-[16.5px] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(15,118,110,0.8)] transition active:scale-[0.985] disabled:opacity-60"
+                              onClick={() => {
+                                trackComposerEvent("publish_summary_opened");
+                                handlePublishAttempt();
+                              }}
+                            >
+                              {isPublishing ? "Yayınlanıyor…" : "Talebi yayınla"}
+                            </button>
+                          </div>
+                          {/* Sabit butonun altında kalan içerik için pay. */}
+                          <div aria-hidden className="max-lg:h-[86px] lg:hidden" />
+
+                          {/*
+                            İSTEĞE BAĞLI SORU OTOMATİK AÇILMAZ. Kapalı tek
+                            satır: açılınca ek alan chip'leri ve isteğe bağlı
+                            soru görünür.
+                          */}
+                          {requestCard.extras.length > 0 || questionPanel ? (
+                            <details
+                              data-testid="composer-optional-details"
+                              open={optionalOpen}
+                              onToggle={(event) =>
+                                setOptionalOpen(event.currentTarget.open)
+                              }
+                              className="rounded-[18px] border border-[#0b1917]/[0.08] bg-white"
+                            >
+                              <summary className="cursor-pointer list-none px-4 py-3 text-[14px] font-medium text-[#0f766e] marker:content-none [&::-webkit-details-marker]:hidden">
+                                Detay ekle — teklifler netleşir (isteğe bağlı)
+                              </summary>
+                              <div className="grid gap-3 border-t border-[#0b1917]/[0.06] px-4 pb-4 pt-3">
+                                {requestCard.extras.length > 0 ? (
+                                  <div
+                                    data-testid="talep-card-extras"
+                                    className="flex flex-wrap gap-2"
+                                  >
+                                    {requestCard.extras.map((extra) => (
+                                      <button
+                                        key={extra.key}
+                                        type="button"
+                                        onClick={() =>
+                                          setAskingFieldKey(extra.key)
+                                        }
+                                        className="inline-flex h-[34px] items-center gap-1.5 rounded-full border border-dashed border-[#0f766e]/30 px-3.5 text-[13.5px] text-[#0f766e] transition hover:bg-[#f0fdfa]"
+                                      >
+                                        <Plus className="h-3.5 w-3.5" aria-hidden />
+                                        {extra.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : null}
+                                {showQuestionInDetails ? questionPanel : null}
+                              </div>
+                            </details>
+                          ) : null}
                         </div>
-                      ) : (
-                        <button
-                          type="button"
-                          data-testid="composer-continue-hint"
-                          className="flex min-h-12 w-full cursor-pointer items-center justify-center rounded-[18px] border border-[#0f766e]/25 bg-[#f0fdfa] px-4 text-sm font-semibold text-[#0f5f59] transition hover:border-[#0f766e]/45"
-                          onClick={() => {
-                            document
-                              .querySelector('[data-testid="composer-questions"]')
-                              ?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "center",
-                              });
-                          }}
-                        >
-                          Yayın için son adım:{" "}
-                          {composerReadiness.blockingLabels?.length
-                            ? composerReadiness.blockingLabels.join(" + ")
-                            : "kalan soruları yanıtlayın"}
-                        </button>
                       )}
                     </>
                   )}
@@ -3702,26 +3856,9 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                     "Bu değil" denince kök seçimi buradan açılır — aynı model,
                     aynı işleyici; kartla ikinci bir kategori mantığı yoktur.
                   */}
-                  {!composerReadiness.outOfScopeNotice &&
-                  categoryConfirmation &&
-                  categoryRejected ? (
-                    <CategoryConfirmationCard
-                      model={categoryConfirmation}
-                      rejected={categoryRejected}
-                      onAction={applyCategoryConfirmation}
-                    />
-                  ) : null}
-
                   {composerReadiness.outOfScopeNotice ? null : categoryGuidance &&
                   !categoryUserChoice &&
-                  categoryChoice &&
-                  categoryRejected ? (
-                    <CategoryConfirmationCard
-                      model={categoryChoice}
-                      rejected
-                      onAction={applyCategoryConfirmation}
-                    />
-                  ) : categoryGuidance && !categoryUserChoice ? (
+                  !categoryStepActive ? (
                     <CategoryGuidanceCard
                       model={categoryGuidance}
                       selectedSlugs={guidanceSelectedSlugs}
@@ -3763,48 +3900,57 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                     </div>
                   ) : null}
 
-                  <button
-                    type="button"
-                    className="min-h-10 text-left text-[13px] font-medium text-[#0f766e]"
-                    onClick={() => {
-                      setIntroDecided(false);
-                      setReadingPhase("quote");
-                    }}
+                  {/*
+                    İKİNCİL YOLLAR SAYFANIN EN ALTINDA (kurucu, 2026-09-25).
+                    "Cümlemi düzenle" ve "Talep analizi" akışın ortasından
+                    çıktı — kaybolmadılar, yayın eyleminin altına, ayrı ve
+                    sessiz bir alana indiler. Ekranda aynı anda tek şey durur.
+                  */}
+                  <div
+                    data-testid="talep-secondary-zone"
+                    className="mt-3 grid gap-2.5 border-t border-[#0b1917]/[0.08] pt-4"
                   >
-                    Cümlemi düzenle
-                  </button>
+                    <button
+                      type="button"
+                      className="min-h-10 justify-self-start text-left text-[13px] font-medium text-[#0f1f1d]/50"
+                      onClick={() => {
+                        setIntroDecided(false);
+                        setReadingPhase("quote");
+                      }}
+                    >
+                      Cümlemi düzenle
+                    </button>
 
-                  {/*
-                    TALEP ANALİZİ — İKİNCİL, VARSAYILAN KAPALI (2026-09-25).
-                    Yeni akışta ekranda aynı anda tek şey durur; piyasa /
-                    profesyonel görünüm isteyen kullanıcı için panel burada
-                    açılır ve kanonik companion sözleşmesi korunur.
-                  */}
-                  {/*
-                    AKORDEON ZORUNLU SİNYALDE AÇILIR. `open` ifadesi türetilmiş
-                    kararı ADIYLA taşır: yayın hatası, rehberlik ya da kapsam
-                    sinyali varsa panel kullanıcının tercihini geçici olarak
-                    ezer ve mesaj kapalı bir akordeonun ardında kalmaz.
-                  */}
-                  <details
-                    className="group rounded-[1.35rem] border border-[#0b1917]/8 bg-white"
-                    open={aiCompanionOpen || publishSignalDemandsAttention}
-                    onToggle={(event) =>
-                      setAiCompanionOpen(event.currentTarget.open)
-                    }
-                  >
-                    <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d] marker:content-none [&::-webkit-details-marker]:hidden">
-                      <span className="flex items-center justify-between gap-2">
-                        <span>Talep analizi</span>
-                        <span className="text-xs font-normal text-[#0f1f1d]/45">
-                          Piyasa & profesyonel görünüm
+                    {/*
+                      TALEP ANALİZİ — İKİNCİL, VARSAYILAN KAPALI (2026-09-25).
+                      Piyasa / profesyonel görünüm isteyen kullanıcı için panel
+                      burada açılır ve kanonik companion sözleşmesi korunur.
+
+                      AKORDEON ZORUNLU SİNYALDE AÇILIR. `open` ifadesi
+                      türetilmiş kararı ADIYLA taşır: yayın hatası, rehberlik
+                      ya da kapsam sinyali varsa panel kullanıcının tercihini
+                      geçici olarak ezer ve mesaj kapalı kalmaz.
+                    */}
+                    <details
+                      className="group rounded-[1.35rem] border border-[#0b1917]/8 bg-white"
+                      open={aiCompanionOpen || publishSignalDemandsAttention}
+                      onToggle={(event) =>
+                        setAiCompanionOpen(event.currentTarget.open)
+                      }
+                    >
+                      <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-medium text-[#0f1f1d]/60 marker:content-none [&::-webkit-details-marker]:hidden">
+                        <span className="flex items-center justify-between gap-2">
+                          <span>Talep analizi</span>
+                          <span className="text-xs font-normal text-[#0f1f1d]/40">
+                            Piyasa &amp; profesyonel görünüm
+                          </span>
                         </span>
-                      </span>
-                    </summary>
-                    <div className="border-t border-[#0b1917]/6 p-3">
-                      {aiCompanionShell}
-                    </div>
-                  </details>
+                      </summary>
+                      <div className="border-t border-[#0b1917]/6 p-3">
+                        {aiCompanionShell}
+                      </div>
+                    </details>
+                  </div>
                 </>
               )}
             </div>

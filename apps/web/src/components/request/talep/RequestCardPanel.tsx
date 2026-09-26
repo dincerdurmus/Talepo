@@ -7,19 +7,29 @@
  * KANONİK sorusunu açar. Ayrı bir "bilgileri düzenle" formu yoktur.
  *
  * KART KARAR VERMEZ. Satırları, doluluk sayısını ve ek alan chip'lerini
- * `buildRequestCardModel` üretir; kategori adımını `buildCategoryConfirmation`
- * üretir. Bu dosya yalnız çizer ve dokunuşu dışarıya iletir.
+ * `buildRequestCardModel` üretir. Bu dosya yalnız çizer ve dokunuşu dışarıya
+ * iletir.
+ *
+ * KART = YALNIZ BİLGİ (kurucu, 2026-09-25 tanıtım videosu). Kategori onayı
+ * kartın İÇİNDEN çıktı: kart bilgiyi gösterir, soru sormaz. Aynı model ve
+ * aynı işleyici kartın altındaki tek soru alanında çalışır — yalnız yeri
+ * değişti, kararı değil.
  */
 
 import Image from "next/image";
-import { Check, Eye, Pencil, Plus } from "lucide-react";
+import { useState } from "react";
+import { Check, ChevronRight, Eye } from "lucide-react";
 
 import { getCategoryVisual } from "@/lib/visuals/category-visuals";
+import {
+  CARD_IN_MS,
+  EASE_REVEAL,
+  EASE_SPRING,
+  REVEAL_MS,
+  ROW_STEP_MS,
+  prefersReducedMotion,
+} from "@/lib/motion/talep-motion";
 import type { RequestCardModel } from "@/lib/request-composer/v2/request-card-model";
-import type {
-  CategoryConfirmationAction,
-  CategoryConfirmationModel,
-} from "@/lib/request-composer/v2/category-confirmation";
 
 type Props = {
   model: RequestCardModel;
@@ -41,18 +51,6 @@ type Props = {
   lockedBadge?: string | null;
   onChangeCategory: () => void;
   onAskField: (fieldKey: string) => void;
-  onAddOptional: (fieldKey: string) => void;
-  /**
-   * Kategori onay adımı — /talep'in iki yüzeyi de AYNI modeli ve AYNI
-   * işleyiciyi kullanır; kart kendi kategori cümlesini uydurmaz.
-   */
-  categoryStep?: CategoryConfirmationModel | null;
-  /**
-   * Kullanıcı "Bu değil" dediğinde kök seçimi kartın ALTINDA açılır; kart
-   * aynı soruyu ikinci kez sormaz.
-   */
-  categoryRejected?: boolean;
-  onCategoryAction?: (action: CategoryConfirmationAction) => void;
 };
 
 function Banner({
@@ -96,11 +94,12 @@ export function RequestCardPanel({
   lockedBadge = null,
   onChangeCategory,
   onAskField,
-  onAddOptional,
-  categoryStep = null,
-  categoryRejected = false,
-  onCategoryAction,
 }: Props) {
+  /**
+   * Hareket kararı BİR KEZ okunur. Azaltılmış hareket isteniyorsa yay girişi
+   * ve satır sırası hiç kurulmaz; kart son hâliyle görünür.
+   */
+  const [still] = useState(prefersReducedMotion);
   /**
    * "Beyaz Eşya › Beyaz Eşya" tekrarı bu yapıda KALMAZ: alt satır yalnız üst
    * kategoriden farklıysa yazılır, aynıysa ikinci satır hiç çizilmez.
@@ -114,12 +113,24 @@ export function RequestCardPanel({
   const complete =
     model.totalCount > 0 && model.filledCount === model.totalCount;
 
+  const hasEditableRow = !locked && model.rows.some((row) => row.askable);
+
   return (
+    <>
     <article
       data-testid="talep-request-card"
       aria-live="polite"
+      /* Kart aşağıdan yay hareketiyle gelir (videodaki `spring`). */
+      style={
+        still
+          ? undefined
+          : {
+              animation: `talep-card-in ${CARD_IN_MS}ms ${EASE_SPRING} both`,
+            }
+      }
       className="overflow-hidden rounded-[28px] bg-white shadow-[0_0_0_1px_rgba(11,25,23,0.07),0_18px_44px_-24px_rgba(11,25,23,0.22)]"
     >
+      <style>{`@keyframes talep-card-in{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}@keyframes talep-row-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes talep-seg-in{from{transform:scaleX(0)}to{transform:scaleX(1)}}`}</style>
       <Banner categoryId={categoryId} categoryLabel={categoryLabel} />
 
       <div className="flex items-center gap-3.5 px-[22px] pt-4">
@@ -127,9 +138,19 @@ export function RequestCardPanel({
           <span className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-[#0f1f1d]/45">
             {categoryLabel ?? "Kategori"}
           </span>
-          <span className="truncate text-[15px] font-medium text-[#0f1f1d]">
-            {leafLabel ?? (categoryLabel ? "Tüm alt kategoriler" : "Seçilmedi")}
-          </span>
+          {/*
+            YER TUTUCU YAZILMAZ (kurucu, 2026-09-25). Alt kategori yoksa
+            "Tüm alt kategoriler" diye bir şey uydurulmaz; satır hiç çizilmez
+            ve başlıkta yalnız kategori adı kalır.
+          */}
+          {leafLabel ? (
+            <span
+              data-testid="talep-card-subcategory"
+              className="truncate text-[15px] font-medium text-[#0f1f1d]"
+            >
+              {leafLabel}
+            </span>
+          ) : null}
         </div>
         {locked ? (
           <span
@@ -151,41 +172,6 @@ export function RequestCardPanel({
         )}
       </div>
 
-      {/*
-        Kategori onayı kartın içindedir: kararın gösterildiği yer, kararın
-        yaşadığı yerdir. "Bu değil" denince kök seçimi kartın ALTINDA açılır.
-      */}
-      {!locked &&
-      !categoryRejected &&
-      categoryStep &&
-      categoryStep.mode === "confirm" &&
-      onCategoryAction ? (
-        <div
-          data-testid="talep-card-category-confirm"
-          className="mx-[22px] mt-3 rounded-2xl border border-[#0f766e]/15 bg-[#f7fdfb] px-3.5 py-3"
-        >
-          <p className="text-[13.5px] leading-5 text-[#0f1f1d]">
-            {categoryStep.prompt}
-          </p>
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="min-h-10 rounded-xl bg-[#0f766e] px-3.5 text-[13px] font-medium text-white"
-              onClick={() => onCategoryAction({ kind: "confirm" })}
-            >
-              {categoryStep.confirmLabel}
-            </button>
-            <button
-              type="button"
-              className="min-h-10 rounded-xl border border-[#0f1f1d]/10 bg-white px-3.5 text-[13px] font-medium text-[#0f1f1d]/70"
-              onClick={() => onCategoryAction({ kind: "reject" })}
-            >
-              {categoryStep.rejectLabel}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       <h2 className="mx-[22px] mb-2.5 mt-4 text-[28px] font-semibold leading-[1.1] tracking-[-0.035em] text-[#0f1f1d]">
         {title}
       </h2>
@@ -200,10 +186,22 @@ export function RequestCardPanel({
       ) : (
         <>
           <div className="mx-[22px] mb-2 flex items-center gap-2.5">
+            {/*
+              ÇUBUK SEGMENT SEGMENT İLERLER (videodaki an): her segment kendi
+              satırıyla aynı sırada dolar, hepsi birden belirmez.
+            */}
             <div className="flex flex-1 gap-1">
-              {model.rows.map((row) => (
+              {model.rows.map((row, index) => (
                 <i
                   key={`seg-${row.key}`}
+                  style={
+                    still || !row.value
+                      ? undefined
+                      : {
+                          transformOrigin: "left",
+                          animation: `talep-seg-in ${REVEAL_MS}ms ${EASE_REVEAL} ${index * ROW_STEP_MS}ms both`,
+                        }
+                  }
                   className={`h-1 flex-1 rounded ${
                     row.value ? "bg-[#0d9488]" : "bg-[#0b1917]/10"
                   }`}
@@ -230,70 +228,72 @@ export function RequestCardPanel({
             </span>
           </div>
 
+          {/*
+            KALEM İKONU KALKTI (kurucu, 2026-09-25). Satırın tamamı zaten
+            dokunulabilir; ikon aynı şeyi ikinci kez söyleyip satırı
+            kalabalıklaştırıyordu. Dokunuş geri bildirimi basılı zemin,
+            masaüstünde hover'da sağda ince bir oktur.
+          */}
           <div className="px-[22px] pb-2 pt-0.5">
-            {model.rows.map((row) => (
-              <button
-                key={row.key}
-                type="button"
-                disabled={locked || !row.askable}
-                data-testid="talep-card-row"
-                data-row-key={row.key}
-                data-row-state={row.state}
-                onClick={() => onAskField(row.key)}
-                className="flex min-h-[52px] w-full items-center gap-3 border-t border-[#0b1917]/[0.08] py-2.5 text-left first:border-t-0 disabled:cursor-default"
-              >
-                <span
-                  className={`min-w-[80px] text-sm ${
-                    row.state === "asking"
-                      ? "text-[#3a4c49]"
-                      : "text-[#0f1f1d]/45"
+            {model.rows.map((row, index) => {
+              const editable = !locked && row.askable;
+              return (
+                <button
+                  key={row.key}
+                  type="button"
+                  disabled={locked || !row.askable}
+                  data-testid="talep-card-row"
+                  data-row-key={row.key}
+                  data-row-state={row.state}
+                  onClick={() => onAskField(row.key)}
+                  style={
+                    still
+                      ? undefined
+                      : {
+                          animation: `talep-row-in ${REVEAL_MS}ms ${EASE_REVEAL} ${index * ROW_STEP_MS}ms both`,
+                        }
+                  }
+                  className={`group flex min-h-[52px] w-full items-center gap-3 border-t border-[#0b1917]/[0.08] px-2 py-2.5 text-left transition-colors duration-150 first:border-t-0 disabled:cursor-default ${
+                    editable ? "active:bg-[#f0fdfa] lg:hover:bg-[#f7fdfb]" : ""
                   }`}
                 >
-                  {row.label}
-                </span>
-                <span className="ml-auto text-right text-[15.5px] font-medium text-[#0f1f1d]">
-                  {row.value ? (
-                    row.value
-                  ) : (
-                    <em
-                      className={`not-italic text-[14.5px] ${
-                        row.state === "asking"
-                          ? "font-medium text-[#a15c07]"
-                          : "font-normal text-[#0f1f1d]/38"
-                      }`}
-                    >
-                      {row.state === "asking" ? "şimdi soruluyor" : "sorulacak"}
-                    </em>
-                  )}
-                </span>
-                {row.value && !locked ? (
-                  <Pencil className="h-[15px] w-[15px] shrink-0 text-[#0f1f1d]/30" aria-hidden />
-                ) : null}
-              </button>
-            ))}
+                  <span
+                    className={`min-w-[80px] text-sm ${
+                      row.state === "asking"
+                        ? "text-[#3a4c49]"
+                        : "text-[#0f1f1d]/45"
+                    }`}
+                  >
+                    {row.label}
+                  </span>
+                  <span className="ml-auto text-right text-[15.5px] font-medium text-[#0f1f1d]">
+                    {row.value ? (
+                      row.value
+                    ) : (
+                      <em
+                        className={`not-italic text-[14.5px] ${
+                          row.state === "asking"
+                            ? "font-medium text-[#a15c07]"
+                            : "font-normal text-[#0f1f1d]/38"
+                        }`}
+                      >
+                        {row.state === "asking"
+                          ? "şimdi soruluyor"
+                          : "sorulacak"}
+                      </em>
+                    )}
+                  </span>
+                  {editable ? (
+                    <ChevronRight
+                      className="hidden h-4 w-4 shrink-0 text-[#0f766e]/0 transition-colors duration-150 lg:block lg:group-hover:text-[#0f766e]/60"
+                      aria-hidden
+                    />
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
 
-          {model.extras.length > 0 && !locked ? (
-            <div
-              data-testid="talep-card-extras"
-              className="mx-[22px] flex flex-wrap gap-2 border-t border-[#0b1917]/[0.08] pb-5 pt-3.5"
-            >
-              <span className="w-full text-[13px] text-[#0f1f1d]/45">
-                İstersen ekle, teklifler netleşir
-              </span>
-              {model.extras.map((extra) => (
-                <button
-                  key={extra.key}
-                  type="button"
-                  onClick={() => onAddOptional(extra.key)}
-                  className="inline-flex h-[34px] items-center gap-1.5 rounded-full border border-dashed border-[#0f766e]/30 px-3.5 text-[13.5px] text-[#0f766e] transition hover:bg-[#f0fdfa]"
-                >
-                  <Plus className="h-3.5 w-3.5" aria-hidden />
-                  {extra.label}
-                </button>
-              ))}
-            </div>
-          ) : null}
         </>
       )}
 
@@ -306,5 +306,18 @@ export function RequestCardPanel({
         Tedarikçiler talebini bu kart olarak görür
       </div>
     </article>
+    {/*
+      İPUCU KART ALTINDA, BİR KEZ. Kalem ikonu kalkınca satırların
+      dokunulabilir olduğunu söyleyecek tek bir yer kaldı; o yer burasıdır.
+    */}
+    {hasEditableRow ? (
+      <p
+        data-testid="talep-card-row-hint"
+        className="m-0 mt-2.5 px-1 text-[13px] text-[#0f1f1d]/45"
+      >
+        Satıra dokunup değiştirebilirsin
+      </p>
+    ) : null}
+    </>
   );
 }

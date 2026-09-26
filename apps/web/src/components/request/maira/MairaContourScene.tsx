@@ -86,6 +86,12 @@ type Props = {
    * görünür kalır.
    */
   onReady?: (ready: boolean) => void;
+  /**
+   * Tek seferlik ışık nabzı için artan sayaç. Değeri her değiştiğinde sahne
+   * bir kez parlar; 0 başlangıç değeridir ve nabız üretmez. Dekoratiftir —
+   * sahne kurulmadıysa hiçbir şey olmaz.
+   */
+  pulseToken?: number;
 };
 
 export function MairaContourScene({
@@ -93,6 +99,7 @@ export function MairaContourScene({
   appearance = "dark",
   framing = "full",
   onReady,
+  pulseToken = 0,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handleRef = useRef<ContourSceneHandle | null>(null);
@@ -156,6 +163,11 @@ export function MairaContourScene({
   useEffect(() => {
     handleRef.current?.setThinking(thinking);
   }, [thinking]);
+
+  useEffect(() => {
+    if (pulseToken <= 0) return;
+    handleRef.current?.pulse();
+  }, [pulseToken]);
 
   if (!budget) return null;
 
