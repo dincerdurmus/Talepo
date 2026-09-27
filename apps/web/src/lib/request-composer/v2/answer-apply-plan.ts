@@ -346,8 +346,13 @@ const NON_VALUE_LABEL: Partial<Record<FieldValueKind, string>> = {
  * turunda (2026-08-30) `fridgeType` bu yüzden ham anahtar olarak görünüyordu.
  * İkinci bir etiket tablosu kurulmaz: soru profilinin kendi `summaryLabel`
  * kaydı okunur. O da yoksa satır gösterilmez — uydurma ad üretilmez.
+ *
+ * 2026-09-27: dışa açıldı (adı değişmedi, yalnız `export` eklendi). Katlanan
+ * iz de bir alanın kullanıcıya gösterilecek adına ihtiyaç duyuyor; ikinci bir
+ * etiket çözücü yazmak yerine BU otorite çağrılır. Adsız alan izde de
+ * gösterilmez — ham anahtar hiçbir yüzeye çıkmaz.
  */
-function humanLabel(fieldKey: string): string | null {
+export function humanLabel(fieldKey: string): string | null {
   const known = composerFieldLabel(fieldKey);
   if (known && known !== fieldKey) return known;
   /**

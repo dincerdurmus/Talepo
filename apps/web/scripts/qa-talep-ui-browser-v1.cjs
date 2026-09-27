@@ -32,7 +32,7 @@ const BASE =
   process.argv[2] || process.env.TALEP_QA_URL || "http://localhost:3211";
 /* Her turun kareleri kendi klasörüne yazılır; öncekiler ezilmez. */
 const OUT = process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc7";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc8";
 
 const results = [];
 const shots = [];
@@ -629,13 +629,88 @@ async function main() {
             id: a.id || null,
             testid: a.getAttribute("data-testid"),
             rowKey: a.getAttribute("data-row-key"),
+            trailKey: a.getAttribute("data-trail-key"),
+            /*
+              SIRA ÖNEMLİ (D-0048). Adım bloğu artık izin İÇİNDE de açılabilir;
+              en İÇ yüzey kazanır, yoksa izde açılan kategori bloğundaki odak
+              "iz" diye okunur ve D-0047'nin kapıları sahte kırmızı verir.
+            */
             blok: a.closest('[data-testid="talep-request-card"]')
               ? "kart"
               : a.closest('[data-testid="composer-questions"]')
                 ? "soruBlok"
                 : a.closest('[data-testid="category-confirmation-card"]')
                   ? "kategoriBlok"
-                  : "diger",
+                  : a.closest('[data-testid="talep-step-trail"]')
+                    ? "iz"
+                    : "diger",
+          };
+        })(),
+        /*
+          D-0048 — KATLANAN İZ. İzin kendisi, sayısı, "+N adım"ın N'i, açık izin
+          anahtarı ve izin GERÇEKTEN tek satır olup olmadığı ölçülür. Tek satır
+          iddiası punto/satır yüksekliği ile doğrulanır: iki satıra taşan bir iz
+          "katlanmış" sayılmaz.
+        */
+        iz: (() => {
+          const ol = q('[data-testid="talep-step-trail"]');
+          if (!ol) return null;
+          const list = [...ol.querySelectorAll('[data-testid="talep-trail-entry"]')];
+          const more = ol.querySelector('[data-testid="talep-trail-more"]');
+          const open = ol.querySelector('[data-testid="talep-trail-open"]');
+          const kutu = ol.getBoundingClientRect();
+          return {
+            toplam: Number(ol.dataset.trailCount),
+            gorunen: Number(ol.dataset.trailVisible),
+            toplanan: Number(ol.dataset.trailFolded),
+            acikAnahtar: ol.dataset.trailOpen || null,
+            yukseklik: Math.round(kutu.height),
+            more: more
+              ? {
+                  metin: more.textContent.trim(),
+                  ariaExpanded: more.getAttribute("aria-expanded"),
+                }
+              : null,
+            /* Açık blok, AÇIK İZİN kendi satırının içinde mi? */
+            acikIzinIcinde: open
+              ? Boolean(
+                  open.closest("li")?.querySelector(
+                    '[data-testid="talep-trail-entry"][aria-expanded="true"]',
+                  ),
+                )
+              : null,
+            izler: list.map((b) => {
+              const r = b.getBoundingClientRect();
+              const cs = getComputedStyle(b);
+              return {
+                anahtar: b.dataset.trailKey,
+                tur: b.dataset.trailKind,
+                metin: b.textContent.trim(),
+                ariaLabel: b.getAttribute("aria-label"),
+                ariaExpanded: b.getAttribute("aria-expanded"),
+                solgun: b.dataset.trailDimmed,
+                opaklik: Number(cs.opacity),
+                yukseklik: Math.round(r.height),
+                punto: cs.fontSize,
+                /* İzin GÖVDESİNİN puntosu — düğmenin miras aldığı değil. */
+                govdePunto: (() => {
+                  const kat = b.querySelector("[data-trail-fold]");
+                  const deger = kat?.lastElementChild;
+                  return deger ? getComputedStyle(deger).fontSize : cs.fontSize;
+                })(),
+                /* Tek satır: düğmenin yüksekliği iki satır metni almıyor. */
+                tekSatir: r.height <= 44,
+              };
+            }),
+          };
+        })(),
+        geriGezinmeYuzeyi: (() => {
+          const govde = q('[data-testid="talep-step-trail"]')?.parentElement;
+          if (!govde) return null;
+          return {
+            tablist: govde.querySelectorAll('[role="tablist"],[role="tab"]').length,
+            ariaStep: govde.querySelectorAll('[aria-current="step"]').length,
+            geriMetni: /(^|\s)Geri(\s|$)|Geri dön/.test(govde.innerText),
           };
         })(),
         kapanisDuyurusu:
@@ -959,6 +1034,38 @@ async function main() {
       s.degistirAriaExpanded === "true",
       s.degistirAriaExpanded,
     );
+    /*
+      D-0048 — CÜMLE GÖNDERİLDİ, TEK İZ VAR. Kategori henüz AKTİF ADIM olduğu
+      için iz değildir; ekranda yalnız kullanıcının kendi cümlesi iz olarak
+      durur ve o iz tek satırdır.
+    */
+    check(
+      "D-0048: cümle gönderildiğinde tek iz var (kullanıcının cümlesi)",
+      s.iz?.toplam === 1 &&
+        s.iz?.izler?.length === 1 &&
+        s.iz.izler[0].tur === "sentence" &&
+        s.iz.izler[0].tekSatir === true,
+      JSON.stringify(s.iz),
+    );
+    check(
+      "D-0048: iz 'Değiştir: …' diye okunuyor",
+      /^Değiştir: /.test(s.iz?.izler?.[0]?.ariaLabel ?? ""),
+      s.iz?.izler?.[0]?.ariaLabel,
+    );
+    check(
+      "D-0048: izde sekme çubuğu / numaralı adım / 'Geri' YOK",
+      Boolean(
+        s.geriGezinmeYuzeyi &&
+          s.geriGezinmeYuzeyi.tablist === 0 &&
+          s.geriGezinmeYuzeyi.ariaStep === 0 &&
+          s.geriGezinmeYuzeyi.geriMetni === false,
+      ),
+      JSON.stringify(s.geriGezinmeYuzeyi),
+    );
+    await shot("m-7-iz-cumle", "mobil 390 — cümle gönderildi: 1 iz", {
+      iz: s.iz,
+      geriGezinmeYuzeyi: s.geriGezinmeYuzeyi,
+    });
     await click('[data-testid="category-confirmation-confirm"]');
     /*
       D-0047 — YUMUŞAK KAPANIŞ AN İÇİNDE ÖLÇÜLÜR. Yerleşmiş ekranda çekilen
@@ -1007,16 +1114,40 @@ async function main() {
       s.kategoriBlokGorunur === false && s.softExit.length === 0,
       `gorunur=${s.kategoriBlokGorunur} cekilen=${s.softExit.join(",")}`,
     );
+    /*
+      D-0048 — ŞEKİL GÜNCELLEMESİ. Kapanan adımın EN YAKIN geri dönüş yolu artık
+      onun katlandığı izdir; odak oraya geçer. Karttaki "Değiştir" kaybolmadı ve
+      aynı bloğu açmaya devam eder (aşağıdaki aria-expanded kapısı ve 4. bölüm
+      bunu ölçüyor). İz DOM'da yoksa odak D-0047'nin yoluna düşer.
+    */
     check(
-      "D-0047: kapanan bloğun odağı karttaki 'Değiştir'e geçti",
-      s.odak?.testid === "talep-card-change-category",
-      JSON.stringify(s.odak),
+      "D-0048: kapanan kategori adımının odağı kendi izine geçti",
+      s.odak?.testid === "talep-trail-entry" &&
+        s.odak?.trailKey === "__category__",
+      JSON.stringify({ odak: s.odak, iz: s.iz?.izler?.map((i) => i.anahtar) }),
+    );
+    check(
+      "D-0048: cevaplanan kategori adımı ize katlandı (iki iz, tek satır)",
+      s.iz?.toplam === 2 &&
+        s.iz.izler.some((i) => i.tur === "category") &&
+        s.iz.izler.every((i) => i.tekSatir === true),
+      JSON.stringify(s.iz),
     );
     check(
       "D-0047: kapanış ekran okuyucuya duyuruldu",
       /Kategori .+ kaydedildi/.test(s.kapanisDuyurusu ?? ""),
       s.kapanisDuyurusu,
     );
+    check(
+      "D-0048: katlanma da duyuruldu",
+      /adım katlandı/.test(s.kapanisDuyurusu ?? ""),
+      s.kapanisDuyurusu,
+    );
+    await shot("m-7b-iz-kategori", "mobil 390 — kategori ize katlandı: 2 iz", {
+      iz: s.iz,
+      odak: s.odak,
+      duyuru: s.kapanisDuyurusu,
+    });
     check(
       "D-0047: adım kapanınca 'Değiştir' aria-expanded=false",
       s.degistirAriaExpanded === "false",
@@ -1172,6 +1303,8 @@ async function main() {
     meterReady: s.meterReady,
     cardTitle: s.cardTitle,
     question: s.question,
+    /* Kare kendi kanıtını taşır: hazır ekranda iz aktif adımın üstünde durur. */
+    iz: s.iz,
     optionalDetails: s.optionalDetails,
     publishDock: s.publishDock,
     cta: s.publishCta,
@@ -1181,7 +1314,7 @@ async function main() {
 
   /*
     D-0047 — YAYINA HAZIRKEN GÖRSEL AĞIRLIK. Ekranda kart + "Talebi yayınla" +
-    kapalı "Detay ekle" konuşur; "Cümlemi düzenle" ve "Talep analizi" kalır ama
+    kapalı "Detay ekle" konuşur; katlanan iz ve "Talep analizi" kalır ama
     ikincil kalır. Kapalı akordeonun çerçevesi ve zemini ölçülür — daha önce
     "Detay ekle" ile aynı ağırlıkta beyaz bir kutuydu.
   */
@@ -1266,10 +1399,21 @@ async function main() {
         s.soruBlokGorunur === false && s.softExit.length === 0,
         `gorunur=${s.soruBlokGorunur} cekilen=${s.softExit.join(",")}`,
       );
+      /*
+        D-0048 — ODAK ZİNCİRİ: iz → kart satırı. İz "+N adım"ın arkasına
+        düştüyse DOM'da yoktur ve odak D-0047'nin yoluna (kart satırı) düşer.
+        Hangi dalın koştuğu ölçülüp yazılır; iki durum birbirine karışmaz.
+      */
+      const izVarMi = (s.iz?.izler ?? []).some((i) => i.anahtar === doluSatir);
       check(
-        "D-0047: odak cevabın düştüğü kart satırına döndü",
-        s.odak?.testid === "talep-card-row" && s.odak?.rowKey === doluSatir,
-        JSON.stringify(s.odak),
+        izVarMi
+          ? `D-0048: odak katlanan '${doluSatir}' izine döndü`
+          : `D-0047: '${doluSatir}' izi toplanmış — odak kart satırına döndü`,
+        izVarMi
+          ? s.odak?.testid === "talep-trail-entry" &&
+              s.odak?.trailKey === doluSatir
+          : s.odak?.testid === "talep-card-row" && s.odak?.rowKey === doluSatir,
+        JSON.stringify({ izVarMi, odak: s.odak }),
       );
       check(
         "D-0047: kapanış ekran okuyucuya duyuruldu ve geri dönüşü söylüyor",
@@ -1294,6 +1438,167 @@ async function main() {
         },
       );
     }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* 5b) KATLANAN İZ — YERİNDE AÇILIR, YENİDEN KATLANIR (D-0048)         */
+  /*
+    Kurucunun istediği geri dönüş burada ölçülür: izlerin sırası kullanıcının
+    yolunu anlatıyor mu, "+N adım" fazlasını gerçekten topluyor mu, ize
+    dokunulunca adım YERİNDE mi açılıyor (aynı blok ikinci kez çizilmiyor) ve
+    onaylandığında tekrar katlanıp odağı ize mi devrediyor.
+  */
+  {
+    s = await snapshot();
+    check(
+      "D-0048: yayına hazır ekranda iz sırası kullanıcının yolunu anlatıyor",
+      Boolean(s.iz) && s.iz.toplam >= 3 && s.iz.izler.every((i) => i.tekSatir),
+      JSON.stringify(s.iz),
+    );
+    check(
+      "D-0048: en fazla son iki iz açık, fazlası '+N adım'a toplandı",
+      Boolean(
+        s.iz &&
+          s.iz.gorunen <= 2 &&
+          s.iz.toplanan === s.iz.toplam - s.iz.gorunen &&
+          s.iz.toplanan >= 1 &&
+          /^\+\d+ adım$/.test(s.iz.more?.metin ?? ""),
+      ),
+      JSON.stringify({
+        toplam: s.iz?.toplam,
+        gorunen: s.iz?.gorunen,
+        toplanan: s.iz?.toplanan,
+        more: s.iz?.more,
+      }),
+    );
+    check(
+      "D-0048: iz ekranda sessiz kalıyor (küçük punto, tek satır)",
+      Boolean(
+        s.iz &&
+          s.iz.izler.every(
+            (i) => parseFloat(i.govdePunto) <= 13 && i.yukseklik <= 44,
+          ),
+      ),
+      JSON.stringify(
+        s.iz?.izler?.map((i) => `${i.govdePunto}/${i.yukseklik}px`),
+      ),
+    );
+    await shot("m-8-iz-uc", "mobil 390 — üç iz: cümle + kategori + cevap", {
+      iz: s.iz,
+      meter: s.meter,
+      cta: s.publishCta,
+    });
+
+    /* "+N adım" fazlasını gerçekten açıyor mu? */
+    await click('[data-testid="talep-trail-more"]');
+    await sleep(500);
+    s = await snapshot();
+    check(
+      "D-0048: '+N adım' dokununca toplanan izler açılıyor",
+      Boolean(s.iz && s.iz.toplanan === 0 && s.iz.gorunen === s.iz.toplam),
+      JSON.stringify({ gorunen: s.iz?.gorunen, toplanan: s.iz?.toplanan }),
+    );
+    await shot("m-8a-iz-hepsi", "mobil 390 — '+N adım' açıldı, bütün izler", {
+      iz: s.iz,
+    });
+
+    /* Kategori izine dokunulur: adım YERİNDE açılmalı. */
+    await click(
+      '[data-testid="talep-trail-entry"][data-trail-key="__category__"]',
+    );
+    await sleep(900);
+    s = await snapshot();
+    const cizimSayisi = await evaluate(
+      `({
+        kategori: document.querySelectorAll('[data-testid="category-confirmation-card"]').length,
+        soru: document.querySelectorAll('[data-testid="composer-questions"]').length,
+      })`,
+    );
+    check(
+      "D-0048: ize dokununca adım YERİNDE açıldı (izin kendi satırında)",
+      Boolean(
+        s.iz &&
+          s.iz.acikAnahtar === "__category__" &&
+          s.iz.acikIzinIcinde === true &&
+          s.kategoriBlokGorunur === true,
+      ),
+      JSON.stringify({
+        acik: s.iz?.acikAnahtar,
+        icinde: s.iz?.acikIzinIcinde,
+        gorunur: s.kategoriBlokGorunur,
+      }),
+    );
+    check(
+      "D-0048: aynı adım bloğu ikinci kez çizilmedi",
+      cizimSayisi.kategori === 1,
+      JSON.stringify(cizimSayisi),
+    );
+    check(
+      "D-0048: açılan izin altındaki adımlar soldu",
+      (() => {
+        const list = s.iz?.izler ?? [];
+        const idx = list.findIndex((i) => i.anahtar === "__category__");
+        const alt = list.slice(idx + 1);
+        return (
+          idx >= 0 &&
+          alt.length > 0 &&
+          alt.every((i) => i.solgun === "true" && i.opaklik < 0.6) &&
+          list[idx].solgun === "false"
+        );
+      })(),
+      JSON.stringify((s.iz?.izler ?? []).map((i) => `${i.anahtar}:${i.solgun}`)),
+    );
+    check(
+      "D-0048: açılan iz aç/kapa denetimi (aria-expanded=true) ve odak blokta",
+      (s.iz?.izler ?? []).find((i) => i.anahtar === "__category__")
+        ?.ariaExpanded === "true" && s.odak?.blok === "kategoriBlok",
+      JSON.stringify({
+        aria: (s.iz?.izler ?? []).find((i) => i.anahtar === "__category__")
+          ?.ariaExpanded,
+        odak: s.odak,
+      }),
+    );
+    await shot("m-8b-iz-acildi", "mobil 390 — kategori izi YERİNDE açıldı", {
+      iz: s.iz,
+      odak: s.odak,
+      cizim: cizimSayisi,
+    });
+
+    /* Onaylanınca tekrar katlanır ve akış kaldığı yerden sürer. */
+    await click('[data-testid="category-confirmation-confirm"]');
+    await sleep(1500);
+    s = await snapshot();
+    check(
+      "D-0048: onaylanınca iz tekrar katlandı (adım bloğu görünür değil)",
+      Boolean(
+        s.iz &&
+          s.iz.acikAnahtar === null &&
+          s.iz.acikIzinIcinde === null &&
+          s.kategoriBlokGorunur === false &&
+          s.softExit.length === 0,
+      ),
+      JSON.stringify({
+        acik: s.iz?.acikAnahtar,
+        gorunur: s.kategoriBlokGorunur,
+        cekilen: s.softExit,
+      }),
+    );
+    check(
+      "D-0048: katlanınca odak izin kendisine döndü",
+      s.odak?.testid === "talep-trail-entry" &&
+        s.odak?.trailKey === "__category__",
+      JSON.stringify(s.odak),
+    );
+    check(
+      "D-0048: akış kaldığı yerden sürüyor — yayın butonu hâlâ açık",
+      Boolean(s.publishCta) && s.publishCtaDisabled === false,
+      `${s.publishCta} disabled=${s.publishCtaDisabled}`,
+    );
+    await shot(
+      "m-8c-iz-yeniden-katlandi",
+      "mobil 390 — iz yeniden katlandı, akış sürüyor",
+      { iz: s.iz, odak: s.odak, duyuru: s.kapanisDuyurusu, cta: s.publishCta },
+    );
   }
 
   /* Kapalı bölüm açılınca chip'ler ve isteğe bağlı soru görünür. */
@@ -1464,6 +1769,58 @@ async function main() {
     s.publishDock?.docked === "visible",
     JSON.stringify(s.publishDock),
   );
+  /*
+    D-0048 — MASAÜSTÜNDE DE İZ. Aynı sözleşme iki genişlikte de ölçülür: iz
+    sırası, "+N adım" ve YERİNDE açılma. Kategori izi olmayabilir (masaüstü
+    akışında kategori paneli üzerinden kök değiştirildi); o durumda ilk açık iz
+    sürülür ve hangi izin sürüldüğü kareye yazılır.
+  */
+  {
+    check(
+      "1280: iz sırası kullanıcının yolunu anlatıyor",
+      Boolean(s.iz) && s.iz.toplam >= 2 && s.iz.izler.every((i) => i.tekSatir),
+      JSON.stringify(s.iz),
+    );
+    const surulen =
+      s.iz?.izler?.find((i) => i.tur === "category")?.anahtar ??
+      s.iz?.izler?.find((i) => i.tur === "answer")?.anahtar ??
+      null;
+    if (surulen) {
+      await click(
+        `[data-testid="talep-trail-entry"][data-trail-key="${surulen}"]`,
+      );
+      await sleep(900);
+      s = await snapshot();
+      check(
+        `1280: '${surulen}' izi YERİNDE açıldı`,
+        s.iz?.acikAnahtar === surulen && s.iz?.acikIzinIcinde === true,
+        JSON.stringify({
+          acik: s.iz?.acikAnahtar,
+          icinde: s.iz?.acikIzinIcinde,
+        }),
+      );
+      await shot("d-6b-iz-acildi", `masaüstü 1280 — '${surulen}' izi açıldı`, {
+        iz: s.iz,
+        odak: s.odak,
+      });
+      const kapat = await evaluate(ANSWER_STEP);
+      await sleep(1500);
+      s = await snapshot();
+      check(
+        `1280: '${surulen}' izi yeniden katlandı (${kapat})`,
+        s.iz?.acikAnahtar === null && s.softExit.length === 0,
+        JSON.stringify({ acik: s.iz?.acikAnahtar, cekilen: s.softExit }),
+      );
+      await shot(
+        "d-6c-iz-katlandi",
+        `masaüstü 1280 — iz yeniden katlandı (${kapat})`,
+        { iz: s.iz, odak: s.odak, duyuru: s.kapanisDuyurusu },
+      );
+    } else {
+      check("1280: sürülebilecek bir iz bulundu", false, JSON.stringify(s.iz));
+    }
+  }
+
   await shot("d-6-hazir", "masaüstü 1280 — yayına hazır, isteğe bağlı bölüm kapalı", {
     status: s.status,
     meter: s.meter,
@@ -1472,6 +1829,7 @@ async function main() {
     question: s.question,
     optionalBadge: s.optionalBadge,
     optionalDetails: s.optionalDetails,
+    iz: s.iz,
     cta: s.publishCta,
     rows: s.rows,
     extras: s.extras,

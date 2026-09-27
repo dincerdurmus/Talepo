@@ -14,9 +14,16 @@
  * eklendi. Bu dizim ÖLÇÜLEN merkez değerlerini karenin altına yazar, böylece
  * hangi hizayı gösterdiği kareye bakan kişi için tahmin olmaktan çıkar.
  *
- * Koşum:  node scripts/qa-talep-video-compare-v1.cjs [akis|yuz]
+ * ÜÇÜNCÜ DİZİM — `iz` (D-0048, 2026-09-27). Katlanan izin karşılaştırması
+ * videoyla YAPILAMAZ: videoda iz yoktur, o yüzden sol sütuna referans kare
+ * konmaz. Karşılaştırılan şey ÜRÜNÜN KENDİ DÖRT ANIDIR: tek iz → üç iz → iz
+ * yerinde açık → yeniden katlandı. Her karenin altında o karede ÖLÇÜLEN iz
+ * sayısı, "+N adım"ın N'i, açık iz anahtarı ve odak durur; böylece hangi
+ * durumu gösterdiği kareye bakan için tahmin olmaktan çıkar.
+ *
+ * Koşum:  node scripts/qa-talep-video-compare-v1.cjs [akis|yuz|iz]
  * Girdi:  referans klasörü + `TALEP_QA_OUT` (varsayılan sonuc6)
- * Çıktı:  <out>/karsilastirma.png  ya da  <out>/karsilastirma-yuz.png
+ * Çıktı:  <out>/karsilastirma.png · -yuz.png · -iz.png
  */
 const fs = require("fs");
 const path = require("path");
@@ -27,10 +34,10 @@ const REF =
   "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-video-ref-2026-09-25";
 const OUT =
   process.env.TALEP_QA_OUT ||
-  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc6";
+  "C:\\Users\\HP\\Documents\\Veyra\\projects\\talepo\\tasarim\\talep-ui-2026-09-25\\sonuc8";
 
-/** `akis` = videonun altı anı, `yuz` = D-0046 telefon hizası. */
-const MODE = process.argv[2] === "yuz" ? "yuz" : "akis";
+/** `akis` = videonun altı anı, `yuz` = D-0046 telefon hizası, `iz` = D-0048. */
+const MODE = ["yuz", "iz"].includes(process.argv[2]) ? process.argv[2] : "akis";
 
 /**
  * SÜTUNLAR. Ürün karesi, videodaki AYNI anı gösteren kareden seçilir; emlak
@@ -66,6 +73,39 @@ const ROWS_YUZ = [
   },
 ];
 
+/**
+ * KATLANAN İZİN DÖRT ANI (D-0048). Sol sütunda referans YOKTUR — videoda iz
+ * yok; sahte bir "video karşılığı" uydurmak yerine sütun kendi anını ve o anda
+ * ölçüleni yazar.
+ */
+const ROWS_IZ = [
+  {
+    shot: "m-7-iz-cumle.png",
+    title: "1 — Cümle gönderildi: 1 iz",
+    beklenen: "toplam 1 · kategori henüz AKTİF adım, iz değil",
+  },
+  {
+    shot: "m-8-iz-uc.png",
+    title: "2 — Kategori + cevap: 3 iz",
+    beklenen: "toplam 3 · son 2 açık · fazlası '+N adım'",
+  },
+  {
+    shot: "m-8b-iz-acildi.png",
+    title: "3 — İze dokunuldu: YERİNDE açık",
+    beklenen: "açık iz __category__ · altındaki izler soldu",
+  },
+  {
+    shot: "m-8c-iz-yeniden-katlandi.png",
+    title: "4 — Yeniden katlandı",
+    beklenen: "açık iz yok · odak izin kendisinde · yayın butonu açık",
+  },
+  {
+    shot: "m-6-hazir.png",
+    title: "5 — Yayına hazır",
+    beklenen: "iz aktif adımın üstünde, kart ve buton değişmedi",
+  },
+];
+
 const fileUrl = (p) => `file:///${p.replace(/\\/g, "/")}`;
 
 /**
@@ -97,7 +137,69 @@ function hizaEtiketi(shotFile) {
 const REF1_OLCUM =
   "ref-1.png ölçüldü: yüz %50.8 · MAIRA %49.7 · başlık %50.0 (1080px genişlik)";
 
+/**
+ * İZ ETİKETİ — KARE KENDİ ÖLÇÜMÜNÜ TAŞIR. Sayılar manifestten okunur; burada
+ * hiçbir şey yeniden hesaplanmaz. Ölçüm yoksa satır "ölçüm yok" der, uydurmaz.
+ */
+function izEtiketi(shotFile) {
+  const manifestPath = path.join(OUT, "olcum-manifest.json");
+  if (!fs.existsSync(manifestPath)) {
+    return "olcum-manifest.json yok — ölçüm okunamadı";
+  }
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  } catch {
+    return "olcum-manifest.json okunamadı";
+  }
+  const shot = (manifest.shots || []).find((s) => s.file === shotFile);
+  const iz = shot?.measured?.iz;
+  if (!iz) return "bu karede iz ölçümü yok";
+  const odak = shot?.measured?.odak;
+  return [
+    `iz ${iz.toplam} (açık ${iz.gorunen} · toplanan ${iz.toplanan})`,
+    `açık iz: ${iz.acikAnahtar || "—"}`,
+    `izler: ${(iz.izler || []).map((i) => `${i.anahtar}${i.solgun === "true" ? "(soluk)" : ""}`).join(" → ") || "—"}`,
+    odak ? `odak: ${odak.testid || odak.etiket}${odak.trailKey ? `[${odak.trailKey}]` : ""}` : null,
+  ]
+    .filter(Boolean)
+    .join(" — ");
+}
+
+function buildHtmlIz() {
+  const cols = ROWS_IZ.map((row) => {
+    const shotPath = path.join(OUT, row.shot);
+    const hasShot = fs.existsSync(shotPath);
+    const cell = hasShot
+      ? `<img src="${fileUrl(shotPath)}" alt="${row.shot}"><em>${row.shot}</em><b class="olcum">${izEtiketi(row.shot)}</b>`
+      : `<div class="note">Ürün karesi yok: ${row.shot}</div><em>${row.shot}</em>`;
+    return `<section>
+      <h2>${row.title}</h2>
+      <figure><figcaption>ÜRÜN — ${row.beklenen}</figcaption>${cell}</figure>
+    </section>`;
+  }).join("");
+
+  return `<!doctype html><meta charset="utf-8"><style>
+    body{margin:0;background:#fff;font:14px/1.4 system-ui,sans-serif;color:#0f1f1d;padding:28px}
+    h1{font-size:22px;margin:0 0 4px;letter-spacing:-0.02em}
+    .sub{margin:0 0 24px;color:#0f1f1d80;font-size:13px}
+    .grid{display:flex;gap:18px;align-items:flex-start}
+    section{flex:1;min-width:0}
+    h2{font:600 13px/1.2 ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:#0f766e;margin:0 0 8px}
+    figure{margin:0;min-width:0}
+    figcaption{font:600 10px/1.35 ui-monospace,monospace;letter-spacing:.06em;color:#0f1f1d66;margin-bottom:4px;min-height:28px}
+    img{width:100%;height:600px;object-fit:contain;object-position:top center;border:1px solid #0b191714;border-radius:10px;background:#f5f8f7}
+    .note{height:600px;display:flex;align-items:center;padding:14px;font-size:11.5px;line-height:1.5;color:#a15c07;background:#fffaf2;border:1px solid #a15c0733;border-radius:10px}
+    em{display:block;margin-top:4px;font:400 10px/1.3 ui-monospace,monospace;color:#0f1f1d66;font-style:normal;word-break:break-all}
+    .olcum{display:block;margin-top:3px;font:500 9.5px/1.45 ui-monospace,monospace;color:#0f766e;word-break:break-word}
+  </style>
+  <h1>/talep — geri dönüş "katlanan iz" (D-0048)</h1>
+  <p class="sub">Videoda iz yok; bu yüzden sol sütunda referans kare DEĞİL, ürünün kendi dört anı yan yana durur. Her karenin altında o karede ÖLÇÜLEN iz sayısı, "+N adım", açık iz ve odak yazar.</p>
+  <div class="grid">${cols}</div>`;
+}
+
 function buildHtml() {
+  if (MODE === "iz") return buildHtmlIz();
   if (MODE === "yuz") return buildHtmlYuz();
   const cols = ROWS.map((row) => {
     const refPath = path.join(REF, row.ref);
@@ -176,7 +278,12 @@ function buildHtmlYuz() {
 
 async function main() {
   const html = buildHtml();
-  const stem = MODE === "yuz" ? "karsilastirma-yuz" : "karsilastirma";
+  const stem =
+    MODE === "yuz"
+      ? "karsilastirma-yuz"
+      : MODE === "iz"
+        ? "karsilastirma-iz"
+        : "karsilastirma";
   const htmlPath = path.join(OUT, `${stem}.html`);
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(htmlPath, html, "utf8");
@@ -214,12 +321,14 @@ async function main() {
   const outFile = path.join(OUT, `${stem}.png`);
   fs.writeFileSync(outFile, Buffer.from(data, "base64"));
   console.log(`KARŞILAŞTIRMA: ${outFile}`);
-  for (const row of MODE === "yuz" ? ROWS_YUZ : ROWS) {
+  const satirlar = MODE === "iz" ? ROWS_IZ : MODE === "yuz" ? ROWS_YUZ : ROWS;
+  for (const row of satirlar) {
     const shotPath = row.shot ? path.join(OUT, row.shot) : null;
+    const varMi = shotPath && fs.existsSync(shotPath);
     console.log(
-      `  ${row.title}: ${row.ref} ⇄ ${
-        shotPath && fs.existsSync(shotPath) ? row.shot : "[NOT-MEASURED]"
-      }`,
+      `  ${row.title}: ${row.ref ? `${row.ref} ⇄ ` : ""}${
+        varMi ? row.shot : "[NOT-MEASURED]"
+      }${MODE === "iz" && varMi ? ` — ${izEtiketi(row.shot)}` : ""}`,
     );
   }
 

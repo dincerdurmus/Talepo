@@ -49,6 +49,7 @@ import {
 } from "@/components/request/talep/MairaVoice";
 import { RequestCardPanel } from "@/components/request/talep/RequestCardPanel";
 import { SoftExit } from "@/components/request/talep/SoftExit";
+import { StepTrail } from "@/components/request/talep/StepTrail";
 import { TalepStartPanel } from "@/components/request/talep/TalepStartPanel";
 import {
   buildReadingHighlights,
@@ -59,6 +60,11 @@ import {
   composeRequestCardTitle,
   type RequestCardQuestion,
 } from "@/lib/request-composer/v2/request-card-model";
+import {
+  TRAIL_CATEGORY_KEY,
+  buildStepTrail,
+  type StepTrailEntry,
+} from "@/lib/request-composer/v2/step-trail-model";
 import { publishOutcomeFrom } from "@/lib/request/publish-result-status";
 import {
   CARD_IN_MS,
@@ -74,6 +80,7 @@ import {
 import type { BrowseNode } from "@/lib/knowledge/types";
 import {
   formatBudgetDigits,
+  humanLabel,
   planAnswerApplication,
   projectCanonicalCommonAnswers,
   projectUserAnswers,
@@ -426,6 +433,18 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
    * KARARINA dokunmaz, yalnız kapanmış adımı yeniden gösterir.
    */
   const [categoryStepReopened, setCategoryStepReopened] = useState(false);
+  /**
+   * KATLANAN İZ (kurucu, 2026-09-27). Cevaplanan adım aktif adımın üstünde tek
+   * satırlık bir ize katlanır; ize dokunulunca adım YERİNDE açılır. Bu iki
+   * bayrak yalnız GÖRÜNÜRLÜKTÜR: hangi izin açık olduğu ve "+N adım"ın açılıp
+   * açılmadığı. Cevap, kategori kararı ve yayın kapısı bunlardan etkilenmez.
+   *
+   * `trailOpenKey` kategori için `TRAIL_CATEGORY_KEY`, bir cevap için o alanın
+   * anahtarıdır; `returnFocusTo` ile AYNI sözlüğü kullanır, böylece katlanınca
+   * odak aynı izi bulur.
+   */
+  const [trailOpenKey, setTrailOpenKey] = useState<string | null>(null);
+  const [trailExpanded, setTrailExpanded] = useState(false);
   /**
    * KAPANAN BLOĞUN ODAĞI KARTA DÖNER. Ölçüldü (`sonuc7/once-*`): her kapanış
    * sonrası `document.activeElement` gövdeydi — klavye ve ekran okuyucu
@@ -2230,11 +2249,19 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   function closeCategoryStep(pathLabel: string | null) {
     startSoftExit("kategori", categoryStepNode);
     setCategoryStepReopened(false);
-    setReturnFocusTo("__category__");
+    /*
+      ADIM İZE KATLANIR (kurucu, 2026-09-27). Kapanan adım aktif adımın üstünde
+      tek satırlık bir iz olarak durur; odak o ize devredilir ve duyuru geri
+      dönüş yolunu artık en yakın denetimin adıyla söyler. Karttaki "Değiştir"
+      aynı bloğu açmaya devam eder (D-0047) — iz onun yerine geçmez, ona
+      daha yakın bir ikinci kapı olur.
+    */
+    setTrailOpenKey(null);
+    setReturnFocusTo(TRAIL_CATEGORY_KEY);
     setClosedStepNotice(
       pathLabel
-        ? `Kategori ${pathLabel} olarak kaydedildi. Değiştirmek için karttaki Değiştir düğmesine dön.`
-        : "Kategori kaydedildi. Değiştirmek için karttaki Değiştir düğmesine dön.",
+        ? `Kategori ${pathLabel} olarak kaydedildi ve adım katlandı. Değiştirmek için Kategori adımına dön.`
+        : "Kategori kaydedildi ve adım katlandı. Değiştirmek için Kategori adımına dön.",
     );
   }
 
@@ -2275,6 +2302,79 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
         )?.focus({ preventScroll: true });
       }, 80);
     }
+  }
+
+  /**
+   * BİR ALANIN SORUSUNU GERİ AÇAR — TEK İŞLEYİCİ, İKİ YÜZEY (2026-09-27).
+   *
+   * Kart satırı (D-0047) ve katlanan iz AYNI fonksiyonu çağırır. Ayrı ayrı
+   * yazılsalardı iki geri dönüş yolunun odağı, bayat duyuru temizliği ya da
+   * kaydırma davranışı sessizce ayrışabilirdi; burada tek yol var.
+   */
+  function askCardField(fieldKey: string) {
+    setAskingFieldKey(fieldKey);
+    /*
+      SATIRDAN/İZDEN GERİ AÇILAN SORU (kurucu, 2026-09-26). Bir önceki
+      kapanışın duyurusu silinir — yoksa canlı bölge "Kategori kaydedildi"
+      derken ekranda bütçe sorusu duruyordu (ölçüldü, `sonuc7/sonra-a4` ilk
+      koşum). Odak da açılan bloğun ilk denetimine geçer: geri dönüş yalnız
+      görünür değil, ulaşılabilir olmalı.
+    */
+    setClosedStepNotice(null);
+    setCategoryStepReopened(false);
+    startSoftExit("soru", null);
+    if (typeof window !== "undefined") {
+      window.setTimeout(() => {
+        const blok = document.querySelector<HTMLElement>(
+          '[data-testid="composer-questions"]',
+        );
+        if (window.innerWidth < 920) {
+          blok?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        blok
+          ?.querySelector<HTMLElement>(
+            'input:not([type="hidden"]), textarea, select, button:not([disabled])',
+          )
+          ?.focus({ preventScroll: true });
+      }, 60);
+    }
+  }
+
+  /**
+   * CÜMLE İZİ = BUGÜNKÜ "CÜMLEMİ DÜZENLE" YOLU (kurucu, 2026-09-27).
+   *
+   * Sayfanın en altındaki ikincil bağlantı kalktı ve yerine ilk iz geçti;
+   * ARKASINDAKİ YOL AYNI. Yeni bir yeniden-anlama mantığı yazılmadı: kullanıcı
+   * başlangıç ekranına döner, cümlesini düzeltir ve akış yeniden okunur.
+   */
+  function editSentence() {
+    setTrailOpenKey(null);
+    setIntroDecided(false);
+    setReadingPhase("quote");
+  }
+
+  /**
+   * İZE DOKUNMA — KATLANMANIN TERSİ. Kategori ve cevap izleri adımı YERİNDE
+   * açar; cümle izi başlangıç ekranına döner (yukarıdaki gerekçe). Her dal
+   * kendi kanonik geri dönüş yolunu çağırır, ikinci bir yol açılmaz.
+   */
+  function openTrailEntry(entry: StepTrailEntry) {
+    if (entry.kind === "sentence") {
+      editSentence();
+      return;
+    }
+    if (entry.kind === "category") {
+      /*
+        Kanonik onay modeli kurulamıyorsa `reopenCategoryStep` tam ekran
+        paneli açar; o durumda yerinde açılacak bir blok yoktur ve iz açık
+        işaretlenmez — kullanıcı boşluğa dokunmuş olmaz.
+      */
+      setTrailOpenKey(categoryReopenAvailable ? TRAIL_CATEGORY_KEY : null);
+      reopenCategoryStep();
+      return;
+    }
+    setTrailOpenKey(entry.key);
+    askCardField(entry.key);
   }
 
   function applyClarification(option: ClarificationOption) {
@@ -2529,6 +2629,12 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   function closeAnsweredQuestion(fieldKey: string) {
     startSoftExit("soru", questionPanel);
     setAskingFieldKey((current) => (current === fieldKey ? null : current));
+    /*
+      İZ YERİNE KATLANIR (kurucu, 2026-09-27). Yerinde açılmış soru kapanır;
+      izin kendisi listede kalır ve odak ona döner (`returnFocusTo`). Kart
+      satırı yedek yol olarak yerinde durur.
+    */
+    setTrailOpenKey((current) => (current === fieldKey ? null : current));
     setReturnFocusTo(fieldKey);
   }
 
@@ -3416,6 +3522,53 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     );
   })();
 
+  /**
+   * KATLANAN İZ SIRASI — KULLANICININ YOLU (kurucu, 2026-09-27).
+   *
+   * Üç kaynak, hepsi KANONİK: kullanıcının kendi metni, kategori kararının
+   * kart yüzeyinde gösterilmeye izinli etiketi (aynı iki kapı: motor emin mi +
+   * etiket güvenli mi) ve kartın kendi satırlarından okunan cevap değerleri.
+   * İkinci bir etiket listesi ya da değer biçimleyici kurulmaz; kartta ne
+   * yazıyorsa izde de o yazar.
+   *
+   * SIRA CEVAPLANMA SIRASIDIR: `answeredQuestionKeys` cevap anında eklenir, bu
+   * yüzden liste kullanıcının yolunu olduğu gibi taşır. Kategori izi yalnız
+   * kullanıcı o adımı KAPATTIKTAN sonra doğar (`categoryUserChoice`); henüz
+   * sorulmakta olan adım iz değildir, aktif adımdır.
+   */
+  const stepTrail = buildStepTrail({
+    sentence: requestText,
+    category:
+      categoryUserChoice &&
+      categoryConfident &&
+      schemaCategory.displayLabelSafe &&
+      (activeSubcategoryLabel || selectedCategory.label)
+        ? {
+            label: "Kategori",
+            value: activeSubcategoryLabel || selectedCategory.label,
+          }
+        : null,
+    answers: answeredQuestionKeys.map((key) => {
+      const row = requestCard.rows.find((item) => item.key === key);
+      return {
+        key,
+        /*
+          ETİKET ÖNCE KARTTAN OKUNUR: iz ile kart aynı adı söylemek zorunda.
+          Kart satırı yoksa (kırpılmış ya da satırı olmayan alan) kanonik
+          etiket çözücüsü çağrılır; o da bilmiyorsa iz YAZILMAZ — ham alan
+          anahtarı kullanıcıya gösterilmez.
+        */
+        label: row?.label ?? humanLabel(key),
+        value: row?.value ?? null,
+      };
+    }),
+    expanded: trailExpanded,
+  });
+  /** Yerinde açık iz; anahtar listeden düştüyse açık iz yok sayılır. */
+  const trailOpenEntry = trailOpenKey
+    ? stepTrail.entries.find((entry) => entry.key === trailOpenKey) ?? null
+    : null;
+
   /** Kategori panelinin kökleri ve çocukları kanonik gezinmeden gelir. */
   const browseRoots = hybrid.browseColumns[0] ?? [];
   const browseChildrenOf = (root: BrowseNode) =>
@@ -3475,9 +3628,60 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
       onAction={applyCategoryConfirmation}
     />
   ) : null;
+  /**
+   * KATEGORİ ADIMI BLOĞU — ADIM VE TEK SESSİZ ÇIKIŞI BİRLİKTE. "Tüm
+   * kategoriler" bağlantısı adımın parçasıdır; iz yerinde açıldığında da onunla
+   * birlikte taşınır ki alt kategori yolu hiçbir yerde kaybolmasın.
+   */
+  const categoryStepBlock = categoryStepActive ? (
+    <>
+      {categoryStepNode}
+      {/*
+        ALT KATEGORİ YOLU KAYBOLMAZ. "Değiştir" ve kategori izi artık bloğu
+        geri açtığı için tam ekran kategori paneline giden tek kapı burasıdır;
+        kök listesi bloğun kendi içindedir, alt kategori panelden seçilir.
+      */}
+      <button
+        type="button"
+        data-testid="category-step-open-sheet"
+        onClick={() => setCategorySheet({ mode: "pick", root: null })}
+        className="mt-2 min-h-10 justify-self-start px-1 text-left text-[13px] font-medium text-[#0f766e]/75"
+      >
+        Tüm kategoriler
+      </button>
+    </>
+  ) : null;
+
+  /**
+   * İZİN İÇİNDE AÇILAN ADIM (kurucu, 2026-09-27). Katlanmanın tersi: adım,
+   * izin durduğu YERDE açılır. Çizilen düğüm ikinci bir kopya değildir — aynı
+   * `categoryStepBlock` / `questionPanel` düğümü ya izde ya akışta durur,
+   * ikisinde birden ASLA durmaz (aşağıdaki iki koşul bunu kapatır).
+   */
+  const trailOpenNode =
+    trailOpenEntry === null
+      ? null
+      : trailOpenEntry.kind === "category"
+        ? categoryStepBlock
+        : /*
+            EKRANDA TEK ADIM KONUŞUR. Kategori adımı otorite gereği açıksa
+            izden soru açılmaz — bugünkü sıra korunur (`showQuestionAboveCta`
+            da aynı kapıyı kullanıyor), yoksa aynı anda iki adım bloğu
+            ekranda durabilirdi.
+          */
+          !categoryStepActive && activeQuestion?.fieldKey === trailOpenEntry.key
+          ? questionPanel
+          : null;
+  /*
+    İZ ANCAK ALTINDA GERÇEKTEN BİR BLOK VARSA "AÇIK"TIR. Aksi hâlde
+    `aria-expanded="true"` diyen ama hiçbir şey açmayan bir düğme kalırdı.
+  */
+  const trailOpenKeyForRender = trailOpenNode ? trailOpenKey : null;
+
   const showQuestionAboveCta = Boolean(
     questionPanel &&
       !categoryStepActive &&
+      !(trailOpenKeyForRender && trailOpenNode === questionPanel) &&
       (!composerReadiness.canReview || askingFieldKey),
   );
   const showQuestionInDetails = Boolean(
@@ -3503,28 +3707,32 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
   useEffect(() => {
     if (!returnFocusTo) return;
     const timer = window.setTimeout(() => {
-      const kategori = returnFocusTo === "__category__";
+      const kategori = returnFocusTo === TRAIL_CATEGORY_KEY;
+      /*
+        ODAK ÖNCE İZE GİDER (kurucu, 2026-09-27). Katlanan adımın en yakın geri
+        dönüş yolu, onun katlandığı izin kendisidir; iz "+N adım"ın arkasına
+        düştüyse DOM'da yoktur ve odak D-0047'nin yoluna — kart satırına /
+        karttaki "Değiştir"e — düşer. Hiçbir durumda gövdede bırakılmaz.
+      */
+      const iz = document.querySelector<HTMLElement>(
+        `[data-testid="talep-trail-entry"][data-trail-key="${CSS.escape(returnFocusTo)}"]`,
+      );
       const hedef = document.querySelector<HTMLElement>(
         kategori
           ? '[data-testid="talep-card-change-category"]'
           : `[data-testid="talep-card-row"][data-row-key="${CSS.escape(returnFocusTo)}"]`,
       );
-      /*
-        Satır bulunamazsa (yayınlanmış kart ya da kart satırı olmayan isteğe
-        bağlı alan) odak kartın kategori düğmesine düşer; hiçbir durumda
-        gövdede bırakılmaz.
-      */
       const yedek = document.querySelector<HTMLElement>(
         '[data-testid="talep-card-change-category"]',
       );
-      (hedef ?? yedek)?.focus({ preventScroll: true });
+      (iz ?? hedef ?? yedek)?.focus({ preventScroll: true });
       if (!kategori) {
         const satir = requestCard.rows.find((row) => row.key === returnFocusTo);
         const etiket = satir?.label ?? null;
         setClosedStepNotice(
           etiket
-            ? `${etiket} kartta güncellendi. Değiştirmek için ${etiket} satırına dön.`
-            : "Cevabın kartta güncellendi. Değiştirmek için karttaki satıra dön.",
+            ? `${etiket} kartta güncellendi ve adım katlandı. Değiştirmek için ${etiket} satırına dön.`
+            : "Cevabın kartta güncellendi ve adım katlandı. Değiştirmek için karttaki satıra dön.",
         );
       }
       setReturnFocusTo(null);
@@ -3537,6 +3745,9 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
     setWizardStep(2);
     setAskingFieldKey(null);
     setCategoryStepReopened(false);
+    /* Yeni okuma yeni bir yol demektir: iz açıklığı ve "+N adım" sıfırlanır. */
+    setTrailOpenKey(null);
+    setTrailExpanded(false);
     setReturnFocusTo(null);
     setClosedStepNotice(null);
     setReadingPulse(0);
@@ -3803,37 +4014,15 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                   locked={Boolean(publishOutcome)}
                   categoryStepOpen={categoryStepActive}
                   onChangeCategory={reopenCategoryStep}
+                  /*
+                    KART SATIRI VE KATLANAN İZ AYNI FONKSİYONU ÇAĞIRIR
+                    (2026-09-27). Satırdan dönüş (D-0047) değişmedi; yalnız
+                    kodu tek yere taşındı ki iki geri dönüş yolunun davranışı
+                    ayrışamasın.
+                  */
                   onAskField={(fieldKey) => {
-                    setAskingFieldKey(fieldKey);
-                    /*
-                      SATIRDAN GERİ AÇILAN SORU (kurucu, 2026-09-26).
-                      Bir önceki kapanışın duyurusu silinir — yoksa canlı bölge
-                      "Kategori kaydedildi" derken ekranda bütçe sorusu
-                      duruyordu (ölçüldü, `sonuc7/sonra-a4` ilk koşum). Odak da
-                      açılan bloğun ilk denetimine geçer: geri dönüş yalnız
-                      görünür değil, ulaşılabilir olmalı.
-                    */
-                    setClosedStepNotice(null);
-                    setCategoryStepReopened(false);
-                    startSoftExit("soru", null);
-                    if (typeof window !== "undefined") {
-                      window.setTimeout(() => {
-                        const blok = document.querySelector<HTMLElement>(
-                          '[data-testid="composer-questions"]',
-                        );
-                        if (window.innerWidth < 920) {
-                          blok?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "center",
-                          });
-                        }
-                        blok
-                          ?.querySelector<HTMLElement>(
-                            'input:not([type="hidden"]), textarea, select, button:not([disabled])',
-                          )
-                          ?.focus({ preventScroll: true });
-                      }, 60);
-                    }
+                    setTrailOpenKey(null);
+                    askCardField(fieldKey);
                   }}
                 />
               ) : null}
@@ -3956,27 +4145,31 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                         model TEK yerden gelir (`categoryStepForMaira`): onay,
                         geri açılan onay ve seçim aynı bileşeni kullanır.
                       */}
-                      {categoryStepActive ? (
-                        <>
-                          {categoryStepNode}
-                          {/*
-                            ALT KATEGORİ YOLU KAYBOLMAZ. "Değiştir" artık
-                            bloğu geri açtığı için tam ekran kategori paneline
-                            giden tek kapı burasıdır; kök listesi bloğun kendi
-                            içindedir, alt kategori panelden seçilir.
-                          */}
-                          <button
-                            type="button"
-                            data-testid="category-step-open-sheet"
-                            onClick={() =>
-                              setCategorySheet({ mode: "pick", root: null })
-                            }
-                            className="mt-2 min-h-10 justify-self-start px-1 text-left text-[13px] font-medium text-[#0f766e]/75"
-                          >
-                            Tüm kategoriler
-                          </button>
-                        </>
-                      ) : null}
+                      {/*
+                        KATLANAN İZ — AKTİF ADIMIN ÜSTÜNDE (kurucu,
+                        2026-09-27). Kullanıcının yolu burada tek satırlık
+                        izler olarak durur: cümlesi, kategori, cevaplar. İze
+                        dokunulunca adım YERİNDE açılır; katlanınca akış
+                        kaldığı yerden sürer. İz karar taşımaz — hangi adımın
+                        ize düştüğünü `buildStepTrail` söyler.
+                      */}
+                      <StepTrail
+                        model={stepTrail}
+                        openKey={trailOpenKeyForRender}
+                        openNode={trailOpenNode}
+                        expanded={trailExpanded}
+                        onToggleFolded={() => setTrailExpanded((v) => !v)}
+                        onOpen={openTrailEntry}
+                      />
+
+                      {/*
+                        Adım bloğu ya izin içinde ya akışta durur — ikisinde
+                        birden asla. Kategori izi açıkken blok yukarıda,
+                        katlanmanın tersi olarak çizilir.
+                      */}
+                      {trailOpenNode === categoryStepBlock
+                        ? null
+                        : categoryStepBlock}
 
                       {/*
                         YUMUŞAK KAPANIŞ YUVASI. Kalkan blok bir karede yok
@@ -4167,26 +4360,20 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
 
                   {/*
                     İKİNCİL YOLLAR SAYFANIN EN ALTINDA (kurucu, 2026-09-25).
-                    "Cümlemi düzenle" ve "Talep analizi" akışın ortasından
-                    çıktı — kaybolmadılar, yayın eyleminin altına, ayrı ve
-                    sessiz bir alana indiler. Ekranda aynı anda tek şey durur.
+                    "Talep analizi" akışın ortasından çıktı — kaybolmadı, yayın
+                    eyleminin altına, ayrı ve sessiz bir alana indi.
+
+                    "CÜMLEMİ DÜZENLE" BURADAN KALKTI (kurucu, 2026-09-27):
+                    yerine ilk İZ geçti (`data-trail-kind="sentence"`) ve aynı
+                    `editSentence()` yolunu çağırıyor. Yüzey sayısı artmadı,
+                    denetim kullanıcının gözünün zaten olduğu yere — adım
+                    çizgisinin başına — taşındı. İki yerde aynı işi yapan iki
+                    düğme bırakılmadı.
                   */}
                   <div
                     data-testid="talep-secondary-zone"
                     className="mt-3 grid gap-1 border-t border-[#0b1917]/[0.08] pt-4"
                   >
-                    <button
-                      type="button"
-                      data-testid="talep-secondary-edit-sentence"
-                      className="min-h-10 justify-self-start text-left text-[13px] font-medium text-[#0f1f1d]/50"
-                      onClick={() => {
-                        setIntroDecided(false);
-                        setReadingPhase("quote");
-                      }}
-                    >
-                      Cümlemi düzenle
-                    </button>
-
                     {/*
                       TALEP ANALİZİ — İKİNCİL, VARSAYILAN KAPALI (2026-09-25).
                       Piyasa / profesyonel görünüm isteyen kullanıcı için panel
@@ -4201,7 +4388,7 @@ function AvailableCategoryForm({ categories }: { categories: import("@/lib/reque
                       Kapalı akordeon beyaz zeminli çerçeveli bir kart olarak
                       duruyordu; yayına hazır ekranda "Detay ekle" ile aynı
                       ağırlıkta üçüncü bir kutu gibi görünüyordu. Kapalıyken
-                      artık "Cümlemi düzenle" ile aynı sessiz satır; AÇILINCA
+                      artık katlanan iz kadar sessiz bir satır; AÇILINCA
                       çerçevesini geri alır. Ürün kararı değişmedi: panel
                       kaybolmuyor, zorunlu sinyalde yine kendiliğinden açılıyor.
                     */}

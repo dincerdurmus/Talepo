@@ -48,6 +48,18 @@ export const READING_MAX_MS = 3000;
 export const ROW_STEP_MS = 220;
 
 /**
+ * KATLANAN İZ (kurucu, 2026-09-27): "kâğıt katlanır gibi, ~200 ms, hareket
+ * tablosundan". Cevaplanan adım yok olmaz; aktif adımın üstünde tek satırlık
+ * bir ize katlanır ve o katlanma bu süreyi kullanır.
+ *
+ * Neden `REVEAL_MS` (460) DEĞİL: ikisi aynı anda çalışır — kalkan blok
+ * yumuşak kapanışla 460 ms çekilirken iz 200 ms'de katlanır. Tek süreye
+ * indirilirse iz, kalkan bloğun bitişini beklemiş gibi görünür ve kullanıcı
+ * "kapanan şey nereye gitti" sorusunun cevabını geç alır.
+ */
+export const FOLD_MS = 200;
+
+/**
  * Okuma anının toplam süresi — TEK HESAP. Vurgu sayısı arttıkça uzar ama
  * `READING_MAX_MS` sınırını geçmez.
  */

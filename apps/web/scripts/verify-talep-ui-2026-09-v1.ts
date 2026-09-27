@@ -34,6 +34,10 @@ import {
   buildRequestCardModel,
   composeRequestCardTitle,
 } from "../src/lib/request-composer/v2/request-card-model";
+import {
+  TRAIL_VALUE_MAX_CHARS,
+  buildStepTrail,
+} from "../src/lib/request-composer/v2/step-trail-model";
 import { publishOutcomeFrom } from "../src/lib/request/publish-result-status";
 import { readingDurationMs } from "../src/lib/motion/talep-motion";
 import {
@@ -1569,14 +1573,21 @@ ok(
   closeAnsweredBody === null ? "closeAnsweredQuestion gövdesi bulunamadı" : undefined,
 );
 /*
-  ODAK KAPANAN BLOKTAN KARTTAKİ İLGİLİ SATIRA GEÇER. Hedef seçicileri kapıya
+  ODAK KAPANAN BLOKTAN GERİ DÖNÜŞ YOLUNA GEÇER. Hedef seçicileri kapıya
   yazılır; "odağı taşıdım" iddiası bir yorum değil, ölçülen bir dizedir.
+
+  ŞEKİL GÜNCELLEMESİ (D-0048, 2026-09-27): geri dönüşün EN YAKIN yolu artık
+  adımın katlandığı izdir; kart satırı ve karttaki "Değiştir" kaybolmadı,
+  izin DOM'da olmadığı durumda (iz "+N adım"ın arkasına düştüğünde) odak yine
+  onlara düşer. Kapı bu yüzden üç hedefi birlikte ölçüyor: kart satırı seçicisi
+  ve kategori düğmesi hâlâ zorunlu, sıralama ise iz → kart satırı → kart.
+  Ölçülen garanti daralmadı, zincire bir halka eklendi.
 */
 ok(
   "kapanan bloğun odağı karttaki ilgili satıra geçer",
   Boolean(
     page &&
-      /returnFocusTo === "__category__"/.test(page) &&
+      /returnFocusTo === TRAIL_CATEGORY_KEY/.test(page) &&
       /\[data-testid="talep-card-change-category"\]/.test(page) &&
       /\[data-testid="talep-card-row"\]\[data-row-key="\$\{CSS\.escape\(returnFocusTo\)\}"\]/.test(
         page,
@@ -1585,7 +1596,9 @@ ok(
 );
 ok(
   "satır bulunamazsa odak yine kartta kalır (gövdeye düşmez)",
-  Boolean(page && /\(hedef \?\? yedek\)\?\.focus\(\{ preventScroll: true \}\)/.test(page)),
+  Boolean(
+    page && /\(iz \?\? hedef \?\? yedek\)\?\.focus\(\{ preventScroll: true \}\)/.test(page),
+  ),
 );
 ok(
   "blok içinde kalan geçişlerde odak bloğun içinde kalır",
@@ -1642,12 +1655,352 @@ ok(
   "'Talep analizi' zorunlu sinyalde hâlâ kendiliğinden açılır",
   Boolean(page && /open=\{aiCompanionOpen \|\| publishSignalDemandsAttention\}/.test(page)),
 );
+/*
+  İKİNCİL YOLLAR KAYBOLMADI — ŞEKLİ DEĞİŞTİ (D-0048, 2026-09-27). "Cümlemi
+  düzenle" sayfanın en altındaki bağlantı olmaktan çıkıp İLK İZ oldu. Ölçülen
+  garanti daralmadı, YER DEĞİŞTİRDİ: cümleye dönüş yolu hâlâ TEK bir yerden
+  çağrılıyor ve "Talep analizi" yerinde. Kapı artık yolun kendisine bakıyor,
+  durduğu köşeye değil; ikinci bir "Cümlemi düzenle" düğmesi eklenirse
+  aşağıdaki "tek çağrı" kapısı kırmızı olur.
+*/
 ok(
-  "ikincil yollar kaybolmadı",
+  "cümleye dönüş yolu kaybolmadı (ilk iz) ve 'Talep analizi' yerinde",
   Boolean(
     page &&
-      /data-testid="talep-secondary-edit-sentence"/.test(page) &&
+      /function editSentence\(\) \{/.test(page) &&
       /data-testid="talep-analysis-summary"/.test(page),
+  ),
+);
+
+/**
+ * I) KATLANAN İZ — CEVAPLANAN ADIM AKTİF ADIMIN ÜSTÜNDE BİR İZE KATLANIR
+ * (kurucu, 2026-09-27, D-0048).
+ *
+ * Kurucunun cümlesi: "Kadıköy'de … arıyorum yazdı, gönderdi, başka bir soru
+ * sekmesi açıldı ya — tekrar geriye dönmesi için biraz farklı bir tasarım yap.
+ * Standart bir şey yapma ama çok da abartmadan."
+ *
+ * ÖLÇÜLEN İDDİALAR.
+ *  1. İz sayısı kullanıcının yolunu sayar: cümle → 1, kategori + bir cevap → 3.
+ *  2. En fazla son iki iz açık durur; fazlası "+N adım"a toplanır ve
+ *     `foldedCount` her zaman `entries.length - visible.length`'tir.
+ *  3. Adı çözülemeyen alan iz OLMAZ — ham alan anahtarı ekrana çıkmaz.
+ *  4. İz `button`, adı "Değiştir: Bütçe, 60 bin TL".
+ *  5. İze dokunulunca adım YERİNDE açılır ve aynı blok ikinci kez çizilmez.
+ *  6. Geri oku, "Geri" düğmesi, numaralı stepper, breadcrumb, sekme YOK.
+ *  7. Katlanma süresi hareket tablosundan; azaltılmış harekette animasyon yok.
+ *  8. Katlanınca odak ize döner, iz yoksa D-0047 yoluna (kart satırı) düşer.
+ *
+ * SINIR. Soru otoritesi, sıra, zorunluluk, yayın kararı ve kategori doğrulama
+ * mantığına dokunmaz; ölçülen tek şey görünürlük, yerleşim ve odak devridir.
+ */
+console.log("\nI) Katlanan iz — geri dönüş (D-0048)");
+
+const trail = strip(read("src/components/request/talep/StepTrail.tsx"));
+const trailModelSrc = strip(
+  read("src/lib/request-composer/v2/step-trail-model.ts"),
+);
+
+{
+  const CUMLE = "Kadıköy'de kiralık 3+1 arıyorum";
+  const yalnizCumle = buildStepTrail({ sentence: CUMLE });
+  ok(
+    "cümle gönderildiğinde tek iz doğar (kullanıcının kendi cümlesi)",
+    yalnizCumle.entries.length === 1 &&
+      yalnizCumle.visible.length === 1 &&
+      yalnizCumle.foldedCount === 0 &&
+      yalnizCumle.entries[0]!.kind === "sentence" &&
+      yalnizCumle.entries[0]!.value === CUMLE,
+    JSON.stringify(yalnizCumle.entries),
+  );
+  ok(
+    "cümle izi yerinde açılmaz — bugünkü 'Cümlemi düzenle' yolunu kullanır",
+    yalnizCumle.entries[0]!.opensInPlace === false,
+  );
+
+  const ucIz = buildStepTrail({
+    sentence: CUMLE,
+    category: { label: "Kategori", value: "Kiralık konut" },
+    answers: [{ key: "budget", label: "Bütçe", value: "60 bin TL" }],
+  });
+  ok(
+    "kategori + bir cevap sonrası üç iz (kullanıcının yolu)",
+    ucIz.entries.length === 3 &&
+      ucIz.entries.map((e) => e.kind).join(",") ===
+        "sentence,category,answer",
+    JSON.stringify(ucIz.entries.map((e) => `${e.kind}:${e.value}`)),
+  );
+  ok(
+    "en fazla son iki iz açık; fazlası '+N adım'a toplanır",
+    ucIz.visible.length === 2 &&
+      ucIz.foldedCount === 1 &&
+      ucIz.visible.map((e) => e.key).join(",") === "__category__,budget",
+    JSON.stringify({
+      visible: ucIz.visible.map((e) => e.key),
+      folded: ucIz.foldedCount,
+    }),
+  );
+  ok(
+    "erişilebilir ad 'Değiştir: Bütçe, 60 bin TL'",
+    ucIz.entries[2]!.accessibleLabel === "Değiştir: Bütçe, 60 bin TL",
+    ucIz.entries[2]!.accessibleLabel,
+  );
+  ok(
+    "cümle izinin adı etiketsizdir: 'Değiştir: <cümle>'",
+    ucIz.entries[0]!.accessibleLabel === `Değiştir: ${CUMLE}`,
+    ucIz.entries[0]!.accessibleLabel,
+  );
+  const acilmis = buildStepTrail({
+    sentence: CUMLE,
+    category: { label: "Kategori", value: "Kiralık konut" },
+    answers: [{ key: "budget", label: "Bütçe", value: "60 bin TL" }],
+    expanded: true,
+  });
+  ok(
+    "'+N adım' açılınca bütün izler görünür",
+    acilmis.visible.length === 3 && acilmis.foldedCount === 0,
+    JSON.stringify({ v: acilmis.visible.length, f: acilmis.foldedCount }),
+  );
+  /*
+    SAYAÇ İNVARYANTI — SÜPÜRME. "+N adım"ın N'i ile ekrandaki iz sayısının
+    toplamı her koşulda tam iz sayısını vermeli; aksi hâlde kullanıcı kaybolan
+    bir adımı hiçbir yerde bulamaz.
+  */
+  let sayacBozuk = 0;
+  for (let n = 0; n <= 7; n += 1) {
+    for (const expanded of [false, true]) {
+      const m = buildStepTrail({
+        sentence: CUMLE,
+        answers: Array.from({ length: n }, (_, i) => ({
+          key: `k${i}`,
+          label: `Alan ${i}`,
+          value: `değer ${i}`,
+        })),
+        expanded,
+      });
+      if (
+        m.foldedCount !== m.entries.length - m.visible.length ||
+        m.visible.length > m.entries.length ||
+        m.foldedCount < 0
+      ) {
+        sayacBozuk += 1;
+      }
+    }
+  }
+  ok("her durumda görünen + toplanan = tüm izler", sayacBozuk === 0, sayacBozuk);
+
+  ok(
+    "adı çözülemeyen alan iz olmaz (ham alan anahtarı ekrana çıkmaz)",
+    buildStepTrail({
+      answers: [{ key: "subcategorySlug", label: null, value: null }],
+    }).entries.length === 0,
+  );
+  ok(
+    "aynı alan iki kez iz üretmez",
+    buildStepTrail({
+      answers: [
+        { key: "budget", label: "Bütçe", value: "60 bin TL" },
+        { key: "budget", label: "Bütçe", value: "70 bin TL" },
+      ],
+    }).entries.length === 1,
+  );
+  ok(
+    "iz TEK SATIRDIR: uzun cümle deterministik olarak kısaltılır",
+    (() => {
+      const uzun = "a".repeat(400);
+      const m = buildStepTrail({ sentence: uzun });
+      const v = m.entries[0]!.value ?? "";
+      return v.length === TRAIL_VALUE_MAX_CHARS && v.endsWith("…");
+    })(),
+  );
+  ok(
+    "kategori ve cevap izleri YERİNDE açılır",
+    ucIz.entries[1]!.opensInPlace === true &&
+      ucIz.entries[2]!.opensInPlace === true,
+  );
+}
+
+/* KAYNAK KAPILARI — sayfanın ve bileşenin şekli. */
+ok(
+  "sayfa izi kanonik modelden çizer, ikinci bir liste kurmaz",
+  Boolean(
+    page &&
+      /const stepTrail = buildStepTrail\(\{/.test(page) &&
+      /<StepTrail\b/.test(page) &&
+      (page.match(/buildStepTrail\(/g) ?? []).length === 1,
+  ),
+);
+ok(
+  "iz etiketi önce karttan, sonra kanonik etiket çözücüsünden gelir",
+  Boolean(page && /label: row\?\.label \?\? humanLabel\(key\)/.test(page)),
+);
+ok(
+  "kategori izi yalnız kullanıcı o adımı kapattıktan sonra doğar",
+  Boolean(
+    page &&
+      /category:\s*\n?\s*categoryUserChoice &&\s*\n?\s*categoryConfident &&\s*\n?\s*schemaCategory\.displayLabelSafe/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "izler tek satırlık `button` ve erişilebilir adını modelden alır",
+  Boolean(
+    trail &&
+      /data-testid="talep-trail-entry"/.test(trail) &&
+      /type="button"/.test(trail) &&
+      /aria-label=\{entry\.accessibleLabel\}/.test(trail) &&
+      /truncate/.test(trail),
+  ),
+  trail === null ? "StepTrail.tsx yok" : undefined,
+);
+ok(
+  "iz bir aç/kapa denetimidir (aria-expanded) ve yerinde açılır",
+  Boolean(
+    trail &&
+      /aria-expanded=\{open\}/.test(trail) &&
+      /data-testid="talep-trail-open"/.test(trail),
+  ),
+);
+ok(
+  "'+N adım' da aç/kapa denetimidir",
+  Boolean(
+    trail &&
+      /data-testid="talep-trail-more"/.test(trail) &&
+      /aria-expanded=\{expanded\}/.test(trail),
+  ),
+);
+/*
+  YAPMA LİSTESİ KAPI OLDU (kurucu): geri oku, "Geri" düğmesi, adım numaralı
+  stepper, breadcrumb ve sekme çubuğu. Bunlar yokluğuyla ölçülür, çünkü ekleyen
+  kişi ekleyeceğini bilerek ekler.
+*/
+ok(
+  "izde geri oku / 'Geri' / numaralı stepper / breadcrumb / sekme YOK",
+  Boolean(
+    trail &&
+      !/ArrowLeft|ChevronLeft|ArrowBigLeft/.test(trail) &&
+      !/>\s*Geri\b|"Geri\b|Geri dön/.test(trail) &&
+      !/Adım\s*\{|Adım\s*\d|aria-current="step"/.test(trail) &&
+      !/role="tab(?:list)?"|breadcrumb|Breadcrumb/.test(trail),
+  ),
+);
+ok(
+  "katlanma süresi hareket tablosundan okunur (kendi sayısını uydurmaz)",
+  Boolean(
+    trail &&
+      /@\/lib\/motion\/talep-motion/.test(trail) &&
+      /FOLD_MS/.test(trail) &&
+      /EASE_REVEAL/.test(trail) &&
+      !/\b(?:180|200|220|240)ms\b/.test(trail),
+  ),
+);
+ok(
+  "hareket tablosunda katlanma süresi var ve ~200 ms",
+  Boolean(motion && /export const FOLD_MS = 200;/.test(motion)),
+);
+ok(
+  "azaltılmış harekette iz anında katlanır (animasyon kurulmaz)",
+  Boolean(
+    trail &&
+      /@media \(prefers-reduced-motion: reduce\)/.test(trail) &&
+      /\[data-trail-fold\]\{animation:none !important\}/.test(trail),
+  ),
+);
+/*
+  SOLMA VE KATLANMA AYRI KATLARDA (tarayıcıda ölçüldü, `sonuc8/m-8b` ilk
+  koşum). Katlanma animasyonu düğmenin kendisinde `fill-mode: both` ile
+  duruyordu; son karesi `opacity:1` olduğu için solma sınıfını sürekli eziyordu
+  ve solgun iz ölçülen opaklıkta 1 çıkıyordu. Kapı iki kararın aynı elemana
+  binmesini engeller.
+*/
+ok(
+  "solma düğmede, katlanma içteki katta — biri diğerini ezemez",
+  (() => {
+    if (!trail) return false;
+    if (!/data-trail-fold=""/.test(trail)) return false;
+    if (!/dimmed \? "opacity-40" : "opacity-100"/.test(trail)) return false;
+    /* Düğmenin açılışı ile iç katın arasında `animation:` bildirimi olmamalı. */
+    const acilis = trail.indexOf("aria-expanded={open}");
+    const icKat = trail.indexOf('data-trail-fold=""');
+    if (acilis < 0 || icKat < acilis) return false;
+    return !trail.slice(acilis, icKat).includes("animation:");
+  })(),
+);
+/*
+  ADIM BLOĞU İKİ YERDE BİRDEN DURMAZ. Aynı düğüm ya izin içinde ya akıştadır;
+  ikinci bir kategori/soru çizimi eklenirse bu kapı kırmızı olur.
+*/
+ok(
+  "adım bloğu ya izde ya akışta durur — ikisinde birden değil",
+  Boolean(
+    page &&
+      /trailOpenNode === categoryStepBlock\s*\n?\s*\? null\s*\n?\s*: categoryStepBlock/.test(
+        page,
+      ) &&
+      /!\(trailOpenKeyForRender && trailOpenNode === questionPanel\)/.test(page) &&
+      (page.match(/<CategoryConfirmationCard/g) ?? []).length === 1 &&
+      (page.match(/<FocusedQuestionsPanel/g) ?? []).length === 1,
+  ),
+);
+ok(
+  "iz 'açık' derken altında gerçekten bir blok vardır",
+  Boolean(
+    page &&
+      /const trailOpenKeyForRender = trailOpenNode \? trailOpenKey : null;/.test(
+        page,
+      ) &&
+      /openKey=\{trailOpenKeyForRender\}/.test(page),
+  ),
+);
+ok(
+  "kart satırı ve iz AYNI fonksiyonu çağırır (tek geri dönüş yolu)",
+  Boolean(
+    page &&
+      /function askCardField\(fieldKey: string\) \{/.test(page) &&
+      /askCardField\(fieldKey\);/.test(page) &&
+      /askCardField\(entry\.key\);/.test(page),
+  ),
+);
+ok(
+  "cümle izi yeni bir yeniden-anlama mantığı yazmaz",
+  Boolean(
+    page &&
+      /function editSentence\(\) \{\s*setTrailOpenKey\(null\);\s*setIntroDecided\(false\);\s*setReadingPhase\("quote"\);\s*\}/.test(
+        page,
+      ) &&
+      (page.match(/editSentence\(\)/g) ?? []).length === 2,
+  ),
+);
+ok(
+  "katlanınca odak ize döner, iz yoksa D-0047 yoluna düşer",
+  Boolean(
+    page &&
+      /const iz = document\.querySelector<HTMLElement>\(\s*`\[data-testid="talep-trail-entry"\]\[data-trail-key="\$\{CSS\.escape\(returnFocusTo\)\}"\]`/.test(
+        page,
+      ) &&
+      /\(iz \?\? hedef \?\? yedek\)\?\.focus\(\{ preventScroll: true \}\)/.test(
+        page,
+      ),
+  ),
+);
+ok(
+  "katlanma ekran okuyucuya duyurulur (iki kapanış yolunun ikisinde de)",
+  Boolean(
+    page &&
+      (page.match(/adım katlandı/g) ?? []).length >= 3 &&
+      /olarak kaydedildi ve adım katlandı/.test(page) &&
+      /kartta güncellendi ve adım katlandı/.test(page),
+  ),
+);
+ok(
+  "iz modeli karar taşımaz (soru/yayın/kategori otoritesini çağırmaz)",
+  Boolean(
+    trailModelSrc &&
+      !/scheduleComposerQuestions|computeComposerPublishReadiness|understandRequest|requestPublishDisposition|buildCategoryConfirmation/.test(
+        trailModelSrc,
+      ) &&
+      !/^import /m.test(trailModelSrc),
   ),
 );
 
